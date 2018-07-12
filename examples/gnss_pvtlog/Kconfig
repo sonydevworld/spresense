@@ -1,0 +1,34 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_GNSS_PVTLOG
+	bool "GNSS PVTLOG example"
+	default n
+	depends on CXD56_GNSS
+
+if EXAMPLES_GNSS_PVTLOG
+
+config EXAMPLES_GNSS_PVTLOG_PROGNAME
+	string "Program name"
+	default "gnss_pvtlog"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_PVTLOG_PRIORITY
+	int "PVTLOG task priority"
+	default 100
+
+config EXAMPLES_PVTLOG_STACKSIZE
+	int "PVTLOG stack size"
+	default 2048
+
+config EXAMPLES_PVTLOG_FILEPATH
+	string "path to save the log file"
+	default "/mnt/spif/PVTLOG"
+	---help---
+		Specify the path to save the log file.
+endif

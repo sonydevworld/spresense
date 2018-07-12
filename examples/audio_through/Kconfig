@@ -1,0 +1,27 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_THROUGH
+	bool "Audio through example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio through example
+
+if EXAMPLES_AUDIO_THROUGH
+
+config EXAMPLES_AUDIO_PLAYER_PROGNAME
+	string "Program name"
+	default "audio_through"
+
+config EXAMPLES_AUDIO_PLAYER_PRIORITY
+	int "Audio through task priority"
+	default 150
+
+config EXAMPLES_AUDIO_PLAYER_STACKSIZE
+	int "Audio through stack size"
+	default 2048
+
+endif

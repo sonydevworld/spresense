@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config AUDIOUTILS_MANAGER
+	bool "Audio manager"
+	default n
+	---help---
+		Enable support for audio manager.
+
+if AUDIOUTILS_MANAGER
+endif

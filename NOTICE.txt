@@ -1,0 +1,18 @@
+To Whom to Submit Contribution:
+
+Thank you for your interest in our software, "SPRESENSE SDK" (the "Software").
+
+Sony Semiconductor Solutions Corporation ("Sony") grants the right to use the Software under such terms and conditions as described below (the "License").  Please refer to the terms and conditions of the License which is contained in 'LICENSE' file under the same directly as this file is contained. 
+
+The License: The 3-Clause BSD License
+
+When you submit a Contribution, you are asked to submit the source code in compliance with the License.
+
+For the purpose of this notice, "Contribution" shall mean the code, documentation or other original works of authorship, as well as any original work of authorship, including any modifications or additions to an existing work, that is intentionally submitted by you to Sony for inclusion in, or documentation of, the Software owned or managed by Sony. For the purposes of this definition, "submitted" means any form of electronic, verbal, or written communication sent to Sony or its representatives, including but not limited to communication on electronic mailing lists, source code control systems, and issue tracking systems that are managed by, or on behalf of, Sony for the purpose of discussing and improving the Software, but excluding communication that is conspicuously marked or otherwise designated in writing by you as "Not a Contribution."
+
+Sony has the right to review a Contribution from the perspective of its quality, etc., and Sony has the sole discretion to accept the Contribution or not.  Your submission of a Contribution in compliance with the License means that you grant to Sony and any third party to use the submitted Contribution under the License, and Sony is allowed to submit the submitted Contribution to the original source repository.
+
+Your submission of a Contribution in compliance with the License will be deemed to as you accept and agree this notice.
+
+
+

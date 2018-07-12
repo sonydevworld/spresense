@@ -1,0 +1,16 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+
+config GPSUTILS_CXD56NMEA_LIB
+	bool "Support CXD56xx gnss NMEA convert library"
+	default n
+	#depends on CXD56_GNSS && LIBM
+	depends on CXD56_GNSS
+	---help---
+		Enable CXD56xx gnss NMEA convert library.
+		This converts from GD positioning data of CXD56 GNSS to NMEA sentences.
+
+		NOTE: This library is object archive depends on libm.a.

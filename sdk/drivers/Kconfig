@@ -1,0 +1,8 @@
+
+menu "Drivers"
+
+source "$SDKDIR/drivers/sensors/Kconfig"
+source "$SDKDIR/drivers/lcd/Kconfig"
+source "$SDKDIR/drivers/video/Kconfig"
+
+endmenu

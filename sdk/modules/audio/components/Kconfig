@@ -1,0 +1,67 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config AUDIOUTILS_CAPTURE
+	bool "Capture"
+	default n
+	---help---
+		Enable Capture Feature
+
+config AUDIOUTILS_DECODER
+	bool "Decoder"
+	default n
+	---help---
+		Enable Decode Feature
+
+config AUDIOUTILS_ENCODER
+	bool "Encoder"
+	default n
+	---help---
+		Enable Encode Feature
+
+config AUDIOUTILS_FILTER
+	bool "Fileter"
+	default n
+	---help---
+		Enable Filtering Feature
+
+config AUDIOUTILS_POSTFILTER
+	bool "Post Filter"
+	default n
+	---help---
+		Enable Post Filtering Feature
+
+config AUDIOUTILS_RECOGNITION
+	bool "Recognition"
+	default n
+	---help---
+		Enable Recognition Feature
+
+config AUDIOUTILS_RENDERER
+	bool "Renderer"
+	default n
+	---help---
+		Enable Renderer Feature
+		
+if AUDIOUTILS_RENDERER
+config AUDIOUTILS_RENDERER_UNDERFLOW
+	bool "Insert silence data at underflow"
+	default n
+	---help---
+		Enable Insert silence data
+
+endif
+
+config AUDIOUTILS_COMPONENT_COMMON
+	bool
+	default y if AUDIOUTILS_DECODER || AUDIOUTILS_FILTER || AUDIOUTILS_POSTFILTER
+
+config AUDIOUTILS_DSP_DEBUG_DUMP
+	bool "dsp debug dump"
+	default n
+	depends on CXD56_BACKUPLOG
+	---help---
+		Enable Dsp Debug Dump
+

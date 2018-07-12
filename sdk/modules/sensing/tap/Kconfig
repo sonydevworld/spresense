@@ -1,0 +1,17 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config TAP
+	bool "Tap detection"
+
+if TAP
+
+config TAP_MANAGER
+	bool "Support tap manager library"
+	default n
+	---help---
+		Enable support for tap manager library.
+
+endif

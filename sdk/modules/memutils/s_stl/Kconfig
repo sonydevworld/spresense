@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config MEMUTILS_S_STL
+	bool "MEMUTILS_S_STL"
+	default n
+	---help---
+		Enable support for S_STL.
+
+if MEMUTILS_S_STL
+endif

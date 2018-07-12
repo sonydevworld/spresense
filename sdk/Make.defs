@@ -1,0 +1,96 @@
+############################################################################
+# Make.defs
+#
+#   Copyright (C) 2014 Gregory Nutt. All rights reserved.
+#   Author: Gregory Nutt <gnutt@nuttx.org>
+#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in
+#    the documentation and/or other materials provided with the
+#    distribution.
+# 3. Neither the name NuttX nor the names of its contributors may be
+#    used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+############################################################################
+
+-include $(SDKDIR)/.config
+
+ifeq ($(WINTOOL),y)
+
+# Windows-native toolchains
+
+CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/bsp/include)"
+CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
+
+CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/bsp/include)"
+CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
+
+# mkspk for create spk packaging file
+
+MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
+
+else
+
+# Linux/Cygwin-native toolchain
+
+CFLAGS += -isystem $(SDKDIR)/bsp/include
+CFLAGS += -isystem $(SDKDIR)/modules/include
+
+CXXFLAGS += -I$(SDKDIR)/bsp/include
+CXXFLAGS += -I$(SDKDIR)/modules/include
+
+MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
+
+endif
+
+DEPCONFIG = $(SDKDIR)/.config $(TOPDIR)/.config
+
+ifeq ($(WINTOOL),y)
+  LDRAWELFFLAGS += -T "${shell cygpath -w $(SDKDIR)/bsp/scripts/asmp-elf.ld}"
+else
+  LDRAWELFFLAGS += -T $(SDKDIR)/bsp/scripts/asmp-elf.ld
+endif
+LDRAWELFFLAGS += -u __vectors
+LDRAWELFFLAGS += -zmax-page-size=256
+LDRAWELFFLAGS += -defsym STACK_SIZE=$(WORKERSTACKSIZE)
+
+ifeq ($(WORKERSTACKSIZE),)
+WORKERSTACKSIZE = 1024
+endif
+
+# Output map file with cross reference table
+
+ifeq ($(WINTOOL),y)
+  LDFLAGS += -Map="${shell cygpath -w $(SDKDIR)/nuttx.map}" --cref
+else
+  LDFLAGS += -Map=$(SDKDIR)/nuttx.map --cref
+endif
+
+ifneq ($(CONFIG_RAM_SIZE),)
+ifneq ($(CONFIG_ASMP_MEMSIZE),)
+  LDFLAGS += --defsym __stack=_vectors+${shell expr $(CONFIG_RAM_SIZE) \- `printf "%d" $(CONFIG_ASMP_MEMSIZE)`}
+else
+  LDFLAGS += --defsym __stack=_vectors+$(CONFIG_RAM_SIZE)
+endif
+endif

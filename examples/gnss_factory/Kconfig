@@ -1,0 +1,33 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_GNSS_FACTORY
+	bool "GNSS FACTORY test"
+	default n
+	depends on CXD56_GNSS
+
+if EXAMPLES_GNSS_FACTORY
+
+config EXAMPLES_GNSS_FACTORY_PROGNAME
+	string "Program name"
+	default "gnss_factory"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_GNSS_FACTORY_PRIORITY
+	int "FACTORY TEST priority"
+	default 100
+
+config EXAMPLES_GNSS_FACTORY_STACKSIZE
+	int "FACTORY TEST stack size"
+	default 2048
+
+config EXAMPLES_GNSS_FACTORY_SVID
+	int "FACTORY TEST svid"
+	default 1
+
+endif

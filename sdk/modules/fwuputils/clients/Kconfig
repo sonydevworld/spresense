@@ -1,0 +1,15 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig FWUPUTILS_CLIENTS
+	bool "FirmWare Update Clients"
+	default n
+	depends on FWUPUTILS_MANAGER
+	---help---
+		Enable support for FirmWare Update.
+
+if FWUPUTILS_CLIENTS
+
+endif # FWUPUTILS_CLIENTS

@@ -1,0 +1,58 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_FWUPDATE
+	bool "FW Update example"
+	default n
+	depends on FWUPUTILS_CLIENTS
+	---help---
+		Enable the FW Update example
+
+if EXAMPLES_FWUPDATE
+
+config EXAMPLES_FWUPDATE_PROGNAME
+	string "Program name"
+	default "fwupdate"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_FWUPDATE_PRIORITY
+	int "fwupdate task priority"
+	default 100
+
+config EXAMPLES_FWUPDATE_STACKSIZE
+	int "fwupdate stack size"
+	default 2048
+
+config EXAMPLES_FWUPDATE_DOWNLOAD_WORK_SIZE
+	hex "FW download work memory size"
+	default 0x10000
+	---help---
+		This is the size of continuous work memory to support for
+		partial download which is allocated from heap memory.
+		Adjust according to the free memory capacity.
+
+config EXAMPLES_FWUPDATE_DOWNLOAD_DIR
+	string "FW update work download directory"
+#	default SYSTEM_ZMODEM_MOUNTPOINT if SYSTEM_ZMODEM
+#	default "/mnt/spif" if !SYSTEM_ZMODEM
+	default "/mnt/spif"
+	---help---
+		This is the temporal download directory. If zmodem is enabled,
+		zmodem mount point is used. Set the storage mounted directory
+		name such as "/mnt/spif".
+
+config EXAMPLES_FWUPDATE_USBCDC_DEVNAME
+	string "FW update USB CDC/ACM device"
+	default "/dev/ttyACM0"
+
+config EXAMPLES_FWUPDATE_USBCDC_ZMODEM
+	bool "FW update via USB CDC/ACM Zmodem"
+	default y
+#	depends on CDCACM && SYSTEM_ZMODEM
+
+endif

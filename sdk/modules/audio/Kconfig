@@ -1,0 +1,219 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SDK_AUDIO
+	bool "SDK audio"
+	default n
+	---help---
+		Enable support for sdk audio
+
+if SDK_AUDIO
+
+menu "Audio Utilities"
+
+source "$SDKDIR/modules/audio/manager/Kconfig"
+
+config AUDIOUTILS_PLAYER
+	bool "Audio Player"
+	default n
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_DECODER
+	select AUDIOUTILS_POSTFILTER
+	select AUDIOUTILS_RENDERER
+	select AUDIOUTILS_DSP_DRIVER
+	---help---
+		Support Player Feature
+
+if AUDIOUTILS_PLAYER
+source "$SDKDIR/modules/audio/playlist/Kconfig"
+
+menu "Audio Player Supported Formats"
+config AUDIOUTILS_PLAYER_CODEC_PCM
+	bool "PCM Audio"
+	default y
+	---help---
+		Supported only headerless PCM data
+
+config AUDIOUTILS_PLAYER_CODEC_MP3
+	bool "MP3"
+	default y
+	---help---
+		Supported MPEG1 Audio Layer-3, MPEG2 Audio Layer-3
+
+config AUDIOUTILS_PLAYER_CODEC_AAC
+	bool "AAC"
+	default y
+	---help---
+		Supported MPEG2 Advanced Audio Coding
+
+config AUDIOUTILS_PLAYER_CODEC_OPUS
+	bool "Opus"
+	default y
+	---help---
+		Supported VoIP codec in Opus format
+
+endmenu # Audio Player Codec Type
+
+endif
+
+config AUDIOUTILS_RECORDER
+	bool "Audio Recorder"
+	default n
+	select AUDIOUTILS_SRC
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_ENCODER
+	select AUDIOUTILS_FILTER
+	select AUDIOUTILS_CAPTURE
+	select AUDIOUTILS_DSP_DRIVER
+	---help---
+		Support Recorder Feature
+
+config AUDIOUTILS_DIAG
+	bool "Audio Diag"
+	depends on CXD56_I2S0
+	default n
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	---help---
+		Support Diag Feature
+
+config AUDIOUTILS_VOICE_CALL
+	bool "Voice Call"
+	depends on CXD56_I2S0
+	default n
+	select AUDIOUTILS_MFE
+	select AUDIOUTILS_MPP
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_RENDERER
+	select AUDIOUTILS_FILTER
+	select AUDIOUTILS_CAPTURE
+	select AUDIOUTILS_DSP_DRIVER
+	select AUDIOUTILS_SOUND_EFFECTOR
+	---help---
+		Support Voice Call Feature
+
+config AUDIOUTILS_VOICE_COMMAND
+	bool "Voice Command"
+	depends on CXD56_I2S0
+	default n
+	select AUDIOUTILS_MFE
+	select AUDIOUTILS_MPP
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_RENDERER
+	select AUDIOUTILS_FILTER
+	select AUDIOUTILS_CAPTURE
+	select AUDIOUTILS_RECOGNITION
+	select AUDIOUTILS_DSP_DRIVER
+	select AUDIOUTILS_SOUND_EFFECTOR
+	---help---
+		Support Voice Command Feature
+
+if AUDIOUTILS_RECORDER
+config AUDIOUTILS_SRC
+	bool "Sampling Rate Converter"
+	default n
+	---help---
+		Enable Sampling Rate Converter filter
+endif
+
+if AUDIOUTILS_VOICE_CALL || AUDIOUTILS_VOICE_COMMAND
+config AUDIOUTILS_MFE
+	bool "Mic Front End"
+	default n
+	---help---
+		Enable Mic Front End Filter
+
+config AUDIOUTILS_MPP
+	bool "Media Player Post"
+	default n
+	---help---
+		Enable Media Player Post Filter
+endif
+
+if AUDIOUTILS_RECORDER || AUDIOUTILS_VOICE_CALL || AUDIOUTILS_VOICE_COMMAND
+config AUDIOUTILS_CAPTURE_CH_NUM
+	int "Audio capture channel number"
+	default 2
+	---help---
+		Set number of using resorce for DMA input channel
+endif
+
+if AUDIOUTILS_PLAYER || AUDIOUTILS_VOICE_CALL || AUDIOUTILS_VOICE_COMMAND
+config AUDIOUTILS_RENDERER_CH_NUM
+	int "Audio renderer channel number"
+	default 2
+	---help---
+		Set number of using resorce for DMA output channel
+endif
+
+config AUDIOUTILS_DSP_MOUNTPT
+	string "DSP image mount path"
+	default "/mnt/spif/BIN"
+	---help---
+		The path to the DSP mount point. Default: /mnt/spif/BIN"
+
+config AUDIOUTILS_EVENTLOG
+	bool "Print event log to console"
+	default n
+	---help---
+		Print logs of audioutils. Event logs only, periodical log is not.
+
+config AUDIOUTILS_STATELOG
+	bool "Print state log to console"
+	default n
+	---help---
+		Print logs of audioutils. State transition log will be printed.
+
+config AUDIOUTILS_DETAILLOG
+	bool "Print detail log to console"
+	default n
+	---help---
+		Print logs of audioutils. Detail log will be printed.
+
+config AUDIOUTILS_ATTENTIONLOG_DISABLE
+	bool "Disable print attention log to console"
+	default n
+	---help---
+		Disable attention log to print in console. default is [n].
+
+menu "Audio component menu"
+source "$SDKDIR/modules/audio/components/Kconfig"
+endmenu
+
+config AUDIOUTILS_UNUSE_ORIGINAL_OPUS_FORMAT
+	bool "Unuse original opus format"
+	default n
+	depends on AUDIOUTILS_PLAYER || AUDIOUTILS_RECORDER
+	---help---
+		Enable Unuse Original Opus Format
+
+config AUDIOUTILS_DSP_DRIVER
+	bool
+
+config AUDIOUTILS_SOUND_EFFECTOR
+	bool
+
+endmenu # Audio Utilities
+
+endif

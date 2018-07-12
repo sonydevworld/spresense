@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config MEMUTILS_SIMPLE_FIFO
+	bool "Simple FIFO"
+	default n
+	---help---
+		Enable support for Simple FIFO.
+
+if MEMUTILS_SIMPLE_FIFO
+endif

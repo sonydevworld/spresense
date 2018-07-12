@@ -1,0 +1,47 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_DECIMATOR
+	bool "SCU decimator example"
+	default n
+	---help---
+		This is a example of SCU decimator. This example needs the sensor
+		is assigned to decimator. See SCU Decimator assignments option.
+
+if EXAMPLES_DECIMATOR
+
+config EXAMPLES_DECIMATOR_PROGNAME
+	string "Program name"
+	default "decimator"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_DECIMATOR_PRIORITY
+	int "Example task priority"
+	default 100
+
+config EXAMPLES_DECIMATOR_STACKSIZE
+	int "Example stack size"
+	default 2048
+
+config EXAMPLES_DECIMATOR0_DEVNAME
+    string "Sensor 0 device name"
+    default "/dev/accel0"
+
+config EXAMPLES_DECIMATOR0_SIGNO
+    int "Sensor signal"
+    default 13
+
+config EXAMPLES_DECIMATOR1_DEVNAME
+    string "Sensor 1 device name"
+    default "/dev/accel1"
+
+config EXAMPLES_DECIMATOR1_SIGNO
+    int "Sensor signal"
+    default 14
+
+endif

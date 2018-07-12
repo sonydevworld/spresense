@@ -1,0 +1,19 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ASMP
+	bool "ASMP ELF Loader Example"
+    depends on ASMP
+	default n
+	---help---
+		Enable the ELF loader example
+
+if EXAMPLES_ASMP
+
+config EXAMPLES_ASMP_WORKER_STACKSIZE
+    int "Example worker stack size"
+    default 1024
+
+endif

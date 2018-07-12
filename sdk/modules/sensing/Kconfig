@@ -1,0 +1,28 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "Sensing"
+
+config SENSING_MANAGER
+	bool "Sensor manager"
+	default n
+	---help---
+		Enable support for sensor manager.
+
+if SENSING_MANAGER
+
+config SENSING_MANAGER_POWERCTRL
+	bool "Sensor manager power control enable"
+	default n
+	---help---
+        To use SF_SendSensorSetPower() API, enable this.
+
+endif
+
+source "$SDKDIR/modules/sensing/gnss/Kconfig"
+source "$SDKDIR/modules/sensing/barometer/Kconfig"
+source "$SDKDIR/modules/sensing/tap/Kconfig"
+
+endmenu # Sensor Utilities

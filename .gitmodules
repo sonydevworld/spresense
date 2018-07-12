@@ -1,0 +1,3 @@
+[submodule "nuttx"]
+	path = nuttx
+	url = ../spresense-nuttx.git

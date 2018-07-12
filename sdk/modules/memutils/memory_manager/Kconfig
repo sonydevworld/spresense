@@ -1,0 +1,26 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config MEMUTILS_MEMORY_MANAGER
+	bool "Memory manager"
+	default n
+	---help---
+		Enable support for memory manager.
+
+if MEMUTILS_MEMORY_MANAGER
+
+config MEMUTILS_MEMORY_MANAGER_USE_FENCE
+	bool "Fence(memory area over) detect function enable"
+	default y
+	---help---
+		When exceeding the set memory area,
+		an exception occurs when Pool is deleted
+
+config MEMUTILS_MEMORY_MANAGER_NUM_FIXED_AREA_FENCES
+	int "Area fence num"
+	depends on MEMUTILS_MEMORY_MANAGER_USE_FENCE
+	default 0
+
+endif

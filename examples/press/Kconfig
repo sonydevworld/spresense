@@ -1,0 +1,59 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_PRESS
+	bool "Pressure sensor example"
+	default n
+    depends on BMP280 || BM1383GLV
+	---help---
+		Enable the sensor via SCU example
+
+if EXAMPLES_PRESS
+
+config EXAMPLES_PRESS_PROGNAME
+	string "Program name"
+	default "press"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_PRESS_PRIORITY
+	int "Sensor task priority"
+	default 100
+
+config EXAMPLES_PRESS_STACKSIZE
+	int "Sensor stack size"
+	default 2048
+
+config EXAMPLES_PRESS_DEVNAME
+    string "Pressure sensor device name"
+    default "/dev/press0"
+
+config EXAMPLES_PRESS_SIGNO
+    int "Pressure sensor signal"
+    default 14
+
+config EXAMPLES_TEMP_DEVNAME
+    string "Temperature sensor device name"
+    default "/dev/temp0"
+    depends on BMP280
+
+config EXAMPLES_TEMP_SIGNO
+    int "Temperature sensor signal"
+    default 15
+    depends on BMP280
+
+config EXAMPLES_PRESS_NTIMES
+    int "Number of sensing times"
+    default 10
+    depends on BMP280
+
+config EXAMPLES_PRESS_INTERVAL
+    int "Period of time to each sensing (ms)"
+    default 100
+    depends on BMP280
+
+endif

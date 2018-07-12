@@ -1,0 +1,19 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_GPIO
+	bool "GPIO Command"
+	default n
+	---help---
+		Enable support for the NSH 'gpio' command.
+
+if SYSTEM_GPIO
+
+config SYSTEM_GPIO_STATUS
+	bool "GPIO status dump"
+	default y
+	depends on CXD56_GPIO_IRQ
+
+endif # SYSTEM_GPIO

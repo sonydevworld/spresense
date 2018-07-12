@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_TILT
+	bool "Tilt detection example"
+	default n
+    depends on BMI160
+	---help---
+		Enable the sensor via SCU Mathfunc example
+
+if EXAMPLES_TILT
+
+config EXAMPLES_TILT_PROGNAME
+	string "Program name"
+	default "tilt"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_TILT_PRIORITY
+	int "Sensor task priority"
+	default 100
+
+config EXAMPLES_TILT_STACKSIZE
+	int "Sensor stack size"
+	default 2048
+
+endif

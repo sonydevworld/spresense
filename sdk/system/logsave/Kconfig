@@ -1,0 +1,22 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_LOGSAVE
+	bool "Log Save Command"
+	default n
+	depends on CXD56_BACKUPLOG
+	---help---
+		Enable support for the NSH 'logsave' command. This command saves all of
+		the logging data on the backup sram as each file into the non-volatile
+		storage like as flash. If the logging data is saved as file, the data
+		is removed from the backup sram.
+
+if SYSTEM_LOGSAVE
+
+config SYSTEM_LOGSAVE_MOUNTPOINT
+	string "Log file saved directory"
+	default "/mnt/spif"
+
+endif # SYSTEM_LOGSAVE
