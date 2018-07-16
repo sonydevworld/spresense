@@ -65,7 +65,14 @@
 #  define BM1422GMV_SEQ_TYPE SEQ_TYPE_NORMAL
 #endif
 
-#define BM1422GMV_ADDR              0x0E    /* I2C Slave Address */
+/* I2C Slave Address */
+
+#ifdef CONFIG_BM1422GMV_SLAVE_ADDRESS_0F
+#define BM1422GMV_ADDR              0x0F    
+#else
+#define BM1422GMV_ADDR              0x0E
+#endif
+
 #define BM1422GMV_DEVID             0x41    /* Device ID */
 #define BM1422GMV_BYTESPERSAMPLE    6
 #define BM1422GMV_ELEMENTSIZE       2
