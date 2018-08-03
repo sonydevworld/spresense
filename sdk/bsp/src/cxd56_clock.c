@@ -2068,7 +2068,7 @@ int up_pmramctrl(int cmd, uintptr_t addr, size_t size)
   return OK;
 }
 
-#ifdef CONFIG_SDK_DEBUG_DEBUG
+#ifdef CONFIG_DEBUG_PM
 /****************************************************************************
  * Name: up_pmstatdump
  *

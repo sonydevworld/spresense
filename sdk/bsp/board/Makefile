@@ -190,4 +190,12 @@ ifeq ($(CONFIG_CXD56_GPIO_IRQ),y)
 CSRCS += cxd56_gpioif.c
 endif
 
+ifeq ($(CONFIG_CXD56_GAUGE),y)
+CSRCS += cxd56_gauge.c
+endif
+
+ifeq ($(CONFIG_CXD56_CHARGER),y)
+CSRCS += cxd56_charger.c
+endif
+
 include $(SDKDIR)/bsp/scripts/Board.mk

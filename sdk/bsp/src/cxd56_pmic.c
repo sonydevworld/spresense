@@ -90,6 +90,55 @@ enum pmic_cmd_type_e
   PMIC_CMD_CHG_PAUSE,
   PMIC_CMD_CHG_ENABLE,
   PMIC_CMD_CHG_DISABLE,
+  /* power monitor */
+  PMIC_CMD_POWER_MONITOR_ENABLE = 0x30,
+  PMIC_CMD_POWER_MONITOR_STATUS,
+  PMIC_CMD_POWER_MONITOR_SET,
+  PMIC_CMD_POWER_MONITOR_GET,
+  PMIC_CMD_AFE,
+  PMIC_CMD_SET_CHG_IFIN,
+  PMIC_CMD_GET_CHG_IFIN,
+  PMIC_CMD_SET_CHG_TEMPERATURE_TABLE,
+  PMIC_CMD_GET_CHG_TEMPERATURE_TABLE,
+};
+
+/* Register CNT_USB2 [1:0] USB_CUR_LIM constants */
+
+#define PMIC_CUR_LIM_2_5mA  0
+#define PMIC_CUR_LIM_100mA  1
+#define PMIC_CUR_LIM_500mA  2
+
+/* Register CNT_CHG1 [6:5] VO_CHG_DET4 constants */
+
+#define PMIC_CHG_DET_MINUS400  0
+#define PMIC_CHG_DET_MINUS350  1
+#define PMIC_CHG_DET_MINUS300  2
+#define PMIC_CHG_DET_MINUS250  3
+
+/* Register CNT_CHG2 [7:5] SET_CHG_IFIN constants */
+
+#define PMIC_CHG_IFIN_50   0
+#define PMIC_CHG_IFIN_40   1
+#define PMIC_CHG_IFIN_30   2
+#define PMIC_CHG_IFIN_20   3
+#define PMIC_CHG_IFIN_10   4
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+/* FarAPI interface structures */
+
+struct pmic_afe_s
+{
+  int voltage;
+  int current;
+  int temperature;
+};
+
+struct pmic_temp_mode_s
+{
+  int low;
+  int high;
 };
 
 extern int PM_PmicControl(int cmd, void *arg);
@@ -599,6 +648,629 @@ bool cxd56_pmic_get_ddc_ldo(uint8_t chset)
 
   return ((setbit & chset) == chset);
 }
+
+/****************************************************************************
+ * Name: cxd56_pmic_get_gauge
+ *
+ * Description:
+ *   Get the set of values (voltage, current and temperature) from PMIC.
+ *
+ * Input Parameter:
+ *   gauge - Set of gauge related values
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_get_gauge(FAR struct pmic_gauge_s *gauge)
+{
+  return PM_PmicControl(PMIC_CMD_GAUGE, gauge);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getlowervol
+ *
+ * Description:
+ *   Get lower limit of voltage for system to be running.
+ *
+ * Input Parameter:
+ *   voltage - Lower limit voltage (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getlowervol(FAR int *vol)
+{
+  return PM_PmicControl(PMIC_CMD_GETVSYS, vol);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargevol
+ *
+ * Description:
+ *   Get charge voltage
+ *
+ * Input Parameter:
+ *   voltage - Possible values are every 50 between 4000 to 4400 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargevol(FAR int *voltage)
+{
+  int val;
+  int ret;
+
+  ret = PM_PmicControl(PMIC_CMD_GET_CHG_VOLTAGE, &val);
+  if (ret)
+    {
+      return -EIO;
+    }
+
+  val &= 0xf;
+
+  /* Convert register value to actual voltage (mV) */
+
+  if (val <= 8)
+    {
+      *voltage = 4000 + (val * 50);
+    }
+  else
+    {
+      *voltage = 4200;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargevol
+ *
+ * Description:
+ *   Set charge voltage
+ *
+ * Input Parameter:
+ *   voltage - Avalable values are every 50 between 4000 to 4400 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargevol(int voltage)
+{
+  int val;
+
+  /* Sanity check */
+
+  if (voltage < 4000 && voltage > 4400)
+    {
+      return -EINVAL;
+    }
+  if (voltage % 50)
+    {
+      return -EINVAL;
+    }
+
+  /* Register setting values are every 50mV between 4.0V to 4.4V */
+
+  val = (voltage - 4000) / 50;
+
+  return PM_PmicControl(PMIC_CMD_SET_CHG_VOLTAGE, (void *)val);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargecurrent
+ *
+ * Description:
+ *   Get charge current value
+ *
+ * Input Parameter:
+ *   current - Possible values are 2, 100 and 500 (mA). However,
+ *             2 means 2.5 mA actually.
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargecurrent(FAR int *current)
+{
+  int val;
+  int ret;
+
+  ret = PM_PmicControl(PMIC_CMD_GET_CHG_CURRENT, &val);
+  if (ret)
+    {
+      return ret;
+    }
+
+  /* Convert register value to current */
+
+  switch (val & 0x3)
+    {
+      case PMIC_CUR_LIM_2_5mA:
+        *current = 2;
+        break;
+
+      case PMIC_CUR_LIM_100mA:
+        *current = 100;
+        break;
+
+      case PMIC_CUR_LIM_500mA:
+        *current = 500;
+        break;
+
+      default:
+        return -EFAULT;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargecurrent
+ *
+ * Description:
+ *   Set charge current value
+ *
+ * Input Parameter:
+ *   current - Available values are 2, 100 and 500 (mA). However, 2 means
+ *             2.5 mA actually.
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargecurrent(int current)
+{
+  int val;
+
+  /* Replace current values for CNT_USB2 [1:0] USB_CUR_LIM */
+
+  switch (current)
+    {
+      case 2:
+        val = PMIC_CUR_LIM_2_5mA;
+        break;
+
+      case 100:
+        val = PMIC_CUR_LIM_100mA;
+        break;
+
+      case 500:
+        val = PMIC_CUR_LIM_500mA;
+        break;
+
+      default:
+        return -EFAULT;
+    }
+
+  return PM_PmicControl(PMIC_CMD_SET_CHG_CURRENT, (void *)val);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getporttype
+ *
+ * Description:
+ *   Get USB port type
+ *
+ * Input Parameter:
+ *   porttype - PMIC_PORTTYPE_SDP or PMIC_PORTTYPE_DCPCDP
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getporttype(FAR int *porttype)
+{
+  return PM_PmicControl(PMIC_CMD_GET_USB_PORT_TYPE, porttype);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargestate
+ *
+ * Description:
+ *   Read charging status
+ *
+ * Input Parameter:
+ *   state - Charging status (see PMIC_STAT_* definitions)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargestate(uint8_t *state)
+{
+  struct pmic_afe_s arg;
+  int val;
+  int ret;
+
+  /* Update charge state */
+
+  ret = PM_PmicControl(PMIC_CMD_AFE, &arg);
+  if (ret)
+    {
+      return ret;
+    }
+
+  /* Get actual charging state (CNT_USB1) */
+
+  ret = PM_PmicControl(PMIC_CMD_GET_CHG_STATE, &val);
+  *state = val & 0xff;
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_setrechargevol
+ *
+ * Description:
+ *   Set threshold voltage against full charge for automatic restart charging.
+ *
+ * Input Parameter:
+ *   mV - Available values are -400, -350, -300 and -250 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setrechargevol(int mV)
+{
+  int val;
+
+  /* Convert voltage to register value */
+
+  switch (mV)
+    {
+      case -400:
+        val = PMIC_CHG_DET_MINUS400;
+        break;
+
+      case -350:
+        val = PMIC_CHG_DET_MINUS350;
+        break;
+
+      case -300:
+        val = PMIC_CHG_DET_MINUS300;
+        break;
+
+      case -250:
+        val = PMIC_CHG_DET_MINUS250;
+        break;
+
+      default:
+        return -EINVAL;
+    }
+
+  return PM_PmicControl(PMIC_CMD_SET_RECHG_VOLTAGE, (void *)val);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getrechargevol
+ *
+ * Description:
+ *   Get threshold voltage against full charge for automatic restart charging.
+ *
+ * Input Parameter:
+ *   mV - Possible values are -400, -350, -300 and -250 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getrechargevol(FAR int *mV)
+{
+  int val;
+  int ret;
+
+  ret = PM_PmicControl(PMIC_CMD_GET_RECHG_VOLTAGE, &val);
+  if (ret)
+    {
+      return ret;
+    }
+
+  /* Convert regsiter value to voltage */
+
+  switch (val)
+    {
+      case PMIC_CHG_DET_MINUS400:
+        *mV = -400;
+        break;
+
+      case PMIC_CHG_DET_MINUS350:
+        *mV = -350;
+        break;
+
+      case PMIC_CHG_DET_MINUS300:
+        *mV = -300;
+        break;
+
+      case PMIC_CHG_DET_MINUS250:
+        *mV = -250;
+        break;
+
+      default:
+        return -EINVAL;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargecompcurrent
+ *
+ * Description:
+ *   Set current value setting for determine fully charged.
+ *
+ * Input Parameter:
+ *   current - Possible values are 50, 40, 30, 20 and 10 (mA)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargecompcurrent(int current)
+{
+  int val;
+
+  /* Convert current (mA) to register value */
+
+  switch (current)
+    {
+      case 50:
+        val = PMIC_CHG_IFIN_50;
+        break;
+
+      case 40:
+        val = PMIC_CHG_IFIN_40;
+        break;
+
+      case 30:
+        val = PMIC_CHG_IFIN_30;
+        break;
+
+      case 20:
+        val = PMIC_CHG_IFIN_20;
+        break;
+
+      case 10:
+        val = PMIC_CHG_IFIN_10;
+        break;
+
+      default:
+        return -EINVAL;
+        break;
+    }
+
+  return PM_PmicControl(PMIC_CMD_SET_CHG_IFIN, (void*)val);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargecompcurrent
+ *
+ * Description:
+ *   Get current value setting for determine fully charged.
+ *
+ * Input Parameter:
+ *   current - Available values are 50, 40, 30, 20 and 10 (mA)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargecompcurrent(FAR int *current)
+{
+  int val;
+  int ret;
+
+  ret = PM_PmicControl(PMIC_CMD_GET_CHG_IFIN, &val);
+  if (ret)
+    {
+      return ret;
+    }
+
+  /* Convert register value to current (mA) */
+
+  switch (val)
+    {
+      case PMIC_CHG_IFIN_50:
+        *current = 50;
+        break;
+
+      case PMIC_CHG_IFIN_40:
+        *current = 40;
+        break;
+
+      case PMIC_CHG_IFIN_30:
+        *current = 30;
+        break;
+
+      case PMIC_CHG_IFIN_20:
+        *current = 20;
+        break;
+
+      case PMIC_CHG_IFIN_10:
+        *current = 10;
+        break;
+
+      default:
+        *current = 0;
+        ret = -EFAULT;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_gettemptable
+ *
+ * Description:
+ *   Get temperature detect resistance table
+ *
+ * Input Parameter:
+ *   table - Settings values for temperature detecting (see CXD5247GF
+ *           specification for more detail)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_gettemptable(FAR struct pmic_temp_table_s *table)
+{
+  /* SET_T60 (70h) - SET_T0_2 (78h) */
+
+  return PM_PmicControl(PMIC_CMD_GET_CHG_TEMPERATURE_TABLE, table);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_settemptable
+ *
+ * Description:
+ *   Set temperature detect resistance table
+ *
+ * Input Parameter:
+ *   table - Settings values for temperature detecting (see CXD5247GF
+ *           specification for more detail)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_settemptable(FAR struct pmic_temp_table_s *table)
+{
+  return PM_PmicControl(PMIC_CMD_SET_CHG_TEMPERATURE_TABLE, table);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargemode
+ *
+ * Description:
+ *   Set charging mode in each low/high temperatures.
+ *   In lower than 10 degrees Celsius, charging mode will be changed on/off
+ *   and weak (half of charge current) according to setting.
+ *   In higher than 45 degrees Celsius, charging mode will be charged on/off
+ *   and weak (-0.15V from charge voltage) according to setting.
+ *
+ * Input Parameter:
+ *   low  - Charging mode in low temperature (see PMIC_CHGMODE_*)
+ *   high - Charging mode in high temperature (see PMIC_CHGMODE_*)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargemode(int low, int high)
+{
+  struct pmic_temp_mode_s arg;
+
+  /* CNT_CHG3
+   * [3:2] SEL_CHG_THL:    <-> low
+   * [1:0] SEL_CHG_THH:    <-> high
+   */
+
+  /* Sanity check */
+
+  if (low == PMIC_CHGMODE_ON || low == PMIC_CHGMODE_OFF ||
+      low == PMIC_CHGMODE_WEAK)
+    {
+      arg.low = low;
+    }
+  else
+    {
+      return -EINVAL;
+    }
+
+  if (high == PMIC_CHGMODE_ON || high == PMIC_CHGMODE_OFF ||
+      high == PMIC_CHGMODE_WEAK)
+    {
+      arg.high = high;
+    }
+  else
+    {
+      return -EINVAL;
+    }
+
+  return PM_PmicControl(PMIC_CMD_SET_CHG_TEMPERATURE_MODE, &arg);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargemode
+ *
+ * Description:
+ *   Get charging mode in each low/high temperatures.
+ *   In lower than 10 degrees Celsius, charging mode will be changed on/off
+ *   and weak (half of charge current) according to setting.
+ *   In higher than 45 degrees Celsius, charging mode will be charged on/off
+ *   and weak (-0.15V from charge voltage) according to setting.
+ *
+ * Input Parameter:
+ *   low  - Charging mode in low temperature (see PMIC_CHG_*)
+ *   high - Charging mode in high temperature (see PMIC_CHG_*)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargemode(FAR int *low, FAR int *high)
+{
+  struct pmic_temp_mode_s arg;
+  int ret;
+
+  ret = PM_PmicControl(PMIC_CMD_GET_CHG_TEMPERATURE_MODE, &arg);
+  if (ret)
+    {
+      return ret;
+    }
+
+  *low = arg.low;
+  *high = arg.high;
+
+  return OK;
+}
+
+#ifdef CONFIG_CXD56_PMIC_BATMONITOR
+/****************************************************************************
+ * Battery monitor for debug
+ ****************************************************************************/
+
+int cxd56_pmic_monitor_enable(FAR struct pmic_mon_s *ptr)
+{
+  return PM_PmicControl(PMIC_CMD_POWER_MONITOR_ENABLE, ptr);
+}
+
+int cxd56_pmic_monitor_status(FAR struct pmic_mon_status_s *ptr)
+{
+  return PM_PmicControl(PMIC_CMD_POWER_MONITOR_STATUS, ptr);
+}
+
+int cxd56_pmic_monitor_set(FAR struct pmic_mon_set_s *ptr)
+{
+  return PM_PmicControl(PMIC_CMD_POWER_MONITOR_SET, ptr);
+}
+
+int cxd56_pmic_monitor_get(FAR struct pmic_mon_log_s *ptr)
+{
+  return PM_PmicControl(PMIC_CMD_POWER_MONITOR_GET, ptr);
+}
+#endif
 
 #ifdef CONFIG_CXD56_PMIC_INT
 /****************************************************************************

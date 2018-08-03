@@ -169,3 +169,11 @@ endif
 ifeq ($(CONFIG_CXD56_BACKUPLOG),y)
 CHIP_CSRCS += cxd56_backuplog.c
 endif
+
+ifeq ($(CONFIG_CXD56_GAUGE),y)
+CHIP_CSRCS += cxd56_gauge.c
+endif
+
+ifeq ($(CONFIG_CXD56_CHARGER),y)
+CHIP_CSRCS += cxd56_charger.c
+endif
