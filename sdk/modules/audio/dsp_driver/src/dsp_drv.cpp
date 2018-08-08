@@ -179,11 +179,14 @@ int DspDrv::init(FAR const char  *pfilename,
       goto dsp_drv_errout_with_mptask_destroy;
     }
 
-  ret = mptask_bindobj(&m_mptask, &m_mq);
-  if (ret < 0)
+  if (!is_secure)
     {
-      err("mptask_bindobj() failure. %d\n", ret);
-      return ret;
+      ret = mptask_bindobj(&m_mptask, &m_mq);
+      if (ret < 0)
+        {
+          err("mptask_bindobj() failure. %d\n", ret);
+          return ret;
+        }
     }
 
   /* Create receive thread. */

@@ -101,9 +101,98 @@
 #define PMIC_DDC_CORE   (1u << 4)
 #define PMIC_LDO_PERI   (1u << 5)
 
+/* Charge mode for both of low/high temperature */
+
+#define PMIC_CHGMODE_ON   0x00
+#define PMIC_CHGMODE_OFF  0x01
+#define PMIC_CHGMODE_WEAK 0x02
+
+/* Charge status */
+
+#define PMIC_STAT_INIT_RST       0
+#define PMIC_STAT_INIT_WAIT      1
+#define PMIC_STAT_INIT_CHK       2
+#define PMIC_STAT_DBP_START      3
+#define PMIC_STAT_DB_INICHARGE   4
+#define PMIC_STAT_DB_PRECHARGE   5
+#define PMIC_STAT_DCON_WAIT      6
+#define PMIC_STAT_PD_START       7
+#define PMIC_STAT_DM_COMPARE     8
+#define PMIC_STAT_PD_END         9
+#define PMIC_STAT_BAT_WAIT       10
+#define PMIC_STAT_CHG_STOP       11
+#define PMIC_STAT_GB_PRECHARGE   12
+#define PMIC_STAT_GB_QCKCHARGE   13
+#define PMIC_STAT_GB_LOWCHARGE   14
+#define PMIC_STAT_GB_HIGHCHARGE  15
+#define PMIC_STAT_CHG_JUDGE      16
+#define PMIC_STAT_CHG_COMPLETE   17
+#define PMIC_STAT_GB_CONWAIT     18
+#define PMIC_STAT_GB_CPTEMPWAIT1 19
+#define PMIC_STAT_GB_CPTEMPWAIT2 20
+#define PMIC_STAT_GB_TEMPWAIT    21
+#define PMIC_STAT_DB_TEMPWAIT    22
+#define PMIC_STAT_DB_CONWAIT     23
+#define PMIC_STAT_BAT_UNUSUAL    24
+#define PMIC_STAT_BAT_DISCON     25
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
+
+struct pmic_gauge_s
+{
+  int reserved;
+  int voltage;
+  int current;
+  int temp;
+};
+
+struct pmic_temp_table_s
+{
+  int T60;
+  int T45;
+  int T10;
+  int T00;
+};
+
+struct pmic_mon_s
+{
+  int on;
+  int interval;
+  int threshold_volt;
+  int threshold_current;
+};
+
+struct pmic_mon_status_s
+{
+  int bRun;
+  int index;
+  int latest;
+  int total_watt;
+  int total_time;
+};
+
+struct pmic_mon_set_s
+{
+  int clearBuf;
+  int clearSum;
+};
+
+struct pmic_mon_rec_s
+{
+  uint16_t index;
+  uint16_t timestamp;
+  uint16_t voltage;
+  int16_t  current;
+};
+
+struct pmic_mon_log_s
+{
+  FAR struct pmic_monitor_rec_s *rec;
+  int index;
+  int size;
+};
 
 /****************************************************************************
  * Public Data
@@ -143,7 +232,7 @@ extern "C"
  *
  ****************************************************************************/
 
-int cxd56_pmic_get_interrupt_status(uint8_t *status);
+int cxd56_pmic_get_interrupt_status(FAR uint8_t *status);
 
 /****************************************************************************
  * Name: cxd56_pmic_set_gpo_reg
@@ -171,8 +260,8 @@ int cxd56_pmic_get_interrupt_status(uint8_t *status);
  *
  ****************************************************************************/
 
-int cxd56_pmic_set_gpo_reg(uint8_t *setbit0, uint8_t *clrbit0,
-                           uint8_t *setbit1, uint8_t *clrbit1);
+int cxd56_pmic_set_gpo_reg(FAR uint8_t *setbit0, FAR uint8_t *clrbit0,
+                           FAR uint8_t *setbit1, FAR uint8_t *clrbit1);
 
 /****************************************************************************
  * Name: cxd56_pmic_set_gpo
@@ -246,7 +335,7 @@ bool cxd56_pmic_get_gpo(uint8_t chset);
  *
  ****************************************************************************/
 
-int cxd56_pmic_set_loadswitch_reg(uint8_t *setbit, uint8_t *clrbit);
+int cxd56_pmic_set_loadswitch_reg(FAR uint8_t *setbit, FAR uint8_t *clrbit);
 
 /****************************************************************************
  * Name: cxd56_pmic_set_loadswitch
@@ -305,7 +394,7 @@ bool cxd56_pmic_get_loadswitch(uint8_t chset);
  *
  ****************************************************************************/
 
-int cxd56_pmic_set_ddc_ldo_reg(uint8_t *setbit, uint8_t *clrbit);
+int cxd56_pmic_set_ddc_ldo_reg(FAR uint8_t *setbit, FAR uint8_t *clrbit);
 
 /****************************************************************************
  * Name: cxd56_pmic_set_ddc_ldo
@@ -341,6 +430,277 @@ int cxd56_pmic_set_ddc_ldo(uint8_t chset, bool value);
 bool cxd56_pmic_get_ddc_ldo(uint8_t chset);
 
 /****************************************************************************
+ * Name: cxd56_pmic_get_gauge
+ *
+ * Description:
+ *   Get the set of values (gauge, voltage, current and temperature) from
+ *   PMIC.
+ *
+ * Input Parameter:
+ *   gauge - Set of gauge values
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_get_gauge(FAR struct pmic_gauge_s *gauge);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getlowervol
+ *
+ * Description:
+ *   Get lower limit of voltage for system to be running.
+ *
+ * Input Parameter:
+ *   voltage - Lower limit voltage (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getlowervol(FAR int *vol);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargevol
+ *
+ * Description:
+ *   Get charge voltage
+ *
+ * Input Parameter:
+ *   voltage - Possible values are every 50 between 4000 to 4400 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargevol(FAR int *voltage);
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargevol
+ *
+ * Description:
+ *   Set charge voltage
+ *
+ * Input Parameter:
+ *   voltage - Avalable values are every 50 between 4000 to 4400 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargevol(int voltage);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargecurrent
+ *
+ * Description:
+ *   Get charge current value
+ *
+ * Input Parameter:
+ *   current - Possible values are 2, 100 and 500 (mA). However,
+ *             2 means 2.5 mA actually.
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargecurrent(FAR int *current);
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargecurrent
+ *
+ * Description:
+ *   Set charge current value
+ *
+ * Input Parameter:
+ *   current - Available values are 2, 100 and 500 (mA). However, 2 means
+ *             2.5 mA actually.
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargecurrent(int current);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getporttype
+ *
+ * Description:
+ *   Get USB port type
+ *
+ * Input Parameter:
+ *   porttype - PMIC_PORTTYPE_SDP or PMIC_PORTTYPE_DCPCDP
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getporttype(FAR int *porttype);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargestate
+ *
+ * Description:
+ *   Read charging status
+ *
+ * Input Parameter:
+ *   state - Charging status (see PMIC_STAT_* definitions)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargestate(FAR uint8_t *state);
+
+/****************************************************************************
+ * Name: cxd56_pmic_setrechargevol
+ *
+ * Description:
+ *   Set threshold voltage against full charge for automatic restart charging.
+ *
+ * Input Parameter:
+ *   mV - Available values are -400, -350, -300 and -250 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setrechargevol(int mV);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getrechargevol
+ *
+ * Description:
+ *   Get threshold voltage against full charge for automatic restart charging.
+ *
+ * Input Parameter:
+ *   mV - Possible values are -400, -350, -300 and -250 (mV)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getrechargevol(FAR int *mV);
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargecompcurrent
+ *
+ * Description:
+ *   Set current value setting for determine fully charged.
+ *
+ * Input Parameter:
+ *   current - Possible values are 50, 40, 30, 20 and 10 (mA)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargecompcurrent(int current);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargecompcurrent
+ *
+ * Description:
+ *   Get current value setting for determine fully charged.
+ *
+ * Input Parameter:
+ *   current - Available values are 50, 40, 30, 20 and 10 (mA)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargecompcurrent(FAR int *current);
+
+/****************************************************************************
+ * Name: cxd56_pmic_gettemptable
+ *
+ * Description:
+ *   Get temperature detect resistance table
+ *
+ * Input Parameter:
+ *   table - Settings values for temperature detecting (see CXD5247GF
+ *           specification for more detail)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_gettemptable(FAR struct pmic_temp_table_s *table);
+
+/****************************************************************************
+ * Name: cxd56_pmic_settemptable
+ *
+ * Description:
+ *   Set temperature detect resistance table
+ *
+ * Input Parameter:
+ *   table - Settings values for temperature detecting (see CXD5247GF
+ *           specification for more detail)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_settemptable(FAR struct pmic_temp_table_s *table);
+
+/****************************************************************************
+ * Name: cxd56_pmic_setchargemode
+ *
+ * Description:
+ *   Set charging mode in each low/high temperatures.
+ *   In lower than 10 degrees Celsius, charging mode will be changed on/off
+ *   and weak (half of charge current) according to setting.
+ *   In higher than 45 degrees Celsius, charging mode will be charged on/off
+ *   and weak (-0.15V from charge voltage) according to setting.
+ *
+ * Input Parameter:
+ *   low  - Charging mode in low temperature (see PMIC_CHGMODE_*)
+ *   high - Charging mode in high temperature (see PMIC_CHGMODE_*)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_setchargemode(int low, int high);
+
+/****************************************************************************
+ * Name: cxd56_pmic_getchargemode
+ *
+ * Description:
+ *   Get charging mode in each low/high temperatures.
+ *   In lower than 10 degrees Celsius, charging mode will be changed on/off
+ *   and weak (half of charge current) according to setting.
+ *   In higher than 45 degrees Celsius, charging mode will be charged on/off
+ *   and weak (-0.15V from charge voltage) according to setting.
+ *
+ * Input Parameter:
+ *   low  - Charging mode in low temperature (see PMIC_CHG_*)
+ *   high - Charging mode in high temperature (see PMIC_CHG_*)
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_getchargemode(FAR int *low, FAR int *high);
+
+/****************************************************************************
  * Name: cxd56_pmic_read
  *
  * Description:
@@ -356,7 +716,7 @@ bool cxd56_pmic_get_ddc_ldo(uint8_t chset);
  *
  ****************************************************************************/
 
-int cxd56_pmic_read(uint8_t addr, void *buf, uint32_t size);
+int cxd56_pmic_read(uint8_t addr, FAR void *buf, uint32_t size);
 
 /****************************************************************************
  * Name: cxd56_pmic_write
@@ -374,7 +734,23 @@ int cxd56_pmic_read(uint8_t addr, void *buf, uint32_t size);
  *
  ****************************************************************************/
 
-int cxd56_pmic_write(uint8_t addr, void *buf, uint32_t size);
+int cxd56_pmic_write(uint8_t addr, FAR void *buf, uint32_t size);
+
+/****************************************************************************
+ * Battery monitor for debug
+ ****************************************************************************/
+
+#ifdef CONFIG_CXD56_PMIC_BATMONITOR
+int cxd56_pmic_monitor_enable(FAR struct pmic_mon_s *ptr);
+int cxd56_pmic_monitor_status(FAR struct pmic_mon_status_s *ptr);
+int cxd56_pmic_monitor_set(FAR struct pmic_mon_set_s *ptr);
+int cxd56_pmic_monitor_get(FAR struct pmic_mon_log_s *ptr);
+#else
+#define cxd56_pmic_monitor_enable(ptr)
+#define cxd56_pmic_monitor_status(ptr)
+#define cxd56_pmic_monitor_set(ptr)
+#define cxd56_pmic_monitor_get(ptr)
+#endif
 
 #undef EXTERN
 #if defined(__cplusplus)

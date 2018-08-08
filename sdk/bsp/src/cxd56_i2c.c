@@ -498,6 +498,13 @@ static int cxd56_i2c_receive(struct cxd56_i2cdev_s *priv, int last)
 
   DEBUGASSERT(msg != NULL);
 
+  /* Support only for less than or equal to 32 bytes */
+
+  if (msg->length > 32)
+    {
+      return -EINVAL;
+    }
+
   /* update threshold value of the receive buffer */
 
   i2c_reg_write(priv, CXD56_IC_RX_TL, msg->length - 1);
@@ -681,20 +688,107 @@ static int cxd56_i2c_reset(FAR struct i2c_master_s *dev)
  ****************************************************************************/
 
 #if defined(CONFIG_CXD56_I2C0_SCUSEQ) || defined(CONFIG_CXD56_I2C1_SCUSEQ)
+
+static int cxd56_i2c_scurecv(int port, int addr, uint8_t *buf, ssize_t buflen)
+{
+  uint16_t inst[2];
+  int      instn;
+  int      len0;
+  int      len1;
+  ssize_t  rem;
+  int      ret = OK;
+
+  /* Ignore buffer is NULL */
+
+  if (buf == NULL)
+    {
+      return OK;
+    }
+
+  rem = buflen;
+  while (rem)
+    {
+      len0 = rem > 8 ? 8 : rem;
+      rem -= len0;
+      len1 = rem > 8 ? 8 : rem;
+      rem -= len1;
+
+      inst[0] = SCU_INST_RECV(len0);
+      if (len1)
+        {
+          inst[1] = SCU_INST_RECV(len0);
+          instn = 2;
+        }
+      else
+        {
+          instn = 1;
+        }
+
+      if (rem == 0)
+        {
+          inst[instn - 1] |= SCU_INST_LAST;
+        }
+
+      ret = scu_i2ctransfer(port, addr, inst, instn, buf, len0 + len1);
+      if (ret < 0)
+        {
+          syslog(LOG_ERR, "I2C recieve failed. port %d addr %d\n",
+                 port, addr);
+          break;
+        }
+
+      buf += len0 + len1;
+    }
+
+  return ret;
+}
+
+static int cxd56_i2c_scusend(int port, int addr, uint8_t *buf, ssize_t buflen)
+{
+  uint16_t inst[12];
+  ssize_t  rem;
+  int      i;
+  int      ret = OK;
+
+  rem = buflen;
+
+  while (rem)
+    {
+      for (i = 0; i < 12 && rem > 0; i++)
+        {
+          inst[i] = SCU_INST_SEND(*buf++);
+          rem--;
+        }
+
+      if (rem == 0)
+        {
+          inst[i - 1] |= SCU_INST_LAST;
+        }
+
+      if (i > 0)
+        {
+          ret = scu_i2ctransfer(port, addr, inst, i, NULL, i);
+          if (ret < 0)
+            {
+              syslog(LOG_ERR, "I2C send failed. port %d addr %d\n",
+                     port, addr);
+              break;
+            }
+        }
+    }
+
+  return ret;
+}
+
 static int cxd56_i2c_transfer_scu(FAR struct i2c_master_s *dev,
                                   FAR struct i2c_msg_s *msgs, int count)
 {
-  struct cxd56_i2cdev_s *priv = (struct cxd56_i2cdev_s *)dev;
-  int i, j;
-  int ret = 0;
-  uint16_t inst[12];
-  int instn            = 0;
-  ssize_t len          = 0;
-  ssize_t readlen      = 0;
-  ssize_t totalreadlen = 0;
-  uint8_t *buf         = NULL;
-  uint8_t *readbuf     = NULL;
-  uint8_t addr       = msgs->addr;
+  FAR struct cxd56_i2cdev_s *priv = (FAR struct cxd56_i2cdev_s *)dev;
+  ssize_t  len  = 0;
+  uint8_t *buf  = NULL;
+  uint8_t  addr = msgs->addr;
+  int      i;
+  int      ret  = 0;
 
   DEBUGASSERT(dev != NULL);
 
@@ -702,7 +796,9 @@ static int cxd56_i2c_transfer_scu(FAR struct i2c_master_s *dev,
 
   sem_wait(&priv->mutex);
 
-  if(priv->frequency != msgs->frequency)
+  /* Apply frequency for request msgs */
+
+  if (priv->frequency != msgs->frequency)
     {
       cxd56_i2c_clock_gate_disable(priv->port);
       cxd56_i2c_disable(priv);
@@ -714,64 +810,24 @@ static int cxd56_i2c_transfer_scu(FAR struct i2c_master_s *dev,
 
       priv->frequency = msgs->frequency;
     }
-  for (i = 0; i < count && instn < 12; i++, msgs++)
+
+  for (i = 0; i < count; i++, msgs++)
     {
       len = msgs->length;
       buf = msgs->buffer;
 
-      /* If the slave address is changed, I2C transfer starts with
-       * settings until changed.
-       */
-
-      if (addr != msgs->addr)
+      if (msgs->flags & I2C_M_READ)
         {
-          break;
-        }
-
-      /* If the read requests is duplicated, only the first request is
-       * accepted.
-       */
-
-      if ((msgs->flags & I2C_M_READ) && (!buf || readbuf))
-        {
-          break;
-        }
-
-      /* Construct SCU oneshot instructions */
-
-      while (len && instn < 12)
-        {
-          if (msgs->flags & I2C_M_READ)
-            {
-              readlen       = (len > 8) ? 8 : len;
-              inst[instn++] = SCU_INST_RECV(readlen);
-              readbuf       = buf;
-              totalreadlen += readlen;
-              len -= readlen;
-            }
-          else
-            {
-              for (j = 0; j < len && instn < 12; j++)
-                {
-                  inst[instn++] = SCU_INST_SEND(*buf++);
-                }
-              len = len - j;
-            }
-        }
-    }
-
-  if (instn > 0)
-    {
-      inst[instn - 1] |= SCU_INST_LAST;
-
-      if (readbuf)
-        {
-          ret = scu_i2ctransfer(priv->port, addr, inst, instn, readbuf,
-                                totalreadlen);
+          ret = cxd56_i2c_scurecv(priv->port, addr, buf, len);
         }
       else
         {
-          ret = scu_i2ctransfer(priv->port, addr, inst, instn, NULL, 0);
+          ret = cxd56_i2c_scusend(priv->port, addr, buf, len);
+        }
+
+      if (ret < 0)
+        {
+          break;
         }
     }
 

@@ -94,14 +94,6 @@
 #  include <asmp/asmp.h>
 #endif
 
-#ifdef CONFIG_CXD5247_CHARGER
-#  include <nuttx/power/battery_charger.h>
-#endif
-
-#ifdef CONFIG_CXD5247_GAUGE
-#  include <nuttx/power/battery_gauge.h>
-#endif
-
 #ifdef CONFIG_USBDEV
 #  include "cxd56_usbdev.h"
 #endif
@@ -182,12 +174,6 @@ int board_app_initialize(uintptr_t arg)
 {
   struct pm_cpu_wakelock_s wlock;
 
-#ifdef CONFIG_CXD5247_CHARGER
-  FAR struct battery_charger_dev_s *charger;
-#endif
-#ifdef CONFIG_CXD5247_GAUGE
-  FAR struct battery_gauge_dev_s *gauge;
-#endif
   int ret;
 
   ret = nsh_cpucom_initialize();
@@ -304,23 +290,6 @@ int board_app_initialize(uintptr_t arg)
 
 #ifdef CONFIG_ASMP
   asmp_initialize();
-#endif
-
-#ifdef CONFIG_CXD5247_CHARGER
-  charger = cxd5247_charger_initialize();
-  ret = battery_charger_register("/dev/charger", charger);
-  if (ret < 0)
-    {
-      _err("ERROR: Failed to initialize battery charger.\n");
-    }
-#endif
-#ifdef CONFIG_CXD5247_GAUGE
-  gauge = cxd5247_gauge_initialize();
-  ret = battery_gauge_register("/dev/gauge", gauge);
-  if (ret < 0)
-    {
-      _err("ERROR: Failed to initialize battery gauge.\n");
-    }
 #endif
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK

@@ -55,6 +55,8 @@
 #include <arch/board/common/cxd56_emmcdev.h>
 #include <arch/board/common/cxd56_sensors.h>
 #include <arch/board/common/cxd56_isx012.h>
+#include <arch/board/common/cxd56_gauge.h>
+#include <arch/board/common/cxd56_charger.h>
 
 /****************************************************************************
  * Pre-processor Definitions

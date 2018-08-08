@@ -178,7 +178,7 @@ extern "C"
 
 int up_pmramctrl(int cmd, uintptr_t addr, size_t size);
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_PM
 /****************************************************************************
  * Name: up_pmstatdump
  *

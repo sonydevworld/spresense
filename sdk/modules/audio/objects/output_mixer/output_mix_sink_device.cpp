@@ -730,8 +730,11 @@ static void send_renderer(RenderComponentHandler handle,
 static bool check_sample(AsPcmDataParam *data)
 {
   bool res = true;
+  uint32_t byte_size_per_sample = ((data->bit_length == AS_BITLENGTH_16) ?
+                                   BYTE_SIZE_PER_SAMPLE :
+                                   BYTE_SIZE_PER_SAMPLE_HIGHRES);
 
-  if (data->size < DMA_MIN_SAMPLE * BYTE_SIZE_PER_SAMPLE)
+  if (data->size < DMA_MIN_SAMPLE * byte_size_per_sample)
     {
       res = false;
     }

@@ -42,11 +42,11 @@ SpresenseSDK: $ spresense make
 
 ## Prerequisites
 
-1. Install the necessary packages and GCC ARM toolchain for cross-compilation.
+Install the necessary packages and GCC ARM toolchain for cross-compilation.
 ```
 $ sudo apt-get install git gperf libncurses5-dev flex bison gcc-arm-none-eabi
 ```
-1. Install the *kconfig-frontends* package from [nuttx-tools](https://bitbucket.org/nuttx/tools.git).
+Install the *kconfig-frontends* package from [nuttx-tools](https://bitbucket.org/nuttx/tools.git).
 ``` bash
 $ git clone -n https://patacongo@bitbucket.org/nuttx/tools.git tools
 $ cd tools
@@ -61,19 +61,19 @@ $ sudo ldconfig
 
 ## Build
 
-1. Go to the folder where you cloned the {SDK_FULL}, and enter the `sdk` folder name:
+Go to the folder where you cloned the {SDK_FULL}, and enter the `sdk` folder name:
 ``` bash
 $ cd spresense/sdk
 ```
-1. Set up the nuttx kernel configuration
+Set up the nuttx kernel configuration
 ``` bash
 $ tools/config.py --kernel release
 ```
-1. Set up the SDK configuration
+Set up the SDK configuration
 ``` bash
 $ tools/config.py examples/hello
 ```
-1. Build the example image:
+Build the example image:
 ``` bash
 $ make buildkernel
 $ make
