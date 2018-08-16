@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
       - doxygen
+      - graphviz
 
 script:
   - doxygen Doxyfile
@@ -15,7 +16,6 @@ script:
 deploy:
   provider: pages
   skip_cleanup: true
-  local_dir: docs/html
   github_token: $GH_REPO_TOKEN
   on:
-    branch: gh-pages
+    branch: auto_build_doxygen
