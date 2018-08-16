@@ -1,5 +1,10 @@
-# Spresense SDK repository
+# Spresense SDK documentation
 
+Latest official release can be found at https://developer.sony.com/develop/spresense/
+
+For the latest beading edge API reference documentation can be found at https://sonydevworld.github.io/spresense/
+
+# Spresense SDK repository
 Clone this repository and update submodules.
 
 ```
