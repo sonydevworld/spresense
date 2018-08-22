@@ -134,7 +134,7 @@
  * (1st dimention index = sampling_frequency)
  * (2nd dimention index = bitrate_index)
  *
- * (sample num per a byte * bitrate ÷ sampling_frequency) + padding length
+ * (sample num per a byte * bitrate / sampling_frequency) + padding length
  */
 
 /* For padding addition(Unit of return value is "slot") */

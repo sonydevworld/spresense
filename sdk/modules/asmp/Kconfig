@@ -15,6 +15,13 @@ if ASMP
 	help
 		Memory size for shared memory area in ASMP Framework.
 
+    config ASMP_SMALL_BLOCK
+    bool "Small memory block"
+    default n
+    help
+        Use small block size (64 KiB) to memory management.
+        This option is for improve memory usage, but it tends to fragmentation.
+
 	config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
 

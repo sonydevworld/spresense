@@ -128,10 +128,10 @@ typedef struct adts_parser_union_head_s AdtsParserUnionHead;
  ****************************************************************************/
 
 /* Sampling frequency table 
- * (indx=sampling_frequency）
+* (indx=sampling_frequency)
  */
 
-/* SamplingFrequency（ISO compliant） */
+/* SamplingFrequency (ISO compliant) */
 
 const uint32_t AdtsSamplingFrequency[16] =
 {

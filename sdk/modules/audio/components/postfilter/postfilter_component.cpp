@@ -41,6 +41,7 @@
 
 #include "dsp_driver/include/dsp_drv.h"
 #include <arch/chip/pm.h>
+#include <sdk/debug.h>
 #include "apus/dsp_audio_version.h"
 
 __USING_WIEN2
@@ -209,7 +210,7 @@ void PostfilterComponent::send_apu(Wien2::Apu::Wien2ApuCmd *p_cmd)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR);
       return;
     }
@@ -274,12 +275,10 @@ bool PostfilterComponent::recv_done(PostfilterCmpltParam *cmplt)
 uint32_t PostfilterComponent::activate(uint32_t *dsp_inf)
 {
   char filename[32];
-  uint32_t postfilter_dsp_version;
 
   POSTFILTER_DBG("ACT:\n");
 
   snprintf(filename, sizeof(filename), "%s/POSTFILTER", CONFIG_AUDIOUTILS_DSP_MOUNTPT);
-  postfilter_dsp_version = DSP_POSTFLTR_VERSION;
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   /* Lock HV performance to avoid loading time becomes too long */
@@ -303,28 +302,23 @@ uint32_t PostfilterComponent::activate(uint32_t *dsp_inf)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_Load() failure. %d\n", ret);
+      logerr("DD_Load() failure. %d\n", ret);
       POSTFILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
     }
 
-  if (!dsp_boot_check(m_apu_mid, postfilter_dsp_version, dsp_inf))
+  /* wait for DSP boot up... */
+
+  dsp_boot_check(m_apu_mid, dsp_inf);
+
+  /* DSP version check */
+
+  if (DSP_POSTFLTR_VERSION != *dsp_inf)
     {
+      logerr("DSP version unmatch. expect %08x / actual %08x",
+              DSP_POSTFLTR_VERSION, *dsp_inf);
+
       POSTFILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
-
-      /* PostFilter DSP(worker) isn't be "EXIT" state is ASMP framework.
-       * And cannot unload normaly. Therefore, unload it force here.
-       */
-
-      ret = DD_force_Unload(m_dsp_handler);
-
-      if (ret != DSPDRV_NOERROR)
-        {
-          _err("DD_UnLoad() failure. %d\n", ret);
-          POSTFILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
-        }
-
-      return AS_ECODE_DSP_VERSION_ERROR;
     }
 
   POSTFILTER_INF(AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE);
@@ -343,7 +337,7 @@ bool PostfilterComponent::deactivate(void)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_UnLoad() failure. %d\n", ret);
+      logerr("DD_UnLoad() failure. %d\n", ret);
       POSTFILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
       result = false;
     }

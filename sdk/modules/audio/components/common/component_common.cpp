@@ -41,7 +41,6 @@ __WIEN2_BEGIN_NAMESPACE
 
 /*--------------------------------------------------------------------*/
 bool ComponentCommon::dsp_boot_check(MsgQueId dsp_dtq,
-                                     uint32_t audioutil_dsp_version,
                                      uint32_t *dsp_inf)
 {
   err_t        err_code;
@@ -59,11 +58,9 @@ bool ComponentCommon::dsp_boot_check(MsgQueId dsp_dtq,
   err_code = que->pop();
   F_ASSERT(err_code == ERR_OK);
 
-  if (dsp_version != audioutil_dsp_version)
-    {
-      *dsp_inf = dsp_version;
-      return false;
-    }
+  /* Reply DSP version */
+
+  *dsp_inf = dsp_version;
 
   return true;
 }

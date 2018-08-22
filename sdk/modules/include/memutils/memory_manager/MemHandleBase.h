@@ -56,7 +56,7 @@
 namespace MemMgrLite {
 
 /*****************************************************************
- * Memory Handle Base class (4bytes固定)
+ * Memory Handle Base class (4bytes fixed)
  *****************************************************************/
 /**
  *  @class MemHandleBase
@@ -128,7 +128,10 @@ private:
 #endif
   }; /* struct SegInfo */
 
-  /* 不要なconstructor/destructorが実行されないよう内部的には、単なるバイナリとして扱う */
+  /* Internally treat it as simple binary so that
+   * unnecessary constructor/destructor will not be executed.
+   */
+
   static MemHandleProxy makeMemHandleProxy(PoolId id, NumSeg seg_no, uint8_t flags) {
     SegInfo  seg = { id, flags, seg_no
 #ifndef USE_MEMMGR_OVER255_SEGMENTS

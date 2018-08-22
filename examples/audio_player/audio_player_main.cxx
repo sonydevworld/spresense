@@ -37,10 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <time.h>
@@ -49,7 +47,6 @@
 #include <arch/chip/pm.h>
 #include <arch/board/board.h>
 #include <sys/stat.h>
-#include "memutils/os_utils/chateau_osal.h"
 #include "audio/audio_high_level_api.h"
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/memory_manager/MemHandle.h"
@@ -68,40 +65,26 @@ using namespace MemMgrLite;
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AUDIOFILE_ROOTPATH "/mnt/sd0/AUDIO"
-#define PLAYLISTFILE_PATH "/mnt/sd0/PLAYLIST"
-#define DSPBIN_PATH "/mnt/sd0/BIN"
-
-/* PlayList file name */
-
-#define PLAY_LIST_NAME "TRACK_DB.CSV"
-
-/* For FIFO */
-
-/* WRITE_SIMPLE_FIFO_SIZE.
- *  This SIMPLE_FIFO_SIZE will be decided from your application system. 
- *  Correctly, on the SDK side, read the following memory.
- *    MP3: maximum 1440 bytes
- *    AAC: maximum 1024 bytes
- *    WAV: 16bit-2560 bytes, 24bit-3840 bytes
- *  It can be selected with the codec to be played.
- *  When playing multiple codecs, please select the largest memory size.
- *  There is no problem increasing the memory size. If it is made smaller,
- *  FIFO under is possibly generated, so it is necessary to be careful.
- *  Please adjust yourself.
- *
- *  This application sets the size based on playing WAV.
- *  Moreover, it is making it the minimum size to reduce the memory amount.
+/*------------------------------
+ * User definable definitions
+ *------------------------------
  */
 
-#define WRITE_SIMPLE_FIFO_SIZE  3840
-#define SIMPLE_FIFO_FRAME_NUM   9
-#define SIMPLE_FIFO_BUF_SIZE    WRITE_SIMPLE_FIFO_SIZE * SIMPLE_FIFO_FRAME_NUM
+/* Path of playback file. */
 
-#define FIFO_RESULT_OK  0
-#define FIFO_RESULT_ERR 1
-#define FIFO_RESULT_EOF 2
-#define FIFO_RESULT_FUL 3
+#define AUDIOFILE_ROOTPATH "/mnt/sd0/AUDIO"
+
+/* Path of playlist file. */
+
+#define PLAYLISTFILE_PATH  "/mnt/sd0/PLAYLIST"
+
+/* Path of DSP image file. */
+
+#define DSPBIN_PATH        "/mnt/sd0/BIN"
+
+/* PlayList file name. */
+
+#define PLAY_LIST_NAME     "TRACK_DB.CSV"
 
 /* Default Volume. -20dB */
 
@@ -111,12 +94,78 @@ using namespace MemMgrLite;
 
 #define PLAYER_PLAY_TIME 10
 
-/****************************************************************************
- * Private Types
- ****************************************************************************/
+/* Definition of FIFO info.
+ * The FIFO defined here refers to the buffer to pass playback data
+ * between application and AudioSubSystem.
+ */
+ 
+/* Recommended frame size differs for each codec.
+ *    MP3       : 1440 bytes
+ *    AAC       : 1024 bytes
+ *    WAV 16bit : 2560 bytes
+ *    WAV 24bit : 3840 bytes
+ * If the codec to be played is fixed, use this size.
+ * When playing multiple codecs, select the largest size.
+ * There is no problem increasing the size. If it is made smaller,
+ * FIFO under is possibly generated, so it is necessary to be careful.
+ */
+
+#define FIFO_FRAME_SIZE  3840
+
+/* The number of elements in the FIFO queue used varies depending on
+ * the performance of the system and must be sufficient.
+ */
+
+#define FIFO_ELEMENT_NUM  10
+
+/* The number of elements pushed to the FIFO Queue at a time depends
+ * on the load of the system. If the number of elements is small,
+ * we will underflow if application dispatching is delayed.
+ * Define a sufficient maximum value.
+ */
+
+#define PLAYER_FIFO_PUSH_NUM_MAX  5
+
+/* Definition of player mode.
+ * If you want to reproduce the high resolution WAV,
+ * make the following definitions effective.
+ */
+
+//#define PLAYER_MODE_HIRES
+
+/*------------------------------
+ * Definition of example fixed
+ *------------------------------
+ */
+
+/* Definition depending on player mode. */
+
+#ifdef PLAYER_MODE_HIRES
+#  define PLAYER_MODE AS_CLKMODE_HIRES
+#  define FIFO_FRAME_NUM  4
+#else
+#  define PLAYER_MODE AS_CLKMODE_NORMAL
+#  define FIFO_FRAME_NUM  1
+#endif
+
+/* FIFO control value. */
+
+#define FIFO_ELEMENT_SIZE  (FIFO_FRAME_SIZE * FIFO_FRAME_NUM)
+#define FIFO_QUEUE_SIZE    (FIFO_ELEMENT_SIZE * FIFO_ELEMENT_NUM)
+
+/* PlayList file name. */
+
+#define PLAY_LIST_NAME "TRACK_DB.CSV"
+
+/* Local error code. */
+
+#define FIFO_RESULT_OK  0
+#define FIFO_RESULT_ERR 1
+#define FIFO_RESULT_EOF 2
+#define FIFO_RESULT_FUL 3
 
 /****************************************************************************
- * Public Type Declarations
+ * Private Types
  ****************************************************************************/
 
 /* For FIFO */
@@ -125,8 +174,8 @@ struct player_fifo_info_s
 {
   CMN_SimpleFifoHandle          handle;
   AsPlayerInputDeviceHdlrForRAM input_device;
-  uint32_t fifo_area[SIMPLE_FIFO_BUF_SIZE/sizeof(uint32_t)];
-  uint8_t  read_buf[WRITE_SIMPLE_FIFO_SIZE];
+  uint32_t fifo_area[FIFO_QUEUE_SIZE/sizeof(uint32_t)];
+  uint8_t  read_buf[FIFO_ELEMENT_SIZE];
 };
 
 /* For play file */
@@ -303,7 +352,8 @@ static bool app_init_simple_fifo(void)
 {
   if (CMN_SimpleFifoInitialize(&s_player_info.fifo.handle,
                                s_player_info.fifo.fifo_area,
-                               SIMPLE_FIFO_BUF_SIZE, NULL) != 0)
+                               FIFO_QUEUE_SIZE,
+                               NULL) != 0)
     {
       printf("Error: Fail to initialize simple FIFO.");
       return false;
@@ -320,7 +370,7 @@ static int app_push_simple_fifo(int fd)
 {
   int ret;
 
-  ret = read(fd, &s_player_info.fifo.read_buf, WRITE_SIMPLE_FIFO_SIZE);
+  ret = read(fd, &s_player_info.fifo.read_buf, FIFO_ELEMENT_SIZE);
   if (ret < 0)
     {
       printf("Error: Fail to read file. errno:%d\n", get_errno());
@@ -344,7 +394,7 @@ static bool app_first_push_simple_fifo(int fd)
   int i;
   int ret = 0;
 
-  for(i = 0; i < SIMPLE_FIFO_FRAME_NUM-1; i++)
+  for(i = 0; i < FIFO_ELEMENT_NUM - 1; i++)
     {
       if ((ret = app_push_simple_fifo(fd)) != FIFO_RESULT_OK)
         {
@@ -357,24 +407,19 @@ static bool app_first_push_simple_fifo(int fd)
 
 static bool app_refill_simple_fifo(int fd)
 {
-  int32_t ret;
+  int32_t ret = FIFO_RESULT_OK;
   size_t  vacant_size;
 
   vacant_size = CMN_SimpleFifoGetVacantSize(&s_player_info.fifo.handle);
 
-  if ((vacant_size != 0) && (vacant_size > WRITE_SIMPLE_FIFO_SIZE))
+  if ((vacant_size != 0) && (vacant_size > FIFO_ELEMENT_SIZE))
     {
-      int cnt = 1;
-      if (vacant_size > WRITE_SIMPLE_FIFO_SIZE*3)
-        {
-          cnt = 3;
-        }
-      else if (vacant_size > WRITE_SIMPLE_FIFO_SIZE*2)
-        {
-          cnt = 2;
-        }
-      
-      for (int i = 0; i < cnt; i++)
+      int push_cnt = vacant_size / FIFO_ELEMENT_SIZE;
+
+      push_cnt = (push_cnt >= PLAYER_FIFO_PUSH_NUM_MAX) ?
+                  PLAYER_FIFO_PUSH_NUM_MAX : push_cnt;
+
+      for (int i = 0; i < push_cnt; i++)
         {
           if ((ret = app_push_simple_fifo(fd)) != FIFO_RESULT_OK)
             {
@@ -383,7 +428,7 @@ static bool app_refill_simple_fifo(int fd)
         }
     }
 
-  return (ret != FIFO_RESULT_ERR) ? true : false;
+  return (ret == FIFO_RESULT_OK) ? true : false;
 }
 
 static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
@@ -403,13 +448,13 @@ static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
   return true;
 }
 
-static void app_attention_callback(uint8_t module_id,
-                                   uint8_t error_code,
-                                   uint8_t sub_code,
-                                   const char* file_name,
-                                   uint32_t line)
+static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n", file_name, line, error_code, sub_code);
+  printf("Attention!! %s L%d ecode %d subcode %d\n",
+          attparam->error_filename,
+          attparam->line_number,
+          attparam->error_code,
+          attparam->error_att_sub_code);
 }
 
 static bool app_create_audio_sub_system(void)
@@ -592,7 +637,6 @@ static int app_init_player(uint8_t codec_type,
     command.header.sub_code      = 0x00;
     command.player.player_id                 = AS_PLAYER_ID_0;
     command.player.init_param.codec_type     = codec_type;
-    command.player.init_param.codec_type     = codec_type;
     command.player.init_param.bit_length     = bit_length;
     command.player.init_param.channel_number = channel_number;
     command.player.init_param.sampling_rate  = sampling_rate;
@@ -618,19 +662,33 @@ static int app_play_player(void)
     return printAudCmdResult(command.header.command_code, result);
 }
 
-static bool app_stop_player(void)
+static bool app_stop_player(int mode)
 {
     AudioCommand command;
     command.header.packet_length = LENGTH_STOP_PLAYER;
     command.header.command_code  = AUDCMD_STOPPLAYER;
     command.header.sub_code      = 0x00;
     command.player.player_id            = AS_PLAYER_ID_0;
-    command.player.stop_param.stop_mode = AS_STOPPLAYER_NORMAL; // todo: comment
+    command.player.stop_param.stop_mode = mode;
     AS_SendAudioCommand(&command);
 
     AudioResult result;
     AS_ReceiveAudioResult(&result);
     return printAudCmdResult(command.header.command_code, result);
+}
+
+static bool app_set_clkmode(void)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETRENDERINGCLK;
+  command.header.command_code  = AUDCMD_SETRENDERINGCLK;
+  command.header.sub_code      = 0x00;
+  command.set_renderingclk_param.clk_mode = PLAYER_MODE;
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
 }
 
 static bool app_init_libraries(void)
@@ -827,7 +885,16 @@ static bool app_stop(void)
 {
   bool result = true;
 
-  if (!app_stop_player())
+  /* Set stop mode.
+   * If the end of the file is detected, play back until the data empty
+   * and then stop.(select AS_STOPPLAYER_ESEND)
+   * Otherwise, stop immediate reproduction.(select AS_STOPPLAYER_NORMAL)
+   */
+
+  int  stop_mode = (s_player_info.file.size != 0) ?
+                    AS_STOPPLAYER_NORMAL : AS_STOPPLAYER_ESEND;
+
+  if (!app_stop_player(stop_mode))
     {
       printf("Error: app_stop_player() failure.\n");
       result = false;
@@ -852,9 +919,9 @@ void app_play_process(uint32_t play_time)
 
   do
     {
-      /* Check the FIFO every 5 ms and fill if there is space. */
+      /* Check the FIFO every 2 ms and fill if there is space. */
 
-      usleep(5 * 1000);
+      usleep(2 * 1000);
       if (!app_refill_simple_fifo(s_player_info.file.fd))
         {
           break;
@@ -952,6 +1019,17 @@ extern "C" int player_main(int argc, char *argv[])
       goto errout_init_output_select;
     }
 
+  /* Set the operation mode of the output function. */
+
+  if (!app_set_clkmode())
+    {
+      printf("Error: app_set_clkmode() failure.\n");
+
+      /* Abnormal termination processing */
+
+      goto errout_set_clkmode;
+    }
+
   /* Set player operation mode. */
 
   if (!app_set_player_status())
@@ -1036,6 +1114,7 @@ errout_amp_mute_control:
 errout_open_playlist:
 errout_init_simple_fifo:
 errout_init_output_select:
+errout_set_clkmode:
 errout_set_player_status:
   if (!app_power_off())
     {

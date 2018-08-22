@@ -64,6 +64,7 @@ static MsgQueId s_effectMid  = MSGQID_UNUSED;
 static MsgQueId s_rcgMid     = MSGQID_UNUSED;
 
 static AudioAttentionCb s_attention_cb  = NULL;
+static obs_AudioAttentionCb s_obs_attention_cb  = NULL;
 
 static AudioManager *s_mng = NULL;
 
@@ -316,8 +317,6 @@ static bool recorder_done_callback(AsRecorderEvent event, uint32_t result, uint3
  * External Interface.
  */
 
-extern "C" {
-
 /*--------------------------------------------------------------------------*/
 int AS_SendAudioCommand(FAR AudioCommand *packet)
 {
@@ -469,7 +468,7 @@ static pid_t s_amng_pid = -1;
 /*--------------------------------------------------------------------------*/
 int AS_AudioManagerEntry(void)
 {
-  AudioManager::create(s_selfMid, s_plyMainMid, s_plySubMid, s_mixerMid, s_attention_cb);
+  AudioManager::create(s_selfMid, s_plyMainMid, s_plySubMid, s_mixerMid, s_attention_cb, s_obs_attention_cb);
   return 0;
 }
 
@@ -486,6 +485,40 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
   s_rcgMid     = (MsgQueId)ids.recognizer;
 
   s_attention_cb = att_cb;
+
+  s_amng_pid = task_create("AMNG",
+                           AUDIO_TASK_PRIORITY,
+                           AUDIO_TASK_MANAGER_STACK_SIZE,
+                           (main_t)AS_AudioManagerEntry,
+                           0);
+  if (s_amng_pid < 0)
+    {
+      _err("ERROR AS_CreateAudioManager failed\n");
+      return AS_ERR_CODE_TASK_CREATE;
+    }
+
+  return AS_ERR_CODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+/* This API is deprecated.
+ * When most of application were seems to be migrated to
+ * newer type of attention callback, delete this API.
+ *
+ */
+
+int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb)
+{
+  s_selfMid    = (MsgQueId)ids.mng;
+  s_appMid     = (MsgQueId)ids.app;
+  s_plyMainMid = (MsgQueId)ids.player_main;
+  s_plySubMid  = (MsgQueId)ids.player_sub;
+  s_mixerMid   = (MsgQueId)ids.mixer;
+  s_rcdSubMid  = (MsgQueId)ids.recorder;
+  s_effectMid  = (MsgQueId)ids.effector;
+  s_rcgMid     = (MsgQueId)ids.recognizer;
+
+  s_obs_attention_cb = obs_att_cb;
 
   s_amng_pid = task_create("AMNG",
                            AUDIO_TASK_PRIORITY,
@@ -548,19 +581,17 @@ MsgQueId AS_GetSelfDtq(void)
   return s_selfMid;
 }
 
-} /* extern "C" */
-
-
 /*--------------------------------------------------------------------------*/
 void AudioManager::create(MsgQueId selfDtq,
                           MsgQueId playerDtq,
                           MsgQueId subplayerDtq,
                           MsgQueId outMixerDtq,
-                          AudioAttentionCb att_cb)
+                          AudioAttentionCb att_cb,
+                          obs_AudioAttentionCb obs_att_cb)
 {
   if (s_mng == NULL)
     {
-      s_mng = new AudioManager(selfDtq, playerDtq, subplayerDtq, outMixerDtq, att_cb);
+      s_mng = new AudioManager(selfDtq, playerDtq, subplayerDtq, outMixerDtq, att_cb, obs_att_cb);
       if (s_mng == NULL)
         {
           MANAGER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
@@ -1074,9 +1105,9 @@ void AudioManager::parse(FAR MsgPacket *msg)
         }
       else if (msg->getType() == MSG_AUD_MGR_CALL_ATTENTION)
         {
-          const AttentionInfo& info = msg->peekParam<AttentionInfo>();
+          const ErrorAttentionParam& info = msg->peekParam<ErrorAttentionParam>();
           execAttentions(info);
-          msg->popParam<AttentionInfo>();
+          msg->popParam<ErrorAttentionParam>();
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
         }
       else if (msg->getType() == MSG_AUD_MGR_FIND_COMMAND)
@@ -1133,20 +1164,24 @@ void AudioManager::getstatus(AudioCommand &cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::execAttentions(const AttentionInfo& info)
+void AudioManager::execAttentions(const ErrorAttentionParam& info)
 {
   if (m_attentionCBFunc != NULL)
     {
+      (m_attentionCBFunc)(&info);
+    }
+  else if (m_obs_attentionCBFunc != NULL)
+    {
 #ifndef ATTENTION_USE_FILENAME_LINE
-      (m_attentionCBFunc)(info.module_id,
-                          info.attention_id,
-                          info.sub_code);
+      (m_obs_attentionCBFunc)(info.module_id,
+                              info.error_code,
+                              info.error_att_sub_code);
 #else
-      (m_attentionCBFunc)(info.module_id,
-                          info.attention_id,
-                          info.sub_code,
-                          info.file_name,
-                          info.line);
+      (m_obs_attentionCBFunc)(info.module_id,
+                              info.error_code,
+                              info.error_att_sub_code,
+                              info.error_filename,
+                              info.line_number);
 #endif  /* ATTENTION_USE_FILENAME_LINE */
     }
 }
@@ -1982,10 +2017,10 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 
   switch (cmd.set_recorder_status_param.input_device)
     {
-      case AS_SETRECDR_STS_INPUTDEVICE_MIC_A:
-      case AS_SETRECDR_STS_INPUTDEVICE_MIC_D:
+      case AS_SETRECDR_STS_INPUTDEVICE_MIC:
         break;
-      case AS_SETRECDR_STS_INPUTDEVICE_I2S_IN:
+
+      case AS_SETRECDR_STS_INPUTDEVICE_I2S:
         /* Enable I2S pin. */
 
         cxd56_audio_en_i2s_io();

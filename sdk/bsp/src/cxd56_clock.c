@@ -58,6 +58,16 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#ifdef CONFIG_DEBUG_PM
+#  define pmerr(fmt, ...)  logerr(fmt, ## __VA_ARGS__)
+#  define pminfo(fmt, ...) loginfo(fmt, ## __VA_ARGS__)
+#  define pmdbg(fmt, ...)  logdebug(fmt, ## __VA_ARGS__)
+#else
+#  define pmerr(fmt, ...)
+#  define pminfo(fmt, ...)
+#  define pmdbg(fmt, ...)
+#endif
+
 /* For enable_pwd, disable_pwd (digital domain) */
 
 #define PDID_SCU         0
@@ -2005,6 +2015,8 @@ int up_pmramctrl(int cmd, uintptr_t addr, size_t size)
   endidx = TILEALIGNIDX(TILEALIGN(addr + size));
 
   DEBUGASSERT(startidx < 12 && endidx <= 12);
+  pmdbg("%x (size: %x) [%d:%d] -> %d\n", addr, size,
+        startidx, endidx, cmd);
 
   /* Make controls bits for RAM power control */
 
@@ -2086,34 +2098,34 @@ void up_pmstatdump(void)
   stat0 = getreg32(CXD56_TOPREG_APPDSP_RAMMODE_STAT0);
   stat1 = getreg32(CXD56_TOPREG_APPDSP_RAMMODE_STAT1);
 
-  logdebug("              0 1 2 3 4 5 6 7 8 9 A B\n");
-  logdebug("DSP RAM stat: %c %c %c %c %c %c %c %c %c %c %c %c\n",
-           statch[(stat0 >>  0) & 3],
-           statch[(stat0 >>  2) & 3],
-           statch[(stat0 >>  4) & 3],
-           statch[(stat0 >>  6) & 3],
-           statch[(stat0 >>  8) & 3],
-           statch[(stat0 >> 10) & 3],
-           statch[(stat1 >>  0) & 3],
-           statch[(stat1 >>  2) & 3],
-           statch[(stat1 >>  4) & 3],
-           statch[(stat1 >>  6) & 3],
-           statch[(stat1 >>  8) & 3],
-           statch[(stat1 >> 10) & 3]);
+  pmdbg("              0 1 2 3 4 5 6 7 8 9 A B\n");
+  pmdbg("DSP RAM stat: %c %c %c %c %c %c %c %c %c %c %c %c\n",
+        statch[(stat0 >>  0) & 3],
+        statch[(stat0 >>  2) & 3],
+        statch[(stat0 >>  4) & 3],
+        statch[(stat0 >>  6) & 3],
+        statch[(stat0 >>  8) & 3],
+        statch[(stat0 >> 10) & 3],
+        statch[(stat1 >>  0) & 3],
+        statch[(stat1 >>  2) & 3],
+        statch[(stat1 >>  4) & 3],
+        statch[(stat1 >>  6) & 3],
+        statch[(stat1 >>  8) & 3],
+        statch[(stat1 >> 10) & 3]);
 
   stat0 = getreg32(CXD56_CRG_APP_TILE_CLK_GATING_ENB);
-  logdebug("Clock gating: %c %c %c %c %c %c %c %c %c %c %c %c\n",
-           gatech[(stat0 >>  0) & 1],
-           gatech[(stat0 >>  1) & 1],
-           gatech[(stat0 >>  2) & 1],
-           gatech[(stat0 >>  3) & 1],
-           gatech[(stat0 >>  4) & 1],
-           gatech[(stat0 >>  5) & 1],
-           gatech[(stat0 >>  6) & 1],
-           gatech[(stat0 >>  7) & 1],
-           gatech[(stat0 >>  8) & 1],
-           gatech[(stat0 >>  9) & 1],
-           gatech[(stat0 >> 10) & 1],
-           gatech[(stat0 >> 11) & 1]);
+  pmdbg("Clock gating: %c %c %c %c %c %c %c %c %c %c %c %c\n",
+        gatech[(stat0 >>  0) & 1],
+        gatech[(stat0 >>  1) & 1],
+        gatech[(stat0 >>  2) & 1],
+        gatech[(stat0 >>  3) & 1],
+        gatech[(stat0 >>  4) & 1],
+        gatech[(stat0 >>  5) & 1],
+        gatech[(stat0 >>  6) & 1],
+        gatech[(stat0 >>  7) & 1],
+        gatech[(stat0 >>  8) & 1],
+        gatech[(stat0 >>  9) & 1],
+        gatech[(stat0 >> 10) & 1],
+        gatech[(stat0 >> 11) & 1]);
 }
 #endif

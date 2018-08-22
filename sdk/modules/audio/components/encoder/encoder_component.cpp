@@ -34,6 +34,7 @@
  ****************************************************************************/
 
 #include <arch/chip/backuplog.h>
+#include <sdk/debug.h>
 
 #include "encoder_component.h"
 #include "apus/cpuif_cmd.h"
@@ -214,24 +215,23 @@ uint32_t EncoderComponent::activate_apu(AudioCodec param,
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_Load() failure. %d\n", ret);
+      logerr("DD_Load() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
     }
 
-  if (!dsp_boot_check(m_apu_dtq, encoder_dsp_version, dsp_inf))
+  /* wait for DSP boot up... */
+
+  dsp_boot_check(m_apu_dtq, dsp_inf);
+
+  /* DSP version check */
+
+  if (encoder_dsp_version != *dsp_inf)
     {
+      logerr("DSP version unmatch. expect %08x / actual %08x",
+              encoder_dsp_version, *dsp_inf);
+
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
-
-      ret = DD_Unload(m_dsp_handler);
-
-      if (ret != DSPDRV_NOERROR)
-        {
-          _err("DD_UnLoad() failure. %d\n", ret);
-          ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
-        }
-
-      return AS_ECODE_DSP_VERSION_ERROR;
     }
 
   ENCODER_INF(AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE);
@@ -259,7 +259,7 @@ bool EncoderComponent::deactivate_apu(void)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_UnLoad() failure. %d\n", ret);
+      logerr("DD_UnLoad() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
       return false;
     }
@@ -451,7 +451,7 @@ void EncoderComponent::send_apu(Apu::Wien2ApuCmd* p_cmd)
   int ret = DD_SendCommand(m_dsp_handler, &com_param);
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR);
       return;
     }

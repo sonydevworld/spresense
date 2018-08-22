@@ -42,6 +42,7 @@
 #include <stdint.h>
 
 #include <arch/chip/backuplog.h>
+#include <sdk/debug.h>
 #include "apus/apu_cmd.h"
 #include "objects/sound_recognizer/voice_recognition_command_object.h"
 #include "voice_recognition_command_component.h"
@@ -198,24 +199,23 @@ uint32_t VoiceCmdComponent::act(uint32_t *dsp_inf)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_Load_Secure() failure. %d\n", ret);
+      logerr("DD_Load_Secure() failure. %d\n", ret);
       RECOGNITION_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
     }
 
-  if (!dsp_boot_check(m_dsp_dtq, DSP_VADWUW_VERSION, dsp_inf))
+  /* wait for DSP boot up... */
+
+  dsp_boot_check(m_dsp_dtq, dsp_inf);
+
+  /* DSP version check */
+
+  if (DSP_VADWUW_VERSION != *dsp_inf)
     {
+      logerr("DSP version unmatch. expect %08x / actual %08x",
+              DSP_VADWUW_VERSION, *dsp_inf);
+
       RECOGNITION_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
-
-      ret = DD_Unload(m_dsp_handler);
-
-      if (ret != DSPDRV_NOERROR)
-        {
-          _err("DD_UnLoad() failure. %d\n", ret);
-          RECOGNITION_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
-        }
-
-      return AS_ECODE_DSP_VERSION_ERROR;
     }
 
   RECOGNITION_CMP_INF(AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE);
@@ -242,7 +242,7 @@ bool VoiceCmdComponent::deact()
 
   if (m_dsp_handler != NULL && ret != DSPDRV_NOERROR)
     {
-      _err("DD_UnLoad() failure. %d\n", ret);
+      logerr("DD_UnLoad() failure. %d\n", ret);
       RECOGNITION_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
       return -1;
     }
@@ -366,7 +366,7 @@ void VoiceCmdComponent::sendApu(Apu::Wien2ApuCmd *p_cmd)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR);
       return;
     }

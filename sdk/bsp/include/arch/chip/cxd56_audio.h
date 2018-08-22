@@ -370,6 +370,15 @@ enum cxd56_audio_dma_state_e
 };
 typedef enum cxd56_audio_dma_state_e cxd56_audio_dma_state_t;
 
+enum cxd56_audio_micdev_e
+{
+  CXD56_AUDIO_MIC_DEV_NONE = 0,
+  CXD56_AUDIO_MIC_DEV_ANALOG,
+  CXD56_AUDIO_MIC_DEV_DIGITAL,
+  CXD56_AUDIO_MIC_DEV_ANADIG
+};
+typedef enum cxd56_audio_micdev_e cxd56_audio_micdev_t;
+
 struct cxd56_audio_i2s_param_s
 {
   uint32_t data_rate;
@@ -860,6 +869,15 @@ cxd56_audio_clkmode_t cxd56_audio_get_clkmode(void);
  * @retval cxd56_audio_dmafmt_t clock mode
  */
 cxd56_audio_dmafmt_t cxd56_audio_get_dmafmt(void);
+
+/**
+ * @brief Get mic device type
+ *
+ * @param none
+ *
+ * @retval cxd56_audio_micdev_t mic device type
+ */
+cxd56_audio_micdev_t cxd56_audio_get_micdev(void);
 
 /**
  * @brief Enable digital soft ramp rate control

@@ -63,6 +63,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define LOG2BASETILE 17
+
 static int mptask_loadfw(mptask_t *task)
 {
   sysctl_loadfw_t arg;
@@ -131,7 +133,7 @@ int mptask_exec_secure(mptask_t *task)
 {
   uintptr_t addr;
 
-  addr = (uintptr_t)tile_alloc(task->loadsize);
+  addr = (uintptr_t)tile_alignalloc(task->loadsize, LOG2BASETILE);
   if (!addr)
     {
       mptask_cpu_free(task);

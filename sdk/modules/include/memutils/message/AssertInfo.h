@@ -37,16 +37,18 @@
 #define ASSERT_INFO_H_INCLUDED
 
 #ifdef _ITRON4
-/*
- * SAVESZ の値は、kernel_id.h の_KERNEL_FLOATING_POINT_ の定義により決定される
- * そのため、kernel_id.h が mips.h および mips_regs.h よりも先にincludeされる必要がある
+/* The value of SAVESZ is determined by the definition of
+ * _KERNEL_FLOATING_POINT_ in kernel_id.h
+ * Therefore, kernel_id.h needs to be included before mips.h and mips_regs.h
  */
+
 #include "kernel.h"
 #ifdef MCB4357
-/*
- * SailOSのMCB4357_1.01版では、SAVESZが未定義なので同様の意味合いのSAVESIZE
- * (kernel/cortex-mx/stack.c)の値を参照して、ここで定義する
+/* In the MCB 4357_1.01 version of SailOS, since SAVESZ is undefined,
+ * SAVESIZE of the same meaning.
+ * Refer to the value of kernel/cortex-mx/stack.c and define here.
  */
+
 #if (defined(__TARGET_FPU_VFP) || defined(__ARMVFP__))
 #define	SAVESZ		(196)
 #else
@@ -67,12 +69,16 @@
 #define DBG_P(...)
 #endif
 
-/* dmp_layout.confにDMP_ASSERT_INFOエントリが未定義の場合は、空文で定義する */
+/* If the DMP_ASSERT_INFO entry is undefined in dmp_layout.conf,
+ * it is defined as a null statement.
+ */
+
 #ifndef DMP_ASSERT_INFO_NUM
 #define DMP_ASSERT_INFO_SEQ_LOG(p)
 #endif
 
-/* このIDにより、LogAnalyzerの表示方法を切り替える */
+/* By this ID, switch display method of LogAnalyzer. */
+
 enum AssertLogId {
 	AssertIdLocation	= 0,
 	AssertIdException	= 1,
@@ -88,12 +94,12 @@ enum AssertLogId {
 }; /* enum AssertLogId */
 
 /*****************************************************************
- * アサート情報の基底クラス
+ * Base class of assert information
  *****************************************************************/
 struct AssertInfoBase {
 	uint8_t		m_log_id;
 	uint8_t		m_task_id;
-	uint16_t	m_body_size;	/* 後続データ長 */
+	uint16_t	m_body_size;  /* Subsequent data length. */
 public:
 	AssertInfoBase(AssertLogId log_id, uint16_t log_size) :
 		m_log_id(log_id),
@@ -103,7 +109,7 @@ public:
 }; /* struct AssertInfoBase */
 
 /*****************************************************************
- * アサート位置を記録するクラス
+ * Class recording the assert position
  *****************************************************************/
 struct AssertLocationLog : public AssertInfoBase {
 	uint32_t	m_line;
@@ -138,7 +144,7 @@ const uint32_t RegSaveSize = 140;	/* (31 + 4) * 4 */
 #endif /* #ifdef _ITRON4 */
 
 /*****************************************************************
- * 例外情報を記憶するクラス
+ * Class that stores exception information
  *****************************************************************/
 struct AssertExceptionLog : public AssertInfoBase {
 	uint32_t	m_cause;
@@ -161,7 +167,10 @@ public:
 		if (uStk) {
 			memcpy(m_uStk, uStk, sizeof(m_uStk));
 		} else {
-			/* スタックフレームのアドレスが指定されない場合は、有効サイズを減らす */
+      /* If the stack frame address is not specified,
+       * reduce the effective size.
+       */
+
 			m_body_size -= sizeof(m_uStk);
 		}
 		if (kStk) {
@@ -175,11 +184,13 @@ public:
 }; /* struct AssertExceptionLog */
 
 /*****************************************************************
- * フェンスチェックエラー時のパラメタとフェンス内容を記憶するクラス
+ * Class for storing fence check error parameters and fence contents
  *****************************************************************/
 struct AssertFenceLog : public AssertInfoBase {
 	uint32_t*	m_addr;
-	uint32_t	m_data[16];	/* Stack/Heap Fenceは16bytes. Pool Fenceは64bytes */
+	uint32_t	m_data[16]; /* Stack/Heap Fence is 16bytes.
+                         * Pool Fence is 64bytes.
+                         */
 public:
 	explicit AssertFenceLog(uint32_t* addr) :
 		AssertInfoBase(AssertIdFence, sizeof(*this)),
@@ -194,7 +205,7 @@ public:
 }; /* struct AssertFenceLog */
 
 /*****************************************************************
- * アサート時のパラメタを記憶するクラス
+ * Class for storing parameters when asserting
  *****************************************************************/
 struct AssertParamLog : public AssertInfoBase {
 	uint32_t	m_param[4];

@@ -1238,6 +1238,34 @@ cxd56_audio_dmafmt_t cxd56_audio_get_dmafmt(void)
 }
 
 /*--------------------------------------------------------------------------*/
+cxd56_audio_micdev_t cxd56_audio_get_micdev(void)
+{
+  cxd56_audio_micdev_t micdev;
+  uint8_t cfg_micdev = cxd56_audio_config_get_micdev();
+  
+  switch (cfg_micdev)
+    {
+      case CXD56_AUDIO_CFG_MIC_DEV_ANALOG:
+        micdev = CXD56_AUDIO_MIC_DEV_ANALOG;
+        break;
+
+      case CXD56_AUDIO_CFG_MIC_DEV_DIGITAL:
+        micdev = CXD56_AUDIO_MIC_DEV_DIGITAL;
+        break;
+
+      case CXD56_AUDIO_CFG_MIC_DEV_ANADIG:
+        micdev = CXD56_AUDIO_MIC_DEV_ANADIG;
+        break;
+
+      default:
+        micdev = CXD56_AUDIO_MIC_DEV_NONE;
+        break;
+    }
+
+  return micdev;
+}
+
+/*--------------------------------------------------------------------------*/
 CXD56_AUDIO_ECODE cxd56_audio_en_digsft(cxd56_audio_dsr_rate_t rate)
 {
   CXD56_AUDIO_ECODE ret = CXD56_AUDIO_ECODE_OK;

@@ -1242,15 +1242,21 @@ uint32_t MediaRecorderObjectTask::isValidActivateParam(
 {
   switch (param.input_device)
     {
-      case AS_SETRECDR_STS_INPUTDEVICE_MIC_A:
-        m_input_device = CaptureDeviceAnalogMic;
+      case AS_SETRECDR_STS_INPUTDEVICE_MIC:
+        {
+          cxd56_audio_micdev_t micdev = cxd56_audio_get_micdev();
+          if (micdev == CXD56_AUDIO_MIC_DEV_ANALOG)
+            {
+              m_input_device = CaptureDeviceAnalogMic;
+            }
+          else
+            {
+              m_input_device = CaptureDeviceDigitalMic;
+            }
+        }
         break;
 
-      case AS_SETRECDR_STS_INPUTDEVICE_MIC_D:
-        m_input_device = CaptureDeviceDigitalMic;
-        break;
-
-      case AS_SETRECDR_STS_INPUTDEVICE_I2S_IN:
+      case AS_SETRECDR_STS_INPUTDEVICE_I2S:
         m_input_device = CaptureDeviceI2S;
         break;
 

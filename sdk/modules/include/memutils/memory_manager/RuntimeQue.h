@@ -42,14 +42,15 @@
 #include "memutils/os_utils/cpp_util.h"		/* CopyGuard */
 
 #ifdef RUNTIME_QUE_DEBUG
-	/* 64bit環境では、size_t型の表示に%zuを使用する必要がある */
+/* In 64 bit environment, you need to use %zu for size_t type display. */
+
 #define DBG_P(...)	printf(__VA_ARGS__)
 #else
 #define DBG_P(...)
 #endif /* RUNTIME_QUE_DEBUG */
 
 /*****************************************************************
- * 実行時にキューの深さを決定する行列クラス
+ * Matrix class to determine queue depth at runtime
  *****************************************************************/
 template<typename T,			/* element type */
 	 typename NumT  = size_t>	/* element num type */
@@ -92,7 +93,10 @@ public:
 		m_put = m_get = 0;
 	}
 
-	/* キュー末尾にデータを入れる(placement newによるコピーコンストラクタ使用) */
+  /* Put data at the end of the queue
+   * (Use copy constructor with placement new).
+   */
+
 	bool push(const T& data) {
 		if (full()) return false;
 		::new(&m_data[m_put]) T(data);
@@ -101,7 +105,8 @@ public:
 		return true;
 	}
 
-	/* キュー先頭のデータをデストラクタ呼出し後に取り除く */
+  /* Remove the data at the head of the queue after calling the destructor. */
+
 	bool pop() {
 		if (empty()) return false;
 		DBG_P("pop : pos=%u, cnt=%u\n", m_get, m_count);
@@ -110,12 +115,16 @@ public:
 		return true;
 	}
 
-	/* キュー先頭のデータを参照する */
+  /* Refer to the data at the head of the queue. */
+
 	const T& top() const { return at(0); }
 
-	/* キューのN番目(先頭が0)のデータを参照する */
+  /* Refer to the data of the Nth (head data is 0) of the queue. */
+
 	const T& at(NumT n) const {
-		D_ASSERT(n < m_count);	/* 例外は使えないので、assertとする */
+		D_ASSERT(n < m_count);  /* Since an exception can not be used,
+	                           * it is set as assert.
+	                           */
 		DBG_P("at(%u): pos=%u\n", n, m_get);
 		return m_data[get_index(n)];
 	}

@@ -78,13 +78,18 @@ public:
 		{}
 }; /* struct MsgLog */
 
-/* LogAnalyzerの共用化のため、同じ構造体を使用して、m_kindフィールドで切り分ける */
+/* For shared use of LogAnalyzer,
+ * use the same structure and carve out by m_kind field.
+ */
+
 typedef MsgLog MsgSeqLog;	/* m_kind: 's': send, 'i': sendIsr, 'r': recv */
 typedef MsgLog MsgRetryLog;	/* m_kind: 'b': begin retry, 'n': normal end, 'e': error */
 
-/* dmp_layout.confのDMP_MSG_SEQ2エントリがtrueの時に有効 */
+/* Valid when DMP_MSG_SEQ 2 entry in dmp_layout.conf is true. */
+
 #if defined(DMP_MSG_SEQ2_NUM) && DMP_MSG_SEQ2_NUM != 0
-	/* 複数タスクとISRのログをシーケンシャルに格納するため、割込み禁止を使用 */
+/* Use interrupt disable to store logs of multiple tasks and ISR sequentially. */
+
 #define DUMP_MSG_SEQ_LOCK(p)	do { InterruptLock _lock_; DMP_MSG_SEQ2_SEQ_LOG(p); } while (0)
 #define DUMP_MSG_SEQ(p)		DMP_MSG_SEQ2_SEQ_LOG(p)
 #else
@@ -112,14 +117,16 @@ public:
 		{}
 }; /* struct MsgPeakLog */
 
-/* dmp_layout.confのDMP_MSG_PEAKエントリがtrueの時に有効 */
+/* Valid when the DMP_MSG_PEAK entry in dmp_layout.conf is true. */
+
 #if defined(DMP_MSG_PEAK_NUM) && DMP_MSG_PEAK_NUM != 0
 #define DUMP_MSG_PEAK(id, pri, p)	DMP_MSG_PEAK_IDX_LOG((((id) - 1) * NumMsgPri + (pri)), (p))
 #else
 #define DUMP_MSG_PEAK(id, pri, p)
 #endif /* defined(DMP_MSG_PEAK_NUM) && DMP_MSG_PEAK_NUM != 0 */
 
-/* dmp_layout.confにDMP_MSGLIB_NUMエントリがない場合は、ここで空定義しておく */
+/* If there is no DMP_MSGLIB_NUM entry in dmp_layout.conf, empty it here. */
+
 #ifndef DMP_MSGLIB_NUM
 #define DMP_MSGLIB_DEBUG_PRINT(...)
 #define DMP_MSGLIB_DEBUG(p)

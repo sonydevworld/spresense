@@ -63,7 +63,7 @@
 #include <semaphore.h>
 
 /*****************************************************************
- * メッセージキューブロッククラス
+ * Message queue block class
  *****************************************************************/
 /**
  * @class MsgQueBlock
@@ -85,67 +85,93 @@ public:
    */
   err_t recv(uint32_t ms, FAR MsgPacket **packet);
 
-  /* メッセージパケットの破棄 */
+  /* Discard message packet. */
+
   err_t pop();
 
-	/* キュー所有者(受信者)のCPU-IDの取得 */
+  /* Get CPU-ID of queue owner (recipient). */
+
 	MsgCpuId getOwner() const { return m_owner; }
 
-	/* 共有キューか否かを取得 */
+  /* Get whether it is a shared queue or not. */
+
 	bool isShare() const { return m_spinlock != 0; }
 
-	/* メッセージパケット数の取得 */
+  /* Get message packet count. */
+
 	uint16_t getNumMsg(MsgPri pri) const;
 
-	/* 格納可能なメッセージパケット数の取得(未使用のキューは、0を返す) */
+  /* Get the number of message packets that can be stored.
+   * (Unused queue returns 0)
+   */
+
 	uint16_t getRest(MsgPri pri) const;
 
-	/* デバッグ専用 */
+  /* Debug only. */
+
 	void dump() const;
 	void dumpQue(MsgPri pri) const { m_que[pri].dump(); }
 
 protected:
 	friend class MsgLib;
 
-	/* 静的な初期化のみ */
+  /* Static initialization only. */
+
 	MsgQueBlock(MsgQueId id, MsgCpuId owner, SpinLockId spinlock);
 
-  /* 動的な初期化 */
+  /* Dynamic initialization. */
+
   err_t setup(drm_t n_drm, uint16_t n_size, uint16_t n_num,
     drm_t h_drm, uint16_t h_size, uint16_t h_num);
 
-	/* キューの要素サイズの取得 */
+  /* Get queue element size. */
+
 	uint16_t getElemSize(MsgPri pri) const { return m_que[pri].elem_size(); }
 
-	/* 自CPUの所有キューか調べる */
+  /* Check if own CPU owned queue. */
+
 #ifdef USE_MULTI_CORE
 	bool isOwn() const { return GET_CPU_ID() == getOwner(); }
 #else
-	/* multiでなければ、常にtrueを返す */
+  /* If it is not multi, always return true. */
+
 	bool isOwn() const { return true; }
 #endif
-	/* 送信メッセージサイズを求める */
+  /* Find the size of the transmitted message. */
+
 	template<typename T>
 	static size_t getSendSize(const T& param, bool type_check);
 
-	/* タスクコンテキストからのメッセージ送信処理 */
+  /* Message sending process from task context */
+
 	template<typename T>
 	err_t send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags, const T& param);
 
-	/* ISRからのメッセージ送信処理(自CPU所有の非共有キュー宛てのみ) */
+  /* Message transmission processing from ISR.
+   * (Only to non-shared queue owned by own CPU)
+   */
+
 	template<typename T>
 	err_t sendIsr(MsgPri pri, MsgType type, MsgQueId reply, const T& param);
 
-	/* メッセージを送信したことを他CPUへ通知 (H/W依存部。CPU毎にユーザーが実装する) */
+  /* Notify other CPU that sending message.
+   * (H/W dependent part. User implements for each CPU)
+   */
+
 	void notifySend(MsgCpuId cpu, MsgQueId dest);
 
-	/* (他CPUからの)メッセージ受信を通知 */
+  /* Notify receipt of message.(from other CPU) */
+
 	void notifyRecv();
 
-	/* キュー末尾にメッセージパケットヘッダを挿入して、そのアドレスを返す */
+  /* Insert a message packet header at the end of the queue
+   * and return that address.
+   */
+
 	MsgPacket* pushHeader(MsgPri pri, const MsgPacketHeader& header);
 
-	/* キューをロック/アンロックする */
+  /* Lock/Unlock Queue. */
+
 	void lock();
 	void unlock();
 
@@ -163,20 +189,26 @@ protected:
 	};
 
 private:
-	const MsgQueId		m_id;			/* メッセージキューID */
-	bool			m_initDone;		/* 初期化済みフラグ */
-	const MsgCpuId		m_owner;		/* キュー所有者(受信者)のCPU-ID */
-	Chateau_sem_handle_t	m_count_sem;		/* 総メッセージ数を示す計数セマフォ */
-	const SpinLockId	m_spinlock;		/* スピンロックID。0ならばCPU間の共有なし */
-	uint16_t		m_pendingMsgCount;	/* パラメタ書込み待ちメッセージ数 */
-	MsgQue			m_que[NumMsgPri];	/* 優先度毎のキュー */
-	MsgQue*			m_cur_que;		/* メッセージ処理中のキュー */
-	Tally			m_tally;		/* 各種計測値 */
-	uint32_t		m_context;		/* ロック用の変数 */
+	const MsgQueId		m_id;     /* ID of message queue. */
+	bool			m_initDone;       /* Flag of Initialized. */
+	const MsgCpuId		m_owner;  /* CPU-ID of queue owner (recipient). */
+	Chateau_sem_handle_t	m_count_sem;  /* Count semaphore indicating
+                                       * the total number of messages.
+                                       */
+	const SpinLockId	m_spinlock;   /* ID of Spin lock.
+                                   * 0, no sharing between CPUs.
+                                   */
+	uint16_t		m_pendingMsgCount;  /* Number of messages waiting
+                                   * for parameter write.
+                                   */
+	MsgQue			m_que[NumMsgPri]; /* Queue by priority. */
+	MsgQue*			m_cur_que;        /* Queue during message processing. */
+	Tally			m_tally;            /* Various measurement values. */
+	uint32_t		m_context;        /* Variable for locking. */
 }; /* class MsgQueBlock */
 
 /*****************************************************************
- * Constructor (静的な初期化のみ)
+ * Constructor (Static initialization only)
  *****************************************************************/
 inline MsgQueBlock::MsgQueBlock(MsgQueId id, MsgCpuId owner, SpinLockId spinlock) :
 	m_id(id),
@@ -192,25 +224,28 @@ inline MsgQueBlock::MsgQueBlock(MsgQueId id, MsgCpuId owner, SpinLockId spinlock
 }
 
 /*****************************************************************
- * 動的な初期化
+ * Dynamic initialization
  *****************************************************************/
 inline err_t MsgQueBlock::setup(drm_t n_drm, uint16_t n_size, uint16_t n_num,
   drm_t h_drm, uint16_t h_size, uint16_t h_num)
 {
-  /* まだ初期化されていないこと */
+  /* What has not been initialized yet. */
+
   if (m_initDone != false)
     {
       return ERR_STS;
     }
 
-  /* キューのアドレス、要素長、要素数を設定 */
+  /* Set queue address, element length, number of elements. */
+
   m_que[MsgPriNormal].init(n_drm, n_size, n_num);
   if (h_drm != INVALID_DRM)
     {
       m_que[MsgPriHigh].init(h_drm, h_size, h_num);
     }
 
-  /* メッセージ領域をキャッシュクリア */
+  /* Cache clear message area. */
+
   if (isShare())
     {
       Dcache_clear(DRM_TO_CACHED_VA(n_drm), n_size * n_num);
@@ -220,23 +255,29 @@ inline err_t MsgQueBlock::setup(drm_t n_drm, uint16_t n_size, uint16_t n_num,
         }
     }
 
-  /* セマフォを初期値0で生成 */
+  /* Create semaphore with initial value 0. */
+
   Chateau_CreateSemaphore(&m_count_sem, 0, 0);
 
-  m_initDone = true;  /* 初期化終了 */
-  Dcache_flush(this, sizeof(*this));  /* syncは呼び出し元でまとめて行う */
+  m_initDone = true;  /* Initialization end. */
+  Dcache_flush(this, sizeof(*this));  /* Do sync at the caller
+                                       * collectively.
+                                       */
 
   return ERR_OK;
 }
 
 /*****************************************************************
- * メッセージパケット数の取得
+ * Get message packet count
  *****************************************************************/
 inline uint16_t MsgQueBlock::getNumMsg(MsgPri pri) const
 {
 	D_ASSERT2(pri == MsgPriNormal || pri == MsgPriHigh, AssertParamLog(AssertIdBadParam, pri));
 
-	/* 他CPU所有キューの動的情報は、キャッシュクリアしてから読込むこと */
+  /* Dynamic information of other CPU owned queue must be read
+   * after cache clearing.
+   */
+
 	if (!isOwn()) {
 		Dcache_clear_sync(this, sizeof(*this));
 	}
@@ -244,13 +285,17 @@ inline uint16_t MsgQueBlock::getNumMsg(MsgPri pri) const
 }
 
 /*****************************************************************
- * 格納可能なメッセージパケット数の取得(未使用のキューは、0を返す)
+ * Get the number of message packets that can be stored
+ * (Unused queue returns 0)
  *****************************************************************/
 inline uint16_t MsgQueBlock::getRest(MsgPri pri) const
 {
 	D_ASSERT2(pri == MsgPriNormal || pri == MsgPriHigh, AssertParamLog(AssertIdBadParam, pri));
 
-	/* 他CPU所有キューの動的情報は、キャッシュクリアしてから読込むこと */
+  /* Dynamic information of other CPU owned queue must be read
+   * after cache clearing.
+   */
+
 	if (!isOwn()) {
 		Dcache_clear_sync(this, sizeof(*this));
 	}
@@ -258,9 +303,10 @@ inline uint16_t MsgQueBlock::getRest(MsgPri pri) const
 }
 
 /*****************************************************************
- * 送信メッセージサイズを求める
+ * Get the size of the transmitted message
  *****************************************************************/
-/* 送信メッセージサイズ(パラメータあり) */
+/* Send message size(With parameter). */
+
 template<typename T>
 size_t MsgQueBlock::getSendSize(const T& /* param */, bool type_check)
 {
@@ -268,14 +314,16 @@ size_t MsgQueBlock::getSendSize(const T& /* param */, bool type_check)
 			sizeof(MsgPacketHeader) + sizeof(TypeHolder<T>) :
 			sizeof(MsgPacketHeader) + ROUND_UP(sizeof(T), sizeof(int));
 }
-/* 送信メッセージサイズ(パラメータなし) */
+/* Send message size(No parameter). */
+
 template<>
 inline size_t MsgQueBlock::getSendSize<MsgNullParam>(const MsgNullParam& /* param */, bool /* type_check */)
 {
 	return sizeof(MsgPacketHeader);
 }
 
-/* 送信メッセージサイズ(アドレス範囲パラメタ) */
+/* Send message size(Address Range Parameter). */
+
 template<>
 inline size_t MsgQueBlock::getSendSize<MsgRangedParam>(const MsgRangedParam& param, bool /* type_check */)
 {
@@ -284,7 +332,7 @@ inline size_t MsgQueBlock::getSendSize<MsgRangedParam>(const MsgRangedParam& par
 
 
 /*****************************************************************
- * メッセージパケット情報取得用クラス
+ * Class for acquiring message packet information
  *****************************************************************/
 template<typename T>
 struct MsgPacketInfo {
@@ -305,12 +353,12 @@ struct MsgPacketInfo<MsgRangedParam> {
 };
 
 /*****************************************************************
- * タスクコンテキストからのメッセージ送信処理
+ * Message sending process from task context
  *****************************************************************/
 template<typename T>
 err_t MsgQueBlock::send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags, const T& param)
 {
-  /* メッセージがキューの要素サイズに収まることを確認する */
+  /* Check that the message fits in the element size of the queue */
 
   bool type_check = MSG_PARAM_TYPE_MATCH_CHECK && MsgPacketInfo<T>::typed_param && isOwn();
   size_t send_size = getSendSize(param, type_check);
@@ -319,29 +367,46 @@ err_t MsgQueBlock::send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags
       return ERR_DATA_SIZE;
     }
 
-  /* メッセージパケットヘッダをキューに入れ、割込み許可後にパラメタを追記する */
+  /* Put the message packet header in the queue
+   * and add the parameter after the interrupt is enabled.
+   */
 
-  lock(); /* 共有キューでは、キュー管理領域のキャッシュクリアも行う */
+  lock(); /* In the shared queue,
+           * the cache of the queue management area is also cleared.
+           */
+
   MsgPacket* msg = pushHeader(pri, MsgPacketHeader(type, reply, flags));
   if (msg)
     {
-      /* 共有キューならば、パケットヘッダ部のキャッシュフラッシュ(syncは、下のunlockに任せる) */
+      /* If it is a shared queue, cache flush of the packet header part.
+       * (The synchronization process is performed by the unlock process)
+       */
 
       if (isShare())
         {
           Dcache_flush_clear(msg, ROUND_UP(sizeof(MsgPacketHeader), CACHE_BLOCK_SIZE));
         }
 
-      /* ほとんどのITRON APIは割込み禁止状態では実行できないため、ここで割込みを許可 */
+      /* Since most ITRON APIs can not be executed in the interrupt
+       *  disabled state, interrupts are permitted here.
+       */
 
-      unlock(); /* 共有キューでは、キュー管理領域のキャッシュフラッシュも行う */
+      unlock(); /* In the shared queue, the cache flush
+                 * of the queue management area is also performed.
+                 */
 
-      /* パラメタを追記 (パラメタなし時は、空関数) */
+      /* Add parameter. (When there is no parameter, empty function) */
 
-      msg->setParam(param, type_check); /* copy constructorで、ITRONのAPI実行可能 */
+      msg->setParam(param, type_check); /* ITRON's API executable
+                                         * with copy constructor.
+                                         */
+
       DUMP_MSG_SEQ_LOCK(MsgSeqLog('s', m_id, pri, m_que[pri].size(), msg));
 
-     /* パラメタ部を共有キューに追記した場合は、メッセージパケット領域をキャッシュフラッシュ */
+     /* When the parameter part is added to the shared queue,
+      * the message packet region is cached flash.
+      */
+
       
       if (!MsgPacketInfo<T>::null_param && isShare())
         {
@@ -350,29 +415,40 @@ err_t MsgQueBlock::send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags
 
       if (isShare() == false || isOwn())
         {
-          Chateau_SignalSemaphoreTask(m_count_sem); /* 総メッセージ数を更新 */
+          /* Update total message count */
+
+          Chateau_SignalSemaphoreTask(m_count_sem);
         } else {
-          notifySend(m_owner, m_id);  /* CPU間通信で、総メッセージ数の更新を依頼 */
+          /* Request to update the total number of messages
+           * by inter-CPU communication.
+           */
+
+          notifySend(m_owner, m_id);
         }
     }
   else
     {
-      unlock(); /* 共有キューでは、キュー管理領域のキャッシュフラッシュも行う */
+      /* In the shared queue, the cache flush of the queue management area
+       * is also performed.
+       */
+
+      unlock();
     }
   return (msg) ? ERR_OK : ERR_QUE_FULL;
 }
 
 /*****************************************************************
- * ISRからのメッセージ送信処理(自CPU所有の非共有キュー宛てのみ)
+ * Message transmission processing from ISR
+ * (Only to non-shared queue owned by own CPU)
  *****************************************************************/
 template<typename T>
 err_t MsgQueBlock::sendIsr(MsgPri pri, MsgType type, MsgQueId reply, const T& param)
 {
-  /* ISRから共有キューへ送信は禁止する */
+  /* Transmission from the ISR to the shared queue is prohibited. */
 
   D_ASSERT2(isShare() == false, AssertParamLog(AssertIdBadMsgQueState, m_id));
 
-  /* メッセージがキューの要素サイズに収まることを確認する */
+  /* Check that the message fits in the element size of the queue. */
 
   bool type_check = MSG_PARAM_TYPE_MATCH_CHECK && MsgPacketInfo<T>::typed_param;
   if (getSendSize(param, type_check) > getElemSize(pri))
@@ -380,27 +456,34 @@ err_t MsgQueBlock::sendIsr(MsgPri pri, MsgType type, MsgQueId reply, const T& pa
       return ERR_DATA_SIZE;
     }
 
-  /* メッセージパケットヘッダをキューに入れる */
+  /* Queue the message packet header. */
 
   MsgPacket* msg = pushHeader(pri, MsgPacketHeader(type, reply, MsgPacket::MsgFlagNull));
   if (msg)
     {
-      /* パラメタを追記 (パラメタなし時は、空関数) */
+      /* Add parameter. (When there is no parameter, empty function) */
 
-      msg->setParam(param, type_check); /* copy constructorで、ITRONのAPIは実行不可 */
-      Chateau_SignalSemaphoreIsr(m_count_sem);  /* 総メッセージ数を更新 */
+       /* ITRON API can not be executed with copy constructor. */
+
+      msg->setParam(param, type_check);
+
+      /* Update total message count. */
+
+      Chateau_SignalSemaphoreIsr(m_count_sem);
       DUMP_MSG_SEQ(MsgSeqLog('i', m_id, pri, m_que[pri].size(), msg));
     }
   return (msg) ? ERR_OK : ERR_QUE_FULL;
 }
 
 /*****************************************************************
- * キュー末尾にメッセージパケットヘッダを挿入して、そのアドレスを返す
+ * Insert a message packet header at the end of the queue
+ * and return that address
  *****************************************************************/
 inline MsgPacket* MsgQueBlock::pushHeader(MsgPri pri, const MsgPacketHeader& header)
 {
 	D_ASSERT2(pri == MsgPriNormal || pri == MsgPriHigh, AssertParamLog(AssertIdBadParam, pri));
-	/* (高優先度)未使用キュー指定のチェック */
+  /* Check unused high priority queue specification. */
+
 	D_ASSERT2(m_que[pri].is_init(), AssertParamLog(AssertIdBadMsgQueState, m_id, pri));
 #ifdef USE_MULTI_CORE
 	D_ASSERT2(isOwn() || (isShare() && InterCpuLock::SpinLockManager::isMember(m_spinlock)),
@@ -413,7 +496,8 @@ inline MsgPacket* MsgQueBlock::pushHeader(MsgPri pri, const MsgPacketHeader& hea
 	if (msg) {
 		if (m_que[pri].size() > m_tally.max_queuing[pri]) {
 			m_tally.max_queuing[pri] = m_que[pri].size();
-			/* ピーク値、メッセージタイプ等をログに残す */
+      /* Leave peak value, message type etc in the log. */
+
 			DUMP_MSG_PEAK(m_id, pri, MsgPeakLog(m_tally.max_queuing[pri], msg, m_que[pri].frontMsg()));
 		}
 	}
@@ -421,27 +505,30 @@ inline MsgPacket* MsgQueBlock::pushHeader(MsgPri pri, const MsgPacketHeader& hea
 }
 
 /*****************************************************************
- * (他CPUからの)メッセージ受信を通知
+  * Notify receipt of message(from other CPU)
  *****************************************************************/
 inline void MsgQueBlock::notifyRecv() {
 	Chateau_SignalSemaphoreIsr(m_count_sem);
 }
 
 /*****************************************************************
- * メッセージパケットの受信
+ * Receive message packet
  *****************************************************************/
 inline err_t MsgQueBlock::recv(uint32_t ms, FAR MsgPacket **packet)
 {
   bool result;
 
-  /* 自CPU所有, 以前受信したパケットが破棄されていることのチェック */
+  /* Check if own CPU is owned, and
+   * check that the previously received packet is discarded.
+   */
 
   if (!(isOwn() && m_cur_que == NULL))
     {
       return ERR_QUE_FULL;
     }
 
-retry:  /* 受信待ち */
+retry:  /* Wait to receive. */
+
   if (ms != TIME_FOREVER)
     {
       timespec tm;
@@ -459,14 +546,16 @@ retry:  /* 受信待ち */
       return ERR_SEM_TAKE;
     }
 
-  /* 共有キューならば、ロック & キュー管理領域をキャッシュクリア */
+  /* If it is a shared queue, clear the lock & queue control area cache. */
 
   if (isShare())
     {
       lock();
     }
 
-  /* 優先度の最も高いキューのメッセージパケットへのポインタを取得 */
+  /* Get a pointer to the message packet of the queue
+   * with the highest priority.
+   */
 
   MsgPri pri = (m_que[MsgPriHigh].size()) ? MsgPriHigh : MsgPriNormal;
   MsgQue* que = &m_que[pri];
@@ -477,55 +566,60 @@ retry:  /* 受信待ち */
       return ERR_QUE_EMP;
     }
 
-  /*
-   * send()のsetParam()とDcache_flush_sync()の間でキャッシュクリアが発生すると
-   * パラメタ部を消失してしまうため、以下のクリアはpop()へ移動した
-   *  if (isShare()) { Dcache_clear_sync(msg, que->elem_size()); }
+  /* If it waits for parameter writing,
+   * it stores it and returns to waiting for message again.
    */
-
-  /* パラメタ書込み待ちならば、それを記憶して、再度メッセージ待ちに戻る */
 
   if (msg->getFlags() & MsgPacket::MsgFlagWaitParam)
     {
-      /*
-      * 非共有キューかつ複数のタスクでrecvを行うと、以下のインクリメントで不整合が
-      * 発生する可能性がある。しかし複数タスクによる同一キューへの同時recvは仕様上
-      * サポート範囲外なのでケアしない
-      */
+      /* When recv is done with nonshared queue and multiple tasks,
+       * inconsistency may occur with the following increment.
+       * However, simultaneous recv to the same queue due to multiple tasks
+       * is not supported because it is outside the support range
+       * by specification.
+       */
 
-      ++m_pendingMsgCount;  /* セマフォカウントを消費してしまった回数を記録する */
+      /* Record the number of times the semaphore count was consumed. */
+
+      ++m_pendingMsgCount;
       m_tally.max_pending = MAX(m_pendingMsgCount, m_tally.max_pending);
       ++m_tally.total_pending;
 
       if (isShare())
         {
 #ifdef USE_MULTI_CORE
-          /* 他CPUからのメッセージの場合は、領域のキャッシュクリアが必要 */
+          /* In the case of a message from another CPU,
+           * it is necessary to clear the area cache.
+           */
 
           if (msg->getSrcCpu() != GET_CPU_ID())
             {
               Dcache_clear(msg, que->elem_size());
             }
 #endif
-          unlock();	/* キュー管理領域をキャッシュフラッシュ & アンロック */
+          /* Cache flushing and unlocking queue management area. */
+
+          unlock();
         }
       goto retry;
     }
 
-  /* キュー管理領域をキャッシュフラッシュ前に更新 */
+  /* Update queue management area before cache flush. */
 
   uint16_t pending = m_pendingMsgCount;
   m_pendingMsgCount = 0;
   m_cur_que = que;
 
-  /* 共有キューならば、キュー管理領域をキャッシュフラッシュ & アンロック */
+  /* If shared queue, cache queue management area cache flash & unlock. */
   
   if (isShare())
     {
       unlock();
     }
 
-  /* パラメタ書込み待ちの間に消費してしまったセマフォカウントを復旧する */
+  /* Recover the semaphore count that was consumed while waiting
+   * for parameter write.
+   */
 
   while (pending--)
     {
@@ -540,18 +634,20 @@ retry:  /* 受信待ち */
 }
 
 /*****************************************************************
- * メッセージパケットの破棄 
+ * Discard message packet
  *****************************************************************/
 inline err_t MsgQueBlock::pop()
 {
-  /* 自CPU所有, パケット受信済みのチェック */
+  /* Check if own CPU is owned, and check Packet Received */
 
   if (!(isOwn() && m_cur_que != NULL))
     {
       return ERR_STS;
     }
 
-  /* 破棄するメッセージパケットのパラメタ長は、0であること */
+  /* Check that the parameter length of the message packet
+   * to be discarded is 0.
+   */
 
   MsgPacket* msg = m_cur_que->frontMsg();
 
@@ -562,16 +658,17 @@ inline err_t MsgQueBlock::pop()
 
   lock();
 
-  /* キューからパケットを破棄する */
+  /* Discard the packet from the queue. */
 
   if (m_cur_que->pop() == false)
     {
       return ERR_QUE_FREE;
     }
 
-  /*
-   * 共有キューの場合は、破棄したパケット領域のキャッシュをクリア (syncは、下のunlockに任せる)
-   * 次回recv時に値が残っていることを防ぐためとdirtyキャッシュの書き戻しを防ぐために必須である
+  /* In case of shared queue, clear cache of discarded packet area.
+   * (The synchronization process is performed by the unlock process)
+   * It is indispensable to prevent the value from remaining
+   * at the next recv and to prevent write back of the dirty cache.
    */
 
 #if MSG_FILL_VALUE_AFTER_POP == 0x00
@@ -583,24 +680,25 @@ inline err_t MsgQueBlock::pop()
   if (isShare())
     {
       Dcache_flush_clear(msg, m_cur_que->elem_size());
-    } /* flushは、pop後のfill値書込み */
+    } /* flush is the fill value write after pop. */
 #endif
-  m_cur_que = NULL; /* パケット未受信状態にする */
+  m_cur_que = NULL; /* Make the packet unreceived state. */
   unlock();
 
   return ERR_OK;
 }
 
 /*****************************************************************
- * キューをロックする
+ * Lock queue
  *****************************************************************/
 inline void MsgQueBlock::lock() {
-	if (isShare() == false) {	/* ローカル(非共有)キュー? */
+	if (isShare() == false) { /* Check local (nonshared) queue. */
 		Chateau_LockInterrupt(&m_context);
 	} else {
 #ifdef USE_MULTI_CORE
 		InterCpuLock::SpinLockManager::acquire(m_spinlock);
-		/* キュー管理領域(自インスタンス)のキャッシュクリア */
+    /* Clear cache of queue management area (self instance). */
+
 		Dcache_clear_sync(this, sizeof(*this));
 #else
 		F_ASSERT(0);
@@ -609,14 +707,15 @@ inline void MsgQueBlock::lock() {
 }
 
 /*****************************************************************
- * キューをアンロックする
+ * Unlock queue
  *****************************************************************/
 inline void MsgQueBlock::unlock() {
-	if (isShare() == false) {	/* ローカル(非共有)キュー? */
+	if (isShare() == false) { /* Check local (nonshared) queue. */
 		Chateau_UnlockInterrupt(&m_context);
 	} else {
 #ifdef USE_MULTI_CORE
-		/* キュー管理領域(自インスタンス)のキャッシュフラッシュ&クリア */
+    /* Cache flash & clear of queue management area (self instance). */
+
 		Dcache_flush_clear_sync(this, sizeof(*this));
 		InterCpuLock::SpinLockManager::release(m_spinlock);
 #else
@@ -626,9 +725,11 @@ inline void MsgQueBlock::unlock() {
 }
 
 /*****************************************************************
- * メッセージキューブロックのダンプ表示
- * 本関数の実行により、メッセージパケットがキャッシュに載るため
- * 他CPUからのメッセージ受信に影響が出る可能性があるため注意が必要
+ * Dump display of message cube lock
+ * Because execution of this function causes the message packet
+ * to appear in the cache, caution is required because there
+ * is a possibility that message reception from other CPU
+ * may be affected.
  *****************************************************************/
 inline void MsgQueBlock::dump() const
 {

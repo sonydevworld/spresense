@@ -64,13 +64,23 @@
 
 #define MPSHM_BLOCK_SIZE_SHIFT 16
 #define MPSHM_BLOCK_SIZE       (1 << MPSHM_BLOCK_SIZE_SHIFT)
+#define MPSHM_BLOCK_TILE_SHIFT 17
+#define MPSHM_BLOCK_TILE       (1 << MPSHM_BLOCK_TILE_SHIFT)
 #define ALIGNUP(v, a)          (((v) + ((a)-1)) & ~((a)-1))
-#define BLOCKSIZEALIGNUP2(v)   ALIGNUP(v, MPSHM_BLOCK_SIZE * 2)
 
 #define MM_TILE_BASE (CONFIG_RAM_START + (CONFIG_RAM_SIZE - CONFIG_ASMP_MEMSIZE))
 #define MM_TILE_SIZE CONFIG_ASMP_MEMSIZE
 
+#ifdef CONFIG_ASMP_SMALL_BLOCK
+#  define MPSHM_TILE_ALIGN    MPSHM_BLOCK_SIZE_SHIFT
+#  define BLOCKALIGNUP(v)  ALIGNUP(v, MPSHM_BLOCK_SIZE)
+#else
+#  define MPSHM_TILE_ALIGN    MPSHM_BLOCK_TILE_SHIFT
+#  define BLOCKALIGNUP(v)  ALIGNUP(v, MPSHM_BLOCK_TILE)
+#endif
+
 /* Address converter can be handled up to 1MB */
+
 #define ADR_CONV_VSIZE         0x100000
 
 #ifdef CONFIG_ASMP_DEBUG_ERROR
@@ -237,9 +247,9 @@ int mpshm_init(mpshm_t *shm, key_t key, size_t size)
       return -ENOMEM;
     }
 
-  /* Tile allocator least size is 128KB, so I adjust specified size */
+  /* Tile allocator least size is 64KB or 128KB, so I adjust specified size */
 
-  shm->size = BLOCKSIZEALIGNUP2(size);
+  shm->size = BLOCKALIGNUP(size);
   mpinfo("Allocate memory %08x (%x)\n", shm->paddr, shm->size);
 
   /* Initialize semaphore */
@@ -507,7 +517,7 @@ void mpshm_initialize(void)
 {
   int ret;
 
-  ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, 17, 17);
+  ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, MPSHM_TILE_ALIGN);
   if (ret < 0)
     {
       mperr("Tile memory initialization failure.\n");

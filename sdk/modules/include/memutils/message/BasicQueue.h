@@ -51,12 +51,15 @@
 #define DRM_TO_CACHED_VA(drm) (void*)(drm)
 
 /*****************************************************************
- * 型特性
+ * Type characteristic
  *****************************************************************/
 template<typename> struct BasicQueueAddrTraits;
 
 template<> struct BasicQueueAddrTraits<void*> {
-	/* static constでは、整数以外(ポインタ)の初期化は行えないので、enumとする */
+  /* In static const, initialization of non-integer (pointer)
+   * can not be performed, so it is set as enum.
+   */
+
 	enum { init_value = 0 };
 };
 
@@ -65,12 +68,14 @@ template<> struct BasicQueueAddrTraits<drm_t> {
 };
 
 /*****************************************************************
- * 基礎的な行列クラス
+ * Basic matrix class
  *****************************************************************/
 template<typename AddrT,		/* queue address type. drm_t or void* */
 	 typename SizeT,		/* element size type. uintN_t */
 	 typename NumT,			/* element num type. uintN_t */
-	 uint8_t FillAfterPop = 0x00>	/* pop後に埋める値。0の場合は埋めを行わない */
+   uint8_t FillAfterPop = 0x00> /* The value to fill after pop.
+                                 * When it is 0, no filling is done.
+                                 */
 class BasicQueue : CopyGuard {
 public:
 	BasicQueue() :
@@ -86,10 +91,13 @@ public:
 
 	~BasicQueue() { D_ASSERT(empty()); }
 
-	/* デフォルトコンストラクタで生成したインスタンスは、本関数による初期化が必要 */
+  /* Initialization by this function is required for the instance created
+   * by default constructor.
+   */
+
 	void init(AddrT data_area, SizeT elem, NumT num) {
 		D_ASSERT(data_area != AddrT(BasicQueueAddrTraits<AddrT>::init_value) && elem && num);
-		D_ASSERT(is_init() == false);		/* 再初期化は禁止 */
+		D_ASSERT(is_init() == false); /* Reinitialization prohibited. */
 		m_data_area = data_area;
 		m_elem_size = elem;
 		m_capacity = num;
@@ -128,13 +136,15 @@ public:
 		}
 	}
 
-	/* デストラクタ呼出しなしで、キューをクリアする */
+  /* Clear the queue without destructor invocation. */
+
 	void clear() {
 		while (pop()) ;
 		m_put = m_get = 0;
 	}
 
-	/* キュー末尾にデータを入れる(memcpy使用) */
+  /* Inserting data at the end of the queue (using memcpy). */
+
 	bool push(const void* data, SizeT len) {
 		D_ASSERT2(len <= elem_size(), AssertParamLog(AssertIdSizeError, len, elem_size()));
 		if (full()) return false;
@@ -143,7 +153,8 @@ public:
 		return true;
 	}
 
-	/* キュー末尾にデータを入れる(コピーコンストラクタ使用) */
+  /* Inserting data at the end of the queue (using copy constructor). */
+
 	template<typename T>
 	bool push(const T& data) {
 		D_ASSERT2(sizeof(T) <= elem_size(), AssertParamLog(AssertIdSizeError, sizeof(T), elem_size()));
@@ -153,14 +164,16 @@ public:
 		return true;
 	}
 
-	/* キュー先頭のデータをデストラクタ呼出しなしで取り除く */
+  /* Remove queue head data without destructor call. */
+
 	bool pop() {
 		if (empty()) return false;
 		postPop();
 		return true;
 	}
 
-	/* キュー先頭のデータをデストラクタ呼出し後に取り除く */
+  /* Remove the data at the head of the queue after calling the destructor. */
+
 	template<typename T>
 	bool pop() {
 		D_ASSERT2(sizeof(T) <= elem_size(), AssertParamLog(AssertIdSizeError, sizeof(T), elem_size()));
@@ -170,11 +183,13 @@ public:
 		return true;
 	}
 
-	/* キュー先頭のデータを参照する */
+  /* Refer to the data at the head of the queue. */
+
 	template<typename T>
 	const T& top() const { return at<T>(0); }
 
-	/* キューのN番目(先頭が0)のデータを参照する */
+  /* Refer to the data of the Nth (head data is 0) of the queue */
+
 	template<typename T>
 	const T& at(NumT n) const {
 		D_ASSERT2(sizeof(T) <= elem_size(), AssertParamLog(AssertIdSizeError, sizeof(T), elem_size()));
@@ -185,14 +200,16 @@ public:
 	template<typename T>
 	T& writable_at(NumT n) { return const_cast<T&>(at<T>(n)); }
 
-	/* キュー先頭のデータを参照する */
+  /* Refer to the data at the head of the queue. */
+
 	template<typename T>
 	const T& front() const { return at<T>(0); }
 
 	template<typename T>
 	T& front() { return writable_at<T>(0); }
 
-	/* キュー末尾のデータを参照する */
+  /* Reference data at the end of the queue. */
+
 	template<typename T>
 	const T& back() const { return at<T>(static_cast<NumT>(m_count - 1)); }
 
@@ -221,7 +238,8 @@ protected:
 		return static_cast<NumT>((m_get + n < capacity()) ? m_get + n : m_get + n - capacity());
 	}
 
-	/* タグ・ディスパッチによる呼び分け */
+  /* Call separation by tag and dispatch. */
+
 	void* getAddr(NumT n) const { return getAddr(n, AddrT()); }
 
 	void* getAddr(NumT n, drm_t /* dummy */) const {
