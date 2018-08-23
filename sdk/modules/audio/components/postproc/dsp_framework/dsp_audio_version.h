@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postfilter/postfilter_through.h
+ * modules/audio/components/postfilter/dsp_framework/dsp_audio_version.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,32 +33,40 @@
  *
  ****************************************************************************/
 
-#ifndef _POSTFILTER_THROUGH_H_
-#define _POSTFILTER_THROUGH_H_
+#ifndef __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
+#define __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
 
-#include "audio/audio_high_level_api.h"
-#include "memutils/s_stl/queue.h"
-#include "postfilter_base.h"
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
 
-class PostfilterThrough : public PostfilterBase
-{
-public:
-  PostfilterThrough() {}
-  ~PostfilterThrough() {}
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
 
-  virtual uint32_t init_apu(const InitPostfilterParam& param, uint32_t *dsp_inf);
-  virtual bool exec_apu(const ExecPostfilterParam& param);
-  virtual bool flush_apu(const FlushPostfilterParam& param);
-  virtual bool recv_done(PostfilterCmpltParam *cmplt);
-  virtual bool recv_done(void) { return true; };
-  virtual uint32_t activate(uint32_t *dsp_inf);
-  virtual bool deactivate();
+/* Version rule:
+ * (change library).(change of DSP interface).(change of internal processing)
+ */
 
-private:
-  #define REQ_QUEUE_SIZE 7 
-  typedef s_std::Queue<AsPcmDataParam, REQ_QUEUE_SIZE> ReqQue;
-  ReqQue m_req_que;
-};
+/* Postfilter Version. */
 
-#endif /* _POSTFILTER_THROUGH_H_ */
+#define DSP_POSTFLTR_VERSION  0x010101    /* 01.01.01 */
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Inline Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+#endif /* __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H */
 

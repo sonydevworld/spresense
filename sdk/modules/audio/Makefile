@@ -71,21 +71,13 @@ CXXFLAGS += -D_POSIX
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
 
 all: $(BIN)
-.PHONY: worker context depend clean distclean
+.PHONY: context depend clean distclean
 
 $(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
 	$(call COMPILEXX, $<, $@)
 
-$(BIN): $(LIB_OBJS) worker
+$(BIN): $(LIB_OBJS)
 	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-ifeq ($(CONFIG_AUDIOUTILS_POSTFILTER),y)
-worker:
-	$(Q) $(MAKE) -C dsp/worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
-else
-worker:
-
-endif
 
 .depend: Makefile $(SRCS)
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >Make.dep

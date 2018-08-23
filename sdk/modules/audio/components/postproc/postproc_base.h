@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postfilter/postfilter_api.h
+ * modules/audio/components/postproc/postproc_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,33 +33,87 @@
  *
  ****************************************************************************/
 
-#ifndef _POSTFILTER_API_H_
-#define _POSTFILTER_API_H_
+#ifndef _POSTPROC_BASE_H_
+#define _POSTPROC_BASE_H_
 
-#include "postfilter_component.h"
-#include "postfilter_through.h"
+#include "dsp_framework/postproc_command_base.h"
+#include "audio/audio_common_defs.h"
+#include "memutils/os_utils/chateau_osal.h"
+#include "memutils/memory_manager/MemHandle.h"
 
-extern "C" {
+enum PostCompFunctionType
+{
+  PostprocInit = 0,
+  PostprocExec,
+  PostprocFlush,
+  PostprocSendCmd,
+};
 
-uint32_t AS_postfilter_init(const InitPostfilterParam *param,
-                            void *p_instance,
-                            uint32_t *dsp_inf);
+struct PostprocCbParam
+{
+  PostprocCommand::CmdType    event_type;
+  PostprocCommand::ResultCode result;
+};
 
-bool AS_postfilter_exec(const ExecPostfilterParam *param, void *p_instance);
+typedef bool (*PostprocCallback)(PostprocCbParam*, void*);
 
-bool AS_postfilter_flush(const FlushPostfilterParam *param, void *p_instance);
+struct PostprocPacket
+{
+  uint8_t  *addr;
+  uint32_t size;
+};
 
-bool AS_postfilter_recv_done(void *p_instance, PostfilterCmpltParam *cmplt);
+struct InitPostprocParam
+{
+  PostprocCallback callback;
+  void             *p_requester;
+};
 
-uint32_t AS_postfilter_activate(void **p_instance,
-                                MemMgrLite::PoolId apu_pool_id,
-                                MsgQueId apu_mid,
-                                uint32_t *dsp_inf,
-                                bool through);
+struct SendPostprocParam
+{
+  uint8_t        cmd_type;
+  bool           is_userdraw;
+  PostprocPacket packet;
+};
 
-bool AS_postfilter_deactivate(void *p_instance);
+struct ExecPostprocParam
+{
+  AsPcmDataParam        input;
+  MemMgrLite::MemHandle output_mh;
+};
 
-} /* extern "C" */
+struct FlushPostprocParam
+{
+  PostprocPacket        packet;
+  MemMgrLite::MemHandle output_mh;
+};
 
-#endif /* _POSTFILTER_API_H_ */
+struct PostprocCmpltParam
+{
+  PostCompFunctionType ftype;
+  bool                 result;
+  AsPcmDataParam       output;
+};
+
+class PostprocBase
+{
+public:
+  PostprocBase() {}
+  virtual ~PostprocBase() {}
+
+  virtual uint32_t init_apu(const InitPostprocParam& param) = 0;
+  virtual bool sendcmd_apu(const SendPostprocParam& param) = 0;
+  virtual bool exec_apu(const ExecPostprocParam& param) = 0;
+  virtual bool flush_apu(const FlushPostprocParam& param) = 0;
+  virtual bool recv_done(PostprocCmpltParam *cmplt) = 0;
+  virtual uint32_t activate(uint32_t *dsp_inf) = 0;
+  virtual bool deactivate() = 0;
+
+protected:
+  PostprocCallback m_callback;
+
+  void *m_p_requester;
+};
+
+#endif /* _POSTPROC_BASE_H_ */
 

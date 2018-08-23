@@ -1,5 +1,5 @@
 ############################################################################
-# modules/audio/LibTargets.mk
+# audio_player/worker/lib/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -32,18 +32,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-# Audio Library
 
-ifeq ($(CONFIG_SDK_AUDIO),y)
-SDKLIBS += lib$(DELIM)libsdkaudio$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)audio
-endif
-SDKCLEANDIRS += modules$(DELIM)audio
+-include $(TOPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-.PHONY: workerbin asmpwlib
+BIN = libasmpw$(LIBEXT)
+WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
+LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 
-modules$(DELIM)audio$(DELIM)libsdkaudio$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)audio TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libsdkaudio$(LIBEXT)
+all: $(BIN)
+.PHONY: depend clean distclean
 
-lib$(DELIM)libsdkaudio$(LIBEXT): modules$(DELIM)audio$(DELIM)libsdkaudio$(LIBEXT)
+depend:
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend
+
+$(LIB): depend
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(BIN)
+
+$(BIN): $(LIB)
 	$(Q) install $< $@
+
+clean:
+	$(call CLEAN)
+
+distclean: clean

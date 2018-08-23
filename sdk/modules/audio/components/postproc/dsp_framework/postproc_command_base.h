@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/dsp/worker/postfilter_command.h
+ * modules/audio/component/postproc/dsp_framework/postproc_command_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,32 +33,27 @@
  *
  ****************************************************************************/
 
-#ifndef __POSTFILTER_COMMAND_H__
-#define __POSTFILTER_COMMAND_H__
+#ifndef __POSTPROC_COMMAND_BASE_H__
+#define __POSTPROC_COMMAND_BASE_H__
 
 #include <stdint.h>
 
-class PostFilterCommand
+namespace PostprocCommand
 {
-public:
-
   enum command_type
   {
-    Boot = 0,
     Init,
     Exec,
     Flush,
-    SetParam,
-    Tuning,
-    Error,
+    Set,
     CmdTypeNum
   };
   typedef command_type CmdType;
 
-  enum process_mode 
+  enum process_mode
   {
     CommonMode = 0,
-    FilterMode = 2,
+    FilterMode = 1,
   };
   typedef process_mode ProcMode;
 
@@ -80,72 +75,97 @@ public:
   struct Buffer
   {
     void     *addr;
-    uint32_t sample;
+    uint32_t size;
   };
 
   /*! Command header */
 
   struct command_header_s
   {
-    uint8_t cmd_type;
-    uint8_t process_mode;
+    uint32_t cmd_type;
   };
   typedef command_header_s CmdHeader;
 
   /*! Initialize command */
 
-  struct init_command_s
+  struct init_command_base_s
   {
-    uint32_t ch_num;
-    uint32_t bit_width;
-    uint32_t sample;
+    /* reserve */
+
+    uint32_t reserve0;
+    uint32_t reserve1;
+    uint32_t reserve2;
+    uint32_t reserve3;
   };
-  typedef init_command_s InitCmd;
+  typedef init_command_base_s InitParamBase;
 
   /*! Execution command */
 
-  struct exec_command_s
+  struct exec_command_base_s
   {
+    /* Fixed parameters */
+
     Buffer input;
     Buffer output;
   };
-  typedef exec_command_s ExecCmd;
+  typedef exec_command_base_s ExecParamBase;
 
   /*! Flush command */
 
-  struct flush_command_s
+  struct flush_command_base_s
   {
+    /* Fixed parameters */
+
     Buffer output;
+
+    /* reserve*/
+
+    uint32_t reserve0;
+    uint32_t reserve1;
   };
-  typedef flush_command_s FlushCmd;
+  typedef flush_command_base_s FlushParamBase;
+
+  /*! Set command */
+
+  struct set_command_base_s
+  {
+    /* reserve*/
+
+    uint32_t reserve0;
+    uint32_t reserve1;
+    uint32_t reserve2;
+    uint32_t reserve3;
+  };
+  typedef set_command_base_s SetParamBase;
 
   /*! Result */
 
   struct result_s
   {
-    ResultCode result_code;
+    uint32_t result_code;
   };
   typedef result_s RestltParam;
 
 
   /*! Command structure definition */
 
-  struct command_s
+  struct command_base_s
   {
     CmdHeader header;
+    RestltParam result;
 
     union
     {
-      InitCmd  init_cmd;
-      ExecCmd  exec_cmd;
-      FlushCmd flush_cmd;
+      InitParamBase  init_cmd;
+      ExecParamBase  exec_cmd;
+      FlushParamBase flush_cmd;
+      SetParamBase   set_cmd;
     };
 
-    RestltParam result;
   };
-  typedef command_s Cmd;
+  typedef command_base_s CmdBase;
+
 };
 
-
-#endif /* __POSTFILTER_COMMAND_H__ */
+#endif /* __POSTPROC_COMMAND_BASE_H__ */
 

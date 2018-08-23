@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/dsp/worker/dsp_audio_version.h
+ * modules/audio/components/postproc/postproc_api.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,40 +33,35 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
-#define __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
+#ifndef _POSTPROC_API_H_
+#define _POSTPROC_API_H_
 
-/****************************************************************************
- * Included Files
- ****************************************************************************/
+#include "postproc_component.h"
+#include "postproc_through.h"
 
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
+extern "C" {
 
-/* Version rule:
- * (change library).(change of DSP interface).(change of internal processing)
- */
+uint32_t AS_postproc_init(const InitPostprocParam *param,
+                          void *p_instance,
+                          uint32_t *dsp_inf);
 
-/* Postfilter Version. */
+bool AS_postproc_sendcmd(const SendPostprocParam *param, void *p_instance);
 
-#define DSP_POSTFLTR_VERSION  0x010101    /* 01.01.01 */
+bool AS_postproc_exec(const ExecPostprocParam *param, void *p_instance);
 
-/****************************************************************************
- * Public Types
- ****************************************************************************/
+bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance);
 
-/****************************************************************************
- * Public Data
- ****************************************************************************/
+bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt);
 
-/****************************************************************************
- * Inline Functions
- ****************************************************************************/
+uint32_t AS_postproc_activate(void **p_instance,
+                              MemMgrLite::PoolId apu_pool_id,
+                              MsgQueId apu_mid,
+                              uint32_t *dsp_inf,
+                              bool through);
 
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
+bool AS_postproc_deactivate(void *p_instance);
 
-#endif /* __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H */
+} /* extern "C" */
+
+#endif /* _POSTPROC_API_H_ */
 

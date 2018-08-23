@@ -79,11 +79,12 @@ static void proc_outputmixer_reply(AsOutputMixerHandle handle,
                                    MsgType reply_of,
                                    AsOutputMixDoneParam *done_param)
 {
-  uint8_t cmd_code[AUD_PLY_MSG_NUM] =
+  uint8_t cmd_code[] =
   {
     AUDCMD_SETPLAYERSTATUS,
     AUDCMD_SETREADYSTATUS,
     AUDCMD_CLKRECOVERY,
+    AUDCMD_SENDPOSTCMD,
   };
 
   AudioMngCmdCmpltResult cmplt(0, 0, AS_ECODE_OK, AS_MODULE_ID_OUTPUT_MIX_OBJ, 0);
@@ -391,6 +392,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         break;
 
       case AUDCMD_CLKRECOVERY:
+      case AUDCMD_SENDPOSTCMD:
         msg_type = MSG_AUD_MGR_CMD_OUTPUTMIXER;
         break;
 
@@ -436,6 +438,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         break;
 
       case AUDCMD_SETPLAYERSTATUS:
+      case AUDCMD_SETPLAYERSTATUSPOST:
         msg_type = MSG_AUD_MGR_CMD_SETPLAYER;
         break;
 
@@ -1501,7 +1504,7 @@ void AudioManager::outputmixer(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 
-  MSG_TYPE msg_type;
+  MSG_TYPE msg_type = MSG_AUD_MIX_CMD_CLKRECOVERY;
   bool check = false;
   OutputMixerCommand omix_cmd;
 
@@ -1522,6 +1525,22 @@ void AudioManager::outputmixer(AudioCommand &cmd)
         omix_cmd.fterm_param.times     = cmd.clk_recovery_param.times;
 
         msg_type = MSG_AUD_MIX_CMD_CLKRECOVERY;
+        break;
+
+      case AUDCMD_SENDPOSTCMD:
+        check = packetCheck(LENGTH_SENDPOSTCMD, AUDCMD_SENDPOSTCMD, cmd);
+        if (!check)
+          {
+            return;
+          }
+
+        omix_cmd.handle =
+          (cmd.clk_recovery_param.player_id == AS_PLAYER_ID_0) ?
+            OutputMixer0 : OutputMixer1;
+
+        omix_cmd.postcmd_param = cmd.send_postcmd_param.postcmd;
+
+        msg_type = MSG_AUD_MIX_CMD_SENDPOSTCMD;
         break;
 
       default:
@@ -1915,7 +1934,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
   /* Before state transition, check parameters first. */
 
   bool check =
-    packetCheck(LENGTH_SET_PLAYER_STATUS, AUDCMD_SETPLAYERSTATUS, cmd);
+    packetCheck(LENGTH_SET_PLAYER_STATUS, cmd.header.command_code, cmd);
   if (!check)
     {
       return;
@@ -1996,7 +2015,8 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
       omix_cmd.handle                  = OutputMixer0;
       omix_cmd.act_param.output_device = m_output_device;
       omix_cmd.act_param.mixer_type    = MainOnly;
-      omix_cmd.act_param.pf_enable     = PostFilterDisable;
+      omix_cmd.act_param.post_enable   = (cmd.header.command_code == AUDCMD_SETPLAYERSTATUSPOST)
+                                           ? cmd.set_player_sts_param.post0_enable : PostFilterDisable;
       omix_cmd.act_param.cb            = outputmixer0_done_callback;
       omix_cmd.act_param.error_cb      = outputmixer_error_callback;
 
@@ -2033,7 +2053,8 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
       omix_cmd.handle                  = OutputMixer1;
       omix_cmd.act_param.output_device = m_output_device;
       omix_cmd.act_param.mixer_type    = MainOnly;
-      omix_cmd.act_param.pf_enable     = PostFilterDisable;
+      omix_cmd.act_param.post_enable   = (cmd.header.command_code == AUDCMD_SETPLAYERSTATUSPOST)
+                                           ? cmd.set_player_sts_param.post1_enable : PostFilterDisable;
       omix_cmd.act_param.cb            = outputmixer1_done_callback;
       omix_cmd.act_param.error_cb      = outputmixer_error_callback;
 
@@ -2448,6 +2469,10 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
 
       case AUDCMD_SETGAIN:
         result_code = AUDRLT_SETGAIN_CMPLT;
+        break;
+
+      case AUDCMD_SENDPOSTCMD:
+        result_code = AUDRLT_SENDPFCMD_CMPLT;
         break;
 
       case AUDCMD_SETREADYSTATUS:

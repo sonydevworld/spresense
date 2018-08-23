@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postfilter/postfilter_through.cpp
+ * audio_player_post/worker/src/userproc/src/userproc.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,73 +33,74 @@
  *
  ****************************************************************************/
 
-#include "postfilter_through.h"
+#include "userproc.h"
 
-/*--------------------------------------------------------------------
-    Class Methods
-  --------------------------------------------------------------------*/
-uint32_t PostfilterThrough::init_apu(const InitPostfilterParam& param,
-                                     uint32_t *dsp_inf)
+/*--------------------------------------------------------------------*/
+/*                                                                    */
+/*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*/
+void UserProc::init(InitParam *param)
 {
-  m_callback = param.callback;
-  m_p_requester = param.p_requester;
-
-  return AS_ECODE_OK;
+  param->result.result_code = PostprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-bool PostfilterThrough::exec_apu(const ExecPostfilterParam& param)
+void UserProc::exec(ExecParam *param)
 {
-  m_req_que.push(param.input);
+  /* !!tentative!! simply copy from input to output */
 
-  PostfilterCbParam cbpram;
+  memcpy(param->exec_cmd.output.addr,
+         param->exec_cmd.input.addr,
+         param->exec_cmd.input.size);
 
-  cbpram.event_type = Wien2::Apu::ExecEvent;
+  param->exec_cmd.output.size = param->exec_cmd.input.size;
 
-  m_callback(&cbpram, m_p_requester);
+  if (m_toggle)
+  {
+    /* RC filter example */
 
-  return true;
+    int16_t *ls = (int16_t*)param->exec_cmd.output.addr;
+    int16_t *rs = ls + 1;
+
+    static int16_t ls_l = 0;
+    static int16_t rs_l = 0;
+
+    if (!ls_l && !rs_l)
+      {
+        ls_l = *ls;
+        rs_l = *rs;
+      }
+
+    for (uint32_t cnt = 0; cnt < param->exec_cmd.input.size; cnt += 4)
+      {
+        *ls = (ls_l * 99 / 100) + (*ls * 1 / 100);
+        *rs = (rs_l * 99 / 100) + (*rs * 1 / 100);
+
+        ls_l = *ls;
+        rs_l = *rs;
+
+        ls += 2;
+        rs += 2;
+      }
+  }
+
+  param->result.result_code = PostprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-bool PostfilterThrough::flush_apu(const FlushPostfilterParam& param)
+void UserProc::flush(FlushParam *param)
 {
-  AsPcmDataParam fls = { 0 };
+  param->flush_cmd.output.size = 0;
 
-  fls.mh       = param.output_mh;
-  fls.is_valid = true;
-
-  m_req_que.push(fls);
-
-  PostfilterCbParam cbpram;
-
-  cbpram.event_type = Wien2::Apu::FlushEvent;
-
-  m_callback(&cbpram, m_p_requester);
-
-  return true;
+  param->result.result_code = PostprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-bool PostfilterThrough::recv_done(PostfilterCmpltParam *cmplt)
+void UserProc::set(SetParam *param)
 {
-  cmplt->output = m_req_que.top();
-  cmplt->result = Wien2::Apu::ApuExecOK;
+  m_toggle = param->postswitch;
 
-  m_req_que.pop();
-
-  return true;
-};
-
-/*--------------------------------------------------------------------*/
-uint32_t PostfilterThrough::activate(uint32_t *dsp_inf)
-{
-  return AS_ECODE_OK;
-}
-
-/*--------------------------------------------------------------------*/
-bool PostfilterThrough::deactivate(void)
-{
-  return true;
+  param->result.result_code = PostprocCommand::ExecOk;
 }
 

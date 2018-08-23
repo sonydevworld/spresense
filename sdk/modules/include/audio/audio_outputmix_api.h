@@ -63,6 +63,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define PF_COMMAND_PACKET_SIZE_MAX (32)
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -125,6 +127,31 @@ enum AsOutputMixerPostFilter
   PostFilterEnable,
 };
 
+/**< PostFilter Command type */
+
+enum AsOutputMixerPostCmdType
+{
+  /*! Init */
+
+  PostCommandInit = 0,
+
+  /*! Exec */
+
+  PostCommandExec,
+
+  /*! Flush */
+
+  PostCommandFlush,
+
+  /*! Set */
+
+  PostCommandSet,
+
+  /*! User defined  */
+
+  PostCommandUserDef
+};
+
 /**< Completion of output-mix object task. */
 enum AsOutputMixDoneCmdType
 {
@@ -139,6 +166,10 @@ enum AsOutputMixDoneCmdType
   /*! \brief Set Clock recovery done */
 
   OutputMixSetClkRcvDone,
+
+  /*! \brief Send pf command done */
+
+  OutputMixSendPostCmdDone,
 
   OutputMixDoneCmdTypeNum
 };
@@ -203,10 +234,17 @@ typedef struct
 
 struct AsOutputMixDoneParam
 {
+  /*! Handle */
+
   int handle;
+
+  /*! Kind of done cmd */
 
   AsOutputMixDoneCmdType done_type;
 
+  /*! result, true means OK */
+
+  bool result;
 };
 
 typedef void (*OutputMixerCallback)(MsgQueId requester_dtq, MsgType msgtype, AsOutputMixDoneParam *param);
@@ -233,7 +271,7 @@ typedef struct
    * Use #AsOutputMixerPostFilter enum type
    */
 
-  uint8_t pf_enable;
+  uint8_t post_enable;
 
   /*! \brief [in] Done callback */
 
@@ -285,6 +323,24 @@ typedef struct
 
 } AsFrameTermFineControl;
 
+/** Send command to postfilter parameter */
+
+typedef struct
+{
+  /*! Command type. User AsOutputMixerPostCmdType enum type */
+
+  uint8_t  cmd_type;
+
+  /*! Command packet addr */
+
+  uint8_t  *addr;
+
+  /*! Command packet size */
+
+  uint32_t size;
+
+} AsSendPostCommand;
+
 /** Clock recovery function parameter */
 
 typedef struct
@@ -296,6 +352,7 @@ typedef struct
     AsActivateOutputMixer   act_param;
     AsDeactivateOutputMixer deact_param;
     AsFrameTermFineControl  fterm_param;
+    AsSendPostCommand       postcmd_param;
   };
 
 } OutputMixerCommand;
@@ -366,6 +423,17 @@ bool AS_SendDataOutputMixer(FAR AsSendDataOutputMixer *sendparam);
  */
 
 bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineControl *ftermparam);
+
+/**
+ * @brief Send command to Postproces DSP
+ *
+ * @param[in] param: post command parameters
+ *
+ * @retval     true  : success
+ * @retval     false : failure
+ */
+
+bool AS_SendPostCmdOutputMixer(uint8_t handle, FAR AsSendPostCommand *postcmdparam);
 
 /**
  * @brief Deactivate audio output mixer

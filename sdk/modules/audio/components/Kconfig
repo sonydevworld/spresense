@@ -35,7 +35,7 @@ config AUDIOUTILS_FILTER
 	---help---
 		Enable Filtering Feature
 
-config AUDIOUTILS_POSTFILTER
+config AUDIOUTILS_POSTPROC
 	bool "Post Filter"
 	default n
 	---help---
@@ -64,7 +64,7 @@ endif
 
 config AUDIOUTILS_COMPONENT_COMMON
 	bool
-	default y if AUDIOUTILS_DECODER || AUDIOUTILS_FILTER || AUDIOUTILS_POSTFILTER
+	default y if AUDIOUTILS_DECODER || AUDIOUTILS_FILTER || AUDIOUTILS_POSTPROC
 
 config AUDIOUTILS_DSP_DEBUG_DUMP
 	bool "dsp debug dump"

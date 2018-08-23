@@ -84,14 +84,15 @@ static bool check_sample(AsPcmDataParam* data);
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-static bool postfilter_done_callback(PostfilterCbParam *p_param,
+static bool postfilter_done_callback(PostprocCbParam *p_param,
                                      void* p_requester)
 {
   err_t er;
   OutputMixObjParam outmix_param;
   outmix_param.handle =
     (static_cast<OutputMixToHPI2S*>(p_requester))->m_self_handle;
-  outmix_param.postfilterdone_param.event_type = p_param->event_type;
+  outmix_param.postfilterdone_param.event_type  = p_param->event_type;
+  outmix_param.postfilterdone_param.result_code = p_param->result;
 
   er = MsgLib::send<OutputMixObjParam>((static_cast<OutputMixToHPI2S*>
                                         (p_requester))->m_self_dtq,
@@ -207,6 +208,15 @@ OutputMixToHPI2S::MsgProc OutputMixToHPI2S::MsgProcTbl[AUD_MIX_MSG_NUM][StateNum
     &OutputMixToHPI2S::clock_recovery,        /*  Stopping               */
     &OutputMixToHPI2S::clock_recovery         /*  Underflow              */
   },
+
+  /* Message type: SEND PF */
+  {                                           /* OutputMixToHPI2S State: */
+    &OutputMixToHPI2S::illegal,               /*  Booted                 */
+    &OutputMixToHPI2S::send_postcommand,      /*  Ready                  */
+    &OutputMixToHPI2S::send_postcommand,      /*  Active                 */
+    &OutputMixToHPI2S::send_postcommand,      /*  Stopping               */
+    &OutputMixToHPI2S::send_postcommand,      /*  Underflow              */
+  },
 };
 
 /*--------------------------------------------------------------------------*/
@@ -261,6 +271,7 @@ void OutputMixToHPI2S::illegal(MsgPacket* msg)
       case MSG_AUD_MIX_CMD_ACT:
       case MSG_AUD_MIX_CMD_DEACT:
       case MSG_AUD_MIX_CMD_CLKRECOVERY:
+      case MSG_AUD_MIX_CMD_SENDPOSTCMD:
         msg->moveParam<OutputMixerCommand>();
         break;
 
@@ -287,10 +298,10 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
   OutputMixerCommand cmd = msg->moveParam<OutputMixerCommand>();
 
 
-  OUTPUT_MIX_DBG("ACT: dev %d, type %d, pf %d\n",
+  OUTPUT_MIX_DBG("ACT: dev %d, type %d, post enable %d\n",
                  cmd.act_param.output_device,
                  cmd.act_param.mixer_type,
-                 cmd.act_param.pf_enable);
+                 cmd.act_param.post_enable);
 
   switch(cmd.act_param.mixer_type)
     {
@@ -335,11 +346,11 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
 
   uint32_t dsp_inf = 0;
 
-  AS_postfilter_activate(&m_p_postfliter_instance,
+  AS_postproc_activate(&m_p_postfliter_instance,
                          m_apu_pool_id,
                          m_apu_dtq,
                          &dsp_inf,
-                         (cmd.act_param.pf_enable == PostFilterEnable) ?
+                         (cmd.act_param.post_enable == PostFilterEnable) ?
                            false : true);
 
   /* Reply */
@@ -365,7 +376,7 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
       return;
     }
 
-  AS_postfilter_deactivate(m_p_postfliter_instance);
+  AS_postproc_deactivate(m_p_postfliter_instance);
 
   /* Replay */
 
@@ -386,24 +397,15 @@ void OutputMixToHPI2S::input_data_on_ready(MsgPacket* msg)
 
   /* Init post filter */
 
-  InitPostfilterParam init;
+  InitPostprocParam init;
   uint32_t dsp_info;
 
-  init.channel_num = AS_CHANNEL_STEREO;
-  init.bit_width   = AS_BITLENGTH_16;
-  init.sample_num  = input.sample;
   init.callback    = postfilter_done_callback;
   init.p_requester = static_cast<void*>(this);
 
-  if (AS_ECODE_OK != AS_postfilter_init(&init,
-                                        m_p_postfliter_instance,
-                                        &dsp_info))
-    {
-      OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
-      return;
-    }
-
-  if (!AS_postfilter_recv_done(m_p_postfliter_instance, NULL))
+  if (AS_ECODE_OK != AS_postproc_init(&init,
+                                      m_p_postfliter_instance,
+                                      &dsp_info))
     {
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
       return;
@@ -411,12 +413,12 @@ void OutputMixToHPI2S::input_data_on_ready(MsgPacket* msg)
 
   /* Exec postfilter */
 
-  ExecPostfilterParam exec;
+  ExecPostprocParam exec;
 
   exec.input     = input;
   exec.output_mh = input.mh;
 
-  if (!AS_postfilter_exec(&exec, m_p_postfliter_instance))
+  if (!AS_postproc_exec(&exec, m_p_postfliter_instance))
     {
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
@@ -443,12 +445,12 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
 
   /* Exec postfilter */
 
-  ExecPostfilterParam exec;
+  ExecPostprocParam exec;
 
   exec.input     = input;
   exec.output_mh = input.mh;
 
-  if (!AS_postfilter_exec(&exec, m_p_postfliter_instance))
+  if (!AS_postproc_exec(&exec, m_p_postfliter_instance))
     {
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
@@ -457,7 +459,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
 
   if (input.is_end)
     {
-      FlushPostfilterParam flush_param;
+      FlushPostprocParam flush_param;
 
       uint32_t size = (MemMgrLite::Manager::getPoolSize(m_pcm_pool_id)) /
                       (MemMgrLite::Manager::getPoolNumSegs(m_pcm_pool_id));
@@ -467,7 +469,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
         }
 
-      if (!AS_postfilter_flush(&flush_param, m_p_postfliter_instance))
+      if (!AS_postproc_flush(&flush_param, m_p_postfliter_instance))
         {
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
           return;
@@ -483,9 +485,30 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   /* Get postfilter result */
 
-  PostfilterCmpltParam cmplt;
+  PostprocCmpltParam cmplt;
 
-  AS_postfilter_recv_done(m_p_postfliter_instance, &cmplt);
+  AS_postproc_recv_done(m_p_postfliter_instance, &cmplt);
+
+  /* If completion of SendCmd function, reply to requester. */
+
+  //if (ftype == PostprocSendCmd)
+  //  {
+  //    AsOutputMixDoneParam done_param;
+
+  //    done_param.handle    = m_self_handle;
+  //    done_param.done_type = OutputMixSendPostCmdDone;
+  //    done_param.result    = cmplt.result;
+
+  //    m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_SENDPOSTCMD, &done_param);
+  //  }
+
+  /* If it is not return of Exec of Flush, no need to rendering. */
+
+  if (!(post_done.event_type == PostprocCommand::Exec)
+   && !(post_done.event_type == PostprocCommand::Flush))
+    {
+      return;
+    }
 
   /* Check minimum trans size and send filtered data to renderer */
 
@@ -507,7 +530,7 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   /* If flust event done, stop renderer */
 
-  if (post_done.event_type == Apu::FlushEvent)
+  if (post_done.event_type == PostprocCommand::Flush)
     {
       if (!AS_stop_renderer(m_render_comp_handler, AS_DMASTOPMODE_NORMAL))
         {
@@ -710,6 +733,58 @@ int8_t OutputMixToHPI2S::get_period_adjustment(void)
     }
 
   return adjust_sample;
+}
+
+/*--------------------------------------------------------------------------*/
+void OutputMixToHPI2S::send_postcommand(MsgPacket* msg)
+{
+  OUTPUT_MIX_DBG("SEND PFCMD:\n");
+
+  OutputMixerCommand cmd =
+    msg->moveParam<OutputMixerCommand>();
+
+  SendPostprocParam param;
+
+  param.cmd_type    = trans_postcommandtype(cmd.postcmd_param.cmd_type);
+  param.is_userdraw = (cmd.postcmd_param.cmd_type == PostCommandUserDef) ? true : false;
+  param.packet.addr = cmd.postcmd_param.addr;
+  param.packet.size = cmd.postcmd_param.size;
+
+  /* Copy packet to MH internally */
+
+  bool send_result = AS_postproc_sendcmd(&param, m_p_postfliter_instance);
+    
+  /* Reply (Don't wait reply from DSP because it will take long time) */
+
+  AsOutputMixDoneParam done_param;
+  
+  done_param.handle    = cmd.handle;
+  done_param.done_type = OutputMixSendPostCmdDone;
+  done_param.result    = send_result;
+  
+  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_SENDPOSTCMD, &done_param);
+
+}
+
+/*--------------------------------------------------------------------------*/
+uint8_t OutputMixToHPI2S::trans_postcommandtype(uint8_t cmd_type)
+{
+  uint8_t post_cmd_defs[] =
+    {
+      PostprocCommand::Init, 
+      PostprocCommand::Exec,
+      PostprocCommand::Flush,
+      PostprocCommand::Set
+    };
+
+  if (cmd_type < (sizeof(post_cmd_defs) / sizeof(uint8_t)))
+    {
+      return post_cmd_defs[cmd_type];
+    }
+  else
+    {
+      return PostprocCommand::Set;
+    }
 }
 
 /*--------------------------------------------------------------------------*/

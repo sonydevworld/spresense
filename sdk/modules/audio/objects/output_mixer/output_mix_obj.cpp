@@ -107,6 +107,7 @@ int OutputMixObjectTask::getHandle(MsgPacket* msg)
       case MSG_AUD_MIX_CMD_ACT:
       case MSG_AUD_MIX_CMD_DEACT:
       case MSG_AUD_MIX_CMD_CLKRECOVERY:
+      case MSG_AUD_MIX_CMD_SENDPOSTCMD:
         handle = msg->peekParam<OutputMixerCommand>().handle;
         break;
 
@@ -415,6 +416,33 @@ bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineContr
   err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_CLKRECOVERY,
+                                              s_msgq_id.mng,
+                                              cmd);
+  F_ASSERT(er == ERR_OK);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_SendPostCmdOutputMixer(uint8_t handle, FAR AsSendPostCommand *postcmdparam)
+{
+  /* Parameter check */
+
+  if (postcmdparam == NULL)
+    {
+      return false;
+    }
+
+  /* Set Postfilter command param */
+
+  OutputMixerCommand cmd;
+
+  cmd.handle        = handle;
+  cmd.postcmd_param = *postcmdparam;
+
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
+                                              MsgPriNormal,
+                                              MSG_AUD_MIX_CMD_SENDPOSTCMD,
                                               s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);

@@ -1,5 +1,5 @@
 ############################################################################
-# modules/audio/components/postfilter/Make.defs
+# modules/audio/components/postproc/Make.defs
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -33,10 +33,10 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_POSTFILTER),y)
+ifeq ($(CONFIG_AUDIOUTILS_POSTPROC),y)
 
-CXXSRCS += postfilter_component.cpp postfilter_through.cpp postfilter_api.cpp
-VPATH   += components/postfilter
-DEPPATH += --dep-path components/postfilter
+CXXSRCS += postproc_component.cpp postproc_through.cpp postproc_api.cpp
+VPATH   += components/postproc
+DEPPATH += --dep-path components/postproc
 
 endif

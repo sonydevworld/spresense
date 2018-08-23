@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/dsp/worker/postfilter_ctrl.h
+ * modules/audio/components/postproc/postproc_through.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,42 +33,39 @@
  *
  ****************************************************************************/
 
-#ifndef __POSTFILTER_CTRL_H__
-#define __POSTFILTER_CTRL_H__
+#ifndef _POSTPROC_THROUGH_H_
+#define _POSTPROC_THROUGH_H_
 
-#include <string.h>
+#include "audio/audio_high_level_api.h"
+#include "memutils/s_stl/queue.h"
+#include "postproc_base.h"
 
-#include "apus/apu_cmd.h"
-#include "postfilter_command.h"
-
-class PostFilterCtrl
+class PostprocThrough : public PostprocBase
 {
 public:
-  void parse(Wien2::Apu::Wien2ApuCmd *cmd);
+  PostprocThrough() {}
+  ~PostprocThrough() {}
 
-  PostFilterCtrl()
-    : m_state(BootedStatus)
-  {}
+  virtual uint32_t init_apu(const InitPostprocParam& param);
+  virtual bool sendcmd_apu(const SendPostprocParam& param);
+  virtual bool exec_apu(const ExecPostprocParam& param);
+  virtual bool flush_apu(const FlushPostprocParam& param);
+  virtual bool recv_done(PostprocCmpltParam *cmplt);
+  virtual uint32_t activate(uint32_t *dsp_inf);
+  virtual bool deactivate();
 
 private:
-  enum StateType
+  #define REQ_QUEUE_SIZE 7 
+
+  struct ApuReqData
   {
-    BootedStatus = 0,
-    ReadyStatus,
-    ExecStatus,
-    StateNum
+    PostCompFunctionType func_type;
+    AsPcmDataParam       pcm;
   };
 
-  StateType m_state;
-  typedef void (PostFilterCtrl::*CtrlProc)(Wien2::Apu::Wien2ApuCmd *cmd);
-  static CtrlProc CtrlFuncTbl[Wien2::Apu::ApuEventTypeNum][StateNum];
-
-  void init(Wien2::Apu::Wien2ApuCmd *cmd);
-  void exec(Wien2::Apu::Wien2ApuCmd *cmd);
-  void flush(Wien2::Apu::Wien2ApuCmd *cmd);
-  void setparam(Wien2::Apu::Wien2ApuCmd *cmd);
-  void illegal(Wien2::Apu::Wien2ApuCmd *cmd);
+  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
+  ReqQue m_req_que;
 };
 
-#endif /* __POSTFILTER_CTRL_H__ */
+#endif /* _POSTPROC_THROUGH_H_ */
 

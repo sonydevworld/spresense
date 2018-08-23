@@ -1,0 +1,54 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_PLAYER_POST
+	bool "Audio player example with postfilter"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio player with postfilter example
+
+if EXAMPLES_AUDIO_PLAYER_POST
+
+choice
+	prompt "Output device selection"
+	default EXAMPLES_AUDIO_PLAYER_POST_OUTPUT_DEV_SPHP
+	---help---
+		Set the device type of output to use
+
+config EXAMPLES_AUDIO_PLAYER_POST_OUTPUT_DEV_SPHP
+	bool "Speaker/Headphone output"
+
+config EXAMPLES_AUDIO_PLAYER_POST_OUTPUT_DEV_I2S
+	bool "I2S output"
+endchoice
+
+choice
+	prompt "player mode selection"
+	default EXAMPLES_AUDIO_PLAYER_POST_MODE_NORMAL
+	---help---
+		Set the operation mode of player capability.
+		To play include Hi-Res file, select Hi-Res mode.
+		If it is not Hi-Res file, select Normal mode.
+
+config EXAMPLES_AUDIO_PLAYER_MODE_POST_NORMAL
+	bool "Normal mode"
+
+config EXAMPLES_AUDIO_PLAYER_MODE_POST_HIRES
+	bool "Hi-Res mode"
+endchoice
+
+config EXAMPLES_AUDIO_PLAYER_POST_PROGNAME
+	string "Program name"
+	default "audio_player_post"
+
+config EXAMPLES_AUDIO_PLAYER_POST_PRIORITY
+	int "Audio player pf task priority"
+	default 150
+
+config EXAMPLES_AUDIO_PLAYER_POST_STACKSIZE
+	int "Audio player pf stack size"
+	default 2048
+endif

@@ -172,6 +172,10 @@
 
 #define AUDCMD_SETGAIN        (AUDCMD_CATEGORY_PLAYER | 0x05)
 
+/*! \brief Command Code: Send Postfilter command */
+
+#define AUDCMD_SENDPOSTCMD    (AUDCMD_CATEGORY_PLAYER | 0x06)
+
 /** @} */
 
 /** @name Player Result code */
@@ -197,6 +201,9 @@
 
 #define  AUDRLT_SETGAIN_CMPLT        AUDCMD_SETGAIN
 
+/*! \brief Result Code: SendPfCommandComplete */
+
+#define  AUDRLT_SENDPFCMD_CMPLT      AUDCMD_SENDPOSTCMD
 
 /** @} */
 
@@ -444,6 +451,10 @@
 /*! \brief Command Code: SetThroughStartus */
 
 #define AUDCMD_SETTHROUGHSTATUS     (AUDCMD_CATEGORY_TRANSITION | 0x07)
+
+/*! \brief Command Code: SetPlayerStatus */
+
+#define AUDCMD_SETPLAYERSTATUSPOST  (AUDCMD_CATEGORY_TRANSITION | 0x08)
 
 /** @} */
 

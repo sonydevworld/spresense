@@ -1,5 +1,5 @@
 ############################################################################
-# modules/audio/LibTargets.mk
+# audio_player_post/worker/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -32,18 +32,44 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-# Audio Library
 
-ifeq ($(CONFIG_SDK_AUDIO),y)
-SDKLIBS += lib$(DELIM)libsdkaudio$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)audio
-endif
-SDKCLEANDIRS += modules$(DELIM)audio
+-include $(TOPDIR)/.config
+-include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
-.PHONY: workerbin asmpwlib
+WORKER_ELFS = src/POSTPROC
 
-modules$(DELIM)audio$(DELIM)libsdkaudio$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)audio TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libsdkaudio$(LIBEXT)
+define DIR_template
+$(1)_$(2):
+	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+endef
 
-lib$(DELIM)libsdkaudio$(LIBEXT): modules$(DELIM)audio$(DELIM)libsdkaudio$(LIBEXT)
-	$(Q) install $< $@
+SUBDIRS = $(dir $(WORKER_ELFS))
+
+all: $(WORKER_ELFS)
+
+# Build ASMP worker library
+
+lib/libasmpw.a:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+lib: lib/libasmpw.a
+
+# Build workers
+
+$(WORKER_ELFS): lib
+	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+.depend:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
+	@touch $@
+
+depend: .depend
+
+lib_clean:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" clean
+
+clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean) lib_clean
+	$(Q) rm -rf romfs romfs.img romfs.h
+
+$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))

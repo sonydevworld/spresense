@@ -111,6 +111,10 @@
 
 #define LENGTH_SET_GAIN (2)
 
+/*! \brief Send Pfcommand command ("AUDCMD_SENDPOSTCMD") packet length */
+
+#define LENGTH_SENDPOSTCMD (10)
+
 /** @} */
 
 /****************************************************************************
@@ -361,17 +365,17 @@ typedef struct
 
   uint8_t  active_player;
 
+  /*! \brief [in] post DSP 0 enable */
+
+  uint8_t  post0_enable;
+
+  /*! \brief [in] post DSP 1 enable */
+
+  uint8_t  post1_enable;
+
   /*! \brief [in] reserved */
 
   uint8_t  reserve0;
-
-  /*! \brief [in] reserved */
-
-  uint8_t  reserve1;
-
-  /*! \brief [in] reserved */
-
-  uint8_t  reserve2;
 
   /*! \brief [in] Activation parameters for player0 */
 

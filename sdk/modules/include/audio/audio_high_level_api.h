@@ -861,6 +861,24 @@ typedef struct
 
 } AsSetThroughPathParam;
 
+#ifdef CONFIG_AUDIOUTILS_PLAYER
+
+/** Send command to postfilter Command (#AUDCMD_SENDPOSTCMD) parameter */
+
+typedef struct
+{
+  /*! Player Id */
+
+  uint8_t player_id;
+
+  /*! Postfileter command parameters*/
+
+  AsSendPostCommand postcmd;
+
+} AsSendPostCommandParam;
+
+#endif /* CONFIG_AUDIOUTILS_PLAYER */
+
 /** Audio command packet */
 
 #if defined(__CC_ARM)
@@ -928,6 +946,12 @@ typedef struct
      */
 
     AsPlayerClockRecovery clk_recovery_param;
+
+    /*! \brief [in] Send command to postfilter
+     * (header.command_code==#AUDCMD_SENDPOSTCMD)
+     */
+
+    AsSendPostCommandParam send_postcmd_param;
 
 #endif
 #ifdef AS_FEATURE_RECORDER_ENABLE
@@ -1231,7 +1255,7 @@ typedef enum
 
   /*! \brief Postfilter Component ID */
 
-  AS_MODULE_ID_POSTFILTER_CMP,
+  AS_MODULE_ID_POSTPROC_CMP,
   AS_MODULE_ID_NUM,
 } AsModuleId;
 
