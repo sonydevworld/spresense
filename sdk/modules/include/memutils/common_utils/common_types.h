@@ -52,11 +52,13 @@
 #include <sys/types.h>
 #endif
 
-/* ushort, uintが<sys/types.h>で定義されている */
+/* ushort, uint is defined in <sys/types.h> */
+
 typedef unsigned char	uchar;
 typedef unsigned long	ulong;
 
-/* ARMCC の 5.05 には sys/types.h がなく、ushort/uint が定義されないため */
+/* Since ARMCC 5.05 doesn't have sys/types.h and ushort/uint isn't defined */
+
 #if defined(_WIN32) || (defined(__CC_ARM) && (__ARMCC_VERSION >= 5050041))
 typedef unsigned short	ushort;
 typedef unsigned int	uint;
@@ -86,9 +88,6 @@ S_ASSERT(FALSE == 0);  /* ERROR: FALSE is not 0 */
 #  endif
 #endif /* _ITRON_H_  && _POSIX */
 
-/* 違う値で2重定義になるので削除 */
-// lib\exeGCC301\MIPS\include\c++\fdlibm.h(155): #define	OVERFLOW	3
-//#define OVERFLOW	(-1)
 #define ON		(1)
 #define OFF		(0)
 
@@ -108,8 +107,7 @@ S_ASSERT(FALSE == 0);  /* ERROR: FALSE is not 0 */
 #define HWORD_BIT	16
 #define SHORT_BIT	HWORD_BIT
 #define BYTE_BIT	8
-/* <limits.h>を使いたい時に、2重定義になるので削除 */
-//#define CHAR_BIT	BYTE_BIT
+
 #define bit_sizeof(x)	(sizeof(x)*CHAR_BIT)
 
 /*** BITS Macro ***/

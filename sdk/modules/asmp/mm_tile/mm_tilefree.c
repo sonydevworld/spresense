@@ -3,6 +3,7 @@
  *
  *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,6 +39,7 @@
  ****************************************************************************/
 
 #include <sdk/config.h>
+#include <sdk/debug.h>
 
 #include <assert.h>
 
@@ -68,73 +70,42 @@
  *
  ****************************************************************************/
 
-static inline void tile_common_free(FAR struct tile_s *priv,
-                                    FAR void *memory, size_t size)
+static inline void tile_common_free(FAR struct tile_s *priv, void *addr,
+                                    size_t size)
 {
-  unsigned int tileno;
-  unsigned int atidx;
-  unsigned int atbit;
-  unsigned int tilemask;
+  unsigned int idx;
   unsigned int ntiles;
-  unsigned int avail;
-  uint32_t     atmask;
+  unsigned int mask;
+  uintptr_t heapend;
 
-  DEBUGASSERT(priv && memory && size <= 32 * (1 << priv->log2tile));
-
-  /* Get exclusive access to the AT */
+  DEBUGASSERT(priv);
 
   tile_enter_critical(priv);
 
-  /* Determine the tile number of the first tile in the allocation */
-
-  tileno = ((uintptr_t)memory - priv->heapstart) >> priv->log2tile;
-
-  /* Determine the AT table index and bit number associated with the
-   * allocation.
-   */
-
-  atidx = tileno >> 5;
-  atbit = tileno & 31;
-
-  /* Determine the number of tiles in the allocation */
-
-  tilemask =  (1 << priv->log2tile) - 1;
-  ntiles = (size + tilemask) >> priv->log2tile;
-
-  /* Clear bits in the AT entry or entries */
-
-  avail = 32 - atbit;
-  if (ntiles > avail)
+  if (addr == NULL || size == 0)
     {
-      /* Clear bits in the first AT entry */
-
-      atmask = (0xffffffff << atbit);
-      DEBUGASSERT((priv->at[atidx] & atmask) == atmask);
-
-      priv->at[atidx] &= ~atmask;
-      ntiles -= avail;
-
-      /* Clear bits in the second AT entry */
-
-      atmask = 0xffffffff >> (32 - ntiles);
-      DEBUGASSERT((priv->at[atidx+1] & atmask) == atmask);
-
-      priv->at[atidx+1] &= ~atmask;
+      goto finish;
     }
 
-  /* Handle the case where where all of the tiles came from one entry */
+  /* Check addr and size are in the heap */
 
-  else
+  heapend = priv->heapstart + (priv->ntiles << priv->log2tile);
+  if (heapend < ((uintptr_t)addr + size))
     {
-      /* Clear bits in a single AT entry */
-
-      atmask   = 0xffffffff >> (32 - ntiles);
-      atmask <<= atbit;
-      DEBUGASSERT((priv->at[atidx] & atmask) == atmask);
-
-      priv->at[atidx] &= ~atmask;
+      goto finish;
     }
 
+  idx = ((uintptr_t)addr - priv->heapstart) >> priv->log2tile;
+  ntiles = ALIGNUP(size, priv->log2tile) >> priv->log2tile;
+  mask = (0xffffffff >> (32 - ntiles)) << idx;
+
+  tinfo("free idx = %u, ntiles = %u, mask = %08x\n", idx, ntiles, mask);
+
+  DEBUGASSERT((priv->at & mask) == mask);
+
+  priv->at &= ~mask;
+
+finish:
   tile_leave_critical(priv);
 }
 
@@ -159,16 +130,36 @@ static inline void tile_common_free(FAR struct tile_s *priv,
 
 void tile_free(FAR void *memory, size_t size)
 {
-  size_t tsize;
+  FAR struct tile_s *priv = g_tileinfo;
+  size_t             tsize;
 
-  tile_common_free(g_tileinfo, memory, size);
+  tile_common_free(priv, memory, size);
 
-  /* Tile power off. */
+  /* Power off free tiles */
 
-  tsize = size + ((1 << g_tileinfo->log2tile) - 1);
-  tsize &= ~((1 << g_tileinfo->log2tile) - 1);
+  tsize = ALIGNUP(size, priv->log2tile);
 
-  up_pmramctrl(PMCMD_RAM_OFF, (uintptr_t)memory, tsize);
+  if (priv->log2tile == 17)
+    {
+      /* If block size is 128KB, just do power off */
+
+      up_pmramctrl(PMCMD_RAM_OFF, (uintptr_t)memory, tsize);
+    }
+  else
+    {
+      uintptr_t    addr = (uintptr_t)memory;
+      unsigned int idx;
+
+      /* If 64KB block size, we need to check a same tile block is
+       * still in used.
+       */
+
+      idx = ((addr - priv->heapstart) >> 17) * 2;
+      if ((priv->at & (3 << idx)) == 0)
+        {
+          up_pmramctrl(PMCMD_RAM_OFF, (uintptr_t)memory, tsize);
+        }
+    }
 }
 
 #endif /* CONFIG_MM_TILE */

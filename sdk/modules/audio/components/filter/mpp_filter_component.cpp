@@ -33,6 +33,7 @@
  *
  ****************************************************************************/
 
+#include <sdk/debug.h>
 #include "components/filter/mpp_filter_component.h"
 #include "apus/cpuif_cmd.h"
 
@@ -140,26 +141,23 @@ uint32_t MPPComponent::activate_apu(MPPComponent *p_component,
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_Load() failure. %d\n", ret);
+      logerr("DD_Load() failure. %d\n", ret);
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
     }
 
   /* wait for DSP boot up... */
 
-  if (!dsp_boot_check(m_apu_dtq, DSP_MPPEAX_VERSION, dsp_inf))
+  dsp_boot_check(m_apu_dtq, dsp_inf);
+
+  /* DSP version check */
+
+  if (DSP_MPPEAX_VERSION != *dsp_inf)
     {
+      logerr("DSP version unmatch. expect %08x / actual %08x",
+              DSP_MPPEAX_VERSION, *dsp_inf);
+
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
-
-      ret = DD_Unload(m_dsp_handler);
-
-      if (ret != DSPDRV_NOERROR)
-        {
-          _err("DD_UnLoad() failure. %d\n", ret);
-          FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
-        }
-
-      return AS_ECODE_DSP_VERSION_ERROR;
     }
 
   FILTER_INF(AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE);
@@ -176,7 +174,7 @@ bool MPPComponent::deactivate_apu(void)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_UnLoad() failure. %d\n", ret);
+      logerr("DD_UnLoad() failure. %d\n", ret);
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
       return false;
     }
@@ -458,7 +456,7 @@ void MPPComponent::send_apu(Apu::Wien2ApuCmd& cmd)
   
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure. %d\n", ret);
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR);
       return;
     }

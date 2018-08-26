@@ -72,12 +72,6 @@ using namespace MemMgrLite;
 #define RECFILE_ROOTPATH "/mnt/sd0/REC"
 #define DSPBIN_PATH "/mnt/sd0/BIN"
 
-/* Use microphone type.
- *   Set MICROPHONE_ANALOG or MICROPHONE_DIGITAL as type
- */
-
-#define USE_MICROPHONE  MICROPHONE_ANALOG
-
 /* Use microphone channel number.
  *   [Analog microphone]
  *       Maximum number: 4
@@ -419,13 +413,13 @@ static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
   return true;
 }
 
-static void app_attention_callback(uint8_t module_id,
-                                   uint8_t error_code,
-                                   uint8_t sub_code,
-                                   const char* file_name,
-                                   uint32_t line)
+static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n", file_name, line, error_code, sub_code);
+  printf("Attention!! %s L%d ecode %d subcode %d\n",
+          attparam->error_filename,
+          attparam->line_number,
+          attparam->error_code,
+          attparam->error_att_sub_code);
 }
 
 static bool app_create_audio_sub_system(void)
@@ -526,51 +520,20 @@ static bool app_set_ready(void)
   return printAudCmdResult(command.header.command_code, result);
 }
 
-static void app_set_mic_gain_analog(AudioCommand* command)
-{
-  command->header.packet_length = LENGTH_INITMICGAIN;
-  command->header.command_code  = AUDCMD_INITMICGAIN;
-  command->header.sub_code      = 0;
-  command->init_mic_gain_param.mic_gain[0] = 210;
-  command->init_mic_gain_param.mic_gain[1] = 210;
-  command->init_mic_gain_param.mic_gain[2] = 210;
-  command->init_mic_gain_param.mic_gain[3] = 210;
-  command->init_mic_gain_param.mic_gain[4] = AS_MICGAIN_HOLD;
-  command->init_mic_gain_param.mic_gain[5] = AS_MICGAIN_HOLD;
-  command->init_mic_gain_param.mic_gain[6] = AS_MICGAIN_HOLD;
-  command->init_mic_gain_param.mic_gain[7] = AS_MICGAIN_HOLD;
-}
-
-static void app_set_mic_gain_digital(AudioCommand* command)
-{
-  command->header.packet_length = LENGTH_INITMICGAIN;
-  command->header.command_code  = AUDCMD_INITMICGAIN;
-  command->header.sub_code      = 0;
-  command->init_mic_gain_param.mic_gain[0] = 0;
-  command->init_mic_gain_param.mic_gain[1] = 0;
-  command->init_mic_gain_param.mic_gain[2] = 0;
-  command->init_mic_gain_param.mic_gain[3] = 0;
-  command->init_mic_gain_param.mic_gain[4] = 0;
-  command->init_mic_gain_param.mic_gain[5] = 0;
-  command->init_mic_gain_param.mic_gain[6] = 0;
-  command->init_mic_gain_param.mic_gain[7] = 0;
-}
-
 static bool app_init_mic_gain(void)
 {
-
   AudioCommand command;
-  switch(USE_MICROPHONE)
-    {
-      case  MICROPHONE_ANALOG:
-        app_set_mic_gain_analog(&command);
-        break;
-      case MICROPHONE_DIGITAL:
-        app_set_mic_gain_digital(&command);
-        break;
-      default:
-        return false;
-    }
+  command.header.packet_length = LENGTH_INITMICGAIN;
+  command.header.command_code  = AUDCMD_INITMICGAIN;
+  command.header.sub_code      = 0;
+  command.init_mic_gain_param.mic_gain[0] = 0;
+  command.init_mic_gain_param.mic_gain[1] = 0;
+  command.init_mic_gain_param.mic_gain[2] = 0;
+  command.init_mic_gain_param.mic_gain[3] = 0;
+  command.init_mic_gain_param.mic_gain[4] = 0;
+  command.init_mic_gain_param.mic_gain[5] = 0;
+  command.init_mic_gain_param.mic_gain[6] = 0;
+  command.init_mic_gain_param.mic_gain[7] = 0;
   AS_SendAudioCommand(&command);
 
   AudioResult result;
@@ -645,7 +608,7 @@ static bool app_set_recorder_status(void)
   command.header.packet_length = LENGTH_SET_RECORDER_STATUS;
   command.header.command_code  = AUDCMD_SETRECORDERSTATUS;
   command.header.sub_code      = 0x00;
-  command.set_recorder_status_param.input_device          = AS_SETRECDR_STS_INPUTDEVICE_MIC_A;
+  command.set_recorder_status_param.input_device          = AS_SETRECDR_STS_INPUTDEVICE_MIC;
   command.set_recorder_status_param.input_device_handler  = 0x00;
   command.set_recorder_status_param.output_device         = AS_SETRECDR_STS_OUTPUTDEVICE_RAM;
   command.set_recorder_status_param.output_device_handler = &s_recorder_info.fifo.output_device;

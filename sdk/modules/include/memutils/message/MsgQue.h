@@ -45,8 +45,8 @@
 #define MSG_FILL_VALUE_AFTER_POP	0x0
 
 /*****************************************************************
- * メッセージキュークラス
- * ベースクラスのテンプレート関数を隠すため、protected継承とする
+ * Message queue class
+ * Make it protected inheritance to hide the base class template function
  *****************************************************************/
 
 class MsgQue : protected BasicQueue<drm_t, uint16_t, uint16_t, MSG_FILL_VALUE_AFTER_POP> {
@@ -57,7 +57,8 @@ public:
 	MsgQue(drm_t data_area, uint16_t elem, uint16_t num) :
 		Base(data_area, elem, num) {}
 
-	/* 特定の関数のみpublicとする */
+  /* Make certain functions public only. */
+
 	using Base::init;
 	using Base::is_init;
 	using Base::elem_size;
@@ -70,7 +71,10 @@ public:
 	using Base::clear;
 	using Base::pop;
 
-	/* キュー末尾にメッセージパケットヘッダを挿入して、そのアドレスを返す */
+  /* Insert a message packet header at the end of the queue
+   * and return that address.
+   */
+
 	MsgPacket* pushHeader(const MsgPacketHeader& header) {
 		return (push(header) == true) ? backMsg() : NULL;
 	}

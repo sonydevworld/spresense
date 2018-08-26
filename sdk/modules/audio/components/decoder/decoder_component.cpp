@@ -34,6 +34,7 @@
  ****************************************************************************/
 
 #include <arch/chip/backuplog.h>
+#include <sdk/debug.h>
 
 #include "decoder_component.h"
 
@@ -264,7 +265,9 @@ uint32_t DecoderComponent::init_apu(const InitDecCompParam& param,
   p_apu_cmd->init_dec_cmd.codec_type     = param.codec_type;
   p_apu_cmd->init_dec_cmd.channel_num    = param.channel_num;
   p_apu_cmd->init_dec_cmd.sampling_rate  = param.input_sampling_rate;
-  p_apu_cmd->init_dec_cmd.channel_config = AUD_PCM_CH_CONFIG_2_0;
+  p_apu_cmd->init_dec_cmd.channel_config =
+    (param.channel_num == MonoChannels) ?
+      AUD_PCM_CH_CONFIG_1_0 : AUD_PCM_CH_CONFIG_2_0;
 
   p_apu_cmd->init_dec_cmd.out_pcm_param.bit_length     = param.bit_width;
   p_apu_cmd->init_dec_cmd.out_pcm_param.channel_format = Aud2ChannelFormat;
@@ -438,7 +441,7 @@ void DecoderComponent::send_apu(Apu::Wien2ApuCmd *p_cmd)
   int ret = DD_SendCommand(m_dsp_handler, &com_param);
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure. %d\n", ret);
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR);
       return;
     }
@@ -524,24 +527,23 @@ uint32_t DecoderComponent::activate(AudioCodec param,
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_Load() failure. %d\n", ret);
+      logerr("DD_Load() failure. %d\n", ret);
       DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
     }
 
-  if (!dsp_boot_check(m_apu_mid, decoder_dsp_version, dsp_inf))
+  /* wait for DSP boot up... */
+
+  dsp_boot_check(m_apu_mid, dsp_inf);
+
+  /* DSP version check */
+
+  if (decoder_dsp_version != *dsp_inf)
     {
+      logerr("DSP version unmatch. expect %08x / actual %08x",
+              decoder_dsp_version, *dsp_inf);
+
       DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
-
-      ret = DD_Unload(m_dsp_handler);
-
-      if (ret != DSPDRV_NOERROR)
-        {
-          _err("DD_UnLoad() failure. %d\n", ret);
-          DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
-        }
-
-      return AS_ECODE_DSP_VERSION_ERROR;
     }
 
   DECODER_INF(AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE);
@@ -572,7 +574,7 @@ bool DecoderComponent::deactivate(void)
 
   if (ret != DSPDRV_NOERROR)
     {
-      _err("DD_UnLoad() failure. %d\n", ret);
+      logerr("DD_UnLoad() failure. %d\n", ret);
       DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR);
       result = false;
     }

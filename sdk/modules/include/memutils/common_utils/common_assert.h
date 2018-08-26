@@ -39,17 +39,20 @@
 #include "memutils/common_utils/common_macro.h"
 #include "assert.h"
 
-/*
- * static assert. expがfalseと評価されるとコンパイルエラーとなる
- * expはコンパイル時に評価可能な定数式のみ記述可能
+/* static assert.
+ * When exp evaluates to false, a compile error occurs.
+ * Exp can describe only constant expressions
+ * that can be evaluated at compile time.
  */
-#define S_ASSERT(exp) \
-	enum { JOIN_MACRO(AssertionFail_, __LINE__) = 1/(!!(exp)) }
 
-/*
- * debug assert.
- * NDEBUGマクロ定義時に空文になるので、expやfuncに副作用のある式は記述不可
+#define S_ASSERT(exp) \
+  enum { JOIN_MACRO(AssertionFail_, __LINE__) = 1/(!!(exp)) }
+
+/* debug assert.
+ * NDEBUG Empty sentence when defining a macro,
+ * so expressions with side effects on exp or func can not be described.
  */
+
 #ifdef NDEBUG
 #define D_ASSERT(exp)			((void)0)
 #define D_ASSERT2(exp, func)		((void)0)
@@ -58,20 +61,33 @@
 #define D_ASSERT2(exp, func)		F_ASSERT2((exp), (func))
 #endif /* NDEBUG */
 
-/*
- * fatal assert.
- * D_ASSERTと違いNDEBUG時も無効にならない。expやfuncに副作用のある式を記述可能
+/* fatal assert.
+ * Unlike D_ASSERT, it does not become invalid when NDEBUG.
+ * Expressions with side effects can be described in exp or func.
  */
+
 #ifdef ASSERT_USE_RETURN_ADDR
+
+/* (void)((exp) || (_AssertionFail(#exp, __FILE__, __LINE__,
+ *                  GET_RETURN_ADDR()), 0))
+ */
+
 #define F_ASSERT(exp) ASSERT(exp)
-//	(void)((exp) || (_AssertionFail(#exp, __FILE__, __LINE__, GET_RETURN_ADDR()), 0))
+
+/* (void)((exp) || ((func), _AssertionFail(#exp, __FILE__,
+ *                  __LINE__, GET_RETURN_ADDR()), 0))
+ */
+
 #define F_ASSERT2(exp, func) ASSERT(exp)
-//	(void)((exp) || ((func), _AssertionFail(#exp, __FILE__, __LINE__, GET_RETURN_ADDR()), 0))
 #else  /* ASSERT_USE_RETURN_ADDR */
+
+/* (void)((exp) || (_AssertionFail(#exp, __FILE__, __LINE__), 0)) */
+
 #define F_ASSERT(exp) ASSERT(exp)
-//	(void)((exp) || (_AssertionFail(#exp, __FILE__, __LINE__), 0))
+
+/* (void)((exp) || ((func), _AssertionFail(#exp, __FILE__, __LINE__), 0)) */
+
 #define F_ASSERT2(exp, func) ASSERT(exp)
-//	(void)((exp) || ((func), _AssertionFail(#exp, __FILE__, __LINE__), 0))
 #endif /* ASSERT_USE_RETURN_ADDR */
 
 #ifdef  __cplusplus
@@ -85,20 +101,13 @@ extern void * _ReturnAddress(void);
 #elif defined(__CC_ARM)
 #define GET_RETURN_ADDR()	(void*)__return_address()
 #else
-/* x86向け以外の大半のgccでは、引数に0しか指定できないらしい(gcc3.3.6+allegro-2.2.3では0のみ) */
-#define GET_RETURN_ADDR()	__builtin_return_address(0)
-#endif
 
-/*
- * BSPで、_AssertionFail関数を実装すること
- * ISS環境であれば、下記のような実装で良い
- *	printf("%s, Assert at %s line:%d\n", exp, filename, line); exit(1);
+/* For most gcc other than for x86, you can only specify 0 as an argument.
+ * (0 for gcc 3.3.6 + allegro-2.2.3)
  */
-#ifdef ASSERT_USE_RETURN_ADDR
-//extern void _AssertionFail(const char* exp, const char* filename, int line, void* ret_addr);
-#else  /* ASSERT_USE_RETURN_ADDR */
-//extern void _AssertionFail(const char* exp, const char* filename, int line);
-#endif /* ASSERT_USE_RETURN_ADDR */
+
+#define GET_RETURN_ADDR() __builtin_return_address(0)
+#endif
 
 #ifdef  __cplusplus
 } /* end of extern "C" */

@@ -840,7 +840,8 @@ void SoundEffectObject::startOnReady(MsgPacket *msg)
         }
     }
 
-  /* I2S-in, Mic-in に対してそれぞれ複数回のcaptureコマンドを発行 */
+  /* Multiple capture commands are issued to I2S-in and Mic-in respectively */
+
   for (int i = 0; i < CAPTURE_DELAY_STAGE_NUM; i++)
     {
       CaptureComponentParam cap_comp_param;
@@ -950,7 +951,10 @@ void SoundEffectObject::input(CaptureDataParam& param)
       /* case of MFE is active */
       if ((m_filter_mode & FILTER_MODE_MFE) != 0)
         {
-          /* TODO: 名前をPre-に隠蔽。Front-end 処理としての認識でよい */
+          /* TODO: Hide the name in Pre-.
+           * It may be recognized as a Front-end process.
+           */
+
           execMfe(param.buf.cap_mh, param.buf.sample, param.end_flag);
           m_mic_in_sync_cnt++;
         }
@@ -986,7 +990,11 @@ void SoundEffectObject::input(CaptureDataParam& param)
           if (m_state.get() != SoundFXRunState)
             {
               if (!param.end_flag)
-                { /* DMAへの導入コマンド数 = m_mic_in_buf_mh_que.size()のため */
+                {
+                  /* The number of commands issued to DMA is equal to
+                   * m_mic_in_buf_mh_que.size().
+                   */
+
                   return;
                 }
 
@@ -1147,14 +1155,16 @@ void SoundEffectObject::filterRstOnActive(MsgPacket *msg)
 
   if (param.filter_type == Apu::MFE)
     {
-      /* MFE処理済データをI2S-out及びvoice recognition objectへ送信。 */
+      /* Send MFE processed data to I2S-out and voice recognition object. */
+
       freeMfeInBuf();
 
       execI2SOutRender(param);
     }
   else if (param.filter_type == Apu::XLOUD)
     {
-      /* xLOUD処理済データをHPへ送信。 */
+      /* Send MPP processed data to HP. */
+
       freeMppInBuf();
 
       execHpSpOutRender(param);
@@ -1245,7 +1255,7 @@ void SoundEffectObject::dmaOutDoneCmpltOnStopping(MsgPacket *msg)
 
   freeOutBuf(param);
 
-  /* TODO: end-flag(component) で見るようにした方がよい */
+  /* TODO: It's better to check with end-flag(component). */
 
   if (m_i2s_out_buf_mh_que.empty() && m_hp_out_buf_mh_que.empty())
     {

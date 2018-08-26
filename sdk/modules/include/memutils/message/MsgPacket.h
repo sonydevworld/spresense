@@ -50,19 +50,20 @@
 #define MEMORY_BARRIER() 	{;}
 #endif
 
-/*
- * 各種型定義
- */
+/* Various type definition. */
 
-typedef uint16_t MsgType;	/* メッセージタイプID */
-typedef uint16_t MsgQueId;	/* メッセージキューID */
-typedef uint8_t  MsgCpuId;	/* メッセージCPU-ID */
-typedef uint8_t  MsgFlags;	/* メッセージフラグ */
+typedef uint16_t MsgType;   /* ID of message type. */
+typedef uint16_t MsgQueId;  /* ID of message queue. */
+typedef uint8_t  MsgCpuId;  /* CPU-ID of message. */
+typedef uint8_t  MsgFlags;  /* Flag of message. */
 
-enum MsgPri {			/* メッセージ優先度 */
+enum MsgPri
+{
+  /* Priority of message. */
+
 	MsgPriNormal,
 	MsgPriHigh,
-	NumMsgPri		/* 優先度の数 */
+	NumMsgPri /* Number of priority. */
 };
 
 /* Message parameter type match check */
@@ -73,10 +74,19 @@ enum MsgPri {			/* メッセージ優先度 */
  *****************************************************************/
 class MsgPacketHeader {
 public:
-	/* 基本的に各フラグは、MessageLib内部専用とする予定 */
-	static const MsgFlags MsgFlagNull	= 0x00;	/* フラグは空 */
-	static const MsgFlags MsgFlagWaitParam	= 0x80;	/* パラメタ書込み待ち */
-	static const MsgFlags MsgFlagTypedParam = 0x40; /* パラメータは型を持った形式 */
+  /* Basically, each flag is exclusive to MessageLib internal. */
+
+  /* Flag is empty. */
+
+	static const MsgFlags MsgFlagNull	= 0x00; /* Flag is empty. */
+
+  /* Wait for parameter writing. */
+
+	static const MsgFlags MsgFlagWaitParam	= 0x80;
+
+  /* Parameter is formatted with type. */
+
+	static const MsgFlags MsgFlagTypedParam = 0x40;
 	MsgPacketHeader(MsgType type, MsgQueId reply, MsgFlags flags, uint16_t size = 0) :
 		m_type(type),
 		m_reply(reply),
@@ -104,12 +114,12 @@ protected:
 }; /* class MsgPacketHeader */
 
 /*****************************************************************
- * メッセージパラメタが存在しないことを示すクラス
+ * Class indicating that the message parameter does not exist
  *****************************************************************/
 class MsgNullParam {};
 
 /*****************************************************************
- * アドレス範囲パラメタであることを示すクラス
+ * Class indicating that it is an address range parameter
  *****************************************************************/
 class MsgRangedParam {
 public:
@@ -125,8 +135,9 @@ private:
 };
 
 /*****************************************************************
- * メッセージパケットクラス
- * 本クラスのインスタンスのコピーでは、パラメタはコピーされないので注意すること
+ * Message Packet Class
+ * In the instance copy of this class,
+ * note that the parameters are not copied
  *****************************************************************/
 class MsgPacket : public MsgPacketHeader {
 public:
@@ -195,7 +206,7 @@ protected:
 		}
 		m_param_size = sizeof(T);
 		MEMORY_BARRIER();
-		m_flags &= ~MsgFlagWaitParam;	/* パラメタ書込み待ちフラグをクリア */
+		m_flags &= ~MsgFlagWaitParam; /* Clear the parameter write wait flag. */
 	}
 
 	void setParam(const MsgRangedParam& param, bool /* type_check */) {
@@ -203,12 +214,13 @@ protected:
 		memcpy(&m_param[0], param.getParam(), param.getParamSize());
 		m_param_size = param.getParamSize();
 		MEMORY_BARRIER();
-		m_flags &= ~MsgFlagWaitParam;	/* パラメタ書込み待ちフラグをクリア */
+		m_flags &= ~MsgFlagWaitParam; /* Clear the parameter write wait flag. */
 	}
 
 	bool isTypeCheckEnable() const { return MSG_PARAM_TYPE_MATCH_CHECK && isTypedParam(); }
 
-	/* エラーチェックなしで、任意の型でパラメタを参照する */
+  /* Reference parameters with arbitrary types without error checking. */
+
 	template<typename T>
 	const T& peekParamAny() const {
 		if (isTypeCheckEnable()) {
@@ -218,7 +230,11 @@ protected:
 		}
 	}
 
-	/* ダンプログ専用。サイズチェックなしなので、ゴミを返す可能性あり */
+  /* For dump log only.
+   * Since there is no size check,
+   * there is a possibility of returning garbage.
+   */
+
 	uint32_t peekParamHead() const { return peekParamAny<uint32_t>(); }
 
 protected:

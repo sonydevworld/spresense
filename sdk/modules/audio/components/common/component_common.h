@@ -62,9 +62,7 @@ public:
   ComponentCommon() {}
   ~ComponentCommon() {}
 
-  bool dsp_boot_check(MsgQueId dsp_dtq,
-                      uint32_t audioutil_dsp_version,
-                      uint32_t *dsp_inf);
+  bool dsp_boot_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
   uint32_t dsp_init_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
   void dsp_init_complete(MsgQueId dsp_dtq, Apu::Wien2ApuCmd *packet);
 

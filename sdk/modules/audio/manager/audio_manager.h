@@ -75,7 +75,8 @@ public:
                      MsgQueId playerDtq,
                      MsgQueId subplayerDtq,
                      MsgQueId outMixerDtq,
-                     AudioAttentionCb att_cb);
+                     AudioAttentionCb att_cb,
+                     obs_AudioAttentionCb obs_att_cb);
 
   ~AudioManager()
   {
@@ -86,7 +87,8 @@ private:
                MsgQueId playerDtq,
                MsgQueId subplayerDtq,
                MsgQueId outMixerDtq,
-               AudioAttentionCb att_cb) :
+               AudioAttentionCb att_cb,
+               obs_AudioAttentionCb obs_att_cb) :
     m_selfDtq(selfDtq),
     m_playerDtq(playerDtq),
     m_subplayerDtq(subplayerDtq),
@@ -94,6 +96,7 @@ private:
     m_State(AS_MNG_STATUS_POWEROFF),
     m_SubState(AS_MNG_SUB_STATUS_NONE),
     m_attentionCBFunc(att_cb),
+    m_obs_attentionCBFunc(obs_att_cb),
     m_active_player(0),
     m_player_transition_count(0),
     m_input_en(false),
@@ -128,6 +131,7 @@ private:
   };
 
   AudioAttentionCb m_attentionCBFunc;
+  obs_AudioAttentionCb m_obs_attentionCBFunc;
 #ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
   static AudioFindCommandCallbackFunction m_findCommandCBFunc;
 #endif
@@ -189,7 +193,7 @@ private:
 
   static void execFindCommandCallback(uint16_t key_word, uint8_t status);
 
-  void execAttentions(const AttentionInfo&);
+  void execAttentions(const ErrorAttentionParam& info);
   static void execAttentionsCallback(FAR void *);
 
   uint32_t powerOnBaseBand(uint8_t power_id);

@@ -133,13 +133,13 @@ static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
   return true;
 }
 
-static void app_attention_callback(uint8_t module_id,
-                                   uint8_t error_code,
-                                   uint8_t sub_code,
-                                   const char* file_name,
-                                   uint32_t line)
+static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n", file_name, line, error_code, sub_code);
+  printf("Attention!! %s L%d ecode %d subcode %d\n",
+          attparam->error_filename,
+          attparam->line_number,
+          attparam->error_code,
+          attparam->error_att_sub_code);
 }
 
 static bool app_create_audio_sub_system(void)

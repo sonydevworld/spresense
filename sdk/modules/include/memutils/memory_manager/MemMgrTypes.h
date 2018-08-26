@@ -54,14 +54,17 @@
 #include "memutils/common_utils/common_types.h"  /* uintN_t */
 #include "memutils/os_utils/cpp_util.h"          /* CopyGuard class */
 
-/* mem_layout.hのコンフィグレーションに依存するヘッダは、これ以降に記述すること */
+/* The header depending on the configuration of mem_layout.h
+ * should be described after this.
+ */
+
 #ifdef USE_MEMMGR_MULTI_CORE
 #include "SpinLockManager.h"
 #endif
 
 #define MEMMGR_SIGNATURE  "MML"
 
-class FastMemAlloc;  /* このクラスは名前空間外 */
+class FastMemAlloc;  /* This class is outside the namespace. */
 
 /**
  * @namespace MemMgrLite
@@ -71,24 +74,29 @@ namespace MemMgrLite {
 
 class MemPool;
 class MemHandleBase;
-typedef uint32_t  MemHandleProxy;    /* MemHandleBaseクラスとの相互参照回避用 */
+typedef uint32_t  MemHandleProxy; /* For avoiding cross reference with
+                                   * MemHandleBase class.
+                                   */
 
 /** Number of Memory Layouts */
-typedef uint8_t    NumLayout;    /* メモリレイアウト数(最大255) */
-const NumLayout    BadLayoutNo = 0xff;  /* レイアウト番号は0 origin */
+typedef uint8_t    NumLayout;    /* Number of memory layout(Max 255)/ */
+const NumLayout    BadLayoutNo = 0xff;  /* The layout number is 0 origin. */
 
 /** ID of a segment pool */
-typedef uint8_t    PoolId;      /* メモリプールID(1 origin. 最大255) */
-const PoolId    NullPoolId = 0;    /* プールIDの0は未使用 */
+typedef uint8_t    PoolId;      /* Memory pool ID(1 origin. Max 255). */
+const PoolId    NullPoolId = 0; /* Pool ID 0 is unused. */
 
 /** Type of segment pools */
-typedef uint8_t    PoolType;    /* メモリプールタイプ */
+typedef uint8_t    PoolType;    /* Type of memory pool. */
 
 /**
  * @enum 
  * @brief Pool types.
  */
-enum {            /* enumは、4bytesになるコンパイラがある */
+enum
+{
+  /* enum has a compiler that will be 4 bytes. */
+
   /** the type number of fixed pools. (Now only support this type.) */
   BasicType,
   RingBufType,
@@ -96,33 +104,37 @@ enum {            /* enumは、4bytesになるコンパイラがある */
   NumPoolTypes  /* number of pool types */
 };
 
-/*
- * メモリプールアドレスに使用するアドレス体系は、プロジェクトに依存する
- * Allegro CPU環境では、通常0 originの物理アドレスを使用する
- * PoolAddr型では、0番地が有効なため、不正アドレスとして0xffffffffを使用する
+/* The address scheme use for the memory pool address depends on the project.
+ * For PoolAddr type, address 0 is valid,
+ * so 0xffffffff is used as an invalid address.
  */
+
 typedef uint32_t  PoolAddr;
 const PoolAddr    BadPoolAddr = 0xffffffff;
 
-typedef uint32_t  PoolSize;    /* メモリプールサイズ(byte単位) */
+typedef uint32_t  PoolSize;    /* Size of memory pool (byte order). */
 
 #ifdef USE_MEMMGR_OVER255_SEGMENTS
-typedef uint16_t  NumSeg;      /* メモリセグメント数(最大65535) */
+typedef uint16_t  NumSeg;      /* Number of memory segment(Max 65535). */
 #else
-typedef uint8_t    NumSeg;      /* メモリセグメント数(最大255) */
+typedef uint8_t    NumSeg;     /* Number of memory segment(Max 255). */
 #endif
-const NumSeg    NullSegNo = 0;    /* セグメント番号の0は未使用 */
+const NumSeg    NullSegNo = 0; /* Segment number 0 is unused. */
 
-typedef uint8_t    SegRefCnt;    /* セグメント参照カウント(最大255) */
+typedef uint8_t    SegRefCnt;  /* Segment reference count(Max 255). */
 
 #ifdef USE_MEMMGR_MULTI_CORE
-/* InterCpuLock::SpinLockIdはuint16_tだが、メモリ節約のため別型で定義 */
-typedef uint8_t    LockId;      /* スピンロックID(1 origin. 最大255) */
-const LockId    NullLockId = 0;    /* スピンロックIDの0は未使用 */
+/* InterCpuLock::SpinLockId is uint16_t,
+ * but it is defined as a different type for memory saving
+ */
 
-/* MemHandleのflagsフィールドに収めるため、6bit以下とすること */
-typedef uint8_t    CpuId;      /* CPU-ID (0 origin 最大15) */
-const CpuId    MaskCpuId = 0x0f;  /* とりあえず下位4bitを有効とする */
+typedef uint8_t    LockId;      /* Spin lock id(1 origin. Max 255). */
+const LockId    NullLockId = 0; /* Spin lock id 0 is unused. */
+
+/* To fit in the flags field of MemHandle, make it less than 6 bits. */
+
+typedef uint8_t    CpuId;         /* CPU-ID (0 origin. Max 15). */
+const CpuId    MaskCpuId = 0x0f;  /* Lower 4 bits are valid. */
 const CpuId    MaxCpuId = MaskCpuId;
 #endif
 

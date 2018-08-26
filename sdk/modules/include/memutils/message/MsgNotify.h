@@ -39,7 +39,8 @@
 #include "memutils/message/MsgQueBlock.h"	/* MsgQueBlock */
 
 /*****************************************************************
- * メッセージを送信したことを他CPUへ通知 (H/W依存部。CPU毎にユーザーが実装する)
+ * Notify other CPU that sending message
+ * (H/W dependent part. User implements for each CPU)
  *****************************************************************/
 inline void MsgQueBlock::notifySend(MsgCpuId cpu, MsgQueId dest)
 {

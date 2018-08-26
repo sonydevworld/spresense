@@ -36,8 +36,8 @@
 # An optional tile allocator
 
 ifeq ($(CONFIG_MM_TILE),y)
-CSRCS += mm_tileinit.c mm_tilerelease.c mm_tilereserve.c mm_tilealloc.c
-CSRCS += mm_tilemark.c mm_tilefree.c mm_tilecritical.c
+CSRCS += mm_tileinit.c mm_tilerelease.c mm_tilealloc.c
+CSRCS += mm_tilefree.c mm_tilecritical.c
 
 # Add the tile directory to the build
 

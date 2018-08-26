@@ -38,10 +38,9 @@
 #include "memutils/memory_manager/RuntimeQue.h"
 #include "memutils/memory_manager/MemMgrTypes.h"
 
-/*
- * 以下の理由により仮想関数は使用禁止
- * ・テキスト非共有のマルチコアでは、仮想関数が使えない
- * ・仮想関数を使用するとインスタンス毎に4byteサイズが増える
+/* Virtual function is prohibited for the following reason.
+ * - Text Non-shared multicore can not use virtual function.
+ * - By using virtual function 4 bytes size increases for each instance.
  */
 
 namespace MemMgrLite {
@@ -55,7 +54,10 @@ protected:
 	MemPool(const PoolAttr& attr, FastMemAlloc& fma);
 	~MemPool();
 
-	/* 例外を使用できないので、コンストラクタのエラーはこの関数で調べる */
+  /* Since exceptions can not be used, constructor errors are
+   * checked with this function.
+   */
+
 	bool isFailed() {
 		if (m_seg_no_que.que_area() == NULL || m_ref_cnt_array == NULL) {
 			return true;
@@ -78,51 +80,55 @@ protected:
 	LockId		getPoolLockId() const { return m_attr.spl_id; }
 #endif
 
-	/*
-	 * セグメント参照カウンタ値の取得・更新
-	 */
+  /* Get and update of segment reference counter value. */
+
 	SegRefCnt	getSegRefCnt(NumSeg seg_no) const {
 		D_ASSERT(seg_no != NullSegNo && seg_no <= getPoolNumSegs());
-		D_ASSERT(m_ref_cnt_array[seg_no - 1] != 0);	/* 使用中のはず */
+		D_ASSERT(m_ref_cnt_array[seg_no - 1] != 0); /* It should be in use. */
 		return m_ref_cnt_array[seg_no - 1];
 	}
 	void		incSegRefCnt(NumSeg seg_no);
 
-	/*
-	 * 使用中のメモリセグメントをメモリハンドルに格納し、格納した数を返す
-	 */
+  /* Store the memory segment in use on the memory handle and
+   * return the stored number.
+   */
+
 	uint32_t	getUsedSegs(MemHandleBase* mhs, uint32_t num_mhs);
 
-	/*
-	 * メモリプールからセグメントを取得する
-	 * 排他制御は呼出し側で行うこと
-	 */
+  /* Get a segment from the memory pool.
+   * Exclusive control should be done on the caller side.
+   */
+
 	MemHandleProxy	allocSeg();
 
-	/*
-	 * 参照カウンタを減算し、参照がなくなった場合はセグメントを返却する
-	 * 排他制御は呼出し側で行うこと
-	 */
+  /* Subtract the reference counter and return the segment
+   * if there is no reference.
+   * Exclusive control should be done on the caller side.
+   */
+
 	void	freeSeg(MemHandleBase& mh);
 
 protected:
-	/*
-	 * 静的プールの場合は、MemoryPoolLayoutsの該当箇所を指し示す
-	 * 動的プールやアドレス書き換え等が必要な場合は、別途PoolAttr格納場所を用意すること
-	 */
+  /* In the case of a static pool, it points to the corresponding part
+   * of MemoryPoolLayouts.
+   * When dynamic pooling, address rewriting, etc. are necessary,
+   * separate PoolAttr storage places should be prepared
+   */
+
 	const PoolAttr&	m_attr;		/* pool attributes */
 
-	/*
-	 * 使用可能なセグメント番号(1 origin)を保持するキュー (8 or 12bytes)
-	 * キューデータ用の領域は別途用意する必要がある
-	 */
+  /* A queue (8 or 12 bytes) holding an usable segment number (1 origin).
+   * It is necessary to separately prepare the area for queue data.
+   */
+
 	RuntimeQue<NumSeg, NumSeg>	m_seg_no_que;
 
-	/*
-	 * セグメント参照カウンタ配列へのポインタ
-	 * ポインタを格納する代わりに、SegRefCnt m_ref_cnt_array[0]; とすれば
-	 * 4bytes節約できるが、本クラスの継承クラスでデータメンバを持てなくなる
-	 */
+  /* Pointer to segment reference counter array.
+   * If you do not store the pointer and set it to
+   * SegRefCnt m_ref_cnt_array[0], you can save 4 bytes.
+   * However, you can not have data members in this class inheritance class.
+   */
+
 	SegRefCnt* const	m_ref_cnt_array;
 }; /* class MemPool */
 

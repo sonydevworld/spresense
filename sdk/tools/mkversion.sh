@@ -38,7 +38,7 @@ TOPDIR=${TOPDIR:-nuttx}
 TAG=${1:-HEAD}
 
 APP_VERSION="0.0.0"
-SDK_VERSION="SDK1.0.1"
+SDK_VERSION="SDK1.0.2"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi

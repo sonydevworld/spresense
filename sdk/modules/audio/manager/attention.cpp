@@ -38,10 +38,10 @@
 #include "attention.h"
 #include "common/audio_internal_message_types.h"
 
+extern MsgQueId AS_GetSelfDtq(void);
+
 extern "C"
 {
-
-extern MsgQueId AS_GetSelfDtq(void);
 
 #ifdef ATTENTION_USE_FILENAME_LINE
 
@@ -49,7 +49,7 @@ void _Attention(uint8_t module_id,
                 uint8_t attention_id,
                 uint8_t sub_code,
                 FAR const char* file_name,
-                uint32_t line)
+                uint16_t line)
 {
 #  ifndef CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE
   syslog(LOG_ERR,
@@ -61,14 +61,23 @@ void _Attention(uint8_t module_id,
          line);
 #  endif /* CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE */
 
-  AttentionInfo info =
+  ErrorAttentionParam info =
     {
-      module_id,
-      attention_id,
-      sub_code,
-      file_name,
-      line
+      0,            /* reserve */
+      attention_id, /* attention id */
+      0,            /* cpu id */
+      0,            /* sub module id */
+      module_id,    /* module id */
+      sub_code,     /* attention code */
+      0,            /* reserve */
+      line,         /* line number */
+      0,            /* task id */
+      0,            /* reserve */
+      0             /* dummy(file name) */
     };
+
+  snprintf(static_cast<char*>(info.error_filename), ATTENTION_FILE_NAME_LEN, "%s", file_name);
+
   MsgQueId msgq_aud_mgr = AS_GetSelfDtq();
 
   err_t er = MsgLib::send(msgq_aud_mgr,
@@ -93,12 +102,21 @@ void _Attention(uint8_t module_id,
          sub_code);
 #  endif /* CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE */
 
-  AttentionInfo info =
+  ErrorAttentionParam info =
     {
-      module_id,
-      attention_id,
-      sub_code
+      0,            /* reserve */
+      attention_id, /* attention id */
+      0,            /* cpu id */
+      0,            /* sub module id */
+      module_id,    /* module id */
+      sub_code,     /* attention code */
+      0,            /* reserve */
+      0,            /* line number */
+      0,            /* task id */
+      0,            /* reserve */
+      0             /* dummy(file name) */
     };
+
   MsgQueId msgq_aud_mgr = AS_GetSelfDtq();
 
   err_t er = MsgLib::send(msgq_aud_mgr,

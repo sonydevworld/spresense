@@ -127,19 +127,22 @@ public:
   static bool    isStaticPoolAvailable() { return getCurrentLayoutNo() != BadLayoutNo; }
 
 #ifdef USE_MEMMGR_DYNAMIC_POOL
-  /* 動的メモリプールの生成/破棄 */
+  /* Create/destroy dynamic memory pool. */
+
   static PoolId  createDynamicPool(const PoolAttr& attr, void* work_area, uint32_t area_size);
   static void  destroyDynamicPool(PoolId id);
   static uint32_t  getDynamicPoolWorkSize(const PoolAttr& attr) { return DYN_POOL_WORK_SIZE(attr); }
 #endif
 
-  /* 使用中のメモリセグメント情報を取得 */
+  /* Get used memory segment information. */
+
   static uint32_t  getStaticPoolsUsedSegs(MemHandleBase* mhs, uint32_t num_mhs);
   static uint32_t  getUsedSegs(PoolId id, MemHandleBase* mhs, uint32_t num_mhs) {
     return findPool(id)->getUsedSegs(mhs, num_mhs);
   }
 
-  /* メモリプール情報を取得 */
+  /* Get memory pool information. */
+
   static bool  isPoolAvailable(PoolId id) { return getPoolObject(id) != NULL; }
   static PoolType  getPoolType(PoolId id) { return findPool(id)->getPoolType(); }
   static PoolAddr  getPoolAddr(PoolId id) { return findPool(id)->getPoolAddr(); }
@@ -158,7 +161,8 @@ public:
 #endif
 
 #ifdef CONFIG_MEMUTILS_MEMORY_MANAGER_USE_FENCE
-  /* フェンスを検証して、エラー検出回数を返す */
+  /* Verify the fence and return the error detection count. */
+
   static uint32_t  verifyFixedAreaFences();
   static uint32_t  verifyStaticPoolsFence();
   static uint32_t  verifyPoolFence(PoolId id) { return findPool(id)->verifyPoolFence(); }
@@ -171,10 +175,10 @@ private:
   static void  destroyPool(MemPool* pool);
   static void  initFixedAreaFences();
 
-  /*
-   * プールIDに対応するメモリプールオブジェクトへのポインタを返す
-   * オブジェクトが未生成ならば、NULLを返す
+  /* Returns a pointer to the memory pool object corresponding to the pool ID.
+   * If the object has not been created, it returns NULL.
    */
+
   static MemPool* getPoolObject(PoolId id) {
     if (id < theManager->m_pool_num) {
       return theManager->m_static_pools[id];
@@ -183,7 +187,7 @@ private:
       return theManager->m_dynamic_pools[id - theManager->m_pool_num];
 #endif
     } else {
-      D_ASSERT(0);  /* 不正なプールID */
+      D_ASSERT(0);  /* Illegal pool ID. */
       return NULL;
     }
   }
@@ -193,7 +197,8 @@ private:
     return p;
   }
 
-  /* メモリセグメントの獲得/解放/情報取得 */
+  /* Memory segment allocate/free/get information. */
+
   friend class MemHandleBase;
 #ifdef USE_MEMMGR_SEG_DELETER
   static err_t allocSeg(PoolId id, size_t size_for_check, MemHandleProxy &proxy, bool use_deleter);
@@ -209,15 +214,17 @@ private:
 private:
   static Manager*  theManager;    /* for singleton */
 
-  uint8_t    m_signature[3];    /* 初期化済み判定とダンプ時の目印用 */
-  uint8_t    m_layout_no;    /* current memory layout number */
-  uint32_t  m_fix_fene_num;    /* fence数 */
-  uint32_t  m_pool_num;    /* プール数 */
-  MemPool**  m_static_pools;
+  uint8_t   m_signature[3]; /* Initialize determination and
+                             * mark for dumping.
+                             */
+  uint8_t   m_layout_no;    /* Current memory layout number. */
+  uint32_t  m_fix_fene_num; /* Numver of fence. */
+  uint32_t  m_pool_num;     /* Number of pool. */
+  MemPool** m_static_pools;
 #ifdef USE_MEMMGR_DYNAMIC_POOL
   MemPool*  m_dynamic_pools[NUM_DYN_POOLS];
-  RuntimeQue<PoolId, PoolId>  m_pool_no_que;  /* 8bytes */
-  PoolId    m_pool_no_array[NUM_DYN_POOLS];  /* 上のキューのデータ領域 */
+  RuntimeQue<PoolId, PoolId>  m_pool_no_que; /* 8bytes */
+  PoolId    m_pool_no_array[NUM_DYN_POOLS];  /* Data area of the queue */
 #endif
 }; /* class Manager */
 

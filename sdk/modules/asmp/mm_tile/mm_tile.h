@@ -3,6 +3,7 @@
  *
  *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
  ****************************************************************************/
 
 #include <sdk/config.h>
+#include <sdk/debug.h>
 
 #include <stdint.h>
 #include <semaphore.h>
@@ -50,13 +52,17 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+/* Debug */
 
-/* Sizes of things */
+#ifdef CONFIG_MM_TILE_DEBUG
+#  define tinfo(fmt, ...) loginfo(fmt, ## __VA_ARGS__)
+#  define terr(fmt, ...)  logerr(fmt, ## __VA_ARGS__)
+#else
+#  define tinfo(fmt, ...)
+#  define terr(fmt, ...)
+#endif
 
-#define SIZEOF_GAT(n) \
-  ((n + 31) >> 5)
-#define SIZEOF_TILE_S(n) \
-  (sizeof(struct tile_s) + sizeof(uint32_t) * (SIZEOF_GAT(n) - 1))
+#define ALIGNUP(x, a)  (((x) + ((1 << (a)) - 1)) & ~((1 << (a)) - 1))
 
 /****************************************************************************
  * Public Types
@@ -70,8 +76,7 @@ struct tile_s
   uint16_t   ntiles;    /* The total number of (aligned) tiles in the heap */
   sem_t      exclsem;   /* For exclusive access to the AT */
   uintptr_t  heapstart; /* The aligned start of the tile heap */
-  uint32_t   memstat;   /* Tile power status */
-  uint32_t   at[1];     /* Start of the tile allocation table */
+  uint32_t   at;        /* Tile allocation table */
 };
 
 /****************************************************************************
@@ -102,24 +107,5 @@ extern FAR struct tile_s *g_tileinfo;
 
 void tile_enter_critical(FAR struct tile_s *priv);
 void tile_leave_critical(FAR struct tile_s *priv);
-
-/****************************************************************************
- * Name: tile_mark_allocated
- *
- * Description:
- *   Mark a range of tiles as allocated.
- *
- * Input Parameters:
- *   priv  - The tile heap state structure.
- *   alloc - The address of the allocation.
- *   ntiles - The number of tiles allocated
- *
- * Returned Value:
- *   None
- *
- ****************************************************************************/
-
-void tile_mark_allocated(FAR struct tile_s *priv, uintptr_t alloc,
-                         unsigned int ntiles);
 
 #endif /* __MODULES_ASMP_MM_MM_TILE_H */

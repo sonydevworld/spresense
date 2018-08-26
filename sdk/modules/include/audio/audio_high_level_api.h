@@ -719,26 +719,6 @@ typedef struct
   uint8_t packet_length;
 } AudioResultHeader;
 
-/** Audio Attention Callback function
- * @param[in] module_id: Module ID, #AsModuleId enum type
-
- * @param[in] error_code: Error Code, AsErrorCode enum type
-
- * @param[in] sub_code: Sub Code
- */
-
-#ifndef ATTENTION_USE_FILENAME_LINE
-typedef void (*AudioAttentionCb)(uint8_t module_id,
-                                 uint8_t error_code,
-                                 uint8_t sub_code);
-#else
-typedef void (*AudioAttentionCb)(uint8_t module_id,
-                                 uint8_t error_code,
-                                 uint8_t sub_code,
-                                 FAR const char *file_name,
-                                 uint32_t line);
-#endif
-
 /** InitMicGain Command (#AUDCMD_INITMICGAIN) parameter */
 
 typedef struct
@@ -1573,6 +1553,8 @@ typedef struct
 
 /** ErrorAttention Result (#AUDRLT_ERRORATTENTION) parameter */
 
+#define ATTENTION_FILE_NAME_LEN 32
+
 typedef struct
 {
   /*! \brief [out] reserved */
@@ -1617,35 +1599,12 @@ typedef struct
 
   /*! \brief [out] File name (internal use only) */
 
-  uint32_t error_filename_1;
+  union
+  {
+    uint32_t align_dummy;
+    char     error_filename[ATTENTION_FILE_NAME_LEN];
+  };
 
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_2;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_3;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_4;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_5;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_6;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_7;
-
-  /*! \brief [out] File name (internal use only) */
-
-  uint32_t error_filename_8;
 } ErrorAttentionParam;
 
 /** Audio result packet
@@ -1686,6 +1645,23 @@ typedef struct {
 } AudioResult __attribute__((transparent_union));
 #endif
 
+/** Audio Attention Callback function
+ * @param[in] attparam: Attention detail parameter
+ */
+
+typedef void (*AudioAttentionCb)(const ErrorAttentionParam *attparam);
+
+#ifndef ATTENTION_USE_FILENAME_LINE
+typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
+                                     uint8_t error_code,
+                                     uint8_t sub_code);
+#else
+typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
+                                     uint8_t error_code,
+                                     uint8_t sub_code,
+                                     FAR const char *file_name,
+                                     uint32_t line);
+#endif
 
 /* Error Code */
 /* [T.B.D]
@@ -1746,10 +1722,6 @@ typedef struct
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**
  * @brief Send Audio Command
  *
@@ -1781,17 +1753,27 @@ int AS_ReceiveAudioResult(AudioResult* packet);
 int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb);
 
 /**
+ * @brief Activate AudioSubSystem[Deprecated]
+ *        This API is to make it compatible with old application.
+ *        Will delete most application seems to migrate to new API.
+ *
+ * @param[in] ids: AudioSubSystemIDs* Message Queue ID of Audio Module
+ *
+ * @retval error code
+ */
+
+__attribute__((deprecated("\nDeprecated attention callback type is used. \
+                           \nPlease use \"AudioAttentionCb\" as callback type. \
+                           \n")))
+int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb);
+
+/**
  * @brief Deactivate AudioSubSystem
  *
  * @retval error code
  */
 
 int AS_DeleteAudioManager(void);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 /** @} */
 

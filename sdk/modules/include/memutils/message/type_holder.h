@@ -41,17 +41,18 @@
 #include "memutils/common_utils/common_assert.h"
 #include "memutils/message/AssertInfo.h"
 
-/* typeに対応するクラス識別子を返す */
+/* Returns the class identifier corresponding to type. */
+
 #define GET_TYPE_ID(type)	(&TypeHolder<type>::type_size)
 
 template<typename T> class TypeHolder;
 
 /*****************************************************************
- * TypeHolder<T>クラスを共通に処理するための基底クラス
+ * Base class for processing TypeHolder<T> class in common
  *****************************************************************/
 class TypeHolderBase {
 public:
-	typedef size_t (*id_t)();	/* 型識別子 */
+	typedef size_t (*id_t)(); /* Type identifier. */
 
 	virtual ~TypeHolderBase() {}
 
@@ -105,20 +106,23 @@ public:
 	virtual id_t id() const = 0;
 
 #ifdef USE_TYPE_HOLDER_ACTION_API
-	/* TypeHolderクラスのサブクラスで、必要に応じてオーバーライドして利用 */
+  /* Subclass of TypeHolder class, overriding it if necessary. */
+
 	virtual void* action(void*) { return 0; }
 	virtual void* action(void*) const { return 0; }
 #endif
 }; /* TypeBase */
 
 /*****************************************************************
- * 任意の型のインスタンスと型情報を保持するクラス
- * 格納型を一意に識別するため、テンプレート引数は型のみとする
+ * Class that holds an instance of an arbitrary type and type information
+ * To uniquely identify the storage type,
+ * the template argument must be of type only
  *****************************************************************/
 template<typename T>
 class TypeHolder : public TypeHolderBase {
 public:
-	/* クラス毎に一意な関数が生成される */
+  /* A unique function is generated for each class. */
+
 	static size_t type_size() { return sizeof(T); }
 
 	TypeHolder() : m_held() {}
@@ -127,7 +131,10 @@ public:
 	T& get() { return m_held; }
 	const T& get() const { return m_held; }
 
-	/* クラス毎に一意な関数のアドレスをクラス識別に利用 */
+  /* Use the address of a unique function for each class
+   * for class identification.
+   */
+
 	virtual id_t id() const { return &type_size; }
 
 private:
