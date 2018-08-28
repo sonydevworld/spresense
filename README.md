@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/nobutokobayashi/spresense.svg?branch=master)](https://travis-ci.org/nobutokobayashi/spresense)
+
 # Spresense SDK repository
 
 Clone this repository and update submodules.
