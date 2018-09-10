@@ -1,0 +1,26 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_RECORDING_PLAYER
+	bool "Recording player (Record audio and play immediately)"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio player example
+
+if EXAMPLES_RECORDING_PLAYER
+
+config EXAMPLES_RECORDING_PLAYER_PROGNAME
+	string "Program name"
+	default "recording_player"
+
+config EXAMPLES_RECORDING_PLAYER_PRIORITY
+	int "Recording player task priority"
+	default 150
+
+config EXAMPLES_RECORDING_PLAYER_STACKSIZE
+	int "Recording player stack size"
+	default 2048
+endif
