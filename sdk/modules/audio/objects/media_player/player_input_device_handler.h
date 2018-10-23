@@ -145,7 +145,6 @@ public:
 protected:
   uint32_t    m_es_sampling_rate;
   AudioCodec  m_codec_type;
-  cxd56_audio_clkmode_t m_clock_mode;
   uint16_t    m_cur_wav_au_sample_num;
   uint8_t     m_ch_num;
   uint8_t     m_init_player_api_codec_type;

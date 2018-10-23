@@ -130,6 +130,10 @@ handel_wav_parser WavContainerFormatParser::parseChunk(const char* file_path,
             }
         }
     }
+
+  fclose(fd);
+  free((void *)wav_parser);
+
   return NULL;
 }
 

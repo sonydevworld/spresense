@@ -448,7 +448,7 @@ static bool app_create_audio_sub_system(void)
   recorder_create_param.pool_id.output        = ES_BUF_POOL;
   recorder_create_param.pool_id.dsp           = ENC_APU_CMD_POOL;
 
-  result = AS_CreateMediaRecorder(&recorder_create_param);
+  result = AS_CreateMediaRecorder(&recorder_create_param, NULL);
   if (!result)
     {
       printf("Error: AS_CreateMediaRecorder() failure. system memory insufficient!\n");

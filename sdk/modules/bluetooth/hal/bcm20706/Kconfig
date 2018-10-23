@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+
+config BCM20706
+	bool "Cypress BCM20706 bluetooth"
+	default n
+	---help---
+		Enable Bluetooth framework. This option not contain HAL configuration, so
+		if you use bluetooth function, please enable HAL configuration what you
+		want to use.

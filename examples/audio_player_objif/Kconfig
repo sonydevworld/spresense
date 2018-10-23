@@ -1,0 +1,26 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF
+	bool "Audio player (use object if)example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio player example
+
+if EXAMPLES_AUDIO_PLAYER_OBJIF
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME
+	string "Program name"
+	default "audio_player_objif"
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_PRIORITY
+	int "Audio player task priority"
+	default 150
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_STACKSIZE
+	int "Audio player stack size"
+	default 2048
+endif

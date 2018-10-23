@@ -462,6 +462,52 @@ static void get_mic_bias(uint8_t cfg_bsel, FAR asAcaPulcoMicBiasSelId *bsel)
 }
 
 /*--------------------------------------------------------------------------*/
+static void get_sp_split_on(uint8_t cf_sp_spliton, FAR asAcaSpSplitonSelId *spSpliton)
+{
+  switch (cf_sp_spliton)
+    {
+      case CXD56_AUDIO_CFG_SP_SPLITON_LONGEST:
+        *spSpliton = AS_ACA_SP_SPLITON_SEL_LONGEST;
+        break;
+
+      case CXD56_AUDIO_CFG_SP_SPLITON_LONG:
+        *spSpliton = AS_ACA_SP_SPLITON_SEL_LONG;
+        break;
+
+      case CXD56_AUDIO_CFG_SP_SPLITON_SHORT:
+        *spSpliton = AS_ACA_SP_SPLITON_SEL_SHORT;
+        break;
+
+      default:
+        *spSpliton = AS_ACA_SP_SPLITON_SEL_SHORTEST;
+        break;
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+static void get_sp_drive(uint8_t cfg_sp_drv, FAR asAcaSpDrvSelId *spDrv)
+{
+  switch (cfg_sp_drv)
+    {
+      case CXD56_AUDIO_CFG_SP_DRV_LINEOUT:
+        *spDrv = AS_ACA_SP_DRV_SEL_LINEOUT;
+        break;
+
+      case CXD56_AUDIO_CFG_SP_DRV_1DRIVER:
+        *spDrv = AS_ACA_SP_DRV_SEL_1DRIVER;
+        break;
+
+      case CXD56_AUDIO_CFG_SP_DRV_2DRIVER:
+        *spDrv = AS_ACA_SP_DRV_SEL_2DRIVER;
+        break;
+
+      default:
+        *spDrv = AS_ACA_SP_DRV_SEL_4DRIVER;
+        break;
+    }
+}
+
+/*--------------------------------------------------------------------------*/
 void get_pwon_param(asAcaPulcoParam *param)
 {
   get_osc_mode((uint8_t)CXD56_AUDIO_CFG_MCLK,       &param->oscMode);
@@ -569,8 +615,9 @@ void get_pwon_out_param(asAcaPulcoOutParam *param)
   param->spDelay   = AS_ACA_SP_DELAY_SEL_UNKNOWN;
   param->loopMode  = AS_ACA_SP_LOOP_MODE_UNKNOWN;
   param->spDlyFree = AS_ACA_SP_DLY_FREE_UNKNOWN;
-  param->spSpliton = CXD56_AUDIO_CFG_SP_SPLIT_ON;
-  param->spDrv     = CXD56_AUDIO_CFG_SP_DRIVE;
+
+  get_sp_split_on((uint8_t)CXD56_AUDIO_CFG_SP_SPLIT_ON, &param->spSpliton);
+  get_sp_drive((uint8_t)CXD56_AUDIO_CFG_SP_DRIVE, &param->spDrv);
 }
 
 /****************************************************************************

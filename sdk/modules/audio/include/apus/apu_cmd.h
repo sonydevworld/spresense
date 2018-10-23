@@ -52,6 +52,10 @@ __APU_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* Invalid cpu id. */
+
+#define APU_INVALID_CPU_ID 0xFF
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -128,6 +132,13 @@ enum audio_pcm_format_type_e
 };
 typedef enum audio_pcm_format_type_e AudioPcmFormatType;
 
+/* SRC channel mode(24bit only) */
+enum AudioSRCChMode {
+	AudSRCChModeAll = 0,  /**< All channel mode */
+	AudSRCChModeEven,     /**< Even channel only mode */
+	AudSRCChModeOdd       /**< Odd channel only mode */
+};
+
 /* xLOUD mode */
 enum audio_xloud_mode_e
 {
@@ -168,7 +179,7 @@ struct apu_cmd_header_s
   uint8_t event_type;    /**< Event type */
 
   apu_cmd_header_s():
-    core_id(0xFF),
+    core_id(APU_INVALID_CPU_ID),
     context_id(0xFF),
     process_mode(InvalidApuProcessMode),
     event_type(InvalidApuEvent)
@@ -240,11 +251,14 @@ struct apu_init_dec_cmd_s
 public:
   AudioCodec         codec_type;      /**< Codec type of input data */
   uint8_t            channel_num;     /**< Channel number of input data */
+  bool               use_slave_cpu;   /**< whether to process with slave core */
+  uint8_t            slave_cpu_id;    /**< CPU id of slave DSP */
   uint32_t           bit_rate;        /**< Bit rate of input data */
   uint32_t           sampling_rate;   /**< Sampling rate of input data */
   AudioChannelConfig channel_config;  /**< Channel config of input data */
   ApuPcmParam        out_pcm_param;   /**< Output data information */
   DebugDumpInfo      debug_dump_info; /**< Debug dump information */
+  BufferHeader       work_buffer;     /**< Work buffer information for SRC */
 };
 typedef struct apu_init_dec_cmd_s ApuInitDecCmd;
 
@@ -305,6 +319,7 @@ public:
   uint32_t  attenuation;           /**< Attenuation[dB] */
   uint16_t  in_word_len;           /**< Word length of input data[Byte] */
   uint16_t  out_word_len;          /**< Word length of output data[Byte] */
+  AudioSRCChMode ch_mode;          /**< mode of SRC target channel */
 
 };
 

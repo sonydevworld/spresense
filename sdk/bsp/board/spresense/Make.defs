@@ -47,3 +47,7 @@ ifeq ($(CONFIG_CXD56_SDIO),y)
 CSRCS += cxd56_sdcard.c
 endif
 
+ifeq ($(CONFIG_MODEM_ALTMDM),y)
+CSRCS += cxd56_altmdm.c
+endif
+

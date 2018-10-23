@@ -1,0 +1,14 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "DNN runtime library"
+config DNN_RT
+	bool "DNN runtime library"
+	depends on EXTERNALS_CMSIS_NN
+	default n
+	---help---
+		Enable or disable deep neural network library.
+
+endmenu # DNN_RT

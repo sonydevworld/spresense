@@ -106,6 +106,10 @@
 #  include "cxd56_geofence.h"
 #endif
 
+#ifdef CONFIG_MODEM_ALTMDM
+#  include <arch/board/common/cxd56_altmdm.h>
+#endif
+
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
 #endif
@@ -281,6 +285,14 @@ int board_app_initialize(uintptr_t arg)
 
 #ifdef CONFIG_ASMP
   asmp_initialize();
+#endif
+
+#ifdef CONFIG_MODEM_ALTMDM
+  ret = board_altmdm_initialize("/dev/altmdm", 5);
+  if (ret < 0)
+    {
+      _err("ERROR: Failed to initialze Altair modem. \n");
+    }
 #endif
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK

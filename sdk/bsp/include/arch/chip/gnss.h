@@ -94,7 +94,8 @@ extern "C" {
  *
  * @param[in] arg
  * Satellite system bitmap value of uint32_t. Not address pointer.\n
- * Bit OR of #CXD56_GNSS_SAT_GPS, #CXD56_GNSS_SAT_GLONASS.
+ * Bit OR of #CXD56_GNSS_SAT_GPS, #CXD56_GNSS_SAT_GLONASS,
+ * #CXD56_GNSS_SAT_SBAS, #CXD56_GNSS_SAT_QZ_L1CA, #CXD56_GNSS_SAT_QZ_L1S.
  */
 
 #define CXD56_GNSS_IOCTL_SELECT_SATELLITE_SYSTEM 3
@@ -106,7 +107,8 @@ extern "C" {
  *
  * @param[out] arg
  * Address pinting to of uint32_t object.\n
- * It shows that bit OR of #CXD56_GNSS_SAT_GPS, #CXD56_GNSS_SAT_GLONASS.
+ * Bit OR of #CXD56_GNSS_SAT_GPS, #CXD56_GNSS_SAT_GLONASS,
+ * #CXD56_GNSS_SAT_SBAS, #CXD56_GNSS_SAT_QZ_L1CA, #CXD56_GNSS_SAT_QZ_L1S.
  */
 
 #define CXD56_GNSS_IOCTL_GET_SATELLITE_SYSTEM 4
@@ -633,6 +635,10 @@ extern "C" {
 #define CXD56_GNSS_GLONASS_ALMANAC_SIZE   576  /**< GLONASS Almanac Size */
 
 #define CXD56_GNSS_GLONASS_EPHEMERIS_SIZE 1152 /**< GLONASS Ephemeris Size */
+
+#define CXD56_GNSS_QZSSL1CA_ALMANAC_SIZE  640  /**< GPS Almanac Size */
+
+#define CXD56_GNSS_QZSSL1CA_EPHEMERIS_SIZE 960 /**< GPS Ephemeris Size */
 /* @} */
 
 /*
@@ -771,7 +777,8 @@ struct cxd56_gnss_ope_mode_param_s
 struct cxd56_gnss_orbital_param_s
 {
   uint32_t      type; /**< One of #CXD56_GNSS_DATA_GPS,
-                           #CXD56_GNSS_DATA_GLONASS. */
+                           #CXD56_GNSS_DATA_GLONASS or
+                           #CXD56_GNSS_DATA_QZSSL1CA. */
   FAR uint32_t *data; /**< Address pointing to almanac or ephemeris data
                            buffer */
 };

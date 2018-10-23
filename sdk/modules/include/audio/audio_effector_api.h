@@ -742,18 +742,25 @@ typedef struct
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**
  * @brief Activate sound effector feature
  *
  * @param[in] param: Parameters of resources used by sound effector
+ * @param[in] attcb: Attention callback of Player. NULL means no callback.
  *
  * @retval     true  : success
  * @retval     false : failure
  */
+bool AS_CreateEffector(FAR AsCreateEffectorParam_t *param,
+                       AudioAttentionCb attcb);
+
+__attribute__((deprecated(
+                 "\n \
+                  \n Deprecated create API is used. \
+                  \n Use \"AS_CreateEffector(AsCreateEffectorParam_t * \
+                  \n                        AudioAttentionCb)\". \
+                  \n \
+                  \n")))
 bool AS_CreateEffector(FAR AsCreateEffectorParam_t *param);
 
 /**
@@ -763,10 +770,6 @@ bool AS_CreateEffector(FAR AsCreateEffectorParam_t *param);
  * @retval     false : failure
  */
 bool AS_DeleteEffector(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_EFFECTOR_API_H */
 /**

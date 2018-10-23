@@ -1,0 +1,22 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config NETUTILS_FTPC
+	bool "FTP client"
+	default n
+	---help---
+		Enable support for the FTP client.
+
+if NETUTILS_FTPC
+
+config DEBUG_FTPC
+	bool "Debug FTP client"
+	default n
+	depends on DEBUG_FEATURES
+	---help---
+		Enable debug support for the FTP client.  This option simple forces
+		CONFIG_DEBUG_NET to be on, but only for the files within this directory.
+
+endif

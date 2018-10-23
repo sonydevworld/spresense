@@ -49,7 +49,7 @@
 #include "wien2_internal_packet.h"
 #include "debug/dbg_log.h"
 
-__WIEN2_BEGIN_NAMESPACE
+__USING_WIEN2
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -239,7 +239,7 @@ uint32_t MediaRecorderObjectTask::loadCodec(AudioCodec codec,
     }
   else if (codec == AudCodecLPCM)
     {
-      if (sampling_rate != AS_SAMPLINGRATE_48000)
+      if (isNeedUpsampling(sampling_rate))
         {
           rst = AS_filter_activate(SRCOnly,
                                    (path) ? path : CONFIG_AUDIOUTILS_DSP_MOUNTPT,
@@ -274,7 +274,7 @@ bool MediaRecorderObjectTask::unloadCodec(void)
         }
     }
   else if ((m_codec_type == AudCodecLPCM) &&
-    (m_sampling_rate != AS_SAMPLINGRATE_48000))
+           (isNeedUpsampling(m_sampling_rate)))
     {
       if(!AS_filter_deactivate(SRCOnly))
         {
@@ -610,8 +610,8 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
   else
     {
       if (m_codec_type == AudCodecLPCM &&
-          (m_sampling_rate == AS_SAMPLINGRATE_16000 &&
-           cmd.init_param.sampling_rate == AS_SAMPLINGRATE_48000))
+          (isNeedUpsampling(m_sampling_rate) &&
+           !isNeedUpsampling(cmd.init_param.sampling_rate)))
         {
           if (!unloadCodec())
             {
@@ -627,9 +627,8 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
         }
 
       if (m_codec_type == AudCodecLPCM &&
-          (m_sampling_rate == AS_SAMPLINGRATE_48000 &&
-            cmd.init_param.sampling_rate ==
-              AS_SAMPLINGRATE_16000))
+          !isNeedUpsampling(m_sampling_rate) &&
+          isNeedUpsampling(cmd.init_param.sampling_rate))
         {
           uint32_t dsp_inf = 0;
           rst = loadCodec(cmd_codec_type,
@@ -709,7 +708,7 @@ void MediaRecorderObjectTask::startOnReady(MsgPacket *msg)
       filter_param.init_src_param.input_pcm_byte_length  = m_pcm_byte_len;
       filter_param.init_src_param.output_pcm_byte_length = m_pcm_byte_len;
       filter_param.callback                              = src_done_callback;
-      if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+      if (isNeedUpsampling(m_sampling_rate))
         {
           apu_result = AS_filter_init(filter_param, &dsp_inf);
           result = AS_filter_recv_done();
@@ -835,7 +834,7 @@ void MediaRecorderObjectTask::filterDoneOnRec(MsgPacket *msg)
 {
   SrcFilterCompCmpltParam filter_result =
     msg->moveParam<SrcFilterCompCmpltParam>();
-  if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+  if (isNeedUpsampling(m_sampling_rate))
     {
       AS_filter_recv_done();
     }
@@ -852,7 +851,7 @@ void MediaRecorderObjectTask::filterDoneOnStop(MsgPacket *msg)
 {
   SrcFilterCompCmpltParam filter_result =
     msg->moveParam<SrcFilterCompCmpltParam>();
-  if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+  if (isNeedUpsampling(m_sampling_rate))
     {
       AS_filter_recv_done();
     }
@@ -905,7 +904,7 @@ void MediaRecorderObjectTask::filterDoneOnOverflow(MsgPacket *msg)
 {
   SrcFilterCompCmpltParam filter_result =
     msg->moveParam<SrcFilterCompCmpltParam>();
-  if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+  if (isNeedUpsampling(m_sampling_rate))
     {
       AS_filter_recv_done();
     }
@@ -1121,7 +1120,7 @@ void MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh, uint32_t pcm_siz
 {
   if (m_codec_type == AudCodecLPCM)
     {
-      if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+      if (isNeedUpsampling(m_sampling_rate))
         {
           FilterComponentParam param;
           param.filter_type = Apu::SRC;
@@ -1183,7 +1182,7 @@ void MediaRecorderObjectTask::stopEnc(void)
 {
   if (m_codec_type == AudCodecLPCM)
     {
-      if (m_sampling_rate != AS_SAMPLINGRATE_48000)
+      if (isNeedUpsampling(m_sampling_rate))
         {
           FilterComponentParam param;
           param.filter_type = Apu::SRC;
@@ -1657,15 +1656,50 @@ bool MediaRecorderObjectTask::checkAndSetMemPool(void)
   return true;
 }
 
+/*--------------------------------------------------------------------------*/
+bool MediaRecorderObjectTask::isNeedUpsampling(int32_t sampling_rate)
+{
+  /* The condition that the sampling rate converter is unnecessary is
+   * when input sampling and output sampling are equal.
+   * If clock mode is normal, the input sampling rate is 48000.
+   * Also, if the clock mode is HI-Res, the input sampling rate is 192000.
+   * Therefore, if the clock mode is normal and output sampling is 48000,
+   * and clock mode is Hi-Res and output sampling is 192000,
+   * upsampling is unnecessary.
+   */
+
+  cxd56_audio_clkmode_t clock_mode = cxd56_audio_get_clkmode();
+  if (((sampling_rate == AS_SAMPLINGRATE_48000) &&
+       (clock_mode == CXD56_AUDIO_CLKMODE_NORMAL)) ||
+      ((sampling_rate == AS_SAMPLINGRATE_192000) &&
+       (clock_mode == CXD56_AUDIO_CLKMODE_HIRES)))
+    {
+      /* No need upsampling. */
+
+      return false;
+    }
+  /* Need upsampoing. */
+
+  return true;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-extern "C"
-{
 /*--------------------------------------------------------------------------*/
 bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
 {
+  return AS_CreateMediaRecorder(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb attcb)
+{
+  /* Register attention callback */
+
+  MEDIA_RECORDER_REG_ATTCB(attcb);
+
   /* Parameter check */
 
   if (param == NULL)
@@ -1804,9 +1838,13 @@ bool AS_DeleteMediaRecorder(void)
   task_delete(s_rcd_pid);
   delete s_rcd_obj;
   s_rcd_obj = NULL;
+
+  /* Unregister attention callback */
+
+  MEDIA_RECORDER_UNREG_ATTCB();
+
   return true;
 }
-} /* extern "C" */
 
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::create(MsgQueId self_dtq,
@@ -1824,5 +1862,3 @@ void MediaRecorderObjectTask::create(MsgQueId self_dtq,
       return;
     }
 }
-
-__WIEN2_END_NAMESPACE

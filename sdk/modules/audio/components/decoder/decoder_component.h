@@ -51,6 +51,17 @@ __WIEN2_BEGIN_NAMESPACE
 
 typedef bool (*DecCompCallback)(void*, void*);
 
+struct ActDecCompParam
+{
+  AudioCodec         codec;
+  FAR char           *path;
+  FAR void           **p_instance;
+  MemMgrLite::PoolId apu_pool_id;
+  MsgQueId           apu_mid;
+  FAR uint32_t       *dsp_inf;
+  bool               dsp_multi_core;
+};
+
 struct InitDecCompParam
 {
   AudioCodec       codec_type;
@@ -60,6 +71,8 @@ struct InitDecCompParam
   uint32_t         frame_sample_num;
   DecCompCallback  callback;
   void             *p_requester;
+  BufferHeader     work_buffer;
+  bool             dsp_multi_core;
 };
 
 struct ExecDecCompParam
@@ -119,12 +132,7 @@ bool AS_decode_recv_apu(void *p_param, void *p_instance);
 
 bool AS_decode_recv_done(void *p_instance);
 
-uint32_t AS_decode_activate(AudioCodec param,
-                            const char *path,
-                            void **p_instance,
-                            MemMgrLite::PoolId apu_pool_id,
-                            MsgQueId apu_mid,
-                            uint32_t *dsp_inf);
+uint32_t AS_decode_activate(FAR ActDecCompParam *param);
 
 bool AS_decode_deactivate(void *p_instance);
 
@@ -138,6 +146,7 @@ public:
   {
     m_apu_pool_id = apu_pool_id;
     m_apu_mid = apu_mid;
+    m_dsp_slave_handler = NULL;
   }
   ~DecoderComponent() {}
 
@@ -147,11 +156,12 @@ public:
   bool setparam_apu(const SetDecCompParam& param);
   bool recv_apu(void *p_param);
   bool recv_done(void) { return freeApuCmdBuf(); };
-  uint32_t activate(AudioCodec param, const char *path, uint32_t *dsp_inf);
+  uint32_t activate(FAR ActDecCompParam *param);
   bool deactivate();
   MsgQueId get_apu_mid(void) { return m_apu_mid; };
 
   void *m_dsp_handler;
+  void *m_dsp_slave_handler;
 
 private:
   MemMgrLite::PoolId m_apu_pool_id;
@@ -170,6 +180,8 @@ private:
 #ifdef CONFIG_AUDIOUTILS_DSP_DEBUG_DUMP
   DecDebugLogInfo m_debug_log_info;
 #endif
+
+  uint8_t m_slave_cpu_id;
 
   void send_apu(Apu::Wien2ApuCmd*);
 

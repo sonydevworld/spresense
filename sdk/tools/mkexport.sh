@@ -323,6 +323,13 @@ for dir in ${OSDIRS}; do
 	cp -f "${TOPDIR}"/sched/${dir}/*.h "${EXPORTNXDIR}"/arch/os/${dir}/. 2>/dev/null
 done
 
+# Copy External CMSIS header files
+
+mkdir "${EXPORTNXDIR}/include/cmsis" || { echo "MK: 'mkdir ${EXPORTNXDIR}/include/cmsis' failed"; exit 1; }
+cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* "${EXPORTNXDIR}/include/cmsis"
+cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* "${EXPORTNXDIR}/include/cmsis"
+cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* "${EXPORTNXDIR}/include/cmsis"
+
 # Add the board library to the list of libraries
 
 LIBLIST="${LIBLIST} bsp/board/libboard${LIBEXT}"

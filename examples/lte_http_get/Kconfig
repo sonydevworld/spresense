@@ -1,0 +1,58 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_HTTP_GET
+	bool "HTTP GET method using LTE example"
+	default n
+	---help---
+		Enable the HTTP GET method using LTE example
+
+if EXAMPLES_LTE_HTTP_GET
+
+config EXAMPLES_LTE_HTTP_GET_PROGNAME
+	string "Program name"
+	default "lte_http_get"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_HTTP_GET_PRIORITY
+	int "lte_http_get task priority"
+	default 100
+
+config EXAMPLES_LTE_HTTP_GET_STACKSIZE
+	int "lte_http_get stack size"
+	default 2048
+
+config EXAMPLES_LTE_HTTP_GET_APN_NAME
+	string "Access Point Name"
+	default ""
+
+config EXAMPLES_LTE_HTTP_GET_APN_IPTYPE
+	int "IP type"
+	default 0
+	range 0 2
+	---help---
+		IP type is selected from IP, IPv6 and IPv4/v6.
+		Values are IP=0, IPv6=1 and IPv4/v6=2.
+
+config EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE
+	int "Authentication type"
+	default 0
+	range 0 2
+	---help---
+		Authentication type is selected from NONE, PAP and CHAP.
+		Values are NONE=0, PAP=1, CHAP=2.
+
+config EXAMPLES_LTE_HTTP_GET_APN_USERNAME
+	string "Username used for authentication"
+	default ""
+
+config EXAMPLES_LTE_HTTP_GET_APN_PASSWD
+	string "Password used for authentication"
+	default ""
+
+endif

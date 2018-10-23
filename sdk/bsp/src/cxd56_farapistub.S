@@ -571,6 +571,10 @@ _modulelist_rtc_mgr:
     nop
     nop
 
+    /* GNSP_FreeSysMemory */
+    nop
+    nop
+
     .section	.modulelist, "ax"
     .align	2
     .global  _modulelist_gnss_pwr

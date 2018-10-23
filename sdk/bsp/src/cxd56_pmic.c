@@ -228,7 +228,7 @@ static void pmic_int_worker(void *arg)
  *
  ************************************************************************************/
 
-static int pmic_int_handler(int irq, void *context)
+static int pmic_int_handler(int irq, void *context, void *arg)
 {
   int ret;
 
@@ -1304,7 +1304,7 @@ int up_pmic_set_notify(int kind, pmic_notify_t cb)
 
   if (is_first)
     {
-      irq_attach(irq, pmic_int_handler);
+      irq_attach(irq, pmic_int_handler, NULL);
       is_first = 0;
     }
 

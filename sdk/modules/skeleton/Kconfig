@@ -1,10 +1,10 @@
 
 menuconfig SKELETON
 	bool "Skeleton"
-	help
+	---help---
 		This is a template for each modules.
 
 if SKELETON
-	config SKELETON_OPTION
+config SKELETON_OPTION
 	bool "Options for module"
 endif

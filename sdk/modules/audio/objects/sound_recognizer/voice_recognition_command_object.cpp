@@ -389,9 +389,6 @@ void VoiceRecognitionCommandObject::freeVadInBuf()
  * Public Functions
  ****************************************************************************/
 
-extern "C"
-{
-
 int AS_VoiceCmdObjEntry(int argc, char *argv[])
 {
   VoiceRecognitionCommandObject::create(s_self_dtq, s_manager_dtq);
@@ -400,6 +397,15 @@ int AS_VoiceCmdObjEntry(int argc, char *argv[])
 
 bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param)
 {
+  return AS_CreateRecognizer(param, NULL);
+}
+
+bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb attcb)
+{
+  /* Register attention callback */ 
+
+  RECOGNITION_OBJ_REG_ATTCB(attcb);
+
   /* Parameter check */
 
   if (param == NULL)
@@ -434,10 +440,13 @@ bool AS_DeleteRecognizer(void)
   task_delete(s_recognizer_pid);
   delete s_rcg_obj;
   s_rcg_obj = NULL;
+
+  /* Unregister attention callback */ 
+
+  RECOGNITION_OBJ_UNREG_ATTCB();
+
   return true;
 }
-
-} /* extern "C" */
 
 void VoiceRecognitionCommandObject::create(MsgQueId msgq_id,
                                            MsgQueId manager_msg_id)

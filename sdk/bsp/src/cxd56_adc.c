@@ -565,7 +565,6 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
 
 static int adc_stop(adc_ch_t ch, FAR struct seq_s *seq)
 {
-  int ret;
   uint32_t *addr;
   uint32_t val;
   uint32_t mask;
@@ -615,7 +614,7 @@ static int adc_stop(adc_ch_t ch, FAR struct seq_s *seq)
 
   adc_active[ch] = false;
 
-  return ret;
+  return OK;
 }
 
 /****************************************************************************

@@ -3,16 +3,13 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-menuconfig VIDEO_DEVICES
-	bool "Video Device Support"
-	default n
-	---help---
-		Enable support for video device drivers.
+menu "Video Device Support"
 
-if VIDEO_DEVICES
+if VIDEO
 
 config VIDEO_ISX012
 	bool "ISX012 Image sensor"
 	default n
 
-endif # VIDEO_DEVICES
+endif # VIDEO
+endmenu

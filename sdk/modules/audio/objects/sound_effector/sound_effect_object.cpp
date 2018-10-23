@@ -40,7 +40,7 @@
 #include "objects/sound_recognizer/voice_recognition_command_object.h"
 #endif
 
-__WIEN2_BEGIN_NAMESPACE
+__USING_WIEN2
 
 using namespace MemMgrLite;
 static MsgQueId s_self_dtq;
@@ -89,7 +89,6 @@ SoundEffectObject* s_effec_obj = NULL;
 /* TODO: Why not use macro created by memory library? */
 #define MAX_MFE_OUT_PCM_BUF_SIZE (MFE_OUT_SAMPLE_NUM * MFE_OUT_BYTE_LEN)
 
-extern "C" {
 /*--------------------------------------------------------------------*/
 int AS_SoundEffectObjEntry(int argc, char *argv[])
 {
@@ -100,6 +99,16 @@ int AS_SoundEffectObjEntry(int argc, char *argv[])
 /*--------------------------------------------------------------------*/
 bool AS_CreateEffector(FAR AsCreateEffectorParam_t *param)
 {
+  return AS_CreateEffector(param, NULL);
+}
+
+/*--------------------------------------------------------------------*/
+bool AS_CreateEffector(FAR AsCreateEffectorParam_t *param, AudioAttentionCb attcb)
+{
+  /* Register attention callback */
+
+  SOUNDFX_REG_ATTCB(attcb);
+
   /* Paramter check */
 
   if (param == NULL)
@@ -150,10 +159,16 @@ bool AS_DeleteEffector(void)
     {
       delete s_effec_obj;
       s_effec_obj = NULL;
+
+      /* Unregister attention callback */
+
+      SOUNDFX_UNREG_ATTCB();
     }
 
   return true;
 }
+
+extern "C" {
 
 /*--------------------------------------------------------------------*/
 static void capture_done_callback(CaptureDataParam param)
@@ -1696,6 +1711,4 @@ void* SoundEffectObject::allocMfeOutBuf()
 
   return mh.getPa();
 }
-
-__WIEN2_END_NAMESPACE
 

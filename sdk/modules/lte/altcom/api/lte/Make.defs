@@ -1,0 +1,104 @@
+############################################################################
+# modules/lte/altcom/api/lte/Make.defs
+#
+#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in
+#    the documentation and/or other materials provided with the
+#    distribution.
+# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+#    the names of its contributors may be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+############################################################################
+
+CSRCS += apicmdhdlr_attachnet.c
+CSRCS += apicmdhdlr_dataoff.c
+CSRCS += apicmdhdlr_dataon.c
+CSRCS += apicmdhdlr_detachnet.c
+CSRCS += apicmdhdlr_enterpin.c
+CSRCS += apicmdhdlr_errind.c
+CSRCS += apicmdhdlr_getapnset.c
+CSRCS += apicmdhdlr_getce.c
+CSRCS += apicmdhdlr_getdataconfig.c
+CSRCS += apicmdhdlr_getdatastat.c
+CSRCS += apicmdhdlr_getedrx.c
+CSRCS += apicmdhdlr_getltime.c
+CSRCS += apicmdhdlr_getnetstat.c
+CSRCS += apicmdhdlr_getpinset.c
+CSRCS += apicmdhdlr_getpsm.c
+CSRCS += apicmdhdlr_imei.c
+CSRCS += apicmdhdlr_imsi.c
+CSRCS += apicmdhdlr_operator.c
+CSRCS += apicmdhdlr_phoneno.c
+CSRCS += apicmdhdlr_power.c
+CSRCS += apicmdhdlr_repcellinfo.c
+CSRCS += apicmdhdlr_repevt.c
+CSRCS += apicmdhdlr_repnetstat.c
+CSRCS += apicmdhdlr_repquality.c
+CSRCS += apicmdhdlr_setapn.c
+CSRCS += apicmdhdlr_setce.c
+CSRCS += apicmdhdlr_setdataconfig.c
+CSRCS += apicmdhdlr_setedrx.c
+CSRCS += apicmdhdlr_setpin.c
+CSRCS += apicmdhdlr_setpsm.c
+CSRCS += apicmdhdlr_ver.c
+CSRCS += lte_attach_net.c
+CSRCS += lte_callback.c
+CSRCS += lte_dataoff.c
+CSRCS += lte_dataon.c
+CSRCS += lte_detach_net.c
+CSRCS += lte_enterpin.c
+CSRCS += lte_finalize.c
+CSRCS += lte_getapnset.c
+CSRCS += lte_getce.c
+CSRCS += lte_getdataconfig.c
+CSRCS += lte_getdatastat.c
+CSRCS += lte_getedrx.c
+CSRCS += lte_getltime.c
+CSRCS += lte_getnetstat.c
+CSRCS += lte_getpinset.c
+CSRCS += lte_getpsm.c
+CSRCS += lte_imei.c
+CSRCS += lte_imsi.c
+CSRCS += lte_initialize.c
+CSRCS += lte_operator.c
+CSRCS += lte_phoneno.c
+CSRCS += lte_power.c
+CSRCS += lte_repcellinfo.c
+CSRCS += lte_repevt.c
+CSRCS += lte_repnetstat.c
+CSRCS += lte_repquality.c
+CSRCS += lte_setapn.c
+CSRCS += lte_setce.c
+CSRCS += lte_setdataconfig.c
+CSRCS += lte_setedrx.c
+CSRCS += lte_setpin.c
+CSRCS += lte_setpsm.c
+CSRCS += lte_ver.c
+
+# Add the src directory to the build
+
+DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)lte
+VPATH += :altcom$(DELIM)api$(DELIM)lte

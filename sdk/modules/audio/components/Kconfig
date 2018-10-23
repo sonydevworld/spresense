@@ -15,6 +15,14 @@ config AUDIOUTILS_DECODER
 	---help---
 		Enable Decode Feature
 
+if AUDIOUTILS_DECODER
+config AUDIOUTILS_DECODER_TIME_MEASUREMENT
+	bool "Measure the decoding time and display the result"
+	default n
+	---help---
+		Enable measure the decoding time
+endif
+
 config AUDIOUTILS_ENCODER
 	bool "Encoder"
 	default n

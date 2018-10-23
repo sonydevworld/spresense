@@ -46,15 +46,21 @@
 
 /* Sampling rate */
 
-#define SAMPLINGRATE_8000   8000   /* 8kHz      */
-#define SAMPLINGRATE_11025  11025  /* 11.025kHz */
-#define SAMPLINGRATE_12000  12000  /* 12kHz     */
-#define SAMPLINGRATE_16000  16000  /* 16kHz     */
-#define SAMPLINGRATE_22050  22050  /* 2205kHz   */
-#define SAMPLINGRATE_24000  24000  /* 24kHz     */
-#define SAMPLINGRATE_32000  32000  /* 32kHz     */
-#define SAMPLINGRATE_44100  44100  /* 44.1kHz   */
-#define SAMPLINGRATE_48000  48000  /* 48kHz     */
+#define SAMPLINGRATE_8000    8000   /* 8kHz      */
+#define SAMPLINGRATE_11025   11025  /* 11.025kHz */
+#define SAMPLINGRATE_12000   12000  /* 12kHz     */
+#define SAMPLINGRATE_16000   16000  /* 16kHz     */
+#define SAMPLINGRATE_22050   22050  /* 2205kHz   */
+#define SAMPLINGRATE_24000   24000  /* 24kHz     */
+#define SAMPLINGRATE_32000   32000  /* 32kHz     */
+#define SAMPLINGRATE_44100   44100  /* 44.1kHz   */
+#define SAMPLINGRATE_48000   48000  /* 48kHz     */
+#define SAMPLINGRATE_64000   64000  /* 64kHz     */
+#define SAMPLINGRATE_88200   88200  /* 88.2kHz   */
+#define SAMPLINGRATE_96000   96000  /* 96kHz     */
+#define SAMPLINGRATE_128000  128000 /* 128kHz    */
+#define SAMPLINGRATE_176400  176400 /* 176.4kHz  */
+#define SAMPLINGRATE_192000  192000 /* 192kHz    */
 
 /* Format ID */
 

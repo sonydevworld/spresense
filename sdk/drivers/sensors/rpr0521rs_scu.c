@@ -248,7 +248,7 @@ static uint8_t g_ps_persistence = RPR0521RS_PS_CONTROL_PS_PERSISTENCE_2;
 static uint8_t rpr0521rs_getreg8(FAR struct rpr0521rs_dev_s *priv,
                                  uint8_t regaddr)
 {
-  uint8_t regval;
+  uint8_t regval = 0;
   uint16_t inst[2];
 
   /* Send register to read and get the next byte */

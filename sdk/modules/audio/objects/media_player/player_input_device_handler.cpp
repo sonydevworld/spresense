@@ -48,8 +48,9 @@ __WIEN2_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define LPCM_SAMPLE_HIRES  1024
-#define LPCM_SAMPLE_NORMAL 640
+#define LPCM_SAMPLE_HIGH   1024
+#define LPCM_SAMPLE_MID    640
+#define LPCM_SAMPLE_LOW    320
 
 #define BIT_TO_BYTE(bit_length) ( \
                                  ((bit_length) % 8 == 0) ? \
@@ -98,17 +99,6 @@ bool InputHandlerOfRAM::initialize(PlayerInHandle* p_handle)
   m_in_device_handler.notification_threshold_size =
     p_handle->p_ram_device_handle->notification_threshold_size;
 
-  if (m_codec_type == AudCodecLPCM)
-    {
-      if (m_clock_mode == CXD56_AUDIO_CLKMODE_HIRES)
-        {
-          m_cur_wav_au_sample_num = LPCM_SAMPLE_HIRES;
-        }
-      else
-        {
-          m_cur_wav_au_sample_num = LPCM_SAMPLE_NORMAL;
-        }
-    }
   return true;
 }
 
@@ -180,13 +170,19 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
       case AS_SAMPLINGRATE_8000:
       case AS_SAMPLINGRATE_16000:
       case AS_SAMPLINGRATE_24000:
+        m_cur_wav_au_sample_num = LPCM_SAMPLE_LOW;
+        break;
       case AS_SAMPLINGRATE_32000:
       case AS_SAMPLINGRATE_44100:
       case AS_SAMPLINGRATE_48000:
+        m_cur_wav_au_sample_num = LPCM_SAMPLE_MID;
+        break;
       case AS_SAMPLINGRATE_64000:
       case AS_SAMPLINGRATE_88200:
       case AS_SAMPLINGRATE_96000:
+      case AS_SAMPLINGRATE_176400:
       case AS_SAMPLINGRATE_192000:
+        m_cur_wav_au_sample_num = LPCM_SAMPLE_HIGH;
         break;
       default:
         MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);

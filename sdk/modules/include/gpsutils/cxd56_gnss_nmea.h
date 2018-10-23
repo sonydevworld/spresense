@@ -63,7 +63,7 @@ extern "C" {
 
 /** Maximum length of one line of NMEA sentence output from this library */
 
-#define NMEA_SENTENCE_MAX_LEN  120
+#define NMEA_SENTENCE_MAX_LEN  160
 
 /** Structure of callback functions to manage buffer and output NMEA sentences */
 

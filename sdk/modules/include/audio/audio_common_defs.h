@@ -385,5 +385,79 @@ typedef struct
 
 } AsPcmDataParam;
 
+/** ErrorAttention Result (#AUDRLT_ERRORATTENTION) parameter */
+
+#define ATTENTION_FILE_NAME_LEN 32
+
+typedef struct
+{
+  /*! \brief [out] reserved */
+
+  uint32_t reserved1;
+
+  /*! \brief [out] Error Infomation, T.B.D. */
+
+  uint8_t  error_code;
+
+  /*! \brief [out] CPU ID (internal use only) */
+
+  uint8_t  cpu_id;
+
+  /*! \brief [out] for debug purpose */
+
+  uint8_t  sub_module_id;
+
+  /*! \brief [out] Error module infomation, T.B.D. */
+
+  uint8_t  module_id;
+
+  /*! \brief [out] Detailed Error Infomation, T.B.D. */
+
+  uint32_t error_att_sub_code;
+
+  /*! \brief [out] reserved */
+
+  uint32_t reserved2;
+
+  /*! \brief [out] Line No (internal use only) */
+
+  uint16_t line_number;
+
+  /*! \brief [out] Task ID (internal use only) */
+
+  uint8_t  task_id;
+
+  /*! \brief [out] reserved */
+
+  uint8_t  reserved3;
+
+  /*! \brief [out] File name (internal use only) */
+
+  union
+  {
+    uint32_t align_dummy;
+    char     error_filename[ATTENTION_FILE_NAME_LEN];
+  };
+
+} ErrorAttentionParam;
+
+/** Audio Attention Callback function
+ * @param[in] attparam: Attention detail parameter
+ */
+
+typedef void (*AudioAttentionCb)(const ErrorAttentionParam *attparam);
+
+#ifndef ATTENTION_USE_FILENAME_LINE
+typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
+                                     uint8_t error_code,
+                                     uint8_t sub_code);
+#else
+typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
+                                     uint8_t error_code,
+                                     uint8_t sub_code,
+                                     FAR const char *file_name,
+                                     uint32_t line);
+#endif
+
 #endif /* __MODULES_INCLUDE_AUDIO_AUDIO_COMMON_DEFS_H */
 

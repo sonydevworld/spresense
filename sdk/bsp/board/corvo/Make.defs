@@ -41,3 +41,6 @@ CSRCS += cxd56_appinit.c
 CSRCS += cxd56_power.c
 endif
 
+ifeq ($(CONFIG_MODEM_ALTMDM), y)
+CSRCS += cxd56_altmdm.c
+endif

@@ -199,7 +199,7 @@ static bool app_create_audio_sub_system(void)
   effector_create_param.pool_id.i2s_out    = I2S_OUT_BUF_POOL;
   effector_create_param.pool_id.mfe_out    = MFE_OUT_BUF_POOL;
 
-  result = AS_CreateEffector(&effector_create_param);
+  result = AS_CreateEffector(&effector_create_param, NULL);
   if (!result)
     {
       printf("Error: AS_CreateEffector failure. system memory insufficient!\n");
@@ -212,7 +212,7 @@ static bool app_create_audio_sub_system(void)
   recognizer_create_param.msgq_id.dsp        = MSGQ_AUD_DSP;
   recognizer_create_param.pool_id.wuwsr_in   = WUWSR_IN_BUF_POOL;
 
-  result = AS_CreateRecognizer(&recognizer_create_param);
+  result = AS_CreateRecognizer(&recognizer_create_param, NULL);
   if (!result)
     {
       printf("Error: AS_activateRecognizer failed. system memory insufficient!\n");

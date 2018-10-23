@@ -1,0 +1,20 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "LTE"
+
+config LTE
+	bool "LTE Library Support"
+	default n
+	---help---
+		Enables support for the LTE library.
+
+if LTE
+
+source "modules/lte/altcom/Kconfig"
+source "modules/lte/net/Kconfig"
+endif
+
+endmenu # LTE

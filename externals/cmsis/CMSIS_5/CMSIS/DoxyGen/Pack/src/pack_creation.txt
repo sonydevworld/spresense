@@ -1,0 +1,130 @@
+/*=======0=========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1====*/
+/**
+\page cp_Packs Software Packs Overview
+
+The <b>CMSIS-Pack</b> format is used to deliver a Software Pack and is aimed to be scalable for future requirements.
+It provides a management process and supports a tool independent distribution for:
+
+ - \ref createPack_DFP "Device Support" for tool chains and software applications to target a specific device:
+  - Information about the processor and it's features.
+  - C and assembly files for the device startup and access to the memory mapped peripheral registers.
+  - Parameters, technical information, and data sheets about the device family and the specific devices.
+  - Device description and available peripherals.
+  - Memory layout of internal and external RAM and ROM address ranges.
+  - \ref flashAlgorithm "Flash algorithms" for programming the device.
+  - Debug and trace configurations as well as System View Description files for device specific display of the memory mapped
+    peripheral registers.
+
+ - \ref createPackBoard "Board Support" for rapid development in the prototyping stage:
+  - Information about the development board and it's features.
+  - Parameters, technical information, and data sheets about the board, the mounted microcontroller and peripheral devices.
+  - Drivers for on-board peripheral devices
+
+ - \ref cp_SWComponents "Software Components" simplify the re-use of software and the management of 3rd party software. They contain:
+  - A collection of source modules, header and \ref configWizard "configuration files" as well as libraries.
+  - Documentation of the software, including features and APIs.
+  
+ - \ref cp_API "Application Programming Interfaces" specify one or more APIs for \ref cp_Components "software components" that are
+   part of another \ref cp_SWComponents "Software Pack".
+
+ - \ref cp_Examples can be used as a reference and starting point for similar applications. They contain:
+  - Fully defined application projects that work out of the box in the specified build and debug environments.
+  - Documentation about the purpose of the example, how to build, configure and execute the application.
+  
+ - \ref cp_CodeTemplates help to understand the basic concepts of a software component better and to give the user a
+   good starting point for implementing his application. 
+
+
+\section PackFilenames Pack Conventions
+
+A \ref cp_SWComponents "Software Pack" is a collection of files located in directories that are archived in a file with the extension *.pack using the standard
+<a href="http://en.wikipedia.org/wiki/Zip_%28file_format%29" target="_blank">ZIP file format</a>.
+The Pack Description file (PDSC) with the file extension *.pdsc contains the \ref packFormat "meta information", describing the content of a pack based on 
+<a href="https://en.wikipedia.org/wiki/XML" target="_blank">XML</a>. The PDSC file must be:
+- included in the \ref cp_SWComponents "Software Pack"
+- located in the base folder of the archive
+- compliant with the \ref cp_SWComponents "Software Pack" file \ref pack_filename "naming convention"
+
+\note
+- The <em>base folder</em> is defined to be the root folder './' of a zip archive and it is imperative that the whole
+  \ref cp_SWComponents "Software Pack" only contains a single PDSC file.
+- Future tools shall support this case: if the PDSC file is located in an immediate subdirectory, then the subdirectory
+  becomes the base folder. The \ref cp_SWComponents "Software Pack" is installed as if the subdirectory does not exist. All
+  files and directories located in the root folder are ignored and do not get installed.
+
+\subsection pack_filename Pack File Name
+
+A \ref cp_SWComponents "Software Pack" must have a unique filename. Therefore it is constructed from vendor, packname and version and the file extension *.pack.
+
+<b>\<vendor\>.\<name\>.\<version\>.pack</b>.
+
+Where:
+ - <b>\<vendor\></b> is the name of the supplier or vendor of the \ref cp_SWComponents "Software Pack".
+ - <b>\<name\></b> is the name of the \ref cp_SWComponents "Software Pack". All packs that are published by a vendor must have a unique packname.
+ - <b>\<release version="X.Y.Z"\></b>specifies the \ref VersionType "version number" of the release for the \ref cp_SWComponents "Software Pack".
+ - <b>.pack</b> is the file extension identifying a \ref cp_SWComponents "Software Pack".
+
+\note
+- The XML elements \elem{vendor}, \elem{name}, and the version attribute of the \elem{release} are specified in the \ref Filenames "PDSC" file. 
+  PDSC, Pack filenames are case sensitive and need to match exactly.
+- \elem{vendor} and \elem{name} \em must \em not contain spaces.
+- The PDSC file needs to reside in the base folder of the Pack. All file references are relative to the location of the PDSC file.
+
+\subsection pack_Cclass Software Component Cclasses
+
+If you add a software component in the PDSC file, you have to specify a component class (CClass), component group (Cgroup),
+and the component's version number (Cversion). For more information refer to \ref cp_Components.
+
+If applicable, try to map the \b Cclass of your software component to one of the following predefined or already well
+established classes:
+- Board Support: Generic interfaces for evaluation and development boards
+- CMSIS: <i>Cortex Microcontroller Software Interface Standard</i> components
+- CMSIS Driver: Unified device drivers compliant to the CMSIS-Driver specification
+- Compiler: Arm Compiler software extensions
+- Data Exchange: Software components for data exchange
+- Device: Startup and system setup components
+- File System*: File drive support and file system
+- Graphics*: Graphical libraries for user interfaces
+- Network*: Network stack using Internet protocols
+- RTOS*: Real-time operating systems
+- Safety: Components for testing application software against safety standards
+- Security*: Encryption for secure communication or storage
+- USB*: Universal Serial Bus stack
+- Wireless*: Communication stacks such as Bluetooth, WiFi, and ZigBee
+
+Classes with a * should always be used together with a \ref Component_Bundle "bundle" to avoid conflicts with other software
+components.
+
+If you wish to standardize a new Cclass, please send an inquiry to cmsis@arm.com or raise an issue on the public 
+<a href="https://github.com/ARM-software/CMSIS_5/issues">CMSIS GitHub development repository</a>.
+
+
+\section cp_PackSteps Steps to Create a Pack
+
+The following image shows the basic steps that are required to create a Software Pack:
+
+\image html PackCreateSteps.png
+
+-# <b>Produce input:</b> Create the files that will be delivered with the Pack.
+-# <b>Organize files:</b> Use directories to separate the content of the Pack.
+-# <b>Create PDSC file:</b> The XML based PDSC file can be created using any text editor. Editors that can
+   validate XML code against a schema file help to find bugs early in the Pack development stage.
+-# <b>Generate Pack:</b> Any compression tool supporting the ZIP format can be used to create a Pack file. \ref packChk is
+   helpful for the validation of the contents of a Pack.
+
+The following pages will show how to create a Software Pack from scratch. The page \ref cp_SWComponents will start with a simple
+Pack containing only the PDSC file and a single software component and will then explain further elements of a Pack in more detail.
+The page \ref createPack_DFP adds information on the additional requirements that a DFP has, while \ref createPackBoard will
+elaborate on the content specific to a BSP.
+
+
+\section PackTutorials Pack Tutorial
+
+The <b>ARM::CMSIS</b> Pack contains tutorials that are explained on the following pages. In the \b \\CMSIS\\Pack\\Tutorials
+directory the following three ZIP files are available:
+|ZIP File                           |Documentation        
+|-----------------------------------|---------------------
+|Pack_with_Software_Components.zip  | \ref cp_SWComponents
+|Pack_with_Device_Support.zip       | \ref createPack_DFP
+|Pack_with_Board_Support.zip        | \ref createPackBoard
+*/
