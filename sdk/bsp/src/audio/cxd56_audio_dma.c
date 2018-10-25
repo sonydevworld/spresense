@@ -89,8 +89,8 @@ enum audio_irq_reg_type_e
 
 #define DMA_TIMEOUT_CNT      10000
 #define DMA_START_RETRY_CNT  10
-#define DMA_SMP_WAIT_HIRES   10
-#define DMA_SMP_WAIT_NORMALT 40
+#define DMA_SMP_WAIT_HIRES   10 /* usec per sample. */
+#define DMA_SMP_WAIT_NORMALT 40 /* usec per sample. */
 
 /****************************************************************************
  * Public Function Prototypes
@@ -238,15 +238,20 @@ static CXD56_AUDIO_ECODE start_dma(cxd56_audio_dma_t handle)
 }
 
 /*--------------------------------------------------------------------------*/
-static CXD56_AUDIO_ECODE start_dma_workarround(cxd56_audio_dma_t handle)
+static CXD56_AUDIO_ECODE exec_dma_ch_sync_workaround(
+  cxd56_audio_dma_t handle)
 {
   int timeout_cnt = 0;
   cxd56_audio_clkmode_t clk_mode = cxd56_audio_config_get_clkmode();
 
-  /* Clear interrupt status */
-
-  cxd56_audio_bca_reg_clear_err_int(handle);
-  cxd56_audio_bca_reg_clear_smp_int(handle);
+  /* Execute out-of-sync workaround.
+   * 1. Clear smp interrupt status
+   * 2. Read until smp interrupt state is true
+   * 3. Reset channel select setting
+   * 4. Start dma transfer
+   * It needs to be less than 9 us by the processing so far.
+   * If it does not fit below 9 us, err_int is generated, so retry.
+   */
 
   /* Mask dma done interrupt. */
 
@@ -254,6 +259,12 @@ static CXD56_AUDIO_ECODE start_dma_workarround(cxd56_audio_dma_t handle)
 
   for (int retry_cnt = 0; retry_cnt < DMA_START_RETRY_CNT; retry_cnt++)
     {
+
+      /* Clear interrupt status */
+
+      cxd56_audio_bca_reg_clear_err_int(handle);
+      cxd56_audio_bca_reg_clear_smp_int(handle);
+
       /* Lock interrupt */
 
       up_irq_disable();
@@ -286,7 +297,7 @@ static CXD56_AUDIO_ECODE start_dma_workarround(cxd56_audio_dma_t handle)
       sched_unlock();
       up_irq_enable();
 
-      /* Wait dma done. */
+      /* Wait for 1sample tramsfer. */
 
       if (clk_mode == CXD56_AUDIO_CLKMODE_HIRES)
         {
@@ -297,7 +308,7 @@ static CXD56_AUDIO_ECODE start_dma_workarround(cxd56_audio_dma_t handle)
           up_udelay(DMA_SMP_WAIT_NORMALT);
         }
 
-      /* Check error. */
+      /* Check whether an error interrupt has occurred. */
 
       if (cxd56_audio_bca_reg_is_err_int(handle))
         {
@@ -328,6 +339,40 @@ static CXD56_AUDIO_ECODE start_dma_workarround(cxd56_audio_dma_t handle)
   cxd56_audio_bca_reg_unmask_done_int(handle);
 
   return CXD56_AUDIO_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+static CXD56_AUDIO_ECODE start_dma_workaround(cxd56_audio_dma_t handle)
+{
+  /* There are two workarounds.
+   * One is a workaround in which the error interrupt of
+   * dma is incorrectly generated.
+   * The other is a workaround for the problem that the channel
+   * is out of sync.
+   * Because both require processing at the beginning of dma,
+   * call out workaround with out-of-sync from the workaround
+   * for interrupt error.
+   */
+
+  /* Execute error interrupt workaround.
+   * 1. Mask dma error interrupt
+   * 2. Wait 77 cycle after dma transfer starts
+   * 3. Clear interrupt status
+   * 4. Unmask dma error interrupt
+   */
+
+  cxd56_audio_bca_reg_mask_err_int(handle);
+
+  /* Transfer start and wait processing of dma is done
+   * in out-of-sync workaround.
+   */
+
+  CXD56_AUDIO_ECODE ret = exec_dma_ch_sync_workaround(handle);
+
+  cxd56_audio_bca_reg_clear_err_int(handle);
+  cxd56_audio_bca_reg_unmask_err_int(handle);
+
+  return ret;
 }
 
 /****************************************************************************
@@ -532,7 +577,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dma_start(cxd56_audio_dma_t handle,
   if (s_work_arroud_dmac[handle])
     {
       s_work_arroud_dmac[handle] = false;
-      ret = start_dma_workarround(handle);
+      ret = start_dma_workaround(handle);
     }
   else
     {

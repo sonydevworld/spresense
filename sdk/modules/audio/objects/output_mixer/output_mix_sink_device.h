@@ -64,6 +64,34 @@ __WIEN2_BEGIN_NAMESPACE
  * Public Types
  ****************************************************************************/
 
+/**< Parameters for post done notify to output-mix object. */
+
+struct OutputMixObjPostfilterDoneCmd
+{
+  Wien2::Apu::ApuEventType event_type;
+};
+
+/**< Parameters for render done notify to output-mix object. */
+
+struct OutputMixObjRenderDoneCmd
+{
+  bool end_flag;
+  bool error_flag;
+};
+
+/**< OutputMixer self internal message structure */
+
+struct OutputMixObjParam
+{
+  int handle;
+
+  union
+  {
+    OutputMixObjPostfilterDoneCmd postfilterdone_param;
+    OutputMixObjRenderDoneCmd     renderdone_param;
+  };
+};
+
 class OutputMixToHPI2S
 {
 public:

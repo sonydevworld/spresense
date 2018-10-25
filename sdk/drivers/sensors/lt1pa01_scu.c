@@ -267,7 +267,7 @@ static uint8_t g_prox_hthreshold = LT1PA01_PROX_INT_TH_DEFAULT;
 static uint8_t lt1pa01_getreg8(FAR struct lt1pa01_dev_s *priv,
                                uint8_t regaddr)
 {
-  uint8_t regval;
+  uint8_t regval = 0;
   uint16_t inst[2];
 
   /* Send register to read and get the next byte */

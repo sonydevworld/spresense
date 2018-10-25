@@ -403,14 +403,21 @@
  */
 
 #define AS_ATTENTION_SUB_CODE_DSP_ASSETION_FAIL     0x1F
-  
+
 /*! \brief DSP Send Fail
  *  \details Inter CPU commucation with DSP is failed.
  */
 
 #define AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR        0x20
 
-#define AS_ATTENTION_SUB_CODE_NUM   AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR
+/*! \brief Allocate memory of heap area
+ *  \details Notify that allocated from the heap area
+ *           without using the memory pool that uses shared memory.
+ */
+
+#define AS_ATTENTION_SUB_CODE_ALLOC_HEAP_MEMORY     0x21
+
+#define AS_ATTENTION_SUB_CODE_NUM   AS_ATTENTION_SUB_CODE_ALLOC_HEAP_MEMORY
 
 /** @} */
 
@@ -1551,62 +1558,6 @@ typedef struct
   uint32_t ErrorCommand[LENGTH_AUDRLT_ERRORRESPONSE_MAX-LENGTH_AUDRLT_ERRORRESPONSE_MIN];
 } ErrorResponseParam;
 
-/** ErrorAttention Result (#AUDRLT_ERRORATTENTION) parameter */
-
-#define ATTENTION_FILE_NAME_LEN 32
-
-typedef struct
-{
-  /*! \brief [out] reserved */
-
-  uint32_t reserved1;
-
-  /*! \brief [out] Error Infomation, T.B.D. */
-
-  uint8_t  error_code;
-
-  /*! \brief [out] CPU ID (internal use only) */
-
-  uint8_t  cpu_id;
-
-  /*! \brief [out] for debug purpose */
-
-  uint8_t  sub_module_id;
-
-  /*! \brief [out] Error module infomation, T.B.D. */
-
-  uint8_t  module_id;
-
-  /*! \brief [out] Detailed Error Infomation, T.B.D. */
-
-  uint32_t error_att_sub_code;
-
-  /*! \brief [out] reserved */
-
-  uint32_t reserved2;
-
-  /*! \brief [out] Line No (internal use only) */
-
-  uint16_t line_number;
-
-  /*! \brief [out] Task ID (internal use only) */
-
-  uint8_t  task_id;
-
-  /*! \brief [out] reserved */
-
-  uint8_t  reserved3;
-
-  /*! \brief [out] File name (internal use only) */
-
-  union
-  {
-    uint32_t align_dummy;
-    char     error_filename[ATTENTION_FILE_NAME_LEN];
-  };
-
-} ErrorAttentionParam;
-
 /** Audio result packet
  */
 #if defined(__CC_ARM)
@@ -1643,24 +1594,6 @@ typedef struct {
 } AudioResult ;
 #else
 } AudioResult __attribute__((transparent_union));
-#endif
-
-/** Audio Attention Callback function
- * @param[in] attparam: Attention detail parameter
- */
-
-typedef void (*AudioAttentionCb)(const ErrorAttentionParam *attparam);
-
-#ifndef ATTENTION_USE_FILENAME_LINE
-typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
-                                     uint8_t error_code,
-                                     uint8_t sub_code);
-#else
-typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
-                                     uint8_t error_code,
-                                     uint8_t sub_code,
-                                     FAR const char *file_name,
-                                     uint32_t line);
 #endif
 
 /* Error Code */

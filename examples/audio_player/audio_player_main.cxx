@@ -57,7 +57,9 @@
 #include "include/msgq_pool.h"
 #include "include/pool_layout.h"
 #include "include/fixed_fence.h"
-#include "playlist/playlist.h"
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
+#  include "playlist/playlist.h"
+#endif
 
 using namespace MemMgrLite;
 
@@ -72,19 +74,21 @@ using namespace MemMgrLite;
 
 /* Path of playback file. */
 
-#define AUDIOFILE_ROOTPATH "/mnt/sd0/AUDIO"
-
-/* Path of playlist file. */
-
-#define PLAYLISTFILE_PATH  "/mnt/sd0/PLAYLIST"
+#define PLAYBACK_FILE_PATH "/mnt/sd0/AUDIO"
 
 /* Path of DSP image file. */
 
-#define DSPBIN_PATH        "/mnt/sd0/BIN"
+#define DSPBIN_FILE_PATH   "/mnt/sd0/BIN"
+
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
+/* Path of playlist file. */
+
+#  define PLAYLIST_FILE_PATH "/mnt/sd0/PLAYLIST"
 
 /* PlayList file name. */
 
-#define PLAY_LIST_NAME     "TRACK_DB.CSV"
+#  define PLAYLIST_FILE_NAME "TRACK_DB.CSV"
+#endif
 
 /* Default Volume. -20dB */
 
@@ -93,6 +97,10 @@ using namespace MemMgrLite;
 /* Play time(sec) */
 
 #define PLAYER_PLAY_TIME 10
+
+/* Play file number */
+
+#define PLAYER_PLAY_FILE_NUM 5
 
 /* Definition of FIFO info.
  * The FIFO defined here refers to the buffer to pass playback data
@@ -126,36 +134,48 @@ using namespace MemMgrLite;
 
 #define PLAYER_FIFO_PUSH_NUM_MAX  5
 
-/* Definition of player mode.
- * If you want to reproduce the high resolution WAV,
- * make the following definitions effective.
+/* Definition of content information to be used when not using playlist. */
+
+#define PLAYBACK_FILE_NAME     "Sound.mp3"
+#define PLAYBACK_CH_NUM        AS_CHANNEL_STEREO
+#define PLAYBACK_BIT_LEN       AS_BITLENGTH_16
+#define PLAYBACK_SAMPLING_RATE AS_SAMPLINGRATE_48000   
+#define PLAYBACK_CODEC_TYPE    AS_CODECTYPE_MP3
+
+/*------------------------------
+ * Definition specified by config
+ *------------------------------
  */
 
-//#define PLAYER_MODE_HIRES
+/* Definition for selection of output device.
+ * Select speaker output or I2S output.
+ */
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OUTPUT_DEV_SPHP
+#  define PLAYER_OUTPUT_DEV AS_SETPLAYER_OUTPUTDEVICE_SPHP
+#  define PLAYER_MIXER_OUT  AS_OUT_SP
+#else
+#  define PLAYER_OUTPUT_DEV AS_SETPLAYER_OUTPUTDEVICE_I2SOUTPUT
+#  define PLAYER_MIXER_OUT  AS_OUT_I2S
+#endif
+
+/* Definition depending on player mode. */
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_HIRES
+#  define FIFO_FRAME_NUM  4
+#else
+#  define FIFO_FRAME_NUM  1
+#endif
 
 /*------------------------------
  * Definition of example fixed
  *------------------------------
  */
 
-/* Definition depending on player mode. */
-
-#ifdef PLAYER_MODE_HIRES
-#  define PLAYER_MODE AS_CLKMODE_HIRES
-#  define FIFO_FRAME_NUM  4
-#else
-#  define PLAYER_MODE AS_CLKMODE_NORMAL
-#  define FIFO_FRAME_NUM  1
-#endif
-
 /* FIFO control value. */
 
 #define FIFO_ELEMENT_SIZE  (FIFO_FRAME_SIZE * FIFO_FRAME_NUM)
 #define FIFO_QUEUE_SIZE    (FIFO_ELEMENT_SIZE * FIFO_ELEMENT_NUM)
-
-/* PlayList file name. */
-
-#define PLAY_LIST_NAME "TRACK_DB.CSV"
 
 /* Local error code. */
 
@@ -178,10 +198,22 @@ struct player_fifo_info_s
   uint8_t  read_buf[FIFO_ELEMENT_SIZE];
 };
 
+#ifndef CONFIG_AUDIOUTILS_PLAYLIST
+struct Track
+{
+  char title[64];
+  uint8_t   channel_number;  /* Channel number. */
+  uint8_t   bit_length;      /* Bit length.     */
+  uint32_t  sampling_rate;   /* Sampling rate.  */
+  uint8_t   codec_type;      /* Codec type.     */
+};
+#endif
+
 /* For play file */
 
 struct player_file_info_s
 {
+  Track   track;
   int32_t size;
   DIR    *dirp;
   int     fd;
@@ -195,8 +227,6 @@ struct player_info_s
   struct player_file_info_s   file;
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
   Playlist *playlist_ins = NULL;
-#else
-error "AUDIOUTILS_PLAYLIST is not enable"
 #endif
 };
 
@@ -248,7 +278,7 @@ static void app_freq_release(void)
 static bool app_open_contents_dir(void)
 {
   DIR *dirp;
-  const char *name = AUDIOFILE_ROOTPATH;
+  const char *name = PLAYBACK_FILE_PATH;
   
   dirp = opendir(name);
 
@@ -270,7 +300,7 @@ static bool app_close_contents_dir(void)
   return true;
 }
 
-
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
 static bool app_open_playlist(void)
 {
   bool result = false;
@@ -281,9 +311,9 @@ static bool app_open_playlist(void)
       return false;
     }
 
-  s_player_info.playlist_ins = new Playlist(PLAY_LIST_NAME);
+  s_player_info.playlist_ins = new Playlist(PLAYLIST_FILE_NAME);
   
-  result = s_player_info.playlist_ins->init(PLAYLISTFILE_PATH);
+  result = s_player_info.playlist_ins->init(PLAYLIST_FILE_PATH);
   if (!result)
     {
       printf("Error: Playlist::init() failure.\n");
@@ -297,7 +327,7 @@ static bool app_open_playlist(void)
       return false;
     }
 
-  s_player_info.playlist_ins->setRepeatMode(Playlist::RepeatModeOff);
+  s_player_info.playlist_ins->setRepeatMode(Playlist::RepeatModeOn);
   if (!result)
     {
       printf("Error: Playlist::setRepeatMode() failure.\n");
@@ -327,21 +357,30 @@ static bool app_close_playlist(void)
 
   return true;
 }
+#endif /* #ifdef CONFIG_AUDIOUTILS_PLAYLIST */
 
 static bool app_get_next_track(Track* track)
 {
-  bool ret;
+  bool ret = true;;
 
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
   if (s_player_info.playlist_ins == NULL)
     {
       printf("Error: Get next track failure. Playlist is not open\n");
       return false;
     }
-
   ret = s_player_info.playlist_ins->getNextTrack(track);
+#else
+  snprintf(track->title, sizeof(track->title), "%s", PLAYBACK_FILE_NAME);
+  track->channel_number = PLAYBACK_CH_NUM;
+  track->bit_length     = PLAYBACK_BIT_LEN;
+  track->sampling_rate  = PLAYBACK_SAMPLING_RATE;
+  track->codec_type     = PLAYBACK_CODEC_TYPE;
+#endif /* #ifdef CONFIG_AUDIOUTILS_PLAYLIST */
 
   return ret;
 }
+
 
 static void app_input_device_callback(uint32_t size)
 {
@@ -475,16 +514,24 @@ static bool app_create_audio_sub_system(void)
 
   AS_CreateAudioManager(ids, app_attention_callback);
 
-  AsCreatePlayerParam_t player_create_param;
-  player_create_param.msgq_id.player = MSGQ_AUD_PLY;
-  player_create_param.msgq_id.mng    = MSGQ_AUD_MNG;
-  player_create_param.msgq_id.mixer  = MSGQ_AUD_OUTPUT_MIX;
-  player_create_param.msgq_id.dsp    = MSGQ_AUD_DSP;
-  player_create_param.pool_id.es     = DEC_ES_MAIN_BUF_POOL;
-  player_create_param.pool_id.pcm    = REND_PCM_BUF_POOL;
-  player_create_param.pool_id.dsp    = DEC_APU_CMD_POOL;
+  /* Create player feature. */
 
-  result = AS_CreatePlayer(AS_PLAYER_ID_0, &player_create_param);
+  AsCreatePlayerParam_t player_create_param;
+  player_create_param.msgq_id.player   = MSGQ_AUD_PLY;
+  player_create_param.msgq_id.mng      = MSGQ_AUD_MNG;
+  player_create_param.msgq_id.mixer    = MSGQ_AUD_OUTPUT_MIX;
+  player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP;
+  player_create_param.pool_id.es       = DEC_ES_MAIN_BUF_POOL;
+  player_create_param.pool_id.pcm      = REND_PCM_BUF_POOL;
+  player_create_param.pool_id.dsp      = DEC_APU_CMD_POOL;
+  player_create_param.pool_id.src_work = SRC_WORK_BUF_POOL;
+
+  /* When calling AS_CreatePlayerMulti(), use the pool area
+   * for multi-core playback processing.
+   * When calling AS_CreatePlayer(), use the heap area.
+   */
+
+  result = AS_CreatePlayerMulti(AS_PLAYER_ID_0, &player_create_param, NULL);
 
   if (!result)
     {
@@ -503,7 +550,7 @@ static bool app_create_audio_sub_system(void)
   output_mix_act_param.pool_id.render_path0_filter_dsp = PF0_APU_CMD_POOL;
   output_mix_act_param.pool_id.render_path1_filter_dsp = PF1_APU_CMD_POOL;
 
-  result = AS_CreateOutputMixer(&output_mix_act_param);
+  result = AS_CreateOutputMixer(&output_mix_act_param, NULL);
   if (!result)
     {
       printf("Error: AS_CreateOutputMixer() failed. system memory insufficient!\n");
@@ -576,13 +623,26 @@ static bool app_set_ready(void)
   return printAudCmdResult(command.header.command_code, result);
 }
 
+static bool app_get_status(void)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_GETSTATUS;
+  command.header.command_code  = AUDCMD_GETSTATUS;
+  command.header.sub_code      = 0x00;
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return result.notify_status.status_info;
+}
+
 static bool app_init_output_select(void)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_INITOUTPUTSELECT;
   command.header.command_code  = AUDCMD_INITOUTPUTSELECT;
   command.header.sub_code      = 0;
-  command.init_output_select_param.output_device_sel = AS_OUT_SP;
+  command.init_output_select_param.output_device_sel = PLAYER_MIXER_OUT;
   AS_SendAudioCommand(&command);
 
   AudioResult result;
@@ -615,7 +675,7 @@ static bool app_set_player_status(void)
     command.set_player_sts_param.active_player         = AS_ACTPLAYER_MAIN;
     command.set_player_sts_param.player0.input_device  = AS_SETPLAYER_INPUTDEVICE_RAM;
     command.set_player_sts_param.player0.ram_handler   = &s_player_info.fifo.input_device;
-    command.set_player_sts_param.player0.output_device = AS_SETPLAYER_OUTPUTDEVICE_SPHP;
+    command.set_player_sts_param.player0.output_device = PLAYER_OUTPUT_DEV;
     command.set_player_sts_param.player1.input_device  = 0x00;
     command.set_player_sts_param.player1.ram_handler   = NULL;
     command.set_player_sts_param.player1.output_device = 0x00;
@@ -640,7 +700,10 @@ static int app_init_player(uint8_t codec_type,
     command.player.init_param.bit_length     = bit_length;
     command.player.init_param.channel_number = channel_number;
     command.player.init_param.sampling_rate  = sampling_rate;
-    snprintf(command.player.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", DSPBIN_PATH);
+    snprintf(command.player.init_param.dsp_path,
+             AS_AUDIO_DSP_PATH_LEN,
+             "%s",
+             DSPBIN_FILE_PATH);
     AS_SendAudioCommand(&command);
 
     AudioResult result;
@@ -677,13 +740,13 @@ static bool app_stop_player(int mode)
     return printAudCmdResult(command.header.command_code, result);
 }
 
-static bool app_set_clkmode(void)
+static bool app_set_clkmode(int clk_mode)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_SETRENDERINGCLK;
   command.header.command_code  = AUDCMD_SETRENDERINGCLK;
   command.header.sub_code      = 0x00;
-  command.set_renderingclk_param.clk_mode = PLAYER_MODE;
+  command.set_renderingclk_param.clk_mode = clk_mode;
   AS_SendAudioCommand(&command);
 
   AudioResult result;
@@ -811,33 +874,32 @@ static int app_play_file_open(FAR const char *file_path, FAR int32_t *file_size)
   return fd;
 }
 
-static bool app_start(void)
+static bool app_open_next_play_file(void)
 {
-  Track track;
-
   /* Get next track */
 
-  if (!app_get_next_track(&track))
+  if (!app_get_next_track(&s_player_info.file.track))
     {
       printf("Error: No more tracks to play.\n");
-      app_freq_release();
       return false;
     }
 
   char full_path[128];
-  snprintf(full_path, sizeof(full_path), "%s/%s", AUDIOFILE_ROOTPATH, track.title);
+  snprintf(full_path,
+           sizeof(full_path),
+           "%s/%s",
+           PLAYBACK_FILE_PATH,
+           s_player_info.file.track.title);
 
   s_player_info.file.fd = app_play_file_open(full_path, &s_player_info.file.size);
   if (s_player_info.file.fd < 0)
     {
       printf("Error: %s open error. check paths and files!\n", full_path);
-      app_freq_release();
       return false;
     }
   if (s_player_info.file.size == 0)
     {
       close(s_player_info.file.fd);
-      app_freq_release();
       printf("Error: %s file size is abnormal. check files!\n",full_path);
       return false;
     }
@@ -849,21 +911,37 @@ static bool app_start(void)
       printf("Error: app_first_push_simple_fifo() failure.\n");
       CMN_SimpleFifoClear(&s_player_info.fifo.handle);
       close(s_player_info.file.fd);
-      app_freq_release();
       return false;
     }
 
+  return true;
+}
+
+static bool app_close_play_file(void)
+{
+  if (close(s_player_info.file.fd) != 0)
+    {
+      printf("Error: close() failure.\n");
+      return false;
+    }
+
+  CMN_SimpleFifoClear(&s_player_info.fifo.handle);
+
+  return true;
+}
+
+static bool app_start(void)
+{
   /* Init Player */
 
-  if (!app_init_player(track.codec_type,
-                       track.sampling_rate,
-                       track.channel_number,
-                       track.bit_length))
+  Track *t = &s_player_info.file.track;
+  if (!app_init_player(t->codec_type,
+                       t->sampling_rate,
+                       t->channel_number,
+                       t->bit_length))
     {
       printf("Error: app_init_player() failure.\n");
-      CMN_SimpleFifoClear(&s_player_info.fifo.handle);
-      close(s_player_info.file.fd);
-      app_freq_release();
+      app_close_play_file();
       return false;
     }
 
@@ -872,9 +950,7 @@ static bool app_start(void)
   if (!app_play_player())
     {
       printf("Error: app_play_player() failure.\n");
-      CMN_SimpleFifoClear(&s_player_info.fifo.handle);
-      close(s_player_info.file.fd);
-      app_freq_release();
+      app_close_play_file();
       return false;
     }
 
@@ -900,9 +976,9 @@ static bool app_stop(void)
       result = false;
     }
 
-  if (close(s_player_info.file.fd) != 0)
+  if (!app_close_play_file())
     {
-      printf("Error: close() failure.\n");
+      printf("Error: app_close_play_file() failure.\n");
       result = false;
     }
 
@@ -939,6 +1015,16 @@ extern "C" int main(int argc, FAR char *argv[])
 extern "C" int player_main(int argc, char *argv[])
 #endif
 {
+  /* Initialize clock mode.
+   * Clock mode indicates whether the internal processing rate of
+   * AudioSubSystem is Normal mode or Hi-Res mode. 
+   * The sampling rate of the playback file determines which mode
+   * will be taken. When playing a Hi-Res file,
+   * please set player mode to Hi-Res mode with config.
+   */
+
+  int clk_mode = -1;
+
   printf("Start AudioPlayer example\n");
 
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
@@ -960,10 +1046,6 @@ extern "C" int player_main(int argc, char *argv[])
       goto errout_act_audio_sub_system;
     }
 
-  /* On and after this point, AudioSubSystem must be active.
-   * Register the callback function to be notified when a problem occurs.
-   */
-
   /* Open directory of play contents. */
 
   if (!app_open_contents_dir())
@@ -974,6 +1056,14 @@ extern "C" int player_main(int argc, char *argv[])
 
       goto errout_open_contents_dir;
     }
+
+  /* Initialize frequency lock parameter. */
+
+  app_init_freq_lock();
+
+  /* Lock cpu frequency to high. */
+
+  app_freq_lock();
 
   /* Change AudioSubsystem to Ready state so that I/O parameters can be changed. */
 
@@ -986,6 +1076,7 @@ extern "C" int player_main(int argc, char *argv[])
       goto errout_power_on;
     }
 
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
   /* Open playlist. */
 
   if (!app_open_playlist())
@@ -996,6 +1087,7 @@ extern "C" int player_main(int argc, char *argv[])
 
       goto errout_open_playlist;
     }
+#endif
 
   /* Initialize simple fifo. */
 
@@ -1019,77 +1111,147 @@ extern "C" int player_main(int argc, char *argv[])
       goto errout_init_output_select;
     }
 
-  /* Set the operation mode of the output function. */
-
-  if (!app_set_clkmode())
+  for (int i = 0; i < PLAYER_PLAY_FILE_NUM; i++)
     {
-      printf("Error: app_set_clkmode() failure.\n");
+      if (!app_open_next_play_file())
+        {
+          /* Abnormal termination processing */
 
-      /* Abnormal termination processing */
+          goto errout_open_next_play_file;
+        }
 
-      goto errout_set_clkmode;
+      /* Get current clock mode.
+       * If the sampling rate is less than 48 kHz,
+       * it will be in Normal mode. Otherwise, Hi-Res mode is set.
+       */
+
+      int cur_clk_mode;
+      if (s_player_info.file.track.sampling_rate <= AS_SAMPLINGRATE_48000)
+        {
+          cur_clk_mode = AS_CLKMODE_NORMAL;
+        }
+      else
+        {
+          cur_clk_mode = AS_CLKMODE_HIRES;
+        }
+
+      /* If clockmode is Hi-Res and player mode is not Hi-Res,
+       * play the next file.
+       */
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_MODE_NORMAL
+      if (cur_clk_mode == AS_CLKMODE_HIRES)
+        {
+          printf("Hi-Res file is not supported.\n"
+                 "Please change player mode to Hi-Res with config.\n");
+          app_close_play_file();
+
+          /* Play next file. */
+
+          continue;
+        }
+#endif
+
+      /* If current clock mode is different from the previous clock mode,
+       * perform initial setting.
+       */
+
+      if (clk_mode != cur_clk_mode)
+        {
+          /* Update clock mode. */
+
+          clk_mode = cur_clk_mode;
+
+          /* Since the initial setting is required to be in the Ready state,
+           * if it is not in the Ready state, it is set to the Ready state.
+           */
+
+          if (AS_MNG_STATUS_READY != app_get_status())
+            {
+              if (board_external_amp_mute_control(true) != OK)
+                {
+                  printf("Error: board_external_amp_mute_control(true) failuer.\n");
+
+                  /* Abnormal termination processing */
+
+                  goto errout_amp_mute_control;
+                }
+
+              if (!app_set_ready())
+                {
+                  printf("Error: app_set_ready() failure.\n");
+
+                  /* Abnormal termination processing */
+
+                  goto errout_set_ready_status;
+                }
+            }
+
+          /* Set the clock mode of the output function. */
+
+          if (!app_set_clkmode(clk_mode))
+            {
+              printf("Error: app_set_clkmode() failure.\n");
+
+              /* Abnormal termination processing */
+
+              goto errout_set_clkmode;
+            }
+
+          /* Set player operation mode. */
+
+          if (!app_set_player_status())
+            {
+              printf("Error: app_set_player_status() failure.\n");
+
+              /* Abnormal termination processing */
+
+              goto errout_set_player_status;
+            }
+
+           /* Cancel output mute. */
+
+           app_set_volume(PLAYER_DEF_VOLUME);
+
+          if (board_external_amp_mute_control(false) != OK)
+            {
+              printf("Error: board_external_amp_mute_control(false) failuer.\n");
+
+              /* Abnormal termination processing */
+
+              goto errout_amp_mute_control;
+            }
+        }
+
+      /* Start player operation. */
+
+      if (!app_start())
+        {
+          printf("Error: app_start_player() failure.\n");
+
+          /* Abnormal termination processing */
+
+          goto errout_start;
+        }
+
+      /* Running... */
+
+      printf("Running time is %d sec\n", PLAYER_PLAY_TIME);
+
+      app_play_process(PLAYER_PLAY_TIME);
+
+      /* Stop player operation. */
+
+      if (!app_stop())
+        {
+          printf("Error: app_stop() failure.\n");
+          return 1;
+        }
+
+#ifndef CONFIG_AUDIOUTILS_PLAYLIST
+      break;
+#endif
     }
-
-  /* Set player operation mode. */
-
-  if (!app_set_player_status())
-    {
-      printf("Error: app_set_player_status() failure.\n");
-
-      /* Abnormal termination processing */
-
-      goto errout_set_player_status;
-    }
-
-  /* Cancel output mute. */
-
-  app_set_volume(PLAYER_DEF_VOLUME);
-
-  if (board_external_amp_mute_control(false) != OK)
-    {
-      printf("Error: board_external_amp_mute_control(false) failuer.\n");
-
-      /* Abnormal termination processing */
-
-      goto errout_amp_mute_control;
-    }
-
-  /* Initialize frequency lock parameter. */
-
-  app_init_freq_lock();
-
-  /* Lock cpu frequency to high. */
-
-  app_freq_lock();
-
-  /* Start player operation. */
-
-  if (!app_start())
-    {
-      printf("Error: app_start_player() failure.\n");
-
-      /* Abnormal termination processing */
-
-      goto errout_start;
-    }
-
-  /* Running... */
-
-  printf("Running time is %d sec\n", PLAYER_PLAY_TIME);
-
-  app_play_process(PLAYER_PLAY_TIME);
-
-  /* Stop player operation. */
-
-  if (!app_stop())
-    {
-      printf("Error: app_stop() failure.\n");
-      return 1;
-    }
-
-  /* Unlock cpu frequency. */
-
-  app_freq_release();
 
   /* Set output mute. */
 
@@ -1102,26 +1264,38 @@ errout_start:
 
   /* Return the state of AudioSubSystem before voice_call operation. */
 
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
+errout_open_playlist:
+#endif
+errout_init_simple_fifo:
+errout_init_output_select:
+errout_open_next_play_file:
+errout_set_ready_status:
+errout_set_clkmode:
+errout_set_player_status:
 errout_amp_mute_control:
-  if (!app_set_ready())
+  if (AS_MNG_STATUS_READY != app_get_status())
     {
-      printf("Error: app_set_ready() failure.\n");
-      return 1;
+      if (!app_set_ready())
+        {
+          printf("Error: app_set_ready() failure.\n");
+          return 1;
+        }
     }
 
   /* Change AudioSubsystem to PowerOff state. */
 
-errout_open_playlist:
-errout_init_simple_fifo:
-errout_init_output_select:
-errout_set_clkmode:
-errout_set_player_status:
   if (!app_power_off())
     {
       printf("Error: app_power_off() failure.\n");
       return 1;
     }
 
+  /* Unlock cpu frequency. */
+
+  app_freq_release();
+
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
   /* Close playlist. */
 
   if (!app_close_playlist())
@@ -1129,6 +1303,7 @@ errout_set_player_status:
       printf("Error: app_close_playlist() failure.\n");
       return 1;
     }
+#endif
 
   /* Close directory of play contents. */
 
@@ -1157,3 +1332,4 @@ errout_act_audio_sub_system:
 
   return 0;
 }
+

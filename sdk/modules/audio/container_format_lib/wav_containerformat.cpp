@@ -74,7 +74,14 @@ bool WavContainerFormat::init(uint16_t format_id,
       case SAMPLINGRATE_32000:
       case SAMPLINGRATE_44100:
       case SAMPLINGRATE_48000:
+      case SAMPLINGRATE_64000:
+      case SAMPLINGRATE_88200:
+      case SAMPLINGRATE_96000:
+      case SAMPLINGRATE_128000:
+      case SAMPLINGRATE_176400:
+      case SAMPLINGRATE_192000:
         break;
+
       default:
         return false;
     }

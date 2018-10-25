@@ -198,4 +198,12 @@ ifeq ($(CONFIG_CXD56_CHARGER),y)
 CSRCS += cxd56_charger.c
 endif
 
+ifeq ($(CONFIG_MODEM_ALTMDM),y)
+CSRCS += cxd56_altmdm_spi.c
+endif
+
+ifeq ($(CONFIG_BCM20706),y)
+CSRCS += cxd56_bcm20706.c
+endif
+
 include $(SDKDIR)/bsp/scripts/Board.mk

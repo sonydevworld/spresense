@@ -308,19 +308,26 @@ typedef struct
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**
  * @brief Create audio output mixer
  *
  * @param[in] param: Parameters of resources used by output mixer
+ * @param[in] attcb: Attention callback of OutputMixer. NULL means no callback.
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param,
+                          AudioAttentionCb attcb);
+
+__attribute__((deprecated(
+                 "\n \
+                  \n Deprecated create API is used. \
+                  \n Use \"AS_CreateOutputMixer(AsCreateOutputMixParam_t * \
+                  \n                           AudioAttentionCb)\". \
+                  \n \
+                  \n")))
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param);
 
 /**
@@ -375,10 +382,6 @@ bool AS_DeactivateOutputMixer(uint8_t handle, FAR AsDeactivateOutputMixer *deact
  */
 
 bool AS_DeleteOutputMix(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_OUTPUTMIX_API_H */
 /**

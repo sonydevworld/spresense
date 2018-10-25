@@ -38,7 +38,6 @@
 #include <arch/chip/cxd56_audio.h>
 
 #include "memutils/os_utils/chateau_osal.h"
-#include "memutils/common_utils/common_attention.h"
 #include "audio/audio_high_level_api.h"
 #include "debug/dbg_log.h"
 #include "audio_dma_drv.h"
@@ -188,8 +187,7 @@ void AsDmaDrv::readyQuePush(const AudioDrvDmaRunParam &dmaParam)
 {
   if (!m_ready_que.push(dmaParam))
     {
-      ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                      AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      DMAC_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
     }
 }
 
@@ -198,8 +196,7 @@ void AsDmaDrv::readyQuePop()
 {
   if (!m_ready_que.pop())
     {
-      ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                      AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+      DMAC_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
     }
 }
 
@@ -208,8 +205,7 @@ void AsDmaDrv::runningQuePush(const AudioDrvDmaRunParam &dmaParam)
 {
   if (!m_running_que.push(dmaParam))
     {
-      ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                      AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      DMAC_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
     }
 }
 
@@ -218,8 +214,7 @@ void AsDmaDrv::runningQuePop()
 {
   if (!m_running_que.pop())
     {
-      ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                      AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+      DMAC_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
     }
 }
 
@@ -847,13 +842,11 @@ void AsDmaDrv::dmaErrCb(E_AS_BB err_code)
   switch (err_code)
     {
       case E_AS_BB_DMA_UNDERFLOW:
-          ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                          AS_ATTENTION_SUB_CODE_DMA_UNDERFLOW);
+          DMAC_ERR(AS_ATTENTION_SUB_CODE_DMA_UNDERFLOW);
           break;
 
       case E_AS_BB_DMA_OVERFLOW:
-          ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                          AS_ATTENTION_SUB_CODE_DMA_OVERFLOW);
+          DMAC_ERR(AS_ATTENTION_SUB_CODE_DMA_OVERFLOW);
           break;
 
       case E_AS_BB_DMA_ILLEGAL:
@@ -861,13 +854,11 @@ void AsDmaDrv::dmaErrCb(E_AS_BB err_code)
       case E_AS_BB_DMA_PARAM:
       case E_AS_BB_DMA_ERR_START:
       case E_AS_BB_DMA_ERR_REQUEST:
-          ERROR_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                          AS_ATTENTION_SUB_CODE_DMA_ERROR);
+          DMAC_ERR(AS_ATTENTION_SUB_CODE_DMA_ERROR);
           break;
 
       case E_AS_BB_DMA_ERR_BUS:
-          FATAL_ATTENTION(AS_MODULE_ID_AUDIO_DRIVER,
-                          AS_ATTENTION_SUB_CODE_DMA_ERROR);
+          DMAC_FATAL(AS_ATTENTION_SUB_CODE_DMA_ERROR);
           break;
 
       default:

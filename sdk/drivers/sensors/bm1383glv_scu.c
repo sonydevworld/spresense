@@ -168,7 +168,7 @@ static struct seq_s *g_seq = NULL;
 static uint8_t bm1383glv_getreg8(FAR struct bm1383glv_dev_s *priv,
                                  uint8_t regaddr)
 {
-  uint8_t regval;
+  uint8_t regval = 0;
   uint16_t inst[2];
 
   /* Send register to read and get the next byte */

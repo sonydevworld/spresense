@@ -212,19 +212,26 @@ typedef struct
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**
  * @brief Activate voice recognizer
  *
  * @param[in] param: Parameters of resources used by voice recognizer
+ * @param[in] attcb: Attention callback of Recognizer. NULL means no callback.
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
+bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param,
+                         AudioAttentionCb attcb);
+
+__attribute__((deprecated(
+                 "\n \
+                  \n Deprecated create API is used. \
+                  \n Use \"AS_CreateRecognizer(AsCreateRecognizerParam_t * \
+                  \n                          AudioAttentionCb)\". \
+                  \n \
+                  \n")))
 bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param);
 
 /**
@@ -235,10 +242,6 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param);
  */
 
 bool AS_DeleteRecognizer(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* AUDIO_RECOGNIZER_API_H */
 /**

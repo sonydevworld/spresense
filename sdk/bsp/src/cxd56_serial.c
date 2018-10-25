@@ -570,6 +570,7 @@ static void up_shutdown(FAR struct uart_dev_s *dev)
   if ((priv->pmhandle) && (priv->uartbase == CXD56_UART2_BASE))
     {
       cxd56_pm_unregister_callback(priv->pmhandle);
+      priv->pmhandle = NULL;
     }
 #endif
 }

@@ -911,6 +911,10 @@ bool Playlist::parseTrackInfo(FAR Track *track,
     {
       track->sampling_rate = AS_SAMPLINGRATE_96000;
     }
+  else if (rate == 176400)
+    {
+      track->sampling_rate = AS_SAMPLINGRATE_176400;
+    }
   else if (rate == 192000)
     {
       track->sampling_rate = AS_SAMPLINGRATE_192000;

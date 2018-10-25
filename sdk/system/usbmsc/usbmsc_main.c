@@ -498,11 +498,15 @@ int msconn_main(int argc, char *argv[])
   /* Then exports the LUN(s) */
 
   printf("mcsonn_main: Configuring with NLUNS=%d\n", CONFIG_SYSTEM_USBMSC_NLUNS);
+  handle = NULL;
   ret = usbmsc_configure(CONFIG_SYSTEM_USBMSC_NLUNS, &handle);
   if (ret < 0)
     {
       printf("mcsonn_main: usbmsc_configure failed: %d\n", -ret);
-      usbmsc_disconnect(handle);
+      if (handle)
+        {
+          usbmsc_disconnect(handle);
+        }
       return EXIT_FAILURE;
     }
 

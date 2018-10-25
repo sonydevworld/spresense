@@ -89,29 +89,6 @@ struct AudioMngCmdCmpltResult
 /* Internal parameters between output-mix object and its user.        */
 /*--------------------------------------------------------------------*/
 
-struct OutputMixObjPostfilterDoneCmd
-{
-  Apu::ApuEventType event_type;
-};
-
-/**< Parameters for render done notify to output-mix object. */
-struct OutputMixObjRenderDoneCmd
-{
-  bool end_flag;
-  bool error_flag;
-};
-
-struct OutputMixObjParam
-{
-  int handle;
-
-  union
-  {
-    OutputMixObjPostfilterDoneCmd postfilterdone_param;
-    OutputMixObjRenderDoneCmd     renderdone_param;
-  };
-};
-
 struct DspResult
 {
   Apu::ExecResult  exec_result;

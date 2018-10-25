@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <nuttx/arch.h>
+#include <nuttx/kmalloc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <arch/chip/cxd56_audio.h>
@@ -64,6 +65,11 @@ using namespace MemMgrLite;
 #  define NUM_OF_AU 1
 #endif /* SUPPORT_SBC_PLAYER */
 
+/* Definition when not using Memory pool. */
+
+#define INVALID_POOL_ID   0
+#define SRC_WORK_BUF_SIZE 8192 /* 1024sample * 2ch * 4bytes */
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -82,12 +88,14 @@ static MsgQueId s_dsp_dtq;
 static PoolId   s_es_pool_id;
 static PoolId   s_pcm_pool_id;
 static PoolId   s_apu_pool_id;
+static PoolId   s_src_work_pool_id;
 static pid_t    s_sub_ply_pid;
 static MsgQueId s_sub_self_dtq;
 static MsgQueId s_sub_dsp_dtq;
 static PoolId   s_sub_es_pool_id;
 static PoolId   s_sub_pcm_pool_id;
 static PoolId   s_sub_apu_pool_id;
+static PoolId   s_sub_src_work_pool_id;
 
 static void *s_play_obj = NULL;
 static void *s_sub_play_obj = NULL;
@@ -125,10 +133,6 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
           cmplt.exec_dec_cmplt.output_buffer  = packet->exec_dec_cmd.output_buffer;
           cmplt.exec_dec_cmplt.is_valid_frame =
             ((packet->result.exec_result == Apu::ApuExecOK) ? true : false);
-
-          MEDIA_PLAYER_VDBG("Dec s %d v %d\n",
-                            cmplt.exec_dec_cmplt.output_buffer.size,
-                            cmplt.exec_dec_cmplt.is_valid_frame);
 
           err_t er = MsgLib::send<DecCmpltParam>((static_cast<FAR PlayerObj *>
                                                   (p_requester))->get_selfId(),
@@ -213,16 +217,19 @@ PlayerObj::PlayerObj(MsgQueId self_dtq,
                      MsgQueId apu_dtq,
                      MemMgrLite::PoolId es_pool_id,
                      MemMgrLite::PoolId pcm_pool_id,
-                     MemMgrLite::PoolId apu_pool_id):
+                     MemMgrLite::PoolId apu_pool_id,
+                     MemMgrLite::PoolId src_work_pool_id):
   m_self_dtq(self_dtq),
   m_apu_dtq(apu_dtq),
   m_es_pool_id(es_pool_id),
   m_pcm_pool_id(pcm_pool_id),
   m_apu_pool_id(apu_pool_id),
+  m_src_work_pool_id(src_work_pool_id),
   m_state(AS_MODULE_ID_PLAYER_OBJ, "main", BootedState),
   m_sub_state(AS_MODULE_ID_PLAYER_OBJ, "sub", InvalidSubState),
   m_input_device_handler(NULL),
   m_codec_type(InvalidCodecType),
+  m_src_work_buf(NULL),
   m_pcm_path(AsPcmDataReply)
 {
 }
@@ -587,6 +594,15 @@ void PlayerObj::init(MsgPacket *msg)
                    param.dsp_path,
                    param.sampling_rate);
 
+  /* Compare existence of multi-core between this time and last time. */
+
+  bool is_multi_core_prev = judgeMultiCore(
+                            m_input_device_handler->getSamplingRate(),
+                            m_input_device_handler->getBitLen());
+
+  bool is_multi_core_cur = judgeMultiCore(param.sampling_rate,
+                                         param.bit_length);
+
   result = m_input_device_handler->setParam(param);
 
   if (result == AS_ECODE_OK)
@@ -599,13 +615,14 @@ void PlayerObj::init(MsgPacket *msg)
 
       AudioCodec next_codec = m_input_device_handler->getCodecType();
 
-      if (m_codec_type != next_codec)
+      if ((m_codec_type != next_codec) ||
+          (is_multi_core_prev != is_multi_core_cur))
         {
           result = unloadCodec();
 
           if(result == AS_ECODE_OK)
             {
-              result = loadCodec(next_codec, param.dsp_path, &dsp_inf);
+              result = loadCodec(next_codec, &param, &dsp_inf);
             }
         }
     }
@@ -698,6 +715,8 @@ void PlayerObj::stopOnWait(MsgPacket *msg)
   MEDIA_PLAYER_DBG("STOP:\n");
 
   m_callback(AsPlayerEventStop, AS_ECODE_OK, 0);
+
+  freeSrcWorkBuf();
 
   m_state = ReadyState;
 }
@@ -850,6 +869,8 @@ void PlayerObj::nextReqOnStopping(MsgPacket *msg)
           MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
         }
       m_callback(ext_cmd_code, AS_ECODE_OK, 0);
+
+      freeSrcWorkBuf();
 
       m_state = ReadyState;
     }
@@ -1010,7 +1031,7 @@ void PlayerObj::decDoneOnPrePlay(MsgPacket *msg)
 
   freePcmBuf();
 
-  if (m_decoded_pcm_mh_que.size() < MAX_EXEC_COUNT)
+  if (m_decoded_pcm_mh_que.size() <= MAX_EXEC_COUNT)
     {
       uint32_t es_size = m_max_es_buff_size;
       void    *es_addr = getEs(&es_size);
@@ -1119,6 +1140,8 @@ void PlayerObj::decDoneOnPrePlayStopping(MsgPacket *msg)
           MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
         }
       m_callback(ext_cmd_code, AS_ECODE_OK, 0);
+
+      freeSrcWorkBuf();
 
       m_sub_state = InvalidSubState;
       m_state = ReadyState;
@@ -1245,7 +1268,9 @@ void PlayerObj::parseSubState(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-uint32_t PlayerObj::loadCodec(AudioCodec codec, char *path, uint32_t* dsp_inf)
+uint32_t PlayerObj::loadCodec(AudioCodec codec,
+                              AsInitPlayerParam *param,
+                              uint32_t* dsp_inf)
 {
   uint32_t rst;
 
@@ -1265,12 +1290,17 @@ uint32_t PlayerObj::loadCodec(AudioCodec codec, char *path, uint32_t* dsp_inf)
       return AS_ECODE_COMMAND_PARAM_CODEC_TYPE;
     }
 
-  rst = AS_decode_activate(codec,
-                           (path) ? path : CONFIG_AUDIOUTILS_DSP_MOUNTPT,
-                           &m_p_dec_instance,
-                           m_apu_pool_id,
-                           m_apu_dtq,
-                           dsp_inf);
+  ActDecCompParam act_param;
+  act_param.codec          = codec;
+  act_param.path           = (param->dsp_path != NULL) ? param->dsp_path :
+                              (char *)CONFIG_AUDIOUTILS_DSP_MOUNTPT;
+  act_param.p_instance     = &m_p_dec_instance;
+  act_param.apu_pool_id    = m_apu_pool_id;
+  act_param.apu_mid        = m_apu_dtq;
+  act_param.dsp_inf        = dsp_inf;
+  act_param.dsp_multi_core = judgeMultiCore(param->sampling_rate,
+                                            param->bit_length);
+  rst = AS_decode_activate(&act_param);
   if (rst != AS_ECODE_OK)
     {
       return rst;
@@ -1323,32 +1353,38 @@ uint32_t PlayerObj::startPlay(uint32_t* dsp_inf)
   init_dec_comp_param.bit_width =
     ((m_input_device_handler->getBitLen() == AS_BITLENGTH_16) ?
      AudPcm16Bit : AudPcm24Bit);
-
+  init_dec_comp_param.work_buffer.p_buffer = reinterpret_cast<unsigned long*>
+      (allocSrcWorkBuf(m_max_src_work_buff_size));
+  init_dec_comp_param.work_buffer.size     = m_max_src_work_buff_size;
+  init_dec_comp_param.dsp_multi_core       =
+    judgeMultiCore(m_input_device_handler->getSamplingRate(),
+                   m_input_device_handler->getBitLen());
   rst = AS_decode_init(&init_dec_comp_param, m_p_dec_instance, dsp_inf);
   if (rst != AS_ECODE_OK)
     {
+      freeSrcWorkBuf();
       return rst;
     }
 
   if (!AS_decode_recv_done(m_p_dec_instance))
     {
+      freeSrcWorkBuf();
       return AS_ECODE_QUEUE_OPERATION_ERROR;
     }
 
-  for (int i=0; i < MAX_EXEC_COUNT; i++)
+  /* Get ES data. */
+
+  uint32_t es_size = m_max_es_buff_size;
+  void    *es_addr = getEs(&es_size);
+
+  if (es_addr == NULL)
     {
-      /* Get ES data. */
+      freeSrcWorkBuf();
+      return  AS_ECODE_SIMPLE_FIFO_UNDERFLOW;
+    }
 
-      uint32_t es_size = m_max_es_buff_size;
-      void    *es_addr = getEs(&es_size);
+  decode(es_addr, es_size);
 
-      if (es_addr == NULL)
-        {
-          return  AS_ECODE_SIMPLE_FIFO_UNDERFLOW;
-        }
-
-    decode(es_addr, es_size);
-  }
   return AS_ECODE_OK;
 }
 
@@ -1463,6 +1499,38 @@ void* PlayerObj::getEs(uint32_t* size)
 }
 
 /*--------------------------------------------------------------------------*/
+void* PlayerObj::allocSrcWorkBuf(uint32_t size)
+{
+  void *work_buf_addr;
+
+  if (m_src_work_pool_id != INVALID_POOL_ID)
+    {
+      MemMgrLite::MemHandle mh;
+      if (mh.allocSeg(m_src_work_pool_id, size) != ERR_OK)
+        {
+          MEDIA_PLAYER_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+          return NULL;
+        }
+      if (!m_src_work_buf_mh_que.push(mh))
+        {
+          MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+          return NULL;
+        }
+      work_buf_addr = mh.getPa();
+    }
+  else
+    {
+      /* Allocate work memory area for SRC. */
+
+      MEDIA_PLAYER_WARN(AS_ATTENTION_SUB_CODE_ALLOC_HEAP_MEMORY);
+      m_src_work_buf = kmm_malloc(SRC_WORK_BUF_SIZE);
+      work_buf_addr = m_src_work_buf;
+    }
+
+  return work_buf_addr;
+}
+
+/*--------------------------------------------------------------------------*/
 void PlayerObj::finalize()
 {
   /* Note:
@@ -1533,15 +1601,43 @@ bool PlayerObj::checkAndSetMemPool()
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
+
+  if (m_src_work_pool_id != INVALID_POOL_ID)
+    {
+      if (!MemMgrLite::Manager::isPoolAvailable(m_src_work_pool_id))
+        {
+          MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+          return false;
+        }
+      m_max_src_work_buff_size = (MemMgrLite::Manager::getPoolSize(m_src_work_pool_id)) /
+        (MemMgrLite::Manager::getPoolNumSegs(m_src_work_pool_id));
+    }
   return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool PlayerObj::judgeMultiCore(uint32_t sampling_rate, uint8_t bit_length)
+{
+  /* If the sampling rate is Hi-Res and bit_length is 24 bits,
+   * load the SRC slave DSP.
+   */
+
+  if ((sampling_rate > AS_SAMPLINGRATE_48000) &&
+      (sampling_rate != AS_SAMPLINGRATE_192000) &&
+      (bit_length > AS_BITLENGTH_16))
+    {
+      /* Multi core. */
+
+      return true;
+    }
+
+  return false;
 }
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-extern "C"
-{
 /*--------------------------------------------------------------------------*/
 int AS_PlayerObjEntry(int argc, char *argv[])
 {
@@ -1550,7 +1646,8 @@ int AS_PlayerObjEntry(int argc, char *argv[])
                     s_dsp_dtq,
                     s_es_pool_id,
                     s_pcm_pool_id,
-                    s_apu_pool_id);
+                    s_apu_pool_id,
+                    s_src_work_pool_id);
   return 0;
 }
 
@@ -1562,13 +1659,35 @@ int AS_SubPlayerObjEntry(int argc, char *argv[])
                     s_sub_dsp_dtq,
                     s_sub_es_pool_id,
                     s_sub_pcm_pool_id,
-                    s_sub_apu_pool_id);
+                    s_sub_apu_pool_id,
+                    s_sub_src_work_pool_id);
   return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 bool AS_CreatePlayer(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
 {
+  /* Do not use memory pool for work area of src.
+   * Set invalid value in memory pool.
+   */
+
+  param->pool_id.src_work = INVALID_POOL_ID;
+  return AS_CreatePlayerMulti(id, param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
+{
+  return AS_CreatePlayerMulti(id, param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, AudioAttentionCb attcb)
+{
+  /* Register attention callback */
+
+  MEDIA_PLAYER_REG_ATTCB(attcb);
+
   /* Parameter check */
 
   if (param == NULL)
@@ -1586,6 +1705,7 @@ bool AS_CreatePlayer(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
       s_es_pool_id  = param->pool_id.es;
       s_pcm_pool_id = param->pool_id.pcm;
       s_apu_pool_id = param->pool_id.dsp;
+      s_src_work_pool_id = param->pool_id.src_work;
 
       s_ply_pid = task_create("PLY_OBJ",
                               150, 1024 * 3,
@@ -1604,7 +1724,8 @@ bool AS_CreatePlayer(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
       s_sub_es_pool_id  = param->pool_id.es;
       s_sub_pcm_pool_id = param->pool_id.pcm;
       s_sub_apu_pool_id = param->pool_id.dsp;
-    
+      s_sub_src_work_pool_id = param->pool_id.src_work;
+
       s_sub_ply_pid = task_create("SUB_PLY_OBJ",
                                   150, 1024 * 3,
                                   AS_SubPlayerObjEntry,
@@ -1858,22 +1979,30 @@ bool AS_DeletePlayer(AsPlayerId id)
         }
     }
 
+  /* Unregister attention callback */
+
+  if (s_play_obj == NULL && s_sub_play_obj == NULL)
+    {
+      MEDIA_PLAYER_UNREG_ATTCB();
+    }
+
   return true;
 }
-} /* extern "C" */
 
 void PlayerObj::create(FAR void **obj,
                        MsgQueId self_dtq,
                        MsgQueId apu_dtq,
                        MemMgrLite::PoolId es_pool_id,
                        MemMgrLite::PoolId pcm_pool_id,
-                       MemMgrLite::PoolId apu_pool_id)
+                       MemMgrLite::PoolId apu_pool_id,
+                       MemMgrLite::PoolId src_work_pool_id)
 {
   FAR PlayerObj *player_obj = new PlayerObj(self_dtq,
                                             apu_dtq,
                                             es_pool_id,
                                             pcm_pool_id,
-                                            apu_pool_id);
+                                            apu_pool_id,
+                                            src_work_pool_id);
 
   if (player_obj != NULL)
     {

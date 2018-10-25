@@ -199,7 +199,7 @@ static bool app_create_audio_sub_system(void)
   effector_create_param.pool_id.i2s_out    = I2S_OUT_BUF_POOL;
   effector_create_param.pool_id.mfe_out    = MFE_OUT_BUF_POOL;
 
-  result = AS_CreateEffector(&effector_create_param);
+  result = AS_CreateEffector(&effector_create_param, NULL);
   if (!result)
     {
       printf("Error: AS_CreateEffector failure. system memory insufficient!\n");

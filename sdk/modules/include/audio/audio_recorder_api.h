@@ -406,19 +406,26 @@ typedef struct
  * Public Function Prototypes
  ****************************************************************************/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 /**
  * @brief Create audio recorder
  *
  * @param[in] param: Parameters of resources used by audio recorder
+ * @param[in] attcb: Attention callback of Recorder. NULL means no callback.
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param,
+                            AudioAttentionCb attcb);
+
+__attribute__((deprecated(
+                 "\n \
+                  \n Deprecated create API is used. \
+                  \n Use \"AS_CreateMediaRecorder(AsCreateRecorderParam_t, \
+                  \n                             AudioAttentionCb)\". \
+                  \n \
+                  \n")))
 bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param);
 
 /**
@@ -478,10 +485,6 @@ bool AS_DeactivateMediaRecorder(void);
  */
 
 bool AS_DeleteMediaRecorder(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_RECORDER_API_H */
 /**

@@ -1,0 +1,26 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "Bluetooth Support"
+
+config BLUETOOTH
+	bool "Bluetooth Framework Support"
+	default n
+	---help---
+		Enable Bluetooth framework. This option not contain HAL configuration, so
+		if you use bluetooth function, please enable HAL configuration what you
+		want to use.
+
+if BLUETOOTH
+config BLUETOOTH_A2DP_USE_THREAD
+	bool "Bluetooth A2DP use thread for handle media packet"
+	default y
+	---help---
+		This option is for use thread while transfering media packet to application.
+endif
+
+source modules/bluetooth/hal/Kconfig
+endmenu
+

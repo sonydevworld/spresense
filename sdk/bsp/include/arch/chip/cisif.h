@@ -1,5 +1,5 @@
 /****************************************************************************
- * bsp/include/arch/chip/cisif.h
+ * bsp/src/cxd56_cisif.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -36,22 +36,12 @@
 #ifndef __BSP_INCLUDE_ARCH_CHIP_CISIF_H
 #define __BSP_INCLUDE_ARCH_CHIP_CISIF_H
 
-/************************************************************************************
+/****************************************************************************
  * Public Types
- ************************************************************************************/
+ ****************************************************************************/
 
 typedef void (*notify_callback_t)(uint8_t code, uint32_t size, uint32_t addr);
-typedef void (*comp_callback_t)(uint8_t code, uint8_t last_frame, uint32_t size, uint32_t addr);
-
-enum format_cisif_e
-{
-  FORMAT_CISIF_YUV,
-  FORMAT_CISIF_JPEG,
-  FORMAT_CISIF_INTERLEAVE,
-  FORMAT_CISIF_MAX,
-};
-
-typedef enum format_cisif_e format_cisif_t;
+typedef void (*comp_callback_t)(uint8_t code, uint32_t size, uint32_t addr);
 
 struct cisif_init_yuv_param_s
 {
@@ -59,7 +49,6 @@ struct cisif_init_yuv_param_s
   uint16_t          vsize;
   uint32_t          notify_size;
   notify_callback_t notify_func;
-  comp_callback_t   comp_func;
 };
 
 typedef struct cisif_init_yuv_param_s cisif_init_yuv_param_t;
@@ -68,7 +57,6 @@ struct cisif_init_jpeg_param_s
 {
   uint32_t notify_size;
   notify_callback_t notify_func;
-  comp_callback_t comp_func;
 };
 
 typedef struct cisif_init_jpeg_param_s cisif_init_jpeg_param_t;
@@ -77,30 +65,20 @@ struct cisif_sarea_s
 {
   uint8_t *strg_addr;
   uint32_t strg_size;
-  uint32_t capnum;
-  uint32_t interval;
 };
 
 typedef struct cisif_sarea_s cisif_sarea_t;
 
 struct cisif_param_s
 {
-  format_cisif_t          format;
+  uint32_t                format;
   cisif_init_yuv_param_t  yuv_param;
   cisif_init_jpeg_param_t jpg_param;
   cisif_sarea_t           sarea;
+  comp_callback_t         comp_func;
 };
 
 typedef struct cisif_param_s cisif_param_t;
-
-struct cisif_bank_sarea_s
-{
-  uint8_t *strg_addr_0;
-  uint8_t *strg_addr_1;
-  uint32_t strg_size;
-};
-
-typedef struct cisif_bank_sarea_s cisif_bank_sarea_t;
 
 #ifndef __ASSEMBLY__
 
@@ -119,23 +97,14 @@ extern "C"
 
 int cxd56_cisifinit(void);
 int cxd56_cisiffinalize(void);
-int cxd56_cisifcaptureframe(
-  cisif_param_t *param,
-  cisif_sarea_t *yuv_sarea,
-  cisif_sarea_t *jpg_sarea);
-int cxd56_cisifstartmonitoring(
-  cisif_param_t      *param,
-  cisif_bank_sarea_t *yuv_area,
-  cisif_bank_sarea_t *jpg_area);
-int cxd56_cisifstopmonitoring(void);
-int cxd56_cisifcontinuouscapture(
-  cisif_param_t *param,
-  cisif_sarea_t *sarea);
+int cxd56_cisifstartcapture(cisif_param_t *param, cisif_sarea_t *sarea);
+int cxd56_cisifstopcapture(void);
+int cxd56_cisifsetdmabuf(cisif_sarea_t *sarea);
 
-#  undef EXTERN
-#  if defined(__cplusplus)
+#undef EXTERN
+#if defined(__cplusplus)
 }
-#  endif
+#endif
 
 #endif /* __ASSEMBLY__ */
 

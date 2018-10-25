@@ -468,43 +468,32 @@ static int pwm_ioctl(FAR struct pwm_lowerhalf_s *dev, int cmd, unsigned long arg
 FAR struct pwm_lowerhalf_s *cxd56_pwminitialize(uint32_t channel)
 {
   FAR struct cxd56_pwm_chan_s *pwmch;
-  int ret = -1;
 
   switch (channel)
     {
 #ifdef CONFIG_CXD56_PWM0
       case CXD56_PWM_CH0:
-        ret = pwm_pin_config(channel);
         pwmch = &g_pwm_ch0;
         break;
 #endif
 #ifdef CONFIG_CXD56_PWM1
       case CXD56_PWM_CH1:
-        ret = pwm_pin_config(channel);
         pwmch = &g_pwm_ch1;
         break;
 #endif
 #ifdef CONFIG_CXD56_PWM2
       case CXD56_PWM_CH2:
-        ret = pwm_pin_config(channel);
         pwmch = &g_pwm_ch2;
         break;
 #endif
 #ifdef CONFIG_CXD56_PWM3
       case CXD56_PWM_CH3:
-        ret = pwm_pin_config(channel);
         pwmch = &g_pwm_ch3;
         break;
 #endif
       default:
         pwmerr("Illeagal channel number:%d\n", channel);
         return NULL;
-    }
-
-  if (ret < 0)
-    {
-      pwmerr("Failed to pinconf():%d\n", channel);
-      return NULL;
     }
 
   return (FAR struct pwm_lowerhalf_s *)pwmch;

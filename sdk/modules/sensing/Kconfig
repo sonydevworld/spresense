@@ -17,7 +17,7 @@ config SENSING_MANAGER_POWERCTRL
 	bool "Sensor manager power control enable"
 	default n
 	---help---
-        To use SF_SendSensorSetPower() API, enable this.
+		To use SF_SendSensorSetPower() API, enable this.
 
 endif
 

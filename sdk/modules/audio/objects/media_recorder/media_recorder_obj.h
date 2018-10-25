@@ -229,6 +229,7 @@ private:
   bool delInputDeviceHdlr(void);
 
   bool checkAndSetMemPool();
+  bool isNeedUpsampling(int32_t sampling_rate);
 };
 
 /****************************************************************************

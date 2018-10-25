@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ############################################################################
 # tools/mkversion.sh
 #
@@ -34,11 +34,15 @@
 #
 ############################################################################
 
+CURRENT_DIR=`pwd`
+SCRIPT_NAME=`readlink -e "${BASH_SOURCE[0]}"`
+SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
+
 TOPDIR=${TOPDIR:-nuttx}
 TAG=${1:-HEAD}
 
 APP_VERSION="0.0.0"
-SDK_VERSION="SDK1.0.2"
+SDK_VERSION="SDK1.1.0"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
@@ -48,7 +52,11 @@ NUTTX_VERSION="7.22"
 # Get short hash for specified tag
 GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
 
-BUILD_ID="${APP_VERSION}-${SDK_VERSION}-${GIT_REVISION}"
+if [ "${GIT_REVISION}" != "" ]; then
+    BUILD_ID="${APP_VERSION}-${SDK_VERSION}-${GIT_REVISION}"
+else
+    BUILD_ID="${APP_VERSION}-${SDK_VERSION}"
+fi
 
 # BUILD_ID must be 40 characters or less
 if [ ${#BUILD_ID} -gt 40 ]; then
@@ -56,4 +64,4 @@ if [ ${#BUILD_ID} -gt 40 ]; then
     exit 1
 fi
 
-${TOPDIR}/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" .version
+${SCRIPT_DIR}/../../nuttx/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${SCRIPT_DIR}/../../nuttx/.version

@@ -4,10 +4,10 @@
 #
 
 config MEMUTILS
-    bool "Memory manager"
-    default n
-    ---help---
-        Enable support for memory manager.
+	bool "Memory manager"
+	default n
+	---help---
+		Enable support for memory manager.
 
 if MEMUTILS
 menu "Memory Utilities"

@@ -1,0 +1,94 @@
+############################################################################
+# modules/lte/altcom/api/socket/Make.defs
+#
+#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in
+#    the documentation and/or other materials provided with the
+#    distribution.
+# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+#    the names of its contributors may be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+############################################################################
+
+# socket feature
+
+CSRCS += altcom_accept.c
+CSRCS += altcom_bind.c
+CSRCS += altcom_close.c
+CSRCS += altcom_connect.c
+CSRCS += altcom_fcntl.c
+CSRCS += altcom_getsockname.c
+CSRCS += altcom_getsockopt.c
+CSRCS += altcom_ioctl.c
+CSRCS += altcom_listen.c
+CSRCS += altcom_read.c
+CSRCS += altcom_recv.c
+CSRCS += altcom_recvfrom.c
+CSRCS += altcom_send.c
+CSRCS += altcom_sendto.c
+CSRCS += altcom_setsockopt.c
+CSRCS += altcom_shutdown.c
+CSRCS += altcom_socket.c
+CSRCS += altcom_write.c
+
+CSRCS += altcom_sock.c
+
+# netdb feature
+
+CSRCS += altcom_freeaddrinfo.c
+CSRCS += altcom_getaddrinfo.c
+CSRCS += altcom_gethostbyname.c
+CSRCS += altcom_gethostbyname_r.c
+
+# select feature
+
+CSRCS += altcom_select.c
+CSRCS += altcom_select_async.c
+
+# inet feature
+
+CSRCS += altcom_htonl.c
+CSRCS += altcom_htons.c
+CSRCS += altcom_ntohl.c
+CSRCS += altcom_ntohs.c
+CSRCS += altcom_inet_addr.c
+CSRCS += altcom_inet_ntoa.c
+CSRCS += altcom_inet_ntop.c
+CSRCS += altcom_inet_pton.c
+CSRCS += altcom_inet_aton.c
+
+# errno feature
+
+CSRCS += altcom_errno.c
+
+# select feature
+
+CSRCS += apicmdhdlr_select.c
+
+# Add the src directory to the build
+
+DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)socket
+VPATH += :altcom$(DELIM)api$(DELIM)socket

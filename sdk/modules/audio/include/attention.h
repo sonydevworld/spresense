@@ -41,7 +41,6 @@
  ****************************************************************************/
 
 #include "audio/audio_high_level_api.h"
-#include "memutils/common_utils/common_attention.h"
 #include "memutils/message/Message.h"
 
 /****************************************************************************
@@ -63,6 +62,61 @@ struct attention_info_s
 #endif /* ATTENTION_USE_FILENAME_LINE */
 };
 typedef struct attention_info_s AttentionInfo;
+
+typedef enum
+{
+  INFORMATION_ATTENTION_CODE = 0, /* Just Information */
+  WARNING_ATTENTION_CODE,         /* Warning. Autonomous return possible. */
+  ERROR_ATTENTION_CODE,           /* Restoration is possible depending
+                                   * on control from the upper level.
+                                   */
+  FATAL_ATTENTION_CODE,           /* Fatal condition. Reset required. */
+} ErrorAttensionCode;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Implement with the following IF for each project. */
+
+extern void _RegisterAttentionCb(uint32_t module_id, AudioAttentionCb att_cb);
+extern void _UnregisterAttentionCb(uint32_t module_id);
+
+#ifdef ATTENTION_USE_FILENAME_LINE
+extern void _Attention(uint8_t module_id, uint8_t attention_code, uint8_t sub_code,
+		       const char* filename, uint16_t line);
+#else
+extern void _Attention(uint8_t module_id, uint8_t attention_code, uint8_t sub_code);
+#endif
+
+#define ATTENTION_CB_REGISTER(module_id, att_cb) \
+    _RegisterAttentionCb(module_id, att_cb)
+#define ATTENTION_CB_UNREGISTER(module_id) \
+    _UnregisterAttentionCb(module_id)
+
+#ifdef ATTENTION_USE_FILENAME_LINE
+#define INFORMATION_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), INFORMATION_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+#define WARNING_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), WARNING_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+#define ERROR_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), ERROR_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+#define FATAL_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), FATAL_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+#else /* ATTENTION_USE_FILENAME_LINE */
+#define INFORMATION_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), INFORMATION_ATTENTION_CODE, (sub_code))
+#define WARNING_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), WARNING_ATTENTION_CODE, (sub_code))
+#define ERROR_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), ERROR_ATTENTION_CODE, (sub_code))
+#define FATAL_ATTENTION(module_id, sub_code) \
+	_Attention((module_id), FATAL_ATTENTION_CODE, (sub_code))
+#endif /* ATTENTION_USE_FILENAME_LINE */
+
+#ifdef __cplusplus
+}
+#endif
 
 /****************************************************************************
  * Public Data

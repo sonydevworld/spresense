@@ -185,10 +185,8 @@ void board_isx012_release_sleep(void)
 
 int isx012_register(FAR struct i2c_master_s *i2c);
 int isx012_unregister(void);
-int video_register(FAR const char *devpath);
-int video_unregister(void);
 
-int board_isx012_initialize(FAR const char *devpath, int bus)
+int board_isx012_initialize(int i2c_bus_num)
 {
   int ret;
 
@@ -206,7 +204,7 @@ int board_isx012_initialize(FAR const char *devpath, int bus)
 
   /* Initialize i2c deivce */
 
-  i2c = cxd56_i2cbus_initialize(bus);
+  i2c = cxd56_i2cbus_initialize(i2c_bus_num);
   if (!i2c)
     {
       return -ENODEV;
@@ -216,12 +214,6 @@ int board_isx012_initialize(FAR const char *devpath, int bus)
   if (ret < 0)
     {
       _err("Error registering ISX012.\n");
-    }
-
-  ret = video_register(devpath);
-  if (ret < 0)
-    {
-      _err("Error registering video.\n");
     }
 
   return ret;
@@ -234,12 +226,6 @@ int board_isx012_uninitialize(void)
   _info("Uninitializing ISX012...\n");
 
   /* Initialize i2c deivce */
-
-  ret = video_unregister();
-  if (ret < 0)
-    {
-      _err("Error unregistering video.\n");
-    }
 
   ret = isx012_unregister();
   if (ret < 0)

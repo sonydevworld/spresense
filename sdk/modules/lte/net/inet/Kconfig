@@ -1,0 +1,44 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig LTE_INET
+	bool "INET Support"
+	---help---
+		INET Support.
+
+if LTE_INET
+
+config LTE_INET_ADDR
+	bool "inet_addr library support"
+	default n
+	---help---
+		none
+
+config LTE_INET_ATON
+	bool "inet_aton library support"
+	default n
+	---help---
+		none
+
+config LTE_INET_NTOA
+	bool "inet_ntoa library support"
+	default n
+	---help---
+		none
+
+config LTE_INET_NTOP
+	bool "inet_ntop library support"
+	default n
+	---help---
+		none
+
+config LTE_INET_PTON
+	bool "inet_pton library support"
+	default n
+	---help---
+		none
+
+endif
+

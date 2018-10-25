@@ -69,7 +69,7 @@ config LCD_ILI9340_NINTERFACES
 	int "Number of supported display driver"
 	range 1 2
 	default 1
-    depends on LCD_ILI9340
+	depends on LCD_ILI9340
 	---help---
 		Define the number of supported  displays driven by a ili9340 LCD Single
 		Chip Driver.

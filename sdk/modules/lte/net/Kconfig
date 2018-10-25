@@ -1,0 +1,14 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig LTE_NET
+	bool "Networking Support"
+	---help---
+		Enable or disable network features.
+
+if LTE_NET
+source "modules/lte/net/inet/Kconfig"
+source "modules/lte/net/netdb/Kconfig"
+endif

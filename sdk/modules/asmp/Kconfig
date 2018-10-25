@@ -1,39 +1,42 @@
 
 menuconfig ASMP
 	bool "ASMP"
-	help
+	---help---
 		A hybrid multi processor framework
 
 if ASMP
-	config MM_TILE
+
+config MM_TILE
 	bool
 	default y
 
-	config ASMP_MEMSIZE
+config ASMP_MEMSIZE
 	hex "ASMP shared memory size"
 	default 0xc0000
-	help
+	---help---
 		Memory size for shared memory area in ASMP Framework.
 
-    config ASMP_SMALL_BLOCK
-    bool "Small memory block"
-    default n
-    help
-        Use small block size (64 KiB) to memory management.
-        This option is for improve memory usage, but it tends to fragmentation.
+config ASMP_SMALL_BLOCK
+	bool "Small memory block"
+	default n
+	---help---
+		Use small block size (64 KiB) to memory management.
+		This option is for improve memory usage, but it tends to fragmentation.
 
-	config ASMP_DEBUG_FEATURE
+config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
 
 if ASMP_DEBUG_FEATURE
-	config ASMP_DEBUG_ERROR
+
+config ASMP_DEBUG_ERROR
 	bool "ASMP Framework debug error"
 
-	config ASMP_DEBUG_WARN
+config ASMP_DEBUG_WARN
 	bool "ASMP Framework debug warn"
 
-	config ASMP_DEBUG_INFO
+config ASMP_DEBUG_INFO
 	bool "ASMP Framework debug info"
-endif
 
-endif
+endif # ASMP_DEBUG_FEATURE
+
+endif # ASMP

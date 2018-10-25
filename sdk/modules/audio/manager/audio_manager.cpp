@@ -34,7 +34,6 @@
  ****************************************************************************/
 
 #include "memutils/common_utils/common_types.h"
-#include "memutils/common_utils/common_attention.h"
 #include "audio_manager.h"
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
 #include "objects/sound_recognizer/voice_recognition_object.h"
@@ -549,6 +548,18 @@ int AS_DeleteAudioManager(void)
     {
       delete s_mng;
       s_mng = NULL;
+
+      s_selfMid    = MSGQID_UNUSED;
+      s_appMid     = MSGQID_UNUSED;
+      s_plyMainMid = MSGQID_UNUSED;
+      s_plySubMid  = MSGQID_UNUSED;
+      s_mixerMid   = MSGQID_UNUSED;
+      s_rcdSubMid  = MSGQID_UNUSED;
+      s_effectMid  = MSGQID_UNUSED;
+      s_rcgMid     = MSGQID_UNUSED;
+
+      s_attention_cb     = NULL;
+      s_obs_attention_cb = NULL;
     }
 
   return AS_ERR_CODE_OK;
@@ -579,6 +590,12 @@ int AS_ReceiveAudioResult(FAR AudioResult *packet)
 MsgQueId AS_GetSelfDtq(void)
 {
   return s_selfMid;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_IsValidDtq(MsgQueId id)
+{
+  return (id != MSGQID_UNUSED) ? true : false;
 }
 
 /*--------------------------------------------------------------------------*/

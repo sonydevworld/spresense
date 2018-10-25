@@ -85,9 +85,9 @@
 
 #define AC_REG_MAX_BIT 32
 
-#define I2S_DATA_RATE_LOW   192000
+#define I2S_DATA_RATE_LOW   48000
 #define I2S_DATA_RATE_MID   96000
-#define I2S_DATA_RATE_HIGH  48000
+#define I2S_DATA_RATE_HIGH  192000
 
 #define CS_VOL_MAX           -195
 #define CS_VOL_MIN           -825

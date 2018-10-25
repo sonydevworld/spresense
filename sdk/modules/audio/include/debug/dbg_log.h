@@ -44,7 +44,7 @@
 #include <sdk/config.h>
 #include <debug.h>
 #include "audio/audio_high_level_api.h"
-#include "memutils/common_utils/common_attention.h"
+#include "attention.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -87,6 +87,12 @@
 #define MANAGER_WARN(code)  DBG_LOGF_WARN(AS_MODULE_ID_AUDIO_MANAGER, code)
 #define MANAGER_INF(code)   DBG_LOGF_DEBUG(AS_MODULE_ID_AUDIO_MANAGER, code)
 
+#define MEDIA_PLAYER_REG_ATTCB(att_cb)  ATTENTION_CB_REGISTER( \
+                                          AS_MODULE_ID_PLAYER_OBJ, \
+                                          att_cb)
+#define MEDIA_PLAYER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+                                     AS_MODULE_ID_PLAYER_OBJ)
+
 #define MEDIA_PLAYER_FATAL(code)    DBG_LOGF_FATAL( \
                                       AS_MODULE_ID_PLAYER_OBJ, \
                                       code)
@@ -108,8 +114,14 @@
                                       fmt, \
                                       ##__VA_ARGS__)
 
+#define OUTPUT_MIX_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+                                       AS_MODULE_ID_OUTPUT_MIX_OBJ, \
+                                       att_cb)
+#define OUTPUT_MIX_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+                                       AS_MODULE_ID_OUTPUT_MIX_OBJ)
+
 #define OUTPUT_MIX_FATAL(code)   DBG_LOGF_FATAL( \
-                                   AS_MODULE_ID_PLAYER_OBJ, \
+                                   AS_MODULE_ID_OUTPUT_MIX_OBJ, \
                                    code)
 #define OUTPUT_MIX_ERR(code)     DBG_LOGF_ERROR( \
                                    AS_MODULE_ID_OUTPUT_MIX_OBJ, \
@@ -125,6 +137,10 @@
                                    fmt, \
                                    ##__VA_ARGS__)
 
+#define RENDERER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_RENDERER_CMP, \
+                                                         att_cb)
+#define RENDERER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_RENDERER_CMP)
+
 #define RENDERER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_RENDERER_CMP, \
                                               code)
 #define RENDERER_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_RENDERER_CMP, \
@@ -136,6 +152,12 @@
 #define RENDERER_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_RENDERER_CMP, \
                                                fmt, \
                                                ##__VA_ARGS__)
+
+#define MEDIA_RECORDER_REG_ATTCB(att_cb)  ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_MEDIA_RECORDER_OBJ, \
+                                            att_cb)
+#define MEDIA_RECORDER_UNREG_ATTCB()  ATTENTION_CB_UNREGISTER( \
+                                        AS_MODULE_ID_MEDIA_RECORDER_OBJ)
 
 #define MEDIA_RECORDER_FATAL(code)    DBG_LOGF_FATAL( \
                                         AS_MODULE_ID_MEDIA_RECORDER_OBJ, \
@@ -158,6 +180,10 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
+#define DECODER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_DECODER_CMP, \
+                                                        att_cb)
+#define DECODER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_DECODER_CMP)
+
 #define DECODER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_DECODER_CMP, \
                                              code)
 #define DECODER_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_DECODER_CMP, \
@@ -169,6 +195,14 @@
 #define DECODER_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_DECODER_CMP, \
                                               fmt, \
                                               ##__VA_ARGS__)
+
+#define DECODER_VDBG(fmt, ...) AUDIO_LOG_DETAIL(AS_MODULE_ID_DECODER_CMP, \
+                                                fmt, \
+                                                ##__VA_ARGS__)
+
+#define ENCODER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_ENCODER_CMP, \
+                                                        att_cb)
+#define ENCODER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_ENCODER_CMP)
 
 #define ENCODER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_ENCODER_CMP, \
                                              code)
@@ -182,6 +216,10 @@
                                               fmt, \
                                               ##__VA_ARGS__)
 
+#define CAPTURE_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_CAPTURE_CMP, \
+                                                        att_cb)
+#define CAPTURE_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_CAPTURE_CMP)
+
 #define CAPTURE_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_CAPTURE_CMP, \
                                              code)
 #define CAPTURE_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_CAPTURE_CMP, \
@@ -193,6 +231,10 @@
 #define CAPTURE_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_CAPTURE_CMP, \
                                               fmt, \
                                               ##__VA_ARGS__)
+
+#define FILTER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_FILTER_CMP, \
+                                                       att_cb)
+#define FILTER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_FILTER_CMP)
 
 #define FILTER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_FILTER_CMP, \
                                             code)
@@ -206,6 +248,10 @@
                                              fmt, \
                                              ##__VA_ARGS__)
 
+#define POSTFILTER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_POSTFILTER_CMP, \
+                                                           att_cb)
+#define POSTFILTER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_POSTFILTER_CMP)
+
 #define POSTFILTER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_POSTFILTER_CMP, \
                                             code)
 #define POSTFILTER_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_POSTFILTER_CMP, \
@@ -218,6 +264,10 @@
                                              fmt, \
                                              ##__VA_ARGS__)
 
+#define SOUNDFX_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_SOUND_EFFECT_OBJ, \
+                                                        att_cb)
+#define SOUNDFX_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_SOUND_EFFECT_OBJ)
+
 #define SOUNDFX_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_SOUND_EFFECT_OBJ, \
                                              code)
 #define SOUNDFX_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_SOUND_EFFECT_OBJ, \
@@ -229,6 +279,12 @@
 #define SOUNDFX_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_SOUND_EFFECT_OBJ, \
                                               fmt, \
                                               ##__VA_ARGS__)
+
+#define RECOGNITION_OBJ_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_RECOGNITION_OBJ, \
+                                            att_cb)
+#define RECOGNITION_OBJ_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+                                            AS_MODULE_ID_RECOGNITION_OBJ)
 
 #define RECOGNITION_OBJ_FATAL(code)   DBG_LOGF_FATAL( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
@@ -247,6 +303,12 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
+#define RECOGNITION_CMP_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_RECOGNITION_CMP, \
+                                            att_cb)
+#define RECOGNITION_CMP_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+                                            AS_MODULE_ID_RECOGNITION_CMP)
+
 #define RECOGNITION_CMP_FATAL(code)   DBG_LOGF_FATAL( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         code)
@@ -264,6 +326,8 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
+#define DMAC_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_AUDIO_DRIVER, att_cb)
+#define DMAC_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_AUDIO_DRIVER)
 #define DMAC_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_AUDIO_DRIVER, code)
 #define DMAC_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_AUDIO_DRIVER, code)
 #define DMAC_WARN(code)    DBG_LOGF_WARN(AS_MODULE_ID_AUDIO_DRIVER, code)

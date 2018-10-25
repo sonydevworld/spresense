@@ -34,14 +34,41 @@
  ****************************************************************************/
 
 #include "audio/audio_high_level_api.h"
-#include "memutils/common_utils/common_attention.h"
 #include "attention.h"
 #include "common/audio_internal_message_types.h"
 
+struct AttCbInfo
+{
+  AudioAttentionCb att_cb;
+
+  AttCbInfo()
+    : att_cb(NULL)
+    {}
+};
+
+static AttCbInfo s_attcb_table[AS_MODULE_ID_NUM];
+
 extern MsgQueId AS_GetSelfDtq(void);
+extern bool AS_IsValidDtq(MsgQueId id);
 
 extern "C"
 {
+
+void _RegisterAttentionCb(uint32_t module_id, AudioAttentionCb att_cb)
+{
+  if (module_id < AS_MODULE_ID_NUM)
+    {
+      s_attcb_table[module_id].att_cb = att_cb;
+    }
+}
+
+void _UnregisterAttentionCb(uint32_t module_id)
+{
+  if (module_id < AS_MODULE_ID_NUM)
+    {
+      s_attcb_table[module_id].att_cb = NULL;
+    }
+}
 
 #ifdef ATTENTION_USE_FILENAME_LINE
 
@@ -80,12 +107,28 @@ void _Attention(uint8_t module_id,
 
   MsgQueId msgq_aud_mgr = AS_GetSelfDtq();
 
-  err_t er = MsgLib::send(msgq_aud_mgr,
-                          MsgPriNormal,
-                          MSG_AUD_MGR_CALL_ATTENTION,
-                          0,
-                          info);
-  F_ASSERT(er == ERR_OK);
+  if (AS_IsValidDtq(msgq_aud_mgr))
+    {
+      err_t er = MsgLib::send(msgq_aud_mgr,
+                              MsgPriNormal,
+                              MSG_AUD_MGR_CALL_ATTENTION,
+                              0,
+                              info);
+      F_ASSERT(er == ERR_OK);
+    }
+  else
+    {
+      if (s_attcb_table[module_id].att_cb != NULL)
+        {
+          /* Callback attention */
+
+          s_attcb_table[module_id].att_cb(&info);
+        }
+      else
+        {
+          /* There is nothing to do. */ 
+        }
+    }
 }
 
 #else /* ATTENTION_USE_FILENAME_LINE */
@@ -119,12 +162,28 @@ void _Attention(uint8_t module_id,
 
   MsgQueId msgq_aud_mgr = AS_GetSelfDtq();
 
-  err_t er = MsgLib::send(msgq_aud_mgr,
-                          MsgPriNormal,
-                          MSG_AUD_MGR_CALL_ATTENTION,
-                          0,
-                          info);
-  F_ASSERT(er == ERR_OK);
+  if (AS_IsValidDtq(msgq_aud_mgr))
+    {
+      err_t er = MsgLib::send(msgq_aud_mgr,
+                              MsgPriNormal,
+                              MSG_AUD_MGR_CALL_ATTENTION,
+                              0,
+                              info);
+      F_ASSERT(er == ERR_OK);
+    }
+  else
+    {
+      if (s_attcb_table[module_id].att_cb != NULL)
+        {
+          /* Callback attention */
+
+          s_attcb_table[module_id].att_cb(&info);
+        }
+      else
+        {
+          /* There is nothing to do. */ 
+        }
+    }
 }
 
 #endif /* ATTENTION_USE_FILENAME_LINE */

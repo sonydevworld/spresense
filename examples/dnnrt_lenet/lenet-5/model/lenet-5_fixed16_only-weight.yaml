@@ -1,0 +1,41 @@
+functions:
+  Convolution:
+    implement: 0
+  ReLU:
+    implement: 0
+  MaxPooling:
+    implement: 0
+  Convolution_2:
+    implement: 0
+  MaxPooling_2:
+    implement: 0
+  Tanh_2:
+    implement: 0
+  Affine:
+    implement: 0
+  ReLU_2:
+    implement: 0
+  Affine_2:
+    implement: 0
+  Softmax:
+    implement: 0
+variables:
+  Input: FLOAT32
+  Convolution: FLOAT32
+  ReLU: FLOAT32
+  MaxPooling: FLOAT32
+  Convolution_2: FLOAT32
+  MaxPooling_2: FLOAT32
+  Tanh_2: FLOAT32
+  Affine: FLOAT32
+  ReLU_2: FLOAT32
+  Affine_2: FLOAT32
+  Softmax: FLOAT32
+  Convolution/conv/W: FIXED16
+  Convolution/conv/b: FIXED16
+  Convolution_2/conv/W: FIXED16
+  Convolution_2/conv/b: FIXED16
+  Affine/affine/W: FIXED16
+  Affine/affine/b: FIXED16
+  Affine_2/affine/W: FIXED16
+  Affine_2/affine/b: FIXED16

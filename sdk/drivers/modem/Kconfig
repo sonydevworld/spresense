@@ -1,0 +1,47 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig MODEM
+	bool "MODEM drivers"
+	---help---
+		MODEM device drivers.
+
+if MODEM
+
+config MODEM_ALTMDM
+	bool "Altair modem support"
+	default y
+	---help---
+		Enable driver for the Altair modem.
+
+config MODEM_ALTMDM_PROTCOL_V2_1
+	bool "Enable SPI protocol version 2.1"
+	default y
+	depends on MODEM_ALTMDM
+	---help---
+		Support only this version.
+
+config MODEM_ALTMDM_DEBUG
+	bool "Enable debug mode for Altair modem driver"
+	default n
+	depends on MODEM_ALTMDM
+	---help---
+		Allow the Altair modem driver print debug information.
+
+config MODEM_ALTMDM_KEEP_WAKE_STATE
+	bool "Configuration to keep wake state of modem"
+	default n
+	depends on MODEM_ALTMDM
+	---help---
+		none
+
+config MODEM_ALTMDM_MAX_PACKET_SIZE
+	int "Max size to be transfer in bytes"
+	default 2064
+	depends on MODEM_ALTMDM
+	---help---
+		none
+
+endif

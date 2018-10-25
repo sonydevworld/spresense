@@ -133,7 +133,7 @@ void board_isx012_release_sleep(void);
  *
  ****************************************************************************/
 
-int board_isx012_initialize(FAR const char *devpath, int bus);
+int board_isx012_initialize(int i2c_bus_num);
 
 /****************************************************************************
  * Name: board_isx012_uninitialize

@@ -37,8 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#ifndef __DRIVERS_VIDEO_ISX012_H
-#define __DRIVERS_VIDEO_ISX012_H
+#ifndef __DRIVERS_VIDEO_ISX012_REG_H
+#define __DRIVERS_VIDEO_ISX012_REG_H
 
 #define ISX012_I2C_SLV_ADDR         (0x1A)
 
@@ -1261,7 +1261,7 @@
 
 #define AF_EXT_AFRAMDRVFIN          (0x02)
 
-/* Set value */
+/* Register set value */
 
 #define REGVAL_VIFMODE_YUV_PARALLEL         (0x00000002)
 #define REGVAL_VIFMODE_JPEG_PARALLEL        (0x0000000A)
@@ -1295,8 +1295,57 @@
 #define REGVAL_FPSTYPE_6FPS         (6)
 #define REGVAL_FPSTYPE_5FPS         (7)
 
+#define REGVAL_CPUEXT_BIT_AESTOP    (0x01)
+#define REGVAL_CPUEXT_BIT_AWBSTOP   (0x02)
+
+#define REGVAL_READVECT_BIT_V       (0x01)
+#define REGVAL_READVECT_BIT_H       (0x02)
+
+#define REGVAL_EFFECT_NONE          (0)
+#define REGVAL_EFFECT_SOLARIZATION  (1)
+#define REGVAL_EFFECT_NEGPOS        (2)
+#define REGVAL_EFFECT_SEPIA         (3)
+#define REGVAL_EFFECT_MONOTONE      (4)
+#define REGVAL_EFFECT_PASTEL        (5)
+#define REGVAL_EFFECT_SKETCH        (6)
+
+#define REGVAL_AWB_ATM              (0x20)
+#define REGVAL_AWB_CLEARWEATHER     (0x04)
+#define REGVAL_AWB_SHADE            (0x05)
+#define REGVAL_AWB_CLOUDYWEATHER    (0x06)
+#define REGVAL_AWB_FLUORESCENTLIGHT (0x07)
+#define REGVAL_AWB_LIGHTBULB        (0x08)
+
+#define REGVAL_PHOTOMETRY_AVERAGE      (0)
+#define REGVAL_PHOTOMETRY_CENTERWEIGHT (1)
+#define REGVAL_PHOTOMETRY_SPOT         (2)
+#define REGVAL_PHOTOMETRY_MULTIPATTERN (3)
+
+#define REGVAL_ISO_AUTO             (0)
+#define REGVAL_ISO_25               (1)
+#define REGVAL_ISO_32               (2)
+#define REGVAL_ISO_40               (3)
+#define REGVAL_ISO_50               (4)
+#define REGVAL_ISO_64               (5)
+#define REGVAL_ISO_80               (6)
+#define REGVAL_ISO_100              (7)
+#define REGVAL_ISO_125              (8)
+#define REGVAL_ISO_160              (9)
+#define REGVAL_ISO_200              (10)
+#define REGVAL_ISO_250              (11)
+#define REGVAL_ISO_320              (12)
+#define REGVAL_ISO_400              (13)
+#define REGVAL_ISO_500              (14)
+#define REGVAL_ISO_640              (15)
+#define REGVAL_ISO_800              (16)
+#define REGVAL_ISO_1000             (17)
+#define REGVAL_ISO_1250             (18)
+#define REGVAL_ISO_1600             (19)
+
+#define REGVAL_YGAMMA_AUTO          (0)
+#define REGVAL_YGAMMA_OFF           (1)
+
 #define REGVAL_INTCLR0_ALLCLEAR     (0x3F)
 
-#endif /* __INCLUDE_NUTTX_VIDEO_ISX012_H */
-
+#endif /* __INCLUDE_NUTTX_VIDEO_ISX012_REG_H */
 

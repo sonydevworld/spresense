@@ -43,7 +43,7 @@
 #include "output_mix_obj.h"
 #include "debug/dbg_log.h"
 
-__WIEN2_BEGIN_NAMESPACE
+__USING_WIEN2
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -190,8 +190,6 @@ void OutputMixObjectTask::parse(MsgPacket* msg)
  * Public Functions
  ****************************************************************************/
 
-extern "C"
-{
 /*--------------------------------------------------------------------------*/
 int AS_OutputMixObjEntry(int argc, char *argv[])
 {
@@ -208,6 +206,16 @@ int AS_OutputMixObjEntry(int argc, char *argv[])
 /*--------------------------------------------------------------------------*/
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param)
 {
+  return AS_CreateOutputMixer(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb attcb)
+{
+  /* Register attention callback */
+
+  OUTPUT_MIX_REG_ATTCB(attcb);
+
   /* Parameter check */
 
   if (param == NULL)
@@ -359,11 +367,13 @@ bool AS_DeleteOutputMix(void)
     {
       delete s_omix_ojb;
       s_omix_ojb = NULL;
+
+      /* Unregister attention callback */
+
+      OUTPUT_MIX_UNREG_ATTCB();
     }
   return true;
 }
-
-} /* extern "C" */
 
 /*--------------------------------------------------------------------------*/
 void OutputMixObjectTask::create(MsgQueId self_dtq,
@@ -396,5 +406,4 @@ void OutputMixObjectTask::create(MsgQueId self_dtq,
     }
 }
 
-__WIEN2_END_NAMESPACE
 

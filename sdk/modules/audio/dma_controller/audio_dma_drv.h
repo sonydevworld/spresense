@@ -77,7 +77,15 @@ E_AS AS_DeactivateDmac(cxd56_audio_dma_t dmacId);
 # define UNDERFLOW_INSERT_SAMPLE 1024  /* 21ms */
 #endif  /* CONFIG_AUDIOUTILS_RENDERER_UNDERFLOW */
 
-#define READY_QUEUE_NUM 16
+/* Definition of size of DMA ReadyQueue.
+ * The number of queues is a value obtained by multiplying
+ * the maximum number of segments by the number of forwarding of DMA.
+ * Assume that the number of Segment is 10 maximum.
+ * The maximum number of DMA transfers in 1 segment is 3.
+ * (192000/882000 * 1024sample / 1024(DMA MAX) = 2.17)
+ */
+
+#define READY_QUEUE_NUM 30
 #define RUNNING_QUEUE_NUM 3
 #define PREPARE_SAVE_NUM RUNNING_QUEUE_NUM
 
