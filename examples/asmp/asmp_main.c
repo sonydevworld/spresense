@@ -135,7 +135,7 @@ static int run_worker(const char *filename)
   ret = mptask_assign(&mptask);
   if (ret != 0)
     {
-      err("mptask_asign() failure. %d\n", ret);
+      err("mptask_assign() failure. %d\n", ret);
       return ret;
     }
 
@@ -154,7 +154,7 @@ static int run_worker(const char *filename)
       return ret;
     }
 
-  /* Initialize MP message queue with asigned CPU ID, and bind it to MP task */
+  /* Initialize MP message queue with assigned CPU ID, and bind it to MP task */
 
   ret = mpmq_init(&mq, KEY_MQ, mptask_getcpuid(&mptask));
   if (ret < 0)

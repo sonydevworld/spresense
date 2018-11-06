@@ -53,17 +53,32 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define task_set_exec(t)           do { (t)->attr.status = STATE_EXEC; } while (0)
-#define task_set_pause(t)          do { (t)->attr.status = STATE_PAUSED; } while (0)
-#define task_set_exit(t)           do { (t)->attr.status = STATE_EXIT; } while (0)
-#define task_set_exit_status(t, c) do { (t)->attr.exit_status = (c); } while (0)
-#define task_set_secure(t)         do { (t)->attr.secured = 1; } while (0)
+#define AFLAGS_SEC (1 << 0)   /* Single secure binary */
+#define AFLAGS_UNI (1 << 1)   /* Unified secure binary */
+#define AFLAGS_CLONE (1 << 2) /* Secure binary on multi core */
 
-#define task_is_init(t)   ((t)->attr.status == STATE_INIT)
-#define task_is_exec(t)   ((t)->attr.status == STATE_EXEC)
-#define task_is_paused(t) ((t)->attr.status == STATE_PAUSED)
-#define task_is_exit(t)   ((t)->attr.status == STATE_EXIT)
-#define task_is_secure(t) ((t)->attr.secured == 1)
+#define task_set_exec(t) \
+  do { (t)->attr.status = STATE_EXEC; } while (0)
+#define task_set_pause(t) \
+  do { (t)->attr.status = STATE_PAUSED; } while (0)
+#define task_set_exit(t) \
+  do { (t)->attr.status = STATE_EXIT; } while (0)
+#define task_set_exit_status(t, c) \
+  do { (t)->attr.exit_status = (c); } while (0)
+#define task_set_secure(t) \
+  do { (t)->attr.flags |= AFLAGS_SEC; } while (0)
+#define task_set_unified(t) \
+  do { (t)->attr.flags |= AFLAGS_UNI; } while (0)
+#define task_set_clone(t) \
+  do { (t)->attr.flags |= AFLAGS_CLONE; } while (0)
+
+#define task_is_init(t)    ((t)->attr.status == STATE_INIT)
+#define task_is_exec(t)    ((t)->attr.status == STATE_EXEC)
+#define task_is_paused(t)  ((t)->attr.status == STATE_PAUSED)
+#define task_is_exit(t)    ((t)->attr.status == STATE_EXIT)
+#define task_is_secure(t)  ((t)->attr.flags & AFLAGS_SEC)
+#define task_is_unified(t) ((t)->attr.flags & AFLAGS_UNI)
+#define task_is_cloned(t)  ((t)->attr.flags & AFLAGS_CLONE)
 
 #define mptask_semgive(id) sem_post(id)
 
@@ -87,6 +102,14 @@
 
 #define NMPCPUS   6
 
+#ifndef alignup
+#  define alignup(n, a) (((n) + ((a) - 1)) & ~((a) - 1))
+#endif
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
 static inline int mptask_semtake(sem_t *id)
 {
   while (sem_wait(id) != 0)
@@ -109,11 +132,12 @@ extern struct pm_cpu_wakelock_s g_mptask_wlock;
 void mptask_initialize(void);
 int mptask_sighandler(int8_t signo, uint16_t sigdata, uint32_t data,
                       FAR void *userdata);
-cpuid_t mptask_getcpuid(mptask_t *task);
 void mptask_cpu_free(mptask_t *task);
-int mptask_map(mptask_t *task);
-void mptask_unmap(mptask_t *task);
-void mptask_mapclear(mptask_t *task);
+int mptask_map(int cpuid, uint32_t pa, uint32_t size);
+void mptask_unmap(int cpuid, uint32_t size);
+void mptask_mapclear(int cpuid);
+void mptask_mapshrink(int cpuid, uint32_t size);
 int mptask_exec_secure(mptask_t *task);
+int mptask_cpu_count(cpu_set_t *set);
 
 #endif
