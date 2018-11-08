@@ -459,8 +459,20 @@ uint32_t cxd56_get_cpu_baseclk(void)
 
 void cxd56_cpu_clock_enable(int cpu)
 {
-  uint32_t c, bits = (1 << (16 + cpu));
-    
+  cxd56_cpulist_clock_enable(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_clock_enable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_enable(uint32_t cpus)
+{
+  uint32_t c, bits = (cpus & 0x3f) << 16;
+
   c = getreg32(CXD56_CRG_CK_GATE_AHB);
   putreg32(c | bits, CXD56_CRG_CK_GATE_AHB);
 }
@@ -474,7 +486,19 @@ void cxd56_cpu_clock_enable(int cpu)
 
 void cxd56_cpu_clock_disable(int cpu)
 {
-  uint32_t c, bits = (1 << (16 + cpu));
+  cxd56_cpulist_clock_disable(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_clock_disable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_disable(uint32_t cpus)
+{
+  uint32_t c, bits = (cpus & 0x3f) << 16;
 
   c = getreg32(CXD56_CRG_CK_GATE_AHB);
   putreg32(c & ~bits, CXD56_CRG_CK_GATE_AHB);
@@ -489,7 +513,19 @@ void cxd56_cpu_clock_disable(int cpu)
 
 void cxd56_cpu_reset(int cpu)
 {
-  uint32_t c, r, bits = (1 << (16 + cpu));
+  cxd56_cpulist_reset(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_reset
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_reset(uint32_t cpus)
+{
+  uint32_t c, r, bits = (cpus & 0x3f) << 16;
 
   /* Reset assert */
 

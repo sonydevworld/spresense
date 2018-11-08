@@ -109,6 +109,15 @@ uint32_t cxd56_get_cpu_baseclk(void);
 void cxd56_cpu_clock_enable(int cpu);
 
 /****************************************************************************
+ * Name: cxd56_cpulist_clock_enable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_enable(uint32_t cpus);
+
+/****************************************************************************
  * Name: cxd56_cpu_clock_disable
  *
  * Description:
@@ -118,6 +127,15 @@ void cxd56_cpu_clock_enable(int cpu);
 void cxd56_cpu_clock_disable(int cpu);
 
 /****************************************************************************
+ * Name: cxd56_cpulist_clock_disable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_disable(uint32_t cpus);
+
+/****************************************************************************
  * Name: cxd56_cpu_reset
  *
  * Description:
@@ -125,6 +143,15 @@ void cxd56_cpu_clock_disable(int cpu);
  ****************************************************************************/
 
 void cxd56_cpu_reset(int cpu);
+
+/****************************************************************************
+ * Name: cxd56_cpulist_reset
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_reset(uint32_t cpus);
 
 /****************************************************************************
  * Name: cxd56_usb_clock_enable
