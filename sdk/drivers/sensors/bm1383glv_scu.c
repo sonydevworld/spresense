@@ -60,7 +60,10 @@
  ****************************************************************************/
 
 #define BM1383GLV_ADDR              0x5D    /* I2C Slave Address */
-#define BM1383GLV_DEVID             0x31    /* Device ID */
+
+#define BM1383GLV_DEVID             0x31
+#define BM1383AGLV_DEVID            0x32
+    /* Device ID */
 #define BM1383GLV_BYTESPERSAMPLE    3
 #define BM1383GLV_ELEMENTSIZE       0
 
@@ -218,7 +221,7 @@ static int bm1383glv_checkid(FAR struct bm1383glv_dev_s *priv)
 
   devid = bm1383glv_getreg8(priv, BM1383GLV_ID);
 
-  if (devid != BM1383GLV_DEVID)
+  if ((devid != BM1383GLV_DEVID) && (devid != BM1383AGLV_DEVID))
     {
       /* ID is not Correct */
 
