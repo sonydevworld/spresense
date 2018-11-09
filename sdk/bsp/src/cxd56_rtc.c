@@ -47,12 +47,14 @@
 
 #include <nuttx/irq.h>
 #include <nuttx/arch.h>
+#include <nuttx/wdog.h>
 
 #include <arch/board/board.h>
 
 #include "up_arch.h"
 #include "cxd56_rtc.h"
 
+#include "chip/cxd5602_topreg.h"
 #include "chip/cxd5602_memorymap.h"
 #include "chip/cxd5602_backupmem.h"
 #include "chip/cxd56_rtc.h"
@@ -88,6 +90,11 @@
   (((nsec) / (NSEC_PER_SEC / CONFIG_RTC_FREQUENCY)) & 0x7fff)
 
 #define MAGIC_RTC_SAVE (0x12aae190077a80ull)
+
+/* RTC clcok stable waiting time (interval x retry) */
+
+#define RTC_CLOCK_CHECK_INTERVAL  (200) /* milliseconds */
+#define RTC_CLOCK_CHECK_MAX_RETRY (15)
 
 /************************************************************************************
  * Private Types
@@ -235,6 +242,91 @@ static int cxd56_rtc_interrupt(int irq, FAR void *context, FAR void *arg)
 }
 #endif
 
+
+/************************************************************************************
+ * Name: cxd56_rtc_initialize
+ *
+ * Description:
+ *   Actually initialize the hardware RTC. This function is called in the
+ *   initialization sequence, thereafter may be called when wdog timer is expired.
+ *
+ * Input Parameters:
+ *   arg: Not used
+ *
+ ************************************************************************************/
+
+static void cxd56_rtc_initialize(int argc, uint32_t arg)
+{
+#ifdef CONFIG_CXD56_RTC_LATEINIT
+  static WDOG_ID s_wdog = NULL;
+  static int     s_retry = 0;
+
+  if (s_wdog == NULL)
+    {
+      s_wdog = wd_create();
+    }
+
+  /* Check whether RTC clock source selects the external RTC and the synchronization
+   * from the external RTC is completed.
+   */
+
+  g_rtc_save = (struct rtc_backup_s*)BKUP->rtc_saved_data;
+
+  if (((getreg32(CXD56_TOPREG_CKSEL_ROOT) & STATUS_RTC_MASK) != STATUS_RTC_SEL) ||
+      (g_rtc_save->magic != MAGIC_RTC_SAVE))
+    {
+
+      /* Retry until RTC clock is stable */
+
+      if (s_retry++ < RTC_CLOCK_CHECK_MAX_RETRY) {
+
+        rtcinfo("retry count: %d\n", s_retry);
+
+        if (OK == wd_start(s_wdog, MSEC2TICK(RTC_CLOCK_CHECK_INTERVAL),
+                           (wdentry_t)cxd56_rtc_initialize, 1, (wdparm_t)NULL))
+          {
+            /* Again, this function is called recursively */
+
+            return;
+          }
+      }
+
+      rtcerr("ERROR: Use inaccurate RCRTC instead of RTC\n");
+    }
+
+  /* RTC clock is stable, or give up using the external RTC */
+
+  if (s_wdog != NULL)
+    {
+      wd_delete(s_wdog);
+    }
+#endif
+
+#ifdef CONFIG_RTC_ALARM
+  /* Configure RTC interrupt to catch overflow and alarm interrupts. */
+
+  irq_attach(CXD56_IRQ_RTC0_A0, cxd56_rtc_interrupt, NULL);
+  irq_attach(CXD56_IRQ_RTC0_A2, cxd56_rtc_interrupt, NULL);
+  irq_attach(CXD56_IRQ_RTC_INT, cxd56_rtc_interrupt, NULL);
+  up_enable_irq(CXD56_IRQ_RTC0_A0);
+  up_enable_irq(CXD56_IRQ_RTC0_A2);
+  up_enable_irq(CXD56_IRQ_RTC_INT);
+#endif
+
+  /* If saved data is invalid, clear offset information */
+
+  if (g_rtc_save->magic != MAGIC_RTC_SAVE)
+    {
+      g_rtc_save->offset = 0;
+    }
+
+  /* Make it possible to use the RTC timer functions */
+
+  g_rtc_enabled = true;
+
+  return;
+}
+
 /************************************************************************************
  * Public Functions
  ************************************************************************************/
@@ -256,28 +348,7 @@ static int cxd56_rtc_interrupt(int irq, FAR void *context, FAR void *arg)
 
 int up_rtc_initialize(void)
 {
-#ifdef CONFIG_RTC_ALARM
-  /* Configure RTC interrupt to catch overflow and alarm interrupts. */
-
-  irq_attach(CXD56_IRQ_RTC0_A0, cxd56_rtc_interrupt, NULL);
-  irq_attach(CXD56_IRQ_RTC0_A2, cxd56_rtc_interrupt, NULL);
-  irq_attach(CXD56_IRQ_RTC_INT, cxd56_rtc_interrupt, NULL);
-  up_enable_irq(CXD56_IRQ_RTC0_A0);
-  up_enable_irq(CXD56_IRQ_RTC0_A2);
-  up_enable_irq(CXD56_IRQ_RTC_INT);
-#endif
-
-  g_rtc_save = (struct rtc_backup_s*)BKUP->rtc_saved_data;
-
-  /* If saved data is invalid, clear offset information */
-
-  if (g_rtc_save->magic != MAGIC_RTC_SAVE)
-    {
-      g_rtc_save->offset = 0;
-    }
-
-  g_rtc_enabled = true;
-
+  cxd56_rtc_initialize(1, (wdparm_t)NULL);
   return OK;
 }
 

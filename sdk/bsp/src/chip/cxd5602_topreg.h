@@ -558,6 +558,8 @@
 
 /* CKSEL_ROOT */
 
+#define STATUS_RTC_MASK (3u<<30)
+#define STATUS_RTC_SEL  (2u<<30)
 #define ENABLE_RF_PLL1 (1u<<4)
 #define ENABLE_SOURCE_SEL (1u<<16)
 

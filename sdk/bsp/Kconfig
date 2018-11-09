@@ -103,11 +103,23 @@ endmenu # Far API Configuration
 
 comment "Timer Options"
 
-config CXD56_RTC
+menuconfig CXD56_RTC
 	bool "Real Time Clock (RTC)"
 	default y
 	---help---
 		Support RTC
+
+if CXD56_RTC
+
+config CXD56_RTC_LATEINIT
+	bool "Late RTC initialization"
+	default y
+	---help---
+		Enable the late RTC initialization after waiting until the external
+		CXD5247 RTC clock is stable. It will take 2 seconds typically at the
+		initial boot by power on reset.
+
+endif # CXD56_RTC
 
 menuconfig CXD56_TIMER
 	bool "Timer"
