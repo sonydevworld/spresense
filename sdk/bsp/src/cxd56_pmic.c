@@ -123,6 +123,22 @@ enum pmic_cmd_type_e
 #define PMIC_CHG_IFIN_20   3
 #define PMIC_CHG_IFIN_10   4
 
+/* RTC Register */
+
+#define PMIC_REG_RTC                   (0x40)
+#define PMIC_REG_RRQ_TIME              (0x46)
+#define PMIC_REG_RTC_ALM               (0x58)
+#define PMIC_REG_LRQ_ALM               (0x5E)
+#define PMIC_REG_RRQ_LRQ_STATUS        (0x60)
+
+/* Register RRQ_LRQ_STATUS */
+
+#define RRQ_TIME_STATE  (1 << 4)
+#define LRQ_TIME_STATE  (1 << 3)
+#define LRQ_OFST_STATE  (1 << 2)
+#define LRQ_WU_STATE    (1 << 1)
+#define LRQ_ALM_STATE   (1 << 0)
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -647,6 +663,48 @@ bool cxd56_pmic_get_ddc_ldo(uint8_t chset)
   cxd56_pmic_set_ddc_ldo_reg(&setbit, &clrbit);
 
   return ((setbit & chset) == chset);
+}
+
+/****************************************************************************
+ * Name: cxd56_pmic_get_rtc
+ *
+ * Description:
+ *   Get the RTC value from PMIC
+ *
+ * Input Parameter:
+ *   count - the pointer to the returned RTC counter value
+ *
+ * Returned Value:
+ *   Return 0 on success. Otherwise, return a negated errno.
+ *
+ ****************************************************************************/
+
+int cxd56_pmic_get_rtc(uint64_t *count)
+{
+  int ret = 0;
+  uint8_t data;
+  uint8_t rtc[6];
+
+  if (!count) return -EINVAL;
+
+  data = 0x1;
+  ret = cxd56_pmic_write(PMIC_REG_RRQ_TIME, &data, sizeof(data));
+  if (ret) goto error;
+
+  do {
+    ret = cxd56_pmic_read(PMIC_REG_RRQ_LRQ_STATUS, &data, sizeof(data));
+    if (ret) goto error;
+  } while (!(RRQ_TIME_STATE & data));
+
+  ret = cxd56_pmic_read(PMIC_REG_RTC, rtc, sizeof(rtc));
+  if (ret) goto error;
+
+  *count =
+    (((uint64_t)((rtc[5] << 24) | (rtc[4] << 16) | (rtc[3] << 8) | rtc[2]) << 15) |
+     ((rtc[1] << 8) | rtc[0]));
+
+error:
+  return ret;
 }
 
 /****************************************************************************
