@@ -269,6 +269,8 @@ typedef enum
   AS_ACA_INIT_AMIC,
   AS_ACA_SET_AMIC_BOOT_DONE,
   AS_ACA_SET_OUTPUT_DEVICE,
+  AS_ACA_GET_REGISTER,
+  AS_ACA_SET_REGISTER,
   AS_ACA_CONTROL_TYPE_NUM
 } AsAcaControlType;
 
@@ -311,6 +313,13 @@ typedef struct
   asAcaSpSplitonSelId   spSpliton;
   asAcaSpDrvSelId       spDrv;
 } asAcaPulcoOutParam;
+
+typedef struct
+{
+  uint32_t bank;
+  uint32_t addr;
+  uint32_t value;
+} asAcaPulcoRegParam;
 
 typedef struct
 {
@@ -784,6 +793,19 @@ CXD56_AUDIO_ECODE cxd56_audio_aca_notify_micbootdone(void)
       return CXD56_AUDIO_ECODE_ANA_NOTIFY_MICBOOT;
     }
 
+  return CXD56_AUDIO_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+CXD56_AUDIO_ECODE cxd56_audio_aca_read_reg(asAcaPulcoRegParam *param)
+{
+  AS_AcaControl(AS_ACA_GET_REGISTER, (uint32_t)param);
+  return CXD56_AUDIO_ECODE_OK;
+}
+
+CXD56_AUDIO_ECODE cxd56_audio_aca_write_reg(asAcaPulcoRegParam *param)
+{
+  AS_AcaControl(AS_ACA_SET_REGISTER, (uint32_t)param);
   return CXD56_AUDIO_ECODE_OK;
 }
 
