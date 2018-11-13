@@ -377,6 +377,7 @@ static int bcm20706_bt_enable(bool enable)
     }
   else
     {
+      btUartFinalization();
       btRecvTaskEnd();
       board_bcm20706_power_control(false);
       /* Workaround for BT Hot Sleep Issue. After it is resolved, wakelock will be removed */
