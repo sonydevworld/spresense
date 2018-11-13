@@ -37,78 +37,70 @@
 #define SRC_FILTER_COMPONENT_H
 
 #include "memutils/os_utils/chateau_osal.h"
-
 #include "wien2_common_defs.h"
 #include "memutils/s_stl/queue.h"
 #include "apus/apu_cmd.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
-
 #include "dsp_driver/include/dsp_drv.h"
 #include "components/common/component_common.h"
-
 #include "debug/dbg_log.h"
+
+#include "filter_component.h"
+
 
 __WIEN2_BEGIN_NAMESPACE
 using namespace MemMgrLite;
 
 /*--------------------------------------------------------------------*/
-struct InitSRCParam
+/* Data structure definitions                                         */
+/*--------------------------------------------------------------------*/
+
+/* Init SRC Parameters */
+
+struct InitSRCParam : public InitFilterParam
 {
-  int32_t  sample_num;
-  uint32_t input_sampling_rate;
-  uint32_t output_sampling_rate;
-  uint16_t input_pcm_byte_length;
-  uint16_t output_pcm_byte_length;
-  uint8_t  channel_num;
 };
 
-struct ExecSRCParam
+/* Exec SRC Parameters */
+
+struct ExecSRCParam : public ExecFilterParam
 {
-  BufferHeader input_buffer;
-  BufferHeader output_buffer;
 };
 
-struct StopSRCParam
+/* Stop SRC Parameters */
+
+struct StopSRCParam : public StopFilterParam
 {
-  BufferHeader output_buffer;
+};
+
+/* SRC Complete Reply Parameters */
+
+struct SrcCmpltParam : public FilterCompCmpltParam
+{
 };
 
 /*--------------------------------------------------------------------*/
-class SRCComponent : public ComponentCommon
+/* Class definitions                                                  */
+/*--------------------------------------------------------------------*/
+
+class SRCComponent : public FilterComponent,
+                     public ComponentCommon
 {
 private:
-  typedef bool (*MppCompCallback)(DspDrvComPrm_t*);
-  MppCompCallback m_callback;
 
 #ifdef CONFIG_AUDIOUTILS_DSP_DEBUG_DUMP
   DebugLogInfo m_debug_log_info;
 #endif
 
-public:
-  SRCComponent(MsgQueId apu_dtq,PoolId apu_pool_id)
-    : m_apu_dtq(apu_dtq)
-    , m_apu_pool_id(apu_pool_id)
-    ,m_dsp_handler(NULL) {}
-  ~SRCComponent() {}
-
-  uint32_t activate_apu(SRCComponent *p_component, const char *path, uint32_t *dsp_inf);
-  bool deactivate_apu();
-  uint32_t init_apu(InitSRCParam param, uint32_t *dsp_inf);
-  bool exec_apu(ExecSRCParam param);
-  bool flush_apu(StopSRCParam param);
-
-  bool setCallBack(MppCompCallback func) { m_callback = func; return true; };
-  bool recv_apu(DspDrvComPrm_t*);
-  bool recv_done(void) { return freeApuCmdBuf(); };
-  MsgQueId get_apu_mid(void) { return m_apu_dtq; };
-
-private:
-  typedef s_std::Queue<MemMgrLite::MemHandle, APU_COMMAND_QUEUE_SIZE> ApuQue;
-  ApuQue m_apu_cmd_mh_que;
+  s_std::Queue<MemMgrLite::MemHandle, APU_COMMAND_QUEUE_SIZE> m_apu_cmd_mh_que;
 
   MsgQueId m_apu_dtq;
   PoolId m_apu_pool_id;
+
+  uint32_t init_apu(InitSRCParam *param, uint32_t *dsp_inf);
+  bool exec_apu(ExecSRCParam *param);
+  bool flush_apu(StopSRCParam *param);
 
   void send_apu(Apu::Wien2ApuCmd*);
 
@@ -141,6 +133,39 @@ private:
 
     return true;
   }
+
+public:
+  SRCComponent(MsgQueId apu_dtq,PoolId apu_pool_id)
+    : m_apu_dtq(apu_dtq)
+    , m_apu_pool_id(apu_pool_id)
+    , m_dsp_handler(NULL) {}
+  ~SRCComponent() {}
+
+  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
+  virtual bool deactivate_apu();
+
+  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
+  {
+    return init_apu(static_cast<InitSRCParam *>(param), dsp_inf);
+  }
+
+  virtual bool exec_apu(ExecFilterParam *param)
+  {
+    return exec_apu(static_cast<ExecSRCParam *>(param));
+  }
+
+  virtual bool flush_apu(StopFilterParam *param)
+  {
+    return flush_apu(static_cast<StopSRCParam *>(param));
+  }
+
+  virtual bool setparam_apu(SetFilterParam *param) { return true; }
+  virtual bool tuning_apu(TuningFilterParam *param) { return true; }
+
+  virtual bool recv_done(void) { return freeApuCmdBuf(); };
+
+  bool recv_apu(DspDrvComPrm_t*);
+  MsgQueId get_apu_mid(void) { return m_apu_dtq; };
 
   void *m_dsp_handler;
 };

@@ -48,8 +48,11 @@
 #include "audio/audio_message_types.h"
 #include "audio_recorder_sink.h"
 #include "components/capture/capture_component.h"
-#include "wien2_common_defs.h"
 #include "audio_state.h"
+
+#include "components/filter/filter_component.h"
+#include "components/filter/src_filter_component.h"
+#include "components/filter/packing_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -86,7 +89,8 @@ private:
     m_codec_type(InvalidCodecType),
     m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
     m_p_output_device_handler(NULL),
-    m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM)
+    m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM),
+    m_filter_instance(NULL)
   {}
 
   enum RecorderState_e
@@ -120,6 +124,8 @@ private:
   bool m_fifo_overflow;
 
   CaptureComponentHandler m_capture_from_mic_hdlr;
+
+  FilterComponent *m_filter_instance;
 
   typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum];

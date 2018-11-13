@@ -38,16 +38,12 @@
 
 __WIEN2_BEGIN_NAMESPACE
 
-static PackingComponent *sp_packing_component = NULL;
-
 /*--------------------------------------------------------------------*/
 /* Methods of PackingComponent class */
 /*--------------------------------------------------------------------*/
-uint32_t PackingComponent::activate_apu(PackingComponent *p_component)
+uint32_t PackingComponent::activate_apu(const char *path, uint32_t *dsp_inf)
 {
   FILTER_DBG("ACT BITCNV:\n");
-
-  sp_packing_component = p_component;
 
   return AS_ECODE_OK;
 }
@@ -57,27 +53,23 @@ bool PackingComponent::deactivate_apu(void)
 {
   FILTER_DBG("DEACT BITCNV:\n");
 
-  sp_packing_component = NULL;
-
   return true;
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t PackingComponent::init_apu(InitPackingParam param)
+uint32_t PackingComponent::init_apu(InitPackingParam *param)
 {
-  FILTER_DBG("INIT BITCNV: in bitwidth %d, out bitwidth %d\n",
-             param.in_bitwidth, param.out_bitwidth);
+  FILTER_DBG("INIT BITCNV: in bytewidth %d, out bytewidth %d\n",
+             param->in_bytelength, param->out_bytelength);
 
-  m_in_bitwidth = param.in_bitwidth;
-  m_out_bitwidth = param.out_bitwidth;
-
-  //notify_reply(Apu::InitEvent, true);
+  m_in_bitwidth  = param->in_bytelength * 8;
+  m_out_bitwidth = param->out_bytelength * 8;
 
   return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
-bool PackingComponent::exec_apu(ExecPackingParam param)
+bool PackingComponent::exec_apu(ExecPackingParam *param)
 {
   void (PackingComponent::*convfunc)(uint32_t, int8_t *, int8_t *);
   uint32_t outsize = 0;
@@ -86,12 +78,12 @@ bool PackingComponent::exec_apu(ExecPackingParam param)
   if ((m_in_bitwidth == BitWidth32bit) && (m_out_bitwidth == BitWidth24bit))
     {
       convfunc = &PackingComponent::cnv32to24;
-      outsize  = param.in_buffer.size * BitWidth24bit / BitWidth32bit;
+      outsize  = param->in_buffer.size * BitWidth24bit / BitWidth32bit;
     }
   else if ((m_in_bitwidth == BitWidth24bit) && (m_out_bitwidth == BitWidth32bit))
     {
       convfunc = &PackingComponent::cnv24to32;
-      outsize  = param.in_buffer.size * BitWidth32bit / BitWidth24bit;
+      outsize  = param->in_buffer.size * BitWidth32bit / BitWidth24bit;
     }
   else
     {
@@ -100,30 +92,30 @@ bool PackingComponent::exec_apu(ExecPackingParam param)
 
   /* Excec convert */
 
-  if (outsize <= param.out_buffer.size)
+  if (outsize <= param->out_buffer.size)
     {
-      (this->*convfunc)(param.in_buffer.size / (m_in_bitwidth / 8),
-                        reinterpret_cast<int8_t *>(param.in_buffer.p_buffer),
-                        reinterpret_cast<int8_t *>(param.out_buffer.p_buffer));
+      (this->*convfunc)(param->in_buffer.size / (m_in_bitwidth / 8),
+                        reinterpret_cast<int8_t *>(param->in_buffer.p_buffer),
+                        reinterpret_cast<int8_t *>(param->out_buffer.p_buffer));
 
-      param.out_buffer.size = outsize;
+      param->out_buffer.size = outsize;
 
       result = true;
     }
  
-  notify_reply(Apu::ExecEvent, result, param.out_buffer);
+  send_resp(ExecEvent, result, param->out_buffer);
 
   return true;
 }
 
 /*--------------------------------------------------------------------*/
-bool PackingComponent::flush_apu(StopPackingParam param)
+bool PackingComponent::flush_apu(StopPackingParam *param)
 {
   FILTER_DBG("FLUSH BITCNV:\n");
 
-  param.out_buffer.size = 0;
+  param->out_buffer.size = 0;
 
-  notify_reply(Apu::FlushEvent, true, param.out_buffer);
+  send_resp(StopEvent, true, param->out_buffer);
 
   return true;
 }
@@ -168,30 +160,16 @@ void PackingComponent::cnv24to32(uint32_t samples, int8_t *in, int8_t *out)
 }
 
 /*--------------------------------------------------------------------*/
-void PackingComponent::notify_reply(uint8_t evt, bool result, BufferHeader outbuf)
+void PackingComponent::send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf)
 {
-  Apu::Wien2ApuCmd packet;
+  PackingCmpltParam cmplt;
 
-  packet.header.event_type  = evt;
-  packet.result.exec_result = (result) ? Apu::ApuExecOK : Apu::ApuExecError;
+  cmplt.filter_type = Packing;
+  cmplt.event_type  = evt;
+  cmplt.result      = true;
+  cmplt.out_buffer  = outbuf;
 
-  if (evt == Apu::ExecEvent)
-    {
-      packet.exec_filter_cmd.output_buffer = outbuf;
-    }
-  else
-    {
-      packet.flush_filter_cmd.flush_src_cmd.output_buffer = outbuf;
-    }
-
-  DspDrvComPrm_t param;
-
-  param.process_mode = Apu::FilterMode;
-  param.event_type   = evt;
-  param.type         = DSP_COM_DATA_TYPE_STRUCT_ADDRESS;
-  param.data.pParam  = static_cast<void *>(&packet);
-
-  m_callback(&param);
+  m_callback(&cmplt);
 }
 
 

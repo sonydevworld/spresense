@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/filter/packing_component.h
+ * modules/audio/components/filter/dummy_component.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef PACKING_COMPONENT_H
-#define PACKING_COMPONENT_H
+#ifndef DUMMY_COMPONENT_H
+#define DUMMY_COMPONENT_H
 
 
 #include "wien2_common_defs.h"
@@ -45,37 +45,30 @@ __WIEN2_BEGIN_NAMESPACE
 using namespace MemMgrLite;
 
 /*--------------------------------------------------------------------*/
-enum BitWidth
-{
-  BitWidth24bit = 24,
-  BitWidth32bit = 32,
-};
-
-/*--------------------------------------------------------------------*/
 /* Data structure definitions                                         */
 /*--------------------------------------------------------------------*/
 
-/* Init PackingComponent Parameters */
+/* Init DummyComponent Parameters */
 
-struct InitPackingParam : public InitFilterParam
+struct InitDummyParam : public InitFilterParam
 {
 };
 
-/* Exec PackingComponent Parameters */
+/* Exec DummyComponent Parameters */
 
-struct ExecPackingParam : public ExecFilterParam
+struct ExecDummyParam : public ExecFilterParam
 {
 };
 
-/* Stop PackingComponent Parameters */
+/* Stop DummyComponent Parameters */
 
-struct StopPackingParam : public StopFilterParam
+struct StopDummyParam : public StopFilterParam
 {
 };
 
-/* PackingComponent Complete Reply Parameters */
+/* DummyComponent Complete Reply Parameters */
 
-struct PackingCmpltParam : public FilterCompCmpltParam
+struct DummyCmpltParam : public FilterCompCmpltParam
 {
 };
 
@@ -83,44 +76,37 @@ struct PackingCmpltParam : public FilterCompCmpltParam
 /* Class definitions                                                  */
 /*--------------------------------------------------------------------*/
 
-class PackingComponent : public FilterComponent
+class DummyComponent : public FilterComponent
 {
 private:
 
-  uint16_t m_in_bitwidth;
-  uint16_t m_out_bitwidth;
+  uint32_t init_apu(InitDummyParam *param, uint32_t *dsp_inf);
+  bool exec_apu(ExecDummyParam *param);
+  bool flush_apu(StopDummyParam *param);
 
-  uint32_t init_apu(InitPackingParam *param);
-  bool exec_apu(ExecPackingParam *param);
-  bool flush_apu(StopPackingParam *param);
-
-  void cnv32to24(uint32_t samples, int8_t *in, int8_t *out);
-  void cnv24to32(uint32_t samples, int8_t *in, int8_t *out);
   void send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf);
 
 public:
 
-  PackingComponent() :
-      m_in_bitwidth(32)
-    , m_out_bitwidth(24)
-    {}
-  ~PackingComponent() {}
+  DummyComponent() {}
+  ~DummyComponent() {}
 
   virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
   virtual bool deactivate_apu();
+
   virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
   {
-    return init_apu(static_cast<InitPackingParam *>(param));
+    return init_apu(static_cast<InitDummyParam *>(param), dsp_inf);
   }
 
   virtual bool exec_apu(ExecFilterParam *param)
   {
-    return exec_apu(static_cast<ExecPackingParam *>(param));
+    return exec_apu(static_cast<ExecDummyParam *>(param));
   }
 
   virtual bool flush_apu(StopFilterParam *param)
   {
-    return flush_apu(static_cast<StopPackingParam *>(param));
+    return flush_apu(static_cast<StopDummyParam *>(param));
   }
 
   virtual bool setparam_apu(SetFilterParam *param) { return true; }
@@ -130,5 +116,5 @@ public:
 
 __WIEN2_END_NAMESPACE
 
-#endif /* PACKING_COMPONENT_H */
+#endif /* DUMMY_COMPONENT_H */
 

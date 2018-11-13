@@ -48,8 +48,6 @@
 
 __WIEN2_BEGIN_NAMESPACE
 
-static MPPComponent *sp_mpp_component = NULL;
-
 #define DSP_CORE_ID_DUMMY 3
 
 #define XLOUD_DEFAULT_LEVEL 30
@@ -63,12 +61,6 @@ void mpp_filter_dsp_done_callback(void *p_response, void *p_instance)
   DspDrvComPrm_t *p_param = (DspDrvComPrm_t *)p_response;
   Apu::Wien2ApuCmd *packet =
     reinterpret_cast<Apu::Wien2ApuCmd*>(p_param->data.pParam);
-
-  if (sp_mpp_component == NULL)
-  {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-      return;
-  };
 
   switch (p_param->process_mode)
     {
@@ -101,10 +93,7 @@ void mpp_filter_dsp_done_callback(void *p_response, void *p_instance)
         switch (packet->init_filter_cmd.filter_type)
           {
             case Apu::XLOUD:
-                if (!sp_mpp_component->recv_apu(p_param))
-                  {
-                    F_ASSERT(0);
-                  }
+                ((MPPComponent *)p_instance)->recv_apu(p_param);
                 break;
 
             default:
@@ -123,14 +112,11 @@ void mpp_filter_dsp_done_callback(void *p_response, void *p_instance)
 /*--------------------------------------------------------------------*/
 /* Methods of MPPComponent class */
 /*--------------------------------------------------------------------*/
-uint32_t MPPComponent::activate_apu(MPPComponent *p_component,
-                                    const char *path,
+uint32_t MPPComponent::activate_apu(const char *path,
                                     uint32_t *dsp_inf)
 {
   char filepath[64];
   FILTER_DBG("ACT MPP:\n");
-
-  sp_mpp_component = p_component;
 
   snprintf(filepath, sizeof(filepath), "%s/MPPEAX", path);
 
@@ -184,16 +170,16 @@ bool MPPComponent::deactivate_apu(void)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t MPPComponent::init_apu(InitXLOUDParam param, uint32_t* dsp_inf)
+uint32_t MPPComponent::init_apu(InitXLOUDParam *param, uint32_t* dsp_inf)
 {
   FILTER_DBG("INIT MPP: ch num %d, sample num %d, infs %d, mode %d, "
              "bit len <in %d/out %d>, xloud coef <tbl %08x/size %d>, "
              "eax coef <tbl %08x/size %d>, sel out %08x\n",
-             param.channel_num, param.sample, param.input_sampling_rate,
-             param.mode, param.in_pcm_bit_len, param.out_pcm_bit_len,
-             param.p_xloud_coef_image, param.xloud_coef_size,
-             param.p_eax_coef_image, param.eax_coef_size,
-             param.p_sel_out_param);
+             param->ch_num, param->sample_per_frame, param->in_fs,
+             param->mode, param->in_bytelength, param->out_bytelength,
+             param->p_xloud_coef_image, param->xloud_coef_size,
+             param->p_eax_coef_image, param->eax_coef_size,
+             param->p_sel_out_param);
 
   m_exec_queue.clear();
   m_buf_idx = 0;
@@ -207,26 +193,26 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam param, uint32_t* dsp_inf)
 
   p_apu_cmd->init_filter_cmd.filter_type = Apu::XLOUD;
 
-  p_apu_cmd->init_filter_cmd.channel_num = param.channel_num;
-  p_apu_cmd->init_filter_cmd.sample      = param.sample;
+  p_apu_cmd->init_filter_cmd.channel_num = param->ch_num;
+  p_apu_cmd->init_filter_cmd.sample      = param->sample_per_frame;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.input_sampling_rate =
-    param.input_sampling_rate;
+    param->in_fs;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.mode =
-    param.mode;
+    param->mode;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.in_pcm_bit_len =
-    param.in_pcm_bit_len;
+    static_cast<Apu::AudioPcmFormatType>((param->in_bytelength) << 3);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.out_pcm_bit_len =
-    param.out_pcm_bit_len;
+    static_cast<Apu::AudioPcmFormatType>((param->out_bytelength) << 3);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.p_coef_image =
-    reinterpret_cast<uint8_t*>(param.p_xloud_coef_image);
+    reinterpret_cast<uint8_t*>(param->p_xloud_coef_image);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.coef_size =
-    param.xloud_coef_size;
+    param->xloud_coef_size;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_input_sampling_rate =
     AudioFs2ApuValue[AudFs_16000];
@@ -237,7 +223,7 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam param, uint32_t* dsp_inf)
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_sample = 80;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_mode =
-    static_cast<Apu::AudioEaxMode>(param.mode);
+    static_cast<Apu::AudioEaxMode>(param->mode);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_enable_external_analysis =
     false;
@@ -249,10 +235,10 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam param, uint32_t* dsp_inf)
     Apu::AudPcmFormatInt16;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.p_eax_coef_image =
-    reinterpret_cast<uint8_t*>(param.p_eax_coef_image);
+    reinterpret_cast<uint8_t*>(param->p_eax_coef_image);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_coef_size =
-    param.eax_coef_size;
+    param->eax_coef_size;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.p_dma_info = NULL;
 
@@ -268,7 +254,7 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam param, uint32_t* dsp_inf)
 }
 
 /*--------------------------------------------------------------------*/
-bool MPPComponent::exec_apu(ExecXLOUDParam param)
+bool MPPComponent::exec_apu(ExecXLOUDParam *param)
 {
   if (m_buf_idx >= APU_COMMAND_QUEUE_SIZE)
     {
@@ -281,9 +267,8 @@ bool MPPComponent::exec_apu(ExecXLOUDParam param)
   m_apu_cmd_buf[m_buf_idx].header.event_type   = Apu::ExecEvent;
 
   m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.filter_type   = Apu::XLOUD;
-  m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.input_buffer  = param.input_buffer;
-  m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.output_buffer =
-    param.output_buffer;
+  m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.input_buffer  = param->in_buffer;
+  m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.output_buffer = param->out_buffer;
 
   m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.exec_xloud_cmd.level = XLOUD_DEFAULT_LEVEL;
   m_apu_cmd_buf[m_buf_idx].exec_filter_cmd.exec_xloud_cmd.headroom_in = XLOUD_DEFAULT_HEADROOM_IN;
@@ -321,11 +306,11 @@ bool MPPComponent::flush_apu()
 }
 
 /*--------------------------------------------------------------------*/
-bool MPPComponent::setparam_apu(Apu::ApuSetParamFilterCmd param)
+bool MPPComponent::setparam_apu(SetXLOUDParam *param)
 {
-  FILTER_DBG("SET MPP: filter type %d, param idx %d, xloud vol %d\n",
-             param.filter_type, param.set_mpp.param_idx,
-             param.set_mpp.xloud_vol);
+  FILTER_DBG("SET MPP: param idx %d, xloud vol %d\n",
+             param->param_idx,
+             param->xloud_vol);
 
   if (m_buf_idx >= APU_COMMAND_QUEUE_SIZE)
     {
@@ -339,12 +324,12 @@ bool MPPComponent::setparam_apu(Apu::ApuSetParamFilterCmd param)
 
   m_apu_cmd_buf[m_buf_idx].setparam_filter_cmd.filter_type       = Apu::XLOUD;
   m_apu_cmd_buf[m_buf_idx].setparam_filter_cmd.set_mpp.param_idx =
-    param.set_mpp.param_idx;
+    param->param_idx;
 
-  if (param.set_mpp.param_idx == Apu::AudXloudSetIndividual)
+  if (param->param_idx == Apu::AudXloudSetIndividual)
     {
       m_apu_cmd_buf[m_buf_idx].setparam_filter_cmd.set_mpp.xloud_vol =
-        param.set_mpp.xloud_vol;
+        param->xloud_vol;
     }
 
   send_apu(m_apu_cmd_buf[m_buf_idx]);
@@ -354,16 +339,16 @@ bool MPPComponent::setparam_apu(Apu::ApuSetParamFilterCmd param)
 }
 
 /*--------------------------------------------------------------------*/
-bool MPPComponent::tuning_apu(Apu::ApuTuningFilterCmd param)
+bool MPPComponent::tuning_apu(TuningXLOUDParam *param)
 {
-  FILTER_DBG("TUNING MPP: filter type %d, param idx %d, "
+  FILTER_DBG("TUNING MPP: param idx %d, "
              "xloud tbl <conf %08x/param %08x>, "
              "eax tbl <conf %08x/param %08x>\n",
-             param.filter_type, param.tuning_mpp.param_idx,
-             param.tuning_mpp.tuning_xloud.xloud_config_table,
-             param.tuning_mpp.tuning_xloud.xloud_param_table,
-             param.tuning_mpp.tuning_xloud.eax_config_table,
-             param.tuning_mpp.tuning_xloud.eax_param_table);
+             param->param_idx,
+             param->xloud_config_table,
+             param->xloud_param_table,
+             param->eax_config_table,
+             param->eax_param_table);
 
   if (m_buf_idx >= APU_COMMAND_QUEUE_SIZE)
     {
@@ -378,21 +363,21 @@ bool MPPComponent::tuning_apu(Apu::ApuTuningFilterCmd param)
   apu_cmd->header.event_type   = Apu::TuningEvent;
 
   apu_cmd->tuning_filter_cmd.filter_type          = Apu::XLOUD;
-  apu_cmd->tuning_filter_cmd.tuning_mpp.param_idx = param.tuning_mpp.param_idx;
+  apu_cmd->tuning_filter_cmd.tuning_mpp.param_idx = param->param_idx;
 
-  if (param.tuning_mpp.param_idx == Apu::AudXloudSetIndividual)
+  if (param->param_idx == Apu::AudXloudSetIndividual)
     {
       apu_cmd->tuning_filter_cmd.tuning_mpp.tuning_xloud.xloud_config_table =
-        param.tuning_mpp.tuning_xloud.xloud_config_table;
+        param->xloud_config_table;
 
       apu_cmd->tuning_filter_cmd.tuning_mpp.tuning_xloud.xloud_param_table =
-        param.tuning_mpp.tuning_xloud.xloud_param_table;
+        param->xloud_param_table;
 
       apu_cmd->tuning_filter_cmd.tuning_mpp.tuning_xloud.eax_config_table =
-        param.tuning_mpp.tuning_xloud.eax_config_table;
+        param->eax_config_table;
 
       apu_cmd->tuning_filter_cmd.tuning_mpp.tuning_xloud.eax_param_table =
-        param.tuning_mpp.tuning_xloud.eax_param_table;
+        param->eax_param_table;
     }
 
   send_apu(m_apu_cmd_buf[m_buf_idx]);
@@ -418,7 +403,27 @@ bool MPPComponent::recv_apu(DspDrvComPrm_t *p_param)
     }
   else
     {
-      if(!m_callback(p_param))
+      xLoudCmpltParam cmplt;
+
+      switch (packet->header.event_type)
+      {
+        case Apu::InitEvent:
+          cmplt.event_type = InitEvent;
+          break;
+    
+        case Apu::ExecEvent:
+          cmplt.event_type = ExecEvent;
+          break;
+    
+        case Apu::FlushEvent:
+          cmplt.event_type = StopEvent;
+          break;
+      }
+
+      cmplt.filter_type = MediaPlayerPost;
+      cmplt.out_buffer  = packet->exec_filter_cmd.output_buffer;
+
+      if(!m_callback(&cmplt))
         {
           FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
           return false;

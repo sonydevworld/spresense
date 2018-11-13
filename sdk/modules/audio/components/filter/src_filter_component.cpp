@@ -43,15 +43,12 @@
 #include "memutils/message/MsgPacket.h"
 #include "audio/audio_message_types.h"
 
-#include "debug/dbg_log.h"
 #include "apus/dsp_audio_version.h"
 #include "wien2_internal_packet.h"
 
 #define DBG_MODULE DBG_MODULE_AS
 
 __WIEN2_BEGIN_NAMESPACE
-
-static SRCComponent *sp_src_component = NULL;
 
 #define DSP_CORE_OF_SRC 3
 
@@ -61,12 +58,6 @@ static SRCComponent *sp_src_component = NULL;
 void src_filter_dsp_done_callback(void *p_response, void *p_instance)
 {
   DspDrvComPrm_t *p_param = (DspDrvComPrm_t *)p_response;
-
-  if (sp_src_component == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-      return;
-    };
 
   switch (p_param->process_mode)
     {
@@ -96,10 +87,7 @@ void src_filter_dsp_done_callback(void *p_response, void *p_instance)
           break;
 
       case Apu::FilterMode:
-        if (!sp_src_component->recv_apu(p_param))
-          {
-            return;
-          }
+        ((SRCComponent*)p_instance)->recv_apu(p_param);
         break;
 
       default:
@@ -111,14 +99,11 @@ void src_filter_dsp_done_callback(void *p_response, void *p_instance)
 /*--------------------------------------------------------------------*/
 /* Methods of SRCComponent class */
 /*--------------------------------------------------------------------*/
-uint32_t SRCComponent::activate_apu(SRCComponent *p_component,
-                                    const char *path,
+uint32_t SRCComponent::activate_apu(const char *path,
                                     uint32_t *dsp_inf)
 {
   char filepath[64];
   FILTER_DBG("ACT SRC:\n");
-
-  sp_src_component = p_component;
 
   snprintf(filepath, sizeof(filepath), "%s/SRC", path);
 
@@ -184,17 +169,17 @@ bool SRCComponent::deactivate_apu(void)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t SRCComponent::init_apu(InitSRCParam param, uint32_t *dsp_inf)
+uint32_t SRCComponent::init_apu(InitSRCParam *param, uint32_t *dsp_inf)
 {
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
   FILTER_DBG("INIT SRC: sample num %d, fs <in %d/out %d>, "
              "byte len <in %d/out %d>, ch num %d\n",
-             param.sample_num, param.input_sampling_rate,
-             param.output_sampling_rate,
-             param.input_pcm_byte_length,
-             param.output_pcm_byte_length, param.channel_num);
+             param->sample_per_frame, param->in_fs,
+             param->out_fs,
+             param->in_bytelength,
+             param->out_bytelength, param->ch_num);
 
   if (p_apu_cmd == NULL)
     {
@@ -206,16 +191,16 @@ uint32_t SRCComponent::init_apu(InitSRCParam param, uint32_t *dsp_inf)
   p_apu_cmd->header.event_type   = Apu::InitEvent;
 
   p_apu_cmd->init_filter_cmd.filter_type = Apu::SRC;
-  p_apu_cmd->init_filter_cmd.channel_num = param.channel_num;
-  p_apu_cmd->init_filter_cmd.sample      = param.sample_num;
+  p_apu_cmd->init_filter_cmd.channel_num = param->ch_num;
+  p_apu_cmd->init_filter_cmd.sample      = param->sample_per_frame;
 
   /* cut_off, attenuation parameter is set to recommended value of SRC library */
 
   p_apu_cmd->init_filter_cmd.init_src_param.input_sampling_rate  =
-    param.input_sampling_rate;
+    param->in_fs;
 
   p_apu_cmd->init_filter_cmd.init_src_param.output_sampling_rate =
-    param.output_sampling_rate;
+    param->out_fs;
 
   p_apu_cmd->init_filter_cmd.init_src_param.cut_off =
     SRC_CUT_OFF;
@@ -224,10 +209,10 @@ uint32_t SRCComponent::init_apu(InitSRCParam param, uint32_t *dsp_inf)
     SRC_ATTENUATION;
 
   p_apu_cmd->init_filter_cmd.init_src_param.in_word_len =
-    param.input_pcm_byte_length;
+    param->in_bytelength;
 
   p_apu_cmd->init_filter_cmd.init_src_param.out_word_len =
-    param.output_pcm_byte_length;
+    param->out_bytelength;
 
   p_apu_cmd->init_filter_cmd.debug_dump_info.addr = NULL;
   p_apu_cmd->init_filter_cmd.debug_dump_info.size = 0;
@@ -268,7 +253,7 @@ uint32_t SRCComponent::init_apu(InitSRCParam param, uint32_t *dsp_inf)
 }
 
 /*--------------------------------------------------------------------*/
-bool SRCComponent::exec_apu(ExecSRCParam param)
+bool SRCComponent::exec_apu(ExecSRCParam *param)
 {
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
@@ -285,8 +270,8 @@ bool SRCComponent::exec_apu(ExecSRCParam param)
   p_apu_cmd->header.event_type   = Apu::ExecEvent;
 
   p_apu_cmd->exec_filter_cmd.filter_type   = Apu::SRC;
-  p_apu_cmd->exec_filter_cmd.input_buffer  = param.input_buffer;
-  p_apu_cmd->exec_filter_cmd.output_buffer = param.output_buffer;
+  p_apu_cmd->exec_filter_cmd.input_buffer  = param->in_buffer;
+  p_apu_cmd->exec_filter_cmd.output_buffer = param->out_buffer;
 
   send_apu(p_apu_cmd);
 
@@ -294,7 +279,7 @@ bool SRCComponent::exec_apu(ExecSRCParam param)
 }
 
 /*--------------------------------------------------------------------*/
-bool SRCComponent::flush_apu(StopSRCParam param)
+bool SRCComponent::flush_apu(StopSRCParam *param)
 {
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
@@ -312,7 +297,7 @@ bool SRCComponent::flush_apu(StopSRCParam param)
 
   p_apu_cmd->flush_filter_cmd.filter_type                 = Apu::SRC;
   p_apu_cmd->flush_filter_cmd.flush_src_cmd.output_buffer =
-    param.output_buffer;
+    param->out_buffer;
 
   send_apu(p_apu_cmd);
 
@@ -322,6 +307,8 @@ bool SRCComponent::flush_apu(StopSRCParam param)
 /*--------------------------------------------------------------------*/
 bool SRCComponent::recv_apu(DspDrvComPrm_t *p_param)
 {
+  D_ASSERT(DSP_COM_DATA_TYPE_STRUCT_ADDRESS == p_param->type);
+
   Apu::Wien2ApuCmd* packet =
     static_cast<Apu::Wien2ApuCmd*>(p_param->data.pParam);
 
@@ -336,7 +323,28 @@ bool SRCComponent::recv_apu(DspDrvComPrm_t *p_param)
       return true;
     }
 
-  return m_callback(p_param);
+  SrcCmpltParam cmplt;
+
+  switch (packet->header.event_type)
+  {
+    case Apu::InitEvent:
+      cmplt.event_type = InitEvent;
+      break;
+
+    case Apu::ExecEvent:
+      cmplt.event_type = ExecEvent;
+      break;
+
+    case Apu::FlushEvent:
+      cmplt.event_type = StopEvent;
+      break;
+
+  }
+
+  cmplt.filter_type = SampleRateConv;
+  cmplt.out_buffer = packet->exec_filter_cmd.output_buffer;
+
+  return m_callback(&cmplt);
 }
 
 /*--------------------------------------------------------------------*/

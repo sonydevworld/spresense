@@ -35,9 +35,10 @@
 
 ifeq ($(CONFIG_AUDIOUTILS_FILTER),y)
 
-CXXSRCS += filter_component.cpp mfe_filter_component.cpp
+CXXSRCS += filter_api.cpp mfe_filter_component.cpp
 CXXSRCS += mpp_filter_component.cpp src_filter_component.cpp
 CXXSRCS += packing_component.cpp
+CXXSRCS += dummy_component.cpp
 VPATH   += components/filter
 DEPPATH += --dep-path components/filter
 

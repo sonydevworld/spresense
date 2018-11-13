@@ -50,10 +50,23 @@
 
 __WIEN2_BEGIN_NAMESPACE
 
-static MFEComponent *sp_mfe_component = NULL;
 static MPPComponent *sp_mpp_component = NULL; /* MFE/SRC 1core Only */
 
 #define DSP_CORE_ID_DUMMY 3
+
+/*--------------------------------------------------------------------*/
+/* Register sub instance                                              */
+/*                                                                    */
+/* Note!!                                                             */
+/*   This function is not suitable as feature of MEFcomponent class.  */
+/*   Therefore, add as global(independent) funtion.                   */
+/*--------------------------------------------------------------------*/
+void mfe_register_sub_instance(MPPComponent *p_sub_ins, MFEComponent *p_ins)
+{
+  sp_mpp_component = p_sub_ins;
+
+  p_sub_ins->m_dsp_handler = p_ins->m_dsp_handler;
+}
 
 /*--------------------------------------------------------------------*/
 /* callback function for DSP Driver */
@@ -63,12 +76,6 @@ void mfe_filter_dsp_done_callback(void *p_response, void *p_instance)
   DspDrvComPrm_t *p_param = (DspDrvComPrm_t *)p_response;
   Apu::Wien2ApuCmd *packet =
     reinterpret_cast<Apu::Wien2ApuCmd*>(p_param->data.pParam);
-
-  if (sp_mfe_component == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-      return;
-    };
 
   switch (p_param->process_mode)
     {
@@ -101,7 +108,7 @@ void mfe_filter_dsp_done_callback(void *p_response, void *p_instance)
           {
             case Apu::MFE:
             case Apu::SRC:
-              if (!sp_mfe_component->recv_apu(p_param))
+              if (!((MFEComponent*)p_instance)->recv_apu(p_param))
                 {
                   return;
                 }
@@ -129,12 +136,9 @@ void mfe_filter_dsp_done_callback(void *p_response, void *p_instance)
 /*--------------------------------------------------------------------*/
 /* Methods of MFEComponent class */
 /*--------------------------------------------------------------------*/
-uint32_t MFEComponent::activate_apu(MFEComponent *p_component,
-                                    uint32_t *dsp_inf)
+uint32_t MFEComponent::activate_apu(const char *path, uint32_t *dsp_inf)
 {
   FILTER_DBG("ACT MFE:\n");
-
-  sp_mfe_component = p_component;
 
   int ret = DD_Load_Secure("MFESRC", 
                            mfe_filter_dsp_done_callback,
@@ -146,11 +150,6 @@ uint32_t MFEComponent::activate_apu(MFEComponent *p_component,
       logerr("DD_Load_Secure() failure. %d\n", ret);
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
       return AS_ECODE_DSP_LOAD_ERROR;
-    }
-
-  if (sp_mpp_component != NULL)
-    {
-      sp_mpp_component->m_dsp_handler = m_dsp_handler;
     }
 
   /* wait for DSP boot up... */
@@ -174,20 +173,6 @@ uint32_t MFEComponent::activate_apu(MFEComponent *p_component,
 #endif
 
   return AS_ECODE_OK;
-}
-
-/*--------------------------------------------------------------------*/
-uint32_t MFEComponent::activate_apu(MFEComponent *p_mfe_component,
-                                    MPPComponent *p_mpp_component,
-                                    uint32_t *dsp_inf)
-{
-  /* MFE/SRC 1core Only */
-
-  FILTER_DBG("ACT MFE:\n");
-
-  sp_mpp_component = p_mpp_component;
-
-  return activate_apu(p_mfe_component, dsp_inf);
 }
 
 /*--------------------------------------------------------------------*/
@@ -217,13 +202,13 @@ bool MFEComponent::deactivate_apu(void)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t MFEComponent::init_apu(InitMFEParam param, uint32_t* dsp_inf)
+uint32_t MFEComponent::init_apu(InitMFEParam *param, uint32_t* dsp_inf)
 {
   FILTER_DBG("INIT MFE: sample num %d, proc mode %d, ch num <mic %d/ref %d>,"
              " fs %d, aec <use %d/enable %d>, conf tbl %08x\n",
-             param.sample_num, param.proc_mode, param.mic_channel_num,
-             param.ref_channel_num, param.sampling_rate,
-             param.use_aec, param.enable_mfe_aec, param.config_table);
+             param->sample_per_frame, param->proc_mode, param->ch_num,
+             param->ref_channel_num, param->in_fs,
+             param->use_aec, param->enable_mfe_aec, param->config_table);
 
   m_exec_queue.clear();
   m_buf_idx = 0;
@@ -234,26 +219,26 @@ uint32_t MFEComponent::init_apu(InitMFEParam param, uint32_t* dsp_inf)
   m_apu_cmd_buf[m_buf_idx].header.event_type   = Apu::InitEvent;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.filter_type = Apu::MFE;
-  m_apu_cmd_buf[m_buf_idx].init_filter_cmd.channel_num = param.mic_channel_num;
-  m_apu_cmd_buf[m_buf_idx].init_filter_cmd.sample      = param.sample_num;
+  m_apu_cmd_buf[m_buf_idx].init_filter_cmd.channel_num = param->ch_num;
+  m_apu_cmd_buf[m_buf_idx].init_filter_cmd.sample      = param->sample_per_frame;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.proc_mode =
-    param.proc_mode;
+    param->proc_mode;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.ref_channel_num =
-    param.ref_channel_num;
+    param->ref_channel_num;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.sampling_rate =
-    param.sampling_rate;
+    param->in_fs;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.use_aec =
-    param.use_aec;
+    param->use_aec;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.enable_mfe_aec =
-    param.enable_mfe_aec;
+    param->enable_mfe_aec;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.init_mfe_param.config_table =
-    param.config_table;
+    param->config_table;
 
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.debug_dump_info.addr = NULL;
   m_apu_cmd_buf[m_buf_idx].init_filter_cmd.debug_dump_info.size = 0;
@@ -298,7 +283,7 @@ uint32_t MFEComponent::init_apu(InitMFEParam param, uint32_t* dsp_inf)
 }
 
 /*--------------------------------------------------------------------*/
-bool MFEComponent::exec_apu(ExecMFEParam param)
+bool MFEComponent::exec_apu(ExecMFEParam *param)
 {
   if (m_buf_idx >= MFE_COMMAND_QUEUE_SIZE)
     {
@@ -326,11 +311,11 @@ bool MFEComponent::exec_apu(ExecMFEParam param)
   p_cmd->header.event_type   = Apu::ExecEvent;
 
   p_cmd->exec_filter_cmd.filter_type   = Apu::MFE;
-  p_cmd->exec_filter_cmd.input_buffer  = param.input_buffer;
-  p_cmd->exec_filter_cmd.output_buffer = param.output_buffer;
+  p_cmd->exec_filter_cmd.input_buffer  = param->in_buffer;
+  p_cmd->exec_filter_cmd.output_buffer = param->out_buffer;
 
   p_cmd->exec_filter_cmd.exec_mfe_cmd.notification.output_buffer =
-    param.notification_buffer;
+    param->notification_buffer;
 
   p_cmd->exec_filter_cmd.exec_mfe_cmd.notification.p_apu_cmd =
     p_apu_cmd;
@@ -362,22 +347,22 @@ bool MFEComponent::flush_apu()
 }
 
 /*--------------------------------------------------------------------*/
-bool MFEComponent::setparam_apu(Apu::ApuSetParamFilterCmd param)
+bool MFEComponent::setparam_apu(SetMFEParam *param)
 {
-  FILTER_DBG("SET MFE: filter type %d, param idx %d, eax handle %08x\n",
-             param.filter_type, param.set_mfe.param_idx,
-             param.set_mfe.p_eax_handle);
+  FILTER_DBG("SET MFE: param idx %d, eax handle %08x\n",
+             param->param_idx,
+             param->p_eax_handle);
 
   return true;
 }
 
 /*--------------------------------------------------------------------*/
-bool MFEComponent::tuning_apu(Apu::ApuTuningFilterCmd param)
+bool MFEComponent::tuning_apu(TuningMFEParam *param)
 {
-  FILTER_DBG("TUNING MFE: filter type %d, mic delay %d, "
+  FILTER_DBG("TUNING MFE: mic delay %d, "
              "ref delay %d, conf tbl %08x\n",
-             param.filter_type, param.tuning_mfe.mic_delay,
-             param.tuning_mfe.ref_delay,param.tuning_mfe.mfe_config_table);
+             param->mic_delay,
+             param->ref_delay, param->mfe_config_table);
 
   if (m_buf_idx >= MFE_COMMAND_QUEUE_SIZE)
     {
@@ -392,13 +377,13 @@ bool MFEComponent::tuning_apu(Apu::ApuTuningFilterCmd param)
   m_apu_cmd_buf[m_buf_idx].tuning_filter_cmd.filter_type = Apu::MFE;
 
   m_apu_cmd_buf[m_buf_idx].tuning_filter_cmd.tuning_mfe.mic_delay =
-    param.tuning_mfe.mic_delay;
+    param->mic_delay;
 
   m_apu_cmd_buf[m_buf_idx].tuning_filter_cmd.tuning_mfe.ref_delay =
-    param.tuning_mfe.ref_delay;
+    param->ref_delay;
 
   m_apu_cmd_buf[m_buf_idx].tuning_filter_cmd.tuning_mfe.mfe_config_table =
-    param.tuning_mfe.mfe_config_table;
+    param->mfe_config_table;
 
   send_apu(m_apu_cmd_buf[m_buf_idx]);
   increment_buf_idx();
@@ -424,7 +409,39 @@ bool MFEComponent::recv_apu(DspDrvComPrm_t *p_param)
     }
   else
     {
-      if (!m_callback(p_param))
+      MfeCmpltParam cmplt;
+
+      switch (packet->header.event_type)
+      {
+        case Apu::InitEvent:
+          cmplt.event_type = InitEvent;
+          break;
+    
+        case Apu::ExecEvent:
+          cmplt.event_type = ExecEvent;
+          break;
+    
+        case Apu::FlushEvent:
+          cmplt.event_type = StopEvent;
+          break;
+      }
+
+      switch (packet->exec_filter_cmd.filter_type)
+        {
+          case Apu::MFE:
+            cmplt.filter_type = MicFrontEnd;
+            break;
+          case Apu::SRC:
+            cmplt.filter_type = SampleRateConv;
+              break;
+          default:
+              break;
+        }
+
+      cmplt.out_buffer      = packet->exec_filter_cmd.output_buffer;
+      cmplt.filtered_buffer = packet->exec_filter_cmd.exec_mfe_cmd.notification.output_buffer;
+
+      if (!m_callback(&cmplt))
         {
           FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
           return false;

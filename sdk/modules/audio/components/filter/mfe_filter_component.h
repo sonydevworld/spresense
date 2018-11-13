@@ -37,41 +37,78 @@
 #define MFE_FILTER_COMPONENT_H
 
 #include "memutils/os_utils/chateau_osal.h"
-
 #include "wien2_common_defs.h"
 #include "memutils/s_stl/queue.h"
 #include "apus/apu_cmd.h"
-
 #include "dsp_driver/include/dsp_drv.h"
-
-#include "components/filter/mpp_filter_component.h" /* for MFE/SRC 1core */
 #include "memutils/message/Message.h"
 #include "components/common/component_common.h"
+#include "filter_component.h"
+
+#include "components/filter/mpp_filter_component.h" /* for MFE/SRC 1core */
 
 __WIEN2_BEGIN_NAMESPACE
 
 #define MFE_COMMAND_QUEUE_SIZE (APU_COMMAND_QUEUE_SIZE*2)
+
 /*--------------------------------------------------------------------*/
-struct InitMFEParam
+/* Data structure definitions                                         */
+/*--------------------------------------------------------------------*/
+
+/* Init MFE Parameters */
+
+struct InitMFEParam : public InitFilterParam
 {
-  int32_t  sample_num;      /* Sample number per processing unit */
   int32_t  proc_mode;       /* excution mode */
-  int32_t  mic_channel_num; /* Channel number of input data */
   int32_t  ref_channel_num; /* Channel number of reference data */
-  int32_t  sampling_rate;   /* sampling rate of input data */
   bool     use_aec;         /* Activate Echo Cancellr */
   bool     enable_mfe_aec;  /* Enable Echo Cancellr */
   uint32_t config_table;    /* MFE configuration table */
 };
 
-struct ExecMFEParam
+/* Exec MFE Parameters */
+
+struct ExecMFEParam : public ExecFilterParam
 {
-  BufferHeader input_buffer;
-  BufferHeader output_buffer;
   BufferHeader notification_buffer;
 };
 
-class MFEComponent : public ComponentCommon
+/* Stop MFE Parameters */
+
+struct StopMFEParam : public StopFilterParam
+{
+};
+
+/* Set MFE Parameters */
+
+struct SetMFEParam : public SetFilterParam
+{
+  int16_t  param_idx;  /**< Index of parameter */
+  FAR void *p_eax_handle;  /**< EAX handle pointer */
+};
+
+/* Tuning MFE Parameters */
+
+struct TuningMFEParam : public TuningFilterParam
+{
+  uint32_t mic_delay;        /**< Mmic delay[ms] */
+  uint32_t ref_delay;        /**< Reference delay[ms] */
+  uint32_t mfe_config_table; /**< MFE configuration address */
+};
+
+/* MFE Complete Reply Parameters */
+
+struct MfeCmpltParam : public FilterCompCmpltParam
+{
+  BufferHeader filtered_buffer;
+};
+
+/*--------------------------------------------------------------------*/
+/* Class definitions                                                  */
+/*--------------------------------------------------------------------*/
+
+class MFEComponent : public FilterComponent,
+                     public ComponentCommon
 {
 private:
   /* Hold (push to queue) command which is processing in API. 
@@ -79,50 +116,73 @@ private:
    */
 
   s_std::Queue<Apu::Wien2ApuCmd*, MFE_COMMAND_QUEUE_SIZE> m_exec_queue;
-  void send_apu(Apu::Wien2ApuCmd& cmd);
+  Apu::Wien2ApuCmd m_apu_cmd_buf[MFE_COMMAND_QUEUE_SIZE];
 
   int m_buf_idx;
-  Apu::Wien2ApuCmd m_apu_cmd_buf[MFE_COMMAND_QUEUE_SIZE];
+  MsgQueId m_apu_dtq;
+#ifdef CONFIG_AUDIOUTILS_DSP_DEBUG_DUMP
+  DebugLogInfo m_debug_log_info;
+#endif
+
+  uint32_t init_apu(InitMFEParam *param, uint32_t* dsp_inf);
+  bool exec_apu(ExecMFEParam *param);
+  bool flush_apu();
+  bool setparam_apu(SetMFEParam *param);
+  bool tuning_apu(TuningMFEParam *param);
+
+  void send_apu(Apu::Wien2ApuCmd& cmd);
+
   void increment_buf_idx()
     {
       m_buf_idx = (m_buf_idx + 1) % MFE_COMMAND_QUEUE_SIZE;
     }
 
-  typedef bool (*MFECompCallback)(DspDrvComPrm_t*);
-  MFECompCallback m_callback;
-
-  MsgQueId m_apu_dtq;
-
-#ifdef CONFIG_AUDIOUTILS_DSP_DEBUG_DUMP
-  DebugLogInfo m_debug_log_info;
-#endif
-
 public:
-  MFEComponent(MsgQueId apu_dtq) : m_apu_dtq(apu_dtq), m_dsp_handler(NULL)
-    {
-      m_exec_queue.clear();
-    }
+  MFEComponent(MsgQueId apu_dtq)
+    : m_apu_dtq(apu_dtq)
+    , m_dsp_handler(NULL)
+  {
+    m_exec_queue.clear();
+  }
   ~MFEComponent() {}
 
-  uint32_t activate_apu(MFEComponent *p_component, uint32_t* dsp_inf);
-  uint32_t activate_apu(MFEComponent *p_mfe_component,
-                        MPPComponent *p_mpp_component,
-                        uint32_t *dsp_inf);
-  bool deactivate_apu();
-  uint32_t init_apu(InitMFEParam param, uint32_t* dsp_inf);
-  bool exec_apu(ExecMFEParam param);
-  bool flush_apu();
-  bool setparam_apu(Apu::ApuSetParamFilterCmd param);
-  bool tuning_apu(Apu::ApuTuningFilterCmd param);
+  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
+  virtual bool deactivate_apu();
 
-  bool setCallBack(MFECompCallback func) { m_callback = func; return true; };
+  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
+  {
+    return init_apu(static_cast<InitMFEParam *>(param), dsp_inf);
+  }
+
+  virtual bool exec_apu(ExecFilterParam *param)
+  {
+    return exec_apu(static_cast<ExecMFEParam *>(param));
+  }
+
+  virtual bool flush_apu(StopFilterParam *param)
+  {
+    return flush_apu();
+  }
+
+  virtual bool setparam_apu(SetFilterParam *param)
+  {
+    return setparam_apu(static_cast<SetMFEParam *>(param));
+  }
+
+  virtual bool tuning_apu(TuningFilterParam *param)
+  {
+    return tuning_apu(static_cast<TuningMFEParam *>(param));
+  }
+
+  virtual bool recv_done(void) { return true; }
+
   bool recv_apu(DspDrvComPrm_t*);
-
-  void dsp_done_callback(DspDrvComPrm_t *p_param);
   MsgQueId get_apu_mid(void) { return m_apu_dtq; };
 
   void *m_dsp_handler;
 };
+
+void mfe_register_sub_instance(MPPComponent *p_sub_ins, MFEComponent *p_ins);
 
 __WIEN2_END_NAMESPACE
 

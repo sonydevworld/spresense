@@ -48,9 +48,8 @@
 #include "memutils/memory_manager/MemHandle.h"
 
 #include "components/capture/capture_component.h"
-#include "components/filter/filter_component.h"
+#include "components/filter/filter_api.h"
 #include "components/renderer/renderer_component.h"
-#include "wien2_internal_packet.h"
 #include "debug/dbg_log.h"
 
 __WIEN2_BEGIN_NAMESPACE
@@ -89,7 +88,10 @@ private:
     , m_select_output_mic(AS_SELECT_MIC1_OR_MIC2)
     , m_mic_in_sync_cnt(0)
     , m_i2s_in_sync_cnt(0)
-    , m_capt_sync_wait_flg(true){}
+    , m_capt_sync_wait_flg(true)
+    , m_mfe_instance(NULL)
+    , m_mpp_instance(NULL)
+    {}
 
   enum SoundEffectState
   {
@@ -154,6 +156,9 @@ private:
   RenderComponentHandler m_i2s_render_comp_handler, m_hp_render_comp_handler;
   CaptureComponentHandler m_capture_from_mic_hdlr, m_capture_from_i2s_hdlr;
 
+  FilterComponent *m_mfe_instance;
+  FilterComponent *m_mpp_instance;
+
   typedef void (SoundEffectObject::*MsgProc)(MsgPacket*);
   static  MsgProc MsgProcTbl[AUD_SEF_MSG_NUM][SoundFXStateNum];
 
@@ -181,8 +186,8 @@ private:
   uint32_t initMfe(const AudioCommand& cmd);
   uint32_t initMpp(const AudioCommand& cmd);
 
-  void execI2SOutRender(FilterComponentParam& param);
-  void execHpSpOutRender(FilterComponentParam& param);
+  void execI2SOutRender(FilterCompCmpltParam *param);
+  void execHpSpOutRender(FilterCompCmpltParam *param);
   void execMfe(MemMgrLite::MemHandle mh, int32_t sample, bool is_end);
   void execMpp(MemMgrLite::MemHandle mh, int32_t sample, bool is_end);
 
