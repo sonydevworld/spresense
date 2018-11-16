@@ -565,5 +565,21 @@ int altcom_select(int maxfdp1, altcom_fd_set *readset,
                   altcom_fd_set *writeset, altcom_fd_set *exceptset,
                   struct altcom_timeval *timeout)
 {
-  return altcom_select_block(maxfdp1, readset, writeset, exceptset, timeout);
+  int ret;
+
+  if (timeout && (timeout->tv_sec == 0) && (timeout->tv_usec == 0))
+    {
+      ret = altcom_select_nonblock(maxfdp1, readset, writeset, exceptset);
+    }
+  else
+    {
+      ret = altcom_select_block(maxfdp1, readset, writeset, exceptset, timeout);
+    }
+
+  if ((ret == SELECT_REQ_FAILURE) && (altcom_errno() == ALTCOM_ETIMEDOUT))
+    {
+      ret = 0;
+    }
+
+  return ret;
 }
