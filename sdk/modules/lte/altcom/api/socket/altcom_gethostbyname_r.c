@@ -62,10 +62,11 @@
  * Private Type
  ****************************************************************************/
 
-struct gethostbyname_r_helper {
-  FAR struct altcom_in6_addr *addr_list[2];
-  struct altcom_in6_addr addr;
-  FAR char *aliases;
+struct gethostbyname_r_helper
+{
+   FAR struct altcom_in6_addr *addr_list[2];  /* Pointer to h_addr_list */
+  struct altcom_in6_addr       addr;
+  FAR char                    *aliases[2];
 };
 
 /****************************************************************************
@@ -88,12 +89,15 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
 {
   int32_t                                cmdret;
   int32_t                                err;
-  uint16_t                               reslen = 0;
-  int32_t                                alslen = 0;
-  FAR char                               *hostname;
-  FAR struct apicmd_gethostbynamer_s     *cmd   = NULL;
-  FAR struct apicmd_gethostbynamer_res_s *res   = NULL;
-  FAR struct gethostbyname_r_helper      *h     = NULL;
+  uint16_t                               reslen;
+  size_t                                 h_namelen;
+  size_t                                 h_aliaseslen;
+  size_t                                 expect_buflen;
+  FAR char                               *pname;
+  FAR char                               *paliases;
+  FAR struct apicmd_gethostbynamer_s     *cmd;
+  FAR struct apicmd_gethostbynamer_res_s *res;
+  FAR struct gethostbyname_r_helper      *phelper;
 
   if (!altcom_sock_alloc_cmdandresbuff(
     (FAR void **)&cmd, APICMDID_SOCK_GETHOSTBYNAMER,
@@ -132,36 +136,100 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
       goto errout_with_cmdfree;
     }
 
+  expect_buflen = sizeof(struct gethostbyname_r_helper);
+
+  h_namelen = strnlen((FAR const char *)res->h_name,
+                       APICMD_GETHOSTBYNAMER_NAME_MAX_LENGTH);
+  if (h_namelen != 0)
+    {
+      expect_buflen += h_namelen + 1;
+    }
+  DBGIF_LOG1_DEBUG("[gethostbyname_r-res] h_name len: %d\n", h_namelen);
+
+  h_aliaseslen = strnlen((FAR const char *)res->h_aliases,
+                         APICMD_GETHOSTBYNAMER_RES_H_ALIASES_LENGTH);
+  if (h_aliaseslen != 0)
+    {
+      expect_buflen += h_aliaseslen + 1;
+    }
+  DBGIF_LOG1_DEBUG("[gethostbyname_r-res] h_aliases len: %d\n", h_aliaseslen);
+
+  /* Check buffer length */
+
+  if (buflen < expect_buflen)
+    {
+      DBGIF_LOG2_ERROR("buffer length is not enough: %d, expected: %d\n", buflen, expect_buflen);
+
+      /* buffer length is not enough */
+
+      err = ERANGE;
+      goto errout_with_cmdfree;
+    }
+
   /* Fill command result */
 
-  h = (struct gethostbyname_r_helper *)buf;
-  if (res->h_name)
+  phelper = (struct gethostbyname_r_helper *)buf;
+
+  /* Set h_name parameter */
+
+  pname = ((FAR char*)phelper) + sizeof(struct gethostbyname_r_helper);
+
+  if (h_namelen != 0)
     {
-      hostname = ((char*)h) + sizeof(struct gethostbyname_r_helper);
-      strncpy(hostname, (FAR const char *)res->h_name, namelen+1);
-      ret->h_name = hostname;
+      memcpy(pname, (FAR const char *)res->h_name, h_namelen);
+      pname[h_namelen] = 0;
+      ret->h_name = pname;
+    }
+  else
+    {
+      ret->h_name = NULL;
     }
 
-  if (res->h_aliases)
+  /* Set h_aliases parameter */
+
+  if (h_aliaseslen != 0)
     {
-      alslen = strlen((FAR char *)res->h_aliases);
-      ret->h_aliases[0] = (FAR char *)BUFFPOOL_ALLOC(alslen);
-      strncpy(ret->h_aliases[0], (FAR const char *)res->h_aliases, alslen);
+      paliases = pname;
+      if  (h_namelen != 0)
+        {
+          paliases = pname + (h_namelen + 1);
+        }
+
+      memcpy(paliases, (FAR char *)res->h_aliases, h_aliaseslen);
+      paliases[h_aliaseslen] = 0;
+      phelper->aliases[0] = paliases;
     }
+  else
+    {
+      phelper->aliases[0] = NULL;
+    }
+  phelper->aliases[1] = NULL;
+  ret->h_aliases = (FAR char**)&phelper->aliases;
+
+  /* Set h_addrtype parameter */
 
   ret->h_addrtype = ntohl(res->h_addrtype);
-  ret->h_length = ALTCOM_AF_INET == ret->h_addrtype ?
+
+  DBGIF_LOG1_DEBUG("[gethostbyname_r-res] h_addrtype: %d\n", ret->h_addrtype);
+
+  /* Set h_length parameter */
+
+  ret->h_length = (ALTCOM_AF_INET == ret->h_addrtype) ?
     sizeof(struct altcom_in_addr) : sizeof(struct altcom_in6_addr);
-  if (res->h_addr_list)
-    {
-      memcpy(&h->addr, res->h_addr_list, ret->h_length);
-      h->addr_list[0] = &h->addr;
-      h->addr_list[1] = NULL;
-      ret->h_addr_list = (FAR char**)&h->addr_list;
-    }
+
+  DBGIF_LOG1_DEBUG("[gethostbyname_r-res] h_length: %d\n", ret->h_length);
+
+  /* Set h_addr_list parameter */
+
+  memcpy(&phelper->addr, &res->h_addr_list[0], ret->h_length);
+  phelper->addr_list[0] = &phelper->addr;
+  phelper->addr_list[1] = NULL;
+  ret->h_addr_list = (FAR char**)&phelper->addr_list;
 
   *result = ret;
+
   altcom_sock_free_cmdandresbuff(cmd, res);
+
   return GETHOSTBYNAMER_REQ_SUCCESS;
 
 errout_with_cmdfree:
@@ -169,10 +237,6 @@ errout_with_cmdfree:
   if (h_errnop)
     {
       *h_errnop = err;
-    }
-  else
-    {
-      h_errnop = &err;
     }
 
   return GETHOSTBYNAMER_REQ_FAILURE;
@@ -216,6 +280,7 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
                            struct altcom_hostent **result, int *h_errnop)
 {
   int32_t namelen = 0;
+  int32_t retval;
 
   if (!altcom_isinit())
     {
@@ -235,9 +300,20 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
     }
 
   namelen = strlen(name);
-  if (GETHOSTBYNAMER_REQ_SUCCESS !=
-    gethostbynamer_request(name, namelen,
-      ret, buf, buflen, result, h_errnop))
+  if (!namelen || APICMD_GETHOSTBYNAMER_NAME_MAX_LENGTH < namelen)
+    {
+      DBGIF_LOG1_ERROR("Invalid param. namelen = [%d]\n", namelen);
+      if (h_errnop)
+        {
+          *h_errnop = ALTCOM_EINVAL;
+        }
+
+      return -1;
+    }
+
+  retval = gethostbynamer_request(name, namelen, ret,
+                                  buf, buflen, result, h_errnop);
+  if (retval != GETHOSTBYNAMER_REQ_SUCCESS)
     {
       return -1;
     }
