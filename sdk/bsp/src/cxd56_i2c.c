@@ -493,7 +493,7 @@ static int cxd56_i2c_interrupt(int irq, FAR void *context, FAR void *arg)
  *   Prohibit all interrupt because the STOP condition might happen
  *   if the interrupt occurs when the writing request.
  *   Actual receiving data is in RX_FULL interrupt handler.
- * 
+ *
  * TODO : The argument "last" is not used.
  ****************************************************************************/
 
@@ -508,42 +508,42 @@ static int cxd56_i2c_receive(struct cxd56_i2cdev_s *priv, int last)
 
   DEBUGASSERT(msg != NULL);
 
-  for(msg_length = msg->length; msg_length > 0; msg_length -= priv->rw_size) 
+  for (msg_length = msg->length; msg_length > 0; msg_length -= priv->rw_size)
     {
-    if(msg_length <= I2C_FIFO_MAX_SIZE) 
-      {
-        priv->rw_size = msg_length;
-        en = 1;
-      } 
-    else 
-      {
-        priv->rw_size = I2C_FIFO_MAX_SIZE;
-        en = 0;
-      }
-      
-    /* update threshold value of the receive buffer */
-    i2c_reg_write(priv, CXD56_IC_RX_TL, priv->rw_size - 1);
+      if (msg_length <= I2C_FIFO_MAX_SIZE)
+        {
+          priv->rw_size = msg_length;
+          en = 1;
+        }
+      else
+        {
+          priv->rw_size = I2C_FIFO_MAX_SIZE;
+          en = 0;
+        }
 
-    for (i = 0; i < priv->rw_size - 1; i++)
-      {
-        i2c_reg_write(priv, CXD56_IC_DATA_CMD, CMD_READ);
-      }
+      /* update threshold value of the receive buffer */
+      i2c_reg_write(priv, CXD56_IC_RX_TL, priv->rw_size - 1);
 
-    flags = enter_critical_section();
-    wd_start(priv->timeout, I2C_TIMEOUT, cxd56_i2c_timeout, 1, (uint32_t)priv);
+      for (i = 0; i < priv->rw_size - 1; i++)
+        {
+          i2c_reg_write(priv, CXD56_IC_DATA_CMD, CMD_READ);
+        }
 
-    /* Set stop flag for indicate the last data */
+      flags = enter_critical_section();
+      wd_start(priv->timeout, I2C_TIMEOUT, cxd56_i2c_timeout, 1, (uint32_t)priv);
 
-    i2c_reg_write(priv, CXD56_IC_DATA_CMD, CMD_READ | (en ? CMD_STOP : 0));
+      /* Set stop flag for indicate the last data */
 
-    i2c_reg_rmw(priv, CXD56_IC_INTR_MASK, INTR_RX_FULL, INTR_RX_FULL);
-    leave_critical_section(flags);
-    sem_wait(&priv->wait);
+      i2c_reg_write(priv, CXD56_IC_DATA_CMD, CMD_READ | (en ? CMD_STOP : 0));
 
-    if (priv->error != OK)
-      {
-        break;
-      }
+      i2c_reg_rmw(priv, CXD56_IC_INTR_MASK, INTR_RX_FULL, INTR_RX_FULL);
+      leave_critical_section(flags);
+      sem_wait(&priv->wait);
+
+      if (priv->error != OK)
+        {
+          break;
+        }
   }
 
   return 0;
