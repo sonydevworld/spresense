@@ -58,6 +58,7 @@
 #include "altcom_socket.h"
 #include "altcom_netdb.h"
 #include "altcom_errno.h"
+#include "stubsock.h"
 #include "dbg_if.h"
 
 /****************************************************************************
@@ -96,9 +97,20 @@
 int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
                     size_t buflen, struct hostent **result, int *h_errnop)
 {
-  return altcom_gethostbyname_r(name, (struct altcom_hostent*)ret, buf,
-                                buflen, (struct altcom_hostent**)result,
-                                h_errnop);
+  int retval;
+
+  retval = altcom_gethostbyname_r(name, (struct altcom_hostent*)ret, buf,
+                                  buflen, (struct altcom_hostent**)result,
+                                  h_errnop);
+  if (retval != 0)
+    {
+      if (h_errnop)
+        {
+          *h_errnop = stubsock_convherrno_local(*h_errnop);
+        }
+    }
+
+  return retval;
 }
 
 #endif /* CONFIG_NET && CONFIG_LTE_NETDB */

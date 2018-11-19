@@ -517,4 +517,42 @@ void stubsock_convstorage_local(FAR const struct altcom_sockaddr_storage *from,
     }
 }
 
+/****************************************************************************
+ * Name: stubsock_convherrno_local()
+ *
+ * Description:
+ *   Convert h_errno to local definition.
+ *
+ ****************************************************************************/
+
+int stubsock_convherrno_local(int herr)
+{
+  int ret;
+
+  switch(herr)
+    {
+      case ALTCOM_HOST_NOT_FOUND:
+        ret = HOST_NOT_FOUND;
+        break;
+
+      case ALTCOM_NO_DATA:
+        ret = NO_DATA;
+        break;
+
+      case ALTCOM_NO_RECOVERY:
+        ret = NO_RECOVERY;
+        break;
+
+      case ALTCOM_TRY_AGAIN:
+        ret = TRY_AGAIN;
+        break;
+
+      default:
+        ret = herr;
+        break;
+    }
+
+  return ret;
+}
+
 #endif /* CONFIG_NET && CONFIG_NET_DEV_SPEC_SOCK */

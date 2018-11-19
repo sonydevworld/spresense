@@ -104,7 +104,8 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
     GETHOSTBYNAMER_REQ_DATALEN,
     (FAR void **)&res, GETHOSTBYNAMER_RES_DATALEN))
     {
-      return GETHOSTBYNAMER_REQ_FAILURE;
+      err = ALTCOM_HOST_NOT_FOUND;
+      goto errout;
     }
 
   cmd->namelen = htonl(namelen);
@@ -116,14 +117,14 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
   if (0 > cmdret)
     {
       DBGIF_LOG1_ERROR("apicmdgw_send error: %d\n", cmdret);
-      err = -cmdret;
+      err = ALTCOM_HOST_NOT_FOUND;
       goto errout_with_cmdfree;
     }
 
   if (GETHOSTBYNAMER_RES_DATALEN != reslen)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
-      err = ALTCOM_EFAULT;
+      err = ALTCOM_HOST_NOT_FOUND;
       goto errout_with_cmdfree;
     }
 
@@ -162,7 +163,7 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
 
       /* buffer length is not enough */
 
-      err = ERANGE;
+      err = ALTCOM_ERANGE;
       goto errout_with_cmdfree;
     }
 
@@ -234,6 +235,8 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
 
 errout_with_cmdfree:
   altcom_sock_free_cmdandresbuff(cmd, res);
+
+errout:
   if (h_errnop)
     {
       *h_errnop = err;
@@ -285,6 +288,11 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
   if (!altcom_isinit())
     {
       DBGIF_LOG_ERROR("Not intialized\n");
+      if (h_errnop)
+        {
+          *h_errnop = ALTCOM_HOST_NOT_FOUND;
+        }
+
       return -1;
     }
 
@@ -293,7 +301,7 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
       DBGIF_LOG_ERROR("Invalid paramaeter\n");
       if (h_errnop)
         {
-          *h_errnop = ALTCOM_EINVAL;
+          *h_errnop = ALTCOM_HOST_NOT_FOUND;
         }
 
       return -1;
@@ -305,7 +313,7 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
       DBGIF_LOG1_ERROR("Invalid param. namelen = [%d]\n", namelen);
       if (h_errnop)
         {
-          *h_errnop = ALTCOM_EINVAL;
+          *h_errnop = ALTCOM_HOST_NOT_FOUND;
         }
 
       return -1;

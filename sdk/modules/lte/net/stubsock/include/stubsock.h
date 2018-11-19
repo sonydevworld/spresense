@@ -235,6 +235,15 @@ void stubsock_convsockaddr_remote(FAR const struct sockaddr *from,
 void stubsock_convstorage_local(FAR const struct altcom_sockaddr_storage *from,
                                 FAR struct sockaddr *to);
 
+/****************************************************************************
+ * Name: stubsock_convherrno_local()
+ *
+ * Description:
+ *   Convert h_errno to local definition.
+ *
+ ****************************************************************************/
+
+int stubsock_convherrno_local(int herr);
 
 /****************************************************************************
  * Name: stubsock_accept

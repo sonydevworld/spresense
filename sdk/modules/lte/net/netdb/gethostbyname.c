@@ -58,6 +58,7 @@
 #include "altcom_socket.h"
 #include "altcom_netdb.h"
 #include "altcom_errno.h"
+#include "stubsock.h"
 #include "dbg_if.h"
 
 /****************************************************************************
@@ -105,7 +106,7 @@ struct hostent *gethostbyname(const char *name)
   h = altcom_gethostbyname(name);
   if (!h)
     {
-      h_errno = altcom_h_errno;
+      h_errno = stubsock_convherrno_local(altcom_h_errno);
       return NULL;
     }
 
