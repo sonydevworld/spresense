@@ -38,11 +38,16 @@
  ****************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <bluetooth/bt_spp.h>
+
+#include "system/readline.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#define SPP_MAX_TX_DATA_SIZE 1024
 
 /****************************************************************************
  * Private Function Prototypes
@@ -98,6 +103,8 @@ static BT_ADDR local_addr           = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}};
 
 static char local_name[BT_NAME_LEN] = "SONY_BT_SPP_SAMPLE";
 
+static struct bt_acl_state_s *s_bt_acl_state = NULL;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -142,6 +149,8 @@ static void onConnectStatusChanged(struct bt_acl_state_s *bt_acl_state,
                                     bool connected, int status)
 {
   /* If ACL is connected, SPP can start connect */
+
+  s_bt_acl_state = bt_acl_state;
 
   if (connected)
     {
@@ -205,15 +214,6 @@ static void onSppReceiveData(struct bt_acl_state_s *bt_acl_state,
   if (ret != BT_SUCCESS)
     {
       printf("%s [BT] Send data failed. ret = %d\n", __func__, ret);
-    }
-
-  /* If data[0] = 0x31('0'), application exit. */
-
-  if (data[0] == 0x31)
-    {
-      printf("%s [BT] Exit command detected, bye. \n", __func__);
-
-      bt_spp_exit();
     }
 }
 
@@ -280,6 +280,8 @@ int bt_spp_main(int argc, char *argv[])
 #endif
 {
   int ret = 0;
+  int len = 0;
+  char buffer[SPP_MAX_TX_DATA_SIZE] = {0};
 
   /* Register BT event callback function */
 
@@ -352,6 +354,35 @@ int bt_spp_main(int argc, char *argv[])
       printf("%s [BT] Start inquiry failed. ret = %d\n", __func__, ret);
       goto error;
     }
+
+  /* Send Tx data by using readline */
+
+  while(1)
+    {
+      printf("spp>");
+      fflush(stdout);
+
+      len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
+
+      if (s_bt_acl_state && s_bt_acl_state->bt_acl_connection == BT_CONNECTED)
+        {
+          ret = bt_spp_send_tx_data(s_bt_acl_state, (uint8_t *) buffer, len);
+          if (ret != BT_SUCCESS)
+            {
+              printf("%s [BT] Send data failed. ret = %d\n", __func__, ret);
+            }
+        }
+
+      if (!strcmp(buffer, "quit\n"))
+        {
+          printf("Quit.");
+          break;
+        }
+    }
+
+  /* Quit this application */
+
+  bt_spp_exit();
 
 error:
   return ret;
