@@ -58,6 +58,7 @@
 #define GETHOSTBYNAME_RES_DATALEN (sizeof(struct apicmd_gethostbynameres_s))
 
 #define NAME_LENGTH (APICMD_GETHOSTBYNAME_NAME_MAX_LENGTH + 1)
+#define ALIASNAME_LENGTH (APICMD_GETHOSTBYNAME_RES_H_ALIASES_LENGTH + 1)
 
 #define GETHOSTBYNAME_REQ_SUCCESS 0
 #define GETHOSTBYNAME_REQ_FAILURE -1
@@ -90,6 +91,8 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
   static struct altcom_in6_addr        s_hostent_addr;
   static char                          *s_phostent_addr[2];
   static char                          s_hostname[NAME_LENGTH];
+  static char                          s_aliasname[ALIASNAME_LENGTH];
+  static char                          *s_paliasname[2];
   int32_t                              l_namelen;
   int32_t                              aliaslen;
 
@@ -132,7 +135,8 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
   /* Fill command result */
 
   result->h_addrtype = ntohl(res->h_addrtype);
-  l_namelen = strlen((FAR char *)res->h_name);
+  l_namelen = strnlen((FAR char *)res->h_name,
+                      APICMD_GETHOSTBYNAME_NAME_MAX_LENGTH);
   if (0 < l_namelen)
     {
       memset(s_hostname, 0, sizeof(s_hostname));
@@ -149,20 +153,23 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
   s_phostent_addr[0] = (FAR char *)&s_hostent_addr;
 
   s_phostent_addr[1] = NULL;
-  result->h_addr_list = (FAR char**)&s_phostent_addr;
+  result->h_addr_list = s_phostent_addr;
 
   aliaslen = strnlen((FAR char *)res->h_aliases,
                      APICMD_GETHOSTBYNAME_RES_H_ALIASES_LENGTH);
 
   if (aliaslen > 0)
     {
-      memcpy(result->h_aliases,
-             res->h_aliases, aliaslen);
+      memset(s_aliasname, 0, sizeof(s_aliasname));
+      memcpy(s_aliasname, res->h_aliases, aliaslen);
+      s_paliasname[0] = s_aliasname;
     }
   else
     {
-      result->h_aliases = NULL;
+      s_paliasname[0] = NULL;
     }
+  s_paliasname[1] = NULL;
+  result->h_aliases = s_paliasname;
 
   altcom_sock_free_cmdandresbuff(cmd, res);
 

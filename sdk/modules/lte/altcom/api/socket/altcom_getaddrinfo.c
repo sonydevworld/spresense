@@ -230,7 +230,7 @@ static int32_t getaddrinfo_request(FAR struct getaddrinfo_req_s* req)
          else
            {
              tmpai = *req->res;
-             while(!tmpai->ai_next)
+             while(tmpai->ai_next)
                {
                  tmpai = tmpai->ai_next;
                }
