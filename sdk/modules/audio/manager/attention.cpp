@@ -35,7 +35,7 @@
 
 #include "audio/audio_high_level_api.h"
 #include "attention.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 
 struct AttCbInfo
 {

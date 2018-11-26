@@ -34,11 +34,12 @@
  ****************************************************************************/
 
 #include "filter_component.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "debug/dbg_log.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
+static PackingComponent *sp_packing_instance = NULL;
 #ifdef CONFIG_AUDIOUTILS_SRC
 static SRCComponent *sp_src_instance = NULL;
 #endif
@@ -63,6 +64,19 @@ uint32_t AS_filter_activate(FilterComponentType type,
 {
   switch (type)
     {
+      case BitWidthConv:
+        if (sp_packing_instance == NULL)
+          {
+            sp_packing_instance = new PackingComponent();
+            if (sp_packing_instance == NULL)
+              {
+                FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+                return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
+              }
+          }
+
+        return sp_packing_instance->activate_apu(sp_packing_instance);
+
 #ifdef CONFIG_AUDIOUTILS_SRC
       case SRCOnly:
         if (sp_src_instance == NULL)
@@ -144,6 +158,14 @@ bool AS_filter_deactivate(FilterComponentType type)
 {
   switch (type)
     {
+      case BitWidthConv:
+        if(sp_packing_instance->deactivate_apu())
+          {
+            delete sp_packing_instance;
+            sp_packing_instance = NULL;
+            return true;
+          }
+
 #ifdef CONFIG_AUDIOUTILS_SRC
       case SRCOnly:
         if(sp_src_instance->deactivate_apu())
@@ -191,6 +213,10 @@ uint32_t AS_filter_init(FilterComponentParam param, uint32_t *dsp_inf)
 {
   switch (param.filter_type)
     {
+      case Apu::BitWidthConv:
+        sp_packing_instance->setCallBack(param.callback);
+        return sp_packing_instance->init_apu(param.init_packing_param);
+
 #ifdef CONFIG_AUDIOUTILS_SRC
       case Apu::SRC:
         sp_src_instance->setCallBack(param.callback);
@@ -216,6 +242,9 @@ bool AS_filter_exec(FilterComponentParam param)
 {
   switch (param.filter_type)
     {
+      case Apu::BitWidthConv:
+        return sp_packing_instance->exec_apu(param.exec_packing_param);
+
 #ifdef CONFIG_AUDIOUTILS_SRC
       case Apu::SRC:
         sp_src_instance->setCallBack(param.callback);
@@ -243,6 +272,9 @@ bool AS_filter_stop(FilterComponentParam param)
 {
   switch (param.filter_type)
     {
+      case Apu::BitWidthConv:
+        return sp_packing_instance->flush_apu(param.stop_packing_param);
+
 #ifdef CONFIG_AUDIOUTILS_SRC
       case Apu::SRC:
         return sp_src_instance->flush_apu(param.stop_src_param);
@@ -311,11 +343,21 @@ bool AS_filter_tuning(FilterComponentParam param)
 #endif
 
 /*--------------------------------------------------------------------*/
-bool AS_filter_recv_done(void)
+bool AS_filter_recv_done(Apu::ApuFilterType type)
 {
+  switch (type)
+    {
+      case Apu::BitWidthConv:
+        return sp_packing_instance->recv_done();
+
 #ifdef CONFIG_AUDIOUTILS_SRC
-  return sp_src_instance->recv_done();
+      case Apu::SRC:
+        return sp_src_instance->recv_done();
 #endif
+      default:
+        break;
+    }
+
   return false;
 }
 

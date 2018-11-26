@@ -7,8 +7,8 @@ Usage
 
 Select options in below.
 
-Å°SDK
-- [CXD56xx Configuration Options]
+- [CXD56xx Configuration]
+    [SDIO SD Card] <= Y
     [Audio] <= Y
 - [SDK audio] <= Y
     [Audio Utilities]
@@ -18,13 +18,17 @@ Select options in below.
 - [Examples]
     [Audio recorder example] <= Y
 
+Or use audio_recorder default configuration
+
+$ ./tools/config.py examples/audio_recorder
+
 Build and install
 --------------------------
 
-Build Kernel and SDK.
+Type 'make' to build SDK.
 Install 'nuttx.spk' to system.
 
-After that, you can see worker binary 'MP3ENC', 'OPUSENC', 'SRC'
+After that, you can see worker binary 'MP3ENC', 'SRC'
 in directory sdk/modules/audio/dsp.
 Store worker binary in the path specified by option.
  - Default path

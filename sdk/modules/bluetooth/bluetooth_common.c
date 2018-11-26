@@ -44,6 +44,18 @@
 #include "bluetooth_hal_init.h"
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#ifndef CONFIG_BLUETOOTH_NAME
+#define CONFIG_BLUETOOTH_NAME    "SONY-BT-CLASSIC"
+#endif
+
+#ifndef CONFIG_BLUETOOTH_LE_NAME
+#define CONFIG_BLUETOOTH_LE_NAME "SONY-BLE-CLASSIC"
+#endif
+
+/****************************************************************************
  * Function prototypes
  ****************************************************************************/
 
@@ -59,8 +71,8 @@ extern void ble_gatt_init(struct ble_state_s *ble_state);
 
 static struct bt_common_state_s g_bt_common_state =
 {
-  .bt_name  = "SONY-BT-CLASSIC",
-  .ble_name = "SONY-BLE-CLASSIC",
+  .bt_name  = CONFIG_BLUETOOTH_NAME,
+  .ble_name = CONFIG_BLUETOOTH_LE_NAME,
   .bt_addr  = {{0x20, 0x70, 0x3A, 0x10, 0x00, 0x01}},
   .ble_addr = {{0x20, 0x70, 0x3A, 0x10, 0x00, 0x01}}
 };

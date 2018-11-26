@@ -86,21 +86,16 @@ $(BIN): $(LIB_OBJS)
 
 depend: .depend
 
-.context:
-	$(Q) patch -d .. -p3    < cmsis-nn-support_nnabla.patch
-	$(Q) touch $@
-
-context: .context
+context:
 
 clean_context:
-	$(Q) if [ -e .context ]; then patch -d .. -p3 -R < cmsis-nn-support_nnabla.patch >/dev/null; fi
-	$(call DELFILE, .context)
 
 clean:
 	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 
 distclean: clean clean_context
+	$(call DELFILE, .context)
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
 

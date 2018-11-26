@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_RECORDER_API_H
-#define __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_RECORDER_API_H
+#ifndef __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H
+#define __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H
 
 /**
  * @defgroup audioutils Audio Utility
@@ -56,6 +56,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "audio/audio_object_common_api.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -486,7 +488,7 @@ bool AS_DeactivateMediaRecorder(void);
 
 bool AS_DeleteMediaRecorder(void);
 
-#endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_RECORDER_API_H */
+#endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H */
 /**
  * @}
  */

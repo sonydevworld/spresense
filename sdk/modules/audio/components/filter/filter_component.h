@@ -41,6 +41,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 
+#include "packing_component.h"
 #ifdef CONFIG_AUDIOUTILS_SRC
 #include "src_filter_component.h"
 #endif
@@ -72,6 +73,9 @@ enum FilterComponentType
   MppEax,                /* Use master: XLOUD-SRC tunnelled
                           * and slave: MFE mechenism.
                           */
+  BitWidthConv,          /* Use BitWidth Converter
+                          * (DSP will not be loaded)
+                          */
   FilterComponentTypeNum
 };
 
@@ -82,6 +86,10 @@ struct FilterComponentParam
 
   union
   {
+    InitPackingParam init_packing_param;
+    ExecPackingParam exec_packing_param;
+    StopPackingParam stop_packing_param;
+
 #ifdef CONFIG_AUDIOUTILS_SRC
     InitSRCParam init_src_param;
     ExecSRCParam exec_src_param;
@@ -102,19 +110,12 @@ struct FilterComponentParam
   };
 };
 
-#ifdef CONFIG_AUDIOUTILS_SRC
-struct SrcFilterCompCmpltParam
+struct FilterCompCmpltParam
 {
   Apu::ApuEventType event_type;
 
-  union
-  {
-    InitSRCParam init_src_param;
-    ExecSRCParam exec_src_param;
-    StopSRCParam stop_src_param;
-  };
+  BufferHeader output_buffer;
 };
-#endif
 
 /*--------------------------------------------------------------------*/
 extern "C" {
@@ -130,7 +131,7 @@ bool AS_filter_exec(FilterComponentParam);
 bool AS_filter_stop(FilterComponentParam);
 bool AS_filter_setparam(FilterComponentParam);
 bool AS_filter_tuning(FilterComponentParam);
-bool AS_filter_recv_done(void);
+bool AS_filter_recv_done(Apu::ApuFilterType type);
 
 } /* extern "C" */
 

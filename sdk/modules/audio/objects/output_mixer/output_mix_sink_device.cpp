@@ -97,8 +97,7 @@ static bool postfilter_done_callback(PostfilterCbParam *p_param,
                                         (p_requester))->m_self_dtq,
                                        MsgPriNormal,
                                        MSG_AUD_MIX_CMD_PSTFLT_DONE,
-                                       (static_cast<OutputMixToHPI2S*>
-                                        (p_requester))->m_self_dtq,
+                                       NULL,
                                        outmix_param);
   F_ASSERT(er == ERR_OK);
 
@@ -120,8 +119,7 @@ static void render_done_callback(FAR AudioDrvDmaResult *p_param,
                                         (p_requester))->m_self_dtq,
                                        MsgPriNormal,
                                        MSG_AUD_MIX_CMD_RENDER_DONE,
-                                       (static_cast<OutputMixToHPI2S*>
-                                        (p_requester))->m_self_dtq,
+                                       NULL,
                                        outmix_param);
   F_ASSERT(er == ERR_OK);
 }
@@ -141,8 +139,7 @@ static void render_err_callback(FAR AudioDrvDmaError *p_param,
                                         (p_requester))->m_self_dtq,
                                        MsgPriNormal,
                                        MSG_AUD_MIX_CMD_RENDER_DONE,
-                                       (static_cast<OutputMixToHPI2S*>
-                                        (p_requester))->m_self_dtq,
+                                       NULL,
                                        outmix_param);
   F_ASSERT(er == ERR_OK);
 }
@@ -219,6 +216,33 @@ void OutputMixToHPI2S::parse(MsgPacket* msg)
   F_ASSERT(event < AUD_MIX_MSG_NUM);
 
   (this->*MsgProcTbl[event][m_state.get()])(msg);
+}
+
+/*--------------------------------------------------------------------------*/
+void OutputMixToHPI2S::reply(MsgQueId requester_dtq,
+                             MsgType msg_type,
+                             AsOutputMixDoneParam *done_param)
+{
+  if (m_callback != NULL)
+    {
+      m_callback(requester_dtq, msg_type, done_param);
+    }
+  else if (m_requester_dtq != MSG_QUE_NULL)
+    {
+      AudioObjReply cmplt((uint32_t)msg_type,
+                           AS_OBJ_REPLY_TYPE_REQ,
+                           AS_MODULE_ID_OUTPUT_MIX_OBJ,
+                           AS_ECODE_OK);
+      err_t er = MsgLib::send<AudioObjReply>(requester_dtq,
+                                             MsgPriNormal,
+                                             MSG_TYPE_AUD_RES,
+                                             NULL,
+                                             cmplt);
+      if (ERR_OK != er)
+        {
+          F_ASSERT(0);
+        }
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -323,7 +347,7 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixActDone;
 
-  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
 
   m_state = Ready;
 }
@@ -348,7 +372,7 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
   done_param.handle    = handle;
   done_param.done_type = OutputMixDeactDone;
 
-  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_DEACT, &done_param);
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_DEACT, &done_param);
 
   m_self_handle = 0;
   m_state       = Booted;
@@ -640,7 +664,7 @@ void OutputMixToHPI2S::clock_recovery(MsgPacket* msg)
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixSetClkRcvDone;
 
-  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_CLKRECOVERY, &done_param);
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_CLKRECOVERY, &done_param);
 
   return;
 }

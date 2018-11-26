@@ -153,6 +153,10 @@
 
 #define AS_BITLENGTH_24  24
 
+/** 24bit Unpacked (32bit) */
+
+#define AS_BITLENGTH_32  32
+
 /** @} */
 
 /** @name Channel number */
@@ -335,6 +339,263 @@
 /** 510kbps */
 
 #define AS_BITRATE_510000  510000
+
+/** @} */
+
+/** @defgroup attention_code Attention Code */
+/** @{ */
+
+/*! \brief Just Information
+ *  \details Just notify information of intermal processing.
+ */
+
+#define AS_ATTENTION_CODE_INFORMATION 0x00
+
+/*! \brief Warning Attention
+ *  \details Internal process error that can continue processing.
+ *           The system can work after this attention, but correctness is not guaranteed.
+ *           For example, encode error, decode error.
+ */
+
+#define AS_ATTENTION_CODE_WARNING     0x01
+
+/*! \brief Error Attention
+ *  \details Internal process error tha cannot continue processing.
+ *           The system cannot work correctly after this attention.
+ *           For example, internal state error, DSP load error.
+ */
+
+#define AS_ATTENTION_CODE_ERROR       0x02
+
+/*! \brief Fatal Attention
+ *  \details Internal process error that cannot continue processing.
+ *           Ths system should be rebooted.
+ */
+
+#define AS_ATTENTION_CODE_FATAL       0x03
+
+/** @} */
+
+/** @defgroup attention_sub_code Attention Sub Code */
+/** @{ */
+
+/*! \brief DMA Underflow
+ *  \details DMA tranfering queue became empty because of DMA read/write request\n
+ *           may be slower than DMA transfer speed. To avoid this, request DMA transfer\n
+ *           faster than transfer speed. (tranfer speed : 48000 samples/sec)
+ */
+
+#define AS_ATTENTION_SUB_CODE_DMA_UNDERFLOW         0x01
+
+/*! \brief DMA Overflow
+ *  \details DMA captureing queue became full because of DMA read/write request\n
+ *           may be faster than DMA transfer speed. To avoid this, request DMA capture\n
+ *           faster than capture speed. (capture speed : 48000 samples/sec)
+ */
+
+#define AS_ATTENTION_SUB_CODE_DMA_OVERFLOW          0x02
+
+/*! \brief DMA Error
+ *  \details DMA error returned from DMW H/W. It may be wrong register setting.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DMA_ERROR             0x03
+
+/*! \brief APU Queue Full Error
+ *  \details DSP response may be delayed and command buffer became full.
+ */
+
+#define AS_ATTENTION_SUB_CODE_APU_QUEUE_FULL        0x04
+
+/*! \brief SimpleFIFO Underflow
+ *  \details Simple fifo between application and sdk became empty. Insertion speed\n
+ *           may be slower than extraction. Coordinate task priority of application\n
+ *           to avoid queue remain decreaseing.
+ */
+
+#define AS_ATTENTION_SUB_CODE_SIMPLE_FIFO_UNDERFLOW 0x05
+
+/*! \brief SimpleFIFO Overflow
+ *  \details Simple fifo between application and sdk became full. Extraction speed\n
+ *           may be slower than Insertion. Coordinate task priority of application\n
+ *           to avoid queue remain increaseing.
+ */
+
+#define AS_ATTENTION_SUB_CODE_SIMPLE_FIFO_OVERFLOW  0x06
+
+/*! \brief Illegal Request
+ *  \details Cannot accept this event on current state.
+ */
+
+#define AS_ATTENTION_SUB_CODE_ILLEGAL_REQUEST       0x07
+
+/*! \brief Internal State Error
+ *  \details Internal State Error.
+ */
+
+#define AS_ATTENTION_SUB_CODE_INTERNAL_STATE_ERROR  0x08
+
+/*! \brief Unexpected Parameter
+ *  \details The command parameter may be wrong. Revise command parameters.
+ */
+
+#define AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM      0x09
+
+/*! \brief Internal Queue Pop Error
+ *  \details The internal process queue is already empty but tried to extraction.
+ */
+
+#define AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR       0x0A
+
+/*! \brief Internal Queue Push Error
+ *  \details The internal process queue is already full but tried to insertion.
+ */
+
+#define AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR      0x0B
+
+/*! \brief Internal Queue Missing Error
+ *  \details The queue became empty unexpectedly.
+ */
+
+#define AS_ATTENTION_SUB_CODE_QUEUE_MISSING_ERROR   0x0C
+
+/*! \brief Memory Handle Alloc Error
+ *  \details All Memory handles may be used.
+ *           Response from DSP may be delayed or get stacked up.
+ */
+
+#define AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR 0x0D
+
+/*! \brief Memory Handle Free Error
+ *  \details The handle may be already freed.
+ */
+
+#define AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR  0x0E
+
+/*! \brief Task Create Error
+ *  \details Task context cannot create.\n
+ *           Revise max task creation number on menu config.
+ */
+
+#define AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR     0x0F
+
+/*! \brief Instance Resource Error
+ *  \details A class instanse could not create or delete.\n
+ *           Check if there duplicate creation of audio objects/components.
+ *           And, check heap area size too.
+ */
+
+#define AS_ATTENTION_SUB_CODE_RESOURCE_ERROR        0x10
+
+/*! \brief Decoded size equal zero
+ *  \details Decoded PCM size euqals to 0, Provided ES data may be broken.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DECODED_SIZE_ZERO     0x11
+
+/*! \brief DSP Load Error
+ *  \details Tried to load DSP binary to sub core but it was failed.\n
+ *           DSP binary may not be stored on dsp load path.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR        0x12
+
+/*! \brief DSP Unload Error
+ *  \details Tried to unload DSP binary from sub core but it was failed.\n
+ *           DSP binary may not loaded.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_UNLOAD_ERROR      0x13
+
+/*! \brief DSP Exec Error
+ *  \details The data or command which sent to DSP may not be correct format.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR        0x14
+
+/*! \brief DSP Result Error
+ *  \details DSP result error.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_RESULT_ERROR      0x15
+
+/*! \brief DSP Illegal Reply
+ *  \detail Command packet from DSP may be broken.
+ *          If uses multi DSP, Check duplication of command buffer.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_ILLEGAL_REPLY     0x16
+
+/*! \brief DSP Unload Done
+ *  \details DSP unload done notification.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_UNLOAD_DONE       0x17
+
+/*! \brief DSP Version Error
+ *  \details Loaded DSP binary version is differ from expected.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR     0x18
+
+/*! \brief BaseBand Error
+ *  \details Baseband power may be off. Power on baseband first.
+ */
+
+#define AS_ATTENTION_SUB_CODE_BASEBAND_ERROR        0x19
+
+/*! \brief Stream Parser Error
+ *  \details ES parsed result may be differ from Player initialize parameters.
+ *           Match parameters and ES data.
+ */
+
+#define AS_ATTENTION_SUB_CODE_STREAM_PARSER_ERROR   0x1A
+
+/*! \brief DSP Load Done
+ *  \details DSP binary load done.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_LOAD_DONE         0x1B
+
+/*! \brief Rec Start Action Done
+ *  \details Recording start.
+ */
+
+#define AS_ATTENTION_SUB_CODE_RECSTART              0x1C
+
+/*! \brief Rec Stop Action Done
+ *  \details Recording stop.
+ */
+
+#define AS_ATTENTION_SUB_CODE_RECSTOP               0x1D
+
+/*! \brief DSP Debug Dump Log Alloc Error
+ *  \details Log area remain size is less than required size.
+ *           The log area may be used by Other DSPs.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_LOG_ALLOC_ERROR   0x1E
+
+/*! \brief DSP Assertion Fail
+ *  \details DSP internal error occured and DSP cannot keep processing.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_ASSETION_FAIL     0x1F
+
+/*! \brief DSP Send Fail
+ *  \details Inter CPU commucation with DSP is failed.
+ */
+
+#define AS_ATTENTION_SUB_CODE_DSP_SEND_ERROR        0x20
+
+/*! \brief Allocate memory of heap area
+ *  \details Notify that allocated from the heap area
+ *           without using the memory pool that uses shared memory.
+ */
+
+#define AS_ATTENTION_SUB_CODE_ALLOC_HEAP_MEMORY     0x21
+
+#define AS_ATTENTION_SUB_CODE_NUM   AS_ATTENTION_SUB_CODE_ALLOC_HEAP_MEMORY
 
 /** @} */
 

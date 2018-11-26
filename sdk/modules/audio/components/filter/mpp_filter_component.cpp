@@ -39,7 +39,7 @@
 
 #include "memutils/message/Message.h"
 #include "memutils/message/MsgPacket.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "apus/apu_context_ids.h"
 #include "debug/dbg_log.h"
 #include "apus/dsp_audio_version.h"

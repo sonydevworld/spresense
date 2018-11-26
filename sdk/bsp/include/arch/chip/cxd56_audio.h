@@ -81,7 +81,7 @@
  ****************************************************************************/
 
 /** cxd56_audio common return code. */
-  
+
 #define CXD56_AUDIO_ECODE uint16_t
 
 #define CXD56_AUDIO_ECODE_OK          0x0000
@@ -183,6 +183,18 @@
 /* Error code of config */
 
 #define CXD56_AUDIO_ECODE_CFG_CLK_MODE     (CXD56_AUDIO_ECODE_CFG | 0x01)
+
+enum cxd56_audio_state_e
+{
+  /* Power OFF state */
+
+  CXD56_AUDIO_POWER_STATE_OFF = 0,
+
+  /* Power ON state */
+
+  CXD56_AUDIO_POWER_STATE_ON
+};
+typedef enum cxd56_audio_state_e cxd56_audio_state_t;
 
 enum cxd56_audio_i2s_src_byp_e
 {
@@ -378,6 +390,15 @@ enum cxd56_audio_micdev_e
   CXD56_AUDIO_MIC_DEV_ANADIG
 };
 typedef enum cxd56_audio_micdev_e cxd56_audio_micdev_t;
+
+enum cxd56_audio_sp_drv_e
+{
+  CXD56_AUDIO_SP_DRV_LINEOUT = 0,
+  CXD56_AUDIO_SP_DRV_1DRIVER,
+  CXD56_AUDIO_SP_DRV_2DRIVER,
+  CXD56_AUDIO_SP_DRV_4DRIVER
+};
+typedef enum cxd56_audio_sp_drv_e cxd56_audio_sp_drv_t;
 
 struct cxd56_audio_i2s_param_s
 {
@@ -914,6 +935,33 @@ CXD56_AUDIO_ECODE cxd56_audio_en_i2s_io(void);
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_i2s_io(void);
+
+/**
+ * @brief Get audio driver status
+ *
+ * @param none
+ *
+ * @retval cxd56_audio_state_t value : current status
+ */
+cxd56_audio_state_t cxd56_audio_get_status(void);
+
+/**
+ * @brief Set audio speaker driver mode
+ *
+ * @param[in] cxd56_audio_sp_drv_t  speaker driver mode
+ *
+ * @retval CXD56_AUDIO_ECODE return code
+ */
+CXD56_AUDIO_ECODE cxd56_audio_set_spdriver(cxd56_audio_sp_drv_t sp_driver);
+
+/**
+ * @brief Get audio speaker driver mode
+ *
+ * @param none
+ *
+ * @retval cxd56_audio_sp_drv_t  speaker driver mode
+ */
+cxd56_audio_sp_drv_t cxd56_audio_get_spdriver(void);
 
 #ifdef __cplusplus
 } /* end of extern "C" */

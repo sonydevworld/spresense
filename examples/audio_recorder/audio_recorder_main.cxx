@@ -85,8 +85,8 @@ using namespace MemMgrLite;
 
 /* For FIFO. */
 
-#define READ_SIMPLE_FIFO_SIZE (1536 * USE_MIC_CHANNEL_NUM)
-#define SIMPLE_FIFO_FRAME_NUM 10
+#define READ_SIMPLE_FIFO_SIZE (3072 * USE_MIC_CHANNEL_NUM)
+#define SIMPLE_FIFO_FRAME_NUM 60
 #define SIMPLE_FIFO_BUF_SIZE  (READ_SIMPLE_FIFO_SIZE * SIMPLE_FIFO_FRAME_NUM)
 
 /* For line buffer mode. */
@@ -123,6 +123,7 @@ struct recorder_file_info_s
 {
   uint32_t  sampling_rate;
   uint8_t   channel_number;
+  uint8_t   bitwidth;
   uint8_t   codec_type;
   uint16_t  format_type;
   uint32_t  size;
@@ -151,6 +152,7 @@ enum sampling_rate_e
   SAMPLING_RATE_8K = 0,
   SAMPLING_RATE_16K,
   SAMPLING_RATE_48K,
+  SAMPLING_RATE_192K,
   SAMPLING_RATE_NUM
 };
 
@@ -162,6 +164,13 @@ enum channel_type_e
   CHAN_TYPE_6CH,
   CHAN_TYPE_8CH,
   CHAN_TYPE_NUM
+};
+
+enum bitwidth_e
+{
+  BITWIDTH_16BIT = 0,
+  BITWIDTH_24BIT,
+  BITWIDTH_32BIT
 };
 
 enum microphone_device_e
@@ -238,7 +247,8 @@ static bool app_init_wav_header(void)
 {
   return s_container_format->init(FORMAT_ID_PCM,
                                  s_recorder_info.file.channel_number,
-                                 s_recorder_info.file.sampling_rate);
+                                 s_recorder_info.file.sampling_rate,
+                                 s_recorder_info.file.bitwidth);
 }
 
 static bool app_open_output_file(void)
@@ -543,7 +553,8 @@ static bool app_init_mic_gain(void)
 
 static bool app_set_recording_param(codec_type_e codec_type,
                                     sampling_rate_e sampling_rate,
-                                    channel_type_e ch_type)
+                                    channel_type_e ch_type,
+                                    bitwidth_e bitwidth)
 {
   switch(codec_type)
     {
@@ -572,6 +583,9 @@ static bool app_set_recording_param(codec_type_e codec_type,
       case SAMPLING_RATE_48K:
         s_recorder_info.file.sampling_rate = AS_SAMPLINGRATE_48000;
         break;
+      case SAMPLING_RATE_192K:
+        s_recorder_info.file.sampling_rate = AS_SAMPLINGRATE_192000;
+        break;
       default:
         printf("Error: Invalid sampling rate(%d)\n", sampling_rate);
         return false;
@@ -596,6 +610,22 @@ static bool app_set_recording_param(codec_type_e codec_type,
         break;
       default:
         printf("Error: Invalid channel type(%d)\n", ch_type);
+        return false;
+    }
+
+  switch (bitwidth)
+    {
+      case BITWIDTH_16BIT:
+        s_recorder_info.file.bitwidth = AS_BITLENGTH_16;
+        break;
+      case BITWIDTH_24BIT:
+        s_recorder_info.file.bitwidth = AS_BITLENGTH_24;
+        break;
+      case BITWIDTH_32BIT:
+        s_recorder_info.file.bitwidth = AS_BITLENGTH_32;
+        break;
+      default:
+        printf("Error: Invalid bit width(%d)\n", bitwidth);
         return false;
     }
 
@@ -642,11 +672,13 @@ static void app_init_recorder_opus(AudioCommand* command)
 
 static bool app_init_recorder(codec_type_e codec_type,
                               sampling_rate_e sampling_rate,
-                              channel_type_e ch_type)
+                              channel_type_e ch_type,
+                              bitwidth_e bitwidth)
 {
   if (!app_set_recording_param(codec_type,
                                sampling_rate,
-                               ch_type))
+                               ch_type,
+                               bitwidth))
     {
       printf("Error: app_set_recording_param() failure.\n");
       return false;
@@ -658,7 +690,7 @@ static bool app_init_recorder(codec_type_e codec_type,
   command.header.sub_code      = 0x00;
   command.recorder.init_param.sampling_rate  = s_recorder_info.file.sampling_rate;
   command.recorder.init_param.channel_number = s_recorder_info.file.channel_number;
-  command.recorder.init_param.bit_length     = AS_BITLENGTH_16;
+  command.recorder.init_param.bit_length     = s_recorder_info.file.bitwidth;
   snprintf(command.recorder.init_param.dsp_path, AS_AUDIO_DSP_PATH_LEN, "%s", DSPBIN_PATH);
 
   switch (s_recorder_info.file.codec_type)
@@ -740,6 +772,20 @@ static bool app_stop_recorder(void)
 
   app_close_output_file();
   return true;
+}
+
+static bool app_set_clkmode(int clk_mode)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETRENDERINGCLK;
+  command.header.command_code  = AUDCMD_SETRENDERINGCLK;
+  command.header.sub_code      = 0x00;
+  command.set_renderingclk_param.clk_mode = clk_mode;
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
 }
 
 static bool app_open_file_dir(void)
@@ -973,6 +1019,16 @@ extern "C" int recorder_main(int argc, char *argv[])
       return 1;
     }
 
+  /* Set audio clock mode. */
+
+  sampling_rate_e sampling_rate = SAMPLING_RATE_16K;
+
+  if (!app_set_clkmode((sampling_rate == SAMPLING_RATE_192K) ? AS_CLKMODE_HIRES : AS_CLKMODE_NORMAL))
+    {
+      printf("Error: app_set_clkmode() failure.\n");
+      return 1;
+    }
+
   /* Set recorder operation mode. */
 
   if (!app_set_recorder_status())
@@ -984,8 +1040,9 @@ extern "C" int recorder_main(int argc, char *argv[])
   /* Initialize recorder. */
 
   if (!app_init_recorder(CODEC_TYPE_LPCM,
-                         SAMPLING_RATE_16K,
-                         CHAN_TYPE_MONO))
+                         sampling_rate,
+                         CHAN_TYPE_MONO,
+                         BITWIDTH_16BIT))
     {
       printf("Error: app_init_recorder() failure.\n");
       return 1;

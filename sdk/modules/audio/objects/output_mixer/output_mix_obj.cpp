@@ -63,13 +63,8 @@ using namespace MemMgrLite;
  ****************************************************************************/
 
 static pid_t    s_omix_pid = -1;
-static MsgQueId s_self_dtq;
-static MsgQueId s_render_path0_filter_apu_dtq;
-static MsgQueId s_render_path1_filter_apu_dtq;
-static PoolId   s_render_path0_filter_pcm_pool_id;
-static PoolId   s_render_path1_filter_pcm_pool_id;
-static PoolId   s_render_path0_filter_apu_pool_id;
-static PoolId   s_render_path1_filter_apu_pool_id;
+static AsOutputMixMsgQueId_t s_msgq_id;
+static AsOutputMixPoolId_t   s_pool_id;
 static OutputMixObjectTask *s_omix_ojb = NULL;
 
 /****************************************************************************
@@ -80,29 +75,24 @@ static OutputMixObjectTask *s_omix_ojb = NULL;
  * Private Functions
  ****************************************************************************/
 
-OutputMixObjectTask::OutputMixObjectTask(MsgQueId self_dtq,
-                                         MsgQueId render_path0_filter_apu_dtq,
-                                         MsgQueId render_path1_filter_apu_dtq,
-                                         PoolId render_path0_filter_pcm_pool_id,
-                                         PoolId render_path1_filter_pcm_pool_id,
-                                         PoolId render_path0_filter_apu_pool_id,
-                                         PoolId render_path1_filter_apu_pool_id) :
-  m_self_dtq(self_dtq),
+OutputMixObjectTask::OutputMixObjectTask(AsOutputMixMsgQueId_t msgq_id,
+                                         AsOutputMixPoolId_t pool_id) :
+  m_msgq_id(msgq_id),
   m_output_device(HPOutputDevice)
   {
     for (int i = 0; i < HPI2SoutChNum; i++)
       {
-        m_output_mix_to_hpi2s[i].set_self_dtq(self_dtq);
+        m_output_mix_to_hpi2s[i].set_self_dtq(msgq_id.mixer);
       }
 
-    m_output_mix_to_hpi2s[0].set_apu_dtq(render_path0_filter_apu_dtq);
-    m_output_mix_to_hpi2s[1].set_apu_dtq(render_path1_filter_apu_dtq);
+    m_output_mix_to_hpi2s[0].set_apu_dtq(msgq_id.render_path0_filter_dsp);
+    m_output_mix_to_hpi2s[1].set_apu_dtq(msgq_id.render_path1_filter_dsp);
 
-    m_output_mix_to_hpi2s[0].set_pcm_pool_id(render_path0_filter_pcm_pool_id);
-    m_output_mix_to_hpi2s[1].set_pcm_pool_id(render_path1_filter_pcm_pool_id);
+    m_output_mix_to_hpi2s[0].set_pcm_pool_id(pool_id.render_path0_filter_pcm);
+    m_output_mix_to_hpi2s[1].set_pcm_pool_id(pool_id.render_path1_filter_pcm);
 
-    m_output_mix_to_hpi2s[0].set_apu_pool_id(render_path0_filter_apu_pool_id);
-    m_output_mix_to_hpi2s[1].set_apu_pool_id(render_path1_filter_apu_pool_id);
+    m_output_mix_to_hpi2s[0].set_apu_pool_id(pool_id.render_path0_filter_dsp);
+    m_output_mix_to_hpi2s[1].set_apu_pool_id(pool_id.render_path1_filter_dsp);
   }
 
 /*--------------------------------------------------------------------------*/
@@ -138,7 +128,7 @@ void OutputMixObjectTask::run()
   MsgQueBlock* que;
   MsgPacket*   msg;
 
-  err_code = MsgLib::referMsgQueBlock(m_self_dtq, &que);
+  err_code = MsgLib::referMsgQueBlock(m_msgq_id.mixer, &que);
   F_ASSERT(err_code == ERR_OK);
 
   while (1)
@@ -193,13 +183,7 @@ void OutputMixObjectTask::parse(MsgPacket* msg)
 /*--------------------------------------------------------------------------*/
 int AS_OutputMixObjEntry(int argc, char *argv[])
 {
-  OutputMixObjectTask::create(s_self_dtq,
-                              s_render_path0_filter_apu_dtq,
-                              s_render_path1_filter_apu_dtq,
-                              s_render_path0_filter_pcm_pool_id,
-                              s_render_path1_filter_pcm_pool_id,
-                              s_render_path0_filter_apu_pool_id,
-                              s_render_path1_filter_apu_pool_id);
+  OutputMixObjectTask::create(s_msgq_id, s_pool_id);
   return 0;
 }
 
@@ -226,13 +210,8 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
 
   /* Create */
 
-  s_self_dtq    = param->msgq_id.mixer;
-  s_render_path0_filter_apu_dtq     = param->msgq_id.render_path0_filter_dsp;
-  s_render_path1_filter_apu_dtq     = param->msgq_id.render_path1_filter_dsp;
-  s_render_path0_filter_pcm_pool_id = param->pool_id.render_path0_filter_pcm;
-  s_render_path1_filter_pcm_pool_id = param->pool_id.render_path1_filter_pcm;
-  s_render_path0_filter_apu_pool_id = param->pool_id.render_path0_filter_dsp;
-  s_render_path1_filter_apu_pool_id = param->pool_id.render_path1_filter_dsp;
+  s_msgq_id = param->msgq_id;
+  s_pool_id = param->pool_id;
 
   s_omix_pid = task_create("OMIX_OBJ",
                            150, 1024 * 3,
@@ -264,10 +243,10 @@ bool AS_ActivateOutputMixer(uint8_t handle, FAR AsActivateOutputMixer *actparam)
   cmd.handle    = handle;
   cmd.act_param = *actparam;
 
-  err_t er = MsgLib::send<OutputMixerCommand>(s_self_dtq,
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_ACT,
-                                              s_self_dtq,
+                                              s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -289,10 +268,10 @@ bool AS_SendDataOutputMixer(FAR AsSendDataOutputMixer *sendparam)
   sendparam->pcm.identifier = sendparam->handle;
   sendparam->pcm.callback   = sendparam->callback;
 
-  err_t er = MsgLib::send<AsPcmDataParam>(s_self_dtq,
+  err_t er = MsgLib::send<AsPcmDataParam>(s_msgq_id.mixer,
                                           MsgPriNormal,
                                           MSG_AUD_MIX_CMD_DATA,
-                                          s_self_dtq,
+                                          s_msgq_id.mng,
                                           sendparam->pcm);
   F_ASSERT(er == ERR_OK);
 
@@ -316,10 +295,10 @@ bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineContr
   cmd.handle      = handle;
   cmd.fterm_param = *ftermparam;
 
-  err_t er = MsgLib::send<OutputMixerCommand>(s_self_dtq,
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_CLKRECOVERY,
-                                              s_self_dtq,
+                                              s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -343,10 +322,10 @@ bool AS_DeactivateOutputMixer(uint8_t handle, FAR AsDeactivateOutputMixer *deact
   cmd.handle      = handle;
   cmd.deact_param = *deactparam;
 
-  err_t er = MsgLib::send<OutputMixerCommand>(s_self_dtq,
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_DEACT,
-                                              s_self_dtq,
+                                              s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -376,23 +355,12 @@ bool AS_DeleteOutputMix(void)
 }
 
 /*--------------------------------------------------------------------------*/
-void OutputMixObjectTask::create(MsgQueId self_dtq,
-                                 MsgQueId render_path0_filter_apu_dtq,
-                                 MsgQueId render_path1_filter_apu_dtq,
-                                 PoolId render_path0_filter_pcm_pool_id,
-                                 PoolId render_path1_filter_pcm_pool_id,
-                                 PoolId render_path0_filter_apu_pool_id,
-                                 PoolId render_path1_filter_apu_pool_id)
+void OutputMixObjectTask::create(AsOutputMixMsgQueId_t msgq_id,
+                                 AsOutputMixPoolId_t pool_id)
 {
   if (s_omix_ojb == NULL)
     {
-      s_omix_ojb = new OutputMixObjectTask(self_dtq,
-                                           render_path0_filter_apu_dtq,
-                                           render_path1_filter_apu_dtq,
-                                           render_path0_filter_pcm_pool_id,
-                                           render_path1_filter_pcm_pool_id,
-                                           render_path0_filter_apu_pool_id,
-                                           render_path1_filter_apu_pool_id);
+      s_omix_ojb = new OutputMixObjectTask(msgq_id, pool_id);
       if (s_omix_ojb == NULL)
         {
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);

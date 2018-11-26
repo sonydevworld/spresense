@@ -39,7 +39,7 @@
 #include "decoder_component.h"
 
 #include "memutils/common_utils/common_assert.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "memutils/message/Message.h"
 
 #include "apus/cpuif_cmd.h"

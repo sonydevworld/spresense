@@ -34,6 +34,7 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
 # PWM Example.
 

@@ -62,6 +62,12 @@
 #define SAMPLINGRATE_176400  176400 /* 176.4kHz  */
 #define SAMPLINGRATE_192000  192000 /* 192kHz    */
 
+/* Bit width */
+
+#define BIT_WIDTH_16 16
+#define BIT_WIDTH_24 24
+#define BIT_WIDTH_32 32 
+
 /* Format ID */
 
 #define FORMAT_ID_PCM   0x0001  /* Linear PCM */
@@ -98,13 +104,26 @@ public:
   WavContainerFormat() :
     m_format_id(0),
     m_channel_number(0),
-    m_sampling_rate(0)
+    m_sampling_rate(0),
+    m_bitwidth(0)
     {}
   ~WavContainerFormat() {}
+
+  /* Init function
+   *
+   * A bitlength is fixed to 16bit 
+   */
 
   bool init(uint16_t  format_id,
             uint16_t  channel_number,
             uint32_t  sampling_rate);
+
+  /* Init function */
+
+  bool init(uint16_t  format_id,
+            uint16_t  channel_number,
+            uint32_t  sampling_rate,
+            uint8_t   bitwidth);
 
   bool getHeader(WAVHEADER *wav_header,
            uint32_t data_size);
@@ -112,6 +131,7 @@ private:
   uint16_t  m_format_id;
   uint16_t  m_channel_number;
   uint32_t  m_sampling_rate;
+  uint8_t   m_bitwidth;
 };
 
 #endif /* MODULES_AUDIO_CONTAINER_FORMAT_LIB_WAV_CONTAINERFORMAT_H */

@@ -48,29 +48,41 @@
 
 struct bt_hal_common_ops_s bt_hal_common_ops;
 
+#ifdef CONFIG_BCM20706_A2DP
 /* BT A2DP HAL I/F */
 
 struct bt_hal_a2dp_ops_s bt_hal_a2dp_ops;
+#endif
 
+#ifdef CONFIG_BCM20706_AVRCP
 /* BT AVRCP HAL I/F */
 
 struct bt_hal_avrcp_ops_s bt_hal_avrcp_ops;
+#endif
 
+#ifdef CONFIG_BCM20706_HFP
 /* BT HFP HAL I/F */
 
 struct bt_hal_hfp_ops_s bt_hal_hfp_ops;
+#endif
 
+#ifdef CONFIG_BCM20706_SPP
 /* BT SPP HAL I/F */
 
 struct bt_hal_spp_ops_s bt_hal_spp_ops;
+#endif
 
+#ifdef CONFIG_BCM20706_LE
 /* BT SPP HAL I/F */
 
 struct ble_hal_common_ops_s ble_hal_common_ops;
 
+#ifdef CONFIG_BCM20706_LE_GATT
 /* BT SPP HAL I/F */
 
 struct ble_hal_gatt_ops_s ble_hal_gatt_ops;
+#endif
+#endif
 
 /****************************************************************************
  * Public Functions
@@ -84,29 +96,41 @@ int bcm20706_probe(void)
 
   ret = bt_common_register_hal(&bt_hal_common_ops);
 
+#ifdef CONFIG_BCM20706_A2DP
   /* Register BT A2DP HAL */
 
   ret = bt_a2dp_register_hal(&bt_hal_a2dp_ops);
+#endif
 
+#ifdef CONFIG_BCM20706_AVRCP
   /* Register BT AVRCP HAL */
 
   ret = bt_avrcp_register_hal(&bt_hal_avrcp_ops);
+#endif
 
+#ifdef CONFIG_BCM20706_HFP
   /* Register BT HFP HAL */
 
   ret = bt_hfp_register_hal(&bt_hal_hfp_ops);
+#endif
 
+#ifdef CONFIG_BCM20706_SPP
   /* Register BT SPP HAL */
 
   ret = bt_spp_register_hal(&bt_hal_spp_ops);
+#endif
 
+#ifdef CONFIG_BCM20706_LE
   /* Register BLE common HAL */
 
   ret = ble_common_register_hal(&ble_hal_common_ops);
 
+#ifdef CONFIG_BCM20706_LE_GATT
   /* Register BLE GATT HAL */
 
   ret = ble_gatt_register_hal(&ble_hal_gatt_ops);
+#endif
+#endif
 
   return ret;
 }

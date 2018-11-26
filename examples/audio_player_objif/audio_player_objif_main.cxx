@@ -59,7 +59,7 @@
 #include "include/fixed_fence.h"
 #include "playlist/playlist.h"
 #include <arch/chip/cxd56_audio.h>
-
+#include "audio/audio_message_types.h"
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -241,14 +241,6 @@ static struct pm_cpu_freqlock_s s_player_lock;
  * Private Functions
  ****************************************************************************/
 
-static void outputmixer_done_callback(MsgQueId requester_dtq,
-                                      MsgType reply_of,
-                                      AsOutputMixDoneParam *done_param)
-{
-  printf("outputmixer done %d\n", done_param->done_type);
-  return;
-}
-
 static void outmixer_send_callback(int32_t identifier, bool is_end)
 {
   AsRequestNextParam next;
@@ -258,12 +250,6 @@ static void outmixer_send_callback(int32_t identifier, bool is_end)
   AS_RequestNextPlayerProcess(AS_PLAYER_ID_0, &next);
 
   return;
-}
-
-static bool player_done_callback(AsPlayerEvent event, uint32_t result, uint32_t sub_result)
-{
-  printf("player done %d\n", event);
-  return true;
 }
 
 static void player_decoded_pcm(AsPcmDataParam pcm)
@@ -531,6 +517,7 @@ static bool app_create_audio_sub_system(void)
   player_create_param.pool_id.es     = DEC_ES_MAIN_BUF_POOL;
   player_create_param.pool_id.pcm    = REND_PCM_BUF_POOL;
   player_create_param.pool_id.dsp    = DEC_APU_CMD_POOL;
+  player_create_param.pool_id.src_work = SRC_WORK_BUF_POOL;
 
   result = AS_CreatePlayerMulti(AS_PLAYER_ID_0, &player_create_param, app_attention_callback);
 
@@ -544,6 +531,7 @@ static bool app_create_audio_sub_system(void)
 
   AsCreateOutputMixParam_t output_mix_act_param;
   output_mix_act_param.msgq_id.mixer = MSGQ_AUD_OUTPUT_MIX;
+  output_mix_act_param.msgq_id.mng   = MSGQ_AUD_MNG;
   output_mix_act_param.msgq_id.render_path0_filter_dsp = MSGQ_AUD_PFDSP0;
   output_mix_act_param.msgq_id.render_path1_filter_dsp = MSGQ_AUD_PFDSP1;
   output_mix_act_param.pool_id.render_path0_filter_pcm = PF0_PCM_BUF_POOL;
@@ -678,6 +666,35 @@ static bool app_set_volume(int master_db)
   return true;
 }
 
+static bool app_receive_object_reply(uint32_t id)
+{
+  AudioObjReply reply_info;
+  AS_ReceiveObjectReply(MSGQ_AUD_MNG, &reply_info);
+
+  if (reply_info.type != AS_OBJ_REPLY_TYPE_REQ)
+    {
+      printf("app_receive_object_reply() error! type 0x%x\n",
+             reply_info.type);
+      return false;
+    }
+
+  if (reply_info.id != id)
+    {
+      printf("app_receive_object_reply() error! id 0x%x(request id 0x%x)\n",
+             reply_info.id, id);
+      return false;
+    }
+
+  if (reply_info.result != AS_ECODE_OK)
+    {
+      printf("app_receive_object_reply() error! result 0x%x\n",
+             reply_info.result);
+      return false;
+    }
+
+  return true;
+}
+
 static bool app_activate_player_system(void)
 {
   /* Activate MediaPlayer */
@@ -687,9 +704,20 @@ static bool app_activate_player_system(void)
   player_act.param.input_device  = AS_SETPLAYER_INPUTDEVICE_RAM;
   player_act.param.ram_handler   = &s_player_info.fifo.input_device;
   player_act.param.output_device = AS_SETPLAYER_OUTPUTDEVICE_SPHP;
-  player_act.cb                  = player_done_callback;
+  player_act.cb                  = NULL;
+
+  /* If manager set NULL to callback function at activate function,
+   * a response is sent to MessageQueueID of manager specified
+   * at create function.
+   * Wait until there is a response of the type specified in the argument.
+   */
 
   AS_ActivatePlayer(AS_PLAYER_ID_0, &player_act);
+
+  if (!app_receive_object_reply(MSG_AUD_PLY_CMD_ACT))
+    {
+      printf("AS_ActivatePlayer() error!\n");
+    }
 
   /* Activate OutputMixer */
 
@@ -698,9 +726,14 @@ static bool app_activate_player_system(void)
   mixer_act.output_device = HPOutputDevice;
   mixer_act.mixer_type    = MainOnly;
   mixer_act.pf_enable     = PostFilterDisable;
-  mixer_act.cb            = outputmixer_done_callback;
+  mixer_act.cb            = NULL;
 
   AS_ActivateOutputMixer(OutputMixer0, &mixer_act);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_ACT))
+    {
+      printf("AS_ActivateOutputMixer() error!\n");
+    }
 
   return true;
 }
@@ -720,6 +753,11 @@ static bool app_init_player(uint8_t codec_type,
  
   AS_InitPlayer(AS_PLAYER_ID_0, &player_init);
 
+  if (!app_receive_object_reply(MSG_AUD_PLY_CMD_INIT))
+    {
+      printf("AS_InitPlayer() error!\n");
+    }
+
   return true;
 }
 
@@ -732,6 +770,11 @@ static bool app_play_player(void)
 
   AS_PlayPlayer(AS_PLAYER_ID_0, &player_play);
 
+  if (!app_receive_object_reply(MSG_AUD_PLY_CMD_PLAY))
+    {
+      printf("AS_PlayPlayer() error!\n");
+    }
+
   return true;
 }
 
@@ -742,6 +785,11 @@ static bool app_stop_player(int mode)
   player_stop.stop_mode = mode;
 
   AS_StopPlayer(AS_PLAYER_ID_0, &player_stop);
+
+  if (!app_receive_object_reply(MSG_AUD_PLY_CMD_STOP))
+    {
+      printf("AS_StopPlayer() error!\n");
+    }
 
   return true;
 }
@@ -754,11 +802,22 @@ static bool app_deact_player_system(void)
 
   AS_DeactivatePlayer(AS_PLAYER_ID_0, &player_deact);
 
+  if (!app_receive_object_reply(MSG_AUD_PLY_CMD_DEACT))
+    {
+      printf("AS_DeactivatePlayer() error!\n");
+    }
+
+
   /* Deactivate OutputMixer */
 
   AsDeactivateOutputMixer mixer_deact;
 
   AS_DeactivateOutputMixer(OutputMixer0, &mixer_deact);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_DEACT))
+    {
+      printf("AS_DeactivateOutputMixer() error!\n");
+    }
 
   return true;
 }

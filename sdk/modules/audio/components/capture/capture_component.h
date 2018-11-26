@@ -47,7 +47,7 @@
 #include "memutils/message/Message.h"
 #include "memutils/memory_manager/MemHandle.h"
 
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 
 #include "dma_controller/audio_dma_drv_api.h"
 #include "debug/dbg_log.h"

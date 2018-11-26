@@ -82,20 +82,13 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static pid_t    s_ply_pid = -1;
-static MsgQueId s_self_dtq;
-static MsgQueId s_dsp_dtq;
-static PoolId   s_es_pool_id;
-static PoolId   s_pcm_pool_id;
-static PoolId   s_apu_pool_id;
-static PoolId   s_src_work_pool_id;
-static pid_t    s_sub_ply_pid;
-static MsgQueId s_sub_self_dtq;
-static MsgQueId s_sub_dsp_dtq;
-static PoolId   s_sub_es_pool_id;
-static PoolId   s_sub_pcm_pool_id;
-static PoolId   s_sub_apu_pool_id;
-static PoolId   s_sub_src_work_pool_id;
+static pid_t s_ply_pid = -1;
+static pid_t s_sub_ply_pid;
+
+static AsPlayerMsgQueId_t s_msgq_id;
+static AsPlayerMsgQueId_t s_sub_msgq_id;
+static AsPlayerPoolId_t   s_pool_id;
+static AsPlayerPoolId_t   s_sub_pool_id;
 
 static void *s_play_obj = NULL;
 static void *s_sub_play_obj = NULL;
@@ -108,6 +101,7 @@ static void *s_sub_play_obj = NULL;
  * Private Functions
  ****************************************************************************/
 
+/*--------------------------------------------------------------------------*/
 static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
 {
   DspDrvComPrm_t *p_param = (DspDrvComPrm_t *)p_response;
@@ -138,8 +132,7 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
                                                   (p_requester))->get_selfId(),
                                                  MsgPriNormal,
                                                  MSG_AUD_PLY_CMD_DEC_DONE,
-                                                 (static_cast<FAR PlayerObj *>
-                                                  (p_requester))->get_selfId(),
+                                                 NULL,
                                                  cmplt);
           F_ASSERT(er == ERR_OK);
         }
@@ -159,8 +152,7 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
                                                 (p_requester))->get_selfId(),
                                                MsgPriNormal,
                                                MSG_AUD_PLY_CMD_DEC_DONE,
-                                               (static_cast<FAR PlayerObj *>
-                                                (p_requester))->get_selfId(),
+                                               NULL,
                                                cmplt);
         F_ASSERT(er == ERR_OK);
       }
@@ -179,8 +171,7 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
                                                 (p_requester))->get_selfId(),
                                                MsgPriNormal,
                                                MSG_AUD_PLY_CMD_DEC_SET_DONE,
-                                               (static_cast<FAR PlayerObj *>
-                                                (p_requester))->get_selfId(),
+                                               NULL,
                                                cmplt);
         F_ASSERT(er == ERR_OK);
       }
@@ -197,7 +188,7 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
 static void pcm_send_done_callback(int32_t identifier, bool is_end)
 {
   MsgQueId msgq_id =
-    (identifier == OutputMixer0) ? s_self_dtq : s_sub_self_dtq;
+    (identifier == OutputMixer0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -207,29 +198,21 @@ static void pcm_send_done_callback(int32_t identifier, bool is_end)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_NEXT_REQ,
-                                         msgq_id,
+                                         NULL,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-PlayerObj::PlayerObj(MsgQueId self_dtq,
-                     MsgQueId apu_dtq,
-                     MemMgrLite::PoolId es_pool_id,
-                     MemMgrLite::PoolId pcm_pool_id,
-                     MemMgrLite::PoolId apu_pool_id,
-                     MemMgrLite::PoolId src_work_pool_id):
-  m_self_dtq(self_dtq),
-  m_apu_dtq(apu_dtq),
-  m_es_pool_id(es_pool_id),
-  m_pcm_pool_id(pcm_pool_id),
-  m_apu_pool_id(apu_pool_id),
-  m_src_work_pool_id(src_work_pool_id),
+PlayerObj::PlayerObj(AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_t pool_id):
+  m_msgq_id(msgq_id),
+  m_pool_id(pool_id),
   m_state(AS_MODULE_ID_PLAYER_OBJ, "main", BootedState),
   m_sub_state(AS_MODULE_ID_PLAYER_OBJ, "sub", InvalidSubState),
   m_input_device_handler(NULL),
   m_codec_type(InvalidCodecType),
   m_src_work_buf(NULL),
+  m_callback(NULL),
   m_pcm_path(AsPcmDataReply)
 {
 }
@@ -241,7 +224,7 @@ void PlayerObj::run(void)
   MsgQueBlock *que;
   MsgPacket   *msg;
 
-  err_code = MsgLib::referMsgQueBlock(m_self_dtq, &que);
+  err_code = MsgLib::referMsgQueBlock(m_msgq_id.player, &que);
   F_ASSERT(err_code == ERR_OK);
 
   while(1)
@@ -488,6 +471,31 @@ void PlayerObj::parse(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
+void PlayerObj::reply(AsPlayerEvent evtype, MsgType msg_type, uint32_t result)
+{
+  if (m_callback != NULL)
+    {
+      m_callback(evtype, result, 0);
+    }
+  else if (m_msgq_id.mng != MSG_QUE_NULL)
+    {
+      AudioObjReply cmplt((uint32_t)msg_type,
+                           AS_OBJ_REPLY_TYPE_REQ,
+                           AS_MODULE_ID_PLAYER_OBJ,
+                           result);
+      err_t er = MsgLib::send<AudioObjReply>(m_msgq_id.mng,
+                                             MsgPriNormal,
+                                             MSG_TYPE_AUD_RES,
+                                             m_msgq_id.player,
+                                             cmplt);
+      if (ERR_OK != er)
+        {
+          F_ASSERT(0);
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------*/
 void PlayerObj::illegalEvt(MsgPacket *msg)
 {
   uint msgtype = msg->getType();
@@ -507,8 +515,7 @@ void PlayerObj::illegalEvt(MsgPacket *msg)
     AsPlayerEventSetGain
   };
 
-  m_callback(table[idx],
-             AS_ECODE_STATE_VIOLATION, 0);
+  reply(table[idx], (MsgType)msgtype, AS_ECODE_STATE_VIOLATION);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -528,8 +535,9 @@ void PlayerObj::activate(MsgPacket *msg)
 
   if (!checkAndSetMemPool())
     {
-      m_callback(AsPlayerEventAct,
-                 AS_ECODE_CHECK_MEMORY_POOL_ERROR, 0);
+      reply(AsPlayerEventAct,
+            msg->getType(),
+            AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
     }
 
@@ -544,21 +552,23 @@ void PlayerObj::activate(MsgPacket *msg)
         break;
 
     default:
-      m_callback(AsPlayerEventAct,
-                 AS_ECODE_COMMAND_PARAM_INPUT_DEVICE, 0);
+      reply(AsPlayerEventAct,
+            msg->getType(),
+            AS_ECODE_COMMAND_PARAM_INPUT_DEVICE);
       return;
   }
 
   result = m_input_device_handler->initialize(&in_device_handle);
   if (result)
     {
-      m_callback(AsPlayerEventAct, AS_ECODE_OK, 0);
+      reply(AsPlayerEventAct, msg->getType(), AS_ECODE_OK);
       m_state = ReadyState;
     }
   else
     {
-      m_callback(AsPlayerEventAct,
-                 AS_ECODE_COMMAND_PARAM_INPUT_HANDLER, 0);
+      reply(AsPlayerEventAct,
+            msg->getType(),
+            AS_ECODE_COMMAND_PARAM_INPUT_HANDLER);
     }
 }
 
@@ -571,12 +581,11 @@ void PlayerObj::deactivate(MsgPacket *msg)
 
   if (AS_ECODE_OK != unloadCodec())
     {
-      m_callback(AsPlayerEventDeact,
-                 AS_ECODE_DSP_UNLOAD_ERROR, 0);
+      reply(AsPlayerEventDeact, msg->getType(), AS_ECODE_DSP_UNLOAD_ERROR);
       return;
     }
 
-  m_callback(AsPlayerEventDeact, AS_ECODE_OK, 0);
+  reply(AsPlayerEventDeact, msg->getType(), AS_ECODE_OK);
   m_state = BootedState;
 }
 
@@ -627,7 +636,7 @@ void PlayerObj::init(MsgPacket *msg)
         }
     }
 
-  m_callback(AsPlayerEventInit, result, dsp_inf);
+  reply(AsPlayerEventInit, msg->getType(), result);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -663,11 +672,11 @@ void PlayerObj::playOnReady(MsgPacket *msg)
       m_sub_state = SubStatePrePlay;
       m_state = PrePlayParentState;
 
-      m_callback(AsPlayerEventPlay, AS_ECODE_OK, 0);
+      reply(AsPlayerEventPlay, msg->getType(), AS_ECODE_OK);
     }
   else
     {
-      m_callback(AsPlayerEventPlay, rst, dsp_inf);
+      reply(AsPlayerEventPlay, msg->getType(), rst);
     }
 }
 
@@ -692,7 +701,9 @@ void PlayerObj::stopOnPlay(MsgPacket *msg)
   if (!m_external_cmd_que.push(AsPlayerEventStop))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-      m_callback(AsPlayerEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsPlayerEventStop,
+            msg->getType(),
+            AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -714,7 +725,7 @@ void PlayerObj::stopOnWait(MsgPacket *msg)
 
   MEDIA_PLAYER_DBG("STOP:\n");
 
-  m_callback(AsPlayerEventStop, AS_ECODE_OK, 0);
+  reply(AsPlayerEventStop, msg->getType(), AS_ECODE_OK);
 
   freeSrcWorkBuf();
 
@@ -742,7 +753,9 @@ void PlayerObj::stopOnUnderflow(MsgPacket *msg)
   if (!m_external_cmd_que.push(AsPlayerEventStop))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-      m_callback(AsPlayerEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsPlayerEventStop,
+            msg->getType(),
+            AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -762,7 +775,9 @@ void PlayerObj::stopOnPrePlay(MsgPacket *msg)
 
   if (!m_external_cmd_que.push(AsPlayerEventStop))
     {
-      m_callback(AsPlayerEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsPlayerEventStop,
+            msg->getType(),
+            AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -796,7 +811,9 @@ void PlayerObj::stopOnPrePlayUnderflow(MsgPacket *msg)
 
   if (!m_external_cmd_que.push(AsPlayerEventStop))
     {
-      m_callback(AsPlayerEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsPlayerEventStop,
+            msg->getType(),
+            AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -820,8 +837,8 @@ void PlayerObj::nextReqOnPlay(MsgPacket *msg)
       return;
     }
 
-  if ((MemMgrLite::Manager::getPoolNumAvailSegs(m_es_pool_id) > 0) &&
-        (MemMgrLite::Manager::getPoolNumAvailSegs(m_pcm_pool_id) > 1))
+  if ((MemMgrLite::Manager::getPoolNumAvailSegs(m_pool_id.es) > 0) &&
+        (MemMgrLite::Manager::getPoolNumAvailSegs(m_pool_id.pcm) > 1))
     {
       /* Do next decoding process. */
 
@@ -868,7 +885,7 @@ void PlayerObj::nextReqOnStopping(MsgPacket *msg)
         {
           MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
         }
-      m_callback(ext_cmd_code, AS_ECODE_OK, 0);
+      reply(ext_cmd_code, MSG_AUD_PLY_CMD_STOP, AS_ECODE_OK);
 
       freeSrcWorkBuf();
 
@@ -939,8 +956,8 @@ void PlayerObj::decDoneOnPlay(MsgPacket *msg)
 
   freePcmBuf();
 
-  if ((MemMgrLite::Manager::getPoolNumAvailSegs(m_es_pool_id) > 0) &&
-        (MemMgrLite::Manager::getPoolNumAvailSegs(m_pcm_pool_id) > 1))
+  if ((MemMgrLite::Manager::getPoolNumAvailSegs(m_pool_id.es) > 0) &&
+        (MemMgrLite::Manager::getPoolNumAvailSegs(m_pool_id.pcm) > 1))
     {
       /* Do next decoding process. */
 
@@ -1139,7 +1156,7 @@ void PlayerObj::decDoneOnPrePlayStopping(MsgPacket *msg)
         {
           MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
         }
-      m_callback(ext_cmd_code, AS_ECODE_OK, 0);
+      reply(ext_cmd_code, msg->getType(), AS_ECODE_OK);
 
       freeSrcWorkBuf();
 
@@ -1212,7 +1229,7 @@ void PlayerObj::decSetDone(MsgPacket *msg)
 
   /* Send result. */
 
-  m_callback(ext_cmd_code, AS_ECODE_OK, 0);
+  reply(ext_cmd_code, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1222,8 +1239,9 @@ void PlayerObj::setGain(MsgPacket *msg)
 
   if (!m_external_cmd_que.push(AsPlayerEventSetGain))
     {
-      m_callback(AsPlayerEventSetGain,
-                 AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsPlayerEventSetGain,
+            msg->getType(),
+            AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -1238,8 +1256,7 @@ void PlayerObj::setGain(MsgPacket *msg)
     {
       m_external_cmd_que.pop();
 
-      m_callback(AsPlayerEventSetGain,
-                 AS_ECODE_DSP_SET_ERROR, 0);
+      reply(AsPlayerEventSetGain, msg->getType(), AS_ECODE_DSP_SET_ERROR);
       return;
     }
 
@@ -1295,8 +1312,8 @@ uint32_t PlayerObj::loadCodec(AudioCodec codec,
   act_param.path           = (param->dsp_path != NULL) ? param->dsp_path :
                               (char *)CONFIG_AUDIOUTILS_DSP_MOUNTPT;
   act_param.p_instance     = &m_p_dec_instance;
-  act_param.apu_pool_id    = m_apu_pool_id;
-  act_param.apu_mid        = m_apu_dtq;
+  act_param.apu_pool_id    = m_pool_id.dsp;
+  act_param.apu_mid        = m_msgq_id.dsp;
   act_param.dsp_inf        = dsp_inf;
   act_param.dsp_multi_core = judgeMultiCore(param->sampling_rate,
                                             param->bit_length);
@@ -1427,7 +1444,7 @@ void PlayerObj::sendPcmToOwner(AsPcmDataParam& data)
       err_t er = MsgLib::send<AsPcmDataParam>(m_pcm_dest.msg.id,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_DATA,
-                                              s_self_dtq,
+                                              s_msgq_id.player,
                                               data);
       F_ASSERT(er == ERR_OK);
     }
@@ -1460,7 +1477,7 @@ void PlayerObj::decode(void* p_es, uint32_t es_size)
 void* PlayerObj::allocPcmBuf(uint32_t size)
 {
   MemMgrLite::MemHandle mh;
-  if (mh.allocSeg(m_pcm_pool_id, size) != ERR_OK)
+  if (mh.allocSeg(m_pool_id.pcm, size) != ERR_OK)
     {
       MEDIA_PLAYER_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return NULL;
@@ -1479,7 +1496,7 @@ void* PlayerObj::getEs(uint32_t* size)
 {
   MemMgrLite::MemHandle mh;
 
-  if (mh.allocSeg(m_es_pool_id, *size) != ERR_OK)
+  if (mh.allocSeg(m_pool_id.es, *size) != ERR_OK)
     {
       MEDIA_PLAYER_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return NULL;
@@ -1503,10 +1520,10 @@ void* PlayerObj::allocSrcWorkBuf(uint32_t size)
 {
   void *work_buf_addr;
 
-  if (m_src_work_pool_id != INVALID_POOL_ID)
+  if (m_pool_id.src_work != INVALID_POOL_ID)
     {
       MemMgrLite::MemHandle mh;
-      if (mh.allocSeg(m_src_work_pool_id, size) != ERR_OK)
+      if (mh.allocSeg(m_pool_id.src_work, size) != ERR_OK)
         {
           MEDIA_PLAYER_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
           return NULL;
@@ -1573,44 +1590,44 @@ void PlayerObj::finalize()
 /*--------------------------------------------------------------------------*/
 bool PlayerObj::checkAndSetMemPool()
 {
-  if (!MemMgrLite::Manager::isPoolAvailable(m_es_pool_id))
+  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.es))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
-  m_max_es_buff_size = (MemMgrLite::Manager::getPoolSize(m_es_pool_id)) /
-    (MemMgrLite::Manager::getPoolNumSegs(m_es_pool_id));
+  m_max_es_buff_size = (MemMgrLite::Manager::getPoolSize(m_pool_id.es)) /
+    (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.es));
 
-  if (!MemMgrLite::Manager::isPoolAvailable(m_pcm_pool_id))
+  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.pcm))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
-  m_max_pcm_buff_size = (MemMgrLite::Manager::getPoolSize(m_pcm_pool_id)) /
-    (MemMgrLite::Manager::getPoolNumSegs(m_pcm_pool_id));
+  m_max_pcm_buff_size = (MemMgrLite::Manager::getPoolSize(m_pool_id.pcm)) /
+    (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.pcm));
 
-  if (!MemMgrLite::Manager::isPoolAvailable(m_apu_pool_id))
+  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.dsp))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
   if ((int)(sizeof(Apu::Wien2ApuCmd)) >
-      (MemMgrLite::Manager::getPoolSize(m_apu_pool_id))/
-      (MemMgrLite::Manager::getPoolNumSegs(m_apu_pool_id)))
+      (MemMgrLite::Manager::getPoolSize(m_pool_id.dsp))/
+      (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.dsp)))
     {
       MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
 
-  if (m_src_work_pool_id != INVALID_POOL_ID)
+  if (m_pool_id.src_work != INVALID_POOL_ID)
     {
-      if (!MemMgrLite::Manager::isPoolAvailable(m_src_work_pool_id))
+      if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.src_work))
         {
           MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
           return false;
         }
-      m_max_src_work_buff_size = (MemMgrLite::Manager::getPoolSize(m_src_work_pool_id)) /
-        (MemMgrLite::Manager::getPoolNumSegs(m_src_work_pool_id));
+      m_max_src_work_buff_size = (MemMgrLite::Manager::getPoolSize(m_pool_id.src_work)) /
+        (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.src_work));
     }
   return true;
 }
@@ -1642,12 +1659,8 @@ bool PlayerObj::judgeMultiCore(uint32_t sampling_rate, uint8_t bit_length)
 int AS_PlayerObjEntry(int argc, char *argv[])
 {
   PlayerObj::create(&s_play_obj,
-                    s_self_dtq,
-                    s_dsp_dtq,
-                    s_es_pool_id,
-                    s_pcm_pool_id,
-                    s_apu_pool_id,
-                    s_src_work_pool_id);
+                    s_msgq_id,
+                    s_pool_id);
   return 0;
 }
 
@@ -1655,12 +1668,8 @@ int AS_PlayerObjEntry(int argc, char *argv[])
 int AS_SubPlayerObjEntry(int argc, char *argv[])
 {
   PlayerObj::create(&s_sub_play_obj,
-                    s_sub_self_dtq,
-                    s_sub_dsp_dtq,
-                    s_sub_es_pool_id,
-                    s_sub_pcm_pool_id,
-                    s_sub_apu_pool_id,
-                    s_sub_src_work_pool_id);
+                    s_sub_msgq_id,
+                    s_sub_pool_id);
   return 0;
 }
 
@@ -1700,13 +1709,8 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
 
   if (id == AS_PLAYER_ID_0)
     {
-      s_self_dtq    = param->msgq_id.player;
-      s_dsp_dtq     = param->msgq_id.dsp;
-      s_es_pool_id  = param->pool_id.es;
-      s_pcm_pool_id = param->pool_id.pcm;
-      s_apu_pool_id = param->pool_id.dsp;
-      s_src_work_pool_id = param->pool_id.src_work;
-
+      s_msgq_id = param->msgq_id;
+      s_pool_id = param->pool_id;
       s_ply_pid = task_create("PLY_OBJ",
                               150, 1024 * 3,
                               AS_PlayerObjEntry,
@@ -1719,13 +1723,8 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
     }
   else
     {
-      s_sub_self_dtq    = param->msgq_id.player;
-      s_sub_dsp_dtq     = param->msgq_id.dsp;
-      s_sub_es_pool_id  = param->pool_id.es;
-      s_sub_pcm_pool_id = param->pool_id.pcm;
-      s_sub_apu_pool_id = param->pool_id.dsp;
-      s_sub_src_work_pool_id = param->pool_id.src_work;
-
+      s_sub_msgq_id = param->msgq_id;
+      s_sub_pool_id = param->pool_id;
       s_sub_ply_pid = task_create("SUB_PLY_OBJ",
                                   150, 1024 * 3,
                                   AS_SubPlayerObjEntry,
@@ -1752,7 +1751,7 @@ bool AS_ActivatePlayer(AsPlayerId id, FAR AsActivatePlayer *actparam)
 
   /* Activate */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1762,7 +1761,7 @@ bool AS_ActivatePlayer(AsPlayerId id, FAR AsActivatePlayer *actparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_ACT,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1781,7 +1780,7 @@ bool AS_InitPlayer(AsPlayerId id, FAR AsInitPlayerParam *initparam)
 
   /* Init */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1791,7 +1790,7 @@ bool AS_InitPlayer(AsPlayerId id, FAR AsInitPlayerParam *initparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_INIT,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1810,7 +1809,7 @@ bool AS_PlayPlayer(AsPlayerId id, FAR AsPlayPlayerParam *playparam)
 
   /* Play */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1820,7 +1819,7 @@ bool AS_PlayPlayer(AsPlayerId id, FAR AsPlayPlayerParam *playparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_PLAY,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1839,7 +1838,7 @@ bool AS_StopPlayer(AsPlayerId id, FAR AsStopPlayerParam *stopparam)
 
   /* Stop */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1849,7 +1848,7 @@ bool AS_StopPlayer(AsPlayerId id, FAR AsStopPlayerParam *stopparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_STOP,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1868,7 +1867,7 @@ bool AS_SetPlayerGain(AsPlayerId id, FAR AsSetGainParam *gainparam)
 
   /* Set gain */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1878,7 +1877,7 @@ bool AS_SetPlayerGain(AsPlayerId id, FAR AsSetGainParam *gainparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_SETGAIN,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1897,7 +1896,7 @@ bool AS_RequestNextPlayerProcess(AsPlayerId id, FAR AsRequestNextParam *nextpara
 
   /* Next request */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1907,7 +1906,7 @@ bool AS_RequestNextPlayerProcess(AsPlayerId id, FAR AsRequestNextParam *nextpara
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_NEXT_REQ,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1926,7 +1925,7 @@ bool AS_DeactivatePlayer(AsPlayerId id, FAR AsDeactivatePlayer *deactparam)
 
   /* Deactivate */
 
-  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_self_dtq : s_sub_self_dtq;
+  MsgQueId msgq_id = (id == AS_PLAYER_ID_0) ? s_msgq_id.player : s_sub_msgq_id.player;
 
   PlayerCommand cmd;
 
@@ -1936,7 +1935,7 @@ bool AS_DeactivatePlayer(AsPlayerId id, FAR AsDeactivatePlayer *deactparam)
   err_t er = MsgLib::send<PlayerCommand>(msgq_id,
                                          MsgPriNormal,
                                          MSG_AUD_PLY_CMD_DEACT,
-                                         s_self_dtq,
+                                         s_msgq_id.mng,
                                          cmd);
   F_ASSERT(er == ERR_OK);
 
@@ -1990,19 +1989,10 @@ bool AS_DeletePlayer(AsPlayerId id)
 }
 
 void PlayerObj::create(FAR void **obj,
-                       MsgQueId self_dtq,
-                       MsgQueId apu_dtq,
-                       MemMgrLite::PoolId es_pool_id,
-                       MemMgrLite::PoolId pcm_pool_id,
-                       MemMgrLite::PoolId apu_pool_id,
-                       MemMgrLite::PoolId src_work_pool_id)
+                       AsPlayerMsgQueId_t msgq_id,
+                       AsPlayerPoolId_t pool_id)
 {
-  FAR PlayerObj *player_obj = new PlayerObj(self_dtq,
-                                            apu_dtq,
-                                            es_pool_id,
-                                            pcm_pool_id,
-                                            apu_pool_id,
-                                            src_work_pool_id);
+  FAR PlayerObj *player_obj = new PlayerObj(msgq_id, pool_id);
 
   if (player_obj != NULL)
     {

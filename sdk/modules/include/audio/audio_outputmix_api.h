@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_OUTPUTMIX_API_H
-#define __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_OUTPUTMIX_API_H
+#ifndef __MODULES_INCLUDE_AUDIO_AUDIO_OUTPUTMIX_API_H
+#define __MODULES_INCLUDE_AUDIO_AUDIO_OUTPUTMIX_API_H
 
 /**
  * @defgroup audioutils Audio Utility
@@ -150,6 +150,10 @@ typedef struct
   /*! \brief [in] Message queue id of output mixer */
 
   uint8_t mixer;
+
+  /*! \brief [in] Message queue id of audio_manager */
+
+  uint8_t mng;
 
   /*! \brief [in] Message queue id of dsp
    *              Effective only when use postfilter
@@ -383,7 +387,7 @@ bool AS_DeactivateOutputMixer(uint8_t handle, FAR AsDeactivateOutputMixer *deact
 
 bool AS_DeleteOutputMix(void);
 
-#endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_OUTPUTMIX_API_H */
+#endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_OUTPUTMIX_API_H */
 /**
  * @}
  */

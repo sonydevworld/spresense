@@ -50,9 +50,9 @@ static int32_t g_altcom_errno;
  * Inline functions
  ****************************************************************************/
 
-static inline void altcom_errno_chkno(int32_t errno)
+static inline void altcom_errno_chkno(int32_t err_no)
 {
-  if (ALTCOM_ERRNO_MIN > errno || ALTCOM_ERRNO_MAX < errno)
+  if (ALTCOM_ERRNO_MIN > err_no || ALTCOM_ERRNO_MAX < err_no)
     {
       DBGIF_ASSERT(NULL, "seterrno invalid param. \n");
     }
@@ -100,3 +100,4 @@ void altcom_seterrno(int32_t err_no)
   g_altcom_errno = err_no;
   return;
 }
+

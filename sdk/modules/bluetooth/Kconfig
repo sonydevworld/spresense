@@ -14,6 +14,29 @@ config BLUETOOTH
 		want to use.
 
 if BLUETOOTH
+config BLUETOOTH_NAME
+	string "Bluetooth default device name"
+	default "SONY-BT-CLASSIC"
+	---help---
+		The name of the default bluetooth device name for classic.
+		If not defined, BLUETOOTH_NAME defaults to "SONY-BT-CLASSIC".
+
+if BLUETOOTH_LE
+config BLUETOOTH_LE_NAME
+	string "Bluetooth Low Energy default device name"
+	default "SONY-BLE-CLASSIC"
+	---help---
+		The name of the default bluetooth device name for low energy.
+		If not defined, BLUETOOTH_LE_NAME defaults to "SONY-BLE-CLASSIC".
+endif
+
+config BLUETOOTH_A2DP
+	bool "A2DP support"
+	default y
+	---help---
+		This option enabling A2DP feature.
+
+if BLUETOOTH_A2DP
 config BLUETOOTH_A2DP_USE_THREAD
 	bool "Bluetooth A2DP use thread for handle media packet"
 	default y
@@ -21,6 +44,39 @@ config BLUETOOTH_A2DP_USE_THREAD
 		This option is for use thread while transfering media packet to application.
 endif
 
+config BLUETOOTH_AVRCP
+	bool "AVRCP support"
+	default y
+	---help---
+		This option enabling AVRCP feature.
+
+config BLUETOOTH_HFP
+	bool "HFP support"
+	default y
+	---help---
+		This option enabling HFP feature.
+
+config BLUETOOTH_SPP
+	bool "SPP support"
+	default y
+	---help---
+		This option enabling SPP feature.
+
+config BLUETOOTH_LE
+	bool "Low Energy support"
+	default y
+	---help---
+		This option enabling Low Energy feature.
+
+if BLUETOOTH_LE
+config BLUETOOTH_LE_GATT
+	bool "LE GATT support"
+	default y
+	---help---
+		This option enabling LE GATT feature.
+endif
+
 source modules/bluetooth/hal/Kconfig
+endif
 endmenu
 

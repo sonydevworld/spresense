@@ -33,4 +33,12 @@
 #
 ############################################################################
 
+ifeq ($(CONFIG_SDK_AUDIO),y)
+
+CXXSRCS += audio_object_common.cpp
+VPATH   += objects
+DEPPATH += --dep-path objects
+
+endif
+
 include $(wildcard objects/*/Make.defs)
