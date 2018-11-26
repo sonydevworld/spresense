@@ -115,43 +115,6 @@ static FAR struct evtdisp_s           *g_evtdisp      = NULL;
 static sys_cremtx_s                   g_mtxparam;
 
 /****************************************************************************
- * Inline functions
- ****************************************************************************/
-
-static inline void apicmdgw_mutex_lock(sys_mutex_t mtx)
-{
-  int32_t lockret = sys_lock_mutex(&mtx);
-  DBGIF_ASSERT(0 == lockret, "sys_lock_mutex().\n");
-}
-
-static inline void apicmdgw_blkinfotbl_lock(void)
-{
-  int32_t creret;
-  if (!g_blkinfotbl)
-    {
-      creret = sys_create_mutex(&g_blkinfotbl_mtx, &g_mtxparam);
-      DBGIF_ASSERT(0 == creret, "sys_create_mutex().\n");
-    }
-  apicmdgw_mutex_lock(g_blkinfotbl_mtx);
-}
-
-static inline void apicmdgw_mutex_unlock(sys_mutex_t mtx)
-{
-  int32_t unlockret = sys_unlock_mutex(&mtx);
-  DBGIF_ASSERT(0 == unlockret, "sys_unlock_mutex().\n");
-}
-
-static inline void apicmdgw_blkinfotbl_unlock(void)
-{
-  apicmdgw_mutex_unlock(g_blkinfotbl_mtx);
-  if (!g_blkinfotbl)
-    {
-      int32_t delret = sys_delete_mutex(&g_blkinfotbl_mtx);
-      DBGIF_ASSERT(0 == delret, "sys_delete_mutex().\n");
-    }
-}
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -341,7 +304,7 @@ void apicmdgw_errhandle(FAR struct apicmd_cmdhdr_s *evthdr)
 
 static void apicmdgw_addtable(FAR struct apicmdgw_blockinf_s *tbl)
 {
-  apicmdgw_blkinfotbl_lock();
+  sys_lock_mutex(&g_blkinfotbl_mtx);
 
   if (!g_blkinfotbl)
     {
@@ -353,7 +316,7 @@ static void apicmdgw_addtable(FAR struct apicmdgw_blockinf_s *tbl)
       g_blkinfotbl = tbl;
     }
 
-  apicmdgw_blkinfotbl_unlock();
+  sys_unlock_mutex(&g_blkinfotbl_mtx);
 }
 
 /****************************************************************************
@@ -376,7 +339,7 @@ static void apicmdgw_remtable(FAR struct apicmdgw_blockinf_s *tbl)
 
   DBGIF_ASSERT(g_blkinfotbl, "table list is null.\n");
 
-  apicmdgw_blkinfotbl_lock();
+  sys_lock_mutex(&g_blkinfotbl_mtx);
 
   tmptbl = g_blkinfotbl;
   if (tmptbl == tbl)
@@ -402,7 +365,7 @@ static void apicmdgw_remtable(FAR struct apicmdgw_blockinf_s *tbl)
   sys_delete_thread_cond_mutex(&tmptbl->waitcond, &tmptbl->waitcondmtx);
   BUFFPOOL_FREE(tmptbl);
 
-  apicmdgw_blkinfotbl_unlock();
+  sys_unlock_mutex(&g_blkinfotbl_mtx);
 }
 
 /****************************************************************************
@@ -430,7 +393,7 @@ static bool apicmdgw_writetable(uint16_t cmdid,
   bool                           result = false;
   FAR struct apicmdgw_blockinf_s *tbl   = NULL;
 
-  apicmdgw_blkinfotbl_lock();
+  sys_lock_mutex(&g_blkinfotbl_mtx);
 
   tbl = g_blkinfotbl;
   while(tbl)
@@ -462,7 +425,7 @@ static bool apicmdgw_writetable(uint16_t cmdid,
       DBGIF_ASSERT(0 == ret, "sys_signal_thread_cond().\n");
     }
 
-  apicmdgw_blkinfotbl_unlock();
+  sys_unlock_mutex(&g_blkinfotbl_mtx);
 
   return result;
 }
@@ -486,7 +449,7 @@ static void apicmdgw_relcondwaitall(void)
   int32_t ret;
   FAR struct apicmdgw_blockinf_s *tmptbl;
 
-  apicmdgw_blkinfotbl_lock();
+  sys_lock_mutex(&g_blkinfotbl_mtx);
 
   tmptbl = g_blkinfotbl;
   while(tmptbl)
@@ -497,7 +460,7 @@ static void apicmdgw_relcondwaitall(void)
       tmptbl = tmptbl->next;
     }
 
-  apicmdgw_blkinfotbl_unlock();
+  sys_unlock_mutex(&g_blkinfotbl_mtx);
 }
 
 /****************************************************************************
@@ -746,6 +709,9 @@ int32_t apicmdgw_init(FAR struct apicmdgw_set_s *set)
   taskset.priority   = SYS_TASK_PRIO_HIGH;
   taskset.stack_size = APICMDGW_MAIN_TASK_STACK_SIZE;
 
+  ret = sys_create_mutex(&g_blkinfotbl_mtx, &g_mtxparam);
+  DBGIF_ASSERT(0 == ret, "sys_create_mutex().\n");
+
   ret = sys_create_task(&g_rcvtask, &taskset);
   DBGIF_ASSERT(0 == ret, "sys_create_task().\n");
 
@@ -793,6 +759,9 @@ int32_t apicmdgw_fin(void)
 
   sys_delete_thread_cond_mutex(&g_delwaitcond, &g_delwaitcondmtx);
   apicmdgw_relcondwaitall();
+
+  ret = sys_delete_mutex(&g_blkinfotbl_mtx);
+  DBGIF_ASSERT(0 == ret, "sys_delete_mutex().\n");
 
   g_hal_if       = NULL;
   g_evtdisp      = NULL;
