@@ -65,9 +65,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AUDIO_POWER_STATE_OFF 0
-#define AUDIO_POWER_STATE_ON  1
-
 #define AUDIO_DNC_ID_NUM      (CXD56_AUDIO_DNC_ID_FF + 1)
 #define AUDIO_VOL_ID_NUM      (CXD56_AUDIO_VOLID_MIXER_OUT + 1)
 
@@ -156,7 +153,7 @@ struct power_on_param_s
 
 /* Status of audio driver. */
 
-static uint8_t g_status = AUDIO_POWER_STATE_OFF;
+static cxd56_audio_state_t g_status = CXD56_AUDIO_POWER_STATE_OFF;
 
 /* Parameter of poweron setting. */
 
@@ -242,7 +239,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron(void)
 
   /* Check status */
 
-  if (AUDIO_POWER_STATE_OFF != g_status)
+  if (CXD56_AUDIO_POWER_STATE_OFF != g_status)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -278,7 +275,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron(void)
 
   /* Update status. */
 
-  g_status = AUDIO_POWER_STATE_ON;
+  g_status = CXD56_AUDIO_POWER_STATE_ON;
 
   /* Set initialize parameter. */
 
@@ -331,7 +328,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron(void)
                                  g_pwon_param.path.sel);
   if (CXD56_AUDIO_ECODE_OK != ret)
     {
-      g_status = AUDIO_POWER_STATE_OFF;
+      g_status = CXD56_AUDIO_POWER_STATE_OFF;
       return ret;
     }
 
@@ -346,7 +343,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff(void)
 
   /* Check status */
 
-  if (AUDIO_POWER_STATE_ON != g_status)
+  if (CXD56_AUDIO_POWER_STATE_ON != g_status)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -378,7 +375,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff(void)
 
   /* Update status. */
 
-  g_status = AUDIO_POWER_STATE_OFF;
+  g_status = CXD56_AUDIO_POWER_STATE_OFF;
 
   return ret;
 }
@@ -393,7 +390,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_cstereo(bool sign_inv, int16_t vol)
   g_pwon_param.cs.en       = true;
   g_pwon_param.cs.sign_inv = sign_inv;
   g_pwon_param.cs.vol      = vol;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -415,7 +412,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_cstereo(void)
   /* Save power on parameters. */
 
   g_pwon_param.cs.en = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -437,7 +434,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron_dnc(void)
   /* Save power on parameters. */
 
   g_pwon_param.pw.dnc = true;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -455,7 +452,7 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff_dnc(void)
   /* Save power on parameters. */
 
   g_pwon_param.pw.dnc = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -477,7 +474,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_dnc(cxd56_audio_dnc_id_t id,
   g_pwon_param.dnc[id].id  = id;
   g_pwon_param.dnc[id].bin = bin;
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -496,7 +493,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_dnc(cxd56_audio_dnc_id_t id)
 
   g_pwon_param.dnc[id].en  = false;
   g_pwon_param.dnc[id].id  = id;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -518,7 +515,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_deq(FAR cxd56_audio_deq_coef_t *coef)
     {
       g_pwon_param.deq.coef = coef;
     }
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -536,7 +533,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_deq(void)
   /* Save power on parameters. */
 
   g_pwon_param.deq.en = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -558,7 +555,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_input(void)
   /* Save power on parameters. */
 
   g_pwon_param.input.en = true;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -586,7 +583,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_output(void)
   /* Save power on parameters. */
 
   g_pwon_param.output.en = true;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -638,7 +635,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_input(void)
   /* Save power on parameters. */
 
   g_pwon_param.input.en = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -666,7 +663,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_output(void)
   /* Save power on parameters. */
 
   g_pwon_param.output.en = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -700,7 +697,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_spout(bool sp_out_en)
 {
   CXD56_AUDIO_ECODE ret = CXD56_AUDIO_ECODE_OK;
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       /* Save power on parameters. */
 
@@ -726,7 +723,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_vol(cxd56_audio_volid_t id, int16_t vol)
 
   g_pwon_param.vol[id].id  = id;
   g_pwon_param.vol[id].vol = vol;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -748,7 +745,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mute_vol(cxd56_audio_volid_t id)
   /* Save power on parameters. */
 
   g_pwon_param.vol[id].mute = true;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -770,7 +767,7 @@ CXD56_AUDIO_ECODE cxd56_audio_unmute_vol(cxd56_audio_volid_t id)
   /* Save power on parameters. */
 
   g_pwon_param.vol[id].mute = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -791,7 +788,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mute_vol_fade(cxd56_audio_volid_t id, bool wait)
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -812,7 +809,7 @@ CXD56_AUDIO_ECODE cxd56_audio_unmute_vol_fade(cxd56_audio_volid_t id, bool wait)
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -834,7 +831,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_beep_freq(uint16_t freq)
   /* Save power on parameters. */
 
   g_pwon_param.beep.freq = freq;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -856,7 +853,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_beep_vol(int16_t vol)
   /* Save power on parameters. */
 
   g_pwon_param.beep.vol = vol;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -878,7 +875,7 @@ CXD56_AUDIO_ECODE cxd56_audio_play_beep(void)
   /* Save power on parameters. */
 
   g_pwon_param.beep.en = true;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -896,7 +893,7 @@ CXD56_AUDIO_ECODE cxd56_audio_stop_beep(void)
   /* Save power on parameters. */
 
   g_pwon_param.beep.en = false;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -919,7 +916,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_micgain(FAR cxd56_audio_mic_gain_t *gain)
   /* Save power on parameters. */
 
   g_pwon_param.input.gain = *gain;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -998,7 +995,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_datapath(cxd56_audio_signal_t sig,
 
   g_pwon_param.path.sig = sig;
   g_pwon_param.path.sel = sel;
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return ret;
     }
@@ -1039,7 +1036,7 @@ CXD56_AUDIO_ECODE cxd56_audio_init_dma(cxd56_audio_dma_t handle,
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1090,7 +1087,7 @@ CXD56_AUDIO_ECODE cxd56_audio_get_dmamstate(cxd56_audio_dma_t handle,
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1165,7 +1162,7 @@ CXD56_AUDIO_ECODE cxd56_audio_start_dma(cxd56_audio_dma_t handle,
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1186,7 +1183,7 @@ CXD56_AUDIO_ECODE cxd56_audio_stop_dma(cxd56_audio_dma_t handle)
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1272,7 +1269,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_digsft(cxd56_audio_dsr_rate_t rate)
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1290,7 +1287,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_digsft(void)
 
   /* Check error of state. PowerON state only. */
 
-  if (g_status == AUDIO_POWER_STATE_OFF)
+  if (g_status == CXD56_AUDIO_POWER_STATE_OFF)
     {
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
@@ -1322,4 +1319,23 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_i2s_io(void)
   cxd56_audio_pin_i2s_unset();
 
   return ret;
+}
+
+/*--------------------------------------------------------------------------*/
+cxd56_audio_state_t cxd56_audio_get_status(void)
+{
+  return g_status;
+}
+/*--------------------------------------------------------------------------*/
+CXD56_AUDIO_ECODE cxd56_audio_set_spdriver(cxd56_audio_sp_drv_t sp_driver)
+{
+  cxd56_audio_config_set_spdriver(sp_driver);
+
+  return CXD56_AUDIO_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+cxd56_audio_sp_drv_t cxd56_audio_get_spdriver(void)
+{
+  return cxd56_audio_config_get_spdriver();
 }

@@ -58,11 +58,9 @@
 #define DBG_LOG_DEBUG btdbg
 #define DBG_LOG_ERROR btdbg
 
-#define CONFIG_USE_FIRMWARE_IN_FILESYSTEM
-
-#ifndef CONFIG_BT_FIRMWARE_PATH
-#define CONFIG_BT_FIRMWARE_PATH "/mnt/spif/bcm20706fw"
-#endif /* CONFIG_BT_FIRMWARE_PATH */
+#ifndef CONFIG_BCM20706_FIRMWARE_PATH
+#define CONFIG_BCM20706_FIRMWARE_PATH "/mnt/spif/bcm20706fw"
+#endif /* CONFIG_BCM20706_FIRMWARE_PATH */
 
 #define PACKAGE_SIZE_OF_FILE 40
 #define CONTOL_PACKET_GROUP_INDEX 2
@@ -113,7 +111,7 @@
 
 typedef struct
 {
-#ifdef CONFIG_USE_FIRMWARE_IN_FILESYSTEM
+#ifdef CONFIG_BCM20706_FIRMWARE_IN_FILESYSTEM
   int fd;
 #else
   /* nop */
@@ -146,7 +144,7 @@ static uint32_t hciRecvEvtLen;
 static int bt_firmware_read(uint8_t *buff, uint8_t size, FIRMWARE_INFO frimware)
 {
   int ret = 0;
-#ifdef CONFIG_USE_FIRMWARE_IN_FILESYSTEM
+#ifdef CONFIG_BCM20706_FIRMWARE_IN_FILESYSTEM
   uint8_t read_size = 0;
 
   read_size = read(frimware.fd, buff, size);
@@ -214,8 +212,8 @@ static int bt_download_firmware(void)
   int bIsLaunch = 0;
   int ret = 0;
 
-#ifdef CONFIG_USE_FIRMWARE_IN_FILESYSTEM
-  frimware.fd = open(CONFIG_BT_FIRMWARE_PATH, O_RDONLY);
+#ifdef CONFIG_BCM20706_FIRMWARE_IN_FILESYSTEM
+  frimware.fd = open(CONFIG_BCM20706_FIRMWARE_PATH, O_RDONLY);
   if (frimware.fd == -1)
     {
       DBG_LOG_DEBUG("%s: Firmware open failed.\n", __func__);
@@ -262,7 +260,7 @@ static int bt_download_firmware(void)
     }
 
 error:
-#ifdef CONFIG_USE_FIRMWARE_IN_FILESYSTEM
+#ifdef CONFIG_BCM20706_FIRMWARE_IN_FILESYSTEM
   close(frimware.fd);
 #else
   /* nop */

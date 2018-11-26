@@ -485,19 +485,19 @@ static void get_sp_split_on(uint8_t cf_sp_spliton, FAR asAcaSpSplitonSelId *spSp
 }
 
 /*--------------------------------------------------------------------------*/
-static void get_sp_drive(uint8_t cfg_sp_drv, FAR asAcaSpDrvSelId *spDrv)
+static void get_sp_driver(uint8_t cfg_sp_drv, FAR asAcaSpDrvSelId *spDrv)
 {
   switch (cfg_sp_drv)
     {
-      case CXD56_AUDIO_CFG_SP_DRV_LINEOUT:
+      case CXD56_AUDIO_SP_DRV_LINEOUT:
         *spDrv = AS_ACA_SP_DRV_SEL_LINEOUT;
         break;
 
-      case CXD56_AUDIO_CFG_SP_DRV_1DRIVER:
+      case CXD56_AUDIO_SP_DRV_1DRIVER:
         *spDrv = AS_ACA_SP_DRV_SEL_1DRIVER;
         break;
 
-      case CXD56_AUDIO_CFG_SP_DRV_2DRIVER:
+      case CXD56_AUDIO_SP_DRV_2DRIVER:
         *spDrv = AS_ACA_SP_DRV_SEL_2DRIVER;
         break;
 
@@ -617,7 +617,7 @@ void get_pwon_out_param(asAcaPulcoOutParam *param)
   param->spDlyFree = AS_ACA_SP_DLY_FREE_UNKNOWN;
 
   get_sp_split_on((uint8_t)CXD56_AUDIO_CFG_SP_SPLIT_ON, &param->spSpliton);
-  get_sp_drive((uint8_t)CXD56_AUDIO_CFG_SP_DRIVE, &param->spDrv);
+  get_sp_driver((uint8_t)cxd56_audio_config_get_spdriver(), &param->spDrv);
 }
 
 /****************************************************************************

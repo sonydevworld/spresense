@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_PLAYER_API_H
-#define __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_PLAYER_API_H
+#ifndef __MODULES_INCLUDE_AUDIO_AUDIO_PLAYER_API_H
+#define __MODULES_INCLUDE_AUDIO_AUDIO_PLAYER_API_H
 
 /**
  * @defgroup audioutils Audio Utility
@@ -58,7 +58,7 @@
 #include <stdbool.h>
 
 #include "audio/audio_common_defs.h"
-
+#include "audio/audio_object_common_api.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/MsgPacket.h"
 
@@ -766,7 +766,7 @@ bool AS_DeactivatePlayer(AsPlayerId id, FAR AsDeactivatePlayer *deactparam);
 
 bool AS_DeletePlayer(AsPlayerId id);
 
-#endif  /* __SONY_APPS_INCLUDE_AUDIOUTIL_AUDIO_PLAYER_API_H */
+#endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_PLAYER_API_H */
 /**
  * @}
  */

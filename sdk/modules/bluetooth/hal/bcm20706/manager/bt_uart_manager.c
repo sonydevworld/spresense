@@ -61,7 +61,11 @@
 
 #define DBG_LOG_ERROR btdbg
 
+#ifdef CONFIG_BCM20706_UART_DEV_PATH
+#define BT_UART_FILE CONFIG_BCM20706_UART_DEV_PATH
+#else
 #define BT_UART_FILE "/dev/ttyS2"
+#endif
 
 /* One BT HCI packet header include packet type(1 byte),
  * opcode code(1 byte), group code(1 byte),

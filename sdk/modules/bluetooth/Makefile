@@ -58,12 +58,22 @@ endif # ($(WINTOOL),y)
 CFLAGS += $(INCLUDES)
 
 # C_SRCS
-BT_C_SRCS_APP  =  bluetooth_a2dp.c
+BT_C_SRCS_APP  =  bluetooth_common.c
+ifeq ($(CONFIG_BLUETOOTH_A2DP),y)
+BT_C_SRCS_APP +=  bluetooth_a2dp.c
+endif
+ifeq ($(CONFIG_BLUETOOTH_AVRCP),y)
 BT_C_SRCS_APP +=  bluetooth_avrcp.c
-BT_C_SRCS_APP +=  bluetooth_common.c
+endif
+ifeq ($(CONFIG_BLUETOOTH_HFP),y)
 BT_C_SRCS_APP +=  bluetooth_hfp.c
+endif
+ifeq ($(CONFIG_BLUETOOTH_SPP),y)
 BT_C_SRCS_APP +=  bluetooth_spp.c
+endif
+ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
 BT_C_SRCS_APP +=  bluetooth_le_gatt.c
+endif
 BT_C_SRCS_APP +=  bluetooth_hal_init.c
 
 ASRCS =

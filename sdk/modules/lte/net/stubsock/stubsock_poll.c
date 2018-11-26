@@ -299,7 +299,7 @@ static int stubsock_pollteardown(FAR struct socket *psock,
   FAR struct stubsock_poll_s    *info;
   int32_t                        select_id;
 
-  if (!conn || !fds->priv)
+  if (!conn)
     {
       return -EINVAL;
     }
@@ -307,7 +307,6 @@ static int stubsock_pollteardown(FAR struct socket *psock,
   /* Recover the socket descriptor poll state info from the poll structure */
 
   info = (FAR struct stubsock_poll_s *)fds->priv;
-  DBGIF_ASSERT(info && info->fds, "Parameter is NULL\n");
   if (info)
     {
       net_lock();

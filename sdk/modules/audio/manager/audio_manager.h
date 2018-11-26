@@ -40,7 +40,7 @@
 #include <arch/chip/cxd56_audio.h>
 #include "attention.h"
 #include "wien2_common_defs.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "memutils/s_stl/queue.h"
 #include "wien2_internal_packet.h"
 
@@ -181,6 +181,7 @@ private:
   void setThroughStatus(AudioCommand &cmd);
   void setThroughPath(AudioCommand &cmd);
   void getstatus(AudioCommand &cmd);
+  void setSpDrvMode(AudioCommand &cmd);
 
   void illegalCmplt(const AudioMngCmdCmpltResult &cmd);
   void cmpltOnReady(const AudioMngCmdCmpltResult &cmd);

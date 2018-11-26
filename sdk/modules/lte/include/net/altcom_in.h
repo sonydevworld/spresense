@@ -48,6 +48,10 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define ALTCOM_INADDR_ANY            ((altcom_in_addr_t)0x00000000)
+#define ALTCOM_INADDR_NONE           ((altcom_in_addr_t)0xffffffff)
+#define ALTCOM_IN6ADDR_ANY_INIT      {{{0,0,0,0}}}
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/

@@ -798,6 +798,7 @@ bool CaptureComponent::init(const CaptureComponentParam& param)
           break;
 
       case AudPcm24Bit:
+      case AudPcm32Bit:
           init_param.format = CXD56_AUDIO_SAMP_FMT_24;
           break;
 

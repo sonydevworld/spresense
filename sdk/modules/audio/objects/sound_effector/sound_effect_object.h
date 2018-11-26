@@ -43,7 +43,7 @@
 #include "memutils/s_stl/queue.h"
 #include "audio_state.h"
 
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "memutils/message/Message.h"
 #include "memutils/memory_manager/MemHandle.h"
 

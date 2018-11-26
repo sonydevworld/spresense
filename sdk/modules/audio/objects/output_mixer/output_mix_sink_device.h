@@ -46,7 +46,7 @@
 #include "memutils/s_stl/queue.h"
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/common_utils/common_assert.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "wien2_internal_packet.h"
 #include "wien2_common_defs.h"
 #include "components/renderer/renderer_component.h"
@@ -158,6 +158,10 @@ private:
 
   int8_t m_adjust_direction;
   int32_t m_adjustment_times;
+
+  void reply(MsgQueId requester_dtq,
+             MsgType msg_type,
+             AsOutputMixDoneParam *done_param);
 
   void illegal(MsgPacket *msg);
   void act(MsgPacket *msg);

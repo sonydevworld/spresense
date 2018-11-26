@@ -375,6 +375,10 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         msg_type = MSG_AUD_MGR_CMD_SETRENDERINGCLK;
         break;
 
+       case AUDCMD_SETSPDRVMODE:
+        msg_type = MSG_AUD_MGR_SETSPDRVMODE;
+        break;
+
 #ifdef AS_FEATURE_PLAYER_ENABLE
       case AUDCMD_INITPLAYER:
       case AUDCMD_PLAYPLAYER:
@@ -1078,6 +1082,22 @@ AudioManager::MsgProc
     &AudioManager::illegal,            /*   BasebandActive state.  */
     &AudioManager::illegal,            /*   WaitCommandWord state. */
     &AudioManager::illegal,            /*   PowerOff state.        */
+    &AudioManager::illegal             /*   Through state.         */
+  },
+
+  /* SetSpDrvMode command. */
+
+  {                                    /* AudioManager all status: */
+    &AudioManager::setSpDrvMode,       /*   Ready state.           */
+    &AudioManager::illegal,            /*   PlayerReady state.     */
+    &AudioManager::illegal,            /*   PlayerActive state.    */
+    &AudioManager::illegal,            /*   PlayerPause state.     */
+    &AudioManager::illegal,            /*   RecorderReady state.   */
+    &AudioManager::illegal,            /*   RecorderActive state.  */
+    &AudioManager::illegal,            /*   BasebandReady state.   */
+    &AudioManager::illegal,            /*   BasebandActive state.  */
+    &AudioManager::illegal,            /*   WaitCommandWord state. */
+    &AudioManager::setSpDrvMode,       /*   PowerOff state.        */
     &AudioManager::illegal             /*   Through state.         */
   }
 };
@@ -3237,15 +3257,72 @@ void AudioManager::setThroughPath(AudioCommand &cmd)
 
   /* Enable I2S pin. */
 
-  if ((cmd.set_through_path.path1.in == AS_THROUGH_PATH_IN_I2S1)  ||
-      (cmd.set_through_path.path1.in == AS_THROUGH_PATH_IN_I2S2)  ||
-      (cmd.set_through_path.path2.in == AS_THROUGH_PATH_OUT_I2S1) ||
-      (cmd.set_through_path.path2.in == AS_THROUGH_PATH_OUT_I2S2))
+  if ((cmd.set_through_path.path1.in  == AS_THROUGH_PATH_IN_I2S1)  ||
+      (cmd.set_through_path.path1.in  == AS_THROUGH_PATH_IN_I2S2)  ||
+      (cmd.set_through_path.path2.in  == AS_THROUGH_PATH_IN_I2S1)  ||
+      (cmd.set_through_path.path2.in  == AS_THROUGH_PATH_IN_I2S2)  ||
+      (cmd.set_through_path.path1.out == AS_THROUGH_PATH_OUT_I2S1) ||
+      (cmd.set_through_path.path1.out == AS_THROUGH_PATH_OUT_I2S2) ||
+      (cmd.set_through_path.path2.out == AS_THROUGH_PATH_OUT_I2S1) ||
+      (cmd.set_through_path.path2.out == AS_THROUGH_PATH_OUT_I2S2))
     {
       cxd56_audio_en_i2s_io();
     }
 
   sendResult(AUDRLT_SETTHROUGHPATHCMPLT);
+}
+
+/*--------------------------------------------------------------------------*/
+void AudioManager::setSpDrvMode(AudioCommand &cmd)
+{
+  CXD56_AUDIO_ECODE error_code = CXD56_AUDIO_ECODE_OK;
+  cxd56_audio_sp_drv_t sp_driver;
+
+  bool check =
+    packetCheck(LENGTH_SETSPDRVMODE, AUDCMD_SETSPDRVMODE, cmd);
+  if (!check)
+    {
+      return;
+    }
+
+  switch (cmd.set_sp_drv_mode.mode)
+    {
+      case AS_SP_DRV_MODE_LINEOUT:
+        sp_driver = CXD56_AUDIO_SP_DRV_LINEOUT;
+        break;
+
+      case AS_SP_DRV_MODE_1DRIVER:
+        sp_driver = CXD56_AUDIO_SP_DRV_1DRIVER;
+        break;
+
+      case AS_SP_DRV_MODE_2DRIVER:
+        sp_driver = CXD56_AUDIO_SP_DRV_2DRIVER;
+        break;
+
+      case AS_SP_DRV_MODE_4DRIVER:
+        sp_driver = CXD56_AUDIO_SP_DRV_4DRIVER;
+        break;
+
+      default:
+        {
+          sendErrRespResult(cmd.header.sub_code,
+                            AS_MODULE_ID_AUDIO_DRIVER,
+                            AS_ECODE_COMMAND_PARAM_SETSPDRVMODE);
+        }
+        return;
+    }
+
+  error_code = cxd56_audio_set_spdriver(sp_driver);
+  if (error_code == CXD56_AUDIO_ECODE_OK)
+    {
+      sendResult(AUDRLT_SETSPDRVMODECMPLT, cmd.header.sub_code);
+    }
+  else
+    {
+      sendErrRespResult(cmd.header.sub_code,
+                        AS_MODULE_ID_AUDIO_DRIVER,
+                        AS_ECODE_SET_SPDRVMODE_ERROR);
+    }
 }
 
 /*--------------------------------------------------------------------------*/

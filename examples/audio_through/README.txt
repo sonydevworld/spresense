@@ -7,21 +7,27 @@ Usage
 
 Select options in below.
 
-Å°SDK
-- [CXD56xx Configuration Options]
+- [CXD56xx Configuration]
     [Audio] <= Y
 - [SDK audio] <= Y
     [Audio Utilities]
       [Audio manager] <= Y
 - [Memory manager] <= Y
+    [Memory Utilities]
+      [Memory manager] <= Y
+      [Message] <= Y
 - [ASMP] <= Y
 - [Examples]
     [Audio through example] <= Y
 
+Or use audio_through default configuration
+
+$ ./tools/config.py examples/audio_through
+
 Build and install
 --------------------------
 
-Build Kernel and SDK.
+Type 'make' to build SDK.
 Install 'nuttx.spk' to system.
 
 Execute

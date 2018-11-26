@@ -92,6 +92,7 @@ enum ApuFilterType
   Downmix,
   MFE,
   XLOUD,
+  BitWidthConv,
   ApuFilterTypeNum
 };
 

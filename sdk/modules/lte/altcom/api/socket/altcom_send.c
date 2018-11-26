@@ -208,9 +208,11 @@ int altcom_send(int sockfd, const void *buf, size_t len, int flags)
 
   if (len > APICMD_SEND_SENDDATA_LENGTH)
     {
-      DBGIF_LOG1_ERROR("There is not enough buffer available. len:%d\n", len);
-      altcom_seterrno(ALTCOM_EMSGSIZE);
-      return -1;
+      DBGIF_LOG2_WARNING("Truncate send length:%d -> %d.\n", len, APICMD_SEND_SENDDATA_LENGTH);
+
+      /* Truncate the length to the maximum transfer size */
+
+      len = APICMD_SEND_SENDDATA_LENGTH;
     }
 
   if (!buf)

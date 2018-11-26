@@ -44,7 +44,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
-
+#include <arch/board/board.h>
 #include <asmp/mpshm.h>
 #include <arch/chip/pm.h>
 #include <sys/stat.h>
@@ -506,6 +506,14 @@ extern "C" int audio_through_main(int argc, char *argv[])
 
   for (int type = 0; type < TEST_PATH_NUM; type++)
     {
+       /* Set output mute. */
+
+       if (board_external_amp_mute_control(true) != OK)
+         {
+           printf("Error: board_external_amp_mute_control(true) failuer.\n");
+           return 1;
+         }
+
       if (!app_set_through_path((audio_through_test_path_e)type))
         {
           printf("Error: app_set_through_path() failure.\n");
@@ -524,6 +532,12 @@ extern "C" int audio_through_main(int argc, char *argv[])
               printf("Error: app_set_volume() failure.\n");
               return 1;
             }
+
+          if (board_external_amp_mute_control(false) != OK)
+            {
+              printf("Error: board_external_amp_mute_control(false) failuer.\n");
+              return 1;
+            }
         }
 
       /* Running... */
@@ -538,6 +552,14 @@ extern "C" int audio_through_main(int argc, char *argv[])
 
       app_set_mute();
     } 
+
+  /* Set output mute. */
+
+  if (board_external_amp_mute_control(true) != OK)
+    {
+      printf("Error: board_external_amp_mute_control(true) failuer.\n");
+      return 1;
+    }
 
   /* Return the state of AudioSubSystem before voice_call operation. */
 

@@ -63,16 +63,6 @@ struct attention_info_s
 };
 typedef struct attention_info_s AttentionInfo;
 
-typedef enum
-{
-  INFORMATION_ATTENTION_CODE = 0, /* Just Information */
-  WARNING_ATTENTION_CODE,         /* Warning. Autonomous return possible. */
-  ERROR_ATTENTION_CODE,           /* Restoration is possible depending
-                                   * on control from the upper level.
-                                   */
-  FATAL_ATTENTION_CODE,           /* Fatal condition. Reset required. */
-} ErrorAttensionCode;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,22 +86,22 @@ extern void _Attention(uint8_t module_id, uint8_t attention_code, uint8_t sub_co
 
 #ifdef ATTENTION_USE_FILENAME_LINE
 #define INFORMATION_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), INFORMATION_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+	_Attention((module_id), AS_ATTENTION_CODE_INFORMATION, (sub_code), __FILE__, __LINE__)
 #define WARNING_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), WARNING_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+	_Attention((module_id), AS_ATTENTION_CODE_WARNING, (sub_code), __FILE__, __LINE__)
 #define ERROR_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), ERROR_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+	_Attention((module_id), AS_ATTENTION_CODE_ERROR, (sub_code), __FILE__, __LINE__)
 #define FATAL_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), FATAL_ATTENTION_CODE, (sub_code), __FILE__, __LINE__)
+	_Attention((module_id), AS_ATTENTION_CODE_FATAL, (sub_code), __FILE__, __LINE__)
 #else /* ATTENTION_USE_FILENAME_LINE */
 #define INFORMATION_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), INFORMATION_ATTENTION_CODE, (sub_code))
+	_Attention((module_id), AS_ATTENTION_CODE_INFORMATION, (sub_code))
 #define WARNING_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), WARNING_ATTENTION_CODE, (sub_code))
+	_Attention((module_id), AS_ATTENTION_CODE_WARNING, (sub_code))
 #define ERROR_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), ERROR_ATTENTION_CODE, (sub_code))
+	_Attention((module_id), AS_ATTENTION_CODE_ERROR, (sub_code))
 #define FATAL_ATTENTION(module_id, sub_code) \
-	_Attention((module_id), FATAL_ATTENTION_CODE, (sub_code))
+	_Attention((module_id), AS_ATTENTION_CODE_FATAL, (sub_code))
 #endif /* ATTENTION_USE_FILENAME_LINE */
 
 #ifdef __cplusplus

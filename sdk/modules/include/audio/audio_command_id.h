@@ -325,6 +325,10 @@
 
 #define AUDCMD_SETRENDERINGCLK  (AUDCMD_CATEGORY_BASEBAND | 0x0c)
 
+/*! \brief Command Code: SetSpDrvMode */
+
+#define AUDCMD_SETSPDRVMODE     (AUDCMD_CATEGORY_BASEBAND | 0x0d)
+
 /** @} */
 
 /** @name Baseband Result code */
@@ -377,6 +381,10 @@
 /*! \brief Result Code: SetRenderingClkCmplt */
 
 #define AUDRLT_SETRENDERINGCLKCMPLT     AUDCMD_SETRENDERINGCLK
+
+/*! \brief Result Code: SetSpDrvModeCmplt */
+
+#define AUDRLT_SETSPDRVMODECMPLT        AUDCMD_SETSPDRVMODE
 
 /** @} */
 

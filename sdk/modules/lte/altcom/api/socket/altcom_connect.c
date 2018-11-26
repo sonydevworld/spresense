@@ -286,6 +286,8 @@ int altcom_connect(int sockfd, const struct altcom_sockaddr *addr,
               ret = -1;
               altcom_seterrno(result);
             }
+
+          return ret;
         }
     }
   else if (result == CONNECT_REQ_FAILURE)

@@ -205,5 +205,25 @@ int altmdm_pm_getnumofwakelock(FAR struct altmdm_pm_wakelock_s *lock);
 
 int altmdm_pm_getwakelockstate(void);
 
+/****************************************************************************
+ * Name: altmdm_pm_poweron
+ *
+ * Description:
+ *   Modem power on.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_poweron(FAR struct altmdm_dev_s *priv);
+
+/****************************************************************************
+ * Name: altmdm_pm_poweroff
+ *
+ * Description:
+ *   Modem power off.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_poweroff(FAR struct altmdm_dev_s *priv);
+
 #endif
 #endif /* __DRIVERS_MODEM_ALTMDM_PM_H */

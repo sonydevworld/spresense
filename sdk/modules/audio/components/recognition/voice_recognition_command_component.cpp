@@ -49,7 +49,7 @@
 #include "debug/dbg_log.h"
 #include "memutils/message/Message.h"
 #include "memutils/message/MsgPacket.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "apus/dsp_audio_version.h"
 
 using namespace Wien2;

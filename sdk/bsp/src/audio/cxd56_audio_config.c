@@ -61,13 +61,15 @@ struct cxd56_audio_cfg_s
   uint8_t mic_dev;
   uint8_t mic_mode;
   cxd56_audio_clkmode_t clk_mode;
+  cxd56_audio_sp_drv_t  sp_driver;
 };
 static struct cxd56_audio_cfg_s g_audio_cfg =
 {
   1,
   CXD56_AUDIO_CFG_MIC_DEV_ANADIG,
   CXD56_AUDIO_CFG_MIC_MODE_64FS,
-  CXD56_AUDIO_CLKMODE_NORMAL
+  CXD56_AUDIO_CLKMODE_NORMAL,
+  CXD56_AUDIO_CFG_SP_DRIVER
 };
 
 /****************************************************************************
@@ -162,6 +164,18 @@ uint8_t cxd56_audio_config_get_micdev(void)
 uint8_t cxd56_audio_config_get_micnum(void)
 {
   return g_audio_cfg.mic_num;
+}
+
+/*--------------------------------------------------------------------------*/
+void cxd56_audio_config_set_spdriver(cxd56_audio_sp_drv_t sp_driver)
+{
+  g_audio_cfg.sp_driver = sp_driver;
+}
+
+/*--------------------------------------------------------------------------*/
+cxd56_audio_sp_drv_t cxd56_audio_config_get_spdriver(void)
+{
+  return g_audio_cfg.sp_driver;
 }
 
 /*--------------------------------------------------------------------------*/

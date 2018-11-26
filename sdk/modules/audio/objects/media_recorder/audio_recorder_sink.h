@@ -70,14 +70,7 @@ public:
 struct InitAudioRecSinkParam_s
 {
 public:
-  uint32_t fs;
-  uint16_t ch;
-  uint16_t byte_length;
-  AudioCodec codec_type;
-  AsSetRecorderStsOutputDevice output_device;
-  union {
-    InitAudioRecRamSinkParam_s init_audio_ram_sink;
-  };
+  InitAudioRecRamSinkParam_s init_audio_ram_sink;
 };
 
 /* Data to the sinker of voice recorder. */

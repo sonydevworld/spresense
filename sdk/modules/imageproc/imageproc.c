@@ -156,10 +156,12 @@ void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
 void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize, size_t vsize)
 {
   uint16_t *p_src = (uint16_t *) ibuf;
+  size_t ix;
+  size_t iy;
 
-  for (size_t iy = 0; iy < vsize; iy++)
+  for (iy = 0; iy < vsize; iy++)
     {
-      for (size_t ix = 0; ix < hsize; ix++)
+      for (ix = 0; ix < hsize; ix++)
         {
           *obuf++ = (uint8_t) ((*p_src++ & 0xff00) >> 8);
         }

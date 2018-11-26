@@ -251,7 +251,7 @@ static int altmdm_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
           if (!priv->poweron)
             {
-              board_altmdm_power_control(true);
+              altmdm_pm_poweron(priv);
 
               priv->poweron = 1;
 
@@ -274,7 +274,7 @@ static int altmdm_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
             {
               ret = altmdm_spi_disable(priv);
 
-              board_altmdm_power_control(false);
+              altmdm_pm_poweroff(priv);
 
               priv->poweron = 0;
             }

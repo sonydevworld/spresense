@@ -70,7 +70,8 @@ enum AudioPcmBitWidth
   AudPcm24Bit = 0,
   AudPcm20Bit,
   AudPcm18Bit,
-  AudPcm16Bit
+  AudPcm16Bit,
+  AudPcm32Bit
 };
 
 enum AudioChannelFormat

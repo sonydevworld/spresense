@@ -8,6 +8,72 @@ config BCM20706
 	bool "Cypress BCM20706 bluetooth"
 	default n
 	---help---
-		Enable Bluetooth framework. This option not contain HAL configuration, so
-		if you use bluetooth function, please enable HAL configuration what you
-		want to use.
+		Enable Cypress BCM20706 HALs.
+
+if BCM20706
+choice
+	prompt "Firmware location"
+	default BCM20706_FIRMWARE_IN_FILESYSTEM
+	config BCM20706_FIRMWARE_IN_FILESYSTEM
+		bool "File system"
+		---help---
+			Firmware is store in file system.
+
+	config BCM20706_FIRMWARE_IN_EXT_ROM
+		bool "External ROM"
+		---help---
+			Firmware is store in external ROM.
+endchoice
+
+if BCM20706_FIRMWARE_IN_FILESYSTEM
+config BCM20706_FIRMWARE_PATH
+	string "BCM20706 firmware binary file path"
+	default "/mnt/spif/bcm20706fw"
+	---help---
+		This option is for using file system to load firmware.
+endif
+
+config BCM20706_UART_DEV_PATH
+	string "BCM20706 UART device file path"
+	default "/dev/ttyS2"
+	---help---
+		This is UART device file path for communicate BCM20706 with Host.
+
+config BCM20706_A2DP
+	bool
+	default BLUETOOTH_A2DP
+	---help---
+		This option enabling Cypress BCM20706 A2DP HAL.
+
+config BCM20706_AVRCP
+	bool
+	default BLUETOOTH_AVRCP
+	---help---
+		This option enabling Cypress BCM20706 AVRCP HAL.
+
+config BCM20706_HFP
+	bool
+	default BLUETOOTH_HFP
+	---help---
+		This option enabling Cypress BCM20706 HFP HAL.
+
+config BCM20706_SPP
+	bool
+	default BLUETOOTH_SPP
+	---help---
+		This option enabling Cypress BCM20706 SPP HAL.
+
+config BCM20706_LE
+	bool
+	default BLUETOOTH_LE
+	---help---
+		This option enabling Cypress BCM20706 Low Energy HAL.
+
+if BCM20706_LE
+config BCM20706_LE_GATT
+	bool
+	default BLUETOOTH_LE_GATT
+	---help---
+		This option enabling Cypress BCM20706 LE GATT HAL.
+endif
+endif

@@ -130,6 +130,7 @@ config AUDIOUTILS_VOICE_COMMAND
 		Support Voice Command Feature
 
 if AUDIOUTILS_RECORDER
+
 config AUDIOUTILS_SRC
 	bool "Sampling Rate Converter"
 	default n

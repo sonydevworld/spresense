@@ -66,9 +66,13 @@
 #define EVENT_MODEM_SLEEP_REQ            EVENT_BIT(6)
 #define EVENT_EXIT                       EVENT_BIT(7)
 #define EVENT_MODEM_RESET_NOTIF          EVENT_BIT(8)
+#define EVENT_MODEM_POWERON_REQ          EVENT_BIT(9)
+#define EVENT_MODEM_POWEROFF_REQ         EVENT_BIT(10)
 #define EVENT_PM_TASK_WAIT               (EVENT_D2H_DOWN | EVENT_D2H_UP | \
                                           EVENT_MODEM_WAKEUP_REQ | \
                                           EVENT_MODEM_RESET_NOTIF | \
+                                          EVENT_MODEM_POWERON_REQ | \
+                                          EVENT_MODEM_POWEROFF_REQ | \
                                           EVENT_MODEM_SLEEP_REQ | EVENT_EXIT)
 #define EVENT_STATE_CHG_WAIT             (EVENT_MODEM_SLEPT_NOTIF | \
                                           EVENT_MODEM_GOING_TO_SLEEP_NOTIF | \
@@ -81,6 +85,8 @@
 #define EVENT_MODEM_WAKEUP_REQ_DONE_NG   EVENT_BIT(1)
 #define EVENT_MODEM_WAKEUP_REQ_DONE      (EVENT_MODEM_WAKEUP_REQ_DONE_OK | \
                                           EVENT_MODEM_WAKEUP_REQ_DONE_NG)
+#define EVENT_MODEM_POWER_ON_DONE        EVENT_BIT(0)
+#define EVENT_MODEM_POWER_OFF_DONE       EVENT_BIT(1)
 
 /* Timeout is counted in units of millisecond. */
 
@@ -113,6 +119,7 @@ static struct altmdm_sys_flag_s g_statetrans_flag;
 static struct altmdm_sys_flag_s g_pmtask_flag;
 static struct altmdm_sys_flag_s g_wakeup_done_flag;
 static struct altmdm_sys_flag_s g_sleep_done_flag;
+static struct altmdm_sys_flag_s g_power_done_flag;
 static bool                     g_is_initdone = false;
 static bool                     g_is_waitnotif = false;
 static bool                     g_is_notrun;
@@ -511,6 +518,48 @@ static int send_exit_request(FAR struct altmdm_dev_s *priv)
 }
 
 /****************************************************************************
+ * Name: send_modem_poweron_request
+ *
+ * Description:
+ *   Send request to power on the modem.
+ *
+ ****************************************************************************/
+
+static int send_modem_poweron_request(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  ret = altmdm_sys_setflag(&g_pmtask_flag, EVENT_MODEM_POWERON_REQ);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: send_modem_poweroff_request
+ *
+ * Description:
+ *   Send request to power off the modem.
+ *
+ ****************************************************************************/
+
+static int send_modem_poweroff_request(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  ret = altmdm_sys_setflag(&g_pmtask_flag, EVENT_MODEM_POWEROFF_REQ);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: send_modem_wakeup_done
  *
  * Description:
@@ -562,6 +611,48 @@ static int send_modem_sleep_done(FAR struct altmdm_dev_s *priv, int result)
       ptn = EVENT_MODEM_SLEEP_REQ_DONE_NG;
     }
   ret = altmdm_sys_setflag(&g_sleep_done_flag, ptn);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: send_modem_poweron_done
+ *
+ * Description:
+ *   Notify that the modem power on.
+ *
+ ****************************************************************************/
+
+static int send_modem_poweron_done(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  ret = altmdm_sys_setflag(&g_power_done_flag, EVENT_MODEM_POWER_ON_DONE);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: send_modem_poweroff_done
+ *
+ * Description:
+ *   Notify that the modem power off.
+ *
+ ****************************************************************************/
+
+static int send_modem_poweroff_done(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  ret = altmdm_sys_setflag(&g_power_done_flag, EVENT_MODEM_POWER_OFF_DONE);
   if (ret != 0)
     {
       m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
@@ -716,6 +807,54 @@ static int wait_for_sleep_requeset_done(FAR struct altmdm_dev_s *priv)
         {
           ret = -1;
         }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: wait_for_poweron_done
+ *
+ * Description:
+ *   Wait until the power on is completed.
+ *
+ ****************************************************************************/
+
+static int wait_for_poweron_done(FAR struct altmdm_dev_s *priv)
+{
+  int      ret;
+  uint32_t ptn;
+
+  ret = altmdm_sys_waitflag(&g_power_done_flag, EVENT_MODEM_POWER_ON_DONE,
+                            ALTMDM_SYS_FLAG_WMODEOR, &ptn,
+                            ALTMDM_SYS_FLAG_TMOFEVR);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Wait flag:%d.\n", __LINE__, ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: wait_for_poweroff_done
+ *
+ * Description:
+ *   Wait until the power off is completed.
+ *
+ ****************************************************************************/
+
+static int wait_for_poweroff_done(FAR struct altmdm_dev_s *priv)
+{
+  int      ret;
+  uint32_t ptn;
+
+  ret = altmdm_sys_waitflag(&g_power_done_flag, EVENT_MODEM_POWER_OFF_DONE,
+                            ALTMDM_SYS_FLAG_WMODEOR, &ptn,
+                            ALTMDM_SYS_FLAG_TMOFEVR);
+  if (ret != 0)
+    {
+      m_err("ERR:%04d Wait flag:%d.\n", __LINE__, ret);
     }
 
   return ret;
@@ -1094,6 +1233,26 @@ static int pm_task(int argc, FAR char *argv[])
               sleep_modem_itself(priv);
             }
 
+          if (ptn & EVENT_MODEM_POWERON_REQ)
+            {
+              /* Modem power on. */
+
+              board_altmdm_power_control(true);
+
+              send_modem_poweron_done(priv);
+            }
+
+          if (ptn & EVENT_MODEM_POWEROFF_REQ)
+            {
+              /* Modem power off. */
+
+              board_altmdm_power_control(false);
+
+              sleep_modem_itself(priv);
+
+              send_modem_poweroff_done(priv);
+            }
+
           if (ptn & EVENT_MODEM_RESET_NOTIF)
             {
               exe_callback(MODEM_PM_CB_TYPE_ERROR, MODEM_PM_ERR_STATE_RESET);
@@ -1143,6 +1302,7 @@ int altmdm_pm_init(FAR struct altmdm_dev_s *priv)
   altmdm_sys_initflag(&g_pmtask_flag);
   altmdm_sys_initflag(&g_wakeup_done_flag);
   altmdm_sys_initflag(&g_sleep_done_flag);
+  altmdm_sys_initflag(&g_power_done_flag);
 
   sq_init(&g_wakelock);
 
@@ -1204,6 +1364,7 @@ int altmdm_pm_uninit(FAR struct altmdm_dev_s *priv)
   altmdm_sys_deleteflag(&g_pmtask_flag);
   altmdm_sys_deleteflag(&g_wakeup_done_flag);
   altmdm_sys_deleteflag(&g_sleep_done_flag);
+  altmdm_sys_deleteflag(&g_power_done_flag);
 
   /* Uinitialize GPIO. */
 
@@ -1613,6 +1774,58 @@ int altmdm_pm_getwakelockstate(void)
   leave_critical_section(flags);
 
   return num;
+}
+
+/****************************************************************************
+ * Name: altmdm_pm_poweron
+ *
+ * Description:
+ *   Modem power on.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_poweron(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  if (!g_is_initdone)
+    {
+      return -EPERM;
+    }
+
+  ret = send_modem_poweron_request(priv);
+  if (ret == 0)
+    {
+      ret = wait_for_poweron_done(priv);
+    }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altmdm_pm_poweroff
+ *
+ * Description:
+ *   Modem power off.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_poweroff(FAR struct altmdm_dev_s *priv)
+{
+  int ret;
+
+  if (!g_is_initdone)
+    {
+      return -EPERM;
+    }
+
+  ret = send_modem_poweroff_request(priv);
+  if (ret == 0)
+    {
+      ret = wait_for_poweroff_done(priv);
+    }
+
+  return 0;
 }
 
 #endif

@@ -7,21 +7,26 @@ Usage
 
 Select options in below.
 
-- [CXD56xx Configuration Options]
+- [CXD56xx Configuration]
+    [SDIO SD Card] <= Y
     [Audio] <= Y
 - [SDK audio] <= Y
     [Audio Utilities]
       [Audio Player] <= Y
-      [Playlist manager] <= Y
+        [Playlist manager] <= Y
 - [Memory manager] <= Y
 - [ASMP] <= Y
 - [Examples]
     [Audio player example] <= Y
 
+Or use audio_player default configuration
+
+$ ./tools/config.py examples/audio_player
+
 Build and install
 --------------------------
 
-Build Kernel and SDK.
+Type 'make' to build SDK.
 Install 'nuttx.spk' to system.
 
 After that, you can see worker binary 'MP3DEC', 'WAVDEC'

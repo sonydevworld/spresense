@@ -47,7 +47,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "wien2_common_defs.h"
 #include "audio_state.h"
-#include "common/audio_internal_message_types.h"
+#include "audio/audio_message_types.h"
 #include "player_input_device_handler.h"
 #include "wien2_internal_packet.h"
 
@@ -65,37 +65,23 @@ class PlayerObj
 {
 public:
   static void create(void **obj,
-                     MsgQueId self_dtq,
-                     MsgQueId apu_dtq,
-                     MemMgrLite::PoolId es_pool_id,
-                     MemMgrLite::PoolId pcm_pool_id,
-                     MemMgrLite::PoolId apu_pool_id,
-                     MemMgrLite::PoolId src_work_pool_id);
+                     AsPlayerMsgQueId_t msgq_id,
+                     AsPlayerPoolId_t pool_id);
 
   MsgQueId get_selfId()
     {
-      return m_self_dtq;
+      return m_msgq_id.player;
     }
   MsgQueId get_apuId()
     {
-      return m_apu_dtq;
+      return m_msgq_id.dsp;
     }
 
 private:
-  PlayerObj(MsgQueId self_dtq,
-            MsgQueId apu_dtq,
-            MemMgrLite::PoolId es_pool_id,
-            MemMgrLite::PoolId pcm_pool_id,
-            MemMgrLite::PoolId apu_pool_id,
-            MemMgrLite::PoolId src_work_pool_id);
+  PlayerObj(AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_t pool_id);
 
-  MsgQueId m_self_dtq;
-  MsgQueId m_apu_dtq;
-
-  MemMgrLite::PoolId m_es_pool_id;
-  MemMgrLite::PoolId m_pcm_pool_id;
-  MemMgrLite::PoolId m_apu_pool_id;
-  MemMgrLite::PoolId m_src_work_pool_id;
+  AsPlayerMsgQueId_t m_msgq_id;
+  AsPlayerPoolId_t   m_pool_id;
 
   enum PlayerState
   {
@@ -166,6 +152,7 @@ private:
   static MsgProc PlayerResultTbl[AUD_PLY_RST_MSG_NUM][PlayerStateNum];
   static MsgProc PlayerResultSubTbl[AUD_PLY_RST_MSG_NUM][SubStateNum];
 
+  void reply(AsPlayerEvent evtype, MsgType msg_type, uint32_t result);
   void illegalEvt(MsgPacket *);
 
   void activate(MsgPacket *);

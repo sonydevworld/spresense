@@ -70,6 +70,8 @@
 #define VIDEO_TRUE              (1)
 #define VIDEO_FALSE             (0)
 
+#define VIDEO_REMAINING_CAPNUM_INFINITY (-1)
+
 /* Debug option */
 #ifdef CONFIG_DEBUG_VIDEO_ERROR
 #  define videoerr(format, ...)     _err(format, ##__VA_ARGS__)
@@ -106,14 +108,16 @@ enum video_state_transition_cause
 {
   CAUSE_VIDEO_STOP  = 0,     /* Stop  DMA event for video stream */
   CAUSE_VIDEO_START = 1,     /* Start DMA event for video stream */
-  CAUSE_STILL_STOP  = 2,     /* Stop  DMA event for still stream */
-  CAUSE_STILL_START = 3,     /* Start DMA event for still stream */
+  CAUSE_VIDEO_DQBUF = 2,     /* DQBUF timing    for video stream */
+  CAUSE_STILL_STOP  = 3,     /* Stop  DMA event for still stream */
+  CAUSE_STILL_START = 4,     /* Start DMA event for still stream */
 };
 
 enum video_waitend_cause_e
 {
-  VIDEO_WAITEND_CAUSE_DMADONE  = 0,
-  VIDEO_WAITEND_CAUSE_DQCANCEL = 1,
+  VIDEO_WAITEND_CAUSE_DMADONE   = 0,
+  VIDEO_WAITEND_CAUSE_DQCANCEL  = 1,
+  VIDEO_WAITEND_CAUSE_STILLSTOP = 2,
 };
 
 struct video_wait_dma_s
@@ -129,6 +133,7 @@ struct video_type_inf_s
 {
   sem_t                lock_state;
   enum video_state_e   state;
+  int32_t              remaining_capnum;
   video_wait_dma_t     wait_dma;
   video_framebuff_t    bufinf;
 };
@@ -349,6 +354,17 @@ static enum video_state_e estimate_next_video_state
             return current_state;
           }
 
+      case CAUSE_VIDEO_DQBUF:
+        if ((current_state == VIDEO_STATE_STREAMON) &&
+             !is_taking_still_picture(vmng))
+          {
+            return VIDEO_STATE_DMA;
+          }
+        else
+          {
+            return current_state;
+          }
+
       default:
         return current_state;
     }
@@ -403,6 +419,36 @@ static bool is_bufsize_sufficient(FAR video_mng_t *vmng, uint32_t bufsize)
   return true;
 }
 
+static void initialize_streamresources(FAR video_type_inf_t *type_inf)
+{
+  memset(type_inf, 0, sizeof(video_type_inf_t));
+  type_inf->remaining_capnum = VIDEO_REMAINING_CAPNUM_INFINITY;
+  sem_init(&type_inf->lock_state, 0, 1);
+  sem_init(&type_inf->wait_dma.dqbuf_wait_flg, 0, 0);
+  video_framebuff_init(&type_inf->bufinf);
+
+  return;
+}
+
+static void initialize_resources(FAR video_mng_t *vmng)
+{
+  initialize_streamresources(&vmng->video_inf);
+  initialize_streamresources(&vmng->still_inf);
+
+  return;
+}
+
+static void cleanup_streamresources(FAR video_type_inf_t *type_inf)
+{
+  video_framebuff_uninit(&type_inf->bufinf);
+  sem_destroy(&type_inf->wait_dma.dqbuf_wait_flg);
+  sem_destroy(&type_inf->lock_state);
+  memset(type_inf, 0, sizeof(video_type_inf_t));
+  type_inf->remaining_capnum = VIDEO_REMAINING_CAPNUM_INFINITY;
+
+  return;
+}
+
 static void cleanup_resources(FAR video_mng_t *vmng)
 {
   /* clean up resource */
@@ -415,14 +461,8 @@ static void cleanup_resources(FAR video_mng_t *vmng)
       g_video_devops->cancel_dma();
     }
 
-  video_framebuff_uninit(&vmng->video_inf.bufinf);
-  video_framebuff_uninit(&vmng->still_inf.bufinf);
-
-  sem_destroy(&vmng->video_inf.lock_state);
-  sem_destroy(&vmng->still_inf.lock_state);
-
-  memset(&vmng->video_inf, 0, sizeof(video_type_inf_t));
-  memset(&vmng->still_inf, 0, sizeof(video_type_inf_t));
+  cleanup_streamresources(&vmng->video_inf);
+  cleanup_streamresources(&vmng->still_inf);
 
   return;
 }
@@ -457,10 +497,7 @@ static int video_open(FAR struct file *filep)
       ret = g_video_devops->open(priv);
       if (ret == OK)
         {
-          sem_init(&priv->video_inf.lock_state, 0, 1);
-          sem_init(&priv->still_inf.lock_state, 0, 1);
-          video_framebuff_init(&priv->video_inf.bufinf);
-          video_framebuff_init(&priv->still_inf.bufinf);
+          initialize_resources(priv);
         }
     }
 
@@ -610,9 +647,11 @@ static int video_qbuf(FAR struct video_mng_s *vmng,
 static int video_dqbuf(FAR struct video_mng_s *vmng,
                        FAR struct v4l2_buffer *buf)
 {
+  irqstate_t           flags;
   FAR video_type_inf_t *type_inf;
   FAR vbuf_container_t *container;
   sem_t                *dqbuf_wait_flg;
+  enum video_state_e   next_video_state;
 
   if ((vmng == NULL) || (buf == NULL))
     {
@@ -631,9 +670,26 @@ static int video_dqbuf(FAR struct video_mng_s *vmng,
       /* Not yet done DMA. Wait done */
 
       dqbuf_wait_flg = &type_inf->wait_dma.dqbuf_wait_flg;
-      sem_init(dqbuf_wait_flg, 0, 0);
-      sem_wait(dqbuf_wait_flg);
-      sem_destroy(dqbuf_wait_flg);
+
+      /* Loop until semaphore is unlocked by DMA done or DQCANCEL */
+
+      do
+        {
+          if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+            {
+              /* If start DMA condition is satisfied, start DMA */
+
+              flags = enter_critical_section();
+              next_video_state = estimate_next_video_state
+                                  (vmng, CAUSE_VIDEO_DQBUF);
+              change_video_state(vmng, next_video_state);
+              leave_critical_section(flags);
+            }
+
+          sem_wait(dqbuf_wait_flg);
+        }
+      while (type_inf->wait_dma.waitend_cause == VIDEO_WAITEND_CAUSE_STILLSTOP);
+
       container = type_inf->wait_dma.done_container;
 
       if (!container)
@@ -645,11 +701,11 @@ static int video_dqbuf(FAR struct video_mng_s *vmng,
           if (type_inf->wait_dma.waitend_cause
                == VIDEO_WAITEND_CAUSE_DQCANCEL)
             {
-              memset(&type_inf->wait_dma, 0, sizeof(video_wait_dma_t));
               return -ECANCELED;
             }
         }
-      memset(&type_inf->wait_dma, 0, sizeof(video_wait_dma_t)); 
+
+      type_inf->wait_dma.done_container = NULL;
     }
 
   memcpy(buf, &container->buf, sizeof(struct v4l2_buffer));
@@ -887,13 +943,6 @@ static int video_takepict_start(FAR struct video_mng_s *vmng,
       return -EINVAL;
     }
 
-  if (capture_num > 0)
-    {
-      /* TODO: to be supported */
-
-      return -EINVAL;
-    }
-
   video_lock(&vmng->still_inf.lock_state);
 
   if (vmng->still_inf.state != VIDEO_STATE_STREAMOFF)
@@ -902,6 +951,15 @@ static int video_takepict_start(FAR struct video_mng_s *vmng,
     }
   else
     {
+      if (capture_num > 0)
+        {
+          vmng->still_inf.remaining_capnum = capture_num;
+        }
+      else
+        {
+          vmng->still_inf.remaining_capnum = VIDEO_REMAINING_CAPNUM_INFINITY;
+        }
+
       /* Control video stream prior to still stream */
 
       flags = enter_critical_section();
@@ -946,7 +1004,8 @@ static int video_takepict_stop(FAR struct video_mng_s *vmng, bool halfpush)
 
   video_lock(&vmng->still_inf.lock_state);
 
-  if (vmng->still_inf.state == VIDEO_STATE_STREAMOFF)
+  if ((vmng->still_inf.state == VIDEO_STATE_STREAMOFF) &&
+      (vmng->still_inf.remaining_capnum == VIDEO_REMAINING_CAPNUM_INFINITY))
     {
       ret = -EPERM;
     }
@@ -960,6 +1019,7 @@ static int video_takepict_stop(FAR struct video_mng_s *vmng, bool halfpush)
       leave_critical_section(flags);
 
       vmng->still_inf.state = VIDEO_STATE_STREAMOFF;
+      vmng->still_inf.remaining_capnum = VIDEO_REMAINING_CAPNUM_INFINITY;
 
       /* Control video stream */
 
@@ -1503,10 +1563,11 @@ int video_common_notify_dma_done(uint8_t  err_code,
                                  uint32_t datasize,
                                  FAR void *priv)
 {
+  FAR video_mng_t      *vmng = (FAR video_mng_t *)priv;
   FAR video_type_inf_t *type_inf;
-  FAR vbuf_container_t *container;
+  FAR vbuf_container_t *container = NULL;
 
-  type_inf = get_video_type_inf((FAR video_mng_t *)priv, buf_type);
+  type_inf = get_video_type_inf(vmng, buf_type);
   if (type_inf == NULL)
     {
       return -EINVAL;
@@ -1515,6 +1576,10 @@ int video_common_notify_dma_done(uint8_t  err_code,
   if (err_code == 0)
     {
       type_inf->bufinf.vbuf_dma->buf.flags = 0;
+      if (type_inf->remaining_capnum > 0)
+        {
+          type_inf->remaining_capnum--;
+        }
     }
   else
     {
@@ -1539,16 +1604,34 @@ int video_common_notify_dma_done(uint8_t  err_code,
       /* TODO:  in poll wait, unlock wait */
     }
 
-  container = video_framebuff_get_dma_container(&type_inf->bufinf);
-  if (!container)
+  if (type_inf->remaining_capnum == 0)
     {
       g_video_devops->cancel_dma();
-      type_inf->state = VIDEO_STATE_STREAMON;
+      type_inf->state = VIDEO_STATE_STREAMOFF;
+
+      /* If stop still stream, notify it to video stream */
+
+      if ((buf_type == V4L2_BUF_TYPE_STILL_CAPTURE) &&
+           is_sem_waited(&vmng->video_inf.wait_dma.dqbuf_wait_flg))
+        {
+          vmng->video_inf.wait_dma.waitend_cause
+            = VIDEO_WAITEND_CAUSE_STILLSTOP;
+          sem_post(&vmng->video_inf.wait_dma.dqbuf_wait_flg);
+        }
     }
   else
     {
-      g_video_devops->set_buf(container->buf.m.userptr,
-                              container->buf.length);
+      container = video_framebuff_get_dma_container(&type_inf->bufinf);
+      if (!container)
+        {
+          g_video_devops->cancel_dma();
+          type_inf->state = VIDEO_STATE_STREAMON;
+        }
+      else
+        {
+          g_video_devops->set_buf(container->buf.m.userptr,
+                                  container->buf.length);
+        }
     }
 
   return OK;

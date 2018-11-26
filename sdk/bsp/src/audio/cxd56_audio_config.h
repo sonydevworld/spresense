@@ -143,14 +143,6 @@ enum cxd56_audio_cfg_sp_spliton_e
   CXD56_AUDIO_CFG_SP_SPLITON_SHORTEST
 };
 
-enum cxd56_audio_cfg_sp_drv_e
-{
-  CXD56_AUDIO_CFG_SP_DRV_LINEOUT = 0,
-  CXD56_AUDIO_CFG_SP_DRV_1DRIVER,
-  CXD56_AUDIO_CFG_SP_DRV_2DRIVER,
-  CXD56_AUDIO_CFG_SP_DRV_4DRIVER
-};
-
 /* Mic bias voltage select */
 
 #if defined(CONFIG_CXD56_AUDIO_MICBIAS_20V)
@@ -377,13 +369,13 @@ enum cxd56_audio_cfg_sp_drv_e
 /* Speaker drive mode */
 
 #if defined(CONFIG_CXD56_AUDIO_SP_DRV_LINEOUT)
-#  define CXD56_AUDIO_CFG_SP_DRIVE   CXD56_AUDIO_CFG_SP_DRV_LINEOUT
+#  define CXD56_AUDIO_CFG_SP_DRIVER   CXD56_AUDIO_SP_DRV_LINEOUT
 #elif defined(CONFIG_CXD56_AUDIO_SP_DRV_1DRIVERT)
-#  define CXD56_AUDIO_CFG_SP_DRIVE   CXD56_AUDIO_CFG_SP_DRV_1DRIVER
+#  define CXD56_AUDIO_CFG_SP_DRIVER   CXD56_AUDIO_SP_DRV_1DRIVER
 #elif defined(CONFIG_CXD56_AUDIO_SP_DRV_2DRIVERT)
-#  define CXD56_AUDIO_CFG_SP_DRIVE   CXD56_AUDIO_CFG_SP_DRV_2DRIVER
+#  define CXD56_AUDIO_CFG_SP_DRIVER   CXD56_AUDIO_SP_DRV_2DRIVER
 #else
-#  define CXD56_AUDIO_CFG_SP_DRIVE   CXD56_AUDIO_CFG_SP_DRV_4DRIVER
+#  define CXD56_AUDIO_CFG_SP_DRIVER   CXD56_AUDIO_SP_DRV_4DRIVER
 #endif
 
 
@@ -403,6 +395,8 @@ void cxd56_audio_config_init(void);
 uint8_t cxd56_audio_config_get_micmode(void);
 uint8_t cxd56_audio_config_get_micdev(void);
 uint8_t cxd56_audio_config_get_micnum(void);
+void cxd56_audio_config_set_spdriver(cxd56_audio_sp_drv_t sp_driver);
+cxd56_audio_sp_drv_t cxd56_audio_config_get_spdriver(void);
 void cxd56_audio_config_set_clkmode(cxd56_audio_clkmode_t mode);
 cxd56_audio_clkmode_t cxd56_audio_config_get_clkmode(void);
 
