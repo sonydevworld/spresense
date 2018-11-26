@@ -1,0 +1,19 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_PRIME
+	bool "Multicore prime number calculator"
+    depends on ASMP
+	default n
+	---help---
+		Enable the ELF loader example
+
+if EXAMPLES_PRIME
+
+config EXAMPLES_PRIME_WORKER_STACKSIZE
+    int "Example worker stack size"
+    default 1024
+
+endif
