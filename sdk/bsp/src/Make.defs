@@ -75,7 +75,11 @@ endif
 
 # Peripherals
 
-CHIP_CSRCS += cxd56_serial.c cxd56_uart.c cxd56_uart0.c
+CHIP_CSRCS += cxd56_serial.c cxd56_uart.c
+
+ifeq ($(CONFIG_CXD56_UART0),y)
+CHIP_CSRCS += cxd56_uart0.c
+endif
 
 ifeq ($(CONFIG_CXD56_RTC),y)
 CHIP_CSRCS += cxd56_rtc.c
