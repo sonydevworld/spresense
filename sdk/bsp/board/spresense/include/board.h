@@ -78,6 +78,10 @@
 #define BOARD_UART1_BASEFREQ        BOARD_FCLKOUT_FREQUENCY
 #define BOARD_UART2_BASEFREQ        CONFIG_CXD56_XOSC_CLOCK
 
+/* LCD Display clocking ****************************************************/
+
+#define ILI9340_SPI_MAXFREQUENCY    40000000
+
 /* LED definitions *********************************************************/
 
 #define BOARD_LED1          (0)
