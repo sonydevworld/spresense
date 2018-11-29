@@ -45,6 +45,9 @@
 # cxd56_uart.o
 # cxd56_timerisr.o
 # cxd56_idle.o
+# cxd56_start.o
+# up_udelay.o
+# up_mdelay.o
 #
 
 CHIP_ASRCS += cxd56_farapistub.S
@@ -55,6 +58,7 @@ CHIP_CSRCS += cxd56_timerisr.c
 CHIP_CSRCS += cxd56_pinconfig.c
 CHIP_CSRCS += cxd56_clock.c
 CHIP_CSRCS += cxd56_delay.c
+CHIP_CSRCS += cxd56_start.c
 
 # Inter CPU communication
 

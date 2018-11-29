@@ -1725,6 +1725,13 @@ config CXD56_GE2D
 
 comment "Debug Features"
 
+config CXD56_BOOT_PROGRESS
+	bool "Boot progress"
+	default n
+	---help---
+		Enable to show boot status by a character print of showprogress().
+		If boot is successful, it will be shown 'AEG' messages on console.
+
 config CXD56_BACKUPLOG
 	bool "Backup Log driver"
 	default y
