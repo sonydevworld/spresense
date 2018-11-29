@@ -311,6 +311,16 @@ void cxd56_i2c_clock_gate_enable(int port);
 void cxd56_i2c_clock_gate_disable(int port);
 
 /****************************************************************************
+ * Name: cxd56_scuseq_is_clock_enabled
+ *
+ * Description:
+ *   Get whether Sensor Control Unit Sequencer clock is enabled or not
+ *
+ ****************************************************************************/
+
+bool cxd56_scuseq_clock_is_enabled(void);
+
+/****************************************************************************
  * Name: cxd56_scuseq_clock_enable
  *
  * Description:

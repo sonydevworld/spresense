@@ -254,6 +254,22 @@ static inline void release_pwd_reset(uint32_t domain)
     }
 }
 
+static bool is_enabled_pwd(int pdid)
+{
+  uint32_t stat;
+  int domain = 1u << pdid;
+
+  stat = getreg32(CXD56_TOPREG_PWD_STAT);
+  if ((stat & domain) != domain)
+    {
+      return false;
+    }
+  else
+    {
+      return true;
+    }
+}
+
 static void enable_pwd(int pdid)
 {
   uint32_t stat;
@@ -1553,10 +1569,22 @@ static void cxd56_scu_clock_ctrl(uint32_t block, uint32_t intr, int on)
   val = getreg32(CXD56_TOPREG_SCU_CKEN);
   if (on)
     {
+      if ((val & block) == block)
+        {
+          /* Already clock on */
+
+          return;
+        }
       putreg32(val | block, CXD56_TOPREG_SCU_CKEN);
     }
   else
     {
+      if ((val & block) == 0)
+        {
+          /* Already clock off */
+
+          return;
+        }
       putreg32(val & ~block, CXD56_TOPREG_SCU_CKEN);
     }
 
@@ -1667,6 +1695,15 @@ void cxd56_scu_clock_disable(void)
                    CRG_CK_SCU_SEQ)));
 
   putreg32(0xffffffff, CXD56_TOPREG_CRG_INT_CLR0);
+}
+
+bool cxd56_scuseq_clock_is_enabled(void)
+{
+  /* If SCU power domain is enabled, it assumes that the SCU sequencer is
+   * already in running.
+   */
+
+  return is_enabled_pwd(PDID_SCU);
 }
 
 int cxd56_scuseq_clock_enable(void)
