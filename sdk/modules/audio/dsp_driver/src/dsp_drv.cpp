@@ -72,24 +72,24 @@
 #  error "ASMP support library is not enabled!"
 #endif
 
-/* If CONFIG_DEBUG is enabled, use dbg instead of printf so that the
- * output will be synchronous with the debug output.
+/* If CONFIG_DEBUG_FEATURES is enabled, use _info or _err instead of printf
+ * so that the output will be synchronous with the debug output.
  */
 
 #ifdef CONFIG_CPP_HAVE_VARARGS
-#  ifdef CONFIG_DEBUG
-#    define message(format, ...)    dbg(format, ##__VA_ARGS__)
-#    define err(format, ...)        dbg(format, ##__VA_ARGS__)
+#  ifdef CONFIG_DEBUG_FEATURES
+#    define message(format, ...)    _info(format, ##__VA_ARGS__)
+#    define err(format, ...)        _err(format, ##__VA_ARGS__)
 #  else
-#    define message(format, ...)    printf(format, ##__VA_ARGS__)
+#    define message(format, ...)
 #    define err(format, ...)        fprintf(stderr, format, ##__VA_ARGS__)
 #  endif
 #else
-#  ifdef CONFIG_DEBUG
-#    define message                 dbg
-#    define err                     dbg
+#  ifdef CONFIG_DEBUG_FEATURES
+#    define message                 _info
+#    define err                     _err
 #  else
-#    define message                 printf
+#    define message
 #    define err                     printf
 #  endif
 #endif

@@ -458,37 +458,3 @@ int cxd56_pin_status(uint32_t pin, cxd56_pin_status_t *stat)
   return ret;
 }
 
-#ifdef CONFIG_DEBUG
-
-/****************************************************************************
- * Function:  cxd56_pin_dump
- *
- * Description:
- *   Dump a pin configuration
- *
- ****************************************************************************/
-
-int cxd56_pin_dump(uint32_t pin, const char *msg)
-{
-  int ret = 0;
-  cxd56_pin_status_t stat;
-
-  ret = cxd56_pin_status(pin, &stat);
-
-  if (!ret)
-    {
-      _info("[CONF] PIN: %3d MODE: %d %dmA %s %s --- %s\n",
-            pin,
-            stat.mode,
-            PINCONF_IS_DRIVE_NORM(stat.drive) ? 2 : 4,
-            PINCONF_INPUT_ENABLED(stat.input_en) ? "ENI" : "DSI",
-            PINCONF_IS_FLOAT(stat.pull) ? "PF" :
-            PINCONF_IS_PULLUP(stat.pull) ? "PU" :
-            PINCONF_IS_PULLDOWN(stat.pull) ? "PD" : "BK",
-            msg);
-    }
-
-  return ret;
-}
-
-#endif
