@@ -3443,6 +3443,10 @@ void scu_uninitialize(void)
   struct cxd56_scudev_s *priv = &g_scudev;
   int i;
 
+  /* Request don't sleep */
+
+  seq_inhibitrequest(REQ_SLEEP, true);
+
   up_disable_irq(CXD56_IRQ_SCU_3);
 
   cxd56_scuseq_clock_disable();
