@@ -181,3 +181,7 @@ endif
 ifeq ($(CONFIG_CXD56_CHARGER),y)
 CHIP_CSRCS += cxd56_charger.c
 endif
+
+ifeq ($(CONFIG_CXD56_GE2D),y)
+CHIP_CSRCS += cxd56_ge2d.c
+endif

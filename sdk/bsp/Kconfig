@@ -1717,6 +1717,12 @@ config CXD56_CHARGER_DEBUG
 
 endif
 
+config CXD56_GE2D
+	bool "Graphics Engine"
+	default n
+	---help---
+		A hardware image processor device.
+
 comment "Debug Features"
 
 config CXD56_BACKUPLOG
