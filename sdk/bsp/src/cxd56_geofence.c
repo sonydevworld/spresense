@@ -55,6 +55,7 @@
 #include <arch/chip/geofence.h>
 #include "cxd56_gnss_api.h"
 #include "cxd56_cpu1signal.h"
+#include "cxd56_gnss.h"
 
 #if defined(CONFIG_CXD56_GEOFENCE)
 
@@ -454,7 +455,7 @@ static void cxd56_geofence_sighandler(uint32_t data, FAR void *userdata)
       if (fds)
         {
           fds->revents |= POLLIN;
-          _info("Report events: %02x\n", fds->revents);
+          gnssinfo("Report events: %02x\n", fds->revents);
           sem_post(fds->sem);
         }
     }
@@ -699,7 +700,7 @@ static int cxd56_geofence_register(FAR const char *devpath)
     sizeof(struct cxd56_geofence_dev_s));
   if (!priv)
     {
-      _err("Failed to allocate instance\n");
+      gnsserr("Failed to allocate instance\n");
       return -ENOMEM;
     }
 
@@ -709,28 +710,28 @@ static int cxd56_geofence_register(FAR const char *devpath)
   ret = cxd56_geofence_initialize(priv);
   if (ret < 0)
     {
-      _err("Failed to initialize geofence device!\n");
+      gnsserr("Failed to initialize geofence device!\n");
       goto _err0;
     }
 
   ret = register_driver(devpath, &g_geofencefops, 0666, priv);
   if (ret < 0)
     {
-      _err("Failed to register driver: %d\n", ret);
+      gnsserr("Failed to register driver: %d\n", ret);
       goto _err0;
     }
 
   ret = cxd56_cpu1siginit(CXD56_CPU1_DEV_GEOFENCE, priv);
   if (ret < 0)
     {
-      _err("Failed to initialize ICC for GPS CPU: %d\n", ret);
+      gnsserr("Failed to initialize ICC for GPS CPU: %d\n", ret);
       goto _err2;
     }
 
   cxd56_cpu1sigregisterhandler(CXD56_CPU1_DEV_GEOFENCE,
                                cxd56_geofence_sighandler);
 
-  _info("GEOFENCE driver loaded successfully!\n");
+  gnssinfo("GEOFENCE driver loaded successfully!\n");
 
   return ret;
 
@@ -759,12 +760,12 @@ int cxd56_geofenceinitialize(FAR const char *devpath)
 {
   int ret;
 
-  _info("Initializing GEOFENCE..\n");
+  gnssinfo("Initializing GEOFENCE..\n");
 
   ret = cxd56_geofence_register(devpath);
   if (ret < 0)
     {
-      _err("Error registering GEOFENCE\n");
+      gnsserr("Error registering GEOFENCE\n");
     }
 
   return ret;

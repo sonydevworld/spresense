@@ -40,6 +40,22 @@ config CXD56_GNSS_FW_RTK
 	---help---
 		This is experimental function.
 
+config CXD56_GNSS_DEBUG_FEATURE
+	bool "GNSS debug feature"
+
+if CXD56_GNSS_DEBUG_FEATURE
+
+config CXD56_GNSS_DEBUG_ERROR
+	bool "GNSS debug error"
+
+config CXD56_GNSS_DEBUG_WARN
+	bool "GNSS debug warn"
+
+config CXD56_GNSS_DEBUG_INFO
+	bool "GNSS debug info"
+
+endif # CXD56_GNSS_DEBUG_FEATURE
+
 endmenu
 
 endif
