@@ -52,7 +52,7 @@ bool WavContainerFormat::init(uint16_t format_id,
 {
   switch (format_id)
     {
-      case FORMAT_ID_PCM:
+      case WAVE_FORMAT_PCM:
         break;
       default:
         return false;
@@ -120,12 +120,12 @@ bool WavContainerFormat::getHeader(WAVHEADER *wav_header, uint32_t data_size)
       return false;
     }
 
-  memcpy(wav_header->riff, CHUNKID_RIFF,    strlen(CHUNKID_RIFF));
-  memcpy(wav_header->wave, FORMAT_WAVE,     strlen(FORMAT_WAVE));
-  memcpy(wav_header->fmt,  SUBCHUNKID_FMT,  strlen(SUBCHUNKID_FMT));
-  memcpy(wav_header->data, SUBCHUNKID_DATA, strlen(SUBCHUNKID_DATA));
+  wav_header->riff       = CHUNKID_RIFF;
+  wav_header->wave       = FORMAT_WAVE;
+  wav_header->fmt        = SUBCHUNKID_FMT;
+  wav_header->data       = SUBCHUNKID_DATA;
   wav_header->fmt_size   = FMT_CHUNK_SIZE;
-  wav_header->format     = FORMAT_ID_PCM;
+  wav_header->format     = WAVE_FORMAT_PCM;
   wav_header->channel    = m_channel_number;
   wav_header->rate       = m_sampling_rate;
   wav_header->avgbyte    = m_sampling_rate * m_channel_number * 2;
