@@ -6,7 +6,7 @@
 menu "Sensing"
 
 config SENSING_MANAGER
-	bool "Sensor manager"
+	bool "Sensing manager"
 	default n
 	---help---
 		Enable support for sensor manager.
@@ -14,15 +14,16 @@ config SENSING_MANAGER
 if SENSING_MANAGER
 
 config SENSING_MANAGER_POWERCTRL
-	bool "Sensor manager power control enable"
+	bool "Sensing manager power control enable"
 	default n
 	---help---
-		To use SF_SendSensorSetPower() API, enable this.
+		To use SS_SendSensorSetPower() API, enable this.
 
 endif
 
 source "$SDKDIR/modules/sensing/gnss/Kconfig"
 source "$SDKDIR/modules/sensing/barometer/Kconfig"
 source "$SDKDIR/modules/sensing/tap/Kconfig"
+source "$SDKDIR/modules/sensing/step_counter/Kconfig"
 
-endmenu # Sensor Utilities
+endmenu # Sensing Utilities
