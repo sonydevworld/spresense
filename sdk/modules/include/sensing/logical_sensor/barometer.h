@@ -41,22 +41,27 @@
  * @{
  */
 
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
 #include <sdk/config.h>
 #include <asmp/mpmq.h>
 #include <asmp/mptask.h>
 #include <nuttx/sensors/bmp280.h>
 #include "memutils/memory_manager/MemHandle.h"
-#include "sensing/sensor_command.h"
+#include "sensing/sensor_api.h"
 #include "sensing/sensor_id.h"
 #include "memutils/s_stl/queue.h"
 
-/*--------------------------------------------------------------------*/
-/*  Pre-processor Definitions                                         */
-/*--------------------------------------------------------------------*/
-#define BAROMETER_PRESSURE_SAMPLING_FREQUENCY    (8)  /* 8Hz */
-#define BAROMETER_PRESSURE_WATERMARK_NUM         (40) /* 40 samples */
-#define BAROMETER_TEMPERATURE_SAMPLING_FREQUENCY (8)  /* 8Hz */
-#define BAROMETER_TEMPERATURE_WATERMARK_NUM      (40) /* 40 samples */
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define BAROMETER_PRESSURE_SAMPLING_FREQUENCY    8  /* 8Hz */
+#define BAROMETER_PRESSURE_WATERMARK_NUM         40 /* 40 samples */
+#define BAROMETER_TEMPERATURE_SAMPLING_FREQUENCY 8  /* 8Hz */
+#define BAROMETER_TEMPERATURE_WATERMARK_NUM      40 /* 40 samples */
 
 #define PRESSURE_SAMPLING_FREQUENCY BAROMETER_PRESSURE_SAMPLING_FREQUENCY
 #define PRESSURE_WATERMARK_NUM      BAROMETER_PRESSURE_WATERMARK_NUM
@@ -64,9 +69,9 @@
 #define TEMPERATURE_SAMPLING_FREQUENCY  BAROMETER_TEMPERATURE_SAMPLING_FREQUENCY
 #define TEMPERATURE_WATERMARK_NUM       BAROMETER_TEMPERATURE_WATERMARK_NUM
 
-/*--------------------------------------------------------------------*/
-/*  Public Structure                                                  */
-/*--------------------------------------------------------------------*/
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
 
 typedef struct
 {
@@ -122,13 +127,13 @@ private:
 
 };
 
-/*--------------------------------------------------------------------
-    External Interface
-  --------------------------------------------------------------------*/
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
 
 /**
  * @brief Create BarometerClass instance. 
- * return Address for instance of BarometerClass
+ * @return Address for instance of BarometerClass
  *
  */
 BarometerClass* BarometerCreate(void);

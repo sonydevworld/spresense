@@ -40,7 +40,7 @@
 #include <sys/time.h>
 #include <debug.h>
 
-#include "sensing/barometer.h"
+#include "sensing/logical_sensor/barometer.h"
 
 /****************************************************************************
  * Pre-processor Definitions
