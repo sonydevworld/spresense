@@ -40,15 +40,29 @@
  * Included Files
  ****************************************************************************/
 
+#include <sdk/debug.h>
+
 #include "memutils/message/Message.h"
 #include "sensing/sensor_message_types.h"
 #include "sensing/sensor_id.h"
-#include "sensing/sensor_command.h"
+#include "sensing/sensor_api.h"
 #include "sensing/sensor_ecode.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+/* Debug log */
+
+#ifdef CONFIG_SENSING_DEBUG
+#  define sensor_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define sensor_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#  define sensor_debug(fmt, ...) logdebug(fmt, ## __VA_ARGS__)
+#else
+#  define sensor_info(fmt, ...)
+#  define sensor_err(fmt, ...)
+#  define sensor_debug(fmt, ...)
+#endif
 
 /****************************************************************************
  * Public Types
