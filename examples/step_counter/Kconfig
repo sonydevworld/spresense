@@ -1,0 +1,41 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_SENSOR_STEP_COUNTER
+	bool "Step counter sensor example"
+	default n
+	---help---
+		Enable the step_counter sensor example
+
+if EXAMPLES_SENSOR_STEP_COUNTER
+
+config EXAMPLES_STEP_COUNTER_PROGNAME
+	string "Program name"
+	default "step_counter"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_STEP_COUNTER_PRIORITY
+	int "Sensor task priority"
+	default 100
+
+config EXAMPLES_STEP_COUNTER_STACKSIZE
+	int "Sensor stack size"
+	default 2048
+
+config EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO
+    int "Accelerator sensor watermark signal"
+    default 14
+
+config EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+	bool "Disable GNSS"
+	default y if !CXD56_GNSS
+	default n
+	---help---
+		Disable GNSS feature
+
+endif
