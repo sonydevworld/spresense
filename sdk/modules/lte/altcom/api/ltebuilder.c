@@ -79,12 +79,13 @@
 #include "apicmdhdlr_setpsm.h"
 #include "apicmdhdlr_ver.h"
 #include "apicmdhdlr_select.h"
+#include "apicmdhdlr_config_verify_callback.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICALLBACK_THRD_STACKSIZE (1024)
+#define APICALLBACK_THRD_STACKSIZE (2048)
 #define APICALLBACK_THRD_PRIO      SYS_TASK_PRIO_NORMAL
 #define APICALLBACK_THRD_NUM       (1)
 #define APICALLBACK_THRD_QNUM      (16)  /* tentative */
@@ -157,6 +158,7 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_getce,
   apicmdhdlr_setce,
   apicmdhdlr_select,
+  apicmdhdlr_config_verify_callback,
   EVTDISP_EVTHDLLIST_TERMINATION
 };
 
