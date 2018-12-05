@@ -64,7 +64,6 @@
 #define ALTCOM_SOCK_STREAM         1
 #define ALTCOM_SOCK_DGRAM          2
 #define ALTCOM_SOCK_RAW            3
-#define ALTCOM_SOCK_DGRAM_DTLS     130
 
 /* Protocol */
 
@@ -140,10 +139,6 @@
 
 #define ALTCOM_IPV6_CHECKSUM       7
 #define ALTCOM_IPV6_V6ONLY         27
-
-/* Options for level ALTCOM_IPPROTO_UDP */
-
-#define ALTCOM_UDP_DTLS_SRTP_RECEPTION 0x01
 
 /* Options for level ALTCOM_IPPROTO_UDPLITE */
 

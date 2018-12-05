@@ -71,7 +71,6 @@ LTEINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)include
 LTEALTCOMINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)altcom$(DELIM)include
 
 ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)net}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)opt}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)osal}"
@@ -80,7 +79,6 @@ ifeq ($(WINTOOL),y)
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)lte}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)socket}"
-  CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)mbedtls}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)evtdisp}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)gw}"
   CFLAGS += -I "${shell cygpath -w $(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include}"
@@ -88,7 +86,6 @@ ifeq ($(CONFIG_NET),y)
     CFLAGS += -I "${shell cygpath -w $(TOPDIR)$(DELIM)net}"
 endif
 else
-  CFLAGS += -I$(LTEINCDIR)
   CFLAGS += -I$(LTEINCDIR)$(DELIM)net
   CFLAGS += -I$(LTEINCDIR)$(DELIM)opt
   CFLAGS += -I$(LTEINCDIR)$(DELIM)osal
@@ -97,7 +94,6 @@ else
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)lte
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)socket
-  CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)mbedtls
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)evtdisp
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)gw
   CFLAGS += -I$(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include

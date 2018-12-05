@@ -44,4 +44,3 @@ VPATH += :altcom$(DELIM)api
 
 include altcom/api/lte/Make.defs
 include altcom/api/socket/Make.defs
-include altcom/api/mbedtls/Make.defs
