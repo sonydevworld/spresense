@@ -1,0 +1,109 @@
+############################################################################
+# modules/lte/altcom/api/mbedtls/Make.defs
+#
+#   Copyright 2018 Sony Corporation
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in
+#    the documentation and/or other materials provided with the
+#    distribution.
+# 3. Neither the name NuttX nor Sony nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+############################################################################
+
+CSRCS += ctx_id_mgr.c
+CSRCS += vrfy_callback_mgr.c
+CSRCS += ssl_init.c
+CSRCS += ssl_free.c
+CSRCS += ssl_setup.c
+CSRCS += ssl_hostname.c
+CSRCS += ssl_bio.c
+CSRCS += ssl_handshake.c
+CSRCS += ssl_write.c
+CSRCS += ssl_read.c
+CSRCS += ssl_close_notify.c
+CSRCS += ssl_version.c
+CSRCS += ssl_ciphersuite.c
+CSRCS += ssl_ciphersuite_id.c
+CSRCS += ssl_record_expansion.c
+CSRCS += ssl_verify_result.c
+CSRCS += ssl_timer_cb.c
+CSRCS += ssl_session_init.c
+CSRCS += ssl_session_free.c
+CSRCS += ssl_session_get.c
+CSRCS += ssl_session_set.c
+CSRCS += ssl_config_init.c
+CSRCS += ssl_config_free.c
+CSRCS += ssl_config_defaults.c
+CSRCS += ssl_config_authmode.c
+CSRCS += ssl_config_rng.c
+CSRCS += ssl_config_ca_chain.c
+CSRCS += ssl_config_own_cert.c
+CSRCS += ssl_config_read_timeout.c
+CSRCS += ssl_config_verify.c
+CSRCS += ssl_config_alpn_protocols.c
+CSRCS += ssl_config_ciphersuites.c
+CSRCS += x509_crt_init.c
+CSRCS += x509_crt_free.c
+CSRCS += x509_crt_parse_file.c
+CSRCS += x509_crt_parse_der.c
+CSRCS += x509_crt_parse.c
+CSRCS += x509_crt_info.c
+CSRCS += x509_crt_verify_info.c
+CSRCS += pk_init.c
+CSRCS += pk_free.c
+CSRCS += pk_parse_keyfile.c
+CSRCS += pk_parse_key.c
+CSRCS += ctr_drbg_init.c
+CSRCS += ctr_drbg_free.c
+CSRCS += ctr_drbg_seed.c
+CSRCS += ctr_drbg_random.c
+CSRCS += entropy_init.c
+CSRCS += entropy_free.c
+CSRCS += entropy_func.c
+CSRCS += cipher_init.c
+CSRCS += cipher_free.c
+CSRCS += cipher_info_from_string.c
+CSRCS += cipher_setup.c
+CSRCS += cipher_setkey.c
+CSRCS += cipher_set_iv.c
+CSRCS += cipher_update.c
+CSRCS += md_info_from_type.c
+CSRCS += md_get_size.c
+CSRCS += md.c
+CSRCS += base64_encode.c
+CSRCS += sha1.c
+CSRCS += net_sockets.c
+CSRCS += apicmdhdlr_config_verify_callback.c
+CSRCS += mbedtls_file_wrapper.c
+
+CSRCS += ssl_export_srtp_keys.c
+CSRCS += ssl_use_srtp.c
+CSRCS += ssl_srtp_profile.c
+
+
+# Add the src directory to the build
+
+DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)mbedtls
+VPATH += :altcom$(DELIM)api$(DELIM)mbedtls
