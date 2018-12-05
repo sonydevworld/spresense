@@ -107,3 +107,9 @@ CSRCS += ssl_srtp_profile.c
 
 DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)mbedtls
 VPATH += :altcom$(DELIM)api$(DELIM)mbedtls
+ifeq ($(WINTOOL),y)
+  CFLAGS += -I"${shell cygpath -w $(SDKDIR)/../externals/mbedtls/include}"
+else
+  CFLAGS += -I$(SDKDIR)/../externals/mbedtls/include
+endif
+

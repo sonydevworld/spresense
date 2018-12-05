@@ -71,7 +71,6 @@ LTEINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)include
 LTEALTCOMINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)altcom$(DELIM)include
 
 ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)net}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)opt}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)osal}"
@@ -88,7 +87,6 @@ ifeq ($(CONFIG_NET),y)
     CFLAGS += -I "${shell cygpath -w $(TOPDIR)$(DELIM)net}"
 endif
 else
-  CFLAGS += -I$(LTEINCDIR)
   CFLAGS += -I$(LTEINCDIR)$(DELIM)net
   CFLAGS += -I$(LTEINCDIR)$(DELIM)opt
   CFLAGS += -I$(LTEINCDIR)$(DELIM)osal
