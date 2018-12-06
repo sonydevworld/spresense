@@ -54,8 +54,6 @@
 #define MAX_MQUEUE_MSG_API          1
 #define MQUEUE_MODE                 0666
 
-extern void board_altmdm_power_control(bool en);
-
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -373,10 +371,6 @@ static int app_lte_fin(void)
   int ret;
   int response = LTE_RESULT_OK;
 
-  /* Need wait before power_off command */
-
-  sleep(1);
-
   /* Power off the modem
    * If it succeeds, it will be not able to accept requests from all APIs */
 
@@ -515,14 +509,3 @@ int lte_fin(void)
   return 0;
 }
 
-void lte_pon(void)
-{
-  board_altmdm_power_control(true);
-  printf("Power on the modem\n");
-}
-
-void lte_poff(void)
-{
-  board_altmdm_power_control(false);
-  printf("Power off the modem\n");
-}

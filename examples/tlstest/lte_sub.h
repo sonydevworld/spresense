@@ -59,7 +59,4 @@
 int lte_init(void);
 int lte_fin(void);
 
-void lte_pon(void);
-void lte_poff(void);
-
 #endif /* __EXAMPLES_TLSTEST_LTE_SUB_H */

@@ -367,29 +367,7 @@ int tlstest_main(int argc, char *argv[])
   int exe = 0;
   struct tlstest_t *site;
 
-  if ((g_status == 0) && (argc > 1) && (strncmp(argv[1], "on", 2) == 0))
-    {
-      /* Power ON only */
-      g_status = 1;
-      lte_pon();
-      return 0;
-    }
-  else if ((g_status == 1) && (argc > 1) && (strncmp(argv[1], "off", 3) == 0))
-    {
-      /* Power OFF only */
-      g_status = 0;
-      lte_poff();
-      return 0;
-    }
-  else if ((g_status == 2) && (argc > 1) && (strncmp(argv[1], "off", 3) == 0))
-    {
-      /* LTE finish only */
-      g_status = 0;
-      lte_fin();
-      return 0;
-    }
-
-  else if (g_status == 0)
+  if (g_status == 0)
     {
       /* LTE connect */ 
       printf("Start to LTE connect\n");
@@ -398,7 +376,7 @@ int tlstest_main(int argc, char *argv[])
         {
           return -1;
         }
-      g_status = 2;
+      g_status = 1;
     }
 
   site = &tlstest_site[0];
