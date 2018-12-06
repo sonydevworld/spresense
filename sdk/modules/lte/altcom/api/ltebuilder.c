@@ -79,7 +79,9 @@
 #include "apicmdhdlr_setpsm.h"
 #include "apicmdhdlr_ver.h"
 #include "apicmdhdlr_select.h"
+#ifdef CONFIG_LTE_NET_MBEDTLS
 #include "apicmdhdlr_config_verify_callback.h"
+#endif
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -158,7 +160,9 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_getce,
   apicmdhdlr_setce,
   apicmdhdlr_select,
+#ifdef CONFIG_LTE_NET_MBEDTLS
   apicmdhdlr_config_verify_callback,
+#endif
   EVTDISP_EVTHDLLIST_TERMINATION
 };
 
