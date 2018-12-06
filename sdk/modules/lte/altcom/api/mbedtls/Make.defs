@@ -32,6 +32,8 @@
 #
 ############################################################################
 
+ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
+
 CSRCS += ctx_id_mgr.c
 CSRCS += vrfy_callback_mgr.c
 CSRCS += ssl_init.c
@@ -102,7 +104,6 @@ CSRCS += ssl_export_srtp_keys.c
 CSRCS += ssl_use_srtp.c
 CSRCS += ssl_srtp_profile.c
 
-
 # Add the src directory to the build
 
 DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)mbedtls
@@ -113,3 +114,4 @@ else
   CFLAGS += -I$(SDKDIR)/../externals/mbedtls/include
 endif
 
+endif

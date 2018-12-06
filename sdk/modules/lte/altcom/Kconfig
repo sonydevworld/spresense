@@ -12,3 +12,13 @@ config MODEM_DEVICE_PATH
 		Path to the modem driver to register.
 
 endif
+
+if LTE_NET
+
+config LTE_NET_MBEDTLS
+	bool "mbedTLS Support"
+	default n
+	---help---
+		Enable or disable mbedTLS feature
+
+endif
