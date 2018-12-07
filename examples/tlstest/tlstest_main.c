@@ -63,10 +63,10 @@
 #ifdef TLSTEST_ENABLE_CAFILE
 static const char* tlstest_calist[] =
 {
-  "/mnt/vfat/cert/rootca_digi.crt",
-  "/mnt/vfat/cert/rootca_digihigh.crt",
-  "/mnt/vfat/cert/rootca_digig2.crt",
-//  "/mnt/vfat/cert/rootca_comodo.crt",
+  "rootca_digi.crt",
+  "rootca_digihigh.crt",
+  "rootca_digig2.crt",
+//  "rootca_comodo.crt",
   NULL
 };
 #endif
