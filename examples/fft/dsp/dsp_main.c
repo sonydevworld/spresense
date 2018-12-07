@@ -37,6 +37,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <sdk/config.h>
+
 #include <errno.h>
 #include <stdlib.h>
 
@@ -69,7 +71,7 @@
 #define DECLARE_RPCENTRY(sym) static int rpcentry_ ## sym
 #define RPCENTRY_TERMINATE { 0, NULL }
 
-#ifdef CONFIGS_EXAMPLES_FFT_COMPLEX_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
 #  define SAMPLE_NUM 2
 #else
 #  define SAMPLE_NUM 1
@@ -197,7 +199,7 @@ static int window_hanning(float *pData, uint32_t fftLen)
   return ret;
 }
 
-#ifdef CONFIGS_EXAMPLES_FFT_COMPLEX_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
 
 static int fft(float *pSrc, float *pDst, uint32_t fftLen)
 {
@@ -265,7 +267,7 @@ static int fft(float *pSrc, float *pDst, uint32_t fftLen)
   return OK;
 }
 
-#else /* CONFIGS_EXAMPLES_FFT_REAL_DATA */
+#else /* CONFIG_EXAMPLES_FFT_REAL_DATA */
 
 static int fft(float *pSrc, float *pDst, uint32_t fftLen)
 {
@@ -377,7 +379,7 @@ static float32_t *ringbuf_read_float(size_t size)
   float32_t *pFrom = (float32_t *)g_inRptr;
   int part;
 
-#ifdef CONFIGS_EXAMPLES_FFT_REAL_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
   int k, l;
   pSrc = (float32_t *)allocate_buffer(g_fftLen * SAMPLE_NUM);
 
@@ -404,7 +406,7 @@ static float32_t *ringbuf_read_float(size_t size)
           pSrc[2 * k + 1] = 0.0f;
         }
     }
-#else /* CONFIGS_EXAMPLES_FFT_REAL_DATA */
+#else /* CONFIG_EXAMPLES_FFT_REAL_DATA */
   pSrc = (float32_t *)allocate_buffer(g_fftLen);
 
   if ((g_inRptr + size) <= g_inBottom)
