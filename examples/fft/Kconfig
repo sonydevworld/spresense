@@ -30,4 +30,18 @@ config EXAMPLES_FFT_DSP_PATH
 	---help---
 		Set path to DSPFFT worker program ELF file on the board.
 
+config EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE
+	hex "Work buffer size"
+	default 0x2000
+	---help---
+		The work buffer for FFT calculation. The actual memory size
+		is CONFIG_EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE x 4 bytes.
+
+config EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE
+	hex "Input buffer size"
+	default 0x1000
+	---help---
+		The input buffer for FFT calculation. The actual memory size
+		is CONFIG_EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE x 4 bytes.
+
 endif # EXAMPLES_FFT
