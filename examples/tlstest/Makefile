@@ -39,13 +39,13 @@
 
 ifeq ($(WINTOOL),y)
 LTEINC = "${shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)include}"
-TLSINC = "${shell cygpath -w $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)mbedtls$(DELIM)include}"
+NETINC = "${shell cygpath -w $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)netutils}"
 else
 LTEINC = "$(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)include"
-TLSINC = "$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)mbedtls$(DELIM)include"
+NETINC = "$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)netutils"
 endif
 
-CFLAGS += -I$(LTEINC) -I$(TLSINC)
+CFLAGS += -I$(LTEINC) -I$(NETINC)
 
 # lte built-in application info
 
