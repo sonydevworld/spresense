@@ -254,22 +254,6 @@ static inline void release_pwd_reset(uint32_t domain)
     }
 }
 
-static bool is_enabled_pwd(int pdid)
-{
-  uint32_t stat;
-  int domain = 1u << pdid;
-
-  stat = getreg32(CXD56_TOPREG_PWD_STAT);
-  if ((stat & domain) != domain)
-    {
-      return false;
-    }
-  else
-    {
-      return true;
-    }
-}
-
 static void enable_pwd(int pdid)
 {
   uint32_t stat;
@@ -1699,11 +1683,21 @@ void cxd56_scu_clock_disable(void)
 
 bool cxd56_scuseq_clock_is_enabled(void)
 {
-  /* If SCU power domain is enabled, it assumes that the SCU sequencer is
+  uint32_t rst;
+
+  /* If SCU reset is already released, it assumes that the SCU sequencer is
    * already in running.
    */
 
-  return is_enabled_pwd(PDID_SCU);
+  rst = getreg32(CXD56_TOPREG_SWRESET_SCU);
+  if (rst & XRST_SCU_ISOP)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
 }
 
 int cxd56_scuseq_clock_enable(void)
