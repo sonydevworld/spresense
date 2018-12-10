@@ -39,9 +39,11 @@
 
 #include <sdk/config.h>
 #include <stdio.h>
+#include <string.h>
 #include <mqueue.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #include "lte/lte_api.h"
 #include "netutils/webclient.h"
@@ -99,6 +101,49 @@ static char g_app_iobuffer[APP_IOBUFFER_LEN];
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: app_lte_setlocaltime
+ ****************************************************************************/
+
+static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
+{
+  int            ret;
+  struct tm      calTime;
+  struct timeval current_time = {0};
+
+  /* lte_localtime_t -> struct tm */
+
+  memset(&calTime, 0, sizeof(struct tm));
+  calTime.tm_year = localtime->year + 100; /* 1900 + 100 + year(0-99) */
+  calTime.tm_mon  = localtime->mon - 1;    /* mon(1-12) - 1 */
+  calTime.tm_mday = localtime->mday;
+  calTime.tm_hour = localtime->hour;
+  calTime.tm_min  = localtime->min;
+  calTime.tm_sec  = localtime->sec;
+
+  /* struct tm -> struct time_t */
+
+  current_time.tv_sec = mktime(&calTime);
+  if (current_time.tv_sec < 0)
+    {
+      printf("%s: mktime falied\n");
+      return;
+    }
+
+  /* Set time */
+
+  ret = settimeofday(&current_time, NULL);
+  if (ret < 0)
+    {
+      printf("%s: settimeofday falied: %d\n", errno);
+      return;
+    }
+
+  printf("set localtime completed: %4d/%02d/%02d,%02d:%02d:%02d\n",
+         localtime->year + 1900 + 100, localtime->mon, localtime->mday,
+         localtime->hour, localtime->min, localtime->sec);
+}
 
 /****************************************************************************
  * Name: app_mq_create
@@ -302,6 +347,46 @@ static void app_detach_net_cb(uint32_t result)
 }
 
 /****************************************************************************
+ * Name: app_data_on_cb
+ *
+ * Description:
+ *   This callback is called when data on is completed.
+ ****************************************************************************/
+
+static void app_data_on_cb(uint32_t result, uint32_t errcause)
+{
+  if (LTE_RESULT_ERROR == result)
+    {
+      printf("%s called: result:%d errorcause:%d\n",
+             __func__, result, errcause);
+    }
+  else
+    {
+      printf("%s called: result:%d\n", __func__, result);
+    }
+
+  /* Notify the result to the lte_http_get sample application task */
+
+  app_mq_notify_result(result);
+}
+
+/****************************************************************************
+ * Name: app_localtime_report_cb
+ *
+ * Description:
+ *   This callback is called when local time has changed.
+ ****************************************************************************/
+
+static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
+{
+  printf("%s called: localtime : \"%02d/%02d/%02d : %02d:%02d:%02d\"\n",
+         __func__, localtime->year, localtime->mon, localtime->mday,
+         localtime->hour, localtime->min, localtime->sec);
+
+  app_lte_setlocaltime(localtime);
+}
+
+/****************************************************************************
  * Name: app_wget_cb
  *
  * Description:
@@ -384,6 +469,15 @@ int lte_http_get_main(int argc, char *argv[])
       goto errout_with_lte_fin;
     }
 
+  /* Enable to receive events of local time change */
+
+  ret = lte_set_report_localtime(app_localtime_report_cb);
+  if (ret < 0)
+    {
+      printf("Failed to set report local time :%d\n", ret);
+      goto errout_with_lte_fin;
+    }
+
   /* Do APN setting for session ID 1 which is used by lte_attach_network.
    * It is necessary to set the correct APN according to your environment. */
   
@@ -418,6 +512,25 @@ int lte_http_get_main(int argc, char *argv[])
   /* Wait until the LTE network is connected and notification
    * comes from the callback(app_attach_net_cb)
    * registered by lte_attach_network. */
+
+  ret = app_wait_lte_callback(&result);
+  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+    {
+      goto errout_with_lte_fin;
+    }
+
+  /* Data on */
+
+  ret = lte_data_on(APP_SESSION_ID, app_data_on_cb);
+  if (ret < 0)
+    {
+      printf("Failed to data on :%d\n", ret);
+      goto errout_with_lte_fin;
+    }
+
+  /* Wait until the data on completed and notification
+   * comes from the callback(app_attach_net_cb)
+   * registered by lte_data_on. */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
