@@ -1,3 +1,4 @@
+
 /****************************************************************************
  * modules/dnnrt/src/runtime/runtime_nnabla.c
  *
@@ -47,9 +48,15 @@
 
 static struct dnn_global_context s_dnn_gctx;
 
-int dnn_initialize(void *reserved)
+int dnn_initialize(dnn_config_t * config)
 {
-  return reserved == NULL ? RT_RET_NOERROR : -EINVAL;
+  if (config != NULL && config->cpu_num != 1u)
+    {
+      DNN_PRINT("multicore-processing is NOT enabled.\n");
+      DNN_PRINT("dnnrt works with dnn_config_t::cpu_num == 1u\n");
+      return -EINVAL;
+    }
+  return RT_RET_NOERROR;
 }
 
 int dnn_finalize(void)
@@ -132,11 +139,11 @@ int dnn_runtime_finalize(dnn_runtime_t * rt)
 }
 
 int dnn_runtime_forward(dnn_runtime_t * rt, const void *inputs[],
-                unsigned char input_num)
+                        unsigned char input_num)
 {
   DNN_CHECK_NULL_RET(rt, -EINVAL);
   rt_context_pointer ctx = (rt_context_pointer) rt->impl_ctx;
-  if (rt_num_of_input (ctx) != input_num)
+  if (rt_num_of_input(ctx) != input_num)
     {
       return -EINVAL;
     }

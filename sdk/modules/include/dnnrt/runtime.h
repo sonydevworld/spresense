@@ -63,12 +63,20 @@ extern "C"
  * @defgroup dnnrt_datatype Data Types
  * @{
  */
-typedef struct dnn_runtime dnn_runtime_t;
-
-struct dnn_runtime
+typedef struct dnn_runtime
 {
   void *impl_ctx;
-};
+} dnn_runtime_t;
+
+/**
+ * @typedef dnn_config_t
+ * structure to configure dnnrt subsystem
+ */
+typedef struct dnn_config
+{
+
+  unsigned char cpu_num; /**< Number of CPUs involved in forward propagation */
+} dnn_config_t;
 
 /** @} dnnrt_datatype */
 
@@ -84,13 +92,15 @@ struct dnn_runtime
 /**
  * Initialize the whole dnnrt subsystem
  *
- * @param [in] reserved: reserved argument. Currently, this argument must be NULL.
+ * @param [in] config: configuration of multicore processing. <br>
+ *                     If CONFIG_DNN_RT_MP=y, dnn_config_t::cpu_num must be 1 or more, <br>
+ *                     otherwise dnn_config_t::cpu_num must be 1.
  *
  * @return 0 on success, otherwise returns error code in errno_t.
  *
  * @note this function must be called before any dnn_runtime_t object is initialized.
  */
-int dnn_initialize(void *reserved);
+int dnn_initialize(dnn_config_t * config);
 
 /**
  * Finalize the whole dnnrt subsystem.

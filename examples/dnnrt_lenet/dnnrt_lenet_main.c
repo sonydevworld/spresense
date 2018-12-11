@@ -146,6 +146,7 @@ int dnnrt_lenet_main(int argc, char *argv[])
   float *output_buffer, proc_time, norm_factor;
   const void *inputs[1] = { s_img_buffer };
   dnn_runtime_t rt;
+  dnn_config_t config = {.cpu_num = 1 };
   nn_network_t *network;
   my_setting_t setting = { 0 };
   struct timeval begin, end;
@@ -173,7 +174,7 @@ int dnnrt_lenet_main(int argc, char *argv[])
     }
 
   /* Step-A: initialize the whole dnnrt subsystem */
-  ret = dnn_initialize(NULL);
+  ret = dnn_initialize(&config);
   if (ret)
     {
       printf("dnn_initialize() failed due to %d", ret);
