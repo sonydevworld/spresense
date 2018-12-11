@@ -236,15 +236,23 @@ static int uart0_close(FAR struct file *filep)
 
 static ssize_t uart0_read(FAR struct file *filep, FAR char *buffer, size_t len)
 {
+  int ret;
+
   uart0_semtake(&g_lock);
 
   /* Always blocking */
 
-  PD_UartReceive(0, buffer, len, 0);
+  ret = PD_UartReceive(0, buffer, len, 0);
 
   uart0_semgive(&g_lock);
 
-  return 0;
+  if (ret < 0)
+    {
+      set_errno(-ret);
+      ret = 0; /* Receive no data */
+    }
+
+  return (ssize_t)ret;
 }
 
 /****************************************************************************
@@ -253,15 +261,22 @@ static ssize_t uart0_read(FAR struct file *filep, FAR char *buffer, size_t len)
 
 static ssize_t uart0_write(FAR struct file *filep, FAR const char *buffer, size_t len)
 {
+  int ret;
+
   uart0_semtake(&g_lock);
 
   /* Always blocking */
 
-  PD_UartSend(0, (FAR void *)buffer, len, 0);
+  ret = PD_UartSend(0, (FAR void *)buffer, len, 0);
 
   uart0_semgive(&g_lock);
 
-  return len;
+  if (ret < 0)
+    {
+      set_errno(-ret);
+      ret = 0;
+    }
+  return (ssize_t)ret;
 }
 
 /****************************************************************************
@@ -299,6 +314,7 @@ int cxd56_uart0initialize(FAR const char *devname)
 void cxd56_uart0uninitialize(FAR const char *devname)
 {
   unregister_driver(devname);
+  sem_destroy(&g_lock);
 }
 
 #endif /* CONFIG_CXD56_UART0 */
