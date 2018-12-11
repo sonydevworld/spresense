@@ -1,3 +1,4 @@
+
 /****************************************************************************
  * dnnrt_lenet/dnnrt_lenet_main.c
  *
@@ -49,11 +50,11 @@
  * Type Definition
  ****************************************************************************/
 typedef struct
-  {
-    char *nnb_path;
-    char *pgm_path;
-    bool skip_norm;
-  } my_setting_t;
+{
+  char *nnb_path;
+  char *pgm_path;
+  bool skip_norm;
+} my_setting_t;
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -108,18 +109,18 @@ static void parse_args(int argc, char *argv[], my_setting_t * setting)
     {
       switch (opt)
         {
-          case 's': /* skip normalization */
-            setting->skip_norm = true;
-            break;
+        case 's':              /* skip normalization */
+          setting->skip_norm = true;
+          break;
         }
     }
 
   /* set my_setting_t::{nnb_path,pgm_path} to argv[] if necessary */
   setting->nnb_path = (optind < argc) ? argv[optind++] : DNN_NNB_PATH;
-  setting->pgm_path = (optind < argc) ? argv[optind]   : DNN_PNM_PATH;
+  setting->pgm_path = (optind < argc) ? argv[optind] : DNN_PNM_PATH;
 
   /* print my_setting_t */
-  printf("Load nnb file: %s\n",  setting->nnb_path);
+  printf("Load nnb file: %s\n", setting->nnb_path);
   printf("Load pgm image: %s\n", setting->pgm_path);
   if (setting->skip_norm)
     {
@@ -152,9 +153,10 @@ int dnnrt_lenet_main(int argc, char *argv[])
   parse_args(argc, argv, &setting);
 
   /* load an hand-written digit image into s_img_buffer,
-     and then divide the pixels by 255.0 for normalization */
+   * and then divide the pixels by 255.0 for normalization */
   norm_factor = setting.skip_norm ? 1.0f : 255.0f;
-  ret = pnm_load(setting.pgm_path, norm_factor, s_img_buffer, sizeof(s_img_buffer));
+  ret =
+    pnm_load(setting.pgm_path, norm_factor, s_img_buffer, sizeof(s_img_buffer));
   if (ret)
     {
       printf("load pgm image failed due to %d\n", ret);
@@ -162,7 +164,7 @@ int dnnrt_lenet_main(int argc, char *argv[])
     }
 
   /* load an nnb file, which holds a network structure and weight values,
-     into a heap memory */
+   * into a heap memory */
   network = alloc_nnb_network(setting.nnb_path);
   if (network == NULL)
     {
@@ -179,7 +181,7 @@ int dnnrt_lenet_main(int argc, char *argv[])
     }
 
   /* Step-B: instantiate a neural network defined
-             by nn_network_t as a dnn_runtime_t object */
+   * by nn_network_t as a dnn_runtime_t object */
   ret = dnn_runtime_initialize(&rt, network);
   if (ret)
     {
