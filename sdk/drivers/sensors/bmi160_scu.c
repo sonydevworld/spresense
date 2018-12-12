@@ -193,6 +193,22 @@
 #define ACCEL_RES_AVG64   (9 << 4)
 #define ACCEL_RES_AVG128  (10 << 4)
 
+/* Register 0x40 - ACCEL_CONFIG accel low power mode averaging */
+
+#define ACCEL_LP_AVG1   (0 << 4)
+#define ACCEL_LP_AVG2   (1 << 4)
+#define ACCEL_LP_AVG4   (2 << 4)
+#define ACCEL_LP_AVG8   (3 << 4)
+#define ACCEL_LP_AVG16  (4 << 4)
+#define ACCEL_LP_AVG32  (5 << 4)
+#define ACCEL_LP_AVG64  (6 << 4)
+#define ACCEL_LP_AVG128 (7 << 4)
+
+/* Register 0x40 - ACCEL_CONFIG accel under sampling */
+
+#define ACCEL_US_DISABLE (0 << 7)
+#define ACCEL_US_ENABLE  (1 << 7)
+
 /* Register 0x42 - GYRO_CONFIG accel bandwidth */
 
 #define GYRO_OSR4_MODE   (0x00 << 4)
@@ -269,6 +285,9 @@ static int bmi160_devregister(FAR const char *devpath, FAR struct i2c_master_s *
 static int bmi160_devregister(FAR const char *devpath, FAR struct spi_dev_s *dev,
                               int minor, const struct file_operations *fops);
 #endif
+
+static int     bmi160_set_accel_pm(FAR struct bmi160_dev_s *priv, int pm);
+static int     bmi160_set_accel_odr(FAR struct bmi160_dev_s *priv, int odr);
 
 /****************************************************************************
  * Private Data
@@ -685,6 +704,14 @@ static int bmi160_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
   switch (cmd)
     {
+      case SNIOC_SETACCPM:
+        ret = bmi160_set_accel_pm(priv, arg);
+        break;
+
+      case SNIOC_SETACCODR:
+        ret = bmi160_set_accel_odr(priv, arg);
+        break;
+
       default:
         {
           if (_SCUIOCVALID(cmd))
@@ -791,6 +818,138 @@ static int bmi160_devregister(FAR const char *devpath, FAR struct spi_dev_s *dev
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: bmi160_set_accel_pm
+ *
+ * Description:
+ *   Set the accelerometer's power mode
+ *
+ * Input Parameters:
+ *   pm - Power mode to be set.
+ *        Modes are suspend(0) or normal(1) or low power(2).
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int bmi160_set_accel_pm(FAR struct bmi160_dev_s *priv, int pm)
+{
+  uint8_t value;
+
+  switch (pm)
+    {
+      case BMI160_PM_SUSPEND:
+
+        /* Set suspend mode */
+
+        bmi160_setcommand(priv, ACCEL_PM_SUSPEND);
+        up_mdelay(30);
+
+        break;
+
+      case BMI160_PM_NORMAL:
+
+        /* Keep output data rate settings */
+
+        value = bmi160_getreg8(priv, BMI160_ACCEL_CONFIG) & 0x0f;
+
+        /* Output data rate less than 12.5Hz needs undersampling */
+
+        if (value < BMI160_ACCEL_ODR_12_5HZ)
+          {
+            value |= ACCEL_US_ENABLE;
+          }
+
+        /* Reset undersampling and bandwidth setting */
+
+        bmi160_putreg8(priv, BMI160_ACCEL_CONFIG, ACCEL_OSR4_AVG1 | value);
+        up_mdelay(1);
+
+        /* Set normal mode */
+
+        bmi160_setcommand(priv, ACCEL_PM_NORMAL);
+        up_mdelay(30);
+
+        break;
+
+      case BMI160_PM_LOWPOWER:
+
+        /* Keep output data rate setting */
+
+        value = bmi160_getreg8(priv, BMI160_ACCEL_CONFIG) & 0x0f;
+
+        /* Set undersampling and averaging cycle */
+
+        bmi160_putreg8(priv,
+                       BMI160_ACCEL_CONFIG,
+                       ACCEL_US_ENABLE | ACCEL_LP_AVG32 | value);
+        up_mdelay(1);
+
+        /* Set low power mode */
+
+        bmi160_setcommand(priv, ACCEL_PM_LOWPOWER);
+        up_mdelay(30);
+
+        break;
+
+      default:
+        return -EINVAL;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: bmi160_set_accel_odr
+ *
+ * Description:
+ *   Set the accelerometer's output data rate
+ *
+ * Input Parameters:
+ *   odr - Output data rate parameter to be set.
+ *        The result rate is 100/2^(8-odr) Hz.
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int bmi160_set_accel_odr(FAR struct bmi160_dev_s *priv, int odr)
+{
+  uint8_t value;
+
+  if (odr < BMI160_ACCEL_ODR_0_78HZ || BMI160_ACCEL_ODR_1600HZ < odr)
+    {
+      return -EINVAL;
+    }
+
+  /* Keep undersampling and bandwidth settings */
+
+  value = bmi160_getreg8(priv, BMI160_ACCEL_CONFIG) & 0xf0;
+
+  /* In normal mode, odr < 12.5Hz needs undersampling */
+
+  if (((g_pmu_stat & 0x30) >> 4) == BMI160_PM_NORMAL)
+    {
+      if (odr < BMI160_ACCEL_ODR_12_5HZ)
+        {
+          value |= ACCEL_US_ENABLE;
+        }
+      else
+        {
+          value &= ~ACCEL_US_ENABLE;
+        }
+    }
+
+  /* Set output data rate parameter */
+
+  bmi160_putreg8(priv, BMI160_ACCEL_CONFIG, value | odr);
+  up_mdelay(1);
+
+  return OK;
 }
 
 /****************************************************************************
