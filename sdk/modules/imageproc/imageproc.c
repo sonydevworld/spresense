@@ -79,11 +79,29 @@
  * Private Data
  ****************************************************************************/
 
-static sem_t rot_sem;
+static sem_t g_rotwait;
+static sem_t g_rotexc;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+static int ip_semtake(sem_t *id)
+{
+  while (sem_wait(id) != 0)
+    {
+      if (errno == EINTR)
+        {
+          return -EINTR;
+        }
+    }
+  return OK;
+}
+
+static void ip_semgive(sem_t *id)
+{
+  sem_post(id);
+}
 
 static int intr_handler_ROT(int irq, FAR void *context, FAR void *arg)
 {
@@ -91,7 +109,7 @@ static int intr_handler_ROT(int irq, FAR void *context, FAR void *arg)
   putreg32(0, ROT_INTR_ENABLE);
   putreg32(1, ROT_INTR_DISABLE);
 
-  sem_post(&rot_sem);
+  ip_semgive(&g_rotwait);
 
   return 0;
 }
@@ -102,7 +120,9 @@ static int intr_handler_ROT(int irq, FAR void *context, FAR void *arg)
 
 void imageproc_initialize(void)
 {
-  sem_init(&rot_sem, 0, 0);
+  sem_init(&g_rotexc, 0, 1);
+  sem_init(&g_rotwait, 0, 0);
+  sem_setprotocol(&g_rotwait, SEM_PRIO_NONE);
 
   putreg32(1, ROT_INTR_CLEAR);
   putreg32(0, ROT_INTR_ENABLE);
@@ -117,12 +137,20 @@ void imageproc_finalize(void)
   up_disable_irq(CXD56_IRQ_ROT);
   irq_detach(CXD56_IRQ_ROT);
 
-  sem_post(&rot_sem);
-  sem_destroy(&rot_sem);
+  sem_destroy(&g_rotwait);
+  sem_destroy(&g_rotexc);
 }
 
 void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
 {
+  int ret;
+
+  ret = ip_semtake(&g_rotexc);
+  if (ret)
+    {
+      return;
+    }
+
   /*
    * Image processing hardware want to be set horizontal/vertical size to
    * actual size - 1.
@@ -148,9 +176,9 @@ void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
   putreg32(0, ROT_RGB_ALIGNMENT);
   putreg32(1, ROT_COMMAND);
 
-  sem_wait(&rot_sem);
+  ip_semtake(&g_rotwait);
 
-  return;
+  ip_semgive(&g_rotexc);
 }
 
 void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize, size_t vsize)
@@ -167,4 +195,3 @@ void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize, size
         }
     }
 }
-
