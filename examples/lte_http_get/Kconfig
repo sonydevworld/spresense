@@ -27,6 +27,10 @@ config EXAMPLES_LTE_HTTP_GET_STACKSIZE
 	int "lte_http_get stack size"
 	default 2048
 
+config EXAMPLES_LTE_HTTP_GET_STACKSIZE_IN_USING_MBEDTLS
+	int "lte_http_get stack size in using mbedTLS"
+	default 5120
+
 config EXAMPLES_LTE_HTTP_GET_APN_NAME
 	string "Access Point Name"
 	default ""
