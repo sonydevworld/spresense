@@ -42,15 +42,132 @@ extern "C"
 {
 #endif
 
+/**
+ * @defgroup imageproc Image manipulation library
+ *
+ * @details
+ *
+ * @{
+ */
+
+/**
+ * @defgroup imageproc_funcs Functions
+ * @{
+ */
+/**
+ * Initialize imageproc library
+ */
+
 void imageproc_initialize(void);
+
+/**
+ * Finalize imageproc library
+ */
+
 void imageproc_finalize(void);
-void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize);
-void imageproc_convert_yuv2gray(uint8_t * ibuf, uint8_t * obuf, size_t hsize,
+
+/**
+ * Convert color format (YUV to RGB)
+ *
+ * TODO: need more description here
+ *
+ * @param [in,out] ibuf: image
+ * @param [in] hsize: Horizontal size
+ * @param [in] vsize: Vertical size
+ */
+
+void imageproc_convert_yuv2rgb(uint8_t *ibuf, uint32_t hsize, uint32_t vsize);
+
+/**
+ * Convert color format (YUV to grayscale)
+ *
+ * TODO: need more description here
+ *
+ * @param [in] ibuf: Input image
+ * @param [out] obuf: Output buffer
+ * @param [in] hsize: Horizontal size
+ * @param [in] vsize: Vertical size
+ */
+
+void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize,
                                 size_t vsize);
+
+/**
+ * @if Japanese
+ *
+ * 画像のリサイズ
+ *
+ * 入力画像 @a ibuf で与えられた画像を、@a ohsize、 @a ovsize で指定された
+ * サイズに縮小または拡大し、出力先バッファ @a obuf に出力します。
+ *
+ * 出力画像に指定可能なサイズは、縦・横それぞれ @a ihsize、 @a ivsize に対して
+ * 1/2^n倍〜2^n倍 (n=0..5)となるように設定します。
+ *
+ * 処理可能なピクセルフォーマットはYUV422のみとなります。このため、入出力の横
+ * サイズは2の倍数になる必要があります。
+ *
+ * また、リサイズ可能なサイズは以下の制限事項があります。
+ *
+ * * 縮小時
+ *   + 縦 12ピクセル
+ *   + 横 12ピクセル
+ * * 拡大時
+ *   + 縦 1024ピクセル
+ *   + 横 768ピクセル
+ *
+ * @param [in] ibuf: 入力画像
+ * @param [in] ihsize: 入力画像サイズ（横）
+ * @param [in] ivsize: 入力画像サイズ（縦）
+ * @param [out] obuf: 画像出力先バッファ
+ * @param [in] ohsize: 出力画像サイズ（横）
+ * @param [in] ovsize: 出力画像サイズ（縦）
+ * @param [in] bpp: Convert 16bpp to 8bpp (1=convert, 0=no convert)
+ *
+ * @return 正常終了の場合は0、それ以外の場合はエラーコードを返します。
+ *
+ * @else
+ *
+ * Resize image
+ *
+ * Resize image specified by @a ibuf to @a ohsize, @a ovsize. Processed
+ * image will be stored to @a obuf.
+ *
+ * For @a ohsize and @a ovsize, specify output size calculated by multiply in
+ * range 1/2^n to 2^n (n=0..5) against @a ihsize and @a ivsize.
+ *
+ * This function can be processing for YUV422 color format. So all of specified
+ * sizes must be multiple of 2.
+ *
+ * And there is limitation about output size below.
+ *
+ * * Shrink
+ *   + Horizontal size least 12 pixels
+ *   + Vertical size least 12 pixels
+ * * Enlarge
+ *   + Horizontal size up to 768 pixels
+ *   + Vertical size up to 1024 pixels
+ *
+ * @param [in] ibuf: Input image
+ * @param [in] ihsize: Input horizontal size
+ * @param [in] ivsize: Input vertical size
+ * @param [out] obuf: Output buffer
+ * @param [in] ohsize: Output horizontal size
+ * @param [in] ovsize: Output vertical size
+ * @param [in] bpp: Convert 16bpp to 8bpp (1=convert, 0=no convert)
+ *
+ * @return 0 on success, otherwise error code.
+ *
+ * @endif
+ */
+
+int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+                     uint8_t *obuf, uint16_t ohsize, uint16_t ovsize, int bpp);
+
+/** @} imageproc_funcs */
+/** @} imageproc */
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif  // __IMAGEPROC_H__
