@@ -44,6 +44,7 @@ CSRCS		=
 
 ifeq ($(CONFIG_NET_TCP),y)
 CSRCS		= webclient.c
+CSRCS           += tls_socket.c tls_rootca_certs.c
 endif
 
 AOBJS		= $(ASRCS:.S=$(OBJEXT))
@@ -51,6 +52,8 @@ COBJS		= $(CSRCS:.c=$(OBJEXT))
 
 SRCS		= $(ASRCS) $(CSRCS)
 OBJS		= $(AOBJS) $(COBJS)
+
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mbedtls/include"}
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
   BIN		= ..\..\libsystem$(LIBEXT)
