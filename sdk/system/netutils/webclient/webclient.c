@@ -447,6 +447,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
   struct wget_s ws;
   struct timeval tv;
   bool redirected;
+  bool https;
   char *dest,post_size[8];
   int sockfd;
   int len,post_len;
@@ -457,13 +458,12 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
   memset(&ws, 0, sizeof(struct wget_s));
   ws.buffer = buffer;
   ws.buflen = buflen;
-  ws.port   = 80;
 
   /* Parse the hostname (with optional port number) and filename from the URL */
 
-  ret = netlib_parsehttpurl(url, &ws.port,
-                            ws.hostname, CONFIG_WEBCLIENT_MAXHOSTNAME,
-                            ws.filename, CONFIG_WEBCLIENT_MAXFILENAME);
+  ret = netlib_parsehttpsurl(&https, url, &ws.port,
+                             ws.hostname, CONFIG_WEBCLIENT_MAXHOSTNAME,
+                             ws.filename, CONFIG_WEBCLIENT_MAXFILENAME);
   if (ret != 0)
     {
       nwarn("WARNING: Malformed HTTP URL: %s\n", url);
