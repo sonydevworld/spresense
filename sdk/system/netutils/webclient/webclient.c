@@ -95,8 +95,6 @@
 #  endif
 #endif
 
-#include "tls_internal.h"
-
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -121,11 +119,6 @@
 
 #define WGET_MODE_GET              0
 #define WGET_MODE_POST             1
-
-static const char g_http[] = "http://";
-static const char g_https[] = "https://";
-#define HTTPLEN  (7)
-#define HTTPSLEN (8)
 
 /****************************************************************************
  * Private Types
@@ -412,106 +405,9 @@ static int wget_gethostip(FAR char *hostname, in_addr_t *ipv4addr)
            he->h_addrtype);
       return -ENOEXEC;
     }
+
   memcpy(ipv4addr, he->h_addr, sizeof(in_addr_t));
   return OK;
-}
-
-int wget_parseurl(bool *https, const char *url, uint16_t *port,
-                     char *hostname, int hostlen,
-                     char *filename, int namelen)
-{
-  const char *src = url;
-  char *dest;
-  int bytesleft;
-  int ret = OK;
-  int prefix_len;
-
-  /* A valid HTTP URL must begin with http:// if it does not, we will assume
-   * that it is a file name only, but still return an error.  wget() depends
-   * on this strange behavior.
-   */
-
-  if (strncmp(src, g_http, HTTPLEN) == 0)
-    {
-      *https = false;
-      *port  = 80;
-      prefix_len = HTTPLEN;
-    }
-  else if (strncmp(src, g_https, HTTPSLEN) == 0)
-    {
-      *https = true;
-      *port  = 443;
-      prefix_len = HTTPSLEN;
-    }
-  else
-    { 
-      return -EINVAL;
-    }
-
-  /* Skip over the http:// */
-
-  src += prefix_len;
-
-  /* Concatenate the hostname following http:// and up to the termnator */
-
-  dest      = hostname;
-  bytesleft = hostlen;
-  while (*src != '\0' && *src != '/' && *src != ' ' && *src != ':')
-    {
-      /* Make sure that there is space for another character in the hostname.
-       * (reserving space for the null terminator)
-       */
-
-      if (bytesleft > 1)
-        {
-          *dest++ = *src++;
-          bytesleft--;
-        }
-      else
-        {
-          ret = -E2BIG;
-        }
-    }
-  *dest = '\0';
-
-  /* Check if the hostname is following by a port number */
-
-  if (*src == ':')
-    {
-      uint16_t accum = 0;
-      src++; /* Skip over the colon */
-
-      while (*src >= '0' && *src <= '9')
-        {
-          accum = 10*accum + *src - '0';
-          src++;
-        }
-      *port = accum;
-    }
-
-  /* The rest of the line is the file name */
-
-  if (*src == '\0' || *src == ' ')
-    {
-      ret = -ENOENT;
-    }
-
-  /* Make sure the file name starts with exactly one '/' */
-
-  dest      = filename;
-  bytesleft = namelen;
-  while (*src == '/')
-    {
-      src++;
-    }
-  *dest++ = '/';
-  bytesleft--;
-
-  /* The copy the rest of the file name to the user buffer */
-
-  strncpy(dest, src, namelen);
-  filename[namelen-1] = '\0';
-  return ret;
 }
 
 /****************************************************************************
@@ -555,7 +451,6 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
   int sockfd;
   int len,post_len;
   int ret;
-  bool https = false;
 
   /* Initialize the state structure */
 
@@ -566,9 +461,9 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
   /* Parse the hostname (with optional port number) and filename from the URL */
 
-  ret = wget_parseurl(&https, url, &ws.port,
-                      ws.hostname, CONFIG_WEBCLIENT_MAXHOSTNAME,
-                      ws.filename, CONFIG_WEBCLIENT_MAXFILENAME);
+  ret = netlib_parsehttpurl(url, &ws.port,
+                            ws.hostname, CONFIG_WEBCLIENT_MAXHOSTNAME,
+                            ws.filename, CONFIG_WEBCLIENT_MAXFILENAME);
   if (ret != 0)
     {
       nwarn("WARNING: Malformed HTTP URL: %s\n", url);
@@ -577,13 +472,6 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
     }
 
   ninfo("hostname='%s' filename='%s'\n", ws.hostname, ws.filename);
-
-  /* In HTTPS case, initialize TLS function */
-
-  if (https)
-    {
-      tls_socket_init();
-    }
 
   /* The following sequence may repeat indefinitely if we are redirected */
 
@@ -601,8 +489,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
       /* Create a socket */
 
-      sockfd = https ? tls_socket_create(AF_INET, SOCK_STREAM, 0)
-                     : socket(AF_INET, SOCK_STREAM, 0);
+      sockfd = socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0)
         {
           /* socket failed.  It will set the errno appropriately */
@@ -640,12 +527,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
        * local port that is not in use.
        */
 
-      ret = https ? tls_socket_connect(sockfd,
-                                       ws.hostname,
-                                       (struct sockaddr *)&server)
-                  : connect(sockfd,
-                            (struct sockaddr *)&server,
-                            sizeof(struct sockaddr_in));
+      ret = connect(sockfd, (struct sockaddr *)&server, sizeof(struct sockaddr_in));
       if (ret < 0)
         {
           nerr("ERROR: connect failed: %d\n", errno);
@@ -672,7 +554,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 #endif
 
       *dest++ = ISO_space;
-      dest = wget_strcpy(dest, g_http11);
+      dest = wget_strcpy(dest, g_http10);
       dest = wget_strcpy(dest, g_httpcrnl);
       dest = wget_strcpy(dest, g_httphost);
       dest = wget_strcpy(dest, ws.hostname);
@@ -700,18 +582,12 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
       len = dest - buffer;
 
-      do
+      ret = send(sockfd, buffer, len, 0);
+      if (ret < 0)
         {
-          ret = https ? tls_socket_write(sockfd, buffer, len)
-                      : send(sockfd, buffer, len, 0);
-          if (ret < 0)
-            {
-              nerr("ERROR: send failed: %d\n", errno);
-              goto errout;
-            }
-          len = len - ret;
+          nerr("ERROR: send failed: %d\n", errno);
+          goto errout;
         }
-      while (len != 0);
 
       /* Now loop to get the file sent in response to the GET.  This
        * loop continues until either we read the end of file (nbytes == 0)
@@ -722,18 +598,17 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
       redirected = false;
       for (;;)
         {
-          ws.datend = https ? tls_socket_read(sockfd, ws.buffer, ws.buflen)
-                            : recv(sockfd, ws.buffer, ws.buflen, 0);
+          ws.datend = recv(sockfd, ws.buffer, ws.buflen, 0);
           if (ws.datend < 0)
             {
-              nerr("ERROR: recv failed: ret=%d, errno=%d\n", ws.datend, errno);
+              nerr("ERROR: recv failed: %d\n", errno);
               ret = ws.datend;
               goto errout_with_errno;
             }
           else if (ws.datend == 0)
             {
               ninfo("Connection lost\n");
-              https ? tls_socket_close(sockfd) : close(sockfd);
+              close(sockfd);
               break;
             }
 
@@ -773,7 +648,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
               else
                 {
                   redirected = true;
-                  https ? tls_socket_close(sockfd) : close(sockfd);
+                  close(sockfd);
                   break;
                 }
             }
@@ -786,7 +661,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 errout_with_errno:
   set_errno(-ret);
 errout:
-  https ? tls_socket_close(sockfd) : close(sockfd);
+  close(sockfd);
   return ERROR;
 }
 
