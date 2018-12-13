@@ -1,0 +1,104 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_NXLINES
+	bool "NX graphics lines example"
+	default n
+	---help---
+		Enable the X graphics lines example
+
+if EXAMPLES_NXLINES
+
+config EXAMPLES_NXLINES_VPLANE
+	int "Graphics Plane"
+	default 0
+	---help---
+		The plane to select from the frame-buffer driver for use in the test.  Default: 0
+
+config EXAMPLES_NXLINES_DEVNO
+	int "Graphics Device Number"
+	default 0
+	---help---
+		The LCD device to select from the LCD driver for use in the test: Default: 0
+
+config EXAMPLES_NXLINES_DEFAULT_COLORS
+	bool "Use default colors"
+	default y
+	---help---
+		Select this option to let the NXLINES example pick the colors.  Otherwise,
+		you may select the exact colors to use in hex format.
+
+config EXAMPLES_NXLINES_BGCOLOR
+	hex "Background Color"
+	default 0x00
+	depends on !EXAMPLES_NXLINES_DEFAULT_COLORS
+	---help---
+		The color of the background.  Default depends on EXAMPLES_NXLINES_BPP.
+
+config EXAMPLES_NXLINES_LINEWIDTH
+	int "Line Width"
+	default 16
+	---help---
+		Selects the width of the lines in pixels (default: 16)
+
+config EXAMPLES_NXLINES_LINECOLOR
+	hex "Line Color"
+	default 0x00
+	depends on !EXAMPLES_NXLINES_DEFAULT_COLORS
+	---help---
+		The color of the central lines drawn in the background window. Default
+		depends on EXAMPLES_NXLINES_BPP (there really is no meaningful default).
+
+config EXAMPLES_NXLINES_BORDERWIDTH
+	int "Border Width"
+	default 16
+	---help---
+		The width of the circular border drawn in the background window. (default: 16).
+
+config EXAMPLES_NXLINES_BORDERCOLOR
+	hex "Border Color"
+	default 0x00
+	depends on !EXAMPLES_NXLINES_DEFAULT_COLORS
+	---help---
+		The color of the circular border drawn in the background window. Default
+		depends on EXAMPLES_NXLINES_BPP (there really is no meaningful default).
+
+config EXAMPLES_NXLINES_CIRCLECOLOR
+	hex "Circle Color"
+	default 0x00
+	depends on !EXAMPLES_NXLINES_DEFAULT_COLORS
+	---help---
+		The color of the circular region filled in the background window. Default
+		depends on EXAMPLES_NXLINES_BPP (there really is no meaningful default).
+
+config EXAMPLES_NXLINES_BPP
+	int "Bits Per Pixel"
+	default 8
+	---help---
+		Pixels per pixel to use.  Valid options include 2, 4, 8, 16, 24, and 32.
+		Default is 16.
+
+config EXAMPLES_NXLINES_EXTERNINIT
+	bool "External Device Initialization"
+	default false
+	depends on LIB_BOARDCTL
+	select BOARDCTL_GRAPHICS
+	---help---
+		The driver for the graphics device on this platform requires some unusual
+		initialization.  This is the for, for example, SPI LCD/OLED devices.  If
+		this configuration is selected, then the platform code must provide an LCD
+		initialization function with a prototype like:
+
+		#ifdef NX_LCDDRIVER
+		FAR struct lcd_dev_s *board_graphics_setup(unsigned int devno);
+		#else
+		FAR struct fb_vtable_s *board_graphics_setup(unsigned int devno);
+		#endif
+
+		and must also define: CONFIG_LIB_BOARDCTL=y and
+		CONFIG_BOARDCTL_GRAPHICS=y so that the boardctl() interface
+		will be available in order to access this function.
+
+endif
