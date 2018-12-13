@@ -190,6 +190,10 @@ int netlib_icmpv6_autoconfiguration(FAR const char *ifname);
 int  netlib_parsehttpurl(FAR const char *url, uint16_t *port,
                       FAR char *hostname, int hostlen,
                       FAR char *filename, int namelen);
+int  netlib_parsehttpsurl(FAR bool *https,
+                      FAR const char *url, uint16_t *port,
+                      FAR char *hostname, int hostlen,
+                      FAR char *filename, int namelen);
 
 /* Generic server logic */
 

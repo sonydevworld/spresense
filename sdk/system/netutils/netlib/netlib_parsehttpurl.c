@@ -49,40 +49,51 @@
  * Private Data
  ****************************************************************************/
 
-static const char g_http[] = "http://";
-#define HTTPLEN 7
+static const char g_http[]  = "http://";
+static const char g_https[] = "https://";
 
 /****************************************************************************
- * Public Functions
+ * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: netlib_parsehttpurl
+ * Name: netlib_parsehttpurl_base
  ****************************************************************************/
 
-int netlib_parsehttpurl(const char *url, uint16_t *port,
-                     char *hostname, int hostlen,
-                     char *filename, int namelen)
+int netlib_parsehttpurl_base(const char *chk_protocol[], int *protocol_index,
+                             const char *url, uint16_t *port,
+                             char *hostname, int hostlen,
+                             char *filename, int namelen)
 {
   const char *src = url;
   char *dest;
   int bytesleft;
   int ret = OK;
+  int cnt;
 
   /* A valid HTTP URL must begin with http:// if it does not, we will assume
    * that it is a file name only, but still return an error.  wget() depends
    * on this strange behavior.
    */
 
-  if (strncmp(src, g_http, HTTPLEN) != 0)
+  for (cnt = 0; chk_protocol[cnt] != NULL; cnt++)
+    {
+      if ((chk_protocol[cnt] != NULL) &&
+          (strncmp(src, chk_protocol[cnt], strlen(chk_protocol[cnt])) == 0))
+        {
+          *protocol_index = cnt;
+          break;
+        }
+    } 
+  if (chk_protocol[cnt] == NULL)
     {
       ret = -EINVAL;
     }
   else
     {
-      /* Skip over the http:// */
+      /* Skip over the http:// or https:// */
 
-      src += HTTPLEN;
+      src += strlen(chk_protocol[cnt]);
 
       /* Concatenate the hostname following http:// and up to the termnator */
 
@@ -145,5 +156,81 @@ int netlib_parsehttpurl(const char *url, uint16_t *port,
   strncpy(dest, src, namelen);
   filename[namelen-1] = '\0';
   return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: netlib_parsehttpurl
+ ****************************************************************************/
+int netlib_parsehttpurl(const char *url, uint16_t *port,
+                        char *hostname, int hostlen,
+                        char *filename, int namelen)
+{
+  int ret = OK;
+  int protocol_index;
+//  const char *chk_protocol[2] = {"http://", NULL};
+  const char *chk_protocol[2] = {g_http, NULL};
+ 
+  *port = 80;  /* Initialize to HTTP default port */
+
+  ret = netlib_parsehttpurl_base(chk_protocol, &protocol_index,
+                                 url, port,
+                                 hostname, hostlen, filename, namelen);
+  return ret;
+}
+
+/****************************************************************************
+ * Name: netlib_parsehttpsurl
+ ****************************************************************************/
+int netlib_parsehttpsurl(bool *https, 
+                         const char *url, uint16_t *port,
+                         char *hostname, int hostlen,
+                         char *filename, int namelen)
+{
+  int ret = OK;
+  int protocol_index;
+//  const char *chk_protocol[3] = {"http://", "https://", NULL};
+  const char *chk_protocol[3] = {g_http, g_https, NULL};
+
+  *port = 0; /* Initialize to invalid port number */
+
+  ret = netlib_parsehttpurl_base(chk_protocol, &protocol_index,
+                                 url, port,
+                                 hostname, hostlen, filename, namelen);
+  if (ret != OK)
+    {
+      return ret;
+    }
+
+  if (protocol_index == 0)
+    {
+      /* http:// case */
+
+      *https = false;
+      if (*port == 0)
+        {
+          /* In not set case, set HTTP default port */
+
+          *port = 80;
+        }
+    }
+  else
+    {
+      /* https:// case */
+
+      *https = true;
+
+      if (*port == 0)
+        {
+          /* In not set case, set HTTPS default port */
+
+          *port = 443;
+        }
+    }
+
+  return OK;
 }
 
