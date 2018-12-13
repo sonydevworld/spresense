@@ -95,6 +95,8 @@
 #  endif
 #endif
 
+#include "tls_internal.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -473,6 +475,13 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
   ninfo("hostname='%s' filename='%s'\n", ws.hostname, ws.filename);
 
+  /* In HTTPS case, initialize TLS function */
+
+  if (https)
+    {
+      tls_socket_init();
+    }
+
   /* The following sequence may repeat indefinitely if we are redirected */
 
   do
@@ -489,7 +498,8 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
       /* Create a socket */
 
-      sockfd = socket(AF_INET, SOCK_STREAM, 0);
+      sockfd = https ? tls_socket_create(AF_INET, SOCK_STREAM, 0)
+                     : socket(AF_INET, SOCK_STREAM, 0);
       if (sockfd < 0)
         {
           /* socket failed.  It will set the errno appropriately */
@@ -527,7 +537,12 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
        * local port that is not in use.
        */
 
-      ret = connect(sockfd, (struct sockaddr *)&server, sizeof(struct sockaddr_in));
+      ret = https ? tls_socket_connect(sockfd,
+                                       ws.hostname,
+                                       (struct sockaddr *)&server)
+                  : connect(sockfd,
+                            (struct sockaddr *)&server,
+                            sizeof(struct sockaddr_in));
       if (ret < 0)
         {
           nerr("ERROR: connect failed: %d\n", errno);
@@ -582,12 +597,18 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
       len = dest - buffer;
 
-      ret = send(sockfd, buffer, len, 0);
-      if (ret < 0)
+      do
         {
-          nerr("ERROR: send failed: %d\n", errno);
-          goto errout;
+          ret = https ? tls_socket_write(sockfd, buffer, len)
+                      : send(sockfd, buffer, len, 0);
+          if (ret < 0)
+            {
+              nerr("ERROR: send failed: %d\n", errno);
+              goto errout;
+            }
+          len = len - ret;
         }
+      while (len != 0);
 
       /* Now loop to get the file sent in response to the GET.  This
        * loop continues until either we read the end of file (nbytes == 0)
@@ -598,7 +619,8 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
       redirected = false;
       for (;;)
         {
-          ws.datend = recv(sockfd, ws.buffer, ws.buflen, 0);
+          ws.datend = https ? tls_socket_read(sockfd, ws.buffer, ws.buflen)
+                            : recv(sockfd, ws.buffer, ws.buflen, 0);
           if (ws.datend < 0)
             {
               nerr("ERROR: recv failed: %d\n", errno);
@@ -608,7 +630,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
           else if (ws.datend == 0)
             {
               ninfo("Connection lost\n");
-              close(sockfd);
+              https ? tls_socket_close(sockfd) : close(sockfd);
               break;
             }
 
@@ -648,7 +670,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
               else
                 {
                   redirected = true;
-                  close(sockfd);
+                  https ? tls_socket_close(sockfd) : close(sockfd);
                   break;
                 }
             }
@@ -661,7 +683,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 errout_with_errno:
   set_errno(-ret);
 errout:
-  close(sockfd);
+  https ? tls_socket_close(sockfd) : close(sockfd);
   return ERROR;
 }
 
