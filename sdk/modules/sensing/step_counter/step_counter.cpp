@@ -37,8 +37,9 @@
  * Included Files
  ****************************************************************************/
 
-#include <sys/time.h>
+#include <sdk/config.h>
 #include <sdk/debug.h>
+#include <sys/time.h>
 
 #include "sensing/logical_sensor/step_counter.h"
 #include "sensing/logical_sensor/sensor_command.h"
@@ -49,14 +50,17 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Debug log */
+/* Step counter debug feature. */
 
-#ifdef CONFIG_SENSING_DEBUG
-#  define sc_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#ifdef CONFIG_SENSING_STEPCOUNTER_DEBUG_ERROR
 #  define sc_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
 #else
-#  define sc_info(fmt, ...)
 #  define sc_err(fmt, ...)
+#endif
+#ifdef CONFIG_SENSING_STEPCOUNTER_DEBUG_INFO
+#  define sc_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#else
+#  define sc_info(fmt, ...)
 #endif
 
 #define STEPCOUNTER_MQ_ID   1
@@ -89,7 +93,7 @@ struct step_counter_data_s
  * Public Function Prototypes
  ****************************************************************************/
 
-extern void SS_SendSensorData(sensor_command_data_t* packet);
+extern void SS_SendSensorData(FAR sensor_command_data_t *packet);
 
 /****************************************************************************
  * Private Functions
@@ -98,7 +102,7 @@ extern void SS_SendSensorData(sensor_command_data_t* packet);
 static FAR void *receiver_thread_entry(FAR void *p_instance)
 {
   do {
-    ((StepCounterClass*)p_instance)->receive();
+    ((FAR StepCounterClass *)p_instance)->receive();
   } while(1);
   
   return 0;
@@ -220,6 +224,7 @@ int StepCounterClass::close(void)
   pthread_join(this->m_thread_id, NULL);
 
   /* Finalize all of MP objects */
+
   mpmq_destroy(&m_mq);
 
   return SS_ECODE_OK;
@@ -234,17 +239,17 @@ int StepCounterClass::sendInit(void)
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  SensorCmd* dsp_cmd = (SensorCmd*)mh.getPa();
+  FAR SensorCmd *dsp_cmd = (FAR SensorCmd *)mh.getPa();
 
   /* Apply default step setting to command. */
 
-  StepCounterSetParam *w_step;
+  FAR StepCounterSetParam *w_step;
 
   w_step = &dsp_cmd->init_step_counter_cmd.setting.walking;
   w_step->step_length = STEP_COUNTER_INITIAL_WALK_STEP_LENGTH;
   w_step->step_mode   = STEP_COUNTER_MODE_STEP_TABLE;
 
-  StepCounterSetParam *r_step;
+  FAR StepCounterSetParam *r_step;
 
   r_step = &dsp_cmd->init_step_counter_cmd.setting.running;
   r_step->step_length = STEP_COUNTER_INITIAL_RUN_STEP_LENGTH;
@@ -252,7 +257,7 @@ int StepCounterClass::sendInit(void)
 
   /* Disable debug feature. */
 
-  StepCounterDebugDumpInfo *debug_info;
+  FAR StepCounterDebugDumpInfo *debug_info;
 
   debug_info = &dsp_cmd->init_step_counter_cmd.debug_dump_info;
   debug_info->addr = NULL;
@@ -267,7 +272,7 @@ int StepCounterClass::sendInit(void)
                       reinterpret_cast<int32_t>(mh.getPa()));
   if (ret < 0)
     {
-      printf("mpmq_send() failure. %d\n", ret);
+      sc_err("mpmq_send() failure. %d\n", ret);
       return SS_ECODE_DSP_INIT_ERROR;
     }
 
@@ -277,12 +282,12 @@ int StepCounterClass::sendInit(void)
 
   int id = mpmq_receive(&m_mq, &msgdata);
   if ((id != STEPCOUNTER_CMD_ID) &&
-      (reinterpret_cast<SensorCmd*>(msgdata)->result.exec_result
+      (reinterpret_cast<FAR SensorCmd *>(msgdata)->result.exec_result
         != SensorOK))
     {
-      printf("init error! %08x : %d\n",
+      sc_err("init error! %08x : %d\n",
               id,
-              reinterpret_cast<SensorCmd*>(msgdata)->result.exec_result);
+              reinterpret_cast<FAR SensorCmd *>(msgdata)->result.exec_result);
       return SS_ECODE_DSP_INIT_ERROR;
     }
 
@@ -290,9 +295,9 @@ int StepCounterClass::sendInit(void)
 }
 
 /*--------------------------------------------------------------------------*/
-int StepCounterClass::write(sensor_command_data_mh_t* command)
+int StepCounterClass::write(FAR sensor_command_data_mh_t *command)
 {
-  struct exe_mh_s       exe_mh;
+  struct exe_mh_s exe_mh;
 
   /* copy memhandle of data */
 
@@ -306,8 +311,8 @@ int StepCounterClass::write(sensor_command_data_mh_t* command)
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  SensorCmd   *dsp_cmd  = (SensorCmd*)exe_mh.cmd.getPa();
-  SensorExecStepCounter *exec_prm = &dsp_cmd->exec_step_counter_cmd;
+  FAR SensorCmd *dsp_cmd  = (FAR SensorCmd *)exe_mh.cmd.getPa();
+  FAR SensorExecStepCounter *exec_prm = &dsp_cmd->exec_step_counter_cmd;
 
   dsp_cmd->header.sensor_type = StepCounter;
   dsp_cmd->header.event_type  = ExecEvent;
@@ -318,19 +323,20 @@ int StepCounterClass::write(sensor_command_data_mh_t* command)
     {
       case accelID:
         {
-          exec_prm->cmd_type                 = STEP_COUNTER_CMD_UPDATE_ACCELERATION;
+          exec_prm->cmd_type                 =
+            STEP_COUNTER_CMD_UPDATE_ACCELERATION;
           exec_prm->update_acc.time_stamp    = command->time;
           exec_prm->update_acc.sampling_rate = command->fs;
           exec_prm->update_acc.sample_num    = command->size;
           exec_prm->update_acc.p_data        =
-            reinterpret_cast<ThreeAxisSample*>(exe_mh.data.getPa());
+            reinterpret_cast<FAR ThreeAxisSample *>(exe_mh.data.getPa());
         }
         break;
 
       case gnssID:
         {
           exec_prm->cmd_type = STEP_COUNTER_CMD_UPDATE_GPS;
-          exec_prm->update_gps = *(reinterpret_cast<GnssSampleData*>
+          exec_prm->update_gps = *(reinterpret_cast<FAR GnssSampleData *>
                                     (exe_mh.data.getPa()));
         }
         break;
@@ -368,12 +374,13 @@ int StepCounterClass::write(sensor_command_data_mh_t* command)
 /*--------------------------------------------------------------------------*/
 void StepCounterClass::set_callback(void)
 {
-  struct exe_mh_s          exe_mh = m_exe_que.top();
+  struct exe_mh_s exe_mh = m_exe_que.top();
   sensor_command_data_mh_t packet;
 
   /* Create command. */
+
   packet.header.code = SendData;
-  packet.header.size = 4; /*tentative*/
+  packet.header.size = sizeof(sensor_command_header_t);
   packet.self        = stepcounterID;
   packet.time        = 0;
   packet.fs          = 0;
@@ -414,7 +421,7 @@ int StepCounterClass::receive(void)
 }
 
 /*--------------------------------------------------------------------------*/
-int StepCounterClass::set(StepCounterSetting *set_param)
+int StepCounterClass::set(FAR StepCounterSetting *set_param)
 {
   struct exe_mh_s exe_mh;
 
@@ -428,7 +435,7 @@ int StepCounterClass::set(StepCounterSetting *set_param)
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  SensorCmd *dsp_cmd = (SensorCmd *)exe_mh.cmd.getPa();
+  FAR SensorCmd *dsp_cmd = (FAR SensorCmd *)exe_mh.cmd.getPa();
 
   /* Send command. */
 

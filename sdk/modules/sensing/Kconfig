@@ -19,7 +19,22 @@ config SENSING_MANAGER_POWERCTRL
 	---help---
 		To use SS_SendSensorSetPower() API, enable this.
 
-endif
+config SENSING_MANAGER_DEBUG_FEATURE
+	bool "Sensing manager debug feature"
+	default n
+
+if SENSING_MANAGER_DEBUG_FEATURE
+
+config SENSING_MANAGER_DEBUG_ERROR
+	bool "Sensing manager debug error"
+	default n
+
+config SENSING_MANAGER_DEBUG_INFO
+	bool "Sensing manager debug info"
+	default n
+
+endif # SENSING_MANAGER_DEBUG_FEATURE
+endif # SENSING_MANAGER
 
 source "$SDKDIR/modules/sensing/gnss/Kconfig"
 source "$SDKDIR/modules/sensing/barometer/Kconfig"

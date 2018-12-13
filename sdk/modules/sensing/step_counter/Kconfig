@@ -9,3 +9,21 @@ config SENSING_STEPCOUNTER
 	---help---
 		Enable support for stepcounter.
 
+if SENSING_STEPCOUNTER
+config SENSING_STEPCOUNTER_DEBUG_FEATURE
+	bool "Step counter debug feature"
+	default n
+
+if SENSING_STEPCOUNTER_DEBUG_FEATURE
+
+config SENSING_STEPCOUNTER_DEBUG_ERROR
+	bool "Step counter debug error"
+	default n
+
+config SENSING_STEPCOUNTER_DEBUG_INFO
+	bool "Step counter debug info"
+	default n
+
+endif # SENSING_STEPCOUNTER_DEBUG_FEATURE
+
+endif # SENSING_STEPCOUNTER

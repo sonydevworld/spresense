@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <sdk/config.h>
+#include <sdk/debug.h>
 #include <nuttx/arch.h>
 
 #include "sensor_manager.h"
@@ -45,6 +46,19 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+/* Manager debug feature. */
+
+#ifdef CONFIG_SENSING_MANAGER_DEBUG_ERROR
+#  define sensor_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#else
+#  define sensor_err(fmt, ...)
+#endif
+#ifdef CONFIG_SENSING_MANAGER_DEBUG_INFO
+#  define sensor_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#else
+#  define sensor_info(fmt, ...)
+#endif
 
 #define SS_TASK_PRIORITY           110
 #define SS_TASK_MANAGER_STACK_SIZE 2048
@@ -339,7 +353,6 @@ void SensorManager::send_result(MsgPacket* packet)
     {
       if (j & (0x01 << i))
         {
-          /* tentative */
           j &= ~(0x01 << i);
         }
     }
