@@ -253,6 +253,11 @@ tls_socket_init(void)
       while ((cert_info = readdir(dirp)) != NULL);
     }
 
+  if (dirp != NULL)
+    {
+      closedir(dirp);
+    }
+
   mbedtls_ssl_conf_ca_chain(&g_ssl_conf, &g_ssl_ca, NULL);
   mbedtls_ssl_conf_authmode(&g_ssl_conf, MBEDTLS_SSL_VERIFY_REQUIRED);
 
@@ -271,6 +276,11 @@ tls_socket_init(void)
   return;
 
 exit:
+  if (dirp != NULL)
+    {
+      closedir(dirp);
+    }
+
   mbedtls_ssl_config_free(&g_ssl_conf);
   mbedtls_ctr_drbg_free(&g_ctr_drbg);
   mbedtls_entropy_free(&g_entropy);
