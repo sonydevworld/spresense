@@ -366,7 +366,15 @@ int tlstest_main(int argc, char *argv[])
   int exe = 0;
   struct tlstest_t *site;
 
-  if (g_status == 0)
+  if ((g_status == 1) && (argc > 1) && (strncmp(argv[1], "off", 3) == 0))
+    {
+      /* LTE finish only */
+      g_status = 0;
+      lte_fin();
+      return 0;
+    }
+
+  else if (g_status == 0)
     {
       /* LTE connect */ 
       printf("Start to LTE connect\n");
