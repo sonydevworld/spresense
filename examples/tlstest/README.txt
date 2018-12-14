@@ -36,3 +36,10 @@ examples/tlstest
   Some test sequence will not satisfy because of mbedTLS implementation.
     15, 16, 19, 24, 25, 31, 44, 45
 
+Notice:
+
+  Need to update Kconfig parameters and prepare files to use this example.
+    EXAMPLES_TLSTEST_DIGICERT_ROOTCA
+    EXAMPLES_TLSTEST_DIGICERT_ROOTG2
+    EXAMPLES_TLSTEST_DIGICERT_HIGH_ROOTCA
+
