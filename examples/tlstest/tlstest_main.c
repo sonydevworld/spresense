@@ -63,10 +63,9 @@
 #ifdef TLSTEST_ENABLE_CAFILE
 static const char* tlstest_calist[] =
 {
-  "rootca_digi.crt",
-  "rootca_digihigh.crt",
-  "rootca_digig2.crt",
-//  "rootca_comodo.crt",
+  CONFIG_EXAMPLES_TLSTEST_DIGICERT_ROOTCA,
+  CONFIG_EXAMPLES_TLSTEST_DIGICERT_ROOTG2,
+  CONFIG_EXAMPLES_TLSTEST_DIGICERT_HIGH_ROOTCA,
   NULL
 };
 #endif
