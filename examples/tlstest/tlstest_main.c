@@ -63,9 +63,10 @@
 #ifdef TLSTEST_ENABLE_CAFILE
 static const char* tlstest_calist[] =
 {
-  CONFIG_EXAMPLES_TLSTEST_DIGICERT_ROOTCA,
-  CONFIG_EXAMPLES_TLSTEST_DIGICERT_ROOTG2,
-  CONFIG_EXAMPLES_TLSTEST_DIGICERT_HIGH_ROOTCA,
+  "rootca_digi.crt",
+  "rootca_digihigh.crt",
+  "rootca_digig2.crt",
+//  "rootca_comodo.crt",
   NULL
 };
 #endif
@@ -366,15 +367,7 @@ int tlstest_main(int argc, char *argv[])
   int exe = 0;
   struct tlstest_t *site;
 
-  if ((g_status == 1) && (argc > 1) && (strncmp(argv[1], "off", 3) == 0))
-    {
-      /* LTE finish only */
-      g_status = 0;
-      lte_fin();
-      return 0;
-    }
-
-  else if (g_status == 0)
+  if (g_status == 0)
     {
       /* LTE connect */ 
       printf("Start to LTE connect\n");

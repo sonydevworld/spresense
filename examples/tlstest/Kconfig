@@ -27,16 +27,8 @@ config EXAMPLES_TLSTEST_STACKSIZE
 	int "tlstest stack size"
 	default 2048
 
-config EXAMPLES_TLSTEST_DIGICERT_ROOTCA
-	string "DigiCert Global Root CA file"
-	default "/mnt/vfat/DigiCertGlobalRootCA.crt"
-
-config EXAMPLES_TLSTEST_DIGICERT_ROOTG2
-	string "DigiCert Global Root G2 file"
-	default "/mnt/vfat/DigiCertGlobalRootG2.crt"
-
-config EXAMPLES_TLSTEST_DIGICERT_HIGH_ROOTCA
-	string "DigiCert High Assuarance EV Root CA file"
-	default "/mnt/vfat/DigiCertHighAssuaranceEVRootCA.crt"
+config EXAMPLES_TLSTEST_CERTPATH
+	string "Path for cert files"
+	default "/mnt/vfat/cert"
 
 endif

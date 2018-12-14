@@ -374,6 +374,7 @@ void ssl_init(const char** cafile, int verify)
 {
   int ret;
   size_t cnt;
+  char cabuffer[256];
 
   if (ssl_status)
     {
@@ -439,8 +440,15 @@ void ssl_init(const char** cafile, int verify)
     {
       while (*cafile != NULL)
         {
-          printf("mbedtls root certificate : add [%s]\n", *cafile);
-          if ((ret = mbedtls_x509_crt_parse_file(&ssl_ca, *cafile)) != 0)
+          memset(cabuffer, 0, 256);
+#ifdef CONFIG_EXAMPLES_TLSTEST_CERTPATH
+          strncpy(cabuffer, CONFIG_EXAMPLES_TLSTEST_CERTPATH, 256);
+#endif
+          strncat(cabuffer, "/", 1);
+          strncat(cabuffer, *cafile, 256-(strlen(cabuffer)));
+          printf("mbedtls root certificate : add [%s]\n", cabuffer);
+
+          if ((ret = mbedtls_x509_crt_parse_file(&ssl_ca, cabuffer)) != 0)
             {
               printf("mbedtls_x509_crt_parse_file error : -0x%x\n", -ret);
               ssl_fin();
