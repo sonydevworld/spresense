@@ -43,6 +43,7 @@
 #include "evthdlbs.h"
 #include "apicmd_power.h"
 #include "apicmdhdlrbs.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Public Data
@@ -63,6 +64,8 @@ static void poweron_job(FAR void *arg)
   power_control_cb_t                    callback;
 
   ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
+
+  altcom_set_status(ALTCOM_STATUS_POWER_ON);
 
   if ((ret == 0) && (callback))
     {

@@ -40,7 +40,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define WRKRID_API_CALLBACK_THREAD (0)
+#define WRKRID_API_CALLBACK_THREAD     (0)
+#define WRKRID_RESTART_CALLBACK_THREAD (1)
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_WRKRID_H */
 

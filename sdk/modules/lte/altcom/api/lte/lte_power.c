@@ -49,6 +49,7 @@
 #include "wrkrid.h"
 #include "apicmd.h"
 #include "apiutil.h"
+#include "altcom_status.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -78,6 +79,87 @@ extern void lte_callback_init(void);
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: power_callback_job
+ *
+ * Description:
+ *   This function is an API callback for power.
+ *
+ * Input Parameters:
+ *  arg    Pointer to input argment.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void restart_callback_job(FAR void *arg)
+{
+  int32_t             ret;
+  FAR uint8_t        *cmdbuff;
+  power_control_cb_t  callback;
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_POWER_ON, POWERON_DATA_LEN);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
+    }
+  else
+    {
+      /* Send API command to modem */
+
+      ret = altcom_send_and_free(cmdbuff);
+    }
+
+  /* If fail, execute the callback */
+
+  if (0 > ret)
+    {
+      ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
+
+      if ((ret == 0) && (callback))
+        {
+          callback(LTE_RESULT_ERROR);
+        }
+      else
+        {
+          DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+        }
+
+      lte_power_off();
+    }
+}
+
+/****************************************************************************
+ * Name: restart_callback
+ *
+ * Description:
+ *   This function is an restart callback.
+ *
+ * Input Parameters:
+ *  arg    Pointer to input argment.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void restart_callback(uint32_t state)
+{
+  int ret;
+
+  altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
+
+  /* Call the API callback function in the context of worker thread */
+
+  ret = altcom_runjob(WRKRID_RESTART_CALLBACK_THREAD,
+                      restart_callback_job, NULL);
+  DBGIF_ASSERT(0 == ret, "Failed to job to worker\n");
+}
 
 /****************************************************************************
  * Name: power_callback_job
@@ -143,6 +225,23 @@ int32_t modem_powerctrl(bool on)
     }
   else
     {
+
+      if (on)
+        {
+          ret = ioctl(fd, MODEM_IOC_PM_ERR_REGISTERCB,
+                      (unsigned long)restart_callback);
+          if (0 > ret)
+            {
+              /* Store errno */
+
+              l_errno = errno;
+              ret = -l_errno;
+
+              DBGIF_LOG2_ERROR("Failed to ioctl(0x%08x). %d\n", MODEM_IOC_PM_ERR_REGISTERCB, l_errno);
+              
+            }
+        }
+
       if (on)
         {
           req = MODEM_IOC_POWERON;
@@ -177,6 +276,81 @@ int32_t modem_powerctrl(bool on)
  ****************************************************************************/
 
 /****************************************************************************
+ * Name: lte_power_on
+ *
+ * Description:
+ *   Power on modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t lte_power_on(void)
+{
+  int32_t ret;
+  int32_t state = altcom_get_status();
+
+  /* Check lte status */
+
+  switch (state)
+    {
+      case ALTCOM_STATUS_INITIALIZED:
+        /* Power on the modem */
+
+        ret = modem_powerctrl(LTE_POWERON);
+        if (ret == 0)
+          {
+            altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
+          }
+
+        break;
+      case ALTCOM_STATUS_RESTART_ONGOING:
+        ret = -EINPROGRESS;
+        break;
+      case ALTCOM_STATUS_POWER_ON:
+        ret = -EALREADY;
+        break;
+      case ALTCOM_STATUS_UNINITIALIZED:
+      default:
+        ret = -EOPNOTSUPP;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: lte_power_off
+ *
+ * Description:
+ *   Power off modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t lte_power_off(void)
+{
+  int32_t ret;
+
+  /* Power on the modem */
+
+  ret = modem_powerctrl(LTE_POWEROFF);
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: lte_power_control
  *
  * Description:
@@ -196,7 +370,6 @@ int32_t modem_powerctrl(bool on)
 int32_t lte_power_control(bool on, power_control_cb_t callback)
 {
   int32_t     ret;
-  FAR uint8_t *cmdbuff;
 
   /* Return error if callback is NULL */
 
@@ -206,60 +379,23 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
+  /* Register API callback */
 
-  if (!altcom_isinit())
+  ALTCOM_REG_CALLBACK(ret, g_lte_power_callback, callback);
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      ret = -EPERM;
-    }
-  else
-    {
-      /* Register API callback */
-
-      ALTCOM_REG_CALLBACK(ret, g_lte_power_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-        }
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
     }
 
   /* Accept the API */
 
   if (0 == ret)
     {
-      /* Power on or off the modem */
-
-      ret = modem_powerctrl(on);
-
-      /* If fail, there is no opportunity to execute the callback,
-       * so clear it here. */
-
-      if (0 > ret)
-        {
-          /* Clear registered callback */
-
-          ALTCOM_CLR_CALLBACK(g_lte_power_callback);
-          return ret;
-        }
-
       if (LTE_POWERON == on)
         {
-          /* Allocate API command buffer to send */
+          /* Power on the modem */
 
-          cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_POWER_ON,
-            POWERON_DATA_LEN);
-          if (!cmdbuff)
-            {
-              DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-              ret = -ENOMEM;
-            }
-          else
-            {
-              /* Send API command to modem */
-
-              ret = altcom_send_and_free(cmdbuff);
-            }
+          ret = lte_power_on();
 
           /* If fail, there is no opportunity to execute the callback,
            * so clear it here. */
@@ -269,16 +405,16 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
               /* Clear registered callback */
 
               ALTCOM_CLR_CALLBACK(g_lte_power_callback);
-
-              (void)modem_powerctrl(false);
-            }
-          else
-            {
-              ret = 0;
+              lte_power_off();
+              return ret;
             }
         }
       else
         {
+          /* Power off the modem */
+
+          ret = lte_power_off();
+
           /* Call the API callback function in the context of worker thread */
 
           ret = altcom_runjob(WRKRID_API_CALLBACK_THREAD,

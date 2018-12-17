@@ -34,6 +34,7 @@
 ############################################################################
 
 CSRCS += ltebuilder.c apiutil.c
+CSRCS += altcom_status.c altcom_callbacks.c altcombs.c
 
 # Add the src directory to the build
 

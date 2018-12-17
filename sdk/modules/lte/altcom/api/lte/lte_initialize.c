@@ -45,6 +45,7 @@
 #include "ltebuilder.h"
 #include "director.h"
 #include "dbg_if.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Public Data
@@ -89,12 +90,16 @@ int32_t lte_initialize(void)
       if (ret < 0)
         {
           DBGIF_LOG1_ERROR("director_construct() error.", ret);
-          altcom_set_finalized();
         }
       else
         {
-          ret = 0;
+          ret = altcom_set_status(ALTCOM_STATUS_INITIALIZED);
         }
+    }
+
+  if (ret < 0)
+    {
+      altcom_set_finalized();
     }
 
   return ret;

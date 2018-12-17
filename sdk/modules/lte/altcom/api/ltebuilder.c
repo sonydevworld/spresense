@@ -87,12 +87,17 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICALLBACK_THRD_STACKSIZE (2048)
-#define APICALLBACK_THRD_PRIO      SYS_TASK_PRIO_NORMAL
-#define APICALLBACK_THRD_NUM       (1)
-#define APICALLBACK_THRD_QNUM      (16)  /* tentative */
+#define APICALLBACK_THRD_STACKSIZE     (2048)
+#define APICALLBACK_THRD_PRIO          SYS_TASK_PRIO_NORMAL
+#define APICALLBACK_THRD_QNUM          (16)  /* tentative */
+
+#define RESTARTCALLBACK_THRD_STACKSIZE (1024)
+#define RESTARTCALLBACK_THRD_PRIO      SYS_TASK_PRIO_NORMAL
+#define RESTARTCALLBACK_THRD_QNUM      (2)
+
+#define THRDSETLIST_NUM                (2)
+
 #define BLOCKSETLIST_NUM (sizeof(g_blk_settings) / sizeof(g_blk_settings[0]))
-#define THRDSETLIST_NUM            (1)
 
 /****************************************************************************
  * Private Function Prototypes
@@ -266,17 +271,35 @@ static int32_t bufferpool_uninitialize(void)
 static int32_t workerthread_initialize(void)
 {
   int32_t                    ret;
-  struct thrdfctry_thrdset_s settings;
+  struct thrdfctry_thrdset_s settings[THRDSETLIST_NUM];
 
   /* worker thread settings for API callback */
 
-  settings.id                     = WRKRID_API_CALLBACK_THREAD;
-  settings.type                   = THRDFCTRY_SEQUENTIAL;
-  settings.u.seqset.thrdstacksize = APICALLBACK_THRD_STACKSIZE;
-  settings.u.seqset.thrdpriority = APICALLBACK_THRD_PRIO;
-  settings.u.seqset.maxquenum    = APICALLBACK_THRD_QNUM;
+  settings[WRKRID_API_CALLBACK_THREAD].id
+    = WRKRID_API_CALLBACK_THREAD;
+  settings[WRKRID_API_CALLBACK_THREAD].type
+    = THRDFCTRY_SEQUENTIAL;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.thrdstacksize
+    = APICALLBACK_THRD_STACKSIZE;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.thrdpriority
+    = APICALLBACK_THRD_PRIO;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.maxquenum
+    = APICALLBACK_THRD_QNUM;
 
-  ret = thrdfctry_init(&settings, THRDSETLIST_NUM);
+  /* worker thread settings for restart callback */
+
+  settings[WRKRID_RESTART_CALLBACK_THREAD].id
+    = WRKRID_RESTART_CALLBACK_THREAD;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].type
+    = THRDFCTRY_SEQUENTIAL;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.thrdstacksize
+    = RESTARTCALLBACK_THRD_STACKSIZE;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.thrdpriority
+    = RESTARTCALLBACK_THRD_PRIO;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.maxquenum
+    = RESTARTCALLBACK_THRD_QNUM;
+
+  ret = thrdfctry_init(settings, THRDSETLIST_NUM);
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("thrdfctry_init() error :%d.\n", ret);
