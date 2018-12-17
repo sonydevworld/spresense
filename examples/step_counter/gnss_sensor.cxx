@@ -50,7 +50,6 @@
 
 #include "gnss_sensor.h"
 #include "gpsutils/cxd56_gnss_nmea.h"
-#include <arch/chip/cxd56_gnss.h>
 
 /****************************************************************************
  * Pre-processor Definitions
