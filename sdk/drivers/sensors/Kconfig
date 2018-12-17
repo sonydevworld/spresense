@@ -11,7 +11,6 @@ if SENSORS
 config BMI160
 	bool "Bosch BMI160 Sensor support"
 	default n
-	select CXD56_SPI
 	---help---
 		Enable driver support for the Bosch BMI160 sensor.
 
