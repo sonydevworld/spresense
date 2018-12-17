@@ -40,5 +40,6 @@ source "$SDKDIR/modules/sensing/gnss/Kconfig"
 source "$SDKDIR/modules/sensing/barometer/Kconfig"
 source "$SDKDIR/modules/sensing/tap/Kconfig"
 source "$SDKDIR/modules/sensing/step_counter/Kconfig"
+source "$SDKDIR/modules/sensing/transport_mode/Kconfig"
 
 endmenu # Sensing Utilities
