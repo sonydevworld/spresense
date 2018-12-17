@@ -1260,10 +1260,7 @@ static int do_xfersleep(FAR struct altmdm_dev_s *priv, uint32_t is_rcvrready)
           m_info("ready to xfer\n");
           notify_xferready(priv);
         }
-      else
-        {
-          altmdm_pm_notify_reset(priv);
-        }
+      altmdm_pm_notify_reset(priv);
     }
 
   return ret;
@@ -1513,10 +1510,7 @@ static void done_xfer(FAR struct altmdm_dev_s *priv, uint32_t xfer_mode,
             m_info("ready to xfer\n");
             notify_xferready(priv);
           }
-        else
-          {
-            altmdm_pm_notify_reset(priv);
-          }
+        altmdm_pm_notify_reset(priv);
         break;
 
       case MODE_TRXRESET:
@@ -1526,10 +1520,7 @@ static void done_xfer(FAR struct altmdm_dev_s *priv, uint32_t xfer_mode,
             m_info("ready to xfer\n");
             notify_xferready(priv);
           }
-        else
-          {
-            altmdm_pm_notify_reset(priv);
-          }
+        altmdm_pm_notify_reset(priv);
         if (spidev->tx_param.is_bufful)
           {
             spidev->tx_param.is_bufful = 0;
