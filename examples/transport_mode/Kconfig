@@ -1,0 +1,65 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_SENSOR_TRAM
+	bool "Transport mode sensor example"
+	default n
+	---help---
+		Enable the transport-mode sensor example
+
+if EXAMPLES_SENSOR_TRAM
+
+config EXAMPLES_SENSOR_TRAM_PROGNAME
+	string "Program name"
+	default "transport_mode"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_SENSOR_TRAM_PRIORITY
+	int "Transport mode task priority"
+	default 100
+
+config EXAMPLES_SENSOR_TRAM_STACKSIZE
+	int "Transport mode stack size"
+	default 2048
+
+config EXAMPLES_SENSOR_TRAM_CHANGE_SCU_SIGNO
+    int "Accelerator sensor's inner changing SCU setting signal"
+    default 16
+
+config EXAMPLES_SENSOR_TRAM_ACCEL_TM_SIGNO
+    int "Accelerator sensor's inner timer signal"
+    default 15
+
+config EXAMPLES_SENSOR_TRAM_ACCEL_WM_SIGNO
+    int "Accelerator sensor signal for waterMark"
+    default 14
+
+config EXAMPLES_SENSOR_TRAM_ACCEL_EV_SIGNO
+    int "Accelerator sensor signal for event"
+    default 13
+
+config EXAMPLES_SENSOR_TRAM_MAG_SIGNO
+    int "Magnetometer sensor signal"
+    default 12
+
+config EXAMPLES_SENSOR_TRAM_PRESS_SIGNO
+    int "Pressure sensor signal"
+    default 11
+
+config EXAMPLES_SENSOR_TRAM_TEMP_SIGNO
+    int "Temperature sensor signal"
+    default 10
+
+config EXAMPLES_SENSOR_TRAM_DETAILED_INFO
+    bool "Enable detailed information"
+    default n
+    select LIBC_FLOATINGPOINT
+    ---help---
+      Enable to get likelihood of all modes
+
+endif
