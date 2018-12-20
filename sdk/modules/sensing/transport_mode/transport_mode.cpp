@@ -45,7 +45,7 @@
 #include <arch/chip/cxd56_scu.h>
 
 #include "sensing/logical_sensor/transport_mode.h"
-#include "sensing/logical_sensor/sensor_command.h"
+#include "sensing/logical_sensor/transport_mode_command.h"
 #include "dsp_sensor_version.h"
 #include "tram_state_transition.h"
 
@@ -352,23 +352,23 @@ int TramClass::sendInit(float* likelihood)
   /* Tentative : Not absolutely necessary to use MemHandle. */
 
   MemMgrLite::MemHandle mh;
-  if (mh.allocSeg(m_cmd_pool_id, sizeof(SensorCmd)) != ERR_OK)
+  if (mh.allocSeg(m_cmd_pool_id, sizeof(SensorCmdTram)) != ERR_OK)
     {
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  FAR SensorCmd *dsp_cmd = (SensorCmd*)mh.getVa();
+  FAR SensorCmdTram *dsp_cmd = (FAR SensorCmdTram *)mh.getVa();
 
   dsp_cmd->header.sensor_type = TransportationMode;
   dsp_cmd->header.event_type  = InitEvent;
 
-  dsp_cmd->init_tram_cmd.likelihood = likelihood;
+  dsp_cmd->init_cmd.likelihood = likelihood;
 
   /* Disable debug feature. */
 
   TramDebugDumpInfo *debug_info;
 
-  debug_info = &dsp_cmd->init_tram_cmd.debug_dump_info;
+  debug_info = &dsp_cmd->init_cmd.debug_dump_info;
   debug_info->addr = NULL;
   debug_info->size = 0;
 
@@ -387,11 +387,13 @@ int TramClass::sendInit(float* likelihood)
 
   int id = mpmq_receive(&m_mq, &msgdata);
   if ((id != TRAM_CMD_ID) &&
-        (reinterpret_cast<SensorCmd*>(msgdata)->result.exec_result
+        (reinterpret_cast<FAR SensorCmdTram *>(msgdata)->result.exec_result
           != SensorOK))
     {
       tram_err("init error! %08x : %d\n",
-               id, reinterpret_cast<SensorCmd*>(msgdata)->result.exec_result);
+               id,
+               reinterpret_cast<FAR SensorCmdTram *>
+                (msgdata)->result.exec_result);
       return SS_ECODE_DSP_INIT_ERROR;
     }
 
@@ -409,12 +411,12 @@ int TramClass::write(sensor_command_data_mh_t* command)
 
   /* Allocate segment of command. */
 
-  if (exe_mh.cmd.allocSeg(m_cmd_pool_id, sizeof(SensorCmd)) != ERR_OK)
+  if (exe_mh.cmd.allocSeg(m_cmd_pool_id, sizeof(SensorCmdTram)) != ERR_OK)
     {
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  SensorCmd* dsp_cmd = (SensorCmd*)exe_mh.cmd.getVa();
+  FAR SensorCmdTram *dsp_cmd = (FAR SensorCmdTram *)exe_mh.cmd.getVa();
 
   dsp_cmd->header.sensor_type = TransportationMode;
   dsp_cmd->header.event_type  = ExecEvent;
@@ -425,40 +427,40 @@ int TramClass::write(sensor_command_data_mh_t* command)
     {
       case accelID:
         {
-          dsp_cmd->exec_tram_cmd.type                   = TramSensorAcc;
-          dsp_cmd->exec_tram_cmd.acc_data.time_stamp    = command->time;
-          dsp_cmd->exec_tram_cmd.acc_data.sampling_rate = command->fs;
-          dsp_cmd->exec_tram_cmd.acc_data.sample_num    = command->size;
-          dsp_cmd->exec_tram_cmd.acc_data.p_data        =
+          dsp_cmd->exec_cmd.type                   = TramSensorAcc;
+          dsp_cmd->exec_cmd.acc_data.time_stamp    = command->time;
+          dsp_cmd->exec_cmd.acc_data.sampling_rate = command->fs;
+          dsp_cmd->exec_cmd.acc_data.sample_num    = command->size;
+          dsp_cmd->exec_cmd.acc_data.p_data        =
             reinterpret_cast<ThreeAxisSample*>(exe_mh.data.getPa());
         }
         break;
 
       case magID:
         {
-          dsp_cmd->exec_tram_cmd.type                   = TramSensorMag;
-          dsp_cmd->exec_tram_cmd.mag_data.time_stamp    = command->time;
-          dsp_cmd->exec_tram_cmd.mag_data.sampling_rate = command->fs;
-          dsp_cmd->exec_tram_cmd.mag_data.sample_num    = command->size;
-          dsp_cmd->exec_tram_cmd.mag_data.p_data        =
+          dsp_cmd->exec_cmd.type                   = TramSensorMag;
+          dsp_cmd->exec_cmd.mag_data.time_stamp    = command->time;
+          dsp_cmd->exec_cmd.mag_data.sampling_rate = command->fs;
+          dsp_cmd->exec_cmd.mag_data.sample_num    = command->size;
+          dsp_cmd->exec_cmd.mag_data.p_data        =
             reinterpret_cast<ThreeAxisSample*>(exe_mh.data.getPa());
         }
         break;
 
       case barometerID:
         {
-          dsp_cmd->exec_tram_cmd.type                   = TramSensorBar;
-          dsp_cmd->exec_tram_cmd.bar_data.time_stamp    = command->time;
-          dsp_cmd->exec_tram_cmd.bar_data.sampling_rate = command->fs;;
-          dsp_cmd->exec_tram_cmd.bar_data.sample_num    = command->size;
-          dsp_cmd->exec_tram_cmd.bar_data.p_data        =
+          dsp_cmd->exec_cmd.type                   = TramSensorBar;
+          dsp_cmd->exec_cmd.bar_data.time_stamp    = command->time;
+          dsp_cmd->exec_cmd.bar_data.sampling_rate = command->fs;;
+          dsp_cmd->exec_cmd.bar_data.sample_num    = command->size;
+          dsp_cmd->exec_cmd.bar_data.p_data        =
             reinterpret_cast<uint32_t*>(exe_mh.data.getPa());
         }
         break;
 
       default:
         {
-          dsp_cmd->exec_tram_cmd.type = TramSensorAcc;
+          dsp_cmd->exec_cmd.type = TramSensorAcc;
         }
         break;
     }

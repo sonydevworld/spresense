@@ -48,6 +48,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "sensing/logical_sensor/sensor_command.h"
 #include "sensing/logical_sensor/physical_command.h"
 
 /**
@@ -212,6 +213,42 @@ typedef struct{
                       */
 
 } CompassData;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorResultCompass
+ * @brief the structure of sensor result on compass commands.
+ */
+typedef struct
+{
+  SensorExecResult exec_result; /**< Execute resule.  */
+
+  union
+    {
+      CompassData         compass;      /**< Acquired azimuth angle.     */
+      SensorAssertionInfo assert_info;  /**< Assert information. */
+    };
+} SensorResultCompass;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorCmdCompass
+ * @brief the structure of compass commands.
+ */
+
+typedef struct
+{
+  SensorCmdHeader header;  /**< Sensor command header. */
+
+  union
+    {
+      SensorInitCompass  init_cmd;  /**< Initialization command. */
+      SensorExecCompass  exec_cmd;  /**< Execution command.      */
+      SensorFlushCompass flush_cmd; /**< Termination command.    */
+    };
+
+  SensorResultCompass result; /**< Result information. */
+} SensorCmdCompass;
 
 #ifdef __cplusplus
 };

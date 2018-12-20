@@ -48,6 +48,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "sensing/logical_sensor/sensor_command.h"
 #include "sensing/logical_sensor/physical_command.h"
 
 /**
@@ -156,6 +157,38 @@ typedef struct
 typedef struct {
 
 } SensorFlushTramlite;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorResultTramlite
+ * @brief the structure of sensor result on transport mode(lite) commands.
+ */
+typedef struct
+{
+  SensorExecResult exec_result;     /**< Execute resule.  */
+  SensorAssertionInfo assert_info;  /**< Assert information. */
+ 
+} SensorResultTramlite;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorCmdTramlite
+ * @brief the structure of transport mode(lite) commands.
+ */
+
+typedef struct
+{
+  SensorCmdHeader header;  /**< Sensor command header. */
+
+  union
+    {
+      SensorInitTramlite  init_cmd;  /**< Initialization command. */
+      SensorExecTramlite  exec_cmd;  /**< Execution command.      */
+      SensorFlushTramlite flush_cmd; /**< Termination command.    */
+    };
+
+  SensorResultTramlite result; /**< Result information. */
+} SensorCmdTramlite;
 
 #ifdef __cplusplus
 };

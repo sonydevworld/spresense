@@ -48,6 +48,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "sensing/logical_sensor/sensor_command.h"
+
 /**
  * @file arm_gesture_command.h
  */
@@ -195,7 +197,43 @@ typedef struct
 typedef struct {
 
 } SensorFlushGesture;
+
 /*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorResultArmGesture
+ * @brief the structure of sensor result on arm gesture commands.
+ */
+typedef struct
+{
+  SensorExecResult exec_result; /**< Execute resule.  */
+
+  union
+    {
+      GestureArmPosition  arm_pos;      /**< Acquired arm position.      */
+      GestureTypes        gesture;      /**< Type of recognized gesture. */
+      SensorAssertionInfo assert_info;  /**< Assert information. */
+    };
+} SensorResultArmGesture;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorCmdArmGesture
+ * @brief the structure of arm gesture commands.
+ */
+
+typedef struct
+{
+  SensorCmdHeader header;  /**< Sensor command header. */
+
+  union
+    {
+      SensorInitGesture  init_cmd;  /**< Initialization command. */
+      SensorExecGesture  exec_cmd;  /**< Execution command.      */
+      SensorFlushGesture flush_cmd; /**< Termination command.    */
+    };
+
+  SensorResultArmGesture result; /**< Result information. */
+} SensorCmdArmGesture;
 
 #ifdef __cplusplus
 };

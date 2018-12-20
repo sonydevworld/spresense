@@ -39,23 +39,23 @@
 /* (change library).(change of DSP interface).(change of internal processing) */
 /* Gesture */
 
-#define DSP_ARMGESTURE_VERSION    0x010102    /* 01.01.02 */
+#define DSP_ARMGESTURE_VERSION    0x010200    /* 01.02.00 */
 
 /* Orientation */
 
-#define DSP_ORIENTATION_VERSION   0x010201    /* 01.02.01 */
+#define DSP_ORIENTATION_VERSION   0x010300    /* 01.03.00 */
 
 /* Step_counter */
 
-#define DSP_STEP_COUNTER_VERSION  0x010102    /* 01.01.02 */
+#define DSP_STEP_COUNTER_VERSION  0x010200    /* 01.02.00 */
 
 /* Transport_recognition */
 
-#define DSP_TRAM_VERSION          0x010102    /* 01.01.02 */
+#define DSP_TRAM_VERSION          0x010200    /* 01.02.00 */
 
 /* Transport_recognition_lite */
 
-#define DSP_TRAMLITE_VERSION      0x010102    /* 01.01.02 */
+#define DSP_TRAMLITE_VERSION      0x010200    /* 01.02.00 */
 
 #endif /* _MODULES_SENSING_INCLUDE_DSP_SENSOR_VERSION_H */
 

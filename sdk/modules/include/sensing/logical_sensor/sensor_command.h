@@ -51,11 +51,6 @@
  */
 
 #include "sensing/logical_sensor/sensor_assertion.h"
-#include "sensing/logical_sensor/step_counter_command.h"
-#include "sensing/logical_sensor/arm_gesture_command.h"
-#include "sensing/logical_sensor/compass_command.h"
-#include "sensing/logical_sensor/transport_mode_command.h"
-#include "sensing/logical_sensor/transport_mode_lite_command.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,63 +132,8 @@ typedef struct
                              * Indicates the sensor type of the command.
                              * See SensorType in sensor_cmd_defs.h.
                              */
-
+  uint8_t    reserved;
 } SensorCmdHeader;
-
-/*--------------------------------------------------------------------------*/
-/**
- * @struct SensorResult
- * @brief the structure of sensor result on sensor commands.
- */
-typedef struct
-{
-  SensorExecResult exec_result; /**< execute resule.  */
-
-  union
-    {
-      StepCounterStepInfo steps;        /**< Step count.                 */
-      GestureArmPosition  arm_pos;      /**< Acquired arm position.      */
-      GestureTypes        gesture;      /**< Type of recognized gesture. */
-      CompassData         compass;      /**< Acquired azimuth angle.     */
-      SensorAssertionInfo assert_info;  /**< Assert information.         */
-    };
-} SensorResult;
-
-/*--------------------------------------------------------------------------*/
-/**
- * @struct SensorCmd
- * @brief the structure of sensor commands.
- */
-
-typedef struct
-{
-  SensorCmdHeader header;  /**< Sensor command header. */
-
-  union
-    {
-      SensorInitStepCounter  init_step_counter_cmd; /**< StepCounter initialization command. */
-      SensorInitGesture      init_gesture_cmd;      /**< Gesture initialization command.     */
-      SensorInitCompass      init_compass_cmd;      /**< Compass initialization command.     */
-      SensorInitTram         init_tram_cmd;         /**< TRAM initialization command.        */
-      SensorInitTramlite     init_tramlite_cmd;     /**< TRAMLITE initialization command.    */
-
-      SensorExecStepCounter  exec_step_counter_cmd; /**< StepCounter execution command.      */
-      SensorExecGesture      exec_gesture_cmd;      /**< Gesture execution command.          */
-      SensorExecCompass      exec_compass_cmd;      /**< Compass execution command    .      */
-      SensorExecTram         exec_tram_cmd;         /**< TRAM initialization command.        */
-      SensorExecTramlite     exec_tramlite_cmd;     /**< TRAMLITE initialization command.    */
-
-      SensorFlushStepCounter flush_step_counter_cmd;/**< StepCounter termination command.    */
-      SensorFlushGesture     flush_gesture_cmd;     /**< Gesture termination command.        */
-      SensorFlushCompass     flush_compass_cmd;     /**< Compass termination command.        */
-      SensorFlushTram        flush_tram_cmd;        /**< TRAM termination command.           */
-      SensorFlushTramlite    flush_tramlite_cmd;    /**< TRAMLITE termination command.       */
-    };
-
-  SensorResult result; /**< Result value
-                        *   (execution result, acquired content)
-                        */
-} SensorCmd;
 
 /****************************************************************************
  * Inline Functions

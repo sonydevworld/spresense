@@ -48,8 +48,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "sensing/logical_sensor/sensor_command.h"
 #include "sensing/logical_sensor/physical_command.h"
-#include "sensing/logical_sensor/step_counter.h"
 
 /**
  * @file step_counter_command.h
@@ -73,6 +73,56 @@ extern "C" {
  * Public Types
  ****************************************************************************/
 
+/**
+ * @enum StepCounterStepMode
+ * @brief Step modes
+ */
+typedef enum
+{
+  STEP_COUNTER_MODE_FIXED_LENGTH = 0, /**<
+                                       * Using fixed length
+                                       * (not using existing stride table).
+                                       */
+  STEP_COUNTER_MODE_NEW_TABLE,        /**<
+                                       * Create a new stride table
+                                       * with stepLength, and use the table.
+                                       */
+  STEP_COUNTER_MODE_STEP_TABLE        /**<
+                                       * Using existing stride table
+                                       * (not using fixed length).
+                                       */
+} StepCounterStepMode;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct StepCounterSetParam
+ * @brief the structure of step setting for initialize.
+ */
+struct step_counter_param_s
+{
+  int32_t              step_length; /**<
+                                     * Step stride setting value.
+                                     * Min 1[cm], Max 249[cm].
+                                     */
+  StepCounterStepMode  step_mode;   /**< Setting of using the stride table. */
+};
+
+typedef struct step_counter_param_s StepCounterSetParam;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct StepCounterSetting
+ * @brief the structure of Accelstep user setting.
+ */
+struct step_counter_setting_s
+{
+  StepCounterSetParam  walking;      /**< User Setting for walking. */
+  StepCounterSetParam  running;      /**< User Setting for running. */
+};
+
+typedef struct step_counter_setting_s StepCounterSetting;
+
+/*--------------------------------------------------------------------------*/
 /**
  * @enum StepCounterMovementType
  * @brief Activity Class
@@ -184,6 +234,42 @@ typedef struct {
                                     *   acceleration sensor data used.
                                     */
 } StepCounterStepInfo;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorResultStepCounter
+ * @brief the structure of sensor result on step counter commands.
+ */
+typedef struct
+{
+  SensorExecResult exec_result; /**< Execute resule.  */
+
+  union
+    {
+      StepCounterStepInfo steps;        /**< Step count.         */
+      SensorAssertionInfo assert_info;  /**< Assert information. */
+    };
+} SensorResultStepCounter;
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @struct SensorCmdStepCounter
+ * @brief the structure of step counter commands.
+ */
+
+typedef struct
+{
+  SensorCmdHeader header;  /**< Sensor command header. */
+
+  union
+    {
+      SensorInitStepCounter  init_cmd;  /**< Initialization command. */
+      SensorExecStepCounter  exec_cmd;  /**< Execution command.      */
+      SensorFlushStepCounter flush_cmd; /**< Termination command.    */
+    };
+
+  SensorResultStepCounter result; /**< Result information. */
+} SensorCmdStepCounter;
 
 #ifdef __cplusplus
 };

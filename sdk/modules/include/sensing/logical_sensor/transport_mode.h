@@ -51,7 +51,7 @@
 #include "sensing/sensor_api.h"
 #include "sensing/sensor_id.h"
 #include "sensing/sensor_ecode.h"
-#include "sensing/logical_sensor/sensor_command.h"
+#include "sensing/logical_sensor/transport_mode_command.h"
 #include "memutils/s_stl/queue.h"
 #include "memutils/memory_manager/MemHandle.h"
 

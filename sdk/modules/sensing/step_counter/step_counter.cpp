@@ -42,7 +42,6 @@
 #include <sys/time.h>
 
 #include "sensing/logical_sensor/step_counter.h"
-#include "sensing/logical_sensor/sensor_command.h"
 #include "sensing/logical_sensor/step_counter_command.h"
 #include "dsp_sensor_version.h"
 
@@ -234,24 +233,24 @@ int StepCounterClass::close(void)
 int StepCounterClass::sendInit(void)
 {
   MemMgrLite::MemHandle mh;
-  if (mh.allocSeg(m_cmd_pool_id, sizeof(SensorCmd)) != ERR_OK)
+  if (mh.allocSeg(m_cmd_pool_id, sizeof(SensorCmdStepCounter)) != ERR_OK)
     {
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  FAR SensorCmd *dsp_cmd = (FAR SensorCmd *)mh.getPa();
+  FAR SensorCmdStepCounter *dsp_cmd = (FAR SensorCmdStepCounter *)mh.getPa();
 
   /* Apply default step setting to command. */
 
   FAR StepCounterSetParam *w_step;
 
-  w_step = &dsp_cmd->init_step_counter_cmd.setting.walking;
+  w_step = &dsp_cmd->init_cmd.setting.walking;
   w_step->step_length = STEP_COUNTER_INITIAL_WALK_STEP_LENGTH;
   w_step->step_mode   = STEP_COUNTER_MODE_STEP_TABLE;
 
   FAR StepCounterSetParam *r_step;
 
-  r_step = &dsp_cmd->init_step_counter_cmd.setting.running;
+  r_step = &dsp_cmd->init_cmd.setting.running;
   r_step->step_length = STEP_COUNTER_INITIAL_RUN_STEP_LENGTH;
   r_step->step_mode   = STEP_COUNTER_MODE_STEP_TABLE;
 
@@ -259,7 +258,7 @@ int StepCounterClass::sendInit(void)
 
   FAR StepCounterDebugDumpInfo *debug_info;
 
-  debug_info = &dsp_cmd->init_step_counter_cmd.debug_dump_info;
+  debug_info = &dsp_cmd->init_cmd.debug_dump_info;
   debug_info->addr = NULL;
   debug_info->size = 0;
 
@@ -282,12 +281,13 @@ int StepCounterClass::sendInit(void)
 
   int id = mpmq_receive(&m_mq, &msgdata);
   if ((id != STEPCOUNTER_CMD_ID) &&
-      (reinterpret_cast<FAR SensorCmd *>(msgdata)->result.exec_result
-        != SensorOK))
+      (reinterpret_cast<FAR SensorCmdStepCounter *>
+        (msgdata)->result.exec_result != SensorOK))
     {
       sc_err("init error! %08x : %d\n",
               id,
-              reinterpret_cast<FAR SensorCmd *>(msgdata)->result.exec_result);
+              reinterpret_cast<FAR SensorCmdStepCounter *>
+                (msgdata)->result.exec_result);
       return SS_ECODE_DSP_INIT_ERROR;
     }
 
@@ -305,14 +305,16 @@ int StepCounterClass::write(FAR sensor_command_data_mh_t *command)
 
   /* allocate segment of command */
 
-  if (exe_mh.cmd.allocSeg(m_cmd_pool_id, sizeof(SensorCmd)) != ERR_OK)
+  if (exe_mh.cmd.allocSeg(m_cmd_pool_id, sizeof(SensorCmdStepCounter))
+      != ERR_OK)
     {
       sc_err("allocSeg() failure.¥n");
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  FAR SensorCmd *dsp_cmd  = (FAR SensorCmd *)exe_mh.cmd.getPa();
-  FAR SensorExecStepCounter *exec_prm = &dsp_cmd->exec_step_counter_cmd;
+  FAR SensorCmdStepCounter *dsp_cmd  =
+    (FAR SensorCmdStepCounter *)exe_mh.cmd.getPa();
+  FAR SensorExecStepCounter *exec_prm = &dsp_cmd->exec_cmd;
 
   dsp_cmd->header.sensor_type = StepCounter;
   dsp_cmd->header.event_type  = ExecEvent;
@@ -427,7 +429,8 @@ int StepCounterClass::set(FAR StepCounterSetting *set_param)
 
   /* allocate segment of command */
 
-  int result = exe_mh.cmd.allocSeg(m_cmd_pool_id, sizeof(SensorCmd));
+  int result = exe_mh.cmd.allocSeg(m_cmd_pool_id,
+                                   sizeof(SensorCmdStepCounter));
 
   if (result != ERR_OK)
     {
@@ -435,14 +438,15 @@ int StepCounterClass::set(FAR StepCounterSetting *set_param)
       return SS_ECODE_MEMHANDLE_ALLOC_ERROR;
     }
 
-  FAR SensorCmd *dsp_cmd = (FAR SensorCmd *)exe_mh.cmd.getPa();
+  FAR SensorCmdStepCounter *dsp_cmd =
+    (FAR SensorCmdStepCounter *)exe_mh.cmd.getPa();
 
   /* Send command. */
 
   dsp_cmd->header.sensor_type = StepCounter;
   dsp_cmd->header.event_type  = ExecEvent;
-  dsp_cmd->exec_step_counter_cmd.cmd_type = STEP_COUNTER_CMD_STEP_SET;
-  dsp_cmd->exec_step_counter_cmd.setting  = *set_param;
+  dsp_cmd->exec_cmd.cmd_type = STEP_COUNTER_CMD_STEP_SET;
+  dsp_cmd->exec_cmd.setting  = *set_param;
 
   if (!m_exe_que.push(exe_mh))
     {
