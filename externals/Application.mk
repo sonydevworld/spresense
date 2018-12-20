@@ -66,8 +66,6 @@ endif
 
 ROOTDEPPATH = --dep-path .
 
-VPATH =
-
 all: .built
 .PHONY: clean preconfig depend distclean
 .PRECIOUS: $(APPDIR)/libexternals$(LIBEXT)
