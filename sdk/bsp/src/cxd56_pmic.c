@@ -723,7 +723,7 @@ error:
 
 int cxd56_pmic_get_gauge(FAR struct pmic_gauge_s *gauge)
 {
-  return PM_PmicControl(PMIC_CMD_GAUGE, gauge);
+  return PM_PmicControl(PMIC_CMD_AFE, gauge);
 }
 
 /****************************************************************************
