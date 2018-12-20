@@ -1694,7 +1694,8 @@ endif
 config CXD56_CHARGER
 	bool "CXD5247 battery charger"
 	default n
-	depends on BOARD_CORVO || BOARD_COLLET
+# Disable anyway
+#	depends on BOARD_CORVO || BOARD_COLLET
 	---help---
 		Enable battery charger driver.
 		This is not a lower half of power driver, but compatible with NuttX charger driver.
