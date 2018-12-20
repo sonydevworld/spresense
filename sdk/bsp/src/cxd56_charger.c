@@ -41,6 +41,7 @@
  ****************************************************************************/
 
 #include <sdk/config.h>
+#include <sdk/debug.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -314,6 +315,64 @@ static int charger_online(FAR bool *online)
 }
 
 /****************************************************************************
+ * Name: charger_get_current
+ ****************************************************************************/
+
+static int charger_get_current(FAR int *current)
+{
+  FAR struct pmic_gauge_s gauge;
+  int ret;
+
+  ASSERT(current);
+
+  *current = 0;
+
+  ret = cxd56_pmic_get_gauge(&gauge);
+  if (ret < 0)
+    {
+      return -EIO;
+    }
+
+  /* (Register value - 800h) / Current detection resistor (0.1 ohm) * 0.02929 */
+
+#ifdef USE_FLOAT_CONVERSION
+  *current = (gauge.current - 0x800) / 0.1f * 0.02929f;
+#else
+  *current = (gauge.current - 0x800) * 2929 / 10000;
+#endif
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: charger_get_voltage
+ ****************************************************************************/
+
+static int charger_get_voltage(FAR int *voltage)
+{
+  FAR struct pmic_gauge_s gauge;
+  int ret;
+
+  ASSERT(voltage);
+
+  *voltage = 0;
+
+  ret = cxd56_pmic_get_gauge(&gauge);
+  if (ret < 0)
+    {
+      return -EIO;
+    }
+
+#ifdef USE_FLOAT_CONVERSION
+  *voltage = gauge.voltage * 1.12f;
+#else
+  *voltage = gauge.voltage * 112 / 100;
+#endif
+
+  return OK;
+}
+
+/****************************************************************************
  * Name: charger_get_temptable
  ****************************************************************************/
 
@@ -515,6 +574,38 @@ static int charger_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
         {
           int current = (int)arg;
           ret = cxd56_pmic_setchargecompcurrent(current);
+        }
+        break;
+
+      case BATIOC_GET_CURRENT:
+        {
+          FAR int *curr = (FAR int *)(uintptr_t)arg;
+
+          if (curr)
+            {
+              ret = charger_get_current(curr);
+            }
+          else
+            {
+              set_errno(EINVAL);
+              ret = -1;
+            }
+        }
+        break;
+
+      case BATIOC_GET_VOLTAGE:
+        {
+          FAR int *vol = (FAR int *)(uintptr_t)arg;
+
+          if (vol)
+            {
+              ret = charger_get_voltage(vol);
+            }
+          else
+            {
+              set_errno(EINVAL);
+              ret = -1;
+            }
         }
         break;
 
