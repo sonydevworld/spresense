@@ -204,7 +204,7 @@ void PostfilterComponent::send_apu(Wien2::Apu::Wien2ApuCmd *p_cmd)
   com_param.type         = DSP_COM_DATA_TYPE_STRUCT_ADDRESS;
   com_param.data.pParam  = reinterpret_cast<void*>(p_cmd);
 
-  /* Send command to PostFileterDSP via DSP driver */
+  /* Send command to PostFilterDSP via DSP driver */
 
   int ret = DD_SendCommand(m_dsp_handler, &com_param);
 

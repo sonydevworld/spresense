@@ -30,7 +30,7 @@ config AUDIOUTILS_ENCODER
 		Enable Encode Feature
 
 config AUDIOUTILS_FILTER
-	bool "Fileter"
+	bool "Filter"
 	default n
 	---help---
 		Enable Filtering Feature
