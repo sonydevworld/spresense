@@ -163,8 +163,8 @@ static bool app_receive_event(sensor_command_data_t& data)
 /*--------------------------------------------------------------------------*/
 static bool app_receive_result(sensor_command_data_mh_t& data)
 {
-  FAR SensorCmd *result_data =
-    reinterpret_cast<FAR SensorCmd *>(data.mh.getVa());
+  FAR SensorCmdTram *result_data =
+    reinterpret_cast<FAR SensorCmdTram *>(data.mh.getVa());
 
   if (SensorOK != result_data->result.exec_result)
     {

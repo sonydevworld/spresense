@@ -50,7 +50,6 @@
 #include "accel_sensor.h"
 #include "gnss_sensor.h"
 #include "sensing/sensor_api.h"
-#include "sensing/logical_sensor/sensor_command.h"
 #include "sensing/logical_sensor/step_counter.h"
 #include "memutils/message/Message.h"
 #include "memutils/memory_manager/MemHandle.h"
@@ -291,11 +290,12 @@ bool step_counter_receive_data(sensor_command_data_mh_t& data)
 bool step_counter_recieve_result(sensor_command_data_mh_t& data)
 {
   bool ret = true;
-  SensorCmd* result_data = reinterpret_cast<SensorCmd*>(data.mh.getVa());
+  FAR SensorCmdStepCounter *result_data =
+    reinterpret_cast<SensorCmdStepCounter *>(data.mh.getVa());
   if (SensorOK == result_data->result.exec_result)
     {
-      if (result_data->exec_step_counter_cmd.cmd_type ==
-                                        STEP_COUNTER_CMD_UPDATE_ACCELERATION)
+      if (result_data->exec_cmd.cmd_type == 
+            STEP_COUNTER_CMD_UPDATE_ACCELERATION)
         {
 #ifndef CONFIG_CPUFREQ_RELEASE_LOCK
           message("   %8ld,   %8ld,   %8ld,   %8ld,   %8lld,",
