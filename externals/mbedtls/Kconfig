@@ -8,6 +8,7 @@ config EXTERNALS_MBEDTLS
 	default n
 	---help---
 		Enable mbed TLS Library.
+		And when you select this, make sure LTE_NET_MBEDTLS is disabled. Those are exclusive items.
 		ARM mbed TLS is provided from https://github.com/ARMmbed/mbedtls
 		and licensed under Apache-2.0.
 
