@@ -64,6 +64,11 @@ MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
 
 endif
 
+# include path setting in externals depending on each configuration.
+
+include $(SDKDIR)/../externals/LibIncludes.mk
+
+
 DEPCONFIG = $(SDKDIR)/.config $(TOPDIR)/.config
 
 ifeq ($(WINTOOL),y)

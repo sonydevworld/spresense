@@ -42,10 +42,6 @@
 CMSIS_DSP = libarm_cortexM4lf_math$(LIBEXT)
 BIN = $(CMSIS_DSP)
 
-# CFLAGS definitions
-
-include ../LibIncludes.mk
-
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP_ARM_MATH_MATRIX_CHECK),y)
 CFLAGS += -DARM_MATH_MATRIX_CHECK
 endif

@@ -53,12 +53,6 @@ COBJS		= $(CSRCS:.c=$(OBJEXT))
 SRCS		= $(ASRCS) $(CSRCS)
 OBJS		= $(AOBJS) $(COBJS)
 
-ifeq ($(CONFIG_EXTERNALS_MBEDTLS),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mbedtls/include"}
-else
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/netutils"}
-endif
-
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
   BIN		= ..\..\libsystem$(LIBEXT)
 else

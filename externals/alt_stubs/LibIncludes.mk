@@ -1,5 +1,5 @@
 ############################################################################
-# externals/cmsis/LibIncludes.mk
+# externals/alt_stubs/LibIncludes.mk
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -33,21 +33,9 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXTERNALS_CMSIS),y)
-CFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U
-CXXFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U
+ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/alt_stubs/mbedtls/include"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/alt_stubs/mbedtls/include"}
 endif
 
-ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
-endif
 
-ifeq ($(CONFIG_EXTERNALS_CMSIS_NN),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include"}
-endif
