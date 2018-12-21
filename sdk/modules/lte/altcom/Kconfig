@@ -20,7 +20,7 @@ config LTE_NET_MBEDTLS
 	default n
 	---help---
 		This function is to use the function of mbedTLS on LTE Modem side.
-		If you want to use mbedTLS itself on CXD5602, please use EXTERNALS_MBEDTLS.
-		And when you select this, make sure EXTERNALS_MBEDTLS is disabled. Those are exclusive items.
+		If you want to use mbedTLS itself on CXD5602, please use CONFIG_EXTERNALS_MBEDTLS.
+		And when you select this, make sure CONFIG_EXTERNALS_MBEDTLS is disabled. Those are exclusive items.
 
 endif
