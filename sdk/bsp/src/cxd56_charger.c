@@ -500,8 +500,8 @@ static int charger_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
       case BATIOC_VOLTAGE:
         {
-          int voltage = (int)arg;
-          ret = cxd56_pmic_setchargevol(voltage);
+          FAR int *voltage = (FAR int *)(uintptr_t)arg;
+          ret = cxd56_pmic_setchargevol(*voltage);
         }
         break;
 
@@ -514,8 +514,8 @@ static int charger_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
       case BATIOC_INPUT_CURRENT:
         {
-          int current = (int)arg;
-          ret = cxd56_pmic_setchargecurrent(current);
+          FAR int *current = (FAR int *)(uintptr_t)arg;
+          ret = cxd56_pmic_setchargecurrent(*current);
         }
         break;
 
@@ -542,8 +542,8 @@ static int charger_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
       case BATIOC_SET_RECHARGEVOL:
         {
-          int voltage = (int)arg;
-          ret = cxd56_pmic_setrechargevol(voltage);
+          FAR int *voltage = (FAR int *)(uintptr_t)arg;
+          ret = cxd56_pmic_setrechargevol(*voltage);
         }
         break;
 
@@ -572,8 +572,8 @@ static int charger_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
       case BATIOC_SET_COMPCURRENT:
         {
-          int current = (int)arg;
-          ret = cxd56_pmic_setchargecompcurrent(current);
+          FAR int *current = (FAR int *)(uintptr_t)arg;
+          ret = cxd56_pmic_setchargecompcurrent(*current);
         }
         break;
 
