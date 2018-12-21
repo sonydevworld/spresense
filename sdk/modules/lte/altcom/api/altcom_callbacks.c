@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/altcom_status.c
+ * modules/lte/altcom/api/altcom_callbacks.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,76 +37,30 @@
  * Included Files
  ****************************************************************************/
 
-#include <errno.h>
 #include "dbg_if.h"
 #include "osal.h"
+#include "buffpoolwrapper.h"
 #include "altcombs.h"
-#include "altcom_status.h"
+#include "altcom_callbacks.h"
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static int g_altcom_status = ALTCOM_STATUS_UNINITIALIZED;
-static FAR struct altcombs_cb_block *g_statchg_cb_table = NULL;
-static sys_mutex_t                  g_table_mtx;
+static FAR struct altcombs_cb_block *g_lteapi_callback_list = NULL;
+static sys_mutex_t                  g_list_mtx;
 static sys_cremtx_s                 g_mtxparam;
 static bool                         g_isinit = false;
-
-/****************************************************************************
- * Private Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: altcomstatus_callcb
- *
- * Description:
- *   Call all status change callbacks.
- *
- * Input Parameters:
- *   new_stat   ALTCOM new status.
- *   old_stat   ALTCOM old status.
- *
- * Returned Value:
- *   None.
- *
- ****************************************************************************/
-
-static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
-{
-  CODE altcom_stat_chg_cb_t *cbs = NULL;
-  CODE altcom_stat_chg_cb_t cb = NULL;
-  FAR struct altcombs_cb_block* cb_block = NULL;
-  int cnt = 0;
-  cb_block = g_statchg_cb_table;
-  while (cb_block)
-    {
-      cbs = (altcom_stat_chg_cb_t *)cb_block->cb_list;
-      while (1)
-        {
-          cb = cbs[cnt];
-          if (!cb)
-            {
-              break;
-            }
-
-          cb(new_stat, old_stat);
-          cnt++;
-        }
-
-      cb_block = cb_block->next;
-    }
-}
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: altcomstatus_init
+ * Name: altcomcallbacks_init
  *
  * Description:
- *   Initialize altcom status.
+ *   Initialize altcom API callbacks.
  *
  * Input Parameters:
  *   None.
@@ -117,17 +71,17 @@ static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_init(void)
+int32_t altcomcallbacks_init(void)
 {
   int32_t ret;
 
   if (g_isinit)
     {
-      DBGIF_LOG_WARNING("ALTCOM status initialized.\n");
+      DBGIF_LOG_WARNING("ALTCOM callbacks initialized.\n");
       return -EPERM;
     }
 
-  ret = sys_create_mutex(&g_table_mtx, &g_mtxparam);
+  ret = sys_create_mutex(&g_list_mtx, &g_mtxparam);
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("sys_create_mutex() %d.\n", ret);
@@ -140,10 +94,10 @@ int32_t altcomstatus_init(void)
 }
 
 /****************************************************************************
- * Name: altcomstatus_fin
+ * Name: altcomcallbacks_fin
  *
  * Description:
- *   Finalize altcom status.
+ *   Finalize altcom API callbacks.
  *
  * Input Parameters:
  *   None.
@@ -154,17 +108,17 @@ int32_t altcomstatus_init(void)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_fin(void)
+int32_t altcomcallbacks_fin(void)
 {
   int32_t ret;
 
   if (!g_isinit)
     {
-      DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
       return -EPERM;
     }
 
-  ret = sys_delete_mutex(&g_table_mtx);
+  ret = sys_delete_mutex(&g_list_mtx);
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("sys_delete_mutex() %d.\n", ret);
@@ -177,32 +131,14 @@ int32_t altcomstatus_fin(void)
 }
 
 /****************************************************************************
- * Name: altcom_get_status
+ * Name: altcomcallbacks_reg_cb
  *
  * Description:
- *   Get altcom status.
+ *   Registration altcom API callback.
  *
  * Input Parameters:
- *   None.
- *
- * Returned Value:
- *   Return current altcom status.
- *
- ****************************************************************************/
-
-int32_t altcom_get_status(void)
-{
-  return g_altcom_status;
-}
-
-/****************************************************************************
- * Name: altcom_set_status
- *
- * Description:
- *   set altcom status.
- *
- * Input Parameters:
- *   status     altcom status.
+ *   cb_ptr     Pointer of registration callback.
+ *   id         Callback function id.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -210,74 +146,42 @@ int32_t altcom_get_status(void)
  *
  ****************************************************************************/
 
-int32_t altcom_set_status(int32_t status)
-{
-  int32_t prev_stat;
-  if (ALTCOM_STATUS_MIN > status ||
-      ALTCOM_STATUS_MAX < status)
-    {
-      return -EINVAL;
-    }
-
-  prev_stat = g_altcom_status;
-  DBGIF_LOG2_INFO("LTE library status %d -> %d.\n", prev_stat, status);
-  g_altcom_status = status;
-  altcomstatus_callcb(g_altcom_status, prev_stat);
-
-  return 0;
-}
-
-/****************************************************************************
- * Name: altcomstatus_reg_statchgcb
- *
- * Description:
- *   Registoration altcom status change callbacks.
- *
- * Input Parameters:
- *   cb_list     Status change callback list.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
- ****************************************************************************/
-
-int32_t altcomstatus_reg_statchgcb(void *cb_list)
+int32_t altcomcallbacks_reg_cb(void *cb_ptr, int32_t id)
 {
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (!g_isinit)
     {
-      DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
       return -EPERM;
     }
 
-  ret = altcombs_alloc_callbacklist(cb_list, &cb_block);
+  ret = altcombs_alloc_callbacklist(cb_ptr, &cb_block);
   if (0 > ret)
     {
-      DBGIF_LOG1_ERROR("altcombs_alloc_callbacklist() %d.\n", ret);
       return ret;
     }
 
-  cb_block->cb_list = cb_list;
+  cb_block->cb_list = cb_ptr;
   cb_block->next = NULL;
+  cb_block->id = id;
 
-  sys_lock_mutex(&g_table_mtx);
-  ret = altcombs_add_cblist(&g_statchg_cb_table, cb_block);
-  sys_unlock_mutex(&g_table_mtx);
+  sys_lock_mutex(&g_list_mtx);
+  ret = altcombs_add_cblist(&g_lteapi_callback_list, cb_block);
+  sys_unlock_mutex(&g_list_mtx);
 
   return ret;
 }
 
 /****************************************************************************
- * Name: altcomstatus_unreg_statchgcb
+ * Name: altcomcallbacks_unreg_cb
  *
  * Description:
- *   Unregistration altcom status change callbacks.
+ *   Unregistration altcom API callback.
  *
  * Input Parameters:
- *   cb_list     Status change callback list.
+ *   id       Target callback function id.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -285,33 +189,179 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_unreg_statchgcb(void *cb_list)
+int32_t altcomcallbacks_unreg_cb(int32_t id)
 {
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (!g_isinit)
     {
-      DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
       return -EPERM;
     }
 
-  if (!cb_list)
-    {
-      DBGIF_LOG_ERROR("null parameter.\n");
-      return -EINVAL;
-    }
-
-  if (!g_statchg_cb_table)
+  if (!g_lteapi_callback_list)
     {
       DBGIF_LOG_WARNING("Callback list not found.\n");
       return 0;
     }
 
-  sys_lock_mutex(&g_table_mtx);
-  cb_block = altcombs_remove_cblist(&g_statchg_cb_table, cb_list);
-  sys_unlock_mutex(&g_table_mtx);
+  sys_lock_mutex(&g_list_mtx);
+  cb_block = altcombs_search_callbacklist(g_lteapi_callback_list, id);
+  if (!cb_block)
+    {
+      sys_unlock_mutex(&g_list_mtx);
+      return -EINVAL;
+    }
+
+  altcombs_remove_cblist(&g_lteapi_callback_list, cb_block->cb_list);
+  sys_unlock_mutex(&g_list_mtx);
   ret = altcombs_free_callbacklist(&cb_block);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcomcallbacks_get_cb
+ *
+ * Description:
+ *   Get altcom API callback.
+ *
+ * Input Parameters:
+ *   id    Target callback function id.
+ *
+ * Returned Value:
+ *   Pointer of Callback function. When not registered callbacke return NULL.
+ *
+ ****************************************************************************/
+
+void *altcomcallbacks_get_cb(int32_t id)
+{
+  void *cb = NULL;
+
+  if (!g_isinit)
+    {
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
+      return NULL;
+    }
+
+  sys_lock_mutex(&g_list_mtx);
+  cb = altcombs_get_cb(g_lteapi_callback_list, id);
+  sys_unlock_mutex(&g_list_mtx);
+
+  return cb;
+}
+
+/****************************************************************************
+ * Name: altcomcallbacks_get_unreg_cb
+ *
+ * Description:
+ *   Get and unregistration altcom API callback.
+ *
+ * Input Parameters:
+ *   id         Target callback function id.
+ *   callback   Pointer of target callback address.
+ *              This pointer is out parameter.
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcomcallbacks_get_unreg_cb(int32_t id, void **callback)
+{
+  int32_t ret = 0;
+  FAR struct altcombs_cb_block *cb_block = NULL;
+
+  *callback = NULL;
+
+  if (!g_isinit)
+    {
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
+      return -EPERM;
+    }
+
+  if (!g_lteapi_callback_list)
+    {
+      DBGIF_LOG_WARNING("Callback list not found.\n");
+      return -EPERM;
+    }
+
+  sys_lock_mutex(&g_list_mtx);
+  *callback = altcombs_get_cb(g_lteapi_callback_list, id);
+  if (*callback)
+    {
+      cb_block = altcombs_search_callbacklist(g_lteapi_callback_list, id);
+      if (!cb_block)
+        {
+          ret = -EINVAL;
+        }
+      else
+        {
+          altcombs_remove_cblist(&g_lteapi_callback_list,
+                                       cb_block->cb_list);
+          altcombs_free_callbacklist(&cb_block);
+        }
+    }
+  else
+    {
+      ret = -EINVAL;
+    }
+
+  sys_unlock_mutex(&g_list_mtx);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcomcallbacks_chk_reg_cb
+ *
+ * Description:
+ *   Check and registration altcom API callback.
+ *
+ * Input Parameters:
+ *   cb         Pointer of altcom API callback function.
+ *   id         Callback function id.
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcomcallbacks_chk_reg_cb(void *cb, int32_t id)
+{
+  int32_t ret = 0;
+  FAR struct altcombs_cb_block *cb_block = NULL;
+
+
+  if (!g_isinit)
+    {
+      DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
+      return -EPERM;
+    }
+
+  sys_lock_mutex(&g_list_mtx);
+
+  if (altcombs_get_cb(g_lteapi_callback_list, id))
+    {
+      ret = -EALREADY;
+    }
+  else
+    {
+      ret = altcombs_alloc_callbacklist(cb, &cb_block);
+
+      if (0 == ret)
+        {
+          cb_block->cb_list = cb;
+          cb_block->next = NULL;
+          cb_block->id = id;
+          ret = altcombs_add_cblist(&g_lteapi_callback_list, cb_block);
+        }
+    }
+
+  sys_unlock_mutex(&g_list_mtx);
 
   return ret;
 }

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/altcombs.c
+ * modules/lte/altcom/api/altcombs.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -55,19 +55,18 @@
  *
  * Input Parameters:
  *   cb_list  List of callback function.
- *   cb_ptr   Pointer of callback function.
+ *   id       Callback id.
  *
  * Returned Value:
  *   Pointer of Callback function. When not registered callbacke return NULL.
  *
  ****************************************************************************/
 
-void *altcombs_get_cb(FAR struct altcombs_cb_block* cb_list, void *cb_ptr)
+void *altcombs_get_cb(FAR struct altcombs_cb_block* cb_list, int32_t id)
 {
-  FAR void *tmp_cb = NULL;
   FAR struct altcombs_cb_block *list_ptr = NULL;
 
-  if (!cb_list || !cb_ptr)
+  if (!cb_list)
     {
       DBGIF_LOG_WARNING("null parameter\n");
       return NULL;
@@ -76,16 +75,10 @@ void *altcombs_get_cb(FAR struct altcombs_cb_block* cb_list, void *cb_ptr)
   list_ptr = cb_list;
   while (list_ptr)
     {
-      tmp_cb = list_ptr->cb_list;
-      while (tmp_cb)
-        {
-          if (tmp_cb == cb_ptr)
-            {
-              return tmp_cb;
-            }
-
-          tmp_cb += sizeof(tmp_cb);
-        }
+      if (list_ptr->id == id)
+      {
+        return list_ptr->cb_list;
+      }
 
       list_ptr = list_ptr->next;
     }
@@ -142,7 +135,7 @@ int32_t altcombs_add_cblist(struct altcombs_cb_block **head,
  *   Delete list from callback list.
  *
  * Input Parameters:
- *   head        Pointer to callback list.
+ *   head        Pointer to callback list head.
  *   cblist_ptr  Target callback list address.
  *
  * Returned Value:
@@ -196,8 +189,8 @@ void *altcombs_remove_cblist(struct altcombs_cb_block **head,
  *   Search list by callback list address.
  *
  * Input Parameters:
- *   head        Pointer of callback list
- *   cblist_ptr  Target callback list address.
+ *   head        Pointer of callback list head.
+ *   id          Target callback list id.
  *
  * Returned Value:
  *   If list is found, return that pointer.
@@ -206,13 +199,12 @@ void *altcombs_remove_cblist(struct altcombs_cb_block **head,
  ****************************************************************************/
 
 struct altcombs_cb_block *altcombs_search_callbacklist(
-  struct altcombs_cb_block *head, void *cblist_ptr)
+  struct altcombs_cb_block *head, int32_t id)
 {
   FAR struct altcombs_cb_block *list_ptr = head;
-
   while (list_ptr)
     {
-      if (list_ptr->cb_list == cblist_ptr)
+      if (list_ptr->id == id)
         {
           return list_ptr;
         }
