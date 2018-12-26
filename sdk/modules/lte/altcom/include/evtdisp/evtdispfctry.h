@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/include/evtdisp/evtdisp.h
+ * modules/lte/altcom/include/evtdisp/evtdispfctry.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,34 +33,24 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISP_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISP_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISPFCTRY_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISPFCTRY_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <errno.h>
 #include "evthdl_if.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define EVTDISP_EVTHDLLIST_TERMINATION (NULL)
+#include "evtdisp.h"
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
-struct evtdisp_s
+struct evtdispfctry_evtdispset_s
 {
-  CODE int32_t (*dispatch)(FAR struct evtdisp_s *thiz,
-    FAR uint8_t *evt, uint32_t evtln);
-  CODE int32_t (*addhdlr)(FAR struct evtdisp_s *thiz,
-    FAR evthdl_if_t *hdllist);
-  CODE int32_t (*rmvhdlr)(FAR struct evtdisp_s *thiz,
-    uint8_t hdlrid);
+  uint8_t     dispid;
+  evthdl_if_t *evthdllist;
 };
 
 /****************************************************************************
@@ -68,35 +58,56 @@ struct evtdisp_s
  ****************************************************************************/
 
 /****************************************************************************
- * Name: evthdisp_create
+ * Name: evtdispfctry_init
  *
  * Description:
- *  Create EVTDISP object.
+ *   Initialize the event dispatcher.
  *
- * Input Parameters: 
- *  evthdllist  handling process function pointer.
+ * Input Parameters:
+ *   set     Parameter list of the event dispatcher to be created.
+ *   setnum  Number of @set.
  *
- * Returned Value: 
- *  EVTDISP object pointer.
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise errno is returned.
  *
  ****************************************************************************/
 
-FAR struct evtdisp_s *evtdisp_create(FAR evthdl_if_t *evthdllist);
+int32_t evtdispfctry_init(struct evtdispfctry_evtdispset_s set[],
+                           int8_t setnum);
 
 /****************************************************************************
- * Name: evthdisp_delete
+ * Name: evtdispfctry_fin
  *
  * Description:
- *  Delete EVTDISP object.
+ *   Finalize the event dispatcher.
  *
- * Input Parameters: 
- *  thiz  EVTDISP object pointer.
+ * Input Parameters:
+ *   None.
  *
- * Returned Value: 
- *  result.
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise errno is returned.
  *
  ****************************************************************************/
 
-int32_t evtdisp_delete(FAR struct evtdisp_s *thiz);
+int32_t evtdispfctry_fin(void);
 
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISP_H */
+/****************************************************************************
+ * Name: evtdispfctry_get_instance
+ *
+ * Description:
+ *   Gets event dispatcher with the specified ID.
+ *
+ * Input Parameters:
+ *   id  The ID of the event dispatcher to retrieve.
+ *
+ * Returned Value:
+ *   Instance of event dispatcher.
+ *   If failed, returned NULL.
+ *
+ ****************************************************************************/
+
+struct evtdisp_s *evtdispfctry_get_instance(uint8_t id);
+
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_EVTDISP_EVTDISPFCTRY_H */
