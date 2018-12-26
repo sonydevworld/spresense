@@ -37,14 +37,6 @@
 
 -include $(SDKDIR)/.config
 
-ifeq ($(WINTOOL),y)
-NETINC = "${shell cygpath -w $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)netutils}"
-else
-NETINC = "$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)netutils"
-endif
-
-CFLAGS += -I$(NETINC)
-
 # lte built-in application info
 
 CONFIG_EXAMPLES_TLSTEST_PRIORITY ?= SCHED_PRIORITY_DEFAULT
