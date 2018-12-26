@@ -45,7 +45,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SSL_WRITE_BUF_LENGTH (2000)
+#define APICMD_SSL_WRITE_BUF_LEN (2000)
 
 /****************************************************************************
  * Public Types
@@ -56,7 +56,7 @@
 begin_packed_struct struct apicmd_ssl_write_s
 {
   uint32_t ssl;
-  int8_t buf[APICMD_SSL_WRITE_BUF_LENGTH];
+  int8_t buf[APICMD_SSL_WRITE_BUF_LEN];
   uint32_t len;
 } end_packed_struct;
 

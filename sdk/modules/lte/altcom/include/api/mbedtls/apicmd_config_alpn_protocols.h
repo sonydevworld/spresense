@@ -45,7 +45,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH (256)
+#define APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN (256)
 
 /****************************************************************************
  * Public Types
@@ -56,10 +56,10 @@
 begin_packed_struct struct apicmd_config_alpn_protocols_s
 {
   uint32_t conf;
-  int8_t protos1[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH];
-  int8_t protos2[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH];
-  int8_t protos3[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH];
-  int8_t protos4[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH];
+  int8_t protos1[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN];
+  int8_t protos2[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN];
+  int8_t protos3[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN];
+  int8_t protos4[APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN];
 } end_packed_struct;
 
 begin_packed_struct struct apicmd_config_alpn_protocolsres_s

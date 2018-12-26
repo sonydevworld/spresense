@@ -178,9 +178,7 @@ extern "C" {
  */
 typedef struct
 {
-    int s;              /*!<  integer sign      */
-    size_t n;           /*!<  total # of limbs  */
-    mbedtls_mpi_uint *p;          /*!<  pointer to limbs  */
+    uint32_t id;
 }
 mbedtls_mpi;
 

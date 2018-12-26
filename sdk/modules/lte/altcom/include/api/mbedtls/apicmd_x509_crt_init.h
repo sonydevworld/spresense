@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/mbedtls/apicmd_x509_ctr_init.h
+ * modules/lte/altcom/include/api/mbedtls/apicmd_x509_crt_init.h
  *
  *   Copyright 2018 Sony Corporation
  *

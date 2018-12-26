@@ -52,7 +52,7 @@
  ****************************************************************************/
 
 static uint32_t g_mbedtls_ctx_id_tbl[SSL_CTX_MAX] =
-  { 1, 1, 1, 1, 1, 1, 1, 1 };
+  { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 
 /****************************************************************************
@@ -72,7 +72,13 @@ uint32_t get_mbedtls_ctx_id(enum mbedtls_ctx_id_e id)
     }
 
   // TODO: mutex
-  ret_id = g_mbedtls_ctx_id_tbl[id]++;
+  g_mbedtls_ctx_id_tbl[id]++;
+  if (g_mbedtls_ctx_id_tbl[id] > MBEDTLS_MAXIMUM_CTX_ID)
+    {
+      g_mbedtls_ctx_id_tbl[id] = MBEDTLS_MINIMUM_CTX_ID;
+    }
+  ret_id = g_mbedtls_ctx_id_tbl[id];
+
   return ret_id;
 }
 

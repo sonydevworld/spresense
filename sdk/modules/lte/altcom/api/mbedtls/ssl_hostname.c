@@ -88,10 +88,10 @@ static int32_t ssl_hostname_request(FAR struct ssl_hostname_req_s *req)
   /* Fill the data */
 
   cmd->ssl = htonl(req->id);
-  memset(cmd->hostname, '\0', APICMD_SSL_HOSTNAME_LENGTH);
+  memset(cmd->hostname, '\0', APICMD_SSL_HOSTNAME_LEN);
   if (req->hostname != NULL)
     {
-      size_t hostname_len = strnlen(req->hostname, APICMD_SSL_HOSTNAME_LENGTH-1);
+      size_t hostname_len = strnlen(req->hostname, APICMD_SSL_HOSTNAME_LEN-1);
       strncpy((char*) cmd->hostname, req->hostname, hostname_len);
     }
 

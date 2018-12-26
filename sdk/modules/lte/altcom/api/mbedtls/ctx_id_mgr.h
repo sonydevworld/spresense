@@ -45,6 +45,8 @@
  ****************************************************************************/
 
 #define MBEDTLS_INVALID_CTX_ID (0xFFFFFFFF)
+#define MBEDTLS_MINIMUM_CTX_ID (0x00000001)
+#define MBEDTLS_MAXIMUM_CTX_ID (0x00FFFFFF)
 
 /****************************************************************************
  * Public Types
@@ -55,11 +57,15 @@ enum mbedtls_ctx_id_e
     SSL_CTX = 0,
     SSL_SESSION_CTX,
     SSL_CONFIG_CTX,
-    SSL_X509_CTX,
+    SSL_X509_CRT_CTX,
     SSL_PK_CTX,
     SSL_CTR_DRBG_CTX,
     SSL_ENTROPY_CTX,
     SSL_CIPHER_CTX,
+    SSL_MPI_CTX,
+    SSL_X509_CSR_CTX,
+    SSL_X509WRITE_CRT_CTX,
+    SSL_RSA_CTX,
     SSL_CTX_MAX,
   };
 

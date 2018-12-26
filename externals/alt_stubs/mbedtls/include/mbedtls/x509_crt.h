@@ -91,16 +91,7 @@ mbedtls_x509_crt_profile;
  */
 typedef struct mbedtls_x509write_cert
 {
-    int version;
-    mbedtls_mpi serial;
-    mbedtls_pk_context *subject_key;
-    mbedtls_pk_context *issuer_key;
-    mbedtls_asn1_named_data *subject;
-    mbedtls_asn1_named_data *issuer;
-    mbedtls_md_type_t md_alg;
-    char not_before[MBEDTLS_X509_RFC5280_UTC_TIME_LEN + 1];
-    char not_after[MBEDTLS_X509_RFC5280_UTC_TIME_LEN + 1];
-    mbedtls_asn1_named_data *extensions;
+    uint32_t id;
 }
 mbedtls_x509write_cert;
 

@@ -95,8 +95,8 @@ static int32_t ssl_read_request(FAR struct ssl_read_req_s *req,
 
   cmd->ssl = htonl(req->id);
 
-  req_buf_len = (req->len <= APICMD_SSL_READ_BUF_LENGTH)
-    ? req->len : APICMD_SSL_READ_BUF_LENGTH;
+  req_buf_len = (req->len <= APICMD_SSL_READ_BUF_LEN)
+    ? req->len : APICMD_SSL_READ_BUF_LEN;
   cmd->len = htonl(req_buf_len);
 
   DBGIF_LOG1_DEBUG("[ssl_read]ctx id: %d\n", req->id);

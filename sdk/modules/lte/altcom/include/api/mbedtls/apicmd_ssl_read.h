@@ -45,7 +45,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SSL_READ_BUF_LENGTH (2000)
+#define APICMD_SSL_READ_BUF_LEN (2000)
 
 /****************************************************************************
  * Public Types
@@ -62,7 +62,7 @@ begin_packed_struct struct apicmd_ssl_read_s
 begin_packed_struct struct apicmd_ssl_readres_s
 {
   int32_t ret_code;
-  int8_t buf[APICMD_SSL_READ_BUF_LENGTH];
+  int8_t buf[APICMD_SSL_READ_BUF_LEN];
 } end_packed_struct;
 
 

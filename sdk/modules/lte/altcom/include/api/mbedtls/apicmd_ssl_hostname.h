@@ -45,7 +45,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SSL_HOSTNAME_LENGTH (256)
+#define APICMD_SSL_HOSTNAME_LEN (256)
 
 /****************************************************************************
  * Public Types
@@ -56,7 +56,7 @@
 begin_packed_struct struct apicmd_ssl_hostname_s
 {
   uint32_t ssl;
-  int8_t hostname[APICMD_SSL_HOSTNAME_LENGTH];
+  int8_t hostname[APICMD_SSL_HOSTNAME_LEN];
 } end_packed_struct;
 
 begin_packed_struct struct apicmd_ssl_hostnameres_s

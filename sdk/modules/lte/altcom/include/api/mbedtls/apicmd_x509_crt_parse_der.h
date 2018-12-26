@@ -66,4 +66,4 @@ begin_packed_struct struct apicmd_x509_crt_parse_derres_s
 } end_packed_struct;
 
 
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_MBEDTLS_APICMD_X509_PARSE_CRT_DER_H */
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_MBEDTLS_APICMD_X509_CRT_PARSE_DER_H */

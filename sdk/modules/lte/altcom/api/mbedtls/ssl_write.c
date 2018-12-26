@@ -93,8 +93,8 @@ static int32_t ssl_write_request(FAR struct ssl_write_req_s *req)
   /* Fill the data */
 
   cmd->ssl = htonl(req->id);
-  writelen = (req->len <= APICMD_SSL_WRITE_BUF_LENGTH)
-    ? req->len : APICMD_SSL_WRITE_BUF_LENGTH;
+  writelen = (req->len <= APICMD_SSL_WRITE_BUF_LEN)
+    ? req->len : APICMD_SSL_WRITE_BUF_LEN;
   memcpy(cmd->buf, req->buf, writelen);
   cmd->len = htonl(writelen);
 

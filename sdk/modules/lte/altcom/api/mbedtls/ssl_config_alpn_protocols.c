@@ -91,28 +91,28 @@ static int32_t config_alpn_protocols_request(FAR struct config_alpn_protocols_re
 
   cmd->conf = htonl(req->id);
   p = req->protos;
-  memset(cmd->protos1, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH);
+  memset(cmd->protos1, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
   if (*p != NULL)
     {
-      strncpy((char*)cmd->protos1, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH-1);
+      strncpy((char*)cmd->protos1, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
       p++;
     }
-  memset(cmd->protos2, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH);
+  memset(cmd->protos2, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
   if (*p != NULL)
     {
-      strncpy((char*)cmd->protos2, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH-1);
+      strncpy((char*)cmd->protos2, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
       p++;
     }
-  memset(cmd->protos3, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH);
+  memset(cmd->protos3, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
   if (*p != NULL)
     {
-      strncpy((char*)cmd->protos3, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH-1);
+      strncpy((char*)cmd->protos3, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
       p++;
     }
-  memset(cmd->protos4, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH);
+  memset(cmd->protos4, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
   if (*p != NULL)
     {
-      strncpy((char*)cmd->protos4, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LENGTH-1);
+      strncpy((char*)cmd->protos4, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
       p++;
     }
 

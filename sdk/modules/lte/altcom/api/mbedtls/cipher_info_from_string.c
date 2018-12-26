@@ -83,7 +83,7 @@ static int32_t cipher_info_from_string_request(FAR struct cipher_info_from_strin
   /* Allocate send and response command buffer */
   if (req->cipher_name == NULL)
     {
-      return 0;
+      return CIPHER_INFO_FROM_STR_FAILURE;
     }
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(

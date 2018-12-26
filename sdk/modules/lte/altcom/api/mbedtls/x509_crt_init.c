@@ -143,7 +143,7 @@ void mbedtls_x509_crt_init(mbedtls_x509_crt *crt)
       return;
     }
 
-  req.id = get_mbedtls_ctx_id(SSL_X509_CTX);
+  req.id = get_mbedtls_ctx_id(SSL_X509_CRT_CTX);
   crt->id = req.id;
 
   result = x509_crt_init_request(&req);
