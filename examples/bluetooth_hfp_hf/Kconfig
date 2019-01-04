@@ -1,0 +1,23 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_BLUETOOTH_HFP_HF
+	bool "Bluetooth HFP_HF example"
+	default n
+	select BLUETOOTH
+	---help---
+		Enable the bluetooth HFP_HF example
+
+if EXAMPLES_BLUETOOTH_HFP_HF
+
+config EXAMPLES_BT_HFP_HF_PROGNAME
+	string "Program name"
+	default "bt_hfp_hf"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+endif
