@@ -577,7 +577,7 @@ static int bcm20706_bt_un_bond(BT_ADDR *addr)
 
   if (ret != BT_SUCCESS)
     {
-      DBG_LOG_DEBUG("unbond failed.");
+      DBG_LOG_DEBUG("unbond failed(%d).\n", ret);
       return ret;
     }
 

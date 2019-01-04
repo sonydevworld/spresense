@@ -66,6 +66,34 @@
 #define NVRAM_ID_LEN   2
 #define HASH_POS_IN_VERSION 8
 
+struct bt_hfp_event_t
+{
+  union _head
+  {
+    uint8_t command_status;
+    uint16_t handle;
+  } head;
+
+  union _event
+  {
+    struct _hf_open_event
+    {
+      uint8_t addr[BT_ADDR_LEN];
+      uint8_t status;
+    } hf_open_event;
+
+    struct _hf_ag_indicator
+    {
+      uint8_t numberic[2];
+      char opt_str[4];
+    } hf_ag_indicator;
+
+    uint8_t profile_type;
+    uint16_t ag_feature;
+  } event;
+
+} __attribute__((__packed__));
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -429,6 +457,135 @@ static void btRecvSppEvtRxData(uint8_t *p, uint16_t len)
   bt_spp_event_handler((struct bt_event_t *) &recv_evt);
 }
 
+static void btRecvHfpCommandStatus(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_CMD_STATUS;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.command_status)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtOpen(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  btdbg("connection open handle = %04x, addr = %02x:%02x:%02x:%02x:%02x:%02x, status = %01x\n",
+        pack->head.handle,
+        pack->event.hf_open_event.addr[0],
+        pack->event.hf_open_event.addr[1],
+        pack->event.hf_open_event.addr[2],
+        pack->event.hf_open_event.addr[3],
+        pack->event.hf_open_event.addr[4],
+        pack->event.hf_open_event.addr[5],
+        pack->event.hf_open_event.status);
+
+}
+
+static void btRecvHfpEvtClose(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection closed handle = %04x\n", pack->head.handle);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_HF_DISCONNECT;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpAudioEvtOpen(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   btdbg("audio open handle = %04x\n", pack->head.handle);
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_AUDIO_CONNECT;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpAudioEvtClose(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   btdbg("audio close handle = %04x\n", pack->head.handle);
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_AUDIO_DISCONNECT;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtConnected(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection connected handle = %04x, profile_type = %02x\n",
+        pack->head.handle, pack->event.profile_type);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_HF_CONNECT;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->event.profile_type)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtAgFeature(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection AG handle = %04x, feature = %04x\n",
+        pack->head.handle, pack->event.ag_feature);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_AG_FEATURE_RESP;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->event.ag_feature)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtAgIndicator(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+  size_t data_size = 0;
+
+  btdbg("AG indicator handle = %04x, numberic = %02x,%02x, opt_str = '%s'\n",
+        pack->head.handle,
+        pack->event.hf_ag_indicator.numberic[0],
+        pack->event.hf_ag_indicator.numberic[1],
+        pack->event.hf_ag_indicator.opt_str);
+
+ data_size = sizeof(pack->head.handle) + sizeof(pack->event.hf_ag_indicator.numberic)
+                + sizeof(pack->event.hf_ag_indicator.opt_str);
+
+ app_evt.group_id = BT_GROUP_HFP;
+ app_evt.event_id = BT_HFP_EVENT_AT_CMD_RESP;
+ memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), data_size));
+
+ bt_hfp_event_handler(&app_evt);
+}
+
 void bleRecvLeConnected(BLE_Evt *bleEvent, ble_evt_t *pBleBcmEvt)
 {
   struct ble_event_conn_stat_t conn_stat_evt;
@@ -566,6 +723,56 @@ static void btRecvDeviceControlPacket(uint8_t evtCode, uint8_t *p,
     }
 }
 
+static void btRecvHfpControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+
+  uint8_t *wp = NULL;
+
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, ((BT_CONTROL_GROUP_HF << 8) | evtCode));
+
+  ASSERT(len <= sizeof(struct bt_hfp_event_t));
+
+  switch (evtCode)
+    {
+      case BT_CONTROL_HF_EVENT_COMMAND_STATUS:
+        btRecvHfpCommandStatus(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_OPEN:
+        btRecvHfpEvtOpen(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_CLOSE:
+        btRecvHfpEvtClose(p);
+        break;
+
+      case BT_CONTROL_HF_AUDIO_EVENT_OPEN:
+        btRecvHfpAudioEvtOpen(p);
+        break;
+
+      case BT_CONTROL_HF_AUDIO_EVENT_CLOSE:
+        btRecvHfpAudioEvtClose(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_CONNECTED:
+        btRecvHfpEvtConnected(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_AG_FEATURE:
+        btRecvHfpEvtAgFeature(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_AG_INDICATOR:
+        btRecvHfpEvtAgIndicator(p);
+        break;
+
+      default:
+        printf("[EVENT] HFP event code %02x not supported\n", evtCode);
+        break;
+    }
+}
+
 static void btRecvSppControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
 {
   uint8_t *wp = NULL;
@@ -672,7 +879,7 @@ static void btRecvControlPacket(uint16_t opcode, uint8_t *p, uint16_t len)
         break;
 
       case BT_CONTROL_GROUP_HF:
-        /* Not supported yet */
+        btRecvHfpControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_LE:

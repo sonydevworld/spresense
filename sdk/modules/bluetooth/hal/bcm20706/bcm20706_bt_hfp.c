@@ -104,6 +104,34 @@ static int btHfSetSupportedFeature(uint32_t *btHfFeature)
   return 0;
 }
 
+static int btHfSendATCommand(uint16_t handle, uint16_t code, uint16_t numeric, char *optionalString)
+{
+  uint8_t buff[BT_LONG_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  size_t atSize = (optionalString ? strnlen(optionalString, BT_HF_MAX_OPTIONAL_STRING_LEN - 1) : 0);
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, (BT_CONTROL_GROUP_HF << 8) | code);
+  UINT16_TO_STREAM(p, sizeof(uint16_t) + sizeof(uint16_t) + atSize + 1);
+  UINT16_TO_STREAM(p, handle);
+  UINT16_TO_STREAM(p, numeric);
+  memcpy(p, (uint8_t*)optionalString, atSize);
+  p[atSize] = '\0';
+  p += atSize + 1;
+  return btUartSendData(buff, p - buff);
+}
+
+static int btHfButtonPress(uint16_t handle)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_HF_COMMAND_BUTTON_PRESS);
+  UINT16_TO_STREAM(p, sizeof(uint16_t));
+  UINT16_TO_STREAM(p, handle);
+  return btUartSendData(buff, p - buff);
+}
+
+
 /****************************************************************************
  * Name: bcm20706_bt_hfp_connect
  *
@@ -186,19 +214,86 @@ static int bcm20706_bt_hfp_hf_feature(BT_HFP_HF_FEATURE_FLAG hf_heature)
 }
 
 /****************************************************************************
- * Name: bcm20706_bt_inquiry_cancel
+ * Name: bcm20706_bt_hfp_send_at_command
  *
  * Description:
- *   Bluetooth cancel inquiry.
- *   Cancel inquiry to stop search.
+ *   Send AT command to BT
  *
  ****************************************************************************/
 
 static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str, uint16_t handle)
 {
   int ret = BT_SUCCESS;
+  int i = 0;
+  uint16_t code = 0;
+  uint16_t numberic = 0;
+  char cmd[20] = {0};
+  char *p = cmd;
+  char *token = NULL;
+  char *str_opt = NULL;
 
-  /* Not supported yet */
+  strncpy(cmd, at_str, sizeof(cmd));
+  cmd[sizeof(cmd)-1] = '\0';
+
+  //AT command '<code> [numberic] [str_opt]'
+
+  for (i = 0; p && (token = strtok_r(p, " \n", &p)); i++)
+    {
+      switch(i)
+        {
+          case 0: // <code>
+            code = atoi(token);
+            break;
+
+          case 1: // [numberic]
+            numberic = atoi(token);
+            break;
+
+          case 2: // [str_opt]
+            if (code == BT_HF_AT_COMMAND_SPK || code == BT_HF_AT_COMMAND_CHUP
+                || code == BT_HF_AT_COMMAND_MAX)
+              {
+                printf("%s Unexpected param\n", __func__);
+                ret = BT_FAIL;
+                goto bye;
+              }
+            str_opt = token;
+            break;
+
+          default:
+            break;
+        } // switch
+
+    } // for
+
+
+  if (btHfSendATCommand(handle, code, numberic, str_opt) < 0)
+    {
+      printf("%s Send AT command failed\n", __func__);
+      ret = BT_FAIL;
+    }
+
+bye:
+  return ret;
+}
+
+/****************************************************************************
+ * Name: bcm20706_bt_hfp_press_button
+ *
+ * Description:
+ *   Send pressing button command to BT
+ *
+ ****************************************************************************/
+
+static int bcm20706_bt_hfp_press_button(BT_ADDR *addr, uint16_t handle)
+{
+  int ret = BT_SUCCESS;
+
+  ret = btHfButtonPress(handle);
+  if (ret < 0)
+    {
+      printf("%s Send pressing button failed\n", __func__);
+    }
 
   return ret;
 }
@@ -212,6 +307,6 @@ struct bt_hal_hfp_ops_s bt_hal_hfp_ops =
   .connect         = bcm20706_bt_hfp_connect,
   .audio_connect   = bcm20706_bt_hfp_audio_connect,
   .set_hf_feature  = bcm20706_bt_hfp_hf_feature,
-  .send_at_command = bcm20706_bt_hfp_send_at_command
+  .send_at_command = bcm20706_bt_hfp_send_at_command,
+  .press_button    = bcm20706_bt_hfp_press_button,
 };
-
