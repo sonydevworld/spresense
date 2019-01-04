@@ -117,6 +117,7 @@ struct bt_hal_hfp_ops_s
   int (*audio_connect)(BT_ADDR *addr, uint16_t handle, bool connect);   /**< Connect/Disconnect HFP audio by BT_ADDR */
   int (*set_hf_feature)(BT_HFP_HF_FEATURE_FLAG hf_heature);             /**< Setup HFP HF feature @ref BT_HFP_HF_FEATURE_FLAG */
   int (*send_at_command)(BT_ADDR *addr, char *at_str, uint16_t handle); /**< Send AT comand */
+  int (*press_button)(BT_ADDR *addr, uint16_t handle);                  /**< Send pressing button comand */
 };
 
 /**
