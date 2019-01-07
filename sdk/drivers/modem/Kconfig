@@ -44,4 +44,14 @@ config MODEM_ALTMDM_MAX_PACKET_SIZE
 	---help---
 		none
 
+config MODEM_ALTMDM_SLEEP_TIMER_VAL
+	int "Modem sleep timer"
+	default 20
+	depends on MODEM_ALTMDM
+	---help---
+		Modem sleep timer in milliseconds.
+		Modem may sleep if there is no data to be transferred
+		during specified time. Values smaller than 20 milliseconds
+		can not be specified.
+
 endif
