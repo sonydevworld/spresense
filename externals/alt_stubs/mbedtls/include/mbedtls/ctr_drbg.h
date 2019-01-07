@@ -86,7 +86,30 @@ extern "C" {
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    unsigned char counter[16];  /*!<  counter (V)       */
+    int reseed_counter;         /*!<  reseed counter    */
+    int prediction_resistance;  /*!<  enable prediction resistance (Automatic
+                                      reseed before every random generation)  */
+    size_t entropy_len;         /*!<  amount of entropy grabbed on each
+                                      (re)seed          */
+    int reseed_interval;        /*!<  reseed interval   */
+
+    mbedtls_aes_context aes_ctx;        /*!<  AES context       */
+
+    /*
+     * Callbacks (Entropy)
+     */
+    int (*f_entropy)(void *, unsigned char *, size_t);
+
+    void *p_entropy;            /*!<  context for the entropy function */
+
+#if defined(MBEDTLS_THREADING_C)
+    mbedtls_threading_mutex_t mutex;
+#endif
+#endif
 }
 mbedtls_ctr_drbg_context;
 

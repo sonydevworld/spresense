@@ -125,7 +125,12 @@ typedef struct mbedtls_pk_info_t mbedtls_pk_info_t;
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    const mbedtls_pk_info_t *   pk_info; /**< Public key informations        */
+    void *                      pk_ctx;  /**< Underlying public key context  */
+#endif
 } mbedtls_pk_context;
 
 #if defined(MBEDTLS_RSA_C)
@@ -135,7 +140,14 @@ typedef struct
  * \warning You must make sure the PK context actually holds an RSA context
  * before using this function!
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 mbedtls_rsa_context *mbedtls_pk_rsa( const mbedtls_pk_context pk );
+#else
+static inline mbedtls_rsa_context *mbedtls_pk_rsa( const mbedtls_pk_context pk )
+{
+    return( (mbedtls_rsa_context *) (pk).pk_ctx );
+}
+#endif
 #endif /* MBEDTLS_RSA_C */
 
 #if defined(MBEDTLS_ECP_C)
@@ -145,7 +157,14 @@ mbedtls_rsa_context *mbedtls_pk_rsa( const mbedtls_pk_context pk );
  * \warning You must make sure the PK context actually holds an EC context
  * before using this function!
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 mbedtls_ecp_keypair *mbedtls_pk_ec( const mbedtls_pk_context pk );
+#else
+static inline mbedtls_ecp_keypair *mbedtls_pk_ec( const mbedtls_pk_context pk )
+{
+    return( (mbedtls_ecp_keypair *) (pk).pk_ctx );
+}
+#endif
 #endif /* MBEDTLS_ECP_C */
 
 #if defined(MBEDTLS_PK_RSA_ALT_SUPPORT)

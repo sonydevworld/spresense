@@ -28,6 +28,11 @@
 #ifndef MBEDTLS_CONFIG_H
 #define MBEDTLS_CONFIG_H
 
+/* Force to use alt_stubs configuration */
+#if !defined (CONFIG_LTE_NET_MBEDTLS)
+#define CONFIG_LTE_NET_MBEDTLS
+#endif
+
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_DEPRECATE)
 #define _CRT_SECURE_NO_DEPRECATE 1
 #endif

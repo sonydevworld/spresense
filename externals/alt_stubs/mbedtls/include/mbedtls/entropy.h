@@ -121,7 +121,26 @@ mbedtls_entropy_source_state;
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+#if defined(MBEDTLS_ENTROPY_SHA512_ACCUMULATOR)
+    mbedtls_sha512_context  accumulator;
+#else
+    mbedtls_sha256_context  accumulator;
+#endif
+    int             source_count;
+    mbedtls_entropy_source_state    source[MBEDTLS_ENTROPY_MAX_SOURCES];
+#if defined(MBEDTLS_HAVEGE_C)
+    mbedtls_havege_state    havege_data;
+#endif
+#if defined(MBEDTLS_THREADING_C)
+    mbedtls_threading_mutex_t mutex;    /*!< mutex                  */
+#endif
+#if defined(MBEDTLS_ENTROPY_NV_SEED)
+    int initial_entropy_run;
+#endif
+#endif
 }
 mbedtls_entropy_context;
 

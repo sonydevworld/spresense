@@ -178,7 +178,13 @@ extern "C" {
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    int s;              /*!<  integer sign      */
+    size_t n;           /*!<  total # of limbs  */
+    mbedtls_mpi_uint *p;          /*!<  pointer to limbs  */
+#endif
 }
 mbedtls_mpi;
 

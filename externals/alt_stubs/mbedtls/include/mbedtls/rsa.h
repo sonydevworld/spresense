@@ -78,7 +78,39 @@ extern "C" {
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    int ver;                    /*!<  always 0          */
+    size_t len;                 /*!<  size(N) in chars  */
+
+    mbedtls_mpi N;                      /*!<  public modulus    */
+    mbedtls_mpi E;                      /*!<  public exponent   */
+
+    mbedtls_mpi D;                      /*!<  private exponent  */
+    mbedtls_mpi P;                      /*!<  1st prime factor  */
+    mbedtls_mpi Q;                      /*!<  2nd prime factor  */
+    mbedtls_mpi DP;                     /*!<  D % (P - 1)       */
+    mbedtls_mpi DQ;                     /*!<  D % (Q - 1)       */
+    mbedtls_mpi QP;                     /*!<  1 / (Q % P)       */
+
+    mbedtls_mpi RN;                     /*!<  cached R^2 mod N  */
+    mbedtls_mpi RP;                     /*!<  cached R^2 mod P  */
+    mbedtls_mpi RQ;                     /*!<  cached R^2 mod Q  */
+
+    mbedtls_mpi Vi;                     /*!<  cached blinding value     */
+    mbedtls_mpi Vf;                     /*!<  cached un-blinding value  */
+
+    int padding;                /*!<  MBEDTLS_RSA_PKCS_V15 for 1.5 padding and
+                                      MBEDTLS_RSA_PKCS_v21 for OAEP/PSS         */
+    int hash_id;                /*!<  Hash identifier of mbedtls_md_type_t as
+                                      specified in the mbedtls_md.h header file
+                                      for the EME-OAEP and EMSA-PSS
+                                      encoding                          */
+#if defined(MBEDTLS_THREADING_C)
+    mbedtls_threading_mutex_t mutex;    /*!<  Thread-safety mutex       */
+#endif
+#endif
 }
 mbedtls_rsa_context;
 

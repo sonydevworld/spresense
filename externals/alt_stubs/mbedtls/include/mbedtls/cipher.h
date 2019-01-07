@@ -185,14 +185,80 @@ typedef struct mbedtls_cmac_context_t mbedtls_cmac_context_t;
  * Cipher information. Allows cipher functions to be called in a generic way.
  */
 typedef struct {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    /** Full cipher identifier (e.g. MBEDTLS_CIPHER_AES_256_CBC) */
+    mbedtls_cipher_type_t type;
+
+    /** Cipher mode (e.g. MBEDTLS_MODE_CBC) */
+    mbedtls_cipher_mode_t mode;
+
+    /** Cipher key length, in bits (default length for variable sized ciphers)
+     *  (Includes parity bits for ciphers like DES) */
+    unsigned int key_bitlen;
+
+    /** Name of the cipher */
+    const char * name;
+
+    /** IV/NONCE size, in bytes.
+     *  For cipher that accept many sizes: recommended size */
+    unsigned int iv_size;
+
+    /** Flags for variable IV size, variable key size, etc. */
+    int flags;
+
+    /** block size, in bytes */
+    unsigned int block_size;
+
+    /** Base cipher information and functions */
+    const mbedtls_cipher_base_t *base;
+
+#endif
 } mbedtls_cipher_info_t;
 
 /**
  * Generic cipher context.
  */
 typedef struct {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    /** Information about the associated cipher */
+    const mbedtls_cipher_info_t *cipher_info;
+
+    /** Key length to use */
+    int key_bitlen;
+
+    /** Operation that the context's key has been initialised for */
+    mbedtls_operation_t operation;
+
+#if defined(MBEDTLS_CIPHER_MODE_WITH_PADDING)
+    /** Padding functions to use, if relevant for cipher mode */
+    void (*add_padding)( unsigned char *output, size_t olen, size_t data_len );
+    int (*get_padding)( unsigned char *input, size_t ilen, size_t *data_len );
+#endif
+
+    /** Buffer for data that hasn't been encrypted yet */
+    unsigned char unprocessed_data[MBEDTLS_MAX_BLOCK_LENGTH];
+
+    /** Number of bytes that still need processing */
+    size_t unprocessed_len;
+
+    /** Current IV or NONCE_COUNTER for CTR-mode */
+    unsigned char iv[MBEDTLS_MAX_IV_LENGTH];
+
+    /** IV size in bytes (for ciphers with variable-length IVs) */
+    size_t iv_size;
+
+    /** Cipher-specific context */
+    void *cipher_ctx;
+
+#if defined(MBEDTLS_CMAC_C)
+    /** CMAC Specific context */
+    mbedtls_cmac_context_t *cmac_ctx;
+#endif
+#endif
 } mbedtls_cipher_context_t;
 
 /**
@@ -279,7 +345,17 @@ int mbedtls_cipher_setup( mbedtls_cipher_context_t *ctx, const mbedtls_cipher_in
  * \return              size of the cipher's blocks, or 0 if ctx has not been
  *                      initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 unsigned int mbedtls_cipher_get_block_size( const mbedtls_cipher_context_t *ctx );
+#else
+static inline unsigned int mbedtls_cipher_get_block_size( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return 0;
+
+    return ctx->cipher_info->block_size;
+}
+#endif
 
 /**
  * \brief               Returns the mode of operation for the cipher.
@@ -290,7 +366,17 @@ unsigned int mbedtls_cipher_get_block_size( const mbedtls_cipher_context_t *ctx 
  * \return              mode of operation, or MBEDTLS_MODE_NONE if ctx
  *                      has not been initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 mbedtls_cipher_mode_t mbedtls_cipher_get_cipher_mode( const mbedtls_cipher_context_t *ctx );
+#else
+static inline mbedtls_cipher_mode_t mbedtls_cipher_get_cipher_mode( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return MBEDTLS_MODE_NONE;
+
+    return ctx->cipher_info->mode;
+}
+#endif
 
 /**
  * \brief               Returns the size of the cipher's IV/NONCE in bytes.
@@ -301,7 +387,20 @@ mbedtls_cipher_mode_t mbedtls_cipher_get_cipher_mode( const mbedtls_cipher_conte
  *                      (0 for ciphers not using IV/NONCE).
  *                      If IV has already been set: actual size.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 int mbedtls_cipher_get_iv_size( const mbedtls_cipher_context_t *ctx );
+#else
+static inline int mbedtls_cipher_get_iv_size( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return 0;
+
+    if( ctx->iv_size != 0 )
+        return (int) ctx->iv_size;
+
+    return (int) ctx->cipher_info->iv_size;
+}
+#endif
 
 /**
  * \brief               Returns the type of the given cipher.
@@ -311,7 +410,17 @@ int mbedtls_cipher_get_iv_size( const mbedtls_cipher_context_t *ctx );
  * \return              type of the cipher, or MBEDTLS_CIPHER_NONE if ctx has
  *                      not been initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 mbedtls_cipher_type_t mbedtls_cipher_get_type( const mbedtls_cipher_context_t *ctx );
+#else
+static inline mbedtls_cipher_type_t mbedtls_cipher_get_type( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return MBEDTLS_CIPHER_NONE;
+
+    return ctx->cipher_info->type;
+}
+#endif
 
 /**
  * \brief               Returns the name of the given cipher, as a string.
@@ -320,7 +429,17 @@ mbedtls_cipher_type_t mbedtls_cipher_get_type( const mbedtls_cipher_context_t *c
  *
  * \return              name of the cipher, or NULL if ctx was not initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 const char *mbedtls_cipher_get_name( const mbedtls_cipher_context_t *ctx );
+#else
+static inline const char *mbedtls_cipher_get_name( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return 0;
+
+    return ctx->cipher_info->name;
+}
+#endif
 
 /**
  * \brief               Returns the key length of the cipher.
@@ -331,7 +450,17 @@ const char *mbedtls_cipher_get_name( const mbedtls_cipher_context_t *ctx );
  *                      MBEDTLS_KEY_LENGTH_NONE if ctx has not been
  *                      initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 int mbedtls_cipher_get_key_bitlen( const mbedtls_cipher_context_t *ctx );
+#else
+static inline int mbedtls_cipher_get_key_bitlen( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return MBEDTLS_KEY_LENGTH_NONE;
+
+    return (int) ctx->cipher_info->key_bitlen;
+}
+#endif
 
 /**
  * \brief               Returns the operation of the given cipher.
@@ -342,7 +471,17 @@ int mbedtls_cipher_get_key_bitlen( const mbedtls_cipher_context_t *ctx );
  *                      or MBEDTLS_OPERATION_NONE if ctx has not been
  *                      initialised.
  */
+#if defined(CONFIG_LTE_NET_MBEDTLS)
 mbedtls_operation_t mbedtls_cipher_get_operation( const mbedtls_cipher_context_t *ctx );
+#else
+static inline mbedtls_operation_t mbedtls_cipher_get_operation( const mbedtls_cipher_context_t *ctx )
+{
+    if( NULL == ctx || NULL == ctx->cipher_info )
+        return MBEDTLS_OPERATION_NONE;
+
+    return ctx->operation;
+}
+#endif
 
 /**
  * \brief               Set the key to use with the given context.

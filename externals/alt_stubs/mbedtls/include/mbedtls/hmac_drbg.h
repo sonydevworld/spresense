@@ -75,7 +75,29 @@ extern "C" {
  */
 typedef struct
 {
+#if defined(CONFIG_LTE_NET_MBEDTLS)
     uint32_t id;
+#else
+    /* Working state: the key K is not stored explicitely,
+     * but is implied by the HMAC context */
+    mbedtls_md_context_t md_ctx;                    /*!< HMAC context (inc. K)  */
+    unsigned char V[MBEDTLS_MD_MAX_SIZE];  /*!< V in the spec          */
+    int reseed_counter;                     /*!< reseed counter         */
+
+    /* Administrative state */
+    size_t entropy_len;         /*!< entropy bytes grabbed on each (re)seed */
+    int prediction_resistance;  /*!< enable prediction resistance (Automatic
+                                     reseed before every random generation) */
+    int reseed_interval;        /*!< reseed interval   */
+
+    /* Callbacks */
+    int (*f_entropy)(void *, unsigned char *, size_t); /*!< entropy function */
+    void *p_entropy;            /*!< context for the entropy function        */
+
+#if defined(MBEDTLS_THREADING_C)
+    mbedtls_threading_mutex_t mutex;
+#endif
+#endif
 } mbedtls_hmac_drbg_context;
 
 /**
