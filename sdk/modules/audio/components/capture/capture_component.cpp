@@ -848,6 +848,15 @@ bool CaptureComponent::init(const CaptureComponentParam& param)
 
   m_ch_num = param.init_param.capture_ch_num;
 
+  if ((param.init_param.preset_num > PRE_REQ_QUE_NUM)
+   || (param.init_param.preset_num > MemMgrLite::Manager::getPoolNumAvailSegs(m_mem_pool_id)))
+    {
+      CAPTURE_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      result = false;
+    }
+
+  m_preset_num = param.init_param.preset_num;
+
   return result;
 }
 
@@ -882,7 +891,7 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
    * send read request to DMAC and start.
    */
 
-  if (m_cap_pre_que.full())
+  if (m_preset_num <= m_cap_pre_que.size())
     {
       while (!m_cap_pre_que.empty())
         {

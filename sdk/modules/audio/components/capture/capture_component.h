@@ -54,6 +54,7 @@
 
 __WIEN2_BEGIN_NAMESPACE
 
+#define PRE_REQ_QUE_NUM     (8)
 #define MAX_CAPTURE_QUE_NUM (9)
 #define MAX_AC_IN_CH_NUM    (4)
 #define MAX_I2S_IN_CH_NUM   (2)
@@ -115,6 +116,7 @@ struct InitCaptureComponentParam
 {
   uint8_t          capture_ch_num;
   AudioPcmBitWidth capture_bit_width;
+  uint8_t          preset_num;
   CaptureDoneCB    callback;
   CaptureErrorCB   err_callback;
 };
@@ -184,6 +186,7 @@ public:
     : m_dmac_id(CXD56_AUDIO_DMAC_MIC)
     , m_output_device(CaptureDeviceTypeNum)
     , m_ch_num(CONFIG_AUDIOUTILS_CAPTURE_CH_NUM)
+    , m_preset_num(0)
     , m_state(AS_MODULE_ID_CAPTURE_CMP, "", Booted)
   {}
 
@@ -221,9 +224,11 @@ private:
 
   uint8_t m_ch_num;
 
+  uint8_t m_preset_num;
+
   AudioState<State> m_state;
 
-  typedef s_std::Queue<CaptureComponentParam, 2> ReadDmacCmdQue;
+  typedef s_std::Queue<CaptureComponentParam, PRE_REQ_QUE_NUM> ReadDmacCmdQue;
   ReadDmacCmdQue m_cap_pre_que;
 
   typedef bool (CaptureComponent::*EvtProc)(const CaptureComponentParam&);

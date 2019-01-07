@@ -60,7 +60,7 @@ __WIEN2_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define CAPTURE_DELAY_STAGE_NUM   3
+#define CAPTURE_PRESET_NUM        4
 #define CAPTURE_PCM_BUF_QUE_SIZE  7
 #define OUTPUT_DATA_QUE_SIZE      5
 #define FALT_HANDLE_ID            0xFF

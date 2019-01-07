@@ -728,6 +728,7 @@ void MediaRecorderObjectTask::startOnReady(MsgPacket *msg)
 
   cap_comp_param.init_param.capture_ch_num    = m_channel_num;
   cap_comp_param.init_param.capture_bit_width = m_pcm_bit_width;
+  cap_comp_param.init_param.preset_num        = CAPTURE_PRESET_NUM;
   cap_comp_param.init_param.callback          = capture_comp_done_callback;
   cap_comp_param.init_param.err_callback      = capture_comp_error_callback;
   cap_comp_param.handle                       = m_capture_from_mic_hdlr;
@@ -1199,7 +1200,7 @@ bool MediaRecorderObjectTask::startCapture()
    * the specification of Baseband.
    */
 
-  for (int i = 0; i < CAPTURE_DELAY_STAGE_NUM; i++)
+  for (int i = 0; i < CAPTURE_PRESET_NUM; i++)
     {
       CaptureComponentParam cap_comp_param;
       cap_comp_param.handle                = m_capture_from_mic_hdlr;

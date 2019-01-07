@@ -87,7 +87,7 @@ E_AS AS_DeactivateDmac(cxd56_audio_dma_t dmacId);
  */
 
 #define READY_QUEUE_NUM 30
-#define RUNNING_QUEUE_NUM 3
+#define RUNNING_QUEUE_NUM 2
 #define PREPARE_SAVE_NUM RUNNING_QUEUE_NUM
 
 typedef bool (* AS_DmaDrvFunc)(void*);
