@@ -205,3 +205,131 @@ bool board_external_amp_mute_monitor(void)
   return false;
 }
 
+/****************************************************************************
+ * Name: board_audio_i2s_enable
+ *
+ * Description:
+ *   Enable I2S on the board.
+ *
+ ****************************************************************************/
+
+void board_audio_i2s_enable(void)
+{
+#ifdef CONFIG_CXD56_I2S0
+  /* Select I2S0_BCK, I2S0_LRCK, I2S0_DATA_IN, I2S0_DATA_OUT. */
+
+#  ifdef CONFIG_CXD56_AUDIO_I2S_DEVICE_1_MASTER
+  /* I2S0 Master. */
+
+#    ifdef CONFIG_CXD56_AUDIO_I2S_LOWEMI_2MA
+  CXD56_PIN_CONFIGS(PINCONFS_I2S0_M_NORM);
+#    else
+  CXD56_PIN_CONFIGS(PINCONFS_I2S0_M_HIGH);
+#    endif
+#  else
+  /* I2S0 Slave. */
+
+#    ifdef CONFIG_CXD56_AUDIO_I2S_LOWEMI_2MA
+  CXD56_PIN_CONFIGS(PINCONFS_I2S0_S_NORM);
+#    else
+  CXD56_PIN_CONFIGS(PINCONFS_I2S0_S_HIGH);
+#    endif
+#  endif /* CONFIG_CXD56_AUDIO_I2S_DEVICE_1_MASTER */
+#endif /* CONFIG_CXD56_I2S0 */
+
+#ifdef CONFIG_CXD56_I2S1
+  /* Select I2S1_BCK, I2S1_LRCK, I2S1_DATA_IN, I2S1_DATA_OUT. */
+
+#  ifdef CONFIG_CXD56_AUDIO_I2S_DEVICE_2_MASTER
+  /* I2S1 Master. */
+
+#    ifdef CONFIG_CXD56_AUDIO_I2S_LOWEMI_2MA
+  CXD56_PIN_CONFIGS(PINCONFS_I2S1_M_NORM);
+#    else
+  CXD56_PIN_CONFIGS(PINCONFS_I2S1_M_HIGH);
+#    endif
+#  else
+  /* I2S1 Slave. */
+
+#    ifdef CONFIG_CXD56_AUDIO_I2S_LOWEMI_2MA
+  CXD56_PIN_CONFIGS(PINCONFS_I2S1_S_NORM);
+#    else
+  CXD56_PIN_CONFIGS(PINCONFS_I2S1_S_HIGH);
+#    endif
+#  endif /* CONFIG_CXD56_AUDIO_I2S_DEVICE_2_MASTER */
+#endif /* CONFIG_CXD56_I2S1 */
+}
+
+/****************************************************************************
+ * Name: board_audio_i2s_disable
+ *
+ * Description:
+ *   Dsiable I2S on the board.
+ *
+ ****************************************************************************/
+
+void board_audio_i2s_disable(void)
+{
+#ifdef CONFIG_CXD56_I2S0
+  /* Select GPIO(P1v_00/01/02/03) */
+
+  CXD56_PIN_CONFIGS(PINCONFS_I2S0_GPIO);
+
+#endif
+
+#ifdef CONFIG_CXD56_I2S1
+  /* Select GPIO(P1v_00/01/02/03) */
+
+  CXD56_PIN_CONFIGS(PINCONFS_I2S1_GPIO);
+#endif
+}
+
+/****************************************************************************
+ * Name: board_audio_initialize
+ *
+ * Description:
+ *   Initialize audio I/O on the board.
+ *
+ ****************************************************************************/
+
+void board_audio_initialize(void)
+{
+  /* Select MCLK. */
+
+#ifndef CONFIG_CXD56_AUDIO_ANALOG_NONE
+  CXD56_PIN_CONFIGS(PINCONFS_MCLK);
+#endif
+
+  /* Select PDM_CLK, PDM_IN, PDM_OUT. */
+
+#ifdef CONFIG_CXD56_AUDIO_PDM_LOWEMI_2MA
+  CXD56_PIN_CONFIGS(PINCONFS_PDM_NORM);
+#else
+  CXD56_PIN_CONFIGS(PINCONFS_PDM_HIGH);
+#endif
+}
+
+/****************************************************************************
+ * Name: board_audio_finalize
+ *
+ * Description:
+ *   Finalize audio I/O on the board.
+ *
+ ****************************************************************************/
+
+void board_audio_finalize(void)
+{
+  /* Select GPIO(P1x_00). */
+
+#ifndef CONFIG_CXD56_AUDIO_ANALOG_NONE
+  CXD56_PIN_CONFIGS(PINCONFS_MCLK_GPIO);
+#endif
+
+  /* Select GPIO(P1y_00/01/02). */
+
+  CXD56_PIN_CONFIGS(PINCONFS_PDM_GPIO);
+
+  /* Disable I2S. */
+
+  board_audio_i2s_disable();
+}

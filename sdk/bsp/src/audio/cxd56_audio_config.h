@@ -99,12 +99,6 @@ enum cxd56_audio_cfg_i2s_bypass_e
   CXD56_AUDIO_CFG_I2S_BYPASS_ENABLE
 };
 
-enum cxd56_audio_cfg_lowemi_e
-{
-  CXD56_AUDIO_CFG_LOEMI_2MA = 0,
-  CXD56_AUDIO_CFG_LOEMI_4MA
-};
-
 enum cxd56_audio_cfg_cic_in_sel_e
 {
   CXD56_AUDIO_CFG_CIC_IN_SEL_NONE = 0,
@@ -272,22 +266,6 @@ enum cxd56_audio_cfg_sp_spliton_e
 #  define CXD56_AUDIO_CFG_I2S2_DATA_RATE   CONFIG_CXD56_AUDIO_I2S_RATE_2
 #else
 #  define CXD56_AUDIO_CFG_I2S2_DATA_RATE   0
-#endif
-
-/* Drive strength of PDM signals */
-
-#if defined(CONFIG_CXD56_AUDIO_PDM_LOWEMI_2MA)
-#  define CXD56_AUDIO_CFG_PDM_DS CXD56_AUDIO_CFG_LOEMI_2MA
-#else
-#  define CXD56_AUDIO_CFG_PDM_DS CXD56_AUDIO_CFG_LOEMI_4MA
-#endif
-
-/* Drive strength of I2S signals */
-
-#if defined(CONFIG_CXD56_AUDIO_I2S_LOWEMI_2MA)
-#  define CXD56_AUDIO_CFG_I2S_DS CXD56_AUDIO_CFG_LOEMI_2MA
-#else
-#  define CXD56_AUDIO_CFG_I2S_DS CXD56_AUDIO_CFG_LOEMI_4MA
 #endif
 
 /* CIC filter input path */

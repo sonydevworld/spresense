@@ -244,9 +244,9 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron(void)
       return CXD56_AUDIO_ECODE_POW_STATE;
     }
 
-  /* Set global pin. */
+  /* Initialize board I/O. */
 
-  cxd56_audio_pin_set();
+  board_audio_initialize();
 
   /* Initialize config. */
 
@@ -369,9 +369,9 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff(void)
   cxd56_audio_irq_disable();
   cxd56_audio_irq_detach();
 
-  /* Unset global pin. */
+  /* Finalize board I/O. */
 
-  cxd56_audio_pin_unset();
+  board_audio_finalize();
 
   /* Update status. */
 

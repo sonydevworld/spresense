@@ -40,7 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <arch/chip/cxd56_audio.h>
+#include <arch/board/board.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -62,8 +62,6 @@
  * Public Function Prototypes
  ****************************************************************************/
 
-void cxd56_audio_pin_set(void);
-void cxd56_audio_pin_unset(void);
 void cxd56_audio_pin_i2s_set(void);
 void cxd56_audio_pin_i2s_unset(void);
 
