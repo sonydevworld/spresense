@@ -210,7 +210,7 @@ static void print_http_status_code(const unsigned char *buffer)
  ****************************************************************************/
 
 /****************************************************************************
- * lte_https_post_main
+ * lte_tls_main
  ****************************************************************************/
 
 #ifdef CONFIG_BUILD_KERNEL
@@ -439,7 +439,7 @@ exit:
   mbedtls_x509_crt_free(&g_ca);
 
   /* 11. Disconnect from LTE network.
-   *     Please refer to lte_sub.c.
+   *     Please refer to lte_connection.c.
    *     (The contents is the same as lte_http_get examples.)
    */
 
