@@ -198,10 +198,16 @@ static void create_http_post(const char    *host,
 
 static void print_http_status_code(const unsigned char *buffer)
 {
-  printf("HTTP status code = ");
-  fflush(stdout);
-  write(1, &buffer[APP_HTTP_STATUS_CODE_OFFSET], APP_HTTP_STATUS_CODE_LEN);
-  printf("\n");
+  unsigned char status_code[APP_HTTP_STATUS_CODE_LEN + 1] = {0};
+
+  /* Get HTTP status code.
+   * For examples, HTTP 200 OK response starts from "HTTP/1.1 200"
+   */
+
+  memcpy(status_code,
+         &buffer[APP_HTTP_STATUS_CODE_OFFSET],
+         APP_HTTP_STATUS_CODE_LEN);
+  printf("HTTP status code = %s\n", status_code);
   return;
 }
 
