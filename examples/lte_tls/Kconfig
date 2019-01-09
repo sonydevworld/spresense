@@ -37,23 +37,17 @@ config EXAMPLES_LTE_TLS_APN_NAME
 
 choice
 	prompt "IP type Selection"
-	default EXAMPLES_LTE_TLS_APN_IPTYPE_V4
+	default EXAMPLES_LTE_TLS_APN_IPTYPE_IP
 
-	config EXAMPLES_LTE_TLS_APN_IPTYPE_V4
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IP
 		bool "IPv4"
 
-	config EXAMPLES_LTE_TLS_APN_IPTYPE_V6
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IPV6
 		bool "IPv6"
 
-	config EXAMPLES_LTE_TLS_APN_IPTYPE_V4V6
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IPV4V6
 		bool "IPv4/v6"
 endchoice
-
-config EXAMPLES_LTE_TLS_APN_IPTYPE
-	int
-	default 0 if EXAMPLES_LTE_TLS_APN_IPTYPE_V4
-        default 1 if EXAMPLES_LTE_TLS_APN_IPTYPE_V6
-        default 2 if EXAMPLES_LTE_TLS_APN_IPTYPE_V4V6
 
 choice
 	prompt "Authentication type Selection"
@@ -68,12 +62,6 @@ choice
 	config EXAMPLES_LTE_TLS_APN_AUTHTYPE_CHAP
 		bool "CHAP"
 endchoice
-
-config EXAMPLES_LTE_TLS_APN_AUTHTYPE
-	int
-	default 0 if EXAMPLES_LTE_TLS_APN_AUTHTYPE_NONE
-	default 1 if EXAMPLES_LTE_TLS_APN_AUTHTYPE_PAP
-	default 2 if EXAMPLES_LTE_TLS_APN_AUTHTYPE_CHAP
 
 config EXAMPLES_LTE_TLS_APN_USERNAME
 	string "Username used for authentication(same as lte_http_get example)"
