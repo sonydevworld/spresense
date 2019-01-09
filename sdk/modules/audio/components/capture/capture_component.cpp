@@ -33,7 +33,6 @@
  *
  ****************************************************************************/
 
-#include <arch/chip/cxd56_audio.h>
 #include "capture_component.h"
 
 #include "dma_controller/audio_dma_drv.h"
@@ -428,7 +427,7 @@ static bool rcv_result(int ch)
 
   err_code = que->recv(TIME_FOREVER, &msg);
   F_ASSERT(err_code == ERR_OK);
-  F_ASSERT(msg->getType() == MSG_AUD_BB_RST);
+  F_ASSERT(msg->getType() == MSG_AUD_CAP_RST);
 
   bool result = msg->moveParam<bool>();
   err_code = que->pop();
@@ -468,7 +467,7 @@ bool AS_get_capture_comp_handler(CaptureComponentHandler *p_handle,
   param.act_param.output_device = device_type;
   param.act_param.mem_pool_id   = mem_pool_id;
 
-  if (!s_pFactory->parse(*p_handle, MSG_AUD_BB_CMD_ACT, param))
+  if (!s_pFactory->parse(*p_handle, MSG_AUD_CAP_CMD_ACT, param))
     {
       return false;
     }
@@ -483,7 +482,7 @@ bool AS_release_capture_comp_handler(CaptureComponentHandler handle)
 {
   CaptureComponentParam param;
 
-  s_pFactory->parse(handle, MSG_AUD_BB_CMD_DEACT, param);
+  s_pFactory->parse(handle, MSG_AUD_CAP_CMD_DEACT, param);
 
   /* Wait response of DEACTIVATE */
 
@@ -512,7 +511,7 @@ bool AS_init_capture(const CaptureComponentParam *param)
 
   /* Init */
 
-  if (!s_pFactory->parse(param->handle, MSG_AUD_BB_CMD_INIT, *param))
+  if (!s_pFactory->parse(param->handle, MSG_AUD_CAP_CMD_INIT, *param))
     {
       return false;
     }
@@ -532,7 +531,7 @@ bool AS_exec_capture(const CaptureComponentParam *param)
 
   /* Execute */
 
-  if (!s_pFactory->parse(param->handle, MSG_AUD_BB_CMD_RUN, *param))
+  if (!s_pFactory->parse(param->handle, MSG_AUD_CAP_CMD_RUN, *param))
     {
       return false;
     }
@@ -552,12 +551,34 @@ bool AS_stop_capture(const CaptureComponentParam *param)
 
   /* Stop */
 
-  if (!s_pFactory->parse(param->handle, MSG_AUD_BB_CMD_STOP, *param))
+  if (!s_pFactory->parse(param->handle, MSG_AUD_CAP_CMD_STOP, *param))
     {
       return false;
     }
 
   /* Wait response of STOP */
+
+  return rcv_result(param->handle);
+}
+
+/*--------------------------------------------------------------------*/
+bool AS_set_micgain_capture(const CaptureComponentParam *param)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      return false;
+    }
+
+  /* Set Mic Gain */
+
+  if (!s_pFactory->parse(param->handle, MSG_AUD_CAP_CMD_SETMICGAIN, *param))
+    {
+      return false;
+    }
+
+  /* Wait response of Set Mic Gain */
 
   return rcv_result(param->handle);
 }
@@ -591,7 +612,7 @@ static void dma_notify_cmplt_int(cxd56_audio_dma_t dmacId, uint32_t dma_result)
 
   err_t err = MsgLib::sendIsr<CaptureComponentParam>(s_self_dtq[handle],
                                                      MsgPriNormal,
-                                                     MSG_AUD_BB_CMD_CMPLT,
+                                                     MSG_AUD_CAP_CMD_CMPLT,
                                                      s_self_sync_dtq[handle],
                                                      param);
   F_ASSERT(err == ERR_OK);
@@ -623,9 +644,9 @@ bool CaptureCompFactory::parse(CaptureComponentHandler handle,
 /*--------------------------------------------------------------------
     Class Methods
   --------------------------------------------------------------------*/
-CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum] =
+CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNum] =
 {
-  /* Message type: MSG_AUD_BB_CMD_ACT */
+  /* Message type: MSG_AUD_CAP_CMD_ACT */
   {                                  /* Capture status: */
     &CaptureComponent::act,          /*   Booted        */
     &CaptureComponent::illegal,      /*   Ready         */
@@ -633,7 +654,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
     &CaptureComponent::illegal       /*   Act           */
   },
 
-  /* Message type: MSG_AUD_BB_CMD_DEACT */
+  /* Message type: MSG_AUD_CAP_CMD_DEACT */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::deact,        /*   Ready         */
@@ -641,7 +662,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
     &CaptureComponent::illegal       /*   Act           */
   },
 
-  /* Message type: MSG_AUD_BB_CMD_INIT */
+  /* Message type: MSG_AUD_CAP_CMD_INIT */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::init,         /*   Ready         */
@@ -649,7 +670,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
     &CaptureComponent::illegal       /*   Act           */
   },
 
-  /* Message type: MSG_AUD_BB_CMD_RUN */
+  /* Message type: MSG_AUD_CAP_CMD_RUN */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::execOnRdy,    /*   Ready         */
@@ -657,7 +678,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
     &CaptureComponent::execOnAct     /*   Act           */
   },
 
-  /* Message type: MSG_AUD_BB_CMD_STOP */
+  /* Message type: MSG_AUD_CAP_CMD_STOP */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::stopOnReady,  /*   Ready         */
@@ -665,7 +686,15 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
     &CaptureComponent::stopOnAct     /*   Act           */
   },
 
-  /* Message type: MSG_AUD_BB_CMD_CMPLT */
+  /* Message type: MSG_AUD_CAP_CMD_SETMICGAIN */
+  {                                  /* Capture status: */
+    &CaptureComponent::illegal,      /*   Booted        */
+    &CaptureComponent::setMicGain,   /*   Ready         */
+    &CaptureComponent::setMicGain,   /*   PreAct        */
+    &CaptureComponent::setMicGain,   /*   Act           */
+  },
+
+  /* Message type: MSG_AUD_CAP_CMD_CMPLT */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::notify,       /*   Ready         */
@@ -757,7 +786,7 @@ bool CaptureComponent::act(const CaptureComponentParam& param)
 
   err_t err = MsgLib::send<bool>(m_self_sync_dtq,
                                  MsgPriNormal,
-                                 MSG_AUD_BB_RST,
+                                 MSG_AUD_CAP_RST,
                                  NULL,
                                  result);
   F_ASSERT(err == ERR_OK);
@@ -790,7 +819,7 @@ bool CaptureComponent::deact(const CaptureComponentParam& param)
 
   err_t err = MsgLib::send<bool>(m_self_sync_dtq,
                                  MsgPriNormal,
-                                 MSG_AUD_BB_RST,
+                                 MSG_AUD_CAP_RST,
                                  NULL,
                                  result);
   F_ASSERT(err == ERR_OK);
@@ -964,7 +993,7 @@ bool CaptureComponent::stopOnPreAct(const CaptureComponentParam& param)
 
   err_t err = MsgLib::send<bool>(m_self_sync_dtq,
                                  MsgPriNormal,
-                                 MSG_AUD_BB_RST,
+                                 MSG_AUD_CAP_RST,
                                  NULL,
                                  result);
   F_ASSERT(err == ERR_OK);
@@ -991,7 +1020,43 @@ bool CaptureComponent::stopOnAct(const CaptureComponentParam& param)
 
   err_t err = MsgLib::send<bool>(m_self_sync_dtq,
                                  MsgPriNormal,
-                                 MSG_AUD_BB_RST,
+                                 MSG_AUD_CAP_RST,
+                                 NULL,
+                                 result);
+  F_ASSERT(err == ERR_OK);
+
+  return result;
+}
+
+/*--------------------------------------------------------------------*/
+bool CaptureComponent::setMicGain(const CaptureComponentParam& param)
+{
+  bool result = true;
+
+  CAPTURE_DBG("SETMICGAIN:\n");
+
+  cxd56_audio_mic_gain_t cxd56_mic_gain;
+
+  for (int i = 0; i < CXD56_AUDIO_MIC_CH_MAX; i++)
+    {
+      if (i < MAX_CAPTURE_MIC_CH)
+        {
+          cxd56_mic_gain.gain[i] = param.set_micgain_param->mic_gain[i];
+        }
+      else
+        {
+          cxd56_mic_gain.gain[i] = 0;
+        }
+    }
+
+  if (CXD56_AUDIO_ECODE_OK != cxd56_audio_set_micgain(&cxd56_mic_gain))
+    {
+      result = false;
+    }
+
+  err_t err = MsgLib::send<bool>(m_self_sync_dtq,
+                                 MsgPriNormal,
+                                 MSG_AUD_CAP_RST,
                                  NULL,
                                  result);
   F_ASSERT(err == ERR_OK);

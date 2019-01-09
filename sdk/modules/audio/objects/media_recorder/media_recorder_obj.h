@@ -158,6 +158,7 @@ private:
   void stopOnRec(MsgPacket *);
   void stopOnErrorStop(MsgPacket *);
   void stopOnWait(MsgPacket *);
+  void setMicGain(MsgPacket *);
 
   void illegalFilterDone(MsgPacket *);
   void filterDoneOnRec(MsgPacket *);

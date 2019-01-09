@@ -391,6 +391,17 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal,         /*   Stopping.      */
     &MediaRecorderObjectTask::stopOnErrorStop, /*   ErrorStopping. */
     &MediaRecorderObjectTask::stopOnWait       /*   WaitStop.      */
+  },
+
+  /* Message Type: MSG_AUD_VRC_CMD_SET_MICGAIN. */
+
+  {                                            /* Recorder status: */
+    &MediaRecorderObjectTask::illegal,         /*   Inactive.      */
+    &MediaRecorderObjectTask::setMicGain,      /*   Ready.         */
+    &MediaRecorderObjectTask::setMicGain,      /*   Play.          */
+    &MediaRecorderObjectTask::illegal,         /*   Stopping.      */
+    &MediaRecorderObjectTask::illegal,         /*   ErrorStopping. */
+    &MediaRecorderObjectTask::illegal          /*   WaitStop.      */
   }
 };
 
@@ -506,6 +517,7 @@ void MediaRecorderObjectTask::illegal(MsgPacket *msg)
     AsRecorderEventStart,
     AsRecorderEventStop,
     AsRecorderEventDeact,
+    AsRecorderEventSetMicGain
   };
 
   m_callback(table[idx], AS_ECODE_STATE_VIOLATION, 0);
@@ -876,6 +888,40 @@ void MediaRecorderObjectTask::stopOnWait(MsgPacket *msg)
   m_callback(AsRecorderEventStop, AS_ECODE_OK, 0);
 
   m_state = RecorderStateReady;
+}
+
+/*--------------------------------------------------------------------------*/
+void MediaRecorderObjectTask::setMicGain(MsgPacket *msg)
+{
+  AsRecorderMicGainParam recv_micgain = msg->moveParam<RecorderCommand>().
+                                          set_micgain_param;
+
+  MEDIA_RECORDER_DBG("Set Mic Gain:\n");
+
+  SetMicGainCaptureComponentParam set_micgain;
+
+  for (int i = 0; i < MAX_CAPTURE_MIC_CH; i++)
+    {
+      if (i < AS_MIC_CHANNEL_MAX)
+        {
+          set_micgain.mic_gain[i] = recv_micgain.mic_gain[i];
+        }
+      else
+        {
+          set_micgain.mic_gain[i] = 0;
+        }
+    }
+
+  CaptureComponentParam cap_comp_param;
+  cap_comp_param.handle = m_capture_from_mic_hdlr;
+  cap_comp_param.set_micgain_param = &set_micgain;
+
+  if (!AS_set_micgain_capture(&cap_comp_param))
+    {
+      m_callback(AsRecorderEventSetMicGain, AS_ECODE_SET_MIC_GAIN_ERROR, 0);
+    }
+
+  m_callback(AsRecorderEventSetMicGain, AS_ECODE_OK, 0);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1904,6 +1950,28 @@ bool AS_DeleteMediaRecorder(void)
   /* Unregister attention callback */
 
   MEDIA_RECORDER_UNREG_ATTCB();
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_SetMicGainMediaRecorder(FAR AsRecorderMicGainParam *micgain_param)
+{
+  if (micgain_param == NULL)
+    {
+      return false;
+    }
+
+  RecorderCommand cmd;
+
+  cmd.set_micgain_param = *micgain_param;
+
+  err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
+                                           MsgPriNormal,
+                                           MSG_AUD_VRC_CMD_SET_MICGAIN,
+                                           NULL,
+                                           cmd);
+  F_ASSERT(er == ERR_OK);
 
   return true;
 }

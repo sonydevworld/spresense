@@ -73,6 +73,7 @@
 #define MSG_CAT_AUD_MIX           (MSG_SET_CATEGORY(0x7))
 #define MSG_CAT_AUD_MIX_SEF       (MSG_SET_CATEGORY(0x8))
 #define MSG_CAT_AUD_SEF           (MSG_SET_CATEGORY(0x9))
+#define MSG_CAT_AUD_CAP           (MSG_SET_CATEGORY(0xA))
 
 /************************************************************************
  *
@@ -251,8 +252,9 @@
 #define MSG_AUD_VRC_CMD_INIT        (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x02))
 #define MSG_AUD_VRC_CMD_START       (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x03))
 #define MSG_AUD_VRC_CMD_STOP        (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_VRC_CMD_SET_MICGAIN (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x05))
 
-#define LAST_AUD_VRC_MSG    (MSG_AUD_VRC_CMD_STOP + 1)
+#define LAST_AUD_VRC_MSG    (MSG_AUD_VRC_CMD_SET_MICGAIN + 1)
 #define AUD_VRC_MSG_NUM     (LAST_AUD_VRC_MSG & MSG_TYPE_SUBTYPE)
 
 #define MSG_AUD_VRC_RST_CAPTURE     (MSG_AUD_VRC_RES | MSG_SET_SUBTYPE(0x00))
@@ -344,6 +346,33 @@
 #define AUD_SEF_MSG_NUM     (LAST_AUD_SEF_MSG & MSG_TYPE_SUBTYPE)
 
 #define MSG_AUD_SEF_RST     (MSG_AUD_SEF_RES | MSG_SET_SUBTYPE(0x00))
+
+/************************************************************************
+ *
+ *    MSG_CAT_AUD_CAP: Audio Capture Command/Result(bi-directional)
+ *
+ *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
+ *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_CAP|   MSG_SUB_TYPE                |
+ *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ *
+ ************************************************************************
+ */
+#define MSG_AUD_CAP_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_CAP)
+#define MSG_AUD_CAP_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_CAP)
+
+#define MSG_AUD_CAP_CMD_ACT          (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_CAP_CMD_DEACT        (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_CAP_CMD_INIT         (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x02))
+#define MSG_AUD_CAP_CMD_RUN          (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_CAP_CMD_STOP         (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_CAP_CMD_SETMICGAIN   (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_CAP_CMD_CMPLT        (MSG_AUD_CAP_REQ | MSG_SET_SUBTYPE(0x06))
+
+#define LAST_AUD_CAP_MSG     (MSG_AUD_CAP_CMD_CMPLT + 1)
+#define AUD_CAP_MSG_NUM      (LAST_AUD_CAP_MSG & MSG_TYPE_SUBTYPE)
+
+#define MSG_AUD_CAP_RST      (MSG_AUD_CAP_RES | MSG_SET_SUBTYPE(0x00))
 
 /************************************************************************
  *
