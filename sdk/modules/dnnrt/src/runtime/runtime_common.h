@@ -116,14 +116,55 @@ extern "C"
     }                                                                          \
   } while (0)
 
-  typedef struct dnn_global_context
-    {
-      int rt_count;
-      int req_scratch_buf_bsize;
-      int scratch_buf_bsize;
-      void *scratch_buf;
-    } dnn_global_context;
+/* dnnrt does NOT support rt_context_t with buffer variables
+   with more than MAX_VBUFFER_NUM */
+#  define MAX_VBUFFER_NUM  (16)
 
+  /* structure to manage shared_chunks, which underlie
+   * variable buffers in dnn_runtime_t. */
+  struct dnn_shared_chunk;
+  typedef struct dnn_shared_chunk dnn_shared_chunk_t;
+  struct dnn_shared_chunk
+  {
+    void *data;                 /* start address of this chunk */
+    size_t allocated_bsize;     /* size of a buffer to which
+                                 * dnn_shared_chunk_t::data points */
+    size_t used_bsize;          /* size of already used portion in the buffer
+                                 * to which dnn_shared_chunk_t::data points */
+    uint8_t ref_count;          /* reference counter of this chunk */
+    dnn_shared_chunk_t *next;   /* point to next shared_chunk in linked-list */
+  };
+
+  /* structure to hold information about how to allocate
+   * dnn_shared_chunk_t::data to each rt_variable_buffer_context_t::buffer */
+  typedef struct dnn_vbuffer_alloc_info dnn_vbuffer_alloc_info_t;
+  struct dnn_vbuffer_alloc_info
+  {
+    size_t bsize_list[MAX_VBUFFER_NUM]; /* size of each variable buffer in bytes */
+    void *addr_list[MAX_VBUFFER_NUM];   /* address of pre-allocated buffer */
+    size_t vbuffer_num;         /* length of bsize_list/addr_list */
+    uint8_t actual_alloc_count; /* how many times to allocate a shared_chunk to
+                                 * variable buffers in rt_initialize_context() */
+  };
+
+  typedef struct dnn_global_context
+  {
+    int rt_count;
+    int req_scratch_buf_bsize;
+    int scratch_buf_bsize;
+    void *scratch_buf;
+    dnn_shared_chunk_t *chunks;
+    dnn_vbuffer_alloc_info_t *alloc_info;       /* allocation info of current
+                                                 * network. the alloc_info is
+                                                 * placed on stack of
+                                                 * dnn_runtime_initialize() for
+                                                 * memory saving, so it
+                                                 * shouldn't be access after
+                                                 * dnn_runtime_initialize()
+                                                 * stack frame inactive */
+  } dnn_global_context_t;
+
+  dnn_global_context_t *dnn_get_global_context(void);
   rt_function_error_t dnnrt_exec_convolution(rt_function_t * f);
   rt_function_error_t dnnrt_exec_affine(rt_function_t * f);
   rt_return_value_t dnnrt_affine_alloc(nn_network_t * net,
@@ -133,6 +174,17 @@ extern "C"
 
   void dnn_req_scratch_buf(int size);
   void *dnn_scratch_buf(void);
+
+  int dnn_peek_vbuffers(const nn_network_t * net,
+                        dnn_vbuffer_alloc_info_t * alloc_info);
+  void dnn_reset_chunk_usage(dnn_global_context_t * ctx);
+  int dnn_preallocate_chunks(dnn_global_context_t * ctx,
+                             dnn_vbuffer_alloc_info_t * alloc_info);
+  void dnn_deallocate_chunks(dnn_global_context_t * ctx,
+                             dnn_vbuffer_alloc_info_t * alloc_info);
+  void dnn_destroy_unused_chunks(dnn_global_context_t * ctx);
+  void *dnn_variable_malloc(size_t size);
+  void dnn_variable_free(void *p);
 
 #  ifdef __cplusplus
 }

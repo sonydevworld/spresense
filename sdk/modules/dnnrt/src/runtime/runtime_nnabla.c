@@ -1,4 +1,3 @@
-
 /****************************************************************************
  * modules/dnnrt/src/runtime/runtime_nnabla.c
  *
@@ -69,25 +68,45 @@ int dnn_runtime_initialize(dnn_runtime_t * rt, const nn_network_t * network)
   DNN_CHECK_NULL_RET(rt, -EINVAL);
   DNN_CHECK_NULL_RET(network, -EINVAL);
   void *tmp_buf;
+  dnn_vbuffer_alloc_info_t alloc_info = { 0 };
+  int err;
+
+  /* for memory saving a stack varible alloc_info is used */
+  s_dnn_gctx.alloc_info = &alloc_info;
+  rt->impl_ctx = NULL;
+
+  /* peek variable buffer sizes and pre-allocate shared chunks to them */
+  err = dnn_peek_vbuffers(network, &alloc_info);
+  if (err != RT_RET_NOERROR)
+    {
+      goto peek_err;
+    }
+  dnn_reset_chunk_usage(&s_dnn_gctx);
+  err = dnn_preallocate_chunks(&s_dnn_gctx, &alloc_info);
+  if (err != RT_RET_NOERROR)
+    {
+      goto pre_alloc_err;
+    }
 
   /* register dnnrt's callback with rt_context */
-  int err;
   err = (int)rt_allocate_context((rt_context_pointer *) & (rt->impl_ctx));
   if (err != RT_RET_NOERROR)
     {
-      goto alloc_error;
+      goto rt_alloc_err;
     }
+  rt_set_variable_malloc(dnn_variable_malloc);
+  rt_set_variable_free(dnn_variable_free);
   rt_context_pointer ctx = (rt_context_pointer) (rt->impl_ctx);
   err =
     (int)rt_add_callback(ctx, NN_FUNCTION_CONVOLUTION, dnnrt_convolution_alloc);
   if (err != RT_RET_NOERROR)
     {
-      goto error;
+      goto rt_init_err;
     }
   err = (int)rt_add_callback(ctx, NN_FUNCTION_AFFINE, dnnrt_affine_alloc);
   if (err != RT_RET_NOERROR)
     {
-      goto error;
+      goto rt_init_err;
     }
 
   /* initialize rt_context and count up required minimum size of scratch_buf */
@@ -96,7 +115,7 @@ int dnn_runtime_initialize(dnn_runtime_t * rt, const nn_network_t * network)
   err = (int)rt_initialize_context(ctx, (nn_network_t *) network);
   if (err != RT_RET_NOERROR)
     {
-      goto error;
+      goto rt_init_err;
     }
 
   /* resize scratch buffer */
@@ -107,19 +126,23 @@ int dnn_runtime_initialize(dnn_runtime_t * rt, const nn_network_t * network)
       if (!tmp_buf)
         {
           err = -ENOMEM;
-          goto error;
+          goto scratch_buf_err;
         }
       s_dnn_gctx.scratch_buf = tmp_buf;
       s_dnn_gctx.scratch_buf_bsize = s_dnn_gctx.req_scratch_buf_bsize;
     }
   ++s_dnn_gctx.rt_count;
 
-  return 0;
+  return RT_RET_NOERROR;
 
-error:
+scratch_buf_err:
+rt_init_err:
+  dnn_deallocate_chunks(&s_dnn_gctx, &alloc_info);
   rt_free_context(&rt->impl_ctx);
-  rt->impl_ctx = NULL;
-alloc_error:
+rt_alloc_err:
+  dnn_destroy_unused_chunks(&s_dnn_gctx);
+pre_alloc_err:
+peek_err:
   return err;
 }
 
@@ -236,7 +259,7 @@ nn_variable_t *dnn_runtime_output_variable(dnn_runtime_t * rt,
   return rt_output_variable(rt->impl_ctx, data_index);
 }
 
-dnn_global_context *dnn_get_global_context(void)
+dnn_global_context_t *dnn_get_global_context(void)
 {
   return &s_dnn_gctx;
 }

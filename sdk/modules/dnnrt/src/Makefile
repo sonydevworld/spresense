@@ -48,6 +48,7 @@ INCLUDES += -I$(RUNTIME_EXTERN_SRCDIR)/functions
 INCLUDES += -Isrc
 
 CSRCS +=  runtime_nnabla.c
+CSRCS +=  shared_chunk.c
 CSRCS +=  affine.c
 CSRCS +=  convolution.c
 CSRC_PATH += src/functions
