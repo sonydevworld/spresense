@@ -225,13 +225,16 @@ int main(int argc, FAR char *argv[])
 int lte_tls_main(int argc, char *argv[])
 #endif
 {
+  int ret;
+  bool https;
   FAR static const char *pers = "mbedtls";
   FAR DIR *dirp = NULL;  /* Directory for TLS certification files */
   FAR struct dirent *cert_info = NULL;
   char *url    = APP_POST_URL;
   uint16_t  port_int;
   char port_char[APP_PORT_LEN] = {0};
-  bool https;
+  unsigned char *buf_ptr;
+  size_t        request_len;
 
   /* This application is a sample that
    *    parse URL and get hostname, filename, port number (1.)
@@ -416,16 +419,128 @@ int lte_tls_main(int argc, char *argv[])
 
   create_http_post(g_hostname, g_filename, g_iobuffer);
 
-  if (mbedtls_ssl_write(&g_ssl, (const unsigned char *) g_iobuffer,
-                        sizeof(g_iobuffer) - 1) <= 0)
+  buf_ptr     = g_iobuffer;
+  request_len = APP_IOBUFFER_LEN;
+  do
     {
-      printf("mbedtls_ssl_write fail\n");
-      goto exit;
+      ret = mbedtls_ssl_write(&g_ssl,
+                              (const unsigned char *) buf_ptr,
+                              sizeof(g_iobuffer) - 1);
+
+      /* Return value means actual written size or error_code */
+
+      if (ret > 0)
+        {
+          /* Successful case */
+
+          if (ret < request_len)
+            {
+              /* Written size may be smaller than requested size.
+               * In such case, for examples, shift address and retry */
+
+              buf_ptr     += ret;
+              request_len -= ret;
+              continue;
+            }
+
+          break;
+        }
+      else if (ret == 0)
+        {
+          /* written size = 0 means communication end */
+
+          break;
+        }
+      else
+        {
+          /* Unsuccessful case.
+           * retry or error return depending on error code.
+           */
+
+          if ((ret == MBEDTLS_ERR_SSL_WANT_READ) ||
+              (ret == MBEDTLS_ERR_SSL_WANT_WRITE))
+            {
+              /* Please retry */
+
+              continue;
+            }
+          else
+            {
+              /* Error case */
+
+              printf("mbedtls_ssl_write() fail: ret = %d\n", ret);
+              break;
+            }
+        }
     }
+  while (1);
 
-  mbedtls_ssl_read(&g_ssl, g_iobuffer, APP_IOBUFFER_LEN);
+  /* Read received data from TLS server.
+   * In this example, receive HTTP response.
+   */
 
-  print_http_status_code((const unsigned char *)g_iobuffer);
+  buf_ptr     = g_iobuffer;
+  request_len = APP_IOBUFFER_LEN;
+  do
+    {
+      ret = mbedtls_ssl_read(&g_ssl, buf_ptr, request_len);
+
+      /* Return value means actual read size or error_code */
+
+      if (ret > 0)
+        {
+          /* Successful case */
+
+          if (ret < request_len)
+            {
+              /* Read size may be smaller than requested size.
+               * In such case, for examples, shift address and retry */
+
+              buf_ptr     += ret;
+              request_len -= ret;
+              continue;
+            }
+
+          /* In this example,
+           * print only HTTP status code for simplicity.
+           */
+
+          print_http_status_code((const unsigned char *)g_iobuffer);
+          break;
+        }
+      else if (ret == 0)
+        {
+          /* read size = 0 means communication end */
+
+          break;
+        }
+      else
+        {
+          /* Unsuccessful case. */
+
+          if ((ret == MBEDTLS_ERR_SSL_WANT_READ) ||
+              (ret == MBEDTLS_ERR_SSL_WANT_WRITE))
+            {
+              /* Please retry */
+
+              continue;
+            }
+          else if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
+            {
+              /* Peer's disconnection */
+
+              break;
+            }
+          else
+            {
+              /* Error case */
+
+              printf("mbedtls_ssl_read() fail: ret = %d\n", ret); 
+              break;
+            } 
+        }
+    }
+  while (1);
 
   /* In this example, ignore the HTTP message except for status code. */
 
