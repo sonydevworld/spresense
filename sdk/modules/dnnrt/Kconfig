@@ -11,4 +11,10 @@ config DNN_RT
 	---help---
 		Enable or disable deep neural network library.
 
+config DNN_RT_MP
+	bool "Use multicore processing"
+	default n
+	---help---
+		Enable or disable multicore processing.
+
 endmenu # DNN_RT

@@ -51,8 +51,8 @@ int dnn_initialize(dnn_config_t * config)
 {
   if (config != NULL && config->cpu_num != 1u)
     {
-      DNN_PRINT("multicore-processing is NOT enabled.\n");
-      DNN_PRINT("dnnrt works with dnn_config_t::cpu_num == 1u\n");
+      dnn_err("multicore-processing is NOT enabled.\n");
+      dnn_err("dnnrt works with dnn_config_t::cpu_num == 1u\n");
       return -EINVAL;
     }
   return RT_RET_NOERROR;
@@ -275,4 +275,23 @@ void dnn_req_scratch_buf(int size)
 void *dnn_scratch_buf(void)
 {
   return s_dnn_gctx.scratch_buf;
+}
+
+int dnn_asmp_mallinfo(unsigned char array_length, dnn_mallinfo_t * info_array)
+{
+  return -EPERM;
+}
+
+int dnn_nuttx_mallinfo(dnn_mallinfo_t * info)
+{
+  DNN_CHECK_NULL_RET(info, -EINVAL);
+  struct mallinfo mem;
+
+  mem = mallinfo();
+  info->cpu = 2;
+  info->total_bytes = mem.arena;
+  info->used_bytes = mem.uordblks;
+  info->largest_bytes = mem.mxordblk;
+
+  return RT_RET_NOERROR;;
 }

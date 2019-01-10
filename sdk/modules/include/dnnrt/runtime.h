@@ -1,4 +1,3 @@
-
 /****************************************************************************
  * modules/include/dnnrt/runtime.h
  *
@@ -47,6 +46,7 @@
  * dnnrt is an Deep Neural Networks RunTime optimized for for CXD5602
  */
 
+#  include <asmp/types.h>
 #  include <dnnrt/nnablart/network.h>
 
 #  ifdef __cplusplus
@@ -77,6 +77,18 @@ typedef struct dnn_config
 
   unsigned char cpu_num; /**< Number of CPUs involved in forward propagation */
 } dnn_config_t;
+
+/**
+ * @typedef dnn_mallinfo_t
+ * structure to obtain memory allocation information
+ */
+typedef struct dnn_mallinfo
+{
+  cpuid_t cpu;
+  size_t total_bytes;
+  size_t used_bytes;
+  size_t largest_bytes;
+} dnn_mallinfo_t;
 
 /** @} dnnrt_datatype */
 
@@ -278,6 +290,26 @@ nn_variable_t *dnn_runtime_output_variable(dnn_runtime_t * rt,
 
  */
 void *dnn_runtime_output_buffer(dnn_runtime_t * rt, unsigned char output_index);
+
+/**
+ * Obtain information about memory allocation in the Nuttx-side heap
+ *
+ * @param [out] info: pointer to store memory allocation stats
+ *
+ * @return 0 on success. otherwise -EINVAL.
+ */
+int dnn_nuttx_mallinfo(dnn_mallinfo_t * info);
+
+/**
+ * Obtain information about memory allocation in the ASMP-side heap
+ *
+ * @param [in]  array_length: Number of elements in info_array.<br>
+                              This value must be dnn_config_t::cpu_num
+ * @param [out] info_array:   Array to store memory allocation stats
+ *
+ * @return 0 on success. -EPERM if CONFIG_DNN_RT_MP=n
+ */
+int dnn_asmp_mallinfo(unsigned char array_length, dnn_mallinfo_t * info_array);
 
 /** @} dnnrt_funcs */
 

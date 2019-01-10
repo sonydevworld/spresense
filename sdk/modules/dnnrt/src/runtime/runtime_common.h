@@ -37,6 +37,7 @@
 
 #  include <sdk/config.h>
 #  include <errno.h>
+#  include <sdk/debug.h>
 #  include <nnablart/functions.h>
 #  include <nnablart/runtime.h>
 
@@ -45,75 +46,16 @@ extern "C"
 {
 #  endif
 
-#  define DNN_PRINT(...) printf(__VA_ARGS__)
+#  define dnn_info(x...) loginfo(x)
+#  define dnn_err(x...) logerr(x)
 
-#  define DNN_CHECK_NULL(b)                                                      \
-  do {                                                                         \
-    if ((b) == NULL) {                                                         \
-      DNN_PRINT("Null-check failed. %s()@%s:L%d\n", __FUNCTION__, __FILE__,    \
-                __LINE__);                                                     \
-      return;                                                                  \
-    }                                                                          \
-  } while (0)
-#  define DNN_CHECK_NULL_RET(b, r)                                               \
-  do {                                                                         \
-    if ((b) == NULL) {                                                         \
-      DNN_PRINT("Null-check failed. %s()@%s:L%d\n", __FUNCTION__, __FILE__,    \
-                __LINE__);                                                     \
-      return r;                                                                \
-    }                                                                          \
-  } while (0)
-#  define DNN_CHECK_NULL_GOTO(b, go)                                             \
-  do {                                                                         \
-    if ((b) == NULL) {                                                         \
-      DNN_PRINT("Null-check failed. %s()@%s:L%d\n", __FUNCTION__, __FILE__,    \
-                __LINE__);                                                     \
-      goto go;                                                                 \
-    }                                                                          \
-  } while (0)
-#  define DNN_CHECK_FUNC_RET(f)                                                  \
-  do {                                                                         \
-    int err = -EPERM;                                                          \
-    if ((err = (f)) != 0) {                                                    \
-      DNN_PRINT("Function-check failed. %s()@%s:L%d\n", __FUNCTION__,          \
-                __FILE__, __LINE__);                                           \
-      return err;                                                              \
-    }                                                                          \
-  } while (0)
-#  define DNN_CHECK_FUNC(f)                                                      \
-  do {                                                                         \
-    if ((f) != 0) {                                                            \
-      DNN_PRINT("Function-check failed. %s()@%s:L%d\n", __FUNCTION__,          \
-                __FILE__, __LINE__);                                           \
-      return;                                                                  \
-    }                                                                          \
-  } while (0)
-#  define DNN_CHECK_FUNC_GOTO(f, go)                                             \
-  do {                                                                         \
-    int err = -EPERM;                                                          \
-    if ((err = (f)) != 0) {                                                    \
-      DNN_PRINT("Function-check failed. %s()@%s:L%d\n", __FUNCTION__,          \
-                __FILE__, __LINE__);                                           \
-      goto go;                                                                 \
-    }                                                                          \
-  } while (0)
-#  define CHECK_FUNC_RET_VAL(f, val)                                             \
-  do {                                                                         \
-    int err = -EPERM;                                                          \
-    if ((err = (f)) != 0) {                                                    \
-      DNN_PRINT("Function-check failed. %s()@%s:L%d\n", __FUNCTION__,          \
-                __FILE__, __LINE__);                                           \
-      return val;                                                              \
-    }                                                                          \
-  } while (0)
-#  define CHECK_FUNC_ERR_RET(f)                                                  \
-  do {                                                                         \
-    int err = 0;                                                               \
-    if ((err = (f)) < 0) {                                                     \
-      DNN_PRINT("Function-check failed. %s()@%s:L%d\n", __FUNCTION__,          \
-                __FILE__, __LINE__);                                           \
-      return NG;                                                               \
-    }                                                                          \
+#  define DNN_CHECK_NULL_RET(b, r)                                          \
+  do {                                                                      \
+    if ((b) == NULL) {                                                      \
+      dnn_err("Null-check failed. %s()@%s:L%d\n", __FUNCTION__, __FILE__,   \
+              __LINE__);                                                    \
+      return r;                                                             \
+    }                                                                       \
   } while (0)
 
 /* dnnrt does NOT support rt_context_t with buffer variables

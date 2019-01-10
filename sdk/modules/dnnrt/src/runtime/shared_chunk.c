@@ -116,7 +116,7 @@ void dnn_variable_free(void *p)
     }
   else
     {
-      DNN_PRINT("unexpected address(%p) was freed", p);
+      dnn_err("free unexpected address NULL\n");
       assert(0);
     }
 }
@@ -290,7 +290,7 @@ int dnn_preallocate_chunks(dnn_global_context_t * ctx,
         }
       else
         {
-          DNN_PRINT("dnn_create_chunk() failed");
+          dnn_err("no enough memory to create variable buffer\n");
           ret = -ENOMEM;
         }
     }
