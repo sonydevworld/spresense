@@ -36,7 +36,7 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-# Bt_Spp built-in application info
+# Bt_Hfp_Hf built-in application info
 
 APPNAME = bt_hfp_hf
 PRIORITY = 100

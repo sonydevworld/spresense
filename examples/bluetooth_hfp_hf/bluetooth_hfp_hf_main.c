@@ -63,7 +63,7 @@ typedef struct
   const char   *arghelp;                    /* Text describing the args */
   void (*pFunc)(int argc, char *argv[]);    /* Pointer to command handler */
   const char   *help;                       /* The help text */
-}BtA2dpSnkCmd;
+}BtHfpHfCmd;
 
 /* BT common callbacks */
 
@@ -129,7 +129,7 @@ static struct bt_hfp_ops_s bt_hfp_ops =
     .hf_at_response     = onHfAtResponse,
   };
 
-const static BtA2dpSnkCmd btHfCmds[] =
+const static BtHfpHfCmd btHfCmds[] =
   {
     { "connectHf",          "",           btConnectHf,             "Emulate BT event" },
     { "disconnectHf",       "",           btDisconnectHf,          "Emulate BT event" },
@@ -322,7 +322,7 @@ static void btDisconnectHf(int argc, char *argv[])
 
   if (bt_hfp_is_supported())
     {
-      if (bt_hfp_disconnect(s_bt_acl_state)) 
+      if (bt_hfp_disconnect(s_bt_acl_state))
         {
           printf("%s Command error\n", __func__);
         }
@@ -480,7 +480,7 @@ static void main_loop(void)
       for (num = 0; num < ARRAY_SIZE(argv) && (token = strtok_r(p, "\n", &p)); num++)
         {
           argv[num] = token;
-        } // for num
+        }
 
       for (i = 0; i < ARRAY_SIZE(btHfCmds); i++)
         {
@@ -489,7 +489,7 @@ static void main_loop(void)
               {
                 btHfCmds[i].pFunc(num, argv);
               }
-        } // for i
+        }
     }
 }
 
@@ -508,10 +508,6 @@ int bt_hfp_hf_main(int argc, char *argv[])
 #endif
 {
   int ret = 0;
-
-  /* Initialise audio component */
-
-  //AUD_load_hf();
 
   /* Register BT event callback function */
 
@@ -556,6 +552,18 @@ int bt_hfp_hf_main(int argc, char *argv[])
     {
       printf("%s [BT] Enabling failed. ret = %d\n", __func__, ret);
       goto error;
+    }
+
+  /* Set HFP feature */
+
+  ret = bt_hfp_set_feature(BT_HFP_HF_FEATURE_3WAY_CALLING
+                             | BT_HFP_HF_FEATURE_CLIP_CAPABILITY
+                             | BT_HFP_HF_FEATURE_VOICE_RECOGNITION_ACTIVATION
+                             | BT_HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL
+                             | BT_HFP_HF_FEATURE_CODEC_NEGOTIATION);
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BT] Set HFP feature failed. ret = %d\n", __func__, ret);
     }
 
   /* Register HFP callback function */

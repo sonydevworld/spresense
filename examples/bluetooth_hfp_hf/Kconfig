@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_BLUETOOTH_HFP_HF
-	bool "Bluetooth HFP_HF example"
+	bool "Bluetooth Hands Free Profile example"
 	default n
 	select BLUETOOTH
 	---help---
