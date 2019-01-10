@@ -235,21 +235,21 @@ static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str, uint16_t
   strncpy(cmd, at_str, sizeof(cmd));
   cmd[sizeof(cmd)-1] = '\0';
 
-  //AT command '<code> [numberic] [str_opt]'
+  /* AT command '<code> [numberic] [str_opt]' */
 
   for (i = 0; p && (token = strtok_r(p, " \n", &p)); i++)
     {
       switch(i)
         {
-          case 0: // <code>
+          case 0: /* <code> */
             code = atoi(token);
             break;
 
-          case 1: // [numberic]
+          case 1: /* [numberic] */
             numberic = atoi(token);
             break;
 
-          case 2: // [str_opt]
+          case 2: /* [str_opt] */
             if (code == BT_HF_AT_COMMAND_SPK || code == BT_HF_AT_COMMAND_CHUP
                 || code == BT_HF_AT_COMMAND_MAX)
               {
@@ -262,9 +262,9 @@ static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str, uint16_t
 
           default:
             break;
-        } // switch
+        }
 
-    } // for
+    }
 
 
   if (btHfSendATCommand(handle, code, numberic, str_opt) < 0)
