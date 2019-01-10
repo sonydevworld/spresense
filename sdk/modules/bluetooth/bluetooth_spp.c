@@ -267,13 +267,26 @@ int bt_spp_disconnect(struct bt_acl_state_s *bt_acl_state)
 
 int bt_spp_set_uuid(BT_UUID *uuid)
 {
-  if (!uuid)
+  int ret = BT_SUCCESS;
+  struct bt_hal_spp_ops_s *bt_hal_spp_ops = g_bt_spp_state.bt_hal_spp_ops;
+
+  if (!bt_hal_spp_ops || !bt_hal_spp_ops->setUuid)
     {
-      _err("%s [BT][SPP] Set UUID failed(UUID invalid).\n", __func__);
+      _err("%s [BT][SPP] Set uuid(HAL not registered).\n", __func__);
       return -EINVAL;
     }
 
-  memcpy(&g_bt_spp_state.spp_uuid, uuid, BT_UUID128_LEN);
+  ret = bt_hal_spp_ops->setUuid((uuid ? uuid : &g_bt_spp_state.spp_uuid));
+  if (ret)
+    {
+      _err("%s [BT][SPP] Set uuid().\n", __func__);
+      return BT_FAIL;
+    }
+  else
+    {
+      memcpy(&g_bt_spp_state.spp_uuid, uuid, BT_UUID128_LEN);
+    }
+
   return BT_SUCCESS;
 }
 
