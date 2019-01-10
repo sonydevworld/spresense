@@ -8,6 +8,7 @@ config EXAMPLES_LTE_TLS
 	default n
 	---help---
 		Enable the tls data communication over LTE network example.
+		This example needs config "EXTERNALS_MBEDTLS" or "LTE_NET_MBEDTLS".
 
 if EXAMPLES_LTE_TLS
 
