@@ -407,7 +407,7 @@ int lte_tls_main(int argc, char *argv[])
   create_http_post(g_hostname, g_filename, (char *)g_iobuffer, APP_IOBUFFER_LEN);
 
   buf_ptr     = g_iobuffer;
-  request_len = APP_IOBUFFER_LEN - 1;
+  request_len = strlen((char *)g_iobuffer);
   do
     {
       ret = mbedtls_ssl_write(&g_ssl,
