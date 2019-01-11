@@ -39,8 +39,14 @@
 int dnn_initialize(dnn_config_t * config)
 {
   int ret;
+  dnn_config_t cfg = { .cpu_num = 1 };
 
-  if ((config == NULL) || (config->cpu_num == 0))
+  if (config == NULL)
+    {
+      config = &cfg;
+    }
+
+  if (config->cpu_num == 0)
     {
       return -EINVAL;
     }
