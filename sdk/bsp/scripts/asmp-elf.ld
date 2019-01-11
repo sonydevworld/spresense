@@ -126,6 +126,8 @@ SECTIONS
       _ebss = ALIGN(4);
 
       __stack_pointer = . + STACK_SIZE ;
+      /* __stack symbol is referred from mkspk tool */
+      __stack = __stack_pointer;
     }
 
     /* Stabs debugging sections.    */
