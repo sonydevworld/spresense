@@ -157,30 +157,25 @@ static const unsigned char GeoTrustGlobalCA_certificate[856]={
  * Private Functions
  ****************************************************************************/
 
-static void create_http_post(const char    *host,
-                             const char    *path,
-                             char          *buffer,
-                             size_t        buffer_size)
+static int create_http_post(const char    *host,
+                            const char    *path,
+                            char          *buffer,
+                            size_t        buffer_size)
 {
-  const char    *post_data = "Spresense!";
-  const char    *post_size = "10";
+  const char *post_data = "Spresense!";
+  const char http_post_request[] = "POST %s HTTP/1.1\r\n"
+                                   "HOST: %s\r\n"
+                                   "Connection: close\r\n"
+                                   "Content-Length: %d\r\n"
+                                   "\r\n"
+                                   "%s";
 
-  /* Set HTTP header */
-
-  snprintf(buffer, buffer_size, "POST %s HTTP/1.1\r\n", path);
-  strncat(buffer, "HOST: ",   buffer_size - strlen(buffer));
-  strncat(buffer, host,       buffer_size - strlen(buffer));
-  strncat(buffer, "\r\n",     buffer_size - strlen(buffer));
-  strncat(buffer, "Connection: close\r\n", buffer_size - strlen(buffer));
-  strncat(buffer, "Content-Length: ", buffer_size - strlen(buffer));
-  strncat(buffer, post_size,  buffer_size - strlen(buffer));
-  strncat(buffer, "\r\n\r\n", buffer_size - strlen(buffer));
-
-  /* Set HTTP body */
-
-  strncat(buffer, post_data, buffer_size - strlen(buffer));
-
-  return;
+  return snprintf(buffer, buffer_size,
+                  http_post_request,
+                  path,
+                  host,
+                  strlen(post_data),
+                  post_data);
 }
 
 static void print_http_status_code(const unsigned char *buffer)
@@ -404,10 +399,11 @@ int lte_tls_main(int argc, char *argv[])
    *    In this example, the fixed HTTP body "Spresense!" is sent.
    */
 
-  create_http_post(g_hostname, g_filename, (char *)g_iobuffer, APP_IOBUFFER_LEN);
-
+  request_len = create_http_post(g_hostname,
+                                 g_filename,
+                                 (char *)g_iobuffer,
+                                 APP_IOBUFFER_LEN);
   buf_ptr     = g_iobuffer;
-  request_len = strlen((char *)g_iobuffer);
   do
     {
       ret = mbedtls_ssl_write(&g_ssl,
