@@ -228,7 +228,8 @@ static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str, uint16_t
   uint16_t code = 0;
   uint16_t numberic = 0;
   char cmd[20] = {0};
-  char *p = cmd;
+  char *str = NULL;
+  char *save_ptr = NULL;
   char *token = NULL;
   char *str_opt = NULL;
 
@@ -237,8 +238,12 @@ static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str, uint16_t
 
   /* AT command '<code> [numberic] [str_opt]' */
 
-  for (i = 0; p && (token = strtok_r(p, " \n", &p)); i++)
+  for (i = 0, str = cmd; ; i++, str = NULL)
     {
+      token = strtok_r(str, " \n", &save_ptr);
+      if (token == NULL)
+        break;
+
       switch(i)
         {
           case 0: /* <code> */
