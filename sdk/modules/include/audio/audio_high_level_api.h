@@ -861,23 +861,43 @@ typedef struct
 
 } AsSetThroughPathParam;
 
-#ifdef CONFIG_AUDIOUTILS_PLAYER
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 
-/** Send command to postfilter Command (#AUDCMD_SENDPOSTCMD) parameter */
+/** Request Clock Recovery Command (#AUDCMD_CLKRECOVERY) parameter */
 
 typedef struct
 {
-  /*! Player Id */
+  /*! \brief [in] Handle of OutputMixer */
 
-  uint8_t player_id;
+  uint8_t  player_id;
 
-  /*! Postfileter command parameters*/
+  int8_t   direction;
 
-  AsSendPostCommand postcmd;
+  uint32_t times;
 
-} AsSendPostCommandParam;
+} AsPlayerClockRecovery;
 
-#endif /* CONFIG_AUDIOUTILS_PLAYER */
+/** InitMpp Command (#AUDCMD_INITMPP) parameter */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  AsInitPostProc initpp_param;
+
+} AsInitMediaPlayerPost;
+
+/** SetMpp Command (#AUDCMD_SETMPPPARAM) parameter */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  AsSetPostProc setpp_param;
+
+} AsSetMediaPlayerPost;
+
+#endif
 
 /** Audio command packet */
 
@@ -911,18 +931,6 @@ typedef struct
 
     StopBBParam stop_bb_param;
 
-    /*! \brief [in] for InitMPP (__not supported__)
-     * (header.command_code==#AUDCMD_INITMPP)
-     */
-
-    InitMPPParam init_mpp_param;
-
-    /*! \brief [in] for SetMPPParam (__not supported__)
-     * (header.command_code==#AUDCMD_SETMPPPARAM)
-     */
-
-    SetMPPParam set_mpp_param;
-
     /*! \brief [in] for SetBaseBandStatus (__not supported__)
      * (header.command_code==#AUDCMD_SETBASEBANDSTATUS)
      */
@@ -941,17 +949,25 @@ typedef struct
 
     PlayerCommand player;
 
+#endif
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     /*! \brief [in] for Adjust sound period
      * (header.command_code==#AUDCMD_CLKRECOVERY)
      */
 
     AsPlayerClockRecovery clk_recovery_param;
 
-    /*! \brief [in] Send command to postfilter
-     * (header.command_code==#AUDCMD_SENDPOSTCMD)
+    /*! \brief [in] for InitMPP
+     * (header.command_code==#AUDCMD_INITMPP)
      */
 
-    AsSendPostCommandParam send_postcmd_param;
+    AsInitMediaPlayerPost init_mpp_param;
+
+    /*! \brief [in] for SetMPPParam
+     * (header.command_code==#AUDCMD_SETMPPPARAM)
+     */
+
+    AsSetMediaPlayerPost set_mpp_param;
 
 #endif
 #ifdef AS_FEATURE_RECORDER_ENABLE

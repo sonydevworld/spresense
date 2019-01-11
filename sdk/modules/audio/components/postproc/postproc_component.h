@@ -49,7 +49,7 @@ bool AS_postproc_recv_apu(void *p_param, void *p_instance);
 } /* extern "C" */
 
 class PostprocComponent : public PostprocBase,
-                            public Wien2::ComponentCommon
+                          public Wien2::ComponentCommon<uint32_t>
 {
 public:
   PostprocComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid):
@@ -59,11 +59,14 @@ public:
   ~PostprocComponent() {}
 
   virtual uint32_t init_apu(const InitPostprocParam& param);
-  virtual bool sendcmd_apu(const SendPostprocParam& param);
   virtual bool exec_apu(const ExecPostprocParam& param);
   virtual bool flush_apu(const FlushPostprocParam& param);
+  virtual bool set_apu(const SetPostprocParam& param);
   virtual bool recv_done(PostprocCmpltParam *cmplt);
-  virtual uint32_t activate(uint32_t *dsp_inf);
+  virtual bool recv_done(void) { return freeApuCmdBuf(); }
+  virtual uint32_t activate(PostprocCallback callback,
+                            void *p_requester,
+                            uint32_t *dsp_inf);
   virtual bool deactivate();
 
   bool recv_apu(void *p_param);
@@ -80,7 +83,6 @@ private:
 
   struct ApuReqData
   {
-    PostCompFunctionType  func_type;
     MemMgrLite::MemHandle cmd_mh;
     AsPcmDataParam        input;
     MemMgrLite::MemHandle output_mh;
@@ -91,7 +93,7 @@ private:
 
   void send(void*);
 
-  void* allocApuBufs(PostCompFunctionType func_type, AsPcmDataParam input, MemMgrLite::MemHandle output)
+  void* allocApuBufs(AsPcmDataParam input, MemMgrLite::MemHandle output)
   {
     ApuReqData req;
 
@@ -101,7 +103,7 @@ private:
     return pushqueue(req);
   }
 
-  void* allocApuBufs(PostCompFunctionType func_type, MemMgrLite::MemHandle output)
+  void* allocApuBufs(MemMgrLite::MemHandle output)
   {
     ApuReqData req;
 
@@ -110,7 +112,7 @@ private:
     return pushqueue(req);
   }
 
-  void* allocApuBufs(PostCompFunctionType func_type)
+  void* allocApuBufs(void)
   {
     ApuReqData req;
 

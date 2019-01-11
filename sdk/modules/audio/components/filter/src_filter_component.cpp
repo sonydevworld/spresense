@@ -247,7 +247,11 @@ uint32_t SRCComponent::init_apu(InitSRCParam *param, uint32_t *dsp_inf)
 
   send_apu(p_apu_cmd);
 
-  uint32_t rst = dsp_init_check(m_apu_dtq, dsp_inf);
+  /* Wait init completion and receive reply information */
+
+  Apu::InternalResult internal_result;
+  uint32_t rst = dsp_init_check(m_apu_dtq, &internal_result);
+  *dsp_inf = internal_result.value;
 
   return rst;
 }
@@ -319,7 +323,10 @@ bool SRCComponent::recv_apu(DspDrvComPrm_t *p_param)
 
   if (Apu::InitEvent == packet->header.event_type)
     {
-      dsp_init_complete(m_apu_dtq, packet);
+      /* Notify init completion to myself */
+
+      Apu::InternalResult internal_result = packet->result.internal_result[0];
+      dsp_init_complete(m_apu_dtq, packet->result.exec_result, &internal_result);
       return true;
     }
 

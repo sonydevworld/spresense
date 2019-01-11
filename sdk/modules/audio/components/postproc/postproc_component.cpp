@@ -103,29 +103,14 @@ uint32_t PostprocComponent::init_apu(const InitPostprocParam& param)
 {
   POSTPROC_DBG("INIT:\n");
 
-  m_callback = param.callback;
-  m_p_requester = param.p_requester;
-
-  return 0;
-}
-
-/*--------------------------------------------------------------------*/
-bool PostprocComponent::sendcmd_apu(const SendPostprocParam& param)
-{
-  POSTPROC_DBG("SEND PFCMD: user draw? %d, type %d size %d addr %08x\n",
-                 param.is_userdraw,
-                 param.cmd_type,
-                 param.packet.size,
-                 param.packet.addr);
-
   /* Send command to PostprocDSP, Contents in packet are "don't care". */
 
   PostprocCommand::CmdBase *p_cmd =
-    static_cast<PostprocCommand::CmdBase *>(allocApuBufs(PostprocSendCmd));
+    static_cast<PostprocCommand::CmdBase *>(allocApuBufs());
 
   if (p_cmd == NULL)
     {
-      return false;
+      return AS_ECODE_CHECK_MEMORY_POOL_ERROR;
     }
 
   /* Load packet data */
@@ -134,23 +119,29 @@ bool PostprocComponent::sendcmd_apu(const SendPostprocParam& param)
 
   /* Edit command base (hearder) */
 
-  if (!param.is_userdraw)
-    {
-      p_cmd->header.cmd_type    = param.cmd_type; 
-      p_cmd->result.result_code = PostprocCommand::ExecError;
-    }
+  p_cmd->header.cmd_type    = PostprocCommand::Init; 
+  p_cmd->result.result_code = PostprocCommand::ExecError;
 
-  /* Send to Post */
+  /* Send to Post DSP */
 
   send(p_cmd);
 
-  return true;
+  uint32_t dsp_inf;
+
+  /* Wait for init completion, and check result */
+
+  if (PostprocCommand::ExecOk != dsp_init_check(m_apu_mid, &dsp_inf))
+    {
+      return AS_ECODE_DSP_SET_ERROR;
+    }
+
+  return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
 bool PostprocComponent::exec_apu(const ExecPostprocParam& param)
 {
-  void *p_cmd = allocApuBufs(PostprocExec, param.input, param.output_mh);
+  void *p_cmd = allocApuBufs(param.input, param.output_mh);
 
   if (p_cmd == NULL)
     {
@@ -178,7 +169,7 @@ bool PostprocComponent::flush_apu(const FlushPostprocParam& param)
 {
   /* The number of time to send FLUSH is depend on type of codec or filter */
 
-  void *p_cmd = allocApuBufs(PostprocFlush, param.output_mh);
+  void *p_cmd = allocApuBufs(param.output_mh);
 
   if (p_cmd == NULL)
     {
@@ -193,6 +184,35 @@ bool PostprocComponent::flush_apu(const FlushPostprocParam& param)
   cmd->header.cmd_type       = PostprocCommand::Flush;
   cmd->flush_cmd.output.addr = param.output_mh.getPa();
   cmd->flush_cmd.output.size = param.output_mh.getSize();;
+
+  send(p_cmd);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool PostprocComponent::set_apu(const SetPostprocParam& param)
+{
+  POSTPROC_DBG("SET:\n");
+
+  PostprocCommand::CmdBase *p_cmd =
+    static_cast<PostprocCommand::CmdBase *>(allocApuBufs());
+
+  if (p_cmd == NULL)
+    {
+      return false;
+    }
+
+  /* Load packet data */
+
+  memcpy(p_cmd, param.packet.addr, param.packet.size);
+
+  /* Edit command base (hearder) */
+
+  p_cmd->header.cmd_type    = PostprocCommand::Set; 
+  p_cmd->result.result_code = PostprocCommand::ExecError;
+
+  /* Send to Post DSP */
 
   send(p_cmd);
 
@@ -244,11 +264,42 @@ bool PostprocComponent::recv_apu(void *p_response)
       POSTPROC_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
 
+  if (PostprocCommand::Init == packet->header.cmd_type)
+    {
+      uint32_t dmy = 0;
+      dsp_init_complete(m_apu_mid, packet->result.result_code, &dmy);
+      return true;
+    }
+
   /* Notify to requester */
 
   PostprocCbParam cbpram;
-  cbpram.event_type = static_cast<PostprocCommand::CmdType>(packet->header.cmd_type);
-  cbpram.result     = static_cast<PostprocCommand::ResultCode>(packet->result.result_code);
+
+  switch (packet->header.cmd_type)
+    {
+      case PostprocCommand::Init:
+        cbpram.event_type = PostprocInit;
+        break;
+
+      case PostprocCommand::Exec:
+        cbpram.event_type = PostprocExec;
+        break;
+
+      case PostprocCommand::Flush:
+        cbpram.event_type = PostprocFlush;
+        break;
+
+      case PostprocCommand::Set:
+        cbpram.event_type = PostprocSet;
+        break;
+
+      default:
+        cbpram.event_type = PostprocInit;
+        break;
+    }
+
+  cbpram.result =
+    (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
 
   return m_callback(&cbpram, m_p_requester);
 }
@@ -270,18 +321,22 @@ bool PostprocComponent::recv_done(PostprocCmpltParam *cmplt)
 
   /* Set function type and result */
 
-  cmplt->ftype = m_apu_req_mh_que.top().func_type;
   cmplt->result = (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
 
   return freeApuCmdBuf();
 };
 
 /*--------------------------------------------------------------------*/
-uint32_t PostprocComponent::activate(uint32_t *dsp_inf)
+uint32_t PostprocComponent::activate(PostprocCallback callback,
+                                     void *p_requester,
+                                     uint32_t *dsp_inf)
 {
   char filename[32];
 
   POSTPROC_DBG("ACT:\n");
+
+  m_p_requester = p_requester;
+  m_callback = callback;
 
   snprintf(filename, sizeof(filename), "%s/POSTPROC", CONFIG_AUDIOUTILS_DSP_MOUNTPT);
 

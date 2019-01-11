@@ -33,10 +33,10 @@ choice
 		To play include Hi-Res file, select Hi-Res mode.
 		If it is not Hi-Res file, select Normal mode.
 
-config EXAMPLES_AUDIO_PLAYER_MODE_POST_NORMAL
+config EXAMPLES_AUDIO_PLAYER_POST_MODE_NORMAL
 	bool "Normal mode"
 
-config EXAMPLES_AUDIO_PLAYER_MODE_POST_HIRES
+config EXAMPLES_AUDIO_PLAYER_POST_MODE_HIRES
 	bool "Hi-Res mode"
 endchoice
 

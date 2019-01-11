@@ -574,20 +574,6 @@ typedef struct
   };
 } PlayerCommand;
 
-/** Request Clock Recovery Command (#AUDCMD_CLKRECOVERY) parameter */
-
-typedef struct
-{
-  /*! \brief [in] Handle of OutputMixer */
-
-  uint8_t  player_id;
-
-  int8_t   direction;
-
-  uint32_t times;
-
-} AsPlayerClockRecovery;
-
 /** Message queue ID parameter of activate function */
 
 typedef struct

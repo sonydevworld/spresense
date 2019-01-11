@@ -47,11 +47,14 @@ public:
   ~PostprocThrough() {}
 
   virtual uint32_t init_apu(const InitPostprocParam& param);
-  virtual bool sendcmd_apu(const SendPostprocParam& param);
   virtual bool exec_apu(const ExecPostprocParam& param);
   virtual bool flush_apu(const FlushPostprocParam& param);
+  virtual bool set_apu(const SetPostprocParam& param);
   virtual bool recv_done(PostprocCmpltParam *cmplt);
-  virtual uint32_t activate(uint32_t *dsp_inf);
+  virtual bool recv_done(void) { m_req_que.pop(); return true; }
+  virtual uint32_t activate(PostprocCallback callback,
+                            void *p_requester,
+                            uint32_t *dsp_inf);
   virtual bool deactivate();
 
 private:
@@ -59,7 +62,6 @@ private:
 
   struct ApuReqData
   {
-    PostCompFunctionType func_type;
     AsPcmDataParam       pcm;
   };
 

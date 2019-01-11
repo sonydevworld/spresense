@@ -85,7 +85,7 @@ struct SrcCmpltParam : public FilterCompCmpltParam
 /*--------------------------------------------------------------------*/
 
 class SRCComponent : public FilterComponent,
-                     public ComponentCommon
+                     public ComponentCommon<Apu::InternalResult>
 {
 private:
 

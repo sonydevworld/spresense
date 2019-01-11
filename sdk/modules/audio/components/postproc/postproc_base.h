@@ -41,18 +41,18 @@
 #include "memutils/os_utils/chateau_osal.h"
 #include "memutils/memory_manager/MemHandle.h"
 
-enum PostCompFunctionType
+enum PostCompEventType
 {
   PostprocInit = 0,
   PostprocExec,
   PostprocFlush,
-  PostprocSendCmd,
+  PostprocSet,
 };
 
 struct PostprocCbParam
 {
-  PostprocCommand::CmdType    event_type;
-  PostprocCommand::ResultCode result;
+  PostCompEventType event_type;
+  bool              result;
 };
 
 typedef bool (*PostprocCallback)(PostprocCbParam*, void*);
@@ -65,16 +65,11 @@ struct PostprocPacket
 
 struct InitPostprocParam
 {
-  PostprocCallback callback;
-  void             *p_requester;
-};
-
-struct SendPostprocParam
-{
   uint8_t        cmd_type;
   bool           is_userdraw;
   PostprocPacket packet;
 };
+typedef InitPostprocParam SetPostprocParam;
 
 struct ExecPostprocParam
 {
@@ -90,7 +85,6 @@ struct FlushPostprocParam
 
 struct PostprocCmpltParam
 {
-  PostCompFunctionType ftype;
   bool                 result;
   AsPcmDataParam       output;
 };
@@ -102,11 +96,14 @@ public:
   virtual ~PostprocBase() {}
 
   virtual uint32_t init_apu(const InitPostprocParam& param) = 0;
-  virtual bool sendcmd_apu(const SendPostprocParam& param) = 0;
   virtual bool exec_apu(const ExecPostprocParam& param) = 0;
   virtual bool flush_apu(const FlushPostprocParam& param) = 0;
+  virtual bool set_apu(const SetPostprocParam& param) = 0;
   virtual bool recv_done(PostprocCmpltParam *cmplt) = 0;
-  virtual uint32_t activate(uint32_t *dsp_inf) = 0;
+  virtual bool recv_done(void) = 0;
+  virtual uint32_t activate(PostprocCallback callback,
+                            void *p_requester,
+                            uint32_t *dsp_inf) = 0;
   virtual bool deactivate() = 0;
 
 protected:

@@ -277,7 +277,11 @@ uint32_t MFEComponent::init_apu(InitMFEParam *param, uint32_t* dsp_inf)
   send_apu(m_apu_cmd_buf[m_buf_idx]);
   increment_buf_idx();
 
-  uint32_t rst = dsp_init_check(m_apu_dtq, dsp_inf);
+  /* Wait init completion and receive reply information */
+
+  Apu::InternalResult internal_result;
+  uint32_t rst = dsp_init_check(m_apu_dtq, &internal_result);
+  *dsp_inf = internal_result.value;
 
   return rst;
 }
@@ -405,7 +409,10 @@ bool MFEComponent::recv_apu(DspDrvComPrm_t *p_param)
   if ((Apu::InitEvent == packet->header.event_type)
    && (Apu::MFE == packet->init_filter_cmd.filter_type))
     {
-      dsp_init_complete(m_apu_dtq, packet);
+      /* Notify init completion to myself */
+
+      Apu::InternalResult internal_result = packet->result.internal_result[0];
+      dsp_init_complete(m_apu_dtq, packet->result.exec_result, &internal_result);
     }
   else
     {

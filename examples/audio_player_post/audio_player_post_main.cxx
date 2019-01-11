@@ -210,7 +210,7 @@ struct player_info_s
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
   Playlist *playlist_ins = NULL;
 #else
-error "AUDIOUTILS_PLAYLIST is not enable"
+#error "AUDIOUTILS_PLAYLIST is not enable"
 #endif
 };
 
@@ -728,7 +728,27 @@ static bool app_set_clkmode(int clk_mode)
   return printAudCmdResult(command.header.command_code, result);
 }
 
-static bool app_send_postfilter_command(void)
+static bool app_send_initpostproc_command(void)
+{
+  InitParam initpostcmd;
+
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INITMPP;
+  command.header.command_code  = AUDCMD_INITMPP;
+  command.init_mpp_param.player_id        = AS_PLAYER_ID_0;
+  command.init_mpp_param.initpp_param.addr = reinterpret_cast<uint8_t *>(&initpostcmd);
+  command.init_mpp_param.initpp_param.size = sizeof(initpostcmd);
+ 
+  /* Create Postfilter command */
+
+  AS_SendAudioCommand(&command);
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+
+}
+
+static bool app_send_setpostproc_command(void)
 {
   static bool s_toggle = false;
   s_toggle = (s_toggle) ? false : true;
@@ -739,12 +759,11 @@ static bool app_send_postfilter_command(void)
   setpostcmd.postswitch = s_toggle;
 
   AudioCommand command;
-  command.header.packet_length = LENGTH_SENDPOSTCMD;
-  command.header.command_code  = AUDCMD_SENDPOSTCMD;
-  command.send_postcmd_param.player_id        = AS_PLAYER_ID_0;
-  command.send_postcmd_param.postcmd.cmd_type = PostCommandSet;
-  command.send_postcmd_param.postcmd.addr     = reinterpret_cast<uint8_t *>(&setpostcmd);
-  command.send_postcmd_param.postcmd.size     = sizeof(SetParam);
+  command.header.packet_length = LENGTH_SUB_SETMPP_COMMON;
+  command.header.command_code  = AUDCMD_SETMPPPARAM;
+  command.init_mpp_param.player_id        = AS_PLAYER_ID_0;
+  command.init_mpp_param.initpp_param.addr = reinterpret_cast<uint8_t *>(&setpostcmd);
+  command.init_mpp_param.initpp_param.size = sizeof(SetParam);
  
   /* Create Postfilter command */
 
@@ -1002,9 +1021,9 @@ void app_play_process(uint32_t play_time)
 
       {
         static int cnt = 0;
-        if (cnt++ > 200)
+        if (cnt++ > 100)
           {
-            app_send_postfilter_command();
+            app_send_setpostproc_command();
             cnt = 0;
           }
       }
@@ -1214,9 +1233,13 @@ extern "C" int player_post_main(int argc, char *argv[])
               goto errout_set_player_status;
             }
 
-           /* Cancel output mute. */
+          /* Init Postproc. */
 
-           app_set_volume(PLAYER_DEF_VOLUME);
+          app_send_initpostproc_command();
+
+          /* Cancel output mute. */
+
+          app_set_volume(PLAYER_DEF_VOLUME);
 
           if (board_external_amp_mute_control(false) != OK)
             {
@@ -1327,7 +1350,7 @@ errout_act_audio_sub_system:
       return 1;
     }
 
-  printf("Exit AudioPlayer (with postfilter) example\n");
+  printf("Exit AudioPlayer (with postproc) example\n");
 
   return 0;
 }

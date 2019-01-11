@@ -697,7 +697,7 @@ static bool app_activate_player_system(void)
 
   mixer_act.output_device = HPOutputDevice;
   mixer_act.mixer_type    = MainOnly;
-  mixer_act.pf_enable     = PostFilterDisable;
+  mixer_act.post_enable   = PostFilterDisable;
   mixer_act.cb            = NULL;
 
   AS_ActivateOutputMixer(OutputMixer0, &mixer_act);

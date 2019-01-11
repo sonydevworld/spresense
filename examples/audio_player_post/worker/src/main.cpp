@@ -55,7 +55,12 @@ extern "C"
 #define KEY_MQ 2
 #define KEY_SHM   1
 #define COMMAND_DATATYPE_ADDRESS 0
-#define COMMAND_DATATYPE_VALUE 1 
+#define COMMAND_DATATYPE_VALUE 1
+
+#define MSGID_PROCMODE_SHIFT 4
+#define MSGID_DATATYPE_MASK 0x01
+
+#define CRE_MSGID(mode, type) ((mode << MSGID_PROCMODE_SHIFT) | (type & MSGID_DATATYPE_MASK))
 
 #define ASSERT(cond) if (!(cond)) wk_abort()
 
@@ -71,8 +76,7 @@ static void reply_to_spu(void *addr)
 
   /* Create message ID */
 
-  msg_id |= (PostprocCommand::FilterMode << 4);
-  msg_id |= COMMAND_DATATYPE_ADDRESS;
+  msg_id = CRE_MSGID(PostprocCommand::FilterMode, COMMAND_DATATYPE_ADDRESS);
 
   /* Message data is address of APU command */
 
@@ -95,7 +99,7 @@ int main()
 {
   UserProc userproc_ins;
   PostprocDspCtrl ctrl_ins(&userproc_ins);
-  
+
   int ret = 0;
 
   /* Initialize MP message queue,
@@ -111,8 +115,7 @@ int main()
 
   uint8_t msg_id = 0;
 
-  msg_id |= (PostprocCommand::CommonMode << 4);
-  msg_id |= PostprocCommand::DataTypeValue;
+  msg_id = CRE_MSGID(PostprocCommand::CommonMode, COMMAND_DATATYPE_VALUE);
 
   ret = mpmq_send(&s_mq, msg_id, DSP_POSTFLTR_VERSION);
 
@@ -130,7 +133,7 @@ int main()
 
       command = mpmq_receive(&s_mq, &msgdata);
 
-      uint8_t type = (command >> 0) & 0x1;
+      uint8_t type = command & MSGID_DATATYPE_MASK;
 
       /* Parse and execute message */
 

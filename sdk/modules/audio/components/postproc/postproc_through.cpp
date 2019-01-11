@@ -40,28 +40,11 @@
   --------------------------------------------------------------------*/
 uint32_t PostprocThrough::init_apu(const InitPostprocParam& param)
 {
-  m_callback = param.callback;
-  m_p_requester = param.p_requester;
-
-  return AS_ECODE_OK;
-}
-
-/*--------------------------------------------------------------------*/
-bool PostprocThrough::sendcmd_apu(const SendPostprocParam& param)
-{
   ApuReqData req;
 
-  req.func_type = PostprocSendCmd;
-  
   m_req_que.push(req);
 
-  PostprocCbParam cbpram;
-
-  cbpram.event_type = PostprocCommand::Set;
-
-  m_callback(&cbpram, m_p_requester);
-
-  return true;
+  return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
@@ -69,14 +52,13 @@ bool PostprocThrough::exec_apu(const ExecPostprocParam& param)
 {
   ApuReqData req;
 
-  req.func_type = PostprocExec;
   req.pcm       = param.input;
 
   m_req_que.push(req);
 
   PostprocCbParam cbpram;
 
-  cbpram.event_type = PostprocCommand::Exec;
+  cbpram.event_type = PostprocExec;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -93,14 +75,29 @@ bool PostprocThrough::flush_apu(const FlushPostprocParam& param)
 
   ApuReqData req;
 
-  req.func_type = PostprocFlush;
   req.pcm       = fls;
 
   m_req_que.push(req);
 
   PostprocCbParam cbpram;
 
-  cbpram.event_type = PostprocCommand::Flush;
+  cbpram.event_type = PostprocFlush;
+
+  m_callback(&cbpram, m_p_requester);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool PostprocThrough::set_apu(const SetPostprocParam& param)
+{
+  ApuReqData req;
+
+  m_req_que.push(req);
+
+  PostprocCbParam cbpram;
+
+  cbpram.event_type = PostprocSet;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -110,9 +107,8 @@ bool PostprocThrough::flush_apu(const FlushPostprocParam& param)
 /*--------------------------------------------------------------------*/
 bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
 {
-  cmplt->ftype  = m_req_que.top().func_type;
   cmplt->output = m_req_que.top().pcm;
-  cmplt->result = PostprocCommand::ExecOk;
+  cmplt->result = true;
 
   m_req_que.pop();
 
@@ -120,8 +116,11 @@ bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
 };
 
 /*--------------------------------------------------------------------*/
-uint32_t PostprocThrough::activate(uint32_t *dsp_inf)
+uint32_t PostprocThrough::activate(PostprocCallback callback, void *p_requester, uint32_t *dsp_inf)
 {
+  m_p_requester = p_requester;
+  m_callback = callback;
+
   return AS_ECODE_OK;
 }
 

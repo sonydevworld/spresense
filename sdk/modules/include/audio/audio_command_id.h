@@ -172,10 +172,6 @@
 
 #define AUDCMD_SETGAIN        (AUDCMD_CATEGORY_PLAYER | 0x05)
 
-/*! \brief Command Code: Send Postfilter command */
-
-#define AUDCMD_SENDPOSTCMD    (AUDCMD_CATEGORY_PLAYER | 0x06)
-
 /** @} */
 
 /** @name Player Result code */

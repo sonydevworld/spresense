@@ -7,7 +7,7 @@ Usage
 
 Select options in below.
 
-Å°SDK
+SDK
 - [CXD56xx Configuration Options]
     [Audio] <= Y
 - [SDK audio] <= Y

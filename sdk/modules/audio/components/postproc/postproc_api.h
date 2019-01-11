@@ -42,20 +42,21 @@
 extern "C" {
 
 uint32_t AS_postproc_init(const InitPostprocParam *param,
-                          void *p_instance,
-                          uint32_t *dsp_inf);
-
-bool AS_postproc_sendcmd(const SendPostprocParam *param, void *p_instance);
+                          void *p_instance);
 
 bool AS_postproc_exec(const ExecPostprocParam *param, void *p_instance);
 
 bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance);
+
+bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance);
 
 bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt);
 
 uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
+                              PostprocCallback callback,
+                              void *p_requester,
                               uint32_t *dsp_inf,
                               bool through);
 

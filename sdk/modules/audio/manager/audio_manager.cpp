@@ -84,7 +84,8 @@ static void proc_outputmixer_reply(AsOutputMixerHandle handle,
     AUDCMD_SETPLAYERSTATUS,
     AUDCMD_SETREADYSTATUS,
     AUDCMD_CLKRECOVERY,
-    AUDCMD_SENDPOSTCMD,
+    AUDCMD_INITMPP,
+    AUDCMD_SETMPPPARAM,
   };
 
   AudioMngCmdCmpltResult cmplt(0, 0, AS_ECODE_OK, AS_MODULE_ID_OUTPUT_MIX_OBJ, 0);
@@ -392,7 +393,8 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         break;
 
       case AUDCMD_CLKRECOVERY:
-      case AUDCMD_SENDPOSTCMD:
+      case AUDCMD_INITMPP:
+      case AUDCMD_SETMPPPARAM:
         msg_type = MSG_AUD_MGR_CMD_OUTPUTMIXER;
         break;
 
@@ -420,11 +422,6 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
       case AUDCMD_INITMFE:
         msg_type = MSG_AUD_MGR_CMD_MFE;
-        break;
-
-      case AUDCMD_INITMPP:
-      case AUDCMD_SETMPPPARAM:
-        msg_type = MSG_AUD_MGR_CMD_MPP;
         break;
 
 #endif  /* AS_FEATURE_EFFECTOR_ENABLE */
@@ -1355,74 +1352,9 @@ void AudioManager::mfe(AudioCommand &cmd)
 /*--------------------------------------------------------------------------*/
 void AudioManager::mpp(AudioCommand &cmd)
 {
-#ifdef AS_FEATURE_EFFECTOR_ENABLE
-  MSG_TYPE msg_type;
-  bool check = false;
-
-  switch (cmd.header.command_code)
-    {
-      case AUDCMD_INITMPP:
-        check = packetCheck(LENGTH_INITMPP, AUDCMD_INITMPP, cmd);
-        if (!check)
-          {
-            return;
-          }
-        if (AS_MPP_XLOUD_MODE_DISABLE != cmd.init_mpp_param.xloud_mode &&
-             cmd.init_mpp_param.xloud_coef_table == 0)
-          {
-            sendErrRespResult(cmd.header.sub_code,
-                              AS_MODULE_ID_AUDIO_MANAGER,
-                              AS_ECODE_COMMAND_PARAM_CONFIG_TABLE);
-            return;
-          }
-        if (AS_MPP_EAX_DISABLE != cmd.init_mpp_param.eax_mode &&
-             cmd.init_mpp_param.eax_coef_table == 0)
-          {
-            sendErrRespResult(cmd.header.sub_code,
-                              AS_MODULE_ID_AUDIO_MANAGER,
-                              AS_ECODE_COMMAND_PARAM_CONFIG_TABLE);
-            return;
-          }
-        msg_type = MSG_AUD_SEF_CMD_INIT;
-        break;
-
-      case AUDCMD_SETMPPPARAM:
-        check = packetCheck(LENGTH_SUB_SETMPP_COMMON,
-                            AUDCMD_SETMPPPARAM,
-                            cmd);
-        if (!check)
-          {
-            return;
-          }
-        msg_type = MSG_AUD_SEF_CMD_SETPARAM;
-        break;
-
-      case SUB_SETMPP_XLOUD:
-        check = packetCheck(LENGTH_SUB_SETMPP_XLOUD, SUB_SETMPP_XLOUD, cmd);
-        if (!check)
-          {
-            return;
-          }
-        msg_type = MSG_AUD_SEF_CMD_SETPARAM;
-        break;
-
-      default:
-        sendErrRespResult(cmd.header.sub_code,
-                          AS_MODULE_ID_AUDIO_MANAGER,
-                          AS_ECODE_COMMAND_CODE_ERROR);
-        return;
-    }
-
-  err_t er = MsgLib::send<AudioCommand>(s_effectMid,
-                                        MsgPriNormal,
-                                        msg_type,
-                                        m_selfDtq, cmd);
-  F_ASSERT(er == ERR_OK);
-#else
   sendErrRespResult(cmd.header.sub_code,
                     AS_MODULE_ID_AUDIO_MANAGER,
                     AS_ECODE_COMMAND_NOT_SUPPOT);
-#endif /* AS_FEATURE_EFFECTOR_ENABLE */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1503,7 +1435,6 @@ void AudioManager::player(AudioCommand &cmd)
 void AudioManager::outputmixer(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
-
   MSG_TYPE msg_type = MSG_AUD_MIX_CMD_CLKRECOVERY;
   bool check = false;
   OutputMixerCommand omix_cmd;
@@ -1527,20 +1458,36 @@ void AudioManager::outputmixer(AudioCommand &cmd)
         msg_type = MSG_AUD_MIX_CMD_CLKRECOVERY;
         break;
 
-      case AUDCMD_SENDPOSTCMD:
-        check = packetCheck(LENGTH_SENDPOSTCMD, AUDCMD_SENDPOSTCMD, cmd);
+      case AUDCMD_INITMPP:
+        check = packetCheck(LENGTH_INITMPP, AUDCMD_INITMPP, cmd);
         if (!check)
           {
             return;
           }
 
         omix_cmd.handle =
-          (cmd.clk_recovery_param.player_id == AS_PLAYER_ID_0) ?
-            OutputMixer0 : OutputMixer1;
+          (cmd.init_mpp_param.player_id == AS_PLAYER_ID_0)
+            ? OutputMixer0 : OutputMixer1;
 
-        omix_cmd.postcmd_param = cmd.send_postcmd_param.postcmd;
+        omix_cmd.initpp_param = cmd.init_mpp_param.initpp_param;
+        
+        msg_type = MSG_AUD_MIX_CMD_INITMPP;
+        break;
 
-        msg_type = MSG_AUD_MIX_CMD_SENDPOSTCMD;
+      case AUDCMD_SETMPPPARAM:
+        check = packetCheck(LENGTH_SUB_SETMPP_COMMON, AUDCMD_SETMPPPARAM, cmd);
+        if (!check)
+          {
+            return;
+          }
+
+        omix_cmd.handle =
+          (cmd.set_mpp_param.player_id == AS_PLAYER_ID_0)
+            ? OutputMixer0 : OutputMixer1;
+
+        omix_cmd.setpp_param = cmd.set_mpp_param.setpp_param;
+        
+        msg_type = MSG_AUD_MIX_CMD_SETMPP;
         break;
 
       default:
@@ -2382,27 +2329,6 @@ void AudioManager::cmpltOnSoundFx(const AudioMngCmdCmpltResult &cmd)
         result_code = AUDRLT_INITMFECMPLT;
         break;
 
-      case AUDCMD_INITMPP:
-        result_code = AUDRLT_INITMPPCMPLT;
-        break;
-
-      case AUDCMD_SETMPPPARAM:
-        switch (cmd.sub_code)
-          {
-            case SUB_SETMPP_COMMON:
-              result_code = AUDRLT_SETMPPCMPLT;
-              break;
-
-            case SUB_SETMPP_XLOUD:
-              result_code = AUDRLT_SETMPPCMPLT;
-              break;
-
-            default:
-              sendResult(result_code, cmd.command_code);
-              return;
-          }
-        break;
-
 #endif  /* AS_FEATURE_EFFECTOR_ENABLE */
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
       case AUDCMD_STARTVOICECOMMAND:
@@ -2467,12 +2393,16 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
         result_code = AUDRLT_CLKRECOVERY_CMPLT;
         break;
 
-      case AUDCMD_SETGAIN:
-        result_code = AUDRLT_SETGAIN_CMPLT;
+      case AUDCMD_INITMPP:
+        result_code = AUDRLT_INITMPPCMPLT;
         break;
 
-      case AUDCMD_SENDPOSTCMD:
-        result_code = AUDRLT_SENDPFCMD_CMPLT;
+      case AUDCMD_SETMPPPARAM:
+        result_code = AUDRLT_SETMPPCMPLT;
+        break;
+
+      case AUDCMD_SETGAIN:
+        result_code = AUDRLT_SETGAIN_CMPLT;
         break;
 
       case AUDCMD_SETREADYSTATUS:
@@ -2952,7 +2882,6 @@ void AudioManager::setVolume(AudioCommand &cmd)
     packetCheck(LENGTH_SETVOLUME, AUDCMD_SETVOLUME, cmd);
   if (!check)
     {
-      printf("AudioManager::setVolume ERR\n");
       return;
     }
 

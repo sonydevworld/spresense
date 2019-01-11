@@ -68,8 +68,8 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct OutputMixObjPostfilterDoneCmd
 {
-  PostprocCommand::CmdType    event_type;
-  PostprocCommand::ResultCode result_code;
+  PostCompEventType event_type;
+  bool              result;
 };
 
 /**< Parameters for render done notify to output-mix object. */
@@ -160,6 +160,9 @@ private:
   int8_t m_adjust_direction;
   int32_t m_adjustment_times;
 
+  uint32_t m_max_pcm_buff_size;
+  uint32_t m_apucmd_pcm_buff_size;
+
   void reply(MsgQueId requester_dtq,
              MsgType msg_type,
              AsOutputMixDoneParam *done_param);
@@ -181,12 +184,13 @@ private:
 
   void clock_recovery(MsgPacket *msg);
 
-  void send_postcommand(MsgPacket* msg);
-  uint8_t trans_postcommandtype(uint8_t cmd_type);
+  void init_postproc(MsgPacket* msg);
+  void set_postproc(MsgPacket* msg);
 
   void parseOutputMixRst(MsgPacket *msg);
 
   int8_t get_period_adjustment(void);
+  bool checkMemPool(void);
 };
 
 /****************************************************************************

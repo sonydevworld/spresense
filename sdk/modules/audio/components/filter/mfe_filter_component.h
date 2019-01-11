@@ -108,7 +108,7 @@ struct MfeCmpltParam : public FilterCompCmpltParam
 /*--------------------------------------------------------------------*/
 
 class MFEComponent : public FilterComponent,
-                     public ComponentCommon
+                     public ComponentCommon<Apu::InternalResult>
 {
 private:
   /* Hold (push to queue) command which is processing in API. 

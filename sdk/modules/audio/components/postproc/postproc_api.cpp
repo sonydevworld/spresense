@@ -41,12 +41,11 @@ extern "C"
     C Interface
   --------------------------------------------------------------------*/
 uint32_t AS_postproc_init(const InitPostprocParam *param,
-                          void *p_instance,
-                          uint32_t *dsp_inf)
+                          void *p_instance)
 {
   /* Parameter check */
 
-  if (param == NULL || p_instance == NULL || dsp_inf == NULL)
+  if (param == NULL || p_instance == NULL)
     {
       POSTPROC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
@@ -55,22 +54,6 @@ uint32_t AS_postproc_init(const InitPostprocParam *param,
   /* Execute */
 
   return ((PostprocBase *)p_instance)->init_apu(*param);
-}
-
-/*--------------------------------------------------------------------*/
-bool AS_postproc_sendcmd(const SendPostprocParam *param, void *p_instance)
-{
-  /* Parameter check */
-
-  if (param == NULL || p_instance == NULL)
-    {
-      POSTPROC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
-  /* Execute */
-
-  return ((PostprocBase *)p_instance)->sendcmd_apu(*param);
 }
 
 /*--------------------------------------------------------------------*/
@@ -106,6 +89,22 @@ bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance)
 }
 
 /*--------------------------------------------------------------------*/
+bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance)
+{
+  /* Parameter check */
+
+  if (param == NULL || p_instance == NULL)
+    {
+      POSTPROC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Execute */
+
+  return ((PostprocBase *)p_instance)->set_apu(*param);
+}
+
+/*--------------------------------------------------------------------*/
 bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
 {
   /* Parameter check */
@@ -118,13 +117,22 @@ bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
 
   /* Execute */
 
-  return ((PostprocBase *)p_instance)->recv_done(cmplt);
+  if (cmplt == NULL)
+    {
+      return ((PostprocBase *)p_instance)->recv_done();
+    }
+  else
+    {
+      return ((PostprocBase *)p_instance)->recv_done(cmplt);
+    }
 }
 
 /*--------------------------------------------------------------------*/
 uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
+                              PostprocCallback callback,
+                              void *p_requester,
                               uint32_t *dsp_inf,
                               bool through)
 {
@@ -146,7 +154,7 @@ uint32_t AS_postproc_activate(void **p_instance,
       return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
     }
 
-  return ((PostprocBase *)*p_instance)->activate(dsp_inf);
+  return ((PostprocBase *)*p_instance)->activate(callback, p_requester, dsp_inf);
 }
 
 /*--------------------------------------------------------------------*/
