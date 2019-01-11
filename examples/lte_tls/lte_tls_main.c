@@ -156,42 +156,29 @@ static const unsigned char GeoTrustGlobalCA_certificate[856]={
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-static unsigned char *http_copy(unsigned char *dst, const char *src)
-{
-  int len = strlen(src);
-
-  memcpy(dst, src, len);
-  dst[len] = '\0';
-  return dst + len;  
-}
 
 static void create_http_post(const char    *host,
                              const char    *path,
-                             unsigned char *buffer)
+                             char          *buffer,
+                             size_t        buffer_size)
 {
   const char    *post_data = "Spresense!";
   const char    *post_size = "10";
-  unsigned char *dst = buffer;
 
   /* Set HTTP header */
 
-  dst = http_copy(dst, "POST ");
-  dst = http_copy(dst, path);
-  dst = http_copy(dst, " HTTP/1.1");
-  dst = http_copy(dst, "\r\n");
-  dst = http_copy(dst, "HOST: ");
-  dst = http_copy(dst, host);
-  dst = http_copy(dst, "\r\n");
-  dst = http_copy(dst, "Connection: close");
-  dst = http_copy(dst, "\r\n");
-  dst = http_copy(dst, "Content-Length: ");
-  dst = http_copy(dst, post_size);
-  dst = http_copy(dst, "\r\n");
-  dst = http_copy(dst, "\r\n");
+  snprintf(buffer, buffer_size, "POST %s HTTP/1.1\r\n", path);
+  strncat(buffer, "HOST: ",   buffer_size - strlen(buffer));
+  strncat(buffer, host,       buffer_size - strlen(buffer));
+  strncat(buffer, "\r\n",     buffer_size - strlen(buffer));
+  strncat(buffer, "Connection: close\r\n", buffer_size - strlen(buffer));
+  strncat(buffer, "Content-Length: ", buffer_size - strlen(buffer));
+  strncat(buffer, post_size,  buffer_size - strlen(buffer));
+  strncat(buffer, "\r\n\r\n", buffer_size - strlen(buffer));
 
   /* Set HTTP body */
 
-  dst = http_copy(dst, post_data);
+  strncat(buffer, post_data, buffer_size - strlen(buffer));
 
   return;
 }
@@ -417,7 +404,7 @@ int lte_tls_main(int argc, char *argv[])
    *    In this example, the fixed HTTP body "Spresense!" is sent.
    */
 
-  create_http_post(g_hostname, g_filename, g_iobuffer);
+  create_http_post(g_hostname, g_filename, (char *)g_iobuffer, APP_IOBUFFER_LEN);
 
   buf_ptr     = g_iobuffer;
   request_len = APP_IOBUFFER_LEN;
