@@ -1045,6 +1045,28 @@ int32_t lte_finalize(void);
 int32_t lte_power_control(bool on, power_control_cb_t callback);
 
 /**
+ * Power on the modem
+ *
+ * lte_power_on() control power on the modem.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned.
+ */
+
+int32_t lte_power_on(void);
+
+/**
+ * Power off the modem
+ *
+ * lte_power_off() control power off the modem.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned.
+ */
+
+int32_t lte_power_off(void);
+
+/**
  * Attach to the LTE network.
  *
  * lte_attach_network() attach to the LTE network.
