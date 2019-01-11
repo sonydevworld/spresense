@@ -42,8 +42,6 @@ APPNAME = bt_hfp_hf
 PRIORITY = 100
 STACKSIZE = 2048
 
-CXXFLAGS += -I./include -D_POSIX -DUSE_MEMMGR_FENCE
-
 ASRCS =
 CSRCS =
 MAINSRC = bluetooth_hfp_hf_main.c

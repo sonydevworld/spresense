@@ -361,16 +361,37 @@ static void btButtonPress(int argc, char *argv[])
 
 static void btSendAtCommand(int argc, char *argv[])
 {
+  int i = 0;
+  size_t offset = -1;
+  size_t len = -1;
+  char param[40] = {0};
+
   ASSERT(s_bt_acl_state);
 
-  if (argc != 1)
+  if (argc < 2)
     {
-      printf("%s Param error\n", __func__);
+      printf("%s Param error (%d)\n", __func__, argc);
+      goto bye;
     }
-    else if (bt_hfp_send_at_command(s_bt_acl_state, argv[0]) < 0)
-      {
-        printf("%s Command error\n", __func__);
-      }
+
+  for (i = 1, offset = 0; argv[i] && offset < sizeof(param); i++, offset += len)
+    {
+      len = snprintf(param + offset, sizeof(param) - offset, "%s ", argv[i]);
+      if (len < 0)
+        {
+          printf("%s Param format error (%d).\n", __func__, len);
+          goto bye;
+        }
+    }
+  param[sizeof(param) - 1] = '\0';
+
+  if (bt_hfp_send_at_command(s_bt_acl_state, param) < 0)
+    {
+      printf("%s Command error\n", __func__);
+    }
+
+bye:
+  return;
 }
 
 static void btGetBondlist(int argc, char *argv[])
@@ -442,20 +463,21 @@ static void bt_hfp_hf_exit(void)
 static void main_loop(void)
 {
   char buffer[50] = {0};
-  char *p = NULL;
-  char *cmd = NULL;
   char *token = NULL;
-  char *argv[20] = {NULL};
+  char *argv[10] = {NULL};
+  char *str = NULL;
+  char *save_str = NULL;
   int i = 0;
   ssize_t len = -1;
   ssize_t num = -1;
 
-  for(; ; p = cmd = token = NULL)
+  for(; ; token = NULL)
     {
       printf("hfp_hf>");
       fflush(stdout);
 
       memset(buffer, sizeof(buffer), 0);
+      memset(argv, sizeof(argv), 0);
 
       len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
       if (len <= 0)
@@ -464,7 +486,7 @@ static void main_loop(void)
           continue;
         }
 
-      if ( strcmp(buffer, "quit\n") == 0 )
+      if (strcmp(buffer, "quit\n") == 0)
         {
           printf("Quit\n");
           break;
@@ -472,22 +494,21 @@ static void main_loop(void)
 
       buffer[len] = '\0';
 
-      if ( !(cmd = strtok_r(buffer, " \n", &p)) )
+      for (num = 0, str = buffer; num < sizeof(argv); num++, str = NULL)
         {
-          continue;
-        }
+          token = strtok_r(str, " \n", &save_str);
+          if (token == NULL)
+            break;
 
-      for (num = 0; num < ARRAY_SIZE(argv) && (token = strtok_r(p, "\n", &p)); num++)
-        {
           argv[num] = token;
         }
 
-      for (i = 0; i < ARRAY_SIZE(btHfCmds); i++)
+      for (i = 0; argv[0] != NULL && i < ARRAY_SIZE(btHfCmds); i++)
         {
-            if (strncmp(cmd, btHfCmds[i].cmd, sizeof(buffer)) == 0
+            if (strncmp(argv[0], btHfCmds[i].cmd, sizeof(buffer)) == 0
                     && btHfCmds[i].pFunc != NULL)
               {
-                btHfCmds[i].pFunc(num, argv);
+                btHfCmds[i].pFunc(num, &argv[0]);
               }
         }
     }
