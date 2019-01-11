@@ -407,12 +407,12 @@ int lte_tls_main(int argc, char *argv[])
   create_http_post(g_hostname, g_filename, (char *)g_iobuffer, APP_IOBUFFER_LEN);
 
   buf_ptr     = g_iobuffer;
-  request_len = APP_IOBUFFER_LEN;
+  request_len = APP_IOBUFFER_LEN - 1;
   do
     {
       ret = mbedtls_ssl_write(&g_ssl,
                               (const unsigned char *) buf_ptr,
-                              sizeof(g_iobuffer) - 1);
+                              request_len);
 
       /* Return value means actual written size or error_code */
 
