@@ -1,5 +1,5 @@
 /****************************************************************************
- * bsp/board/common/include/cxd56_audio.h
+ * bsp/board/spresense/src/cxd56_audio_amp.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,55 +33,35 @@
  *
  ****************************************************************************/
 
-#ifndef __BSP_BOARD_COMMON_INCLUDE_CXD56_AUDIO_H
-#define __BSP_BOARD_COMMON_INCLUDE_CXD56_AUDIO_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <sdk/config.h>
 
+#include <sys/types.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <assert.h>
+#include <debug.h>
+
+#include <nuttx/arch.h>
+
+#include "chip.h"
+#include "up_arch.h"
+
+#include <arch/board/board.h>
+#include "cxd56_pmic.h"
+#include "cxd56_gpio.h"
+#include "cxd56_pinconfig.h"
 
 /****************************************************************************
- * Public Types
+ * Pre-processor Definitions
  ****************************************************************************/
 
-#ifndef __ASSEMBLY__
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-#undef EXTERN
-#if defined(__cplusplus)
-#define EXTERN extern "C"
-extern "C"
-{
-#else
-#define EXTERN extern
-#endif
-
-/****************************************************************************
- * Name: board_aca_power_control
- *
- * Description:
- *   Power on/off the Aca device on the board.
- *
- ****************************************************************************/
-
-int board_aca_power_control(int target, bool en);
-
-/****************************************************************************
- * Name: board_aca_power_monitor
- *
- * Description:
- *   Get status of Power on/off the Aca device on the board.
- *
- ****************************************************************************/
-
-bool board_aca_power_monitor(int target);
+#define MUTE_OFF_DELAY  (1250 * 1000) /* ms */
+#define MUTE_ON_DELAY   (150 * 1000) /* ms */
 
 /****************************************************************************
  * Name: board_external_amp_mute_control
@@ -93,7 +73,27 @@ bool board_aca_power_monitor(int target);
  *
  ****************************************************************************/
 
-int board_external_amp_mute_control(bool en);
+int board_external_amp_mute_control(bool en)
+{
+  int ret = 0;
+
+  if (en)
+    {
+      /* Mute ON */
+
+      ret = board_power_control(POWER_AUDIO_MUTE, false);
+      usleep(MUTE_ON_DELAY);
+    }
+  else
+    {
+      /* Mute OFF */
+
+      usleep(MUTE_OFF_DELAY);
+      ret = board_power_control(POWER_AUDIO_MUTE, true);
+    }
+
+  return ret;
+}
 
 /****************************************************************************
  * Name: board_external_amp_mute_monitor
@@ -105,56 +105,9 @@ int board_external_amp_mute_control(bool en);
  *
  ****************************************************************************/
 
-bool board_external_amp_mute_monitor(void);
-
-/****************************************************************************
- * Name: board_audio_i2s_enable
- *
- * Description:
- *   Enable I2S on the board.
- *   Used by the audio driver. Do not use by users.
- *
- ****************************************************************************/
-
-void board_audio_i2s_enable(void);
-
-/****************************************************************************
- * Name: board_audio_i2s_disable
- *
- * Description:
- *   Disable I2S on the board.
- *   Used by the audio driver. Do not use by users.
- *
- ****************************************************************************/
-
-void board_audio_i2s_disable(void);
-
-/****************************************************************************
- * Name: board_audio_initialize
- *
- * Description:
- *   Initialize audio I/O on the board.
- *   Used by the audio driver. Do not use by users.
- *
- ****************************************************************************/
-
-void board_audio_initialize(void);
-
-/****************************************************************************
- * Name: board_audio_finalize
- *
- * Description:
- *   Finalize audio I/O on the board.
- *   Used by the audio driver. Do not use by users.
- *
- ****************************************************************************/
-
-void board_audio_finalize(void);
-
-#undef EXTERN
-#if defined(__cplusplus)
+bool board_external_amp_mute_monitor(void)
+{
+  bool mute = board_power_monitor(POWER_AUDIO_MUTE);
+  return !mute;
 }
-#endif
 
-#endif /* __ASSEMBLY__ */
-#endif /* __BSP_BOARD_COMMON_INCLUDE_CXD56_AUDIO_H */

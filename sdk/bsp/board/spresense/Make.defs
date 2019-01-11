@@ -55,3 +55,7 @@ ifeq ($(CONFIG_MODEM_ALTMDM),y)
 CSRCS += cxd56_altmdm.c
 endif
 
+ifeq ($(CONFIG_CXD56_AUDIO), y)
+CSRCS += cxd56_audio_amp.c
+endif
+

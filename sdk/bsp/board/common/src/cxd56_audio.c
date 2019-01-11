@@ -181,6 +181,7 @@ bool board_aca_power_monitor(int target)
  *
  ****************************************************************************/
 
+__attribute__((weak))
 int board_external_amp_mute_control(bool en)
 {
   /* Not connected */
@@ -198,6 +199,7 @@ int board_external_amp_mute_control(bool en)
  *
  ****************************************************************************/
 
+__attribute__((weak))
 bool board_external_amp_mute_monitor(void)
 {
   /* Not connected */
