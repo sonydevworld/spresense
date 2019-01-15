@@ -141,7 +141,7 @@ $(NNABLA_LIBS):$(NNABLA_C_RUNTIME_MAKEFILE)
 
 # Create dependencies
 
-libmakedep: Makefile
+libmakedep: $(SDKDIR)/.config Makefile
 	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) > Make.dep
 
 .depend: libmakedep 

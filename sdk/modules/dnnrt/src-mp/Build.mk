@@ -89,14 +89,14 @@ $(LIB): $(OBJS)
 install:
 
 context:
-	# make apps refer to the same version of network.h
+# make apps refer to the same version of network.h
 	$(Q) install -m 0664 -C \
 		$(RUNTIME_EXTERN_DIR)/include/nnablart/network.h \
 		$(SDKDIR)/modules/include/dnnrt/nnablart/network.h
 
 # Create dependencies
 
-.depend: Makefile $(SRCS)
+.depend: $(SDKDIR)/.config Makefile $(SRCS)
 	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) > Make.dep
 	$(Q) touch $@
 
