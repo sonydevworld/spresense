@@ -38,28 +38,66 @@
 
 #include "audio_wav_containerformat_common.h"
 
-/* Format ID */
+/** Format ID */
 
 #define FORMAT_ID_PCM WAVE_FORMAT_PCM
 
-/* For wave header. */
+/** For wave header */
 
 #define FMT_CHUNK_SIZE    16
 
+/** WAV container format (will generate) */
+
 struct wav_header_s
 {
-  uint32_t riff;       /* "RIFF"             */
-  uint32_t total_size; /* Whole size exclude "RIFF" */
-  uint32_t wave;       /* "WAVE"             */
-  uint32_t fmt;        /* "fmt "             */
-  uint32_t fmt_size;   /* fmt chunk size     */
-  uint16_t format;     /* format type        */
-  uint16_t channel;    /* channel number     */
-  uint32_t rate;       /* sampling rate      */
-  uint32_t avgbyte;    /* rate * block       */
-  uint16_t block;      /* channels * bit / 8 */
-  uint16_t bit;        /* bit length         */
-  uint32_t data;       /* "data"             */
+  /*! \brief character "RIFF" */
+
+  uint32_t riff;
+
+  /*! \brief Whole size exclude "RIFF" */
+
+  uint32_t total_size;
+
+  /*! \brief character "WAVE" */
+
+  uint32_t wave;
+
+  /*! \brief character "fmt " */
+
+  uint32_t fmt;
+
+  /*! \brief fmt chunk size */
+
+  uint32_t fmt_size;
+
+  /*! \brief format type */
+
+  uint16_t format;
+
+  /*! \brief channel number */
+
+  uint16_t channel;
+
+  /*! \brief sampling rate */
+
+  uint32_t rate;
+
+  /*! \brief rate * block */
+
+  uint32_t avgbyte;
+
+  /*! \brief channels * bit / 8 */
+
+  uint16_t block;
+
+  /*! \brief bit length */
+
+  uint16_t bit;
+
+  /*! \brief character "data"             */
+
+  uint32_t data;
+
   uint32_t data_size;
 };
 typedef struct wav_header_s WAVHEADER;
@@ -75,19 +113,30 @@ public:
     {}
   ~WavContainerFormat() {}
 
-  /* Init function
+  /**
+   * @brief Init function
    *
-   *   A bitlength is fixed to 16bit
-   *   Set WAV container information
+   * @details Set WAV container information
+   *          A bitlength is fixed to 16bit
+   *
+   * @param[in] format_id:      WAV format type
+   * @param[in] channel_number: Number of channels 
+   * @param[in] sampling_rate:  Sampling rate
    */
 
   bool init(uint16_t  format_id,
             uint16_t  channel_number,
             uint32_t  sampling_rate);
 
-  /* Init function
+  /**
+   * @brief Init function (Bitwidth can be specified)
    *
-   *   Set WAV container information
+   * @details Set WAV container information
+   *
+   * @param[in] format_id:      WAV format type
+   * @param[in] channel_number: Number of channels 
+   * @param[in] sampling_rate:  Sampling rate
+   * @param[in] bitwidth:       Bit per sample 
    */
 
   bool init(uint16_t  format_id,
@@ -95,14 +144,19 @@ public:
             uint32_t  sampling_rate,
             uint8_t   bitwidth);
 
-  /* Get WAV header
+  /**
+   * @brief Get WAV header
    *
-   *   Get WAV container header information.
-   *   Informations depends on parameters of "init()".
+   * @details Get WAV container header information.
+   *          The Informations depends on parameters of "init()".
+   *
+   * @param[out] wav_header: WAV continer header
+   * @param[in]  data_size:  Wav data size to set header parameter 
    */
 
   bool getHeader(WAVHEADER *wav_header,
                  uint32_t data_size);
+
 private:
   uint16_t  m_format_id;
   uint16_t  m_channel_number;

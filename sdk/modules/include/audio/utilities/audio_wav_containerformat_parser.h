@@ -46,20 +46,35 @@ typedef void* handel_wav_parser;
 
 #define MAX_CHUNK_LIST 128
 
+/** Chunk information */
+
 struct chunk_s
 {
+  /*! \brief Chunk ID */
+
   uint32_t chunk_id;
+
+  /*! \brief Chunk size */
+
   int32_t  size;
 };
 typedef struct chunk_s chunk_t;
 
+/** Chunk list */
+
 struct chunk_list_s
 {
+  /*! \brief Number of chunks in a list */
+
   uint8_t  cnt;
+
+  /*! \brief Chunk list (MAX num is MAX_CHUNK_LIST) */
+
   chunk_t  chunk[MAX_CHUNK_LIST];
 };
 typedef struct chunk_list_s chunk_list_t;
 
+/** RIFF chunk structure */
 
 struct riff_chunk_s
 {
@@ -68,17 +83,41 @@ struct riff_chunk_s
 };
 typedef struct riff_chunk_s riff_chunk_t;
 
+/** FMT chunk structure */
+
 struct fmt_chunk_s
 {
+  /*! \brief Number of chunks in a list */
+
   uint16_t  format;
+
+  /*! \brief Number of channel */
+
   uint16_t  channel;
+
+  /*! \brief Sampling rate (fs) */
+
   uint32_t  rate;
+
+  /*! \brief Averate byte per second */
+
   uint32_t  avgbyte;
+
+  /*! \brief block size */
+
   uint16_t  block;
+
+  /*! \brief bit per sample */
+
   uint16_t  bit;
+
+  /*! \brief extend area size */
+
   uint16_t  extended_size;
 };
 typedef struct fmt_chunk_s fmt_chunk_t;
+
+/** Handle structure of the parser */
 
 struct handel_wav_parser_s
 {
@@ -93,6 +132,7 @@ struct handel_wav_parser_s
 };
 typedef struct handel_wav_parser_s handel_wav_parser_t;
 
+/** Class definition of the parser */
 
 class WavContainerFormatParser
 {
@@ -100,50 +140,70 @@ public:
   WavContainerFormatParser() {}
   ~WavContainerFormatParser() {}
 
-  /*
-   * Parse WAV container
+  /**
+   * @brief Parse WAV container
    *
-   *   Parse WAV container and return handle, and "fmt" chunk.
-   *   The "fmt" chunk include sampling rate, bit length, ch num... and more.
+   * @details Parse WAV container and return handle, and "fmt" chunk.\n
+   *          The "fmt" chunk include sampling rate, bit length, ch num... and more.
    *
+   * @param[in]  file_path: Path of Target WAV format file
+   * @param[out] fmt:       Information of FMT chunk
+   *
+   * @retval handle of the parser
    */
-
+  
   handel_wav_parser parseChunk(const char *file_path, fmt_chunk_t *fmt);
-
-  /*
-   * Get Chunk List
+  
+  /**
+   * @brief Get Chunk List
    *
-   *   Get list of chunks which is included in designated WAV file.
+   * @details Get list of chunks which is included in designated WAV file.
    *
+   * @param[in]  handle: Handle of the parser 
+   * @param[out] list  : list of chunks in WAV format file 
+   *
+   * @retval result
    */
-
+  
   bool getChunkList(handel_wav_parser handle, chunk_list_t *list);
-
-  /*
-   * Get Chunk
+  
+  /**
+   * @brief Get Chunk
    *
-   *   Get chunk by chunk id.
+   * @details  Get chunk by chunk id.
    *
+   * @param[in] handle:   Handle of the parser
+   * @param[in] chunk_id: ID of require chunk 
+   * @param[in] buffer:   Memory address which will store chunk data 
+   *
+   * @retval result
    */
-
+  
   bool getChunk(handel_wav_parser handle, uint32_t chunk_id, int8_t *buffer);
-
-  /*
-   * Get Data Chunk
+  
+  /**
+   * @brief Get Data Chunk
    *
-   *   Get Data chunk.
+   * @details Get Data chunk.
    *
+   * @param[in] handle: Handle of the parser
+   * @param[in] format: WAV format(currently, support only WAVE_FORMAT_PCM)
+   * @param[in] buffer: Memory address which will store data chunk data
+   * @param[in] size:   Size of buffer
+   *
+   * @retval got size
    */
-
+  
   int32_t getDataChunk(handel_wav_parser handle, uint16_t format, int8_t *buffer, uint32_t size);
-
-  /*
-   * Reset Parser
+  
+  /**
+   * @brief Reset Parser
    *
-   *   Close WAV file and free internal memory area.
+   * @details Close WAV file and free internal memory area.
    *
+   * @param[in] handle: Handle of parser
    */
-
+  
   void resetParser(handel_wav_parser handle);
 
 private:
