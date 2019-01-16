@@ -122,16 +122,16 @@
 
 /* Definition for control gamma curve */
 
-#define ISX012_TYPE_GAMMACURVE      V4L2_CTRL_TYPE_U8
+#define ISX012_TYPE_GAMMACURVE      V4L2_CTRL_TYPE_U16
 #define ISX012_NAME_GAMMACURVE      "Gamma adjustment(curve)"
 #define ISX012_DEF_GAMMACURVE       (0)
 #define ISX012_MIN_GAMMACURVE       (0)
-#define ISX012_MAX_GAMMACURVE       (255)
+#define ISX012_MAX_GAMMACURVE       (511)
 #define ISX012_STEP_GAMMACURVE      (1)
 #define ISX012_ELEMSIZE_GAMMACURVE  (1)
 #define ISX012_ELEMS_GAMMACURVE     (19)
 #define ISX012_REG_GAMMACURVE       GAMMA_BASE
-#define ISX012_SIZE_GAMMACURVE      (1)
+#define ISX012_SIZE_GAMMACURVE      (2)
 
 
 /* Definition for control exposure value */

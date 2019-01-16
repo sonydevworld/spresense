@@ -95,6 +95,19 @@ static void capture_comp_done_callback(CaptureDataParam param)
 }
 
 /*--------------------------------------------------------------------------*/
+static void capture_comp_error_callback(CaptureErrorParam param)
+{
+  err_t er;
+
+  er = MsgLib::send<CaptureErrorParam>(s_msgq_id.recorder,
+                                       MsgPriNormal,
+                                       MSG_AUD_VRC_RST_CAPTURE_ERR,
+                                       NULL,
+                                       param);
+  F_ASSERT(er == ERR_OK);
+}
+
+/*--------------------------------------------------------------------------*/
 static bool filter_done_callback(DspDrvComPrm_t* p_param)
 {
   D_ASSERT2(DSP_COM_DATA_TYPE_STRUCT_ADDRESS == p_param->type,
@@ -354,7 +367,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal,        /*   Ready.         */
     &MediaRecorderObjectTask::illegal,        /*   Play.          */
     &MediaRecorderObjectTask::illegal,        /*   Stopping.      */
-    &MediaRecorderObjectTask::illegal,        /*   Overflow.      */
+    &MediaRecorderObjectTask::illegal,        /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
@@ -365,7 +378,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::deactivate,     /*   Ready.         */
     &MediaRecorderObjectTask::illegal,        /*   Play.          */
     &MediaRecorderObjectTask::illegal,        /*   Stopping.      */
-    &MediaRecorderObjectTask::illegal,        /*   Overflow.      */
+    &MediaRecorderObjectTask::illegal,        /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
@@ -376,7 +389,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::init,           /*   Ready.         */
     &MediaRecorderObjectTask::illegal,        /*   Play.          */
     &MediaRecorderObjectTask::illegal,        /*   Stopping.      */
-    &MediaRecorderObjectTask::illegal,        /*   Overflow.      */
+    &MediaRecorderObjectTask::illegal,        /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
@@ -387,19 +400,19 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::startOnReady,   /*   Ready.         */
     &MediaRecorderObjectTask::illegal,        /*   Play.          */
     &MediaRecorderObjectTask::illegal,        /*   Stopping.      */
-    &MediaRecorderObjectTask::illegal,        /*   Overflow.      */
+    &MediaRecorderObjectTask::illegal,        /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
   /* Message Type: MSG_AUD_VRC_CMD_STOP. */
 
-  {                                           /* Recorder status: */
-    &MediaRecorderObjectTask::illegal,        /*   Inactive.      */
-    &MediaRecorderObjectTask::illegal,        /*   Ready.         */
-    &MediaRecorderObjectTask::stopOnRec,      /*   Play.          */
-    &MediaRecorderObjectTask::illegal,        /*   Stopping.      */
-    &MediaRecorderObjectTask::stopOnOverflow, /*   Overflow.      */
-    &MediaRecorderObjectTask::stopOnWait      /*   WaitStop.      */
+  {                                            /* Recorder status: */
+    &MediaRecorderObjectTask::illegal,         /*   Inactive.      */
+    &MediaRecorderObjectTask::illegal,         /*   Ready.         */
+    &MediaRecorderObjectTask::stopOnRec,       /*   Play.          */
+    &MediaRecorderObjectTask::illegal,         /*   Stopping.      */
+    &MediaRecorderObjectTask::stopOnErrorStop, /*   ErrorStopping. */
+    &MediaRecorderObjectTask::stopOnWait       /*   WaitStop.      */
   }
 };
 
@@ -414,8 +427,19 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegalCaptureDone,    /*   Ready.         */
     &MediaRecorderObjectTask::captureDoneOnRec,      /*   Play.          */
     &MediaRecorderObjectTask::captureDoneOnStop,     /*   Stopping.      */
-    &MediaRecorderObjectTask::captureDoneOnStop,     /*   Overflow.      */
+    &MediaRecorderObjectTask::captureDoneOnStop,     /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegalCaptureDone     /*   WaitStop.      */
+  },
+
+  /* Message Type: MSG_AUD_VRC_RST_CAPTURE_ERR. */
+
+  {                                                    /* Recorder status: */
+    &MediaRecorderObjectTask::illegalCaptureDone,      /*   Inactive.      */
+    &MediaRecorderObjectTask::illegalCaptureDone,      /*   Ready.         */
+    &MediaRecorderObjectTask::captureErrorOnRec,       /*   Play.          */
+    &MediaRecorderObjectTask::captureErrorOnStop,      /*   Stopping.      */
+    &MediaRecorderObjectTask::captureErrorOnErrorStop, /*   ErrorStopping. */
+    &MediaRecorderObjectTask::captureErrorOnWaitStop   /*   WaitStop.      */
   },
 
   /* Message Type: MSG_AUD_VRC_RST_FILTER. */
@@ -425,7 +449,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegalFilterDone,     /*   Ready.         */
     &MediaRecorderObjectTask::filterDoneOnRec,       /*   Play.          */
     &MediaRecorderObjectTask::filterDoneOnStop,      /*   Stopping.      */
-    &MediaRecorderObjectTask::filterDoneOnOverflow,  /*   Overflow.      */
+    &MediaRecorderObjectTask::filterDoneOnErrorStop, /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegalFilterDone      /*   WaitStop.      */
   },
 
@@ -436,7 +460,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegalEncDone,        /*   Ready.         */
     &MediaRecorderObjectTask::encDoneOnRec,          /*   Play.          */
     &MediaRecorderObjectTask::encDoneOnStop,         /*   Stopping.      */
-    &MediaRecorderObjectTask::encDoneOnOverflow,     /*   Overflow.      */
+    &MediaRecorderObjectTask::encDoneOnErrorStop,    /*   ErrorStopping. */
     &MediaRecorderObjectTask::illegalEncDone         /*   WaitStop.      */
   }
 };
@@ -727,6 +751,7 @@ void MediaRecorderObjectTask::startOnReady(MsgPacket *msg)
   cap_comp_param.init_param.capture_ch_num    = m_channel_num;
   cap_comp_param.init_param.capture_bit_width = m_pcm_bit_width;
   cap_comp_param.init_param.callback          = capture_comp_done_callback;
+  cap_comp_param.init_param.err_callback      = capture_comp_error_callback;
   cap_comp_param.handle                       = m_capture_from_mic_hdlr;
   if (!AS_init_capture(&cap_comp_param))
     {
@@ -852,7 +877,7 @@ void MediaRecorderObjectTask::stopOnRec(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void MediaRecorderObjectTask::stopOnOverflow(MsgPacket *msg)
+void MediaRecorderObjectTask::stopOnErrorStop(MsgPacket *msg)
 {
   msg->moveParam<RecorderCommand>();
 
@@ -971,7 +996,7 @@ void MediaRecorderObjectTask::filterDoneOnStop(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void MediaRecorderObjectTask::filterDoneOnOverflow(MsgPacket *msg)
+void MediaRecorderObjectTask::filterDoneOnErrorStop(MsgPacket *msg)
 {
   FilterCompCmpltParam filter_result =
     msg->moveParam<FilterCompCmpltParam>();
@@ -1087,7 +1112,7 @@ void MediaRecorderObjectTask::encDoneOnStop(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void MediaRecorderObjectTask::encDoneOnOverflow(MsgPacket *msg)
+void MediaRecorderObjectTask::encDoneOnErrorStop(MsgPacket *msg)
 {
   EncCmpltParam enc_result = msg->moveParam<EncCmpltParam>();
   AS_encode_recv_done();
@@ -1165,6 +1190,48 @@ void MediaRecorderObjectTask::captureDoneOnStop(MsgPacket *msg)
     {
       stopEnc();
     }
+}
+
+/*--------------------------------------------------------------------------*/
+void MediaRecorderObjectTask::captureErrorOnRec(MsgPacket *msg)
+{
+  msg->moveParam<CaptureErrorParam>();
+
+  /* Stop capture input */
+
+  CaptureComponentParam cap_comp_param;
+  cap_comp_param.handle          = m_capture_from_mic_hdlr;
+  cap_comp_param.stop_param.mode = AS_DMASTOPMODE_IMMEDIATE;
+
+  AS_stop_capture(&cap_comp_param);
+
+  /* Enter error stop sequence */
+
+  m_state = RecorderStateErrorStopping;
+}
+
+/*--------------------------------------------------------------------------*/
+void MediaRecorderObjectTask::captureErrorOnStop(MsgPacket *msg)
+{
+  msg->moveParam<CaptureErrorParam>();
+
+  /* If already in stopping sequence, there are nothing to do */
+}
+
+/*--------------------------------------------------------------------------*/
+void MediaRecorderObjectTask::captureErrorOnErrorStop(MsgPacket *msg)
+{
+  msg->moveParam<CaptureErrorParam>();
+
+  /* If already in error stopping sequence, there are nothing to do */
+}
+
+/*--------------------------------------------------------------------------*/
+void MediaRecorderObjectTask::captureErrorOnWaitStop(MsgPacket *msg)
+{
+  msg->moveParam<CaptureErrorParam>();
+
+  /* If already in wait stop sequence, there are nothing to do */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1678,7 +1745,7 @@ void MediaRecorderObjectTask::writeToDataSinker(
 
           AS_stop_capture(&cap_comp_param);
 
-          m_state = RecorderStateOverflow;
+          m_state = RecorderStateErrorStopping;
           m_fifo_overflow = true;
         }
     }

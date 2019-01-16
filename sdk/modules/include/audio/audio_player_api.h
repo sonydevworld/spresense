@@ -66,8 +66,16 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* Enable player feature. */
+
 #define AS_FEATURE_PLAYER_ENABLE
 
+/* Need to enable mixer feature when player feature is enabled.
+ * Because player feature always use mixer feature.
+ */
+
+#define AS_FEATURE_OUTPUTMIX_ENABLE
+  
 /** @name Packet length of player command*/
 /** @{ */
 

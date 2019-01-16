@@ -38,7 +38,7 @@
 ifeq ($(CONFIG_I2C),y)
 
 ifeq ($(CONFIG_VIDEO_ISX012),y)
-CSRCS += isx012.c 
+CSRCS += isx012.c
 endif
 
 DEPPATH += --dep-path video

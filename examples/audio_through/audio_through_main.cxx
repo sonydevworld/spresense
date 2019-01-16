@@ -313,20 +313,6 @@ static bool app_set_through_path(audio_through_test_path_e path_type)
   return printAudCmdResult(command.header.command_code, result);
 }
 
-static bool app_init_output_select(void)
-{
-  AudioCommand command;
-  command.header.packet_length = LENGTH_INITOUTPUTSELECT;
-  command.header.command_code  = AUDCMD_INITOUTPUTSELECT;
-  command.header.sub_code      = 0;
-  command.init_output_select_param.output_device_sel = AS_OUT_SP;
-  AS_SendAudioCommand(&command);
-
-  AudioResult result;
-  AS_ReceiveAudioResult(&result);
-  return printAudCmdResult(command.header.command_code, result);
-}
-
 static bool app_init_mic_gain(void)
 {
   AudioCommand command;
@@ -467,14 +453,6 @@ extern "C" int audio_through_main(int argc, char *argv[])
   if (!app_power_on())
     {
       printf("Error: app_power_on() failure.\n");
-      return 1;
-    }
-
-  /* Initialize Speaker Out */
-
-    if (!app_init_output_select())
-    {
-      printf("Error: app_init_output_select() failure.\n");
       return 1;
     }
 

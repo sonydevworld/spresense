@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <nuttx/arch.h>
+#include <arch/chip/cxd56_audio.h>
 #include "output_mix_obj.h"
 #include "debug/dbg_log.h"
 
@@ -122,6 +123,100 @@ int OutputMixObjectTask::getHandle(MsgPacket* msg)
 }
 
 /*--------------------------------------------------------------------------*/
+void OutputMixObjectTask::enableOutputDevice()
+{
+  CXD56_AUDIO_ECODE error_code;
+
+  switch (m_output_device)
+    {
+      case A2dpSrcOutputDevice:
+        cxd56_audio_dis_i2s_io();
+        error_code = cxd56_audio_dis_output();
+        break;
+
+      case HPOutputDevice:
+        cxd56_audio_dis_i2s_io();
+        cxd56_audio_set_spout(true);
+        error_code = cxd56_audio_en_output();
+        break;
+
+      case I2SOutputDevice:
+        {
+          cxd56_audio_en_i2s_io();
+          cxd56_audio_set_spout(false);
+          error_code = cxd56_audio_en_output();
+          if (error_code != CXD56_AUDIO_ECODE_OK)
+            {
+              break;
+            }
+
+          /* Set Path, Mixer to I2S0 */
+
+          cxd56_audio_signal_t sig_id = CXD56_AUDIO_SIG_MIX;
+          cxd56_audio_sel_t    sel_info;
+          sel_info.au_dat_sel1 = false;
+          sel_info.au_dat_sel2 = false;
+          sel_info.cod_insel2  = false;
+          sel_info.cod_insel3  = false;
+          sel_info.src1in_sel  = true;
+          sel_info.src2in_sel  = false;
+
+          error_code = cxd56_audio_set_datapath(sig_id, sel_info);
+        }
+        break;
+
+      default:
+        OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+        return;;
+    }
+
+  if (error_code != CXD56_AUDIO_ECODE_OK)
+    {
+      OUTPUT_MIX_ERR(AS_ATTENTION_CODE_FATAL);
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+void OutputMixObjectTask::disableOutputDevice()
+{
+  CXD56_AUDIO_ECODE error_code;
+
+  switch (m_output_device)
+    {
+      case A2dpSrcOutputDevice:
+        /* Do nothing */
+
+        error_code = CXD56_AUDIO_ECODE_OK;
+        break;
+
+      case HPOutputDevice:
+        cxd56_audio_set_spout(false);
+        error_code = cxd56_audio_dis_output();
+        break;
+
+      case I2SOutputDevice:
+        {
+          cxd56_audio_dis_i2s_io();
+          error_code = cxd56_audio_dis_output();
+          if (error_code != CXD56_AUDIO_ECODE_OK)
+            {
+              break;
+            }
+        }
+        break;
+
+      default:
+        OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+        return;
+    }
+
+  if (error_code != CXD56_AUDIO_ECODE_OK)
+    {
+      OUTPUT_MIX_ERR(AS_ATTENTION_CODE_FATAL);
+    }
+}
+
+/*--------------------------------------------------------------------------*/
 void OutputMixObjectTask::run()
 {
   err_t        err_code;
@@ -146,13 +241,35 @@ void OutputMixObjectTask::run()
 /*--------------------------------------------------------------------------*/
 void OutputMixObjectTask::parse(MsgPacket* msg)
 {
-  if (MSG_GET_CATEGORY(msg->getType()) == MSG_CAT_AUD_MIX)
+  MsgType msg_type = msg->getType();
+
+  if (MSG_GET_CATEGORY(msg_type) == MSG_CAT_AUD_MIX)
     {
-      if (msg->getType() == MSG_AUD_MIX_CMD_ACT)
+      switch(msg_type)
         {
-          m_output_device =
-            static_cast<AsOutputMixDevice>
-              (msg->peekParam<OutputMixerCommand>().act_param.output_device);
+          case MSG_AUD_MIX_CMD_ACT:
+            {
+              m_output_device = static_cast<AsOutputMixDevice>
+                (msg->peekParam<OutputMixerCommand>().act_param.output_device);
+
+              /* Enable output device */
+
+              enableOutputDevice();
+            }
+            break;
+
+          case MSG_AUD_MIX_CMD_DEACT:
+            {
+              /* Disable output device */
+
+              disableOutputDevice();
+            }
+            break;
+
+          default:
+            /* Do nothing */
+
+            break;
         }
 
       switch(m_output_device)

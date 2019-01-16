@@ -585,40 +585,12 @@ static bool app_activate_baseband(void)
       return false;
     }
 
-  /* Enable output */
-
-  error_code = cxd56_audio_set_spout(true);
-
-  if (error_code != CXD56_AUDIO_ECODE_OK)
-    {
-      printf("cxd56_audio_set_spout() error! [%d]\n", error_code);
-      return false;
-    }
-
-  error_code = cxd56_audio_en_output();
-
-  if (error_code != CXD56_AUDIO_ECODE_OK)
-    {
-      printf("cxd56_audio_en_output() error! [%d]\n", error_code);
-      return false;
-    }
-
   return true;
 }
 
 static bool app_deactivate_baseband(void)
 {
   CXD56_AUDIO_ECODE error_code;
-
-  /* Disable output */
-
-  error_code = cxd56_audio_dis_output();
-
-  if (error_code != CXD56_AUDIO_ECODE_OK)
-    {
-      printf("cxd56_audio_dis_output() error! [%d]\n", error_code);
-      return false;
-    }
 
   /* Power off audio device */
 

@@ -179,6 +179,13 @@ static void AS_CaptureNotifyDmaDoneDev0(AudioDrvDmaResult *p_param)
       CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
       return;
     }
+
+  /* When receive end frame, Clera remaing que */
+
+  if (result.end_flag)
+    {
+      instance->m_req_data_que.clear();
+    }
 }
 
 /*--------------------------------------------------------------------*/
@@ -206,13 +213,24 @@ static void AS_CaptureNotifyDmaDoneDev1(AudioDrvDmaResult *p_param)
       CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
       return;
     }
+
+  if (result.end_flag)
+    {
+      instance->m_req_data_que.clear();
+    }
 }
 #endif
 
 /*--------------------------------------------------------------------*/
 static void AS_CaptureNotifyDmaError(AudioDrvDmaError *p_param)
 {
-  CAPTURE_ERR(AS_ATTENTION_SUB_CODE_DMA_ERROR);
+  CaptureComponentHandler handle =
+    s_pFactory->getCaptureHandleByDmacId(p_param->dmac_id);
+
+  CaptureComponent *instance =
+    s_pFactory->getCaptureCompInstance(handle);
+
+  CaptureErrorParam errparam;
 
   switch (p_param->status)
     {
@@ -231,6 +249,10 @@ static void AS_CaptureNotifyDmaError(AudioDrvDmaError *p_param)
       case E_AS_BB_DMA_UNDERFLOW:
       case E_AS_BB_DMA_OVERFLOW:
       case E_AS_BB_DMA_PARAM:
+          errparam.error_type = CaptureErrorDMAunder;
+          instance->m_err_callback(errparam);
+          break;
+
       default:
           break;
     }
@@ -638,7 +660,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_BB_MSG_NUM][StateNum
   /* Message type: MSG_AUD_BB_CMD_STOP */
   {                                  /* Capture status: */
     &CaptureComponent::illegal,      /*   Booted        */
-    &CaptureComponent::illegal,      /*   Ready         */
+    &CaptureComponent::stopOnReady,  /*   Ready         */
     &CaptureComponent::stopOnPreAct, /*   PreAct        */
     &CaptureComponent::stopOnAct     /*   Act           */
   },
@@ -812,6 +834,7 @@ bool CaptureComponent::init(const CaptureComponentParam& param)
   init_param.p_dmadone_func = m_dma_done_cb;
 
   m_callback = param.init_param.callback;
+  m_err_callback = param.init_param.err_callback;
 
   if (result && E_AS_OK != AS_InitDmac(&init_param))
     {
@@ -875,6 +898,7 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
 
           if (E_AS_OK != AS_ReadDmac(&dmac_param))
             {
+              m_req_data_que.pop();
               return false;
             }
 
@@ -909,10 +933,17 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
 
   if (E_AS_OK != AS_ReadDmac(&dmac_param))
     {
+      m_req_data_que.pop();
       return false;
     }
 
   return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool CaptureComponent::stopOnReady(const CaptureComponentParam& param)
+{
+  return stopOnPreAct(param);
 }
 
 /*--------------------------------------------------------------------*/

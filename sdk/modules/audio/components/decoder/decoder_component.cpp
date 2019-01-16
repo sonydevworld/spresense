@@ -626,7 +626,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
       if (decoder_dsp_version != DSP_VERSION_GET_VER(slave_dsp_inf))
         {
           logerr("Slave DSP version unmatch. expect %08x / actual %08x",
-                  DSP_SLAVE_SRC_VERSION, DSP_VERSION_GET_VER(slave_dsp_inf));
+                  decoder_dsp_version, DSP_VERSION_GET_VER(slave_dsp_inf));
 
           if (!is_version_matched)
             {
