@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <ble/ble_comm.h>
 #include <ble/ble_gatts.h>
+#include <ble/ble_gattc.h>
 
 #include "bt_util.h"
 #include "bcm20706_ble_internal.h"
@@ -70,6 +71,9 @@
 #define GATTS_HANDLE_DESP_DESC_OFFSET   4
 
 #define CONN_HANDLE_INVALED 0xffff
+
+#define SRV_DISC_START_HANDLE  0x0001
+#define SRV_DISC_END_HANDLE    0xFFFF
 
 /****************************************************************************
  * Private Data
@@ -259,7 +263,7 @@ static int bcm20706_ble_add_characteristic(uint16_t serv_handle, struct ble_gatt
  *
  ****************************************************************************/
 
-static int bcm20706_ble_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int bcm20706_ble_gatts_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
 {
   int ret = BT_SUCCESS;
 
@@ -277,7 +281,7 @@ static int bcm20706_ble_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t ha
  *
  ****************************************************************************/
 
-static int bcm20706_ble_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int bcm20706_ble_gatts_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
 {
   int ret = BT_SUCCESS;
 
@@ -324,16 +328,86 @@ static int bcm20706_ble_notify(struct ble_gatt_char_s *ble_gatt_char, uint16_t h
 }
 
 /****************************************************************************
+ * Name: bcm20706_ble_start_db_discovery
+ *
+ * Description:
+ *   Bluetooth LE GATT client start attribute database discovery
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_start_db_discovery(uint16_t conn_handle)
+{
+  return BLE_GattcStartDbDiscovery(conn_handle);
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_continue_db_discovery
+ *
+ * Description:
+ *   Bluetooth LE GATT client continue attribute database discovery
+ *   Continue discovery from start_handle
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle)
+{
+  return BLE_GattcContinueDbDiscovery(conn_handle, start_handle);
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_write
+ *
+ * Description:
+ *   Bluetooth LE GATT client write request.
+ *   Request GATT server to write attributes.
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+{
+  BLE_GattcWriteParams param = {0};
+
+  param.writeOp       = (ble_gatt_char->property.writeWoResp ? BLE_GATTC_WRITE_CMD : BLE_GATTC_WRITE_REQ);
+  param.charValHandle = ble_gatt_char->handle;
+  param.charValLen    = ble_gatt_char->value.length;
+  param.charValData   = ble_gatt_char->value.data;
+
+  return BLE_GattcWrite(handle, &param);
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_read
+ *
+ * Description:
+ *   Bluetooth LE GATT client read request.
+ *   Request GATT server to read attributes.
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+{
+  BLE_GattcReadParams param = {0};
+
+  param.charValHandle = ble_gatt_char->handle;
+
+  return BLE_GattcRead(handle, &param);
+}
+
+/****************************************************************************
  * Public Data
  ****************************************************************************/
 
 struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
 {
-  .addService = bcm20706_ble_add_service,
-  .addChar    = bcm20706_ble_add_characteristic,
-  .write      = bcm20706_ble_write,
-  .read       = bcm20706_ble_read,
-  .notify     = bcm20706_ble_notify
+  .gatts.addService          = bcm20706_ble_add_service,
+  .gatts.addChar             = bcm20706_ble_add_characteristic,
+  .gatts.write               = bcm20706_ble_gatts_write,
+  .gatts.read                = bcm20706_ble_gatts_read,
+  .gatts.notify              = bcm20706_ble_notify,
+  .gattc.startDbDiscovery    = bcm20706_ble_start_db_discovery,
+  .gattc.continueDbDiscovery = bcm20706_ble_continue_db_discovery,
+  .gattc.write               = bcm20706_ble_gattc_write,
+  .gattc.read                = bcm20706_ble_gattc_read
 };
 
 /****************************************************************************
@@ -499,5 +573,133 @@ int bleGattsUpdateAttrValue(uint16_t connHandle, uint16_t attrHandle, ble_gatts_
   memcpy(p, gattsValue->p_value, gattsValue->len);
   p += gattsValue->len;
   return btUartSendData(buff, p - buff);
+}
+
+int bleServiceDiscover(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_DISCOVER_SERVICES);
+  UINT16_TO_STREAM(p, 6);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, startHandle);
+  UINT16_TO_STREAM(p, endHandle);
+  return btUartSendData(buff, p - buff);
+}
+
+int bleCharDiscover(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_DISCOVER_CHARACTERISTICS);
+  UINT16_TO_STREAM(p, 6);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, startHandle);
+  UINT16_TO_STREAM(p, endHandle);
+  return btUartSendData(buff, p - buff);
+}
+
+int bleDescriptorsDiscover(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_DISCOVER_DESCRIPTORS);
+  UINT16_TO_STREAM(p, 6);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, startHandle);
+  UINT16_TO_STREAM(p, endHandle);
+  return btUartSendData(buff, p - buff);
+}
+
+int bleGattcReadResponse(uint16_t connHandle, uint16_t attrHandle)
+{
+  return 0;
+}
+
+int bleGattcRead(uint16_t connHandle, BLE_GattcReadParams const *readParams)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_READ_REQUEST);
+  UINT16_TO_STREAM(p, 4);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, readParams->charValHandle);
+  btdbg("read connHandle = %x,val handle = %x\n",connHandle,readParams->charValHandle);
+  return btUartSendData(buff, p - buff);
+}
+
+int bleGattcWriteResponse(uint16_t connHandle, uint16_t attrHandle)
+{
+  return 0;
+}
+
+int bleGattcWrite(uint16_t connHandle, BLE_GattcWriteParams const *writeParams)
+{
+  uint8_t buff[BT_LONG_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  if (writeParams->writeOp == BLE_GATTC_WRITE_CMD)
+    {
+      UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_WRITE_COMMAND);
+    }
+  else if (writeParams->writeOp == BLE_GATTC_WRITE_REQ)
+    {
+      UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_WRITE_REQUEST);
+    }
+  else
+    {
+      return -EINVAL;
+    }
+  UINT16_TO_STREAM(p, 4 + writeParams->charValLen);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, writeParams->charValHandle);
+  memcpy(p, writeParams->charValData, writeParams->charValLen);
+  p += writeParams->charValLen;
+  btdbg("write connHandle = %x,val handle = %x, len = %x\n",
+        connHandle,writeParams->charValHandle, writeParams->charValLen);
+  btdbg("write data[0] = %x,data[1] = %x\n",
+        writeParams->charValData[0],writeParams->charValData[1]);
+  return btUartSendData(buff, p - buff);
+}
+
+int bleGattcConfirm(uint16_t connHandle, uint16_t attrHandle)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, BT_CONTROL_GATT_COMMAND_INDICATE_CONFIRM);
+  UINT16_TO_STREAM(p, 4);
+  UINT16_TO_STREAM(p, connHandle);
+  UINT16_TO_STREAM(p, attrHandle);
+  return btUartSendData(buff, p - buff);
+}
+
+int BLE_GattcStartDbDiscovery(uint16_t connHandle)
+{
+  return bleServiceDiscover(connHandle, SRV_DISC_START_HANDLE, SRV_DISC_END_HANDLE);
+}
+
+int BLE_GattcContinueDbDiscovery(uint16_t connHandle, uint16_t startHandle)
+{
+  return bleServiceDiscover(connHandle, startHandle, SRV_DISC_END_HANDLE);
+}
+
+int BLE_GattcRead(uint16_t connHandle, BLE_GattcReadParams const *readParams)
+{
+  return bleGattcRead(connHandle, readParams);
+}
+
+int BLE_GattcWrite(uint16_t connHandle, BLE_GattcWriteParams const *writeParams)
+{
+  return bleGattcWrite(connHandle, writeParams);
+}
+
+int BLE_GattcConfirm(uint16_t connHandle, uint16_t attrHandle)
+{
+  return bleGattcConfirm(connHandle, attrHandle);
 }
 

@@ -57,7 +57,7 @@
 /******************************************************************************
  * externs
  *****************************************************************************/
-
+extern uint8_t sdsBaseuuid[BASE_UUID_LEN];
 extern bleGapMem *bleGetGapMem(void);
 
 /****************************************************************************
@@ -309,6 +309,44 @@ static int bcm20706_ble_scan(bool enable)
 }
 
 /****************************************************************************
+ * Name: bcm20706_ble_connect
+ *
+ * Description:
+ *   Bluetooth LE connect to target device
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_connect(const BT_ADDR *addr)
+{
+  int ret = BT_SUCCESS;
+  BLE_GapAddr gap_addr = {0};
+
+  memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
+
+  ret = BLE_GapConnect(&gap_addr);
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_disconnect
+ *
+ * Description:
+ *   Bluetooth LE disconnect link to target device
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_disconnect(const uint16_t conn_handle)
+{
+  int ret = BT_SUCCESS;
+  BLE_GapConnHandle handle = conn_handle;
+
+  ret = BLE_GapDisconnectLink(handle);
+
+  return ret;
+}
+
+/****************************************************************************
  * Public Data
  ****************************************************************************/
 
@@ -319,7 +357,9 @@ struct ble_hal_common_ops_s ble_hal_common_ops =
   .setAppearance = bcm20706_ble_set_appearance,
   .setPPCP       = bcm20706_ble_set_ppcp,
   .advertise     = bcm20706_ble_advertise,
-  .scan          = bcm20706_ble_scan
+  .scan          = bcm20706_ble_scan,
+  .connect       = bcm20706_ble_connect,
+  .disconnect    = bcm20706_ble_disconnect
 };
 
 /****************************************************************************
@@ -376,3 +416,489 @@ void bleRecvNvramData(ble_evt_t *pBleBcmEvt, uint16_t len)
   btdbg("nv data len = %d\n", len);
 }
 
+static void bleCopyUuid(uint8_t *pDest, uint8_t *pSrc, uint16_t len)
+{
+  int i = 0;
+  for (i = 0; i < len; i++)
+    {
+      pDest[i] = pSrc[len - 1 - i];
+    }
+  return;
+}
+
+void bleRecvGattServiceDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  bleGattcDb *gattcDbDiscovery = &commMem.gattcDb;
+  uint8_t *rp = NULL;
+  uint16_t connHandle = 0;
+  BLE_GattcDbDiscSrv  *srvBeingDiscovered = NULL;
+  uint16_t tempServUuid = 0;
+  uint8_t tempServUuid128[BASE_UUID_LEN] = {0};
+
+  rp = pBleBcmEvt->evtData;
+  STREAM_TO_UINT16(connHandle, rp);
+
+  if (gattcDbDiscovery->dbDiscovery.srvCount >= BLE_DB_DISCOVERY_MAX_SRV)
+    {
+      gattcDbDiscovery->state.srvCount += 1;
+      return;
+    }
+  gattcDbDiscovery->dbDiscovery.srvCount +=1;
+  gattcDbDiscovery->state.srvCount += 1;
+  gattcDbDiscovery->dbDiscovery.connHandle = connHandle;
+  srvBeingDiscovered = &(gattcDbDiscovery->
+                         dbDiscovery.services[gattcDbDiscovery->dbDiscovery.srvCount - 1]);
+
+  if (len == BLE_SERV_UUID_BTSIG_PACKET_LEN)
+    {
+      srvBeingDiscovered->srvUuid.type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+      STREAM_TO_UINT16(tempServUuid, rp);
+      if ((tempServUuid < MIN_UUID_SERVICE) && (tempServUuid > MAX_UUID_SERVICE))
+        {
+          srvBeingDiscovered->srvUuid.type = BLE_UUID_TYPE_BASEALIAS_VENDOR;
+          memcpy(tempServUuid128, sdsBaseuuid, BASE_UUID_LEN);
+          tempServUuid128[BLE_UUID128_13_BYTE] = (uint8_t)(tempServUuid && 0xff);
+          tempServUuid128[BLE_UUID128_14_BYTE] = (uint8_t)(tempServUuid >> 8);
+          bleCopyUuid(srvBeingDiscovered->
+                      srvUuid.value.uuid128.uuid128, tempServUuid128, BLE_UUID128_LEN);
+        }
+      else
+        {
+          srvBeingDiscovered->srvUuid.type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+          srvBeingDiscovered->srvUuid.value.baseAlias.uuidAlias = tempServUuid;
+        }
+    }
+  else if (len == BLE_SERV_UUID_VENDOR_PACKET_LEN)
+    {
+      srvBeingDiscovered->srvUuid.type = BLE_UUID_TYPE_UUID128;
+      bleCopyUuid(srvBeingDiscovered->srvUuid.value.uuid128.uuid128, rp, BLE_UUID128_LEN);
+      rp += BLE_UUID128_LEN;
+    }
+  else
+    {
+      /* nothing */
+    }
+  STREAM_TO_UINT16(srvBeingDiscovered->srvHandleRange.startHandle, rp);
+  STREAM_TO_UINT16(srvBeingDiscovered->srvHandleRange.endHandle, rp);
+  gattcDbDiscovery->state.endHandle =
+    srvBeingDiscovered->srvHandleRange.endHandle;
+  btdbg("service discover,startHandle = %x,endHandle = %x.\n",
+        srvBeingDiscovered->srvHandleRange.startHandle,
+        srvBeingDiscovered->srvHandleRange.endHandle);
+}
+
+void bleRecvGattCharDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  bleGattcDb *gattcDbDiscovery = &commMem.gattcDb;
+  uint8_t *rp = NULL;
+  uint8_t numCharsPrevDisc = 0;
+  uint8_t numCharsCurrDisc = 0;
+  uint16_t tempCharUuid = 0;
+  uint8_t tempCharUuid128[BASE_UUID_LEN] = {0};
+
+  BLE_GattcDbDiscSrv *srvBeingDiscovered =
+    &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  rp = pBleBcmEvt->evtData + BLE_HANDLE_LEN;
+
+  if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
+    {
+      gattcDbDiscovery->discoveryInProgress = false;
+      return;
+    }
+
+  numCharsPrevDisc = srvBeingDiscovered->charCount;
+  numCharsCurrDisc = 1;
+
+  /* Check if the total number of discovered characteristics are supported */
+  if ((numCharsPrevDisc + numCharsCurrDisc) <= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+    {
+      /* Update the characteristics count. */
+      srvBeingDiscovered->charCount += numCharsCurrDisc;
+    }
+  else
+    {
+      /* The number of characteristics discovered at the peer is more than the supported maximum. */
+      srvBeingDiscovered->charCount = BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV;
+    }
+
+  STREAM_TO_UINT16(srvBeingDiscovered->
+                   characteristics[srvBeingDiscovered->charCount - 1].
+                   characteristic.charDeclhandle, rp);
+  btdbg("char discover,handle = %x.\n",
+        srvBeingDiscovered->
+        characteristics[srvBeingDiscovered->charCount - 1].
+        characteristic.charDeclhandle);
+  if (len == BLE_CHAR_UUID_BTSIG_PACKET_LEN)
+    {
+      STREAM_TO_UINT16(tempCharUuid, rp);
+      if ((tempCharUuid < MIN_UUID_CHAR) && (tempCharUuid > MAX_UUID_CHAR))
+        {
+          srvBeingDiscovered->
+            characteristics[srvBeingDiscovered->
+                            charCount - 1].characteristic.charValUuid.type
+            = BLE_UUID_TYPE_BASEALIAS_VENDOR;
+          memcpy(tempCharUuid128, sdsBaseuuid, BASE_UUID_LEN);
+          tempCharUuid128[BLE_UUID128_13_BYTE] = (uint8_t)(tempCharUuid && 0xff);
+          tempCharUuid128[BLE_UUID128_14_BYTE] = (uint8_t)(tempCharUuid >> 8);
+          bleCopyUuid(srvBeingDiscovered->
+                      characteristics[srvBeingDiscovered->charCount - 1].
+                      characteristic.charValUuid.value.uuid128.uuid128,
+                      tempCharUuid128, BLE_UUID128_LEN);
+        }
+      else
+        {
+          srvBeingDiscovered->
+            characteristics[srvBeingDiscovered->charCount - 1].
+            characteristic.charValUuid.type
+            = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+          srvBeingDiscovered->
+            characteristics[srvBeingDiscovered->charCount - 1].
+            characteristic.charValUuid.value.baseAlias.uuidAlias
+            = tempCharUuid;
+        }
+    }
+  else if (len == BLE_CHAR_UUID_VENDOR_PACKET_LEN)
+    {
+      srvBeingDiscovered->
+        characteristics[srvBeingDiscovered->charCount - 1].
+        characteristic.charValUuid.type
+        = BLE_UUID_TYPE_UUID128;
+      bleCopyUuid(srvBeingDiscovered->
+                  characteristics[srvBeingDiscovered->charCount - 1].
+                  characteristic.charValUuid.value.uuid128.uuid128,
+                  rp, BLE_UUID128_LEN);
+      rp += BLE_UUID128_LEN;
+    }
+  else
+    {
+      /* nothing */
+    }
+  memcpy(&srvBeingDiscovered->
+         characteristics[srvBeingDiscovered->charCount - 1].characteristic.charPrope, rp, 1);
+  rp += 1;
+  STREAM_TO_UINT16(srvBeingDiscovered->
+                   characteristics[srvBeingDiscovered->charCount - 1].
+                   characteristic.charValhandle, rp);
+  btdbg("char discover,valueHandle = %x.\n",
+        srvBeingDiscovered->
+        characteristics[srvBeingDiscovered->charCount - 1].characteristic.charValhandle);
+
+  srvBeingDiscovered->
+    characteristics[srvBeingDiscovered->charCount - 1].cccdHandle = BLE_GATT_HANDLE_INVALID;
+}
+
+void bleRecvGattDescriptorDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  bleGattcDb *gattcDbDiscovery = &commMem.gattcDb;
+  uint8_t *rp = NULL;
+  uint16_t descriptorHandle = 0,uuid16 = 0;
+  BLE_GattcDbDiscSrv *srvBeingDiscovered = NULL;
+
+  rp = pBleBcmEvt->evtData + 2;
+  if (len == BLE_DESP_UUID_BTSIG_PACKET_LEN)
+    {
+      STREAM_TO_UINT16(uuid16, rp);
+    }
+  else if (len == BLE_DESP_UUID_VENDOR_PACKET_LEN)
+    {
+      rp += BLE_UUID128_LEN;
+    }
+  STREAM_TO_UINT16(descriptorHandle, rp);
+
+  srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  BLE_GattcDbDiscChar * charBeingDiscovered =
+    &(srvBeingDiscovered->characteristics[gattcDbDiscovery->currCharInd]);
+
+  if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
+      || (gattcDbDiscovery->currCharInd >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
+    {
+      gattcDbDiscovery->discoveryInProgress = false;
+      return;
+    }
+  if (uuid16 == BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG)
+    {
+      charBeingDiscovered->cccdHandle = descriptorHandle;
+    }
+  btdbg("descriptor discover,handle = %x.\n", descriptorHandle);
+}
+
+static void bleCharDiscoverd(bleGattcDb *gattcDbDiscovery)
+{
+  uint16_t connHandle = gattcDbDiscovery->dbDiscovery.connHandle;
+  int ret;
+  BLE_GattcHandleRange handleRange = {0};
+
+  btdbg("char discover,handle = %x.\n", connHandle);
+
+  if (gattcDbDiscovery->currSrvInd < gattcDbDiscovery->dbDiscovery.srvCount)
+    {
+      handleRange.startHandle = gattcDbDiscovery->
+        dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.startHandle;
+      handleRange.endHandle = gattcDbDiscovery->
+        dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle;
+      ret = bleCharDiscover(connHandle, handleRange.startHandle, handleRange.endHandle);
+      if (ret != BLE_SUCCESS)
+        {
+          gattcDbDiscovery->discoveryInProgress = false;
+          return;
+        }
+      gattcDbDiscovery->discoverState = CHAR_DISCOVER;
+    }
+  else
+    {
+      gattcDbDiscovery->discoverState = COMPLETE_DISCOVER;
+    }
+}
+
+static int isDescDiscoveryReqd(bleGattcDb *gattcDbDiscovery,
+                               BLE_GattcDbDiscChar  *currChar,
+                               BLE_GattcDbDiscChar  *nextChar,
+                               BLE_GattcHandleRange *handleRange)
+{
+  if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
+    {
+      return false;
+    }
+  btdbg("charValhandle=%d,srvInd = %d\n",
+        currChar->characteristic.charValhandle,gattcDbDiscovery->currSrvInd);
+  if (nextChar == NULL)
+    {
+      /* Current characteristic is the last characteristic in the service. Check if the value
+       * handle of the current characteristic is equal to the service end handle.
+       */
+      if (currChar->characteristic.charValhandle ==
+          gattcDbDiscovery->
+          dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle)
+        {
+          /* No descriptors can be present for the current characteristic. currChar is the last
+           * characteristic with no descriptors.
+	   */
+          return false;
+        }
+
+      handleRange->startHandle = currChar->characteristic.charValhandle + 1;
+
+      /* Since the current characteristic is the last characteristic in the service, the end
+       * handle should be the end handle of the service.
+       */
+      handleRange->endHandle = gattcDbDiscovery->
+        dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle;
+      return true;
+    }
+
+  /* nextChar != NULL. Check for existence of descriptors between the current and the next
+   * characteristic.
+   */
+  if ((currChar->characteristic.charValhandle + 1) == nextChar->characteristic.charDeclhandle)
+    {
+      /* No descriptors can exist between the two characteristic. */
+      return false;
+    }
+
+  handleRange->startHandle = currChar->characteristic.charValhandle + 1;
+  handleRange->endHandle   = nextChar->characteristic.charDeclhandle - 1;
+
+  return true;
+}
+
+static void onSrvDiscCompletion(bleGattcDb *gattcDbDiscovery)
+{
+  /* Reset the current characteristic index since a new service discovery is about to start. */
+  gattcDbDiscovery->currCharInd = 0;
+
+  /* Initiate discovery of the next service. */
+  gattcDbDiscovery->currSrvInd++;
+
+  if (gattcDbDiscovery->currSrvInd >= gattcDbDiscovery->dbDiscovery.srvCount)
+    {
+      gattcDbDiscovery->discoverState = COMPLETE_DISCOVER;
+    }
+}
+
+static int bleDiscriptorDiscoverd(bleGattcDb *const gattcDbDiscovery, int *raiseDiscovComplete)
+{
+  int                        ret = 0;
+  uint8_t                    i = 0;
+  uint16_t                   connHandle = 0;
+  BLE_GattcHandleRange       handleRange = {0};
+  BLE_GattcDbDiscChar        *currCharBeingDiscovered = NULL;
+  BLE_GattcDbDiscSrv         *srvBeingDiscovered = NULL;
+  BLE_GattcDbDiscChar        *nextChar = NULL;
+  int                       isDiscoveryReqd = 0;
+  connHandle = gattcDbDiscovery->dbDiscovery.connHandle;
+
+  btdbg("start descriptor discover\n");
+
+  if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
+      || (gattcDbDiscovery->currCharInd >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
+    {
+      return BLE_FAILED;
+    }
+
+  srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  currCharBeingDiscovered = &(srvBeingDiscovered->characteristics[gattcDbDiscovery->currCharInd]);
+
+  btdbg("start descriptor discover1,%d,charInd=%d,charCount=%d\n",
+        isDiscoveryReqd,gattcDbDiscovery->currCharInd,
+        srvBeingDiscovered->charCount);
+  if ((gattcDbDiscovery->currCharInd + 1) == srvBeingDiscovered->charCount)
+    {
+      /* This is the last characteristic of this service. */
+      isDiscoveryReqd = isDescDiscoveryReqd(gattcDbDiscovery,
+                                            currCharBeingDiscovered,
+                                            NULL, &handleRange);
+    }
+  else
+    {
+      for (i = gattcDbDiscovery->currCharInd; i < srvBeingDiscovered->charCount; i++)
+        {
+          if (i == (srvBeingDiscovered->charCount - 1))
+            {
+              /* The current characteristic is the last characteristic in the service. */
+              nextChar = NULL;
+            }
+          else
+            {
+              nextChar = &(srvBeingDiscovered->characteristics[i + 1]);
+            }
+
+          /* Check if it is possible for the current characteristic to have a descriptor. */
+          if (isDescDiscoveryReqd(gattcDbDiscovery,
+                                  currCharBeingDiscovered, nextChar, &handleRange))
+            {
+              isDiscoveryReqd = true;
+              gattcDbDiscovery->currCharInd = i;
+              btdbg("start descriptor discover2,%d\n",isDiscoveryReqd);
+              break;
+            }
+          else
+            {
+              /* No descriptors can exist. */
+              currCharBeingDiscovered = nextChar;
+            }
+        }
+    }
+
+  if (!isDiscoveryReqd)
+    {
+      /* No more descriptor discovery required. Discovery is complete. */
+      *raiseDiscovComplete = true;
+      btdbg("start descriptor discover1 over\n");
+      return ret;
+    }
+
+  *raiseDiscovComplete = false;
+  btdbg("start descriptor discover start,connecthandle= %x,start handle= %x,end handle=%x\n",
+        connHandle, handleRange.startHandle, handleRange.endHandle);
+  ret = bleDescriptorsDiscover(connHandle, handleRange.startHandle, handleRange.endHandle);
+  if (ret != BLE_SUCCESS)
+    {
+      gattcDbDiscovery->discoveryInProgress = false;
+      return BLE_FAILED;
+    }
+  return ret;
+}
+
+void bleRecvGattCompleteDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
+{
+  bleGattcDb *gattcDbDiscovery = &commMem.gattcDb;
+  BLE_GattcDbDiscSrv *srvBeingDiscovered = NULL;
+  BLE_EvtGattcDbDiscovery *db = &commMem.gattcDbDiscoveryData;
+  int raiseDiscovComplete = 0;
+
+  srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  btdbg("discover complete,state = %d.\n", gattcDbDiscovery->discoverState);
+  if (gattcDbDiscovery->discoverState == SERV_DISCOVER
+      && (gattcDbDiscovery->dbDiscovery.srvCount != 0))
+    {
+      gattcDbDiscovery->discoverState = CHAR_DISCOVER;
+      gattcDbDiscovery->currSrvInd = 0;
+      bleCharDiscoverd(gattcDbDiscovery);
+      btdbg("serv discover0,state = %d.\n", gattcDbDiscovery->discoverState);
+    }
+  else if ((gattcDbDiscovery->discoverState == SERV_DISCOVER)
+           && (gattcDbDiscovery->dbDiscovery.srvCount == 0))
+    {
+      pBleEvent->evtHeader = BLE_GATTC_EVENT_DBDISCOVERY;
+      db->result     = BLE_GATTC_RESULT_FAILED;
+      db->params.reason = BLE_GATTC_REASON_SERVICE;
+      pBleEvent->evtDataSize = sizeof(BLE_EvtGattcDbDiscovery);
+      memcpy(pBleEvent->evtData, db, pBleEvent->evtDataSize);
+      btdbg("serv discover1,state = %d.\n", gattcDbDiscovery->discoverState);
+    }
+  else if ((gattcDbDiscovery->discoverState == CHAR_DISCOVER)
+           && (gattcDbDiscovery->
+               dbDiscovery.services[gattcDbDiscovery->currSrvInd].charCount == 0) )
+    {
+      onSrvDiscCompletion(gattcDbDiscovery);
+      if (gattcDbDiscovery->discoverState == COMPLETE_DISCOVER)
+        {
+          goto discover_over;
+        }
+      bleCharDiscoverd(gattcDbDiscovery);
+      btdbg("char discover,state = %d.\n", gattcDbDiscovery->discoverState);
+    }
+  else if ((gattcDbDiscovery->discoverState == CHAR_DISCOVER)
+           && (gattcDbDiscovery->
+               dbDiscovery.services[gattcDbDiscovery->currSrvInd].charCount != 0) )
+    {
+      bleDiscriptorDiscoverd(gattcDbDiscovery, &raiseDiscovComplete);
+      gattcDbDiscovery->discoverState = DESCRIPTOR_DISCOVER;
+      btdbg("des discover0,state = %d.\n", gattcDbDiscovery->discoverState);
+    }
+  else if (gattcDbDiscovery->discoverState == DESCRIPTOR_DISCOVER
+           && (gattcDbDiscovery->currCharInd < srvBeingDiscovered->charCount - 1))
+    {
+      gattcDbDiscovery->currCharInd++;
+      btdbg("des discover ,state = %d.\n", gattcDbDiscovery->discoverState);
+      bleDiscriptorDiscoverd(gattcDbDiscovery, &raiseDiscovComplete);
+    }
+  else if (gattcDbDiscovery->discoverState == DESCRIPTOR_DISCOVER
+           && (gattcDbDiscovery->currCharInd >= srvBeingDiscovered->charCount - 1))
+    {
+      btdbg("start discover char0\n");
+      gattcDbDiscovery->discoverState = CHAR_DISCOVER;
+      onSrvDiscCompletion(gattcDbDiscovery);
+      if (gattcDbDiscovery->discoverState == COMPLETE_DISCOVER) {
+        goto discover_over;
+      }
+      bleCharDiscoverd(gattcDbDiscovery);
+    }
+
+  if (raiseDiscovComplete)
+    {
+      btdbg("start discover char\n");
+      gattcDbDiscovery->discoverState = CHAR_DISCOVER;
+      onSrvDiscCompletion(gattcDbDiscovery);
+      if (gattcDbDiscovery->discoverState == COMPLETE_DISCOVER) {
+        goto discover_over;
+      }
+      bleCharDiscoverd(gattcDbDiscovery);
+      raiseDiscovComplete = false;
+    }
+
+ discover_over:
+  if (gattcDbDiscovery->discoverState == COMPLETE_DISCOVER)
+    {
+      btdbg("discover over,serv count = %d\n", gattcDbDiscovery->dbDiscovery.srvCount);
+      pBleEvent->evtHeader = BLE_GATTC_EVENT_DBDISCOVERY;
+      if (gattcDbDiscovery->state.srvCount >
+          BLE_DB_DISCOVERY_MAX_SRV)
+        {
+          db->result = BLE_GATTC_RESULT_OVERRUN;
+          db->state.srvCount = gattcDbDiscovery->state.srvCount;
+          db->state.endHandle = gattcDbDiscovery->state.endHandle;
+        }
+      else
+        {
+          db->result = BLE_GATTC_RESULT_SUCCESS;
+        }
+      pBleEvent->evtDataSize = sizeof(BLE_EvtGattcDbDiscovery);
+      memcpy(&db->params.dbDiscovery,
+             &gattcDbDiscovery->dbDiscovery,
+             sizeof(BLE_GattcDbDiscovery));
+      db->connHandle = db->params.dbDiscovery.connHandle;
+      memcpy(pBleEvent->evtData, db, pBleEvent->evtDataSize);
+      memset(gattcDbDiscovery, 0, sizeof(bleGattcDb));
+    }
+}

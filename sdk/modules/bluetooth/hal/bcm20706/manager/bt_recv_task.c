@@ -65,6 +65,7 @@
 #define BT_RESULT_SIZE 2
 #define NVRAM_ID_LEN   2
 #define HASH_POS_IN_VERSION 8
+#define BLE_ADV_RSSI_LEN  1
 
 struct bt_hfp_event_t
 {
@@ -618,6 +619,56 @@ void bleRecvLeDisconnected(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
   ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
 }
 
+void bleRecvLeAdverReport(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  (void) pBleEvent;
+
+  struct ble_event_adv_rept_t adv_rept_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData + 1;
+
+  adv_rept_evt.group_id = BLE_GROUP_COMMON;
+  adv_rept_evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
+
+  /* not used
+   * STREAM_TO_UINT8(commMem.advReportData.addr.type, rp);
+   */
+  ++rp; /* skip addr type */
+  memcpy(&adv_rept_evt.addr, rp, BLE_GAP_ADDR_LENGTH);
+  rp += BLE_GAP_ADDR_LENGTH;
+  STREAM_TO_UINT8(adv_rept_evt.rssi, rp);
+
+  adv_rept_evt.length = len - BLE_GAP_ADDR_LENGTH - BLE_HANDLE_LEN - BLE_ADV_RSSI_LEN;
+  memcpy(adv_rept_evt.data, rp, BLE_GAP_ADV_MAX_SIZE);
+
+#ifndef REPORT_ALL_ADV_DATA /* report device name only */
+  uint32_t idx = 0;
+  uint8_t field_len = 0;
+  uint8_t field_type = 0;
+  uint8_t adv_data[BLE_GAP_ADV_MAX_SIZE] = {0};
+
+  memcpy(adv_data, adv_rept_evt.data, adv_rept_evt.length);
+
+  while (idx < adv_rept_evt.length)
+    {
+      field_len = adv_data[idx];
+      field_type = adv_data[idx + 1];
+
+      if (0x09 == field_type) { /* 0x09: Complete local name */
+        adv_rept_evt.length = field_len;
+        memset(adv_rept_evt.data, 0, sizeof(adv_rept_evt.data));
+        memcpy(adv_rept_evt.data, &adv_data[idx + 2], field_len - 1);
+        ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
+        return;
+      }
+      idx += field_len + 1;
+    }
+#else
+  ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
+#endif /* REPORT_ALL_ADV_DATA */
+
+
+}
+
 void bleRecvGattReadRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
 {
   /* Read request will operate by firmware side */
@@ -651,6 +702,52 @@ void bleRecvGattWriteRequest(BLE_Evt *pBleEvent,
   write_req_evt.event_id = BLE_GATT_EVENT_WRITE_REQ;
 
   ble_gatt_event_handler((struct bt_event_t *) &write_req_evt);
+}
+
+void bleRecvGattReadResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  (void) pBleEvent;
+
+  struct ble_gatt_event_read_rsp_t read_rsp_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData;
+
+  STREAM_TO_UINT16(read_rsp_evt.conn_handle, rp);
+  STREAM_TO_UINT16(read_rsp_evt.char_handle, rp);
+
+  read_rsp_evt.length   = len - BLE_HANDLE_LEN - BLE_HANDLE_LEN;
+  memcpy(read_rsp_evt.data, rp, read_rsp_evt.length);
+
+  /* This HAL doesn't support service handle ID while write request */
+  read_rsp_evt.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+
+  read_rsp_evt.group_id = BLE_GROUP_GATT;
+  read_rsp_evt.event_id = BLE_GATT_EVENT_READ_RESP;
+
+  ble_gatt_event_handler((struct bt_event_t *) &read_rsp_evt);
+
+  btdbg("read reponse\n");
+}
+
+void bleRecvGattWriteResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
+{
+  (void) pBleEvent;
+
+  struct ble_gatt_event_write_rsp_t write_rsp_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData;
+
+  STREAM_TO_UINT16(write_rsp_evt.conn_handle, rp);
+  STREAM_TO_UINT16(write_rsp_evt.char_handle, rp);
+  STREAM_TO_UINT8(write_rsp_evt.status, rp);
+
+  /* This HAL doesn't support service handle ID while write request */
+  write_rsp_evt.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+
+  write_rsp_evt.group_id = BLE_GROUP_GATT;
+  write_rsp_evt.event_id = BLE_GATT_EVENT_WRITE_RESP;
+
+  ble_gatt_event_handler((struct bt_event_t *) &write_rsp_evt);
+
+  btdbg("write response,status.\n");
 }
 
 /* Event spliter */
@@ -824,6 +921,8 @@ void bleRecvLeControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
         btdbg("ble disconnect\n");
         break;
       case BT_CONTROL_LE_EVENT_ADVERTISEMENT_REPORT:
+        bleRecvLeAdverReport(bleEvent, pBleBcmEvt, len);
+        break;
       case BT_CONTROL_LE_EVENT_ADVERTISEMENT_STATE:
       case BT_CONTROL_LE_EVENT_SCAN_STATUS:
       case BT_CONTROL_LE_EVENT_CONN_PARAMS:
@@ -850,13 +949,75 @@ void bleRecvGattControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
         bleRecvGattWriteRequest(bleEvent, pBleBcmEvt, len);
         break;
 
-      case BT_CONTROL_GATT_EVENT_COMMAND_STATUS:
-      case BT_CONTROL_GATT_EVENT_DISCOVERY_COMPLETE:
-      case BT_CONTROL_GATT_EVENT_SERVICE_DISCOVERED:
-      case BT_CONTROL_GATT_EVENT_CHARACTERISTIC_DISCOVERED:
-      case BT_CONTROL_GATT_EVENT_DESCRIPTOR_DISCOVERED:
       case BT_CONTROL_GATT_EVENT_READ_RESPONSE:
+        bleRecvGattReadResponse(bleEvent, pBleBcmEvt, len);
+        break;
+
       case BT_CONTROL_GATT_EVENT_WRITE_RESPONSE:
+        bleRecvGattWriteResponse(bleEvent, pBleBcmEvt);
+        break;
+      case BT_CONTROL_GATT_EVENT_COMMAND_STATUS:
+        break;
+      case BT_CONTROL_GATT_EVENT_DISCOVERY_COMPLETE:
+        {
+          bleRecvGattCompleteDiscovered(bleEvent, pBleBcmEvt);
+          uint32_t i = 0, j = 0;
+          struct ble_gatt_event_db_discovery_t db_disc_evt = {0};
+          BLE_EvtGattcDbDiscovery *db = (BLE_EvtGattcDbDiscovery *)(bleEvent->evtData);
+
+          db_disc_evt.group_id = BLE_GROUP_GATT;
+          db_disc_evt.event_id = BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE;
+
+          db_disc_evt.result                          = db->result;
+          db_disc_evt.conn_handle                     = db->connHandle;
+          db_disc_evt.state.srv_count                 = db->state.srvCount;
+          db_disc_evt.state.end_handle                = db->state.endHandle;
+          db_disc_evt.params.db_discovery.srv_count   = db->params.dbDiscovery.srvCount;
+          db_disc_evt.params.db_discovery.conn_handle = db->params.dbDiscovery.connHandle;
+
+          for (i = 0; i < BLE_DB_DISCOVERY_MAX_SRV; ++i)
+            {
+              struct ble_gattc_db_disc_srv_s *srvs_dst = db_disc_evt.params.db_discovery.services;
+              BLE_GattcDbDiscSrv *srvs_src = db->params.dbDiscovery.services;
+
+              srvs_dst[i].char_count = srvs_src[i].charCount;
+              srvs_dst[i].srv_handle_range.start_handle = srvs_src[i].srvHandleRange.startHandle;
+              srvs_dst[i].srv_handle_range.end_handle = srvs_src[i].srvHandleRange.endHandle;
+
+              for (j = 0; j < BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV; ++j)
+                {
+                  struct ble_gattc_db_disc_char_s *chars_dst = srvs_dst[i].characteristics;
+                  BLE_GattcDbDiscChar *chars_src = srvs_src[i].characteristics;
+
+                  chars_dst[j].cccd_handle = chars_src[j].cccdHandle;
+                  chars_dst[j].characteristic.char_prope.broadcast = chars_src[j].characteristic.charPrope.broadcast;
+                  chars_dst[j].characteristic.char_prope.read = chars_src[j].characteristic.charPrope.read;
+                  chars_dst[j].characteristic.char_prope.writeWoResp = chars_src[j].characteristic.charPrope.writeWoResp;
+                  chars_dst[j].characteristic.char_prope.write = chars_src[j].characteristic.charPrope.write;
+                  chars_dst[j].characteristic.char_prope.notify = chars_src[j].characteristic.charPrope.notify;
+                  chars_dst[j].characteristic.char_prope.indicate = chars_src[j].characteristic.charPrope.indicate;
+                  chars_dst[j].characteristic.char_prope.authSignedWr = chars_src[j].characteristic.charPrope.authSignedWr;
+                  chars_dst[j].characteristic.char_valhandle = chars_src[j].characteristic.charValhandle;
+                  chars_dst[j].characteristic.char_declhandle = chars_src[j].characteristic.charDeclhandle;
+                  memcpy(&chars_dst[j].characteristic.char_valuuid,
+                         &chars_src[j].characteristic.charValUuid,
+                         sizeof(BLE_UUID));
+                }
+              /* BLE_Uuid and BLE_UUID must keeps the same */
+              memcpy(&srvs_dst[i].srv_uuid, &srvs_src[i].srvUuid, sizeof(BLE_UUID));
+            }
+          ble_gatt_event_handler((struct bt_event_t *) &db_disc_evt);
+        }
+        break;
+      case BT_CONTROL_GATT_EVENT_SERVICE_DISCOVERED:
+        bleRecvGattServiceDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
+      case BT_CONTROL_GATT_EVENT_CHARACTERISTIC_DISCOVERED:
+        bleRecvGattCharDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
+      case BT_CONTROL_GATT_EVENT_DESCRIPTOR_DISCOVERED:
+        bleRecvGattDescriptorDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
       case BT_CONTROL_GATT_EVENT_WRITE_COMPLETE:
       case BT_CONTROL_GATT_EVENT_INDICATION:
       case BT_CONTROL_GATT_EVENT_NOTIFICATION:

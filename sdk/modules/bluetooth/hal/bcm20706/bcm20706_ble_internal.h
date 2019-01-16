@@ -226,6 +226,12 @@ void bleRecvNvramData(ble_evt_t *pBleBcmEvt, uint16_t len);
 int bleSetAdvData(uint8_t *advData, uint8_t size);
 int bleGapReplySecurity(BT_ADDR bleAddr,  uint8_t pairEnable,
 		BLE_GapPairingFeature pairingFeature);
+int bleCharDiscover(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle);
+int bleDescriptorsDiscover(uint16_t connHandle, uint16_t startHandle, uint16_t endHandle);
+void bleRecvGattServiceDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len);
+void bleRecvGattCharDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len);
+void bleRecvGattDescriptorDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len);
+void bleRecvGattCompleteDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt);
 
 #endif  /* __MODULES_BLUETOOTH_HAL_BCM20706_BCM20706_BLE_INTERNAL_H */
 
