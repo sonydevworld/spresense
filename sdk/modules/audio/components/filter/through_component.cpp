@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/filter/dummy_component.h
+ * modules/audio/components/filter/through_component.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,88 +33,76 @@
  *
  ****************************************************************************/
 
-#ifndef DUMMY_COMPONENT_H
-#define DUMMY_COMPONENT_H
-
-
-#include "wien2_common_defs.h"
+#include "components/filter/through_component.h"
 #include "debug/dbg_log.h"
-#include "filter_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
-using namespace MemMgrLite;
 
 /*--------------------------------------------------------------------*/
-/* Data structure definitions                                         */
+/* Methods of ThroughComponent class */
 /*--------------------------------------------------------------------*/
-
-/* Init DummyComponent Parameters */
-
-struct InitDummyParam : public InitFilterParam
+uint32_t ThroughComponent::activate_apu(const char *path, uint32_t *dsp_inf)
 {
-};
+  FILTER_DBG("ACT THROUGH:\n");
 
-/* Exec DummyComponent Parameters */
-
-struct ExecDummyParam : public ExecFilterParam
-{
-};
-
-/* Stop DummyComponent Parameters */
-
-struct StopDummyParam : public StopFilterParam
-{
-};
-
-/* DummyComponent Complete Reply Parameters */
-
-struct DummyCmpltParam : public FilterCompCmpltParam
-{
-};
+  return AS_ECODE_OK;
+}
 
 /*--------------------------------------------------------------------*/
-/* Class definitions                                                  */
-/*--------------------------------------------------------------------*/
-
-class DummyComponent : public FilterComponent
+bool ThroughComponent::deactivate_apu(void)
 {
-private:
+  FILTER_DBG("DEACT THROUGH:\n");
 
-  uint32_t init_apu(InitDummyParam *param, uint32_t *dsp_inf);
-  bool exec_apu(ExecDummyParam *param);
-  bool flush_apu(StopDummyParam *param);
+  return true;
+}
 
-  void send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf);
+/*--------------------------------------------------------------------*/
+uint32_t ThroughComponent::init_apu(InitThroughParam *param, uint32_t *dsp_inf)
+{
+  FILTER_DBG("INIT THROUGH:\n");
 
-public:
+  return AS_ECODE_OK;
+}
 
-  DummyComponent() {}
-  ~DummyComponent() {}
+/*--------------------------------------------------------------------*/
+bool ThroughComponent::exec_apu(ExecThroughParam *param)
+{
+  memcpy(param->out_buffer.p_buffer,
+         param->in_buffer.p_buffer,
+         param->in_buffer.size);
 
-  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
-  virtual bool deactivate_apu();
+  param->out_buffer.size = param->in_buffer.size;
 
-  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
-  {
-    return init_apu(static_cast<InitDummyParam *>(param), dsp_inf);
-  }
+  send_resp(ExecEvent, true, param->out_buffer);
 
-  virtual bool exec_apu(ExecFilterParam *param)
-  {
-    return exec_apu(static_cast<ExecDummyParam *>(param));
-  }
+  return true;
+}
 
-  virtual bool flush_apu(StopFilterParam *param)
-  {
-    return flush_apu(static_cast<StopDummyParam *>(param));
-  }
+/*--------------------------------------------------------------------*/
+bool ThroughComponent::flush_apu(StopThroughParam *param)
+{
+  FILTER_DBG("FLUSH THROUGH:\n");
 
-  virtual bool setparam_apu(SetFilterParam *param) { return true; }
-  virtual bool tuning_apu(TuningFilterParam *param) { return true; }
-  virtual bool recv_done(void) { return true; };
-};
+  param->out_buffer.size = 0;
+
+  send_resp(StopEvent, true, param->out_buffer);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+void ThroughComponent::send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf)
+{
+  ThroughCmpltParam cmplt;
+
+  cmplt.filter_type = Through;
+  cmplt.event_type  = evt;
+  cmplt.result      = result;
+  cmplt.out_buffer  = outbuf;
+
+  m_callback(&cmplt);
+}
+
 
 __WIEN2_END_NAMESPACE
-
-#endif /* DUMMY_COMPONENT_H */
 

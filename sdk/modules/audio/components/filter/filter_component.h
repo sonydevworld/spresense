@@ -64,7 +64,7 @@ enum FilterComponentType
   Packing,               /* Use BitWidth Converter
                           * (DSP will not be loaded)
                           */
-  Dummy,                 /* Dummy */
+  Through,               /* Through */
   FilterComponentTypeNum
 };
 

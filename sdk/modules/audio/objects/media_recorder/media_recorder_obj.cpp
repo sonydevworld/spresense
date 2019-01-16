@@ -231,7 +231,7 @@ uint32_t MediaRecorderObjectTask::loadCodec(AudioCodec codec,
     }
   else if (codec == AudCodecLPCM)
     {
-      FilterComponentType type = Dummy;
+      FilterComponentType type = Through;
 
       if (isNeedUpsampling(sampling_rate))
         {

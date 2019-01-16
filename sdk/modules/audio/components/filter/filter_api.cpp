@@ -131,8 +131,8 @@ uint32_t AS_filter_activate(FilterComponentType type,
         (*pp_ins)->setCallBack(callback);
         return (*pp_ins)->activate_apu(path, dsp_inf);
 #endif
-      case Dummy:
-        *pp_ins = new DummyComponent();
+      case Through:
+        *pp_ins = new ThroughComponent();
         if (*pp_ins == NULL)
           {
             FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
