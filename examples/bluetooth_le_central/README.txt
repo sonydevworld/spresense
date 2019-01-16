@@ -11,8 +11,7 @@ examples/bluetooth_le_central
     CONFIG_EXAMPLES_BLUETOOTH_LE_CENTRAL - Enable this example
 
   Build(In <spresense>/sdk):
-    $ ./tools/config.py --kernel release
-    $ ./tools/config.py board/spresense feature/bluetooth device/bcm20706 examples/ble_central
+    $ ./tools/config.py examples/ble_central
     $ make buildkernel
     $ make
 
