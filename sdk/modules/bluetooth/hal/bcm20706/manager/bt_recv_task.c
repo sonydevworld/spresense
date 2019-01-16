@@ -587,6 +587,77 @@ static void btRecvHfpEvtAgIndicator(uint8_t *p)
  bt_hfp_event_handler(&app_evt);
 }
 
+static void btRecvA2dpSnkEvtConnected(uint8_t *p)
+{
+  struct bt_a2dp_event_connect_t connect_evt = {0};
+
+  /* Copy device address */
+  memcpy(&connect_evt.addr, p, BT_ADDR_LEN);
+  p += BT_ADDR_LEN;
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_A2DP;
+  connect_evt.event_id = BT_A2DP_EVENT_CONNECT;
+
+  bt_a2dp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerConnected(uint8_t *p)
+{
+  struct bt_avrcp_event_connect_t connect_evt = {0};
+
+  /* Copy device address */
+  memcpy(&connect_evt.addr, p, BT_ADDR_LEN);
+  p += BT_ADDR_LEN + 1;
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_AVRCP;
+  connect_evt.event_id = BT_AVRCC_EVENT_CONNECT;
+  bt_avrcp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerDisconnected(uint8_t *p)
+{
+  struct bt_avrcp_event_connect_t connect_evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_AVRCP;
+  connect_evt.event_id = BT_AVRCC_EVENT_DISCONNECT;
+  bt_avrcp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerPlayPosition(uint8_t *p, uint8_t evtCode)
+{
+  struct bt_avrcp_event_play_position_t evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(evt.handle, p);
+
+  evt.group_id = BT_GROUP_AVRCP;
+  evt.event_id = BT_AVRCP_EVENT_PLAY_POS_CHANGE;
+  memcpy(&evt.position, p, sizeof(evt.position));
+  bt_avrcp_event_handler((struct bt_event_t *) &evt);
+}
+
+static void btRecvA2dpSnkEvtDisconnect(uint8_t *p)
+{
+  struct bt_a2dp_event_connect_t connect_evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_A2DP;
+  connect_evt.event_id = BT_A2DP_EVENT_DISCONNECT;
+
+  bt_a2dp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
 void bleRecvLeConnected(BLE_Evt *bleEvent, ble_evt_t *pBleBcmEvt)
 {
   struct ble_event_conn_stat_t conn_stat_evt;
@@ -905,6 +976,91 @@ static void btRecvSppControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
     }
 }
 
+static void btRecvA2dpSnkControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+  uint8_t *wp = NULL;
+
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, ((BT_CONTROL_GROUP_A2DP_SINK) | evtCode));
+
+  switch(evtCode)
+    {
+      case BT_CONTROL_SINK_EVENT_COMMAND_STATUS:
+          btRecvDeviceStatus(p, len, BT_CONTROL_GROUP_DEVICE);
+          break;
+      case BT_CONTROL_SINK_EVENT_CONNECTED:
+          btRecvA2dpSnkEvtConnected(p);
+          break;
+      case BT_CONTROL_SINK_EVENT_CONNECTION_FAILED:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_DISCONNECTED:
+          btRecvA2dpSnkEvtDisconnect(p);
+          break;
+      case BT_CONTROL_SINK_EVENT_RECEIVE_DATA:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_STARTED:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_STOPPED:
+          /* Not supported yet */
+          break;
+      default:
+          break;
+    }
+}
+
+static void btRecvA2dpAvrcControllerControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+  uint8_t *wp = NULL;
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, (BT_CONTROL_GROUP_AVRC_CONTROLLER << 8) | evtCode);
+
+  switch (evtCode)
+    {
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_CMD_STATUS:
+        btRecvDeviceStatus(p, len, BT_CONTROL_GROUP_DEVICE);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_CONNECTED:
+        btRecvA2dpAvrcControllerConnected(p);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_DISCONNECTED:
+        btRecvA2dpAvrcControllerDisconnected(p);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_TRACK_INFO:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_PLAY_STATUS:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_PLAY_POSITION:
+        btRecvA2dpAvrcControllerPlayPosition(p, evtCode);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_SETTING_CHANGE:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_VOLUME_LEVEL:
+        /* Not supported yet */
+        break;
+
+      case BT_EVT_AVRC_CONTROLLER_VOLUME_UP:
+      case BT_EVT_AVRC_CONTROLLER_VOLUME_DOWN:
+        /* Not supported yet */
+        break;
+
+      default:
+        break;
+    }
+}
+
 void bleRecvLeControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
 {
   BLE_Evt *bleEvent = &(((BLE_EvtCtx*)appEvtBuff)->evt);
@@ -1060,11 +1216,11 @@ static void btRecvControlPacket(uint16_t opcode, uint8_t *p, uint16_t len)
         break;
 
       case BT_CONTROL_GROUP_AVRC_CONTROLLER:
-        /* Not supported yet */
+        btRecvA2dpAvrcControllerControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_A2DP_SINK:
-        /* Not supported yet */
+        btRecvA2dpSnkControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_AUDIO_SINK:

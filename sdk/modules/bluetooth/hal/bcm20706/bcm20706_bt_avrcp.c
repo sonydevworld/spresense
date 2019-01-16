@@ -92,6 +92,19 @@ static int btAvrcTargetDisconnect(void)
   return btUartSendData(buff, p - buff);
 }
 
+static int btAvrcSendCommand(uint16_t handle, uint16_t cmd)
+{
+  uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
+  uint8_t *p = buff;
+  UINT8_TO_STREAM(p, PACKET_CONTROL);
+  UINT16_TO_STREAM(p, cmd);
+  UINT16_TO_STREAM(p, 2);
+  UINT16_TO_STREAM(p, handle);
+  btUartSendData(buff, p - buff);
+  return 0;
+}
+
+
 /****************************************************************************
  * Name: bcm20706_bt_inquiry_cancel
  *
@@ -161,19 +174,56 @@ static int bcm20706_bt_avrcp_target_connect(BT_ADDR *addr, uint16_t handle, bool
 
 static int bcm20706_bt_avrcp_send_avrcp_command(BT_ADDR *addr, BT_AVRCP_CMD_ID cmd_id, bool press, uint16_t handle)
 {
+  uint16_t cmd = 0x0FFFF;
   int ret = BT_SUCCESS;
 
-  /* Not supported yet */
+  switch (cmd_id)
+    {
+      case BT_AVRCP_CMD_VOL_UP:
+        cmd = BT_CONTROL_AVRC_CONTROLLER_COMMAND_VOLUME_UP;
+        break;
 
+      case BT_AVRCP_CMD_VOL_DOWN:
+        cmd = BT_CONTROL_AVRC_CONTROLLER_COMMAND_VOLUME_DOWN;
+        break;
+
+      case BT_AVRCP_CMD_PLAY:
+        cmd = BT_CONTROL_AVRC_CONTROLLER_COMMAND_PLAY;
+        break;
+
+      case BT_AVRCP_CMD_STOP:
+        cmd = BT_CONTROL_AVRC_CONTROLLER_COMMAND_STOP;
+        break;
+
+      case BT_AVRCP_CMD_PAUSE:
+        cmd = BT_CONTROL_AVRC_CONTROLLER_COMMAND_PAUSE;
+        break;
+
+      default:
+        printf("%s [BT][AVRCP] Command ID (%d) not supported wit HAL.\n", __func__, cmd_id);
+        ret = BT_FAIL;
+        goto bye;
+    }
+
+  if ((cmd ^ 0x0FFFF) == 0)
+    {
+      printf("%s [BT][AVRCP] Command (%d) invalid.\n", __func__, cmd);
+      ret = BT_FAIL;
+      goto bye;
+    }
+
+  ret = btAvrcSendCommand(handle, cmd);
+
+bye:
   return ret;
 }
 
 /****************************************************************************
- * Name: bcm20706_bt_inquiry_cancel
+ * Name: bcm20706_bt_avrcp_configure_notification
  *
  * Description:
- *   Bluetooth cancel inquiry.
- *   Cancel inquiry to stop search.
+ *   Bluetooth avrcp configure notification.
+ *   Register for the avrcp configure notifiction.
  *
  ****************************************************************************/
 
