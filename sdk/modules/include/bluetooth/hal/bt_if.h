@@ -143,19 +143,43 @@ struct ble_hal_common_ops_s
   int (*setPPCP)(BLE_CONN_PARAMS ppcp);            /**< Set PPCP connection parameter */
   int (*advertise)(bool enable);                   /**< Advertisement start/stop */
   int (*scan)(bool enable);                        /**< Scan start/stop */
+  int (*connect)(const BT_ADDR *addr);             /**< Create a connection */
+  int (*disconnect)(const uint16_t conn_handle);   /**< Destroy a connection */
+};
+
+/**
+ * @struct ble_hal_gatts_ops_s
+ * @brief Bluetooth LE GATTS HAL callbacks
+ */
+struct ble_hal_gatts_ops_s
+{
+  int (*addService)(struct ble_gatt_service_s *ble_gatt_service);              /**< Add service to HAL */
+  int (*addChar)(uint16_t serv_handle, struct ble_gatt_char_s *ble_gatt_char); /**< Add characteristic to service */
+  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);        /**< Write characteristic response(Peripheral) */
+  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);         /**< Read characteristic response(Peripheral) */
+  int (*notify)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);       /**< Notify characteristic request(Central)/response(Peripheral) */
+};
+
+/**
+ * @struct ble_hal_gattc_ops_s
+ * @brief Bluetooth LE GATTC HAL callbacks
+ */
+struct ble_hal_gattc_ops_s
+{
+  int (*startDbDiscovery)(uint16_t conn_handle);                           /**< GATT client start attribute database discovery */
+  int (*continueDbDiscovery)(uint16_t start_handle, uint16_t conn_handle); /**< GATT client start attribute database discovery */
+  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);    /**< Write characteristic request(Central)/response(Peripheral) */
+  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);     /**< Read characteristic request(Central)/response(Peripheral) */
 };
 
 /**
  * @struct ble_hal_gatt_ops_s
- * @brief Bluetooth LE GATT HAL callbacks
+ * @brief Bluetooth LE GATT HAL
  */
 struct ble_hal_gatt_ops_s
 {
-  int (*addService)(struct ble_gatt_service_s *ble_gatt_service);              /**< Add service to HAL */
-  int (*addChar)(uint16_t serv_handle, struct ble_gatt_char_s *ble_gatt_char); /**< Add characteristic to service */
-  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);        /**< Write characteristic request(Central)/response(Peripheral) */
-  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);         /**< Read characteristic request(Central)/response(Peripheral) */
-  int (*notify)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);       /**< Notify characteristic request(Central)/response(Peripheral) */
+  struct ble_hal_gatts_ops_s gatts; /**< GATT server HAL */
+  struct ble_hal_gattc_ops_s gattc; /**< GATT client HAL */
 };
 
 /****************************************************************************
@@ -308,5 +332,16 @@ int ble_gatt_register_hal(struct ble_hal_gatt_ops_s *ble_hal_gatt_ops);
  */
 
 int ble_gatt_event_handler(struct bt_event_t *bt_event);
+
+/**
+ * @brief Temporary I/F helps app hook central callbacks to framework stored state
+ *        Should be removed after consider overall design about how to manage app state
+ *
+ * @param[in] central_ops: gatt central role callback operation functions
+ *
+ * @retval error code
+ */
+
+int ble_register_gatt_central_cb(struct ble_gatt_central_ops_s *central_ops);
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_HAL_BT_IF_H */
