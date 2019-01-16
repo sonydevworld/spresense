@@ -422,11 +422,6 @@ bool AS_get_render_comp_handler(RenderComponentHandler *p_handle,
       param.act_render_param.sel_info.src2in_sel  = false;
     }
 
-  if (device_type == RenderDeviceI2S)
-    {
-      param.act_render_param.sel_info.src1in_sel  = true;
-    }
-
   if (!s_pFactory->parse(*p_handle, MSG_AUD_BB_CMD_ACT, param))
     {
       return false;

@@ -52,14 +52,17 @@
 #define AE_BASE                     (0x5E00)
 #define AWB_BASE                    (0x6200)
 #define AF_BASE                     (0x6600)
+#define ADJ_BASE                    (0x6800)
 #define MODE_BASE                   (0x6A00)
-#define YGAMMA_BASE                 (0x6C00)
+#define PICT_BASE                   (0x6C00)
 #define GAMMA_BASE                  (0x7000)
 #define JPEG_BASE                   (0x7800)
 #define AUTOCOM_BASE                (0x7C00)
 #define VFRMPARA_BASE               (0x8800)
 #define SOUT_BASE                   (0x8A00)
 #define PICT_GAIN0_BASE             (0x9200)
+#define CXC_DATA_BASE               (0xEB00)
+#define SHD_DATA_BASE               (0xED00)
 
 /* USERCTRL OFFSET */
 
@@ -690,6 +693,19 @@
 #define AF_OPDDATA_SAVE             (AF_BASE+0x001B)
 #define CAP_AF_CANCEL_F             (AF_BASE+0x0075)
 
+/* ADJ OFFSET */
+
+#define NORMR                       (ADJ_BASE+0x0004)
+#define NORMB                       (ADJ_BASE+0x0006)
+#define AWBPRER                     (ADJ_BASE+0x0008)
+#define AWBPREB                     (ADJ_BASE+0x000A)
+#define SHD_NORMR_OFFSET_R2         (ADJ_BASE+0X0026)
+#define SHD_PRER_OFFSET_R2          (ADJ_BASE+0X0028)
+#define SHD_NORMR_OFFSET_RB         (ADJ_BASE+0X002A)
+#define SHD_PRER_OFFSET_RB          (ADJ_BASE+0X002C)
+#define SHD_NORMB_OFFSET_RB         (ADJ_BASE+0X002E)
+#define SHD_PREB_OFFSET_RB          (ADJ_BASE+0X0030)
+
 /* MODE OFFSET */
 
 #define RO_MASK_NUM                 (MODE_BASE+0x0001)
@@ -748,9 +764,17 @@
 #define VIF_REC601_Y                (MODE_BASE+0x008C)
 #define VIF_REC601_C                (MODE_BASE+0x008E)
 
-/* YGAMMA OFFSET */
+/* PICT OFFSET */
 
-#define YGAMMA_MODE                 (YGAMMA_BASE+0x0093)
+#define SHD_INP_TH_HB_H_R2          (PICT_BASE+0x0032)
+#define SHD_INP_TH_HB_L_R2          (PICT_BASE+0x0034)
+#define SHD_INP_TH_LB_H_R2          (PICT_BASE+0x0036)
+#define SHD_INP_TH_LB_L_R2          (PICT_BASE+0x0038)
+#define SHD_INP_TH_HB_H_RB          (PICT_BASE+0x003C)
+#define SHD_INP_TH_HB_L_RB          (PICT_BASE+0x003E)
+#define SHD_INP_TH_LB_H_RB          (PICT_BASE+0x0040)
+#define SHD_INP_TH_LB_L_RB          (PICT_BASE+0x0042)
+#define YGAMMA_MODE                 (PICT_BASE+0x0093)
 
 /* GAMMA OFFSET */
 
@@ -1249,6 +1273,21 @@
 #define INTERLOCK_TYPE5             (PICT_GAIN0_BASE+0x0005)
 #define INTERLOCK_TYPE6             (PICT_GAIN0_BASE+0x0006)
 #define INTERLOCK_TYPE7             (PICT_GAIN0_BASE+0x0007)
+
+/* CXC_DATA OFFSET */
+
+#define CXC_VALID                   (CXC_DATA_BASE+0x0000)
+#define CXC_RGB_UNIT(x, y)          (CXC_DATA_BASE+0x0002 + (((x) * 7) + (y)))
+#define CXC_GRB_UNIT(x, y)          (CXC_DATA_BASE+0x00BF + (((x) * 7) + (y)))
+
+/* SHD_DATA OFFSET */
+
+#define SHD_VALID                   (SHD_DATA_BASE+0x0000)
+#define SHD_RGB_UNIT(x,y)           (SHD_DATA_BASE+0x0002 + (((x) * 11) + (y)))
+#define SHD_GRB_UNIT(x, y)          (SHD_DATA_BASE+0x012B + (((x) * 11) + (y)))
+#define SHD_R1_UNIT(x, y)           (SHD_DATA_BASE+0x0254 + (((x) * 11) + (y)))
+#define SHD_R2_UNIT(x, y)           (SHD_DATA_BASE+0x02EE + (((x) * 11) + (y)))
+#define SHD_B2_UNIT(x, y)           (SHD_DATA_BASE+0x0388 + (((x) * 11) + (y)))
 
 /* Status bit */
 

@@ -80,6 +80,14 @@ enum CaptureDevice
   CaptureDeviceTypeNum
 };
 
+enum CaptureError
+{
+  CaptureErrorDMAunder = 0,
+  CaptureErrorIntErr,
+  CaptureErrorBusErr,
+  CaptureErrorTypeNum
+};
+
 struct CaptureDataParam
 {
   CaptureDevice output_device;
@@ -88,6 +96,13 @@ struct CaptureDataParam
 };
 
 typedef void (* CaptureDoneCB)(CaptureDataParam p_param);
+
+struct CaptureErrorParam
+{
+  CaptureError error_type;
+};
+
+typedef void (* CaptureErrorCB)(CaptureErrorParam p_param);
 
 /* API paramters */
 
@@ -101,6 +116,7 @@ struct InitCaptureComponentParam
   uint8_t          capture_ch_num;
   AudioPcmBitWidth capture_bit_width;
   CaptureDoneCB    callback;
+  CaptureErrorCB   err_callback;
 };
 
 struct ActCaptureComponentParam
@@ -176,6 +192,7 @@ public:
   cxd56_audio_dma_t m_dmac_id;
 
   CaptureDoneCB m_callback;
+  CaptureErrorCB m_err_callback;
 
   CaptureDevice m_output_device;
 
@@ -222,6 +239,7 @@ private:
   bool execOnRdy(const CaptureComponentParam& param);
   bool execOnPreAct(const CaptureComponentParam& param);
   bool execOnAct(const CaptureComponentParam& param);
+  bool stopOnReady(const CaptureComponentParam& param);
   bool stopOnPreAct(const CaptureComponentParam& param);
   bool stopOnAct(const CaptureComponentParam& param);
   bool notify(const CaptureComponentParam& param);

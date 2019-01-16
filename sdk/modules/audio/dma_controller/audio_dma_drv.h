@@ -41,6 +41,7 @@
 #include "memutils/s_stl/queue.h"
 #include "memutils/s_stl/s_stl_config.h"
 #include "dma_controller/level_ctrl.h"
+#include "audio_state.h"
 #include <debug.h>
 
 __USING_S_STL;
@@ -109,7 +110,7 @@ public:
 
   AsDmaDrv(cxd56_audio_dma_t dmac_id)
       : m_dmac_id(dmac_id)
-      , m_state(AS_DMA_STATE_BOOTED)
+      , m_state(AS_MODULE_ID_AUDIO_DRIVER, "", AS_DMA_STATE_BOOTED)
       , m_error_func(dma_err_callback)
       , m_dma_buf_cnt(0)
       , m_min_size(0)
@@ -141,7 +142,7 @@ private:
 
   cxd56_audio_dma_t m_dmac_id;
 
-  asDmaState  m_state;
+  AudioState<asDmaState>  m_state;
 
   AS_ErrorCb   m_error_func;
   AS_DmaDoneCb m_dmadone_func;
@@ -185,6 +186,7 @@ private:
   void dmaCmplt(void);
   bool dmaCmpltOnRun(void*);
   bool dmaCmpltOnFlush(void*);
+  bool dmaCmpltOnError(void*);
   bool dmaErrInt(void*);
   bool dmaErrIntOnRun(void*);
   bool dmaErrBus(void*);
@@ -198,6 +200,8 @@ private:
   void fadeControl(void);
   void volumeCtrl(bool validity, bool is_last_frame);
   bool pushRequest(void*, bool);
+  bool ignore(void*);
+
 
   static void dma_err_callback(AudioDrvDmaError *pParam)
   {

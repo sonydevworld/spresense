@@ -77,6 +77,8 @@ private:
   void run();
   int getHandle(MsgPacket* msg);
   void parse(MsgPacket* msg);
+  void enableOutputDevice();
+  void disableOutputDevice();
 };
 
 /****************************************************************************

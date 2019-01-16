@@ -44,6 +44,7 @@
 
 #define DBG_MODULE DBG_MODULE_AS
 
+#define BB_POWER_BASE   0
 #define BB_POWER_INPUT  1
 #define BB_POWER_OUTPUT 2
 
@@ -67,7 +68,7 @@ static obs_AudioAttentionCb s_obs_attention_cb  = NULL;
 
 static AudioManager *s_mng = NULL;
 
-#ifdef AS_FEATURE_PLAYER_ENABLE
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 /*
  * Callback functions from OutputMixer
  */
@@ -128,7 +129,9 @@ static void outputmixer_error_callback(uint8_t handle)
                                          player);
   F_ASSERT(er == ERR_OK);
 }
+#endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 
+#ifdef AS_FEATURE_PLAYER_ENABLE
 /*
  * Callback functions from MediaPlayer 
  */
@@ -1249,15 +1252,6 @@ void AudioManager::powerOff(AudioCommand &cmd)
       return;
     }
 
-  uint8_t rst = powerOffBaseBand(BB_POWER_INPUT | BB_POWER_OUTPUT);
-  if (rst != AS_ECODE_OK)
-    {
-      sendErrRespResult(cmd.header.sub_code,
-                        AS_MODULE_ID_AUDIO_DRIVER,
-                        rst);
-      return;
-    }
-
       m_State    = AS_MNG_STATUS_POWEROFF;
       m_SubState = AS_MNG_SUB_STATUS_NONE;
       sendResult(AUDRLT_STATUSCHANGED);
@@ -1505,7 +1499,7 @@ void AudioManager::player(AudioCommand &cmd)
 /*--------------------------------------------------------------------------*/
 void AudioManager::outputmixer(AudioCommand &cmd)
 {
-#ifdef AS_FEATURE_PLAYER_ENABLE
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 
   MSG_TYPE msg_type;
   bool check = false;
@@ -1540,8 +1534,11 @@ void AudioManager::outputmixer(AudioCommand &cmd)
                                               m_selfDtq,
                                               omix_cmd);
   F_ASSERT(er == ERR_OK);
-
-#endif /* AS_FEATURE_PLAYER_ENABLE */
+#else
+  sendErrRespResult(cmd.header.sub_code,
+                    AS_MODULE_ID_AUDIO_MANAGER,
+                    AS_ECODE_COMMAND_NOT_SUPPOT);
+#endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1609,6 +1606,10 @@ void AudioManager::setThroughStatus(AudioCommand &cmd)
     {
       return;
     }
+
+  /* Enable speaker output. */
+
+  cxd56_audio_set_spout(true);
 
   uint32_t rst = powerOnBaseBand(BB_POWER_INPUT | BB_POWER_OUTPUT);
   if (rst != AS_ECODE_OK)
@@ -1774,6 +1775,14 @@ void AudioManager::setRdyOnThrough(AudioCommand &cmd)
       return;
     }
 
+  /* Disable speaker output. */
+
+  cxd56_audio_set_spout(false);
+
+  /* Disable I2S pin. */
+
+  cxd56_audio_dis_i2s_io();
+
   uint32_t rst = powerOffBaseBand(BB_POWER_INPUT | BB_POWER_OUTPUT);
   if (rst != AS_ECODE_OK)
     {
@@ -1807,6 +1816,10 @@ void AudioManager::setBaseBandStatus(AudioCommand &cmd)
   /* Enable I2S pin. */
 
   cxd56_audio_en_i2s_io();
+
+  /* Enable speaker output. */
+
+  cxd56_audio_set_spout(true);
 
   rst = powerOnBaseBand(BB_POWER_INPUT | BB_POWER_OUTPUT);
   if (rst != AS_ECODE_OK)
@@ -1950,7 +1963,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
 
   uint32_t rst = AS_ECODE_OK;
 
-  rst = powerOnBaseBand(BB_POWER_OUTPUT);
+  rst = powerOnBaseBand(BB_POWER_BASE);
   if (rst != AS_ECODE_OK)
     {
       sendErrRespResult(cmd.header.sub_code,
@@ -1981,7 +1994,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
       OutputMixerCommand omix_cmd;
 
       omix_cmd.handle                  = OutputMixer0;
-      omix_cmd.act_param.output_device = HPOutputDevice;
+      omix_cmd.act_param.output_device = m_output_device;
       omix_cmd.act_param.mixer_type    = MainOnly;
       omix_cmd.act_param.pf_enable     = PostFilterDisable;
       omix_cmd.act_param.cb            = outputmixer0_done_callback;
@@ -2018,7 +2031,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
       OutputMixerCommand omix_cmd;
 
       omix_cmd.handle                  = OutputMixer1;
-      omix_cmd.act_param.output_device = HPOutputDevice;
+      omix_cmd.act_param.output_device = m_output_device;
       omix_cmd.act_param.mixer_type    = MainOnly;
       omix_cmd.act_param.pf_enable     = PostFilterDisable;
       omix_cmd.act_param.cb            = outputmixer1_done_callback;
@@ -2632,7 +2645,7 @@ bool AudioManager::deactivatePlayer()
 {
   uint32_t rst = AS_ECODE_OK;
 
-  rst = powerOffBaseBand(BB_POWER_OUTPUT);
+  rst = powerOffBaseBand(BB_POWER_BASE);
   if (rst != AS_ECODE_OK)
     {
       return false;
@@ -2647,6 +2660,10 @@ bool AudioManager::deactivatePlayer()
 bool AudioManager::deactivateRecorder()
 {
   uint32_t rst = AS_ECODE_OK;
+
+  /* Disable I2S pin. */
+
+  cxd56_audio_dis_i2s_io();
 
   rst = powerOffBaseBand(BB_POWER_INPUT);
   if (rst != AS_ECODE_OK)
@@ -2665,7 +2682,15 @@ bool AudioManager::deactivateSoundFx()
 {
   uint32_t rst = AS_ECODE_OK;
 
-  rst = powerOffBaseBand(BB_POWER_OUTPUT);
+  /* Disable speaker output. */
+
+  cxd56_audio_set_spout(false);
+
+  /* Disable I2S pin. */
+
+  cxd56_audio_dis_i2s_io();
+
+  rst = powerOffBaseBand(BB_POWER_INPUT | BB_POWER_OUTPUT);
   if (rst != AS_ECODE_OK)
     {
       return false;
@@ -2809,7 +2834,7 @@ void AudioManager::initDEQParam(AudioCommand &cmd)
 /*--------------------------------------------------------------------------*/
 void AudioManager::setOutputSelect(AudioCommand &cmd)
 {
-  CXD56_AUDIO_ECODE error_code;
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   bool check =
     packetCheck(LENGTH_INITOUTPUTSELECT, AUDCMD_INITOUTPUTSELECT, cmd);
   if (!check)
@@ -2820,58 +2845,31 @@ void AudioManager::setOutputSelect(AudioCommand &cmd)
   switch (cmd.init_output_select_param.output_device_sel)
     {
       case AS_OUT_OFF:
-        cxd56_audio_dis_i2s_io();
-        error_code = cxd56_audio_dis_output();
+        m_output_device = A2dpSrcOutputDevice;
+
         break;
 
       case AS_OUT_SP:
-        cxd56_audio_dis_i2s_io();
-        cxd56_audio_set_spout(true);
-        error_code = cxd56_audio_en_output();
+        m_output_device = HPOutputDevice;
+
         break;
-
+      
       case AS_OUT_I2S:
-        {
-          cxd56_audio_en_i2s_io();
-          cxd56_audio_set_spout(false);
-          error_code = cxd56_audio_en_output();
-          if (error_code != CXD56_AUDIO_ECODE_OK)
-            {
-              break;
-            }
+        m_output_device = I2SOutputDevice;
 
-          /* Set Path, Mixer to I2S0 */
-
-          cxd56_audio_signal_t sig_id = CXD56_AUDIO_SIG_MIX;
-          cxd56_audio_sel_t    sel_info;
-          sel_info.au_dat_sel1 = false;
-          sel_info.au_dat_sel2 = false;
-          sel_info.cod_insel2  = false;
-          sel_info.cod_insel3  = false;
-          sel_info.src1in_sel  = true;
-          sel_info.src2in_sel  = false;
-
-          error_code = cxd56_audio_set_datapath(sig_id, sel_info);
-        }
         break;
 
       default:
-        sendErrRespResult(cmd.header.sub_code,
-                          AS_MODULE_ID_AUDIO_DRIVER,
-                          AS_ECODE_COMMAND_PARAM_OUTPUT_DEVICE);
+        {
+          sendErrRespResult(cmd.header.sub_code,
+                            AS_MODULE_ID_AUDIO_DRIVER,
+                            AS_ECODE_SET_OUTPUT_SELECT_ERROR);
+        }
         return;;
     }
+#endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 
-  if (error_code == CXD56_AUDIO_ECODE_OK)
-    {
-      sendResult(AUDRLT_INITOUTPUTSELECTCMPLT, cmd.header.sub_code);
-    }
-  else
-    {
-      sendErrRespResult(cmd.header.sub_code,
-                        AS_MODULE_ID_AUDIO_DRIVER,
-                        AS_ECODE_SET_OUTPUT_SELECT_ERROR);
-    }
+  sendResult(AUDRLT_INITOUTPUTSELECTCMPLT, cmd.header.sub_code);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -3091,14 +3089,6 @@ void AudioManager::setBeep(AudioCommand &cmd)
     packetCheck(LENGTH_SETBEEPPARAM, AUDCMD_SETBEEPPARAM, cmd);
   if (!check)
     {
-      return;
-    }
-
-  if (!m_output_en)
-    {
-      sendErrRespResult(cmd.header.sub_code,
-                        AS_MODULE_ID_AUDIO_DRIVER,
-                        AS_ECODE_NOT_AUDIO_DATA_PATH);
       return;
     }
 
@@ -3376,14 +3366,6 @@ uint32_t AudioManager::powerOffBaseBand(uint8_t power_id)
         }
       m_input_en = false;
 
-      if (!m_input_en && !m_output_en)
-        {
-          error_code = cxd56_audio_poweroff();
-          if (error_code != CXD56_AUDIO_ECODE_OK)
-            {
-              return AS_ECODE_AUDIO_POWER_OFF_ERROR;
-            }
-        }
     }
 
   if ((power_id & BB_POWER_OUTPUT) && m_output_en)
@@ -3394,14 +3376,14 @@ uint32_t AudioManager::powerOffBaseBand(uint8_t power_id)
           return AS_ECODE_AUDIO_POWER_OFF_ERROR;
         }
       m_output_en = false;
+    }
 
-      if (!m_input_en && !m_output_en)
+  if (!m_input_en && !m_output_en)
+    {
+      error_code = cxd56_audio_poweroff();
+      if (error_code != CXD56_AUDIO_ECODE_OK)
         {
-          error_code = cxd56_audio_poweroff();
-          if (error_code != CXD56_AUDIO_ECODE_OK)
-            {
-              return AS_ECODE_AUDIO_POWER_OFF_ERROR;
-            }
+          return AS_ECODE_AUDIO_POWER_OFF_ERROR;
         }
     }
 

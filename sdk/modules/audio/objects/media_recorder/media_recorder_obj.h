@@ -59,6 +59,7 @@ __WIEN2_BEGIN_NAMESPACE
 
 #define CAPTURE_DELAY_STAGE_NUM   3
 #define CAPTURE_PCM_BUF_QUE_SIZE  7
+#define OUTPUT_DATA_QUE_SIZE      5
 #define FALT_HANDLE_ID            0xFF
 
 /****************************************************************************
@@ -94,7 +95,7 @@ private:
     RecorderStateReady,
     RecorderStateRecording,
     RecorderStateStopping,
-    RecorderStateOverflow,
+    RecorderStateErrorStopping,
     RecorderStateWaitStop,
     RecorderStateNum
   };
@@ -124,7 +125,7 @@ private:
   static MsgProc MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum];
   static MsgProc RstProcTbl[AUD_VRC_RST_MSG_NUM][RecorderStateNum];
 
-  typedef s_std::Queue<MemMgrLite::MemHandle, APU_COMMAND_QUEUE_SIZE>
+  typedef s_std::Queue<MemMgrLite::MemHandle, OUTPUT_DATA_QUE_SIZE>
     OutputBufMhQueue;
   OutputBufMhQueue m_output_buf_mh_que;
 
@@ -149,22 +150,27 @@ private:
   void init(MsgPacket *);
   void startOnReady(MsgPacket *);
   void stopOnRec(MsgPacket *);
-  void stopOnOverflow(MsgPacket *);
+  void stopOnErrorStop(MsgPacket *);
   void stopOnWait(MsgPacket *);
 
   void illegalFilterDone(MsgPacket *);
   void filterDoneOnRec(MsgPacket *);
   void filterDoneOnStop(MsgPacket *);
-  void filterDoneOnOverflow(MsgPacket *);
+  void filterDoneOnErrorStop(MsgPacket *);
 
   void illegalEncDone(MsgPacket *);
   void encDoneOnRec(MsgPacket *);
   void encDoneOnStop(MsgPacket *);
-  void encDoneOnOverflow(MsgPacket *);
+  void encDoneOnErrorStop(MsgPacket *);
 
   void illegalCaptureDone(MsgPacket *);
   void captureDoneOnRec(MsgPacket *);
   void captureDoneOnStop(MsgPacket *);
+
+  void captureErrorOnRec(MsgPacket *);
+  void captureErrorOnStop(MsgPacket *);
+  void captureErrorOnErrorStop(MsgPacket *);
+  void captureErrorOnWaitStop(MsgPacket *);
 
   bool startCapture();
   void execEnc(MemMgrLite::MemHandle mh, uint32_t pcm_size);
