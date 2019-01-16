@@ -318,6 +318,18 @@ struct bt_avrcp_event_connect_t
 };
 
 /**
+ * @struct bt_avrcp_event_play_position_t
+ * @brief Bluetooth AVRCP play position event data type
+ */
+struct bt_avrcp_event_play_position_t
+{
+  uint8_t group_id; /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t event_id; /**< Event sub ID @ref BT_AVRCP_EVENT_ID */
+  uint16_t handle;  /**< Handle ID for AVRCP connection */
+  uint32_t position;/**< Play Position */
+};
+
+/**
  * @struct bt_hfp_event_connect_t
  * @brief Bluetooth HFP connection event data type
  */
