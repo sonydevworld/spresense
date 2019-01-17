@@ -16,6 +16,7 @@
  */
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
+#include <sdk/config.h>
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jerror.h"
@@ -26,15 +27,20 @@
 typedef struct {
   struct jpeg_source_mgr pub;	/* public fields */
 
-  FILE * infile;		/* source stream */
+  int infile;		        /* source file descriptor */
   JOCTET * buffer;		/* start of buffer */
   boolean start_of_file;	/* have we gotten any data yet? */
 } my_source_mgr;
 
 typedef my_source_mgr * my_src_ptr;
 
-#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
+static my_source_mgr jpeg_src;
 
+#ifndef CONFIG_JPEGDEC_INPUT_BUF_SIZE
+#  define CONFIG_JPEGDEC_INPUT_BUF_SIZE  4096 /* choose an efficiently fread'able size */
+#endif
+
+static JOCTET jpeg_buffer[CONFIG_JPEGDEC_INPUT_BUF_SIZE];
 
 /*
  * Initialize source --- called by jpeg_read_header
@@ -99,7 +105,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes;
 
-  nbytes = JFREAD(src->infile, src->buffer, INPUT_BUF_SIZE);
+  nbytes = JFREAD(src->infile, src->buffer, CONFIG_JPEGDEC_INPUT_BUF_SIZE);
 
   if (nbytes <= 0) {
     if (src->start_of_file)	/* Treat empty input file as fatal error */
@@ -207,7 +213,7 @@ term_source (j_decompress_ptr cinfo)
  */
 
 GLOBAL(void)
-jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
+jpeg_stdio_src (j_decompress_ptr cinfo, int infile)
 {
   my_src_ptr src;
 
@@ -219,13 +225,9 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
    * manager serially with the same JPEG object.  Caveat programmer.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  SIZEOF(my_source_mgr));
+    cinfo->src = (struct jpeg_source_mgr *)&jpeg_src;
     src = (my_src_ptr) cinfo->src;
-    src->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  INPUT_BUF_SIZE * SIZEOF(JOCTET));
+    src->buffer = jpeg_buffer;
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -259,9 +261,7 @@ jpeg_mem_src (j_decompress_ptr cinfo,
    * the first one.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  SIZEOF(struct jpeg_source_mgr));
+    cinfo->src = (struct jpeg_source_mgr *)&jpeg_src;
   }
 
   src = cinfo->src;

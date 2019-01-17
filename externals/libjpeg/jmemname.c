@@ -67,7 +67,7 @@ extern void free JPP((void *ptr));
  */
 
 #ifndef TEMP_DIRECTORY		/* can override from jconfig.h or Makefile */
-#define TEMP_DIRECTORY  "/usr/tmp/" /* recommended setting for Unix */
+#define TEMP_DIRECTORY  "/mnt/spif/" /* recommended setting for Unix */
 #endif
 
 static int next_file_num;	/* to distinguish among several temp files */
@@ -207,7 +207,7 @@ read_backing_store (j_common_ptr cinfo, backing_store_ptr info,
 {
   if (fseek(info->temp_file, file_offset, SEEK_SET))
     ERREXIT(cinfo, JERR_TFILE_SEEK);
-  if (JFREAD(info->temp_file, buffer_address, byte_count)
+  if (fread(buffer_address, 1, byte_count, info->temp_file)
       != (size_t) byte_count)
     ERREXIT(cinfo, JERR_TFILE_READ);
 }
