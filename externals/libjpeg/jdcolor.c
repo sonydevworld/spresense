@@ -437,21 +437,37 @@ null_convert (j_decompress_ptr cinfo,
 	      JSAMPIMAGE input_buf, JDIMENSION input_row,
 	      JSAMPARRAY output_buf, int num_rows)
 {
-  int ci;
-  register int nc = cinfo->num_components;
   register JSAMPROW outptr;
   register JSAMPROW inptr;
   register JDIMENSION col;
   JDIMENSION num_cols = cinfo->output_width;
 
   while (--num_rows >= 0) {
-    for (ci = 0; ci < nc; ci++) {
-      inptr = input_buf[ci][input_row];
-      outptr = output_buf[0] + ci;
-      for (col = 0; col < num_cols; col++) {
-	*outptr = *inptr++;	/* needn't bother with GETJSAMPLE() here */
-	outptr += nc;
-      }
+    /* Copy Y */
+
+    inptr = input_buf[0][input_row];
+    outptr = output_buf[0] + 1;
+    for (col = 0; col < num_cols; col++) {
+      *outptr = *inptr++;
+      outptr += 2;
+    }
+
+    /* Copy Cb */
+
+    inptr = input_buf[1][input_row];
+    outptr = output_buf[0];
+    for (col = 0; col < num_cols; col+=2) {
+      *outptr = *inptr++;
+      outptr += 4;
+    }
+
+    /* Copy Cr */
+
+    inptr = input_buf[2][input_row];
+    outptr = output_buf[0] + 2;
+    for (col = 0; col < num_cols; col+=2) {
+      *outptr = *inptr++;
+      outptr += 4;
     }
     input_row++;
     output_buf++;

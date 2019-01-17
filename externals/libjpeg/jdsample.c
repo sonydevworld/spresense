@@ -226,67 +226,6 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 
 
 /*
- * Fast processing for the common case of 2:1 horizontal and 1:1 vertical.
- * It's still a box filter.
- */
-
-METHODDEF(void)
-h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
-	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
-{
-  JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register JSAMPLE invalue;
-  JSAMPROW outend;
-  int outrow;
-
-  for (outrow = 0; outrow < cinfo->max_v_samp_factor; outrow++) {
-    inptr = input_data[outrow];
-    outptr = output_data[outrow];
-    outend = outptr + cinfo->output_width;
-    while (outptr < outend) {
-      invalue = *inptr++;	/* don't need GETJSAMPLE() here */
-      *outptr++ = invalue;
-      *outptr++ = invalue;
-    }
-  }
-}
-
-
-/*
- * Fast processing for the common case of 2:1 horizontal and 2:1 vertical.
- * It's still a box filter.
- */
-
-METHODDEF(void)
-h2v2_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
-	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
-{
-  JSAMPARRAY output_data = *output_data_ptr;
-  register JSAMPROW inptr, outptr;
-  register JSAMPLE invalue;
-  JSAMPROW outend;
-  int inrow, outrow;
-
-  inrow = outrow = 0;
-  while (outrow < cinfo->max_v_samp_factor) {
-    inptr = input_data[inrow];
-    outptr = output_data[outrow];
-    outend = outptr + cinfo->output_width;
-    while (outptr < outend) {
-      invalue = *inptr++;	/* don't need GETJSAMPLE() here */
-      *outptr++ = invalue;
-      *outptr++ = invalue;
-    }
-    jcopy_sample_rows(output_data, outrow, output_data, outrow+1,
-		      1, cinfo->output_width);
-    inrow++;
-    outrow += 2;
-  }
-}
-
-
-/*
  * Module initialization routine for upsampling.
  */
 
@@ -336,11 +275,11 @@ jinit_upsampler (j_decompress_ptr cinfo)
     }
     if (h_in_group * 2 == h_out_group && v_in_group == v_out_group) {
       /* Special case for 2h1v upsampling */
-      upsample->methods[ci] = h2v1_upsample;
+      upsample->methods[ci] = fullsize_upsample;
     } else if (h_in_group * 2 == h_out_group &&
 	       v_in_group * 2 == v_out_group) {
       /* Special case for 2h2v upsampling */
-      upsample->methods[ci] = h2v2_upsample;
+      upsample->methods[ci] = fullsize_upsample;
     } else if ((h_out_group % h_in_group) == 0 &&
 	       (v_out_group % v_in_group) == 0) {
       /* Generic integral-factors upsampling method */
