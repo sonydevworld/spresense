@@ -6,7 +6,6 @@
 config EXAMPLES_BLUETOOTH_LE_CENTRAL
 	bool "Bluetooth low energy GATT central example"
 	default n
-	select BLUETOOTH
 	---help---
 		Enable the bluetooth LE central example
 

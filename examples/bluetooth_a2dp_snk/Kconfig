@@ -6,7 +6,6 @@
 config EXAMPLES_BLUETOOTH_A2DP_SNK
 	bool "Bluetooth A2DP Sink example"
 	default n
-	select BLUETOOTH
 	---help---
 		Enable the bluetooth A2DP Sink example
 

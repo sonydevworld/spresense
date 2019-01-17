@@ -4,8 +4,7 @@ bt_hfp_hf
 How to build
 -----------------------------
 $ cd spresense/sdk
-$ ./tools/config.py --kernel release
-$ ./tools/config.py board/spresense feature/bluetooth device/bcm20706 examples/bt_hfp_hf
+$ ./tools/config.py examples/bt_hfp_hf
 $ make buildkernel
 $ make
 $ ./tools/flash.sh nuttx.spk

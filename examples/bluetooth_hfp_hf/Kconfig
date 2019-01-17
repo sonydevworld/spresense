@@ -6,7 +6,6 @@
 config EXAMPLES_BLUETOOTH_HFP_HF
 	bool "Bluetooth Hands Free Profile example"
 	default n
-	select BLUETOOTH
 	---help---
 		Enable the bluetooth HFP_HF example
 

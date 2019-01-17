@@ -11,8 +11,7 @@ examples/bluetooth_spp
     CONFIG_EXAMPLES_BLUETOOTH_SPP - Enable this example
 
   Build(In <spresense>/sdk):
-    $ ./tools/config.py --kernel release
-    $ ./tools/config.py board/spresense feature/bluetooth device/bcm20706 examples/bt_spp
+    $ ./tools/config.py examples/bt_spp
     $ make buildkernel
     $ make
 
