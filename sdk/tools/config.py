@@ -57,6 +57,19 @@ def get_defconfigs(directory):
     return list(map(lambda x: os.path.basename(str(x)),
                     glob.glob(os.path.join(directory, '*-defconfig'))))
 
+def get_defconfigs_by_dir(configs, configdir, subdir):
+    # Get defconfigs from each reserved subdirectories and add
+    # their subdirectory name to the prefix.
+
+    defconfigs = get_defconfigs(os.path.join(configdir, subdir))
+    subconfigs = list(map(lambda x: os.path.join(subdir, str(x)), defconfigs))
+
+    # Sort them before join
+    subconfigs.sort()
+
+    # Add subconfigs to configs
+    configs += subconfigs
+
 def install(src, dest, mode=0o644):
     logging.debug(src)
     logging.debug(dest)
@@ -224,29 +237,10 @@ if __name__ == "__main__":
 
         configs = get_defconfigs(configdir)
 
-        # Get defconfigs from each reserved subdirectories and add
-        # their subdirectory name to the prefix.
-
-        l = get_defconfigs(os.path.join(configdir, BOARDDIR))
-        bconfigs = list(map(lambda x: os.path.join(BOARDDIR, str(x)), l))
-        l = get_defconfigs(os.path.join(configdir, FEATUREDIR))
-        fconfigs = list(map(lambda x: os.path.join(FEATUREDIR, str(x)), l))
-        l = get_defconfigs(os.path.join(configdir, DEVDIR))
-        dconfigs = list(map(lambda x: os.path.join(DEVDIR, str(x)), l))
-        l = get_defconfigs(os.path.join(configdir, EXAMPLESDIR))
-        econfigs = list(map(lambda x: os.path.join(EXAMPLESDIR, str(x)), l))
-
-        # Sort them before join
-
-        bconfigs.sort()
-        fconfigs.sort()
-        dconfigs.sort()
-        econfigs.sort()
-
-        configs += bconfigs
-        configs += fconfigs
-        configs += dconfigs
-        configs += econfigs
+        get_defconfigs_by_dir(configs, configdir, BOARDDIR)
+        get_defconfigs_by_dir(configs, configdir, FEATUREDIR)
+        get_defconfigs_by_dir(configs, configdir, DEVDIR)
+        get_defconfigs_by_dir(configs, configdir, EXAMPLESDIR)
 
     if opts.list:
         print('Available configurations:')
