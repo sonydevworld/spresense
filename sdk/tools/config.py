@@ -48,27 +48,76 @@ MODE_MENUCONFIG = "menuconfig"
 MODE_QCONFIG = "qconfig"
 MODE_GCONFIG = "gconfig"
 
-BOARDDIR = "board"
-FEATUREDIR = "feature"
-DEVDIR = "device"
-EXAMPLESDIR = "examples"
+CAT_ROOT     = "configroot"
+CAT_KERNEL   = "kernel"
+CAT_BOARD    = "board"
+CAT_FEATURE  = "feature"
+CAT_DEVICE   = "device"
+CAT_EXAMPLES = "examples"
 
-def get_defconfigs(directory):
-    return list(map(lambda x: os.path.basename(str(x)),
-                    glob.glob(os.path.join(directory, '*-defconfig'))))
+DEF_CATEGORY = [CAT_ROOT, CAT_BOARD, CAT_FEATURE, CAT_DEVICE, CAT_EXAMPLES]
 
-def get_defconfigs_by_dir(configs, configdir, subdir):
-    # Get defconfigs from each reserved subdirectories and add
-    # their subdirectory name to the prefix.
+#
+# Configuration database
+#
+# Structure: {<category>:{<name>:<defconfig>, ...}, ...}
+# e.g. {'default':{'default':'path/to/default-defconfig'},
+#       'board':{'spresense':'path/to/spresense-defconfig'},
+#       'feature':{'zmodem':'path/to/spresense-defconfig'},
+#       ...}
+configs = dict()
 
-    defconfigs = get_defconfigs(os.path.join(configdir, subdir))
-    subconfigs = list(map(lambda x: os.path.join(subdir, str(x)), defconfigs))
+# Store defconfig information into database
+def store_defconfig_db(category, name, defconfig):
+    global configs
 
-    # Sort them before join
-    subconfigs.sort()
+    if category not in configs:
+        configs[category] = dict()
 
-    # Add subconfigs to configs
-    configs += subconfigs
+    configs[category][name] = defconfig
+
+# Search all defconfig files from directory
+def get_defconfigs(directory, category=CAT_ROOT, prefix=''):
+    global configs
+
+    # Search defconfig files
+
+    # Search root defconfig files
+    defconfigs = glob.glob(os.path.join(directory, '*-defconfig'))
+    for defconfig in defconfigs:
+        name = os.path.basename(defconfig).replace('-defconfig', '')
+        name = os.path.join(prefix, name)
+        if category != CAT_ROOT:
+            name = os.path.join(category, name)
+        store_defconfig_db(category, name, defconfig)
+
+    # Search subdir defconfig files
+    defconfigs = glob.glob(os.path.join(directory, '*', '*-defconfig'))
+    for defconfig in defconfigs:
+        category = os.path.basename(os.path.dirname(defconfig))
+        name = os.path.basename(defconfig).replace('-defconfig', '')
+        name = os.path.join(prefix, name)
+        if category != CAT_KERNEL:
+            name = os.path.join(category, name)
+        store_defconfig_db(category, name, defconfig)
+
+def get_defconfig_src(defconfig, kernel):
+    if kernel:
+        key = CAT_KERNEL
+    else:
+        path = defconfig.split('/')
+
+        if len(path) == 1:
+            # root configuration
+            key = CAT_ROOT
+        else:
+            # Subset configuration
+            key = path[0]
+
+    if key not in configs or defconfig not in configs[key]:
+        return None
+
+    return configs[key][defconfig]
 
 def install(src, dest, mode=0o644):
     logging.debug(src)
@@ -94,12 +143,12 @@ def append(srcfile, destfile):
                     logging.debug('write option: %s', line)
                     dest.write(line)
 
-def apply_defconfig(configname, configlist, topdir, sdkdir, kernel):
+def apply_defconfig(defconfigs, topdir, sdkdir, kernel):
     # Convert config names to "*-defconfig" and check it already exists
 
-    defconfigs = list(map(lambda x: x + "-defconfig", configname))
     for c in defconfigs:
-        if c not in configlist:
+        src = get_defconfig_src(c, kernel)
+        if src == None:
             print('Error: config "%s" not found' % c, file=sys.stderr)
             sys.exit(3)
 
@@ -112,7 +161,7 @@ def apply_defconfig(configname, configlist, topdir, sdkdir, kernel):
         install(srcmakedefs, destmakedefs)
 
     if kernel:
-        src = os.path.join(kconfigdir, defconfigs[0])
+        src = get_defconfig_src(defconfigs[0], kernel)
         dest = os.path.join(topdir, '.config')
         install(src, dest)
         postproc = 'make olddefconfigkernel'
@@ -125,7 +174,7 @@ def apply_defconfig(configname, configlist, topdir, sdkdir, kernel):
         f.close()
 
         for c in defconfigs:
-            src = os.path.join(configdir, c)
+            src = get_defconfig_src(c, kernel)
             append(src, dest)
         postproc = 'make olddefconfig'
 
@@ -208,7 +257,6 @@ if __name__ == "__main__":
     sdkdir = os.getcwd()
     topdir = os.path.abspath(os.path.join(sdkdir, '..', 'nuttx'))
     configdir = os.path.join(sdkdir, 'configs')
-    kconfigdir = os.path.join(sdkdir, 'configs', 'kernel')
 
     # If -d options has been specified, then replace base config directory to
     # specified ones.
@@ -216,7 +264,6 @@ if __name__ == "__main__":
     if opts.dir:
         d = opts.dir[0]
         configdir = d
-        kconfigdir = os.path.join(d, 'kernel')
 
         # Set 'default-defconfig' to configname list when it is not specified.
         # Only for base directory change option.
@@ -224,29 +271,31 @@ if __name__ == "__main__":
         if len(opts.configname) == 0:
             opts.configname = ['default']
 
+    # pick-up defconfig files from SDK
+
+    get_defconfigs(configdir)
+
     if opts.kernel:
-        if not os.path.isdir(kconfigdir):
-            print('Kernel config directory not found.', file=sys.stderr)
+        if CAT_KERNEL not in configs:
+            print('Kernel configuration not found.', file=sys.stderr)
             sys.exit(3)
 
-        configs = get_defconfigs(kconfigdir)
     else:
-        if not os.path.isdir(configdir):
-            print('Config directory not found.', file=sys.stderr)
+        if len(configs.keys()) == 0:
+            print('Configuration not found.', file=sys.stderr)
             sys.exit(2)
-
-        configs = get_defconfigs(configdir)
-
-        get_defconfigs_by_dir(configs, configdir, BOARDDIR)
-        get_defconfigs_by_dir(configs, configdir, FEATUREDIR)
-        get_defconfigs_by_dir(configs, configdir, DEVDIR)
-        get_defconfigs_by_dir(configs, configdir, EXAMPLESDIR)
 
     if opts.list:
         print('Available configurations:')
-
-        for c in configs:
-            print('\t%s' % c.replace('-defconfig', ''))
+        if opts.kernel:
+            if CAT_KERNEL in configs:
+                for defconfig in sorted(configs[CAT_KERNEL]):
+                    print('\t%s' % defconfig)
+        else:
+            for subdir in DEF_CATEGORY:
+                if subdir in configs:
+                    for defconfig in sorted(configs[subdir]):
+                        print('\t%s' % defconfig)
 
         sys.exit(0)
 
@@ -262,7 +311,7 @@ if __name__ == "__main__":
                 defconfigs.append(c)
 
     if len(defconfigs) > 0:
-        ret = apply_defconfig(defconfigs, configs, topdir, sdkdir, opts.kernel)
+        ret = apply_defconfig(defconfigs, topdir, sdkdir, opts.kernel)
         if ret != 0:
             sys.exit(ret)
 
