@@ -267,6 +267,15 @@ bool SRCComponent::exec_apu(ExecSRCParam *param)
       return false;
     }
 
+  /* Filter data area check */
+
+  if ((param->in_buffer.p_buffer == NULL)
+   || (param->out_buffer.p_buffer == NULL))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
   /* SRC processing */
 
   p_apu_cmd->header.core_id      = DSP_CORE_OF_SRC;
@@ -290,6 +299,14 @@ bool SRCComponent::flush_apu(StopSRCParam *param)
 
   if (p_apu_cmd == NULL)
     {
+      return false;
+    }
+
+  /* Filter data area check */
+
+  if (param->out_buffer.p_buffer == NULL)
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
     }
 
@@ -350,6 +367,7 @@ bool SRCComponent::recv_apu(DspDrvComPrm_t *p_param)
 
   cmplt.filter_type = SampleRateConv;
   cmplt.out_buffer = packet->exec_filter_cmd.output_buffer;
+  cmplt.result = (Apu::ApuExecOK == packet->result.exec_result) ? true : false;
 
   return m_callback(&cmplt);
 }

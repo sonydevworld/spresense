@@ -265,6 +265,15 @@ bool MPPComponent::exec_apu(ExecXLOUDParam *param)
       return false;
     }
 
+  /* Filter data area check */
+
+  if ((param->in_buffer.p_buffer == NULL)
+   || (param->out_buffer.p_buffer == NULL))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
   m_apu_cmd_buf[m_buf_idx].header.core_id      = DSP_CORE_ID_DUMMY;
   m_apu_cmd_buf[m_buf_idx].header.context_id   = DSP_MPPEAX_CONTEXT_MPPEAX;
   m_apu_cmd_buf[m_buf_idx].header.process_mode = Apu::FilterMode;
@@ -429,6 +438,7 @@ bool MPPComponent::recv_apu(DspDrvComPrm_t *p_param)
 
       cmplt.filter_type = MediaPlayerPost;
       cmplt.out_buffer  = packet->exec_filter_cmd.output_buffer;
+      cmplt.result      = (Apu::ApuExecOK == packet->result.exec_result) ? true : false;
 
       if(!m_callback(&cmplt))
         {

@@ -75,6 +75,17 @@ bool PackingComponent::exec_apu(ExecPackingParam *param)
   uint32_t outsize = 0;
   bool result = false;
 
+  /* Filter data area check */
+
+  if ((param->in_buffer.p_buffer == NULL)
+   || (param->out_buffer.p_buffer == NULL))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Execute packing */
+
   if ((m_in_bitwidth == BitWidth32bit) && (m_out_bitwidth == BitWidth24bit))
     {
       convfunc = &PackingComponent::cnv32to24;
@@ -112,6 +123,14 @@ bool PackingComponent::exec_apu(ExecPackingParam *param)
 bool PackingComponent::flush_apu(StopPackingParam *param)
 {
   FILTER_DBG("FLUSH BITCNV:\n");
+
+  /* Filter data area check */
+
+  if (param->out_buffer.p_buffer == NULL)
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
 
   param->out_buffer.size = 0;
 

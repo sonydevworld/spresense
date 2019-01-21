@@ -382,6 +382,17 @@ uint32_t EncoderComponent::init_apu(const InitEncParam& param, uint32_t *dsp_inf
 /*--------------------------------------------------------------------*/
 bool EncoderComponent::exec_apu(const ExecEncParam& param)
 {
+  /* Encode data area check */
+
+  if ((param.input_buffer.p_buffer == NULL)
+   || (param.output_buffer.p_buffer == NULL))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Execute encode */
+
   Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
   if (p_apu_cmd == NULL)
@@ -405,6 +416,16 @@ bool EncoderComponent::exec_apu(const ExecEncParam& param)
 /*--------------------------------------------------------------------*/
 bool EncoderComponent::flush_apu(const StopEncParam& param)
 {
+  /* Encode data area check */
+
+  if (param.output_buffer.p_buffer == NULL)
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Flush */
+
   Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
   if (p_apu_cmd == NULL)

@@ -78,6 +78,7 @@ struct StopEncParam
 struct EncCmpltParam
 {
   Apu::ApuEventType event_type;
+  bool              result;
 
   union
   {

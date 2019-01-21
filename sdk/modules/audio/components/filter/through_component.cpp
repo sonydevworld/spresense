@@ -67,6 +67,17 @@ uint32_t ThroughComponent::init_apu(InitThroughParam *param, uint32_t *dsp_inf)
 /*--------------------------------------------------------------------*/
 bool ThroughComponent::exec_apu(ExecThroughParam *param)
 {
+  /* Filter data area check */
+
+  if ((param->in_buffer.p_buffer == NULL)
+   || (param->out_buffer.p_buffer == NULL))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Through input to output */
+
   memcpy(param->out_buffer.p_buffer,
          param->in_buffer.p_buffer,
          param->in_buffer.size);
@@ -82,6 +93,14 @@ bool ThroughComponent::exec_apu(ExecThroughParam *param)
 bool ThroughComponent::flush_apu(StopThroughParam *param)
 {
   FILTER_DBG("FLUSH THROUGH:\n");
+
+  /* Filter data area check */
+
+  if (param->out_buffer.p_buffer == NULL)
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
 
   param->out_buffer.size = 0;
 
