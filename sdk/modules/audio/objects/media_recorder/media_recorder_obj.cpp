@@ -932,6 +932,18 @@ void MediaRecorderObjectTask::illegalFilterDone(MsgPacket *msg)
 {
   msg->moveParam<FilterCompCmpltParam>();
   MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_ILLEGAL_REQUEST);
+
+  /* Even if illegal reply, but need to do post handling same as usual.
+   * Because allocated areas and queue for encodeing should be free.
+   */
+
+  if (m_filter_instance)
+    {
+      AS_filter_recv_done(m_filter_instance);
+    }
+
+  freeCnvInBuf();
+  freeOutputBuf();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1091,6 +1103,15 @@ void MediaRecorderObjectTask::illegalEncDone(MsgPacket *msg)
 {
   msg->moveParam<EncCmpltParam>();
   MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_ILLEGAL_REQUEST);
+
+  /* Even if illegal reply, but need to do post handling same as usual.
+   * Because allocated areas and queue for encodeing should be free.
+   */
+
+  AS_encode_recv_done();
+
+  freeCnvInBuf();
+  freeOutputBuf();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1342,7 +1363,7 @@ void MediaRecorderObjectTask::captureDoneOnErrorStop(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::captureErrorOnRec(MsgPacket *msg)
 {
-  msg->moveParam<CaptureErrorParam>();
+  CaptureErrorParam param = msg->moveParam<CaptureErrorParam>();
 
   /* Stop capture input */
 
@@ -1352,25 +1373,81 @@ void MediaRecorderObjectTask::captureErrorOnRec(MsgPacket *msg)
 
   AS_stop_capture(&cap_comp_param);
 
-  /* Enter error stop sequence */
+  if (param.error_type == CaptureErrorErrInt)
+    {
+      /* Flush encoding.
+       * Because, the continuity of captured audio data will be lost when
+       * ERRINT was occured. Therefore, do not excute subsequent encodings.
+       * Instead of them, flush(stop) encoding right now.
+       */
 
-  m_state = RecorderStateErrorStopping;
+      bool stop_result = stopEnc();
+
+      if (!stop_result)
+        {
+          m_state = RecorderStateWaitStop;
+        }
+      else
+        {
+          m_state = RecorderStateErrorStopping;
+        }
+    }
+  else
+    {
+      /* Transit to ErrorStopping state. */
+
+      m_state = RecorderStateErrorStopping;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::captureErrorOnStop(MsgPacket *msg)
 {
-  msg->moveParam<CaptureErrorParam>();
+  CaptureErrorParam param = msg->moveParam<CaptureErrorParam>();
 
-  /* If already in stopping sequence, there are nothing to do */
+  if (param.error_type == CaptureErrorErrInt)
+    {
+      /* Occurrence of ERRINT means that the end flame has not arrived yet 
+       * and it will never arrive. Therefore, flush encode is not executed
+       * yet and there is no trigger to execute in future.
+       * Request flush encofing here. 
+       */
+
+      bool stop_result = stopEnc();
+
+      if (!stop_result)
+        {
+          if (checkExternalCmd())
+            {
+              AsRecorderEvent ext_cmd = getExternalCmd();
+              m_callback(ext_cmd, AS_ECODE_OK, 0);
+
+              m_state = RecorderStateReady;
+            }
+          else
+            {
+              m_state = RecorderStateWaitStop;
+            }
+        }
+      else
+        {
+          m_state = RecorderStateErrorStopping;
+        }
+    }
+  else
+    {
+      /* Transit to ErrorStopping state. */
+
+      m_state = RecorderStateErrorStopping;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::captureErrorOnErrorStop(MsgPacket *msg)
 {
-  msg->moveParam<CaptureErrorParam>();
+  /* Same as case of Stopping. */
 
-  /* If already in error stopping sequence, there are nothing to do */
+  captureErrorOnStop(msg);
 }
 
 /*--------------------------------------------------------------------------*/

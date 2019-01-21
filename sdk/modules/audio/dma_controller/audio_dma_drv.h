@@ -187,6 +187,7 @@ private:
   bool dmaCmpltOnRun(void*);
   bool dmaCmpltOnFlush(void*);
   bool dmaCmpltOnError(void*);
+  bool illegalDmaCmplt(void*);
   bool dmaErrInt(void*);
   bool dmaErrIntOnRun(void*);
   bool dmaErrBus(void*);

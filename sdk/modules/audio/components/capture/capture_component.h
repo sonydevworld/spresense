@@ -89,7 +89,7 @@ enum CaptureDevice
 enum CaptureError
 {
   CaptureErrorDMAunder = 0,
-  CaptureErrorIntErr,
+  CaptureErrorErrInt,
   CaptureErrorBusErr,
   CaptureErrorTypeNum
 };

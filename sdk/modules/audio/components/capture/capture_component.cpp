@@ -239,10 +239,14 @@ static void AS_CaptureNotifyDmaError(AudioDrvDmaError *p_param)
 
       case E_AS_BB_DMA_ILLEGAL:
       case E_AS_BB_DMA_ERR_BUS:
-      case E_AS_BB_DMA_ERR_INT:
       case E_AS_BB_DMA_ERR_START:
       case E_AS_BB_DMA_ERR_REQUEST:
           F_ASSERT(0);
+          break;
+
+      case E_AS_BB_DMA_ERR_INT:
+          errparam.error_type = CaptureErrorErrInt;
+          instance->m_err_callback(errparam);
           break;
 
       case E_AS_BB_DMA_UNDERFLOW:
