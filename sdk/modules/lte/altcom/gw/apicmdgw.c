@@ -895,6 +895,41 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
 }
 
 /****************************************************************************
+ * Name: apicmdgw_sendabort
+ *
+ * Description:
+ *   Abort api command send, And release sync command response waiting.
+ *
+ * Input Parameters:
+ *   None.
+ *
+ * Returned Value:
+ *   On success, the length of the sent command in bytes is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t apicmdgw_sendabort(void)
+{
+  int32_t                        ret = 0;
+  FAR struct apicmdgw_blockinf_s *tbl = NULL;
+
+  sys_lock_mutex(&g_blkinfotbl_mtx);
+
+  tbl = g_blkinfotbl;
+  while (tbl)
+    {
+      tbl->result = -ENETDOWN;
+      tbl = tbl->next;
+    }
+
+  sys_unlock_mutex(&g_blkinfotbl_mtx);
+  apicmdgw_relcondwaitall();
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: apicmdgw_cmd_allocbuff
  *
  * Description:
