@@ -58,40 +58,6 @@ typedef void (*altcom_stat_chg_cb_t)(int32_t new_stat, int32_t old_stat);
  ****************************************************************************/
 
 /****************************************************************************
- * Name: altcomstatus_init
- *
- * Description:
- *   Initialize altcom status.
- *
- * Input Parameters:
- *   None.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
- ****************************************************************************/
-
-int32_t altcomstatus_init(void);
-
-/****************************************************************************
- * Name: altcomstatus_fin
- *
- * Description:
- *   Finalize altcom status.
- *
- * Input Parameters:
- *   None.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
- ****************************************************************************/
-
-int32_t altcomstatus_fin(void);
-
-/****************************************************************************
  * Name: altcom_get_status
  *
  * Description:

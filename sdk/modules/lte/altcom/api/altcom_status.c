@@ -47,11 +47,10 @@
  * Private Data
  ****************************************************************************/
 
-static int g_altcom_status = ALTCOM_STATUS_UNINITIALIZED;
+static int32_t g_altcom_status = ALTCOM_STATUS_UNINITIALIZED;
 static FAR struct altcombs_cb_block *g_statchg_cb_table = NULL;
 static sys_mutex_t                  g_table_mtx;
 static sys_cremtx_s                 g_mtxparam;
-static bool                         g_isinit = false;
 
 /****************************************************************************
  * Private Functions
@@ -77,7 +76,7 @@ static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
   CODE altcom_stat_chg_cb_t *cbs = NULL;
   CODE altcom_stat_chg_cb_t cb = NULL;
   FAR struct altcombs_cb_block* cb_block = NULL;
-  int cnt = 0;
+  int32_t cnt = 0;
   cb_block = g_statchg_cb_table;
   while (cb_block)
     {
@@ -101,80 +100,6 @@ static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
-
-/****************************************************************************
- * Name: altcomstatus_init
- *
- * Description:
- *   Initialize altcom status.
- *
- * Input Parameters:
- *   None.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
- ****************************************************************************/
-
-int32_t altcomstatus_init(void)
-{
-  int32_t ret;
-
-  if (g_isinit)
-    {
-      DBGIF_LOG_WARNING("ALTCOM status initialized.\n");
-      return -EPERM;
-    }
-
-  ret = sys_create_mutex(&g_table_mtx, &g_mtxparam);
-  if (0 > ret)
-    {
-      DBGIF_LOG1_ERROR("sys_create_mutex() %d.\n", ret);
-      return ret;
-    }
-
-  g_isinit = true;
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: altcomstatus_fin
- *
- * Description:
- *   Finalize altcom status.
- *
- * Input Parameters:
- *   None.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
- ****************************************************************************/
-
-int32_t altcomstatus_fin(void)
-{
-  int32_t ret;
-
-  if (!g_isinit)
-    {
-      DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
-      return -EPERM;
-    }
-
-  ret = sys_delete_mutex(&g_table_mtx);
-  if (0 > ret)
-    {
-      DBGIF_LOG1_ERROR("sys_delete_mutex() %d.\n", ret);
-      return ret;
-    }
-
-  g_isinit = false;
-
-  return ret;
-}
 
 /****************************************************************************
  * Name: altcom_get_status
@@ -213,10 +138,42 @@ int32_t altcom_get_status(void)
 int32_t altcom_set_status(int32_t status)
 {
   int32_t prev_stat;
+  int32_t ret = 0;
+
   if (ALTCOM_STATUS_MIN > status ||
       ALTCOM_STATUS_MAX < status)
     {
       return -EINVAL;
+    }
+
+  /* status UNINIT >> INIT, Create mutex. */
+
+  if (ALTCOM_STATUS_UNINITIALIZED == g_altcom_status &&
+      ALTCOM_STATUS_INITIALIZED == status)
+    {
+      ret = sys_create_mutex(&g_table_mtx, &g_mtxparam);
+      if (0 > ret)
+        {
+          DBGIF_LOG1_ERROR("sys_create_mutex() %d.\n", ret);
+          return ret;
+        }
+
+    }
+  else if (ALTCOM_STATUS_UNINITIALIZED != g_altcom_status &&
+           ALTCOM_STATUS_UNINITIALIZED == status)
+    {
+      /* status NOTUNINIT >> UNINIT, Delete mutex */
+
+      ret = sys_delete_mutex(&g_table_mtx);
+      if (0 > ret)
+        {
+          DBGIF_LOG1_ERROR("sys_delete_mutex() %d.\n", ret);
+          return ret;
+        }
+    }
+  else
+    {
+      ;;
     }
 
   prev_stat = g_altcom_status;
@@ -247,7 +204,7 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list)
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
-  if (!g_isinit)
+  if (ALTCOM_STATUS_UNINITIALIZED == g_altcom_status)
     {
       DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
       return -EPERM;
@@ -290,7 +247,7 @@ int32_t altcomstatus_unreg_statchgcb(void *cb_list)
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
-  if (!g_isinit)
+  if (ALTCOM_STATUS_UNINITIALIZED == g_altcom_status)
     {
       DBGIF_LOG_WARNING("ALTCOM status not initialized.\n");
       return -EPERM;
