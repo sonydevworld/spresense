@@ -131,7 +131,7 @@ static bool filter_done_callback(FilterCompCmpltParam *cmplt)
       case StopEvent:
         {
           MEDIA_RECORDER_VDBG("Flsflt sz %d\n",
-                              cmplt->output_buffer.size);
+                              cmplt->out_buffer.size);
 
           er = MsgLib::send<FilterCompCmpltParam>(s_msgq_id.recorder,
                                                   MsgPriNormal,
