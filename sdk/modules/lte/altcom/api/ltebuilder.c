@@ -41,7 +41,8 @@
 #include "buffpoolwrapper.h"
 #include "wrkrid.h"
 #include "thrdfctry.h"
-#include "evtdisp.h"
+#include "evtdispfctry.h"
+#include "evtdispid.h"
 #include "ltebuilder.h"
 #include "hal_altmdm_spi.h"
 #include "apicmdgw.h"
@@ -354,15 +355,27 @@ static int32_t workerthread_uninitialize(void)
 static int32_t eventdispatcher_initialize(void)
 {
   int ret = 0;
+  struct evtdispfctry_evtdispset_s set[] =
+  {
+    { EVTDISPID_APICMD_DISP_ID, g_apicmdhdlrs }
+  };
 
-  g_evtdips_obj = evtdisp_create(g_apicmdhdlrs);
-  if (!g_evtdips_obj)
+  ret = evtdispfctry_init(set, sizeof(set) / sizeof(set[0]));
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("evtdisp_create() error.\n");
-      ret = -1;
+      DBGIF_LOG_ERROR("evtdispfctry_init() error.\n");
+      return -1;
     }
 
-  return ret;
+  g_evtdips_obj = evtdispfctry_get_instance(EVTDISPID_APICMD_DISP_ID);
+  if (!g_evtdips_obj)
+    {
+      DBGIF_LOG1_ERROR("evtdispfctry_get_instance() error. id = \n",
+        EVTDISPID_APICMD_DISP_ID);
+      return -1;
+    }
+
+  return 0;
 }
 
 /****************************************************************************
@@ -384,7 +397,7 @@ static int32_t eventdispatcher_uninitialize(void)
 {
   int32_t ret;
 
-  ret = evtdisp_delete(g_evtdips_obj);
+  ret = evtdispfctry_fin();
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("evtdisp_delete() error :%d.\n", ret);
@@ -534,6 +547,8 @@ static CODE int32_t lte_buildmain(FAR void *arg)
 {
   int32_t ret;
 
+  lte_callback_init();
+
   ret = bufferpool_initialize();
   if (ret < 0)
     {
@@ -616,8 +631,6 @@ static CODE int32_t lte_destroy(void)
     {
       return ret;
     }
-
-  lte_callback_init();
 
   ret = halspi_uninitialize();
   if (ret < 0)
