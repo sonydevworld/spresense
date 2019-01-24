@@ -54,8 +54,9 @@ CAT_BOARD    = "board"
 CAT_FEATURE  = "feature"
 CAT_DEVICE   = "device"
 CAT_EXAMPLES = "examples"
+CAT_MYAPP    = "myapp"
 
-DEF_CATEGORY = [CAT_ROOT, CAT_BOARD, CAT_FEATURE, CAT_DEVICE, CAT_EXAMPLES]
+DEF_CATEGORY = [CAT_ROOT, CAT_BOARD, CAT_FEATURE, CAT_DEVICE, CAT_EXAMPLES, CAT_MYAPP]
 
 #
 # Configuration database
@@ -100,6 +101,19 @@ def get_defconfigs(directory, category=CAT_ROOT, prefix=''):
         if category != CAT_KERNEL:
             name = os.path.join(category, name)
         store_defconfig_db(category, name, defconfig)
+
+def get_all_defconfigs(configdir):
+    # Pickup SDK configurations
+
+    get_defconfigs(configdir)
+
+    # Pickup user application configurations
+
+    if 'SPRESENSE_HOME' in os.environ:
+        myapp_root = os.environ['SPRESENSE_HOME']
+        for app_config in glob.glob(os.path.join(myapp_root, '*', 'configs')):
+            appname = os.path.basename(os.path.dirname(app_config))
+            get_defconfigs(app_config, category=CAT_MYAPP, prefix=appname)
 
 def get_defconfig_src(defconfig, kernel):
     if kernel:
@@ -271,9 +285,9 @@ if __name__ == "__main__":
         if len(opts.configname) == 0:
             opts.configname = ['default']
 
-    # pick-up defconfig files from SDK
+    # pick-up defconfig files from SDK and user application
 
-    get_defconfigs(configdir)
+    get_all_defconfigs(configdir)
 
     if opts.kernel:
         if CAT_KERNEL not in configs:
