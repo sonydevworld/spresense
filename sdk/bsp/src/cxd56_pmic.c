@@ -806,7 +806,7 @@ int cxd56_pmic_setchargevol(int voltage)
 
   /* Sanity check */
 
-  if (voltage < 4000 && voltage > 4400)
+  if (voltage < 4000 || voltage > 4400)
     {
       return -EINVAL;
     }
