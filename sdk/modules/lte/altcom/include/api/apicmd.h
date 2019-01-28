@@ -95,6 +95,15 @@
 #define APICMDID_SET_PSM                (0x0023)
 #define APICMDID_GET_CE                 (0x0024)
 #define APICMDID_SET_CE                 (0x0025)
+#define APICMDID_RADIO_ON               (0x0026)
+#define APICMDID_RADIO_OFF              (0x0027)
+#define APICMDID_ACTIVATE_PDN           (0x0028)
+#define APICMDID_DEACTIVATE_PDN         (0x0029)
+#define APICMDID_DATA_ALLOW             (0x002A)
+#define APICMDID_GET_NETINFO            (0x002B)
+#define APICMDID_GET_IMS_CAP            (0x002C)
+#define APICMDID_REP_NETINFO            (0x002D)
+#define APICMDID_ERRINFO                (0x002E)
 
 /* SOCKET API commands */
 

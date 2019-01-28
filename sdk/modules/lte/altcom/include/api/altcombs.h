@@ -40,7 +40,10 @@
  * Included Files
  ****************************************************************************/
 
+#include <errno.h>
+
 #include "dbg_if.h"
+#include "lte/lte_api.h"
 #include "altcom_status.h"
 
 /****************************************************************************
@@ -187,5 +190,41 @@ int32_t altcombs_alloc_callbacklist(void *cb_ptr,
  ****************************************************************************/
 
 int32_t altcombs_free_callbacklist(struct altcombs_cb_block **cb_block);
+
+/****************************************************************************
+ * Name: altcombs_set_errinfo
+ *
+ * Description:
+ *   Get LTE api last error information.
+ *
+ * Input Parameters:
+ *   err_code    LTE error code.
+ *   err_no      ALTCOM error no.
+ *   err_str     Error string.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+void altcombs_set_errinfo(int32_t err_code,
+  int32_t err_no, uint8_t *err_str);
+
+/****************************************************************************
+ * Name: altcombs_get_errinfo
+ *
+ * Description:
+ *   Get LTE api last error information.
+ *
+ * Input Parameters:
+ *   info    Pointer of lte error info.
+ *
+ * Returned Value:
+ *   When get success is returned 0.
+ *   When get failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_get_errinfo(lte_errinfo_t *info);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */
