@@ -53,6 +53,7 @@ VPATH   += common/src
 DEPPATH += --dep-path common/src
 
 CSRCS += cxd56_boot.c
+CSRCS += cxd56_clock.c
 
 ifeq ($(CONFIG_ARCH_FPU),y)
 CSRCS += cxd56_ostest.c

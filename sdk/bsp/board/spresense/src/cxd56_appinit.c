@@ -117,13 +117,6 @@
 #endif
 
 /****************************************************************************
- * Private Data
- ****************************************************************************/
-
-static struct pm_cpu_freqlock_s g_hv_lock =
-  PM_CPUFREQLOCK_INIT(PM_CPUFREQLOCK_TAG('C','P',0), PM_CPUFREQLOCK_FLAG_HV);
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -179,7 +172,6 @@ static void timer_initialize(void)
 int board_app_initialize(uintptr_t arg)
 {
   struct pm_cpu_wakelock_s wlock;
-
   int ret;
 
   ret = nsh_cpucom_initialize();
@@ -217,7 +209,9 @@ int board_app_initialize(uintptr_t arg)
     }
 #endif
 
-  up_pm_acquire_freqlock(&g_hv_lock);
+  /* Initialize CPU clock to max frequency */
+
+  board_clock_initialize();
 
   /* Setup the power of external device */
 
@@ -338,7 +332,9 @@ int board_app_initialize(uintptr_t arg)
 #endif
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
-  up_pm_release_freqlock(&g_hv_lock);
+  /* Enable dynamic clock control and CPU clock down for power saving */
+
+  board_clock_enable();
 #endif
 
   up_pm_release_wakelock(&wlock);
