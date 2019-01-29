@@ -45,6 +45,8 @@
 #include "ltebuilder.h"
 #include "director.h"
 #include "dbg_if.h"
+#include "altcom_callbacks.h"
+#include "altcom_status.h"
 
 /****************************************************************************
  * Public Functions
@@ -81,11 +83,19 @@ int32_t lte_finalize(void)
       ret = director_destruct(&g_ltebuilder);
       if (ret < 0)
         {
-          DBGIF_LOG1_ERROR("director_destruct() error.", ret);
+          DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
           altcom_set_initialized();
         }
       else
         {
+          ret = altcomcallbacks_fin();
+          if (ret < 0)
+            {
+              DBGIF_LOG1_ERROR("callbacks_uninitialize() error. %d", ret);
+              return ret;
+            }
+
+          altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
           ret = 0;
         }
     }
