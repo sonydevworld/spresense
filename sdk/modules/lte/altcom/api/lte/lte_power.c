@@ -342,10 +342,32 @@ int32_t lte_power_on(void)
 int32_t lte_power_off(void)
 {
   int32_t ret;
+  int32_t state = altcom_get_status();
 
-  /* Power on the modem */
+  /* Check lte status */
 
-  ret = modem_powerctrl(LTE_POWEROFF);
+  switch (state)
+    {
+      case ALTCOM_STATUS_UNINITIALIZED:
+      case ALTCOM_STATUS_INITIALIZED:
+        ret = -EALREADY;
+        break;
+
+      case ALTCOM_STATUS_RESTART_ONGOING:
+      case ALTCOM_STATUS_POWER_ON:
+        /* Power off the modem */
+
+        ret = modem_powerctrl(LTE_POWEROFF);
+        if (ret == 0)
+          {
+            altcom_set_status(ALTCOM_STATUS_INITIALIZED);
+          }
+      break;
+
+      default:
+        ret = -EOPNOTSUPP;
+        break;
+    }
 
   return ret;
 }
