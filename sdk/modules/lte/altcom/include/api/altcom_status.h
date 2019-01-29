@@ -97,7 +97,7 @@ int32_t altcom_set_status(int32_t status);
  *   Registoration altcom status change callbacks.
  *
  * Input Parameters:
- *   cb_list     Status change callback list.
+ *   cb     Status change callback list.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -105,7 +105,7 @@ int32_t altcom_set_status(int32_t status);
  *
  ****************************************************************************/
 
-int32_t altcomstatus_reg_statchgcb(void *cb_list);
+int32_t altcomstatus_reg_statchgcb(void *cb);
 
 /****************************************************************************
  * Name: altcomstatus_unreg_statchgcb
@@ -114,7 +114,7 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list);
  *   Unregistration altcom status change callbacks.
  *
  * Input Parameters:
- *   cb_list     Status change callback list.
+ *   cb     Status change callback.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -122,6 +122,6 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list);
  *
  ****************************************************************************/
 
-int32_t altcomstatus_unreg_statchgcb(void *cb_list);
+int32_t altcomstatus_unreg_statchgcb(void *cb);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_ALTCOM_STATUS_H */

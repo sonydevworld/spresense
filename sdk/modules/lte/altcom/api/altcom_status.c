@@ -73,24 +73,16 @@ static sys_cremtx_s                 g_mtxparam;
 
 static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
 {
-  CODE altcom_stat_chg_cb_t *cbs = NULL;
   CODE altcom_stat_chg_cb_t cb = NULL;
   FAR struct altcombs_cb_block* cb_block = NULL;
-  int32_t cnt = 0;
   cb_block = g_statchg_cb_table;
+
   while (cb_block)
     {
-      cbs = (altcom_stat_chg_cb_t *)cb_block->cb_list;
-      while (1)
+      cb = (altcom_stat_chg_cb_t)cb_block->cb_list;
+      if (cb)
         {
-          cb = cbs[cnt];
-          if (!cb)
-            {
-              break;
-            }
-
           cb(new_stat, old_stat);
-          cnt++;
         }
 
       cb_block = cb_block->next;
@@ -191,7 +183,7 @@ int32_t altcom_set_status(int32_t status)
  *   Registoration altcom status change callbacks.
  *
  * Input Parameters:
- *   cb_list     Status change callback list.
+ *   cb     Status change callback.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -199,7 +191,7 @@ int32_t altcom_set_status(int32_t status)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_reg_statchgcb(void *cb_list)
+int32_t altcomstatus_reg_statchgcb(void *cb)
 {
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
@@ -210,14 +202,14 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list)
       return -EPERM;
     }
 
-  ret = altcombs_alloc_callbacklist(cb_list, &cb_block);
+  ret = altcombs_alloc_callbacklist(cb, &cb_block);
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("altcombs_alloc_callbacklist() %d.\n", ret);
       return ret;
     }
 
-  cb_block->cb_list = cb_list;
+  cb_block->cb_list = cb;
   cb_block->next = NULL;
 
   sys_lock_mutex(&g_table_mtx);
@@ -234,7 +226,7 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list)
  *   Unregistration altcom status change callbacks.
  *
  * Input Parameters:
- *   cb_list     Status change callback list.
+ *   cb     Status change callback.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -242,7 +234,7 @@ int32_t altcomstatus_reg_statchgcb(void *cb_list)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_unreg_statchgcb(void *cb_list)
+int32_t altcomstatus_unreg_statchgcb(void *cb)
 {
   int32_t ret;
   FAR struct altcombs_cb_block *cb_block = NULL;
@@ -253,7 +245,7 @@ int32_t altcomstatus_unreg_statchgcb(void *cb_list)
       return -EPERM;
     }
 
-  if (!cb_list)
+  if (!cb)
     {
       DBGIF_LOG_ERROR("null parameter.\n");
       return -EINVAL;
@@ -266,7 +258,7 @@ int32_t altcomstatus_unreg_statchgcb(void *cb_list)
     }
 
   sys_lock_mutex(&g_table_mtx);
-  cb_block = altcombs_remove_cblist(&g_statchg_cb_table, cb_list);
+  cb_block = altcombs_remove_cblist(&g_statchg_cb_table, cb);
   sys_unlock_mutex(&g_table_mtx);
   ret = altcombs_free_callbacklist(&cb_block);
 
