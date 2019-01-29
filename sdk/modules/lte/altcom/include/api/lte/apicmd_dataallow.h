@@ -65,6 +65,8 @@
 begin_packed_struct struct apicmd_cmddat_dataallow_s
 {
   uint8_t session_id;
+  uint8_t data_allow;
+  uint8_t dataroam_allow;
 } end_packed_struct;
 
 begin_packed_struct struct apicmd_cmddat_dataallowres_s
