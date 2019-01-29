@@ -50,6 +50,9 @@
 #define APICMD_REPNETINFO_RES_OK                 (0)
 #define APICMD_REPNETINFO_RES_ERR                (1)
 
+#define APICMD_REPNETINFO_REPORT_ENABLE          (0)
+#define APICMD_REPNETINFO_REPORT_DISABLE         (1)
+
 #define APICMD_REPNETINFO_PDNCOUNT_MAX           (5)
 
 #define APICMD_REPNETINFO_NWSTAT_ATCH            (0)
