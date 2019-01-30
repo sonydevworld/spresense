@@ -52,6 +52,7 @@
 
 #include "up_arch.h"
 #include "chip.h"
+#include "cxd56_clock.h"
 
 #include "chip/cxd56_ge2d.h"
 
@@ -241,6 +242,8 @@ int cxd56_ge2dinitialize(FAR const char *devname)
       return ERROR;
     }
 
+  cxd56_img_ge2d_clock_enable();
+
   /* Disable interrupts */
 
   putreg32(0, GE2D_INTR_ENABLE);
@@ -259,6 +262,8 @@ void cxd56_ge2duninitialize(FAR const char *devname)
 {
   up_disable_irq(CXD56_IRQ_GE2D);
   irq_detach(CXD56_IRQ_GE2D);
+
+  cxd56_img_ge2d_clock_disable();
 
   sem_destroy(&g_lock);
   sem_destroy(&g_wait);
