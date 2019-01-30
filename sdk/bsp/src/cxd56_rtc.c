@@ -320,6 +320,10 @@ static void cxd56_rtc_initialize(int argc, uint32_t arg)
       g_rtc_save->offset = 0;
     }
 
+  /* Synchronize the system time to the RTC time */
+
+  clock_synchronize();
+
   /* Make it possible to use the RTC timer functions */
 
   g_rtc_enabled = true;
