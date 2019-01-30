@@ -1277,6 +1277,44 @@ void cxd56_img_cisif_clock_disable(void)
   sem_post(&g_clockexc);
 }
 
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_enable
+ *
+ * Description:
+ *   Enable img cisif clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_enable(void)
+{
+  sem_wait(&g_clockexc);
+
+  enable_pwd(PDID_APP_SUB);
+  cxd56_img_clock_enable();
+  g_active_imgdevs |= FLAG_IMG_GE2D;
+
+  sem_post(&g_clockexc);
+}
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_disable
+ *
+ * Description:
+ *   Disable img cisif clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_disable(void)
+{
+  sem_wait(&g_clockexc);
+
+  g_active_imgdevs &= ~FLAG_IMG_GE2D;
+  cxd56_img_clock_disable();
+  disable_pwd(PDID_APP_SUB);
+
+  sem_post(&g_clockexc);
+}
+
 static uint32_t cxd56_get_clock(enum clock_source cs)
 {
   if (!rcosc_clock)

@@ -401,6 +401,26 @@ void cxd56_img_cisif_clock_enable(void);
 void cxd56_img_cisif_clock_disable(void);
 
 /****************************************************************************
+ * Name: cxd56_img_ge2d_clock_enable
+ *
+ * Description:
+ *   Enable ge2d clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_enable(void);
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_dsiable
+ *
+ * Description:
+ *   Disable ge2d clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_disable(void);
+
+/****************************************************************************
  * Name: cxd56_get_com_baseclock
  *
  * Description:
