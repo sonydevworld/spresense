@@ -52,7 +52,6 @@ CSRCS += apicmdhdlr_imei.c
 CSRCS += apicmdhdlr_imsi.c
 CSRCS += apicmdhdlr_operator.c
 CSRCS += apicmdhdlr_phoneno.c
-CSRCS += apicmdhdlr_power.c
 CSRCS += apicmdhdlr_repcellinfo.c
 CSRCS += apicmdhdlr_repevt.c
 CSRCS += apicmdhdlr_repnetstat.c
@@ -97,6 +96,16 @@ CSRCS += lte_setedrx.c
 CSRCS += lte_setpin.c
 CSRCS += lte_setpsm.c
 CSRCS += lte_ver.c
+CSRCS += lte_radio_on.c
+CSRCS += lte_radio_off.c
+CSRCS += lte_getimscap.c
+CSRCS += lte_activate_pdn.c
+CSRCS += lte_deactivate_pdn.c
+CSRCS += lte_dataallow.c
+CSRCS += lte_getnetinfo.c
+CSRCS += lte_set_rep_netinfo.c
+CSRCS += lte_set_rep_restart.c
+CSRCS += lte_geterrinfo.c
 
 # Add the src directory to the build
 

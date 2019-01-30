@@ -79,6 +79,15 @@
 #include "apicmdhdlr_setpin.h"
 #include "apicmdhdlr_setpsm.h"
 #include "apicmdhdlr_ver.h"
+#include "lte_radio_on.h"
+#include "lte_radio_off.h"
+#include "lte_activatepdn.h"
+#include "lte_deactivatepdn.h"
+#include "lte_dataallow.h"
+#include "lte_getnetinfo.h"
+#include "lte_rep_netinfo.h"
+#include "lte_getimscap.h"
+#include "lte_geterrinfo.h"
 #include "apicmdhdlr_select.h"
 #ifdef CONFIG_LTE_NET_MBEDTLS
 #include "apicmdhdlr_config_verify_callback.h"
@@ -165,6 +174,15 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_setpsm,
   apicmdhdlr_getce,
   apicmdhdlr_setce,
+  apicmdhdlr_radioon,
+  apicmdhdlr_radiooff,
+  apicmdhdlr_activatepdn,
+  apicmdhdlr_deactivatepdn,
+  apicmdhdlr_dataallow,
+  apicmdhdlr_repnetinfo,
+  apicmdhdlr_getnetinfo,
+  apicmdhdlr_getimscap,
+  apicmdhdlr_errinfo,
   apicmdhdlr_select,
 #ifdef CONFIG_LTE_NET_MBEDTLS
   apicmdhdlr_config_verify_callback,
