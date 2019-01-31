@@ -103,14 +103,9 @@
 #define APICMDID_GET_NETINFO            (0x002B)
 #define APICMDID_GET_IMS_CAP            (0x002C)
 #define APICMDID_SETREP_NETINFO         (0x002D)
-<<<<<<< HEAD
-#define APICMDID_REPORT_NETINFO         (0x002D)
-#define APICMDID_ERRINFO                (0x002E)
-=======
 #define APICMDID_REPORT_NETINFO         (0x002E)
 #define APICMDID_REPORT_RESTART         (0x002F)
 #define APICMDID_ERRINFO                (0x0030)
->>>>>>> 050496f... fix apicmd.h
 
 /* SOCKET API commands */
 

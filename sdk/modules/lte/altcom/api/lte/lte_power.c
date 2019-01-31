@@ -50,6 +50,10 @@
 #include "apicmd.h"
 #include "apiutil.h"
 #include "altcom_status.h"
+#include "lte_report_restart.h"
+#include "apicmd_power.h"
+#include "apicmdhdlrbs.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -151,6 +155,24 @@ static void restart_callback_job(FAR void *arg)
 static void restart_callback(uint32_t state)
 {
   int ret;
+
+  if (ALTCOM_STATUS_POWER_ON == altcom_get_status())
+    {
+      /* When receive reset packet in current status power on,
+       * This case is modem reset. */
+
+      /* Call restart callback input modem restart */
+
+      lte_set_report_reason(LTE_RESTART_MODEM_INITIATED);
+
+      /* Abort send apicmd for Release waiting sync API responce. */
+
+      apicmdgw_sendabort();
+    }
+  else
+    {
+      lte_set_report_reason(LTE_RESTART_USER_INITIATED);
+    }
 
   altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
 
@@ -269,6 +291,54 @@ int32_t modem_powerctrl(bool on)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: poweron_job
+ *
+ * Description:
+ *   This function is an API callback for power on.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void poweron_job(FAR void *arg)
+{
+  int32_t                               ret;
+  int32_t                               result;
+  FAR struct apicmd_cmddat_poweronres_s *data =
+      (FAR struct apicmd_cmddat_poweronres_s *)arg;
+  power_control_cb_t                    callback;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
+
+  altcom_set_status(ALTCOM_STATUS_POWER_ON);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+
+      callback(result);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* Call report restart callback */
+
+  lte_do_restartcallback();
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
 }
 
 /****************************************************************************
@@ -446,4 +516,28 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_power
+ *
+ * Description:
+ *   This function is an API command handler for power on result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_POWER_ON_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_power(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_POWER_ON), poweron_job);
 }

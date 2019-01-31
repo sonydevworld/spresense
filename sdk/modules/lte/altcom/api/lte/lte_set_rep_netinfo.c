@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_setrep_netstat.c
+ * modules/lte/altcom/api/lte/lte_setrep_netinfo.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *

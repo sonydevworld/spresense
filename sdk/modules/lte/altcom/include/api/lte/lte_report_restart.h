@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/hdlr_imei.c
+ * modules/lte/altcom/include/api/lte/lte_report_restart.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,82 +33,49 @@
  *
  ****************************************************************************/
 
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_REPORT_RESTART_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_REPORT_RESTART_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <string.h>
-
-#include "lte/lte_api.h"
-#include "evthdlbs.h"
-#include "apicmd_power.h"
-#include "apicmdhdlrbs.h"
-#include "altcombs.h"
-
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern power_control_cb_t g_lte_power_callback;
-
-/****************************************************************************
- * Private Functions
- ****************************************************************************/
-
-static void poweron_job(FAR void *arg)
-{
-  int32_t                               ret;
-  int32_t                               result;
-  FAR struct apicmd_cmddat_poweronres_s *data =
-      (FAR struct apicmd_cmddat_poweronres_s *)arg;
-  power_control_cb_t                    callback;
-
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
-
-  altcom_set_status(ALTCOM_STATUS_POWER_ON);
-
-  if ((ret == 0) && (callback))
-    {
-      result = (int32_t)data->result;
-
-      callback(result);
-    }
-  else
-    {
-      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
-    }
-
-  /* In order to reduce the number of copies of the receive buffer,
-   * bring a pointer to the receive buffer to the worker thread.
-   * Therefore, the receive buffer needs to be released here. */
-
-  altcom_free_cmd((FAR uint8_t *)arg);
-}
-
-/****************************************************************************
- * Public Functions
+ * Public Function Prototypes
  ****************************************************************************/
 
 /****************************************************************************
- * Name: apicmdhdlr_power
+ * Name: lte_set_report_reason
  *
  * Description:
- *   This function is an API command handler for power on result.
+ *   Set restart reason.
  *
  * Input Parameters:
- *  evt    Pointer to received event.
- *  evlen  Length of received event.
+ *   reason      Modem restart reason.
  *
  * Returned Value:
- *   If the API command ID matches APICMDID_POWER_ON_RES,
- *   EVTHDLRC_STARTHANDLE is returned.
- *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
- *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
  *
  ****************************************************************************/
 
-enum evthdlrc_e apicmdhdlr_power(FAR uint8_t *evt, uint32_t evlen)
-{
-  return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_POWER_ON), poweron_job);
-}
+int32_t lte_set_report_reason(int32_t reason);
+
+/****************************************************************************
+ * Name: lte_do_restartcallback
+ *
+ * Description:
+ *   Call registered modem restart callback function.
+ *
+ * Input Parameters:
+ *   None.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t lte_do_restartcallback(void);
+
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_REPORT_RESTART_H */
