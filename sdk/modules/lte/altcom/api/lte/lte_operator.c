@@ -41,8 +41,11 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_operator.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -55,6 +58,53 @@
  ****************************************************************************/
 
 extern get_operator_cb_t g_getoperator_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: getoperator_job
+ *
+ * Description:
+ *   This function is an API callback for get network operator information.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getoperator_job(FAR void *arg)
+{
+  int32_t                                   ret;
+  int32_t                                   result;
+  FAR struct apicmd_cmddat_getoperatorres_s *data;
+  get_operator_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_getoperatorres_s *)arg;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_getoperator_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+
+      callback(result, (FAR int8_t *)data->oper);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -144,4 +194,29 @@ int32_t lte_get_operator(get_operator_cb_t callback)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_operator
+ *
+ * Description:
+ *   This function is an API command handler for
+ *   network operator information get result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_GET_OPERATOR_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_operator(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_GET_OPERATOR), getoperator_job);
 }

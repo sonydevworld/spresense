@@ -44,6 +44,9 @@
 #include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_setrepnetstat.h"
+#include "apicmd_repnetstat.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -64,6 +67,48 @@ static bool g_lte_setnetstat_isproc = false;
  ****************************************************************************/
 
 extern netstat_report_cb_t g_netstat_report_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: repnetstat_job
+ *
+ * Description:
+ *   This function is an API callback for event report receive.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repnetstat_job(FAR void *arg)
+{
+  FAR struct apicmd_cmddat_repnetstat_s *data;
+  int32_t                               netstat;
+
+  data = (FAR struct apicmd_cmddat_repnetstat_s *)arg;
+
+  if (!g_netstat_report_callback)
+    {
+      DBGIF_LOG_WARNING("When callback is null called report netstat.\n");
+    }
+  else
+    {
+      netstat = (int32_t)data->stat;
+      g_netstat_report_callback(netstat);
+    }
+  
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -177,4 +222,27 @@ int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback)
   g_lte_setnetstat_isproc = false;
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_repnetstat
+ *
+ * Description:
+ *   This function is an API command handler for event report.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_REPORT_NETSTAT,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_repnetstat(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_NETSTAT, repnetstat_job);
 }

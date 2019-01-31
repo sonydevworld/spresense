@@ -41,8 +41,11 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_dataoff.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -55,6 +58,76 @@
  ****************************************************************************/
 
 extern data_off_cb_t g_dataoff_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: attachnet_job
+ *
+ * Description:
+ *   This function is an API callback for data connect.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void dataoff_job(FAR void *arg)
+{
+  int32_t                               ret;
+  int32_t                               result;
+  uint32_t                              errcause = 0;
+  FAR struct apicmd_cmddat_dataoffres_s *data;
+  data_off_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_dataoffres_s *)arg;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_dataoff_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      if (APICMD_DATAOFF_RES_OK == data->result)
+        {
+          result = LTE_RESULT_OK;
+        }
+      else if (APICMD_DATAOFF_RES_ERR == data->result)
+        {
+          result = LTE_RESULT_ERROR;
+          switch(data->errorcause)
+            {
+              case APICMD_DATAOFF_RES_ERRCAUSE_DETACHED:
+                {
+                  errcause = LTE_ERR_DETACHED;
+                }
+              break;
+              default:
+                  errcause = LTE_ERR_UNEXPECTED;
+              break;
+            }
+        }
+      else
+        {
+          result = LTE_RESULT_CANCEL;
+        }
+
+      callback(result, errcause);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -152,4 +225,28 @@ int32_t lte_data_off(uint8_t session_id, data_off_cb_t callback)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_dataoff
+ *
+ * Description:
+ *   This function is an API command handler for data connection on result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_DATAOFF_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_dataoff(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_DATAOFF), dataoff_job);
 }

@@ -39,10 +39,14 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include <string.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_getapnset.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -55,6 +59,84 @@
  ****************************************************************************/
 
 extern get_apnset_cb_t g_getapnset_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: getapnset_job
+ *
+ * Description:
+ *   This function is an API callback for get APN set.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getapnset_job(FAR void *arg)
+{
+  int32_t                                 ret;
+  int32_t                                 result;
+  FAR struct apicmd_cmddat_getapnsetres_s *data;
+  lte_getapnset_t                         apnset;
+  get_apnset_cb_t                         callback;
+  int32_t                                 cnt;
+
+  data = (FAR struct apicmd_cmddat_getapnsetres_s *)arg;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_getapnset_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+      apnset.listnum = data->listnum;
+      apnset.apnlist = NULL;
+
+      if (APICMD_GETAPNSET_RES_OK == result)
+        {
+          if (APICMD_GETAPNSET_RES_LIST_MAX_NUM < apnset.listnum)
+            {
+              DBGIF_LOG1_ERROR("apnset.listnum error:%d\n", apnset.listnum);
+              result = APICMD_GETAPNSET_RES_ERR;
+            }
+          else
+            {
+              apnset.apnlist =
+                BUFFPOOL_ALLOC(sizeof(lte_getapndata_t) * data->listnum);
+              DBGIF_ASSERT(apnset.apnlist, "BUFFPOOL_ALLOC error.");
+              for (cnt = 0; cnt < data->listnum; cnt++)
+                {
+                  apnset.apnlist[cnt].session_id = data->apnlist[cnt].session_id;
+                  strncpy((FAR char *)apnset.apnlist[cnt].apn,
+                    (FAR char *)data->apnlist[cnt].apn,
+                    sizeof(apnset.apnlist[cnt].apn));
+                  apnset.apnlist[cnt].ip_type   = data->apnlist[cnt].ip_type;
+                }
+            }
+        }
+
+      callback(result, &apnset);
+      if (apnset.apnlist)
+        {
+          (void)BUFFPOOL_FREE((FAR void *)apnset.apnlist);
+        }
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -142,4 +224,28 @@ int32_t lte_get_apnset(get_apnset_cb_t callback)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_getapnset
+ *
+ * Description:
+ *   This function is an API command handler for get APN set result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_GET_APNSET_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_getapnset(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_GET_APNSET), getapnset_job);
 }

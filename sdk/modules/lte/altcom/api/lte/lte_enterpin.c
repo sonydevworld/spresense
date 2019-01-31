@@ -42,8 +42,11 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_enterpin.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -59,6 +62,53 @@
  ****************************************************************************/
 
 extern enter_pin_cb_t g_enterpin_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: enterpin_job
+ *
+ * Description:
+ *   This function is an API callback for enter PIN.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void enterpin_job(FAR void *arg)
+{
+  int32_t                                ret;
+  int32_t                                result;
+  FAR struct apicmd_cmddat_enterpinres_s *data;
+  enter_pin_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_enterpinres_s *)arg;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_enterpin_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+
+      callback(result, data->simstat, data->attemptsleft);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -176,4 +226,28 @@ int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_enterpin
+ *
+ * Description:
+ *   This function is an API command handler for enter PIN result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_ENTER_PIN_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_enterpin(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_ENTER_PIN), enterpin_job);
 }

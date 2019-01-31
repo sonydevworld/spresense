@@ -41,11 +41,14 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "dbg_if.h"
 #include "osal.h"
 #include "apiutil.h"
 #include "apicmdgw.h"
 #include "apicmd_setce.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -58,6 +61,57 @@
  ****************************************************************************/
 
 extern set_ce_cb_t g_setce_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: setce_job
+ *
+ * Description:
+ *   This function is an API callback for set CE.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void setce_job(FAR void *arg)
+{
+  int32_t                             ret;
+  FAR struct apicmd_cmddat_setceres_s *data;
+  set_ce_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_setceres_s *)arg;
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_setce_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      if (APICMD_SETCE_RES_OK == data->result)
+        {
+          callback(LTE_RESULT_OK);
+        }
+      else
+        {
+          callback(LTE_RESULT_ERROR);
+          DBGIF_ASSERT(APICMD_SETCE_RES_ERR == data->result, "result parameter error.\n");
+        }
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -152,3 +206,27 @@ int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
   return ret;
 }
 
+
+/****************************************************************************
+ * Name: apicmdhdlr_setce
+ *
+ * Description:
+ *   This function is an API command handler for set CE result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_SET_CE_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_setce(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_SET_CE),
+    setce_job);
+}

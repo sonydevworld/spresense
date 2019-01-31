@@ -39,10 +39,14 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include <string.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apicmd_ver.h"
 #include "apiutil.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -55,6 +59,68 @@
  ****************************************************************************/
 
 extern get_ver_cb_t g_getver_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: getver_job
+ *
+ * Description:
+ *   This function is an API callback for get version.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getver_job(FAR void *arg)
+{
+  int32_t                               ret;
+  int32_t                               result;
+  FAR struct apicmd_cmddat_getverres_s  *data =
+    (FAR struct apicmd_cmddat_getverres_s *)arg;
+  FAR lte_version_t                     *version = NULL;
+  get_ver_cb_t                          callback;
+
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_getver_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+
+      if (APICMD_VERSION_RES_OK == result)
+        {
+          version =
+            (FAR lte_version_t *)BUFFPOOL_ALLOC(sizeof(lte_version_t));
+          strncpy((char *)version->bb_product,
+            (char *)data->bb_product, LTE_VER_BB_PRODUCT_LEN);
+          strncpy((char *)version->np_package,
+            (char *)data->np_package, LTE_VER_NP_PACKAGE_LEN);
+        }
+
+      callback(result, version);
+
+      if (NULL != version)
+        {
+          (void)BUFFPOOL_FREE((FAR void *)version);
+        }
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR void *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -142,4 +208,28 @@ int32_t lte_get_version(get_ver_cb_t callback)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_ver
+ *
+ * Description:
+ *   This function is an API command handler for version get result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_GET_VERSION_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_ver(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_GET_VERSION), getver_job);
 }

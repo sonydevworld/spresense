@@ -41,11 +41,14 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "dbg_if.h"
 #include "osal.h"
 #include "apiutil.h"
 #include "apicmdgw.h"
 #include "apicmd_setedrx.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -62,6 +65,57 @@
  ****************************************************************************/
 
 extern set_edrx_cb_t g_setedrx_callback;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: setedrx_job
+ *
+ * Description:
+ *   This function is an API callback for set eDRX.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void setedrx_job(FAR void *arg)
+{
+  int32_t                               ret;
+  FAR struct apicmd_cmddat_setedrxres_s *data;
+  set_edrx_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_setedrxres_s *)arg;
+  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_setedrx_callback, callback);
+
+  if ((ret == 0) && (callback))
+    {
+      if (APICMD_SETEDRX_RES_OK == data->result)
+        {
+          callback(LTE_RESULT_OK);
+        }
+      else
+        {
+          callback(LTE_RESULT_ERROR);
+          DBGIF_ASSERT(APICMD_SETEDRX_RES_ERR == data->result, "result parameter error.\n");
+        }
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -169,3 +223,26 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
   return ret;
 }
 
+/****************************************************************************
+ * Name: apicmdhdlr_setedrx
+ *
+ * Description:
+ *   This function is an API command handler for set eDRX result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_SET_EDRX_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_setedrx(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_SET_EDRX),
+    setedrx_job);
+}
