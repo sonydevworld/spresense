@@ -400,6 +400,11 @@ int jpeg_decode_main(int argc, char *argv[])
       strncpy(infile_name, argv[1], APP_FILENAME_LEN);
     }
 
+  /* Original libjpeg use file pointer to specify JPEG file.
+   * Spresense use file descripter, which enables to get JPEG
+   *  from any readable descripter.
+   */
+
   if ((infile = open(infile_name, O_RDONLY)) < 0) {
     fprintf(stderr, "can't open %s\n", infile_name);
     return 0;
@@ -442,6 +447,10 @@ int jpeg_decode_main(int argc, char *argv[])
   fprintf(stdout, "image height = %d\n", cinfo.image_height);
 
   /* Step 4: set parameters for decompression */
+
+  /* JCS_YCbCr means YUV4:4:4 in original libjpeg.
+   * In Spresense, YCbCr means YUV4:2:2 for memory reduction.
+   */
 
   cinfo.out_color_space = JCS_YCbCr;
 
