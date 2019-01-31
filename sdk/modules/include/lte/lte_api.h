@@ -85,33 +85,6 @@
  * |                                 | @ref lte_get_sleepmode         |
  * |                                 | @ref lte_set_sleepmode         |
  *
- * #### Obsoleted APIs
- *
- * @attention
- * The following APIs are obsoleted API. You shouldn't use these APIs.
- * - lte_power_control
- *   - Use lte_power_on or lte_power_off instead of it.
- * - lte_attach_network
- *   - Use lte_activate_pdn instead of it.
- * - lte_detach_network
- *   - Use lte_deactivate_pdn instead of it.
- * - lte_get_netstat
- *   - Use lte_get_netinfo instead of it.
- * - lte_data_on
- *   - Use lte_activate_pdn instead of it.
- * - lte_data_off
- *   - Use lte_deactivate_pdn instead of it.
- * - lte_get_datastat
- *   - Use lte_get_netinfo instead of it.
- * - lte_get_dataconfig
- * - lte_set_dataconfig
- *   - Use lte_data_allow instead of it.
- * - lte_get_apnset
- * - lte_set_apn
- * - lte_get_sleepmode
- * - lte_set_sleepmode
- * - lte_set_report_netstat
- *   - Use lte_get_netinfo instead of it.
  *
  * @{
  *
@@ -2208,8 +2181,7 @@ int32_t lte_get_errinfo(lte_errinfo_t *info);
 /**
  * Power on/off the modem
  *
- * @attention **This function is obsolete API.
- * You should use lte_power_on or lte_power_off instead of this function**.
+ * @deprecated Use @ref lte_power_on or @ref lte_power_off instead.
  *
  * @param [in] on: "Power on" or "Power off".
  *                  Definition is as below.@n
@@ -2227,8 +2199,7 @@ int32_t lte_power_control(bool on, power_control_cb_t callback);
 /**
  * Attach to the LTE network.
  *
- * @attention **This function is obsolete API.
- * You should use lte_activate_pdn instead of this function**.
+ * @deprecated Use @ref lte_radio_on and @ref lte_activate_pdn instead.
  *
  * @param [in] callback: Callback function to notify that
  *                       attach completed
@@ -2242,8 +2213,7 @@ int32_t lte_attach_network(attach_net_cb_t callback);
 /**
  * Detach from the LTE network.
  *
- * @attention **This function is obsolete API.
- * You should use lte_deactivate_pdn instead of this function**.
+ * @deprecated Use @ref lte_radio_off and @ref lte_deactivate_pdn instead.
  *
  * @param [in] callback: Callback function to notify that
  *                       detach completed
@@ -2258,8 +2228,7 @@ int32_t lte_detach_network(detach_net_cb_t callback);
  * Get network state of the LTE.
  * The network state means whether it has been attached or not.
  *
- * @attention **This function is obsolete API.
- * You should use lte_get_netinfo instead of this function**.
+ * @deprecated Use @ref lte_get_netinfo instead.
  *
  * @param [in] callback: Callback function to notify that
  *                       get network state completed
@@ -2273,8 +2242,7 @@ int32_t lte_get_netstat(get_netstat_cb_t callback);
 /**
  * Enable the data communication feature.
  *
- * @attention **This function is obsolete API.
- * You should use lte_activate_pdn instead of this function**.
+ * @deprecated Use @ref lte_activate_pdn instead.
  *
  * @param [in] session_id: The numeric value of the session ID defined
  *                         in the apn setting.@n
@@ -2292,8 +2260,7 @@ int32_t lte_data_on(uint8_t session_id, data_on_cb_t callback);
 /**
  * Disable the data communication feature.
  *
- * @attention **This function is obsolete API.
- * You should use lte_deactivate_pdn instead of this function**.
+ * @deprecated Use @ref lte_deactivate_pdn instead.
  *
  * @param [in] session_id: The numeric value of the session ID defined
  *                         in the apn setting.@n
@@ -2312,8 +2279,7 @@ int32_t lte_data_off(uint8_t session_id, data_off_cb_t callback);
 /**
  * Get state of the data communication
  *
- * @attention **This function is obsolete API.
- * You should use lte_get_netinfo instead of this function**.
+ * @deprecated Use @ref lte_get_netinfo instead.
  *
  * @param [in] callback: Callback function to notify that
  *                       get data communication state completed.
@@ -2328,8 +2294,7 @@ int32_t lte_get_datastat(get_datastat_cb_t callback);
  * Get Configuration of the data transfer.
  * There are two types of data that can be specified: user data or IMS.
  *
- * @attention **This function is obsolete API.
- * You shouldn't use this function**.
+ * @deprecated This function will be deleted.
  *
  * @param [in] data_type: Data type.
  *                        Definition is as below.@n
@@ -2348,8 +2313,7 @@ int32_t lte_get_dataconfig(uint32_t data_type, get_dataconfig_cb_t callback);
  * Change configuration of the data transfer.
  * There are two types of data that can be specified: user data or IMS.
  *
- * @attention **This function is obsolete API.
- * You should use lte_data_allow instead of this function**.
+ * @deprecated Use @ref lte_data_allow instead.
  *
  * Details are shown in the table below.
  *
@@ -2386,8 +2350,7 @@ int32_t lte_set_dataconfig(uint32_t data_type, bool general, bool roaming,
 /**
  * Get access point name settings.
  *
- * @attention **This function is obsolete API.
- * You shouldn't use this function**.
+ * @deprecated This function will be deleted.
  *
  * @param [in] callback: Callback function to notify that
  *                       get of APN setting completed.
@@ -2401,8 +2364,7 @@ int32_t lte_get_apnset(get_apnset_cb_t callback);
 /**
  * Set access point name settings.
  *
- * @attention **This function is obsolete API.
- * You shouldn't use this function**.
+ * @deprecated This function will be deleted.
  *
  * @param [in] session_id: The numeric value of the session ID.@n
  *                         The range is from @ref LTE_SESSION_ID_MIN to
@@ -2439,8 +2401,7 @@ int32_t lte_set_apn(uint8_t session_id, int8_t *apn, uint8_t ip_type,
 /**
  * Get sleep mode of the modem.
  *
- * @attention **This function is obsolete API.
- * You shouldn't use this function**.
+ * @deprecated This function will be deleted.
  *
  * @param [in] callback: Callback function to notify that
  *                       get sleep mode is completed.
@@ -2454,8 +2415,7 @@ int32_t lte_get_sleepmode(get_slpmode_cb_t callback);
 /**
  * Set sleep mode of the modem.
  *
- * @attention **This function is obsolete API.
- * You shouldn't use this function**.
+ * @deprecated This function will be deleted.
  *
  * @param [in] sleepmode: Sleep mode of the modem.
  *                        Definition is as below.@n
@@ -2475,8 +2435,7 @@ int32_t lte_set_sleepmode(uint32_t sleepmode, set_slpmode_cb_t callback);
  * Change the report setting of the LTE network state.
  * The default report setting is disable.
  *
- * @attention **This function is obsolete API.
- * You should use lte_get_netinfo instead of this function**.
+ * @deprecated Use @ref lte_get_netinfo instead.
  *
  * @param [in] netstat_callback: Callback function to notify that
  *                               LTE network state. If NULL is set,
