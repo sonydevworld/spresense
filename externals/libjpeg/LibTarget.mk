@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_JPEGDEC),y)
+ifeq ($(CONFIG_EXTERNALS_LIBJPEG),y)
 EXTLIBS += lib$(DELIM)libjpeg$(LIBEXT)
 LIBJPEGDIRS += $(EXTERNAL_DIR)$(DELIM)libjpeg
 endif
