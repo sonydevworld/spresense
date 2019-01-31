@@ -38,7 +38,7 @@ typedef enum {			/* Operating modes for buffer controllers */
 #define DSTATE_BUFPOST	208	/* looking for SOS/EOI in jpeg_finish_output */
 #define DSTATE_RDCOEFS	209	/* reading file in jpeg_read_coefficients */
 #define DSTATE_STOPPING	210	/* looking for EOI in jpeg_finish_decompress */
-
+#define DSTATE_SETSRC   211     /* after stdio_src or mem_src */
 
 /* Declarations for compression modules */
 

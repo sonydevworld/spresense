@@ -20,7 +20,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jerror.h"
-
+#include "jpegint.h"
 
 /* Expanded data source object for stdio input */
 
@@ -217,6 +217,11 @@ jpeg_stdio_src (j_decompress_ptr cinfo, int infile)
 {
   my_src_ptr src;
 
+  /* Block execution in the middle of decode */
+
+  if (cinfo->global_state != DSTATE_START)
+    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+
   /* The source object and input buffer are made permanent so that a series
    * of JPEG images can be read from the same file by calling jpeg_stdio_src
    * only before the first one.  (If we discarded the buffer at the end of
@@ -239,6 +244,8 @@ jpeg_stdio_src (j_decompress_ptr cinfo, int infile)
   src->infile = infile;
   src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
   src->pub.next_input_byte = NULL; /* until buffer loaded */
+
+  cinfo->global_state = DSTATE_SETSRC;
 }
 
 
@@ -256,6 +263,11 @@ jpeg_mem_src (j_decompress_ptr cinfo,
   if (inbuffer == NULL || insize == 0)	/* Treat empty input as fatal error */
     ERREXIT(cinfo, JERR_INPUT_EMPTY);
 
+  /* Block execution in the middle of decode */
+
+  if (cinfo->global_state != DSTATE_START)
+    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+
   /* The source object is made permanent so that a series of JPEG images
    * can be read from the same buffer by calling jpeg_mem_src only before
    * the first one.
@@ -272,4 +284,6 @@ jpeg_mem_src (j_decompress_ptr cinfo,
   src->term_source = term_source;
   src->bytes_in_buffer = (size_t) insize;
   src->next_input_byte = (const JOCTET *) inbuffer;
+
+  cinfo->global_state = DSTATE_SETSRC;
 }
