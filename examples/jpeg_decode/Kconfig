@@ -25,7 +25,7 @@ config EXAMPLES_JPEG_DECODE_PRIORITY
 
 config EXAMPLES_JPEG_DECODE_STACKSIZE
 	int "JPEG decode stack size"
-	default 3072
+	default 2048
 
 config EXAMPLES_JPEG_DECODE_OUTPUT_LCD
 	bool "Output LCD"
