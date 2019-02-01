@@ -482,6 +482,8 @@ struct jpeg_decompress_struct {
 
   double output_gamma;		/* image gamma wanted in output */
 
+  boolean mcu_out;              /* TRUE=output not by the line but by the MCU */
+
   boolean buffered_image;	/* TRUE=multiple output passes */
   boolean raw_data_out;		/* TRUE=downsampled data wanted */
 
@@ -506,6 +508,7 @@ struct jpeg_decompress_struct {
    */
 
   JDIMENSION output_width;	/* scaled image width */
+  JDIMENSION output_unit_width; /* output width by one jpeg_read_scanlines */
   JDIMENSION output_height;	/* scaled image height */
   int out_color_components;	/* # of color components in out_color_space */
   int output_components;	/* # of color components returned */

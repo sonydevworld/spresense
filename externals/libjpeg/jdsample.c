@@ -74,7 +74,14 @@ start_pass_upsample (j_decompress_ptr cinfo)
   /* Mark the conversion buffer empty */
   upsample->next_row_out = cinfo->max_v_samp_factor;
   /* Initialize total-height counter for detecting bottom of image */
-  upsample->rows_to_go = cinfo->output_height;
+  if (cinfo->mcu_out)
+    {
+      upsample->rows_to_go = cinfo->output_height * cinfo->MCUs_per_row;
+    }
+  else
+    {
+      upsample->rows_to_go = cinfo->output_height;
+    }
 }
 
 
@@ -97,7 +104,6 @@ sep_upsample (j_decompress_ptr cinfo,
   int ci;
   jpeg_component_info * compptr;
   JDIMENSION num_rows;
-
   /* Fill the conversion buffer, if it's empty */
   if (upsample->next_row_out >= cinfo->max_v_samp_factor) {
     for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;

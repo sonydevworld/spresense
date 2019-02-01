@@ -157,7 +157,10 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
 
   if (cinfo->global_state != DSTATE_SCANNING)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
-  if (cinfo->output_scanline >= cinfo->output_height) {
+  if ((cinfo->mcu_out &&
+       (cinfo->output_scanline >= cinfo->output_height*cinfo->MCUs_per_row)) ||
+      (!cinfo->mcu_out &&
+       (cinfo->output_scanline >= cinfo->output_height))) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;
   }

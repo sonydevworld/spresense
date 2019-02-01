@@ -369,7 +369,7 @@ typedef enum { FALSE = 0, TRUE = 1 } boolean;
 #define D_ARITH_CODING_SUPPORTED    /* Arithmetic coding back end? */
 #define D_MULTISCAN_FILES_SUPPORTED /* Multiple-scan JPEG files? */
 #define D_PROGRESSIVE_SUPPORTED	    /* Progressive JPEG? (Requires MULTISCAN)*/
-#undef  IDCT_SCALING_SUPPORTED	    /* Output rescaling via IDCT? (Requires DCT_ISLOW)*/
+#define IDCT_SCALING_SUPPORTED	    /* Output rescaling via IDCT? (Requires DCT_ISLOW)*/
 #define SAVE_MARKERS_SUPPORTED	    /* jpeg_save_markers() needed? */
 #define BLOCK_SMOOTHING_SUPPORTED   /* Block smoothing? (Progressive only) */
 #define UPSAMPLE_SCALING_SUPPORTED  /* Output rescaling at upsample stage? */

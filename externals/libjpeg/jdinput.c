@@ -190,7 +190,6 @@ jpeg_core_output_dimensions (j_decompress_ptr cinfo)
     compptr->DCT_h_scaled_size = cinfo->min_DCT_h_scaled_size;
     compptr->DCT_v_scaled_size = cinfo->min_DCT_v_scaled_size;
   }
-
 #else /* !IDCT_SCALING_SUPPORTED */
 
   /* Hardwire it to "no scaling" */
@@ -424,7 +423,7 @@ per_scan_setup (j_decompress_ptr cinfo)
     if (cinfo->comps_in_scan <= 0 || cinfo->comps_in_scan > MAX_COMPS_IN_SCAN)
       ERREXIT2(cinfo, JERR_COMPONENT_COUNT, cinfo->comps_in_scan,
 	       MAX_COMPS_IN_SCAN);
-    
+
     /* Overall image size in MCUs */
     cinfo->MCUs_per_row = (JDIMENSION)
       jdiv_round_up((long) cinfo->image_width,
@@ -434,7 +433,7 @@ per_scan_setup (j_decompress_ptr cinfo)
 		    (long) (cinfo->max_v_samp_factor * cinfo->block_size));
     
     cinfo->blocks_in_MCU = 0;
-    
+
     for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
       compptr = cinfo->cur_comp_info[ci];
       /* Sampling factors give # of blocks of component in each MCU */
@@ -457,7 +456,12 @@ per_scan_setup (j_decompress_ptr cinfo)
 	cinfo->MCU_membership[cinfo->blocks_in_MCU++] = ci;
       }
     }
-    
+  }
+
+  if (cinfo->mcu_out) {
+    cinfo->output_unit_width = cinfo->output_width/cinfo->MCUs_per_row;
+  } else {
+    cinfo->output_unit_width = cinfo->output_width;
   }
 }
 
