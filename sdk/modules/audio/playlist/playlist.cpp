@@ -47,6 +47,13 @@
 /*--------------------------------------------------------------------------*/
 bool Playlist::init(const char *playlist_path)
 {
+  /* Check argument */
+
+  if (playlist_path == NULL)
+    {
+      return false;
+    }
+
   /* Set playlist file path */
 
   snprintf(m_playlist_path, sizeof(m_playlist_path), "%s", playlist_path);
@@ -70,6 +77,13 @@ bool Playlist::init(const char *playlist_path)
 bool Playlist::open(FAR const char *mode)
 {
   char absolute_path[FileNameMaxLength];
+
+  /* Check argument */
+
+  if (mode == NULL)
+    {
+      return false;
+    }
 
   snprintf(absolute_path,
            sizeof(absolute_path),
@@ -133,6 +147,13 @@ bool Playlist::setRepeatMode(RepeatMode repeat_mode)
 /*--------------------------------------------------------------------------*/
 bool Playlist::select(ListType type, FAR const char *key_str)
 {
+  /* Check argument */
+
+  if (key_str == NULL)
+    {
+      return false;
+    }
+
   this->m_list_type = type;
   strncpy(this->m_list_key, key_str, sizeof(this->m_list_key));
 
@@ -154,6 +175,13 @@ bool Playlist::select(ListType type, FAR const char *key_str)
 /*--------------------------------------------------------------------------*/
 bool Playlist::getNextTrack(FAR Track *track)
 {
+  /* Check argument */
+
+  if (track == NULL)
+    {
+      return false;
+    }
+
   if (this->m_alias_list.empty())
     {
       _err("no playlist.\n");
@@ -215,6 +243,13 @@ bool Playlist::getNextTrack(FAR Track *track)
 /*--------------------------------------------------------------------------*/
 bool Playlist::getPrevTrack(Track *track)
 {
+  /* Check argument */
+
+  if (track == NULL)
+    {
+      return false;
+    }
+
   if (this->m_alias_list.empty())
     {
       _err("no playlist.\n");
@@ -293,6 +328,13 @@ bool Playlist::restart(void)
 /*--------------------------------------------------------------------------*/
 bool Playlist::updatePlaylist(ListType type, FAR const char *key_str)
 {
+  /* Check argument */
+
+  if (key_str == NULL)
+    {
+      return false;
+    }
+
   if (type == ListTypeUser)
     {
       _err("User define list cannnot not be updated automatically.\n");
@@ -376,6 +418,13 @@ bool Playlist::addTrack(FAR const char *key_str, int track_no)
   uint32_t seek_offset = sizeof(data) * track_no;
   int      read_size = 0;
 
+  /* Check argument */
+
+  if (key_str == NULL)
+    {
+      return false;
+    }
+
   /* Open AllList and read data. */
 
   this->getFileName(ListTypeAllTrack, "", file_name, sizeof(file_name));
@@ -434,6 +483,13 @@ bool Playlist::addTrack(FAR const char *key_str, int track_no)
 bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
 {
   _info("remove track from [%s : pos %d]\n", key_str, remove_pos);
+
+  /* Check argument */
+
+  if (key_str == NULL)
+    {
+      return false;
+    }
 
   char file_name_org[FileNameMaxLength];
   this->getFileName(ListTypeUser,
@@ -494,6 +550,13 @@ bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
 /*--------------------------------------------------------------------------*/
 bool Playlist::updateTrackDb(const char *audiofile_root_path)
 {
+  /* Check argument */
+
+  if (audiofile_root_path == NULL)
+    {
+      return false;
+    }
+
   /* Reopen track database with write mode. */
 
   this->close();
@@ -542,6 +605,11 @@ bool Playlist::updateTrackDb(const char *audiofile_root_path)
               codec = strtok(dir_ent->d_name, ".");
               codec = strtok(NULL, ".");
 
+              if (codec == NULL)
+                {
+                  _err("There was no delimiter.\n");
+                  break;
+                }
               snprintf(line, sizeof(line),
                        "%s,unknown artist,unknown album,2,16,44100,%s,0\r\n",
                        fname,
@@ -632,6 +700,13 @@ bool Playlist::deleteAll(void)
 /*--------------------------------------------------------------------------*/
 bool Playlist::deleteOne(ListType type, FAR const char *key_str)
 {
+  /* Check argument */
+
+  if (key_str == NULL)
+    {
+      return false;
+    }
+
   if (type == ListTypeAllTrack)
     {
       _err(" List type All cannnot be deleted.\n");
@@ -656,6 +731,14 @@ bool Playlist::isTargetTrack(ListType       type,
 {
   bool rtcd;
   int  cmp_rst;
+
+  /* Check arguments */
+
+  if (key_str == NULL || track == NULL)
+    {
+      return false;
+    }
+
   switch (type)
     {
       case ListTypeAllTrack:
@@ -761,6 +844,13 @@ bool Playlist::readLine(FAR char *line, uint32_t line_size)
       return false;
     }
 
+  /* Check argument */
+
+  if (line == NULL)
+    {
+      return false;
+    }
+
   FAR char *tmp = this->m_line_buffer;
   int read_size;
   int idx;
@@ -816,6 +906,13 @@ bool Playlist::parseTrackInfo(FAR Track *track,
                               FAR char  *line,
                               uint32_t  line_size)
 {
+  /* Check arguments */
+
+  if (track == NULL || line == NULL)
+    {
+      return false;
+    }
+
   memset(track, 0, sizeof(Track));
 
   /* Make terminate of string to use strtok(). */
@@ -830,15 +927,30 @@ bool Playlist::parseTrackInfo(FAR Track *track,
 
   /* Get author. */
 
-  strncpy(track->author, strtok(NULL, ","), sizeof(track->author) - 1);
+  FAR char *tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  strncpy(track->author, tp, sizeof(track->author) - 1);
 
   /* Get album. */
 
-  strncpy(track->album, strtok(NULL, ","), sizeof(track->album) - 1);
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  strncpy(track->album, tp, sizeof(track->album) - 1);
 
   /* Get channel number. */
 
-  int ch_num = atoi(strtok(NULL, ","));
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  int ch_num = atoi(tp);
   if (ch_num == 1)
     {
       track->channel_number = AS_CHANNEL_MONO;
@@ -854,7 +966,12 @@ bool Playlist::parseTrackInfo(FAR Track *track,
 
   /* Get bit length. */
 
-  int length = atoi(strtok(NULL, ","));
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  int length = atoi(tp);
   if (length == 16)
     {
       track->bit_length = AS_BITLENGTH_16;
@@ -870,7 +987,12 @@ bool Playlist::parseTrackInfo(FAR Track *track,
 
   /* Get sampling rate. */
 
-  int rate = atoi(strtok(NULL, ","));
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  int rate = atoi(tp);
   if (rate == 0)
     {
       track->sampling_rate = AS_SAMPLINGRATE_AUTO;
@@ -926,8 +1048,13 @@ bool Playlist::parseTrackInfo(FAR Track *track,
 
   /* Get codec type. */
 
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
   char codec[16] = { '\0' };
-  strncpy(codec, strtok(NULL, ","), sizeof(codec) - 1);
+  strncpy(codec, tp, sizeof(codec) - 1);
   if ((strncmp(codec, "wav", sizeof(codec)) == 0) ||
       (strncmp(codec, "WAV", sizeof(codec)) == 0))
     {
@@ -955,7 +1082,12 @@ bool Playlist::parseTrackInfo(FAR Track *track,
 
   /* Get played Info. */
 
-  int played_flag = atoi(strtok(NULL, ","));
+  tp = strtok(NULL, ",");
+  if (tp == NULL)
+    {
+      return false;
+    }
+  int played_flag = atoi(tp);
   if (played_flag == 1)
     {
       track->is_played = true;
@@ -979,6 +1111,13 @@ bool Playlist::getFileName(ListType       type,
                            uint8_t        max_length)
 {
   const char prefix[] = "alias_list_";
+
+  /* Check arguments */
+
+  if (key_str == NULL || file_name == NULL)
+    {
+      return false;
+    }
 
   switch (type)
     {
