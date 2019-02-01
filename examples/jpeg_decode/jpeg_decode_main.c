@@ -90,6 +90,7 @@
 #define APP_BYTES_PER_PIXEL 2
 
 #define APP_QVGA_WIDTH    320
+#define APP_QVGA_HEIGHT   240
 
 /* For output to Spresense LCD */
 
@@ -329,7 +330,7 @@ static void put_scanline_someplace(JSAMPROW buffer, int row_stride)
 #  ifdef CONFIG_IMAGEPROC
   imageproc_convert_yuv2rgb((void *)buffer,
                             row_stride/2, /* output image width = row_stride/2
-                                           * This 2 means 2bytes/pixel. 
+                                           * This 2 means 2bytes/pixel.
                                            */
                             1);
 #  else
@@ -338,7 +339,17 @@ static void put_scanline_someplace(JSAMPROW buffer, int row_stride)
 
   /* Diplay RGB565 */
 
-  nximage_image(g_jpeg_decode_nximage.hbkgd, buffer);
+  if (cinfo.mcu_out)
+    {
+      nximage_image(g_jpeg_decode_nximage.hbkgd, buffer,
+                    8*cinfo.scale_num/cinfo.scale_denom,
+                    16*cinfo.scale_num/cinfo.scale_denom);
+    }
+  else
+    {
+      nximage_image(g_jpeg_decode_nximage.hbkgd, buffer,
+                    APP_QVGA_HEIGHT, APP_QVGA_WIDTH);
+    }
 #else
   /* Save to file */
 
@@ -387,11 +398,14 @@ int jpeg_decode_main(int argc, char *argv[])
   /* Because Spresense do not support setjmp/longjmp,
    *  use default error handling function for now.
    */
-
   struct jpeg_error_mgr jerr;
   /* More stuff */
+
   JSAMPARRAY buffer;            /* Output row buffer */
   int row_stride;               /* physical row width in output buffer */
+  int num_of_scan;              /* Number of times that
+                                 * jpeg_read_scanlines should be called
+                                 */
 
   /* Command parameter mean input filename in this example. */
 
@@ -460,6 +474,44 @@ int jpeg_decode_main(int argc, char *argv[])
   cinfo.scale_num = APP_QVGA_WIDTH;
   cinfo.scale_denom = cinfo.image_width;
 
+  /* The member "boolean mcu_out" are specific for Spresense.
+   * This setting means that JPEG Decoder output by the MCU.
+   * This setting is useful to save memory.
+   */
+
+  cinfo.mcu_out = TRUE;
+
+  /*
+   * [examples of decoded data order in LINE UNIT(libjpeg original) case]
+   *  (correspond to mcu_out = FALSE)
+   * +--MCU1--+   +--MCU2--+   +--MCU3--+                +--MCU20-+
+   * |(1)-----|---|--------|---|--------|----------------|------->|
+   * |(2)-----|---|--------|---|--------|----------------|------->|
+   * |  ...   |   |        |   |        |                |        |
+   * |(8)-----|---|--------|---|--------|----------------|------->|
+   * +--------+   +--------+   +--------+                +--------+
+   * +--MCU21-+   +--MCU22-+   +--MCU23-+                +--MCU40-+
+   * |(9)-----|---|--------|---|--------|----------------|------->|
+   * |(10)----|---|--------|---|--------|----------------|------->|
+   * |  ...   |   |        |   |        |                |        |
+   * |(16)----|---|--------|---|--------|----------------|------->|
+   * +--------+   +--------+   +--------+                +--------+
+   *
+   * [examples of decoded data order in MCU UNIT case]
+   * +--MCU1--+   +--MCU2--+   +--MCU3--+                +--MCU20-+
+   * |(1)---->|   |(9)---->|   |        |     ...        |(153)-->|
+   * |(2)---->|   | ...    |   |        |                |(154)-->|
+   * |  ...   |   |        |   |        |                |  ...   |
+   * |(8)---->|   |        |   |        |                |(160)-->|
+   * +--------+   +--------+   +--------+                +--------+
+   * +--MCU21-+   +--MCU22-+   +--MCU23-+                +--MCU40-+
+   * |(161)-->|   |(169)-->|   |        |     ...        |(313)-->|
+   * |(162)-->|   | ...    |   |        |                |(314)-->|
+   * |  ...   |   |        |   |        |                |  ...   |
+   * |(168)-->|   |        |   |        |                |(320)-->|
+   * +--------+   +--------+   +--------+                +--------+
+   */
+
   /* Step 5: Start decompressor */
 
   (void) jpeg_start_decompress(&cinfo);
@@ -473,8 +525,18 @@ int jpeg_decode_main(int argc, char *argv[])
    * if we asked for color quantization.
    * In this example, we need to make an output work buffer of the right size.
    */
+
   /* JSAMPLEs per row in output buffer */
-  row_stride = cinfo.output_width * 2; /* YUV4:2:2 size is 2bytes/pixel */
+
+  if (cinfo.mcu_out)
+    {
+      row_stride = (cinfo.output_width/cinfo.MCUs_per_row) * 2;
+    }
+  else
+    {
+      row_stride = cinfo.output_width * 2;
+    }
+
 
   /* Make a one-row-high sample array that will go away when done with image */
 
@@ -485,10 +547,16 @@ int jpeg_decode_main(int argc, char *argv[])
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
 
-  /* Here we use the library's state variable cinfo.output_scanline as the
-   * loop counter, so that we don't have to keep track ourselves.
-   */
-  while (cinfo.output_scanline < cinfo.output_height)
+  if (cinfo.mcu_out)
+    {
+      num_of_scan = cinfo.MCUs_per_row * cinfo.output_height;
+    }
+  else
+    {
+      num_of_scan = cinfo.output_height;
+    }
+
+  while (num_of_scan--)
     { 
       /* jpeg_read_scanlines expects an array of pointers to scanlines.
        * Here the array is only one element long, but you could ask for

@@ -215,39 +215,51 @@ static void nximage_kbdin(NXWINDOW hwnd, uint8_t nch, FAR const uint8_t *ch,
  *   Put the NuttX logo in the center of the display.
  *
  ****************************************************************************/
-
-void nximage_image(NXWINDOW hwnd, FAR const void *image)
+void nximage_image(NXWINDOW hwnd, FAR const void *image,
+                   int row_unit, int col_unit)
 {
   FAR struct nxgl_point_s origin;
   FAR struct nxgl_rect_s dest;
   FAR const void *src[CONFIG_NX_NPLANES];
+  static int current_col = 0;
+  static int current_row = 0;
   int ret;
-  static int current_row = 0; 
 
-  origin.x = 0;
+  origin.x = current_col;
   origin.y = current_row;
 
   /* Set up the destination to whole LCD screen */
 
-  dest.pt1.x = 0;
+  dest.pt1.x = current_col;
   dest.pt1.y = current_row;
-  dest.pt2.x = g_jpeg_decode_nximage.xres - 1;
+  dest.pt2.x = current_col + col_unit - 1;
   dest.pt2.y = current_row;
 
   src[0] = image;
 
   ret = nx_bitmap((NXWINDOW)hwnd, &dest, src, &origin,
-                  g_jpeg_decode_nximage.xres * sizeof(nxgl_mxpixel_t));
+                  col_unit * sizeof(nxgl_mxpixel_t));
   if (ret < 0)
     {
       printf("nximage_image: nx_bitmapwindow failed: %d\n", errno);
     }
 
   current_row++;
-  if (current_row > g_jpeg_decode_nximage.yres - 1)
+  if (current_row%row_unit == 0)
     {
-      /* If last line is written, return to top. */
+      current_col += col_unit;
+      if (current_col < g_jpeg_decode_nximage.xres)
+        {
+          current_row -= row_unit;
+        }
+      else
+        {
+          current_col = 0;
+        }
+    }
 
+  if (current_row >= g_jpeg_decode_nximage.yres)
+    {
       current_row = 0;
     }
 }

@@ -93,6 +93,6 @@ extern const struct nx_callback_s g_jpeg_decode_nximagecb;
 
 /* Background window interfaces */
 
-void nximage_image(NXWINDOW hwnd, FAR const void *image);
+void nximage_image(NXWINDOW hwnd, FAR const void *image, int ROW_UNIT, int COL_UNIT);
 
 #endif /* __EXAMPLES_JPEG_DECODE_H */
