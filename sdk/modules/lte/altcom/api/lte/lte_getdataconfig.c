@@ -46,6 +46,8 @@
 #include "apicmd_getdataconfig.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -56,14 +58,34 @@
 #define DATA_TYPE_MAX          LTE_DATA_TYPE_IMS
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern get_dataconfig_cb_t g_getdataconfig_callback;
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: getdataconfig_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing get data connection
+ *   configuration.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getdataconfig_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("getdataconfig_status_chg_cb(%d -> %d)\n",
+        new_stat, old_stat);
+      altcomcallbacks_unreg_cb(APICMDID_GET_DATACONFIG);
+    }
+}
 
 /****************************************************************************
  * Name: getdataconfig_job
@@ -91,7 +113,8 @@ static void getdataconfig_job(FAR void *arg)
 
   data = (FAR struct apicmd_cmddat_getdataconfigres_s *)arg;
 
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_getdataconfig_callback, callback);
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_DATACONFIG,
+    (void **)&callback);
 
   if ((ret == 0) && (callback))
     {
@@ -114,6 +137,10 @@ static void getdataconfig_job(FAR void *arg)
    * Therefore, the receive buffer needs to be released here. */
 
   altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb((void *)getdataconfig_status_chg_cb);
 }
 
 /****************************************************************************
@@ -151,28 +178,35 @@ int32_t lte_get_dataconfig(uint32_t data_type, get_dataconfig_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
-    }
-  else if (data_type < DATA_TYPE_MIN || DATA_TYPE_MAX < data_type)
+  if (data_type < DATA_TYPE_MIN || DATA_TYPE_MAX < data_type)
     {
       DBGIF_LOG1_ERROR("Unsupport data type. type:%d\n", data_type);
       return -EINVAL;
     }
-  else
-    {
-      /* Register API callback */
 
-      ALTCOM_REG_CALLBACK(ret, g_getdataconfig_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-          return ret;
-        }
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_DATACONFIG);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb((void *)getdataconfig_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_GET_DATACONFIG);
+      return ret;
     }
 
   /* Allocate API command buffer to send */
@@ -209,7 +243,8 @@ int32_t lte_get_dataconfig(uint32_t data_type, get_dataconfig_cb_t callback)
     {
       /* Clear registered callback */
 
-      ALTCOM_CLR_CALLBACK(g_getdataconfig_callback);
+      altcomcallbacks_unreg_cb(APICMDID_GET_DATACONFIG);
+      altcomstatus_unreg_statchgcb((void *)getdataconfig_status_chg_cb);
     }
   else
     {

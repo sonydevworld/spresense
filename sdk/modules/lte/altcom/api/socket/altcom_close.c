@@ -164,14 +164,17 @@ errout_with_cmdfree:
 
 int altcom_close(int sockfd)
 {
+  int32_t                    ret;
   int32_t                    result;
   FAR struct altcom_socket_s *fsock;
   struct close_req_s         req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_EPERM);
+      altcom_seterrno(-ret);
       return -1;
     }
 

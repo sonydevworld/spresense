@@ -49,6 +49,8 @@
 #include "apicmd_getce.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -57,14 +59,33 @@
 #define GETCE_DATA_LEN (0)
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern get_ce_cb_t g_getce_callback;
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: getce_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing get CE.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getce_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("getce_status_chg_cb(%d -> %d)\n",
+        new_stat, old_stat);
+      altcomcallbacks_unreg_cb(APICMDID_GET_CE);
+    }
+}
 
 /****************************************************************************
  * Name: getce_job
@@ -89,7 +110,9 @@ static void getce_job(FAR void *arg)
   get_ce_cb_t                         callback;
 
   data = (FAR struct apicmd_cmddat_getceres_s *)arg;
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_getce_callback, callback);
+
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_CE,
+    (void **)&callback);
 
   if ((ret == 0) && (callback))
     {
@@ -148,6 +171,10 @@ static void getce_job(FAR void *arg)
    * Therefore, the receive buffer needs to be released here. */
 
   altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb((void *)getce_status_chg_cb);
 }
 
 /****************************************************************************
@@ -183,57 +210,60 @@ int32_t lte_get_ce(get_ce_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
+  /* Check Lte library status */
 
-  if (!altcom_isinit())
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_CE);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb((void *)getce_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_GET_CE);
+      return ret;
+    }
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_CE,
+    GETCE_DATA_LEN);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
     }
   else
     {
-      /* Register API callback */
+      /* Send API command to modem */
 
-      ALTCOM_REG_CALLBACK(ret, g_getce_callback, callback);
-      if (ret < 0)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-        }
+      ret = altcom_send_and_free(cmdbuff);
     }
 
-  /* Accept the API */
+  /* If fail, there is no opportunity to execute the callback,
+   * so clear it here. */
 
-  if (ret == 0)
+  if (ret < 0)
     {
-      /* Allocate API command buffer to send */
+      /* Clear registered callback */
 
-      cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_CE,
-        GETCE_DATA_LEN);
-      if (!cmdbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          ret = -ENOMEM;
-        }
-      else
-        {
-          /* Send API command to modem */
-
-          ret = altcom_send_and_free(cmdbuff);
-        }
-
-      /* If fail, there is no opportunity to execute the callback,
-       * so clear it here. */
-
-      if (ret < 0)
-        {
-          /* Clear registered callback */
-
-          ALTCOM_CLR_CALLBACK(g_getce_callback);
-        }
-      else
-        {
-          ret = 0;
-        }
+      altcomcallbacks_unreg_cb(APICMDID_GET_CE);
+      altcomstatus_unreg_statchgcb((void *)getce_status_chg_cb);
+    }
+  else
+    {
+      ret = 0;
     }
 
   return ret;

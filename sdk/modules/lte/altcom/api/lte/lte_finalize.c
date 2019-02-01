@@ -70,34 +70,33 @@
 int32_t lte_finalize(void)
 {
   int32_t ret;
+  int32_t status;
 
-  /* Set not initialized status */
+  status = altcom_get_status();
+  if (status == ALTCOM_STATUS_UNINITIALIZED)
+    {
+      return -EALREADY;
+    }
+  /* Power off the modem if need */
 
-  ret = altcom_check_finalized_and_set();
+  lte_power_off();
+
+  ret = director_destruct(&g_ltebuilder);
   if (ret < 0)
     {
-      DBGIF_LOG_ERROR("Already finalized.\n");
+      DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
     }
   else
     {
-      ret = director_destruct(&g_ltebuilder);
+      ret = altcomcallbacks_fin();
       if (ret < 0)
         {
-          DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
-          altcom_set_initialized();
+          DBGIF_LOG1_ERROR("callbacks_uninitialize() error. %d", ret);
+          return ret;
         }
-      else
-        {
-          ret = altcomcallbacks_fin();
-          if (ret < 0)
-            {
-              DBGIF_LOG1_ERROR("callbacks_uninitialize() error. %d", ret);
-              return ret;
-            }
 
-          altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
-          ret = 0;
-        }
+      altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
+      ret = 0;
     }
 
   return ret;

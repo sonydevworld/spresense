@@ -203,10 +203,12 @@ int altcom_sendto(int sockfd, const void *buf, size_t len, int flags,
   struct sendto_req_s         req;
   FAR struct altcom_timeval   *sendtimeo;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

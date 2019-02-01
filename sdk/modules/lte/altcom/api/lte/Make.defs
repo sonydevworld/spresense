@@ -35,7 +35,6 @@
 
 CSRCS += apicmdhdlr_errind.c
 CSRCS += lte_attach_net.c
-CSRCS += lte_callback.c
 CSRCS += lte_dataoff.c
 CSRCS += lte_dataon.c
 CSRCS += lte_detach_net.c

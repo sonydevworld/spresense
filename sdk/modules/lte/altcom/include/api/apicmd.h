@@ -106,6 +106,9 @@
 #define APICMDID_REPORT_NETINFO         (0x002E)
 #define APICMDID_REPORT_RESTART         (0x002F)
 #define APICMDID_ERRINFO                (0x0030)
+#define APICMDID_SET_REP_EVT_LTIME      (0x0031)
+#define APICMDID_SET_REP_EVT_SIMSTATE   (0x0032)
+#define APICMDID_POWER_OFF              (0x0033)
 
 /* SOCKET API commands */
 

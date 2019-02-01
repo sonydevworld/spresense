@@ -54,6 +54,7 @@
 #include "apicmd_power.h"
 #include "apicmdhdlrbs.h"
 #include "altcombs.h"
+#include "altcom_callbacks.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -69,23 +70,36 @@
 #define POWERON_DATA_LEN     (0)
 
 /****************************************************************************
- * Private Data
- ****************************************************************************/
-
-extern power_control_cb_t g_lte_power_callback;
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern void lte_callback_init(void);
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: power_callback_job
+ * Name: poweron_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing Power on.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void poweron_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat <= ALTCOM_STATUS_INITIALIZED)
+    {
+      DBGIF_LOG2_INFO("poweron_status_chg_cb(%d -> %d)\n",
+        new_stat, old_stat);
+      altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
+    }
+}
+
+/****************************************************************************
+ * Name: restart_callback_job
  *
  * Description:
  *   This function is an API callback for power.
@@ -123,15 +137,15 @@ static void restart_callback_job(FAR void *arg)
 
   if (0 > ret)
     {
-      ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
-
+      ret = altcomcallbacks_get_unreg_cb(APICMDID_POWER_ON,
+                                         (void **)&callback);
       if ((ret == 0) && (callback))
         {
           callback(LTE_RESULT_ERROR);
         }
       else
         {
-          DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+          DBGIF_LOG_WARNING("callback is NULL.\n");
         }
 
       lte_power_off();
@@ -184,10 +198,10 @@ static void restart_callback(uint32_t state)
 }
 
 /****************************************************************************
- * Name: power_callback_job
+ * Name: poweroff_callback_job
  *
  * Description:
- *   This function is an API callback for power.
+ *   This function is an API callback for power off.
  *
  * Input Parameters:
  *  arg    Pointer to input argment.
@@ -197,17 +211,16 @@ static void restart_callback(uint32_t state)
  *
  ****************************************************************************/
 
-static void power_callback_job(FAR void *arg)
+static void poweroff_callback_job(FAR void *arg)
 {
   int32_t            ret;
   power_control_cb_t callback = NULL;
 
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
-
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_POWER_OFF,
+                                     (void **)&callback);
   if ((0 == ret) && (callback))
     {
       callback(LTE_RESULT_OK);
-      lte_callback_init();
     }
   else
     {
@@ -315,10 +328,10 @@ static void poweron_job(FAR void *arg)
       (FAR struct apicmd_cmddat_poweronres_s *)arg;
   power_control_cb_t                    callback;
 
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_lte_power_callback, callback);
-
   altcom_set_status(ALTCOM_STATUS_POWER_ON);
 
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_POWER_ON,
+                                     (void **)&callback);
   if ((ret == 0) && (callback))
     {
       result = (int32_t)data->result;
@@ -327,7 +340,7 @@ static void poweron_job(FAR void *arg)
     }
   else
     {
-      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+      DBGIF_LOG_WARNING("callback is NULL.\n");
     }
 
   /* Call report restart callback */
@@ -461,7 +474,8 @@ int32_t lte_power_off(void)
 
 int32_t lte_power_control(bool on, power_control_cb_t callback)
 {
-  int32_t     ret;
+  int32_t ret;
+  int32_t state = altcom_get_status();
 
   /* Return error if callback is NULL */
 
@@ -471,49 +485,68 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
       return -EINVAL;
     }
 
-  /* Register API callback */
-
-  ALTCOM_REG_CALLBACK(ret, g_lte_power_callback, callback);
-  if (0 > ret)
+  if (state == ALTCOM_STATUS_UNINITIALIZED)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EOPNOTSUPP;
     }
 
-  /* Accept the API */
+ if (LTE_POWERON == on)
+   {
+      /* Register API callback */
 
-  if (0 == ret)
-    {
-      if (LTE_POWERON == on)
+      ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_POWER_ON);
+      if (0 > ret)
         {
-          /* Power on the modem */
-
-          ret = lte_power_on();
-
-          /* If fail, there is no opportunity to execute the callback,
-           * so clear it here. */
-
-          if (0 > ret)
-            {
-              /* Clear registered callback */
-
-              ALTCOM_CLR_CALLBACK(g_lte_power_callback);
-              lte_power_off();
-              return ret;
-            }
+          DBGIF_LOG_ERROR("Currently API is busy.\n");
+          return -EINPROGRESS;
         }
-      else
+
+      ret = altcomstatus_reg_statchgcb((void *)poweron_status_chg_cb);
+      if (0 > ret)
         {
-          /* Power off the modem */
-
-          ret = lte_power_off();
-
-          /* Call the API callback function in the context of worker thread */
-
-          ret = altcom_runjob(WRKRID_API_CALLBACK_THREAD,
-                               power_callback_job, NULL);
-          DBGIF_ASSERT(0 == ret, "Failed to job to worker\n");
+          DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+          altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
+          return ret;
         }
-    }
+
+     /* Power on the modem */
+
+     ret = lte_power_on();
+
+     /* If fail, there is no opportunity to execute the callback,
+      * so clear it here. */
+
+     if (0 > ret)
+       {
+         /* Clear registered callback */
+
+         altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
+         altcomstatus_unreg_statchgcb((void *)poweron_status_chg_cb);
+         lte_power_off();
+         return ret;
+       }
+   }
+ else
+   {
+      /* Register API callback */
+
+      ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_POWER_OFF);
+      if (0 > ret)
+        {
+          DBGIF_LOG_ERROR("Currently API is busy.\n");
+          return -EINPROGRESS;
+        }
+
+     /* Power off the modem */
+
+     ret = lte_power_off();
+
+     /* Call the API callback function in the context of worker thread */
+
+     ret = altcom_runjob(WRKRID_API_CALLBACK_THREAD,
+                          poweroff_callback_job, NULL);
+     DBGIF_ASSERT(0 == ret, "Failed to job to worker\n");
+   }
 
   return ret;
 }

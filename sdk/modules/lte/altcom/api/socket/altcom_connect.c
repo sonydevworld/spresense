@@ -215,10 +215,12 @@ int altcom_connect(int sockfd, const struct altcom_sockaddr *addr,
   struct altcom_fd_set_s     writeset;
   struct connect_req_s       req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

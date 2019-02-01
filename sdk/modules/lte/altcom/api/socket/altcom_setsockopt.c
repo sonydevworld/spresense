@@ -105,10 +105,12 @@ int altcom_setsockopt(int sockfd, int level, int option, const void *value,
   FAR struct apicmd_setsockopt_s    *cmd = NULL;
   FAR struct apicmd_setsockoptres_s *res = NULL;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

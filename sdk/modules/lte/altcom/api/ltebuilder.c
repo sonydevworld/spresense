@@ -205,9 +205,6 @@ struct builder_if_s g_ltebuilder =
   .destroy = lte_destroy
 };
 
-extern int32_t modem_powerctrl(bool on);
-extern void    lte_callback_init(void);
-
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -565,8 +562,6 @@ static CODE int32_t lte_buildmain(FAR void *arg)
 {
   int32_t ret;
 
-  lte_callback_init();
-
   ret = bufferpool_initialize();
   if (ret < 0)
     {
@@ -637,8 +632,6 @@ errout:
 static CODE int32_t lte_destroy(void)
 {
   int32_t ret;
-
-  (void)modem_powerctrl(false);
 
 #ifdef CONFIG_NET
   stubsock_finalize();

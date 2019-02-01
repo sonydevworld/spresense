@@ -60,6 +60,12 @@
   (sizeof(struct apicmd_cmddat_set_repnetinfores_s))
 
 /****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static bool g_lte_setrepnetinfo_isproc = false;
+
+/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -107,19 +113,19 @@ static void repnetinfo_job(FAR void *arg)
   uint8_t                                i;
   uint8_t                                j;
   FAR struct apicmd_cmddat_rep_netinfo_s *data;
-  int32_t                                ret;
   netinfo_report_cb_t                    callback;
   lte_netinfo_t                          netinfo;
 
-  ret = altcomcallbacks_get_unreg_cb(APICMDID_REPORT_NETINFO, (void **)&callback);
-  data = (FAR struct apicmd_cmddat_rep_netinfo_s *)arg;
+  callback = altcomcallbacks_get_cb(APICMDID_REPORT_NETINFO);
 
-  if ((0 != ret) || (!callback))
+  if (!callback)
     {
       DBGIF_LOG_WARNING("When callback is null called report netstat.\n");
     }
   else
     {
+      data = (FAR struct apicmd_cmddat_rep_netinfo_s *)arg;
+
       /* Fill network infomation */
 
       netinfo.nw_stat = data->nw_stat;
@@ -200,6 +206,8 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
   uint16_t                                     resbufflen =
                                                SETREP_NETINFO_RES_DATA_LEN;
   uint16_t                                     reslen     = 0;
+  bool                                         reset_flag = false;
+  netinfo_report_cb_t                          callback;
 
   /* Check Lte library status */
 
@@ -209,11 +217,33 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
       return ret;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)repnetinfo_status_chg_cb);
-  if (0 > ret)
+  /* Check this process runnning. */
+
+  if (g_lte_setrepnetinfo_isproc)
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      return ret;
+      return -EBUSY;
+    }
+  g_lte_setrepnetinfo_isproc = true;
+
+  if (netinfo_callback)
+    {
+      /* Check callback is registered */
+
+      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
+      if (callback)
+        {
+          reset_flag = true;
+        }
+      else
+        {
+          ret = altcomstatus_reg_statchgcb((void *)repnetinfo_status_chg_cb);
+          if (0 > ret)
+            {
+              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+              g_lte_setrepnetinfo_isproc = false;
+              return ret;
+            }
+        }
     }
 
   /* Accept the API
@@ -224,6 +254,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
   if (!cmdbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      g_lte_setrepnetinfo_isproc = false;
       return -ENOMEM;
     }
   else
@@ -234,6 +265,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
         {
           DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
           altcom_free_cmd((FAR uint8_t *)cmdbuff);
+          g_lte_setrepnetinfo_isproc = false;
           return -ENOMEM;
         }
 
@@ -256,7 +288,11 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
         {
           if (netinfo_callback)
             {
-              altcomcallbacks_reg_cb((void *)netinfo_callback, APICMDID_REPORT_NETINFO);
+              if (!reset_flag)
+                {
+                  altcomcallbacks_reg_cb((void *)netinfo_callback,
+                                          APICMDID_REPORT_NETINFO);
+                }
             }
           else
             {
@@ -280,6 +316,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
 
   altcom_free_cmd((FAR uint8_t *)cmdbuff);
   (void)BUFFPOOL_FREE(resbuff);
+  g_lte_setrepnetinfo_isproc = false;
 
   return ret;
 }

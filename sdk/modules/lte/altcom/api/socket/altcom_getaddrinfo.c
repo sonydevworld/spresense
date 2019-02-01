@@ -300,12 +300,16 @@ int altcom_getaddrinfo(const char *nodename, const char *servname,
                        const struct altcom_addrinfo *hints,
                        struct altcom_addrinfo **res)
 {
-  int32_t result;
+  int32_t                  ret;
+  int32_t                  result;
   struct getaddrinfo_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
+      altcom_seterrno(-ret);
       return ALTCOM_EAI_FAIL;
     }
 

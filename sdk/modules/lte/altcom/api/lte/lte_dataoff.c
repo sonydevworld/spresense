@@ -46,6 +46,8 @@
 #include "apicmd_dataoff.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -54,20 +56,39 @@
 #define DATAOFF_DATA_LEN (sizeof(struct apicmd_cmddat_dataoff_s))
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern data_off_cb_t g_dataoff_callback;
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: attachnet_job
+ * Name: dataoff_status_chg_cb
  *
  * Description:
- *   This function is an API callback for data connect.
+ *   Notification status change in processing data off.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void dataoff_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("dataoff_status_chg_cb(%d -> %d)\n",
+        new_stat, old_stat);
+      altcomcallbacks_unreg_cb(APICMDID_DATAOFF);
+    }
+}
+
+/****************************************************************************
+ * Name: dataoff_job
+ *
+ * Description:
+ *   This function is an API callback for data off.
  *
  * Input Parameters:
  *  arg    Pointer to received event.
@@ -87,7 +108,8 @@ static void dataoff_job(FAR void *arg)
 
   data = (FAR struct apicmd_cmddat_dataoffres_s *)arg;
 
-  ALTCOM_GET_AND_CLR_CALLBACK(ret, g_dataoff_callback, callback);
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_DATAOFF,
+    (void **)&callback);
 
   if ((ret == 0) && (callback))
     {
@@ -127,6 +149,10 @@ static void dataoff_job(FAR void *arg)
    * Therefore, the receive buffer needs to be released here. */
 
   altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb((void *)dataoff_status_chg_cb);
 }
 
 /****************************************************************************
@@ -164,64 +190,68 @@ int32_t lte_data_off(uint8_t session_id, data_off_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      ret = -EPERM;
-    }
-  else if (LTE_SESSION_ID_MIN > session_id ||
-           LTE_SESSION_ID_MAX < session_id)
+  if (LTE_SESSION_ID_MIN > session_id ||
+      LTE_SESSION_ID_MAX < session_id)
     {
       DBGIF_LOG_ERROR("Invalid parameter.\n");
-      ret = -EINVAL;
+      return -EINVAL;
+    }
+
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_DATAOFF);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb((void *)dataoff_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_DATAOFF);
+      return ret;
+    }
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = (FAR struct apicmd_cmddat_dataoff_s *)
+    apicmdgw_cmd_allocbuff(APICMDID_DATAOFF, DATAOFF_DATA_LEN);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
     }
   else
     {
-      /* Register API callback */
+      /* Send API command to modem */
 
-      ALTCOM_REG_CALLBACK(ret, g_dataoff_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-        }
+      cmdbuff->sessionid = session_id;
+      ret = altcom_send_and_free((FAR uint8_t *) cmdbuff);
     }
 
-  /* Accept the API */
+  /* If fail, there is no opportunity to execute the callback,
+   * so clear it here. */
 
-  if (0 == ret)
+  if (0 > ret)
     {
-      /* Allocate API command buffer to send */
+      /* Clear registered callback */
 
-      cmdbuff = (FAR struct apicmd_cmddat_dataoff_s *)
-        apicmdgw_cmd_allocbuff(APICMDID_DATAOFF, DATAOFF_DATA_LEN);
-      if (!cmdbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          ret = -ENOMEM;
-        }
-      else
-        {
-          /* Send API command to modem */
-
-          cmdbuff->sessionid = session_id;
-          ret = altcom_send_and_free((FAR uint8_t *) cmdbuff);
-        }
-
-      /* If fail, there is no opportunity to execute the callback,
-       * so clear it here. */
-
-      if (0 > ret)
-        {
-          /* Clear registered callback */
-
-          ALTCOM_CLR_CALLBACK(g_dataoff_callback);
-        }
-      else
-        {
-          ret = 0;
-        }
+      altcomcallbacks_unreg_cb(APICMDID_DATAOFF);
+      altcomstatus_unreg_statchgcb((void *)dataoff_status_chg_cb);
+    }
+  else
+    {
+      ret = 0;
     }
 
   return ret;

@@ -348,13 +348,16 @@ int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
                                     altcom_fd_set *writeset,
                                     altcom_fd_set *exceptset)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -393,13 +396,16 @@ int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
 
 int altcom_select_cancel_request_send(int id)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -446,13 +452,17 @@ int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
                            altcom_fd_set *writeset,
                            altcom_fd_set *exceptset)
 {
+
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -500,13 +510,16 @@ int altcom_select_block(int maxfdp1, altcom_fd_set *readset,
                         altcom_fd_set *writeset, altcom_fd_set *exceptset,
                         struct altcom_timeval *timeout)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

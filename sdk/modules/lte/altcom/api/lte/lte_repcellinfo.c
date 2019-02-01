@@ -47,6 +47,8 @@
 #include "apicmd_repcellinfo.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -65,14 +67,33 @@
 static bool g_lte_setrepcellinfo_isproc = false;
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern cellinfo_report_cb_t g_cellinfo_callback;
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: repcellinfo_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing report cellinfo .
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repcellinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("repcellinfo_status_chg_cb(%d -> %d)\n",
+        new_stat, old_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_REP_CELLINFO);
+    }
+}
 
 /****************************************************************************
  * Name: check_arrydigitnum
@@ -123,66 +144,70 @@ static void repcellinfo_job(FAR void *arg)
 {
   FAR struct apicmd_cmddat_repcellinfo_s *data;
   lte_cellinfo_t                         *repdat = NULL;
+  cellinfo_report_cb_t                    callback;
 
-  if (!g_cellinfo_callback)
+  callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
+  if (!callback)
     {
-      DBGIF_LOG_DEBUG("g_cellinfo_callback is not registered.\n");
-      return;
-    }
-
-  data = (FAR struct apicmd_cmddat_repcellinfo_s *)arg;
-
-  repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
-  if (!repdat)
-    {
-      DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+      DBGIF_LOG_WARNING("When callback is null called report cellinfo.\n");
     }
   else
     {
-      repdat->valid      = APICMD_REP_CELLINFO_ENABLE == data->enability ?
-                           LTE_VALID : LTE_INVALID;
-      if (repdat->valid)
+      data = (FAR struct apicmd_cmddat_repcellinfo_s *)arg;
+
+      repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
+      if (!repdat)
         {
-          repdat->phycell_id = ntohl(data->cell_id);
-          repdat->earfcn     = ntohl(data->earfcn);
-          memcpy(repdat->mcc, data->mcc, APICMD_SET_REPCELLINFO_MCC_DIGIT);
-          repdat->mnc_digit  = data->mnc_digit;
-          memcpy(repdat->mnc, data->mnc, data->mnc_digit);
-
-          if (repdat->phycell_id < APICMD_SET_REPCELLINFO_CELLID_MIN ||
-            APICMD_SET_REPCELLINFO_CELLID_MAX < repdat->phycell_id)
-            {
-              DBGIF_LOG1_ERROR("repdat->phycell_id error:%d\n", repdat->phycell_id);
-              repdat->valid = LTE_INVALID;
-            }
-          else if (repdat->earfcn < APICMD_SET_REPCELLINFO_EARFCN_MIN ||
-            APICMD_SET_REPCELLINFO_EARFCN_MAX < repdat->earfcn)
-            {
-              DBGIF_LOG1_ERROR("repdat->earfcn error:%d\n", repdat->earfcn);
-              repdat->valid = LTE_INVALID;
-            }
-          else if (!check_arrydigitnum(repdat->mcc,
-            APICMD_SET_REPCELLINFO_MCC_DIGIT))
-            {
-              DBGIF_LOG_ERROR("repdat->mcc error\n");
-              repdat->valid = LTE_INVALID;
-            }
-          else if (
-            repdat->mnc_digit < APICMD_SET_REPCELLINFO_MNC_DIGIT_MIN ||
-            APICMD_SET_REPCELLINFO_MNC_DIGIT_MAX < repdat->mnc_digit)
-            {
-              DBGIF_LOG1_ERROR("repdat->mnc_digit error:%d\n", repdat->mnc_digit);
-              repdat->valid = LTE_INVALID;
-            }
-          else if (!check_arrydigitnum(repdat->mnc, repdat->mnc_digit))
-            {
-              DBGIF_LOG_ERROR("repdat->mnc error\n");
-              repdat->valid = LTE_INVALID;
-            }
+          DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
         }
+      else
+        {
+          repdat->valid = APICMD_REP_CELLINFO_ENABLE == data->enability ?
+                          LTE_VALID : LTE_INVALID;
+          if (repdat->valid)
+            {
+              repdat->phycell_id = ntohl(data->cell_id);
+              repdat->earfcn     = ntohl(data->earfcn);
+              memcpy(repdat->mcc, data->mcc,
+                     APICMD_SET_REPCELLINFO_MCC_DIGIT);
+              repdat->mnc_digit  = data->mnc_digit;
+              memcpy(repdat->mnc, data->mnc, data->mnc_digit);
 
-      g_cellinfo_callback(repdat);
-      (void)BUFFPOOL_FREE((FAR void *)repdat);
+              if (repdat->phycell_id < APICMD_SET_REPCELLINFO_CELLID_MIN ||
+                APICMD_SET_REPCELLINFO_CELLID_MAX < repdat->phycell_id)
+                {
+                  DBGIF_LOG1_ERROR("repdat->phycell_id error:%d\n", repdat->phycell_id);
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (repdat->earfcn < APICMD_SET_REPCELLINFO_EARFCN_MIN ||
+                APICMD_SET_REPCELLINFO_EARFCN_MAX < repdat->earfcn)
+                {
+                  DBGIF_LOG1_ERROR("repdat->earfcn error:%d\n", repdat->earfcn);
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (!check_arrydigitnum(repdat->mcc,
+                APICMD_SET_REPCELLINFO_MCC_DIGIT))
+                {
+                  DBGIF_LOG_ERROR("repdat->mcc error\n");
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (
+                repdat->mnc_digit < APICMD_SET_REPCELLINFO_MNC_DIGIT_MIN ||
+                APICMD_SET_REPCELLINFO_MNC_DIGIT_MAX < repdat->mnc_digit)
+                {
+                  DBGIF_LOG1_ERROR("repdat->mnc_digit error:%d\n", repdat->mnc_digit);
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (!check_arrydigitnum(repdat->mnc, repdat->mnc_digit))
+                {
+                  DBGIF_LOG_ERROR("repdat->mnc error\n");
+                  repdat->valid = LTE_INVALID;
+                }
+            }
+
+          callback(repdat);
+          (void)BUFFPOOL_FREE((FAR void *)repdat);
+        }
     }
 
   /* In order to reduce the number of copies of the receive buffer,
@@ -223,14 +248,8 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
   uint16_t                                      resbufflen =
                                                   CELLINFO_SETRES_DATA_LEN;
   uint16_t                                      reslen     = 0;
-
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
-    }
+  bool                                          reset_flag = false;
+  cellinfo_report_cb_t                          callback;
 
   if (cellinfo_callback)
     {
@@ -241,14 +260,42 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
         }
     }
 
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
   /* Check this process runnning. */
 
   if (g_lte_setrepcellinfo_isproc)
     {
       return -EBUSY;
     }
-
   g_lte_setrepcellinfo_isproc = true;
+
+  if (cellinfo_callback)
+    {
+      /* Check callback is registered */
+
+      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
+      if (callback)
+        {
+          reset_flag = true;
+        }
+      else
+        {
+          ret = altcomstatus_reg_statchgcb((void *)repcellinfo_status_chg_cb);
+          if (0 > ret)
+            {
+              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+              g_lte_setrepcellinfo_isproc = false;
+              return ret;
+            }
+        }
+    }
 
   /* Accept the API */
   /* Allocate API command buffer to send */
@@ -288,13 +335,20 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
     {
       if (APICMD_SET_REPCELLINFO_RES_OK == resbuff->result)
         {
-          /* Register API callback */
-
-          ALTCOM_CLR_CALLBACK(g_cellinfo_callback);
           if (cellinfo_callback)
             {
-              ALTCOM_REG_CALLBACK(
-                ret, g_cellinfo_callback, cellinfo_callback);
+              if (!reset_flag)
+                {
+                  altcomcallbacks_reg_cb((void *)cellinfo_callback,
+                                          APICMDID_SET_REP_CELLINFO);
+                }
+            }
+          else
+            {
+              /* Unregistration callback. */
+
+              altcomcallbacks_unreg_cb(APICMDID_SET_REP_CELLINFO);
+              altcomstatus_unreg_statchgcb((void *)repcellinfo_status_chg_cb);
             }
         }
       else

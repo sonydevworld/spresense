@@ -282,12 +282,15 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
                            char *buf, size_t buflen,
                            struct altcom_hostent **result, int *h_errnop)
 {
+  int32_t status;
   int32_t namelen = 0;
   int32_t retval;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  status = altcombs_check_poweron_status();
+  if (0 > status)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
       if (h_errnop)
         {
           *h_errnop = ALTCOM_HOST_NOT_FOUND;

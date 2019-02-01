@@ -176,10 +176,12 @@ int altcom_fcntl(int sockfd, int cmd, int val)
   FAR struct altcom_socket_s *fsock;
   struct fcntl_req_s         req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
