@@ -526,7 +526,6 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
 
          altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
          altcomstatus_unreg_statchgcb((void *)poweron_status_chg_cb);
-         lte_power_off();
          return ret;
        }
    }
@@ -544,6 +543,10 @@ int32_t lte_power_control(bool on, power_control_cb_t callback)
      /* Power off the modem */
 
      ret = lte_power_off();
+     if (0 > ret)
+       {
+         return ret;
+       }
 
      /* Call the API callback function in the context of worker thread */
 
