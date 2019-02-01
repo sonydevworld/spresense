@@ -93,7 +93,7 @@ static void poweron_status_chg_cb(int32_t new_stat, int32_t old_stat)
   if (new_stat <= ALTCOM_STATUS_INITIALIZED)
     {
       DBGIF_LOG2_INFO("poweron_status_chg_cb(%d -> %d)\n",
-        new_stat, old_stat);
+        old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
     }
 }
@@ -352,6 +352,10 @@ static void poweron_job(FAR void *arg)
    * Therefore, the receive buffer needs to be released here. */
 
   altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb((void *)poweron_status_chg_cb);
 }
 
 /****************************************************************************

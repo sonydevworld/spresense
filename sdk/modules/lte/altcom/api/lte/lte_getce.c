@@ -82,7 +82,7 @@ static void getce_status_chg_cb(int32_t new_stat, int32_t old_stat)
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("getce_status_chg_cb(%d -> %d)\n",
-        new_stat, old_stat);
+        old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_GET_CE);
     }
 }
