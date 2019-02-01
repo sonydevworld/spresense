@@ -87,7 +87,7 @@ begin_packed_struct struct apicmd_pdnset_s
 {
   uint8_t session_id;
   uint8_t activate;
-  uint8_t apntype;
+  uint32_t apntype;
   uint8_t ipaddr_num;
   struct apicmd_ipaddr_s
     ip_address[APICMD_PDN_IPCOUNT_MAX];
