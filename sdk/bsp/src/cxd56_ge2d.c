@@ -147,6 +147,14 @@ static ssize_t ge2d_write(FAR struct file *filep, FAR const char *buffer, size_t
 {
   uint32_t bits;
 
+  /* GE2D wants 16 byte aligned address for operation buffer. */
+
+  if (((uintptr_t)buffer & 0xf) != 0)
+    {
+      set_errno(EINVAL);
+      return 0;
+    }
+
   /* Get exclusive access */
 
   ge2d_semtake(&g_lock);
