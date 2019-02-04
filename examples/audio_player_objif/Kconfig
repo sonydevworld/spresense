@@ -8,9 +8,37 @@ config EXAMPLES_AUDIO_PLAYER_OBJIF
 	default n
 	depends on CXD56_AUDIO
 	---help---
-		Enable the audio player example
+		Enable the audio player with object level i/f example
 
 if EXAMPLES_AUDIO_PLAYER_OBJIF
+
+choice
+	prompt "Output device selection"
+	default EXAMPLES_AUDIO_PLAYER_OBJIF_OUTPUT_DEV_SPHP
+	---help---
+		Set the device type of output to use
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_OUTPUT_DEV_SPHP
+	bool "Speaker/Headphone output"
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_OUTPUT_DEV_I2S
+	bool "I2S output"
+endchoice
+
+choice
+	prompt "player mode selection"
+	default EXAMPLES_AUDIO_PLAYER_OBJIF_MODE_NORMAL
+	---help---
+		Set the operation mode of player capability.
+		To play include Hi-Res file, select Hi-Res mode.
+		If it is not Hi-Res file, select Normal mode.
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_MODE_NORMAL
+	bool "Normal mode"
+
+config EXAMPLES_AUDIO_PLAYER_OBJIF_MODE_HIRES
+	bool "Hi-Res mode"
+endchoice
 
 config EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME
 	string "Program name"
