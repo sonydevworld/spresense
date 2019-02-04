@@ -274,12 +274,12 @@ static uint16_t calc_ratio(uint16_t src, uint16_t dest)
 static void *set_rop_cmd(void *cmdbuf, void *srcaddr, void *destaddr,
                          uint16_t srcwidth, uint16_t srcheight, uint16_t srcpitch,
                          uint16_t destwidth, uint16_t destheight, uint16_t destpitch,
-                         uint8_t rop, uint8_t options, uint16_t patcolor)
+                         uint8_t bpp, uint8_t rop, uint8_t options, uint16_t patcolor)
 {
   struct ge2d_ropcmd_s *rc = (struct ge2d_ropcmd_s *)cmdbuf;
   uint16_t rv;
   uint16_t rh;
-  uint16_t cmd = ROPCMD | SRC16BPP;
+  uint16_t cmd = ROPCMD;
 
   if (((uintptr_t)srcaddr & 1) || ((uintptr_t)destaddr & 1))
     {
@@ -310,6 +310,11 @@ static void *set_rop_cmd(void *cmdbuf, void *srcaddr, void *destaddr,
     }
 
   memset(rc, 0, sizeof(struct ge2d_ropcmd_s));
+
+  if (bpp == 16)
+    {
+      cmd |= SRC16BPP;
+    }
 
   rc->cmd = cmd;
   rc->rop = rop;
@@ -469,7 +474,7 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
       return -ENODEV;
     }
 
-  if (bpp != 0 && bpp != 1)
+  if (bpp != 8 && bpp != 16)
     {
       return -EINVAL;
     }
@@ -484,9 +489,7 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
 
   cmd = set_rop_cmd(cmd, ibuf, obuf, ihsize, ivsize, ihsize,
                     ohsize, ovsize, ohsize,
-                    SRCCOPY,
-                    FIXEDCOLOR | (bpp ? CONV8BPP : 0),
-                    0x0080);
+                    bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
   if (cmd == NULL)
     {
       ip_semgive(&g_geexc);

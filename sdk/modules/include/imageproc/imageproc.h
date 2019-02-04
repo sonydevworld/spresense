@@ -103,8 +103,8 @@ void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize,
  * 出力画像に指定可能なサイズは、縦・横それぞれ @a ihsize、 @a ivsize に対して
  * 1/2^n倍〜2^n倍 (n=0..5)となるように設定します。
  *
- * 処理可能なピクセルフォーマットはYUV422のみとなります。このため、入出力の横
- * サイズは2の倍数になる必要があります。
+ * 処理可能なピクセルフォーマットはYUV422またはグレースケールのみとなります。
+ * YUV422 (16bpp)の画像を処理する場合は、入出力の横サイズは2の倍数になる必要があります。
  *
  * また、リサイズ可能なサイズは以下の制限事項があります。
  *
@@ -121,7 +121,7 @@ void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize,
  * @param [out] obuf: 画像出力先バッファ
  * @param [in] ohsize: 出力画像サイズ（横）
  * @param [in] ovsize: 出力画像サイズ（縦）
- * @param [in] bpp: Convert 16bpp to 8bpp (1=convert, 0=no convert)
+ * @param [in] bpp: １ピクセルあたりのビット数（16 or 8）
  *
  * @return 正常終了の場合は0、それ以外の場合はエラーコードを返します。
  *
@@ -153,7 +153,7 @@ void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize,
  * @param [out] obuf: Output buffer
  * @param [in] ohsize: Output horizontal size
  * @param [in] ovsize: Output vertical size
- * @param [in] bpp: Convert 16bpp to 8bpp (1=convert, 0=no convert)
+ * @param [in] bpp: Bits per pixel (16 or 8)
  *
  * @return 0 on success, otherwise error code.
  *
