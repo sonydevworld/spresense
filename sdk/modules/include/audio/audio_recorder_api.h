@@ -456,7 +456,7 @@ __attribute__((deprecated(
 bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param);
 
 /**
- * @brief Activate audio recorder with mic gain 0dB
+ * @brief Activate audio recorder
  *
  * @param[in] param: Activation parameters
  *
@@ -514,12 +514,13 @@ bool AS_DeactivateMediaRecorder(void);
 bool AS_DeleteMediaRecorder(void);
 
 /**
- * @brief Set mig gain for audio recorder
+ * @brief Set mic gain for audio recorder
  *
  * @param[in] gain    : Mic gain
  *
  * @retval     true  : success
  * @retval     false : failure
+ * @note Refer to AsRecorderMicGainParam for gain setting range.
  */
 
 bool AS_SetMicGainMediaRecorder(FAR AsRecorderMicGainParam *micgain_param);
