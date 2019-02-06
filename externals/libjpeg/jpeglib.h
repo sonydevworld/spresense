@@ -482,8 +482,6 @@ struct jpeg_decompress_struct {
 
   double output_gamma;		/* image gamma wanted in output */
 
-  boolean mcu_out;              /* TRUE=output not by the line but by the MCU */
-
   boolean buffered_image;	/* TRUE=multiple output passes */
   boolean raw_data_out;		/* TRUE=downsampled data wanted */
 
@@ -508,7 +506,6 @@ struct jpeg_decompress_struct {
    */
 
   JDIMENSION output_width;	/* scaled image width */
-  JDIMENSION output_unit_width; /* output width by one jpeg_read_scanlines */
   JDIMENSION output_height;	/* scaled image height */
   int out_color_components;	/* # of color components in out_color_space */
   int output_components;	/* # of color components returned */
@@ -539,6 +536,8 @@ struct jpeg_decompress_struct {
    * "while (output_scanline < output_height)".
    */
   JDIMENSION output_scanline;	/* 0 .. output_height-1  */
+
+  JDIMENSION output_offset;
 
   /* Current input scan number and number of iMCU rows completed in scan.
    * These indicate the progress of the decompressor input side.
@@ -1057,6 +1056,10 @@ EXTERN(boolean) jpeg_start_decompress JPP((j_decompress_ptr cinfo));
 EXTERN(JDIMENSION) jpeg_read_scanlines JPP((j_decompress_ptr cinfo,
 					    JSAMPARRAY scanlines,
 					    JDIMENSION max_lines));
+EXTERN(JDIMENSION) jpeg_read_mcus JPP((j_decompress_ptr cinfo,
+                                            JSAMPARRAY scanlines,
+                                            JDIMENSION max_lines,
+                                            JDIMENSION *offset));
 EXTERN(boolean) jpeg_finish_decompress JPP((j_decompress_ptr cinfo));
 
 /* Replaces jpeg_read_scanlines when reading raw downsampled data. */

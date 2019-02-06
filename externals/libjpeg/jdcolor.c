@@ -33,6 +33,9 @@ typedef struct {
 
   /* Private state for RGB->Y conversion */
   INT32 * rgb_y_tab;		/* => table for RGB to Y conversion */
+
+  /* Size of output unit */
+  JDIMENSION output_width;
 } my_color_deconverter;
 
 typedef my_color_deconverter * my_cconvert_ptr;
@@ -440,10 +443,10 @@ null_convert (j_decompress_ptr cinfo,
   register JSAMPROW outptr;
   register JSAMPROW inptr;
   register JDIMENSION col;
-  JDIMENSION num_cols;
+  my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
+  JDIMENSION num_cols = cconvert->output_width;
   JSAMPLE indata_h, indata_l;
 
-  num_cols = cinfo->output_unit_width;
   while (--num_rows >= 0) {
     /* Copy Y */
 
@@ -741,21 +744,27 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
     if (cinfo->out_color_space == cinfo->jpeg_color_space) {
       cinfo->out_color_components = cinfo->num_components;
       cconvert->pub.color_convert = null_convert;
-  if (cinfo->mcu_out)
-    {
-      cinfo->output_unit_width = cinfo->output_width/cinfo->MCUs_per_row;
-    }
-  else
-    {
-      cinfo->output_unit_width = cinfo->output_width;
-    }
     } else			/* unsupported non-null conversion */
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
   }
+
+  cconvert->output_width = cinfo->output_width;
 
   if (cinfo->quantize_colors)
     cinfo->output_components = 1; /* single colormapped output component */
   else
     cinfo->output_components = cinfo->out_color_components;
 }
+
+/*
+ * MCU decode preparation routine for output colorspace conversion.
+ */
+
+GLOBAL(void)
+jmcu_color_deconverter(j_decompress_ptr cinfo)
+{
+  my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
+  cconvert->output_width = cinfo->output_width / cinfo->MCUs_per_row;
+}
+

@@ -457,12 +457,6 @@ per_scan_setup (j_decompress_ptr cinfo)
       }
     }
   }
-
-  if (cinfo->mcu_out) {
-    cinfo->output_unit_width = cinfo->output_width/cinfo->MCUs_per_row;
-  } else {
-    cinfo->output_unit_width = cinfo->output_width;
-  }
 }
 
 

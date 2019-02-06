@@ -403,6 +403,11 @@ EXTERN(void) jinit_color_deconverter JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_1pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_2pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_merged_upsampler JPP((j_decompress_ptr cinfo));
+/* MCU decode preparation routines */
+EXTERN(void) jmcu_d_coef_controller JPP((j_decompress_ptr cinfo));
+EXTERN(void) jmcu_upsampler JPP((j_decompress_ptr cinfo));
+EXTERN(void) jmcu_color_deconverter JPP((j_decompress_ptr cinfo));
+
 /* Memory manager initialization */
 EXTERN(void) jinit_memory_mgr JPP((j_common_ptr cinfo));
 

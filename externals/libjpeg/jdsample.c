@@ -74,14 +74,7 @@ start_pass_upsample (j_decompress_ptr cinfo)
   /* Mark the conversion buffer empty */
   upsample->next_row_out = cinfo->max_v_samp_factor;
   /* Initialize total-height counter for detecting bottom of image */
-  if (cinfo->mcu_out)
-    {
-      upsample->rows_to_go = cinfo->output_height * cinfo->MCUs_per_row;
-    }
-  else
-    {
-      upsample->rows_to_go = cinfo->output_height;
-    }
+  upsample->rows_to_go = cinfo->output_height;
 }
 
 
@@ -301,3 +294,15 @@ jinit_upsampler (j_decompress_ptr cinfo)
        (JDIMENSION) cinfo->max_v_samp_factor);
   }
 }
+
+/*
+ * MCU decode preparation routine for upsampling.
+ */
+
+GLOBAL(void)
+jmcu_upsampler (j_decompress_ptr cinfo)
+{
+  my_upsample_ptr upsample = (my_upsample_ptr) cinfo->upsample;
+  upsample->rows_to_go = cinfo->output_height * cinfo->MCUs_per_row;
+}
+

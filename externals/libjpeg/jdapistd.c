@@ -18,7 +18,7 @@
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
-
+//#include "jpegint.h"
 
 /* Forward declarations */
 LOCAL(boolean) output_pass_setup JPP((j_decompress_ptr cinfo));
@@ -99,6 +99,7 @@ output_pass_setup (j_decompress_ptr cinfo)
     /* First call: do pass setup */
     (*cinfo->master->prepare_for_output_pass) (cinfo);
     cinfo->output_scanline = 0;
+    cinfo->output_offset = 0;
     cinfo->global_state = DSTATE_PRESCAN;
   }
   /* Loop over any required dummy passes */
@@ -157,10 +158,7 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
 
   if (cinfo->global_state != DSTATE_SCANNING)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
-  if ((cinfo->mcu_out &&
-       (cinfo->output_scanline >= cinfo->output_height*cinfo->MCUs_per_row)) ||
-      (!cinfo->mcu_out &&
-       (cinfo->output_scanline >= cinfo->output_height))) {
+  if  (cinfo->output_scanline >= cinfo->output_height) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;
   }
@@ -176,6 +174,63 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
   row_ctr = 0;
   (*cinfo->main->process_data) (cinfo, scanlines, &row_ctr, max_lines);
   cinfo->output_scanline += row_ctr;
+  return row_ctr;
+}
+
+/*
+ * Read one mcu of data from the JPEG decompressor.
+ *
+ * The return value will be the number of lines actually read.
+ * This may be less than the number requested in several cases,
+ * including bottom of image, data source suspension, and operating
+ * modes that emit multiple scanlines at a time.
+ *
+ * Note: we warn about excess calls to jpeg_read_scanlines() since
+ * this likely signals an application programmer error.  However,
+ * an oversize buffer (max_lines > scanlines remaining) is not an error.
+ */
+
+GLOBAL(JDIMENSION)
+jpeg_read_mcus (j_decompress_ptr cinfo, JSAMPARRAY mcu_buffer,
+                JDIMENSION max_lines, JDIMENSION *offset)
+{
+  JDIMENSION row_ctr;
+
+  if (cinfo->global_state != DSTATE_SCANNING)
+    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+  if (cinfo->output_scanline != 0) {
+    /* jpeg_read_scanline and jpeg_read_mcu are not used at the same time */
+  }
+  if (max_lines != (cinfo->output_height / cinfo->MCU_rows_in_scan)) {
+    /* Can not get one whole MCU */
+  }
+  if (cinfo->output_offset >= (cinfo->output_width * cinfo->output_height)) {
+    WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
+    return 0;
+  }
+
+  if (cinfo->output_offset == 0) {
+    /* Prepare for one MCU decode first time only */
+    jmcu_upsampler(cinfo);
+    jmcu_color_deconverter(cinfo);
+    jmcu_d_coef_controller(cinfo);
+  }
+
+  /* Process some data */
+  row_ctr = 0;
+  while (row_ctr < max_lines) {
+    (*cinfo->main->process_data) (cinfo, mcu_buffer, &row_ctr, max_lines);
+  }
+
+  /* Notify current position to application */
+  *offset = cinfo->output_offset;
+
+  /* Update to next position */
+  cinfo->output_offset += (cinfo->output_width / cinfo->MCUs_per_row);
+  if ((cinfo->output_offset % cinfo->output_width) == 0) {
+    cinfo->output_offset += ((max_lines - 1) * cinfo->output_width);
+  }
+
   return row_ctr;
 }
 

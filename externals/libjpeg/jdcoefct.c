@@ -793,15 +793,19 @@ jinit_d_coef_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
       FMEMZERO((void FAR *) coef_buffer,
 	       (size_t) (D_MAX_BLOCKS_IN_MCU * SIZEOF(JBLOCK)));
     coef->pub.consume_data = dummy_consume_data;
-    if (cinfo->mcu_out)
-      {
-        coef->pub.decompress_data = decompress_onemcu;
-      }
-    else
-      {
-        coef->pub.decompress_data = decompress_onepass;
-      }
+    coef->pub.decompress_data = decompress_onepass;
 
     coef->pub.coef_arrays = NULL; /* flag for no virtual arrays */
   }
 }
+
+/*
+ * MCU decode preparation for coefficient buffer controller.
+ */
+
+GLOBAL(void)
+jmcu_d_coef_controller(j_decompress_ptr cinfo)
+{
+  cinfo->coef->decompress_data = decompress_onemcu;
+}
+
