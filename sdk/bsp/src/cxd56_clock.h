@@ -273,6 +273,15 @@ void cxd56_spi_clock_gate_enable(int port);
 void cxd56_spi_clock_gate_disable(int port);
 
 /****************************************************************************
+ * Name: cxd56_spi_clock_gear_adjust
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq);
+
+/****************************************************************************
  * Name: cxd56_i2c0_clock_enable
  *
  * Description:

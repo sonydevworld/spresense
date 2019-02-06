@@ -878,6 +878,36 @@ static void cxd56_img_spi_clock_disable(void)
   disable_pwd(PDID_APP_SUB);
   sem_post(&g_clockexc);
 }
+
+/****************************************************************************
+ * Name: cxd56_img_spi_clock_gear_adjust
+ *
+ * Description:
+ *   Adjust gear for SPI channel 4 device.
+ *   This is called IMG_SPI, located at APP domain and inside of IMG block.
+ *
+ ****************************************************************************/
+
+static void cxd56_img_spi_clock_gear_adjust(uint32_t maxfreq)
+{
+  uint32_t baseclock;
+  uint32_t gear;
+  uint32_t divisor;
+
+  sem_wait(&g_clockexc);
+  baseclock = cxd56_get_appsmp_baseclock();
+  if (baseclock != 0)
+    {
+      divisor = baseclock / (maxfreq * 2);
+      if (baseclock % (maxfreq * 2))
+        {
+          divisor += 1;
+        }
+      gear = 0x00010000 | (divisor & 0x7f);
+      putreg32(gear, CXD56_CRG_GEAR_IMG_SPI);
+    }
+  sem_post(&g_clockexc);
+}
 #endif
 
 #if defined(CONFIG_CXD56_SPI5)
@@ -913,6 +943,36 @@ static void cxd56_img_wspi_clock_disable(void)
   putreg32(0, CXD56_CRG_GEAR_IMG_WSPI);
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
+  sem_post(&g_clockexc);
+}
+
+/****************************************************************************
+ * Name: cxd56_img_wspi_clock_gear_adjust
+ *
+ * Description:
+ *   Adjust gear for SPI channel 5 device.
+ *   This is called IMG_WSPI, located at APP domain and inside of IMG block.
+ *
+ ****************************************************************************/
+
+static void cxd56_img_wspi_clock_gear_adjust(uint32_t maxfreq)
+{
+  uint32_t baseclock;
+  uint32_t gear;
+  uint32_t divisor;
+
+  sem_wait(&g_clockexc);
+  baseclock = cxd56_get_appsmp_baseclock();
+  if (baseclock != 0)
+    {
+      divisor = baseclock / (maxfreq * 2);
+      if (baseclock % (maxfreq * 2))
+        {
+          divisor += 1;
+        }
+      gear = 0x00010000 | (divisor & 0xf);
+      putreg32(gear, CXD56_CRG_GEAR_IMG_WSPI);
+    }
   sem_post(&g_clockexc);
 }
 #endif
@@ -1003,6 +1063,34 @@ void cxd56_spi_clock_gate_disable(int port)
   if (port == 3)
     {
       cxd56_scu_peri_clock_gating(&g_scuspi, 0);
+    }
+#endif
+}
+
+/****************************************************************************
+ * Name: cxd56_spi_clock_gear_adjust
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
+{
+  if (maxfreq == 0)
+    {
+      return;
+    }
+
+#if defined(CONFIG_CXD56_SPI4)
+  if (port == 4)
+    {
+      cxd56_img_spi_clock_gear_adjust(maxfreq);
+    }
+#endif
+#if defined(CONFIG_CXD56_SPI5)
+  if (port == 5)
+    {
+      cxd56_img_wspi_clock_gear_adjust(maxfreq);
     }
 #endif
 }
