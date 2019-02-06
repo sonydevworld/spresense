@@ -75,19 +75,20 @@
 #include <nuttx/lcd/lcd.h>
 #include <nuttx/nx/nx.h>
 #include <nuttx/nx/nxglib.h>
-#include "jpeg_decode.h"
 
 #  ifdef CONFIG_IMAGEPROC
 #    include <imageproc/imageproc.h>
 #  endif
 #endif
 
+#include "jpeg_decode.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 #define APP_FILENAME_LEN  128
 
-#define APP_BYTES_PER_PIXEL 2
+#define APP_BYTES_PER_PIXEL 2  /* YUV4:2:2 has 2 bytes/pixel */
 
 #define APP_QVGA_WIDTH    320
 #define APP_QVGA_HEIGHT   240
@@ -126,12 +127,12 @@ struct uyvy_s
  * but by file descripter
  */
 
-static int   infile;   /* file descriptor of input file */
-static  char infile_name[APP_FILENAME_LEN] = "/mnt/spif/SAMPLE.JPG";
+static int  infile;   /* file descriptor of input file */
+static char infile_name[APP_FILENAME_LEN] = "/mnt/spif/SAMPLE.JPG";
 
 #ifndef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
-static int   outfile;  /* file descriptor of output file */
-static  char outfile_name[APP_FILENAME_LEN];
+static FILE *outfile;  /* file pointer of output file */
+static char outfile_name[APP_FILENAME_LEN];
 #endif  /* CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
 
 struct jpeg_decompress_struct cinfo;
@@ -152,6 +153,8 @@ struct nximage_data_s g_jpeg_decode_nximage =
   0              /* exit code */
 };
 #endif
+
+struct jpeg_decode_output_s g_jpeg_decode_output;
 
 /****************************************************************************
  * Private Functions
@@ -294,81 +297,107 @@ static void yuv2rgb(void *buf, uint32_t size)
 #  endif /* !CONFIG_IMAGEPROC */
 #endif /* !CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
 
-/* init_put_place(), put_scanline_someplace() and fin_put_place()
+/* init_output(), output_result() and fin_output()
  * are specific for this example.
  * These are for displaying LCD or saving file.
  */
 
-static int init_put_place(void)
+static int init_output(void)
 {
   int ret = OK;
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
-  ret = nximage_initialize();
-  if (ret < 0)
+  static bool is_lcd_initialized = false;
+  if (!is_lcd_initialized)
     {
-      printf("camera_main: Failed to get NX handle: %d\n", errno);
-      return ERROR;
+      ret = nximage_initialize();
+      if (ret < 0)
+        {
+          printf("camera_main: Failed to get NX handle: %d\n", errno);
+          return ERROR;
+        }
+      is_lcd_initialized = true;
     }
 #  ifdef CONFIG_IMAGEPROC
   imageproc_initialize();
 #  endif
 #else
+  /* Delete old file name */
+
+  memset(outfile_name, 0, sizeof(outfile_name));
+
   /* Output file name = Input file name without extension + .YUV" */
 
-  strncpy(outfile_name, infile_name, strlen(infile_name) - 3 /* 3 is extension length */);
+  strncpy(outfile_name,
+          infile_name,
+          strlen(infile_name) - 3 /* 3 is extension length */);
   strncat(outfile_name, "YUV", 3);
 
-  outfile = open(outfile_name, O_WRONLY | O_CREAT);
+  outfile = fopen(outfile_name, "wb");
+
+  /* Initialize with the size of created YUV4:2:2 data */
+
+  fseek(outfile, APP_QVGA_WIDTH * APP_QVGA_HEIGHT * 2, SEEK_SET);
 #endif
   return ret;
 }
 
-static void put_scanline_someplace(JSAMPROW buffer, int row_stride)
+static void output_result(JSAMPARRAY buffer, JDIMENSION position)
 {
+  int y_cnt;
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
   /* Convert YUV4:2:2 to RGB565 */
-#  ifdef CONFIG_IMAGEPROC
-  imageproc_convert_yuv2rgb((void *)buffer,
-                            row_stride/2, /* output image width = row_stride/2
-                                           * This 2 means 2bytes/pixel.
-                                           */
-                            1);
-#  else
-  yuv2rgb(buffer, row_stride);
-#  endif
 
+  for (y_cnt = 0; y_cnt < g_jpeg_decode_output.youtsize; y_cnt++)
+    {
+#  ifdef CONFIG_IMAGEPROC
+      imageproc_convert_yuv2rgb((void *)buffer[y_cnt],
+                                g_jpeg_decode_output.xoutsize,
+                                1);
+#  else
+      yuv2rgb(buffer[y_cnt],
+              g_jpeg_decode_output.xoutsize * APP_BYTES_PER_PIXEL);
+#  endif
+    }
   /* Diplay RGB565 */
 
-  if (cinfo.mcu_out)
-    {
-      nximage_image(g_jpeg_decode_nximage.hbkgd, buffer,
-                    8*cinfo.scale_num/cinfo.scale_denom,
-                    16*cinfo.scale_num/cinfo.scale_denom);
-    }
-  else
-    {
-      nximage_image(g_jpeg_decode_nximage.hbkgd, buffer,
-                    APP_QVGA_HEIGHT, APP_QVGA_WIDTH);
-    }
+  nximage_image(g_jpeg_decode_nximage.hbkgd, buffer, position);
 #else
   /* Save to file */
+  fseek(outfile, position * APP_BYTES_PER_PIXEL, SEEK_SET);
+  for (y_cnt = 0; y_cnt < g_jpeg_decode_output.youtsize - 1; y_cnt++)
+    {
+      fwrite(buffer[y_cnt],
+             APP_BYTES_PER_PIXEL,
+             g_jpeg_decode_output.xoutsize,
+             outfile);
 
-  write(outfile, buffer, row_stride);
+      /* Go to next line */
+      fseek(outfile,
+            (APP_QVGA_WIDTH - g_jpeg_decode_output.xoutsize)
+              * APP_BYTES_PER_PIXEL,
+            SEEK_CUR);
+    }
+
+  /* Write last line */
+
+  fwrite(buffer[g_jpeg_decode_output.youtsize - 1],
+         APP_BYTES_PER_PIXEL,
+         g_jpeg_decode_output.xoutsize,
+         outfile);
 #endif
 
   return;
 }
 
 
-static void fin_put_place(void)
+static void fin_output(void)
 {
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
 #  ifdef CONFIG_IMAGEPROC
   imageproc_finalize();
 #  endif
-  nx_close(g_jpeg_decode_nximage.hnx);
 #else
-  close(outfile);
+  fclose(outfile);
 #endif /* CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
 
   return;
@@ -402,16 +431,21 @@ int jpeg_decode_main(int argc, char *argv[])
   /* More stuff */
 
   JSAMPARRAY buffer;            /* Output row buffer */
-  int row_stride;               /* physical row width in output buffer */
-  int num_of_scan;              /* Number of times that
-                                 * jpeg_read_scanlines should be called
-                                 */
+  JDIMENSION output_position;   /* start position of output */
+  bool       mcu = false;       /* True means "decode by the MCU" */
 
   /* Command parameter mean input filename in this example. */
 
   if (argc > 1)
     {
       strncpy(infile_name, argv[1], APP_FILENAME_LEN);
+    }
+
+  if (argc > 2)
+    {
+      /* 2nd parameter setting means "decode by the MCU". */
+
+      mcu = true;
     }
 
   /* Original libjpeg use file pointer to specify JPEG file.
@@ -474,13 +508,6 @@ int jpeg_decode_main(int argc, char *argv[])
   cinfo.scale_num = APP_QVGA_WIDTH;
   cinfo.scale_denom = cinfo.image_width;
 
-  /* The member "boolean mcu_out" are specific for Spresense.
-   * This setting means that JPEG Decoder output by the MCU.
-   * This setting is useful to save memory.
-   */
-
-  cinfo.mcu_out = TRUE;
-
   /*
    * [examples of decoded data order in LINE UNIT(libjpeg original) case]
    *  (correspond to mcu_out = FALSE)
@@ -526,50 +553,128 @@ int jpeg_decode_main(int argc, char *argv[])
    * In this example, we need to make an output work buffer of the right size.
    */
 
-  /* JSAMPLEs per row in output buffer */
+  /* Spresense JPEG decoder support the two decode methods.
+   *  One is the original libjpeg method: jpeg_read_scanlines()
+   *  The other is the Spresense-specific method: jpeg_read_mcus()
+   *
+   * [examples of decoded data order in LINE UNIT(libjpeg original) case
+   *  (jpeg_read_scanlines)]
+   * +--MCU1--+ +--MCU2--+                  +--MCU20-+
+   * |(1)-----|-|--------|------------------|------->|
+   * |(2)-----|-|--------|------------------|------->|
+   * |  ...   | |        |                  |        |
+   * |(8)-----|-|--------|------------------|------->|
+   * +--------+ +--------+                  +--------+
+   *   ......
+   *
+   * +-MCU581-+   +-MCU582-+                  +-MCU600-+
+   * |(233)---|-|--------|------------------|------->|
+   * |(234)---|-|--------|------------------|------->|
+   * |  ...   | |        |                  |        |
+   * |(240)---|-|--------|------------------|------->|
+   * +--------+ +--------+                  +--------+
+   *
+   * [examples of decoded data order in MCU UNIT case
+   *  (jpeg_read_mcus)]
+   * +--MCU1--+ +--MCU2--+                  +--MCU20-+
+   * |(1)---->| |(2)---->|       ...        |(20)--->|
+   * |------->| |------->|                  |------->|
+   * |  ...   | | ...    |                  |  ...   |
+   * |------->| |------->|                  |------->|
+   * +--------+ +--------+                  +--------+
+   *   ......
+   *
+   * +-MCU581-+ +-MCU582-+                  +-MCU600-+
+   * |(581)-->| |(582)-->|       ...        |(600)-->|
+   * |------->| |------->|                  |------->|
+   * |  ...   | | ...    |                  |  ...   |
+   * |------->| |------->|                  |------->|
+   * +--------+ +--------+                  +--------+
+   */
 
-  if (cinfo.mcu_out)
+  if (mcu)
     {
-      row_stride = (cinfo.output_width/cinfo.MCUs_per_row) * 2;
+      /* Output size of 1 decode is the size of 1 MCU */
+
+      g_jpeg_decode_output.xoutsize
+        = (cinfo.output_width  / cinfo.MCUs_per_row);
+      g_jpeg_decode_output.youtsize
+        = (cinfo.output_height / cinfo.MCU_rows_in_scan);
     }
   else
     {
-      row_stride = cinfo.output_width * 2;
+      /* Output size of 1 decode is the size of 1 line */
+      g_jpeg_decode_output.xoutsize = cinfo.output_width;
+      g_jpeg_decode_output.youtsize = 1;
     }
 
-
-  /* Make a one-row-high sample array that will go away when done with image */
+  /* Make a multi-rows-high sample array that will go away when done with image.
+   * Please allocate g_jpeg_decode_output.youtsize lines. */
 
   buffer = (*cinfo.mem->alloc_sarray)
-                ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-  init_put_place();
+                ((j_common_ptr) &cinfo,
+                 JPOOL_IMAGE,
+                 g_jpeg_decode_output.xoutsize * APP_BYTES_PER_PIXEL,
+                 g_jpeg_decode_output.youtsize);
+  /* For examples, if g_jpeg_decode_output.youtsize = 8,
+   * buffer has the following structure:
+   *
+   *                                 +---------------------------+
+   *     buffer[0] points to ---->   | 1st line of decode result |
+   *                                 +---------------------------+
+   *     buffer[1] points to ---->   | 2nd line of decode result |
+   *                                 +---------------------------+
+   *      ...                        |  ...                      |
+   *                                 +---------------------------+
+   *     buffer[7] points to ---->   | 8th line of decode result |
+   *                                 +---------------------------+
+   */
 
-  /* Step 6: while (scan lines remain to be read) */
-  /*           jpeg_read_scanlines(...); */
+  init_output();
 
-  if (cinfo.mcu_out)
+  /* Step 6: while (MCU remain to be read) */
+  /*           jpeg_read_mcus(...); */
+
+  if (mcu)
     {
-      num_of_scan = cinfo.MCUs_per_row * cinfo.output_height;
+      while (cinfo.output_offset < (cinfo.output_width * cinfo.output_height))
+        {
+          /* jpeg_read_mcus output lines of decode result to each buffer[line],
+           *  and notify the position(offset from top-left) which their lines
+           *  are written.
+           */
+
+          jpeg_read_mcus(&cinfo,
+                         buffer,
+                         g_jpeg_decode_output.youtsize,
+                         &output_position);
+
+          output_result(buffer, output_position);
+        }
     }
   else
     {
-      num_of_scan = cinfo.output_height;
-    }
+      /* Same as original libjpeg examples in using jpeg_read_scanlines */
 
-  while (num_of_scan--)
-    { 
-      /* jpeg_read_scanlines expects an array of pointers to scanlines.
-       * Here the array is only one element long, but you could ask for
-       * more than one scanline at a time if that's more convenient.
+      /* Here we use the library's state variable cinfo.output_scanline as the
+       * loop counter, so that we don't have to keep track ourselves.
        */
-      jpeg_read_scanlines(&cinfo, buffer, 1);
-      /* Assume put_scanline_someplace wants a pointer and sample count. */
-      put_scanline_someplace(buffer[0], row_stride);
+      while (cinfo.output_scanline < cinfo.output_height)
+        {
+          /* jpeg_read_scanlines expects an array of pointers to scanlines.
+           * Here the array is only one element long, but you could ask for
+           * more than one scanline at a time if that's more convenient.
+           */
+
+          jpeg_read_scanlines(&cinfo, buffer, 1);
+          /* Assume output wants a pointer and writing position. */
+          output_result(buffer, (cinfo.output_scanline - 1) * cinfo.output_width);
+        }
     }
 
   /* Step 7: Finish decompression */
 
-  fin_put_place();
+  fin_output();
   (void) jpeg_finish_decompress(&cinfo);
 
   /* We can ignore the return value since suspension is not possible

@@ -50,6 +50,9 @@
 #include <nuttx/nx/nx.h>
 #include <nuttx/nx/nxglib.h>
 
+#include <jpeglib.h>
+
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -75,6 +78,14 @@ struct nximage_data_s
   volatile int code;
 };
 
+struct jpeg_decode_output_s
+{
+  /* The output size at one time */
+
+  int xoutsize;
+  int youtsize;
+};
+
 /****************************************************************************
  * Public Data
  ****************************************************************************/
@@ -87,12 +98,18 @@ extern struct nximage_data_s g_jpeg_decode_nximage;
 
 extern const struct nx_callback_s g_jpeg_decode_nximagecb;
 
+/* Output information */
+
+extern struct jpeg_decode_output_s g_jpeg_decode_output;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
 /* Background window interfaces */
 
-void nximage_image(NXWINDOW hwnd, FAR const void *image, int ROW_UNIT, int COL_UNIT);
+void nximage_image(NXWINDOW hwnd,
+                   FAR const JSAMPARRAY image,
+                   JDIMENSION position);
 
 #endif /* __EXAMPLES_JPEG_DECODE_H */

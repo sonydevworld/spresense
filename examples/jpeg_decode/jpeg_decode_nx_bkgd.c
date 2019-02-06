@@ -54,7 +54,7 @@
 #include <nuttx/nx/nxfonts.h>
 
 #include "jpeg_decode.h"
-
+#include <jpeglib.h>
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -215,51 +215,34 @@ static void nximage_kbdin(NXWINDOW hwnd, uint8_t nch, FAR const uint8_t *ch,
  *   Put the NuttX logo in the center of the display.
  *
  ****************************************************************************/
-void nximage_image(NXWINDOW hwnd, FAR const void *image,
-                   int row_unit, int col_unit)
+void nximage_image(NXWINDOW hwnd,
+                   FAR const JSAMPARRAY image,
+                   JDIMENSION position)
 {
-  FAR struct nxgl_point_s origin;
   FAR struct nxgl_rect_s dest;
   FAR const void *src[CONFIG_NX_NPLANES];
-  static int current_col = 0;
-  static int current_row = 0;
   int ret;
-
-  origin.x = current_col;
-  origin.y = current_row;
+  int cnt;
 
   /* Set up the destination to whole LCD screen */
 
-  dest.pt1.x = current_col;
-  dest.pt1.y = current_row;
-  dest.pt2.x = current_col + col_unit - 1;
-  dest.pt2.y = current_row;
+  dest.pt1.x = (position % g_jpeg_decode_nximage.xres);
+  dest.pt1.y = (position / g_jpeg_decode_nximage.xres);;
+  dest.pt2.x = dest.pt1.x + g_jpeg_decode_output.xoutsize - 1;
+  dest.pt2.y = dest.pt1.y;
 
-  src[0] = image;
+  /* Write per one line */
 
-  ret = nx_bitmap((NXWINDOW)hwnd, &dest, src, &origin,
-                  col_unit * sizeof(nxgl_mxpixel_t));
-  if (ret < 0)
+  for (cnt=0;
+       cnt < g_jpeg_decode_output.youtsize;
+       cnt++, dest.pt1.y++, dest.pt2.y++)
     {
-      printf("nximage_image: nx_bitmapwindow failed: %d\n", errno);
-    }
-
-  current_row++;
-  if (current_row%row_unit == 0)
-    {
-      current_col += col_unit;
-      if (current_col < g_jpeg_decode_nximage.xres)
+      src[0] = image[cnt];
+      ret = nx_bitmap((NXWINDOW)hwnd, &dest, src, &dest.pt1,
+                      g_jpeg_decode_output.xoutsize * sizeof(nxgl_mxpixel_t));
+      if (ret < 0)
         {
-          current_row -= row_unit;
+          printf("nximage_image: nx_bitmapwindow failed: %d\n", errno);
         }
-      else
-        {
-          current_col = 0;
-        }
-    }
-
-  if (current_row >= g_jpeg_decode_nximage.yres)
-    {
-      current_row = 0;
     }
 }
