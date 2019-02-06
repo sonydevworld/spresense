@@ -294,19 +294,15 @@ bool SRCComponent::exec_apu(ExecSRCParam *param)
 /*--------------------------------------------------------------------*/
 bool SRCComponent::flush_apu(StopSRCParam *param)
 {
+  /* Regardless of output buffer is not allocated, send Flush Request
+   * to DSP. Because it is needed by DSP to finish process correctly.
+   */
+
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
   if (p_apu_cmd == NULL)
     {
-      return false;
-    }
-
-  /* Filter data area check */
-
-  if (param->out_buffer.p_buffer == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
     }
 

@@ -274,6 +274,8 @@ bool MPPComponent::exec_apu(ExecXLOUDParam *param)
       return false;
     }
 
+  /* Exec MFE */
+
   m_apu_cmd_buf[m_buf_idx].header.core_id      = DSP_CORE_ID_DUMMY;
   m_apu_cmd_buf[m_buf_idx].header.context_id   = DSP_MPPEAX_CONTEXT_MPPEAX;
   m_apu_cmd_buf[m_buf_idx].header.process_mode = Apu::FilterMode;

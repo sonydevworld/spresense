@@ -94,14 +94,6 @@ bool ThroughComponent::flush_apu(StopThroughParam *param)
 {
   FILTER_DBG("FLUSH THROUGH:\n");
 
-  /* Filter data area check */
-
-  if (param->out_buffer.p_buffer == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
   param->out_buffer.size = 0;
 
   send_resp(StopEvent, true, param->out_buffer);

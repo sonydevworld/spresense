@@ -124,14 +124,6 @@ bool PackingComponent::flush_apu(StopPackingParam *param)
 {
   FILTER_DBG("FLUSH BITCNV:\n");
 
-  /* Filter data area check */
-
-  if (param->out_buffer.p_buffer == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
   param->out_buffer.size = 0;
 
   send_resp(StopEvent, true, param->out_buffer);
@@ -185,7 +177,7 @@ void PackingComponent::send_resp(FilterComponentEvent evt, bool result, BufferHe
 
   cmplt.filter_type = Packing;
   cmplt.event_type  = evt;
-  cmplt.result      = true;
+  cmplt.result      = result;
   cmplt.out_buffer  = outbuf;
 
   m_callback(&cmplt);

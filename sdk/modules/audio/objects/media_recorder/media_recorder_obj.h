@@ -89,7 +89,6 @@ private:
     m_codec_type(InvalidCodecType),
     m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
     m_p_output_device_handler(NULL),
-    m_stop_factor(StopFactorCommand),
     m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM),
     m_filter_instance(NULL)
   {}
@@ -100,19 +99,9 @@ private:
     RecorderStateReady,
     RecorderStateRecording,
     RecorderStateStopping,
-    RecorderStateFlushing,
-    RecorderStateCleanUp,
+    RecorderStateErrorStopping,
     RecorderStateWaitStop,
     RecorderStateNum
-  };
-
-  enum StopFactor_e
-  {
-    StopFactorCommand = 0,
-    StopFactorOverflow,
-    StopFactorCaptureErr,
-    StopFactorMemAllocErr,
-    StopFactorNum
   };
 
   AsRecorderMsgQueId_t m_msgq_id;
@@ -132,7 +121,6 @@ private:
   int8_t  m_complexity;
   int32_t m_bit_rate;
   AudioRecorderSink m_rec_sink;
-  StopFactor_e m_stop_factor;
 
   CaptureComponentHandler m_capture_from_mic_hdlr;
 
@@ -173,31 +161,28 @@ private:
   void init(MsgPacket *);
   void startOnReady(MsgPacket *);
   void stopOnRec(MsgPacket *);
-  void stopOnStopping(MsgPacket *msg);
-  void stopOnFlushing(MsgPacket *msg);
-  void stopOnCleanUp(MsgPacket *msg);
+  void stopOnErrorStop(MsgPacket *);
   void stopOnWait(MsgPacket *);
   void setMicGain(MsgPacket *);
 
   void illegalFilterDone(MsgPacket *);
   void filterDoneOnRec(MsgPacket *);
   void filterDoneOnStop(MsgPacket *);
-  void filterDoneOnFlushing(MsgPacket *);
-  void filterDoneOnCleanUp(MsgPacket *);
+  void filterDoneOnErrorStop(MsgPacket *);
 
   void illegalEncDone(MsgPacket *);
   void encDoneOnRec(MsgPacket *);
   void encDoneOnStop(MsgPacket *);
-  void encDoneOnFlushing(MsgPacket *);
-  void encDoneOnCleanUp(MsgPacket *);
+  void encDoneOnErrorStop(MsgPacket *);
 
   void illegalCaptureDone(MsgPacket *);
   void captureDoneOnRec(MsgPacket *);
   void captureDoneOnStop(MsgPacket *);
+  void captureDoneOnErrorStop(MsgPacket *);
 
   void captureErrorOnRec(MsgPacket *);
   void captureErrorOnStop(MsgPacket *);
-  void captureErrorOnFlushing(MsgPacket *);
+  void captureErrorOnErrorStop(MsgPacket *);
   void captureErrorOnWaitStop(MsgPacket *);
 
   bool startCapture();
@@ -206,6 +191,7 @@ private:
 
   bool setExternalCmd(AsRecorderEvent ext_event);
   AsRecorderEvent getExternalCmd(void);
+  uint32_t checkExternalCmd(void);
 
   void* getOutputBufAddr();
 

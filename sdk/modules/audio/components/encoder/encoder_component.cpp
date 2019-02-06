@@ -416,13 +416,9 @@ bool EncoderComponent::exec_apu(const ExecEncParam& param)
 /*--------------------------------------------------------------------*/
 bool EncoderComponent::flush_apu(const StopEncParam& param)
 {
-  /* Encode data area check */
-
-  if (param.output_buffer.p_buffer == NULL)
-    {
-      FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
+  /* Regardless of output buffer is not allocated, send Flush Request
+   * to DSP. Because it is needed by DSP to finish process correctly.
+   */
 
   /* Flush */
 
