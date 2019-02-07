@@ -1033,7 +1033,7 @@ static int spi4_colockchange(uint8_t id)
   switch (id)
     {
       case CXD56_PM_CALLBACK_ID_CLK_CHG_END:
-        cxd56_spi_clock_gear_adjust(priv->port, priv->frequency);
+        spi_setfrequency(&priv->spidev, priv->frequency);
         break;
       default:
         break;
@@ -1064,7 +1064,7 @@ static int spi5_colockchange(uint8_t id)
   switch (id)
     {
       case CXD56_PM_CALLBACK_ID_CLK_CHG_END:
-        cxd56_spi_clock_gear_adjust(priv->port, priv->frequency);
+        spi_setfrequency(&priv->spidev, priv->frequency);
         break;
       default:
         break;
