@@ -1019,7 +1019,7 @@ void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
   uint32_t baseclock;
   uint32_t gear;
   uint32_t divisor;
-  uint32_t divmask;
+  uint32_t maxdivisor;
   uint32_t addr;
 
   if (maxfreq == 0)
@@ -1030,16 +1030,16 @@ void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
 #if defined(CONFIG_CXD56_SPI4)
   if (port == 4)
     {
-      divmask = 0x7f;
-      addr    = CXD56_CRG_GEAR_IMG_SPI;
+      maxdivisor = 0x7f;
+      addr       = CXD56_CRG_GEAR_IMG_SPI;
     }
   else
 #endif
 #if defined(CONFIG_CXD56_SPI5)
   if (port == 5)
     {
-      divmask = 0xf;
-      addr    = CXD56_CRG_GEAR_IMG_WSPI;
+      maxdivisor = 0xf;
+      addr       = CXD56_CRG_GEAR_IMG_WSPI;
     }
   else
 #endif
@@ -1056,7 +1056,11 @@ void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
         {
           divisor += 1;
         }
-      gear = 0x00010000 | (divisor & divmask);
+      if (divisor > maxdivisor)
+        {
+          divisor = maxdivisor;
+        }
+      gear = 0x00010000 | divisor;
       putreg32(gear, addr);
     }
   sem_post(&g_clockexc);
