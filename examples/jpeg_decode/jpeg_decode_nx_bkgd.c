@@ -217,7 +217,9 @@ static void nximage_kbdin(NXWINDOW hwnd, uint8_t nch, FAR const uint8_t *ch,
  ****************************************************************************/
 void nximage_image(NXWINDOW hwnd,
                    FAR const JSAMPARRAY image,
-                   JDIMENSION position)
+                   JDIMENSION position,
+                   JDIMENSION xsize,
+                   JDIMENSION ysize)
 {
   FAR struct nxgl_rect_s dest;
   FAR const void *src[CONFIG_NX_NPLANES];
@@ -228,18 +230,18 @@ void nximage_image(NXWINDOW hwnd,
 
   dest.pt1.x = (position % g_jpeg_decode_nximage.xres);
   dest.pt1.y = (position / g_jpeg_decode_nximage.xres);;
-  dest.pt2.x = dest.pt1.x + g_jpeg_decode_output.xoutsize - 1;
+  dest.pt2.x = dest.pt1.x + xsize - 1;
   dest.pt2.y = dest.pt1.y;
 
   /* Write per one line */
 
   for (cnt=0;
-       cnt < g_jpeg_decode_output.youtsize;
+       cnt < ysize;
        cnt++, dest.pt1.y++, dest.pt2.y++)
     {
       src[0] = image[cnt];
       ret = nx_bitmap((NXWINDOW)hwnd, &dest, src, &dest.pt1,
-                      g_jpeg_decode_output.xoutsize * sizeof(nxgl_mxpixel_t));
+                      xsize * sizeof(nxgl_mxpixel_t));
       if (ret < 0)
         {
           printf("nximage_image: nx_bitmapwindow failed: %d\n", errno);

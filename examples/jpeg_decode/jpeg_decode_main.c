@@ -154,8 +154,6 @@ struct nximage_data_s g_jpeg_decode_nximage =
 };
 #endif
 
-struct jpeg_decode_output_s g_jpeg_decode_output;
-
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -341,48 +339,50 @@ static int init_output(void)
   return ret;
 }
 
-static void output_result(JSAMPARRAY buffer, JDIMENSION position)
+static void output_result(JSAMPARRAY buffer,
+                          JDIMENSION position,
+                          JDIMENSION width,
+                          JDIMENSION height)
 {
   int y_cnt;
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
   /* Convert YUV4:2:2 to RGB565 */
 
-  for (y_cnt = 0; y_cnt < g_jpeg_decode_output.youtsize; y_cnt++)
+  for (y_cnt = 0; y_cnt < height; y_cnt++)
     {
 #  ifdef CONFIG_IMAGEPROC
       imageproc_convert_yuv2rgb((void *)buffer[y_cnt],
-                                g_jpeg_decode_output.xoutsize,
+                                width,
                                 1);
 #  else
-      yuv2rgb(buffer[y_cnt],
-              g_jpeg_decode_output.xoutsize * APP_BYTES_PER_PIXEL);
+      yuv2rgb(buffer[y_cnt], width * APP_BYTES_PER_PIXEL);
 #  endif
     }
   /* Diplay RGB565 */
 
-  nximage_image(g_jpeg_decode_nximage.hbkgd, buffer, position);
+  nximage_image(g_jpeg_decode_nximage.hbkgd,
+                buffer, position, width, height);
 #else
   /* Save to file */
   fseek(outfile, position * APP_BYTES_PER_PIXEL, SEEK_SET);
-  for (y_cnt = 0; y_cnt < g_jpeg_decode_output.youtsize - 1; y_cnt++)
+  for (y_cnt = 0; y_cnt < height - 1; y_cnt++)
     {
       fwrite(buffer[y_cnt],
              APP_BYTES_PER_PIXEL,
-             g_jpeg_decode_output.xoutsize,
+             width,
              outfile);
 
       /* Go to next line */
       fseek(outfile,
-            (APP_QVGA_WIDTH - g_jpeg_decode_output.xoutsize)
-              * APP_BYTES_PER_PIXEL,
+            (APP_QVGA_WIDTH - width) * APP_BYTES_PER_PIXEL,
             SEEK_CUR);
     }
 
   /* Write last line */
 
-  fwrite(buffer[g_jpeg_decode_output.youtsize - 1],
+  fwrite(buffer[height - 1],
          APP_BYTES_PER_PIXEL,
-         g_jpeg_decode_output.xoutsize,
+         width,
          outfile);
 #endif
 
@@ -432,6 +432,8 @@ int jpeg_decode_main(int argc, char *argv[])
 
   JSAMPARRAY buffer;            /* Output row buffer */
   JDIMENSION output_position;   /* start position of output */
+  JDIMENSION output_width_by_one_decode;
+  JDIMENSION output_height_by_one_decode;
   bool       mcu = false;       /* True means "decode by the MCU" */
 
   /* Command parameter mean input filename in this example. */
@@ -565,27 +567,26 @@ int jpeg_decode_main(int argc, char *argv[])
     {
       /* Output size of 1 decode is the size of 1 MCU */
 
-      g_jpeg_decode_output.xoutsize
-        = (cinfo.output_width  / cinfo.MCUs_per_row);
-      g_jpeg_decode_output.youtsize
-        = (cinfo.output_height / cinfo.MCU_rows_in_scan);
+      output_width_by_one_decode  = (cinfo.output_width  / cinfo.MCUs_per_row);
+      output_height_by_one_decode = (cinfo.output_height / cinfo.MCU_rows_in_scan);
     }
   else
     {
       /* Output size of 1 decode is the size of 1 line */
-      g_jpeg_decode_output.xoutsize = cinfo.output_width;
-      g_jpeg_decode_output.youtsize = 1;
+
+      output_width_by_one_decode  = cinfo.output_width;
+      output_height_by_one_decode = 1;
     }
 
   /* Make a multi-rows-high sample array that will go away when done with image.
-   * Please allocate g_jpeg_decode_output.youtsize lines. */
+   * Please allocate output_height_by_one_decode lines. */
 
   buffer = (*cinfo.mem->alloc_sarray)
                 ((j_common_ptr) &cinfo,
                  JPOOL_IMAGE,
-                 g_jpeg_decode_output.xoutsize * APP_BYTES_PER_PIXEL,
-                 g_jpeg_decode_output.youtsize);
-  /* For examples, if g_jpeg_decode_output.youtsize = 8,
+                 output_width_by_one_decode * APP_BYTES_PER_PIXEL,
+                 output_height_by_one_decode);
+  /* For examples, if output_height_by_one_decode = 8,
    * buffer has the following structure:
    *
    *                                 +---------------------------+
@@ -615,10 +616,11 @@ int jpeg_decode_main(int argc, char *argv[])
 
           jpeg_read_mcus(&cinfo,
                          buffer,
-                         g_jpeg_decode_output.youtsize,
+                         output_height_by_one_decode,
                          &output_position);
 
-          output_result(buffer, output_position);
+          output_result(buffer, output_position,
+                        output_width_by_one_decode, output_height_by_one_decode);
         }
     }
   else
@@ -637,7 +639,8 @@ int jpeg_decode_main(int argc, char *argv[])
 
           jpeg_read_scanlines(&cinfo, buffer, 1);
           /* Assume output wants a pointer and writing position. */
-          output_result(buffer, (cinfo.output_scanline - 1) * cinfo.output_width);
+          output_result(buffer, (cinfo.output_scanline - 1) * cinfo.output_width,
+                        output_width_by_one_decode, output_height_by_one_decode););
         }
     }
 
