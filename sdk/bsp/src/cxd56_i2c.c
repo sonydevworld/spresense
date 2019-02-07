@@ -606,7 +606,7 @@ static int cxd56_i2c_transfer(FAR struct i2c_master_s *dev,
   int ret    = 0;
   int semval = 0;
   int addr = -1;
-  int wostop = 0;
+  static int wostop = 0;
 
   DEBUGASSERT(dev != NULL);
 
@@ -631,9 +631,8 @@ static int cxd56_i2c_transfer(FAR struct i2c_master_s *dev,
 
       priv->msgs  = msgs;
       priv->error = OK;
-      wostop = 0;
 
-      if (addr != msgs->addr)
+      if ((addr != msgs->addr) && !wostop)
         {
           cxd56_i2c_disable(priv);
 
@@ -651,6 +650,10 @@ static int cxd56_i2c_transfer(FAR struct i2c_master_s *dev,
           /* Don't send stop condition even if the last data */
 
           wostop = 1;
+        }
+      else
+        {
+          wostop = 0;
         }
 
       if (msgs->flags & I2C_M_READ)
@@ -678,7 +681,10 @@ static int cxd56_i2c_transfer(FAR struct i2c_master_s *dev,
       priv->msgs = NULL;
     }
 
-  cxd56_i2c_disable(priv);
+  if (!wostop)
+    {
+      cxd56_i2c_disable(priv);
+    }
 
   /* Enable clock gating (clock disable) */
 
