@@ -123,9 +123,7 @@ struct uyvy_s
 /****************************************************************************
  * Private Data
  ****************************************************************************/
-/* In Spresense, the input file is specified not by file pointer
- * but by file descripter
- */
+/* In Spresense, the input file can be specified by file descriptor */
 
 static int  infile;   /* file descriptor of input file */
 static char infile_name[APP_FILENAME_LEN] = "/mnt/spif/SAMPLE.JPG";
@@ -470,8 +468,8 @@ int jpeg_decode_main(int argc, char *argv[])
     }
 
   /* Original libjpeg use file pointer to specify JPEG file.
-   * Spresense use file descripter, which enables to get JPEG
-   *  from any readable descripter.
+   * In Spresense, application can use file descripter, which enables to get
+   * JPEG from any readable descripter.
    */
 
   if ((infile = open(infile_name, O_RDONLY)) < 0) {
@@ -497,9 +495,13 @@ int jpeg_decode_main(int argc, char *argv[])
 
   jpeg_create_decompress(&cinfo);
 
-  /* Step 2: specify data source (eg, a file) */
+  /* Step 2: specify data source (eg, a file)
+   * Spresense support file descriptor.
+   * In using file descriptor, use jpeg_fd_src() API.
+   */
 
-  jpeg_stdio_src(&cinfo, infile);
+  /* jpeg_stdio_src(&cinfo, infile); This is file pointer    API */
+  jpeg_fd_src(&cinfo, infile);    /* This is file descriptor API */
 
   /* Step 3: read file parameters with jpeg_read_header() */
 

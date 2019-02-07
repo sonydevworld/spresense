@@ -977,6 +977,10 @@ EXTERN(void) jpeg_destroy_decompress JPP((j_decompress_ptr cinfo));
 EXTERN(void) jpeg_stdio_dest JPP((j_compress_ptr cinfo, FILE * outfile));
 EXTERN(void) jpeg_stdio_src JPP((j_decompress_ptr cinfo, FILE * infile));
 
+/* Data source managers: file descriptor. */
+/* Caller is responsible for opening the file before and closing after. */
+EXTERN(void) jpeg_fd_src JPP((j_decompress_ptr cinfo, int infd));
+
 /* Data source and destination managers: memory buffers. */
 EXTERN(void) jpeg_mem_dest JPP((j_compress_ptr cinfo,
 			       unsigned char ** outbuffer,

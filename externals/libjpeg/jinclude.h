@@ -89,6 +89,7 @@
  * to facilitate adaption by applications using an own FILE class.
  */
 
+#define JREAD read
 #define JFREAD(file,buf,sizeofbuf)  \
   ((size_t) fread((void *) (buf), (size_t) 1, (size_t) (sizeofbuf), (file)))
 #define JFWRITE(file,buf,sizeofbuf)  \
