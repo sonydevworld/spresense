@@ -45,6 +45,7 @@
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
 
 /*
  * We need memory copying and zeroing functions, plus strncpy().
