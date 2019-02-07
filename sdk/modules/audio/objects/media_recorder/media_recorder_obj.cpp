@@ -1296,7 +1296,14 @@ void MediaRecorderObjectTask::captureDoneOnStop(MsgPacket *msg)
 
       if (!stop_result)
         {
-          m_state = RecorderStateErrorStopping;
+          if (m_cnv_in_buf_mh_que.empty())
+            {
+              m_state = RecorderStateWaitStop;
+            }
+          else
+            {
+              m_state = RecorderStateErrorStopping;
+            }
         }
     }
 }
@@ -1320,7 +1327,14 @@ void MediaRecorderObjectTask::captureDoneOnErrorStop(MsgPacket *msg)
 
       if (!stop_result)
         {
-          m_state = RecorderStateErrorStopping;
+          if (m_cnv_in_buf_mh_que.empty())
+            {
+              m_state = RecorderStateWaitStop;
+            }
+          else
+            {
+              m_state = RecorderStateErrorStopping;
+            }
         }
     }
 }
@@ -1398,15 +1412,17 @@ bool MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh,
                                       uint32_t pcm_size,
                                       bool is_end)
 {
+  MemMgrLite::MemHandle outmh = getOutputBufAddr();
+
   if (m_codec_type == AudCodecLPCM)
     {
       ExecFilterParam param;
 
       param.in_buffer.p_buffer  =
-        reinterpret_cast<unsigned long *>(mh.getPa());
+        static_cast<unsigned long *>(mh.getPa());
       param.in_buffer.size      = pcm_size;
       param.out_buffer.p_buffer =
-        reinterpret_cast<unsigned long *>(getOutputBufAddr());
+        static_cast<unsigned long *>((outmh.isNull()) ? NULL : outmh.getPa());
       param.out_buffer.size     = m_max_output_pcm_size;
 
       if ((m_filter_instance)
@@ -1416,11 +1432,11 @@ bool MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh,
           if (AS_filter_exec(&param, m_filter_instance))
             {
               ConvIn cnvin = { mh, is_end };
-              m_cnv_in_buf_mh_que.push(cnvin);
+              holdCnvInBuf(cnvin);
+              holdOutputBuf(outmh);
             }
           else
             {
-              freeOutputBuf();
               return false;
             }
         }
@@ -1434,10 +1450,10 @@ bool MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh,
       ExecEncParam param;
 
       param.input_buffer.p_buffer  =
-        reinterpret_cast<unsigned long *>(mh.getPa());
+        static_cast<unsigned long *>(mh.getPa());
       param.input_buffer.size      = pcm_size;
       param.output_buffer.p_buffer =
-        reinterpret_cast<unsigned long *>(getOutputBufAddr());
+        static_cast<unsigned long *>((outmh.isNull()) ? NULL : outmh.getPa());
       param.output_buffer.size     = m_max_output_pcm_size;
 
       if ((param.input_buffer.p_buffer)
@@ -1446,11 +1462,11 @@ bool MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh,
           if (AS_encode_exec(&param))
             {
               ConvIn cnvin = { mh, is_end };
-              m_cnv_in_buf_mh_que.push(cnvin);
+              holdCnvInBuf(cnvin);
+              holdOutputBuf(outmh);
             }
           else
             {
-              freeOutputBuf();
               return false;
             }
         }
@@ -1466,12 +1482,14 @@ bool MediaRecorderObjectTask::execEnc(MemMgrLite::MemHandle mh,
 /*--------------------------------------------------------------------------*/
 bool MediaRecorderObjectTask::stopEnc(void)
 {
+  MemMgrLite::MemHandle outmh = getOutputBufAddr();
+
   if (m_codec_type == AudCodecLPCM)
     {
       StopFilterParam param;
 
       param.out_buffer.p_buffer =
-        reinterpret_cast<unsigned long *>(getOutputBufAddr());
+        static_cast<unsigned long *>((outmh.isNull()) ? NULL : outmh.getPa());
       param.out_buffer.size     = m_max_output_pcm_size;
 
       if (m_filter_instance)
@@ -1481,9 +1499,12 @@ bool MediaRecorderObjectTask::stopEnc(void)
            * and will be replyed with "ERROR".
            */
 
-          if (!AS_filter_stop(&param, m_filter_instance))
+          if (AS_filter_stop(&param, m_filter_instance))
             {
-              freeOutputBuf();
+              holdOutputBuf(outmh);
+            }
+          else
+            {
               return false;
             }
         }
@@ -1493,20 +1514,16 @@ bool MediaRecorderObjectTask::stopEnc(void)
       StopEncParam param;
 
       param.output_buffer.p_buffer =
-        reinterpret_cast<unsigned long *>(getOutputBufAddr());
+        static_cast<unsigned long *>((outmh.isNull()) ? NULL : outmh.getPa());
       param.output_buffer.size     = m_max_output_pcm_size;
 
-      if (param.output_buffer.p_buffer)
-        {
-          /* Request flush even if it is not memory allocated.
-           * Spcifing NULL addr is allowed and will be replyed with "ERROR".
-           */
+      /* Request flush even if it is not memory allocated.
+       * Spcifing NULL addr is allowed and will be replyed with "ERROR".
+       */
 
-          if (!AS_encode_stop(&param))
-            {
-              freeOutputBuf();
-              return false;
-            }
+      if (AS_encode_stop(&param))
+        {
+          holdOutputBuf(outmh);
         }
       else
         {
@@ -1558,21 +1575,15 @@ uint32_t MediaRecorderObjectTask::checkExternalCmd(void)
 }
 
 /*--------------------------------------------------------------------------*/
-void* MediaRecorderObjectTask::getOutputBufAddr()
+MemMgrLite::MemHandle MediaRecorderObjectTask::getOutputBufAddr()
 {
   MemMgrLite::MemHandle mh;
   if (mh.allocSeg(m_pool_id.output, m_max_output_pcm_size) != ERR_OK)
     {
       MEDIA_RECORDER_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-      return NULL;
     }
 
-  if (!m_output_buf_mh_que.push(mh))
-    {
-      MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-      return NULL;
-    }
-  return mh.getPa();
+  return mh;
 }
 
 /*--------------------------------------------------------------------------*/

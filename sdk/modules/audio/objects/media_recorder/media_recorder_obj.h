@@ -193,16 +193,36 @@ private:
   AsRecorderEvent getExternalCmd(void);
   uint32_t checkExternalCmd(void);
 
-  void* getOutputBufAddr();
+  MemMgrLite::MemHandle getOutputBufAddr();
 
   uint32_t loadCodec(AudioCodec, char *, int32_t, int32_t, uint32_t *);
   bool unloadCodec(void);
 
+  bool holdCnvInBuf(ConvIn in)
+    {
+      if (!m_cnv_in_buf_mh_que.push(in))
+        {
+          MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+          return false;
+        }
+
+      return true;
+    }
   bool freeCnvInBuf()
     {
       if (!m_cnv_in_buf_mh_que.pop())
         {
           MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
+          return false;
+        }
+
+      return true;
+    }
+  bool holdOutputBuf(MemMgrLite::MemHandle mh)
+    {
+      if (!m_output_buf_mh_que.push(mh))
+        {
+          MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
           return false;
         }
 
