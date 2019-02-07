@@ -293,18 +293,17 @@ static void yuv2rgb(void *buf, uint32_t size)
     }
 }
 #  endif /* !CONFIG_IMAGEPROC */
-#endif /* !CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
 
-/* init_output(), output_result() and fin_output()
+/* init_output_to_lcd(), output_to_lcd() and fin_output_to_lcd()
  * are specific for this example.
- * These are for displaying LCD or saving file.
+ * These are for displaying to LCD.
  */
 
-static int init_output(void)
+static int init_output_to_lcd(void)
 {
   int ret = OK;
-#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
   static bool is_lcd_initialized = false;
+
   if (!is_lcd_initialized)
     {
       ret = nximage_initialize();
@@ -317,8 +316,54 @@ static int init_output(void)
     }
 #  ifdef CONFIG_IMAGEPROC
   imageproc_initialize();
+#  endif /* CONFIG_IMAGEPROC */
+  return ret;
+}
+
+static void output_to_lcd(JSAMPARRAY buffer,
+                          JDIMENSION position,
+                          JDIMENSION width,
+                          JDIMENSION height)
+{
+  int y_cnt;
+  /* Convert YUV4:2:2 to RGB565 */
+
+  for (y_cnt = 0; y_cnt < height; y_cnt++)
+    {
+#  ifdef CONFIG_IMAGEPROC
+      imageproc_convert_yuv2rgb((void *)buffer[y_cnt],
+                                width,
+                                1);
+#  else
+      yuv2rgb(buffer[y_cnt], width * APP_BYTES_PER_PIXEL);
+#  endif /* CONFIG_IMAGEPROC */
+    }
+
+  /* Display RGB565 */
+
+  nximage_image(g_jpeg_decode_nximage.hbkgd,
+                buffer, position, width, height);
+  return;
+}
+
+static void fin_output_to_lcd(void)
+{
+#  ifdef CONFIG_IMAGEPROC
+  imageproc_finalize();
 #  endif
-#else
+  return;
+}
+#else /* !CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
+
+/* init_output_to_file(), output_to_file() and fin_output_to_file()
+ * are specific for this example.
+ * These are for saving to file.
+ */
+
+static int init_output_to_file(void)
+{
+  int ret = OK;
+
   /* Delete old file name */
 
   memset(outfile_name, 0, sizeof(outfile_name));
@@ -334,36 +379,19 @@ static int init_output(void)
 
   /* Initialize with the size of created YUV4:2:2 data */
 
-  fseek(outfile, APP_QVGA_WIDTH * APP_QVGA_HEIGHT * 2, SEEK_SET);
-#endif
+  fseek(outfile,
+        APP_QVGA_WIDTH * APP_QVGA_HEIGHT * APP_BYTES_PER_PIXEL,
+        SEEK_SET);
   return ret;
 }
 
-static void output_result(JSAMPARRAY buffer,
-                          JDIMENSION position,
-                          JDIMENSION width,
-                          JDIMENSION height)
+static void output_to_file(JSAMPARRAY buffer,
+                           JDIMENSION position,
+                           JDIMENSION width,
+                           JDIMENSION height)
 {
   int y_cnt;
-#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
-  /* Convert YUV4:2:2 to RGB565 */
 
-  for (y_cnt = 0; y_cnt < height; y_cnt++)
-    {
-#  ifdef CONFIG_IMAGEPROC
-      imageproc_convert_yuv2rgb((void *)buffer[y_cnt],
-                                width,
-                                1);
-#  else
-      yuv2rgb(buffer[y_cnt], width * APP_BYTES_PER_PIXEL);
-#  endif
-    }
-  /* Diplay RGB565 */
-
-  nximage_image(g_jpeg_decode_nximage.hbkgd,
-                buffer, position, width, height);
-#else
-  /* Save to file */
   fseek(outfile, position * APP_BYTES_PER_PIXEL, SEEK_SET);
   for (y_cnt = 0; y_cnt < height - 1; y_cnt++)
     {
@@ -384,24 +412,15 @@ static void output_result(JSAMPARRAY buffer,
          APP_BYTES_PER_PIXEL,
          width,
          outfile);
-#endif
-
   return;
 }
 
-
-static void fin_output(void)
+static void fin_output_to_file(void)
 {
-#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
-#  ifdef CONFIG_IMAGEPROC
-  imageproc_finalize();
-#  endif
-#else
   fclose(outfile);
-#endif /* CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
-
   return;
 }
+#endif /* CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
 
 /****************************************************************************
  * Public Functions
@@ -579,7 +598,7 @@ int jpeg_decode_main(int argc, char *argv[])
     }
 
   /* Make a multi-rows-high sample array that will go away when done with image.
-   * Please allocate output_height_by_one_decode lines. */
+   * Please allocate g_jpeg_decode_output.youtsize lines. */
 
   buffer = (*cinfo.mem->alloc_sarray)
                 ((j_common_ptr) &cinfo,
@@ -599,8 +618,11 @@ int jpeg_decode_main(int argc, char *argv[])
    *     buffer[7] points to ---->   | 8th line of decode result |
    *                                 +---------------------------+
    */
-
-  init_output();
+#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+  init_output_to_lcd();
+#else
+  init_output_to_file();
+#endif
 
   /* Step 6: while (MCU remain to be read) */
   /*           jpeg_read_mcus(...); */
@@ -618,9 +640,13 @@ int jpeg_decode_main(int argc, char *argv[])
                          buffer,
                          output_height_by_one_decode,
                          &output_position);
-
-          output_result(buffer, output_position,
+#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+          output_to_lcd(buffer, output_position,
                         output_width_by_one_decode, output_height_by_one_decode);
+#else
+          output_to_file(buffer, output_position,
+                         output_width_by_one_decode, output_height_by_one_decode); 
+#endif
         }
     }
   else
@@ -639,14 +665,23 @@ int jpeg_decode_main(int argc, char *argv[])
 
           jpeg_read_scanlines(&cinfo, buffer, 1);
           /* Assume output wants a pointer and writing position. */
-          output_result(buffer, (cinfo.output_scanline - 1) * cinfo.output_width,
-                        output_width_by_one_decode, output_height_by_one_decode););
+#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+          output_to_lcd(buffer, (cinfo.output_scanline - 1) * cinfo.output_width,
+                        output_width_by_one_decode, output_height_by_one_decode);
+#else
+          output_to_file(buffer, (cinfo.output_scanline - 1) * cinfo.output_width,
+                         output_width_by_one_decode, output_height_by_one_decode);
+#endif
         }
     }
 
   /* Step 7: Finish decompression */
 
-  fin_output();
+#ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+  fin_output_to_lcd();
+#else
+  fin_output_to_file();
+#endif
   (void) jpeg_finish_decompress(&cinfo);
 
   /* We can ignore the return value since suspension is not possible
