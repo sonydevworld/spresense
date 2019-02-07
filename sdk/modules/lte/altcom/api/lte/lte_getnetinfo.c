@@ -111,9 +111,9 @@ static void getnetinfo_job(FAR void *arg)
   uint32_t                                 result = LTE_RESULT_ERROR;
   FAR lte_netinfo_t                        netinfo;
 
-  data = (FAR struct apicmd_cmddat_getnetinfores_s *)arg;
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_NETINFO,
-    (void **)&callback);
+    (FAR void **)&callback);
+  netinfo.pdn_stat = NULL;
 
   if ((0 != ret) || (!callback))
     {
@@ -121,48 +121,65 @@ static void getnetinfo_job(FAR void *arg)
     }
   else
     {
+      data = (FAR struct apicmd_cmddat_getnetinfores_s *)arg;
+
       if (data->result == APICMD_GETNETINFO_RES_OK)
         {
           /* Fill network infomation */
 
           netinfo.nw_stat = data->nw_stat;
+          netinfo.pdn_num = data->pdn_count;
           if (0 < data->pdn_count)
             {
-              netinfo.pdn_stat = (lte_pdn_t *)
+              netinfo.pdn_stat = (FAR lte_pdn_t *)
                 BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->pdn_count);
-              for (i = 0; i < data->pdn_count; i++)
+              if (!netinfo.pdn_stat)
                 {
-                  netinfo.pdn_stat[i].session_id =
-                    data->pdn[i].session_id;
-                  netinfo.pdn_stat[i].active =
-                    data->pdn[i].activate == APICMD_PDN_ACT_ACTIVE ?
-                  LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
-                  netinfo.pdn_stat[i].apn_type = htonl(data->pdn[i].apntype);
-                  netinfo.pdn_stat[i].ipaddr_num = data->pdn[i].ipaddr_num;
-                  for (j = 0; j < data->pdn[i].ipaddr_num; j++)
+                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+                }
+              else
+                {
+                  for (i = 0; i < data->pdn_count; i++)
                     {
-                      memcpy(&netinfo.pdn_stat[i].address[j],
-                        &data->pdn[i].ip_address[j], sizeof(lte_ipaddr_t));
+                      netinfo.pdn_stat[i].session_id =
+                        data->pdn[i].session_id;
+                      netinfo.pdn_stat[i].active =
+                        data->pdn[i].activate == APICMD_PDN_ACT_ACTIVE ?
+                        LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
+                      netinfo.pdn_stat[i].apn_type =
+                        htonl(data->pdn[i].apntype);
+                      netinfo.pdn_stat[i].ipaddr_num =
+                        data->pdn[i].ipaddr_num;
+                      for (j = 0; j < netinfo.pdn_stat[i].ipaddr_num; j++)
+                        {
+                          netinfo.pdn_stat[i].address[j].ip_type =
+                            data->pdn[i].ip_address[j].iptype;
+                          strncpy(
+                            (FAR char *)netinfo.pdn_stat[i].address[j].address,
+                            (FAR char *)data->pdn[i].ip_address[j].address,
+                            LTE_IPADDR_MAX_LEN - 1);
+                        }
+
+                      netinfo.pdn_stat[i].ims_register =
+                        data->pdn[i].imsregister == APICMD_PDN_IMS_REG ?
+                        LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
+                      netinfo.pdn_stat[i].data_allow =
+                        data->pdn[i].dataallow == APICMD_PDN_DATAALLOW_ALLOW ?
+                        LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
+                      netinfo.pdn_stat[i].data_roaming_allow =
+                        data->pdn[i].dararoamingallow ==
+                        APICMD_PDN_DATAROAMALLOW_ALLOW ? LTE_DATA_ALLOW :
+                        LTE_DATA_DISALLOW;
                     }
 
-                  netinfo.pdn_stat[i].ims_register =
-                    data->pdn[i].imsregister == APICMD_PDN_IMS_REG ?
-                    LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
-                  netinfo.pdn_stat[i].data_allow =
-                    data->pdn[i].dataallow == APICMD_PDN_DATAALLOW_ALLOW ?
-                    LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
-                  netinfo.pdn_stat[i].data_roaming_allow =
-                    data->pdn[i].dararoamingallow ==
-                    APICMD_PDN_DATAROAMALLOW_ALLOW ? LTE_DATA_ALLOW :
-                    LTE_DATA_DISALLOW;
+                  result = LTE_RESULT_OK;
                 }
-
-              result = LTE_RESULT_OK;
             }
           else
             {
-              DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-              result = LTE_RESULT_ERROR;
+              /* When not connected PDN */
+
+              result = LTE_RESULT_OK;
             }
         }
 
@@ -173,7 +190,11 @@ static void getnetinfo_job(FAR void *arg)
    * bring a pointer to the receive buffer to the worker thread.
    * Therefore, the receive buffer needs to be released here. */
 
-  (void)BUFFPOOL_FREE(netinfo.pdn_stat);
+  if (netinfo.pdn_stat)
+    {
+      (void)BUFFPOOL_FREE(netinfo.pdn_stat);
+    }
+
   altcom_free_cmd((FAR uint8_t *)arg);
 
   /* Unregistration status change callback. */

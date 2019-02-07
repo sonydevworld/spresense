@@ -115,12 +115,15 @@ static void repnetinfo_job(FAR void *arg)
   FAR struct apicmd_cmddat_rep_netinfo_s *data;
   netinfo_report_cb_t                    callback;
   lte_netinfo_t                          netinfo;
+  int32_t                                ret = 0;
 
+  netinfo.pdn_stat = NULL;
   callback = altcomcallbacks_get_cb(APICMDID_REPORT_NETINFO);
 
   if (!callback)
     {
       DBGIF_LOG_WARNING("When callback is null called report netstat.\n");
+      ret = -1;
     }
   else
     {
@@ -129,43 +132,54 @@ static void repnetinfo_job(FAR void *arg)
       /* Fill network infomation */
 
       netinfo.nw_stat = data->nw_stat;
+      netinfo.pdn_num = data->pdn_count;
       if (0 < data->pdn_count)
         {
-          netinfo.pdn_stat = (lte_pdn_t *)
+          netinfo.pdn_stat = (FAR lte_pdn_t *)
             BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->pdn_count);
-          for (i = 0; i < data->pdn_count; i++)
+          if (!netinfo.pdn_stat)
             {
-              netinfo.pdn_stat[i].session_id =
-                data->pdn[i].session_id;
-              netinfo.pdn_stat[i].active =
-                data->pdn[i].activate == APICMD_PDN_ACT_ACTIVE ?
-              LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
-              netinfo.pdn_stat[i].apn_type = htonl(data->pdn[i].apntype);
-              netinfo.pdn_stat[i].ipaddr_num = data->pdn[i].ipaddr_num;
-              for (j = 0; j < data->pdn[i].ipaddr_num; j++)
-                {
-                  memcpy(&netinfo.pdn_stat[i].address[j],
-                    &data->pdn[i].ip_address[j], sizeof(lte_ipaddr_t));
-                }
-
-              netinfo.pdn_stat[i].ims_register =
-                data->pdn[i].imsregister == APICMD_PDN_IMS_REG ?
-                LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
-              netinfo.pdn_stat[i].data_allow =
-                data->pdn[i].dataallow == APICMD_PDN_DATAALLOW_ALLOW ?
-                LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
-              netinfo.pdn_stat[i].data_roaming_allow =
-                data->pdn[i].dararoamingallow ==
-                APICMD_PDN_DATAROAMALLOW_ALLOW ? LTE_DATA_ALLOW :
-                LTE_DATA_DISALLOW;
+              DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+              ret = -1;
             }
+          else
+            {
+              for (i = 0; i < data->pdn_count; i++)
+                {
+                  netinfo.pdn_stat[i].session_id =
+                    data->pdn[i].session_id;
+                  netinfo.pdn_stat[i].active =
+                    data->pdn[i].activate == APICMD_PDN_ACT_ACTIVE ?
+                  LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
+                  netinfo.pdn_stat[i].apn_type = htonl(data->pdn[i].apntype);
+                  netinfo.pdn_stat[i].ipaddr_num = data->pdn[i].ipaddr_num;
+                  for (j = 0; j < netinfo.pdn_stat[i].ipaddr_num; j++)
+                    {
+                      netinfo.pdn_stat[i].address[j].ip_type =
+                        data->pdn[i].ip_address[j].iptype;
+                      strncpy(
+                        (FAR char *)netinfo.pdn_stat[i].address[j].address,
+                        (FAR char *)data->pdn[i].ip_address[j].address,
+                        LTE_IPADDR_MAX_LEN - 1);
+                    }
 
+                  netinfo.pdn_stat[i].ims_register =
+                    data->pdn[i].imsregister == APICMD_PDN_IMS_REG ?
+                    LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
+                  netinfo.pdn_stat[i].data_allow =
+                    data->pdn[i].dataallow == APICMD_PDN_DATAALLOW_ALLOW ?
+                    LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
+                  netinfo.pdn_stat[i].data_roaming_allow =
+                    data->pdn[i].dararoamingallow ==
+                    APICMD_PDN_DATAROAMALLOW_ALLOW ? LTE_DATA_ALLOW :
+                    LTE_DATA_DISALLOW;
+                }
+            }
         }
-      else
-        {
-          DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-        }
+    }
 
+  if (0 == ret)
+    {
       callback(&netinfo);
     }
 
@@ -173,7 +187,11 @@ static void repnetinfo_job(FAR void *arg)
    * bring a pointer to the receive buffer to the worker thread.
    * Therefore, the receive buffer needs to be released here. */
 
-  BUFFPOOL_FREE(netinfo.pdn_stat);
+  if (netinfo.pdn_stat)
+    {
+      (void)BUFFPOOL_FREE(netinfo.pdn_stat);
+    }
+
   altcom_free_cmd((FAR uint8_t *)arg);
 }
 

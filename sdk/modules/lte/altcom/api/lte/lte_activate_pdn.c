@@ -189,10 +189,11 @@ static void activatepdn_job(FAR void *arg)
   activate_pdn_cb_t                         callback;
   uint32_t                                  result;
   FAR lte_pdn_t                             *pdn = NULL;
+  uint8_t i;
 
   data = (FAR struct apicmd_cmddat_activatepdnres_s *)arg;
   ret = altcomcallbacks_get_unreg_cb(APICMDID_ACTIVATE_PDN,
-    (void **)&callback);
+    (FAR void **)&callback);
 
   if ((0 != ret) || (!callback))
     {
@@ -206,26 +207,32 @@ static void activatepdn_job(FAR void *arg)
         LTE_RESULT_CANCEL;
 
       if (result == APICMD_ACTIVATEPDN_RES_OK)
-      {
-        /* Fill pdn infomation */
+        {
+          /* Fill pdn infomation */
 
-        pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
-        if (pdn)
-          {
-            pdn->session_id = data->pdnset.session_id;
-            pdn->active = data->pdnset.activate;
-            pdn->apn_type = data->pdnset.apntype;
-            memcpy(pdn->address, data->pdnset.ip_address,
-              (sizeof(struct apicmd_ipaddr_s) * 2));
-            pdn->ims_register = data->pdnset.imsregister;
-            pdn->data_allow = data->pdnset.dataallow;
-            pdn->data_roaming_allow = data->pdnset.dararoamingallow;
-          }
-        else
-          {
-            DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-          }
-      }
+          pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
+          if (pdn)
+            {
+              pdn->session_id = data->pdnset.session_id;
+              pdn->active = data->pdnset.activate;
+              pdn->apn_type = htonl(data->pdnset.apntype);
+              pdn->ipaddr_num = data->pdnset.ipaddr_num;
+              for (i = 0; i < pdn->ipaddr_num; i++)
+                {
+                  pdn->address[i].ip_type = data->pdnset.ip_address[i].iptype;
+                  strncpy((FAR char *)pdn->address[i].address,
+                          (FAR char *)data->pdnset.ip_address[i].address,
+                          LTE_IPADDR_MAX_LEN - 1);
+                }
+              pdn->ims_register = data->pdnset.imsregister;
+              pdn->data_allow = data->pdnset.dataallow;
+              pdn->data_roaming_allow = data->pdnset.dararoamingallow;
+            }
+          else
+            {
+              DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+            }
+        }
 
       callback(result, pdn);
     }
@@ -234,7 +241,11 @@ static void activatepdn_job(FAR void *arg)
    * bring a pointer to the receive buffer to the worker thread.
    * Therefore, the receive buffer needs to be released here. */
 
-  (void)BUFFPOOL_FREE(pdn);
+  if (pdn)
+    {
+      (void)BUFFPOOL_FREE(pdn);
+    }
+
   altcom_free_cmd((FAR uint8_t *)arg);
 
   /* Unregistration status change callback. */
