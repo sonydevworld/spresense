@@ -608,6 +608,22 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
   cinfo->cconvert = &cconvert->pub;
   cconvert->pub.start_pass = start_pass_dcolor;
 
+  /* Currently, Spresense do not support YCbCr, YCCK, CMYK.
+   * TODO: These are to be supported.
+   */
+  if ((cinfo->out_color_space == JCS_YCbCr) ||
+      (cinfo->out_color_space == JCS_CMYK)  ||
+      (cinfo->out_color_space == JCS_YCCK))
+    ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
+
+  /* In CbYCrY case, replace to YCbCr internally.
+   * TODO: This replace should be deleted, and
+   *       both YCbCr and CbYCrY should work well each.
+   */
+  if (cinfo->out_color_space == JCS_CbYCrY) {
+    cinfo->out_color_space = JCS_YCbCr;
+  }
+
   /* Make sure num_components agrees with jpeg_color_space */
   switch (cinfo->jpeg_color_space) {
   case JCS_GRAYSCALE:

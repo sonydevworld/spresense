@@ -223,6 +223,7 @@ typedef enum {
 	JCS_GRAYSCALE,		/* monochrome */
 	JCS_RGB,		/* red/green/blue, standard RGB (sRGB) */
 	JCS_YCbCr,		/* Y/Cb/Cr (also known as YUV), standard YCC */
+	JCS_CbYCrY,		/* Cb/Y/Cr/Y (also known as YUV4:2:2) */
 	JCS_CMYK,		/* C/M/Y/K */
 	JCS_YCCK,		/* Y/Cb/Cr/K */
 	JCS_BG_RGB,		/* big gamut red/green/blue, bg-sRGB */
