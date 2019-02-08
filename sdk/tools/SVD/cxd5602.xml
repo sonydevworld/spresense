@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd" xmlns:xi="http://www.w3.org/2001/XInclude" >
+  <vendor>Sony Semiconductor Solutions</vendor>                                       <!-- device vendor name -->
+  <vendorID>SONY</vendorID>                                        <!-- device vendor short name -->
+  <name>cxd5602</name>                                        <!-- name of part-->
+  <series>CXD56xx</series>                                         <!-- device series the device belongs to -->
+  <version>1.0</version>                                          <!-- version of this description, adding CMSIS-SVD 1.1 tags -->
+  <description>ARM 32-bit Cortex-M4F Microcontroller based device, CPU clock up to 156MHz, etc. </description>
+  <licenseText>                                                   <!-- this license text will appear in header file. \n force line breaks -->
+    Copyright 2019 Sony Semiconductor Solutions Corporation\n
+\n
+  Redistribution and use in source and binary forms, with or without\n
+  modification, are permitted provided that the following conditions\n
+  are met:\n
+\n
+  1. Redistributions of source code must retain the above copyright\n
+     notice, this list of conditions and the following disclaimer.\n
+  2. Redistributions in binary form must reproduce the above copyright\n
+     notice, this list of conditions and the following disclaimer in\n
+     the documentation and/or other materials provided with the\n
+     distribution.\n
+  3. Neither the name of Sony Semiconductor Solutions Corporation nor\n
+     the names of its contributors may be used to endorse or promote\n
+     products derived from this software without specific prior written\n
+     permission.\n
+\n
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS\n
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE\n
+  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,\n
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,\n
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS\n
+  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED\n
+  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN\n
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n
+  POSSIBILITY OF SUCH DAMAGE.\n
+  </licenseText>
+  <cpu>                                                           <!-- details about the cpu embedded in the device -->
+    <name>CM4</name>
+    <revision>r0p1</revision>
+    <endian>little</endian>
+    <mpuPresent>true</mpuPresent>
+    <fpuPresent>true</fpuPresent>
+    <nvicPrioBits>3</nvicPrioBits>
+    <vendorSystickConfig>false</vendorSystickConfig>
+    <deviceNumInterrupts>128</deviceNumInterrupts>
+  </cpu>
+  <addressUnitBits>8</addressUnitBits>                            <!-- byte addressable memory -->
+  <width>32</width>                                               <!-- bus width is 32 bits -->
+  <!-- default settings implicitly inherited by subsequent sections -->
+  <size>32</size>                                                 <!-- this is the default size (number of bits) of all peripherals
+                                                                       and register that do not define "size" themselves -->
+  <access>read-write</access>                                     <!-- default access permission for all subsequent registers -->
+  <resetValue>0x00000000</resetValue>                             <!-- by default all bits of the registers are initialized to 0 on reset -->
+  <resetMask>0xFFFFFFFF</resetMask>                               <!-- by default all 32Bits of the registers are used -->
+
+  <peripherals>
+    <!-- Clock/Reset/Gating -->
+    <xi:include href="crg.xml"/>
+
+    <!-- 2D Graphics Engine -->
+    <xi:include href="ge2d.xml"/>
+  </peripherals>
+
+
+</device>
+
