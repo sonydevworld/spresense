@@ -519,11 +519,12 @@ int jpeg_decode_main(int argc, char *argv[])
 
   /* Step 4: set parameters for decompression */
 
-  /* JCS_YCbCr means YUV4:4:4 in original libjpeg.
-   * In Spresense, YCbCr means YUV4:2:2 for memory reduction.
+  /* Spresense support CbYCrY output, which is Spresense-specific.
+   * But, Spresense do not support YCbCr(YUV4:4:4) and 4-component formats
+   *  (CMYK and YCCK) currently.
    */
 
-  cinfo.out_color_space = JCS_YCbCr;
+  cinfo.out_color_space = JCS_CbYCrY;
 
   /* In this example, output to QVGA(320*240) display */
   /* For such purpose, set downscaling in large input image case. */
