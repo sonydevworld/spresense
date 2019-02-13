@@ -111,12 +111,22 @@ int32_t altcomcallbacks_init(void)
 int32_t altcomcallbacks_fin(void)
 {
   int32_t ret;
+  FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (!g_isinit)
     {
       DBGIF_LOG_WARNING("ALTCOM callbacks not initialized.\n");
       return -EPERM;
     }
+
+  sys_lock_mutex(&g_list_mtx);
+  while(g_lteapi_callback_list)
+    {
+      cb_block = g_lteapi_callback_list;
+      altcombs_remove_cblist(&g_lteapi_callback_list, cb_block->cb_list);
+    }
+
+  sys_unlock_mutex(&g_list_mtx);
 
   ret = sys_delete_mutex(&g_list_mtx);
   if (0 > ret)
@@ -287,7 +297,6 @@ int32_t altcomcallbacks_get_unreg_cb(int32_t id, void **callback)
       DBGIF_LOG_WARNING("Callback list not found.\n");
       return -EPERM;
     }
-
   sys_lock_mutex(&g_list_mtx);
   *callback = altcombs_get_cb(g_lteapi_callback_list, id);
   if (*callback)
