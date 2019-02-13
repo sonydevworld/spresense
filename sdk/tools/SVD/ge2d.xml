@@ -2,7 +2,7 @@
 <peripheral>
   <name>GE2D</name>
   <version>1.0</version>
-  <description></description>
+  <description>Hardware 2D Graphics Engine</description>
   <baseAddress>0x02101000</baseAddress>
   <size>32</size>
   <access>read-write</access>
@@ -20,9 +20,9 @@
   </interrupt>
 
   <registers>
-    <!-- GE2D_INTR_ENABLE: Interrupt Control -->
+    <!-- INTR_ENABLE: Interrupt Control -->
     <register>
-      <name>GE2D_INTR_ENABLE</name>
+      <name>INTR_ENABLE</name>
       <description>2D Graphics Engine Interrupt Control</description>
       <addressOffset>0x00</addressOffset>
       <size>32</size>
@@ -75,17 +75,17 @@
       </fields>
     </register>
 
-    <!-- GE2D_INTR_STAT: Interrupt Status -->
-    <register derivedFrom="GE2D_INTR_ENABLE">
-      <name>GE2D_INTR_STAT</name>
+    <!-- INTR_STAT: Interrupt Status -->
+    <register derivedFrom="INTR_ENABLE">
+      <name>INTR_STAT</name>
       <description>2D Graphics Engine Interrupt Status and Clear</description>
       <addressOffset>0x04</addressOffset>
       <modifiedWriteValues>oneToClear</modifiedWriteValues>
     </register>
 
-    <!-- GE2D_ADDRESS_DESCRIPTOR_START: Descriptor Address Set Register -->
+    <!-- ADDRESS_DESCRIPTOR_START: Descriptor Address Set Register -->
     <register>
-      <name>GE2D_ADDRESS_DESCRIPTOR_START</name>
+      <name>ADDRESS_DESCRIPTOR_START</name>
       <description>Descriptor Address Set Register</description>
       <addressOffset>0x08</addressOffset>
       <size>32</size>
@@ -111,9 +111,9 @@
       </fields>
     </register>
 
-    <!-- GE2D_STATUS: Status Register -->
+    <!-- STATUS: Status Register -->
     <register>
-      <name>GE2D_STATUS</name>
+      <name>STATUS</name>
       <description>Status Register</description>
       <addressOffset>0x0c</addressOffset>
       <size>32</size>
@@ -157,9 +157,9 @@
       </fields>
     </register>
 
-    <!-- GE2D_CMD_DESCRIPTOR: Command Register -->
+    <!-- CMD_DESCRIPTOR: Command Register -->
     <register>
-      <name>GE2D_CMD_DESCRIPTOR</name>
+      <name>CMD_DESCRIPTOR</name>
       <description>Command Register</description>
       <addressOffset>0x0c</addressOffset>
       <size>32</size>
@@ -197,18 +197,18 @@
       </fields>
     </register>
 
-    <!-- GE2D_STAT_NORMAL_DESCRIPTOR_ADDRESS: Normal Descriptor Address Register -->
+    <!-- STAT_NORMAL_DESCRIPTOR_ADDRESS: Normal Descriptor Address Register -->
     <register>
-      <name>GE2D_STAT_NORMAL_DESCRIPTOR_ADDRESS</name>
+      <name>STAT_NORMAL_DESCRIPTOR_ADDRESS</name>
       <description>Normal Descriptor Address Register</description>
       <addressOffset>0x10</addressOffset>
       <size>32</size>
       <access>read-only</access>
     </register>
 
-    <!-- GE2D_STAT_CURRENT_DESCRIPTOR_ADDRESS: Current Descriptor Address Register -->
+    <!-- STAT_CURRENT_DESCRIPTOR_ADDRESS: Current Descriptor Address Register -->
     <register>
-      <name>GE2D_STAT_CURRENT_DESCRIPTOR_ADDRESS</name>
+      <name>STAT_CURRENT_DESCRIPTOR_ADDRESS</name>
       <description>Current Descriptor Address Register</description>
       <addressOffset>0x14</addressOffset>
       <size>32</size>
