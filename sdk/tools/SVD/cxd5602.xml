@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<device schemaVersion="1.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd" xmlns:xi="http://www.w3.org/2001/XInclude" >
+<device schemaVersion="1.3.3" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd" xmlns:xi="http://www.w3.org/2001/XInclude" >
   <vendor>Sony Semiconductor Solutions</vendor>                                       <!-- device vendor name -->
   <vendorID>SONY</vendorID>                                        <!-- device vendor short name -->
   <name>cxd5602</name>                                        <!-- name of part-->
@@ -60,6 +60,9 @@
   <peripherals>
     <!-- Clock/Reset/Gating -->
     <xi:include href="crg.xml"/>
+
+    <!-- Address Converter -->
+    <xi:include href="addrconv.xml"/>
 
     <!-- 2D Graphics Engine -->
     <xi:include href="ge2d.xml"/>
