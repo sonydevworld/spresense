@@ -2,7 +2,7 @@
     <peripheral>
       <name>CRG</name>
       <version>1.0</version>
-      <description></description>
+      <description>Clock / Reset / Gating</description>
       <baseAddress>0x02011000</baseAddress>
       <size>32</size>
       <access>read-write</access>
