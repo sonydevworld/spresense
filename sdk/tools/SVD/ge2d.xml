@@ -9,7 +9,7 @@
 
   <addressBlock>
     <offset>0</offset>
-    <size>0x1000</size>
+    <size>0x400</size>
     <usage>registers</usage>
   </addressBlock>
 
@@ -99,9 +99,6 @@
           <bitRange>[31:4]</bitRange><access>read-write</access>
           <description>Descriptor Address</description>
         </field>
-        <field>
-          <name>reserved</name><bitRange>[3:1]</bitRange>
-        </field>
         <!-- MSEL -->
         <field>
           <name>MSEL</name>
@@ -141,13 +138,6 @@
           <bitRange>[2:2]</bitRange>
         </field>
 
-        <!-- PREQ -->
-        <field>
-          <name>PREQ</name>
-          <description>Reserved</description>
-          <bitRange>[1:1]</bitRange>
-        </field>
-
         <!-- NREQ -->
         <field>
           <name>NREQ</name>
@@ -181,11 +171,6 @@
               <name>RUN</name>
               <description>Normal Descriptor Set and Run</description>
               <value>1</value>
-            </enumeratedValue>
-            <enumeratedValue>
-              <name>reserved</name>
-              <description>Reserved</description>
-              <value>2</value>
             </enumeratedValue>
             <enumeratedValue>
               <name>STOP</name>
