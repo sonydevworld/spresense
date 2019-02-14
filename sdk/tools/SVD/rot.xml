@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>ROT</name>
+  <version>1.0</version>
+  <description>Image rotation</description>
+  <baseAddress>0x02101400</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x400</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>ROT</name>
+    <description>Rotation interrupt</description>
+    <value>107</value>
+  </interrupt>
+
+  <registers>
+    <!-- INTR_STATUS: Interrupt Control -->
+    <register>
+      <name>INTR_STATUS</name>
+      <description>Interrupt Status</description>
+      <addressOffset>0x00</addressOffset>
+      <access>read-only</access>
+
+      <fields>
+        <!-- WR_ERR_STS -->
+        <field>
+          <name>WR_ERR_STS</name>
+          <description>Write Error</description>
+          <bitRange>[9:9]</bitRange>
+        </field>
+
+        <!-- RD_ERR_STS -->
+        <field>
+          <name>RD_ERR_STS</name>
+          <description>Read Error</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+
+        <!-- END_STS -->
+        <field>
+          <name>END_STS</name>
+          <description>Done</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- INTR_ENABLE: Interrupt Enable -->
+    <register>
+      <name>INTR_ENABLE</name>
+      <description>Interrupt Enable</description>
+      <addressOffset>0x04</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000301</resetMask>
+
+      <fields>
+        <!-- WR_ERR_ENB -->
+        <field>
+          <name>WR_ERR_ENB</name>
+          <description>Write Error Enable</description>
+          <bitRange>[9:9]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>Disable</name>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>Enable</name>
+              <value>1</value>
+            </enumeratedValue>
+          </enumeratedValues>            
+        </field>
+
+        <!-- RD_ERR_ENB -->
+        <field derivedFrom="WR_ERR_ENB">
+          <name>RD_ERR_ENB</name>
+          <description>Read Error</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+
+        <!-- END_ENB -->
+        <field derivedFrom="WR_ERR_ENB">
+          <name>END_ENB</name>
+          <description>Done Interrupt Enable</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- INTR_DISABLE: Interrupt Disable -->
+    <register>
+      <name>INTR_DISABLE</name>
+      <description>Interrupt Disable</description>
+      <addressOffset>0x08</addressOffset>
+      <access>write-only</access>
+
+      <fields>
+        <!-- WR_ERR_DIS -->
+        <field>
+          <name>WR_ERR_DIS</name>
+          <description>Write Error Disable</description>
+          <bitRange>[9:9]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+
+        <!-- RD_ERR_DIS -->
+        <field>
+          <name>RD_ERR_DIS</name>
+          <description>Read Error Disable</description>
+          <bitRange>[8:8]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+
+        <!-- END_DIS -->
+        <field>
+          <name>END_DIS</name>
+          <description>Done Interrupt Disable</description>
+          <bitRange>[0:0]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- INTR_CLEAR: Interrupt Clear -->
+    <register>
+      <name>INTR_CLEAR</name>
+      <description>Interrupt Clear</description>
+      <addressOffset>0x0c</addressOffset>
+      <access>write-only</access>
+
+      <fields>
+        <!-- WR_ERR_CLR -->
+        <field>
+          <name>WR_ERR_CLR</name>
+          <description>Write Error Clear</description>
+          <bitRange>[9:9]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+
+        <!-- RD_ERR_CLR -->
+        <field>
+          <name>RD_ERR_CLR</name>
+          <description>Read Error Clear</description>
+          <bitRange>[8:8]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+
+        <!-- END_CLR -->
+        <field>
+          <name>END_CLR</name>
+          <description>Done Interrupt Clear</description>
+          <bitRange>[0:0]</bitRange>
+          <modifiedWriteValues>oneToSet</modifiedWriteValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- COMMAND: Start rotation processing -->
+    <register>
+      <name>COMMAND</name>
+      <description>Start rotation processing</description>
+      <addressOffset>0x10</addressOffset>
+      <access>write-only</access>
+
+      <fields>
+        <field>
+          <name>CMD</name>
+          <description>Start rotation</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>start</name>
+              <value>1</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SET_DIRECTION: Image Rotation -->
+    <register>
+      <name>SET_DIRECTION</name>
+      <description>Set Rotation Angle</description>
+      <addressOffset>0x14</addressOffset>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>ROT</name>
+          <description>Rotation Angle</description>
+          <bitRange>[2:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>No rotation</name>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>Right 90 degrees</name>
+              <value>1</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>Right 180 degrees</name>
+              <value>2</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>Right 270 degrees</name>
+              <value>4</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SET_SRC_HSIZE: Source Image Horizontal Size -->
+    <register>
+      <name>SET_SRC_HSIZE</name>
+      <description>Source Image Horizontal Size (Actual size - 1)</description>
+      <addressOffset>0x18</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000FFF</resetMask>
+
+      <fields>
+        <field><name>SIZE</name><bitRange>[11:0]</bitRange></field>
+      </fields>
+    </register>
+
+    <!-- SET_SRC_VSIZE: Source Image Vertical Size -->
+    <register>
+      <name>SET_SRC_VSIZE</name>
+      <description>Source Image Vertical Size (Actual size - 1)</description>
+      <addressOffset>0x1c</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000FFF</resetMask>
+
+      <fields>
+        <field><name>SIZE</name><bitRange>[11:0]</bitRange></field>
+      </fields>
+    </register>
+
+    <!-- SET_SRC_ADDRESS: Source Image Address -->
+    <register>
+      <name>SET_SRC_ADDRESS</name>
+      <description>Source Image Address</description>
+      <addressOffset>0x20</addressOffset>
+      <access>read-write</access>
+    </register>
+
+    <!-- SET_SRC_PITCH: Source Image Pitch -->
+    <register>
+      <name>SET_SRC_PITCH</name>
+      <description>Source Image Pitch (Actual size - 1)</description>
+      <addressOffset>0x24</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000FFF</resetMask>
+
+      <fields>
+        <field><name>PITCH</name><bitRange>[11:0]</bitRange></field>
+      </fields>
+    </register>
+
+    <!-- SET_DST_ADDRESS: Destination Address -->
+    <register>
+      <name>SET_DST_ADDRESS</name>
+      <description>Destination Address</description>
+      <addressOffset>0x28</addressOffset>
+      <access>read-write</access>
+    </register>
+
+    <!-- SET_DST_PITCH: Destination Image Pitch -->
+    <register>
+      <name>SET_DST_PITCH</name>
+      <description>Destination Image Pitch (Actual size - 1)</description>
+      <addressOffset>0x2c</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000FFF</resetMask>
+
+      <fields>
+        <field><name>PITCH</name><bitRange>[11:0]</bitRange></field>
+      </fields>
+    </register>
+
+    <!-- STATUS: Running Status -->
+    <register>
+      <name>STATUS</name>
+      <description>Running Status</description>
+      <addressOffset>0x30</addressOffset>
+      <access>read-only</access>
+      
+      <fields>
+        <field>
+          <name>STATUS</name>
+          <description>Running Status (1 = running)</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>stop</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>running</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- CONV_CTRL: Color Convertion Control -->
+    <register>
+      <name>CONV_CTRL</name>
+      <description>Color Convertion Control</description>
+      <addressOffset>0x34</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000013</resetMask>
+
+      <fields>
+        <field>
+          <name>CONV_CALC_SEL</name>
+          <description>Scale factor for Cb and Cr</description>
+          <bitRange>[4:4]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>16 .. 240 range</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>-127 .. 127 range</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>CONV_FORMAT</name>
+          <description>Convert RGB565 to YCbCr422</description>
+          <bitRange>[1:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>NOCONVERT</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>YCBCR422_RGB565</name><value>1</value></enumeratedValue>
+            <enumeratedValue><name>RGB565_YCBCR422</name><value>2</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- RGB_ALIGNMENT: RGB format selector -->
+    <register>
+      <name>RGB_ALIGNMENT</name>
+      <description>RGB format selector</description>
+      <addressOffset>0x38</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000001</resetMask>
+
+      <fields>
+        <field>
+          <name>FORMAT</name>
+          <description>RGB Format</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>RGB</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>BGR</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+  </registers>
+</peripheral>
