@@ -66,6 +66,9 @@
 
     <!-- 2D Graphics Engine -->
     <xi:include href="ge2d.xml"/>
+
+    <!-- ROT -->
+    <xi:include href="rot.xml"/>
   </peripherals>
 
 
