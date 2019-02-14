@@ -58,6 +58,9 @@
   <resetMask>0xFFFFFFFF</resetMask>                               <!-- by default all 32Bits of the registers are used -->
 
   <peripherals>
+    <!-- SMP RAM CTRL -->
+    <xi:include href="smp_ram_ctrl.xml"/>
+
     <!-- Clock/Reset/Gating -->
     <xi:include href="crg.xml"/>
 
