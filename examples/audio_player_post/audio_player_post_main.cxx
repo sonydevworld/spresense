@@ -58,7 +58,7 @@
 #include "include/pool_layout.h"
 #include "include/fixed_fence.h"
 #include "userproc_command.h"
-#include "playlist/playlist.h"
+#include <audio/utilities/playlist.h>
 
 using namespace MemMgrLite;
 

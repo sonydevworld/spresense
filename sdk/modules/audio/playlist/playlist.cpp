@@ -42,7 +42,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "playlist.h"
+#include <audio/utilities/playlist.h>
 
 /*--------------------------------------------------------------------------*/
 bool Playlist::init(const char *playlist_path)

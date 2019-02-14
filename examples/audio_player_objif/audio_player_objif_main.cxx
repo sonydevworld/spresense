@@ -60,7 +60,7 @@
 #include <arch/chip/cxd56_audio.h>
 #include "audio/audio_message_types.h"
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
-#include "playlist/playlist.h"
+#include <audio/utilities/playlist.h>
 #endif
 
 using namespace MemMgrLite;
