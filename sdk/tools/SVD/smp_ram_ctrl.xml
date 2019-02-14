@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>SMP_RAM_CTRL</name>
+  <version>1.0</version>
+  <description>SRAM Control</description>
+  <baseAddress>0x02001000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x1000</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <registers>
+    <register>
+      <name>APP_TILE_CLK_GATING_ENB</name>
+      <description>SRAM tile (128KB) clock gating control (0 = gated)</description>
+      <addressOffset>0x84</addressOffset>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000FFF</resetMask>
+
+      <fields>
+        <field>
+          <dim>12</dim>
+          <dimIncrement>1</dimIncrement>
+          <name>TILE%s_CLK_GATING_ENB</name>
+          <description>Enable clock gating</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>gated</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>ungated</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+  </registers>
+</peripheral>
