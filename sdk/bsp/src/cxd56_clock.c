@@ -225,6 +225,22 @@ const struct scu_peripheral g_scuhpadc =
  * Private Functions
  ****************************************************************************/
 
+static void clock_semtake(sem_t *id)
+{
+  if (!up_interrupt_context())
+    {
+      sem_wait(id);
+    }
+}
+
+static void clock_semgive(sem_t *id)
+{
+  if (!up_interrupt_context())
+    {
+      sem_post(id);
+    }
+}
+
 static void busy_wait(int cnt)
 {
   for (; cnt; cnt--)
@@ -855,11 +871,11 @@ static void cxd56_spim_clock_disable(void)
 
 static void cxd56_img_spi_clock_enable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   putreg32(0x00010002, CXD56_CRG_GEAR_IMG_SPI);
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -872,11 +888,11 @@ static void cxd56_img_spi_clock_enable(void)
 
 static void cxd56_img_spi_clock_disable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
   putreg32(0, CXD56_CRG_GEAR_IMG_SPI);
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 #endif
 
@@ -892,11 +908,11 @@ static void cxd56_img_spi_clock_disable(void)
 
 static void cxd56_img_wspi_clock_enable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   putreg32(0x00010004, CXD56_CRG_GEAR_IMG_WSPI);
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -909,11 +925,11 @@ static void cxd56_img_wspi_clock_enable(void)
 
 static void cxd56_img_wspi_clock_disable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
   putreg32(0, CXD56_CRG_GEAR_IMG_WSPI);
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 #endif
 
@@ -1047,7 +1063,7 @@ void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
       return;
     }
 
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
   baseclock = cxd56_get_appsmp_baseclock();
   if (baseclock != 0)
     {
@@ -1063,7 +1079,7 @@ void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
       gear = 0x00010000 | divisor;
       putreg32(gear, addr);
     }
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 #if defined(CONFIG_CXD56_I2C2)
@@ -1258,7 +1274,7 @@ void cxd56_img_uart_clock_enable()
 {
   uint32_t val = 0;
 
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
@@ -1271,7 +1287,7 @@ void cxd56_img_uart_clock_enable()
 #endif /* CONFIG_CXD56_UART2 */
   putreg32(val, CXD56_CRG_GEAR_IMG_UART);
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1286,7 +1302,7 @@ void cxd56_img_uart_clock_disable()
 {
   uint32_t val = 0;
 
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   val = getreg32(CXD56_CRG_GEAR_IMG_UART);
   val &= ~(1UL << 16);
@@ -1295,7 +1311,7 @@ void cxd56_img_uart_clock_disable()
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1308,13 +1324,13 @@ void cxd56_img_uart_clock_disable()
 
 void cxd56_img_cisif_clock_enable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   g_active_imgdevs |= FLAG_IMG_CISIF;
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1327,13 +1343,13 @@ void cxd56_img_cisif_clock_enable(void)
 
 void cxd56_img_cisif_clock_disable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   g_active_imgdevs &= ~FLAG_IMG_CISIF;
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1346,13 +1362,13 @@ void cxd56_img_cisif_clock_disable(void)
 
 void cxd56_img_ge2d_clock_enable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   g_active_imgdevs |= FLAG_IMG_GE2D;
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1365,13 +1381,13 @@ void cxd56_img_ge2d_clock_enable(void)
 
 void cxd56_img_ge2d_clock_disable(void)
 {
-  sem_wait(&g_clockexc);
+  clock_semtake(&g_clockexc);
 
   g_active_imgdevs &= ~FLAG_IMG_GE2D;
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
 
-  sem_post(&g_clockexc);
+  clock_semgive(&g_clockexc);
 }
 
 static uint32_t cxd56_get_clock(enum clock_source cs)
