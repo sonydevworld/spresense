@@ -20,7 +20,6 @@ Select options in below.
         [SCU Sequencer] <= Y
 - [Sensing]
     [Sensing manager] <= Y
-    [GNSS device] <= Y
     [Step counter] <= Y
 - [ASMP] <= Y
 - [Examples]

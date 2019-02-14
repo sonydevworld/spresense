@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <asmp/mpshm.h>
 
-#ifdef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifndef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
 #  include <arch/board/board.h>
 #endif
 
@@ -75,7 +75,7 @@ using namespace MemMgrLite;
  ****************************************************************************/
 
 static FAR AccelSensor *sp_accel_sensor = NULL;
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
 static FAR GnssSensor *sp_gnss_sensor = NULL;
 #endif
 static FAR StepCounterClass *sp_step_counter_ins = NULL;
@@ -217,7 +217,7 @@ static int accel_read_callback(uint32_t context, MemMgrLite::MemHandle &mh)
 }
 
 /*--------------------------------------------------------------------------*/
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
 static int gnss_read_callback(uint32_t context, FAR GnssSampleData *pos)
 {
   MemMgrLite::MemHandle mh;
@@ -268,7 +268,7 @@ static int accel_sensor_entry(int argc,  const char* argv[])
 }
 
 /*--------------------------------------------------------------------------*/
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
 static int gnss_sensor_entry(int argc,  const char* argv[])
 {
   GnssSensorStartSensing(sp_gnss_sensor);
@@ -389,7 +389,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   ret = GnssSensorCreate(&sp_gnss_sensor);
   if (ret < 0)
     {
@@ -423,7 +423,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-#ifdef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifndef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   /* After here,
    * because this example program doesn't access to flash
    * and doesn't use TCXO,
@@ -480,7 +480,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
               (main_t)accel_sensor_entry,
               (FAR char * const *)NULL);
 
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   task_create("gnss_sensoring",
               110,
               2048,
@@ -512,7 +512,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
 
   AccelSensorStopSensing(sp_accel_sensor);
 
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   GnssSensorStopSensing(sp_gnss_sensor);
 #endif
 
@@ -540,7 +540,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
   rel.self        = gnssID;
   SS_SendSensorRelease(&rel);
 
-#ifdef CONFIG_EXAMPLES_STEP_COUNTER_DISABLE_GNSS
+#ifndef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   /* Turn flash and TCXO power on */
 
   board_xtal_power_control(true);
