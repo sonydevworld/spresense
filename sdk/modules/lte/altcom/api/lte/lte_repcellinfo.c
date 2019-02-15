@@ -85,14 +85,18 @@ static bool g_lte_setrepcellinfo_isproc = false;
  *
  ****************************************************************************/
 
-static void repcellinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t repcellinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("repcellinfo_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_SET_REP_CELLINFO);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -287,7 +291,7 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
         }
       else
         {
-          ret = altcomstatus_reg_statchgcb((void *)repcellinfo_status_chg_cb);
+          ret = altcomstatus_reg_statchgcb(repcellinfo_status_chg_cb);
           if (0 > ret)
             {
               DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -348,7 +352,7 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
               /* Unregistration callback. */
 
               altcomcallbacks_unreg_cb(APICMDID_SET_REP_CELLINFO);
-              altcomstatus_unreg_statchgcb((void *)repcellinfo_status_chg_cb);
+              altcomstatus_unreg_statchgcb(repcellinfo_status_chg_cb);
             }
         }
       else

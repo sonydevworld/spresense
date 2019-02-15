@@ -158,14 +158,18 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
  *
  ****************************************************************************/
 
-static void activatepdn_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t activatepdn_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("activatepdn_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_ACTIVATE_PDN);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -250,7 +254,7 @@ static void activatepdn_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)activatepdn_status_chg_cb);
+  altcomstatus_unreg_statchgcb(activatepdn_status_chg_cb);
 }
 
 /****************************************************************************
@@ -311,7 +315,7 @@ int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)activatepdn_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(activatepdn_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -355,7 +359,7 @@ int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_ACTIVATE_PDN);
-      altcomstatus_unreg_statchgcb((void *)activatepdn_status_chg_cb);
+      altcomstatus_unreg_statchgcb(activatepdn_status_chg_cb);
     }
   else
     {

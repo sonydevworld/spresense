@@ -75,14 +75,18 @@
  *
  ****************************************************************************/
 
-static void getapnset_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t getapnset_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("getapnset_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_GET_APNSET);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -161,7 +165,7 @@ static void getapnset_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)getapnset_status_chg_cb);
+  altcomstatus_unreg_statchgcb(getapnset_status_chg_cb);
 }
 
 /****************************************************************************
@@ -213,7 +217,7 @@ int32_t lte_get_apnset(get_apnset_cb_t callback)
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)getapnset_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(getapnset_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -245,7 +249,7 @@ int32_t lte_get_apnset(get_apnset_cb_t callback)
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_GET_APNSET);
-      altcomstatus_unreg_statchgcb((void *)getapnset_status_chg_cb);
+      altcomstatus_unreg_statchgcb(getapnset_status_chg_cb);
     }
   else
     {

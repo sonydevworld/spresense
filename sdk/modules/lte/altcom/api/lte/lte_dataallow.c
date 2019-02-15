@@ -77,14 +77,18 @@
  *
  ****************************************************************************/
 
-static void dataallow_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t dataallow_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("dataallow_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_DATA_ALLOW);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -174,7 +178,7 @@ static void dataallow_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)dataallow_status_chg_cb);
+  altcomstatus_unreg_statchgcb(dataallow_status_chg_cb);
 }
 
 /****************************************************************************
@@ -239,7 +243,7 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)dataallow_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(dataallow_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -282,7 +286,7 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_DATA_ALLOW);
-      altcomstatus_unreg_statchgcb((void *)dataallow_status_chg_cb);
+      altcomstatus_unreg_statchgcb(dataallow_status_chg_cb);
     }
   else
     {

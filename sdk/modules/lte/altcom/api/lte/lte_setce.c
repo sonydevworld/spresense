@@ -77,14 +77,18 @@
  *
  ****************************************************************************/
 
-static void setce_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t setce_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("setce_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_SET_CE);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -137,7 +141,7 @@ static void setce_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)setce_status_chg_cb);
+  altcomstatus_unreg_statchgcb(setce_status_chg_cb);
 }
 
 /****************************************************************************
@@ -190,7 +194,7 @@ int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)setce_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(setce_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -227,7 +231,7 @@ int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_SET_CE);
-      altcomstatus_unreg_statchgcb((void *)setce_status_chg_cb);
+      altcomstatus_unreg_statchgcb(setce_status_chg_cb);
     }
   else
     {

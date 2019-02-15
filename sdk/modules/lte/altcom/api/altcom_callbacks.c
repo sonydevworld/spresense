@@ -120,11 +120,15 @@ int32_t altcomcallbacks_fin(void)
     }
 
   sys_lock_mutex(&g_list_mtx);
-  while(g_lteapi_callback_list)
+
+  cb_block = g_lteapi_callback_list;
+
+  while(cb_block)
     {
-      cb_block = g_lteapi_callback_list;
-      altcombs_remove_cblist(&g_lteapi_callback_list, cb_block->cb_list);
+      altcombs_mark_removal_cbblock(cb_block);
+      cb_block = altcombs_get_next_cbblock(cb_block);
     }
+  altcombs_remove_removal_cbblock(&g_lteapi_callback_list);
 
   sys_unlock_mutex(&g_list_mtx);
 
@@ -158,8 +162,7 @@ int32_t altcomcallbacks_fin(void)
 
 int32_t altcomcallbacks_reg_cb(void *cb_ptr, int32_t id)
 {
-  int32_t ret;
-  FAR struct altcombs_cb_block *cb_block = NULL;
+  int32_t                       ret;
 
   if (!g_isinit)
     {
@@ -167,19 +170,16 @@ int32_t altcomcallbacks_reg_cb(void *cb_ptr, int32_t id)
       return -EPERM;
     }
 
-  ret = altcombs_alloc_callbacklist(cb_ptr, &cb_block);
+  sys_lock_mutex(&g_list_mtx);
+
+  ret = altcombs_add_cbblock(&g_lteapi_callback_list, id, cb_ptr);
+
+  sys_unlock_mutex(&g_list_mtx);
+
   if (0 > ret)
     {
-      return ret;
+      DBGIF_LOG1_ERROR("altcombs_add_cbblock() %d.\n", ret);
     }
-
-  cb_block->cb_list = cb_ptr;
-  cb_block->next = NULL;
-  cb_block->id = id;
-
-  sys_lock_mutex(&g_list_mtx);
-  ret = altcombs_add_cblist(&g_lteapi_callback_list, cb_block);
-  sys_unlock_mutex(&g_list_mtx);
 
   return ret;
 }
@@ -201,7 +201,7 @@ int32_t altcomcallbacks_reg_cb(void *cb_ptr, int32_t id)
 
 int32_t altcomcallbacks_unreg_cb(int32_t id)
 {
-  int32_t ret;
+  int32_t                       ret = 0;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (!g_isinit)
@@ -217,16 +217,18 @@ int32_t altcomcallbacks_unreg_cb(int32_t id)
     }
 
   sys_lock_mutex(&g_list_mtx);
-  cb_block = altcombs_search_callbacklist(g_lteapi_callback_list, id);
-  if (!cb_block)
+
+  cb_block = altcombs_search_cbblock(g_lteapi_callback_list, id);
+  if (cb_block)
     {
-      sys_unlock_mutex(&g_list_mtx);
-      return -EINVAL;
+      altcombs_remove_cbblock(&g_lteapi_callback_list, cb_block);
+    }
+  else
+    {
+      ret = -EINVAL;
     }
 
-  altcombs_remove_cblist(&g_lteapi_callback_list, cb_block->cb_list);
   sys_unlock_mutex(&g_list_mtx);
-  ret = altcombs_free_callbacklist(&cb_block);
 
   return ret;
 }
@@ -247,7 +249,7 @@ int32_t altcomcallbacks_unreg_cb(int32_t id)
 
 void *altcomcallbacks_get_cb(int32_t id)
 {
-  void *cb = NULL;
+  FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (!g_isinit)
     {
@@ -256,10 +258,17 @@ void *altcomcallbacks_get_cb(int32_t id)
     }
 
   sys_lock_mutex(&g_list_mtx);
-  cb = altcombs_get_cb(g_lteapi_callback_list, id);
+
+  cb_block = altcombs_search_cbblock(g_lteapi_callback_list, id);
+
   sys_unlock_mutex(&g_list_mtx);
 
-  return cb;
+  if (!cb_block)
+    {
+      return NULL;
+    }
+
+  return cb_block->cb;
 }
 
 /****************************************************************************
@@ -297,21 +306,15 @@ int32_t altcomcallbacks_get_unreg_cb(int32_t id, void **callback)
       DBGIF_LOG_WARNING("Callback list not found.\n");
       return -EPERM;
     }
+
   sys_lock_mutex(&g_list_mtx);
-  *callback = altcombs_get_cb(g_lteapi_callback_list, id);
-  if (*callback)
+
+  cb_block = altcombs_search_cbblock(g_lteapi_callback_list, id);
+  if (cb_block)
     {
-      cb_block = altcombs_search_callbacklist(g_lteapi_callback_list, id);
-      if (!cb_block)
-        {
-          ret = -EINVAL;
-        }
-      else
-        {
-          altcombs_remove_cblist(&g_lteapi_callback_list,
-                                       cb_block->cb_list);
-          altcombs_free_callbacklist(&cb_block);
-        }
+      *callback = cb_block->cb;
+
+      altcombs_remove_cbblock(&g_lteapi_callback_list, cb_block);
     }
   else
     {
@@ -341,9 +344,7 @@ int32_t altcomcallbacks_get_unreg_cb(int32_t id, void **callback)
 
 int32_t altcomcallbacks_chk_reg_cb(void *cb, int32_t id)
 {
-  int32_t ret = 0;
-  FAR struct altcombs_cb_block *cb_block = NULL;
-
+  int32_t                       ret = 0;
 
   if (!g_isinit)
     {
@@ -353,20 +354,16 @@ int32_t altcomcallbacks_chk_reg_cb(void *cb, int32_t id)
 
   sys_lock_mutex(&g_list_mtx);
 
-  if (altcombs_get_cb(g_lteapi_callback_list, id))
+  if (altcombs_search_cbblock(g_lteapi_callback_list, id))
     {
       ret = -EALREADY;
     }
   else
     {
-      ret = altcombs_alloc_callbacklist(cb, &cb_block);
-
-      if (0 == ret)
+      ret = altcombs_add_cbblock(&g_lteapi_callback_list, id, cb);
+      if (0 > ret)
         {
-          cb_block->cb_list = cb;
-          cb_block->next = NULL;
-          cb_block->id = id;
-          ret = altcombs_add_cblist(&g_lteapi_callback_list, cb_block);
+          DBGIF_LOG1_ERROR("altcombs_add_cbblock() %d.\n", ret);
         }
     }
 

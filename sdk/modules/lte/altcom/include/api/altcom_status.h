@@ -47,11 +47,14 @@
 #define ALTCOM_STATUS_MIN               (ALTCOM_STATUS_UNINITIALIZED)
 #define ALTCOM_STATUS_MAX               (ALTCOM_STATUS_POWER_ON)
 
+#define ALTCOM_STATUS_REG_KEEP          (0)
+#define ALTCOM_STATUS_REG_CLR           (1)
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
-typedef void (*altcom_stat_chg_cb_t)(int32_t new_stat, int32_t old_stat);
+typedef int32_t (*altcom_stat_chg_cb_t)(int32_t new_stat, int32_t old_stat);
 
 /****************************************************************************
  * Public Function Prototypes
@@ -97,7 +100,7 @@ int32_t altcom_set_status(int32_t status);
  *   Registoration altcom status change callbacks.
  *
  * Input Parameters:
- *   cb     Status change callback list.
+ *   cb     Status change callback.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -105,7 +108,7 @@ int32_t altcom_set_status(int32_t status);
  *
  ****************************************************************************/
 
-int32_t altcomstatus_reg_statchgcb(void *cb);
+int32_t altcomstatus_reg_statchgcb(altcom_stat_chg_cb_t cb);
 
 /****************************************************************************
  * Name: altcomstatus_unreg_statchgcb
@@ -122,6 +125,6 @@ int32_t altcomstatus_reg_statchgcb(void *cb);
  *
  ****************************************************************************/
 
-int32_t altcomstatus_unreg_statchgcb(void *cb);
+int32_t altcomstatus_unreg_statchgcb(altcom_stat_chg_cb_t cb);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_ALTCOM_STATUS_H */

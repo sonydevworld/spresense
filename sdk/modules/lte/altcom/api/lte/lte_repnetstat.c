@@ -83,14 +83,18 @@ static bool g_lte_setnetstat_isproc = false;
  *
  ****************************************************************************/
 
-static void repnetstat_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t repnetstat_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("repnetstat_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_SET_REP_NETSTAT);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -192,7 +196,7 @@ int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback)
         }
       else
         {
-          ret = altcomstatus_reg_statchgcb((void *)repnetstat_status_chg_cb);
+          ret = altcomstatus_reg_statchgcb(repnetstat_status_chg_cb);
           if (0 > ret)
             {
               DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -256,7 +260,7 @@ int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback)
               /* Unregistration callback. */
 
               altcomcallbacks_unreg_cb(APICMDID_SET_REP_NETSTAT);
-              altcomstatus_unreg_statchgcb((void *)repnetstat_status_chg_cb);
+              altcomstatus_unreg_statchgcb(repnetstat_status_chg_cb);
             }
         }
       else

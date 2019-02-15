@@ -73,20 +73,43 @@ static sys_cremtx_s                 g_mtxparam;
 
 static void altcomstatus_callcb(int32_t new_stat, int32_t old_stat)
 {
-  CODE altcom_stat_chg_cb_t cb = NULL;
-  FAR struct altcombs_cb_block* cb_block = NULL;
+  CODE altcom_stat_chg_cb_t     cb_func       = NULL;
+  FAR struct altcombs_cb_block *cb_block      = NULL;
+  int32_t                       ret           = ALTCOM_STATUS_REG_KEEP;
+
+  sys_lock_mutex(&g_table_mtx);
+
   cb_block = g_statchg_cb_table;
 
-  while (cb_block)
+  if (cb_block)
     {
-      cb = (altcom_stat_chg_cb_t)cb_block->cb_list;
-      if (cb)
+      while (cb_block)
         {
-          cb(new_stat, old_stat);
+          cb_func = (altcom_stat_chg_cb_t)cb_block->cb;
+          if (cb_func)
+            {
+              ret = cb_func(new_stat, old_stat);
+            }
+          else
+            {
+              ret = ALTCOM_STATUS_REG_KEEP;
+            }
+
+          if (ret == ALTCOM_STATUS_REG_CLR)
+            {
+              /* Mark as removal when this loop is over */
+
+              altcombs_mark_removal_cbblock(cb_block);
+            }
+          cb_block = altcombs_get_next_cbblock(cb_block);
         }
 
-      cb_block = cb_block->next;
+      /* Remove block marked for removal */
+
+      altcombs_remove_removal_cbblock(&g_statchg_cb_table);
     }
+
+  sys_unlock_mutex(&g_table_mtx);
 }
 
 /****************************************************************************
@@ -131,6 +154,7 @@ int32_t altcom_set_status(int32_t status)
 {
   int32_t prev_stat;
   int32_t ret = 0;
+  bool    delflag = false;
 
   if (ALTCOM_STATUS_MIN > status ||
       ALTCOM_STATUS_MAX < status)
@@ -156,12 +180,7 @@ int32_t altcom_set_status(int32_t status)
     {
       /* status NOTUNINIT >> UNINIT, Delete mutex */
 
-      ret = sys_delete_mutex(&g_table_mtx);
-      if (0 > ret)
-        {
-          DBGIF_LOG1_ERROR("sys_delete_mutex() %d.\n", ret);
-          return ret;
-        }
+      delflag = true;
     }
   else
     {
@@ -172,6 +191,16 @@ int32_t altcom_set_status(int32_t status)
   DBGIF_LOG2_INFO("LTE library status %d -> %d.\n", prev_stat, status);
   g_altcom_status = status;
   altcomstatus_callcb(g_altcom_status, prev_stat);
+
+  if (delflag)
+    {
+      ret = sys_delete_mutex(&g_table_mtx);
+      if (0 > ret)
+        {
+          DBGIF_LOG1_ERROR("sys_delete_mutex() %d.\n", ret);
+          return ret;
+        }
+    }
 
   return 0;
 }
@@ -191,10 +220,9 @@ int32_t altcom_set_status(int32_t status)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_reg_statchgcb(void *cb)
+int32_t altcomstatus_reg_statchgcb(altcom_stat_chg_cb_t cb)
 {
-  int32_t ret;
-  FAR struct altcombs_cb_block *cb_block = NULL;
+  int32_t                       ret;
 
   if (ALTCOM_STATUS_UNINITIALIZED == g_altcom_status)
     {
@@ -202,19 +230,16 @@ int32_t altcomstatus_reg_statchgcb(void *cb)
       return -EPERM;
     }
 
-  ret = altcombs_alloc_callbacklist(cb, &cb_block);
+  sys_lock_mutex(&g_table_mtx);
+
+  ret = altcombs_add_cbblock(&g_statchg_cb_table, 0, cb);
+
+  sys_unlock_mutex(&g_table_mtx);
+
   if (0 > ret)
     {
-      DBGIF_LOG1_ERROR("altcombs_alloc_callbacklist() %d.\n", ret);
-      return ret;
+      DBGIF_LOG1_ERROR("altcombs_add_cbblock() %d.\n", ret);
     }
-
-  cb_block->cb_list = cb;
-  cb_block->next = NULL;
-
-  sys_lock_mutex(&g_table_mtx);
-  ret = altcombs_add_cblist(&g_statchg_cb_table, cb_block);
-  sys_unlock_mutex(&g_table_mtx);
 
   return ret;
 }
@@ -234,9 +259,9 @@ int32_t altcomstatus_reg_statchgcb(void *cb)
  *
  ****************************************************************************/
 
-int32_t altcomstatus_unreg_statchgcb(void *cb)
+int32_t altcomstatus_unreg_statchgcb(altcom_stat_chg_cb_t cb)
 {
-  int32_t ret;
+  int32_t                       ret = 0;
   FAR struct altcombs_cb_block *cb_block = NULL;
 
   if (ALTCOM_STATUS_UNINITIALIZED == g_altcom_status)
@@ -258,9 +283,18 @@ int32_t altcomstatus_unreg_statchgcb(void *cb)
     }
 
   sys_lock_mutex(&g_table_mtx);
-  cb_block = altcombs_remove_cblist(&g_statchg_cb_table, cb);
+
+  cb_block = altcombs_search_cbblock_bycb(g_statchg_cb_table, cb);
+  if (cb_block)
+    {
+      altcombs_remove_cbblock(&g_statchg_cb_table, cb_block);
+    }
+  else
+    {
+      ret = -EINVAL;
+    }
+
   sys_unlock_mutex(&g_table_mtx);
-  ret = altcombs_free_callbacklist(&cb_block);
 
   return ret;
 }

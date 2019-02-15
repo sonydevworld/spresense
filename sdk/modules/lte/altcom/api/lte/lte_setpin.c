@@ -85,14 +85,18 @@
  *
  ****************************************************************************/
 
-static void setpin_lock_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t setpin_lock_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("setpin_lock_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_SET_PIN_LOCK);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -110,14 +114,18 @@ static void setpin_lock_status_chg_cb(int32_t new_stat, int32_t old_stat)
  *
  ****************************************************************************/
 
-static void setpin_code_status_chg_cb(int32_t new_stat, int32_t old_stat)
+static int32_t setpin_code_status_chg_cb(int32_t new_stat, int32_t old_stat)
 {
   if (new_stat < ALTCOM_STATUS_POWER_ON)
     {
       DBGIF_LOG2_INFO("setpin_code_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
       altcomcallbacks_unreg_cb(APICMDID_SET_PIN_CODE);
+
+      return ALTCOM_STATUS_REG_CLR;
     }
+
+  return ALTCOM_STATUS_REG_KEEP;
 }
 
 /****************************************************************************
@@ -163,7 +171,7 @@ static void setpin_lock_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)setpin_lock_status_chg_cb);
+  altcomstatus_unreg_statchgcb(setpin_lock_status_chg_cb);
 }
 
 /****************************************************************************
@@ -209,7 +217,7 @@ static void setpin_code_job(FAR void *arg)
 
   /* Unregistration status change callback. */
 
-  altcomstatus_unreg_statchgcb((void *)setpin_code_status_chg_cb);
+  altcomstatus_unreg_statchgcb(setpin_code_status_chg_cb);
 }
 
 /****************************************************************************
@@ -274,7 +282,7 @@ int32_t lte_set_pinenable(bool enable,
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)setpin_lock_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(setpin_lock_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -312,7 +320,7 @@ int32_t lte_set_pinenable(bool enable,
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_SET_PIN_LOCK);
-      altcomstatus_unreg_statchgcb((void *)setpin_lock_status_chg_cb);
+      altcomstatus_unreg_statchgcb(setpin_lock_status_chg_cb);
     }
   else
     {
@@ -393,7 +401,7 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
       return -EINPROGRESS;
     }
 
-  ret = altcomstatus_reg_statchgcb((void *)setpin_code_status_chg_cb);
+  ret = altcomstatus_reg_statchgcb(setpin_code_status_chg_cb);
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
@@ -441,7 +449,7 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
       /* Clear registered callback */
 
       altcomcallbacks_unreg_cb(APICMDID_SET_PIN_CODE);
-      altcomstatus_unreg_statchgcb((void *)setpin_code_status_chg_cb);
+      altcomstatus_unreg_statchgcb(setpin_code_status_chg_cb);
     }
   else
     {

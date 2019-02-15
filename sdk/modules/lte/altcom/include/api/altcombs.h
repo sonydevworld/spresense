@@ -52,8 +52,9 @@
 
 struct altcombs_cb_block
 {
-  int32_t                      id;
-  FAR void                     *cb_list;
+  int32_t                       id;
+  FAR void                     *cb;
+  bool                         removal;
   FAR struct altcombs_cb_block *prev;
   FAR struct altcombs_cb_block *next;
 };
@@ -81,31 +82,15 @@ static inline int altcombs_check_poweron_status(void)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: altcombs_get_cb
+ * Name: altcombs_add_cbblock
  *
  * Description:
- *   Get Callback from callback list.
+ *   Add callback block to the end of list.
  *
  * Input Parameters:
- *   cb_list  List of callback function.
- *   id       Callback id.
- *
- * Returned Value:
- *   Pointer of Callback function. When not registered callbacke return NULL.
- *
- ****************************************************************************/
-
-void *altcombs_get_cb(struct altcombs_cb_block* cb_list, int32_t id);
-
-/****************************************************************************
- * Name: altcombs_add_cblist
- *
- * Description:
- *   Add callback list to the end of list.
- *
- * Input Parameters:
- *   head   Pointer of callback list head.
- *   block  Pointer to callback list.
+ *   head  Pointer of callback block list head.
+ *   id    Callback block id.
+ *   cb    Pointer to callback.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -113,37 +98,38 @@ void *altcombs_get_cb(struct altcombs_cb_block* cb_list, int32_t id);
  *
  ****************************************************************************/
 
-int32_t altcombs_add_cblist(struct altcombs_cb_block **head,
-                            struct altcombs_cb_block *block);
+int32_t altcombs_add_cbblock(FAR struct altcombs_cb_block **head,
+                             int32_t                        id,
+                             FAR void                      *cb);
 
 /****************************************************************************
- * Name: delete_callbacklist
+ * Name: altcombs_remove_cbblock
  *
  * Description:
- *   Delete list from callback list.
+ *   Delete callback block from callback block list.
  *
  * Input Parameters:
- *   head        Pointer to callback list head.
- *   cblist_ptr  Target callback list address.
+ *   head   Pointer to callback block list head.
+ *   block  Pointer to callback block.
  *
  * Returned Value:
- *   Pointer of removed callback list.
- *   Otherwise NULL is returned.
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
  *
  ****************************************************************************/
 
-void *altcombs_remove_cblist(struct altcombs_cb_block **head,
-                                    void *cblist_ptr);
+int32_t altcombs_remove_cbblock(FAR struct altcombs_cb_block **head,
+                                FAR struct altcombs_cb_block  *block);
 
 /****************************************************************************
- * Name: altcombs_search_callbacklist
+ * Name: altcombs_search_cbblock
  *
  * Description:
- *   Search list by callback list address.
+ *   Search callback block by callback id.
  *
  * Input Parameters:
- *   head        Pointer of callback list head.
- *   id          Target callback list id.
+ *   head  Pointer to callback block list head.
+ *   id    Target callback block id.
  *
  * Returned Value:
  *   If list is found, return that pointer.
@@ -151,19 +137,36 @@ void *altcombs_remove_cblist(struct altcombs_cb_block **head,
  *
  ****************************************************************************/
 
-struct altcombs_cb_block *altcombs_search_callbacklist(
-  struct altcombs_cb_block *head, int32_t id);
+FAR struct altcombs_cb_block *altcombs_search_cbblock(
+  FAR struct altcombs_cb_block *head, int32_t id);
 
 /****************************************************************************
- * Name: altcombs_alloc_callbacklist
+ * Name: altcombs_search_cbblock_bycb
  *
  * Description:
- *   Allocation callback block.
+ *   Search callback block by callback pointer.
  *
  * Input Parameters:
- *   cb_ptr     Pointer of callback list.
- *   cb_block   Pointer of Callback block address.
- *              This argument is out parameter.
+ *   head  Pointer to callback block list head.
+ *   cb    Pointer to callback.
+ *
+ * Returned Value:
+ *   If list is found, return that pointer.
+ *   Otherwise NULL is returned.
+ *
+ ****************************************************************************/
+
+FAR struct altcombs_cb_block *altcombs_search_cbblock_bycb(
+  FAR struct altcombs_cb_block *head, FAR void *cb);
+
+/****************************************************************************
+ * Name: altcombs_mark_removal_cbblock
+ *
+ * Description:
+ *   Mark as removal callback block.
+ *
+ * Input Parameters:
+ *   block  Pointer to callback block.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -171,17 +174,16 @@ struct altcombs_cb_block *altcombs_search_callbacklist(
  *
  ****************************************************************************/
 
-int32_t altcombs_alloc_callbacklist(void *cb_ptr,
-                                    struct altcombs_cb_block **cb_block);
+int32_t altcombs_mark_removal_cbblock(FAR struct altcombs_cb_block *block);
 
 /****************************************************************************
- * Name: altcombs_alloc_callbacklist
+ * Name: altcombs_remove_removal_cbblock
  *
  * Description:
- *   Free callback block.
+ *   Delete callback block marked for removal.
  *
  * Input Parameters:
- *   cb_block   Pointer of Callback block address.
+ *   head   Pointer to callback block list head.
  *
  * Returned Value:
  *   If the process succeeds, it returns 0.
@@ -189,7 +191,25 @@ int32_t altcombs_alloc_callbacklist(void *cb_ptr,
  *
  ****************************************************************************/
 
-int32_t altcombs_free_callbacklist(struct altcombs_cb_block **cb_block);
+int32_t altcombs_remove_removal_cbblock(FAR struct altcombs_cb_block **head);
+
+/****************************************************************************
+ * Name: altcombs_get_next_cbblock
+ *
+ * Description:
+ *   Get pointer to next callback block.
+ *
+ * Input Parameters:
+ *   block  Pointer to callback block.
+ *
+ * Returned Value:
+ *   If next is found, return that pointer.
+ *   Otherwise NULL is returned.
+ *
+ ****************************************************************************/
+
+FAR struct altcombs_cb_block *altcombs_get_next_cbblock(
+  FAR struct altcombs_cb_block *block);
 
 /****************************************************************************
  * Name: altcombs_set_errinfo
