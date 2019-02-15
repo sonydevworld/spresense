@@ -154,48 +154,48 @@
 /** Network status: Not registered, MT is not currently searching
                     a new operator to register to */
 
-#define LTE_NETSTAT_NOT_REG_NOT_SEARCHING     (1)
+#define LTE_NETSTAT_NOT_REG_NOT_SEARCHING     (0)
 
 /** Network status: Registered, home network */
 
-#define LTE_NETSTAT_REG_HOME                  (2)
+#define LTE_NETSTAT_REG_HOME                  (1)
 
 /** Network status: Not registered, but MT is currently searching
                     a new operator to register to */
 
-#define LTE_NETSTAT_NOT_REG_SEARCHING         (3)
+#define LTE_NETSTAT_NOT_REG_SEARCHING         (2)
 
 /** Network status: Registration denied */
 
-#define LTE_NETSTAT_REG_DENIED                (4)
+#define LTE_NETSTAT_REG_DENIED                (3)
 
 /** Network status: Unknown */
 
-#define LTE_NETSTAT_UNKNOWN                   (5)
+#define LTE_NETSTAT_UNKNOWN                   (4)
 
 /** Network status: Registered, roaming */
 
-#define LTE_NETSTAT_REG_ROAMING               (6)
+#define LTE_NETSTAT_REG_ROAMING               (5)
 
 /** Network status: Registered for "SMS only", home network */
 
-#define LTE_NETSTAT_REG_SMS_ONLY_HOME         (7)
+#define LTE_NETSTAT_REG_SMS_ONLY_HOME         (6)
 
 /** Network status: Registered for "SMS only", roaming */
 
-#define LTE_NETSTAT_REG_SMS_ONLY_ROAMING      (8)
+#define LTE_NETSTAT_REG_SMS_ONLY_ROAMING      (7)
 
 /** Network status: Attached for emergency bearer services only */
 
-#define LTE_NETSTAT_NOT_REG_EMERGENCY         (9)
+#define LTE_NETSTAT_NOT_REG_EMERGENCY         (8)
 
 /** Network status: Registered for "CSFB not preferred", home network */
 
-#define LTE_NETSTAT_REG_CSFB_NOT_PREF_HOME    (10)
+#define LTE_NETSTAT_REG_CSFB_NOT_PREF_HOME    (9)
 
 /** Network status: Registered for "CSFB not preferred", roaming */
 
-#define LTE_NETSTAT_REG_CSFB_NOT_PREF_ROAMING (11)
+#define LTE_NETSTAT_REG_CSFB_NOT_PREF_ROAMING (10)
 
 #define LTE_DATA_TYPE_USER (0) /**< Data type: user data */
 #define LTE_DATA_TYPE_IMS  (1) /**< Data type: IMS */
@@ -961,7 +961,7 @@ typedef struct lte_pdn
    *  - @ref LTE_APN_TYPE_IA@n
    *  - @ref LTE_APN_TYPE_EMERGENCY@n */
 
-  uint8_t      apn_type;
+  uint32_t     apn_type;
 
   /** Number of valid ip addresses */
 
