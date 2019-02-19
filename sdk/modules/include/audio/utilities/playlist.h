@@ -43,10 +43,6 @@
 
 struct Track
 {
-  /*! \brief Don't care */
-
-  bool is_played;
-
   /*! \brief Track title (file name) */
 
   char title[64];
