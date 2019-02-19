@@ -257,6 +257,7 @@ static int cxd56_rtc_interrupt(int irq, FAR void *context, FAR void *arg)
 
 static void cxd56_rtc_initialize(int argc, uint32_t arg)
 {
+  struct timespec ts;
 #ifdef CONFIG_CXD56_RTC_LATEINIT
   static WDOG_ID s_wdog = NULL;
   static int     s_retry = 0;
@@ -320,9 +321,23 @@ static void cxd56_rtc_initialize(int argc, uint32_t arg)
       g_rtc_save->offset = 0;
     }
 
+  if (g_rtc_save->offset == 0)
+    {
+      /* Keep the system operating time before RTC is enabled. */
+
+      clock_systimespec(&ts);
+    }
+
   /* Synchronize the system time to the RTC time */
 
   clock_synchronize();
+
+  if (g_rtc_save->offset == 0)
+    {
+      /* Reflect the system operating time to RTC offset data. */
+
+      g_rtc_save->offset = SEC_TO_CNT(ts.tv_sec) | NSEC_TO_PRECNT(ts.tv_nsec);
+    }
 
   /* Make it possible to use the RTC timer functions */
 
