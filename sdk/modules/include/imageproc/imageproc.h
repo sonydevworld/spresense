@@ -50,6 +50,14 @@ extern "C"
  * @{
  */
 
+typedef struct
+{
+  uint16_t x;
+  uint16_t y;
+  uint16_t width;
+  uint16_t height;
+} rect_t;
+
 /**
  * @defgroup imageproc_funcs Functions
  * @{
@@ -162,6 +170,67 @@ void imageproc_convert_yuv2gray(uint8_t *ibuf, uint8_t *obuf, size_t hsize,
 
 int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
                      uint8_t *obuf, uint16_t ohsize, uint16_t ovsize, int bpp);
+
+/**
+ * @if Japanese
+ *
+ * 画像のリサイズ
+ *
+ * 入力画像 @a ibuf で与えられた画像を、@a ohsize、 @a ovsize で指定された
+ * サイズに縮小または拡大し、出力先バッファ @a obuf に出力します。
+ *
+ * 出力画像に指定可能なサイズは、縦・横それぞれ @a ihsize、 @a ivsize に対して
+ * 1/2^n倍〜2^n倍 (n=0..5)となるように設定します。
+ *
+ * 処理可能なピクセルフォーマットはYUV422またはグレースケールのみとなります。
+ * YUV422 (16bpp)の画像を処理する場合は、入出力の横サイズは2の倍数になる必要があります。
+ *
+ * また、リサイズ可能なサイズは以下の制限事項があります。
+ *
+ * * 縮小時
+ *   + 縦 12ピクセル
+ *   + 横 12ピクセル
+ * * 拡大時
+ *   + 縦 1024ピクセル
+ *   + 横 768ピクセル
+ *
+ * @param [in] ibuf: 入力画像
+ * @param [in] ihsize: 入力画像サイズ（横）
+ * @param [in] ivsize: 入力画像サイズ（縦）
+ * @param [out] obuf: 画像出力先バッファ
+ * @param [in] ohsize: 出力画像サイズ（横）
+ * @param [in] ovsize: 出力画像サイズ（縦）
+ * @param [in] bpp: １ピクセルあたりのビット数（16 or 8）
+ * @param [in] rect: 入力画像の矩形領域指定
+ *
+ * @return 正常終了の場合は0、それ以外の場合はエラーコードを返します。
+ *
+ * @else
+ *
+ * Resize image
+ *
+ * @param [in] ibuf: Input image
+ * @param [in] ihsize: Input horizontal size
+ * @param [in] ivsize: Input vertical size
+ * @param [out] obuf: Output buffer
+ * @param [in] ohsize: Output horizontal size
+ * @param [in] ovsize: Output vertical size
+ * @param [in] bpp: Bits per pixel (16 or 8)
+ * @param [in] rect: Input rectangle setting
+ *
+ * @return 0 on success, otherwise error code.
+ *
+ * @endif
+ */
+
+int imageproc_resize_with_rect(
+  uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+  uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
+  int bpp, rect_t *rect);
+
+int imageproc_yuv_fill(
+  uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+  uint16_t color, int bpp, rect_t *rect);
 
 /** @} imageproc_funcs */
 /** @} imageproc */

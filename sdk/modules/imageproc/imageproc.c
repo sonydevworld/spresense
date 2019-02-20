@@ -245,6 +245,7 @@ static int intr_handler_ROT(int irq, FAR void *context, FAR void *arg)
 
 static uint16_t calc_ratio(uint16_t src, uint16_t dest)
 {
+#if 0
   uint16_t r;
 
   if (src > dest)
@@ -262,11 +263,23 @@ static uint16_t calc_ratio(uint16_t src, uint16_t dest)
         {
           return 256 / r;
         }
+      return (src * 256) / dest;
     }
   else
     {
       return 256;
     }
+#else
+  if (src != dest)
+    {
+      return (uint16_t)((uint32_t)(src * 256) / dest);
+    }
+  else
+    {
+      return 256;
+    }
+#endif
+
 
   return 0;
 }
@@ -326,14 +339,22 @@ static void *set_rop_cmd(void *cmdbuf, void *srcaddr, void *destaddr,
   rc->daddr = (uint32_t)(uintptr_t)destaddr | MSEL;
   rc->spitch = srcpitch - 1;
   rc->dpitch = destpitch - 1;
-  rc->desth = destwidth - 1;
-  rc->destv = destheight - 1;
-  rc->ratiov = rv - 1;
-  rc->ratioh = rh - 1;
-  rc->hphaseinit = 1;
-  rc->vphaseinit = 1;
-  rc->intpmode = 0; /* XXX: HV Linear interpolation */
-
+  if (rop == SRCCOPY)
+    {
+      rc->desth = destwidth - 1;
+      rc->destv = destheight - 1;
+      rc->ratiov = rv - 1;
+      rc->ratioh = rh - 1;
+      rc->hphaseinit = 0;
+      rc->vphaseinit = 0;
+      rc->intpmode = 0; /* XXX: HV Linear interpolation */
+    }
+#if 0
+  printf("src:%dx%d(%d), dst=%dx%d(%d), rv=%d, rh=%d\n",
+         rc->srch, rc->srcv, rc->spitch,
+         rc->desth, rc->destv, rc->dpitch,
+         rc->ratiov, rc->ratioh);
+#endif
   /* return next command area */
 
   return (void *)((uintptr_t)cmdbuf + sizeof(struct ge2d_ropcmd_s));
@@ -514,3 +535,137 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
 
   return 0;
 }
+
+//@@@ imageproc_resize_with_rect
+int imageproc_resize_with_rect(
+   uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+   uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
+   int bpp, rect_t *rect)
+{
+  void *cmd = g_gcmdbuf;
+  size_t len;
+  int ret;
+  uint8_t pix_bytes;
+  uint32_t offset = 0;
+
+  if (g_gfd <= 0)
+    {
+      return -ENODEV;
+    }
+
+  if (bpp != 8 && bpp != 16)
+    {
+      return -EINVAL;
+    }
+
+  ret = ip_semtake(&g_geexc);
+  if (ret)
+    {
+      return ret; /* -EINTR */
+    }
+
+  /* Create descriptor to graphics engine */
+  if (rect != NULL)
+    {
+      pix_bytes = bpp >> 3;
+      offset = rect->x * pix_bytes + rect->y * ihsize * pix_bytes;
+      cmd = set_rop_cmd(cmd, ibuf + offset, obuf,
+                        rect->width, rect->height, ihsize,
+                        ohsize, ovsize, ohsize,
+                        bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
+    }
+  else
+    {
+      cmd = set_rop_cmd(cmd, ibuf, obuf,
+                        ihsize, ivsize, ihsize,
+                        ohsize, ovsize, ohsize,
+                        bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
+    }
+
+  if (cmd == NULL)
+    {
+      ip_semgive(&g_geexc);
+      return -EINVAL;
+    }
+
+  /* Terminate command */
+
+  cmd = set_halt_cmd(cmd);
+
+  /* Process resize */
+
+  len = (uintptr_t)cmd - (uintptr_t)g_gcmdbuf;
+  ret = write(g_gfd, g_gcmdbuf, len);
+  if (ret < 0)
+    {
+      ip_semgive(&g_geexc);
+      return -EFAULT;
+    }
+
+  ip_semgive(&g_geexc);
+
+  return 0;
+}
+
+//@@@ imageproc_yuv_fill
+int imageproc_yuv_fill(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+                       uint16_t color, int bpp, rect_t *rect)
+{
+  void *cmd = g_gcmdbuf;
+  size_t len;
+  int ret;
+  uint32_t offset;
+
+  if (g_gfd <= 0)
+    {
+      return -ENODEV;
+    }
+
+  ret = ip_semtake(&g_geexc);
+  if (ret)
+    {
+      return ret; /* -EINTR */
+    }
+
+  /* Create descriptor to graphics engine */
+  if (rect != NULL)
+    {
+      offset = rect->x * 2 + rect->y * ihsize * 2;
+      cmd = set_rop_cmd(cmd, ibuf + offset, ibuf + offset,
+                        rect->width, rect->height, ihsize,
+                        rect->width, rect->height, ihsize,
+                        16, PATCOPY, FIXEDCOLOR, color);
+    }
+  else
+    {
+      cmd = set_rop_cmd(cmd, ibuf, ibuf,
+                        ihsize, ivsize, ihsize,
+                        ihsize, ivsize, ihsize,
+                        16, PATCOPY, FIXEDCOLOR, color);
+    }
+
+  if (cmd == NULL)
+    {
+      ip_semgive(&g_geexc);
+      return -EINVAL;
+    }
+
+  /* Terminate command */
+
+  cmd = set_halt_cmd(cmd);
+
+  /* Process resize */
+
+  len = (uintptr_t)cmd - (uintptr_t)g_gcmdbuf;
+  ret = write(g_gfd, g_gcmdbuf, len);
+  if (ret < 0)
+    {
+      ip_semgive(&g_geexc);
+      return -EFAULT;
+    }
+
+  ip_semgive(&g_geexc);
+
+  return 0;
+}
+
