@@ -87,6 +87,17 @@
 
 #define MSEL     1
 
+/* limit size */
+#define HSIZE_MIN           (12)
+#define VSIZE_MIN           (12)
+#define HSIZE_MAX           (4096)  /* Not used scaler(ISE) */
+#define VSIZE_MAX           (4096)  /* Not used scaler(ISE) */
+#define ISE_SRC_HSIZE_MAX   (2880)
+#define ISE_SRC_VSIZE_MAX   (2160)
+#define ISE_DST_HSIZE_MAX   (768)
+#define ISE_DST_VSIZE_MAX   (1024)
+#define MAX_RATIO           (64)
+
 /* Command code */
 
 #define COPYCMD  0x4
@@ -239,6 +250,27 @@ static int intr_handler_ROT(int irq, FAR void *context, FAR void *arg)
   putreg32(1, ROT_INTR_DISABLE);
 
   ip_semgive(&g_rotwait);
+
+  return 0;
+}
+
+static int ratio_check(uint16_t src, uint16_t dest)
+{
+  uint16_t ratio = 1;
+
+  if (src > dest)
+    {
+      ratio = src / dest;
+    }
+  else if (src < dest)
+    {
+      ratio = dest / src;
+    }
+
+  if (ratio > MAX_RATIO)
+    {
+      return -1;
+    }
 
   return 0;
 }
@@ -432,6 +464,12 @@ void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
 {
   int ret;
 
+  if ((hsize & 1) || (vsize & 1))
+    {
+      return;
+    }
+
+
   ret = ip_semtake(&g_rotexc);
   if (ret)
     {
@@ -500,6 +538,20 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
       return -EINVAL;
     }
 
+  if ((ihsize > ISE_SRC_HSIZE_MAX || ihsize < HSIZE_MIN) ||
+      (ivsize > ISE_SRC_VSIZE_MAX || ihsize < VSIZE_MIN) ||
+      (ohsize > ISE_DST_HSIZE_MAX || ohsize < HSIZE_MIN) ||
+      (ovsize > ISE_DST_VSIZE_MAX || ovsize < VSIZE_MIN))
+    {
+      return -EINVAL;
+    }
+
+  if ((ratio_check(ihsize, ohsize) != 0) ||
+      (ratio_check(ivsize, ovsize) != 0))
+    {
+      return -EINVAL;
+    }
+
   ret = ip_semtake(&g_geexc);
   if (ret)
     {
@@ -556,6 +608,37 @@ int imageproc_resize_with_rect(
   if (bpp != 8 && bpp != 16)
     {
       return -EINVAL;
+    }
+
+  if ((ihsize > ISE_SRC_HSIZE_MAX || ihsize < HSIZE_MIN) ||
+      (ivsize > ISE_SRC_VSIZE_MAX || ihsize < VSIZE_MIN) ||
+      (ohsize > ISE_DST_HSIZE_MAX || ohsize < HSIZE_MIN) ||
+      (ovsize > ISE_DST_VSIZE_MAX || ovsize < VSIZE_MIN))
+    {
+      return -EINVAL;
+    }
+
+  if (rect != NULL)
+    {
+      if ((rect->width + rect->x) > ihsize ||
+          (rect->height + rect->y) > ivsize)
+        {
+          return -EINVAL;
+        }
+
+      if ((ratio_check(rect->width, ohsize) != 0) ||
+          (ratio_check(rect->height, ovsize) != 0))
+        {
+          return -EINVAL;
+        }
+    }
+  else
+    {
+      if ((ratio_check(ihsize, ohsize) != 0) ||
+          (ratio_check(ivsize, ovsize) != 0))
+        {
+          return -EINVAL;
+        }
     }
 
   ret = ip_semtake(&g_geexc);
@@ -621,6 +704,26 @@ int imageproc_yuv_fill(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
       return -ENODEV;
     }
 
+  if (bpp != 8 && bpp != 16)
+    {
+      return -EINVAL;
+    }
+
+  if ((ihsize > HSIZE_MAX || ihsize < HSIZE_MIN) ||
+      (ivsize > VSIZE_MAX || ivsize < VSIZE_MIN))
+    {
+      return -EINVAL;
+    }
+
+  if (rect != NULL)
+    {
+      if ((rect->width  + rect->x) > ihsize ||
+          (rect->height + rect->y) > ivsize)
+        {
+          return -EINVAL;
+        }
+    }
+
   ret = ip_semtake(&g_geexc);
   if (ret)
     {
@@ -630,18 +733,18 @@ int imageproc_yuv_fill(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
   /* Create descriptor to graphics engine */
   if (rect != NULL)
     {
-      offset = rect->x * 2 + rect->y * ihsize * 2;
+      offset = rect->x * (bpp >> 3) + rect->y * ihsize * (bpp >> 3);
       cmd = set_rop_cmd(cmd, ibuf + offset, ibuf + offset,
                         rect->width, rect->height, ihsize,
                         rect->width, rect->height, ihsize,
-                        16, PATCOPY, FIXEDCOLOR, color);
+                        bpp, PATCOPY, FIXEDCOLOR, color);
     }
   else
     {
       cmd = set_rop_cmd(cmd, ibuf, ibuf,
                         ihsize, ivsize, ihsize,
                         ihsize, ivsize, ihsize,
-                        16, PATCOPY, FIXEDCOLOR, color);
+                        bpp, PATCOPY, FIXEDCOLOR, color);
     }
 
   if (cmd == NULL)
