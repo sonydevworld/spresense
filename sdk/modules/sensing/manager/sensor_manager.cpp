@@ -70,7 +70,7 @@
 static SensorManager *TheSensorManager = NULL;
 static MsgQueId s_selfMid = 0xFF; /* Invalid ID */
 static api_response_callback_t s_response_callback = NULL;
-static pid_t s_smng_pid = -1;
+static pthread_t s_smng_pid = INVALID_PROCESS_ID;
 
 /****************************************************************************
  * Public Data
@@ -461,8 +461,7 @@ void SensorManager::response(unsigned int code, unsigned int ercd, unsigned int 
  ****************************************************************************/
 extern "C"
 {
-
-int SS_SensorManagerEntry(void)
+FAR void *SS_SensorManagerEntry(FAR void *arg)
 {
   SensorManager::create(s_selfMid, s_response_callback);
   return 0;
@@ -476,13 +475,20 @@ bool SS_ActivateSensorSubSystem(MsgQueId selfMId,
 {
   s_selfMid = selfMId;
   s_response_callback = callback;
-  s_smng_pid = task_create("sensor_manager",
-                           SS_TASK_PRIORITY,
-                           SS_TASK_MANAGER_STACK_SIZE,
-                           (main_t)SS_SensorManagerEntry,
-                           0);
 
-  if (s_smng_pid < 0)
+  pthread_attr_t     attr;
+  struct sched_param sch_param;
+  int                ret = 0;
+  pthread_attr_init(&attr);
+  sch_param.sched_priority = SS_TASK_PRIORITY;
+  attr.stacksize           = SS_TASK_MANAGER_STACK_SIZE;
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  ret = pthread_create(&s_smng_pid,
+                       &attr,
+                       (pthread_startroutine_t)SS_SensorManagerEntry,
+                       (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       sensor_err("ERROR SS_ActivateSensorSubSystem failed\n");
       return false;
@@ -495,16 +501,19 @@ bool SS_ActivateSensorSubSystem(MsgQueId selfMId,
 */
 bool SS_DeactivateSensorSubSystem()
 {
-  if (s_smng_pid < 0)
+  if (s_smng_pid == INVALID_PROCESS_ID)
     {
       return false;
     }
-  task_delete(s_smng_pid);
+
+  FAR void *thread_return;
+  pthread_cancel(s_smng_pid);
+  pthread_join(s_smng_pid, &thread_return);
 
   DEBUGASSERT(TheSensorManager != NULL);
   delete TheSensorManager;
   TheSensorManager = NULL;
-  s_smng_pid = -1;
+  s_smng_pid = INVALID_PROCESS_ID;
 
   return true;
 }
