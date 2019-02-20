@@ -1454,14 +1454,14 @@ uint32_t cxd56_get_sys_baseclock(void)
 
   val = getreg32(CXD56_TOPREG_CKSEL_ROOT);
 
-  switch ((val >> 20) & 0x3)
+  switch ((val >> 22) & 0x3)
     {
     case 0:
       return cxd56_get_clock(RCOSC);
 
     case 1:
       {
-        uint32_t div = ((val >> 8) & 0x3) + 1;
+        uint32_t div = ((val >> 10) & 0x3) + 1;
         
         if (div == 4 && (val & (1<<2)))
           {
