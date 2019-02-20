@@ -1513,7 +1513,7 @@ uint32_t cxd56_get_appsmp_baseclock(void)
 {
   uint32_t val = getreg32(CXD56_TOPREG_APP_CKSEL);
 
-  switch (val & 0x3)
+  switch ((val >> 8) & 0x3)
     {
     case 0:
       return cxd56_get_clock(RCOSC);

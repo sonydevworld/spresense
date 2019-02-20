@@ -175,7 +175,7 @@ static void cxd56_powermgr_procfs_clock_base(void)
   /* Collect clock base value */
 
   sys_clk_sel = getreg32(CXD56_TOPREG_CKSEL_ROOT) >> 20 & 0x3;
-  app_clk_sel = getreg32(CXD56_TOPREG_APP_CKSEL) & 0x3;
+  app_clk_sel = getreg32(CXD56_TOPREG_APP_CKSEL) >> 8 & 0x3;
 
   /* Store data in buffer */
 
