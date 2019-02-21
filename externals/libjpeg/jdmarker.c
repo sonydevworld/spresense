@@ -454,9 +454,6 @@ get_dac (j_decompress_ptr cinfo)
 
 #endif /* D_ARITH_CODING_SUPPORTED */
 
-static UINT8 huffval[256]; /* For decrease of stack size */
-static JHUFF_TBL htbl_ac[NUM_HUFF_TBLS];
-static JHUFF_TBL htbl_dc[NUM_HUFF_TBLS];
 
 LOCAL(boolean)
 get_dht (j_decompress_ptr cinfo)
@@ -464,10 +461,9 @@ get_dht (j_decompress_ptr cinfo)
 {
   INT32 length;
   UINT8 bits[17];
-/* UINT8 huffval[256]; */ /* Make global for decrease of stack size */
+  UINT8 huffval[256];
   int i, index, count;
   JHUFF_TBL **htblptr;
-  JHUFF_TBL *htbl;
   INPUT_VARS(cinfo);
 
   INPUT_2BYTES(cinfo, length, return FALSE);
@@ -510,17 +506,15 @@ get_dht (j_decompress_ptr cinfo)
     if (index & 0x10) {		/* AC table definition */
       index -= 0x10;
       htblptr = &cinfo->ac_huff_tbl_ptrs[index];
-      htbl    = htbl_ac;
     } else {			/* DC table definition */
       htblptr = &cinfo->dc_huff_tbl_ptrs[index];
-      htbl    = htbl_dc;
     }
 
     if (index < 0 || index >= NUM_HUFF_TBLS)
       ERREXIT1(cinfo, JERR_DHT_INDEX, index);
 
     if (*htblptr == NULL)
-      *htblptr = &htbl[index];
+      *htblptr = jpeg_alloc_huff_table((j_common_ptr) cinfo);
   
     MEMCOPY((*htblptr)->bits, bits, SIZEOF((*htblptr)->bits));
     MEMCOPY((*htblptr)->huffval, huffval, SIZEOF((*htblptr)->huffval));
@@ -533,7 +527,6 @@ get_dht (j_decompress_ptr cinfo)
   return TRUE;
 }
 
-static JQUANT_TBL quant_tbl[NUM_QUANT_TBLS];
 
 LOCAL(boolean)
 get_dqt (j_decompress_ptr cinfo)
@@ -561,7 +554,7 @@ get_dqt (j_decompress_ptr cinfo)
       ERREXIT1(cinfo, JERR_DQT_INDEX, n);
       
     if (cinfo->quant_tbl_ptrs[n] == NULL)
-      cinfo->quant_tbl_ptrs[n] = &quant_tbl[n];
+      cinfo->quant_tbl_ptrs[n] = jpeg_alloc_quant_table((j_common_ptr) cinfo);
     quant_ptr = cinfo->quant_tbl_ptrs[n];
 
     if (prec) {
@@ -1117,7 +1110,6 @@ read_markers (j_decompress_ptr cinfo)
      * input point is just past the marker proper, but before any parameters.
      * A suspension will cause us to return with this state still true.
      */
-
     switch (cinfo->unread_marker) {
     case M_SOI:
       if (! get_soi(cinfo))

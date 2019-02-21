@@ -15,7 +15,6 @@
  */
 
 #define JPEG_INTERNALS
-#include <sdk/config.h>
 #include "jinclude.h"
 #include "jpeglib.h"
 
@@ -109,19 +108,6 @@
  * be worth providing --- if someone wants a 1/8th-size preview, they probably
  * want it quick and dirty, so a context-free upsampler is sufficient.
  */
-
-#ifndef CONFIG_JPEGDEC_MAX_H_PIXELS
-#  define CONFIG_JPEGDEC_MAX_H_PIXELS     2560
-#endif
-#define MAX_MCU_V_PIXELS 8
-
-JSAMPROW buffer_Y[MAX_MCU_V_PIXELS];
-JSAMPROW buffer_Cb[MAX_MCU_V_PIXELS];
-JSAMPROW buffer_Cr[MAX_MCU_V_PIXELS];
-
-JSAMPLE buffer_Y_entity[MAX_MCU_V_PIXELS][CONFIG_JPEGDEC_MAX_H_PIXELS];
-JSAMPLE buffer_Cb_entity[MAX_MCU_V_PIXELS][CONFIG_JPEGDEC_MAX_H_PIXELS/2];
-JSAMPLE buffer_Cr_entity[MAX_MCU_V_PIXELS][CONFIG_JPEGDEC_MAX_H_PIXELS/2];
 
 
 /* Private buffer controller object */
@@ -484,7 +470,6 @@ jinit_d_main_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
 {
   my_main_ptr mainp;
   int ci, rgroup, ngroups;
-  int row_cnt;
   jpeg_component_info *compptr;
 
   mainp = (my_main_ptr)
@@ -514,21 +499,9 @@ jinit_d_main_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
        ci++, compptr++) {
     rgroup = (compptr->v_samp_factor * compptr->DCT_v_scaled_size) /
       cinfo->min_DCT_v_scaled_size; /* height of a row group of component */
-
     mainp->buffer[ci] = (*cinfo->mem->alloc_sarray)
       ((j_common_ptr) cinfo, JPOOL_IMAGE,
        compptr->width_in_blocks * ((JDIMENSION) compptr->DCT_h_scaled_size),
        (JDIMENSION) (rgroup * ngroups));
   }
-
-  for (row_cnt = 0; row_cnt < MAX_MCU_V_PIXELS; row_cnt++)
-    {
-      buffer_Y[row_cnt]  = buffer_Y_entity[row_cnt];
-      buffer_Cb[row_cnt] = buffer_Cb_entity[row_cnt];
-      buffer_Cr[row_cnt] = buffer_Cr_entity[row_cnt];
-    }
-
-  mainp->buffer[0] = buffer_Y;
-  mainp->buffer[1] = buffer_Cb;
-  mainp->buffer[2] = buffer_Cr;
 }

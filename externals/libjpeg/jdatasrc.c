@@ -35,13 +35,9 @@ typedef struct {
 
 typedef my_source_mgr * my_src_ptr;
 
-static my_source_mgr jpeg_src;
-
 #ifndef CONFIG_JPEGDEC_INPUT_BUF_SIZE
 #  define CONFIG_JPEGDEC_INPUT_BUF_SIZE  4096 /* choose an efficiently fread'able size */
 #endif
-
-static JOCTET jpeg_buffer[CONFIG_JPEGDEC_INPUT_BUF_SIZE];
 
 /*
  * Initialize source --- called by jpeg_read_header
@@ -256,9 +252,13 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
    * manager serially with the same JPEG object.  Caveat programmer.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)&jpeg_src;
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                  SIZEOF(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
-    src->buffer = jpeg_buffer;
+    src->buffer = (JOCTET *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                  CONFIG_JPEGDEC_INPUT_BUF_SIZE * SIZEOF(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -299,9 +299,13 @@ jpeg_fd_src (j_decompress_ptr cinfo, int infd)
    * manager serially with the same JPEG object.  Caveat programmer.
    */
   if (cinfo->src == NULL) {     /* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)&jpeg_src;
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                  SIZEOF(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
-    src->buffer = jpeg_buffer;
+    src->buffer = (JOCTET *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                  CONFIG_JPEGDEC_INPUT_BUF_SIZE * SIZEOF(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -342,7 +346,9 @@ jpeg_mem_src (j_decompress_ptr cinfo,
    * the first one.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)&jpeg_src;
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                  SIZEOF(struct jpeg_source_mgr));
   }
 
   src = cinfo->src;
