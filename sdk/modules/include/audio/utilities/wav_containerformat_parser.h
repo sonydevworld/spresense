@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/audio/utilities/audio_wav_containerformat_parser.h
+ * modules/include/audio/utilities/wav_containerformat_parser.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,10 +33,10 @@
  *
  ****************************************************************************/
 
-#ifndef MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_PARSER_H
-#define MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_PARSER_H
+#ifndef MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_PARSER_H
+#define MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_PARSER_H
 
-#include "audio_wav_containerformat_common.h"
+#include "audio/utilities/wav_containerformat_common.h"
 
 typedef void* handel_wav_parser;
 
@@ -209,4 +209,4 @@ public:
 private:
 };
 
-#endif /* MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_PARSER_H */
+#endif /* MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_PARSER_H */

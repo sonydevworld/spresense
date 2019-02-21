@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/audio/utilities/audio_wav_containerformat.h
+ * modules/include/audio/utilities/wav_containerformat.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,10 +33,10 @@
  *
  ****************************************************************************/
 
-#ifndef MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_H
-#define MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_H
+#ifndef MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_H
+#define MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_H
 
-#include "audio_wav_containerformat_common.h"
+#include "audio/utilities/wav_containerformat_common.h"
 
 /** Format ID */
 
@@ -164,4 +164,4 @@ private:
   uint8_t   m_bitwidth;
 };
 
-#endif /* MODULES_INCLUDE_AUDIO_UTILITIES_AUDIO_WAV_CONTAINERFORMAT_H */
+#endif /* MODULES_INCLUDE_AUDIO_UTILITIES_WAV_CONTAINERFORMAT_H */
