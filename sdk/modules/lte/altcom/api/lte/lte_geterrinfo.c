@@ -75,6 +75,8 @@ static void errinfo_job(FAR void *arg)
   DBGIF_LOG1_INFO("errcode: %d.\n", err_code);
   DBGIF_LOG1_INFO("errcode: %d.\n", err_no);
   altcombs_set_errinfo(err_code, err_no, cmd->err_str);
+
+  altcom_free_cmd((FAR uint8_t *)arg);
 }
 
 /****************************************************************************
