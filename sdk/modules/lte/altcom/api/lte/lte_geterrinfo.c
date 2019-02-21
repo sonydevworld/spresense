@@ -37,6 +37,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <string.h>
+
 #include "lte/lte_api.h"
 #include "altcombs.h"
 #include "apicmd_errinfo.h"
@@ -63,18 +65,32 @@
 
 static void errinfo_job(FAR void *arg)
 {
-  int32_t                        err_code = 0;
-  int32_t                        err_no   = 0;
-  struct apicmd_cmddat_errinfo_s *cmd     = NULL;
+  struct apicmd_cmddat_errinfo_s *cmd = NULL;
+  lte_errinfo_t                   info;
 
   cmd = (struct apicmd_cmddat_errinfo_s *)arg;
-  err_code = ntohl(cmd->err_code);
-  err_no   = ntohl(cmd->err_no);
 
-  DBGIF_LOG_INFO("recv errinfo.\n");
-  DBGIF_LOG1_INFO("errcode: %d.\n", err_code);
-  DBGIF_LOG1_INFO("errcode: %d.\n", err_no);
-  altcombs_set_errinfo(err_code, err_no, cmd->err_str);
+  info.err_indicator   = cmd->indicator;
+  info.err_result_code = ntohl(cmd->err_code);
+  info.err_no          = ntohl(cmd->err_no);
+  memcpy(info.err_string, cmd->err_str, LTE_ERROR_STRING_MAX_LEN);
+  info.err_string[LTE_ERROR_STRING_MAX_LEN - 1] = '\0';
+
+  DBGIF_LOG1_INFO("recv errinfo. err_indicator:0x%x\n", info.err_indicator);
+  if (info.err_indicator & LTE_ERR_INDICATOR_ERRCODE)
+    {
+      DBGIF_LOG1_INFO("err_result_code: %d.\n", info.err_result_code);
+    }
+  if (info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
+    {
+      DBGIF_LOG1_INFO("err_no: %d.\n", info.err_no);
+    }
+  if (info.err_indicator & LTE_ERR_INDICATOR_ERRSTR)
+    {
+      DBGIF_LOG1_INFO("err_string: %s.\n", info.err_string);
+    }
+
+  altcombs_set_errinfo(&info);
 
   altcom_free_cmd((FAR uint8_t *)arg);
 }

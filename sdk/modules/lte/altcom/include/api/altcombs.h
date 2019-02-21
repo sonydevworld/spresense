@@ -215,29 +215,26 @@ FAR struct altcombs_cb_block *altcombs_get_next_cbblock(
  * Name: altcombs_set_errinfo
  *
  * Description:
- *   Get LTE api last error information.
+ *   Get LTE API last error information.
  *
  * Input Parameters:
- *   err_code    LTE error code.
- *   err_no      ALTCOM error no.
- *   err_str     Error string.
+ *   info    Pointer of LTE error information.
  *
  * Returned Value:
  *   None.
  *
  ****************************************************************************/
 
-void altcombs_set_errinfo(int32_t err_code,
-  int32_t err_no, uint8_t *err_str);
+void altcombs_set_errinfo(FAR lte_errinfo_t *info);
 
 /****************************************************************************
  * Name: altcombs_get_errinfo
  *
  * Description:
- *   Get LTE api last error information.
+ *   Get LTE API last error information.
  *
  * Input Parameters:
- *   info    Pointer of lte error info.
+ *   info    Pointer of LTE error information.
  *
  * Returned Value:
  *   When get success is returned 0.

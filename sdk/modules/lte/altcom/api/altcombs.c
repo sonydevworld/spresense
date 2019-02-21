@@ -415,43 +415,21 @@ FAR struct altcombs_cb_block *altcombs_get_next_cbblock(
  * Name: altcombs_set_errinfo
  *
  * Description:
- *   Get LTE api last error information.
+ *   Get LTE API last error information.
  *
  * Input Parameters:
- *   err_code    LTE error code.
- *   err_no      ALTCOM error no.
- *   err_str     Error string.
+ *   info    Pointer of LTE error information.
  *
  * Returned Value:
  *   None.
  *
  ****************************************************************************/
 
-void altcombs_set_errinfo(int32_t err_code,
-  int32_t err_no, uint8_t *err_str)
+void altcombs_set_errinfo(FAR lte_errinfo_t *info)
 {
-  g_errinfo.err_indicator   = 0;
-  g_errinfo.err_result_code = 0;
-  g_errinfo.err_no          = 0;
-  memset(g_errinfo.err_string, 0, LTE_ERROR_STRING_MAX_LEN);
-  if (0 != err_code)
+  if (info)
     {
-      g_errinfo.err_indicator |= LTE_ERR_INDICATOR_ERRCODE;
-      g_errinfo.err_result_code = err_code;
-    }
-
-  if (0 != err_no)
-    {
-      g_errinfo.err_indicator |= LTE_ERR_INDICATOR_ERRNO;
-      g_errinfo.err_no = err_no;
-    }
-
-  if (err_str)
-    {
-      g_errinfo.err_indicator |= LTE_ERR_INDICATOR_ERRSTR;
-      strncpy((char *)g_errinfo.err_string,
-        (char *)err_str, LTE_ERROR_STRING_MAX_LEN);
-      (g_errinfo.err_string)[LTE_ERROR_STRING_MAX_LEN - 1] = '\0';
+      memcpy(&g_errinfo, info, sizeof(lte_errinfo_t));
     }
 }
 
@@ -459,10 +437,10 @@ void altcombs_set_errinfo(int32_t err_code,
  * Name: altcombs_get_errinfo
  *
  * Description:
- *   Get LTE api last error information.
+ *   Get LTE API last error information.
  *
  * Input Parameters:
- *   info    Pointer of lte error info.
+ *   info    Pointer of LTE error information.
  *
  * Returned Value:
  *   When get success is returned 0.
@@ -470,7 +448,7 @@ void altcombs_set_errinfo(int32_t err_code,
  *
  ****************************************************************************/
 
-int32_t altcombs_get_errinfo(lte_errinfo_t *info)
+int32_t altcombs_get_errinfo(FAR lte_errinfo_t *info)
 {
   if (!info)
     {
