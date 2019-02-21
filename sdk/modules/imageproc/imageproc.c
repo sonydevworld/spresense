@@ -589,16 +589,16 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
 }
 
 //@@@ imageproc_resize_with_rect
-int imageproc_resize_with_rect(
-   uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
-   uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
-   int bpp, rect_t *rect)
+int imageproc_clip_and_resize(
+  uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
+  uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
+  int bpp, struct nxgl_rect_s *clip_rect)
 {
   void *cmd = g_gcmdbuf;
   size_t len;
   int ret;
   uint8_t pix_bytes;
-  uint32_t offset = 0;
+  uint16_t clip_width = 0, clip_height = 0;
 
   if (g_gfd <= 0)
     {
@@ -618,19 +618,32 @@ int imageproc_resize_with_rect(
       return -EINVAL;
     }
 
-  if (rect != NULL)
+  if (clip_rect != NULL)
     {
-      if ((rect->width + rect->x) > ihsize ||
-          (rect->height + rect->y) > ivsize)
+      if ( (clip_rect->pt2.x < clip_rect->pt1.x) || 
+           (clip_rect->pt2.y < clip_rect->pt1.y) )
         {
           return -EINVAL;
         }
 
-      if ((ratio_check(rect->width, ohsize) != 0) ||
-          (ratio_check(rect->height, ovsize) != 0))
+      if ((clip_rect->pt2.x > ihsize) ||
+          (clip_rect->pt2.y > ivsize) )
         {
           return -EINVAL;
         }
+
+      clip_width  = clip_rect->pt2.x - clip_rect->pt1.x + 1;
+      clip_height = clip_rect->pt2.y - clip_rect->pt1.y + 1;
+
+      if ((ratio_check(clip_width,  ohsize) != 0) ||
+          (ratio_check(clip_height, ovsize) != 0))
+        {
+          return -EINVAL;
+        }
+
+      pix_bytes = bpp >> 3;
+      ibuf = ibuf + (clip_rect->pt1.x * pix_bytes + clip_rect->pt1.y * ihsize * pix_bytes);
+
     }
   else
     {
@@ -639,6 +652,8 @@ int imageproc_resize_with_rect(
         {
           return -EINVAL;
         }
+      clip_width  = ihsize;
+      clip_height = ivsize;
     }
 
   ret = ip_semtake(&g_geexc);
@@ -648,22 +663,11 @@ int imageproc_resize_with_rect(
     }
 
   /* Create descriptor to graphics engine */
-  if (rect != NULL)
-    {
-      pix_bytes = bpp >> 3;
-      offset = rect->x * pix_bytes + rect->y * ihsize * pix_bytes;
-      cmd = set_rop_cmd(cmd, ibuf + offset, obuf,
-                        rect->width, rect->height, ihsize,
-                        ohsize, ovsize, ohsize,
-                        bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
-    }
-  else
-    {
-      cmd = set_rop_cmd(cmd, ibuf, obuf,
-                        ihsize, ivsize, ihsize,
-                        ohsize, ovsize, ohsize,
-                        bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
-    }
+
+  cmd = set_rop_cmd(cmd, ibuf, obuf,
+                    clip_width, clip_height, ihsize,
+                    ohsize, ovsize, ohsize,
+                    bpp, SRCCOPY, FIXEDCOLOR, 0x0080);
 
   if (cmd == NULL)
     {
@@ -690,85 +694,4 @@ int imageproc_resize_with_rect(
   return 0;
 }
 
-//@@@ imageproc_yuv_fill
-int imageproc_yuv_fill(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
-                       uint16_t color, int bpp, rect_t *rect)
-{
-  void *cmd = g_gcmdbuf;
-  size_t len;
-  int ret;
-  uint32_t offset;
-
-  if (g_gfd <= 0)
-    {
-      return -ENODEV;
-    }
-
-  if (bpp != 8 && bpp != 16)
-    {
-      return -EINVAL;
-    }
-
-  if ((ihsize > HSIZE_MAX || ihsize < HSIZE_MIN) ||
-      (ivsize > VSIZE_MAX || ivsize < VSIZE_MIN))
-    {
-      return -EINVAL;
-    }
-
-  if (rect != NULL)
-    {
-      if ((rect->width  + rect->x) > ihsize ||
-          (rect->height + rect->y) > ivsize)
-        {
-          return -EINVAL;
-        }
-    }
-
-  ret = ip_semtake(&g_geexc);
-  if (ret)
-    {
-      return ret; /* -EINTR */
-    }
-
-  /* Create descriptor to graphics engine */
-  if (rect != NULL)
-    {
-      offset = rect->x * (bpp >> 3) + rect->y * ihsize * (bpp >> 3);
-      cmd = set_rop_cmd(cmd, ibuf + offset, ibuf + offset,
-                        rect->width, rect->height, ihsize,
-                        rect->width, rect->height, ihsize,
-                        bpp, PATCOPY, FIXEDCOLOR, color);
-    }
-  else
-    {
-      cmd = set_rop_cmd(cmd, ibuf, ibuf,
-                        ihsize, ivsize, ihsize,
-                        ihsize, ivsize, ihsize,
-                        bpp, PATCOPY, FIXEDCOLOR, color);
-    }
-
-  if (cmd == NULL)
-    {
-      ip_semgive(&g_geexc);
-      return -EINVAL;
-    }
-
-  /* Terminate command */
-
-  cmd = set_halt_cmd(cmd);
-
-  /* Process resize */
-
-  len = (uintptr_t)cmd - (uintptr_t)g_gcmdbuf;
-  ret = write(g_gfd, g_gcmdbuf, len);
-  if (ret < 0)
-    {
-      ip_semgive(&g_geexc);
-      return -EFAULT;
-    }
-
-  ip_semgive(&g_geexc);
-
-  return 0;
-}
 
