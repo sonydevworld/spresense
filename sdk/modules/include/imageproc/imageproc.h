@@ -36,17 +36,29 @@
 #define __IMAGEPROC_H__
 
 #include <stdint.h>
-#include <nuttx/nx/nxglib.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+
 /**
  * @defgroup imageproc_funcs Functions
  * @{
  */
+
+/**
+ * Structure of rectangle coordinates from left top point to right buttom point.
+ */
+struct imageproc_rect_s {
+  uint16_t x1;  /**< X coordinate of left top point */
+  uint16_t y1;  /**< Y coordinate of left top point */
+  uint16_t x2;  /**< X coordinate of rignt bottom point */
+  uint16_t y2;  /**< Y coordinate of rignt bottom point */
+};
+typedef struct imageproc_rect_s imageproc_rect_t;
+
 /**
  * Initialize imageproc library
  */
@@ -212,7 +224,7 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
 int imageproc_clip_and_resize(
   uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
   uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
-  int bpp, struct nxgl_rect_s *clip_rect);
+  int bpp, imageproc_rect_t *clip_rect);
 
 /** @} imageproc_funcs */
 /** @} imageproc */

@@ -277,7 +277,6 @@ static int ratio_check(uint16_t src, uint16_t dest)
 
 static uint16_t calc_ratio(uint16_t src, uint16_t dest)
 {
-#if 0
   uint16_t r;
 
   if (src > dest)
@@ -295,23 +294,11 @@ static uint16_t calc_ratio(uint16_t src, uint16_t dest)
         {
           return 256 / r;
         }
-      return (src * 256) / dest;
     }
   else
     {
       return 256;
     }
-#else
-  if (src != dest)
-    {
-      return (uint16_t)((uint32_t)(src * 256) / dest);
-    }
-  else
-    {
-      return 256;
-    }
-#endif
-
 
   return 0;
 }
@@ -371,22 +358,14 @@ static void *set_rop_cmd(void *cmdbuf, void *srcaddr, void *destaddr,
   rc->daddr = (uint32_t)(uintptr_t)destaddr | MSEL;
   rc->spitch = srcpitch - 1;
   rc->dpitch = destpitch - 1;
-  if (rop == SRCCOPY)
-    {
-      rc->desth = destwidth - 1;
-      rc->destv = destheight - 1;
-      rc->ratiov = rv - 1;
-      rc->ratioh = rh - 1;
-      rc->hphaseinit = 0;
-      rc->vphaseinit = 0;
-      rc->intpmode = 0; /* XXX: HV Linear interpolation */
-    }
-#if 0
-  printf("src:%dx%d(%d), dst=%dx%d(%d), rv=%d, rh=%d\n",
-         rc->srch, rc->srcv, rc->spitch,
-         rc->desth, rc->destv, rc->dpitch,
-         rc->ratiov, rc->ratioh);
-#endif
+  rc->desth = destwidth - 1;
+  rc->destv = destheight - 1;
+  rc->ratiov = rv - 1;
+  rc->ratioh = rh - 1;
+  rc->hphaseinit = 1;
+  rc->vphaseinit = 1;
+  rc->intpmode = 0; /* XXX: HV Linear interpolation */
+
   /* return next command area */
 
   return (void *)((uintptr_t)cmdbuf + sizeof(struct ge2d_ropcmd_s));
@@ -592,7 +571,7 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
 int imageproc_clip_and_resize(
   uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
   uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
-  int bpp, struct nxgl_rect_s *clip_rect)
+  int bpp, imageproc_rect_t *clip_rect)
 {
   void *cmd = g_gcmdbuf;
   size_t len;
@@ -620,20 +599,20 @@ int imageproc_clip_and_resize(
 
   if (clip_rect != NULL)
     {
-      if ( (clip_rect->pt2.x < clip_rect->pt1.x) || 
-           (clip_rect->pt2.y < clip_rect->pt1.y) )
+      if ( (clip_rect->x2 < clip_rect->x1) || 
+           (clip_rect->y2 < clip_rect->y1) )
         {
           return -EINVAL;
         }
 
-      if ((clip_rect->pt2.x > ihsize) ||
-          (clip_rect->pt2.y > ivsize) )
+      if ((clip_rect->x2 > ihsize) ||
+          (clip_rect->y2 > ivsize) )
         {
           return -EINVAL;
         }
 
-      clip_width  = clip_rect->pt2.x - clip_rect->pt1.x + 1;
-      clip_height = clip_rect->pt2.y - clip_rect->pt1.y + 1;
+      clip_width  = clip_rect->x2 - clip_rect->x1 + 1;
+      clip_height = clip_rect->y2 - clip_rect->y1 + 1;
 
       if ((ratio_check(clip_width,  ohsize) != 0) ||
           (ratio_check(clip_height, ovsize) != 0))
@@ -642,7 +621,7 @@ int imageproc_clip_and_resize(
         }
 
       pix_bytes = bpp >> 3;
-      ibuf = ibuf + (clip_rect->pt1.x * pix_bytes + clip_rect->pt1.y * ihsize * pix_bytes);
+      ibuf = ibuf + (clip_rect->x1 * pix_bytes + clip_rect->y1 * ihsize * pix_bytes);
 
     }
   else
