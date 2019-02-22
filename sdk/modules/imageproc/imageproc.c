@@ -567,7 +567,6 @@ int imageproc_resize(uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
   return 0;
 }
 
-//@@@ imageproc_resize_with_rect
 int imageproc_clip_and_resize(
   uint8_t *ibuf, uint16_t ihsize, uint16_t ivsize,
   uint8_t *obuf, uint16_t ohsize, uint16_t ovsize,
