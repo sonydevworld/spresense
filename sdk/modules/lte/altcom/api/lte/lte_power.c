@@ -439,11 +439,9 @@ int32_t lte_power_off(void)
 
   switch (state)
     {
-      case ALTCOM_STATUS_UNINITIALIZED:
       case ALTCOM_STATUS_INITIALIZED:
         ret = -EALREADY;
         break;
-
       case ALTCOM_STATUS_RESTART_ONGOING:
       case ALTCOM_STATUS_POWER_ON:
         /* Power off the modem */
@@ -453,8 +451,9 @@ int32_t lte_power_off(void)
           {
             altcom_set_status(ALTCOM_STATUS_INITIALIZED);
           }
-      break;
 
+        break;
+      case ALTCOM_STATUS_UNINITIALIZED:
       default:
         ret = -EOPNOTSUPP;
         break;
