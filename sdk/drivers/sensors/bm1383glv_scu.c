@@ -74,6 +74,7 @@
 #define BM1383GLV_RESET             0x13
 #define BM1383GLV_MODE_CONTROL      0x14
 #define BM1383GLV_PRESSURE_MSB      0x1C
+#define BM1383AGLV_PRESSURE_MSB     0x1A
 
 /* Register POWER_DOWN */
 
@@ -141,11 +142,23 @@ static const struct file_operations g_bm1383glvfops =
   0                            /* unlink */
 };
 
-/* Take press data. */
+/* Device is not BM1383AGLV but BM1383GLV */
+
+static uint8_t g_is_bm1383glv = 0;
+
+/* Take press data for BM1383GLV */
 
 static const uint16_t g_bm1383glvinst[] =
 {
   SCU_INST_SEND(BM1383GLV_PRESSURE_MSB),
+  SCU_INST_RECV(BM1383GLV_BYTESPERSAMPLE) | SCU_INST_LAST,
+};
+
+/* Take press data for BM1383AGLV */
+
+static const uint16_t g_bm1383aglvinst[] =
+{
+  SCU_INST_SEND(BM1383AGLV_PRESSURE_MSB),
   SCU_INST_RECV(BM1383GLV_BYTESPERSAMPLE) | SCU_INST_LAST,
 };
 
@@ -229,6 +242,13 @@ static int bm1383glv_checkid(FAR struct bm1383glv_dev_s *priv)
       return -ENODEV;
     }
 
+  if (devid == BM1383GLV_DEVID)
+    {
+      /* Device is BM1383GLV, which remains for backward compatibility */
+
+      g_is_bm1383glv = 1;
+    }
+
   return OK;
 }
 
@@ -242,6 +262,8 @@ static int bm1383glv_checkid(FAR struct bm1383glv_dev_s *priv)
 
 static int bm1383glv_seqinit(FAR struct bm1383glv_dev_s *priv)
 {
+  const uint16_t *inst;
+
   DEBUGASSERT(g_seq == NULL);
 
   /* Open sequencer */
@@ -257,7 +279,9 @@ static int bm1383glv_seqinit(FAR struct bm1383glv_dev_s *priv)
 
   /* Set instruction and sample data information to sequencer */
 
-  seq_setinstruction(priv->seq, g_bm1383glvinst, itemsof(g_bm1383glvinst));
+  inst = (g_is_bm1383glv) ? g_bm1383glvinst : g_bm1383aglvinst;
+
+  seq_setinstruction(priv->seq, inst, itemsof(inst));
   seq_setsample(priv->seq, BM1383GLV_BYTESPERSAMPLE, 0, BM1383GLV_ELEMENTSIZE,
                 false);
 
