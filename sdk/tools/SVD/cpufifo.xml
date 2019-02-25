@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>CPU_FIFO</name>
+  <version>1.0</version>
+  <description>CPU FIFO Control</description>
+  <baseAddress>0x4600c400</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x20</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <registers>
+    <register>
+      <name>FIF_PUSH_FULL</name>
+      <description>TX buffer is full (=1)</description>
+      <addressOffset>0x0</addressOffset>
+      <access>read-only</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000001</resetMask>
+
+      <fields>
+        <field>
+          <name>FULL_FLAG</name>
+          <description>TX buffer is full</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>not full</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>full</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>FIF_PUSH_WRD0</name>
+      <description>TX data word 0</description>
+      <addressOffset>0x4</addressOffset>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>RECEIVER_ID</name>
+          <description>Target ID</description>
+          <bitRange>[31:28]</bitRange>
+        </field>
+        <field>
+          <name>DATA_0</name>
+          <description>TX data word 0</description>
+          <bitRange>[27:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>FIF_PUSH_WRD1</name>
+      <description>TX data word 1</description>
+      <addressOffset>0x8</addressOffset>
+      <access>read-write</access>
+    </register>
+
+    <register>
+      <name>FIF_PUSH_CMP</name>
+      <description>TX data write complete</description>
+      <addressOffset>0xc</addressOffset>
+      <access>write-only</access>
+
+      <fields>
+        <field>
+          <name>PUSH_CMP</name>
+          <description>TX data write complete</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>don't care</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>complete</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>FIF_PULL_EMP</name>
+      <description>RX buffer is empty (=1)</description>
+      <addressOffset>0x10</addressOffset>
+      <access>read-only</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x00000001</resetMask>
+
+      <fields>
+        <field>
+          <name>EMPTY_FLAG</name>
+          <description>RX buffer is empty</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>not empty</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>empty</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>FIF_PULL_WRD0</name>
+      <description>RX data word 0</description>
+      <addressOffset>0x14</addressOffset>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>SENDER_ID</name>
+          <description>Sender ID</description>
+          <bitRange>[31:28]</bitRange>
+        </field>
+        <field>
+          <name>DATA_0</name>
+          <description>RX data word 0</description>
+          <bitRange>[27:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>FIF_PULL_WRD1</name>
+      <description>RX data word 1</description>
+      <addressOffset>0x18</addressOffset>
+      <access>read-write</access>
+    </register>
+
+    <register>
+      <name>FIF_PULL_CMP</name>
+      <description>RX data read complete</description>
+      <addressOffset>0x1c</addressOffset>
+      <access>write-only</access>
+
+      <fields>
+        <field>
+          <name>PULL_CMP</name>
+          <description>RX data read complete</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>don't care</name><value>0</value></enumeratedValue>
+            <enumeratedValue><name>complete</name><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+  </registers>
+</peripheral>

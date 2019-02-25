@@ -72,6 +72,9 @@
 
     <!-- ROT -->
     <xi:include href="rot.xml"/>
+
+    <!-- CPU FIFO -->
+    <xi:include href="cpufifo.xml"/>
   </peripherals>
 
 
