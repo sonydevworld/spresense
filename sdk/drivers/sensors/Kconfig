@@ -225,12 +225,6 @@ config BM1383GLV_SCU
 	---help---
 		Use the sensor control unit (SCU) sequencer.
 
-config BM1383AGLV
-	bool "BM1383AGLV"
-	default n
-	---help---
-		Use BM1383AGLV registers.
-
 endif # BM1383GLV
 
 config BH1745NUC
