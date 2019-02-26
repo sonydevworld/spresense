@@ -53,7 +53,7 @@ ifeq ($(CONFIG_BMP280),y)
 ifeq ($(CONFIG_CXD56_SCU),y)
 MAINSRC = press_main.c
 else
-MAINSRC = press_main_bmi160.c
+MAINSRC = press_main_bmp280.c
 endif
 endif
 

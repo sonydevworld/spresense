@@ -1,5 +1,5 @@
 /****************************************************************************
- * press/press_main_bmi160.c
+ * press/press_main_bmp280.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
