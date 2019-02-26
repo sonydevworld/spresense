@@ -137,9 +137,14 @@ int dnn_peek_vbuffers(const nn_network_t * n,
   alloc_info->vbuffer_num = n->buffers.size;
   for (i = 0; i < alloc_info->vbuffer_num; i++)
     {
-      /* FIXME: nnabla should use bytes instead of number of elements to
-       * specify buffer size */
-      alloc_info->bsize_list[i] = *(list + i) * sizeof(float);
+      if (n->version >= 3) 
+        {
+          alloc_info->bsize_list[i] = *(list + i);
+        }
+      else
+        {
+          alloc_info->bsize_list[i] = *(list + i) * sizeof(float);
+        }
     }
 
   return RT_RET_NOERROR;
