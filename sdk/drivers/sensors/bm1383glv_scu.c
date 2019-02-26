@@ -90,6 +90,10 @@
 #define BM1383GLV_MODE_CONTROL_T_AVE       (1 << 3)
 #define BM1383GLV_MODE_CONTORL_MODE_200MS  (4 << 0)
 
+#define BM1383AGLV_MODE_CONTROL_AVE_NUM64  (6 << 5)
+#define BM1383AGLV_MODE_CONTROL_RESERVED   (1 << 3)
+#define BM1383AGLV_MODE_CONTROL_CONTINUOUS (2 << 0)
+
 #ifndef itemsof
 #  define itemsof(array) (sizeof(array)/sizeof(array[0]))
 #endif
@@ -323,8 +327,18 @@ static int bm1383glv_open(FAR struct file *filep)
 
       /* start sampling */
 
-      val = BM1383GLV_MODE_CONTROL_AVE_NUM64 | BM1383GLV_MODE_CONTROL_T_AVE |
-            BM1383GLV_MODE_CONTORL_MODE_200MS;
+      if (g_is_bm1383glv)
+        {
+          val = BM1383GLV_MODE_CONTROL_AVE_NUM64 |
+                BM1383GLV_MODE_CONTROL_T_AVE |
+                BM1383GLV_MODE_CONTORL_MODE_200MS;
+        }
+      else
+        {
+          val = BM1383AGLV_MODE_CONTROL_AVE_NUM64 |
+                BM1383AGLV_MODE_CONTROL_RESERVED |
+                BM1383AGLV_MODE_CONTROL_CONTINUOUS;
+        }
       bm1383glv_putreg8(priv, BM1383GLV_MODE_CONTROL, val);
     }
   else
