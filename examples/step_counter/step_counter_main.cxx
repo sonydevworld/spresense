@@ -63,6 +63,13 @@ using namespace MemMgrLite;
  * Pre-processor Definitions
  ****************************************************************************/
 
+#ifndef CONFIG_EXAMPLES_STEP_COUNTER_WALKING_STRIDE
+#  define CONFIG_EXAMPLES_STEP_COUNTER_WALKING_STRIDE 60
+#endif
+#ifndef CONFIG_EXAMPLES_STEP_COUNTER_RUNNING_STRIDE
+#  define CONFIG_EXAMPLES_STEP_COUNTER_RUNNING_STRIDE 80
+#endif
+
 #define ACCEL_DATA_BUFFER_NUM  4
 
 #define EXIT_REQUEST_KEY       0x20 /* space key */
@@ -420,6 +427,23 @@ extern "C" int step_counter_main(int argc, char *argv[])
   if (ret != SS_ECODE_OK)
     {
       err("Error: StepCounterOpen() failure. error = %d\n", ret);
+      return EXIT_FAILURE;
+    }
+
+  /* Setup Stride setting.
+   * The range of configurable stride lenght is 1 - 249[cm].
+   * For the mode, set STEP_COUNTER_MODE_FIXED_LENGTH fixed.
+   */
+
+  StepCounterSetting set;
+  set.walking.step_length = CONFIG_EXAMPLES_STEP_COUNTER_WALKING_STRIDE;
+  set.walking.step_mode   = STEP_COUNTER_MODE_FIXED_LENGTH;
+  set.running.step_length = CONFIG_EXAMPLES_STEP_COUNTER_RUNNING_STRIDE;
+  set.running.step_mode   = STEP_COUNTER_MODE_FIXED_LENGTH;
+  ret = StepCounterSet(sp_step_counter_ins, &set);
+  if (ret != SS_ECODE_OK)
+    {
+      err("Error: StepCounterSet() failure. error = %d\n", ret);
       return EXIT_FAILURE;
     }
 

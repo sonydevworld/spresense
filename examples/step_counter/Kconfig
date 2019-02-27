@@ -31,4 +31,11 @@ config EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO
     int "Accelerator sensor watermark signal"
     default 14
 
+config EXAMPLES_STEP_COUNTER_WALKING_STRIDE
+	int "Stride length of walking state"
+	default 60
+
+config EXAMPLES_STEP_COUNTER_RUNNING_STRIDE
+	int "Stride length of running state"
+	default 80
 endif
