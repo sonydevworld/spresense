@@ -86,10 +86,12 @@ typedef enum
   STEP_COUNTER_MODE_NEW_TABLE,        /**<
                                        * Create a new stride table
                                        * with stepLength, and use the table.
+                                       * (not supported)
                                        */
   STEP_COUNTER_MODE_STEP_TABLE        /**<
                                        * Using existing stride table
                                        * (not using fixed length).
+                                       * (not supported)
                                        */
 } StepCounterStepMode;
 

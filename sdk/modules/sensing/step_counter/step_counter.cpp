@@ -246,13 +246,13 @@ int StepCounterClass::sendInit(void)
 
   w_step = &dsp_cmd->init_cmd.setting.walking;
   w_step->step_length = STEP_COUNTER_INITIAL_WALK_STEP_LENGTH;
-  w_step->step_mode   = STEP_COUNTER_MODE_STEP_TABLE;
+  w_step->step_mode   = STEP_COUNTER_MODE_FIXED_LENGTH;
 
   FAR StepCounterSetParam *r_step;
 
   r_step = &dsp_cmd->init_cmd.setting.running;
   r_step->step_length = STEP_COUNTER_INITIAL_RUN_STEP_LENGTH;
-  r_step->step_mode   = STEP_COUNTER_MODE_STEP_TABLE;
+  r_step->step_mode   = STEP_COUNTER_MODE_FIXED_LENGTH;
 
   /* Disable debug feature. */
 
