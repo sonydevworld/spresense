@@ -44,7 +44,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <nuttx/sensors/bmi160.h>
-#include <arch/chip/cxd56_scu.h>
 
 #include "accel_sensor.h"
 
@@ -52,58 +51,155 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* For physical sensor. */
+
 #define STEP_COUNTER_ACCEL_DEVNAME "/dev/accel0"
 
 #ifndef CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO
 #  define CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO 14
 #endif
 
-#define err(format, ...)        fprintf(stderr, format, ##__VA_ARGS__)
+/* For error */
 
-#define CHECK_TRUE_GOTO(expr, failed)                                   \
-      do {                                                              \
-        if (!(expr)) {                                                  \
-          err("check failed. %s, %d\n", __FUNCTION__, __LINE__);        \
-          goto failed;                                                  \
-        }                                                               \
-      } while(0)
-
-
-#define CHECK_NULL_RET(expr)                                            \
-  do {                                                                  \
-    if (expr == NULL) {                                                 \
-      err("check failed. %s, %d\n", __FUNCTION__, __LINE__);            \
-      return -1;                                                        \
-    }                                                                   \
-  } while(0)
+#define err(format, ...)    fprintf(stderr, format, ##__VA_ARGS__)
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
 
-typedef struct accel_t three_axis_s;
-
 /****************************************************************************
  * Private Data
  ****************************************************************************/
-
-static bool accel_sensing_stop = false;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
-static int AccelSensorScuSetup(FAR AccelSensor *sensor)
+static FAR void *accel_sensor_entry(pthread_addr_t arg)
 {
+  static int s_sensor_entry_result = PHYSICAL_SENSOR_ERR_CODE_OK;
+  FAR physical_sensor_t *sensor =
+    reinterpret_cast<FAR physical_sensor_t *>(arg);
 
-  int                   ret;
-  struct scufifo_wm_s   wm;
+  /* Create instanse of AccelSensorClass. */
 
-  /* Set FIFO size */
+  AccelSensorClass *instance = new AccelSensorClass(sensor);
 
-  ret = ioctl(sensor->fd,
+  /* Set sensor signal number. */
+
+  instance->add_signal(CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO);
+
+  /* Start accel sensor process. */
+
+  instance->run();
+
+  /* Delete sensor signal number. */
+
+  instance->delete_signal(CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO);
+
+  /* Free instance of AccelSensorClass. */
+
+  free(instance);
+
+  return (void *)&s_sensor_entry_result;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+FAR physical_sensor_t *AccelSensorCreate(pysical_event_handler_t handler)
+{
+  return PhysicalSensorCreate(handler,
+                              (void *)accel_sensor_entry,
+                              "accel_sensor");
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorOpen(FAR physical_sensor_t *sensor)
+{
+  return PhysicalSensorOpen(sensor, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorStart(FAR physical_sensor_t *sensor)
+{
+  return PhysicalSensorStart(sensor);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorStop(FAR physical_sensor_t *sensor)
+{
+  return PhysicalSensorStop(sensor);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClose(FAR physical_sensor_t *sensor)
+{
+  return PhysicalSensorClose(sensor);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorDestroy(FAR physical_sensor_t *sensor)
+{
+  return PhysicalSensorDestroy(sensor);
+}
+
+/****************************************************************************
+ * AccelSensorClass
+ ****************************************************************************/
+
+int AccelSensorClass::open_sensor()
+{
+  m_fd = open(STEP_COUNTER_ACCEL_DEVNAME, O_RDONLY);
+  if (m_fd <= 0)
+    {
+      return -1;
+    }
+  return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClass::close_sensor()
+{
+  return close(m_fd);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClass::start_sensor()
+{
+  return ioctl(m_fd, SCUIOC_START, 0);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClass::stop_sensor()
+{
+  return ioctl(m_fd, SCUIOC_STOP, 0);
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClass::setup_sensor(FAR void *param)
+{
+  return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+int AccelSensorClass::setup_scu(FAR void *param)
+{
+  /* Free FIFO. */
+
+  int ret = ioctl(m_fd, SCUIOC_FREEFIFO, 0);
+  if (ret < 0)
+    {
+      err("Accel free FIFO error %d\n", ret);
+      return ret;
+    }
+
+  /* Set FIFO size. */
+
+  ret = ioctl(m_fd,
               SCUIOC_SETFIFO,
-              sizeof(three_axis_s) * ACCEL_WATERMARK_NUM * 2);
+              sizeof(struct accel_t) * ACCEL_WATERMARK_NUM * 2);
   if (ret < 0)
     {
       err("Accel set FIFO size error %d\n", ret);
@@ -115,7 +211,7 @@ static int AccelSensorScuSetup(FAR AccelSensor *sensor)
    * 32768 / 64 / (2 ^ 4) = 32
    */
 
-  ret = ioctl(sensor->fd, SCUIOC_SETSAMPLE, 4);
+  ret = ioctl(m_fd, SCUIOC_SETSAMPLE, 4);
   if (ret < 0)
     {
       err("Accel set sequencer sampling rate error %d\n", ret);
@@ -124,189 +220,111 @@ static int AccelSensorScuSetup(FAR AccelSensor *sensor)
 
   /* Set water mark */
 
+  struct scufifo_wm_s wm;
   wm.signo     = CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO;
-  wm.ts        = &sensor->wm_ts;
+  wm.ts        = &m_wm_ts;
   wm.watermark = ACCEL_WATERMARK_NUM;
 
-  ret = ioctl(sensor->fd,
+  ret = ioctl(m_fd,
               SCUIOC_SETWATERMARK,
-              (unsigned long)(uintptr_t)&wm);
+              static_cast<unsigned long>((uintptr_t)&wm));
   if (ret < 0)
     {
       err("Accel set water mark error %d\n", ret);
       return ret;
     }
 
-  return OK;
-}
-
-/*--------------------------------------------------------------------------*/
-static void AccelConvertData(FAR three_axis_s *p_src,
-                             FAR AccelDOF *p_dst,
-                             int sample_num)
-{
-  for (int i = 0; i < sample_num; ++i)
-    {
-      p_dst->accel_x = (float)p_src->x * 2 / 32768;
-      p_dst->accel_y = (float)p_src->y * 2 / 32768;
-      p_dst->accel_z = (float)p_src->z * 2 / 32768;
-
-      p_src++;
-      p_dst++;
-    }
-}
-
-/*--------------------------------------------------------------------------*/
-static void AccelNotifyData(FAR AccelSensor* sensor,
-                            MemMgrLite::MemHandle &mh_dst)
-{
-  if ((sensor->handler != NULL) && (sensor->stopped != true))
-    {
-      sensor->handler(sensor->context, mh_dst);
-    }
-}
-
-/****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-int AccelSensorCreate(FAR AccelSensor** sensor)
-{
-  CHECK_NULL_RET(sensor);
-
-  *sensor = (AccelSensor *)malloc(sizeof(AccelSensor));
-  memset(*sensor, 0 , sizeof(AccelSensor));
-
   return 0;
 }
 
 /*--------------------------------------------------------------------------*/
-int AccelSensorRegisterHandler(FAR AccelSensor* sensor,
-                               AccelEventHandler handler,
-                               uint32_t context)
+int AccelSensorClass::receive_signal(int sig_no, FAR siginfo_t *sig_info)
 {
-  sensor->handler = handler;
-  sensor->context = context;
+  int ret = -1;
 
-  return 0;
+  switch (sig_no)
+    {
+      case CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO:
+        {
+          ret = receive_scu_wm_ev();
+        }
+        break;
+
+      default:
+        break;
+    }
+  return ret;
 }
 
 /*--------------------------------------------------------------------------*/
-int AccelSensorStartSensing(FAR AccelSensor *sensor)
+int AccelSensorClass::receive_scu_wm_ev()
 {
-  int ret;
   MemMgrLite::MemHandle mh_dst;
   MemMgrLite::MemHandle mh_src;
-  sigset_t              set;
-  char                 *p_src;
-  struct siginfo        value;
-  struct timespec       timeout;
+  FAR char *p_src;
+  FAR char *p_dst;
 
-  sensor->fd = open(STEP_COUNTER_ACCEL_DEVNAME, O_RDONLY);
-  if (sensor->fd <= 0)
+  /* Get segment of memory handle. */
+
+  if (ERR_OK != mh_src.allocSeg(
+                  ACCEL_DATA_BUF_POOL,
+                  (sizeof(struct accel_t) * ACCEL_WATERMARK_NUM)))
     {
-      err("Accel device open error %d\n", sensor->fd);
-      return -1;
+      /* Fatal error occured. */
+
+      err("Fail to allocate segment of memory handle.\n");
+      ASSERT(0);
     }
+  p_src = reinterpret_cast<char *>(mh_src.getPa());
 
-  /* Set timeout 2 seconds, SCU may send signal every 1 second. */
-  
-  timeout.tv_sec  = 2;
-  timeout.tv_nsec = 0;
-  
-  sigemptyset(&set);
-  sigaddset(&set, CONFIG_EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO);
-
-  ret = AccelSensorScuSetup(sensor);
-  if (ret < 0)
+  if (ERR_OK != mh_dst.allocSeg(
+                  ACCEL_DATA_BUF_POOL,
+                  (sizeof(accel_float_t) * ACCEL_WATERMARK_NUM)))
     {
-      return ret;
+      /* Fatal error occured. */
+
+      err("Fail to allocate segment of memory handle.\n");
+      ASSERT(0);
     }
+  p_dst = reinterpret_cast<char *>(mh_dst.getPa());
 
-  /* Start sequencer */
+  /* Read accelerometer data from driver. */
 
-  ret = ioctl(sensor->fd, SCUIOC_START, 0);
-  ASSERT(ret == 0);
+  read(m_fd, p_src, sizeof(struct accel_t) * ACCEL_WATERMARK_NUM);
 
-  sensor->stopped = false;
-  while(!sensor->stopped)
-    {
-      ret = sigtimedwait(&set, &value, &timeout);
-      if (ret < 0)
-        {
-          continue;
-        }
+  this->convert_data(reinterpret_cast<FAR struct accel_t *>(p_src),
+                     reinterpret_cast<FAR accel_float_t *>(p_dst),
+                     ACCEL_WATERMARK_NUM);
 
-      /* get MemHandle */
+  /* Notify accelerometer data to sensor manager. */
 
-      if (ERR_OK != mh_src.allocSeg(
-                      ACCEL_DATA_BUF_POOL,
-                      (sizeof(three_axis_s) * ACCEL_WATERMARK_NUM)))
-        {
-          ASSERT(0);
-        }
-      p_src = reinterpret_cast<char *>(mh_src.getPa());
+  this->notify_data(mh_dst);
 
-      if (ERR_OK != mh_dst.allocSeg(
-                      ACCEL_DATA_BUF_POOL,
-                      (sizeof(AccelDOF) * ACCEL_WATERMARK_NUM)))
-        {
-          ASSERT(0);
-        }
+  /* Free segment. */
 
-      /* read accel data from driver */
-
-      ret = read(sensor->fd,
-                 p_src,
-                 sizeof(three_axis_s) * ACCEL_WATERMARK_NUM);
-
-      CHECK_TRUE_GOTO(ret == (sizeof(three_axis_s) * ACCEL_WATERMARK_NUM),
-                      failed);
-
-      AccelConvertData(reinterpret_cast<three_axis_s*>(p_src),
-                       reinterpret_cast<AccelDOF*>(mh_dst.getPa()),
-                       ACCEL_WATERMARK_NUM);
-      AccelNotifyData(sensor, mh_dst);
-
-      mh_src.freeSeg();
-      mh_dst.freeSeg();
-    }
-
-  if (sensor->fd >= 0)
-    {
-      ret = ioctl(sensor->fd, SCUIOC_STOP, 0);
-    }
-
-failed:
-  if (sensor->fd >= 0)
-    {
-      close(sensor->fd);
-    }
-
-  accel_sensing_stop = true;
+  mh_src.freeSeg();
+  mh_dst.freeSeg();
 
   return 0;
 }
 
 /*--------------------------------------------------------------------------*/
-int AccelSensorDestroy(AccelSensor* sensor)
+void AccelSensorClass::convert_data(FAR accel_t *p_src,
+                                    FAR accel_float_t *p_dst,
+                                    int sample_num)
 {
-  free(sensor);
-  return 0;
+  for (int i = 0; i < sample_num; i++, p_src++, p_dst++)
+    {
+      p_dst->x = (float)p_src->x * 2 / 32768;
+      p_dst->y = (float)p_src->y * 2 / 32768;
+      p_dst->z = (float)p_src->z * 2 / 32768;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
-int AccelSensorStopSensing(AccelSensor* sensor)
+int AccelSensorClass::notify_data(MemMgrLite::MemHandle &mh_dst)
 {
-  CHECK_NULL_RET(sensor);
-  sensor->stopped = true;
+  uint32_t timestamp = get_timestamp();
 
-  while(!accel_sensing_stop)
-    {
-      sleep(1);
-    }
-
-  accel_sensing_stop = false;
-
-  return 0;
-}
+  return m_handler(0, timestamp, mh_dst);
+};

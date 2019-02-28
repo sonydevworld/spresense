@@ -50,7 +50,7 @@ STACKSIZE = $(CONFIG_EXAMPLES_STEP_COUNTER_STACKSIZE)
 # Sensor Example
 
 MAINSRC = step_counter_main.cxx
-CXXSRCS = accel_sensor.cxx gnss_sensor.cxx
+CXXSRCS = physical_sensor.cxx accel_sensor.cxx gnss_sensor.cxx
 
 # Sensing Example paths
 

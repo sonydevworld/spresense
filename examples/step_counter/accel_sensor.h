@@ -43,9 +43,7 @@
 #include <sdk/config.h>
 #include <arch/chip/cxd56_scu.h>
 
-#include "memutils/memory_manager/MemHandle.h"
-#include "include/mem_layout.h"
-#include "include/msgq_id.h"
+#include "physical_sensor.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -58,51 +56,84 @@
  * Public Types
  ****************************************************************************/
 
-typedef struct
-{
-  float accel_x;  /* X axis standard gravity acceleration.[G] */
-  float accel_y;  /* Y axis standard gravity acceleration.[G] */
-  float accel_z;  /* Z axis standard gravity acceleration.[G] */
-} AccelDOF;
-
-typedef int (*AccelEventHandler)(uint32_t context,
-                                 MemMgrLite::MemHandle &mh);
-
-struct accel_sensor_s
-{
-  /* Indicates the event handler of the acceleration sensor. */
-
-  AccelEventHandler     handler;
-
-  /* Indicates the context of the acceleration sensor. */
-
-  uint32_t              context; 
-
-  /* Status flag of accel process. */
-
-  bool                  stopped;
-
-  /* Indicates the file discriptor of driver. */
-  
-  int                   fd;
-
-  /* Indicates the time stamp information of water mark. */
-
-  struct scutimestamp_s wm_ts;
-};
-
-typedef struct accel_sensor_s AccelSensor;
-
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-int AccelSensorCreate(FAR AccelSensor **sensor);
-int AccelSensorRegisterHandler(FAR AccelSensor *sensor,
-                               AccelEventHandler handler,
-                               uint32_t context);
-int AccelSensorStartSensing(FAR AccelSensor *sensor);
-int AccelSensorDestroy(FAR AccelSensor* sensor);
-int AccelSensorStopSensing(FAR AccelSensor* sensor);
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
+FAR physical_sensor_t *AccelSensorCreate(pysical_event_handler_t handler);
+int AccelSensorOpen(FAR physical_sensor_t *sensor);
+int AccelSensorStart(FAR physical_sensor_t *sensor);
+int AccelSensorStop(FAR physical_sensor_t *sensor);
+int AccelSensorClose(FAR physical_sensor_t *sensor);
+int AccelSensorDestroy(FAR physical_sensor_t *sensor);
+
+#ifdef __cplusplus
+} /* end of extern "C" */
+#endif /* __cplusplus */
+
+/****************************************************************************
+ * Class
+ ****************************************************************************/
+
+#ifdef __cplusplus
+
+class AccelSensorClass : public PhysicalSensorClass
+{
+public:
+
+  AccelSensorClass(FAR physical_sensor_t *sensor) :
+    PhysicalSensorClass(sensor)
+    {
+      create();
+    };
+
+  ~AccelSensorClass(){};
+
+private:
+
+  struct accel_float_s
+    {
+      float x;  /* X axis standard gravity acceleration.[G] */
+      float y;  /* Y axis standard gravity acceleration.[G] */
+      float z;  /* Z axis standard gravity acceleration.[G] */
+    };
+  typedef struct accel_float_s accel_float_t;
+
+  /* Override method */
+
+  int open_sensor();
+  int close_sensor();
+  int start_sensor();
+  int stop_sensor();
+
+  int setup_sensor(FAR void *param);
+  int setup_scu(FAR void *param);
+  int receive_signal(int sig_no, FAR siginfo_t *sig_info);
+
+  /* Local method */
+
+  int receive_scu_wm_ev();
+  void convert_data(FAR struct accel_t *p_src,
+                    FAR accel_float_t *p_dst,
+                    int sample_num);
+  int notify_data(MemMgrLite::MemHandle &mh_dst);
+
+  /* Inline method */
+
+  uint32_t get_timestamp()
+    {
+      /* Get timestamp in millisecond. Tick in 32768 Hz  */
+
+      return 1000 * m_wm_ts.sec + ((1000 * m_wm_ts.tick) >> 15);
+    }
+
+  int m_fd;
+  struct scutimestamp_s m_wm_ts;
+};
+
+#endif /* __cplusplus */
 #endif /* _EXAMPLES_STEP_COUNTER_ACCEL_SENSOR_H */

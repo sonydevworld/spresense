@@ -81,7 +81,6 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static FAR AccelSensor *sp_accel_sensor = NULL;
 #ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
 static FAR GnssSensor *sp_gnss_sensor = NULL;
 #endif
@@ -200,15 +199,10 @@ static bool sensor_finalize_libraries(void)
  * Callback Function
  ****************************************************************************/
 
-static int accel_read_callback(uint32_t context, MemMgrLite::MemHandle &mh)
+static int accel_read_callback(uint32_t ev_type,
+                               uint32_t timestamp,
+                               MemMgrLite::MemHandle &mh)
 {
-  uint32_t timestamp;
-
-  /* get timestamp in millisecond */
-
-  struct scutimestamp_s wm_ts = sp_accel_sensor->wm_ts;
-  timestamp = 1000 * wm_ts.sec + ((1000 * wm_ts.tick) >> 15); /* tick in 32768 Hz */
-
   sensor_command_data_mh_t packet;
   packet.header.size = 0;
   packet.header.code = SendData;
@@ -251,28 +245,6 @@ static int gnss_read_callback(uint32_t context, FAR GnssSampleData *pos)
   return 0;
 }
 #endif
-
-/*--------------------------------------------------------------------------*/
-static int accel_sensor_entry(int argc,  const char* argv[])
-{
-  if (AccelSensorStartSensing(sp_accel_sensor) < 0)
-    {
-      err("Error: AccelSensorStartSensing() failure\n");
-      return -1;
-    }
-
-  if (AccelSensorDestroy(sp_accel_sensor) < 0)
-    {
-      err("Error: AccelSensorDestroy() failure\n");
-      return -1;
-    }
-
-  /* Clear address of accelerator instance. */
-
-  sp_accel_sensor = NULL;
-
-  return 0;
-}
 
 /*--------------------------------------------------------------------------*/
 #ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
@@ -379,20 +351,10 @@ extern "C" int step_counter_main(int argc, char *argv[])
 
   /* Setup physical sensor. */
 
-  uint32_t context = 0;
-  ret = AccelSensorCreate(&sp_accel_sensor);
-  if (ret < 0)
+  FAR physical_sensor_t *sensor = AccelSensorCreate(accel_read_callback);
+  if (sensor == NULL)
     {
       err("Error: AccelSensorCreate() failure.\n");
-      return EXIT_FAILURE;
-    }
-
-  ret = AccelSensorRegisterHandler(sp_accel_sensor,
-                                   accel_read_callback,
-                                   context);
-  if (ret < 0)
-    {
-      err("Error: AccelSensorRegisterHandler() failure.\n");
       return EXIT_FAILURE;
     }
 
@@ -404,6 +366,7 @@ extern "C" int step_counter_main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
+  uint32_t context = 0;
   ret = GnssSensorRegisterHandler(sp_gnss_sensor,
                                   gnss_read_callback,
                                   context);
@@ -413,6 +376,42 @@ extern "C" int step_counter_main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 #endif
+
+  /* Resister sensor clients. */
+
+  sensor_command_register_t reg;
+
+  reg.header.size   = 0;
+  reg.header.code   = ResisterClient;
+  reg.self          = accelID;
+  reg.subscriptions = 0; 
+  reg.callback      = NULL;
+  reg.callback_mh   = NULL;
+  SS_SendSensorResister(&reg);
+
+  reg.header.size   = 0;
+  reg.header.code   = ResisterClient;
+  reg.self          = gnssID;
+  reg.subscriptions = 0; 
+  reg.callback      = NULL;
+  reg.callback_mh   = NULL;
+  SS_SendSensorResister(&reg);
+
+  reg.header.size   = 0;
+  reg.header.code   = ResisterClient;
+  reg.self          = stepcounterID;
+  reg.subscriptions = (0x01 << accelID) | (0x01 << gnssID);
+  reg.callback      = NULL;
+  reg.callback_mh   = &step_counter_receive_data;
+  SS_SendSensorResister(&reg);
+
+  reg.header.size   = 0;
+  reg.header.code   = ResisterClient;
+  reg.self          = app0ID;
+  reg.subscriptions = (0x01 << stepcounterID);
+  reg.callback      = NULL;
+  reg.callback_mh   = &step_counter_recieve_result;
+  SS_SendSensorResister(&reg);
 
   /* Setup logical sensor. */
 
@@ -458,51 +457,23 @@ extern "C" int step_counter_main(int argc, char *argv[])
   board_flash_power_control(false);
 #endif
 
-  /* Resister sensor clients. */
-
-  sensor_command_register_t reg;
-
-  reg.header.size   = 0;
-  reg.header.code   = ResisterClient;
-  reg.self          = accelID;
-  reg.subscriptions = 0; 
-  reg.callback      = NULL;
-  reg.callback_mh   = NULL;
-  SS_SendSensorResister(&reg);
-
-  reg.header.size   = 0;
-  reg.header.code   = ResisterClient;
-  reg.self          = gnssID;
-  reg.subscriptions = 0; 
-  reg.callback      = NULL;
-  reg.callback_mh   = NULL;
-  SS_SendSensorResister(&reg);
-
-  reg.header.size   = 0;
-  reg.header.code   = ResisterClient;
-  reg.self          = stepcounterID;
-  reg.subscriptions = (0x01 << accelID) | (0x01 << gnssID);
-  reg.callback      = NULL;
-  reg.callback_mh   = &step_counter_receive_data;
-  SS_SendSensorResister(&reg);
-
-  reg.header.size   = 0;
-  reg.header.code   = ResisterClient;
-  reg.self          = app0ID;
-  reg.subscriptions = (0x01 << stepcounterID);
-  reg.callback      = NULL;
-  reg.callback_mh   = &step_counter_recieve_result;
-  SS_SendSensorResister(&reg);
-
   message("start sensoring...\n");
 
   /* Start physical sensor process. */
 
-  task_create("accel_sensoring",
-              110,
-              2048,
-              (main_t)accel_sensor_entry,
-              (FAR char * const *)NULL);
+  ret = AccelSensorOpen(sensor);
+  if (ret < 0)
+    {
+      err("Error: AccelSensorOpen() failure.\n");
+      return EXIT_FAILURE;
+    }
+
+  ret = AccelSensorStart(sensor);
+  if (ret < 0)
+    {
+      err("Error: AccelSensorStart() failure.\n");
+      return EXIT_FAILURE;
+    }
 
 #ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   task_create("gnss_sensoring",
@@ -534,7 +505,19 @@ extern "C" int step_counter_main(int argc, char *argv[])
 
   /* Stop physical sensor. */
 
-  AccelSensorStopSensing(sp_accel_sensor);
+  ret = AccelSensorStop(sensor);
+  if (ret < 0)
+    {
+      err("Error: AccelSensorStop() failure.\n");
+      return EXIT_FAILURE;
+    }
+
+  ret = AccelSensorClose(sensor);
+  if (ret < 0)
+    {
+      err("Error: AccelSensorClose() failure.\n");
+      return EXIT_FAILURE;
+    }
 
 #ifdef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
   GnssSensorStopSensing(sp_gnss_sensor);
@@ -586,6 +569,10 @@ extern "C" int step_counter_main(int argc, char *argv[])
       err("Error: SS_DeactivateSensorSubSystem() failure.\n");
       return EXIT_FAILURE;
     }
+
+  /* Destroy physical sensor. */
+
+  AccelSensorDestroy(sensor);
 
   /* finalize the shared memory and memory utility used by sensing. */
 
