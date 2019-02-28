@@ -157,7 +157,8 @@ static void repnetinfo_job(FAR void *arg)
                   LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
                   netinfo.pdn_stat[i].apn_type = htonl(data->pdn[i].apntype);
                   netinfo.pdn_stat[i].ipaddr_num = data->pdn[i].ipaddr_num;
-                  for (j = 0; j < netinfo.pdn_stat[i].ipaddr_num; j++)
+                  for (j = 0; (j < netinfo.pdn_stat[i].ipaddr_num) &&
+                        (j < LTE_PDN_IPADDR_MAX_COUNT); j++)
                     {
                       netinfo.pdn_stat[i].address[j].ip_type =
                         data->pdn[i].ip_address[j].iptype;
