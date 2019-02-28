@@ -1,7 +1,7 @@
 /****************************************************************************
  * bsp/include/arch/chip/gnss.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -685,6 +685,10 @@ extern "C" {
 
 #define CXD56_GNSS_READ_OFFSET_SBAS         0x9000
 
+/** Offset for DC report */
+
+#define CXD56_GNSS_READ_OFFSET_DCREPORT     0x9800
+
 /** Offset for Spectrum data */
 
 #define CXD56_GNSS_READ_OFFSET_SPECTRUM     0xa000
@@ -735,6 +739,10 @@ extern "C" {
 /** Signal type is SBAS */
 
 #define CXD56_GNSS_SIG_SBAS         14
+
+/** Signal type is QZSS DC report */
+
+#define CXD56_GNSS_SIG_DCREPORT     15
 
 /* @} */
 

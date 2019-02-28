@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/gpsutils/cxd56_gnss_nmea.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,7 +115,7 @@ int NMEA_RegistOutputFunc(FAR const NMEA_OUTPUT_CB *func);
  * ### Mask description
  *
  * - Defult value 0x000000ef.
- * - bit8 to bit31 are reserved.
+ * - Bits not listed below are reserved.
  *
  * |bit |sentence|
  * |:----:|:---:|
@@ -127,6 +127,7 @@ int NMEA_RegistOutputFunc(FAR const NMEA_OUTPUT_CB *func);
  * |bit5|RMC|
  * |bit6|VTG|
  * |bit7|ZDA|
+ * |bit22|QZQSM|
  *
  */
 
@@ -147,6 +148,14 @@ uint32_t NMEA_GetMask(void);
  */
 
 uint16_t NMEA_Output(FAR const struct cxd56_gnss_positiondata_s* pposdat);
+
+/*
+ * Output QZSS Satellite Report sentence for Disaster and Crisis Management(DC Report)
+ * @param[in] dcrdat : QZSS DC report data
+ * @retval >0 : success, output total sentence size
+ * @retval <0 : fail
+ */
+uint16_t NMEA_DcReport_Output(const struct cxd56_gnss_dcreport_data_s* dcrdat);
 
 /**
  * Output Spectrum data as TEXT sentence
