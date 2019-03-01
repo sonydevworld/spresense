@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_objif/include/fixed_fence.h
+ * fixed_fence.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
