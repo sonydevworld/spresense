@@ -645,10 +645,7 @@ void AudioManager::run(void)
       err_code = que->recv(TIME_FOREVER, &msg);
       F_ASSERT(err_code == ERR_OK);
 
-      parse(msg);
-
-      err_code = que->pop();
-      F_ASSERT(err_code == ERR_OK);
+      parse(msg, que);
     }
 }
 
@@ -1119,8 +1116,10 @@ AudioManager::RstProc AudioManager::RstProcTbl[1][AS_MNG_STATUS_NUM] =
 };
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::parse(FAR MsgPacket *msg)
+void AudioManager::parse(FAR MsgPacket *msg, FAR MsgQueBlock *que)
 {
+  err_t err_code;
+
   if (MSG_IS_REQUEST(msg->getType()))
     {
       /* External event. */
@@ -1128,6 +1127,8 @@ void AudioManager::parse(FAR MsgPacket *msg)
       uint event = MSG_GET_SUBTYPE(msg->getType());
       F_ASSERT((event < AUD_MGR_MSG_NUM));
       AudioCommand cmd = msg->moveParam<AudioCommand>();
+      err_code = que->pop();
+      F_ASSERT(err_code == ERR_OK);
       int allstate = getAllState();
       (this->*MsgProcTbl[event][allstate])(cmd);
     }
@@ -1138,16 +1139,17 @@ void AudioManager::parse(FAR MsgPacket *msg)
       if (msg->getType() == MSG_AUD_MGR_RST)
         {
           uint event = MSG_GET_SUBTYPE(msg->getType());
-          const AudioMngCmdCmpltResult& rst =
-            msg->peekParam<AudioMngCmdCmpltResult>();
+          const AudioMngCmdCmpltResult rst = msg->moveParam<AudioMngCmdCmpltResult>();
+          err_code = que->pop();
+          F_ASSERT(err_code == ERR_OK);
           (this->*RstProcTbl[event][m_State])(rst);
-          msg->popParam<AudioMngCmdCmpltResult>();
         }
       else if (msg->getType() == MSG_AUD_MGR_CALL_ATTENTION)
         {
-          const ErrorAttentionParam& info = msg->peekParam<ErrorAttentionParam>();
+          const ErrorAttentionParam info = msg->moveParam<ErrorAttentionParam>();
+          err_code = que->pop();
+          F_ASSERT(err_code == ERR_OK);
           execAttentions(info);
-          msg->popParam<ErrorAttentionParam>();
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
         }
       else if (msg->getType() == MSG_AUD_MGR_FIND_COMMAND)
