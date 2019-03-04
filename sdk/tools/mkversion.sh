@@ -34,12 +34,12 @@
 #
 ############################################################################
 
-CURRENT_DIR=`pwd`
-SCRIPT_NAME=`readlink -e "${BASH_SOURCE[0]}"`
-SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
-
-TOPDIR=${TOPDIR:-nuttx}
 TAG=${1:-HEAD}
+
+if [ "X${TOPDIR}" = "X" ]; then
+    echo "Please specify a TOPDIR variable"
+    exit 1
+fi
 
 APP_VERSION="0.0.0"
 SDK_VERSION="SDK1.2.1"
@@ -64,4 +64,4 @@ if [ ${#BUILD_ID} -gt 40 ]; then
     exit 1
 fi
 
-${SCRIPT_DIR}/../../nuttx/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${SCRIPT_DIR}/../../nuttx/.version
+${TOPDIR}/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${TOPDIR}/.version

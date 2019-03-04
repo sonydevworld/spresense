@@ -128,7 +128,7 @@ all: $(BIN)
 # automatically.
 
 buildkernel:
-	$(Q) $(SDKDIR)/tools/mkversion.sh
+	$(Q) TOPDIR=$(TOPDIR) $(SDKDIR)/tools/mkversion.sh
 ifneq ($(KERNCONF),)
 	$(Q) $(SDKDIR)/tools/config.py --kernel $(KERNCONF)
 endif
