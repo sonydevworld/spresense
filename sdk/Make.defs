@@ -60,7 +60,11 @@ CFLAGS += -isystem $(SDKDIR)/modules/include
 CXXFLAGS += -I$(SDKDIR)/bsp/include
 CXXFLAGS += -I$(SDKDIR)/modules/include
 
-MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
+ifeq ($(shell uname -s 2>/dev/null),Darwin)
+  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)macos$(DELIM)mkspk
+else
+  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
+endif
 
 endif
 
