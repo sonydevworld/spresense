@@ -155,12 +155,12 @@ static void led_progress(void) {
     }
 }
 
-inline void time_measure_start(struct timeval *start_time) {
+static inline void time_measure_start(struct timeval *start_time) {
     gettimeofday(start_time, NULL);
 }
 
 /* Return diff in ms. */
-inline uint32_t time_measure_end(struct timeval *start_time) {
+static inline uint32_t time_measure_end(struct timeval *start_time) {
     struct timeval end_time, result;
     gettimeofday(&end_time, NULL);
     timersub(&end_time, start_time, &result);
