@@ -223,6 +223,7 @@ private:
     Ready,
     PreAct,
     Act,
+    Error,
     StateNum
   };
 
@@ -259,10 +260,12 @@ private:
   bool stopOnReady(const CaptureComponentParam& param);
   bool stopOnPreAct(const CaptureComponentParam& param);
   bool stopOnAct(const CaptureComponentParam& param);
+  bool stopOnError(const CaptureComponentParam& param);
   bool setMicGain(const CaptureComponentParam& param);
   bool notify(const CaptureComponentParam& param);
 
-  void* getCapBuf(uint32_t cap_sample);
+  CaptureBuffer getCapBuf(uint32_t cap_sample);
+  bool holdCapBuf(CaptureBuffer buf);
 };
 
 

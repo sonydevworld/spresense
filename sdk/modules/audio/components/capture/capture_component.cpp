@@ -655,7 +655,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::act,          /*   Booted        */
     &CaptureComponent::illegal,      /*   Ready         */
     &CaptureComponent::illegal,      /*   PreAct        */
-    &CaptureComponent::illegal       /*   Act           */
+    &CaptureComponent::illegal,      /*   Act           */
+    &CaptureComponent::illegal       /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_DEACT */
@@ -663,7 +664,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::deact,        /*   Ready         */
     &CaptureComponent::illegal,      /*   PreAct        */
-    &CaptureComponent::illegal       /*   Act           */
+    &CaptureComponent::illegal,      /*   Act           */
+    &CaptureComponent::illegal       /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_INIT */
@@ -671,7 +673,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::init,         /*   Ready         */
     &CaptureComponent::illegal,      /*   PreAct        */
-    &CaptureComponent::illegal       /*   Act           */
+    &CaptureComponent::illegal,      /*   Act           */
+    &CaptureComponent::illegal       /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_RUN */
@@ -679,7 +682,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::execOnRdy,    /*   Ready         */
     &CaptureComponent::execOnPreAct, /*   PreAct        */
-    &CaptureComponent::execOnAct     /*   Act           */
+    &CaptureComponent::execOnAct,    /*   Act           */
+    &CaptureComponent::illegal       /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_STOP */
@@ -687,7 +691,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::stopOnReady,  /*   Ready         */
     &CaptureComponent::stopOnPreAct, /*   PreAct        */
-    &CaptureComponent::stopOnAct     /*   Act           */
+    &CaptureComponent::stopOnAct,    /*   Act           */
+    &CaptureComponent::stopOnError   /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_SETMICGAIN */
@@ -696,6 +701,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::setMicGain,   /*   Ready         */
     &CaptureComponent::setMicGain,   /*   PreAct        */
     &CaptureComponent::setMicGain,   /*   Act           */
+    &CaptureComponent::setMicGain    /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_CMPLT */
@@ -703,7 +709,8 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::illegal,      /*   Booted        */
     &CaptureComponent::notify,       /*   Ready         */
     &CaptureComponent::notify,       /*   PreAct        */
-    &CaptureComponent::notify        /*   Act           */
+    &CaptureComponent::notify,       /*   Act           */
+    &CaptureComponent::notify        /*   Error         */
   },
 };
 
@@ -931,8 +938,10 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
           asReadDmacParam dmac_param;
           CaptureComponentParam pre = m_cap_pre_que.top();
 
+          CaptureBuffer capbuf = getCapBuf(pre.exec_param.pcm_sample);
+
           dmac_param.dmacId   = m_dmac_id;
-          dmac_param.addr     = (uint32_t)getCapBuf(pre.exec_param.pcm_sample);
+          dmac_param.addr     = (uint32_t)((capbuf.cap_mh.isNull()) ? NULL : capbuf.cap_mh.getPa());
           dmac_param.size     = pre.exec_param.pcm_sample;
           dmac_param.addr2    = 0;
           dmac_param.size2    = 0;
@@ -940,8 +949,11 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
 
           if (E_AS_OK != AS_ReadDmac(&dmac_param))
             {
-              m_req_data_que.pop();
               return false;
+            }
+          else
+            {
+              holdCapBuf(capbuf);
             }
 
           if (!m_cap_pre_que.pop())
@@ -966,8 +978,10 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
 {
   asReadDmacParam dmac_param;
 
+  CaptureBuffer capbuf = getCapBuf(param.exec_param.pcm_sample);
+
   dmac_param.dmacId   = m_dmac_id;
-  dmac_param.addr     = (uint32_t)getCapBuf(param.exec_param.pcm_sample);
+  dmac_param.addr     = (uint32_t)((capbuf.cap_mh.isNull()) ? NULL : capbuf.cap_mh.getPa());
   dmac_param.size     = param.exec_param.pcm_sample;
   dmac_param.addr2    = 0;
   dmac_param.size2    = 0;
@@ -975,8 +989,11 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
 
   if (E_AS_OK != AS_ReadDmac(&dmac_param))
     {
-      m_req_data_que.pop();
       return false;
+    }
+  else
+    {
+      holdCapBuf(capbuf);
     }
 
   return true;
@@ -1033,6 +1050,14 @@ bool CaptureComponent::stopOnAct(const CaptureComponentParam& param)
 }
 
 /*--------------------------------------------------------------------*/
+bool CaptureComponent::stopOnError(const CaptureComponentParam& param)
+{
+  m_req_data_que.clear();
+
+  return stopOnAct(param);
+}
+
+/*--------------------------------------------------------------------*/
 bool CaptureComponent::setMicGain(const CaptureComponentParam& param)
 {
   bool result = true;
@@ -1077,12 +1102,18 @@ bool CaptureComponent::notify(const CaptureComponentParam& param)
     {
       case NtfDmaCmplt:
         {
+          if (param.notify_param.code == E_AS_DMA_INT_ERR)
+            {
+              m_state = Error;
+            }
+
           if (E_AS_OK != AS_NotifyDmaCmplt
                                   (m_dmac_id,
                                    param.notify_param.code))
             {
               return false;
             }
+
           result = true;
         }
         break;
@@ -1095,32 +1126,35 @@ bool CaptureComponent::notify(const CaptureComponentParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-void* CaptureComponent::getCapBuf(uint32_t cap_sample)
+CaptureBuffer CaptureComponent::getCapBuf(uint32_t cap_sample)
 {
   /* Allocate memory for capture, and push to request que */
 
-  MemMgrLite::MemHandle mh;
+  CaptureBuffer buf;
 
-  if (mh.allocSeg(m_mem_pool_id,
-                  cap_sample * m_ch_num * 2)
+
+  if (buf.cap_mh.allocSeg(m_mem_pool_id,
+                          cap_sample * m_ch_num * 2)
       != ERR_OK)
     {
       CAPTURE_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-      return NULL;
     }
 
-  CaptureBuffer buf;
-
-  buf.cap_mh = mh;
   buf.sample = cap_sample;
 
+  return buf;
+}
+
+/*--------------------------------------------------------------------*/
+bool CaptureComponent::holdCapBuf(CaptureBuffer buf)
+{
   if (!m_req_data_que.push(buf))
     {
-      CAPTURE_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-      return NULL;
+      CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      return false;
     }
 
-  return mh.getPa();
+  return true;
 }
 
 __WIEN2_END_NAMESPACE
