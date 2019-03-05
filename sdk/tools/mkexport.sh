@@ -140,7 +140,7 @@ fi
 
 # Check whether the environment is Cygwin and create the export directory
 
-if [ $(uname -o) = "Cygwin" ]; then
+if [ $(uname -o 2>/dev/null) = "Cygwin" ]; then
 	TMPDIR=`mktemp -d | cygpath -m -f -`
 else
 	TMPDIR=`mktemp -d`
