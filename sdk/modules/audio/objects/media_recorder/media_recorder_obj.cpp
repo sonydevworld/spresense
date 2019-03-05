@@ -324,6 +324,8 @@ void MediaRecorderObjectTask::run(void)
   err_code = MsgLib::referMsgQueBlock(m_msgq_id.recorder, &que);
   F_ASSERT(err_code == ERR_OK);
 
+  que->reset();
+
   while(1)
     {
       err_code = que->recv(TIME_FOREVER, &msg);

@@ -268,6 +268,7 @@ typedef sem_t	Chateau_sem_handle_t;
 #define Chateau_CreateSemaphore(pH, ini, max)				\
 	do {    F_ASSERT((sem_init(pH,ini,max)) == 0);	\
 	} while(0)
+#define Chateau_DeleteSemaphore(h)  F_ASSERT(sem_destroy(&h) == 0)
 #define Chateau_SignalSemaphore(h)      F_ASSERT(sem_post(&h)		== 0)
 #define Chateau_SignalSemaphoreTask(h)  F_ASSERT(sem_post(&h)		== 0)
 #define Chateau_SignalSemaphoreIsr(h)   F_ASSERT(sem_post(&h)		== 0)

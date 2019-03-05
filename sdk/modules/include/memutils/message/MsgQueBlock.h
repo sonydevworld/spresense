@@ -107,6 +107,16 @@ public:
 
 	uint16_t getRest(MsgPri pri) const;
 
+  /* Reset the information of message. */
+
+  void reset()
+    {
+      /* Reset semaphore with initialize value 0. */
+
+      Chateau_DeleteSemaphore(m_count_sem);
+      Chateau_CreateSemaphore(&m_count_sem, 0, 0);
+    }
+
   /* Debug only. */
 
 	void dump() const;
