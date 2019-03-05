@@ -45,12 +45,7 @@ INCDIROPT = -w
 endif
 
 # INCLUDES
-ifeq ($(WINTOOL),y)
-INCLUDES := -I"${shell cygpath -w $(APPDIR)/include}"
-else
-INCLUDES := -I$(APPDIR)/include
-INCLUDES += -I$(SDKDIR)/modules/bluetooth/hal/bcm20706/include
-endif # ($(WINTOOL),y)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)/modules/bluetooth/hal/bcm20706/include}
 
 # CFLAGS
 CFLAGS += $(INCLUDES)
