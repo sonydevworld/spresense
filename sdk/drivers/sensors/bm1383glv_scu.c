@@ -267,6 +267,7 @@ static int bm1383glv_checkid(FAR struct bm1383glv_dev_s *priv)
 static int bm1383glv_seqinit(FAR struct bm1383glv_dev_s *priv)
 {
   const uint16_t *inst;
+  uint16_t nr;
 
   DEBUGASSERT(g_seq == NULL);
 
@@ -283,9 +284,18 @@ static int bm1383glv_seqinit(FAR struct bm1383glv_dev_s *priv)
 
   /* Set instruction and sample data information to sequencer */
 
-  inst = (g_is_bm1383glv) ? g_bm1383glvinst : g_bm1383aglvinst;
+  if (g_is_bm1383glv)
+    {
+      inst = g_bm1383glvinst;
+      nr   = itemsof(g_bm1383glvinst);
+    }
+  else
+    {
+      inst = g_bm1383aglvinst;
+      nr   = itemsof(g_bm1383aglvinst);
+    }
 
-  seq_setinstruction(priv->seq, inst, itemsof(inst));
+  seq_setinstruction(priv->seq, inst, nr);
   seq_setsample(priv->seq, BM1383GLV_BYTESPERSAMPLE, 0, BM1383GLV_ELEMENTSIZE,
                 false);
 
