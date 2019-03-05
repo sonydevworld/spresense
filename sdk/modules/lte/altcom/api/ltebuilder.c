@@ -87,6 +87,7 @@
 #include "lte_getnetinfo.h"
 #include "lte_rep_netinfo.h"
 #include "lte_getimscap.h"
+#include "lte_getsiminfo.h"
 #include "lte_geterrinfo.h"
 #include "apicmdhdlr_select.h"
 #ifdef CONFIG_LTE_NET_MBEDTLS
@@ -182,6 +183,7 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_repnetinfo,
   apicmdhdlr_getnetinfo,
   apicmdhdlr_getimscap,
+  apicmdhdlr_getsiminfo,
   apicmdhdlr_errinfo,
   apicmdhdlr_select,
 #ifdef CONFIG_LTE_NET_MBEDTLS

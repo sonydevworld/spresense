@@ -84,6 +84,7 @@
  * |                                 | @ref lte_set_apn               |
  * |                                 | @ref lte_get_sleepmode         |
  * |                                 | @ref lte_set_sleepmode         |
+ * |                                 | @ref lte_get_siminfo           |
  *
  *
  * @{
@@ -369,8 +370,16 @@
 
 #define LTE_SIMSTAT_ACTIVATE        (4)
 
-#define LTE_CELLINFO_MCC_DIGIT     (3)  /**< Digit number of mcc */
-#define LTE_CELLINFO_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
+#define LTE_MCC_DIGIT     (3)  /**< Digit number of mcc */
+#define LTE_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
+
+/** Digit number of mcc */
+
+#define LTE_CELLINFO_MCC_DIGIT     LTE_MCC_DIGIT
+
+/** Max digit number of mnc */
+
+#define LTE_CELLINFO_MNC_DIGIT_MAX LTE_MNC_DIGIT_MAX
 
 #define LTE_EDRX_ACTTYPE_WBS1 (0) /**< E-UTRAN (WB-S1 mode) */
 #define LTE_EDRX_CYC_512      (0) /**< eDRX cycle:    5.12 sec */
@@ -493,6 +502,29 @@
 /** Maximum length of the error string */
 
 #define LTE_ERROR_STRING_MAX_LEN   (64)
+
+/** Indicates to get for MCC/MNC of SIM */
+
+#define LTE_SIMINFO_GETOPT_MCCMNC (1 << 0)
+
+/** Indicates to get for SPN of SIM */
+
+#define LTE_SIMINFO_GETOPT_SPN    (1 << 1)
+
+/** Indicates to get for ICCID of SIM */
+
+#define LTE_SIMINFO_GETOPT_ICCID  (1 << 2)
+
+/** Digit number of mcc */
+
+#define LTE_SIMINFO_MCC_DIGIT      LTE_MCC_DIGIT
+
+/** Max digit number of mnc */
+
+#define LTE_SIMINFO_MNC_DIGIT_MAX  LTE_MNC_DIGIT_MAX
+
+#define LTE_SIMINFO_SPN_LEN   (16)  /**< Maximum length of SPN */
+#define LTE_SIMINFO_ICCID_LEN (10)  /**< Maximum length of ICCCID */
 
 /****************************************************************************
  * Public Types
@@ -1079,6 +1111,61 @@ typedef struct lte_ce_setting
   bool mode_b_enable;
 } lte_ce_setting_t;
 
+/**
+ * @struct lte_siminfo
+ * Definition of parameters for SIM information.
+ * This is notified by get_siminfo_cb_t
+ * @typedef lte_siminfo_t
+ * See @ref lte_siminfo
+ */
+
+typedef struct lte_siminfo
+{
+  /** Indicates which parameter to get.
+   *  Bit setting definition is as below.@n
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
+   *  - @ref LTE_SIMINFO_GETOPT_SPN@n
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID@n
+   */
+
+  uint32_t option;
+
+  /** Mobile Country Code (000-999). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mcc[LTE_SIMINFO_MCC_DIGIT];
+
+  /** Digit number of mnc(2-3). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mnc_digit;
+
+  /** Mobile Network Code (00-999). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mnc[LTE_SIMINFO_MNC_DIGIT_MAX];
+
+  /** Length of Service provider name. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
+
+  uint8_t  spn_len;
+
+  /** Service provider name. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
+
+  uint8_t  spn[LTE_SIMINFO_SPN_LEN];
+
+  /** Length of ICCID. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
+
+  uint8_t  iccid_len;
+
+  /** ICCID. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
+
+  uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
+} lte_siminfo_t;
+
 /** Definition of callback function.
  *  Since lte_power_control() is an asynchronous API,
  *  the result is notified by this function
@@ -1662,6 +1749,18 @@ typedef void (*restart_report_cb_t)(uint32_t reason);
  */
 
 typedef void (*netinfo_report_cb_t)(lte_netinfo_t *info);
+
+/** Definition of callback function.
+ *  Since lte_get_siminfo() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_siminfo().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] siminfo : SIM information. See @ref lte_siminfo_t
+ */
+
+typedef void (*get_siminfo_cb_t)(uint32_t result, lte_siminfo_t *siminfo);
 
 #ifdef __cplusplus
 #define EXTERN extern "C"
@@ -2446,6 +2545,23 @@ int32_t lte_set_sleepmode(uint32_t sleepmode, set_slpmode_cb_t callback);
  */
 
 int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback);
+
+/**
+ * Get SIM information such as MCC/MNC.
+ *
+ * @param [in] option:   Indicates which parameter to get.
+ *                       Bit setting definition is as below.@n
+ *                       - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
+ *                       - @ref LTE_SIMINFO_GETOPT_SPN@n
+ *                       - @ref LTE_SIMINFO_GETOPT_ICCID@n
+ * @param [in] callback: Callback function to notify that
+ *                       get of SIM information is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback);
 
 /** @} */
 

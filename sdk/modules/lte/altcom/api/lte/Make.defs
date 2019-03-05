@@ -76,7 +76,7 @@ CSRCS += lte_getnetinfo.c
 CSRCS += lte_set_rep_netinfo.c
 CSRCS += lte_set_rep_restart.c
 CSRCS += lte_geterrinfo.c
-
+CSRCS += lte_getsiminfo.c
 # Add the src directory to the build
 
 DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)lte
