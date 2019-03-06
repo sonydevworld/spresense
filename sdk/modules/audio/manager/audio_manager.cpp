@@ -526,6 +526,13 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
 
   s_obs_attention_cb = obs_att_cb;
 
+  /* Reset Message queue. */
+
+  FAR MsgQueBlock *que;
+  err_t err_code = MsgLib::referMsgQueBlock(s_selfMid, &que);
+  F_ASSERT(err_code == ERR_OK);
+  que->reset();
+
   s_amng_pid = task_create("AMNG",
                            AUDIO_TASK_PRIORITY,
                            AUDIO_TASK_MANAGER_STACK_SIZE,
@@ -639,8 +646,6 @@ void AudioManager::run(void)
 
   err_code = MsgLib::referMsgQueBlock(m_selfDtq, &que);
   F_ASSERT(err_code == ERR_OK);
-
-  que->reset();
 
   while(1)
     {

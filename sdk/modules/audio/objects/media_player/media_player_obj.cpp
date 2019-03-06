@@ -227,8 +227,6 @@ void PlayerObj::run(void)
   err_code = MsgLib::referMsgQueBlock(m_msgq_id.player, &que);
   F_ASSERT(err_code == ERR_OK);
 
-  que->reset();
-
   while(1)
     {
       err_code = que->recv(TIME_FOREVER, &msg);
@@ -1713,6 +1711,14 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
     {
       s_msgq_id = param->msgq_id;
       s_pool_id = param->pool_id;
+
+      /* Reset Message queue. */
+
+      FAR MsgQueBlock *que;
+      err_t err_code = MsgLib::referMsgQueBlock(s_msgq_id.player, &que);
+      F_ASSERT(err_code == ERR_OK);
+      que->reset();
+
       s_ply_pid = task_create("PLY_OBJ",
                               150, 1024 * 3,
                               AS_PlayerObjEntry,
@@ -1727,6 +1733,14 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
     {
       s_sub_msgq_id = param->msgq_id;
       s_sub_pool_id = param->pool_id;
+
+      /* Reset Message queue. */
+
+      FAR MsgQueBlock *que;
+      err_t err_code = MsgLib::referMsgQueBlock(s_sub_msgq_id.player, &que);
+      F_ASSERT(err_code == ERR_OK);
+      que->reset();
+
       s_sub_ply_pid = task_create("SUB_PLY_OBJ",
                                   150, 1024 * 3,
                                   AS_SubPlayerObjEntry,

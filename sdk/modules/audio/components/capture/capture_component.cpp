@@ -338,6 +338,13 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
   s_self_dtq[0]      = dev0_self_dtq;
   s_self_sync_dtq[0] = dev0_self_sync_dtq;
 
+  /* Reset Message queue. */
+
+  FAR MsgQueBlock *que;
+  err_t err_code = MsgLib::referMsgQueBlock(dev0_self_dtq, &que);
+  F_ASSERT(err_code == ERR_OK);
+  que->reset();
+
   s_capture_pid[0] = task_create("CAPTURE_CMP_DEV0",
                                  200,
                                  1024 * 2,
@@ -370,6 +377,12 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
 
       s_self_dtq[1]      = dev1_self_dtq;
       s_self_sync_dtq[1] = dev1_self_sync_dtq;
+
+      /* Reset Message queue. */
+
+      err_code = MsgLib::referMsgQueBlock(dev1_self_dtq, &que);
+      F_ASSERT(err_code == ERR_OK);
+      que->reset();
 
       s_capture_pid[1] = task_create("CAPTURE_CMP_DEV1",
                                      200,
@@ -736,8 +749,6 @@ void CaptureComponent::run()
 
   err_code = MsgLib::referMsgQueBlock(m_self_dtq, &que);
   F_ASSERT(err_code == ERR_OK);
-
-  que->reset();
 
   while (1)
     {

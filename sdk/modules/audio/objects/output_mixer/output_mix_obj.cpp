@@ -228,8 +228,6 @@ void OutputMixObjectTask::run()
   err_code = MsgLib::referMsgQueBlock(m_msgq_id.mixer, &que);
   F_ASSERT(err_code == ERR_OK);
 
-  que->reset();
-
   while (1)
     {
       err_code = que->recv(TIME_FOREVER, &msg);
@@ -333,6 +331,13 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
 
   s_msgq_id = param->msgq_id;
   s_pool_id = param->pool_id;
+
+  /* Reset Message queue. */
+
+  FAR MsgQueBlock *que;
+  err_t err_code = MsgLib::referMsgQueBlock(s_msgq_id.mixer, &que);
+  F_ASSERT(err_code == ERR_OK);
+  que->reset();
 
   s_omix_pid = task_create("OMIX_OBJ",
                            150, 1024 * 3,
