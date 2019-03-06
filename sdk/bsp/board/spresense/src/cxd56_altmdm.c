@@ -61,11 +61,12 @@
 
 #if defined(CONFIG_MODEM_ALTMDM) && defined(CONFIG_CXD56_GPIO_IRQ)
 
-#define ALTMDM_SHUTDOWN (PIN_UART2_CTS)
-#define MODEM_WAKEUP    (PIN_UART2_RTS)
-#define MASTER_REQUEST  (PIN_EMMC_DATA3)
-#define SLAVE_REQUEST   (PIN_EMMC_DATA2)
-#define NUM_OF_PINS     (sizeof(pincfg) / sizeof(struct altmdm_pincfg))
+#define ALTMDM_SHUTDOWN  (PIN_SPI2_MISO)
+#define MODEM_WAKEUP     (PIN_SPI2_MOSI)
+#define MASTER_REQUEST   (PIN_RTC_IRQ_OUT)
+#define SLAVE_REQUEST    (PIN_SPI2_SCK)
+#define LTE_POWER_BUTTON (PIN_AP_CLK)
+#define NUM_OF_PINS      (sizeof(pincfg) / sizeof(struct altmdm_pincfg))
 
 #endif
 
@@ -122,6 +123,11 @@ void board_altmdm_poweron(void)
   cxd56_gpio_config(ALTMDM_SHUTDOWN, false);
   cxd56_gpio_write(ALTMDM_SHUTDOWN, true);
 
+  cxd56_gpio_config(LTE_POWER_BUTTON, false);
+  cxd56_gpio_write(LTE_POWER_BUTTON, true);
+
+  board_power_control(POWER_LTE, true);
+
   for (i = 0; i < NUM_OF_PINS; i++ )
     {
       /* input pin: input enable */
@@ -168,7 +174,12 @@ void board_altmdm_poweroff(void)
 
   /* power off Altair modem device */
 
+  cxd56_gpio_write(ALTMDM_SHUTDOWN, true);
+
+  board_power_control(POWER_LTE, true);
+
   cxd56_gpio_write(ALTMDM_SHUTDOWN, false);
+  cxd56_gpio_write(LTE_POWER_BUTTON, false);
 }
 
 /****************************************************************************

@@ -173,6 +173,7 @@ enum board_power_device {
   POWER_BTBLE           = PMIC_NONE,
   POWER_SENSOR          = PMIC_NONE,
   POWER_EMMC            = PMIC_NONE,
+  POWER_LTE             = PMIC_GPO(2),
 };
 
 /* Power Off Level definitions *********************************************/
