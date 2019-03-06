@@ -324,7 +324,7 @@ int board_app_initialize(uintptr_t arg)
 #endif
 
 #ifdef CONFIG_MODEM_ALTMDM
-  ret = board_altmdm_initialize("/dev/altmdm", 5);
+  ret = board_altmdm_initialize("/dev/altmdm");
   if (ret < 0)
     {
       _err("ERROR: Failed to initialze Altair modem. \n");
