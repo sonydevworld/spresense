@@ -45,6 +45,7 @@
 #include "dbg_if.h"
 #include "lte/lte_api.h"
 #include "altcom_status.h"
+#include "apicmd_pdn.h"
 
 /****************************************************************************
  * Public Types
@@ -243,5 +244,24 @@ void altcombs_set_errinfo(FAR lte_errinfo_t *info);
  ****************************************************************************/
 
 int32_t altcombs_get_errinfo(lte_errinfo_t *info);
+
+/****************************************************************************
+ * Name: altcombs_set_pdninfo
+ *
+ * Description:
+ *   Set lte_pdn_t param.
+ *
+ * Input Parameters:
+ *   cmd_pdn    Pointer of api command pdn struct.
+ *   lte_pdn    Pointer of lte_pdn_t.
+ *
+ * Returned Value:
+ *   When convert success is returned 0.
+ *   When convert failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
+  lte_pdn_t *lte_pdn);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */

@@ -193,7 +193,6 @@ static void activatepdn_job(FAR void *arg)
   activate_pdn_cb_t                         callback;
   uint32_t                                  result;
   FAR lte_pdn_t                             *pdn = NULL;
-  uint8_t i;
 
   data = (FAR struct apicmd_cmddat_activatepdnres_s *)arg;
   ret = altcomcallbacks_get_unreg_cb(APICMDID_ACTIVATE_PDN,
@@ -210,27 +209,19 @@ static void activatepdn_job(FAR void *arg)
         data->result == APICMD_ACTIVATEPDN_RES_ERR ? LTE_RESULT_ERROR :
         LTE_RESULT_CANCEL;
 
-      if (result == APICMD_ACTIVATEPDN_RES_OK)
+      if (result == LTE_RESULT_OK)
         {
           /* Fill pdn infomation */
 
           pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
           if (pdn)
             {
-              pdn->session_id = data->pdnset.session_id;
-              pdn->active = data->pdnset.activate;
-              pdn->apn_type = htonl(data->pdnset.apntype);
-              pdn->ipaddr_num = data->pdnset.ipaddr_num;
-              for (i = 0; i < pdn->ipaddr_num; i++)
+              ret = altcombs_set_pdninfo(&data->pdnset, pdn);
+              if (0 > ret)
                 {
-                  pdn->address[i].ip_type = data->pdnset.ip_address[i].iptype;
-                  strncpy((FAR char *)pdn->address[i].address,
-                          (FAR char *)data->pdnset.ip_address[i].address,
-                          LTE_IPADDR_MAX_LEN - 1);
+                  DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
+                  result = LTE_RESULT_ERROR;
                 }
-              pdn->ims_register = data->pdnset.imsregister;
-              pdn->data_allow = data->pdnset.dataallow;
-              pdn->data_roaming_allow = data->pdnset.dararoamingallow;
             }
           else
             {

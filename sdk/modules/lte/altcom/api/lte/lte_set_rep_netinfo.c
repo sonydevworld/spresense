@@ -115,7 +115,6 @@ static int32_t repnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void repnetinfo_job(FAR void *arg)
 {
   uint8_t                                i;
-  uint8_t                                j;
   FAR struct apicmd_cmddat_rep_netinfo_s *data;
   netinfo_report_cb_t                    callback;
   lte_netinfo_t                          netinfo;
@@ -150,34 +149,13 @@ static void repnetinfo_job(FAR void *arg)
             {
               for (i = 0; i < data->pdn_count; i++)
                 {
-                  netinfo.pdn_stat[i].session_id =
-                    data->pdn[i].session_id;
-                  netinfo.pdn_stat[i].active =
-                    data->pdn[i].activate == APICMD_PDN_ACT_ACTIVE ?
-                  LTE_PDN_ACTIVE : LTE_PDN_DEACTIVE;
-                  netinfo.pdn_stat[i].apn_type = htonl(data->pdn[i].apntype);
-                  netinfo.pdn_stat[i].ipaddr_num = data->pdn[i].ipaddr_num;
-                  for (j = 0; (j < netinfo.pdn_stat[i].ipaddr_num) &&
-                        (j < LTE_PDN_IPADDR_MAX_COUNT); j++)
+                  ret = altcombs_set_pdninfo(&data->pdn[i],
+                    &netinfo.pdn_stat[i]);
+                  if (0 > ret)
                     {
-                      netinfo.pdn_stat[i].address[j].ip_type =
-                        data->pdn[i].ip_address[j].iptype;
-                      strncpy(
-                        (FAR char *)netinfo.pdn_stat[i].address[j].address,
-                        (FAR char *)data->pdn[i].ip_address[j].address,
-                        LTE_IPADDR_MAX_LEN - 1);
+                      DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
+                      break;
                     }
-
-                  netinfo.pdn_stat[i].ims_register =
-                    data->pdn[i].imsregister == APICMD_PDN_IMS_REG ?
-                    LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
-                  netinfo.pdn_stat[i].data_allow =
-                    data->pdn[i].dataallow == APICMD_PDN_DATAALLOW_ALLOW ?
-                    LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
-                  netinfo.pdn_stat[i].data_roaming_allow =
-                    data->pdn[i].dararoamingallow ==
-                    APICMD_PDN_DATAROAMALLOW_ALLOW ? LTE_DATA_ALLOW :
-                    LTE_DATA_DISALLOW;
                 }
             }
         }

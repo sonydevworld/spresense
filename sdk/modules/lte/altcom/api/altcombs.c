@@ -458,3 +458,53 @@ int32_t altcombs_get_errinfo(FAR lte_errinfo_t *info)
   memcpy(info, &g_errinfo, sizeof(lte_errinfo_t));
   return 0;
 }
+
+/****************************************************************************
+ * Name: altcombs_set_pdninfo
+ *
+ * Description:
+ *   Set lte_pdn_t param.
+ *
+ * Input Parameters:
+ *   cmd_pdn    Pointer of api command pdn struct.
+ *   lte_pdn    Pointer of lte_pdn_t.
+ *
+ * Returned Value:
+ *   When convert success is returned 0.
+ *   When convert failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
+  lte_pdn_t *lte_pdn)
+{
+  int32_t i;
+
+  if (!cmd_pdn || !lte_pdn)
+    {
+      return -EINVAL;
+    }
+
+  lte_pdn->session_id = cmd_pdn->session_id;
+  lte_pdn->active = cmd_pdn->activate;
+  lte_pdn->apn_type = htonl(cmd_pdn->apntype);
+  lte_pdn->ipaddr_num = cmd_pdn->ipaddr_num;
+  for (i = 0; i < lte_pdn->ipaddr_num; i++)
+    {
+      lte_pdn->address[i].ip_type = cmd_pdn->ip_address[i].iptype;
+      strncpy((FAR char *)lte_pdn->address[i].address,
+              (FAR char *)cmd_pdn->ip_address[i].address,
+              LTE_IPADDR_MAX_LEN - 1);
+    }
+
+  lte_pdn->ims_register = cmd_pdn->imsregister == APICMD_PDN_IMS_REG ?
+    LTE_IMS_REGISTERED : LTE_IMS_NOT_REGISTERED;
+  lte_pdn->data_allow = cmd_pdn->dataallow ==
+    APICMD_PDN_DATAALLOW_ALLOW ?
+    LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
+  lte_pdn->data_roaming_allow = cmd_pdn->dararoamingallow ==
+    APICMD_PDN_DATAROAMALLOW_ALLOW ?
+    LTE_DATA_ALLOW : LTE_DATA_DISALLOW;
+
+  return 0;
+}

@@ -460,15 +460,15 @@
 
 #define LTE_PDN_SESSIONID_MAX        (255)
 
-#define LTE_PDN_ACTIVE           (0) /**< PDN status: Active */
-#define LTE_PDN_DEACTIVE         (1) /**< PDN status: Not active */
+#define LTE_PDN_DEACTIVE         (0) /**< PDN status: Not active */
+#define LTE_PDN_ACTIVE           (1) /**< PDN status: Active */
 
 #define LTE_PDN_IPADDR_MAX_COUNT (2) /**< Maximum number of IP addresses */
 
 #define LTE_IMS_NOT_REGISTERED   (0) /**< IMS status: Not registered */
 #define LTE_IMS_REGISTERED       (1) /**< IMS status: Registered */
-#define LTE_DATA_ALLOW           (0) /**< Data communication: Allow */
-#define LTE_DATA_DISALLOW        (1) /**< Data communication: Not allow */
+#define LTE_DATA_DISALLOW        (0) /**< Data communication: Not allow */
+#define LTE_DATA_ALLOW           (1) /**< Data communication: Allow */
 
 /** Modem restert cause: User initiated */
 
