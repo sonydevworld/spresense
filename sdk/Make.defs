@@ -50,6 +50,8 @@ CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
 
 MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
 
+INCDIROPT = -w
+
 else
 
 # Linux/Cygwin-native toolchain
