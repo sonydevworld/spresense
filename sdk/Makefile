@@ -258,7 +258,7 @@ cleankernel:
 	$(Q) $(MAKE) -C $(TOPDIR) clean
 PHONY += cleankernel
 
-distcleankernel:
+distcleankernel: distclean
 	$(Q) $(MAKE) -C $(TOPDIR) distclean
 PHONY += distcleankernel
 
