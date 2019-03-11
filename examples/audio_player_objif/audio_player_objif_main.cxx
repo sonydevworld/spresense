@@ -155,10 +155,10 @@ using namespace MemMgrLite;
 
 #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_OUTPUT_DEV_SPHP
 #  define PLAYER_OUTPUT_DEV AS_SETPLAYER_OUTPUTDEVICE_SPHP
-#  define PLAYER_MIXER_OUT  AS_OUT_SP
+#  define PLAYER_MIXER_OUT  HPOutputDevice
 #else
 #  define PLAYER_OUTPUT_DEV AS_SETPLAYER_OUTPUTDEVICE_I2SOUTPUT
-#  define PLAYER_MIXER_OUT  AS_OUT_I2S
+#  define PLAYER_MIXER_OUT  I2SOutputDevice
 #endif
 
 /* Definition depending on player mode. */
@@ -602,6 +602,35 @@ static void app_deact_audio_sub_system(void)
   AS_DeleteRenderer();
 }
 
+static bool app_receive_object_reply(uint32_t id)
+{
+  AudioObjReply reply_info;
+  AS_ReceiveObjectReply(MSGQ_AUD_MNG, &reply_info);
+
+  if (reply_info.type != AS_OBJ_REPLY_TYPE_REQ)
+    {
+      printf("app_receive_object_reply() error! type 0x%x\n",
+             reply_info.type);
+      return false;
+    }
+
+  if (reply_info.id != id)
+    {
+      printf("app_receive_object_reply() error! id 0x%x(request id 0x%x)\n",
+             reply_info.id, id);
+      return false;
+    }
+
+  if (reply_info.result != AS_ECODE_OK)
+    {
+      printf("app_receive_object_reply() error! result 0x%x\n",
+             reply_info.result);
+      return false;
+    }
+
+  return true;
+}
+
 static bool app_activate_baseband(void)
 {
   CXD56_AUDIO_ECODE error_code;
@@ -616,11 +645,38 @@ static bool app_activate_baseband(void)
       return false;
     }
 
+  /* Activate OutputMixer */
+
+  AsActivateOutputMixer mixer_act;
+
+  mixer_act.output_device = PLAYER_MIXER_OUT;
+  mixer_act.mixer_type    = MainOnly;
+  mixer_act.post_enable   = PostFilterDisable;
+  mixer_act.cb            = NULL;
+
+  AS_ActivateOutputMixer(OutputMixer0, &mixer_act);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_ACT))
+    {
+      printf("AS_ActivateOutputMixer() error!\n");
+    }
+
   return true;
 }
 
 static bool app_deactivate_baseband(void)
 {
+  /* Deactivate OutputMixer */
+
+  AsDeactivateOutputMixer mixer_deact;
+
+  AS_DeactivateOutputMixer(OutputMixer0, &mixer_deact);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_DEACT))
+    {
+      printf("AS_DeactivateOutputMixer() error!\n");
+    }
+
   CXD56_AUDIO_ECODE error_code;
 
   /* Power off audio device */
@@ -669,34 +725,6 @@ static bool app_set_volume(int master_db)
   return true;
 }
 
-static bool app_receive_object_reply(uint32_t id)
-{
-  AudioObjReply reply_info;
-  AS_ReceiveObjectReply(MSGQ_AUD_MNG, &reply_info);
-
-  if (reply_info.type != AS_OBJ_REPLY_TYPE_REQ)
-    {
-      printf("app_receive_object_reply() error! type 0x%x\n",
-             reply_info.type);
-      return false;
-    }
-
-  if (reply_info.id != id)
-    {
-      printf("app_receive_object_reply() error! id 0x%x(request id 0x%x)\n",
-             reply_info.id, id);
-      return false;
-    }
-
-  if (reply_info.result != AS_ECODE_OK)
-    {
-      printf("app_receive_object_reply() error! result 0x%x\n",
-             reply_info.result);
-      return false;
-    }
-
-  return true;
-}
 
 static bool app_activate_player_system(void)
 {
@@ -720,22 +748,6 @@ static bool app_activate_player_system(void)
   if (!app_receive_object_reply(MSG_AUD_PLY_CMD_ACT))
     {
       printf("AS_ActivatePlayer() error!\n");
-    }
-
-  /* Activate OutputMixer */
-
-  AsActivateOutputMixer mixer_act;
-
-  mixer_act.output_device = PLAYER_OUTPUT_DEV;
-  mixer_act.mixer_type    = MainOnly;
-  mixer_act.post_enable   = PostFilterDisable;
-  mixer_act.cb            = NULL;
-
-  AS_ActivateOutputMixer(OutputMixer0, &mixer_act);
-
-  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_ACT))
-    {
-      printf("AS_ActivateOutputMixer() error!\n");
     }
 
   return true;
@@ -828,18 +840,6 @@ static bool app_deact_player_system(void)
   if (!app_receive_object_reply(MSG_AUD_PLY_CMD_DEACT))
     {
       printf("AS_DeactivatePlayer() error!\n");
-    }
-
-
-  /* Deactivate OutputMixer */
-
-  AsDeactivateOutputMixer mixer_deact;
-
-  AS_DeactivateOutputMixer(OutputMixer0, &mixer_deact);
-
-  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_DEACT))
-    {
-      printf("AS_DeactivateOutputMixer() error!\n");
     }
 
   return true;
