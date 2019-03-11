@@ -1,7 +1,7 @@
 ############################################################################
-# modules/dnnrt/Makefile
+# modules/dnnrt/src/Make.defs
 #
-#   Copyright 2018 Sony Corporation
+#   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,9 +13,10 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. Neither the name of Sony Corporation nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+#    the names of its contributors may be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -38,67 +39,68 @@
 
 DELIM ?= $(strip /)
 
-RUNTIMEDIR := $(SDKDIR)/../externals/nnabla-c-runtime
+# like "uniq" command
 
-CSRCS =
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
-ifeq ($(CONFIG_DNN_RT_MP),y)
-include src-mp/Make.defs
-else
-include src/Make.defs
-endif
+RUNTIMEDIR ?= $(SDKDIR)/../externals/nnabla-c-runtime
 
+# C source files are separated because many files are exists
+
+include Make.defs
+
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/functions}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/runtime}
+
+# Runtime patch for missing fminf, fmaxf math functions
+
+CFLAGS += -include fminf_fmaxf.h
 CFLAGS += -std=c99
 
 # Don't follow the -O. option in CFLAGS
+
 CFLAGS := $(patsubst -O%,-O3,$(CFLAGS))
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
+FUNC_OBJS = $(FUNC_SRCS:.c=$(OBJEXT))
+RT_OBJS = $(RT_SRCS:.c=$(OBJEXT))
 
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
+SRCS = $(FUNC_SRCS) $(RT_SRCS)
+OBJS = $(FUNC_OBJS) $(RT_OBJS)
 
-BIN = libdnnrt$(LIBEXT)
+LIBFUNC = libnnablart_functions$(LIBEXT)
+LIBRT = libnnablart_runtime$(LIBEXT)
 
-all: $(BIN)
-
-.PHONY: all context depend clean distclean preconfig
+all: $(LIBFUNC) $(LIBRT)
 
 $(OBJS): %$(OBJEXT): %.c
 	$(call COMPILE, $<, $@)
 
-$(BIN): $(OBJS)
-	$(call DELFILE, $@)
-	$(call ARCHIVE, $@, $(OBJS))
+$(LIBFUNC): $(FUNC_OBJS)
+	$(call ARCHIVE, $@, $(FUNC_OBJS))
 
-$(SDKDIR)/modules/include/dnnrt/nnablart/network.h: $(RUNTIMEDIR)/include/nnablart/network.h
-	$(Q) install -m 0644 -C $< $@
+$(LIBRT): $(RT_OBJS)
+	$(call ARCHIVE, $@, $(RT_OBJS))
 
-.context: $(SDKDIR)/modules/include/dnnrt/nnablart/network.h
+.context:
 	$(Q) touch $@
 
 context: .context
 
-# Create dependencies
-
-.depend: $(SDKDIR)/.config Makefile $(SRCS)
+.depend: $(SDKDIR)/.config Makefile Make.defs $(SRCS)
 	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) > Make.dep
 	$(Q) touch $@
 
 depend: .depend
 
 clean:
-	$(call DELFILE, $(BIN))
+	$(call DELFILE, $(LIBRUNC))
+	$(call DELFILE, $(LIBRT))
 	$(call CLEAN)
 
 distclean: clean
 	$(call DELFILE, .context)
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
-	$(call DELFILE, $(SDKDIR)/modules/include/dnnrt/nnablart/network.h)
 
 -include Make.dep
-preconfig:
-
-#endif
