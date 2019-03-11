@@ -492,6 +492,13 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
 
   s_attention_cb = att_cb;
 
+  /* Reset Message queue. */
+
+  FAR MsgQueBlock *que;
+  err_t err_code = MsgLib::referMsgQueBlock(s_selfMid, &que);
+  F_ASSERT(err_code == ERR_OK);
+  que->reset();
+
   s_amng_pid = task_create("AMNG",
                            AUDIO_TASK_PRIORITY,
                            AUDIO_TASK_MANAGER_STACK_SIZE,
