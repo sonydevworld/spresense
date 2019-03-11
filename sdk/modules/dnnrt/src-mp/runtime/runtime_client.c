@@ -97,7 +97,7 @@ int dnn_runtime_input_num(dnn_runtime_t * rt)
 
 int dnn_runtime_input_size(dnn_runtime_t * rt, unsigned char data_index)
 {
-  return dnn_mpmgr_call_api(DNNRT_API_RT_INPUT_NUM, 2, rt, data_index);
+  return dnn_mpmgr_call_api(DNNRT_API_RT_INPUT_SIZE, 2, rt, data_index);
 }
 
 int dnn_runtime_input_ndim(dnn_runtime_t * rt, unsigned char data_index)
