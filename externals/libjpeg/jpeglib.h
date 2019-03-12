@@ -993,7 +993,7 @@ EXTERN(void) jpeg_destroy_compress JPP((j_compress_ptr cinfo));
 /**
  * Release JPEG decompression object.
  *
- * @param [in,out] cinfo Pointer to JPEG decompression object
+ * @param [in,out] cinfo: Pointer to JPEG decompression object
  *
  * @return void
  */
@@ -1007,8 +1007,8 @@ EXTERN(void) jpeg_stdio_dest JPP((j_compress_ptr cinfo, FILE * outfile));
  * Specify a file to JPEG data source by file pointer.
  * @note Caller is responsible for opening the file before and closing after.
  *
- * @param [in,out] cinfo Pointer toJPEG decompression object
- * @param [in]     infile JPEG file pointer to be decoded
+ * @param [in,out] cinfo:  Pointer toJPEG decompression object
+ * @param [in]     infile: JPEG file pointer to be decoded
  *
  * @return void
  */
@@ -1018,8 +1018,8 @@ EXTERN(void) jpeg_stdio_src JPP((j_decompress_ptr cinfo, FILE * infile));
  * Specify a file to JPEG data source by file descriptor.
  * @note Caller is responsible for opening the file before and closing after.
  *
- * @param [in,out] cinfo  Pointer to JPEG decompression object
- * @param [in]     infile JPEG file descriptor to be decoded
+ * @param [in,out] cinfo:  Pointer to JPEG decompression object
+ * @param [in]     infile: JPEG file descriptor to be decoded
  *
  * @return void
  */
@@ -1034,9 +1034,9 @@ EXTERN(void) jpeg_mem_dest JPP((j_compress_ptr cinfo,
  * Specify a buffer to JPEG data source.
  * @note The input buffer must contain the whole JPEG data.
  *
- * @param [in,out] cinfo Pointer to JPEG decompression object
- * @param [in]     inbuffer Pointer to buffer which include the whole JPEG data
- * @param [in]     insize: Size of inbuffer
+ * @param [in,out] cinfo:    Pointer to JPEG decompression object
+ * @param [in]     inbuffer: Pointer to buffer which include the whole JPEG data
+ * @param [in]     insize:   Size of @a inbuffer
  *
  * @return void
  */
@@ -1104,8 +1104,8 @@ EXTERN(void) jpeg_write_tables JPP((j_compress_ptr cinfo));
  * @note Application need to complete one of jpeg_stdio_src, jpeg_fd_src or jpeg_mem_src
  *       in order to complete this API and proceed decode.
  *
- * @param [in,out] cinfo  Pointer to JPEG decompression object
- * @param [in] require_image  True means that decoder handle error and
+ * @param [in,out] cinfo:     Pointer to JPEG decompression object
+ * @param [in] require_image: True means that decoder handle error and
  *                            do not return in no-image case.
  *
  * @return
@@ -1129,7 +1129,7 @@ EXTERN(int) jpeg_read_header JPP((j_decompress_ptr cinfo,
  * @note Application need to complete jpeg_read_header
  *       in order to complete this API and proceed decode.
  *
- * @param [in,out] cinfo Pointer to JPEG decompression object
+ * @param [in,out] cinfo: Pointer to JPEG decompression object
  *
  * @return
  * | return value | meaning |
@@ -1141,14 +1141,14 @@ EXTERN(boolean) jpeg_start_decompress JPP((j_decompress_ptr cinfo));
 
 /**
  * Read decompressed image data by scanline.
- * Maximum readable number of lines is the value of argument max_lines.
+ * Maximum readable number of lines is the value of @a max_lines.
  * The number of lines actually read is notified by the return value.
  *
  * @note jpeg_start_decompress must be completed before calling this API.
  *
- * @param [in,out]  cinfo  Pointer to JPEG decompression object
- * @param [out] scanlines  Pointer to buffer array
- * @param [in]  max_lines  Array size of scanlines
+ * @param [in,out]  cinfo:     Pointer to JPEG decompression object
+ * @param [out]     scanlines: Pointer to buffer array
+ * @param [in]      max_lines: Array size of @a scanlines
  *
  * @return The number of lines actually read.
  */
@@ -1163,10 +1163,10 @@ EXTERN(JDIMENSION) jpeg_read_scanlines JPP((j_decompress_ptr cinfo,
  * @note jpeg_start_decompress must be completed before calling this API.
  *       Currently, max_lines must be the size of one mcu.
  *
- * @param [in,out]  cinfo  Pointer to JPEG decompression object
- * @param [out] mcus       Pointer to buffer array
- * @param [in]  max_lines  Array size of mcus
- * @param [out] offset     Position of the read mcu from the top of image
+ * @param [in,out]  cinfo:     Pointer to JPEG decompression object
+ * @param [out]     mcus:      Pointer to buffer array
+ * @param [in]      max_lines: Array size of @a mcus
+ * @param [out]     offset:    Position of the read mcu from the top of image
  *
  * @return The number of mcus actually read.
  */
@@ -1178,7 +1178,7 @@ EXTERN(JDIMENSION) jpeg_read_mcus JPP((j_decompress_ptr cinfo,
 /**
  * Finish JPEG decompression.
  *
- * @param [in] cinfo  Pointer to JPEG decompression object
+ * @param [in] cinfo: Pointer to JPEG decompression object
  *
  * @return
  * | return value | meaning |
