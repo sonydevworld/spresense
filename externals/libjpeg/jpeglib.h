@@ -1004,7 +1004,7 @@ EXTERN(void) jpeg_destroy_decompress JPP((j_decompress_ptr cinfo));
 EXTERN(void) jpeg_stdio_dest JPP((j_compress_ptr cinfo, FILE * outfile));
 
 /**
- * Specify JPEG data source by file pointer.
+ * Specify a file to JPEG data source by file pointer.
  * @note Caller is responsible for opening the file before and closing after.
  *
  * @param [in,out] cinfo Pointer toJPEG decompression object
@@ -1015,7 +1015,7 @@ EXTERN(void) jpeg_stdio_dest JPP((j_compress_ptr cinfo, FILE * outfile));
 EXTERN(void) jpeg_stdio_src JPP((j_decompress_ptr cinfo, FILE * infile));
 
 /**
- * Specify JPEG data source by file descriptor.
+ * Specify a file to JPEG data source by file descriptor.
  * @note Caller is responsible for opening the file before and closing after.
  *
  * @param [in,out] cinfo  Pointer to JPEG decompression object
@@ -1031,7 +1031,7 @@ EXTERN(void) jpeg_mem_dest JPP((j_compress_ptr cinfo,
 			       unsigned long * outsize));
 
 /**
- * Specify JPEG data source by buffer.
+ * Specify a buffer to JPEG data source.
  * @note The input buffer must contain the whole JPEG data.
  *
  * @param [in,out] cinfo Pointer to JPEG decompression object
@@ -1101,8 +1101,8 @@ EXTERN(void) jpeg_write_tables JPP((j_compress_ptr cinfo));
 /**
  * Read JPEG header.
  *
- * @note Any one of jpeg_stdio_src, jpeg_fd_src, or jpeg_mem_src must be completed
- *       before calling this API.
+ * @note Application need to complete one of jpeg_stdio_src, jpeg_fd_src or jpeg_mem_src
+ *       in order to complete this API and proceed decode.
  *
  * @param [in,out] cinfo  Pointer to JPEG decompression object
  * @param [in] require_image  True means that decoder handle error and
@@ -1126,7 +1126,8 @@ EXTERN(int) jpeg_read_header JPP((j_decompress_ptr cinfo,
 /**
  * Start decompression.
  *
- * @note jpeg_read_header must be completed before calling this API.
+ * @note Application need to complete jpeg_read_header
+ *       in order to complete this API and proceed decode.
  *
  * @param [in,out] cinfo Pointer to JPEG decompression object
  *
@@ -1139,13 +1140,15 @@ EXTERN(int) jpeg_read_header JPP((j_decompress_ptr cinfo,
 EXTERN(boolean) jpeg_start_decompress JPP((j_decompress_ptr cinfo));
 
 /**
- * Read some scanlines of data fomr the JPEG decompressor.
+ * Read decompressed image data by scanline.
+ * Maximum readable number of lines is the value of argument max_lines.
+ * The number of lines actually read is notified by the return value.
  *
  * @note jpeg_start_decompress must be completed before calling this API.
  *
  * @param [in,out]  cinfo  Pointer to JPEG decompression object
  * @param [out] scanlines  Pointer to buffer array
- * @param [in]  max_linex  Array size of scanlines
+ * @param [in]  max_lines  Array size of scanlines
  *
  * @return The number of lines actually read.
  */
