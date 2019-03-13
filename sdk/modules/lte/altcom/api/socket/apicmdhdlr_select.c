@@ -52,16 +52,6 @@
 
 /****************************************************************************
  * Name: select_job
- *
- * Description:
- *   This function is an API callback for select async.
- *
- * Input Parameters:
- *  arg    Pointer to received event.
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 static void select_job(FAR void *arg)
@@ -119,20 +109,6 @@ static void select_job(FAR void *arg)
 
 /****************************************************************************
  * Name: apicmdhdlr_select
- *
- * Description:
- *   This function is an API command handler for select async.
- *
- * Input Parameters:
- *  evt    Pointer to received event.
- *  evlen  Length of received event.
- *
- * Returned Value:
- *   If the API command ID matches APICMDID_SOCK_SELECT,
- *   EVTHDLRC_STARTHANDLE is returned.
- *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
- *   detected, EVTHDLRC_INTERNALERROR is returned.
- *
  ****************************************************************************/
 
 enum evthdlrc_e apicmdhdlr_select(FAR uint8_t *evt, uint32_t evlen)

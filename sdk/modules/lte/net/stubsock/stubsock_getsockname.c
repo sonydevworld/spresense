@@ -67,24 +67,6 @@
 
 /****************************************************************************
  * Name: stubsock_getsockname
- *
- * Description:
- *   The getsockname() function retrieves the locally-bound name of the
- *   specified socket, stores this address in the sockaddr structure pointed
- *   to by the 'addr' argument, and stores the length of this address in the
- *   object pointed to by the 'addrlen' argument.
- *
- *   If the actual length of the address is greater than the length of the
- *   supplied sockaddr structure, the stored address will be truncated.
- *
- *   If the socket has not been bound to a local name, the value stored in
- *   the object pointed to by address is unspecified.
- *
- * Parameters:
- *   conn     usrsock socket connection structure
- *   addr     sockaddr structure to receive data [out]
- *   addrlen  Length of sockaddr structure [in/out]
- *
  ****************************************************************************/
 
 int stubsock_getsockname(FAR struct socket *psock,

@@ -70,27 +70,6 @@
 
 /****************************************************************************
  * Name: altcom_setsockopt
- *
- * Description:
- *   altcom_setsockopt() sets the option specified by the 'option' argument,
- *   at the protocol level specified by the 'level' argument, to the value
- *   pointed to by the 'value' argument for the socket associated with the
- *   file descriptor specified by the 'sockfd' argument.
- *
- *   The 'level' argument specifies the protocol level of the option. To set
- *   options at the socket level, specify the level argument
- *   as ALTCOM_SOL_SOCKET.
- *
- * Parameters:
- *   sockfd    Socket descriptor of socket
- *   level     Protocol level to set the option
- *   option    identifies the option to set
- *   value     Points to the argument value
- *   value_len The length of the argument value
- *
- * Returned Value:
- *  0 on success; -1 on failure
- *
  ****************************************************************************/
 
 int altcom_setsockopt(int sockfd, int level, int option, const void *value,

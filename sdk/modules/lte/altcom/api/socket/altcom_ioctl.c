@@ -46,19 +46,6 @@
 
 /****************************************************************************
  * Name: altcom_ioctl
- *
- * Description:
- *   Perform device specific operations.
- *
- * Parameters:
- *   sockfd   Socket descriptor of device
- *   req      The ioctl command
- *   argp     A third argument of type unsigned long is expected
- *
- * Return:
- *   >=0 on success (positive non-zero values are cmd-specific)
- *   -1 on failure with errno set properly.
- *
  ****************************************************************************/
 
 int altcom_ioctl(int sockfd, long req, void *argp)

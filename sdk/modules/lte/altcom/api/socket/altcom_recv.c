@@ -77,10 +77,6 @@ struct recv_req_s
 
 /****************************************************************************
  * Name: recv_request
- *
- * Description:
- *   Send ALTCOM_RECV_REQ.
- *
  ****************************************************************************/
 
 static int32_t recv_request(FAR struct altcom_socket_s *fsock,
@@ -171,20 +167,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_recv
- *
- * Description:
- *   The altcom_recv() call is identical to altcom_recvfrom() with a NULL
- *   from parameter.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Buffer to receive data
- *   len      Length of buffer
- *   flags    Receive flags
- *
- * Returned Value:
- *  (see recvfrom)
- *
  ****************************************************************************/
 
 int altcom_recv(int sockfd, void *buf, size_t len, int flags)

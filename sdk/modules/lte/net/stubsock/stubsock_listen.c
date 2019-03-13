@@ -65,28 +65,6 @@
 
 /****************************************************************************
  * Name: stubsock_listen
- *
- * Description:
- *   To accept connections, a socket is first created with psock_socket(), a
- *   willingness to accept incoming connections and a queue limit for
- *   incoming connections are specified with psock_listen(), and then the
- *   connections are accepted with psock_accept().  For the case of AFINET
- *   and AFINET6 sockets, psock_listen() calls this function.  The
- *   psock_listen() call applies only to sockets of type SOCK_STREAM or
- *   SOCK_SEQPACKET.
- *
- * Parameters:
- *   psock    Reference to an internal, bound socket structure.
- *   backlog  The maximum length the queue of pending connections may grow.
- *            If a connection request arrives with the queue full, the client
- *            may receive an error with an indication of ECONNREFUSED or,
- *            if the underlying protocol supports retransmission, the request
- *            may be ignored so that retries succeed.
- *
- * Returned Value:
- *   On success, zero is returned. On error, a negated errno value is
- *   returned.  See listen() for the set of appropriate error values.
- *
  ****************************************************************************/
 
 int stubsock_listen(FAR struct socket *psock, int backlog)

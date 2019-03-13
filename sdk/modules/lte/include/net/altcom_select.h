@@ -90,28 +90,6 @@ extern "C"
 
 /****************************************************************************
  * Name: altcom_select
- *
- * Description:
- *   altcom_select() allows a program to monitor multiple file descriptors,
- *   waiting until one or more of the file descriptors become "ready" for
- *   some class of I/O operation (e.g., input possible).  A file descriptor
- *   is considered  ready if it is possible to perform the corresponding I/O
- *   operation (e.g., altcom_recv()) without blocking.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   timeout - Return at this time if none of these events of interest
- *             occur.
- *
- *  Return:
- *   0: Timer expired
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select(int maxfdp1, altcom_fd_set *readset,

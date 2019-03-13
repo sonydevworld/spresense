@@ -79,10 +79,6 @@ struct recvfrom_req_s
 
 /****************************************************************************
  * Name: recvfrom_request
- *
- * Description:
- *   Send ALTCOM_RECVFROM_REQ.
- *
  ****************************************************************************/
 
 static int32_t recvfrom_request(FAR struct altcom_socket_s *fsock,
@@ -207,28 +203,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_recvfrom
- *
- * Description:
- *   altcom_recvfrom() receives messages from a socket, and may be used to
- *   receive data on a socket whether or not it is connection-oriented.
- *
- *   If from is not NULL, and the underlying protocol provides the source
- *   address, this source address is filled in. The argument fromlen
- *   initialized to the size of the buffer associated with from, and modified
- *   on return to indicate the actual size of the address stored there.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Buffer to receive data
- *   len      Length of buffer
- *   flags    Receive flags
- *   from     Address of source (may be NULL)
- *   fromlen  The length of the address structure
- *
- * Returned Value:
- *   On success, returns the number of characters received. On error,
- *   -1 is returned, and errno is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_recvfrom(int sockfd, void *buf, size_t len, int flags,

@@ -74,10 +74,6 @@ struct listen_req_s
 
 /****************************************************************************
  * Name: listen_request
- *
- * Description:
- *   Send ALTCOM_LISTEN_REQ.
- *
  ****************************************************************************/
 
 static int32_t listen_request(FAR struct altcom_socket_s *fsock,
@@ -152,26 +148,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_listen
- *
- * Description:
- *   To accept connections, a socket is first created with altcom_socket(), a
- *   willingness to accept incoming connections and a queue limit for incoming
- *   connections are specified with listen(), and then the connections are
- *   accepted with altcom_accept(). The altcom_listen() call applies only to
- *   sockets of type ALTCOM_SOCK_STREAM.
- *
- * Parameters:
- *   sockfd   Socket descriptor of the bound socket
- *   backlog  The maximum length the queue of pending connections may grow.
- *            If a connection request arrives with the queue full, the client
- *            may receive an error with an indication of ECONNREFUSED or,
- *            if the underlying protocol supports retransmission, the request
- *            may be ignored so that retries succeed.
- *
- * Returned Value:
- *   On success, zero is returned. On error, -1 is returned, and errno is set
- *   appropriately.
- *
  ****************************************************************************/
 
 int altcom_listen(int sockfd, int backlog)

@@ -63,16 +63,6 @@ static inline void altcom_errno_chkno(int32_t err_no)
 
 /****************************************************************************
  * Name: altcom_errno
- *
- * Description:
- *   Get errno for socket APIs.
- *
- * Input parameters:
- *   None
- *
- *  Return:
- *   errno
- *
  ****************************************************************************/
 
 int32_t altcom_errno(void)
@@ -82,16 +72,6 @@ int32_t altcom_errno(void)
 
 /****************************************************************************
  * Name: altcom_seterrno
- *
- * Description:
- *   Set errno for socket APIs.
- *
- * Input parameters:
- *   errno
- *
- *  Return:
- *   None
- *
  ****************************************************************************/
 
 void altcom_seterrno(int32_t err_no)

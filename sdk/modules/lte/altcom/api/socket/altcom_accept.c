@@ -77,10 +77,6 @@ struct accept_req_s
 
 /****************************************************************************
  * Name: accept_request
- *
- * Description:
- *   Send ALTCOM_ACCEPT_REQ.
- *
  ****************************************************************************/
 
 static int32_t accept_request(FAR struct altcom_socket_s *fsock,
@@ -187,40 +183,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_accept
- *
- * Description:
- *   The altcom_accept function is used with connection-based socket types
- *   (ALTCOM_SOCK_STREAM). It extracts the first
- *   connection request on the queue of pending connections, creates a new
- *   connected socket with mostly the same properties as 'sockfd', and
- *   allocates a new socket descriptor for the socket, which is returned. The
- *   newly created socket is no longer in the listening state. The original
- *   socket 'sockfd' is unaffected by this call.  Per file descriptor flags
- *   are not inherited across an accept.
- *
- *   The 'sockfd' argument is a socket descriptor that has been created with
- *   altcom_socket(), bound to a local address with altcom_bind(), and is
- *   listening for connections after a call to altcom_listen().
- *
- *   On return, the 'addr' structure is filled in with the address of the
- *   connecting entity. The 'addrlen' argument initially contains the size
- *   of the structure pointed to by 'addr'; on return it will contain the
- *   actual length of the address returned.
- *
- *   If no pending connections are present on the queue, and the socket is
- *   not marked as non-blocking, accept blocks the caller until a connection
- *   is present. If the socket is marked non-blocking and no pending
- *   connections are present on the queue, accept returns EAGAIN.
- *
- * Parameters:
- *   sockfd   The listening socket descriptor
- *   addr     Receives the address of the connecting client
- *   addrlen  Input: allocated size of 'addr', Return: returned size of 'addr'
- *
- * Returned Value:
- *  Returns -1 on error. If it succeeds, it returns a non-negative integer
- *  that is a descriptor for the accepted socket.
- *
  ****************************************************************************/
 
 int altcom_accept(int sockfd, struct altcom_sockaddr *addr,

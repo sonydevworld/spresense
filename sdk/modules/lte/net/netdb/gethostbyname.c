@@ -73,30 +73,6 @@ int h_errno;
 
 /****************************************************************************
  * Name: gethostbyname
- *
- * Description:
- *   The gethostbyname() function returns a structure of type hostent
- *   for the given host name. Here name is either a hostname, or an IPv4
- *   address in standard dot notation (as for inet_addr(3)), or an IPv6
- *   address in colon (and possibly dot) notation.
- *
- *   If name is an IPv4 or IPv6 address, no lookup is performed and
- *   gethostbyname_r() simply copies name into the h_name field
- *   and its struct in_addr equivalent into the h_addr_list[0] field of the
- *   returned hostent structure.
- *
- * Input Parameters:
- *   name - The name of the host to find.
- *
- * Returned Value:
- *   Upon successful completion, this function will return a pointer to a
- *   hostent structure if the requested entry was found, and a null pointer
- *   if the end of the database was reached or the requested entry was not
- *   found.
- *
- *   Upon unsuccessful completion, gethostbyname() will set h_errno to
- *   indicate the error
- *
  ****************************************************************************/
 
 struct hostent *gethostbyname(const char *name)

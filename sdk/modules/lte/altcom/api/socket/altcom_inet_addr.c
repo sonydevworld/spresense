@@ -48,18 +48,6 @@
 
 /****************************************************************************
  * Name: altcom_inet_addr
- *
- * Description:
- *   Converts the string pointed to by cp, in the standard IPv4 dotted
- *   decimal notation, to an integer value suitable for use as an Internet
- *   address.
- *
- * Input parameters:
- *   cp - Pointer to string in the standard IPv4 dotted decimal notation
- *
- *  Return:
- *   Internet address
- *
  ****************************************************************************/
 
 altcom_in_addr_t altcom_inet_addr(const char *cp)

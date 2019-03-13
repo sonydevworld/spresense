@@ -74,10 +74,6 @@ struct socket_req_s
 
 /****************************************************************************
  * Name: socket_request
- *
- * Description:
- *   Send ALTCOM_SOCKET_REQ.
- *
  ****************************************************************************/
 
 static int32_t socket_request(FAR struct socket_req_s *req)
@@ -151,20 +147,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_socket
- *
- * Description:
- *   altcom_socket() creates an endpoint for communication and returns
- *   a descriptor.
- *
- * Parameters:
- *   domain   See Address family.
- *   type     See Socket protocol type.
- *   protocol See Protocol.
- *
- * Returned Value:
- *   A non-negative socket descriptor on success; -1 on error with errno set
- *   appropriately.
- *
  ****************************************************************************/
 
 int altcom_socket(int domain, int type, int protocol)

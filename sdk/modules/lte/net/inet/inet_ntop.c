@@ -66,32 +66,6 @@
 
 /****************************************************************************
  * Name: inet_ntop
- *
- * Description:
- *  The inet_ntop() function converts a numeric address into a text
- *  string suitable for presentation.
- *
- * Input Parameters:
- *   af   - The af argument specifies the family of the address. This can be
- *          AF_INET or AF_INET6.
- *   src  - The src argument points to a buffer holding an address of the
- *          specified type.  The address must be in network byte order.
- *   dst  - The dest argument points to a buffer where the function stores
- *          the resulting text string; it shall not be NULL.
- *   size - The size argument specifies the size of this buffer, which must
- *          be large enough to hold the text string (INET_ADDRSTRLEN
- *          characters for IPv4, INET6_ADDRSTRLEN characters for
- *          IPv6).
- *
- * Returned Value:
- *   inet_ntop() returns a pointer to the buffer containing the text
- *   string if the conversion succeeds. Otherwise, NULL is returned and the
- *   errno is set to indicate the error.
- *   There follow errno values may be set:
- *
- *   EAFNOSUPPORT - The af argument is invalid.
- *   ENOSPC - The size of the inet_ntop() result buffer is inadequate
- *
  ****************************************************************************/
 
 const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)

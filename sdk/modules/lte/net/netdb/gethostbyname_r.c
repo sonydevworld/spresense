@@ -67,31 +67,6 @@
 
 /****************************************************************************
  * Name: gethostbyname_r
- *
- * Description:
- *   The gethostbyname_r() function returns a structure of type
- *   hostent for the given host name. Here name is either a hostname, or an
- *   IPv4 address in standard dot notation (as for inet_addr(3)), or an IPv6
- *   address in colon (and possibly dot) notation.
- *
- *   If name is an IPv4 or IPv6 address, no lookup is performed and
- *   gethostbyname_r() simply copies name into the h_name field
- *   and its struct in_addr equivalent into the h_addr_list[0] field of the
- *   returned hostent structure.
- *
- * Input Parameters:
- *   name - The name of the host to find.
- *   ret - Caller provided location to return the host data.
- *   buf - Caller provided buffer to hold string data associated with the
- *     host data.
- *   buflen - The size of the caller-provided buffer
- *   result - Point to the result on success.
- *   h_errnop - There h_errno value returned in the event of a failure.
- *
- * Returned Value:
- *   0 is returned on success, -1 is returned on a failure
- *   with the returned h_errno value provided the reason for the failure.
- *
  ****************************************************************************/
 
 int gethostbyname_r(const char *name, struct hostent *ret, char *buf,

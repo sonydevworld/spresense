@@ -143,17 +143,6 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
 
 /****************************************************************************
  * Name: stubsock_pollsetup
- *
- * Description:
- *   Setup to monitor events on an stubsock socket
- *
- * Input Parameters:
- *   psock - An instance of the internal socket structure.
- *   fds   - The structure describing the events to be monitored.
- *
- * Returned Value:
- *  0: Success; Negated errno on failure
- *
  ****************************************************************************/
 
 static int stubsock_pollsetup(FAR struct socket *psock, FAR struct pollfd *fds)
@@ -277,17 +266,6 @@ static int stubsock_pollsetup(FAR struct socket *psock, FAR struct pollfd *fds)
 
 /****************************************************************************
  * Name: stubsock_pollteardown
- *
- * Description:
- *   Teardown monitoring of events on an stubsock socket
- *
- * Input Parameters:
- *   psock - An instance of the internal socket structure.
- *   fds   - The structure describing the events to be stopped being monitored.
- *
- * Returned Value:
- *  0: Success; Negated errno on failure
- *
  ****************************************************************************/
 
 static int stubsock_pollteardown(FAR struct socket *psock,
@@ -342,19 +320,6 @@ static int stubsock_pollteardown(FAR struct socket *psock,
 
 /****************************************************************************
  * Name: stubsock_poll
- *
- * Description:
- *   The standard poll() operation redirects operations on socket descriptors
- *   to this function.
- *
- * Input Parameters:
- *   psock - An instance of the internal socket structure.
- *   fds   - The structure describing the events to be monitored.
- *   setup - true: Setup up the poll; false: Teardown the poll
- *
- * Returned Value:
- *  0: Success; Negated errno on failure
- *
  ****************************************************************************/
 
 int stubsock_poll(FAR struct socket *psock, FAR struct pollfd *fds, bool setup)

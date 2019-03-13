@@ -46,20 +46,6 @@
 
 /****************************************************************************
  * Name: altcom_write
- *
- * Description:
- *   The altcom_write() is the same as altcom_send() with the flags parameter
- *   set to zero.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Data to write
- *   len      Length of data to send
- *
- * Returned Value:
- *   On success, returns the number of characters sent. On error,
- *   -1 is returned, and errno is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_write(int sockfd, const void *buf, size_t len)

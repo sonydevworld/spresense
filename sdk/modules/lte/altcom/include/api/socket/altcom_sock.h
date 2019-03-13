@@ -67,34 +67,12 @@ struct altcom_socket_s
 
 /****************************************************************************
  * Name: altcom_sockfd_socket
- *
- * Description:
- *   Given a socket descriptor, return the underlying socket structure.
- *
- * Input Parameters:
- *   sockfd - The socket descriptor index to use.
- *
- * Returned Value:
- *   On success, a reference to the socket structure associated with
- *   the socket descriptor is returned.  NULL is returned on any failure.
- *
  ****************************************************************************/
 
 struct altcom_socket_s *altcom_sockfd_socket(int sockfd);
 
 /****************************************************************************
  * Name: altcom_sockaddr_to_sockstorage
- *
- * Description:
- *   Convert from sockaddr structure to sockaddr_storage structure
- *
- * Parameters:
- *   addr     sockaddr structure.
- *   storage  sockstorage structure.
- *
- * Returned Value:
- *   None
- *
  ****************************************************************************/
 
 void altcom_sockaddr_to_sockstorage(const struct altcom_sockaddr *addr,
@@ -102,21 +80,6 @@ void altcom_sockaddr_to_sockstorage(const struct altcom_sockaddr *addr,
 
 /****************************************************************************
  * Name: altcom_select_request_asyncsend
- *
- * Description:
- *   Send select request.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *  >0: The select id use select cancel request
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
@@ -125,40 +88,12 @@ int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_cancel_request_send
- *
- * Description:
- *   Send select cancel request.
- *
- * Input parameters:
- *   id - returned by altcom_select_request_asyncsend
- *
- *  Return:
- *   0: Send succeded
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_cancel_request_send(int id);
 
 /****************************************************************************
  * Name: altcom_select_nonblock
- *
- * Description:
- *   altcom_select_nonblock() is the same as altcom_select(),
- *   but set command parameter to nonblock.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *   0: All descriptors in the three sets are not ready
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
@@ -167,24 +102,6 @@ int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_block
- *
- * Description:
- *   altcom_select_nonblock() is the same as altcom_select(),
- *   but set command parameter to block.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   timeout - Return at this time if none of these events of interest
- *             occur.
- *
- *  Return:
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_block(int maxfdp1, altcom_fd_set *readset,

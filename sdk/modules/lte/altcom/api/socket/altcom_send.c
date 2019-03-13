@@ -76,10 +76,6 @@ struct send_req_s
 
 /****************************************************************************
  * Name: send_request
- *
- * Description:
- *   Send ALTCOM_SEND_REQ.
- *
  ****************************************************************************/
 
 static int32_t send_request(FAR struct altcom_socket_s *fsock,
@@ -160,25 +156,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_send
- *
- * Description:
- *   The altcom_send() call may be used only when the socket is in
- *   a connected state (so that the intended recipient is known). The only
- *   difference between altcom_send() and altcom_write() is the presence of
- *   flags. With zero flags parameter, altcom_send() is equivalent to 
- *   altcom_write(). Also, send(sockfd,buf,len,flags) is equivalent to
- *   altcom_sendto(sockfd,buf,len,flags,NULL,0).
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Data to send
- *   len      Length of data to send
- *   flags    Send flags
- *
- * Returned Value:
- *   On success, returns the number of characters sent. On error,
- *   -1 is returned, and errno is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_send(int sockfd, const void *buf, size_t len, int flags)

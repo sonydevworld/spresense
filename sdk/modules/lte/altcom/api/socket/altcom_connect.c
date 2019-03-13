@@ -77,10 +77,6 @@ struct connect_req_s
 
 /****************************************************************************
  * Name: connect_request
- *
- * Description:
- *   Send ALTCOM_CONNECT_REQ.
- *
  ****************************************************************************/
 
 static int32_t connect_request(FAR struct altcom_socket_s *fsock,
@@ -176,33 +172,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_connect
- *
- * Description:
- *   altcom_connect() connects the socket referred to by the file descriptor
- *   'sockfd' to the address specified by 'addr'. The addrlen argument
- *   specifies the size of 'addr'.  The format of the address in 'addr' is
- *   determined by the address space of the socket 'sockfd'.
- *
- *   If the socket 'sockfd' is of type ALTCOM_SOCK_DGRAM then 'addr' is the
- *   address to which datagrams are sent by default, and the only address
- *   from which datagrams are received. If the socket is of type
- *   ALTCOM_SOCK_STREAM this call attempts to make a connection to the socket
- *   that is bound to the address specified by 'addr'.
- *
- *   Generally, connection-based protocol sockets may successfully connect()
- *   only once; connectionless protocol sockets may use connect() multiple
- *   times to change their association.  Connectionless sockets may dissolve
- *   the association by connecting to an address with the sa_family member of
- *   sockaddr set to ALTCOM_AF_UNSPEC.
- *
- * Parameters:
- *   sockfd    Socket descriptor returned by altcom_socket()
- *   addr      Server address (form depends on type of socket)
- *   addrlen   Length of actual 'addr'
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int altcom_connect(int sockfd, const struct altcom_sockaddr *addr,

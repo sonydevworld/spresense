@@ -73,10 +73,6 @@ struct close_req_s
 
 /****************************************************************************
  * Name: close_request
- *
- * Description:
- *   Send ALTCOM_CLOSE_REQ.
- *
  ****************************************************************************/
 
 static int32_t close_request(FAR struct altcom_socket_s *fsock,
@@ -150,16 +146,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_close
- *
- * Description:
- *   altcom_close() closes a file descriptor of the socket.
- *
- * Parameters:
- *   sockfd   Socket descriptor to close
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately.
- *
  ****************************************************************************/
 
 int altcom_close(int sockfd)

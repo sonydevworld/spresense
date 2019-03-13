@@ -71,10 +71,6 @@ FAR buffpool_t g_stubsockbuffpl_obj = NULL;
 
 /****************************************************************************
  * Name: stubsock_mem_initialize()
- *
- * Description:
- *   Initialize the memory for stub socket.
- *
  ****************************************************************************/
 
 void stubsock_mem_initialize(void)
@@ -90,10 +86,6 @@ void stubsock_mem_initialize(void)
 
 /****************************************************************************
  * Name: stubsock_mem_finalize()
- *
- * Description:
- *   Finalize the memory for stub socket.
- *
  ****************************************************************************/
 
 void stubsock_mem_finalize(void)
@@ -114,10 +106,6 @@ void stubsock_mem_finalize(void)
 
 /****************************************************************************
  * Name: stubsock_mem_alloc()
- *
- * Description:
- *   Allocate the memory for stub socket.
- *
  ****************************************************************************/
 
 FAR void *stubsock_mem_alloc(uint32_t reqsize)
@@ -127,10 +115,6 @@ FAR void *stubsock_mem_alloc(uint32_t reqsize)
 
 /****************************************************************************
  * Name: stubsock_mem_free()
- *
- * Description:
- *   Free the memory for stub socket.
- *
  ****************************************************************************/
 
 void stubsock_mem_free(FAR void *mem)

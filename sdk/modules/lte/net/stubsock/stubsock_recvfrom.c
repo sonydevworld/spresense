@@ -67,24 +67,6 @@
 
 /****************************************************************************
  * Name: stubsock_recvfrom
- *
- * Description:
- *   recvfrom() receives messages from a socket, and may be used to receive
- *   data on a socket whether or not it is connection-oriented.
- *
- *   If from is not NULL, and the underlying protocol provides the source
- *   address, this source address is filled in. The argument fromlen
- *   initialized to the size of the buffer associated with from, and modified
- *   on return to indicate the actual size of the address stored there.
- *
- * Parameters:
- *   psock    A pointer to a NuttX-specific, internal socket structure
- *   buf      Buffer to receive data
- *   len      Length of buffer
- *   flags    Receive flags (ignored)
- *   from     Address of source (may be NULL)
- *   fromlen  The length of the address structure
- *
  ****************************************************************************/
 
 ssize_t stubsock_recvfrom(FAR struct socket *psock, FAR void *buf, size_t len,

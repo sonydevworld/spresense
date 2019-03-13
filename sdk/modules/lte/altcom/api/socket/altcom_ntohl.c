@@ -47,16 +47,6 @@
 
 /****************************************************************************
  * Name: altcom_ntohl
- *
- * Description:
- *   Convert from network byte order to host byte order.
- *
- * Input parameters:
- *   x - unsigned long value
- *
- *  Return:
- *   Value converted to host byte order
- *
  ****************************************************************************/
 
 uint32_t altcom_ntohl(uint32_t x)

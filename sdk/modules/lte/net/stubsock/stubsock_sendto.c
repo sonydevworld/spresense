@@ -68,21 +68,6 @@
 
 /****************************************************************************
  * Name: stubsock_sendto
- *
- * Description:
- *   If sendto() is used on a connection-mode (SOCK_STREAM, SOCK_SEQPACKET)
- *   socket, the parameters to and 'tolen' are ignored (and the error EISCONN
- *   may be returned when they are not NULL and 0), and the error ENOTCONN is
- *   returned when the socket was not actually connected.
- *
- * Parameters:
- *   psock    A pointer to a NuttX-specific, internal socket structure
- *   buf      Data to send
- *   len      Length of data to send
- *   flags    Send flags (ignored)
- *   to       Address of recipient
- *   tolen    The length of the address structure
- *
  ****************************************************************************/
 
 ssize_t stubsock_sendto(FAR struct socket *psock, FAR const void *buf,

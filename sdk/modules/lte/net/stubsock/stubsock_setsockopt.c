@@ -64,24 +64,6 @@
 
 /****************************************************************************
  * Name: stubsock_setsockopt
- *
- * Description:
- *   stubsock_setsockopt() sets the option specified by the 'option' argument,
- *   at the protocol level specified by the 'level' argument, to the value
- *   pointed to by the 'value' argument for the socket on the 'psock' argument.
- *
- *   The 'level' argument specifies the protocol level of the option. To set
- *   options at the socket level, specify the level argument as SOL_SOCKET.
- *
- *   See <sys/socket.h> a complete list of values for the 'option' argument.
- *
- * Parameters:
- *   psock     Socket instance
- *   level     Protocol level to set the option
- *   option    identifies the option to set
- *   value     Points to the argument value
- *   value_len The length of the argument value
- *
  ****************************************************************************/
 
 int stubsock_setsockopt(FAR struct socket *psock, int level, int option,

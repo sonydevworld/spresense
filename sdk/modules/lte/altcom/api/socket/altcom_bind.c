@@ -75,10 +75,6 @@ struct bind_req_s
 
 /****************************************************************************
  * Name: bind_request
- *
- * Description:
- *   Send ALTCOM_BIND_REQ.
- *
  ****************************************************************************/
 
 static int32_t bind_request(FAR struct altcom_socket_s *fsock,
@@ -160,21 +156,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_bind
- *
- * Description:
- *   altcom_bind() gives the socket 'sockfd' the local address 'addr'.
- *   'addr' is 'addrlen' bytes long. Traditionally, this is called 
- *   "assigning a name to a socket." When a socket is created with socket, 
- *   it exists in a name space (address family) but has no name assigned.
- *
- * Parameters:
- *   sockfd   Socket descriptor of the socket to bind
- *   addr     Socket local address
- *   addrlen  Length of 'addr'
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int altcom_bind(int sockfd, const struct altcom_sockaddr *addr,

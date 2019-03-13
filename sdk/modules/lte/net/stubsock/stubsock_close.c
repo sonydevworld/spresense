@@ -64,16 +64,6 @@
 
 /****************************************************************************
  * Name: stubsock_close
- *
- * Description:
- *   Performs the close operation on an socket instance
- *
- * Parameters:
- *   psock   Socket instance
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately.
- *
  ****************************************************************************/
 
 int stubsock_close(FAR struct socket *psock)

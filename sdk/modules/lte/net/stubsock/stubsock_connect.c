@@ -68,20 +68,6 @@
 
 /****************************************************************************
  * Name: stubsock_connect
- *
- * Description:
- *   Perform a stubsock connection
- *
- * Parameters:
- *   psock - A reference to the socket structure of the socket to be connected
- *   addr    The address of the remote server to connect to
- *   addrlen Length of address buffer
- *
- * Returned Value:
- *   None
- *
- * Assumptions:
- *
  ****************************************************************************/
 
 int stubsock_connect(FAR struct socket *psock,

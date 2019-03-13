@@ -74,10 +74,6 @@ struct shutdown_req_s
 
 /****************************************************************************
  * Name: shutdown_request
- *
- * Description:
- *   Send ALTCOM_SHUTDOWN_REQ.
- *
  ****************************************************************************/
 
 static int32_t shutdown_request(FAR struct altcom_socket_s *fsock,
@@ -152,27 +148,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_shutdown
- *
- * Description:
- *   The altcom_shutdown() function will cause all or part of a full-duplex
- *   connection on the socket associated with the file descriptor socket to
- *   be shut down.
- *
- *   The altcom_shutdown() function disables subsequent send and/or receive
- *   operations on a socket, depending on the value of the how argument.
- *
- * Input Paramteers:
- *   sockfd - Specifies the file descriptor of the socket.
- *   how    - Specifies the type of shutdown. The values are as follows:
- *
- *     ALTCOM_SHUT_RD   - Disables further receive operations.
- *     ALTCOM_SHUT_WR   - Disables further send operations.
- *     ALTCOM_SHUT_RDWR - Disables further send and receive operations.
- *
- * Returned Value:
- *   Upon successful completion, altcom_shutdown() will return 0; otherwise,
- *   -1 will be returned and errno set to indicate the error.
- *
  ****************************************************************************/
 
 int altcom_shutdown(int sockfd, int how)
