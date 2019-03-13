@@ -142,7 +142,6 @@ static int changeStateUninitToMs(FAR TramClass *owner)
 
   owner->set_state(TRAM_STATE_MS);
   owner->set_power(0x01 << accelID);
-  owner->send_notification(ChangeScuSettings);
 
   return ret;
 }
@@ -188,9 +187,7 @@ static int changeStateCMDToTMI(FAR TramClass *owner)
   int ret = 0;
 
   owner->set_state(TRAM_STATE_TMI);
-  owner->set_power((0x01 << accelID) |
-                   (0x01 << magID) |
-                   (0x01 << barometerID));
+  owner->set_power((0x01 << magID) | (0x01 << barometerID));
 
   return ret;
 }
