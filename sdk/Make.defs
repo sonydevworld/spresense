@@ -36,9 +36,13 @@
 
 -include $(SDKDIR)/.config
 
-ifeq ($(WINTOOL),y)
+# Platforms are: Linux, Darwin, MSYS, CYGWIN
 
-# Windows-native toolchains
+PLATFORM := $(firstword $(subst _, ,$(shell uname -s 2>/dev/null)))
+
+ifeq ($(PLATFORM),CYGWIN)
+
+# Cygwin-native toolchain
 
 CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/bsp/include)"
 CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
@@ -46,15 +50,11 @@ CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
 CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/bsp/include)"
 CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
 
-# mkspk for create spk packaging file
-
-MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
-
 INCDIROPT = -w
 
 else
 
-# Linux/Cygwin-native toolchain
+# Linux/macOS/MSYS2-native toolchain
 
 CFLAGS += -isystem $(SDKDIR)/bsp/include
 CFLAGS += -isystem $(SDKDIR)/modules/include
@@ -62,13 +62,21 @@ CFLAGS += -isystem $(SDKDIR)/modules/include
 CXXFLAGS += -I$(SDKDIR)/bsp/include
 CXXFLAGS += -I$(SDKDIR)/modules/include
 
-ifeq ($(shell uname -s 2>/dev/null),Darwin)
-  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)macos$(DELIM)mkspk
-else
-  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
 endif
 
+# mkspk for create spk packaging file
+
+ifeq ($(PLATFORM),Darwin)
+  # macOS
+  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)macos$(DELIM)mkspk
+else ifeq ($(PLATFORM),Linux)
+  # Linux
+  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
+else
+  # Cygwin/MSYS2
+  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
 endif
+
 
 # include path setting in external sub directories which contains 'LibIncludes.mk' file.
 
