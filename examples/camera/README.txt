@@ -17,11 +17,11 @@ examples/camera
 
   And enable following option in /sdk/configs/device/camera-defconfig
 
-  CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD -- Show captured image on the LCD
+  CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD=y
   
   Currently supports ili9340 and lpm013m091a based displays.
   
-  Default resolution is 240x320.  
+  Default resolution is 320x240.  
   This can be modified in the LCD driver code at /sdk/drivers/lcd/ili9340.c
 
   The LCD is expected to be connected on SPI4 (available on the Spresense expansion board)
