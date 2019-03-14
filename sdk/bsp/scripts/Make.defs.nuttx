@@ -42,10 +42,9 @@ include ${TOPDIR}/arch/arm/src/armv7-m/Toolchain.defs
 
 LDSCRIPT = ramconfig.ld
 
-# Setup for Windows vs Linux/Cygwin/OSX environments
-
-ifeq ("$(shell uname -o 2>/dev/null)","Cygwin")
-    WINTOOL = y
+ifeq ($(CONFIG_WINDOWS_MSYS),y)
+  DIRLINK = $(TOPDIR)/tools/copydir.sh
+  DIRUNLINK = $(TOPDIR)/tools/unlink.sh
 endif
 
 ifeq ($(WINTOOL),y)
