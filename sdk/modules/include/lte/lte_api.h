@@ -1161,7 +1161,8 @@ typedef struct lte_siminfo
   uint8_t  iccid_len;
 
   /** ICCID. It can be referneced when
-   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.@n
+   *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
 
   uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
 } lte_siminfo_t;
