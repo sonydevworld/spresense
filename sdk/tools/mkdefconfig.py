@@ -42,6 +42,9 @@ import re
 
 CONFIG_APPS_DIR = 'CONFIG_APPS_DIR="../sdk/tools/empty_apps"'
 
+def remove_config(opt, config):
+    os.system("kconfig-tweak --file %s --undefine %s" % (config, opt))
+
 def make_savedefconfig(d):
     ''' Run 'make savedefconfig' at specified directory
     '''
@@ -84,6 +87,19 @@ def save_default_config(basedir, confpath, kernel):
         os.replace(defconfig, confpath)
         with open(confpath, 'a') as dest:
             dest.write(CONFIG_APPS_DIR + "\n")
+
+        # Remove host related options
+
+        remove_config('CONFIG_HOST_LINUX', confpath)
+        remove_config('CONFIG_HOST_WINDOWS', confpath)
+        remove_config('CONFIG_HOST_OSX', confpath)
+        remove_config('CONFIG_HOST_MACOS', confpath) # for latest NuttX
+        remove_config('TOOLCHAIN_WINDOWS', confpath)
+        remove_config('WINDOWS_NATIVE', confpath)
+        remove_config('WINDOWS_CYGWIN', confpath)
+        remove_config('WINDOWS_UBUNTU', confpath)
+        remove_config('WINDOWS_MSYS', confpath)
+        remove_config('WINDOWS_OTHER', confpath)
     else:
         with open(confpath, 'w') as dest:
             with open(defconfig, 'r') as src:
