@@ -24,8 +24,13 @@ examples/camera
   Default resolution is 320x240.  
   This can be modified in the LCD driver code at /sdk/drivers/lcd/ili9340.c
 
-  The LCD is expected to be connected on SPI4 (available on the Spresense expansion board)
-  To change this, modify /sdk/configs/device/lcd-defconfig
+  The LCD is expected to be connected on SPI4 (expansion board) or SPI5 (main board) 
+  
+  To use an LCD connected to the expansion board, set the following option in /sdk/configs/device/camera-defconfig
+  CONFIG_LCD_ON_EXTENSION_BOARD=y
+  
+  To use an LCD connected to the main board (the Spresense itself), set the following option in /sdk/configs/device/camera-defconfig
+  CONFIG_LCD_ON_MAIN_BOARD=y
   
   The example will capture images to an SD card if one is connected to the expansion board, otherwise it will save to flash memory.
   
