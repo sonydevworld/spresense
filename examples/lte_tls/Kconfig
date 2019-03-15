@@ -1,0 +1,75 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_TLS
+	bool "TLS data communication over LTE network example"
+	default n
+	---help---
+		Enable the tls data communication over LTE network example.
+		This example needs config "EXTERNALS_MBEDTLS" or "LTE_NET_MBEDTLS".
+
+if EXAMPLES_LTE_TLS
+
+config EXAMPLES_LTE_TLS_PROGNAME
+	string "Program name"
+	default "lte_tls"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_TLS_PRIORITY
+	int "lte_tls task priority"
+	default 100
+
+config EXAMPLES_LTE_TLS_STACKSIZE
+	int "lte_tls stack size"
+	default 5120
+
+config EXAMPLES_LTE_TLS_CERTS_PATH
+	string "Directory for server certification files"
+	default "/mnt/sd0/CERTS"
+
+config EXAMPLES_LTE_TLS_APN_NAME
+	string "Access Point Name(same as lte_http_get example)"
+	default ""
+
+choice
+	prompt "IP type Selection"
+	default EXAMPLES_LTE_TLS_APN_IPTYPE_IP
+
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IP
+		bool "IPv4"
+
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IPV6
+		bool "IPv6"
+
+	config EXAMPLES_LTE_TLS_APN_IPTYPE_IPV4V6
+		bool "IPv4/v6"
+endchoice
+
+choice
+	prompt "Authentication type Selection"
+	default EXAMPLES_LTE_TLS_APN_AUTHTYPE_NONE
+
+	config EXAMPLES_LTE_TLS_APN_AUTHTYPE_NONE
+		bool "None"
+
+	config EXAMPLES_LTE_TLS_APN_AUTHTYPE_PAP
+		bool "PAP"
+
+	config EXAMPLES_LTE_TLS_APN_AUTHTYPE_CHAP
+		bool "CHAP"
+endchoice
+
+config EXAMPLES_LTE_TLS_APN_USERNAME
+	string "Username used for authentication(same as lte_http_get example)"
+	default ""
+
+config EXAMPLES_LTE_TLS_PASSWD
+	string "Password used for authentication(same as lte_http_get example)"
+	default ""
+
+endif

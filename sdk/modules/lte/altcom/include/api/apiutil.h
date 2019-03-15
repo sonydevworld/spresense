@@ -49,6 +49,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "buffpoolwrapper.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -313,13 +314,15 @@ static inline void altcom_set_finalized(void)
 
 static inline bool altcom_isinit(void)
 {
-  bool is_init;
+  int ret;
 
-  altcom_lock();
-  is_init = g_lte_initialized;
-  altcom_unlock();
+  ret = altcombs_check_poweron_status();
+  if(ret < 0)
+    {
+      return false;
+    }
 
-  return is_init;
+  return true;
 }
 
 static inline void altcom_sock_free_cmdandresbuff(
@@ -353,6 +356,19 @@ static inline bool altcom_sock_alloc_cmdandresbuff(
     }
 
   return true;
+}
+
+static inline void altcom_mbedtls_free_cmdandresbuff(
+  FAR void *cmdbuff, FAR void *resbuff)
+{
+  return altcom_sock_free_cmdandresbuff(cmdbuff, resbuff);
+}
+
+static inline bool altcom_mbedtls_alloc_cmdandresbuff(
+  FAR void **buff, int32_t id, uint16_t bufflen,
+  FAR void **res, uint16_t reslen)
+{
+  return altcom_sock_alloc_cmdandresbuff(buff, id, bufflen, res, reslen);
 }
 
 /****************************************************************************

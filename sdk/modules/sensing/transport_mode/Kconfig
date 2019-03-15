@@ -1,0 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SENSING_TRAM
+	bool "Transport mode"
+	default n
+	---help---
+		Enable support for transport mode.
+
+if SENSING_TRAM
+config SENSING_TRAM_DEBUG_FEATURE
+	bool "Tramsport mode debug feature"
+	default n
+
+if SENSING_TRAM_DEBUG_FEATURE
+
+config SENSING_TRAM_DEBUG_ERROR
+	bool "Tramsport mode debug error"
+	default n
+
+config SENSING_TRAM_DEBUG_INFO
+	bool "Tramsport mode debug info"
+	default n
+
+endif # SENSING_TRAM_DEBUG_FEATURE
+
+endif # SENSING_TRAM

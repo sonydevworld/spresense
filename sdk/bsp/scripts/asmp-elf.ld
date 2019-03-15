@@ -99,16 +99,16 @@ SECTIONS
   .ctors :
     {
       _sctors = . ;
-      *(.ctors)       /* Old ABI:  Unallocated */
-      *(.init_array)  /* New ABI:  Allocated */
+      KEEP(*(.ctors))       /* Old ABI:  Unallocated */
+      KEEP(*(.init_array))  /* New ABI:  Allocated */
       _ectors = . ;
     }
 
   .dtors :
     {
       _sdtors = . ;
-      *(.dtors)       /* Old ABI:  Unallocated */
-      *(.fini_array)  /* New ABI:  Allocated */
+      KEEP(*(.dtors))       /* Old ABI:  Unallocated */
+      KEEP(*(.fini_array))  /* New ABI:  Allocated */
       _edtors = . ;
     }
 
@@ -126,6 +126,8 @@ SECTIONS
       _ebss = ALIGN(4);
 
       __stack_pointer = . + STACK_SIZE ;
+      /* __stack symbol is referred from mkspk tool */
+      __stack = __stack_pointer;
     }
 
     /* Stabs debugging sections.    */

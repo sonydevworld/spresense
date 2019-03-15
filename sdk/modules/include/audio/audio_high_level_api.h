@@ -861,6 +861,44 @@ typedef struct
 
 } AsSetThroughPathParam;
 
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
+
+/** Request Clock Recovery Command (#AUDCMD_CLKRECOVERY) parameter */
+
+typedef struct
+{
+  /*! \brief [in] Handle of OutputMixer */
+
+  uint8_t  player_id;
+
+  int8_t   direction;
+
+  uint32_t times;
+
+} AsPlayerClockRecovery;
+
+/** InitMpp Command (#AUDCMD_INITMPP) parameter */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  AsInitPostProc initpp_param;
+
+} AsInitMediaPlayerPost;
+
+/** SetMpp Command (#AUDCMD_SETMPPPARAM) parameter */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  AsSetPostProc setpp_param;
+
+} AsSetMediaPlayerPost;
+
+#endif
+
 /** Audio command packet */
 
 #if defined(__CC_ARM)
@@ -875,37 +913,25 @@ typedef struct
   union
   {
 #ifdef AS_FEATURE_EFFECTOR_ENABLE
-    /*! \brief [in] for InitMFE
+    /*! \brief [in] for InitMFE (__not supported__)
      * (header.command_code==#AUDCMD_INITMFE)
      */
 
     InitMFEParam init_mfe_param;
 
-    /*! \brief [in] for StartBB
+    /*! \brief [in] for StartBB (__not supported__)
      * (header.command_code==#AUDCMD_STARTBB)
      */
 
     StartBBParam start_bb_param;
 
-    /*! \brief [in] for StopBB
+    /*! \brief [in] for StopBB (__not supported__)
      * (header.command_code==#AUDCMD_STOPBB)
      */
 
     StopBBParam stop_bb_param;
 
-    /*! \brief [in] for InitMPP
-     * (header.command_code==#AUDCMD_INITMPP)
-     */
-
-    InitMPPParam init_mpp_param;
-
-    /*! \brief [in] for SetMPPParam
-     * (header.command_code==#AUDCMD_SETMPPPARAM)
-     */
-
-    SetMPPParam set_mpp_param;
-
-    /*! \brief [in] for SetBaseBandStatus
+    /*! \brief [in] for SetBaseBandStatus (__not supported__)
      * (header.command_code==#AUDCMD_SETBASEBANDSTATUS)
      */
 
@@ -923,11 +949,25 @@ typedef struct
 
     PlayerCommand player;
 
+#endif
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     /*! \brief [in] for Adjust sound period
      * (header.command_code==#AUDCMD_CLKRECOVERY)
      */
 
     AsPlayerClockRecovery clk_recovery_param;
+
+    /*! \brief [in] for InitMPP
+     * (header.command_code==#AUDCMD_INITMPP)
+     */
+
+    AsInitMediaPlayerPost init_mpp_param;
+
+    /*! \brief [in] for SetMPPParam
+     * (header.command_code==#AUDCMD_SETMPPPARAM)
+     */
+
+    AsSetMediaPlayerPost set_mpp_param;
 
 #endif
 #ifdef AS_FEATURE_RECORDER_ENABLE
@@ -945,7 +985,7 @@ typedef struct
 
 #endif
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-    /*! \brief [in] for StratVoiceCommand
+    /*! \brief [in] for StratVoiceCommand (__not supported__)
      * (header.command_code==#AUDCMD_STARTVOICECOMMAND)
      */
 
@@ -958,7 +998,7 @@ typedef struct
 
     InitMicGainParam init_mic_gain_param;
 
-    /*! \brief [in] for InitI2SParam
+    /*! \brief [in] for InitI2SParam (__not supported__)
      * (header.command_code==#AUDCMD_INITI2SPARAM)
      */
 
@@ -970,13 +1010,13 @@ typedef struct
 
     InitOutputSelectParam init_output_select_param;
 
-    /*! \brief [in] for InitDNCParam
+    /*! \brief [in] for InitDNCParam (__not supported__)
      * (header.command_code==#AUDCMD_INITDNCPARAM)
      */
 
     InitDNCParam init_dnc_param;
 
-    /*! \brief [in] for InitClearStereo
+    /*! \brief [in] for InitClearStereo (__not supported__)
      * (header.command_code==#AUDCMD_INITCLEARSTEREO)
      */
 
@@ -1231,7 +1271,7 @@ typedef enum
 
   /*! \brief Postfilter Component ID */
 
-  AS_MODULE_ID_POSTFILTER_CMP,
+  AS_MODULE_ID_POSTPROC_CMP,
   AS_MODULE_ID_NUM,
 } AsModuleId;
 

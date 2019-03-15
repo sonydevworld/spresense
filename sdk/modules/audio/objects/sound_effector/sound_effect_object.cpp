@@ -200,24 +200,19 @@ static void render_error_callback(AudioDrvDmaError *pParam, void *p_requester)
 }
 
 /*--------------------------------------------------------------------*/
-static bool handle_mfe_done_notification(Apu::Wien2ApuCmd *packet)
+static bool handle_mfe_done_notification(MfeCmpltParam *p_cmplt)
 {
-  switch (packet->header.event_type)
+  switch (p_cmplt->event_type)
     {
-      case Apu::InitEvent:
+      case InitEvent:
         break;
-      case Apu::ExecEvent:
+      case ExecEvent:
 #ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
         {
           VoiceRecognitionCommandObject::CommandExecParam_t exec_param;
 
-          exec_param.address = (uint32_t)
-            packet->exec_filter_cmd.exec_mfe_cmd.notification.
-            output_buffer.p_buffer;
-
-          exec_param.size =
-            packet->exec_filter_cmd.exec_mfe_cmd.notification.
-            output_buffer.size;
+          exec_param.address = (uint32_t)p_cmplt->filtered_buffer.p_buffer;
+          exec_param.size    = p_cmplt->filtered_buffer.size;
 
           err_t er =
             MsgLib::send<VoiceRecognitionCommandObject::CommandExecParam_t>
@@ -231,65 +226,53 @@ static bool handle_mfe_done_notification(Apu::Wien2ApuCmd *packet)
 #endif /* #ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND */
         break;
 
-      case Apu::FlushEvent:
+      case StopEvent:
         {
-          FilterComponentParam cmplt;
-          cmplt.filter_type = Apu::MFE;
           err_t er =
-            MsgLib::send<FilterComponentParam>(s_self_dtq,
+            MsgLib::send<FilterCompCmpltParam>(s_self_dtq,
                                                MsgPriNormal,
                                                MSG_AUD_SEF_CMD_CMPLT,
                                                NULL,
-                                               cmplt);
+                                               *(p_cmplt));
 
           F_ASSERT(er == ERR_OK);
         }
         break;
 
-      case Apu::SetParamEvent:
-      case Apu::TuningEvent:
-
+      case SetParamEvent:
+      case TuningEvent:
         break;
     }
   return true;
 }
 
 /*--------------------------------------------------------------------*/
-static bool handle_mfe_post_notification(Apu::Wien2ApuCmd *packet)
+static bool handle_mfe_post_notification(SrcCmpltParam *p_cmplt)
 {
-  switch (packet->header.event_type)
+  switch (p_cmplt->event_type)
     {
-      case Apu::ExecEvent:
+      case ExecEvent:
         {
           /* TODO: Refactor data manage processing after SRC done. */
-          FilterComponentParam cmplt;
-
-          cmplt.filter_type = Apu::MFE;
-
-          cmplt.exec_mfe_param.input_buffer =
-            packet->exec_filter_cmd.input_buffer;
-
-          cmplt.exec_mfe_param.output_buffer =
-            packet->exec_filter_cmd.output_buffer;
 
           err_t er =
-            MsgLib::send<FilterComponentParam>(s_self_dtq,
+            MsgLib::send<FilterCompCmpltParam>(s_self_dtq,
                                                MsgPriNormal,
                                                MSG_AUD_SEF_CMD_FILTER_DATA,
                                                NULL,
-                                               cmplt);
+                                               *(p_cmplt));
 
           F_ASSERT(er == ERR_OK);
         }
         break;
 
-      case Apu::InitEvent:
-      case Apu::FlushEvent:
+      case InitEvent:
+      case StopEvent:
         SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_DSP_ILLEGAL_REPLY);
         return false;
 
-      case Apu::SetParamEvent:
-      case Apu::TuningEvent:
+      case SetParamEvent:
+      case TuningEvent:
         break;
     }
 
@@ -297,18 +280,9 @@ static bool handle_mfe_post_notification(Apu::Wien2ApuCmd *packet)
 }
 
 /*--------------------------------------------------------------------*/
-static bool mfe_done_callback(DspDrvComPrm_t *p_param)
+static bool mfe_done_callback(FilterCompCmpltParam *cmplt)
 {
-  if (DSP_COM_DATA_TYPE_STRUCT_ADDRESS != p_param->type)
-    {
-      SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_DSP_ILLEGAL_REPLY);
-      return false;
-    }
-
-  Apu::Wien2ApuCmd *packet =
-    reinterpret_cast<Apu::Wien2ApuCmd*>(p_param->data.pParam);
-
-  if (packet->init_filter_cmd.filter_type == Apu::MFE)
+  if (cmplt->filter_type == MicFrontEnd)
     {
       /* 16kHz data for voice recognition
        *  | MIC-in 48kHz
@@ -317,9 +291,9 @@ static bool mfe_done_callback(DspDrvComPrm_t *p_param)
        *  | -> here
        */
 
-      return handle_mfe_done_notification(packet);
+      return handle_mfe_done_notification(static_cast<MfeCmpltParam *>(cmplt));
     }
-  else if (packet->init_filter_cmd.filter_type == Apu::SRC)
+  else if (cmplt->filter_type == SampleRateConv)
     {
       /* 48kHz data for I2S-out
        *  | MIC-in 48kHz
@@ -329,7 +303,7 @@ static bool mfe_done_callback(DspDrvComPrm_t *p_param)
        *  | -> here
        */
 
-      return handle_mfe_post_notification(packet);
+      return handle_mfe_post_notification(static_cast<SrcCmpltParam *>(cmplt));
     }
 
   SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_DSP_ILLEGAL_REPLY);
@@ -338,62 +312,39 @@ static bool mfe_done_callback(DspDrvComPrm_t *p_param)
 }
 
 /*--------------------------------------------------------------------*/
-static bool xloud_done_callback(DspDrvComPrm_t *p_param)
+static bool xloud_done_callback(FilterCompCmpltParam *p_cmplt)
 {
-  if (DSP_COM_DATA_TYPE_STRUCT_ADDRESS != p_param->type)
+  switch (p_cmplt->event_type)
     {
-      SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_DSP_ILLEGAL_REPLY);
-      return false;
-    }
-
-  Apu::Wien2ApuCmd *packet =
-    reinterpret_cast<Apu::Wien2ApuCmd*>(p_param->data.pParam);
-
-  switch (packet->header.event_type)
-    {
-      case Apu::InitEvent:
+      case InitEvent:
         break;
-      case Apu::ExecEvent:
+      case ExecEvent:
         {
-          FilterComponentParam cmplt;
-
-          cmplt.filter_type = Apu::XLOUD;
-
-          cmplt.exec_xloud_param.input_buffer =
-            packet->exec_filter_cmd.input_buffer;
-
-          cmplt.exec_xloud_param.output_buffer =
-            packet->exec_filter_cmd.output_buffer;
-
           err_t er =
-            MsgLib::send<FilterComponentParam>(s_self_dtq,
+            MsgLib::send<FilterCompCmpltParam>(s_self_dtq,
                                                MsgPriNormal,
                                                MSG_AUD_SEF_CMD_FILTER_DATA,
                                                NULL,
-                                               cmplt);
+                                               *(p_cmplt));
 
           F_ASSERT(er == ERR_OK);
         }
         break;
 
-      case Apu::FlushEvent:
+      case StopEvent:
         {
-          FilterComponentParam cmplt;
-
-          cmplt.filter_type = Apu::XLOUD;
-
-          err_t er = MsgLib::send<FilterComponentParam>(s_self_dtq,
+          err_t er = MsgLib::send<FilterCompCmpltParam>(s_self_dtq,
                                                         MsgPriNormal,
                                                         MSG_AUD_SEF_CMD_CMPLT,
                                                         NULL,
-                                                        cmplt);
+                                                        *(p_cmplt));
 
           F_ASSERT(er == ERR_OK);
         }
         break;
 
-      case Apu::SetParamEvent:
-      case Apu::TuningEvent:
+      case SetParamEvent:
+      case TuningEvent:
         break;
     }
 
@@ -642,40 +593,79 @@ void SoundEffectObject::act(MsgPacket *msg)
 
   if (m_filter_mode != FILTER_MODE_THROUGH)
     {
-      FilterComponentType filter_mode = FilterComponentTypeNum;
-
-      /* set component filter mode */
-      if (m_filter_mode == FILTER_MODE_MFE)
-        {
-          /* MFE only */
-          filter_mode = MfeOnly;
-        }
-      else if (m_filter_mode == (FILTER_MODE_MFE + FILTER_MODE_MPPEAX))
-        {
-          /* MFE and MPPeax */
-          filter_mode = MppEax;
-        }
-      else if (m_filter_mode == FILTER_MODE_MPPEAX)
+      uint32_t rst = AS_ECODE_OK;
+      uint32_t dsp_inf = 0;
+      
+      if (m_filter_mode == FILTER_MODE_MPPEAX)
         {
           /* MPPeax Only */
-          /* T.B.D. MPP EAX only is nosupport */
+
+          /* T.B.D. MPP EAX only is not supported */
+
           sendAudioCmdCmplt(cmd, AS_ECODE_COMMAND_PARAM_WITH_MPP);
           return;
         }
       else
         {
-          D_ASSERT(0); /* code bug */
+          /*
+           * Case MFE
+           *  * Load/Unload DSP is done by MFEComp
+           *
+           * +--------+ MicIn +-------+      +========+
+           * | SfxObj |--+--->|MFEcomp|----->|        |
+           * +--------+  |    +-------+      | MFESRC |
+           *             |    +-------+      |  DSP   |
+           *             +--->|MPPcomp|----->|        |
+           *            I2SIn +-------+      +========+
+           */
+
+          /*
+           * Case MFE + MPPEAX
+           *
+           * +--------+ MicIn +-------+      +========+
+           * | SfxObj |--+--->|MFEcomp|----->| MFESRC |
+           * +--------+  |    +-------+      +========+
+           *             |    +-------+      +========+
+           *             +--->|MPPcomp|----->| MPPEAX |
+           *            I2SIn +-------+      +========+
+           *
+           */
+
+          FilterComponentType mpp_acttype = FilterComponentTypeNum;
+
+          if (m_filter_mode & FILTER_MODE_MFE)
+            {
+              rst = AS_filter_activate(MicFrontEnd,
+                                       cmd.set_baseband_status_param.dsp_path,
+                                       s_dsp_dtq,
+                                       0,
+                                       &dsp_inf,
+                                       mfe_done_callback,
+                                       &m_mfe_instance);
+
+              /* If MFE is active, use MPP component too. */
+
+              mpp_acttype = MediaPlayerPostAsSub;
+            }
+
+          if (m_filter_mode == (FILTER_MODE_MFE + FILTER_MODE_MPPEAX))
+            {
+              mpp_acttype = MediaPlayerPost;
+            }
+
+          if (mpp_acttype != FilterComponentTypeNum)
+            {
+              rst = AS_filter_activate(mpp_acttype,
+                                       cmd.set_baseband_status_param.dsp_path,
+                                       s_dsp_dtq,
+                                       0,
+                                       &dsp_inf,
+                                       xloud_done_callback,
+                                       &m_mpp_instance);
+            }
         }
 
-      uint32_t rst = AS_ECODE_OK;
-      uint32_t dsp_inf = 0;
-
-      if ((rst = AS_filter_activate(filter_mode,
-                                    cmd.set_baseband_status_param.dsp_path,
-                                    s_dsp_dtq,
-                                    0,
-                                    &dsp_inf))
-          != AS_ECODE_OK)
+      if (rst != AS_ECODE_OK)
         {
           sendAudioCmdCmplt(cmd, rst, dsp_inf);
           return;
@@ -702,33 +692,35 @@ void SoundEffectObject::deact(MsgPacket* msg)
 
   if (m_filter_mode != FILTER_MODE_THROUGH)
     {
-      FilterComponentType filter_mode = FilterComponentTypeNum;
+      FilterComponentType mpp_acttype = FilterComponentTypeNum;
 
-      if (m_filter_mode == FILTER_MODE_MFE)
+      if (m_mfe_instance)
         {
-          /* MFE only */
-          filter_mode = MfeOnly;
-        }
-      else if (m_filter_mode == (FILTER_MODE_MFE + FILTER_MODE_MPPEAX))
-        {
-          /* MFE and MPPeax */
-          filter_mode = MppEax;
-        }
-      else if (m_filter_mode == FILTER_MODE_MPPEAX)
-        {
-          /* MPPeax Only */
-          /* T.B.D. MPP EAX only is nosupport */
-          sendAudioCmdCmplt(cmd, AS_ECODE_COMMAND_PARAM_WITH_MPP);
-        }
-      else
-        {
-          D_ASSERT(0); /* code bug */
+          if (!AS_filter_deactivate(m_mfe_instance, MicFrontEnd))
+            {
+              sendAudioCmdCmplt(cmd, AS_ECODE_DSP_UNLOAD_ERROR);
+              return;
+            }
+
+          m_mfe_instance = NULL;
+
+          mpp_acttype = MediaPlayerPostAsSub;
         }
 
-      if (!AS_filter_deactivate(filter_mode))
+      if (m_mpp_instance)
         {
-          sendAudioCmdCmplt(cmd, AS_ECODE_DSP_UNLOAD_ERROR);
-          return;
+          if (m_filter_mode == (FILTER_MODE_MFE + FILTER_MODE_MPPEAX))
+            {
+              mpp_acttype = MediaPlayerPost;
+            }
+
+          if (!AS_filter_deactivate(m_mpp_instance, mpp_acttype))
+            {
+              sendAudioCmdCmplt(cmd, AS_ECODE_DSP_UNLOAD_ERROR);
+              return;
+            }
+
+          m_mpp_instance = NULL;
         }
     }
 
@@ -830,24 +822,15 @@ void SoundEffectObject::startOnReady(MsgPacket *msg)
 
   if (m_filter_mode != FILTER_MODE_THROUGH)
     {
-      FilterComponentParam filter_param;
-
-      filter_param.filter_type    = Apu::MFE;
-      filter_param.callback       = &mfe_done_callback;
-      filter_param.init_mfe_param = m_init_mfe_param;
-
-      if ((rst = AS_filter_init(filter_param, &dsp_inf))
+      SOUNDFX_DBG("[[ %08x, %08x ]]\n", ((MFEComponent *)m_mfe_instance)->m_dsp_handler, ((MPPComponent *)m_mpp_instance)->m_dsp_handler);
+      if ((rst = AS_filter_init(&m_init_mfe_param, &dsp_inf, m_mfe_instance))
           != AS_ECODE_OK)
         {
           sendAudioCmdCmplt(cmd, rst, dsp_inf);
           return;
         }
 
-      filter_param.filter_type      = Apu::XLOUD;
-      filter_param.callback         = &xloud_done_callback;
-      filter_param.init_xloud_param = m_init_xloud_param;
-
-      if ((rst = AS_filter_init(filter_param, &dsp_inf))
+      if ((rst = AS_filter_init(&m_init_xloud_param, &dsp_inf, m_mpp_instance))
           != AS_ECODE_OK)
         {
           sendAudioCmdCmplt(cmd, rst, dsp_inf);
@@ -975,12 +958,12 @@ void SoundEffectObject::input(CaptureDataParam& param)
         }
       else
         {
-          FilterComponentParam render_param;
+          FilterCompCmpltParam render_param;
 
-          render_param.exec_mfe_param.output_buffer.p_buffer =
+          render_param.out_buffer.p_buffer =
             reinterpret_cast<unsigned long*>(allocI2SOutBuf());
 
-          render_param.exec_mfe_param.output_buffer.size =
+          render_param.out_buffer.size =
             param.buf.sample * m_i2s_out_ch_num * AC_IN_BYTE_LEN;
 
           /* case of MFE is through */
@@ -988,18 +971,18 @@ void SoundEffectObject::input(CaptureDataParam& param)
             {
               selectCh4to2
               ((uint16_t *)param.buf.cap_mh.getPa(),
-               (uint16_t *)render_param.exec_mfe_param.output_buffer.p_buffer,
+               (uint16_t *)render_param.out_buffer.p_buffer,
                (uint32_t)param.buf.sample);
             }
           else
             {
               convertCh1to2
               ((uint16_t *)param.buf.cap_mh.getPa(),
-               (uint16_t *)render_param.exec_mfe_param.output_buffer.p_buffer,
+               (uint16_t *)render_param.out_buffer.p_buffer,
                (uint32_t)param.buf.sample);
             }
 
-          execI2SOutRender(render_param);
+          execI2SOutRender(&render_param);
 
           /* stop process */
           if (m_state.get() != SoundFXRunState)
@@ -1032,16 +1015,15 @@ void SoundEffectObject::input(CaptureDataParam& param)
       else
         {
           /* case of MFE is through */
-          FilterComponentParam render_param;
+          FilterCompCmpltParam render_param;
 
-          render_param.exec_xloud_param.output_buffer.p_buffer =
+          render_param.out_buffer.p_buffer =
             reinterpret_cast<unsigned long*>(allocHpOutBuf());
 
-          render_param.exec_xloud_param.output_buffer.size =
+          render_param.out_buffer.size =
             param.buf.sample * MAX_I2S_IN_CH_NUM * I2S_IN_BYTE_LEN;
 
-          if (render_param.exec_xloud_param.output_buffer.size
-              > MAX_HP_OUT_PCM_BUF_SIZE)
+          if (render_param.out_buffer.size > MAX_HP_OUT_PCM_BUF_SIZE)
             {
               /* It is impossible to enter here, but it becomes an Assertion
                * if you carelessly change the code
@@ -1051,11 +1033,11 @@ void SoundEffectObject::input(CaptureDataParam& param)
               return;
             }
 
-          memcpy(render_param.exec_xloud_param.output_buffer.p_buffer,
+          memcpy(render_param.out_buffer.p_buffer,
                  param.buf.cap_mh.getPa(),
-                 render_param.exec_xloud_param.output_buffer.size);
+                 render_param.out_buffer.size);
 
-          execHpSpOutRender(render_param);
+          execHpSpOutRender(&render_param);
 
           /* stop process */
 
@@ -1166,26 +1148,27 @@ void SoundEffectObject::inputOnStopping(MsgPacket *msg)
 /*--------------------------------------------------------------------*/
 void SoundEffectObject::filterRstOnActive(MsgPacket *msg)
 {
-  FilterComponentParam param = msg->moveParam<FilterComponentParam>();
+  FilterCompCmpltParam param = msg->moveParam<FilterCompCmpltParam>();
 
-  if (param.filter_type == Apu::MFE)
+  if (param.filter_type == SampleRateConv)
     {
       /* Send MFE processed data to I2S-out and voice recognition object. */
 
       freeMfeInBuf();
 
-      execI2SOutRender(param);
+      execI2SOutRender(&param);
     }
-  else if (param.filter_type == Apu::XLOUD)
+  else if (param.filter_type == MediaPlayerPost)
     {
       /* Send MPP processed data to HP. */
 
       freeMppInBuf();
 
-      execHpSpOutRender(param);
+      execHpSpOutRender(&param);
     }
   else
     {
+      printf("ft!!  %0x\n", param.filter_type);
       SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
     }
 }
@@ -1193,16 +1176,15 @@ void SoundEffectObject::filterRstOnActive(MsgPacket *msg)
 /*--------------------------------------------------------------------*/
 void SoundEffectObject::filterRstOnStopping(MsgPacket *msg)
 {
-  FilterComponentParam param = msg->moveParam<FilterComponentParam>();
-  FilterComponentParam stopParam;
+  FilterCompCmpltParam param = msg->moveParam<FilterCompCmpltParam>();
 
   /* TODO: Refactor process sequence.
    * It has potential of using freed memory in APU.
    */
 
-  if (param.filter_type == Apu::MFE)
+  if (param.filter_type == SampleRateConv)
     {
-      execI2SOutRender(param);
+      execI2SOutRender(&param);
 
       if (m_mfe_in_buf_mh_que.top().is_end)
         {
@@ -1214,17 +1196,16 @@ void SoundEffectObject::filterRstOnStopping(MsgPacket *msg)
               return;
             }
 
-          stopParam.filter_type = Apu::MFE;
-          stopParam.callback    = &mfe_done_callback;
+          StopMFEParam stopParam;
 
-          AS_filter_stop(stopParam);
+          AS_filter_stop(&stopParam, m_mfe_instance);
         }
 
       freeMfeInBuf();
     }
-  else if (param.filter_type == Apu::XLOUD)
+  else if (param.filter_type == MediaPlayerPost)
     {
-      execHpSpOutRender(param);
+      execHpSpOutRender(&param);
 
       if (m_mpp_in_buf_mh_que.top().is_end)
         {
@@ -1236,10 +1217,9 @@ void SoundEffectObject::filterRstOnStopping(MsgPacket *msg)
               return;
             }
 
-          stopParam.filter_type = Apu::XLOUD;
-          stopParam.callback    = &xloud_done_callback;
+          StopXLOUDParam stopParam;
 
-          AS_filter_stop(stopParam);
+          AS_filter_stop(&stopParam, m_mpp_instance);
         }
 
       freeMppInBuf();
@@ -1251,7 +1231,7 @@ void SoundEffectObject::filterDoneCmplt(MsgPacket *msg)
 {
   /* If state becames "Sttopping", last data will discarded. */
 
-  FilterComponentParam param= msg->moveParam<FilterComponentParam>();
+  FilterCompCmpltParam param= msg->moveParam<FilterCompCmpltParam>();
   (void)param;
 }
 
@@ -1318,7 +1298,6 @@ void SoundEffectObject::freeOutBuf(cxd56_audio_dma_t dmac_select_id)
 void SoundEffectObject::setParam(MsgPacket *msg)
 {
   AudioCommand cmd = msg->moveParam<AudioCommand>();
-  FilterComponentParam filter_param;
 
   bool result = false;
 
@@ -1328,34 +1307,36 @@ void SoundEffectObject::setParam(MsgPacket *msg)
   switch(cmd.header.sub_code)
     {
       case SUB_SETMPP_COMMON:
-        filter_param.filter_type = Apu::XLOUD;
-        filter_param.callback = &xloud_done_callback;
-        filter_param.set_mpp_param.set_mpp.param_idx = cmd.header.sub_code;
+        {
+          SetXLOUDParam filter_param;
+          filter_param.param_idx = cmd.header.sub_code;
 
-        result = AS_filter_setparam(filter_param);
+          result = AS_filter_setparam(&filter_param, m_mfe_instance);
 
-        if (!result)
-          {
-            sendAudioCmdCmplt(cmd, AS_ECODE_QUEUE_OPERATION_ERROR);
-            return;
-          }
-        break;
+          if (!result)
+            {
+              sendAudioCmdCmplt(cmd, AS_ECODE_QUEUE_OPERATION_ERROR);
+              return;
+            }
+
+          break;
+        }
 
       case SUB_SETMPP_XLOUD:
-        filter_param.filter_type = Apu::XLOUD;
-        filter_param.callback = &xloud_done_callback;
-        filter_param.set_mpp_param.set_mpp.param_idx = cmd.header.sub_code;
-        filter_param.set_mpp_param.set_mpp.xloud_vol =
-          cmd.set_mpp_param.mpp_xloud_set.xloud_vol;
+        {
+          SetXLOUDParam filter_param;
+          filter_param.param_idx = cmd.header.sub_code;
+          filter_param.xloud_vol = cmd.set_mpp_param.mpp_xloud_set.xloud_vol;
 
-        result = AS_filter_setparam(filter_param);
+          result = AS_filter_setparam(&filter_param, m_mpp_instance);
 
-        if (!result)
-          {
-            sendAudioCmdCmplt(cmd, AS_ECODE_QUEUE_OPERATION_ERROR);
-            return;
-          }
-        break;
+          if (!result)
+            {
+              sendAudioCmdCmplt(cmd, AS_ECODE_QUEUE_OPERATION_ERROR);
+              return;
+            }
+          break;
+        }
 
       default:
         sendAudioCmdCmplt(cmd, AS_ECODE_COMMAND_CODE_ERROR);
@@ -1404,12 +1385,12 @@ uint32_t SoundEffectObject::initMfe(const AudioCommand& cmd)
     }
 
   m_init_mfe_param.proc_mode = cmd.init_mfe_param.mfe_mode;
-  m_init_mfe_param.mic_channel_num = cmd.init_mfe_param.mic_channel_num;
+  m_init_mfe_param.ch_num    = cmd.init_mfe_param.mic_channel_num;
   m_init_mfe_param.ref_channel_num = cmd.init_mfe_param.ref_channel_num;
-  m_init_mfe_param.sampling_rate = cmd.init_mfe_param.input_fs;
-  m_init_mfe_param.sample_num =
+  m_init_mfe_param.in_fs = cmd.init_mfe_param.input_fs;
+  m_init_mfe_param.sample_per_frame =
     MAX_CAPTURE_SAMPLE_NUM
-    * m_init_mfe_param.sampling_rate
+    * m_init_mfe_param.in_fs
     / AudioFs2ApuValue[AudFs_48000];
 
   m_init_mfe_param.use_aec =
@@ -1471,8 +1452,8 @@ uint32_t SoundEffectObject::initMpp(const AudioCommand& cmd)
               cmd.init_mpp_param.xloud_mode,
               cmd.init_mpp_param.coef_mode);
 
-  m_init_xloud_param.channel_num = cmd.init_mpp_param.output_channel_num;
-  m_init_xloud_param.sample = MAX_CAPTURE_SAMPLE_NUM;
+  m_init_xloud_param.ch_num = cmd.init_mpp_param.output_channel_num;
+  m_init_xloud_param.sample_per_frame = MAX_CAPTURE_SAMPLE_NUM;
 
   m_i2s_out_ch_num = cmd.init_mpp_param.output_channel_num;
 
@@ -1480,7 +1461,7 @@ uint32_t SoundEffectObject::initMpp(const AudioCommand& cmd)
     {
       case AS_SAMPLINGRATE_48000:
         /* fixed value */
-        m_init_xloud_param.input_sampling_rate =
+        m_init_xloud_param.in_fs =
           cmd.init_mpp_param.output_fs;
         break;
 
@@ -1492,8 +1473,8 @@ uint32_t SoundEffectObject::initMpp(const AudioCommand& cmd)
   m_init_xloud_param.mode =
     static_cast<Apu::AudioXloudMode>(cmd.init_mpp_param.xloud_mode);
 
-  m_init_xloud_param.in_pcm_bit_len = Apu::AudPcmFormatInt16;
-  m_init_xloud_param.out_pcm_bit_len = Apu::AudPcmFormatInt16;
+  m_init_xloud_param.in_bytelength = 2;
+  m_init_xloud_param.out_bytelength = 2;
   m_init_xloud_param.p_xloud_coef_image =
     reinterpret_cast<void *>(cmd.init_mpp_param.xloud_coef_table);
 
@@ -1514,9 +1495,9 @@ uint32_t SoundEffectObject::initMpp(const AudioCommand& cmd)
 }
 
 /*--------------------------------------------------------------------*/
-void SoundEffectObject::execI2SOutRender(FilterComponentParam& param)
+void SoundEffectObject::execI2SOutRender(FilterCompCmpltParam *param)
 {
-  if (param.exec_mfe_param.output_buffer.p_buffer == NULL)
+  if (param->out_buffer.p_buffer == NULL)
     {
       SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return;
@@ -1525,8 +1506,8 @@ void SoundEffectObject::execI2SOutRender(FilterComponentParam& param)
    /* Note: I2S-out is support max 2ch. */
   if (!AS_exec_renderer
         (m_i2s_render_comp_handler,
-        (void*)(param.exec_mfe_param.output_buffer.p_buffer),
-        param.exec_mfe_param.output_buffer.size 
+        (void*)(param->out_buffer.p_buffer),
+        param->out_buffer.size 
           / m_i2s_out_ch_num 
           / AC_IN_BYTE_LEN,
         true))
@@ -1536,9 +1517,9 @@ void SoundEffectObject::execI2SOutRender(FilterComponentParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-void SoundEffectObject::execHpSpOutRender(FilterComponentParam& param)
+void SoundEffectObject::execHpSpOutRender(FilterCompCmpltParam *param)
 {
-  if (param.exec_xloud_param.output_buffer.p_buffer == NULL)
+  if (param->out_buffer.p_buffer == NULL)
     {
       SOUNDFX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return;
@@ -1548,8 +1529,8 @@ void SoundEffectObject::execHpSpOutRender(FilterComponentParam& param)
 
   if (!AS_exec_renderer
         (m_hp_render_comp_handler,
-        (void*)(param.exec_xloud_param.output_buffer.p_buffer),
-        param.exec_xloud_param.output_buffer.size / 2 / I2S_IN_BYTE_LEN,
+        (void*)(param->out_buffer.p_buffer),
+        param->out_buffer.size / 2 / I2S_IN_BYTE_LEN,
         true))
     {
       return;
@@ -1561,27 +1542,25 @@ void SoundEffectObject::execMfe(MemMgrLite::MemHandle mh,
                                 int32_t sample,
                                 bool is_end)
 {
-  FilterComponentParam param;
+  ExecMFEParam param;
 
-  param.filter_type = Apu::MFE;
-  param.callback = &mfe_done_callback;
-
-  param.exec_mfe_param.input_buffer.p_buffer =
+  param.in_buffer.p_buffer =
     reinterpret_cast<unsigned long*>(mh.getPa());
 
-  param.exec_mfe_param.input_buffer.size =
+  param.in_buffer.size =
     sample * m_mic_in_ch_num * AC_IN_BYTE_LEN;
 
-  param.exec_mfe_param.output_buffer.p_buffer =
+  param.out_buffer.p_buffer =
     reinterpret_cast<unsigned long*>(allocI2SOutBuf());
 
-  param.exec_mfe_param.output_buffer.size = 0;
-  param.exec_mfe_param.notification_buffer.p_buffer =
+  param.out_buffer.size = 0;
+
+  param.notification_buffer.p_buffer =
     reinterpret_cast<unsigned long*>(allocMfeOutBuf());
 
-  param.exec_mfe_param.notification_buffer.size = 0;
+  param.notification_buffer.size = 0;
 
-  AS_filter_exec(param);
+  AS_filter_exec(&param, m_mfe_instance);
 
   /* Copy MH from MIC-captured data to mfe-in data. */
 
@@ -1605,22 +1584,20 @@ void SoundEffectObject::execMpp(MemMgrLite::MemHandle mh,
    * Next, next request I2S-in caputure command.
    */
 
-  FilterComponentParam param;
-  param.filter_type = Apu::XLOUD;
-  param.callback = &xloud_done_callback;
+  ExecXLOUDParam param;
 
-  param.exec_xloud_param.input_buffer.p_buffer =
+  param.in_buffer.p_buffer =
     reinterpret_cast<unsigned long*>(mh.getPa());
 
-  param.exec_xloud_param.input_buffer.size =
+  param.in_buffer.size =
     sample * m_i2s_in_ch_num * I2S_IN_BYTE_LEN;
 
-  param.exec_xloud_param.output_buffer.p_buffer =
+  param.out_buffer.p_buffer =
     reinterpret_cast<unsigned long*>(allocHpOutBuf());
 
-  param.exec_xloud_param.output_buffer.size = 0;
+  param.out_buffer.size = 0;
 
-  AS_filter_exec(param);
+  AS_filter_exec(&param, m_mpp_instance);
 
   /* Copy MH from I2S-captured data to mpp-in data. */
 

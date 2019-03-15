@@ -165,23 +165,17 @@ PM_LoadImage:
     mov     r12, pc
     b       1b
 
-    .global	PM_LoadImageToAddress
-    .thumb_func
-PM_LoadImageToAddress:
-    mov     r12, pc
-    b       1b
+    /* PM_LoadImageToAddress */
+    nop
+    nop
 
-    .global	PM_RamControlByAddress
-    .thumb_func
-PM_RamControlByAddress:
-    mov     r12, pc
-    b       1b
+    /* PM_RamControlByAddress */
+    nop
+    nop
 
-    .global	PM_ChangeClock
-    .thumb_func
-PM_ChangeClock:
-    mov     r12, pc
-    b       1b
+    /* PM_ChangeClock */
+    nop
+    nop
 
     .global	PM_PmicControl
     .thumb_func
@@ -189,23 +183,17 @@ PM_PmicControl:
     mov     r12, pc
     b       1b
 
-    .global	PM_BootCpu
-    .thumb_func
-PM_BootCpu:
-    mov     r12, pc
-    b       1b
+    /* PM_BootCpu */
+    nop
+    nop
 
-    .global	PM_BootCpuWithWaitMode
-    .thumb_func
-PM_BootCpuWithWaitMode:
-    mov     r12, pc
-    b       1b
+    /* PM_BootCpuWithWaitMode */
+    nop
+    nop
 
-    .global	PM_GetClock
-    .thumb_func
-PM_GetClock:
-    mov     r12, pc
-    b       1b
+    /* PM_GetClock */
+    nop
+    nop
 
     .section	.modulelist, "ax"
     .align	2
@@ -241,83 +229,57 @@ _modulelist_power_mgr:
     .align	2
 3:
 
-    .global	FM_GetRegistryValue
-    .thumb_func
-FM_GetRegistryValue:
-    mov     r12, pc
-    b       1b
+    /* FM_GetRegistryValue */
+    nop
+    nop
 
-    .global	FM_SetRegistryValue
-    .thumb_func
-FM_SetRegistryValue:
-    mov     r12, pc
-    b       1b
+    /* FM_SetRegistryValue */
+    nop
+    nop
 
-    .global	FM_SetRegistryValueList
-    .thumb_func
-FM_SetRegistryValueList:
-    mov     r12, pc
-    b       1b
+    /* FM_SetRegistryValueList */
+    nop
+    nop
 
-    .global	FM_DeleteRegistryKey
-    .thumb_func
-FM_DeleteRegistryKey:
-    mov     r12, pc
-    b       1b
+    /* FM_DeleteRegistryKey */
+    nop
+    nop
 
-    .global	FM_GenerateRegistryKey
-    .thumb_func
-FM_GenerateRegistryKey:
-    mov     r12, pc
-    b       1b
+    /* FM_GenerateRegistryKey */
+    nop
+    nop
 
-    .global	FM_Sync
-    .thumb_func
-FM_Sync:
-    mov     r12, pc
-    b       1b
+    /* FM_Sync */
+    nop
+    nop
 
-    .global	FM_FileOpen
-    .thumb_func
-FM_FileOpen:
-    mov     r12, pc
-    b       1b
+    /* FM_FileOpen */
+    nop
+    nop
 
-    .global	FM_FileClose
-    .thumb_func
-FM_FileClose:
-    mov     r12, pc
-    b       1b
+    /* FM_FileClose */
+    nop
+    nop
 
-    .global	FM_FileRead
-    .thumb_func
-FM_FileRead:
-    mov     r12, pc
-    b       1b
+    /* FM_FileRead */
+    nop
+    nop
 
-    .global	FM_FileWrite
-    .thumb_func
-FM_FileWrite:
-    mov     r12, pc
-    b       1b
+    /* FM_FileWrite */
+    nop
+    nop
 
-    .global	FM_FileSeek
-    .thumb_func
-FM_FileSeek:
-    mov     r12, pc
-    b       1b
+    /* FM_FileSeek */
+    nop
+    nop
 
-    .global	FM_FileFlush
-    .thumb_func
-FM_FileFlush:
-    mov     r12, pc
-    b       1b
+    /* FM_FileFlush */
+    nop
+    nop
 
-    .global	FM_FileDelete
-    .thumb_func
-FM_FileDelete:
-    mov     r12, pc
-    b       1b
+    /* FM_FileDelete */
+    nop
+    nop
 
     .global	FM_RawWrite
     .thumb_func
@@ -337,29 +299,21 @@ FM_RawEraseSector:
     mov     r12, pc
     b       1b
 
-    .global	FM_FileRename
-    .thumb_func
-FM_FileRename:
-    mov     r12, pc
-    b       1b
+    /* FM_FileRename */
+    nop
+    nop
 
-    .global	FM_FileGetAttr
-    .thumb_func
-FM_FileGetAttr:
-    mov     r12, pc
-    b       1b
+    /* FM_FileGetAttr */
+    nop
+    nop
 
-    .global	FM_FileSetAttr
-    .thumb_func
-FM_FileSetAttr:
-    mov     r12, pc
-    b       1b
+    /* FM_FileSetAttr */
+    nop
+    nop
 
-    .global	FM_FileClearAttr
-    .thumb_func
-FM_FileClearAttr:
-    mov     r12, pc
-    b       1b
+    /* FM_FileClearAttr */
+    nop
+    nop
 
     .global	FM_RawVerifyWrite
     .thumb_func

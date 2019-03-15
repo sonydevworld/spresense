@@ -54,6 +54,7 @@
  * 3322 2222 2222 1111 1111 1100 0000 0000
  * 1098 7654 3210 9876 5432 1098 7654 3210
  * ---- ---- ---- ---- ---- ---- ---- ----
+ * .... .... .... ..B. .... .... .... .... Both detect mode
  * .... .... .... ...T .... .... .... .... Toggle detect mode
  * .... .... .... .... .... .... .... N... Noise Filter
  * .... .... .... .... .... .... .... .YYY Polarity
@@ -74,6 +75,9 @@
 #define GPIOINT_PSEUDO_EDGE_FALL    (GPIOINT_LEVEL_LOW | \
                                      GPIOINT_TOGGLE_MODE_MASK)
                                         /* Falling Edge without clear */
+#define GPIOINT_PSEUDO_EDGE_BOTH    (GPIOINT_TOGGLE_MODE_MASK | \
+                                     GPIOINT_TOGGLE_BOTH_MASK)
+                                        /* Both Edge without clear */
 
 /* GPIO Interrupt Noise Filter Definitions */
 
@@ -83,6 +87,7 @@
 /* Use Pseudo Edge Interrupt */
 
 #define GPIOINT_TOGGLE_MODE_MASK        (1u << 16)
+#define GPIOINT_TOGGLE_BOTH_MASK        (1u << 17)
 
 /****************************************************************************
  * Public Types

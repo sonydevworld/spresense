@@ -154,7 +154,7 @@ private:
   static RstProc RstProcTbl[1][AS_MNG_STATUS_NUM];
 
   void run(void);
-  void parse(FAR MsgPacket *);
+  void parse(FAR MsgPacket *, FAR MsgQueBlock *);
 
   void illegal(AudioCommand &cmd);
   void ignore(AudioCommand &cmd);

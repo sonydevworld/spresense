@@ -67,33 +67,6 @@
 
 /****************************************************************************
  * Name: getaddrinfo
- *
- * Description:
- *   Given node and service, which identify an Internet host and a service,
- *   getaddrinfo() returns one or more addrinfo structures, each of
- *   which contains an Internet address that can be specified in a call to
- *   bind() or connect(). The getaddrinfo() is reentrant
- *   and allows programs to eliminate IPv4-versus-IPv6 dependencies. 
- *
- * Parameters:
- *   nodename - Specifies either a numerical network address, or a network
- *              hostname, whose network addresses are looked up and resolved
- *   servname - Sets the port in each returned address structure
- *   hints - Points to an addrinfo structure that specifies criteria for
- *           selecting the socket address structures returned in the list
- *           pointed to by res
- *   res - Pointer to the start of the list
- *
- * Returned Value:
- *  getaddrinfo() returns 0 if it succeeds, or one of the following
- *  nonzero error codes:
- *
- *     EAI_NONAME
- *     EAI_SERVICE
- *     EAI_FAIL
- *     EAI_MEMORY
- *     EAI_FAMILY
- *
  ****************************************************************************/
 
 int getaddrinfo(const char *nodename, const char *servname,

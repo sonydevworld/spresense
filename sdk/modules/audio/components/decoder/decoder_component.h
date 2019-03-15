@@ -139,7 +139,7 @@ bool AS_decode_deactivate(void *p_instance);
 } /* extern "C" */
 
 
-class DecoderComponent : public ComponentCommon
+class DecoderComponent : public ComponentCommon<Apu::InternalResult>
 {
 public:
   DecoderComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid)

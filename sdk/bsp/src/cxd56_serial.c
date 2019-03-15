@@ -167,10 +167,6 @@ static const struct uart_ops_s g_uart2_ops =
 
 /* I/O buffers */
 
-#ifdef CONFIG_CXD56_UART0
-static char g_uart0rxbuffer[CONFIG_UART0_RXBUFSIZE];
-static char g_uart0txbuffer[CONFIG_UART0_TXBUFSIZE];
-#endif
 #ifdef CONFIG_CXD56_UART1
 static char g_uart1rxbuffer[CONFIG_UART1_RXBUFSIZE];
 static char g_uart1txbuffer[CONFIG_UART1_TXBUFSIZE];
@@ -178,38 +174,6 @@ static char g_uart1txbuffer[CONFIG_UART1_TXBUFSIZE];
 #ifdef CONFIG_CXD56_UART2
 static char g_uart2rxbuffer[CONFIG_UART2_RXBUFSIZE];
 static char g_uart2txbuffer[CONFIG_UART2_TXBUFSIZE];
-#endif
-
-/* This describes the state of the CXD56xx uart0 port. */
-
-#ifdef CONFIG_CXD56_UART0
-static struct up_dev_s g_uart0priv =
-{
-  .uartbase  = CXD56_UART0_BASE,
-  .basefreq  = BOARD_UART0_BASEFREQ,
-  .baud      = CONFIG_UART0_BAUD,
-  .id        = 0,
-  .irq       = CXD56_IRQ_UART0,
-  .parity    = CONFIG_UART0_PARITY,
-  .bits      = CONFIG_UART0_BITS,
-  .stopbits2 = CONFIG_UART0_2STOP,
-};
-
-static uart_dev_t g_uart0port =
-{
-  .recv =
-    {
-      .size   = CONFIG_UART0_RXBUFSIZE,
-      .buffer = g_uart0rxbuffer,
-    },
-  .xmit =
-    {
-      .size   = CONFIG_UART0_TXBUFSIZE,
-      .buffer = g_uart0txbuffer,
-    },
-  .ops  = &g_uart_ops,
-  .priv = &g_uart0priv,
-};
 #endif
 
 /* This describes the state of the CXD56xx uart1 port. */
@@ -242,6 +206,7 @@ static uart_dev_t g_uart1port =
   .ops  = &g_uart_ops,
   .priv = &g_uart1priv,
 };
+#  define TTYS0_DEV g_uart1port /* UART1=ttyS0 */
 #endif
 
 /* This describes the state of the CXD56xx uart1 port. */
@@ -281,61 +246,10 @@ static uart_dev_t g_uart2port =
 /* Which UART with be tty0/console and which tty1? tty2? tty3? */
 
 #ifdef HAVE_CONSOLE
-#  if defined(CONFIG_UART0_SERIAL_CONSOLE)
-#    define CONSOLE_DEV     g_uart0port /* UART0=console */
-#    define TTYS0_DEV       g_uart0port /* UART0=ttyS0 */
-#    ifdef CONFIG_CXD56_UART1
-#      define TTYS1_DEV     g_uart1port /* UART0=ttyS0;UART1=ttyS1 */
-#      ifdef CONFIG_CXD56_UART2
-#        define TTYS2_DEV   g_uart2port /* UART0=ttyS0;UART1=ttyS1;UART2=ttyS2 */
-#      endif
-#    else
-#      ifdef CONFIG_CXD56_UART2
-#        define TTYS1_DEV   g_uart2port /* UART0=ttyS0;UART2=ttyS1;No ttyS3 */
-#      endif
-#    endif
-#  elif defined(CONFIG_UART1_SERIAL_CONSOLE)
+#  if defined(CONFIG_UART1_SERIAL_CONSOLE)
 #    define CONSOLE_DEV     g_uart1port /* UART1=console */
-#    define TTYS0_DEV       g_uart1port /* UART1=ttyS0 */
-#    ifdef CONFIG_CXD56_UART0
-#      define TTYS1_DEV     g_uart0port /* UART1=ttyS0;UART0=ttyS1 */
-#      ifdef CONFIG_CXD56_UART2
-#        define TTYS2_DEV   g_uart2port /* UART1=ttyS0;UART0=ttyS1;UART2=ttyS2 */
-#      endif
-#    else
-#      ifdef CONFIG_CXD56_UART2
-#        define TTYS1_DEV   g_uart2port /* UART1=ttyS0;UART2=ttyS1 */
-#      else
-#        undef TTYS2_DEV                /* No ttyS2 */
-#      endif
-#    endif
 #  elif defined(CONFIG_UART2_SERIAL_CONSOLE)
 #    define CONSOLE_DEV     g_uart2port /* UART2=console */
-#    define TTYS0_DEV       g_uart2port /* UART2=ttyS0 */
-#    ifdef CONFIG_CXD56_UART0
-#      define TTYS1_DEV     g_uart0port /* UART2=ttyS0;UART0=ttyS1 */
-#      ifdef CONFIG_CXD56_UART1
-#        define TTYS2_DEV   g_uart1port /* UART2=ttyS0;UART0=ttyS1;UART1=ttyS2 */
-#      endif
-#    else
-#      ifdef CONFIG_CXD56_UART1
-#        define TTYS1_DEV   g_uart1port /* UART2=ttyS0;UART1=ttyS1 */
-#      endif
-#    endif
-#  endif
-#else                                   /* No console */
-#  define TTYS0_DEV         g_uart0port /* UART0=ttyS0 */
-#  ifdef CONFIG_CXD56_UART1
-#    define TTYS1_DEV       g_uart1port /* UART0=ttyS0;UART1=ttyS1 */
-#    ifdef CONFIG_CXD56_UART2
-#      define TTYS2_DEV     g_uart2port /* UART0=ttyS0;UART1=ttyS1;UART2=ttyS2 */
-#    endif
-#  else
-#    ifdef CONFIG_CXD56_UART2
-#      define TTYS1_DEV     g_uart2port /* UART0=ttyS0;UART2=ttyS1;No ttyS3 */
-#    else
-#      undef TTYS2_DEV                  /* No ttyS2 */
-#    endif
 #  endif
 #endif /* HAVE_CONSOLE */
 
@@ -1028,9 +942,6 @@ void up_serialinit(void)
 #endif
 #ifdef TTYS0_DEV
   (void)uart_register("/dev/ttyS0", &TTYS0_DEV);
-#endif
-#ifdef TTYS1_DEV
-  (void)uart_register("/dev/ttyS1", &TTYS1_DEV);
 #endif
 #ifdef TTYS2_DEV
   (void)uart_register("/dev/ttyS2", &TTYS2_DEV);

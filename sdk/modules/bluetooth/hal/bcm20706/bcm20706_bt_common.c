@@ -377,6 +377,7 @@ static int bcm20706_bt_enable(bool enable)
     }
   else
     {
+      btUartFinalization();
       btRecvTaskEnd();
       board_bcm20706_power_control(false);
       /* Workaround for BT Hot Sleep Issue. After it is resolved, wakelock will be removed */
@@ -576,7 +577,7 @@ static int bcm20706_bt_un_bond(BT_ADDR *addr)
 
   if (ret != BT_SUCCESS)
     {
-      DBG_LOG_DEBUG("unbond failed.");
+      DBG_LOG_DEBUG("unbond failed(%d).\n", ret);
       return ret;
     }
 

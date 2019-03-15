@@ -77,10 +77,6 @@ struct recv_req_s
 
 /****************************************************************************
  * Name: recv_request
- *
- * Description:
- *   Send ALTCOM_RECV_REQ.
- *
  ****************************************************************************/
 
 static int32_t recv_request(FAR struct altcom_socket_s *fsock,
@@ -171,20 +167,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_recv
- *
- * Description:
- *   The altcom_recv() call is identical to altcom_recvfrom() with a NULL
- *   from parameter.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Buffer to receive data
- *   len      Length of buffer
- *   flags    Receive flags
- *
- * Returned Value:
- *  (see recvfrom)
- *
  ****************************************************************************/
 
 int altcom_recv(int sockfd, void *buf, size_t len, int flags)
@@ -196,10 +178,12 @@ int altcom_recv(int sockfd, void *buf, size_t len, int flags)
   struct recv_req_s          req;
   FAR struct altcom_timeval  *recvtimeo;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

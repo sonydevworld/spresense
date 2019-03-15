@@ -54,10 +54,34 @@
  *   Enables support for the BMI160 driver
  */
 
+/* Power mode */
+
+#define BMI160_PM_SUSPEND     (0x00)
+#define BMI160_PM_NORMAL      (0x01)
+#define BMI160_PM_LOWPOWER    (0x02)
+#define BMI160_PM_FASTSTARTUP (0x03)
+
+/* Output data rate */
+
+#define BMI160_ACCEL_ODR_0_78HZ (0x01)
+#define BMI160_ACCEL_ODR_1_56HZ (0x02)
+#define BMI160_ACCEL_ODR_3_12HZ (0x03)
+#define BMI160_ACCEL_ODR_6_25HZ (0x04)
+#define BMI160_ACCEL_ODR_12_5HZ (0x05)
+#define BMI160_ACCEL_ODR_25HZ   (0x06)
+#define BMI160_ACCEL_ODR_50HZ   (0x07)
+#define BMI160_ACCEL_ODR_100HZ  (0x08)
+#define BMI160_ACCEL_ODR_200HZ  (0x09)
+#define BMI160_ACCEL_ODR_400HZ  (0x0A)
+#define BMI160_ACCEL_ODR_800HZ  (0x0B)
+#define BMI160_ACCEL_ODR_1600HZ (0x0C)
+
 /* IOCTL Commands ***************************************************************************/
 
 #define SNIOC_ENABLESC     _SNIOC(0x0001) /* Arg: uint8_t value */
 #define SNIOC_READSC       _SNIOC(0x0002) /* Arg: int16_t* pointer */
+#define SNIOC_SETACCPM     _SNIOC(0x0003) /* Arg: uint8_t value */
+#define SNIOC_SETACCODR    _SNIOC(0x0004) /* Arg: uint8_t value */
 
 /****************************************************************************
  * Public Types

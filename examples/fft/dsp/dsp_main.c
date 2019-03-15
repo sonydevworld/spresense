@@ -37,6 +37,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <sdk/config.h>
+
 #include <errno.h>
 #include <stdlib.h>
 
@@ -69,14 +71,19 @@
 #define DECLARE_RPCENTRY(sym) static int rpcentry_ ## sym
 #define RPCENTRY_TERMINATE { 0, NULL }
 
-#ifdef CONFIGS_EXAMPLES_FFT_COMPLEX_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
 #  define SAMPLE_NUM 2
 #else
 #  define SAMPLE_NUM 1
 #endif
 
-#define WORKBUF_MAX (1024 * 8 * SAMPLE_NUM)
-#define INPUTBUF_MAX (1024 * 4)
+#ifndef CONFIG_EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE
+#  define CONFIG_EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE (1024 * 8)
+#endif
+
+#ifndef CONFIG_EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE
+#  define CONFIG_EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE (1024 * 4)
+#endif
 
 /****************************************************************************
  * Private Types
@@ -95,13 +102,14 @@ struct rpcentry_s
 static mpmq_t g_mq;
 static mpmq_t g_mq2;
 
-static float32_t g_workBuffer[WORKBUF_MAX];
+static float32_t g_workBuffer[CONFIG_EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE];
 
 /* For DSP_FFT_STREAM_INPUT */
 
-static float32_t g_inBuffer[INPUTBUF_MAX];
+static float32_t g_inBuffer[CONFIG_EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE];
 static uint8_t *g_inTop = (uint8_t*)g_inBuffer;
-static uint8_t *g_inBottom = (uint8_t*)(g_inBuffer + INPUTBUF_MAX);
+static uint8_t *g_inBottom = (uint8_t*)(g_inBuffer
+                            + CONFIG_EXAMPLES_FFT_SAMPLES_INPUT_BUFFER_SIZE);
 static uint8_t *g_inWptr = (uint8_t*)g_inBuffer;
 static uint8_t *g_inRptr = (uint8_t*)g_inBuffer;
 
@@ -132,7 +140,7 @@ static void *allocate_buffer(uint32_t fftLen)
   static int index = 0;
   void *workPtr;
 
-  if ((index + fftLen) > WORKBUF_MAX)
+  if ((index + fftLen) > CONFIG_EXAMPLES_FFT_SAMPLES_WORK_BUFFER_SIZE)
     {
       index = 0;
     }
@@ -197,7 +205,7 @@ static int window_hanning(float *pData, uint32_t fftLen)
   return ret;
 }
 
-#ifdef CONFIGS_EXAMPLES_FFT_COMPLEX_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
 
 static int fft(float *pSrc, float *pDst, uint32_t fftLen)
 {
@@ -265,7 +273,7 @@ static int fft(float *pSrc, float *pDst, uint32_t fftLen)
   return OK;
 }
 
-#else /* CONFIGS_EXAMPLES_FFT_REAL_DATA */
+#else /* CONFIG_EXAMPLES_FFT_REAL_DATA */
 
 static int fft(float *pSrc, float *pDst, uint32_t fftLen)
 {
@@ -377,7 +385,7 @@ static float32_t *ringbuf_read_float(size_t size)
   float32_t *pFrom = (float32_t *)g_inRptr;
   int part;
 
-#ifdef CONFIGS_EXAMPLES_FFT_REAL_DATA
+#ifdef CONFIG_EXAMPLES_FFT_COMPLEX_DATA
   int k, l;
   pSrc = (float32_t *)allocate_buffer(g_fftLen * SAMPLE_NUM);
 
@@ -404,7 +412,7 @@ static float32_t *ringbuf_read_float(size_t size)
           pSrc[2 * k + 1] = 0.0f;
         }
     }
-#else /* CONFIGS_EXAMPLES_FFT_REAL_DATA */
+#else /* CONFIG_EXAMPLES_FFT_REAL_DATA */
   pSrc = (float32_t *)allocate_buffer(g_fftLen);
 
   if ((g_inRptr + size) <= g_inBottom)

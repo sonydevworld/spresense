@@ -372,7 +372,15 @@
 /*
 * Define events from the HFP profile
 */
+#define BT_CONTROL_HF_EVENT_COMMAND_STATUS                 0x00    /* HFP command status */
 #define BT_CONTROL_HF_EVENT_OPEN                           0x01    /* HS connection opened or connection attempt failed  */
+#define BT_CONTROL_HF_EVENT_CLOSE                          0x02    /* HS connection closed */
+#define BT_CONTROL_HF_AUDIO_EVENT_OPEN                     0x04    /* Audio connection open */
+#define BT_CONTROL_HF_AUDIO_EVENT_CLOSE                    0x05    /* Audio connection closed */
+#define BT_CONTROL_HF_AUDIO_EVENT_REQUESTED                0x06    /* Audio connection requested */
+#define BT_CONTROL_HF_EVENT_CONNECTED                      0x07    /* HS connection connected */
+#define BT_CONTROL_HF_EVENT_AG_FEATURE                     0x08    /* HS peer device AG feature */
+#define BT_CONTROL_HF_EVENT_AG_INDICATOR                   0x2A    /* AG indicator event */
 
 /*
 * Subcommands AT resoponses defined with AT Commands

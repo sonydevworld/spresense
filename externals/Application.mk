@@ -64,9 +64,8 @@ else
   INSTALL_DIR = $(BIN_DIR)
 endif
 
-ROOTDEPPATH = --dep-path .
-
-VPATH =
+ROOTDEPPATH += --dep-path .
+VPATH +=
 
 all: .built
 .PHONY: clean preconfig depend distclean

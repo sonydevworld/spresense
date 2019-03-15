@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-CSRCS += evtdisp.c thrdfctry.c buffpoolwrapper.c evthdlbs.c
+CSRCS += evtdisp.c thrdfctry.c buffpoolwrapper.c evthdlbs.c evtdispfctry.c
 
 # Add the src directory to the build
 

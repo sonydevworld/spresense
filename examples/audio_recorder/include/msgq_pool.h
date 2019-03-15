@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_recorder/include/msgq_pool.h
+ * msgq_pool.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -41,12 +41,12 @@
 extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] = {
    /* n_drm, n_size, n_num, h_drm, h_size, h_num */
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfe1dc, 88, 3, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
-  { 0xfe2e4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfe364, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfe3c8, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RECORDER */
-  { 0xfe4b8, 24, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
-  { 0xfe638, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
+  { 0xfd1dc, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
+  { 0xfdc2c, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
+  { 0xfdcac, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
+  { 0xfdd10, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RECORDER */
+  { 0xfde00, 24, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
+  { 0xfdf80, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

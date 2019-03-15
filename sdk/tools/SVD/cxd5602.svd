@@ -1,0 +1,1663 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xmlns:xi="http://www.w3.org/2001/XInclude" schemaVersion="1.3.3" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd">
+  <vendor>Sony Semiconductor Solutions</vendor>
+  <!-- device vendor name -->
+  <vendorID>SONY</vendorID>
+  <!-- device vendor short name -->
+  <name>cxd5602</name>
+  <!-- name of part-->
+  <series>CXD56xx</series>
+  <!-- device series the device belongs to -->
+  <version>1.0</version>
+  <!-- version of this description, adding CMSIS-SVD 1.1 tags -->
+  <description>ARM 32-bit Cortex-M4F Microcontroller based device, CPU clock up to 156MHz, etc. </description>
+  <licenseText><!-- this license text will appear in header file. \n force line breaks -->
+    Copyright 2019 Sony Semiconductor Solutions Corporation\n
+\n
+  Redistribution and use in source and binary forms, with or without\n
+  modification, are permitted provided that the following conditions\n
+  are met:\n
+\n
+  1. Redistributions of source code must retain the above copyright\n
+     notice, this list of conditions and the following disclaimer.\n
+  2. Redistributions in binary form must reproduce the above copyright\n
+     notice, this list of conditions and the following disclaimer in\n
+     the documentation and/or other materials provided with the\n
+     distribution.\n
+  3. Neither the name of Sony Semiconductor Solutions Corporation nor\n
+     the names of its contributors may be used to endorse or promote\n
+     products derived from this software without specific prior written\n
+     permission.\n
+\n
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS\n
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE\n
+  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,\n
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,\n
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS\n
+  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED\n
+  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT\n
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN\n
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE\n
+  POSSIBILITY OF SUCH DAMAGE.\n
+  </licenseText>
+  <cpu>
+    <!-- details about the cpu embedded in the device -->
+    <name>CM4</name>
+    <revision>r0p1</revision>
+    <endian>little</endian>
+    <mpuPresent>true</mpuPresent>
+    <fpuPresent>true</fpuPresent>
+    <nvicPrioBits>3</nvicPrioBits>
+    <vendorSystickConfig>false</vendorSystickConfig>
+    <deviceNumInterrupts>128</deviceNumInterrupts>
+  </cpu>
+  <addressUnitBits>8</addressUnitBits>
+  <!-- byte addressable memory -->
+  <width>32</width>
+  <!-- bus width is 32 bits -->
+  <!-- default settings implicitly inherited by subsequent sections -->
+  <size>32</size>
+  <!-- this is the default size (number of bits) of all peripherals
+                                                                       and register that do not define "size" themselves -->
+  <access>read-write</access>
+  <!-- default access permission for all subsequent registers -->
+  <resetValue>0x00000000</resetValue>
+  <!-- by default all bits of the registers are initialized to 0 on reset -->
+  <resetMask>0xFFFFFFFF</resetMask>
+  <!-- by default all 32Bits of the registers are used -->
+  <peripherals>
+    <!-- SMP RAM CTRL -->
+
+    <peripheral>
+      <name>SMP_RAM_CTRL</name>
+      <version>1.0</version>
+      <description>SRAM Control</description>
+      <baseAddress>0x02001000</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>APP_TILE_CLK_GATING_ENB</name>
+          <description>SRAM tile (128KB) clock gating control (0 = gated)</description>
+          <addressOffset>0x84</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000FFF</resetMask>
+          <fields>
+            <field>
+              <dim>12</dim>
+              <dimIncrement>1</dimIncrement>
+              <name>TILE%s_CLK_GATING_ENB</name>
+              <description>Enable clock gating</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>gated</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>ungated</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+
+    <!-- Clock/Reset/Gating -->
+
+    <peripheral>
+      <name>CRG</name>
+      <version>1.0</version>
+      <description>Clock / Reset / Gating</description>
+      <baseAddress>0x02011000</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <interrupt>
+        <name>CRG</name>
+        <description>CRG interrupt</description>
+        <value>1</value>
+      </interrupt>
+      <registers>
+        <!-- GEAR_AHB: AHB clock setting -->
+        <register>
+          <name>GEAR_AHB</name>
+          <description>Gear ratio (n/m) for AHB</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00010002</resetValue>
+          <resetMask>0x007F007F</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_AHB</name>
+              <bitRange>[6:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_AHB</name>
+              <bitRange>[22:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- GEAR_IMG_UART: IMG UART clock setting -->
+        <register>
+          <name>GEAR_IMG_UART</name>
+          <description>IMG UART clock setting</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001007F</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_UART</name>
+              <bitRange>[6:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_UART</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- GEAR_IMG_SPI: IMG SPI clock setting -->
+        <register>
+          <name>GEAR_IMG_SPI</name>
+          <description>IMG SPI clock setting</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001007F</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_SPI</name>
+              <bitRange>[6:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_SPI</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- GEAR_PER_SDIO: SDIO clock setting -->
+        <register>
+          <name>GEAR_PER_SDIO</name>
+          <description>SDIO clock setting</description>
+          <addressOffset>0x0c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000002</resetValue>
+          <resetMask>0x00010003</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_SDIO</name>
+              <bitRange>[1:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_SDIO</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- GEAR_PER_USB: USB clock setting -->
+        <register>
+          <name>GEAR_PER_USB</name>
+          <description>USB clock setting</description>
+          <addressOffset>0x10</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000002</resetValue>
+          <resetMask>0x00010FFF</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_USB</name>
+              <bitRange>[11:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_USB</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- GEAR_M_IMG_VENB: VENB clock setting -->
+        <register>
+          <name>GEAR_M_IMG_VENB</name>
+          <description>VENB_M clock setting</description>
+          <addressOffset>0x14</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0xFFFFFFFF</resetMask>
+        </register>
+        <!-- GEAR_N_IMG_VENB: VENB clock setting -->
+        <register>
+          <name>GEAR_N_IMG_VENB</name>
+          <description>VENB_N clock setting</description>
+          <addressOffset>0x18</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0xFFFFFFFF</resetMask>
+        </register>
+        <!-- GEAR_IMG_WSPI: IMG WSPI clock setting -->
+        <register>
+          <name>GEAR_IMG_WSPI</name>
+          <description>IMG WSPI clock setting</description>
+          <addressOffset>0x1c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001000F</resetMask>
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_IMG_WSPI</name>
+              <bitRange>[3:0]</bitRange>
+              <access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_IMG_WSPI</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+            </field>
+          </fields>
+        </register>
+        <!-- CKEN_EMMC: EMMC clock setting -->
+        <register>
+          <name>CKEN_EMMC</name>
+          <description>eMMC clock setting</description>
+          <addressOffset>0x20</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000007</resetMask>
+          <fields>
+            <!-- CLKIN: -->
+            <field>
+              <name>CLKIN</name>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <description>Enable eMMC clock</description>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>DISABLE</name>
+                  <description>Disable</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>ENABLE</name>
+                  <description>Enable</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <!-- DRV: -->
+            <field derivedFrom="CLKIN">
+              <name>DRV</name>
+              <description>Enable DRV clock</description>
+              <bitRange>[1:1]</bitRange>
+            </field>
+            <!-- SMP: -->
+            <field derivedFrom="CLKIN">
+              <name>SMP</name>
+              <description>Enable eMMC sampling clock</description>
+              <bitRange>[2:2]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- RESET: Reset control -->
+        <register>
+          <name>RESET</name>
+          <description>Reset control</description>
+          <addressOffset>0x30</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x007F0F11</resetMask>
+          <fields>
+            <field>
+              <name>XRS_AUD</name>
+              <description>0=reset, 1=active</description>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>RESET</name>
+                  <description>Reset</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>ACTIVE</name>
+                  <description>Active</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_IMG</name>
+              <bitRange>[4:4]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_USB</name>
+              <bitRange>[8:8]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_SDIO</name>
+              <bitRange>[9:9]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_MMC</name>
+              <bitRange>[10:10]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_MMC_CRG</name>
+              <bitRange>[11:11]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP0</name>
+              <bitRange>[16:16]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP1</name>
+              <bitRange>[17:17]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP2</name>
+              <bitRange>[18:18]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP3</name>
+              <bitRange>[19:19]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP4</name>
+              <bitRange>[20:20]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP5</name>
+              <bitRange>[21:21]</bitRange>
+            </field>
+            <field derivedFrom="XRS_AUD">
+              <name>XRS_DSP_GEN</name>
+              <bitRange>[22:22]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- CK_GATE_AHB: Gating control -->
+        <register>
+          <name>CK_GATE_AHB</name>
+          <description>CPU/Peripheral clock gating control</description>
+          <addressOffset>0x40</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x103F0711</resetMask>
+          <fields>
+            <field>
+              <name>CK_GATE_AUD</name>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <description>0=Gated, 1=Ungated</description>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>GATED</name>
+                  <description>Gated</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>UNGATED</name>
+                  <description>Ungated</description>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_IMG</name>
+              <bitRange>[4:4]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_USB</name>
+              <bitRange>[8:8]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_SDIO</name>
+              <bitRange>[9:9]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_MMC</name>
+              <bitRange>[10:10]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP0</name>
+              <bitRange>[16:16]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP1</name>
+              <bitRange>[17:17]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP2</name>
+              <bitRange>[18:18]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP3</name>
+              <bitRange>[19:19]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP4</name>
+              <bitRange>[20:20]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DSP5</name>
+              <bitRange>[21:21]</bitRange>
+            </field>
+            <field derivedFrom="CK_GATE_AUD">
+              <name>CK_GATE_DMAC</name>
+              <bitRange>[28:28]</bitRange>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+
+    <!-- Address Converter -->
+
+    <peripheral>
+      <name>ADDRCONV</name>
+      <version>1.0</version>
+      <description>Address Converter</description>
+      <baseAddress>0x02012000</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <!-- TODO: GNU MCU Eclipse plugin raise a Null pointer exception by using cluster.
+       Address Converter registers are the same in each CPUs, so we should to use
+       the cluster tag.
+  -->
+      <registers>
+        <!-- ACNV_P0_DST0: -->
+        <register>
+          <name>ACNV_P0_DST0</name>
+          <description>CPU 0 address conversion area 0/1</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00010000</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_0</name>
+              <description>0x00000 .. 0x10000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_1</name>
+              <description>0x10000 .. 0x20000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST1: -->
+        <register>
+          <name>ACNV_P0_DST1</name>
+          <description>CPU 0 address conversion area 2/3</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00030002</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_2</name>
+              <description>0x20000 .. 0x30000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_3</name>
+              <description>0x30000 .. 0x40000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST2: -->
+        <register>
+          <name>ACNV_P0_DST2</name>
+          <description>CPU 0 address conversion area 4/5</description>
+          <addressOffset>0x0c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00050004</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_4</name>
+              <description>0x40000 .. 0x50000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_5</name>
+              <description>0x50000 .. 0x60000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST3: -->
+        <register>
+          <name>ACNV_P0_DST3</name>
+          <description>CPU 0 address conversion area 6/7</description>
+          <addressOffset>0x10</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00070006</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_6</name>
+              <description>0x60000 .. 0x70000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_7</name>
+              <description>0x70000 .. 0x80000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST4: -->
+        <register>
+          <name>ACNV_P0_DST4</name>
+          <description>CPU 0 address conversion area 8/9</description>
+          <addressOffset>0x14</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00090008</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_8</name>
+              <description>0x80000 .. 0x90000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_9</name>
+              <description>0x90000 .. 0xa0000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST5: -->
+        <register>
+          <name>ACNV_P0_DST5</name>
+          <description>CPU 0 address conversion area A/B</description>
+          <addressOffset>0x18</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x000b000a</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_A</name>
+              <description>0xa0000 .. 0xb0000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_B</name>
+              <description>0xb0000 .. 0xc0000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST6: -->
+        <register>
+          <name>ACNV_P0_DST6</name>
+          <description>CPU 0 address conversion area C/D</description>
+          <addressOffset>0x1c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x000d000c</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_C</name>
+              <description>0xc0000 .. 0xd0000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_D</name>
+              <description>0xd0000 .. 0xe0000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P0_DST7: -->
+        <register>
+          <name>ACNV_P0_DST7</name>
+          <description>CPU 0 address conversion area E/F</description>
+          <addressOffset>0x20</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x000f000e</resetValue>
+          <resetMask>0x07FF07FF</resetMask>
+          <fields>
+            <field>
+              <name>AREA_E</name>
+              <description>0xe0000 .. 0xf0000</description>
+              <bitRange>[10:0]</bitRange>
+            </field>
+            <field>
+              <name>AREA_F</name>
+              <description>0xf0000 .. 0x100000</description>
+              <bitRange>[26:16]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- ACNV_P1_DST0: -->
+        <register derivedFrom="ACNV_P0_DST0">
+          <name>ACNV_P1_DST0</name>
+          <description>CPU 1 address conversion area 0/1</description>
+          <addressOffset>0x24</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST1: -->
+        <register derivedFrom="ACNV_P0_DST1">
+          <name>ACNV_P1_DST1</name>
+          <description>CPU 1 address conversion area 2/3</description>
+          <addressOffset>0x28</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST2: -->
+        <register derivedFrom="ACNV_P0_DST2">
+          <name>ACNV_P1_DST2</name>
+          <description>CPU 1 address conversion area 4/5</description>
+          <addressOffset>0x2c</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST3: -->
+        <register derivedFrom="ACNV_P0_DST3">
+          <name>ACNV_P1_DST3</name>
+          <description>CPU 1 address conversion area 6/7</description>
+          <addressOffset>0x30</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST4: -->
+        <register derivedFrom="ACNV_P0_DST4">
+          <name>ACNV_P1_DST4</name>
+          <description>CPU 1 address conversion area 8/9</description>
+          <addressOffset>0x34</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST5: -->
+        <register derivedFrom="ACNV_P0_DST5">
+          <name>ACNV_P1_DST5</name>
+          <description>CPU 1 address conversion area A/B</description>
+          <addressOffset>0x38</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST6: -->
+        <register derivedFrom="ACNV_P0_DST6">
+          <name>ACNV_P1_DST6</name>
+          <description>CPU 1 address conversion area C/D</description>
+          <addressOffset>0x3c</addressOffset>
+        </register>
+        <!-- ACNV_P1_DST7: -->
+        <register derivedFrom="ACNV_P0_DST7">
+          <name>ACNV_P1_DST7</name>
+          <description>CPU 1 address conversion area E/F</description>
+          <addressOffset>0x40</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST0: -->
+        <register derivedFrom="ACNV_P0_DST0">
+          <name>ACNV_P2_DST0</name>
+          <description>CPU 2 address conversion area 0/1</description>
+          <addressOffset>0x44</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST1: -->
+        <register derivedFrom="ACNV_P0_DST1">
+          <name>ACNV_P2_DST1</name>
+          <description>CPU 2 address conversion area 2/3</description>
+          <addressOffset>0x48</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST2: -->
+        <register derivedFrom="ACNV_P0_DST2">
+          <name>ACNV_P2_DST2</name>
+          <description>CPU 2 address conversion area 4/5</description>
+          <addressOffset>0x4c</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST3: -->
+        <register derivedFrom="ACNV_P0_DST3">
+          <name>ACNV_P2_DST3</name>
+          <description>CPU 2 address conversion area 6/7</description>
+          <addressOffset>0x50</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST4: -->
+        <register derivedFrom="ACNV_P0_DST4">
+          <name>ACNV_P2_DST4</name>
+          <description>CPU 2 address conversion area 8/9</description>
+          <addressOffset>0x54</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST5: -->
+        <register derivedFrom="ACNV_P0_DST5">
+          <name>ACNV_P2_DST5</name>
+          <description>CPU 2 address conversion area A/B</description>
+          <addressOffset>0x58</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST6: -->
+        <register derivedFrom="ACNV_P0_DST6">
+          <name>ACNV_P2_DST6</name>
+          <description>CPU 2 address conversion area C/D</description>
+          <addressOffset>0x5c</addressOffset>
+        </register>
+        <!-- ACNV_P2_DST7: -->
+        <register derivedFrom="ACNV_P0_DST7">
+          <name>ACNV_P2_DST7</name>
+          <description>CPU 2 address conversion area E/F</description>
+          <addressOffset>0x60</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST0: -->
+        <register derivedFrom="ACNV_P0_DST0">
+          <name>ACNV_P3_DST0</name>
+          <description>CPU 3 address conversion area 0/1</description>
+          <addressOffset>0x64</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST1: -->
+        <register derivedFrom="ACNV_P0_DST1">
+          <name>ACNV_P3_DST1</name>
+          <description>CPU 3 address conversion area 2/3</description>
+          <addressOffset>0x68</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST2: -->
+        <register derivedFrom="ACNV_P0_DST2">
+          <name>ACNV_P3_DST2</name>
+          <description>CPU 3 address conversion area 4/5</description>
+          <addressOffset>0x6c</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST3: -->
+        <register derivedFrom="ACNV_P0_DST3">
+          <name>ACNV_P3_DST3</name>
+          <description>CPU 3 address conversion area 6/7</description>
+          <addressOffset>0x70</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST4: -->
+        <register derivedFrom="ACNV_P0_DST4">
+          <name>ACNV_P3_DST4</name>
+          <description>CPU 3 address conversion area 8/9</description>
+          <addressOffset>0x74</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST5: -->
+        <register derivedFrom="ACNV_P0_DST5">
+          <name>ACNV_P3_DST5</name>
+          <description>CPU 3 address conversion area A/B</description>
+          <addressOffset>0x78</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST6: -->
+        <register derivedFrom="ACNV_P0_DST6">
+          <name>ACNV_P3_DST6</name>
+          <description>CPU 3 address conversion area C/D</description>
+          <addressOffset>0x7c</addressOffset>
+        </register>
+        <!-- ACNV_P3_DST7: -->
+        <register derivedFrom="ACNV_P0_DST7">
+          <name>ACNV_P3_DST7</name>
+          <description>CPU 3 address conversion area E/F</description>
+          <addressOffset>0x80</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST0: -->
+        <register derivedFrom="ACNV_P0_DST0">
+          <name>ACNV_P4_DST0</name>
+          <description>CPU 4 address conversion area 0/1</description>
+          <addressOffset>0x84</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST1: -->
+        <register derivedFrom="ACNV_P0_DST1">
+          <name>ACNV_P4_DST1</name>
+          <description>CPU 4 address conversion area 2/3</description>
+          <addressOffset>0x88</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST2: -->
+        <register derivedFrom="ACNV_P0_DST2">
+          <name>ACNV_P4_DST2</name>
+          <description>CPU 4 address conversion area 4/5</description>
+          <addressOffset>0x8c</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST3: -->
+        <register derivedFrom="ACNV_P0_DST3">
+          <name>ACNV_P4_DST3</name>
+          <description>CPU 4 address conversion area 6/7</description>
+          <addressOffset>0x90</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST4: -->
+        <register derivedFrom="ACNV_P0_DST4">
+          <name>ACNV_P4_DST4</name>
+          <description>CPU 4 address conversion area 8/9</description>
+          <addressOffset>0x94</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST5: -->
+        <register derivedFrom="ACNV_P0_DST5">
+          <name>ACNV_P4_DST5</name>
+          <description>CPU 4 address conversion area A/B</description>
+          <addressOffset>0x98</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST6: -->
+        <register derivedFrom="ACNV_P0_DST6">
+          <name>ACNV_P4_DST6</name>
+          <description>CPU 4 address conversion area C/D</description>
+          <addressOffset>0x9c</addressOffset>
+        </register>
+        <!-- ACNV_P4_DST7: -->
+        <register derivedFrom="ACNV_P0_DST7">
+          <name>ACNV_P4_DST7</name>
+          <description>CPU 4 address conversion area E/F</description>
+          <addressOffset>0xa0</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST0: -->
+        <register derivedFrom="ACNV_P0_DST0">
+          <name>ACNV_P5_DST0</name>
+          <description>CPU 5 address conversion area 0/1</description>
+          <addressOffset>0xa4</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST1: -->
+        <register derivedFrom="ACNV_P0_DST1">
+          <name>ACNV_P5_DST1</name>
+          <description>CPU 5 address conversion area 2/3</description>
+          <addressOffset>0xa8</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST2: -->
+        <register derivedFrom="ACNV_P0_DST2">
+          <name>ACNV_P5_DST2</name>
+          <description>CPU 5 address conversion area 4/5</description>
+          <addressOffset>0xac</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST3: -->
+        <register derivedFrom="ACNV_P0_DST3">
+          <name>ACNV_P5_DST3</name>
+          <description>CPU 5 address conversion area 6/7</description>
+          <addressOffset>0xb0</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST4: -->
+        <register derivedFrom="ACNV_P0_DST4">
+          <name>ACNV_P5_DST4</name>
+          <description>CPU 5 address conversion area 8/9</description>
+          <addressOffset>0xb4</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST5: -->
+        <register derivedFrom="ACNV_P0_DST5">
+          <name>ACNV_P5_DST5</name>
+          <description>CPU 5 address conversion area A/B</description>
+          <addressOffset>0xb8</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST6: -->
+        <register derivedFrom="ACNV_P0_DST6">
+          <name>ACNV_P5_DST6</name>
+          <description>CPU 5 address conversion area C/D</description>
+          <addressOffset>0xbc</addressOffset>
+        </register>
+        <!-- ACNV_P5_DST7: -->
+        <register derivedFrom="ACNV_P0_DST7">
+          <name>ACNV_P5_DST7</name>
+          <description>CPU 5 address conversion area E/F</description>
+          <addressOffset>0xc0</addressOffset>
+        </register>
+      </registers>
+    </peripheral>
+
+    <!-- CPU FIFO -->
+
+    <peripheral>
+      <name>CPU_FIFO</name>
+      <version>1.0</version>
+      <description>CPU FIFO Control</description>
+      <baseAddress>0x4600c400</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x20</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <registers>
+        <register>
+          <name>FIF_PUSH_FULL</name>
+          <description>TX buffer is full (=1)</description>
+          <addressOffset>0x0</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000001</resetMask>
+          <fields>
+            <field>
+              <name>FULL_FLAG</name>
+              <description>TX buffer is full</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>not full</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>full</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>FIF_PUSH_WRD0</name>
+          <description>TX data word 0</description>
+          <addressOffset>0x4</addressOffset>
+          <access>read-write</access>
+          <fields>
+            <field>
+              <name>RECEIVER_ID</name>
+              <description>Target ID</description>
+              <bitRange>[31:28]</bitRange>
+            </field>
+            <field>
+              <name>DATA_0</name>
+              <description>TX data word 0</description>
+              <bitRange>[27:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>FIF_PUSH_WRD1</name>
+          <description>TX data word 1</description>
+          <addressOffset>0x8</addressOffset>
+          <access>read-write</access>
+        </register>
+        <register>
+          <name>FIF_PUSH_CMP</name>
+          <description>TX data write complete</description>
+          <addressOffset>0xc</addressOffset>
+          <access>write-only</access>
+          <fields>
+            <field>
+              <name>PUSH_CMP</name>
+              <description>TX data write complete</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>don't care</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>complete</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>FIF_PULL_EMP</name>
+          <description>RX buffer is empty (=1)</description>
+          <addressOffset>0x10</addressOffset>
+          <access>read-only</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000001</resetMask>
+          <fields>
+            <field>
+              <name>EMPTY_FLAG</name>
+              <description>RX buffer is empty</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>not empty</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>empty</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>FIF_PULL_WRD0</name>
+          <description>RX data word 0</description>
+          <addressOffset>0x14</addressOffset>
+          <access>read-write</access>
+          <fields>
+            <field>
+              <name>SENDER_ID</name>
+              <description>Sender ID</description>
+              <bitRange>[31:28]</bitRange>
+            </field>
+            <field>
+              <name>DATA_0</name>
+              <description>RX data word 0</description>
+              <bitRange>[27:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>FIF_PULL_WRD1</name>
+          <description>RX data word 1</description>
+          <addressOffset>0x18</addressOffset>
+          <access>read-write</access>
+        </register>
+        <register>
+          <name>FIF_PULL_CMP</name>
+          <description>RX data read complete</description>
+          <addressOffset>0x1c</addressOffset>
+          <access>write-only</access>
+          <fields>
+            <field>
+              <name>PULL_CMP</name>
+              <description>RX data read complete</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>don't care</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>complete</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+
+    <!-- 2D Graphics Engine -->
+
+    <peripheral>
+      <name>GE2D</name>
+      <version>1.0</version>
+      <description>Hardware 2D Graphics Engine</description>
+      <baseAddress>0x02101000</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x400</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <interrupt>
+        <name>2D</name>
+        <description>2D interrupt</description>
+        <value>106</value>
+      </interrupt>
+      <registers>
+        <!-- INTR_ENABLE: Interrupt Control -->
+        <register>
+          <name>INTR_ENABLE</name>
+          <description>2D Graphics Engine Interrupt Control</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x0003010F</resetMask>
+          <fields>
+            <!-- WR_ERR -->
+            <field>
+              <name>WR_ERR</name>
+              <bitRange>[17:17]</bitRange>
+              <access>read-write</access>
+              <description>Write Error Interrupt</description>
+            </field>
+            <!-- RD_ERR -->
+            <field>
+              <name>RD_ERR</name>
+              <bitRange>[16:16]</bitRange>
+              <access>read-write</access>
+              <description>Read Error Interrupt</description>
+            </field>
+            <!-- DSD -->
+            <field>
+              <name>DSD</name>
+              <bitRange>[8:8]</bitRange>
+              <access>read-write</access>
+              <description>Descriptor STOP Command Done Interrupt</description>
+            </field>
+            <!-- NDE -->
+            <field>
+              <name>NDE</name>
+              <bitRange>[3:3]</bitRange>
+              <access>read-write</access>
+              <description>Normal Descriptor Command Error Interrupt</description>
+            </field>
+            <!-- NDB -->
+            <field>
+              <name>NDB</name>
+              <bitRange>[2:2]</bitRange>
+              <access>read-write</access>
+              <description>Normal Descriptor Command Branch Interrupt</description>
+            </field>
+            <!-- NDF -->
+            <field>
+              <name>NDF</name>
+              <bitRange>[1:1]</bitRange>
+              <access>read-write</access>
+              <description>Normal Descriptor Command Finished Interrupt</description>
+            </field>
+            <!-- HPU -->
+            <field>
+              <name>HPU</name>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <description>Normal Descriptor Command Update Interrupt</description>
+            </field>
+          </fields>
+        </register>
+        <!-- INTR_STAT: Interrupt Status -->
+        <register derivedFrom="INTR_ENABLE">
+          <name>INTR_STAT</name>
+          <description>2D Graphics Engine Interrupt Status and Clear</description>
+          <addressOffset>0x04</addressOffset>
+          <modifiedWriteValues>oneToClear</modifiedWriteValues>
+        </register>
+        <!-- ADDRESS_DESCRIPTOR_START: Descriptor Address Set Register -->
+        <register>
+          <name>ADDRESS_DESCRIPTOR_START</name>
+          <description>Descriptor Address Set Register</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0xFFFFFFFF</resetMask>
+          <fields>
+            <!-- DA -->
+            <field>
+              <name>DA</name>
+              <bitRange>[31:4]</bitRange>
+              <access>read-write</access>
+              <description>Descriptor Address</description>
+            </field>
+            <!-- MSEL -->
+            <field>
+              <name>MSEL</name>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <description>must be 1</description>
+            </field>
+          </fields>
+        </register>
+        <!-- STATUS: Status Register -->
+        <register>
+          <name>STATUS</name>
+          <description>Status Register</description>
+          <addressOffset>0x0c</addressOffset>
+          <size>32</size>
+          <access>read-only</access>
+          <fields>
+            <!-- ISER -->
+            <field>
+              <name>ISER</name>
+              <description>ISE Running Status</description>
+              <bitRange>[24:24]</bitRange>
+            </field>
+            <!-- NDCR -->
+            <field>
+              <name>NDCR</name>
+              <description>Normal Descriptor Command Running Status</description>
+              <bitRange>[8:8]</bitRange>
+            </field>
+            <!-- SREQ -->
+            <field>
+              <name>SREQ</name>
+              <description>Reqesting Descriptor Stop</description>
+              <bitRange>[2:2]</bitRange>
+            </field>
+            <!-- NREQ -->
+            <field>
+              <name>NREQ</name>
+              <description>Requesting Normal Descriptor</description>
+              <bitRange>[0:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- CMD_DESCRIPTOR: Command Register -->
+        <register>
+          <name>CMD_DESCRIPTOR</name>
+          <description>Command Register</description>
+          <addressOffset>0x0c</addressOffset>
+          <size>32</size>
+          <access>write-only</access>
+          <fields>
+            <field>
+              <name>COMMAND</name>
+              <description>Command</description>
+              <bitRange>[1:0]</bitRange>
+              <enumeratedValues>
+                <name>COMMAND_TYPE</name>
+                <enumeratedValue>
+                  <name>NOP</name>
+                  <description>No Operation</description>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>RUN</name>
+                  <description>Normal Descriptor Set and Run</description>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>STOP</name>
+                  <description>Stop Descriptor</description>
+                  <value>3</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <!-- STAT_NORMAL_DESCRIPTOR_ADDRESS: Normal Descriptor Address Register -->
+        <register>
+          <name>STAT_NORMAL_DESCRIPTOR_ADDRESS</name>
+          <description>Normal Descriptor Address Register</description>
+          <addressOffset>0x10</addressOffset>
+          <size>32</size>
+          <access>read-only</access>
+        </register>
+        <!-- STAT_CURRENT_DESCRIPTOR_ADDRESS: Current Descriptor Address Register -->
+        <register>
+          <name>STAT_CURRENT_DESCRIPTOR_ADDRESS</name>
+          <description>Current Descriptor Address Register</description>
+          <addressOffset>0x14</addressOffset>
+          <size>32</size>
+          <access>read-only</access>
+        </register>
+      </registers>
+    </peripheral>
+
+    <!-- ROT -->
+
+    <peripheral>
+      <name>ROT</name>
+      <version>1.0</version>
+      <description>Image rotation</description>
+      <baseAddress>0x02101400</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x400</size>
+        <usage>registers</usage>
+      </addressBlock>
+      <interrupt>
+        <name>ROT</name>
+        <description>Rotation interrupt</description>
+        <value>107</value>
+      </interrupt>
+      <registers>
+        <!-- INTR_STATUS: Interrupt Control -->
+        <register>
+          <name>INTR_STATUS</name>
+          <description>Interrupt Status</description>
+          <addressOffset>0x00</addressOffset>
+          <access>read-only</access>
+          <fields>
+            <!-- WR_ERR_STS -->
+            <field>
+              <name>WR_ERR_STS</name>
+              <description>Write Error</description>
+              <bitRange>[9:9]</bitRange>
+            </field>
+            <!-- RD_ERR_STS -->
+            <field>
+              <name>RD_ERR_STS</name>
+              <description>Read Error</description>
+              <bitRange>[8:8]</bitRange>
+            </field>
+            <!-- END_STS -->
+            <field>
+              <name>END_STS</name>
+              <description>Done</description>
+              <bitRange>[0:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- INTR_ENABLE: Interrupt Enable -->
+        <register>
+          <name>INTR_ENABLE</name>
+          <description>Interrupt Enable</description>
+          <addressOffset>0x04</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000301</resetMask>
+          <fields>
+            <!-- WR_ERR_ENB -->
+            <field>
+              <name>WR_ERR_ENB</name>
+              <description>Write Error Enable</description>
+              <bitRange>[9:9]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>Disable</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Enable</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <!-- RD_ERR_ENB -->
+            <field derivedFrom="WR_ERR_ENB">
+              <name>RD_ERR_ENB</name>
+              <description>Read Error</description>
+              <bitRange>[8:8]</bitRange>
+            </field>
+            <!-- END_ENB -->
+            <field derivedFrom="WR_ERR_ENB">
+              <name>END_ENB</name>
+              <description>Done Interrupt Enable</description>
+              <bitRange>[0:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- INTR_DISABLE: Interrupt Disable -->
+        <register>
+          <name>INTR_DISABLE</name>
+          <description>Interrupt Disable</description>
+          <addressOffset>0x08</addressOffset>
+          <access>write-only</access>
+          <fields>
+            <!-- WR_ERR_DIS -->
+            <field>
+              <name>WR_ERR_DIS</name>
+              <description>Write Error Disable</description>
+              <bitRange>[9:9]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+            <!-- RD_ERR_DIS -->
+            <field>
+              <name>RD_ERR_DIS</name>
+              <description>Read Error Disable</description>
+              <bitRange>[8:8]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+            <!-- END_DIS -->
+            <field>
+              <name>END_DIS</name>
+              <description>Done Interrupt Disable</description>
+              <bitRange>[0:0]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+          </fields>
+        </register>
+        <!-- INTR_CLEAR: Interrupt Clear -->
+        <register>
+          <name>INTR_CLEAR</name>
+          <description>Interrupt Clear</description>
+          <addressOffset>0x0c</addressOffset>
+          <access>write-only</access>
+          <fields>
+            <!-- WR_ERR_CLR -->
+            <field>
+              <name>WR_ERR_CLR</name>
+              <description>Write Error Clear</description>
+              <bitRange>[9:9]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+            <!-- RD_ERR_CLR -->
+            <field>
+              <name>RD_ERR_CLR</name>
+              <description>Read Error Clear</description>
+              <bitRange>[8:8]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+            <!-- END_CLR -->
+            <field>
+              <name>END_CLR</name>
+              <description>Done Interrupt Clear</description>
+              <bitRange>[0:0]</bitRange>
+              <modifiedWriteValues>oneToSet</modifiedWriteValues>
+            </field>
+          </fields>
+        </register>
+        <!-- COMMAND: Start rotation processing -->
+        <register>
+          <name>COMMAND</name>
+          <description>Start rotation processing</description>
+          <addressOffset>0x10</addressOffset>
+          <access>write-only</access>
+          <fields>
+            <field>
+              <name>CMD</name>
+              <description>Start rotation</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>start</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <!-- SET_DIRECTION: Image Rotation -->
+        <register>
+          <name>SET_DIRECTION</name>
+          <description>Set Rotation Angle</description>
+          <addressOffset>0x14</addressOffset>
+          <access>read-write</access>
+          <fields>
+            <field>
+              <name>ROT</name>
+              <description>Rotation Angle</description>
+              <bitRange>[2:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>No rotation</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Right 90 degrees</name>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Right 180 degrees</name>
+                  <value>2</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>Right 270 degrees</name>
+                  <value>4</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <!-- SET_SRC_HSIZE: Source Image Horizontal Size -->
+        <register>
+          <name>SET_SRC_HSIZE</name>
+          <description>Source Image Horizontal Size (Actual size - 1)</description>
+          <addressOffset>0x18</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000FFF</resetMask>
+          <fields>
+            <field>
+              <name>SIZE</name>
+              <bitRange>[11:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- SET_SRC_VSIZE: Source Image Vertical Size -->
+        <register>
+          <name>SET_SRC_VSIZE</name>
+          <description>Source Image Vertical Size (Actual size - 1)</description>
+          <addressOffset>0x1c</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000FFF</resetMask>
+          <fields>
+            <field>
+              <name>SIZE</name>
+              <bitRange>[11:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- SET_SRC_ADDRESS: Source Image Address -->
+        <register>
+          <name>SET_SRC_ADDRESS</name>
+          <description>Source Image Address</description>
+          <addressOffset>0x20</addressOffset>
+          <access>read-write</access>
+        </register>
+        <!-- SET_SRC_PITCH: Source Image Pitch -->
+        <register>
+          <name>SET_SRC_PITCH</name>
+          <description>Source Image Pitch (Actual size - 1)</description>
+          <addressOffset>0x24</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000FFF</resetMask>
+          <fields>
+            <field>
+              <name>PITCH</name>
+              <bitRange>[11:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- SET_DST_ADDRESS: Destination Address -->
+        <register>
+          <name>SET_DST_ADDRESS</name>
+          <description>Destination Address</description>
+          <addressOffset>0x28</addressOffset>
+          <access>read-write</access>
+        </register>
+        <!-- SET_DST_PITCH: Destination Image Pitch -->
+        <register>
+          <name>SET_DST_PITCH</name>
+          <description>Destination Image Pitch (Actual size - 1)</description>
+          <addressOffset>0x2c</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000FFF</resetMask>
+          <fields>
+            <field>
+              <name>PITCH</name>
+              <bitRange>[11:0]</bitRange>
+            </field>
+          </fields>
+        </register>
+        <!-- STATUS: Running Status -->
+        <register>
+          <name>STATUS</name>
+          <description>Running Status</description>
+          <addressOffset>0x30</addressOffset>
+          <access>read-only</access>
+          <fields>
+            <field>
+              <name>STATUS</name>
+              <description>Running Status (1 = running)</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>stop</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>running</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <!-- CONV_CTRL: Color Convertion Control -->
+        <register>
+          <name>CONV_CTRL</name>
+          <description>Color Convertion Control</description>
+          <addressOffset>0x34</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000013</resetMask>
+          <fields>
+            <field>
+              <name>CONV_CALC_SEL</name>
+              <description>Scale factor for Cb and Cr</description>
+              <bitRange>[4:4]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>16 .. 240 range</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>-127 .. 127 range</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field>
+              <name>CONV_FORMAT</name>
+              <description>Convert RGB565 to YCbCr422</description>
+              <bitRange>[1:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>NOCONVERT</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>YCBCR422_RGB565</name>
+                  <value>1</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>RGB565_YCBCR422</name>
+                  <value>2</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+        <!-- RGB_ALIGNMENT: RGB format selector -->
+        <register>
+          <name>RGB_ALIGNMENT</name>
+          <description>RGB format selector</description>
+          <addressOffset>0x38</addressOffset>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000001</resetMask>
+          <fields>
+            <field>
+              <name>FORMAT</name>
+              <description>RGB Format</description>
+              <bitRange>[0:0]</bitRange>
+              <enumeratedValues>
+                <enumeratedValue>
+                  <name>RGB</name>
+                  <value>0</value>
+                </enumeratedValue>
+                <enumeratedValue>
+                  <name>BGR</name>
+                  <value>1</value>
+                </enumeratedValue>
+              </enumeratedValues>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+
+  </peripherals>
+</device>

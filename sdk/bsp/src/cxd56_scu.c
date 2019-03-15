@@ -3394,25 +3394,32 @@ void scu_initialize(void)
 
   scufifo_initialize();
 
-  /* Enable SCU clock. This process must do before loading firmware because
-   * SCU instruction RAM is not accessible.
+  /* If SCU clock has been already enabled, keep SCU running without loading
+   * and reset of SCU firmware.
    */
 
-  cxd56_scuseq_clock_enable();
+  if (false == cxd56_scuseq_clock_is_enabled())
+    {
+      /* Enable SCU clock. This process must do before loading firmware
+       * because SCU instruction RAM is not accessible.
+       */
 
-  /* Load firmware & clear data RAM */
+      cxd56_scuseq_clock_enable();
 
-  memcpy((void *)CXD56_SCU_SEQ_IRAM_BASE, scuIsopProgArray,
-         sizeOfscuIsopProgArray);
-  memset((void *)CXD56_SCU_SEQ_DRAM_BASE, 0, 0x324);
+      /* Load firmware & clear data RAM */
 
-  /* Release SCU reset to bring up SCU firmware */
+      memcpy((void *)CXD56_SCU_SEQ_IRAM_BASE, scuIsopProgArray,
+             sizeOfscuIsopProgArray);
+      memset((void *)CXD56_SCU_SEQ_DRAM_BASE, 0, 0x324);
 
-  cxd56_scuseq_release_reset();
+      /* Release SCU reset to bring up SCU firmware */
 
-  /* Initialize SCU registers */
+      cxd56_scuseq_release_reset();
 
-  scu_hwinit();
+      /* Initialize SCU registers */
+
+      scu_hwinit();
+    }
 
   /*
    * Enable error interrupt
@@ -3435,6 +3442,10 @@ void scu_uninitialize(void)
 {
   struct cxd56_scudev_s *priv = &g_scudev;
   int i;
+
+  /* Request don't sleep */
+
+  seq_inhibitrequest(REQ_SLEEP, true);
 
   up_disable_irq(CXD56_IRQ_SCU_3);
 

@@ -48,16 +48,6 @@
 
 /****************************************************************************
  * Name: altcom_seterrno
- *
- * Description:
- *   Set errno for socket APIs.
- *
- * Input parameters:
- *   errno
- *
- *  Return:
- *   None
- *
  ****************************************************************************/
 
 void altcom_seterrno(int32_t err_no);

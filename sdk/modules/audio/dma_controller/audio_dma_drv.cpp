@@ -66,7 +66,7 @@
 extern "C" uint32_t cxd56_get_cpu_baseclk(void);
 
 #ifdef CONFIG_AUDIOUTILS_RENDERER_UNDERFLOW
-/* Underflow insertion data 
+/* Underflow insertion data
  *  (saize: sample[UNDERFLOW_DATA_SAMPLE] * bitleng[4] * channel[2])
  */
 
@@ -124,14 +124,14 @@ AsDmaDrv::dmaDrvFuncTbl AsDmaDrv::m_func_tbl[] =
     EvtCmplt,
 
     {                             /* DmaController status:  */
-      &AsDmaDrv::illegal,         /*   AS_DMA_STATE_BOOTED  */
-      &AsDmaDrv::illegal,         /*   AS_DMA_STATE_STOP    */
-      &AsDmaDrv::illegal,         /*   AS_DMA_STATE_READY   */
-      &AsDmaDrv::illegal,         /*   AS_DMA_STATE_PREPARE */
+      &AsDmaDrv::illegalDmaCmplt, /*   AS_DMA_STATE_BOOTED  */
+      &AsDmaDrv::illegalDmaCmplt, /*   AS_DMA_STATE_STOP    */
+      &AsDmaDrv::illegalDmaCmplt, /*   AS_DMA_STATE_READY   */
+      &AsDmaDrv::illegalDmaCmplt, /*   AS_DMA_STATE_PREPARE */
       &AsDmaDrv::dmaCmpltOnRun,   /*   AS_DMA_STATE_RUN     */
       &AsDmaDrv::dmaCmpltOnFlush, /*   AS_DMA_STATE_FLUSH   */
       &AsDmaDrv::dmaCmpltOnError, /*   AS_DMA_STATE_ERROR   */
-      &AsDmaDrv::illegal          /*   AS_DMA_STATE_TERMINATE */
+      &AsDmaDrv::illegalDmaCmplt  /*   AS_DMA_STATE_TERMINATE */
     }
   },
 
@@ -785,6 +785,20 @@ bool AsDmaDrv::dmaCmpltOnError(void *p_param)
 }
 
 /*--------------------------------------------------------------------*/
+bool AsDmaDrv::illegalDmaCmplt(void *p_param)
+{
+  DMAC_ERR(AS_ATTENTION_SUB_CODE_ILLEGAL_REQUEST);
+
+  /* Even if illegal completion, but need to reply to requester as usual.
+   * Because, DMA completion means that the transfer request have came.
+   */
+
+  dmaCmplt();
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
 bool AsDmaDrv::stop(void *p_param)
 {
   AudioDrvDmaStopParam *stopParam =
@@ -836,6 +850,8 @@ bool AsDmaDrv::stopOnRun(void *p_param)
 /*--------------------------------------------------------------------*/
 bool AsDmaDrv::dmaErrInt(void *p_param)
 {
+  cxd56_audio_stop_dma(m_dmac_id);
+
   dmaErrCb(E_AS_BB_DMA_ERR_INT);
 
   return true;
@@ -846,7 +862,7 @@ bool AsDmaDrv::dmaErrIntOnRun(void *p_param)
 {
   dmaErrInt(p_param);
 
-  m_state = AS_DMA_STATE_READY;
+  m_state = AS_DMA_STATE_TERMINATE;
 
   return true;
 }

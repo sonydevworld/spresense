@@ -41,7 +41,8 @@
 #include "buffpoolwrapper.h"
 #include "wrkrid.h"
 #include "thrdfctry.h"
-#include "evtdisp.h"
+#include "evtdispfctry.h"
+#include "evtdispid.h"
 #include "ltebuilder.h"
 #include "hal_altmdm_spi.h"
 #include "apicmdgw.h"
@@ -78,18 +79,35 @@
 #include "apicmdhdlr_setpin.h"
 #include "apicmdhdlr_setpsm.h"
 #include "apicmdhdlr_ver.h"
+#include "lte_radio_on.h"
+#include "lte_radio_off.h"
+#include "lte_activatepdn.h"
+#include "lte_deactivatepdn.h"
+#include "lte_dataallow.h"
+#include "lte_getnetinfo.h"
+#include "lte_rep_netinfo.h"
+#include "lte_getimscap.h"
+#include "lte_geterrinfo.h"
 #include "apicmdhdlr_select.h"
+#ifdef CONFIG_LTE_NET_MBEDTLS
+#include "apicmdhdlr_config_verify_callback.h"
+#endif
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICALLBACK_THRD_STACKSIZE (1024)
-#define APICALLBACK_THRD_PRIO      SYS_TASK_PRIO_NORMAL
-#define APICALLBACK_THRD_NUM       (1)
-#define APICALLBACK_THRD_QNUM      (16)  /* tentative */
+#define APICALLBACK_THRD_STACKSIZE     (2048)
+#define APICALLBACK_THRD_PRIO          SYS_TASK_PRIO_NORMAL
+#define APICALLBACK_THRD_QNUM          (16)  /* tentative */
+
+#define RESTARTCALLBACK_THRD_STACKSIZE (1024)
+#define RESTARTCALLBACK_THRD_PRIO      SYS_TASK_PRIO_NORMAL
+#define RESTARTCALLBACK_THRD_QNUM      (2)
+
+#define THRDSETLIST_NUM                (2)
+
 #define BLOCKSETLIST_NUM (sizeof(g_blk_settings) / sizeof(g_blk_settings[0]))
-#define THRDSETLIST_NUM            (1)
 
 /****************************************************************************
  * Private Function Prototypes
@@ -156,7 +174,19 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_setpsm,
   apicmdhdlr_getce,
   apicmdhdlr_setce,
+  apicmdhdlr_radioon,
+  apicmdhdlr_radiooff,
+  apicmdhdlr_activatepdn,
+  apicmdhdlr_deactivatepdn,
+  apicmdhdlr_dataallow,
+  apicmdhdlr_repnetinfo,
+  apicmdhdlr_getnetinfo,
+  apicmdhdlr_getimscap,
+  apicmdhdlr_errinfo,
   apicmdhdlr_select,
+#ifdef CONFIG_LTE_NET_MBEDTLS
+  apicmdhdlr_config_verify_callback,
+#endif
   EVTDISP_EVTHDLLIST_TERMINATION
 };
 
@@ -174,9 +204,6 @@ struct builder_if_s g_ltebuilder =
   .buildsub3 = NULL,
   .destroy = lte_destroy
 };
-
-extern int32_t modem_powerctrl(bool on);
-extern void    lte_callback_init(void);
 
 /****************************************************************************
  * Private Functions
@@ -260,17 +287,35 @@ static int32_t bufferpool_uninitialize(void)
 static int32_t workerthread_initialize(void)
 {
   int32_t                    ret;
-  struct thrdfctry_thrdset_s settings;
+  struct thrdfctry_thrdset_s settings[THRDSETLIST_NUM];
 
   /* worker thread settings for API callback */
 
-  settings.id                     = WRKRID_API_CALLBACK_THREAD;
-  settings.type                   = THRDFCTRY_SEQUENTIAL;
-  settings.u.seqset.thrdstacksize = APICALLBACK_THRD_STACKSIZE;
-  settings.u.seqset.thrdpriority = APICALLBACK_THRD_PRIO;
-  settings.u.seqset.maxquenum    = APICALLBACK_THRD_QNUM;
+  settings[WRKRID_API_CALLBACK_THREAD].id
+    = WRKRID_API_CALLBACK_THREAD;
+  settings[WRKRID_API_CALLBACK_THREAD].type
+    = THRDFCTRY_SEQUENTIAL;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.thrdstacksize
+    = APICALLBACK_THRD_STACKSIZE;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.thrdpriority
+    = APICALLBACK_THRD_PRIO;
+  settings[WRKRID_API_CALLBACK_THREAD].u.seqset.maxquenum
+    = APICALLBACK_THRD_QNUM;
 
-  ret = thrdfctry_init(&settings, THRDSETLIST_NUM);
+  /* worker thread settings for restart callback */
+
+  settings[WRKRID_RESTART_CALLBACK_THREAD].id
+    = WRKRID_RESTART_CALLBACK_THREAD;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].type
+    = THRDFCTRY_SEQUENTIAL;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.thrdstacksize
+    = RESTARTCALLBACK_THRD_STACKSIZE;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.thrdpriority
+    = RESTARTCALLBACK_THRD_PRIO;
+  settings[WRKRID_RESTART_CALLBACK_THREAD].u.seqset.maxquenum
+    = RESTARTCALLBACK_THRD_QNUM;
+
+  ret = thrdfctry_init(settings, THRDSETLIST_NUM);
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("thrdfctry_init() error :%d.\n", ret);
@@ -325,15 +370,27 @@ static int32_t workerthread_uninitialize(void)
 static int32_t eventdispatcher_initialize(void)
 {
   int ret = 0;
+  struct evtdispfctry_evtdispset_s set[] =
+  {
+    { EVTDISPID_APICMD_DISP_ID, g_apicmdhdlrs }
+  };
 
-  g_evtdips_obj = evtdisp_create(g_apicmdhdlrs);
-  if (!g_evtdips_obj)
+  ret = evtdispfctry_init(set, sizeof(set) / sizeof(set[0]));
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("evtdisp_create() error.\n");
-      ret = -1;
+      DBGIF_LOG_ERROR("evtdispfctry_init() error.\n");
+      return -1;
     }
 
-  return ret;
+  g_evtdips_obj = evtdispfctry_get_instance(EVTDISPID_APICMD_DISP_ID);
+  if (!g_evtdips_obj)
+    {
+      DBGIF_LOG1_ERROR("evtdispfctry_get_instance() error. id = \n",
+        EVTDISPID_APICMD_DISP_ID);
+      return -1;
+    }
+
+  return 0;
 }
 
 /****************************************************************************
@@ -355,7 +412,7 @@ static int32_t eventdispatcher_uninitialize(void)
 {
   int32_t ret;
 
-  ret = evtdisp_delete(g_evtdips_obj);
+  ret = evtdispfctry_fin();
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("evtdisp_delete() error :%d.\n", ret);
@@ -576,8 +633,6 @@ static CODE int32_t lte_destroy(void)
 {
   int32_t ret;
 
-  (void)modem_powerctrl(false);
-
 #ifdef CONFIG_NET
   stubsock_finalize();
 #endif
@@ -587,8 +642,6 @@ static CODE int32_t lte_destroy(void)
     {
       return ret;
     }
-
-  lte_callback_init();
 
   ret = halspi_uninitialize();
   if (ret < 0)

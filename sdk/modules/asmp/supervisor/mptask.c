@@ -117,12 +117,12 @@ static inline int mptask_obj_is_duplicated(mptask_t *task, mpobj_t *obj)
   return OK;
 }
 
-static off_t get_filelen(const char *filename)
+static off_t get_filelen(int fd)
 {
   struct stat buf;
   int ret;
 
-  ret = stat(filename, &buf);
+  ret = fstat(fd, &buf);
   if (ret < 0)
     {
       return 0;
@@ -142,8 +142,8 @@ static off_t get_filelen(const char *filename)
 
 void mptask_cpu_free(mptask_t *task)
 {
-  mpinfo("Free CPU %d\n", task->cpuid);
-  CPU_SET(task->cpuid, &g_freecpus);
+  CPU_OR(&g_freecpus, &g_freecpus, &task->cpuids);
+  mpinfo("Available CPUs %x\n", g_freecpus);
 }
 
 int mptask_init(mptask_t *task, const char *filename)
@@ -172,7 +172,7 @@ int mptask_init(mptask_t *task, const char *filename)
       return -ENOENT;
     }
 
-  size = get_filelen(filename);
+  size = get_filelen(fd);
   if (!size)
     {
       close(fd);
@@ -275,32 +275,122 @@ int mptask_getattr(mptask_t *task, mptask_attr_t *attr)
   return OK;
 }
 
-int mptask_assign(mptask_t *task)
+int mptask_cpu_count(cpu_set_t *set)
 {
-  cpu_set_t can;
+  int count;
   int i;
 
-  CPU_AND(&can, &g_freecpus, &task->attr.affinity);
-  
-  for (i = 1; i<NMPCPUS; i++)
+  for (i = 1, count = 0; i < NMPCPUS; i++)
     {
-      if (CPU_ISSET(i, &can))
+      if (CPU_ISSET(i, set))
         {
-          task->cpuid = i;
-          CPU_CLR(i, &g_freecpus);
+          count++;
+        }
+    }
+  return count;
+}
 
-          mpinfo("Allocate CPU %d\n", task->cpuid);
+static int assign_cpus(mptask_t *task, int ncpus)
+{
+  cpu_set_t can;
+  int cpu;
 
-          return OK;
+  /* Check enough CPUs to be assigned. */
+
+  if (mptask_cpu_count(&g_freecpus) < ncpus)
+    {
+      return -ENOENT;
+    }
+
+  CPU_AND(&can, &g_freecpus, &task->attr.affinity);
+  for (cpu = 1; cpu < NMPCPUS && ncpus; cpu++)
+    {
+      if (CPU_ISSET(cpu, &can))
+        {
+          CPU_SET(cpu, &task->cpuids);
+          CPU_CLR(cpu, &g_freecpus);
+          mpinfo("Allocate CPU %d\n", cpu);
+          ncpus--;
         }
     }
 
+  /* Return last assigned CPU ID.
+   * This process may useful for 1 CPU assignments only.
+   */
+
+  return cpu;
+}
+
+static int find_firstcpu(mptask_t *task)
+{
+  int cpu;
+
+  for (cpu = 1; cpu < NMPCPUS; cpu++)
+    {
+      if (CPU_ISSET(cpu, &task->cpuids))
+        {
+          return cpu;
+        }
+    }
   return -ENOENT;
+}
+
+int mptask_assign(mptask_t *task)
+{
+  int ret = assign_cpus(task, 1);
+  return ret < 0 ? ret : OK;
+}
+
+int mptask_assign_cpus(mptask_t *task, int ncpus)
+{
+  int ret;
+
+  /* Sanity checks
+   * Currently, multiple CPU assignments only for secure binary.
+   */
+
+  if (!task_is_secure(task))
+    {
+      return -EINVAL;
+    }
+
+  if (ncpus <= 0 || ncpus >= NMPCPUS)
+    {
+      return -EINVAL;
+    }
+
+  /*
+   * If loading binary is unified format, then ncpus must be the same
+   * with number of binaries.
+   */
+
+  if (task_is_unified(task))
+    {
+      if (task->ubin.nr_offs != ncpus)
+        {
+          return -EINVAL;
+        }
+    }
+
+  ret = assign_cpus(task, ncpus);
+
+  return ret < 0 ? ret : OK;
 }
 
 cpuid_t mptask_getcpuid(mptask_t *task)
 {
-  return task->cpuid == 0 ? -ENOENT : task->cpuid + 2;
+  int cpu = find_firstcpu(task);
+  return cpu < 0 ? -ENOENT : cpu + 2;
+}
+
+int mptask_getcpuidset(mptask_t *task, cpu_set_t *set)
+{
+  if (set)
+    {
+      *set = task->cpuids << 2;
+      return OK;
+    }
+  return -EINVAL;
 }
 
 int mptask_join(mptask_t *task, int *exit_status)

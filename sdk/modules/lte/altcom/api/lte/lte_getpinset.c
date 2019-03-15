@@ -41,8 +41,13 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_getpinset.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -51,10 +56,91 @@
 #define GETPINSET_DATA_LEN (0)
 
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern get_pinset_cb_t g_getpinset_callback;
+/****************************************************************************
+ * Name: getpinset_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing get PIN set.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t getpinset_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("getpinset_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_GET_PINSET);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: getpinset_job
+ *
+ * Description:
+ *   This function is an API callback for get PIN set.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getpinset_job(FAR void *arg)
+{
+  int32_t                                 ret;
+  int32_t                                 result;
+  FAR struct apicmd_cmddat_getpinsetres_s *data;
+  lte_getpin_t                            pinset;
+  get_pinset_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_getpinsetres_s *)arg;
+
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_PINSET,
+    (void **)&callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+      pinset.enable            = data->active;
+      pinset.status            = data->status;
+      pinset.pin_attemptsleft  = data->pin_attemptsleft;
+      pinset.puk_attemptsleft  = data->puk_attemptsleft;
+      pinset.pin2_attemptsleft = data->pin2_attemptsleft;
+      pinset.puk2_attemptsleft = data->puk2_attemptsleft;
+      callback(result, &pinset);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb(getpinset_status_chg_cb);
+}
 
 /****************************************************************************
  * Public Functions
@@ -89,58 +175,85 @@ int32_t lte_get_pinset(get_pinset_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
+  /* Check Lte library status */
 
-  if (!altcom_isinit())
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      ret = -EPERM;
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_PINSET);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb(getpinset_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_GET_PINSET);
+      return ret;
+    }
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_PINSET,
+    GETPINSET_DATA_LEN);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
     }
   else
     {
-      /* Register API callback */
+      /* Send API command to modem */
 
-      ALTCOM_REG_CALLBACK(ret, g_getpinset_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-        }
+      ret = altcom_send_and_free(cmdbuff);
     }
 
-  /* Accept the API */
+  /* If fail, there is no opportunity to execute the callback,
+   * so clear it here. */
 
-  if (0 == ret)
+  if (0 > ret)
     {
-      /* Allocate API command buffer to send */
+      /* Clear registered callback */
 
-      cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_PINSET,
-        GETPINSET_DATA_LEN);
-      if (!cmdbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          ret = -ENOMEM;
-        }
-      else
-        {
-          /* Send API command to modem */
-
-          ret = altcom_send_and_free(cmdbuff);
-        }
-
-      /* If fail, there is no opportunity to execute the callback,
-       * so clear it here. */
-
-      if (0 > ret)
-        {
-          /* Clear registered callback */
-
-          ALTCOM_CLR_CALLBACK(g_getpinset_callback);
-        }
-      else
-        {
-          ret = 0;
-        }
+      altcomcallbacks_unreg_cb(APICMDID_GET_PINSET);
+      altcomstatus_unreg_statchgcb(getpinset_status_chg_cb);
+    }
+  else
+    {
+      ret = 0;
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_getpinset
+ *
+ * Description:
+ *   This function is an API command handler for get PIN set result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_GET_PINSET_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_getpinset(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_GET_PINSET), getpinset_job);
 }

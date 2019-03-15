@@ -248,19 +248,19 @@
                                              fmt, \
                                              ##__VA_ARGS__)
 
-#define POSTFILTER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_POSTPROC_CMP, \
                                                            att_cb)
-#define POSTFILTER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_POSTFILTER_CMP)
+#define POSTPROC_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_POSTPROC_CMP)
 
-#define POSTFILTER_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_POSTPROC_CMP, \
                                             code)
-#define POSTFILTER_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_ERR(code)     DBG_LOGF_ERROR(AS_MODULE_ID_POSTPROC_CMP, \
                                             code)
-#define POSTFILTER_WARN(code)    DBG_LOGF_WARN(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_WARN(code)    DBG_LOGF_WARN(AS_MODULE_ID_POSTPROC_CMP, \
                                            code)
-#define POSTFILTER_INF(code)     DBG_LOGF_DEBUG(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_INF(code)     DBG_LOGF_DEBUG(AS_MODULE_ID_POSTPROC_CMP, \
                                             code)
-#define POSTFILTER_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_POSTFILTER_CMP, \
+#define POSTPROC_DBG(fmt, ...) AUDIO_LOG_EVENT(AS_MODULE_ID_POSTPROC_CMP, \
                                              fmt, \
                                              ##__VA_ARGS__)
 

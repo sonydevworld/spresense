@@ -53,6 +53,7 @@ VPATH   += common/src
 DEPPATH += --dep-path common/src
 
 CSRCS += cxd56_boot.c
+CSRCS += cxd56_clock.c
 
 ifeq ($(CONFIG_ARCH_FPU),y)
 CSRCS += cxd56_ostest.c
@@ -200,10 +201,6 @@ endif
 
 ifeq ($(CONFIG_MODEM_ALTMDM),y)
 CSRCS += cxd56_altmdm_spi.c
-endif
-
-ifeq ($(CONFIG_BCM20706),y)
-CSRCS += cxd56_bcm20706.c
 endif
 
 include $(SDKDIR)/bsp/scripts/Board.mk

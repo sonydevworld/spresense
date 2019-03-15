@@ -41,8 +41,13 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_setdataconfig.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -53,10 +58,86 @@
 #define DATA_TYPE_MAX          LTE_DATA_TYPE_IMS
 
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern set_dataconfig_cb_t g_setdataconfig_callback;
+/****************************************************************************
+ * Name: setdataconfig_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing set data connection
+ *   configuration.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t setdataconfig_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("setdataconfig_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_DATACONFIG);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: setdataconfig_job
+ *
+ * Description:
+ *   This function is an API callback for
+ *   set data connection configuration.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void setdataconfig_job(FAR void *arg)
+{
+  int32_t                                     ret;
+  int32_t                                     result;
+  FAR struct apicmd_cmddat_setdataconfigres_s *data;
+  set_dataconfig_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_setdataconfigres_s *)arg;
+
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_SET_DATACONFIG,
+    (void **)&callback);
+
+  if ((ret == 0) && (callback))
+    {
+      result = (int32_t)data->result;
+      callback(result);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb(setdataconfig_status_chg_cb);
+}
 
 /****************************************************************************
  * Public Functions
@@ -112,28 +193,35 @@ int32_t lte_set_dataconfig(uint32_t data_type, bool general, bool roaming,
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
-    }
-  else if (DATA_TYPE_MIN > data_type || DATA_TYPE_MAX < data_type)
+  if (DATA_TYPE_MIN > data_type || DATA_TYPE_MAX < data_type)
     {
       DBGIF_LOG1_ERROR("Unsupport data type. type:%d\n", data_type);
       return -EINVAL;
     }
-  else
-    {
-      /* Register API callback */
 
-      ALTCOM_REG_CALLBACK(ret, g_setdataconfig_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-          return ret;
-        }
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_DATACONFIG);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb(setdataconfig_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_SET_DATACONFIG);
+      return ret;
     }
 
   /* Allocate API command buffer to send */
@@ -169,7 +257,8 @@ int32_t lte_set_dataconfig(uint32_t data_type, bool general, bool roaming,
     {
       /* Clear registered callback */
 
-      ALTCOM_CLR_CALLBACK(g_setdataconfig_callback);
+      altcomcallbacks_unreg_cb(APICMDID_SET_DATACONFIG);
+      altcomstatus_unreg_statchgcb(setdataconfig_status_chg_cb);
     }
   else
     {
@@ -177,4 +266,28 @@ int32_t lte_set_dataconfig(uint32_t data_type, bool general, bool roaming,
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_setdataconfig
+ *
+ * Description:
+ *   This function is an API command handler for get data cnct cfg result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_SET_DATASET_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_setdataconfig(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_SET_DATACONFIG), setdataconfig_job);
 }

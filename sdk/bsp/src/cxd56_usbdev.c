@@ -2222,7 +2222,7 @@ static int cxd56_epdisable(FAR struct usbdev_ep_s *ep)
   FAR struct cxd56_ep_s *privep = (FAR struct cxd56_ep_s *)ep;
   irqstate_t flags;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!ep)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -2253,7 +2253,7 @@ static FAR struct usbdev_req_s *cxd56_epallocreq(FAR struct usbdev_ep_s *ep)
 {
   FAR struct cxd56_req_s *privreq;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!ep)
     {
       return NULL;
@@ -2285,7 +2285,7 @@ static void cxd56_epfreereq(FAR struct usbdev_ep_s *ep,
 {
   FAR struct cxd56_req_s *privreq = (FAR struct cxd56_req_s *)req;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!ep || !req)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -2355,7 +2355,7 @@ static int cxd56_epsubmit(FAR struct usbdev_ep_s *ep,
   irqstate_t flags;
   int ret = OK;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!req || !req->callback || !req->buf || !ep)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -2493,7 +2493,7 @@ static int cxd56_epcancel(FAR struct usbdev_ep_s *ep,
   FAR struct cxd56_ep_s *privep = (FAR struct cxd56_ep_s *)ep;
   irqstate_t flags;
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!ep || !req)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -2734,7 +2734,7 @@ static int cxd56_getframe(FAR struct usbdev_s *dev)
 
   usbtrace(TRACE_DEVGETFRAME, 0);
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!dev)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -2786,7 +2786,7 @@ static int cxd56_selfpowered(FAR struct usbdev_s *dev, bool selfpowered)
 
   usbtrace(TRACE_DEVSELFPOWERED, (uint16_t)selfpowered);
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!dev)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);
@@ -3131,7 +3131,7 @@ int usbdev_register(FAR struct usbdevclass_driver_s *driver)
 
   usbtrace(TRACE_DEVREGISTER, 0);
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (!driver || !driver->ops->bind || !driver->ops->unbind ||
       !driver->ops->setup)
     {
@@ -3189,7 +3189,7 @@ int usbdev_unregister(FAR struct usbdevclass_driver_s *driver)
 
   usbtrace(TRACE_DEVUNREGISTER, 0);
 
-#ifdef CONFIG_DEBUG
+#ifdef CONFIG_DEBUG_FEATURES
   if (driver != g_usbdev.driver)
     {
       usbtrace(TRACE_DEVERROR(CXD56_TRACEERR_INVALIDPARMS), 0);

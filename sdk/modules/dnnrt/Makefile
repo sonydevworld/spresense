@@ -36,5 +36,9 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-include ./src/Makefile
+ifeq ($(CONFIG_DNN_RT_MP),y)
+include ./src-mp/Build.mk
+else
+include ./src/Build.mk
+endif
 

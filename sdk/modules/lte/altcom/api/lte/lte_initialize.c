@@ -45,6 +45,9 @@
 #include "ltebuilder.h"
 #include "director.h"
 #include "dbg_if.h"
+#include "altcombs.h"
+#include "altcom_callbacks.h"
+#include "altcom_status.h"
 
 /****************************************************************************
  * Public Data
@@ -75,28 +78,32 @@ sys_mutex_t g_lte_apicallback_mtx;
 int32_t lte_initialize(void)
 {
   int32_t ret;
+  int32_t status;
 
-  /* Set initialized status */
+  status = altcom_get_status();
+  if (status != ALTCOM_STATUS_UNINITIALIZED)
+    {
+      return -EALREADY;
+    }
 
-  ret = altcom_check_initialized_and_set();
+  ret = director_construct(&g_ltebuilder, NULL);
   if (ret < 0)
     {
-      DBGIF_LOG_ERROR("Already initialized.\n");
+      DBGIF_LOG1_ERROR("director_construct() error. %d", ret);
     }
   else
     {
-      ret = director_construct(&g_ltebuilder, NULL);
+      ret = altcomcallbacks_init();
       if (ret < 0)
         {
-          DBGIF_LOG1_ERROR("director_construct() error.", ret);
-          altcom_set_finalized();
+          DBGIF_LOG1_ERROR("callbacks_initialize() failed %d\n", ret);
+          director_destruct(&g_ltebuilder);
         }
       else
         {
-          ret = 0;
+          altcom_set_status(ALTCOM_STATUS_INITIALIZED);
         }
     }
 
   return ret;
 }
-

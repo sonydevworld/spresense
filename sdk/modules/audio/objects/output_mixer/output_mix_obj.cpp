@@ -107,6 +107,8 @@ int OutputMixObjectTask::getHandle(MsgPacket* msg)
       case MSG_AUD_MIX_CMD_ACT:
       case MSG_AUD_MIX_CMD_DEACT:
       case MSG_AUD_MIX_CMD_CLKRECOVERY:
+      case MSG_AUD_MIX_CMD_INITMPP:
+      case MSG_AUD_MIX_CMD_SETMPP:
         handle = msg->peekParam<OutputMixerCommand>().handle;
         break;
 
@@ -330,6 +332,13 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
   s_msgq_id = param->msgq_id;
   s_pool_id = param->pool_id;
 
+  /* Reset Message queue. */
+
+  FAR MsgQueBlock *que;
+  err_t err_code = MsgLib::referMsgQueBlock(s_msgq_id.mixer, &que);
+  F_ASSERT(err_code == ERR_OK);
+  que->reset();
+
   s_omix_pid = task_create("OMIX_OBJ",
                            150, 1024 * 3,
                            AS_OutputMixObjEntry,
@@ -415,6 +424,60 @@ bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineContr
   err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_CLKRECOVERY,
+                                              s_msgq_id.mng,
+                                              cmd);
+  F_ASSERT(er == ERR_OK);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_InitPostprocOutputMixer(uint8_t handle, FAR AsInitPostProc *initppparam)
+{
+  /* Parameter check */
+
+  if (initppparam == NULL)
+    {
+      return false;
+    }
+
+  /* Set Postfilter command param */
+
+  OutputMixerCommand cmd;
+
+  cmd.handle       = handle;
+  cmd.initpp_param = *initppparam;
+
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
+                                              MsgPriNormal,
+                                              MSG_AUD_MIX_CMD_INITMPP,
+                                              s_msgq_id.mng,
+                                              cmd);
+  F_ASSERT(er == ERR_OK);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_SetPostprocOutputMixer(uint8_t handle, FAR AsSetPostProc *setppparam)
+{
+  /* Parameter check */
+
+  if (setppparam == NULL)
+    {
+      return false;
+    }
+
+  /* Set Postfilter command param */
+
+  OutputMixerCommand cmd;
+
+  cmd.handle       = handle;
+  cmd.setpp_param = *setppparam;
+
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
+                                              MsgPriNormal,
+                                              MSG_AUD_MIX_CMD_SETMPP,
                                               s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);

@@ -198,7 +198,7 @@ static int gauge_get_vol(FAR b16_t *voltage)
       return -EIO;
     }
 
-  *voltage = gauge.voltage;
+  *voltage = gauge.voltage * 112 / 100;
   return OK;
 }
 

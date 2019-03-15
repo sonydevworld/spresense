@@ -272,6 +272,24 @@ static int ble_event_connect_dev_name(struct ble_event_dev_name_t *dev_name_evt)
   return ret;
 }
 
+static int ble_event_advertise_report(struct ble_event_adv_rept_t *adv_rept_evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ble_common_ops = g_bt_common_state.ble_common_ops;
+
+  if (ble_common_ops && ble_common_ops->scan_result)
+    {
+      ble_common_ops->scan_result(adv_rept_evt->addr, (char*)(adv_rept_evt->data));
+    }
+  else
+    {
+      _err("%s [BLE][Common] Advertise report callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -971,8 +989,20 @@ int ble_disable(void)
 
 int ble_connect(struct ble_state_s *ble_state)
 {
-  _err("%s [BLE][Common] BLE connect failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ble_hal_common_ops && ble_hal_common_ops->connect)
+    {
+      ret = ble_hal_common_ops->connect(&ble_state->bt_target_addr);
+    }
+  else
+    {
+      _err("%s [BLE][Common] BLE connect failed(Central not supported yet).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -986,8 +1016,20 @@ int ble_connect(struct ble_state_s *ble_state)
 
 int ble_disconnect(struct ble_state_s *ble_state)
 {
-  _err("%s [BLE][Common] BLE connect failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ble_hal_common_ops && ble_hal_common_ops->disconnect)
+    {
+      ret = ble_hal_common_ops->disconnect(ble_state->ble_connect_handle);
+    }
+  else
+    {
+      _err("%s [BLE][Common] BLE connect failed(Central not supported yet).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -1055,8 +1097,20 @@ int ble_cancel_advertise(void)
 
 int ble_start_scan(void)
 {
-  _err("%s [BLE][Common] BLE scan failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+    {
+      ret = ble_hal_common_ops->scan(true);
+    }
+  else
+    {
+      _err("%s [BLE][Common] BLE scan failed(Central not supported yet).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -1070,8 +1124,20 @@ int ble_start_scan(void)
 
 int ble_cancel_scan(void)
 {
-  _err("%s [BLE][Common] BLE scan failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+    {
+      ret = ble_hal_common_ops->scan(false);
+    }
+  else
+    {
+      _err("%s [BLE][Common] BLE scan failed(Central not supported yet).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -1138,8 +1204,7 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
         return ble_event_connect_dev_name((struct ble_event_dev_name_t *) bt_event);
 
       case BLE_COMMON_EVENT_SCAN_RESULT:
-        /* Central role not supported yet */
-        break;
+        return ble_event_advertise_report((struct ble_event_adv_rept_t *) bt_event);
 
       default:
         break;

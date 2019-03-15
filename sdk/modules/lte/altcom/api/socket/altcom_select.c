@@ -86,10 +86,6 @@ static int32_t g_select_id = 0;
 
 /****************************************************************************
  * Name: generate_selectid
- *
- * Description:
- *   Generate select ID.
- *
  ****************************************************************************/
 
 static int32_t generate_selectid(void)
@@ -101,10 +97,6 @@ static int32_t generate_selectid(void)
 
 /****************************************************************************
  * Name: fill_select_request_command
- *
- * Description:
- *   Fill the ALTCOM_SELECT_REQ command.
- *
  ****************************************************************************/
 
 static void fill_select_request_command(FAR struct apicmd_select_s *cmd,
@@ -153,10 +145,6 @@ static void fill_select_request_command(FAR struct apicmd_select_s *cmd,
 
 /****************************************************************************
  * Name: select_request
- *
- * Description:
- *   Send ALTCOM_SELECT_REQ.
- *
  ****************************************************************************/
 
 static int32_t select_request(FAR struct select_req_s *req)
@@ -265,10 +253,6 @@ errout:
 
 /****************************************************************************
  * Name: select_request_async
- *
- * Description:
- *   Send ALTCOM_SELECT_REQ. Just send and do not wait for a response.
- *
  ****************************************************************************/
 
 static int32_t select_request_async(FAR struct select_req_s *req)
@@ -327,34 +311,22 @@ errout:
 
 /****************************************************************************
  * Name: altcom_select_request_asyncsend
- *
- * Description:
- *   Send select request.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *  >0: The select id use select cancel request
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
                                     altcom_fd_set *writeset,
                                     altcom_fd_set *exceptset)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -378,28 +350,20 @@ int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_cancel_request_send
- *
- * Description:
- *   Send select cancel request.
- *
- * Input parameters:
- *   id - returned by altcom_select_request_asyncsend
- *
- *  Return:
- *   0: Send succeded
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_cancel_request_send(int id)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -423,36 +387,23 @@ int altcom_select_cancel_request_send(int id)
 
 /****************************************************************************
  * Name: altcom_select_nonblock
- *
- * Description:
- *   altcom_select_nonblock() is the same as altcom_select(),
- *   but set command parameter to nonblock.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *   0: All descriptors in the three sets are not ready
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
                            altcom_fd_set *writeset,
                            altcom_fd_set *exceptset)
 {
+
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -476,37 +427,22 @@ int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_block
- *
- * Description:
- *   altcom_select_nonblock() is the same as altcom_select(),
- *   but set command parameter to block.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   timeout - Return at this time if none of these events of interest
- *             occur.
- *
- *  Return:
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select_block(int maxfdp1, altcom_fd_set *readset,
                         altcom_fd_set *writeset, altcom_fd_set *exceptset,
                         struct altcom_timeval *timeout)
 {
+  int32_t             ret;
   int32_t             result;
   struct select_req_s req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
@@ -537,33 +473,27 @@ int altcom_select_block(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select
- *
- * Description:
- *   altcom_select() allows a program to monitor multiple file descriptors,
- *   waiting until one or more of the file descriptors become "ready" for
- *   some class of I/O operation (e.g., input possible).  A file descriptor
- *   is considered  ready if it is possible to perform the corresponding I/O
- *   operation (e.g., altcom_recv()) without blocking.
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   timeout - Return at this time if none of these events of interest
- *             occur.
- *
- *  Return:
- *   0: Timer expired
- *  >0: The number of bits set in the three sets of descriptors
- *  -1: An error occurred (errno will be set appropriately)
- *
  ****************************************************************************/
 
 int altcom_select(int maxfdp1, altcom_fd_set *readset,
                   altcom_fd_set *writeset, altcom_fd_set *exceptset,
                   struct altcom_timeval *timeout)
 {
-  return altcom_select_block(maxfdp1, readset, writeset, exceptset, timeout);
+  int ret;
+
+  if (timeout && (timeout->tv_sec == 0) && (timeout->tv_usec == 0))
+    {
+      ret = altcom_select_nonblock(maxfdp1, readset, writeset, exceptset);
+    }
+  else
+    {
+      ret = altcom_select_block(maxfdp1, readset, writeset, exceptset, timeout);
+    }
+
+  if ((ret == SELECT_REQ_FAILURE) && (altcom_errno() == ALTCOM_ETIMEDOUT))
+    {
+      ret = 0;
+    }
+
+  return ret;
 }

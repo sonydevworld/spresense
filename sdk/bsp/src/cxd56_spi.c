@@ -62,6 +62,7 @@
 #include "chip/cxd56_spi.h"
 #include "cxd56_clock.h"
 #include "cxd56_pinconfig.h"
+#include "cxd56_powermgr.h"
 
 #ifdef CONFIG_CXD56_DMAC
 #  include "cxd56_dmac.h"
@@ -463,15 +464,13 @@ static uint32_t spi_setfrequency(FAR struct spi_dev_s *dev, uint32_t frequency)
   uint32_t divisor;
   uint32_t actual;
 
-  if (priv->frequency == frequency)
-    {
-      /* We are already at this frequency.  Return the actual. */
+  /* Set SPI_CLOCK */
 
-      return priv->actual;
-    }
+  cxd56_spi_clock_gear_adjust(priv->port, frequency);
 
   /* frequency = SPI_CLOCK / divisor, or divisor = SPI_CLOCK / frequency */
 
+  priv->spibasefreq = cxd56_get_spi_baseclock(priv->port);
   divisor = priv->spibasefreq / frequency;
 
   /* "In master mode, CPSDVSRmin = 2 or larger (even numbers only)" */
@@ -1014,6 +1013,68 @@ static void cxd56_spi_pincontrol(int ch, bool on)
     }
 }
 
+#ifdef CONFIG_CXD56_SPI4
+
+/****************************************************************************
+ * Name: spi4_colockchange
+ *
+ * Description:
+ *   pm event callback for SPI4
+ *
+ * Input Parameter:
+ *   id - PM callback ID
+ *
+ ****************************************************************************/
+
+static int spi4_colockchange(uint8_t id)
+{
+  FAR struct cxd56_spidev_s *priv = &g_spi4dev;
+
+  switch (id)
+    {
+      case CXD56_PM_CALLBACK_ID_CLK_CHG_END:
+        spi_setfrequency(&priv->spidev, priv->frequency);
+        break;
+      default:
+        break;
+    }
+
+  return 0;
+}
+
+#endif
+
+#ifdef CONFIG_CXD56_SPI5
+
+/****************************************************************************
+ * Name: spi5_colockchange
+ *
+ * Description:
+ *   pm event callback for SPI5
+ *
+ * Input Parameter:
+ *   id - PM callback ID
+ *
+ ****************************************************************************/
+
+static int spi5_colockchange(uint8_t id)
+{
+  FAR struct cxd56_spidev_s *priv = &g_spi5dev;
+
+  switch (id)
+    {
+      case CXD56_PM_CALLBACK_ID_CLK_CHG_END:
+        spi_setfrequency(&priv->spidev, priv->frequency);
+        break;
+      default:
+        break;
+    }
+
+  return 0;
+}
+
+#endif
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1043,12 +1104,20 @@ FAR struct spi_dev_s *cxd56_spibus_initialize(int port)
 #ifdef CONFIG_CXD56_SPI4
       case 4:
         priv = &g_spi4dev;
+        if (!priv->initialized)
+          {
+            cxd56_pm_register_callback(PM_CLOCK_APP_SPI, spi4_colockchange);
+          }
         break;
 #endif
 
 #ifdef CONFIG_CXD56_SPI5
       case 5:
         priv = &g_spi5dev;
+        if (!priv->initialized)
+          {
+            cxd56_pm_register_callback(PM_CLOCK_APP_WSPI, spi5_colockchange);
+          }
         break;
 #endif
 

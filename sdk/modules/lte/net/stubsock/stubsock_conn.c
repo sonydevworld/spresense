@@ -69,11 +69,6 @@ struct devspecsock_sockif_s g_ds_sockif;
 
 /****************************************************************************
  * Name: stubsock_alloc()
- *
- * Description:
- *   Allocate a new, uninitialized stubsock connection structure.  This is
- *   normally something done by the implementation of the socket() API
- *
  ****************************************************************************/
 
 FAR struct stubsock_conn_s *stubsock_alloc(void)
@@ -97,11 +92,6 @@ FAR struct stubsock_conn_s *stubsock_alloc(void)
 
 /****************************************************************************
  * Name: stubsock_free()
- *
- * Description:
- *   Free a stubsock connection structure that is no longer in use. This should
- *   be done by the implementation of close().
- *
  ****************************************************************************/
 
 void stubsock_free(FAR struct stubsock_conn_s *conn)
@@ -111,10 +101,6 @@ void stubsock_free(FAR struct stubsock_conn_s *conn)
 
 /****************************************************************************
  * Name: stubsock_initialize()
- *
- * Description:
- *   Initialize the stub Socket connection structures.
- *
  ****************************************************************************/
 
 void stubsock_initialize(void)
@@ -130,10 +116,6 @@ void stubsock_initialize(void)
 
 /****************************************************************************
  * Name: stubsock_finalize()
- *
- * Description:
- *   Finalize the stub Socket connection structures.
- *
  ****************************************************************************/
 
 void stubsock_finalize(void)

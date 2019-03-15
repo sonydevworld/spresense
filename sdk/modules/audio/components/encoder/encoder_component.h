@@ -78,6 +78,7 @@ struct StopEncParam
 struct EncCmpltParam
 {
   Apu::ApuEventType event_type;
+  bool              result;
 
   union
   {
@@ -103,7 +104,7 @@ bool AS_encode_recv_done(void);
 
 } /* extern "C" */
 
-class EncoderComponent : public ComponentCommon
+class EncoderComponent : public ComponentCommon<Apu::InternalResult>
 {
 public:
   EncoderComponent(MsgQueId apu_dtq,PoolId apu_pool_id)

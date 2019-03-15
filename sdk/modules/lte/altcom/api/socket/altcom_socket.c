@@ -74,10 +74,6 @@ struct socket_req_s
 
 /****************************************************************************
  * Name: socket_request
- *
- * Description:
- *   Send ALTCOM_SOCKET_REQ.
- *
  ****************************************************************************/
 
 static int32_t socket_request(FAR struct socket_req_s *req)
@@ -151,32 +147,21 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_socket
- *
- * Description:
- *   altcom_socket() creates an endpoint for communication and returns
- *   a descriptor.
- *
- * Parameters:
- *   domain   See Address family.
- *   type     See Socket protocol type.
- *   protocol See Protocol.
- *
- * Returned Value:
- *   A non-negative socket descriptor on success; -1 on error with errno set
- *   appropriately.
- *
  ****************************************************************************/
 
 int altcom_socket(int domain, int type, int protocol)
 {
+  int32_t                    ret;
   int32_t                    result;
   FAR struct altcom_socket_s *fsock;
   struct socket_req_s        req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

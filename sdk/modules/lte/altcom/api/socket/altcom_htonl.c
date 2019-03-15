@@ -47,16 +47,6 @@
 
 /****************************************************************************
  * Name: altcom_htonl
- *
- * Description:
- *   Convert from host byte order to network byte order.
- *
- * Input parameters:
- *   x - unsigned long value
- *
- *  Return:
- *   Value converted to network byte order
- *
  ****************************************************************************/
 
 uint32_t altcom_htonl(uint32_t x)

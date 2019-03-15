@@ -99,11 +99,18 @@
 
 #define WAIT_RXREQ_TIMEOUT    (1000)
 #define WAIT_XFERRDY_TIMEOUT  (25 * 1000)
-#define SV_TIMER_TIMOUT_VAL   (5 * 1000)
+#if defined(CONFIG_MODEM_ALTMDM_SLEEP_TIMER_VAL)
+#  if (CONFIG_MODEM_ALTMDM_SLEEP_TIMER_VAL < 20)
+#    error MODEM_ALTMDM_SLEEP_TIMER_VAL too small
+#  endif
+#  define SV_TIMER_TIMOUT_VAL (CONFIG_MODEM_ALTMDM_SLEEP_TIMER_VAL)
+#else
+#  define SV_TIMER_TIMOUT_VAL (20)
+#endif
 #define WRITE_WAIT_TIMEOUT    (ALTMDM_SYS_FLAG_TMOFEVR)
 #define SREQ_WAIT_TIMEOUT     (ALTMDM_SYS_FLAG_TMOFEVR)
 
-#define SPI_MAXFREQUENCY            (24375000)      /* 24.375MHz. */
+#define SPI_MAXFREQUENCY            (13000000)      /* 13MHz. */
 #define GPIO_MASTER_REQUEST         (ALTMDM_GPIO_MASTER_REQ)
 #define GPIO_SLAVE_REQUEST          (ALTMDM_GPIO_SLAVE_REQ)
 #define GPIO_SREQ_INT_POLARITY      (ALTMDM_GPIOINT_LEVEL_HIGH)
@@ -1253,10 +1260,7 @@ static int do_xfersleep(FAR struct altmdm_dev_s *priv, uint32_t is_rcvrready)
           m_info("ready to xfer\n");
           notify_xferready(priv);
         }
-      else
-        {
-          altmdm_pm_notify_reset(priv);
-        }
+      altmdm_pm_notify_reset(priv);
     }
 
   return ret;
@@ -1506,10 +1510,7 @@ static void done_xfer(FAR struct altmdm_dev_s *priv, uint32_t xfer_mode,
             m_info("ready to xfer\n");
             notify_xferready(priv);
           }
-        else
-          {
-            altmdm_pm_notify_reset(priv);
-          }
+        altmdm_pm_notify_reset(priv);
         break;
 
       case MODE_TRXRESET:
@@ -1519,10 +1520,7 @@ static void done_xfer(FAR struct altmdm_dev_s *priv, uint32_t xfer_mode,
             m_info("ready to xfer\n");
             notify_xferready(priv);
           }
-        else
-          {
-            altmdm_pm_notify_reset(priv);
-          }
+        altmdm_pm_notify_reset(priv);
         if (spidev->tx_param.is_bufful)
           {
             spidev->tx_param.is_bufful = 0;

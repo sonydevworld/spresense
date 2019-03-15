@@ -175,11 +175,15 @@ int board_power_setup(int status)
 
   board_power_control(POWER_AUDIO_DVDD, false);
 
-  /* Power off all of GPO switches in boot-up stage */
+  /* Power off all of GPO switches (except for GPO0) in boot-up stage */
 
-  board_power_control(PMIC_GPO(0) | PMIC_GPO(1) | PMIC_GPO(2) | PMIC_GPO(3) |
+  board_power_control(              PMIC_GPO(1) | PMIC_GPO(2) | PMIC_GPO(3) |
                       PMIC_GPO(4) | PMIC_GPO(5) | PMIC_GPO(6) | PMIC_GPO(7),
                       false);
+
+  /* Set GPO0 to Hi-Z */
+
+  cxd56_pmic_set_gpo_hiz(PMIC_GET_CH(PMIC_GPO(0)));
 
   return 0;
 }

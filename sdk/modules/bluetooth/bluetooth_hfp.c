@@ -47,7 +47,7 @@
 static struct bt_hfp_state_s g_bt_hfp_state =
 {
   .bt_hfp_connection       = BT_DISCONNECTED,
-  .bt_hfp_audio_connection = BT_DISCONNECTED
+  .bt_hfp_audio_connection = BT_DISCONNECTED,
 };
 
 /****************************************************************************
@@ -85,6 +85,7 @@ static int event_hf_connect(struct bt_hfp_event_connect_t *event_connect)
       bt_hfp_ops->connect(g_bt_hfp_state.bt_acl_state, event_connect->hfp_type);
 
       g_bt_hfp_state.bt_hfp_handle = event_connect->handle;
+      g_bt_hfp_state.bt_hfp_audio_handle = event_connect->handle;
     }
   else
     {
@@ -410,6 +411,58 @@ int bt_hfp_send_at_command(struct bt_acl_state_s *bt_acl_state, char *at_cmd_str
 
   return ret;
 }
+
+/****************************************************************************
+ * Name: bt_hfp_press_button
+ *
+ * Description:
+ *   Set pressing button for HFP profile
+ *
+ ****************************************************************************/
+
+int bt_hfp_press_button(struct bt_acl_state_s *bt_acl_state)
+{
+  int ret = BT_SUCCESS;
+  struct bt_hal_hfp_ops_s *bt_hal_hfp_ops = g_bt_hfp_state.bt_hal_hfp_ops;
+
+  if (bt_hal_hfp_ops && bt_hal_hfp_ops->press_button)
+    {
+      bt_hal_hfp_ops->press_button(&bt_acl_state->bt_target_addr, g_bt_hfp_state.bt_hfp_handle);
+    }
+  else
+    {
+      _err("%s [BT][HFP] Press button failed(HAL not registered).\n", __func__);
+      return BT_FAIL;
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Name: bt_hfp_set_feature
+ *
+ * Description:
+ *   Set feature for HFP profile
+ *
+ ****************************************************************************/
+
+int bt_hfp_set_feature(BT_HFP_HF_FEATURE_FLAG flag)
+{
+  int ret = BT_SUCCESS;
+  struct bt_hal_hfp_ops_s *bt_hal_hfp_ops = g_bt_hfp_state.bt_hal_hfp_ops;
+
+  if (bt_hal_hfp_ops && bt_hal_hfp_ops->set_hf_feature)
+    {
+      bt_hal_hfp_ops->set_hf_feature(flag);
+      g_bt_hfp_state.bt_hfp_supported_feature = flag;
+    }
+  else
+    {
+      _err("%s [BT][HFP] Set default supported feature failed(HAL not registered).\n", __func__);
+      return BT_FAIL;
+    }
+  return ret;
+}
+
 
 /****************************************************************************
  * Name: bt_hfp_register_cb

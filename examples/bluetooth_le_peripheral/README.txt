@@ -11,8 +11,7 @@ examples/bluetooth_le_peripheral
     CONFIG_EXAMPLES_BLUETOOTH_LE_PERIPHERAL - Enable this example
 
   Build(In <spresense>/sdk):
-    $ ./tools/config.py --kernel release
-    $ ./tools/config.py board/spresense feature/bluetooth device/bcm20706 examples/ble_peripheral
+    $ ./tools/config.py examples/ble_peripheral
     $ make buildkernel
     $ make
 

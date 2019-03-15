@@ -57,13 +57,13 @@
 
 /* Encoder Version. */
 
-#define DSP_MP3ENC_VERSION    0x020102    /* 02.01.02 */
+#define DSP_MP3ENC_VERSION    0x020103    /* 02.01.03 */
 #define DSP_OPUSENC_VERSION   0x010306    /* 01.03.06 */
 
 /* Filter Version. */
 
 #define DSP_MFESRC_VERSION    0x010203    /* 01.02.03 */
-#define DSP_SRC_VERSION       0x020102    /* 02.01.02 */
+#define DSP_SRC_VERSION       0x020104    /* 02.01.04 */
 #define DSP_MPPEAX_VERSION    0x010203    /* 01.02.03 */
 
 /* Postfilter Version. */

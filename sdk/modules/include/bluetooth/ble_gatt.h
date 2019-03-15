@@ -76,12 +76,25 @@
 #define BLE_MAX_CHAR_SIZE 20
 /** @} */
 
-
 /**
  *@name Invalid service handle ID
  *@{
  */
 #define BLE_GATT_INVALID_SERVICE_HANDLE UINT16_MAX
+/** @} */
+
+/**
+ *@name Support Max services
+ *@{
+ */
+#define BLE_DB_DISCOVERY_MAX_SRV          3
+/** @} */
+
+/**
+ *@name Support Max characteristics per service
+ *@{
+ */
+#define BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV 4
 /** @} */
 
 /****************************************************************************
@@ -100,9 +113,9 @@ struct ble_gatt_char_s;
  */
 typedef enum
 {
-  BLE_UUID_TYPE_BASEALIAS_BTSIG = 1, /**< UUID type base alias bluetooth SIG qualified */
+  BLE_UUID_TYPE_UUID128 = 0,         /**< UUID type 128-bit UUID */
+  BLE_UUID_TYPE_BASEALIAS_BTSIG,     /**< UUID type base alias bluetooth SIG qualified */
   BLE_UUID_TYPE_BASEALIAS_VENDOR,    /**< UUID type base alias vendor */
-  BLE_UUID_TYPE_UUID128,             /**< UUID type 128-bit UUID */
 } BLE_GATT_UUID_TYPE;
 
 /**
@@ -201,19 +214,6 @@ typedef struct
 } BLE_CHAR_PROP;
 
 /**
- * @struct ble_gatt_central_ops_s
- * @brief Bluetooth LE characteristic callbacks(for Central)
- * @detail If characteristic get event from target, this callback will
- *         call for response(Central).
- */
-struct ble_gatt_central_ops_s
-{
-  void (*write)(struct ble_gatt_char_s *ble_gatt_char);  /**< Write response */
-  void (*read)(struct ble_gatt_char_s *ble_gatt_char);   /**< Read response */
-  void (*notify)(struct ble_gatt_char_s *ble_gatt_char); /**< Notify response */
-};
-
-/**
  * @struct ble_gatt_peripheral_ops_s
  * @brief Bluetooth LE characteristic callbacks(for Peripheral)
  * @detail If characteristic get event from target, this callback will
@@ -236,6 +236,7 @@ struct ble_gatt_char_s
   BLE_UUID              uuid;          /**< Characteristic UUID */
   BLE_CHAR_VALUE        value;         /**< Characteristic value */
   BLE_CHAR_PROP         property;      /**< Characteristic property */
+  uint8_t               status;        /**< Characteristic write response status */
   union
   {
     struct ble_gatt_central_ops_s    *ble_gatt_central_ops;    /**< Central role application callbacks @ref ble_gatt_central_ops_s */
@@ -266,7 +267,108 @@ struct ble_gatt_state_s
   struct ble_hal_gatt_ops_s *ble_hal_gatt_ops;          /**< BLE GATT HAL interfaces */
   uint8_t                   num;                        /**< Number of services */
   struct ble_gatt_service_s services[BLE_MAX_SERVICES]; /**< Service list @ref ble_gatt_service_s */
+  /* TODO: temporary, needs to consider the design */
+  struct ble_gatt_central_ops_s *ble_gatt_central_ops;  /**< Central role application callbacks @ref ble_gatt_central_ops_s */
 };
+
+/**
+ * @struct ble_gattc_handle_range_s
+ * @brief GATTC handle range structure
+ */
+struct ble_gattc_handle_range_s
+{
+  uint16_t start_handle; /**< Start handle */
+  uint16_t end_handle;   /**< End handle */
+};
+
+/**
+ * @struct ble_gattc_char_s
+ * @brief GATTC characteristic structure
+ */
+struct ble_gattc_char_s
+{
+  BLE_CHAR_PROP char_prope;      /**< Characteristic property */
+  uint16_t      char_valhandle;  /**< Characteristic value handle */
+  uint16_t      char_declhandle; /**< Characteristic declaration handle */
+  BLE_UUID      char_valuuid;    /**< Characteristic value uuid */
+};
+
+/**
+ * @struct ble_gattc_db_disc_char_s
+ * @brief GATTC discovered characteristic data structure
+ */
+struct ble_gattc_db_disc_char_s
+{
+  uint16_t                cccd_handle;    /**< Handle of client configuration characteristic descriptor in characteristic */
+  struct ble_gattc_char_s characteristic; /**< Characteristic information */
+};
+
+/**
+ * @struct ble_gattc_db_disc_srv_s
+ * @brief GATTC discovered service data structure
+ */
+struct ble_gattc_db_disc_srv_s
+{
+  uint8_t                         char_count;                                         /**< Discovered characteristic count in service */
+  struct ble_gattc_handle_range_s srv_handle_range;                                   /**< The handle range of this service */
+  struct ble_gattc_db_disc_char_s characteristics[BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV]; /**< Discovered characteristics in this service */
+  BLE_UUID                        srv_uuid;                                           /**< UUID of discovered service */
+};
+
+/**
+ * @struct ble_gattc_db_discovery_s
+ * @brief GATTC discovered attribute database data structure
+ */
+struct ble_gattc_db_discovery_s
+{
+  uint8_t                        srv_count;                           /**< Discovered services count */
+  uint16_t                       conn_handle;                         /**< Connection handle */
+  struct ble_gattc_db_disc_srv_s services[BLE_DB_DISCOVERY_MAX_SRV];  /**< Discovered services in attribute database */
+};
+
+/**
+ * @struct ble_gattc_overrun_state_s
+ * @brief GATTC discover overrun state
+ */
+struct ble_gatt_coverrun_state_s
+{
+  uint8_t  srv_count;  /**< the Max service count of peer device */
+  uint16_t end_handle; /**< the end handle of the last discorver service */
+};
+
+/**
+ * @struct ble_gatt_event_db_discovery_t
+ * @brief GATTC attribute database discovery event structure
+ * @details When the event coming from the stack to the application, the @ref BLE_Evt structure member evtHeader is set to @ref BLE_GATTC_EVENT_DBDISCOVERY, and the member evtData is point to @ref BLE_EvtGattcDbDiscovery structure.
+ */
+struct ble_gatt_event_db_discovery_t
+{
+  uint8_t                           group_id;     /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t                           event_id;     /**< Event sub ID */
+  uint8_t                           result;       /**< GATTC discovery result, @ref GATT Client DB Discovery Result Code */
+  uint16_t                          conn_handle;  /**< Connection handle */
+  struct ble_gatt_coverrun_state_s  state;        /**< When the service count of peer device is over the supporter MAX services */
+  union{
+    uint32_t                        reason;       /**< Indicate db discovery failed reason */
+    struct ble_gattc_db_discovery_s db_discovery; /**< Discovered db information */
+  } params;                                       /**< params union */
+};
+
+/**
+ * @struct ble_gatt_central_ops_s
+ * @brief Bluetooth LE characteristic callbacks(for Central)
+ * @detail If characteristic get event from target, this callback will
+ *         call for response(Central).
+ */
+struct ble_gatt_central_ops_s
+{
+  void (*write)(struct ble_gatt_char_s *ble_gatt_char);                      /**< Write response */
+  void (*read)(struct ble_gatt_char_s *ble_gatt_char);                       /**< Read response */
+  void (*notify)(struct ble_gatt_char_s *ble_gatt_char);                     /**< Notify response */
+  void (*database_discovery)(struct ble_gatt_event_db_discovery_t *db_disc); /**< Database discovery event */
+};
+
+
 
 /****************************************************************************
  * Private Data
@@ -354,5 +456,28 @@ int ble_characteristic_read(struct ble_gatt_char_s *charc);
  */
 
 int ble_characteristic_write(struct ble_gatt_char_s *charc, uint8_t *data, int len);
+
+/**
+ * @brief BLE start database discovery
+ *        Send database discovery request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: Bluetooth LE GATT connection handle
+ *
+ * @retval error code
+ */
+
+int ble_start_db_discovery(uint16_t conn_handle);
+
+/**
+ * @brief BLE continue database discovery
+ *        Send continue database discovery request to peripheral (For Central role)
+ *
+ * @param[in] start_handle: Bluetooth LE GATT start handle
+ * @param[in] conn_handle: Bluetooth LE GATT connection handle
+ *
+ * @retval error code
+ */
+
+int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle);
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BLE_GATT_H */

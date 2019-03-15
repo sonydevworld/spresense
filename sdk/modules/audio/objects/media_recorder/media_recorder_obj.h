@@ -48,8 +48,11 @@
 #include "audio/audio_message_types.h"
 #include "audio_recorder_sink.h"
 #include "components/capture/capture_component.h"
-#include "wien2_common_defs.h"
 #include "audio_state.h"
+
+#include "components/filter/filter_component.h"
+#include "components/filter/src_filter_component.h"
+#include "components/filter/packing_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -57,7 +60,7 @@ __WIEN2_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define CAPTURE_DELAY_STAGE_NUM   3
+#define CAPTURE_PRESET_NUM        4
 #define CAPTURE_PCM_BUF_QUE_SIZE  7
 #define OUTPUT_DATA_QUE_SIZE      5
 #define FALT_HANDLE_ID            0xFF
@@ -86,7 +89,8 @@ private:
     m_codec_type(InvalidCodecType),
     m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
     m_p_output_device_handler(NULL),
-    m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM)
+    m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM),
+    m_filter_instance(NULL)
   {}
 
   enum RecorderState_e
@@ -117,9 +121,10 @@ private:
   int8_t  m_complexity;
   int32_t m_bit_rate;
   AudioRecorderSink m_rec_sink;
-  bool m_fifo_overflow;
 
   CaptureComponentHandler m_capture_from_mic_hdlr;
+
+  FilterComponent *m_filter_instance;
 
   typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum];
@@ -133,7 +138,13 @@ private:
 
   MediaRecorderCallback m_callback;
 
-  typedef s_std::Queue<MemMgrLite::MemHandle, CAPTURE_PCM_BUF_QUE_SIZE> CnvInMhQueue;
+  typedef struct
+  {
+    MemMgrLite::MemHandle mh;
+    bool                  is_end;
+  } ConvIn;
+
+  typedef s_std::Queue<ConvIn, CAPTURE_PCM_BUF_QUE_SIZE> CnvInMhQueue;
   CnvInMhQueue m_cnv_in_buf_mh_que;
 
   void run();
@@ -152,6 +163,7 @@ private:
   void stopOnRec(MsgPacket *);
   void stopOnErrorStop(MsgPacket *);
   void stopOnWait(MsgPacket *);
+  void setMicGain(MsgPacket *);
 
   void illegalFilterDone(MsgPacket *);
   void filterDoneOnRec(MsgPacket *);
@@ -166,6 +178,7 @@ private:
   void illegalCaptureDone(MsgPacket *);
   void captureDoneOnRec(MsgPacket *);
   void captureDoneOnStop(MsgPacket *);
+  void captureDoneOnErrorStop(MsgPacket *);
 
   void captureErrorOnRec(MsgPacket *);
   void captureErrorOnStop(MsgPacket *);
@@ -173,20 +186,43 @@ private:
   void captureErrorOnWaitStop(MsgPacket *);
 
   bool startCapture();
-  void execEnc(MemMgrLite::MemHandle mh, uint32_t pcm_size);
-  void stopEnc(void);
+  bool execEnc(MemMgrLite::MemHandle mh, uint32_t pcm_size, bool is_end);
+  bool stopEnc(void);
 
-  void* getMicInBufAddr();
-  void* getOutputBufAddr();
+  bool setExternalCmd(AsRecorderEvent ext_event);
+  AsRecorderEvent getExternalCmd(void);
+  uint32_t checkExternalCmd(void);
+
+  MemMgrLite::MemHandle getOutputBufAddr();
 
   uint32_t loadCodec(AudioCodec, char *, int32_t, int32_t, uint32_t *);
   bool unloadCodec(void);
 
+  bool holdCnvInBuf(ConvIn in)
+    {
+      if (!m_cnv_in_buf_mh_que.push(in))
+        {
+          MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+          return false;
+        }
+
+      return true;
+    }
   bool freeCnvInBuf()
     {
       if (!m_cnv_in_buf_mh_que.pop())
         {
           MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
+          return false;
+        }
+
+      return true;
+    }
+  bool holdOutputBuf(MemMgrLite::MemHandle mh)
+    {
+      if (!m_output_buf_mh_que.push(mh))
+        {
+          MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
           return false;
         }
 
@@ -234,7 +270,7 @@ private:
   uint32_t isValidInitParamMP3(const RecorderCommand& cmd);
   uint32_t isValidInitParamLPCM(const RecorderCommand& cmd);
   uint32_t isValidInitParamOPUS(const RecorderCommand& cmd);
-  void writeToDataSinker(const MemMgrLite::MemHandle& mh, uint32_t byte_size);
+  bool writeToDataSinker(const MemMgrLite::MemHandle& mh, uint32_t byte_size);
 
   bool getInputDeviceHdlr(void);
   bool delInputDeviceHdlr(void);

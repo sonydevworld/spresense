@@ -44,5 +44,8 @@ define ExtSubDirectory_template
 endef
 
 EXTSUBDIRS = $(dir $(wildcard ../*/LibTarget.mk))
+ifneq ($(SPRESENSE_HOME),)
+    EXTSUBDIRS += $(dir $(wildcard $(SPRESENSE_HOME)/LibTarget.mk))
+endif
 
 $(foreach SDIR, $(EXTSUBDIRS), $(eval $(call ExtSubDirectory_template,$(SDIR))))

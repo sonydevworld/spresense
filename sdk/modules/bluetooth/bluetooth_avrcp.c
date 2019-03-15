@@ -133,6 +133,24 @@ static int event_disconnect(struct bt_avrcp_event_connect_t *event_connect)
   return ret;
 }
 
+static int event_play_position(struct bt_avrcp_event_play_position_t *event_pos)
+{
+  int ret = BT_SUCCESS;
+  struct bt_avrcp_notify_ops_s *bt_avrcp_notify_ops = g_bt_avrcp_state.bt_avrcp_notify_ops;
+
+
+  if (bt_avrcp_notify_ops && bt_avrcp_notify_ops->playPosChanged)
+    {
+      bt_avrcp_notify_ops->playPosChanged((uint8_t *)&event_pos->position, sizeof(event_pos->position));
+    }
+  else
+    {
+      _err("%s [BT][AVRCP] AVRCP play position callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -390,6 +408,45 @@ int bt_avrcp_event_handler(struct bt_event_t *bt_event)
       case BT_AVRCT_EVENT_DISCONNECT:
         return event_disconnect((struct bt_avrcp_event_connect_t *) bt_event);
 
+      case BT_AVRCP_EVENT_PLAY_STAT_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_TRACK_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_TRACK_REACH_END:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_TRACK_REACH_START:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_PLAY_POS_CHANGE:
+        return event_play_position((struct bt_avrcp_event_play_position_t *) bt_event);
+
+      case BT_AVRCP_EVENT_BATT_STAT_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_SYS_STATUS_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_APP_SETT_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_NOW_PLAY_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_AVAI_PLAYER_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_ADDR_PLAYER_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_UIDS_CHANGE:
+        /* Not supported yet */
+        break;
+      case BT_AVRCP_EVENT_VOLUME_CHANGE:
+        /* Not supported yet */
+        break;
       default:
         break;
     }

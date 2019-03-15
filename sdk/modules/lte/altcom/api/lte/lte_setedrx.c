@@ -41,11 +41,16 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "dbg_if.h"
 #include "osal.h"
 #include "apiutil.h"
 #include "apicmdgw.h"
 #include "apicmd_setedrx.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -58,10 +63,90 @@
 #define SETEDRX_PTW_MAX  LTE_EDRX_PTW_2048
 
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern set_edrx_cb_t g_setedrx_callback;
+/****************************************************************************
+ * Name: setedrx_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing set eDRX.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t setedrx_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("setedrx_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_EDRX);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: setedrx_job
+ *
+ * Description:
+ *   This function is an API callback for set eDRX.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void setedrx_job(FAR void *arg)
+{
+  int32_t                               ret;
+  FAR struct apicmd_cmddat_setedrxres_s *data;
+  set_edrx_cb_t                         callback;
+
+  data = (FAR struct apicmd_cmddat_setedrxres_s *)arg;
+
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_SET_EDRX,
+    (void **)&callback);
+
+  if ((ret == 0) && (callback))
+    {
+      if (APICMD_SETEDRX_RES_OK == data->result)
+        {
+          callback(LTE_RESULT_OK);
+        }
+      else
+        {
+          callback(LTE_RESULT_ERROR);
+          DBGIF_ASSERT(APICMD_SETEDRX_RES_ERR == data->result, "result parameter error.\n");
+        }
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb(setedrx_status_chg_cb);
+}
 
 /****************************************************************************
  * Public Functions
@@ -96,14 +181,6 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
-    }
-
   if (settings->enable)
     {
       if (settings->edrx_cycle < SETEDRX_CYC_MIN ||
@@ -121,12 +198,28 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
         }
     }
 
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
   /* Register API callback */
 
-  ALTCOM_REG_CALLBACK(ret, g_setedrx_callback, callback);
-  if (ret < 0)
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_EDRX);
+  if (0 > ret)
     {
       DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb(setedrx_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_SET_EDRX);
       return ret;
     }
 
@@ -159,7 +252,8 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
     {
       /* Clear registered callback */
 
-      ALTCOM_CLR_CALLBACK(g_setedrx_callback);
+      altcomcallbacks_unreg_cb(APICMDID_SET_EDRX);
+      altcomstatus_unreg_statchgcb(setedrx_status_chg_cb);
     }
   else
     {
@@ -169,3 +263,26 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
   return ret;
 }
 
+/****************************************************************************
+ * Name: apicmdhdlr_setedrx
+ *
+ * Description:
+ *   This function is an API command handler for set eDRX result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_SET_EDRX_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_setedrx(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_SET_EDRX),
+    setedrx_job);
+}

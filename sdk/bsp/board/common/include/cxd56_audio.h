@@ -107,6 +107,50 @@ int board_external_amp_mute_control(bool en);
 
 bool board_external_amp_mute_monitor(void);
 
+/****************************************************************************
+ * Name: board_audio_i2s_enable
+ *
+ * Description:
+ *   Enable I2S on the board.
+ *   Used by the audio driver. Do not use by users.
+ *
+ ****************************************************************************/
+
+void board_audio_i2s_enable(void);
+
+/****************************************************************************
+ * Name: board_audio_i2s_disable
+ *
+ * Description:
+ *   Disable I2S on the board.
+ *   Used by the audio driver. Do not use by users.
+ *
+ ****************************************************************************/
+
+void board_audio_i2s_disable(void);
+
+/****************************************************************************
+ * Name: board_audio_initialize
+ *
+ * Description:
+ *   Initialize audio I/O on the board.
+ *   Used by the audio driver. Do not use by users.
+ *
+ ****************************************************************************/
+
+void board_audio_initialize(void);
+
+/****************************************************************************
+ * Name: board_audio_finalize
+ *
+ * Description:
+ *   Finalize audio I/O on the board.
+ *   Used by the audio driver. Do not use by users.
+ *
+ ****************************************************************************/
+
+void board_audio_finalize(void);
+
 #undef EXTERN
 #if defined(__cplusplus)
 }

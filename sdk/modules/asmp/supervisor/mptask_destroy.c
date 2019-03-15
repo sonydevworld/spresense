@@ -80,12 +80,81 @@ static void mptask_unloadfw(mptask_t *task)
     }
 }
 
+static void mptask_unloadfwgp(mptask_t *task)
+{
+  sysctl_unloadfwgp_t arg;
+  int ret;
+
+  arg.groupid = task->groupid;
+  ret = cxd56_sysctlcmd(SYSCTL_UNLOADFWGP, (uint32_t)(uintptr_t)&arg);
+  if (ret)
+    {
+      mperr("unload group failed. %d\n", ret);
+    }
+}
+
+static void mptask_clock_disable(mptask_t *task)
+{
+  int cpu;
+
+  for (cpu = 1; cpu < NMPCPUS; cpu++)
+    {
+      if (CPU_ISSET(cpu, &task->cpuids))
+        {
+          cxd56_cpu_clock_disable(cpu);
+        }
+    }
+}
+
+static void mptask_unmap_unified(mptask_t *task)
+{
+  unified_binary_t *ub = &task->ubin;
+  int cpu;
+  int i;
+
+  for (cpu = 1, i = 0; cpu < NMPCPUS; cpu++)
+    {
+      if (CPU_ISSET(cpu, &task->cpuids))
+        {
+          mptask_unmap(cpu, ub->size[i]);
+          i++;
+        }
+    }
+}
+
+static void mptask_unmap_all(mptask_t *task)
+{
+  int cpu;
+
+  for (cpu = 1; cpu < NMPCPUS; cpu++)
+    {
+      if (CPU_ISSET(cpu, &task->cpuids))
+        {
+          mptask_unmap(cpu, task->loadsize);
+        }
+    }
+}
+
+static void mptask_unmap_task(mptask_t *task)
+{
+  if (task_is_unified(task))
+    {
+      mptask_unmap_unified(task);
+    }
+  else
+    {
+      mptask_unmap_all(task);
+    }
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 int mptask_destroy(mptask_t *task, bool force, int *exit_status)
 {
+  int i;
+
   /* If task is secure binary, then it can't wait for exit signal. */
 
   if (task_is_secure(task))
@@ -102,7 +171,7 @@ int mptask_destroy(mptask_t *task, bool force, int *exit_status)
       mptask_join(task, exit_status);
     }
 
-  cxd56_cpu_clock_disable(task->cpuid);
+  mptask_clock_disable(task);
 
   /* Permit hot sleep */
 
@@ -112,15 +181,37 @@ int mptask_destroy(mptask_t *task, bool force, int *exit_status)
 
   if (task_is_secure(task))
     {
-      mptask_unloadfw(task);
+      if (task->groupid > 0)
+        {
+          mptask_unloadfwgp(task);
+        }
+      else
+        {
+          mptask_unloadfw(task);
+        }
     }
 
-  mptask_unmap(task);
+  mptask_unmap_task(task);
+
   mptask_cpu_free(task);
 
   if (task->loadaddr)
     {
       tile_free((FAR void *)task->loadaddr, task->loadsize);
+    }
+  if (task_is_cloned(task))
+    {
+      binary_info_t *bi = task->bin;
+      int ncpus;
+
+      ncpus = mptask_cpu_count(&task->cpuids);
+      for (i = 0; i < ncpus; i++, bi++)
+        {
+          if (bi->loadaddr)
+            {
+              tile_free((FAR void *)(uintptr_t)bi->loadaddr, task->loadsize);
+            }
+        }
     }
 
   task_set_exit(task);

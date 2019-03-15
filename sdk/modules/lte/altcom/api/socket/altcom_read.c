@@ -46,20 +46,6 @@
 
 /****************************************************************************
  * Name: altcom_read
- *
- * Description:
- *   The altcom_read() is the same as altcom_recv() with the flags parameter
- *   set to zero.
- *
- * Parameters:
- *   sockfd   File structure instance
- *   buf      Buffer to receive data
- *   len      Length of buffer
- *
- * Return:
- *   On success, returns the number of characters received. On error,
- *   -1 is returned, and errno is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_read(int sockfd, void *buf, size_t len)

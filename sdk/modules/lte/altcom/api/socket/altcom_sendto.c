@@ -78,10 +78,6 @@ struct sendto_req_s
 
 /****************************************************************************
  * Name: sendto_request
- *
- * Description:
- *   Send ALTCOM_SENDTO_REQ.
- *
  ****************************************************************************/
 
 static int32_t sendto_request(FAR struct altcom_socket_s *fsock,
@@ -172,25 +168,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_sendto
- *
- * Description:
- *   If altcom_sendto() is used on a connection-mode (ALTCOM_SOCK_STREAM)
- *   socket, the parameters to and 'tolen' are ignored (and the error EISCONN
- *   may be returned when they are not NULL and 0), and the error ENOTCONN is
- *   returned when the socket was not actually connected.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket
- *   buf      Data to send
- *   len      Length of data to send
- *   flags    Send flags
- *   to       Address of recipient
- *   tolen    The length of the address structure
- *
- * Returned Value:
- *   On success, returns the number of characters sent. On error,
- *   -1 is returned, and errno is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_sendto(int sockfd, const void *buf, size_t len, int flags,
@@ -203,10 +180,12 @@ int altcom_sendto(int sockfd, const void *buf, size_t len, int flags,
   struct sendto_req_s         req;
   FAR struct altcom_timeval   *sendtimeo;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

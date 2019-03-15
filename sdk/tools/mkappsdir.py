@@ -45,14 +45,21 @@ Create a new application directory at the outside of sdk repository
 This tool must be run on sdk directory.
 '''
 
-TEMPLATENAME = 'examples'
+REFERENCE = 'examples'
+TEMPLATELIBNAME = 'lib%s' % REFERENCE
+TEMPLATEDIRNAME = '$(SDKDIR)$(DELIM)..$(DELIM)%s$(DELIM)' % REFERENCE
 
-def replaced_copy(srcfile, dstfile, appname):
+def replaced_copy(srcfile, dstfile, appname, ishome):
     with open(srcfile, 'r') as src:
         with open(dstfile, 'w') as dst:
             for line in src:
-                l = line.replace(TEMPLATENAME, appname)
-                dst.write(l)
+                if ishome:
+                    line = line.replace(TEMPLATELIBNAME, 'libuserapps')
+                    line = line.replace(TEMPLATEDIRNAME, '$(SPRESENSE_HOME)$(DELIM)')
+                else:
+                    line = line.replace(REFERENCE, appname)
+                    line = line.replace(REFERENCE, appname)
+                dst.write(line)
 
 if __name__ == '__main__':
 
@@ -63,13 +70,15 @@ if __name__ == '__main__':
     parser.add_argument('dirname', metavar='<dir name>', type=str,
                         help='New application directory name')
     parser.add_argument('desc', type=str, nargs="?", help='Menu description')
+    parser.add_argument('-s', '--spresense_home', action='store_true',
+                        help='using spresense home')
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help='verbose messages')
     opts = parser.parse_args()
 
     verbose = opts.verbose
 
-    srcdir = os.path.join('..', TEMPLATENAME)
+    srcdir = os.path.join('..', REFERENCE)
     targetdir = os.path.join('..', opts.dirname)
 
     # Sanity checks
@@ -97,7 +106,7 @@ if __name__ == '__main__':
         dst = os.path.join(targetdir, f)
         if verbose > 0:
             print('Copying file %s -> %s' % (src, dst))
-        replaced_copy(src, dst, opts.dirname)
+        replaced_copy(src, dst, opts.dirname, opts.spresense_home)
 
     # Finally, replace menu description
 

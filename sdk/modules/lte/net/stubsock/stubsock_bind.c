@@ -68,21 +68,6 @@
 
 /****************************************************************************
  * Name: stubsock_bind
- *
- * Description:
- *   stubsock_bind() gives the socket 'conn' the local address 'addr'. 'addr'
- *   is 'addrlen' bytes long. Traditionally, this is called "assigning a name
- *   to a socket." When a socket is created with socket, it exists in a name
- *   space (address family) but has no name assigned.
- *
- * Parameters:
- *   conn     usrsock socket connection structure
- *   addr     Socket local address
- *   addrlen  Length of 'addr'
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int stubsock_bind(FAR struct socket *psock, FAR const struct sockaddr *addr,

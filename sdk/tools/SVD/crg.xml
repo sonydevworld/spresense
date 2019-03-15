@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <peripheral>
+      <name>CRG</name>
+      <version>1.0</version>
+      <description>Clock / Reset / Gating</description>
+      <baseAddress>0x02011000</baseAddress>
+      <size>32</size>
+      <access>read-write</access>
+
+      <addressBlock>
+        <offset>0</offset>
+        <size>0x1000</size>
+        <usage>registers</usage>
+      </addressBlock>
+
+      <interrupt>
+        <name>CRG</name>
+        <description>CRG interrupt</description>
+        <value>1</value>
+      </interrupt>
+
+      <registers>
+        <!-- GEAR_AHB: AHB clock setting -->
+        <register>
+          <name>GEAR_AHB</name>
+          <description>Gear ratio (n/m) for AHB</description>
+          <addressOffset>0x00</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00010002</resetValue>
+          <resetMask>0x007F007F</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_AHB</name><bitRange>[6:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_AHB</name><bitRange>[22:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- GEAR_IMG_UART: IMG UART clock setting -->
+        <register>
+          <name>GEAR_IMG_UART</name>
+          <description>IMG UART clock setting</description>
+          <addressOffset>0x04</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001007F</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_UART</name><bitRange>[6:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_UART</name><bitRange>[16:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- GEAR_IMG_SPI: IMG SPI clock setting -->
+        <register>
+          <name>GEAR_IMG_SPI</name>
+          <description>IMG SPI clock setting</description>
+          <addressOffset>0x08</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001007F</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_SPI</name><bitRange>[6:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_SPI</name><bitRange>[16:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- GEAR_PER_SDIO: SDIO clock setting -->
+        <register>
+          <name>GEAR_PER_SDIO</name>
+          <description>SDIO clock setting</description>
+          <addressOffset>0x0c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000002</resetValue>
+          <resetMask>0x00010003</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_SDIO</name><bitRange>[1:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_SDIO</name><bitRange>[16:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- GEAR_PER_USB: USB clock setting -->
+        <register>
+          <name>GEAR_PER_USB</name>
+          <description>USB clock setting</description>
+          <addressOffset>0x10</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000002</resetValue>
+          <resetMask>0x00010FFF</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_USB</name><bitRange>[11:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_USB</name><bitRange>[16:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- GEAR_M_IMG_VENB: VENB clock setting -->
+        <register>
+          <name>GEAR_M_IMG_VENB</name>
+          <description>VENB_M clock setting</description>
+          <addressOffset>0x14</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0xFFFFFFFF</resetMask>
+        </register>
+
+        <!-- GEAR_N_IMG_VENB: VENB clock setting -->
+        <register>
+          <name>GEAR_N_IMG_VENB</name>
+          <description>VENB_N clock setting</description>
+          <addressOffset>0x18</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0xFFFFFFFF</resetMask>
+        </register>
+
+        <!-- GEAR_IMG_WSPI: IMG WSPI clock setting -->
+        <register>
+          <name>GEAR_IMG_WSPI</name>
+          <description>IMG WSPI clock setting</description>
+          <addressOffset>0x1c</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000004</resetValue>
+          <resetMask>0x0001000F</resetMask>
+
+          <fields>
+            <!-- N/M: Load value -->
+            <field>
+              <name>GEAR_M_IMG_WSPI</name><bitRange>[3:0]</bitRange><access>read-write</access>
+            </field>
+            <field>
+              <name>GEAR_N_IMG_WSPI</name><bitRange>[16:16]</bitRange><access>read-write</access>
+            </field>
+          </fields>
+        </register>
+
+        <!-- CKEN_EMMC: EMMC clock setting -->
+        <register>
+          <name>CKEN_EMMC</name>
+          <description>eMMC clock setting</description>
+          <addressOffset>0x20</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x00000007</resetMask>
+
+          <fields>
+            <!-- CLKIN: -->
+            <field>
+              <name>CLKIN</name>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <description>Enable eMMC clock</description>
+              <enumeratedValues>
+                <enumeratedValue><name>DISABLE</name><description>Disable</description><value>0</value></enumeratedValue>
+                <enumeratedValue><name>ENABLE</name><description>Enable</description><value>1</value></enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <!-- DRV: -->
+            <field derivedFrom="CLKIN">
+              <name>DRV</name>
+              <description>Enable DRV clock</description>
+              <bitRange>[1:1]</bitRange>
+            </field>
+            <!-- SMP: -->
+            <field derivedFrom="CLKIN">
+              <name>SMP</name>
+              <description>Enable eMMC sampling clock</description>
+              <bitRange>[2:2]</bitRange>
+            </field>
+          </fields>
+        </register>
+
+        <!-- RESET: Reset control -->
+        <register>
+          <name>RESET</name>
+          <description>Reset control</description>
+          <addressOffset>0x30</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x007F0F11</resetMask>
+
+          <fields>
+            <field>
+              <name>XRS_AUD</name>
+              <description>0=reset, 1=active</description>
+              <bitRange>[0:0]</bitRange>
+              <access>read-write</access>
+              <enumeratedValues>
+                <enumeratedValue><name>RESET</name><description>Reset</description><value>0</value></enumeratedValue>
+                <enumeratedValue><name>ACTIVE</name><description>Active</description><value>1</value></enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field derivedFrom="XRS_AUD"><name>XRS_IMG</name><bitRange>[4:4]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_USB</name><bitRange>[8:8]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_SDIO</name><bitRange>[9:9]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_MMC</name><bitRange>[10:10]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_MMC_CRG</name><bitRange>[11:11]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP0</name><bitRange>[16:16]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP1</name><bitRange>[17:17]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP2</name><bitRange>[18:18]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP3</name><bitRange>[19:19]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP4</name><bitRange>[20:20]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP5</name><bitRange>[21:21]</bitRange></field>
+            <field derivedFrom="XRS_AUD"><name>XRS_DSP_GEN</name><bitRange>[22:22]</bitRange></field>
+          </fields>
+        </register>
+
+        <!-- CK_GATE_AHB: Gating control -->
+        <register>
+          <name>CK_GATE_AHB</name>
+          <description>CPU/Peripheral clock gating control</description>
+          <addressOffset>0x40</addressOffset>
+          <size>32</size>
+          <access>read-write</access>
+          <resetValue>0x00000000</resetValue>
+          <resetMask>0x103F0711</resetMask>
+
+          <fields>
+            <field>
+              <name>CK_GATE_AUD</name><bitRange>[0:0]</bitRange><access>read-write</access>
+              <description>0=Gated, 1=Ungated</description>
+              <enumeratedValues>
+                <enumeratedValue><name>GATED</name><description>Gated</description><value>0</value></enumeratedValue>
+                <enumeratedValue><name>UNGATED</name><description>Ungated</description><value>1</value></enumeratedValue>
+              </enumeratedValues>
+            </field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_IMG</name><bitRange>[4:4]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_USB</name><bitRange>[8:8]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_SDIO</name><bitRange>[9:9]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_MMC</name><bitRange>[10:10]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP0</name><bitRange>[16:16]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP1</name><bitRange>[17:17]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP2</name><bitRange>[18:18]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP3</name><bitRange>[19:19]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP4</name><bitRange>[20:20]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DSP5</name><bitRange>[21:21]</bitRange></field>
+            <field derivedFrom="CK_GATE_AUD"><name>CK_GATE_DMAC</name><bitRange>[28:28]</bitRange></field>
+          </fields>
+        </register>
+
+      </registers>
+    </peripheral>

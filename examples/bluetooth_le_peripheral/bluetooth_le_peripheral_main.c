@@ -41,10 +41,13 @@
 #include <string.h>
 #include <bluetooth/ble_gatt.h>
 
+#include "system/readline.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define BLE_MAX_TX_DATA_SIZE     1024
 
 #define BLE_UUID_SDS_SERVICE_IN  0x3802
 #define BLE_UUID_SDS_CHAR_IN     0x4a02
@@ -110,6 +113,8 @@ static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}}
 
 static char local_bt_name[BT_NAME_LEN]  = "SONY_BT";
 static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
+
+static struct bt_acl_state_s *s_bt_acl_state = NULL;
 
 static struct ble_gatt_service_s *g_ble_gatt_service;
 
@@ -194,10 +199,7 @@ static void onConnectStatusChanged(struct bt_acl_state_s *bt_acl_state,
 {
   /* If ACL is connected, SPP can start connect */
 
-  if (connected)
-    {
-
-    }
+  s_bt_acl_state = bt_acl_state;
 }
 
 static void onConnectedDeviceName(const char *name)
@@ -252,18 +254,10 @@ static void onScanResult(BT_ADDR addr, char *dev_name)
 static void onWrite(struct ble_gatt_char_s *ble_gatt_char)
 {
   BLE_CHAR_VALUE *value = &ble_gatt_char->value;
-  uint8_t data[2] = {0x06, 0x14};
-  int len = 2;
 
   /* If receive connected device name data, this function will call. */
 
   printf("%s [BLE] data[0] = 0x%02X, Length = %d\n", __func__, value->data[0], value->length);
-
-  /* After 2 seconds, send data to characteristic */
-
-  sleep(2);
-
-  ble_characteristic_notify(ble_gatt_char, data, len);
 }
 
 static void onRead(struct ble_gatt_char_s *ble_gatt_char)
@@ -278,6 +272,27 @@ static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable)
   /* If receive connected device name data, this function will call. */
 
   printf("%s [BLE] \n", __func__);
+}
+
+static void ble_peripheral_exit(void)
+{
+  int ret;
+
+  /* Turn OFF BT */
+
+  ret = bt_disable();
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BT] BT disable failed. ret = %d\n", __func__, ret);
+    }
+
+  /* Finalize BT */
+
+  ret = bt_finalize();
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BT] BT finalize failed. ret = %d\n", __func__, ret);
+    }
 }
 
 /****************************************************************************
@@ -295,6 +310,8 @@ int ble_peripheral_main(int argc, char *argv[])
 #endif
 {
   int ret = 0;
+  int len = 0;
+  char buffer[BLE_MAX_TX_DATA_SIZE] = {0};
   BLE_UUID *s_uuid;
   BLE_UUID *c_uuid;
 
@@ -454,6 +471,35 @@ int ble_peripheral_main(int argc, char *argv[])
       printf("%s [BLE] Start advertise failed. ret = %d\n", __func__, ret);
       goto error;
     }
+
+  /* Send Tx data by using readline */
+
+  while(1)
+    {
+      printf("ble_peripheral>");
+      fflush(stdout);
+
+      len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
+
+      if (s_bt_acl_state && s_bt_acl_state->bt_acl_connection == BT_CONNECTED)
+        {
+          ret = ble_characteristic_notify(&g_ble_gatt_char, (uint8_t *) buffer, len);
+          if (ret != BT_SUCCESS)
+            {
+              printf("%s [BLE] Send data failed. ret = %d\n", __func__, ret);
+            }
+        }
+
+      if (!strcmp(buffer, "quit\n"))
+        {
+          printf("Quit.\n");
+          break;
+        }
+    }
+
+  /* Quit this application */
+
+  ble_peripheral_exit();
 
 error:
   return ret;

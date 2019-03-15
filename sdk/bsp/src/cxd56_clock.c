@@ -96,6 +96,15 @@
 #define CONFIG_CXD56_UART2_BASE_CLOCK_DIVIDER 4
 #endif /* CONFIG_CXD56_UART2_BASE_CLOCK_DIVIDER */
 
+/*
+ * Flags for IMG device active
+ *
+ * This flags for fixed clock devices.
+ */
+
+#define FLAG_IMG_CISIF   (1 << 0)
+#define FLAG_IMG_GE2D    (1 << 1)
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -146,6 +155,14 @@ static struct power_domain g_analog;
 /* Store calibrated RCOSC */
 
 static uint32_t rcosc_clock = 0;
+
+/* Save used IMG block devices */
+
+static uint32_t g_active_imgdevs = 0;
+
+/* Exclusive control */
+
+static sem_t g_clockexc = SEM_INITIALIZER(1);
 
 /* For peripherals inside SCU block
  *
@@ -207,6 +224,22 @@ const struct scu_peripheral g_scuhpadc =
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+static void clock_semtake(sem_t *id)
+{
+  if (!up_interrupt_context())
+    {
+      sem_wait(id);
+    }
+}
+
+static void clock_semgive(sem_t *id)
+{
+  if (!up_interrupt_context())
+    {
+      sem_post(id);
+    }
+}
 
 static void busy_wait(int cnt)
 {
@@ -459,8 +492,20 @@ uint32_t cxd56_get_cpu_baseclk(void)
 
 void cxd56_cpu_clock_enable(int cpu)
 {
-  uint32_t c, bits = (1 << (16 + cpu));
-    
+  cxd56_cpulist_clock_enable(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_clock_enable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_enable(uint32_t cpus)
+{
+  uint32_t c, bits = (cpus & 0x3f) << 16;
+
   c = getreg32(CXD56_CRG_CK_GATE_AHB);
   putreg32(c | bits, CXD56_CRG_CK_GATE_AHB);
 }
@@ -474,7 +519,19 @@ void cxd56_cpu_clock_enable(int cpu)
 
 void cxd56_cpu_clock_disable(int cpu)
 {
-  uint32_t c, bits = (1 << (16 + cpu));
+  cxd56_cpulist_clock_disable(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_clock_disable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_disable(uint32_t cpus)
+{
+  uint32_t c, bits = (cpus & 0x3f) << 16;
 
   c = getreg32(CXD56_CRG_CK_GATE_AHB);
   putreg32(c & ~bits, CXD56_CRG_CK_GATE_AHB);
@@ -489,7 +546,19 @@ void cxd56_cpu_clock_disable(int cpu)
 
 void cxd56_cpu_reset(int cpu)
 {
-  uint32_t c, r, bits = (1 << (16 + cpu));
+  cxd56_cpulist_reset(1 << cpu);
+}
+
+/****************************************************************************
+ * Name: cxd56_cpulist_reset
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_reset(uint32_t cpus)
+{
+  uint32_t c, r, bits = (cpus & 0x3f) << 16;
 
   /* Reset assert */
 
@@ -802,9 +871,11 @@ static void cxd56_spim_clock_disable(void)
 
 static void cxd56_img_spi_clock_enable(void)
 {
+  clock_semtake(&g_clockexc);
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   putreg32(0x00010002, CXD56_CRG_GEAR_IMG_SPI);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -817,9 +888,11 @@ static void cxd56_img_spi_clock_enable(void)
 
 static void cxd56_img_spi_clock_disable(void)
 {
+  clock_semtake(&g_clockexc);
   putreg32(0, CXD56_CRG_GEAR_IMG_SPI);
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
+  clock_semgive(&g_clockexc);
 }
 #endif
 
@@ -835,9 +908,11 @@ static void cxd56_img_spi_clock_disable(void)
 
 static void cxd56_img_wspi_clock_enable(void)
 {
+  clock_semtake(&g_clockexc);
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
   putreg32(0x00010004, CXD56_CRG_GEAR_IMG_WSPI);
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -850,9 +925,11 @@ static void cxd56_img_wspi_clock_enable(void)
 
 static void cxd56_img_wspi_clock_disable(void)
 {
+  clock_semtake(&g_clockexc);
   putreg32(0, CXD56_CRG_GEAR_IMG_WSPI);
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
+  clock_semgive(&g_clockexc);
 }
 #endif
 
@@ -944,6 +1021,65 @@ void cxd56_spi_clock_gate_disable(int port)
       cxd56_scu_peri_clock_gating(&g_scuspi, 0);
     }
 #endif
+}
+
+/****************************************************************************
+ * Name: cxd56_spi_clock_gear_adjust
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq)
+{
+  uint32_t baseclock;
+  uint32_t gear;
+  uint32_t divisor;
+  uint32_t maxdivisor;
+  uint32_t addr;
+
+  if (maxfreq == 0)
+    {
+      return;
+    }
+
+#if defined(CONFIG_CXD56_SPI4)
+  if (port == 4)
+    {
+      maxdivisor = 0x7f;
+      addr       = CXD56_CRG_GEAR_IMG_SPI;
+    }
+  else
+#endif
+#if defined(CONFIG_CXD56_SPI5)
+  if (port == 5)
+    {
+      maxdivisor = 0xf;
+      addr       = CXD56_CRG_GEAR_IMG_WSPI;
+    }
+  else
+#endif
+    {
+      return;
+    }
+
+  clock_semtake(&g_clockexc);
+  baseclock = cxd56_get_appsmp_baseclock();
+  if (baseclock != 0)
+    {
+      divisor = baseclock / (maxfreq * 2);
+      if (baseclock % (maxfreq * 2))
+        {
+          divisor += 1;
+        }
+      if (divisor > maxdivisor)
+        {
+          divisor = maxdivisor;
+        }
+      gear = 0x00010000 | divisor;
+      putreg32(gear, addr);
+    }
+  clock_semgive(&g_clockexc);
 }
 
 #if defined(CONFIG_CXD56_I2C2)
@@ -1138,6 +1274,8 @@ void cxd56_img_uart_clock_enable()
 {
   uint32_t val = 0;
 
+  clock_semtake(&g_clockexc);
+
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
 
@@ -1148,6 +1286,8 @@ void cxd56_img_uart_clock_enable()
   val |= CONFIG_CXD56_UART2_BASE_CLOCK_DIVIDER;
 #endif /* CONFIG_CXD56_UART2 */
   putreg32(val, CXD56_CRG_GEAR_IMG_UART);
+
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1162,15 +1302,18 @@ void cxd56_img_uart_clock_disable()
 {
   uint32_t val = 0;
 
+  clock_semtake(&g_clockexc);
+
   val = getreg32(CXD56_CRG_GEAR_IMG_UART);
   val &= ~(1UL << 16);
   putreg32(val, CXD56_CRG_GEAR_IMG_UART);
 
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
+
+  clock_semgive(&g_clockexc);
 }
 
-#if defined(CONFIG_CXD56_CISIF)
 /****************************************************************************
  * Name: cxd56_img_cisif_clock_enable
  *
@@ -1181,8 +1324,13 @@ void cxd56_img_uart_clock_disable()
 
 void cxd56_img_cisif_clock_enable(void)
 {
+  clock_semtake(&g_clockexc);
+
   enable_pwd(PDID_APP_SUB);
   cxd56_img_clock_enable();
+  g_active_imgdevs |= FLAG_IMG_CISIF;
+
+  clock_semgive(&g_clockexc);
 }
 
 /****************************************************************************
@@ -1195,10 +1343,52 @@ void cxd56_img_cisif_clock_enable(void)
 
 void cxd56_img_cisif_clock_disable(void)
 {
+  clock_semtake(&g_clockexc);
+
+  g_active_imgdevs &= ~FLAG_IMG_CISIF;
   cxd56_img_clock_disable();
   disable_pwd(PDID_APP_SUB);
+
+  clock_semgive(&g_clockexc);
 }
-#endif
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_enable
+ *
+ * Description:
+ *   Enable img cisif clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_enable(void)
+{
+  clock_semtake(&g_clockexc);
+
+  enable_pwd(PDID_APP_SUB);
+  cxd56_img_clock_enable();
+  g_active_imgdevs |= FLAG_IMG_GE2D;
+
+  clock_semgive(&g_clockexc);
+}
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_disable
+ *
+ * Description:
+ *   Disable img cisif clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_disable(void)
+{
+  clock_semtake(&g_clockexc);
+
+  g_active_imgdevs &= ~FLAG_IMG_GE2D;
+  cxd56_img_clock_disable();
+  disable_pwd(PDID_APP_SUB);
+
+  clock_semgive(&g_clockexc);
+}
 
 static uint32_t cxd56_get_clock(enum clock_source cs)
 {
@@ -1264,14 +1454,14 @@ uint32_t cxd56_get_sys_baseclock(void)
 
   val = getreg32(CXD56_TOPREG_CKSEL_ROOT);
 
-  switch ((val >> 20) & 0x3)
+  switch ((val >> 22) & 0x3)
     {
     case 0:
       return cxd56_get_clock(RCOSC);
 
     case 1:
       {
-        uint32_t div = ((val >> 8) & 0x3) + 1;
+        uint32_t div = ((val >> 10) & 0x3) + 1;
         
         if (div == 4 && (val & (1<<2)))
           {
@@ -1323,7 +1513,7 @@ uint32_t cxd56_get_appsmp_baseclock(void)
 {
   uint32_t val = getreg32(CXD56_TOPREG_APP_CKSEL);
 
-  switch (val & 0x3)
+  switch ((val >> 8) & 0x3)
     {
     case 0:
       return cxd56_get_clock(RCOSC);
@@ -1498,8 +1688,10 @@ static void cxd56_img_clock_disable(void)
   val |= getreg32(CXD56_CRG_GEAR_IMG_WSPI) >> 16;
   val |= getreg32(CXD56_CRG_GEAR_N_IMG_VENB);
 
-  if (val)
-    return;
+  if (val || g_active_imgdevs)
+    {
+      return;
+    }
 
   val = getreg32(CXD56_CRG_RESET);
   putreg32(val & ~XRS_IMG, CXD56_CRG_RESET);
@@ -1517,10 +1709,22 @@ static void cxd56_scu_clock_ctrl(uint32_t block, uint32_t intr, int on)
   val = getreg32(CXD56_TOPREG_SCU_CKEN);
   if (on)
     {
+      if ((val & block) == block)
+        {
+          /* Already clock on */
+
+          return;
+        }
       putreg32(val | block, CXD56_TOPREG_SCU_CKEN);
     }
   else
     {
+      if ((val & block) == 0)
+        {
+          /* Already clock off */
+
+          return;
+        }
       putreg32(val & ~block, CXD56_TOPREG_SCU_CKEN);
     }
 
@@ -1631,6 +1835,25 @@ void cxd56_scu_clock_disable(void)
                    CRG_CK_SCU_SEQ)));
 
   putreg32(0xffffffff, CXD56_TOPREG_CRG_INT_CLR0);
+}
+
+bool cxd56_scuseq_clock_is_enabled(void)
+{
+  uint32_t rst;
+
+  /* If SCU reset is already released, it assumes that the SCU sequencer is
+   * already in running.
+   */
+
+  rst = getreg32(CXD56_TOPREG_SWRESET_SCU);
+  if (rst & XRST_SCU_ISOP)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
 }
 
 int cxd56_scuseq_clock_enable(void)

@@ -37,21 +37,31 @@
  * Included Files
  ****************************************************************************/
 
-#include "sensor_manager.h"
-#include <debug.h>
-#include <nuttx/arch.h>
 #include <sdk/config.h>
+#include <sdk/debug.h>
+#include <nuttx/arch.h>
+
+#include "sensor_manager.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
+/* Manager debug feature. */
 
-#define MSGQ_NULL 0 /* temporal */
+#ifdef CONFIG_SENSING_MANAGER_DEBUG_ERROR
+#  define sensor_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#else
+#  define sensor_err(fmt, ...)
+#endif
+#ifdef CONFIG_SENSING_MANAGER_DEBUG_INFO
+#  define sensor_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#else
+#  define sensor_info(fmt, ...)
+#endif
 
-
-#define SF_TASK_PRIORITY           110
-#define SF_TASK_MANAGER_STACK_SIZE 2048
+#define SS_TASK_PRIORITY           110
+#define SS_TASK_MANAGER_STACK_SIZE 2048
 
 /****************************************************************************
  * Private Data
@@ -60,7 +70,7 @@
 static SensorManager *TheSensorManager = NULL;
 static MsgQueId s_selfMid = 0xFF; /* Invalid ID */
 static api_response_callback_t s_response_callback = NULL;
-static pid_t s_smng_pid = -1;
+static pthread_t s_smng_pid = INVALID_PROCESS_ID;
 
 /****************************************************************************
  * Public Data
@@ -343,7 +353,6 @@ void SensorManager::send_result(MsgPacket* packet)
     {
       if (j & (0x01 << i))
         {
-          /* tentative */
           j &= ~(0x01 << i);
         }
     }
@@ -433,7 +442,7 @@ void SensorManager::clear_power(MsgPacket* packet)
 /*--------------------------------------------------------------------*/
 void SensorManager::ignore(MsgPacket* packet)
 {
-  _err("Illegal command.\n");
+  sensor_err("Illegal command.\n");
 }
 
 /*--------------------------------------------------------------------*/
@@ -452,8 +461,7 @@ void SensorManager::response(unsigned int code, unsigned int ercd, unsigned int 
  ****************************************************************************/
 extern "C"
 {
-
-int SF_SensorManagerEntry(void)
+FAR void *SS_SensorManagerEntry(FAR void *arg)
 {
   SensorManager::create(s_selfMid, s_response_callback);
   return 0;
@@ -462,19 +470,27 @@ int SF_SensorManagerEntry(void)
 /*--------------------------------------------------------------------*/
 /* Activation function for sensor subsystem. 
  */
-bool SF_ActivateSensorSubSystem(MsgQueId selfMId, api_response_callback_t callback)
+bool SS_ActivateSensorSubSystem(MsgQueId selfMId,
+                                api_response_callback_t callback)
 {
   s_selfMid = selfMId;
   s_response_callback = callback;
-  s_smng_pid = task_create("sensor_manager",
-                           SF_TASK_PRIORITY,
-                           SF_TASK_MANAGER_STACK_SIZE,
-                           (main_t)SF_SensorManagerEntry,
-                           0);
 
-  if (s_smng_pid < 0)
+  pthread_attr_t     attr;
+  struct sched_param sch_param;
+  int                ret = 0;
+  pthread_attr_init(&attr);
+  sch_param.sched_priority = SS_TASK_PRIORITY;
+  attr.stacksize           = SS_TASK_MANAGER_STACK_SIZE;
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  ret = pthread_create(&s_smng_pid,
+                       &attr,
+                       (pthread_startroutine_t)SS_SensorManagerEntry,
+                       (pthread_addr_t)NULL);
+  if (ret < 0)
     {
-      printf("ERROR SF_ActivateSensorSubSystem failed\n");
+      sensor_err("ERROR SS_ActivateSensorSubSystem failed\n");
       return false;
     }
   return true;
@@ -483,18 +499,21 @@ bool SF_ActivateSensorSubSystem(MsgQueId selfMId, api_response_callback_t callba
 /*--------------------------------------------------------------------*/
 /* Deactivation function for sensor subsystem.
 */
-bool SF_DeactivateSensorSubSystem()
+bool SS_DeactivateSensorSubSystem()
 {
-  if (s_smng_pid < 0)
+  if (s_smng_pid == INVALID_PROCESS_ID)
     {
       return false;
     }
-  task_delete(s_smng_pid);
+
+  FAR void *thread_return;
+  pthread_cancel(s_smng_pid);
+  pthread_join(s_smng_pid, &thread_return);
 
   DEBUGASSERT(TheSensorManager != NULL);
   delete TheSensorManager;
   TheSensorManager = NULL;
-  s_smng_pid = -1;
+  s_smng_pid = INVALID_PROCESS_ID;
 
   return true;
 }
@@ -503,85 +522,85 @@ bool SF_DeactivateSensorSubSystem()
 /* Sender function to Sensor Manager wo MemHandle
     @param packet 
 */
-void SF_SendSensorData(sensor_command_data_t* packet)
+void SS_SendSensorData(FAR sensor_command_data_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_data_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_SEND_DATA,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 
 /*--------------------------------------------------------------------*/
-void SF_SendSensorResult(sensor_command_result_t* packet)
+void SS_SendSensorResult(FAR sensor_command_result_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_result_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_SEND_RESULT,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 /*--------------------------------------------------------------------*/
-void SF_SendSensorResister(sensor_command_register_t* packet)
+void SS_SendSensorResister(FAR sensor_command_register_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_register_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_REGISTER_CLIENT,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 
 /*--------------------------------------------------------------------*/
-void SF_SendSensorRelease(sensor_command_release_t* packet)
+void SS_SendSensorRelease(sensor_command_release_t* packet)
 {
   err_t er = MsgLib::send<sensor_command_release_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_RELEASE_CLIENT,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 
 /*--------------------------------------------------------------------*/
-extern void SF_SendSensorChangeSubscription(sensor_command_change_subscription_t* packet)
+extern void SS_SendSensorChangeSubscription(FAR sensor_command_change_subscription_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_change_subscription_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_CHG_SUBSCRIPTION,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 
 #ifdef CONFIG_SENSING_MANAGER_POWERCTRL
 /*--------------------------------------------------------------------*/
-void SF_SendSensorSetPower(sensor_command_power_t* packet)
+void SS_SendSensorSetPower(FAR sensor_command_power_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_power_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_SET_POWER,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
 
 /*--------------------------------------------------------------------*/
-void SF_SendSensorClearPower(sensor_command_power_t* packet)
+void SS_SendSensorClearPower(FAR sensor_command_power_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_power_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_CLEAR_POWER,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }
@@ -594,13 +613,13 @@ void SF_SendSensorClearPower(sensor_command_power_t* packet)
 /* Sender function to Sensor Manager wo MemHandle
     @param packet 
 */
-void SF_SendSensorDataMH(sensor_command_data_mh_t* packet)
+void SS_SendSensorDataMH(FAR sensor_command_data_mh_t *packet)
 {
   err_t er = MsgLib::send<sensor_command_data_mh_t>(
                TheSensorManager->get_mid(),
                MsgPriNormal,
                MSG_SENSOR_MGR_CMD_SEND_DATA_MH,
-               MSGQ_NULL,
+               MSG_QUE_NULL,
                *packet);
   F_ASSERT(er == ERR_OK);
 }

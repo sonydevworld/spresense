@@ -116,7 +116,7 @@ int mptask_exec(mptask_t *task)
   struct rawelf_loadinfo_s loadinfo;
   Elf32_Sym sym;
   uint32_t binddata;
-  int cpuid;
+  int cpu;
   int ret;
 
   if (!task)
@@ -129,35 +129,54 @@ int mptask_exec(mptask_t *task)
       return -EPERM;
     }
 
-  cpuid = mptask_getcpuid(task);
-  if (cpuid < 0)
+  ret = mptask_cpu_count(&task->cpuids);
+  if (ret == 0)
     {
-      ret = mptask_assign(task);
+      /* Assign necessary number of CPUs when not assigned yet. */
+
+      if (task_is_unified(task))
+        {
+          ret = mptask_assign_cpus(task, task->ubin.nr_offs);
+        }
+      else
+        {
+          ret = mptask_assign(task);
+        }
+
+      /* Abort if auto CPU assignments failure */
+
       if (ret < 0)
         {
           return ret;
         }
-      cpuid = mptask_getcpuid(task);
     }
 
-  /* Clear allocated CPU's address converter */
+  for (cpu = 1; cpu < NMPCPUS; cpu++)
+    {
+      if (CPU_ISSET(cpu, &task->cpuids))
+        {
+          /* Clear allocated CPU's address converter */
 
-  mptask_mapclear(task);
+          mptask_mapclear(cpu);
+        }
+    }
 
   if (task_is_secure(task))
     {
       return mptask_exec_secure(task);
     }
 
-  /* Allocated CPU ID is APP local ID, so I convert it to global CPU ID */
+  /* Normal ASMP worker bootup process from here. */
 
-  ret = cxd56_iccinitmsg(cpuid);
+  cpu = mptask_getcpuid(task);
+
+  ret = cxd56_iccinitmsg(cpu);
   if (ret < 0)
     {
       return ret;
     }
 
-  cxd56_iccregistersighandler(cpuid, mptask_sighandler, task);
+  cxd56_iccregistersighandler(cpu, mptask_sighandler, task);
 
   /* Load ELF image */
 
@@ -211,9 +230,13 @@ int mptask_exec(mptask_t *task)
 
   mpinfo("Load at %08x (size: %x)\n", task->loadaddr, task->loadsize);
 
+  /* Convert global CPU ID to APP domain ID */
+
+  cpu -= 2;
+
   /* Map physical address for allocated CPU address map to based on zero */
 
-  mptask_map(task);
+  mptask_map(cpu, task->loadaddr, task->loadsize);
 
   /* Opened ELF file will be closed in rawelf_uninit() */
 
@@ -240,8 +263,8 @@ int mptask_exec(mptask_t *task)
 
   up_pm_acquire_wakelock(&g_mptask_wlock);
 
-  cxd56_cpu_reset(task->cpuid);
-  cxd56_cpu_clock_enable(task->cpuid);
+  cxd56_cpu_reset(cpu);
+  cxd56_cpu_clock_enable(cpu);
 
   /* If bindata is given, it is inside the MP framework. So I wait
    * a start signal from worker.

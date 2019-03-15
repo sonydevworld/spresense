@@ -43,6 +43,8 @@ CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include"}
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
 endif
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS_NN),y)

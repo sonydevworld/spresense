@@ -11,7 +11,6 @@ if SENSORS
 config BMI160
 	bool "Bosch BMI160 Sensor support"
 	default n
-	select CXD56_SPI
 	---help---
 		Enable driver support for the Bosch BMI160 sensor.
 
@@ -225,12 +224,6 @@ config BM1383GLV_SCU
 	depends on CXD56_SCU
 	---help---
 		Use the sensor control unit (SCU) sequencer.
-
-config BM1383AGLV
-	bool "BM1383AGLV"
-	default n
-	---help---
-		Use BM1383AGLV registers.
 
 endif # BM1383GLV
 

@@ -40,15 +40,13 @@
  * Included Files
  ****************************************************************************/
 
+#include <sdk/config.h>
+
 #include "memutils/message/Message.h"
 #include "sensing/sensor_message_types.h"
 #include "sensing/sensor_id.h"
-#include "sensing/sensor_command.h"
+#include "sensing/sensor_api.h"
 #include "sensing/sensor_ecode.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
 
 /****************************************************************************
  * Public Types
@@ -72,7 +70,7 @@ private:
       : m_selfMId(selfMId)
       , m_api_response_callback(callback)
   {
-    for (int i = 0; i < 24/*tentative*/; i++)
+    for (int i = 0; i < 24; i++)
       {
         client_table[i].status      = 0;
         client_table[i].subscribers = 0;

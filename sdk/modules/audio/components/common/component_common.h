@@ -56,6 +56,14 @@ struct DebugLogInfo
 };
 #endif
 
+template<typename T>
+struct DspResult
+{
+  uint32_t exec_result;
+  T        internal_result;
+};
+
+template<typename T>
 class ComponentCommon
 {
 public:
@@ -63,8 +71,8 @@ public:
   ~ComponentCommon() {}
 
   bool dsp_boot_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
-  uint32_t dsp_init_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
-  void dsp_init_complete(MsgQueId dsp_dtq, Apu::Wien2ApuCmd *packet);
+  uint32_t dsp_init_check(MsgQueId dsp_dtq, T *internal);
+  void dsp_init_complete(MsgQueId dsp_dtq, uint32_t result, T *internal);
 
 private:
 };

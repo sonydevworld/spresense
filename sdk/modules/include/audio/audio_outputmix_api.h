@@ -63,6 +63,22 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define AS_FEATURE_OUTPUTMIX_ENABLE
+
+/*! \brief InitMPP command (#AUDCMD_INITMPP) packet length */
+
+#define  LENGTH_INITMPP             5
+
+/*! \brief SetMPP command (#AUDCMD_SETMPPPARAM) packet length */
+
+#define  LENGTH_SUB_SETMPP_COMMON   4
+
+/*! \brief SetMPP command (#AUDCMD_SETMPPPARAM) packet length */
+
+#define  LENGTH_SUB_SETMPP_XLOUD    4
+
+#define PF_COMMAND_PACKET_SIZE_MAX (32)
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -140,6 +156,14 @@ enum AsOutputMixDoneCmdType
 
   OutputMixSetClkRcvDone,
 
+  /*! \brief Init Postproc command done */
+
+  OutputMixInitPostDone,
+
+  /*! \brief Set Postproc command done */
+
+  OutputMixSetPostDone,
+
   OutputMixDoneCmdTypeNum
 };
 
@@ -203,10 +227,17 @@ typedef struct
 
 struct AsOutputMixDoneParam
 {
+  /*! Handle */
+
   int handle;
+
+  /*! Kind of done cmd */
 
   AsOutputMixDoneCmdType done_type;
 
+  /*! result, true means OK */
+
+  bool result;
 };
 
 typedef void (*OutputMixerCallback)(MsgQueId requester_dtq, MsgType msgtype, AsOutputMixDoneParam *param);
@@ -233,7 +264,7 @@ typedef struct
    * Use #AsOutputMixerPostFilter enum type
    */
 
-  uint8_t pf_enable;
+  uint8_t post_enable;
 
   /*! \brief [in] Done callback */
 
@@ -285,6 +316,26 @@ typedef struct
 
 } AsFrameTermFineControl;
 
+/** Init postproc parameter */
+
+typedef struct
+{
+  /*! Command type (UserDefined, xLoud, etc... */
+
+  uint8_t  cmd_type;
+
+  /*! Init Command packet addr */
+
+  uint8_t  *addr;
+
+  /*! Init Command packet size */
+
+  uint32_t size;
+
+} AsInitPostProc;
+
+typedef AsInitPostProc AsSetPostProc;
+
 /** Clock recovery function parameter */
 
 typedef struct
@@ -296,6 +347,8 @@ typedef struct
     AsActivateOutputMixer   act_param;
     AsDeactivateOutputMixer deact_param;
     AsFrameTermFineControl  fterm_param;
+    AsInitPostProc          initpp_param;
+    AsSetPostProc           setpp_param;
   };
 
 } OutputMixerCommand;
@@ -366,6 +419,28 @@ bool AS_SendDataOutputMixer(FAR AsSendDataOutputMixer *sendparam);
  */
 
 bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineControl *ftermparam);
+
+/**
+ * @brief Init Postproces DSP
+ *
+ * @param[in] param: command parameters
+ *
+ * @retval     true  : success
+ * @retval     false : failure
+ */
+
+bool AS_InitPostprocOutputMixer(uint8_t handle, FAR AsInitPostProc *initppparam);
+
+/**
+ * @brief Set parameters Postproces DSP
+ *
+ * @param[in] param: command parameters
+ *
+ * @retval     true  : success
+ * @retval     false : failure
+ */
+
+bool AS_SetPostprocOutputMixer(uint8_t handle, FAR AsSetPostProc *setppparam);
 
 /**
  * @brief Deactivate audio output mixer

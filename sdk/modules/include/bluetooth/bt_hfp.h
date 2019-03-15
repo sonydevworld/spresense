@@ -84,6 +84,7 @@ struct bt_hfp_state_s
   struct bt_acl_state_s    *bt_acl_state;           /**< Bluetooth ACL context @ref bt_acl_state_s */
   struct bt_hal_hfp_ops_s  *bt_hal_hfp_ops;         /**< HFP HAL interfaces @ref bt_hal_hfp_ops_s */
   struct bt_hfp_ops_s      *bt_hfp_ops;             /**< HFP connection callbacks @ref bt_hfp_ops_s */
+  BT_HFP_HF_FEATURE_FLAG   bt_hfp_supported_feature;/**< HFP supported feature @ref BT_HFP_HF_FEATURE_FLAG */
 };
 
 /****************************************************************************
@@ -153,6 +154,26 @@ int bt_hfp_audio_disconnect(struct bt_acl_state_s *bt_acl_state);
  */
 
 int bt_hfp_send_at_command(struct bt_acl_state_s *bt_acl_state, char *at_cmd_str);
+
+/**
+ * @brief Bluetooth press button
+ *        Press button.
+ *
+ * @param[in] bt_acl_state: Bluetooth context @ref bt_acl_state_s
+ * @retval error code
+ */
+
+int bt_hfp_press_button(struct bt_acl_state_s *bt_acl_state);
+
+/**
+ * @brief Bluetooth set feature
+ *        Set feature.
+ *
+ * @param[in] flag: Bluetooth feature flag @ref BT_HFP_HF_FEATURE_FLAG
+ * @retval error code
+ */
+
+int bt_hfp_set_feature(BT_HFP_HF_FEATURE_FLAG flag);
 
 /**
  * @brief Bluetooth HFP Register callbacks

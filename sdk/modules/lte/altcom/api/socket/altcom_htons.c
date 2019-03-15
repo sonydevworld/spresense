@@ -47,16 +47,6 @@
 
 /****************************************************************************
  * Name: altcom_htons
- *
- * Description:
- *   Convert from host byte order to network byte order.
- *
- * Input parameters:
- *   x - unsigned short value
- *
- *  Return:
- *   Value converted to network byte order
- *
  ****************************************************************************/
 
 uint16_t altcom_htons(uint16_t x)

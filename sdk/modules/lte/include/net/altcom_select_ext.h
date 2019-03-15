@@ -73,28 +73,6 @@ extern "C"
 
 /****************************************************************************
  * Name: altcom_select_async
- *
- * Description:
- *   altcom_select_async() is a function that operates select asynchronously.
- *   Notified by callback when one or more of the file descriptors become
- *   "ready" for some class of I/O operation (e.g., input possible). It will
- *   be notified until callback is called once or canceled
- *   by altcom_select_async_cancel().
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   callback - Callback function that informs that one or more file
- *              descriptors are in the "ready" state
- *   priv - For use by caller
- *
- *  Return:
- *   A non-negative id on success; -1 on error with errno set
- *   appropriately.
- *
  ****************************************************************************/
 
 int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
@@ -103,22 +81,6 @@ int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_async_exec_callback
- *
- * Description:
- *   Execute callback that registered by altcom_select_async().
- *
- * Input parameters:
- *   id - id returned by altcom_select_async()
- *   ret_code - result of altcom_select_async()
- *   err_code - error code when altcom_select_async() failure
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
  ****************************************************************************/
 
 int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
@@ -129,17 +91,6 @@ int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
 
 /****************************************************************************
  * Name: altcom_select_async_cancel
- *
- * Description:
- *   altcom_select_async_cancel() cancel altcom_select_async() based on the
- *   id.
- *
- * Input parameters:
- *   id - id returned by altcom_select_async()
- *
- *  Return:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int altcom_select_async_cancel(int id);

@@ -47,16 +47,6 @@
 
 /****************************************************************************
  * Name: altcom_ntohs
- *
- * Description:
- *   Convert from network byte order to host byte order.
- *
- * Input parameters:
- *   x - unsigned short value
- *
- *  Return:
- *   Value converted to host byte order
- *
  ****************************************************************************/
 
 uint16_t altcom_ntohs(uint16_t x)

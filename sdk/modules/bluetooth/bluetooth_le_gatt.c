@@ -224,6 +224,110 @@ static int event_notify_req(struct ble_gatt_event_notify_req_t *notify_req_evt)
   return ret;
 }
 
+static int event_write_rsp(struct ble_gatt_event_write_rsp_t *write_rsp_evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_gatt_char_s *ble_gatt_char = NULL;
+  struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
+
+  /* Search characteristic */
+
+  ble_gatt_char = ble_search_characteristic(write_rsp_evt->serv_handle, write_rsp_evt->char_handle);
+
+  if (!ble_gatt_char)
+    {
+      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
+      return BT_FAIL;
+    }
+
+  ble_gatt_char->status = write_rsp_evt->status;
+  ble_gatt_char->handle = write_rsp_evt->char_handle;
+
+  /* Callback to application with updated characteristic */
+
+  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+
+  if (ble_gatt_central_ops && ble_gatt_central_ops->write)
+    {
+      ble_gatt_central_ops->write(ble_gatt_char);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Write response event callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int event_read_rsp(struct ble_gatt_event_read_rsp_t *read_rsp_evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_gatt_char_s *ble_gatt_char = NULL;
+  struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
+  BLE_CHAR_VALUE  *value = NULL;
+
+  /* Search characteristic */
+
+  ble_gatt_char = ble_search_characteristic(read_rsp_evt->serv_handle, read_rsp_evt->char_handle);
+
+  if (!ble_gatt_char)
+    {
+      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
+      return BT_FAIL;
+    }
+
+  ble_gatt_char->handle = read_rsp_evt->char_handle;
+
+  /* Copy write data */
+
+  value = &ble_gatt_char->value;
+
+  memcpy(value->data, read_rsp_evt->data, read_rsp_evt->length);
+
+  value->length = read_rsp_evt->length;
+
+  /* Callback to application with searched characteristic */
+
+  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+
+  if (ble_gatt_central_ops && ble_gatt_central_ops->read)
+    {
+      ble_gatt_central_ops->read(ble_gatt_char);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Read response event callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int event_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc_evt)
+{
+  int ret = BT_SUCCESS;
+  /* TODO: gatt database discovery can't look up central_ops by ble_search_characteristic(),
+   * because the peer device service/characteristic database has not been built yet while this
+   * callback is calling. We should consider where to store struct ble_gatt_central_ops.
+   */
+  struct ble_gatt_central_ops_s *ble_gatt_central_ops = g_ble_gatt_state.ble_gatt_central_ops;
+
+  /* Callback to application */
+
+  if (ble_gatt_central_ops && ble_gatt_central_ops->database_discovery)
+    {
+      ble_gatt_central_ops->database_discovery(db_disc_evt);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Db discovery event callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -293,7 +397,7 @@ int ble_register_servce(struct ble_gatt_service_s *service)
 {
   int ret = BT_SUCCESS;
   int n;
-  struct ble_hal_gatt_ops_s *ble_hal_gatt_ops = g_ble_gatt_state.ble_hal_gatt_ops;
+  struct ble_hal_gatts_ops_s *ble_hal_gatts_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gatts);
 
   if (!service)
     {
@@ -307,10 +411,10 @@ int ble_register_servce(struct ble_gatt_service_s *service)
       return BT_FAIL;
     }
 
-  if (ble_hal_gatt_ops && ble_hal_gatt_ops->addService &&
-      ble_hal_gatt_ops->addChar)
+  if (ble_hal_gatts_ops && ble_hal_gatts_ops->addService &&
+      ble_hal_gatts_ops->addChar)
     {
-      ret = ble_hal_gatt_ops->addService(service);
+      ret = ble_hal_gatts_ops->addService(service);
 
       if (ret != BT_SUCCESS)
         {
@@ -320,7 +424,7 @@ int ble_register_servce(struct ble_gatt_service_s *service)
 
       for (n = 0; n < service->num; n ++)
         {
-          ret = ble_hal_gatt_ops->addChar(service->handle, service->chars[n]);
+          ret = ble_hal_gatts_ops->addChar(service->handle, service->chars[n]);
 
           if (ret != BT_SUCCESS)
             {
@@ -379,7 +483,7 @@ int ble_add_characteristic(struct ble_gatt_service_s *service, struct ble_gatt_c
 int ble_characteristic_notify(struct ble_gatt_char_s *charc, uint8_t *data, int len)
 {
   int ret = BT_SUCCESS;
-  struct ble_hal_gatt_ops_s *ble_hal_gatt_ops = g_ble_gatt_state.ble_hal_gatt_ops;
+  struct ble_hal_gatts_ops_s *ble_hal_gatts_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gatts);
   BLE_CHAR_VALUE *value;
 
   if (!charc)
@@ -396,13 +500,13 @@ int ble_characteristic_notify(struct ble_gatt_char_s *charc, uint8_t *data, int 
       return BT_FAIL;
     }
 
-  if (ble_hal_gatt_ops && ble_hal_gatt_ops->notify)
+  if (ble_hal_gatts_ops && ble_hal_gatts_ops->notify)
     {
       memcpy(value->data, data, len);
 
       value->length = len;
 
-      ret = ble_hal_gatt_ops->notify(charc, g_ble_gatt_state.ble_state->ble_connect_handle);
+      ret = ble_hal_gatts_ops->notify(charc, g_ble_gatt_state.ble_state->ble_connect_handle);
     }
   else
     {
@@ -424,8 +528,26 @@ int ble_characteristic_notify(struct ble_gatt_char_s *charc, uint8_t *data, int 
 
 int ble_characteristic_read(struct ble_gatt_char_s *charc)
 {
-  _err("%s [BLE][GATT] BLE read failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ble_hal_gattc_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (!charc)
+    {
+      _err("%s [BLE][GATT] BLE characteristic read failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  if (ble_hal_gattc_ops && ble_hal_gattc_ops->read)
+    {
+      ret = ble_hal_gattc_ops->read(charc, g_ble_gatt_state.ble_state->ble_connect_handle);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] read characteristic failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -439,8 +561,80 @@ int ble_characteristic_read(struct ble_gatt_char_s *charc)
 
 int ble_characteristic_write(struct ble_gatt_char_s *charc, uint8_t *data, int len)
 {
-  _err("%s [BLE][GATT] BLE write failed(Central not supported yet).\n", __func__);
-  return BT_FAIL;
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ble_hal_gattc_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (!charc)
+    {
+      _err("%s [BLE][GATT] BLE characteristic write failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  if (ble_hal_gattc_ops && ble_hal_gattc_ops->write)
+    {
+      ret = ble_hal_gattc_ops->write(charc, g_ble_gatt_state.ble_state->ble_connect_handle);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] write characteristic failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_start_db_discovery
+ *
+ * Description:
+ *   BLE start database discovery
+ *   Send database discovery request to peripheral (For Central role)
+ *
+ ****************************************************************************/
+
+int ble_start_db_discovery(uint16_t conn_handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ble_hal_gattc_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (ble_hal_gattc_ops && ble_hal_gattc_ops->startDbDiscovery)
+    {
+      ret = ble_hal_gattc_ops->startDbDiscovery(conn_handle);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] start db discovery failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_continue_db_discovery
+ *
+ * Description:
+ *   BLE continue database discovery
+ *   Send continue database discovery request to peripheral (For Central role)
+ *
+ ****************************************************************************/
+
+int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ble_hal_gattc_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (ble_hal_gattc_ops && ble_hal_gattc_ops->continueDbDiscovery)
+    {
+      ret = ble_hal_gattc_ops->continueDbDiscovery(start_handle, conn_handle);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] continue db discovery failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -487,10 +681,17 @@ int ble_gatt_event_handler(struct bt_event_t *bt_event)
         return event_notify_req((struct ble_gatt_event_notify_req_t *) bt_event);
 
       case BLE_GATT_EVENT_WRITE_RESP:
+        return event_write_rsp((struct ble_gatt_event_write_rsp_t *) bt_event);
+
       case BLE_GATT_EVENT_READ_RESP:
+        return event_read_rsp((struct ble_gatt_event_read_rsp_t *) bt_event);
+
       case BLE_GATT_EVENT_NOTIFY_RESP:
         /* Central role not supported yet */
         break;
+
+      case BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE:
+        return event_db_discovery((struct ble_gatt_event_db_discovery_t *) bt_event);
 
       default:
         break;
@@ -498,3 +699,24 @@ int ble_gatt_event_handler(struct bt_event_t *bt_event)
   return BT_SUCCESS;
 }
 
+/****************************************************************************
+ * Name: ble_register_gatt_central_cb
+ *
+ * Description:
+ *   Temporary I/F helps app hook central callbacks to framework stored state
+ *   Should be removed after consider overall design about how to manage app state
+ *
+ ****************************************************************************/
+
+int ble_register_gatt_central_cb(struct ble_gatt_central_ops_s *central_ops)
+{
+  if (!central_ops)
+    {
+      _err("%s [BLE][GATT] Set central callback failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  g_ble_gatt_state.ble_gatt_central_ops = central_ops;
+
+  return BT_SUCCESS;
+}

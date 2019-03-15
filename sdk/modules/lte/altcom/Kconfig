@@ -12,3 +12,15 @@ config MODEM_DEVICE_PATH
 		Path to the modem driver to register.
 
 endif
+
+if LTE_NET
+
+config LTE_NET_MBEDTLS
+	bool "Stub mbedTLS Support"
+	default n
+	---help---
+		This function is to use the function of mbedTLS on LTE Modem side.
+		If you want to use mbedTLS itself on CXD5602, please use CONFIG_EXTERNALS_MBEDTLS.
+		And when you select this, make sure CONFIG_EXTERNALS_MBEDTLS is disabled. Those are exclusive items.
+
+endif

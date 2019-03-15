@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>GE2D</name>
+  <version>1.0</version>
+  <description>Hardware 2D Graphics Engine</description>
+  <baseAddress>0x02101000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x400</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>2D</name>
+    <description>2D interrupt</description>
+    <value>106</value>
+  </interrupt>
+
+  <registers>
+    <!-- INTR_ENABLE: Interrupt Control -->
+    <register>
+      <name>INTR_ENABLE</name>
+      <description>2D Graphics Engine Interrupt Control</description>
+      <addressOffset>0x00</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0x0003010F</resetMask>
+
+      <fields>
+        <!-- WR_ERR -->
+        <field>
+          <name>WR_ERR</name><bitRange>[17:17]</bitRange><access>read-write</access>
+          <description>Write Error Interrupt</description>
+        </field>
+
+        <!-- RD_ERR -->
+        <field>
+          <name>RD_ERR</name><bitRange>[16:16]</bitRange><access>read-write</access>
+          <description>Read Error Interrupt</description>
+        </field>
+
+        <!-- DSD -->
+        <field>
+          <name>DSD</name><bitRange>[8:8]</bitRange><access>read-write</access>
+          <description>Descriptor STOP Command Done Interrupt</description>
+        </field>
+
+        <!-- NDE -->
+        <field>
+          <name>NDE</name><bitRange>[3:3]</bitRange><access>read-write</access>
+          <description>Normal Descriptor Command Error Interrupt</description>
+        </field>
+
+        <!-- NDB -->
+        <field>
+          <name>NDB</name><bitRange>[2:2]</bitRange><access>read-write</access>
+          <description>Normal Descriptor Command Branch Interrupt</description>
+        </field>
+
+        <!-- NDF -->
+        <field>
+          <name>NDF</name><bitRange>[1:1]</bitRange><access>read-write</access>
+          <description>Normal Descriptor Command Finished Interrupt</description>
+        </field>
+
+        <!-- HPU -->
+        <field>
+          <name>HPU</name><bitRange>[0:0]</bitRange><access>read-write</access>
+          <description>Normal Descriptor Command Update Interrupt</description>
+        </field>
+      </fields>
+    </register>
+
+    <!-- INTR_STAT: Interrupt Status -->
+    <register derivedFrom="INTR_ENABLE">
+      <name>INTR_STAT</name>
+      <description>2D Graphics Engine Interrupt Status and Clear</description>
+      <addressOffset>0x04</addressOffset>
+      <modifiedWriteValues>oneToClear</modifiedWriteValues>
+    </register>
+
+    <!-- ADDRESS_DESCRIPTOR_START: Descriptor Address Set Register -->
+    <register>
+      <name>ADDRESS_DESCRIPTOR_START</name>
+      <description>Descriptor Address Set Register</description>
+      <addressOffset>0x08</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00000000</resetValue>
+      <resetMask>0xFFFFFFFF</resetMask>
+      <fields>
+        <!-- DA -->
+        <field>
+          <name>DA</name>
+          <bitRange>[31:4]</bitRange><access>read-write</access>
+          <description>Descriptor Address</description>
+        </field>
+        <!-- MSEL -->
+        <field>
+          <name>MSEL</name>
+          <bitRange>[0:0]</bitRange><access>read-write</access>
+          <description>must be 1</description>
+        </field>
+      </fields>
+    </register>
+
+    <!-- STATUS: Status Register -->
+    <register>
+      <name>STATUS</name>
+      <description>Status Register</description>
+      <addressOffset>0x0c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+
+      <fields>
+        <!-- ISER -->
+        <field>
+          <name>ISER</name>
+          <description>ISE Running Status</description>
+          <bitRange>[24:24]</bitRange>
+        </field>
+
+        <!-- NDCR -->
+        <field>
+          <name>NDCR</name>
+          <description>Normal Descriptor Command Running Status</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+
+        <!-- SREQ -->
+        <field>
+          <name>SREQ</name>
+          <description>Reqesting Descriptor Stop</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+
+        <!-- NREQ -->
+        <field>
+          <name>NREQ</name>
+          <description>Requesting Normal Descriptor</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- CMD_DESCRIPTOR: Command Register -->
+    <register>
+      <name>CMD_DESCRIPTOR</name>
+      <description>Command Register</description>
+      <addressOffset>0x0c</addressOffset>
+      <size>32</size>
+      <access>write-only</access>
+
+      <fields>
+        <field>
+          <name>COMMAND</name>
+          <description>Command</description>
+          <bitRange>[1:0]</bitRange>
+          <enumeratedValues>
+            <name>COMMAND_TYPE</name>
+            <enumeratedValue>
+              <name>NOP</name>
+              <description>No Operation</description>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>RUN</name>
+              <description>Normal Descriptor Set and Run</description>
+              <value>1</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>STOP</name>
+              <description>Stop Descriptor</description>
+              <value>3</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- STAT_NORMAL_DESCRIPTOR_ADDRESS: Normal Descriptor Address Register -->
+    <register>
+      <name>STAT_NORMAL_DESCRIPTOR_ADDRESS</name>
+      <description>Normal Descriptor Address Register</description>
+      <addressOffset>0x10</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+    </register>
+
+    <!-- STAT_CURRENT_DESCRIPTOR_ADDRESS: Current Descriptor Address Register -->
+    <register>
+      <name>STAT_CURRENT_DESCRIPTOR_ADDRESS</name>
+      <description>Current Descriptor Address Register</description>
+      <addressOffset>0x14</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+    </register>
+  </registers>
+</peripheral>

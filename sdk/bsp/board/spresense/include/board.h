@@ -50,6 +50,7 @@
 
 #include <arch/board/common/cxd56_gpioif.h>
 #include <arch/board/common/cxd56_power.h>
+#include <arch/board/common/cxd56_clock.h>
 #include <arch/board/common/cxd56_audio.h>
 #include <arch/board/common/cxd56_flash.h>
 #include <arch/board/common/cxd56_sdcard.h>
@@ -58,6 +59,8 @@
 #include <arch/board/common/cxd56_pwm.h>
 #include <arch/board/common/cxd56_sensors.h>
 #include <arch/board/common/cxd56_isx012.h>
+#include <arch/board/common/cxd56_gauge.h>
+#include <arch/board/common/cxd56_charger.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -77,6 +80,10 @@
 #define BOARD_UART0_BASEFREQ        CONFIG_CXD56_XOSC_CLOCK
 #define BOARD_UART1_BASEFREQ        BOARD_FCLKOUT_FREQUENCY
 #define BOARD_UART2_BASEFREQ        CONFIG_CXD56_XOSC_CLOCK
+
+/* LCD Display clocking ****************************************************/
+
+#define ILI9340_SPI_MAXFREQUENCY    40000000
 
 /* LED definitions *********************************************************/
 
@@ -162,8 +169,8 @@ enum board_power_device {
   POWER_AUDIO_AVDD      = PMIC_GPO(1),
   POWER_AUDIO_MUTE      = PMIC_GPO(6),
   POWER_IMAGE_SENSOR    = PMIC_GPO(4) | PMIC_GPO(5) | PMIC_GPO(7),
-  POWER_BTBLE           = PMIC_GPO(3),
 
+  POWER_BTBLE           = PMIC_NONE,
   POWER_SENSOR          = PMIC_NONE,
   POWER_EMMC            = PMIC_NONE,
 };

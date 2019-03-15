@@ -31,12 +31,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+
 /**
  * @file runtime.h
  */
 
 #ifndef __INCLUDE_DNNRT_RUNTIME_H
-#define __INCLUDE_DNNRT_RUNTIME_H
+#  define __INCLUDE_DNNRT_RUNTIME_H
 
 /**
  * @defgroup dnnrt dnnrt
@@ -45,33 +46,56 @@
  * dnnrt is an Deep Neural Networks RunTime optimized for for CXD5602
  */
 
-#include <dnnrt/nnablart/network.h>
+#  include <asmp/types.h>
+#  include <dnnrt/nnablart/network.h>
 
-#ifdef __cplusplus
-#define EXTERN extern "C"
+#  ifdef __cplusplus
+#    define EXTERN extern "C"
 extern "C"
 {
-#else
-#define EXTERN extern
-#endif
+#  else
+#    define EXTERN extern
+#  endif
 
-#define DNNRT_IMPLEMENT (0)
+#  define DNNRT_IMPLEMENT (0)
+
 /**
  * @defgroup dnnrt_datatype Data Types
  * @{
  */
-typedef struct dnn_runtime dnn_runtime_t;
-
-struct dnn_runtime
+typedef struct dnn_runtime
 {
   void *impl_ctx;
-};
+} dnn_runtime_t;
+
+/**
+ * @typedef dnn_config_t
+ * structure to configure dnnrt subsystem
+ */
+typedef struct dnn_config
+{
+
+  unsigned char cpu_num; /**< Number of CPUs involved in forward propagation */
+} dnn_config_t;
+
+/**
+ * @typedef dnn_mallinfo_t
+ * structure to obtain memory allocation information
+ */
+typedef struct dnn_mallinfo
+{
+  cpuid_t cpu;
+  size_t total_bytes;
+  size_t used_bytes;
+  size_t largest_bytes;
+} dnn_mallinfo_t;
 
 /** @} dnnrt_datatype */
 
 /********************************************************************************
  * Public Function Prototypes
  ********************************************************************************/
+
 /**
  * @defgroup dnnrt_funcs Functions
  * @{
@@ -80,13 +104,15 @@ struct dnn_runtime
 /**
  * Initialize the whole dnnrt subsystem
  *
- * @param [in] reserved: reserved argument. Currently, this argument must be NULL.
+ * @param [in] config: configuration of multicore processing. <br>
+ *                     If CONFIG_DNN_RT_MP=y, dnn_config_t::cpu_num must be 1 or more, <br>
+ *                     otherwise dnn_config_t::cpu_num must be 1.
  *
  * @return 0 on success, otherwise returns error code in errno_t.
  *
  * @note this function must be called before any dnn_runtime_t object is initialized.
  */
-int dnn_initialize (void* reserved);
+int dnn_initialize(dnn_config_t * config);
 
 /**
  * Finalize the whole dnnrt subsystem.
@@ -96,7 +122,7 @@ int dnn_initialize (void* reserved);
  *
  * @note this function must be called after all the dnn_runtime_t is finalized
  */
-int dnn_finalize (void);
+int dnn_finalize(void);
 
  /**
   * Instantiate a neural network defined by nn_network_t as a dnn_runtime_t object.
@@ -111,7 +137,7 @@ int dnn_finalize (void);
   *       However, the runtime holds reference to the network object. <br>
   *       Applications must NOT free it until dnn_runtime_finalize().
   */
-int dnn_runtime_initialize (dnn_runtime_t * rt, const nn_network_t * network);
+int dnn_runtime_initialize(dnn_runtime_t * rt, const nn_network_t * network);
 
  /**
   * Free all the memory allocated to a dnn_runtime_t object
@@ -122,7 +148,7 @@ int dnn_runtime_initialize (dnn_runtime_t * rt, const nn_network_t * network);
   *
   * @note dnnrt are NOT involved in freeing nn_network_t.
   */
-int dnn_runtime_finalize (dnn_runtime_t * rt);
+int dnn_runtime_finalize(dnn_runtime_t * rt);
 
 /**
  * Execute forward propagation after feeding input data.
@@ -137,8 +163,8 @@ int dnn_runtime_finalize (dnn_runtime_t * rt);
  *   - length of each input buffer(i.e. inputs[i]) equals to dnn_runtime_input_size(rt, i)
  *   - internal representation of each input buffer(i.e. inputs[i]) can be obtained by dnn_runtime_input_variable(rt, i)
  */
-int dnn_runtime_forward (dnn_runtime_t * rt, const void *inputs[],
-                unsigned char input_num);
+int dnn_runtime_forward(dnn_runtime_t * rt, const void *inputs[],
+                        unsigned char input_num);
 
 /**
  * Return the number of inputs which this network needs.
@@ -147,7 +173,7 @@ int dnn_runtime_forward (dnn_runtime_t * rt, const void *inputs[],
  *
  * @return number of inputs on success, otherwise -EINVAL.
  */
-int dnn_runtime_input_num (dnn_runtime_t * rt);
+int dnn_runtime_input_num(dnn_runtime_t * rt);
 
 /**
  * Return the number of elements in a specified input.
@@ -157,7 +183,7 @@ int dnn_runtime_input_num (dnn_runtime_t * rt);
  *
  * @return number of elements in the specified input on success, otherwise -EINVAL.
  */
-int dnn_runtime_input_size (dnn_runtime_t * rt, unsigned char input_index);
+int dnn_runtime_input_size(dnn_runtime_t * rt, unsigned char input_index);
 
 /**
  * Return the number of a specified input's dimensions.
@@ -168,7 +194,7 @@ int dnn_runtime_input_size (dnn_runtime_t * rt, unsigned char input_index);
  * @return number of the specified input's dimensions on success,
  *         otherwise -EINVAL.
  */
-int dnn_runtime_input_ndim (dnn_runtime_t * rt, unsigned char input_index);
+int dnn_runtime_input_ndim(dnn_runtime_t * rt, unsigned char input_index);
 
 /**
  * Return the number of elements in a specified dimension of an input.
@@ -180,8 +206,8 @@ int dnn_runtime_input_ndim (dnn_runtime_t * rt, unsigned char input_index);
  * @return number of elements in the specified dimension of the input on success,
  *         otherwise -EINVAL.
  */
-int dnn_runtime_input_shape (dnn_runtime_t * rt, unsigned char input_index,
-			     unsigned char dim_index);
+int dnn_runtime_input_shape(dnn_runtime_t * rt, unsigned char input_index,
+                            unsigned char dim_index);
 
 /**
  * Get nn_variable_t* corresponding to a specified input
@@ -192,8 +218,8 @@ int dnn_runtime_input_shape (dnn_runtime_t * rt, unsigned char input_index,
  * @return pointer to nn_variable_t in nn_network_t on success,
  *         otherwise NULL
  */
-nn_variable_t *dnn_runtime_input_variable (dnn_runtime_t * rt,
-					   unsigned char input_index);
+nn_variable_t *dnn_runtime_input_variable(dnn_runtime_t * rt,
+                                          unsigned char input_index);
 
 /**
  * Return the number of outputs which this network emits.
@@ -202,7 +228,7 @@ nn_variable_t *dnn_runtime_input_variable (dnn_runtime_t * rt,
  *
  * @return number of outputs on success, otherwise -EINVAL.
  */
-int dnn_runtime_output_num (dnn_runtime_t * rt);
+int dnn_runtime_output_num(dnn_runtime_t * rt);
 
 /**
  * Return the number of elements in a specified output.
@@ -212,7 +238,7 @@ int dnn_runtime_output_num (dnn_runtime_t * rt);
  *
  * @return number of elements in the specified output on success, otherwise -EINVAL.
  */
-int dnn_runtime_output_size (dnn_runtime_t * rt, unsigned char output_index);
+int dnn_runtime_output_size(dnn_runtime_t * rt, unsigned char output_index);
 
 /**
  * Return the number of a specified output's dimensions.
@@ -223,7 +249,7 @@ int dnn_runtime_output_size (dnn_runtime_t * rt, unsigned char output_index);
  * @return number of the specified input's dimensions on success,
  *         otherwise -EINVAL.
  */
-int dnn_runtime_output_ndim (dnn_runtime_t * rt, unsigned char output_index);
+int dnn_runtime_output_ndim(dnn_runtime_t * rt, unsigned char output_index);
 
 /**
  * Return the number of elements in a specified dimension of an output.
@@ -235,8 +261,8 @@ int dnn_runtime_output_ndim (dnn_runtime_t * rt, unsigned char output_index);
  * @return number of elements in the specified dimension of the output on success,
  *         otherwise -EINVAL.
  */
-int dnn_runtime_output_shape (dnn_runtime_t * rt, unsigned char output_index,
-			      unsigned char dim_index);
+int dnn_runtime_output_shape(dnn_runtime_t * rt, unsigned char output_index,
+                             unsigned char dim_index);
 
 /**
  * Get nn_variable_t* corresponding to a specified output
@@ -247,8 +273,8 @@ int dnn_runtime_output_shape (dnn_runtime_t * rt, unsigned char output_index,
  * @return pointer to nn_variable_t in nn_network_t on success,
  *         otherwise NULL
  */
-nn_variable_t *dnn_runtime_output_variable (dnn_runtime_t * rt,
-					    unsigned char output_index);
+nn_variable_t *dnn_runtime_output_variable(dnn_runtime_t * rt,
+                                           unsigned char output_index);
 
 /**
  * Return a pointer to a specified output
@@ -263,17 +289,35 @@ nn_variable_t *dnn_runtime_output_variable (dnn_runtime_t * rt,
  *   - internal representation of the output buffer can be obtained by dnn_runtime_output_variable(rt, output_index)
 
  */
-void *dnn_runtime_output_buffer (dnn_runtime_t * rt,
-				 unsigned char output_index);
+void *dnn_runtime_output_buffer(dnn_runtime_t * rt, unsigned char output_index);
 
+/**
+ * Obtain information about memory allocation in the Nuttx-side heap
+ *
+ * @param [out] info: pointer to store memory allocation stats
+ *
+ * @return 0 on success. otherwise -EINVAL.
+ */
+int dnn_nuttx_mallinfo(dnn_mallinfo_t * info);
+
+/**
+ * Obtain information about memory allocation in the ASMP-side heap
+ *
+ * @param [in]  array_length: Number of elements in info_array.<br>
+                              This value must be dnn_config_t::cpu_num
+ * @param [out] info_array:   Array to store memory allocation stats
+ *
+ * @return 0 on success. -EPERM if CONFIG_DNN_RT_MP=n
+ */
+int dnn_asmp_mallinfo(unsigned char array_length, dnn_mallinfo_t * info_array);
 
 /** @} dnnrt_funcs */
 
-#undef EXTERN
-#ifdef __cplusplus
+#  undef EXTERN
+#  ifdef __cplusplus
 }
-#endif
+#  endif
 
 /** @} dnnrt */
 
-#endif /* __INCLUDE_DNNRT_RUNTIME_H */
+#endif                                 /* __INCLUDE_DNNRT_RUNTIME_H */

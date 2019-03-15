@@ -65,6 +65,35 @@
 #define BT_RESULT_SIZE 2
 #define NVRAM_ID_LEN   2
 #define HASH_POS_IN_VERSION 8
+#define BLE_ADV_RSSI_LEN  1
+
+struct bt_hfp_event_t
+{
+  union _head
+  {
+    uint8_t command_status;
+    uint16_t handle;
+  } head;
+
+  union _event
+  {
+    struct _hf_open_event
+    {
+      uint8_t addr[BT_ADDR_LEN];
+      uint8_t status;
+    } hf_open_event;
+
+    struct _hf_ag_indicator
+    {
+      uint8_t numberic[2];
+      char opt_str[4];
+    } hf_ag_indicator;
+
+    uint8_t profile_type;
+    uint16_t ag_feature;
+  } event;
+
+} __attribute__((__packed__));
 
 /****************************************************************************
  * Private Data
@@ -429,6 +458,206 @@ static void btRecvSppEvtRxData(uint8_t *p, uint16_t len)
   bt_spp_event_handler((struct bt_event_t *) &recv_evt);
 }
 
+static void btRecvHfpCommandStatus(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_CMD_STATUS;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.command_status)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtOpen(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  btdbg("connection open handle = %04x, addr = %02x:%02x:%02x:%02x:%02x:%02x, status = %01x\n",
+        pack->head.handle,
+        pack->event.hf_open_event.addr[0],
+        pack->event.hf_open_event.addr[1],
+        pack->event.hf_open_event.addr[2],
+        pack->event.hf_open_event.addr[3],
+        pack->event.hf_open_event.addr[4],
+        pack->event.hf_open_event.addr[5],
+        pack->event.hf_open_event.status);
+
+}
+
+static void btRecvHfpEvtClose(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection closed handle = %04x\n", pack->head.handle);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_HF_DISCONNECT;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpAudioEvtOpen(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   btdbg("audio open handle = %04x\n", pack->head.handle);
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_AUDIO_CONNECT;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpAudioEvtClose(uint8_t *p)
+{
+   const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+   struct bt_event_t app_evt = {0};
+
+   btdbg("audio close handle = %04x\n", pack->head.handle);
+
+   app_evt.group_id = BT_GROUP_HFP;
+   app_evt.event_id = BT_HFP_EVENT_AUDIO_DISCONNECT;
+   memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->head.handle)));
+
+   bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtConnected(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection connected handle = %04x, profile_type = %02x\n",
+        pack->head.handle, pack->event.profile_type);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_HF_CONNECT;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->event.profile_type)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtAgFeature(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+
+  btdbg("connection AG handle = %04x, feature = %04x\n",
+        pack->head.handle, pack->event.ag_feature);
+
+  app_evt.group_id = BT_GROUP_HFP;
+  app_evt.event_id = BT_HFP_EVENT_AG_FEATURE_RESP;
+  memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), sizeof(pack->event.ag_feature)));
+
+  bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvHfpEvtAgIndicator(uint8_t *p)
+{
+  const struct bt_hfp_event_t *pack = (const struct bt_hfp_event_t*)p;
+
+  struct bt_event_t app_evt = {0};
+  size_t data_size = 0;
+
+  btdbg("AG indicator handle = %04x, numberic = %02x,%02x, opt_str = '%s'\n",
+        pack->head.handle,
+        pack->event.hf_ag_indicator.numberic[0],
+        pack->event.hf_ag_indicator.numberic[1],
+        pack->event.hf_ag_indicator.opt_str);
+
+ data_size = sizeof(pack->head.handle) + sizeof(pack->event.hf_ag_indicator.numberic)
+                + sizeof(pack->event.hf_ag_indicator.opt_str);
+
+ app_evt.group_id = BT_GROUP_HFP;
+ app_evt.event_id = BT_HFP_EVENT_AT_CMD_RESP;
+ memcpy(app_evt.data, pack, MIN(sizeof(app_evt.data), data_size));
+
+ bt_hfp_event_handler(&app_evt);
+}
+
+static void btRecvA2dpSnkEvtConnected(uint8_t *p)
+{
+  struct bt_a2dp_event_connect_t connect_evt = {0};
+
+  /* Copy device address */
+  memcpy(&connect_evt.addr, p, BT_ADDR_LEN);
+  p += BT_ADDR_LEN;
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_A2DP;
+  connect_evt.event_id = BT_A2DP_EVENT_CONNECT;
+
+  bt_a2dp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerConnected(uint8_t *p)
+{
+  struct bt_avrcp_event_connect_t connect_evt = {0};
+
+  /* Copy device address */
+  memcpy(&connect_evt.addr, p, BT_ADDR_LEN);
+  p += BT_ADDR_LEN + 1;
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_AVRCP;
+  connect_evt.event_id = BT_AVRCC_EVENT_CONNECT;
+  bt_avrcp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerDisconnected(uint8_t *p)
+{
+  struct bt_avrcp_event_connect_t connect_evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_AVRCP;
+  connect_evt.event_id = BT_AVRCC_EVENT_DISCONNECT;
+  bt_avrcp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
+static void btRecvA2dpAvrcControllerPlayPosition(uint8_t *p, uint8_t evtCode)
+{
+  struct bt_avrcp_event_play_position_t evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(evt.handle, p);
+
+  evt.group_id = BT_GROUP_AVRCP;
+  evt.event_id = BT_AVRCP_EVENT_PLAY_POS_CHANGE;
+  memcpy(&evt.position, p, sizeof(evt.position));
+  bt_avrcp_event_handler((struct bt_event_t *) &evt);
+}
+
+static void btRecvA2dpSnkEvtDisconnect(uint8_t *p)
+{
+  struct bt_a2dp_event_connect_t connect_evt = {0};
+
+  /* Copy Handle ID */
+  STREAM_TO_UINT16(connect_evt.handle, p);
+
+  connect_evt.group_id = BT_GROUP_A2DP;
+  connect_evt.event_id = BT_A2DP_EVENT_DISCONNECT;
+
+  bt_a2dp_event_handler((struct bt_event_t *) &connect_evt);
+}
+
 void bleRecvLeConnected(BLE_Evt *bleEvent, ble_evt_t *pBleBcmEvt)
 {
   struct ble_event_conn_stat_t conn_stat_evt;
@@ -459,6 +688,56 @@ void bleRecvLeDisconnected(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
   conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
 
   ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
+}
+
+void bleRecvLeAdverReport(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  (void) pBleEvent;
+
+  struct ble_event_adv_rept_t adv_rept_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData + 1;
+
+  adv_rept_evt.group_id = BLE_GROUP_COMMON;
+  adv_rept_evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
+
+  /* not used
+   * STREAM_TO_UINT8(commMem.advReportData.addr.type, rp);
+   */
+  ++rp; /* skip addr type */
+  memcpy(&adv_rept_evt.addr, rp, BLE_GAP_ADDR_LENGTH);
+  rp += BLE_GAP_ADDR_LENGTH;
+  STREAM_TO_UINT8(adv_rept_evt.rssi, rp);
+
+  adv_rept_evt.length = len - BLE_GAP_ADDR_LENGTH - BLE_HANDLE_LEN - BLE_ADV_RSSI_LEN;
+  memcpy(adv_rept_evt.data, rp, BLE_GAP_ADV_MAX_SIZE);
+
+#ifndef REPORT_ALL_ADV_DATA /* report device name only */
+  uint32_t idx = 0;
+  uint8_t field_len = 0;
+  uint8_t field_type = 0;
+  uint8_t adv_data[BLE_GAP_ADV_MAX_SIZE] = {0};
+
+  memcpy(adv_data, adv_rept_evt.data, adv_rept_evt.length);
+
+  while (idx < adv_rept_evt.length)
+    {
+      field_len = adv_data[idx];
+      field_type = adv_data[idx + 1];
+
+      if (0x09 == field_type) { /* 0x09: Complete local name */
+        adv_rept_evt.length = field_len;
+        memset(adv_rept_evt.data, 0, sizeof(adv_rept_evt.data));
+        memcpy(adv_rept_evt.data, &adv_data[idx + 2], field_len - 1);
+        ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
+        return;
+      }
+      idx += field_len + 1;
+    }
+#else
+  ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
+#endif /* REPORT_ALL_ADV_DATA */
+
+
 }
 
 void bleRecvGattReadRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
@@ -494,6 +773,52 @@ void bleRecvGattWriteRequest(BLE_Evt *pBleEvent,
   write_req_evt.event_id = BLE_GATT_EVENT_WRITE_REQ;
 
   ble_gatt_event_handler((struct bt_event_t *) &write_req_evt);
+}
+
+void bleRecvGattReadResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t len)
+{
+  (void) pBleEvent;
+
+  struct ble_gatt_event_read_rsp_t read_rsp_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData;
+
+  STREAM_TO_UINT16(read_rsp_evt.conn_handle, rp);
+  STREAM_TO_UINT16(read_rsp_evt.char_handle, rp);
+
+  read_rsp_evt.length   = len - BLE_HANDLE_LEN - BLE_HANDLE_LEN;
+  memcpy(read_rsp_evt.data, rp, read_rsp_evt.length);
+
+  /* This HAL doesn't support service handle ID while write request */
+  read_rsp_evt.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+
+  read_rsp_evt.group_id = BLE_GROUP_GATT;
+  read_rsp_evt.event_id = BLE_GATT_EVENT_READ_RESP;
+
+  ble_gatt_event_handler((struct bt_event_t *) &read_rsp_evt);
+
+  btdbg("read reponse\n");
+}
+
+void bleRecvGattWriteResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
+{
+  (void) pBleEvent;
+
+  struct ble_gatt_event_write_rsp_t write_rsp_evt = {0};
+  uint8_t *rp = pBleBcmEvt->evtData;
+
+  STREAM_TO_UINT16(write_rsp_evt.conn_handle, rp);
+  STREAM_TO_UINT16(write_rsp_evt.char_handle, rp);
+  STREAM_TO_UINT8(write_rsp_evt.status, rp);
+
+  /* This HAL doesn't support service handle ID while write request */
+  write_rsp_evt.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+
+  write_rsp_evt.group_id = BLE_GROUP_GATT;
+  write_rsp_evt.event_id = BLE_GATT_EVENT_WRITE_RESP;
+
+  ble_gatt_event_handler((struct bt_event_t *) &write_rsp_evt);
+
+  btdbg("write response,status.\n");
 }
 
 /* Event spliter */
@@ -566,6 +891,56 @@ static void btRecvDeviceControlPacket(uint8_t evtCode, uint8_t *p,
     }
 }
 
+static void btRecvHfpControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+
+  uint8_t *wp = NULL;
+
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, ((BT_CONTROL_GROUP_HF << 8) | evtCode));
+
+  ASSERT(len <= sizeof(struct bt_hfp_event_t));
+
+  switch (evtCode)
+    {
+      case BT_CONTROL_HF_EVENT_COMMAND_STATUS:
+        btRecvHfpCommandStatus(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_OPEN:
+        btRecvHfpEvtOpen(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_CLOSE:
+        btRecvHfpEvtClose(p);
+        break;
+
+      case BT_CONTROL_HF_AUDIO_EVENT_OPEN:
+        btRecvHfpAudioEvtOpen(p);
+        break;
+
+      case BT_CONTROL_HF_AUDIO_EVENT_CLOSE:
+        btRecvHfpAudioEvtClose(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_CONNECTED:
+        btRecvHfpEvtConnected(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_AG_FEATURE:
+        btRecvHfpEvtAgFeature(p);
+        break;
+
+      case BT_CONTROL_HF_EVENT_AG_INDICATOR:
+        btRecvHfpEvtAgIndicator(p);
+        break;
+
+      default:
+        printf("[EVENT] HFP event code %02x not supported\n", evtCode);
+        break;
+    }
+}
+
 static void btRecvSppControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
 {
   uint8_t *wp = NULL;
@@ -601,6 +976,91 @@ static void btRecvSppControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
     }
 }
 
+static void btRecvA2dpSnkControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+  uint8_t *wp = NULL;
+
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, ((BT_CONTROL_GROUP_A2DP_SINK) | evtCode));
+
+  switch(evtCode)
+    {
+      case BT_CONTROL_SINK_EVENT_COMMAND_STATUS:
+          btRecvDeviceStatus(p, len, BT_CONTROL_GROUP_DEVICE);
+          break;
+      case BT_CONTROL_SINK_EVENT_CONNECTED:
+          btRecvA2dpSnkEvtConnected(p);
+          break;
+      case BT_CONTROL_SINK_EVENT_CONNECTION_FAILED:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_DISCONNECTED:
+          btRecvA2dpSnkEvtDisconnect(p);
+          break;
+      case BT_CONTROL_SINK_EVENT_RECEIVE_DATA:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_STARTED:
+          /* Not supported yet */
+          break;
+      case BT_CONTROL_SINK_EVENT_STOPPED:
+          /* Not supported yet */
+          break;
+      default:
+          break;
+    }
+}
+
+static void btRecvA2dpAvrcControllerControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
+{
+  uint8_t *wp = NULL;
+  wp = appEvtBuff;
+  UINT16_TO_STREAM(wp, (BT_CONTROL_GROUP_AVRC_CONTROLLER << 8) | evtCode);
+
+  switch (evtCode)
+    {
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_CMD_STATUS:
+        btRecvDeviceStatus(p, len, BT_CONTROL_GROUP_DEVICE);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_CONNECTED:
+        btRecvA2dpAvrcControllerConnected(p);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_DISCONNECTED:
+        btRecvA2dpAvrcControllerDisconnected(p);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_TRACK_INFO:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_PLAY_STATUS:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_PLAY_POSITION:
+        btRecvA2dpAvrcControllerPlayPosition(p, evtCode);
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_SETTING_CHANGE:
+        /* Not supported yet */
+        break;
+
+      case BT_CONTROL_AVRC_CONTROLLER_EVENT_VOLUME_LEVEL:
+        /* Not supported yet */
+        break;
+
+      case BT_EVT_AVRC_CONTROLLER_VOLUME_UP:
+      case BT_EVT_AVRC_CONTROLLER_VOLUME_DOWN:
+        /* Not supported yet */
+        break;
+
+      default:
+        break;
+    }
+}
+
 void bleRecvLeControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
 {
   BLE_Evt *bleEvent = &(((BLE_EvtCtx*)appEvtBuff)->evt);
@@ -617,6 +1077,8 @@ void bleRecvLeControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
         btdbg("ble disconnect\n");
         break;
       case BT_CONTROL_LE_EVENT_ADVERTISEMENT_REPORT:
+        bleRecvLeAdverReport(bleEvent, pBleBcmEvt, len);
+        break;
       case BT_CONTROL_LE_EVENT_ADVERTISEMENT_STATE:
       case BT_CONTROL_LE_EVENT_SCAN_STATUS:
       case BT_CONTROL_LE_EVENT_CONN_PARAMS:
@@ -643,13 +1105,75 @@ void bleRecvGattControlPacket(uint8_t evtCode, uint8_t *p, uint16_t len)
         bleRecvGattWriteRequest(bleEvent, pBleBcmEvt, len);
         break;
 
-      case BT_CONTROL_GATT_EVENT_COMMAND_STATUS:
-      case BT_CONTROL_GATT_EVENT_DISCOVERY_COMPLETE:
-      case BT_CONTROL_GATT_EVENT_SERVICE_DISCOVERED:
-      case BT_CONTROL_GATT_EVENT_CHARACTERISTIC_DISCOVERED:
-      case BT_CONTROL_GATT_EVENT_DESCRIPTOR_DISCOVERED:
       case BT_CONTROL_GATT_EVENT_READ_RESPONSE:
+        bleRecvGattReadResponse(bleEvent, pBleBcmEvt, len);
+        break;
+
       case BT_CONTROL_GATT_EVENT_WRITE_RESPONSE:
+        bleRecvGattWriteResponse(bleEvent, pBleBcmEvt);
+        break;
+      case BT_CONTROL_GATT_EVENT_COMMAND_STATUS:
+        break;
+      case BT_CONTROL_GATT_EVENT_DISCOVERY_COMPLETE:
+        {
+          bleRecvGattCompleteDiscovered(bleEvent, pBleBcmEvt);
+          uint32_t i = 0, j = 0;
+          struct ble_gatt_event_db_discovery_t db_disc_evt = {0};
+          BLE_EvtGattcDbDiscovery *db = (BLE_EvtGattcDbDiscovery *)(bleEvent->evtData);
+
+          db_disc_evt.group_id = BLE_GROUP_GATT;
+          db_disc_evt.event_id = BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE;
+
+          db_disc_evt.result                          = db->result;
+          db_disc_evt.conn_handle                     = db->connHandle;
+          db_disc_evt.state.srv_count                 = db->state.srvCount;
+          db_disc_evt.state.end_handle                = db->state.endHandle;
+          db_disc_evt.params.db_discovery.srv_count   = db->params.dbDiscovery.srvCount;
+          db_disc_evt.params.db_discovery.conn_handle = db->params.dbDiscovery.connHandle;
+
+          for (i = 0; i < BLE_DB_DISCOVERY_MAX_SRV; ++i)
+            {
+              struct ble_gattc_db_disc_srv_s *srvs_dst = db_disc_evt.params.db_discovery.services;
+              BLE_GattcDbDiscSrv *srvs_src = db->params.dbDiscovery.services;
+
+              srvs_dst[i].char_count = srvs_src[i].charCount;
+              srvs_dst[i].srv_handle_range.start_handle = srvs_src[i].srvHandleRange.startHandle;
+              srvs_dst[i].srv_handle_range.end_handle = srvs_src[i].srvHandleRange.endHandle;
+
+              for (j = 0; j < BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV; ++j)
+                {
+                  struct ble_gattc_db_disc_char_s *chars_dst = srvs_dst[i].characteristics;
+                  BLE_GattcDbDiscChar *chars_src = srvs_src[i].characteristics;
+
+                  chars_dst[j].cccd_handle = chars_src[j].cccdHandle;
+                  chars_dst[j].characteristic.char_prope.broadcast = chars_src[j].characteristic.charPrope.broadcast;
+                  chars_dst[j].characteristic.char_prope.read = chars_src[j].characteristic.charPrope.read;
+                  chars_dst[j].characteristic.char_prope.writeWoResp = chars_src[j].characteristic.charPrope.writeWoResp;
+                  chars_dst[j].characteristic.char_prope.write = chars_src[j].characteristic.charPrope.write;
+                  chars_dst[j].characteristic.char_prope.notify = chars_src[j].characteristic.charPrope.notify;
+                  chars_dst[j].characteristic.char_prope.indicate = chars_src[j].characteristic.charPrope.indicate;
+                  chars_dst[j].characteristic.char_prope.authSignedWr = chars_src[j].characteristic.charPrope.authSignedWr;
+                  chars_dst[j].characteristic.char_valhandle = chars_src[j].characteristic.charValhandle;
+                  chars_dst[j].characteristic.char_declhandle = chars_src[j].characteristic.charDeclhandle;
+                  memcpy(&chars_dst[j].characteristic.char_valuuid,
+                         &chars_src[j].characteristic.charValUuid,
+                         sizeof(BLE_UUID));
+                }
+              /* BLE_Uuid and BLE_UUID must keeps the same */
+              memcpy(&srvs_dst[i].srv_uuid, &srvs_src[i].srvUuid, sizeof(BLE_UUID));
+            }
+          ble_gatt_event_handler((struct bt_event_t *) &db_disc_evt);
+        }
+        break;
+      case BT_CONTROL_GATT_EVENT_SERVICE_DISCOVERED:
+        bleRecvGattServiceDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
+      case BT_CONTROL_GATT_EVENT_CHARACTERISTIC_DISCOVERED:
+        bleRecvGattCharDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
+      case BT_CONTROL_GATT_EVENT_DESCRIPTOR_DISCOVERED:
+        bleRecvGattDescriptorDiscovered(bleEvent, pBleBcmEvt, len);
+        break;
       case BT_CONTROL_GATT_EVENT_WRITE_COMPLETE:
       case BT_CONTROL_GATT_EVENT_INDICATION:
       case BT_CONTROL_GATT_EVENT_NOTIFICATION:
@@ -672,7 +1196,7 @@ static void btRecvControlPacket(uint16_t opcode, uint8_t *p, uint16_t len)
         break;
 
       case BT_CONTROL_GROUP_HF:
-        /* Not supported yet */
+        btRecvHfpControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_LE:
@@ -692,11 +1216,11 @@ static void btRecvControlPacket(uint16_t opcode, uint8_t *p, uint16_t len)
         break;
 
       case BT_CONTROL_GROUP_AVRC_CONTROLLER:
-        /* Not supported yet */
+        btRecvA2dpAvrcControllerControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_A2DP_SINK:
-        /* Not supported yet */
+        btRecvA2dpSnkControlPacket(evtCode, p, len);
         break;
 
       case BT_CONTROL_GROUP_AUDIO_SINK:
@@ -788,13 +1312,6 @@ int btRecvTaskEntry(void)
 int btRecvTaskEnd(void)
 {
   int ret = 0;
-
-  ret = pthread_cancel(gRecvTask);
-
-  if (ret != 0)
-    {
-      btdbg("Receive task cancel error.\n");
-    }
 
   ret = pthread_join(gRecvTask, NULL);
 

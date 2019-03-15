@@ -33,39 +33,8 @@
 #
 ############################################################################
 
-CSRCS += apicmdhdlr_attachnet.c
-CSRCS += apicmdhdlr_dataoff.c
-CSRCS += apicmdhdlr_dataon.c
-CSRCS += apicmdhdlr_detachnet.c
-CSRCS += apicmdhdlr_enterpin.c
 CSRCS += apicmdhdlr_errind.c
-CSRCS += apicmdhdlr_getapnset.c
-CSRCS += apicmdhdlr_getce.c
-CSRCS += apicmdhdlr_getdataconfig.c
-CSRCS += apicmdhdlr_getdatastat.c
-CSRCS += apicmdhdlr_getedrx.c
-CSRCS += apicmdhdlr_getltime.c
-CSRCS += apicmdhdlr_getnetstat.c
-CSRCS += apicmdhdlr_getpinset.c
-CSRCS += apicmdhdlr_getpsm.c
-CSRCS += apicmdhdlr_imei.c
-CSRCS += apicmdhdlr_imsi.c
-CSRCS += apicmdhdlr_operator.c
-CSRCS += apicmdhdlr_phoneno.c
-CSRCS += apicmdhdlr_power.c
-CSRCS += apicmdhdlr_repcellinfo.c
-CSRCS += apicmdhdlr_repevt.c
-CSRCS += apicmdhdlr_repnetstat.c
-CSRCS += apicmdhdlr_repquality.c
-CSRCS += apicmdhdlr_setapn.c
-CSRCS += apicmdhdlr_setce.c
-CSRCS += apicmdhdlr_setdataconfig.c
-CSRCS += apicmdhdlr_setedrx.c
-CSRCS += apicmdhdlr_setpin.c
-CSRCS += apicmdhdlr_setpsm.c
-CSRCS += apicmdhdlr_ver.c
 CSRCS += lte_attach_net.c
-CSRCS += lte_callback.c
 CSRCS += lte_dataoff.c
 CSRCS += lte_dataon.c
 CSRCS += lte_detach_net.c
@@ -97,6 +66,16 @@ CSRCS += lte_setedrx.c
 CSRCS += lte_setpin.c
 CSRCS += lte_setpsm.c
 CSRCS += lte_ver.c
+CSRCS += lte_radio_on.c
+CSRCS += lte_radio_off.c
+CSRCS += lte_getimscap.c
+CSRCS += lte_activate_pdn.c
+CSRCS += lte_deactivate_pdn.c
+CSRCS += lte_dataallow.c
+CSRCS += lte_getnetinfo.c
+CSRCS += lte_set_rep_netinfo.c
+CSRCS += lte_set_rep_restart.c
+CSRCS += lte_geterrinfo.c
 
 # Add the src directory to the build
 

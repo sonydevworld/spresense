@@ -50,7 +50,7 @@
 #include "wien2_internal_packet.h"
 #include "wien2_common_defs.h"
 #include "components/renderer/renderer_component.h"
-#include "components/postfilter/postfilter_api.h"
+#include "components/postproc/postproc_api.h"
 #include "objects/stream_parser/ram_lpcm_data_source.h"
 #include "objects/stream_parser/mp3_stream_mng.h"
 
@@ -68,7 +68,8 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct OutputMixObjPostfilterDoneCmd
 {
-  Wien2::Apu::ApuEventType event_type;
+  PostCompEventType event_type;
+  bool              result;
 };
 
 /**< Parameters for render done notify to output-mix object. */
@@ -159,6 +160,9 @@ private:
   int8_t m_adjust_direction;
   int32_t m_adjustment_times;
 
+  uint32_t m_max_pcm_buff_size;
+  uint32_t m_apucmd_pcm_buff_size;
+
   void reply(MsgQueId requester_dtq,
              MsgType msg_type,
              AsOutputMixDoneParam *done_param);
@@ -180,9 +184,13 @@ private:
 
   void clock_recovery(MsgPacket *msg);
 
+  void init_postproc(MsgPacket* msg);
+  void set_postproc(MsgPacket* msg);
+
   void parseOutputMixRst(MsgPacket *msg);
 
   int8_t get_period_adjustment(void);
+  bool checkMemPool(void);
 };
 
 /****************************************************************************

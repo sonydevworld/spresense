@@ -1,0 +1,33 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_JPEG_DECODE
+	bool "JPEG decode example"
+	default n
+	---help---
+		Enable the JPEG decode example
+
+if EXAMPLES_JPEG_DECODE
+
+config EXAMPLES_JPEG_DECODE_PROGNAME
+	string "Program name"
+	default "jpeg_decode"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_JPEG_DECODE_PRIORITY
+	int "JPEG decode task priority"
+	default 100
+
+config EXAMPLES_JPEG_DECODE_STACKSIZE
+	int "JPEG decode stack size"
+	default 2048
+
+config EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+	bool "Output LCD"
+
+endif

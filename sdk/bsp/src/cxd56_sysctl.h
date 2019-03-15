@@ -57,6 +57,18 @@
 #define SYSCTL_GETFWSIZE 3
 #define SYSCTL_LOADFW    4
 #define SYSCTL_UNLOADFW  5
+#define SYSCTL_GETPGOFFSETS 6
+#define SYSCTL_LOADFWUNIFY  7
+#define SYSCTL_LOADFWCLONE  8
+#define SYSCTL_UNLOADFWGP   9
+
+/* Number of sub cores */
+
+#define SYSCTL_NR_CPUS 5
+
+/* Limit length of filename */
+
+#define SYSCTL_FNLEN   32
 
 /****************************************************************************
  * Public Types
@@ -85,7 +97,7 @@ typedef struct sysctl_unmap_s
 
 typedef struct sysctl_getfwsize_s
 {
-    char filename[32];
+    char filename[SYSCTL_FNLEN];
 } sysctl_getfwsize_t;
 
 /* Arguments for SYSCTL_LOADFW */
@@ -94,7 +106,7 @@ typedef struct sysctl_loadfw_s
 {
     int cpuid;
     uint32_t addr;
-    char filename[32];
+    char filename[SYSCTL_FNLEN];
 } sysctl_loadfw_t;
 
 /* Arguments for SYSCTL_UNLOADFW */
@@ -103,6 +115,33 @@ typedef struct sysctl_unloadfw_s
 {
     int cpuid;
 } sysctl_unloadfw_t;
+
+/* Arguments for SYSCTL_GETPGOFFSETS */
+
+typedef struct sysctl_getpgoffsets_s
+{
+    uint8_t offset[SYSCTL_NR_CPUS];
+    uint8_t size[SYSCTL_NR_CPUS];
+    int nr_offsets;
+    char filename[SYSCTL_FNLEN];
+} sysctl_getpgoffsets_t;
+
+/* Arguments for SYSCTL_LOADFWUNIFY and SYSCTL_LOADFWCLONE */
+
+typedef struct sysctl_loadfwgp_s
+{
+    uint32_t cpuids;
+    uint32_t addr[SYSCTL_NR_CPUS];
+    int nr_addrs;
+    char filename[SYSCTL_FNLEN];
+} sysctl_loadfwgp_t;
+
+/* Arguments for SYSCTL_UNLOADFWGP */
+
+typedef struct sysctl_unloadfwgp_s
+{
+    int groupid;
+} sysctl_unloadfwgp_t;
 
 /****************************************************************************
  * Public Functions

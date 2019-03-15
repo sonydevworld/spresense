@@ -95,7 +95,7 @@ struct cxd56_lowerhalf_s
  ****************************************************************************/
 /* Register operations ******************************************************/
 
-#if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG)
+#if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG_FEATURES)
 static uint32_t cxd56_getreg(uintptr_t regaddr);
 static void cxd56_putreg(uint32_t regval, uintptr_t regaddr);
 #else
@@ -160,7 +160,7 @@ static void *pmhandle = NULL;
  *
  ****************************************************************************/
 
-#  if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG)
+#  if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG_FEATURES)
 static uint32_t cxd56_getreg(uintptr_t regaddr)
 {
   static uint32_t prevaddr = 0;
@@ -223,7 +223,7 @@ static uint32_t cxd56_getreg(uintptr_t regaddr)
  *
  ****************************************************************************/
 
-#if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG)
+#if defined(CONFIG_CXD56_WDT_REGDEBUG) && defined(CONFIG_DEBUG_FEATURES)
 static void cxd56_putreg(uint32_t regval, uintptr_t regaddr)
 {
   /* Show the register value being written */

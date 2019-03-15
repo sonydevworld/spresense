@@ -95,7 +95,11 @@ extern "C"
  *
  * mpmq_init() initialize MP message queue object. This function needs raw CPU
  * ID at @a cpuid. User can use mptask_getcpuid() to get asigned CPU ID.
- * When call this API on the worker side, @a cpuid is ignored.
+ *
+ * On the worker side, specify known key to initialize with supervisor. In this
+ * case, @a cpuid is ignored.
+ * If use mpmq for communicate with sub cores, set 0 to key and target CPU ID to
+ * @a cpuid.
  *
  * @param [in,out] mq: MP message queue object
  * @param [in] key: Unique object ID

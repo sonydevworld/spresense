@@ -44,6 +44,10 @@
 #include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_repquality.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -62,10 +66,117 @@
 static bool g_lte_setrepquality_isproc = false;
 
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern quality_report_cb_t  g_quality_callback;
+/****************************************************************************
+ * Name: repquality_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing report quality.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t repquality_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("repquality_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_REP_QUALITY);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: repquality_job
+ *
+ * Description:
+ *   This function is an API callback for quality report receive.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repquality_job(FAR void *arg)
+{
+  FAR struct apicmd_cmddat_repquality_s *data;
+  lte_quality_t                         *repdat = NULL;
+  quality_report_cb_t                    callback;
+
+  callback = altcomcallbacks_get_cb(APICMDID_SET_REP_QUALITY);
+  if (!callback)
+    {
+      DBGIF_LOG_WARNING("When callback is null called report quality.\n");
+    }
+  else
+    {
+      data = (FAR struct apicmd_cmddat_repquality_s *)arg;
+
+      repdat = (lte_quality_t *)BUFFPOOL_ALLOC(sizeof(lte_quality_t));
+      if (!repdat)
+        {
+          DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+        }
+      else
+        {
+          repdat->valid = APICMD_REP_QUALITY_ENABLE == data->enability ?
+                               LTE_VALID : LTE_INVALID;
+          if (repdat->valid)
+            {
+              repdat->rsrp  = ntohs(data->rsrp);
+              repdat->rsrq  = ntohs(data->rsrq);
+              repdat->sinr  = ntohs(data->sinr);
+              repdat->rssi  = ntohs(data->rssi);
+              if (repdat->rsrp < APICMD_REP_QUALITY_RSRP_MIN ||
+                APICMD_REP_QUALITY_RSRP_MAX < repdat->rsrp)
+                {
+                  DBGIF_LOG1_ERROR("repdat->rsrp error:%d\n", repdat->rsrp);
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (repdat->rsrq < APICMD_REP_QUALITY_RSRQ_MIN ||
+                APICMD_REP_QUALITY_RSRQ_MAX < repdat->rsrq)
+                {
+                  DBGIF_LOG1_ERROR("repdat->rsrq error:%d\n", repdat->rsrq);
+                  repdat->valid = LTE_INVALID;
+                }
+              else if (repdat->sinr < APICMD_REP_QUALITY_SINR_MIN ||
+                APICMD_REP_QUALITY_SINR_MAX < repdat->sinr)
+                {
+                  DBGIF_LOG1_ERROR("repdat->sinr error:%d\n", repdat->sinr);
+                  repdat->valid = LTE_INVALID;
+                }
+              else
+                {
+                  /* Do nothing. */
+                }
+            }
+
+          callback(repdat);
+          (void)BUFFPOOL_FREE((FAR void *)repdat);
+        }
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -100,14 +211,8 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
   uint16_t                                     resbufflen =
                                                  QUALITY_SETRES_DATA_LEN;
   uint16_t                                     reslen     = 0;
-
-  /* Check if the library is initialized */
-
-  if (!altcom_isinit())
-    {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
-    }
+  bool                                         reset_flag = false;
+  quality_report_cb_t                          callback;
 
   if (quality_callback)
     {
@@ -118,14 +223,41 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
         }
     }
 
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
   if (g_lte_setrepquality_isproc)
     {
       return -EBUSY;
     }
-
   g_lte_setrepquality_isproc = true;
 
-  /* Accept the API */
+  if (quality_callback)
+    {
+      /* Check callback is registered */
+
+      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_QUALITY);
+      if (callback)
+        {
+          reset_flag = true;
+        }
+      else
+        {
+          ret = altcomstatus_reg_statchgcb(repquality_status_chg_cb);
+          if (0 > ret)
+            {
+              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+              g_lte_setrepquality_isproc = false;
+              return ret;
+            }
+        }
+    }
+
   /* Allocate API command buffer to send */
 
   cmdbuff = (FAR struct apicmd_cmddat_setrepquality_s *)
@@ -163,13 +295,20 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
     {
       if (APICMD_SET_REPQUALITY_RES_OK == resbuff->result)
         {
-          /* Register API callback */
-
-          ALTCOM_CLR_CALLBACK(g_quality_callback);
           if (quality_callback)
             {
-              ALTCOM_REG_CALLBACK(
-                ret, g_quality_callback, quality_callback);
+              if (!reset_flag)
+                {
+                  altcomcallbacks_reg_cb((void *)quality_callback,
+                                          APICMDID_SET_REP_QUALITY);
+                }
+            }
+          else
+            {
+              /* Unregistration callback. */
+
+              altcomcallbacks_unreg_cb(APICMDID_SET_REP_QUALITY);
+              altcomstatus_unreg_statchgcb(repquality_status_chg_cb);
             }
         }
       else
@@ -189,4 +328,27 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
   g_lte_setrepquality_isproc = false;
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_repquality
+ *
+ * Description:
+ *   This function is an API command handler for quality report.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_REPORT_QUALITY,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_repquality(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_QUALITY, repquality_job);
 }

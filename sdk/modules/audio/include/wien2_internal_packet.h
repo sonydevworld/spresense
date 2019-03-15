@@ -85,16 +85,6 @@ struct AudioMngCmdCmpltResult
   {}
 };
 
-/*--------------------------------------------------------------------*/
-/* Internal parameters between output-mix object and its user.        */
-/*--------------------------------------------------------------------*/
-
-struct DspResult
-{
-  Apu::ExecResult  exec_result;
-  Apu::InternalResult  internal_result;
-};
-
 /****************************************************************************
  * Public Data
  ****************************************************************************/

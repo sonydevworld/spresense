@@ -41,8 +41,13 @@
 #include <errno.h>
 
 #include "lte/lte_api.h"
+#include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_atchnet.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -51,10 +56,125 @@
 #define ATTACH_NET_DATA_LEN (0)
 
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern attach_net_cb_t g_attach_net_callback;
+/****************************************************************************
+ * Name: attachnet_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing attach.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t attachnet_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("attachnet_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_ATTACH_NET);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: attachnet_job
+ *
+ * Description:
+ *   This function is an API callback for attach network.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void attachnet_job(FAR void *arg)
+{
+  int32_t                               ret;
+  FAR struct apicmd_cmddat_atchnetres_s *data;
+  attach_net_cb_t                       callback;
+  uint32_t                              result;
+  uint32_t                              errcause = 0;
+
+  data = (FAR struct apicmd_cmddat_atchnetres_s *)arg;
+
+  ret = altcomcallbacks_get_unreg_cb(APICMDID_ATTACH_NET,
+    (void **)&callback);
+
+  if ((ret == 0) && (callback))
+    {
+      if (APICMD_ATCHNET_RES_OK == data->result)
+        {
+          result = (uint32_t)LTE_RESULT_OK;
+        }
+      else if (APICMD_ATCHNET_RES_ERR == data->result)
+        {
+          result = (uint32_t)LTE_RESULT_ERROR;
+          switch (data->errorcause)
+          {
+            case APICMD_ATCHNET_RES_ERRCAUSE_WAITENTERPIN:
+              {
+                errcause = (uint32_t)LTE_ERR_WAITENTERPIN;
+              }
+            break;
+            case APICMD_ATCHNET_RES_ERRCAUSE_REJECT:
+              {
+                errcause = (uint32_t)LTE_ERR_REJECT;
+              }
+            break;
+            case APICMD_ATCHNET_RES_ERRCAUSE_MAXRETRY:
+              {
+                errcause = (uint32_t)LTE_ERR_MAXRETRY;
+              }
+            break;
+            case APICMD_ATCHNET_RES_ERRCAUSE_BARRING:
+              {
+                errcause = (uint32_t)LTE_ERR_BARRING;
+              }
+            break;
+            default:
+              {
+                errcause = (uint32_t)LTE_ERR_UNEXPECTED;
+              }
+            break;
+          }
+        }
+      else
+        {
+          result = (uint32_t)LTE_RESULT_CANCEL;
+        }
+
+      callback(result, errcause);
+    }
+  else
+    {
+      DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+
+  /* Unregistration status change callback. */
+
+  altcomstatus_unreg_statchgcb(attachnet_status_chg_cb);
+}
 
 /****************************************************************************
  * Public Functions
@@ -88,58 +208,85 @@ int32_t lte_attach_network(attach_net_cb_t callback)
       return -EINVAL;
     }
 
-  /* Check if the library is initialized */
+  /* Check Lte library status */
 
-  if (!altcom_isinit())
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      ret = -EPERM;
+      return ret;
+    }
+
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_ATTACH_NET);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  ret = altcomstatus_reg_statchgcb(attachnet_status_chg_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(APICMDID_ATTACH_NET);
+      return ret;
+    }
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_ATTACH_NET,
+    ATTACH_NET_DATA_LEN);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
     }
   else
     {
-      /* Register API callback */
+      /* Send API command to modem */
 
-      ALTCOM_REG_CALLBACK(ret, g_attach_net_callback, callback);
-      if (0 > ret)
-        {
-          DBGIF_LOG_ERROR("Currently API is busy.\n");
-        }
+      ret = altcom_send_and_free(cmdbuff);
     }
 
-  /* Accept the API */
+  /* If fail, there is no opportunity to execute the callback,
+   * so clear it here. */
 
-  if (0 == ret)
+  if (0 > ret)
     {
-      /* Allocate API command buffer to send */
+      /* Clear registered callback */
 
-      cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_ATTACH_NET,
-        ATTACH_NET_DATA_LEN);
-      if (!cmdbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          ret = -ENOMEM;
-        }
-      else
-        {
-          /* Send API command to modem */
-
-          ret = altcom_send_and_free(cmdbuff);
-        }
-
-      /* If fail, there is no opportunity to execute the callback,
-       * so clear it here. */
-
-      if (0 > ret)
-        {
-          /* Clear registered callback */
-
-          ALTCOM_CLR_CALLBACK(g_attach_net_callback);
-        }
-      else
-        {
-          ret = 0;
-        }
+      altcomcallbacks_unreg_cb(APICMDID_ATTACH_NET);
+      altcomstatus_unreg_statchgcb(attachnet_status_chg_cb);
+    }
+  else
+    {
+      ret = 0;
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_attachnet
+ *
+ * Description:
+ *   This function is an API command handler for attach network result.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_ATTACH_NET_RES,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_attachnet(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(APICMDID_ATTACH_NET), attachnet_job);
 }

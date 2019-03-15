@@ -1013,14 +1013,13 @@ static int modem_sleep_procedure(FAR struct altmdm_dev_s *priv)
         {
           m_err("ERR:%04d device is not down.\n", __LINE__);
         }
+      /* Transitions to the sleep state. */
+
+      altmdm_pm_setinternalstate(MODEM_PM_INTERNAL_STATE_SLEEP);
 
       /* Reverse polarity of Device to Host GPIO line. */
 
       change_polarity_d2h_gpio(priv, GPIO_SREQ_INT_POLARITY);
-
-      /* Transitions to the sleep state. */
-
-      altmdm_pm_setinternalstate(MODEM_PM_INTERNAL_STATE_SLEEP);
 
       /* Perform processing at the time of state transition. */
 

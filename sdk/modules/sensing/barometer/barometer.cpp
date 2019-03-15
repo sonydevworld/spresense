@@ -40,7 +40,7 @@
 #include <sys/time.h>
 #include <debug.h>
 
-#include "sensing/barometer.h"
+#include "sensing/logical_sensor/barometer.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -91,7 +91,7 @@ int BarometerClass::start(void)
   packet.self          = barometerID;
   packet.subscriptions = (0x01 << pressureID) | (0x01 << tempID);
 
-  SF_SendSensorSetPower(&packet);
+  SS_SendSensorSetPower(&packet);
 
   return 0;
 }
@@ -110,7 +110,7 @@ int BarometerClass::stop(void)
   packet.self          = barometerID;
   packet.subscriptions = (0x01 << pressureID) | (0x01 << tempID);
 
-  SF_SendSensorClearPower(&packet);
+  SS_SendSensorClearPower(&packet);
 
   return 0;
 }
@@ -151,7 +151,7 @@ int BarometerClass::write(sensor_command_data_mh_t* command)
       packet.size        = BAROMETER_PRESSURE_WATERMARK_NUM;
       packet.mh          = this->pressureDate;
 
-      SF_SendSensorDataMH(&packet);
+      SS_SendSensorDataMH(&packet);
 
       this->pressureDate.freeSeg();
       this->temperatureData.freeSeg();

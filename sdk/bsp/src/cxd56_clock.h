@@ -109,6 +109,15 @@ uint32_t cxd56_get_cpu_baseclk(void);
 void cxd56_cpu_clock_enable(int cpu);
 
 /****************************************************************************
+ * Name: cxd56_cpulist_clock_enable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_enable(uint32_t cpus);
+
+/****************************************************************************
  * Name: cxd56_cpu_clock_disable
  *
  * Description:
@@ -118,6 +127,15 @@ void cxd56_cpu_clock_enable(int cpu);
 void cxd56_cpu_clock_disable(int cpu);
 
 /****************************************************************************
+ * Name: cxd56_cpulist_clock_disable
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_clock_disable(uint32_t cpus);
+
+/****************************************************************************
  * Name: cxd56_cpu_reset
  *
  * Description:
@@ -125,6 +143,15 @@ void cxd56_cpu_clock_disable(int cpu);
  ****************************************************************************/
 
 void cxd56_cpu_reset(int cpu);
+
+/****************************************************************************
+ * Name: cxd56_cpulist_reset
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_cpulist_reset(uint32_t cpus);
 
 /****************************************************************************
  * Name: cxd56_usb_clock_enable
@@ -246,6 +273,15 @@ void cxd56_spi_clock_gate_enable(int port);
 void cxd56_spi_clock_gate_disable(int port);
 
 /****************************************************************************
+ * Name: cxd56_spi_clock_gear_adjust
+ *
+ * Description:
+ *
+ ****************************************************************************/
+
+void cxd56_spi_clock_gear_adjust(int port, uint32_t maxfreq);
+
+/****************************************************************************
  * Name: cxd56_i2c0_clock_enable
  *
  * Description:
@@ -282,6 +318,16 @@ void cxd56_i2c_clock_gate_enable(int port);
  ****************************************************************************/
 
 void cxd56_i2c_clock_gate_disable(int port);
+
+/****************************************************************************
+ * Name: cxd56_scuseq_is_clock_enabled
+ *
+ * Description:
+ *   Get whether Sensor Control Unit Sequencer clock is enabled or not
+ *
+ ****************************************************************************/
+
+bool cxd56_scuseq_clock_is_enabled(void);
 
 /****************************************************************************
  * Name: cxd56_scuseq_clock_enable
@@ -343,7 +389,6 @@ void cxd56_img_uart_clock_disable(void);
 
 uint32_t cxd56_get_img_uart_baseclock(void);
 
-#if defined(CONFIG_CXD56_CISIF)
 /****************************************************************************
  * Name: cxd56_img_cisif_clock_enable
  *
@@ -363,7 +408,26 @@ void cxd56_img_cisif_clock_enable(void);
  ****************************************************************************/
 
 void cxd56_img_cisif_clock_disable(void);
-#endif
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_enable
+ *
+ * Description:
+ *   Enable ge2d clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_enable(void);
+
+/****************************************************************************
+ * Name: cxd56_img_ge2d_clock_dsiable
+ *
+ * Description:
+ *   Disable ge2d clock.
+ *
+ ****************************************************************************/
+
+void cxd56_img_ge2d_clock_disable(void);
 
 /****************************************************************************
  * Name: cxd56_get_com_baseclock

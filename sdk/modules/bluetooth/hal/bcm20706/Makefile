@@ -61,7 +61,7 @@ ifeq ($(CONFIG_BCM20706_LE),y)
 BT_C_SRCS_APP +=  bcm20706_ble_common.c
 ifeq ($(CONFIG_BCM20706_LE_GATT),y)
 BT_C_SRCS_APP +=  bcm20706_ble_gap.c
-BT_C_SRCS_APP +=  bcm20706_ble_gatts.c
+BT_C_SRCS_APP +=  bcm20706_ble_gatt.c
 endif
 endif
 ifeq ($(CONFIG_BCM20706_A2DP),y)

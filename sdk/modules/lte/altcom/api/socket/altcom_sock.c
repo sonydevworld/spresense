@@ -56,17 +56,6 @@ static struct altcom_socket_s g_altcom_sockets[ALTCOM_NSOCKET];
 
 /****************************************************************************
  * Name: altcom_sockfd_socket
- *
- * Description:
- *   Given a socket descriptor, return the underlying socket structure.
- *
- * Input Parameters:
- *   sockfd - The socket descriptor index to use.
- *
- * Returned Value:
- *   On success, a reference to the socket structure associated with
- *   the socket descriptor is returned.  NULL is returned on any failure.
- *
  ****************************************************************************/
 
 FAR struct altcom_socket_s *altcom_sockfd_socket(int sockfd)
@@ -81,17 +70,6 @@ FAR struct altcom_socket_s *altcom_sockfd_socket(int sockfd)
 
 /****************************************************************************
  * Name: altcom_sockaddr_to_sockstorage
- *
- * Description:
- *   Convert from sockaddr structure to sockaddr_storage structure
- *
- * Parameters:
- *   addr     sockaddr structure.
- *   storage  sockstorage structure.
- *
- * Returned Value:
- *   None
- *
  ****************************************************************************/
 
 void altcom_sockaddr_to_sockstorage(FAR const struct altcom_sockaddr *addr,

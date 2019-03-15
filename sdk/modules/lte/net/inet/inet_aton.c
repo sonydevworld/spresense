@@ -66,20 +66,6 @@
 
 /****************************************************************************
  * Name: inet_aton
- *
- * Description:
- *   Converts the address cp of the Internet host from IPv4 value and dot
- *   notation to binary value (network byte order) and stores the conversion
- *   result in the structure pointed to by inp.
- *   Returns nonzero if the address is valid, 0 if not.
- *
- * Input parameters:
- *   cp - Pointer to string in the standard IPv4 dotted decimal notation
- *   inp - Pointer to conversion result
- *
- *  Return:
- *   nonzero if the address is valid, 0 if not.
- *
  ****************************************************************************/
 
 int inet_aton(const char *cp, struct in_addr *inp)

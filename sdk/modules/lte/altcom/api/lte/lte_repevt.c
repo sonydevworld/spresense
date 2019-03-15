@@ -44,6 +44,10 @@
 #include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_repevt.h"
+#include "evthdlbs.h"
+#include "apicmdhdlrbs.h"
+#include "altcom_callbacks.h"
+#include "altcombs.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -60,13 +64,257 @@ static uint8_t g_set_repevt = 0;
 static bool g_lte_setrepsimstat_isproc = false;
 static bool g_lte_setrepltime_isproc = false;
 
-
 /****************************************************************************
- * Public Data
+ * Private Functions
  ****************************************************************************/
 
-extern simstat_report_cb_t   g_simstat_report_callback;
-extern localtime_report_cb_t g_localtime_report_callback;
+/****************************************************************************
+ * Name: repevt_ltime_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing report LTIME.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t repevt_ltime_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("repevt_ltime_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_REP_EVT_LTIME);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: repevt_simstate_status_chg_cb
+ *
+ * Description:
+ *   Notification status change in processing report SIM state.
+ *
+ * Input Parameters:
+ *  new_stat    Current status.
+ *  old_stat    Preview status.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static int32_t repevt_simstate_status_chg_cb(int32_t new_stat, int32_t old_stat)
+{
+  if (new_stat < ALTCOM_STATUS_POWER_ON)
+    {
+      DBGIF_LOG2_INFO("repevt_simstate_status_chg_cb(%d -> %d)\n",
+        old_stat, new_stat);
+      altcomcallbacks_unreg_cb(APICMDID_SET_REP_EVT_SIMSTATE);
+
+      return ALTCOM_STATUS_REG_CLR;
+    }
+
+  return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: repevt_ltime_report
+ *
+ * Description:
+ *   This function is an API callback for event report LTIME.
+ *
+ * Input Parameters:
+ *  ltime    Pointer to received LTIME data.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repevt_ltime_report(FAR struct apicmd_cmddat_ltime_s *ltime)
+{
+  lte_localtime_t       result;
+  localtime_report_cb_t callback;
+
+  callback = altcomcallbacks_get_cb(APICMDID_SET_REP_EVT_LTIME);
+  if (!callback)
+    {
+      DBGIF_LOG_WARNING("When callback is null called report localtime.\n");
+      return;
+    }
+  
+  result.year   = ltime->year;
+  result.mon    = ltime->month;
+  result.mday   = ltime->day;
+  result.hour   = ltime->hour;
+  result.min    = ltime->minutes;
+  result.sec    = ltime->seconds;
+  result.tz_sec = ntohl(ltime->timezone);
+
+  callback(&result);
+}
+
+/****************************************************************************
+ * Name: repevt_simd_report
+ *
+ * Description:
+ *   This function is an API callback for event report SIMD.
+ *
+ * Input Parameters:
+ *  ltime    Pointer to received SIMD data.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repevt_simd_report(FAR struct apicmd_cmddat_repevt_simd_s *simd)
+{
+  uint8_t             result;
+  simstat_report_cb_t callback;
+
+  callback = altcomcallbacks_get_cb(APICMDID_SET_REP_EVT_SIMSTATE);
+  if (!callback)
+    {
+      DBGIF_LOG_WARNING("When callback is null called report SIM state.\n");
+      return;
+    }
+
+  switch (simd->status)
+    {
+      case APICMD_REPORT_EVT_SIMD_REMOVAL:
+        {
+          result = LTE_SIMSTAT_REMOVAL;
+        }
+      break;
+      case APICMD_REPORT_EVT_SIMD_INSERTION:
+        {
+          result = LTE_SIMSTAT_INSERTION;
+        }
+      break;
+      default:
+        {
+          DBGIF_LOG1_ERROR("Unsupport SIMD status. status:%d\n", simd->status);
+          return;
+        }
+    }
+
+  callback(result);
+}
+
+/****************************************************************************
+ * Name: repevt_simstate_report
+ *
+ * Description:
+ *   This function is an API callback for event report SIMSTATE.
+ *
+ * Input Parameters:
+ *  ltime    Pointer to received SIMSTATE data.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repevt_simstate_report(
+  FAR struct apicmd_cmddat_repevt_simstate_s *simstate)
+{
+  uint8_t             result;
+  simstat_report_cb_t callback;
+
+  callback = altcomcallbacks_get_cb(APICMDID_SET_REP_EVT_SIMSTATE);
+  if (!callback)
+    {
+      DBGIF_LOG_WARNING("When callback is null called report SIM state.\n");
+      return;
+    }
+
+  switch (simstate->state)
+    {
+      case APICMD_REPORT_EVT_SIMSTATE_SIM_INIT_WAIT_PIN_UNLOCK:
+        {
+          result = LTE_SIMSTAT_WAIT_PIN_UNLOCK;
+        }
+      break;
+      case APICMD_REPORT_EVT_SIMSTATE_PERSONALIZATION_FAILED:
+        {
+          result = LTE_SIMSTAT_PERSONAL_FAILED;
+        }
+      break;
+      case APICMD_REPORT_EVT_SIMSTATE_ACTIVATION_COMPLETED:
+        {
+          result = LTE_SIMSTAT_ACTIVATE;
+        }
+      break;
+      default:
+        {
+          DBGIF_LOG1_ERROR("Unsupport SIM state. status:%d\n", simstate->state);
+          return;
+        }
+    }
+
+  callback(result);
+}
+
+/****************************************************************************
+ * Name: repevt_job
+ *
+ * Description:
+ *   This function is an API callback for event report receive.
+ *
+ * Input Parameters:
+ *  arg    Pointer to received event.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void repevt_job(FAR void *arg)
+{
+  FAR struct apicmd_cmddat_repevt_s *data;
+
+  data = (FAR struct apicmd_cmddat_repevt_s *)arg;
+
+  switch (data->type)
+    {
+      case APICMD_REPORT_EVT_TYPE_LTIME:
+        {
+          repevt_ltime_report(&data->u.ltime);
+        }
+      break;
+      case APICMD_REPORT_EVT_TYPE_SIMD:
+        {
+          repevt_simd_report(&data->u.simd);
+        }
+      break;
+      case APICMD_REPORT_EVT_TYPE_SIMSTATE:
+        {
+          repevt_simstate_report(&data->u.simstate);
+        }
+      break;
+      default:
+        {
+          DBGIF_LOG1_ERROR("Unsupport event type. type:%d\n", data->type);
+        }
+      break;
+    }
+
+  /* In order to reduce the number of copies of the receive buffer,
+   * bring a pointer to the receive buffer to the worker thread.
+   * Therefore, the receive buffer needs to be released here. */
+
+  altcom_free_cmd((FAR uint8_t *)arg);
+}
 
 /****************************************************************************
  * Public Functions
@@ -96,13 +344,15 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
   FAR struct apicmd_cmddat_setrepevtres_s *resbuff   = NULL;
   uint16_t                                resbufflen = REPSETRES_DATA_LEN;
   uint16_t                                reslen     = 0;
+  bool                                    reset_flag = false;
+  simstat_report_cb_t                     callback;
 
-  /* Check if the library is initialized */
+  /* Check Lte library status */
 
-  if (!altcom_isinit())
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
+      return ret;
     }
 
   /* Check this process runnning. */
@@ -111,8 +361,28 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
     {
       return -EBUSY;
     }
-
   g_lte_setrepsimstat_isproc = true;
+
+  if (simstat_callback)
+    {
+      /* Check callback is registered */
+
+      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_EVT_SIMSTATE);
+      if (callback)
+        {
+          reset_flag = true;
+        }
+      else
+        {
+          ret = altcomstatus_reg_statchgcb(repevt_simstate_status_chg_cb);
+          if (0 > ret)
+            {
+              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+              g_lte_setrepsimstat_isproc = false;
+              return ret;
+            }
+        }
+    }
 
   /* Allocate API command buffer to send */
 
@@ -161,13 +431,20 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
     {
       if (APICMD_SET_REP_EVT_RES_OK == resbuff->result)
         {
-          /* Register API callback */
-
-          ALTCOM_CLR_CALLBACK(g_simstat_report_callback);
           if (simstat_callback)
             {
-              ALTCOM_REG_CALLBACK(
-                ret, g_simstat_report_callback, simstat_callback);
+              if (!reset_flag)
+                {
+                  altcomcallbacks_reg_cb((void *)simstat_callback,
+                                          APICMDID_SET_REP_EVT_SIMSTATE);
+                }
+            }
+          else
+            {
+              /* Unregistration callback. */
+
+              altcomcallbacks_unreg_cb(APICMDID_SET_REP_EVT_SIMSTATE);
+              altcomstatus_unreg_statchgcb(repevt_simstate_status_chg_cb);
             }
         }
       else
@@ -213,13 +490,15 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
   FAR struct apicmd_cmddat_setrepevtres_s *resbuff   = NULL;
   uint16_t                                resbufflen = REPSETRES_DATA_LEN;
   uint16_t                                reslen     = 0;
+  bool                                    reset_flag = false;
+  localtime_report_cb_t                   callback;
 
-  /* Check if the library is initialized */
+  /* Check Lte library status */
 
-  if (!altcom_isinit())
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      return -EPERM;
+      return ret;
     }
 
   /* Check this process runnning. */
@@ -228,8 +507,28 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
     {
       return -EBUSY;
     }
-
   g_lte_setrepltime_isproc = true;
+
+  if (localtime_callback)
+    {
+      /* Check callback is registered */
+
+      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_EVT_LTIME);
+      if (callback)
+        {
+          reset_flag = true;
+        }
+      else
+        {
+          ret = altcomstatus_reg_statchgcb(repevt_ltime_status_chg_cb);
+          if (0 > ret)
+            {
+              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+              g_lte_setrepltime_isproc = false;
+              return ret;
+            }
+        }
+    }
 
     /* Allocate API command buffer to send */
 
@@ -276,13 +575,20 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
     {
       if (APICMD_SET_REP_EVT_RES_OK == resbuff->result)
         {
-          /* Register API callback */
-
-          ALTCOM_CLR_CALLBACK(g_localtime_report_callback);
           if (localtime_callback)
             {
-              ALTCOM_REG_CALLBACK(
-                ret, g_localtime_report_callback, localtime_callback);
+              if (!reset_flag)
+                {
+                  altcomcallbacks_reg_cb((void *)localtime_callback,
+                                          APICMDID_SET_REP_EVT_LTIME);
+                }
+            }
+          else
+            {
+              /* Unregistration callback. */
+
+              altcomcallbacks_unreg_cb(APICMDID_SET_REP_EVT_LTIME);
+              altcomstatus_unreg_statchgcb(repevt_ltime_status_chg_cb);
             }
         }
       else
@@ -302,4 +608,27 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
   g_lte_setrepltime_isproc = false;
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: apicmdhdlr_repevt
+ *
+ * Description:
+ *   This function is an API command handler for event report.
+ *
+ * Input Parameters:
+ *  evt    Pointer to received event.
+ *  evlen  Length of received event.
+ *
+ * Returned Value:
+ *   If the API command ID matches APICMDID_REPORT_EVT,
+ *   EVTHDLRC_STARTHANDLE is returned.
+ *   Otherwise it returns EVTHDLRC_UNSUPPORTEDEVENT. If an internal error is
+ *   detected, EVTHDLRC_INTERNALERROR is returned.
+ *
+ ****************************************************************************/
+
+enum evthdlrc_e apicmdhdlr_repevt(FAR uint8_t *evt, uint32_t evlen)
+{
+  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_EVT, repevt_job);
 }

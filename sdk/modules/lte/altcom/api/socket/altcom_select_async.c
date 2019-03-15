@@ -70,17 +70,6 @@ static FAR struct select_asynccb_s *g_callbacklist_head = NULL;
 
 /****************************************************************************
  * Name: allocate_callbacklist
- *
- * Description:
- *   Allocate select callback list.
- *
- * Input Parameters:
- *   select_id  This is ID that identifies the select request.
- *
- * Returned Value:
- *   If the allocation succeeds, it returns the allocated pointer.
- *   Otherwise NULL is returned.
- *
  ****************************************************************************/
 
 static FAR struct select_asynccb_s *allocate_callbacklist(int32_t select_id)
@@ -109,16 +98,6 @@ static FAR struct select_asynccb_s *allocate_callbacklist(int32_t select_id)
 
 /****************************************************************************
  * Name: free_callbacklist
- *
- * Description:
- *   Free select callback list.
- *
- * Input Parameters:
- *   list  Pointer to callback list.
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 static void free_callbacklist(FAR struct select_asynccb_s *list)
@@ -129,16 +108,6 @@ static void free_callbacklist(FAR struct select_asynccb_s *list)
 
 /****************************************************************************
  * Name: add_callbacklist
- *
- * Description:
- *   Add callback list to the end of list.
- *
- * Input Parameters:
- *   list  Pointer to callback list.
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 static void add_callbacklist(FAR struct select_asynccb_s *list)
@@ -164,17 +133,6 @@ static void add_callbacklist(FAR struct select_asynccb_s *list)
 
 /****************************************************************************
  * Name: delete_callbacklist
- *
- * Description:
- *   Delete list from callback list.
- *
- * Input Parameters:
- *   list  Pointer to callback list.
- *
- * Returned Value:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
  ****************************************************************************/
 
 static int32_t delete_callbacklist(FAR struct select_asynccb_s *list)
@@ -211,17 +169,6 @@ static int32_t delete_callbacklist(FAR struct select_asynccb_s *list)
 
 /****************************************************************************
  * Name: search_callbacklist
- *
- * Description:
- *   Search list by select ID.
- *
- * Input Parameters:
- *   select_id  Target select ID.
- *
- * Returned Value:
- *   If list is found, return that pointer.
- *   Otherwise NULL is returned.
- *
  ****************************************************************************/
 
 static FAR struct select_asynccb_s *search_callbacklist(int32_t select_id)
@@ -242,17 +189,6 @@ static FAR struct select_asynccb_s *search_callbacklist(int32_t select_id)
 
 /****************************************************************************
  * Name: setup_callback
- *
- * Description:
- *   Register callback to be used for select async.
- *
- * Input Parameters:
- *   select_id  This is ID that identifies the select request.
- *   cb         Callback function when received select response.
- *
- * Returned Value:
- *   None
- *
  ****************************************************************************/
 
 static void setup_callback(int32_t select_id, altcom_select_async_cb_t cb,
@@ -283,16 +219,6 @@ static void setup_callback(int32_t select_id, altcom_select_async_cb_t cb,
 
 /****************************************************************************
  * Name: teardown_callback
- *
- * Description:
- *   Unregister callback to be used for select async.
- *
- * Input Parameters:
- *   select_id  This is ID that identifies the select request.
- *
- * Returned Value:
- *   None
- *
  ****************************************************************************/
 
 static void teardown_callback(int32_t select_id)
@@ -323,28 +249,6 @@ static void teardown_callback(int32_t select_id)
 
 /****************************************************************************
  * Name: altcom_select_async
- *
- * Description:
- *   altcom_select_async() is a function that operates select asynchronously.
- *   Notified by callback when one or more of the file descriptors become
- *   "ready" for some class of I/O operation (e.g., input possible). It will
- *   be notified until callback is called once or canceled
- *   by altcom_select_async_cancel().
- *
- * Input parameters:
- *   maxfdp1 - the maximum socket file descriptor number (+1) of any
- *             descriptor in any of the three sets.
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *   callback - Callback function that informs that one or more file
- *              descriptors are in the "ready" state
- *   priv - For use by caller
- *
- *  Return:
- *   A non-negative id on success; -1 on error with errno set
- *   appropriately.
- *
  ****************************************************************************/
 
 int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
@@ -373,22 +277,6 @@ int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
 
 /****************************************************************************
  * Name: altcom_select_async_exec_callback
- *
- * Description:
- *   Execute callback that registered by altcom_select_async().
- *
- * Input parameters:
- *   id - id returned by altcom_select_async()
- *   ret_code - result of altcom_select_async()
- *   err_code - error code when altcom_select_async() failure
- *   readset - the set of descriptions to monitor for read-ready events
- *   writeset - the set of descriptions to monitor for write-ready events
- *   exceptset - the set of descriptions to monitor for error events
- *
- *  Return:
- *   If the process succeeds, it returns 0.
- *   Otherwise negative value is returned.
- *
  ****************************************************************************/
 
 int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
@@ -417,17 +305,6 @@ int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
 
 /****************************************************************************
  * Name: altcom_select_async_cancel
- *
- * Description:
- *   altcom_select_async_cancel() cancel altcom_select_async() based on the
- *   id.
- *
- * Input parameters:
- *   id - id returned by altcom_select_async()
- *
- *  Return:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int altcom_select_async_cancel(int id)

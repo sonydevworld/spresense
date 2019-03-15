@@ -76,10 +76,6 @@ struct fcntl_req_s
 
 /****************************************************************************
  * Name: fcntl_request
- *
- * Description:
- *   Send ALTCOM_FCNTL_REQ.
- *
  ****************************************************************************/
 
 static int32_t fcntl_request(FAR struct altcom_socket_s *fsock,
@@ -155,19 +151,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_fcntl
- *
- * Description:
- *   Performs fcntl operations on socket
- *
- * Input Parameters:
- *   sockfd - Socket descriptor of the socket to operate on
- *   cmd    - The fcntl command.
- *   val    - Command-specific arguments
- *
- * Returned Value:
- *   0 is returned on success; -1 is returned on failure and
- *   the errno value is set appropriately.
- *
  ****************************************************************************/
 
 int altcom_fcntl(int sockfd, int cmd, int val)
@@ -176,10 +159,12 @@ int altcom_fcntl(int sockfd, int cmd, int val)
   FAR struct altcom_socket_s *fsock;
   struct fcntl_req_s         req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 

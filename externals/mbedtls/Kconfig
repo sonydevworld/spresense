@@ -1,0 +1,14 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_MBEDTLS
+	bool "mbed TLS Library"
+	default n
+	---help---
+		Enable mbed TLS Library.
+		And when you select this, make sure CONFIG_LTE_NET_MBEDTLS is disabled. Those are exclusive items.
+		ARM mbed TLS is provided from https://github.com/ARMmbed/mbedtls
+		and licensed under Apache-2.0.
+

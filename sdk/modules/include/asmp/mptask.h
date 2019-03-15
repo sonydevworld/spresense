@@ -200,13 +200,15 @@ typedef enum mptask_state
  */
 
 /**
- * MP task attribute structure
+ * MP task attribute structure.
+ *
+ * Do not refer directly.
  */
 
 typedef struct mptask_attr
 {
   int8_t status;                /**< Running state */
-  int8_t secured;               /**< Secured */
+  int8_t flags;                 /**< Attribute flags */
   cpu_set_t affinity;           /**< Bit set of permitted CPUs */
   uint32_t exit_status;         /**< Worker exit status */
 } mptask_attr_t;
@@ -224,6 +226,18 @@ typedef struct mpbindobj
   uint32_t    value;
 } mpbindobj_t;
 
+typedef struct unified_binary
+{
+  int nr_offs;       /* Number of offsets has been stored */
+  uint8_t offset[5]; /* Offset table, except CPU 0 */
+  uint8_t size[5];   /* Size table, except CPU 0 */
+} unified_binary_t;
+
+typedef struct binary_info
+{
+  uint32_t loadaddr;
+} binary_info_t;
+
 /**
  * @typedef mptask_t
  * @brief MP task object
@@ -236,7 +250,8 @@ typedef struct mptask
   off_t             filelen;
   uintptr_t         loadaddr;
   size_t            loadsize;
-  cpuid_t           cpuid;
+  cpu_set_t         cpuids;
+  int               groupid;
   mptask_attr_t     attr;
 
   /* filename is used when secure loading, and bounds is used for normal binary.
@@ -250,6 +265,11 @@ typedef struct mptask
 
   int               nbounds;
   sem_t             wait;
+
+  union {
+    unified_binary_t  ubin;     /* Unified binary */
+    binary_info_t     bin[5];   /* binary */
+  };
 } mptask_t;
 
 /** @} mptask_datatypes */
@@ -398,18 +418,52 @@ int mptask_getattr(mptask_t *task, mptask_attr_t *attr);
 int mptask_assign(mptask_t *task);
 
 /**
+ * Assign CPUs for MP task
+ *
+ * mptask_assign_cpus() assigns CPU for running MP task.
+ * This function is for secure binary only.
+ *
+ * @param [in,out] task: MP task object.
+ * @param [in] ncpus: Number of CPUs to be assigned.
+ *
+ * @return On success, mptask_setattr() returns 0. On error, it returns an error
+ * number.
+ * @retval -EINVAL: Invalid argument
+ * @retval -ENOENT: CPU can't be assigned
+ */
+
+int mptask_assign_cpus(mptask_t *task, int ncpus);
+
+/**
  * Get assigned CPU ID
  *
  * mptask_getcpuid() returns assigned CPU ID for @a task.
  *
  * @param [in,out] task: MP task object.
  *
- * @return On success, mptask_getcpuid() returns CPU ID (1-5). On error, it returns
+ * @return On success, mptask_getcpuid() returns CPU ID (3-7). On error, it returns
  * an error number.
  * @retval -ENOENT: CPU not assigned yet
  */
 
 cpuid_t mptask_getcpuid(mptask_t *task);
+
+/**
+ * Get assigned CPU ID list
+ *
+ * mptask_getcpuid() returns assigned CPU ID list for @a task. This API is used for
+ * secure binary.
+ * CPU ID list can be test with CPU_ISSET() macro.
+ *
+ * @param [in,out] task: MP task object.
+ * @param [out] cpuids: Assigned CPU ID list
+ *
+ * @return On success, mptask_getcpuid() returns CPU ID list. On error, it returns
+ * an error number.
+ * @retval -ENOENT: CPU not assigned yet
+ */
+
+int mptask_getcpuidset(mptask_t *task, cpu_set_t *cpuids);
 
 /**
  * Execute MP task

@@ -57,12 +57,6 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-/* Debug ********************************************************************/
-/* Non-standard debug that may be enabled just for testing PWM */
-
-#ifndef CONFIG_DEBUG
-#  undef CONFIG_DEBUG_PWM
-#endif
 
 #define PWM_REG_BASE        (0x04195600)
 #define PWM_PHASE_REG_BASE  (0x04195630)

@@ -39,8 +39,6 @@ SDKLIBS += lib$(DELIM)libsdkaudio$(LIBEXT)
 SDKMODDIRS += modules$(DELIM)audio
 endif
 SDKCLEANDIRS += modules$(DELIM)audio
-SDKCLEANDIRS += modules$(DELIM)audio$(DELIM)dsp$(DELIM)worker
-SDKCLEANDIRS += modules$(DELIM)audio$(DELIM)dsp$(DELIM)worker$(DELIM)lib
 
 .PHONY: workerbin asmpwlib
 

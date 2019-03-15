@@ -58,7 +58,7 @@
 #include "include/pool_layout.h"
 #include "include/fixed_fence.h"
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
-#  include "playlist/playlist.h"
+#include <audio/utilities/playlist.h>
 #endif
 
 using namespace MemMgrLite;

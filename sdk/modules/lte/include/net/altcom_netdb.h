@@ -114,50 +114,12 @@ extern "C"
 
 /****************************************************************************
  * Name: altcom_freeaddrinfo
- *
- * Description:
- *   The altcom_freeaddrinfo() function frees the memory that was allocated
- *   for the dynamically allocated linked list res. 
- *
- * Parameters:
- *   res - The res returned by altcom_getaddrinfo()
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 void altcom_freeaddrinfo(struct altcom_addrinfo *res);
 
 /****************************************************************************
  * Name: altcom_getaddrinfo
- *
- * Description:
- *   Given node and service, which identify an Internet host and a service,
- *   altcom_getaddrinfo() returns one or more addrinfo structures, each of
- *   which contains an Internet address that can be specified in a call to
- *   altcom_bind() or altcom_connect(). The altcom_getaddrinfo() is reentrant
- *   and allows programs to eliminate IPv4-versus-IPv6 dependencies. 
- *
- * Parameters:
- *   nodename - Specifies either a numerical network address, or a network
- *              hostname, whose network addresses are looked up and resolved
- *   servname - Sets the port in each returned address structure
- *   hints - Points to an addrinfo structure that specifies criteria for
- *           selecting the socket address structures returned in the list
- *           pointed to by res
- *   res - Pointer to the start of the list
- *
- * Returned Value:
- *  altcom_getaddrinfo() returns 0 if it succeeds, or one of the following
- *  nonzero error codes:
- *
- *     ALTCOM_EAI_NONAME
- *     ALTCOM_EAI_SERVICE
- *     ALTCOM_EAI_FAIL
- *     ALTCOM_EAI_MEMORY
- *     ALTCOM_EAI_FAMILY
- *
  ****************************************************************************/
 
 int altcom_getaddrinfo(const char *nodename, const char *servname,
@@ -166,61 +128,12 @@ int altcom_getaddrinfo(const char *nodename, const char *servname,
 
 /****************************************************************************
  * Name: altcom_gethostbyname
- *
- * Description:
- *   The altcom_gethostbyname() function returns a structure of type hostent
- *   for the given host name. Here name is either a hostname, or an IPv4
- *   address in standard dot notation (as for inet_addr(3)), or an IPv6
- *   address in colon (and possibly dot) notation.
- *
- *   If name is an IPv4 or IPv6 address, no lookup is performed and
- *   altcom_gethostbyname_r() simply copies name into the h_name field
- *   and its struct in_addr equivalent into the h_addr_list[0] field of the
- *   returned hostent structure.
- *
- * Input Parameters:
- *   name - The name of the host to find.
- *
- * Returned Value:
- *   Upon successful completion, this function will return a pointer to a
- *   hostent structure if the requested entry was found, and a null pointer
- *   if the end of the database was reached or the requested entry was not
- *   found.
- *
- *   Upon unsuccessful completion, altcom_gethostbyname() will set h_errno to
- *   indicate the error
- *
  ****************************************************************************/
 
 struct altcom_hostent *altcom_gethostbyname(const char *name);
 
 /****************************************************************************
  * Name: altcom_gethostbyname_r
- *
- * Description:
- *   The altcom_gethostbyname_r() function returns a structure of type
- *   hostent for the given host name. Here name is either a hostname, or an
- *   IPv4 address in standard dot notation (as for inet_addr(3)), or an IPv6
- *   address in colon (and possibly dot) notation.
- *
- *   If name is an IPv4 or IPv6 address, no lookup is performed and
- *   altcom_gethostbyname_r() simply copies name into the h_name field
- *   and its struct in_addr equivalent into the h_addr_list[0] field of the
- *   returned hostent structure.
- *
- * Input Parameters:
- *   name - The name of the host to find.
- *   ret - Caller provided location to return the host data.
- *   buf - Caller provided buffer to hold string data associated with the
- *     host data.
- *   buflen - The size of the caller-provided buffer
- *   result - Point to the result on success.
- *   h_errnop - There h_errno value returned in the event of a failure.
- *
- * Returned Value:
- *   0 is returned on success, -1 is returned on a failure
- *   with the returned h_errno value provided the reason for the failure.
- *
  ****************************************************************************/
 
 int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,

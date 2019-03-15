@@ -150,6 +150,7 @@ installkernel:
 		$(ARCROSSDEV)ar d lib/libarch.a cxd56_uart.o; \
 		$(ARCROSSDEV)ar d lib/libarch.a cxd56_timerisr.o; \
 		$(ARCROSSDEV)ar d lib/libarch.a cxd56_idle.o; \
+		$(ARCROSSDEV)ar d lib/libarch.a cxd56_start.o; \
 		$(ARCROSSDEV)ar d lib/libarch.a up_udelay.o; \
 		$(ARCROSSDEV)ar d lib/libarch.a up_mdelay.o; \
 	fi

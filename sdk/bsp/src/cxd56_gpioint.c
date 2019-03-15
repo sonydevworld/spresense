@@ -107,6 +107,7 @@
  ****************************************************************************/
 
 static xcpt_t g_isr[MAX_SLOT];
+static uint32_t g_bothedge = 0;
 
 /****************************************************************************
  * Private Functions
@@ -351,6 +352,12 @@ static int gpioint_handler(int irq, FAR void *context, FAR void *arg)
 
   invert_irq(irq);
 
+  if (g_bothedge & (1 << slot))
+    {
+      g_isr[slot](irq, context, arg);
+      return 0;
+    }
+
   /* Get the polarity */
 
   shift = 16 + (slot * 4);
@@ -407,6 +414,7 @@ int cxd56_gpioint_config(uint32_t pin, uint32_t gpiocfg, xcpt_t isr)
 {
   int slot;
   int irq;
+  irqstate_t flags;
 
   slot = alloc_slot(pin, (isr != NULL));
   if (slot < 0)
@@ -426,6 +434,10 @@ int cxd56_gpioint_config(uint32_t pin, uint32_t gpiocfg, xcpt_t isr)
 
       irq_attach(irq, NULL, NULL);
       g_isr[slot] = NULL;
+
+      flags = enter_critical_section();
+      g_bothedge &= ~(1 << slot);
+      leave_critical_section(flags);
       return irq;
     }
 
@@ -434,6 +446,23 @@ int cxd56_gpioint_config(uint32_t pin, uint32_t gpiocfg, xcpt_t isr)
   cxd56_gpio_config(pin, true);
 
   /* set GPIO interrupt configuration */
+
+  if (gpiocfg & GPIOINT_TOGGLE_BOTH_MASK) {
+
+    /* set GPIO pseudo both edge interrupt */
+
+    flags = enter_critical_section();
+    g_bothedge |= (1 << slot);
+    leave_critical_section(flags);
+
+    /* detect the change from the current signal */
+
+    if (true == cxd56_gpio_read(pin)) {
+      gpiocfg |= GPIOINT_SET_POLARITY(GPIOINT_LEVEL_LOW);
+    } else {
+      gpiocfg |= GPIOINT_SET_POLARITY(GPIOINT_LEVEL_HIGH);
+    }
+  }
 
   set_gpioint_config(slot, gpiocfg);
 
@@ -604,6 +633,10 @@ int cxd56_gpioint_status(uint32_t pin, cxd56_gpioint_status_t *stat)
   if ((g_isr[slot]) && (stat->polarity == GPIOINT_LEVEL_LOW))
     {
       stat->polarity = GPIOINT_EDGE_FALL;
+    }
+  if ((g_isr[slot]) && (g_bothedge & (1 << slot)))
+    {
+      stat->polarity = GPIOINT_EDGE_BOTH;
     }
 
   /* Get noise filter enabled or not */

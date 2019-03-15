@@ -86,21 +86,32 @@ int mpmq_init(mpmq_t *mq, key_t key, cpuid_t cpu)
 {
   mpbindobj_t *obj;
 
-  if (!mq || !key)
+  if (!mq)
     {
       return -EINVAL;
     }
 
   wk_memset(mq, 0, sizeof(mpmq_t));
 
-  obj = asmp_findmpbindobj(MPOBJTYPE_MQ, key);
-  if (!obj)
-    {
-      return -ENOENT;
-    }
-
   mpobj_init(mq, MQ, key);
-  mq->cpuid = (cpuid_t) obj->value;
+
+  if (key)
+    {
+      obj = asmp_findmpbindobj(MPOBJTYPE_MQ, key);
+      if (!obj)
+        {
+          return -ENOENT;
+        }
+      mq->cpuid = (cpuid_t) obj->value;
+    }
+  else
+    {
+      if (cpu < 3 && cpu > 7)
+        {
+          return -EINVAL;
+        }
+      mq->cpuid = cpu;
+    }
 
   /* If target CPU ID is same with worker CPU, then replace
    * to supervisor CPU ID (2).
@@ -110,7 +121,7 @@ int mpmq_init(mpmq_t *mq, key_t key, cpuid_t cpu)
     {
       mq->cpuid = 2;
     }
-  
+
   return OK;
 }
 

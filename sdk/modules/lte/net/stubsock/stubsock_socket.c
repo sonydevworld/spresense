@@ -64,40 +64,6 @@
 
 /****************************************************************************
  * Name: stubsock_socket
- *
- * Description:
- *   socket() creates an endpoint for communication and returns a socket
- *   structure.
- *
- * Parameters:
- *   domain   (see sys/socket.h)
- *   type     (see sys/socket.h)
- *   protocol (see sys/socket.h)
- *   psock    A pointer to a user allocated socket structure to be initialized.
- *
- * Returned Value:
- *   0 on success; negative error-code on error
- *
- *   EACCES
- *     Permission to create a socket of the specified type and/or protocol
- *     is denied.
- *   EAFNOSUPPORT
- *     The implementation does not support the specified address family.
- *   EINVAL
- *     Unknown protocol, or protocol family not available.
- *   EMFILE
- *     Process file table overflow.
- *   ENFILE
- *     The system limit on the total number of open files has been reached.
- *   ENOBUFS or ENOMEM
- *     Insufficient memory is available. The socket cannot be created until
- *     sufficient resources are freed.
- *   EPROTONOSUPPORT
- *     The protocol type or the specified protocol is not supported within
- *     this domain.
- *
- * Assumptions:
- *
  ****************************************************************************/
 
 int stubsock_socket(int domain, int type, int protocol,

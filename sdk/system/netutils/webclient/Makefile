@@ -44,6 +44,7 @@ CSRCS		=
 
 ifeq ($(CONFIG_NET_TCP),y)
 CSRCS		= webclient.c
+CSRCS           += tls_socket.c tls_rootca_certs.c
 endif
 
 AOBJS		= $(ASRCS:.S=$(OBJEXT))

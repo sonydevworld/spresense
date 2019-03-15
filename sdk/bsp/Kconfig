@@ -103,11 +103,23 @@ endmenu # Far API Configuration
 
 comment "Timer Options"
 
-config CXD56_RTC
+menuconfig CXD56_RTC
 	bool "Real Time Clock (RTC)"
 	default y
 	---help---
 		Support RTC
+
+if CXD56_RTC
+
+config CXD56_RTC_LATEINIT
+	bool "Late RTC initialization"
+	default y
+	---help---
+		Enable the late RTC initialization after waiting until the external
+		CXD5247 RTC clock is stable. It will take 2 seconds typically at the
+		initial boot by power on reset.
+
+endif # CXD56_RTC
 
 menuconfig CXD56_TIMER
 	bool "Timer"
@@ -268,6 +280,46 @@ config CXD56_UART
 	default y
 
 if CXD56_UART
+
+config CXD56_UART0
+	bool "UART0"
+	default n
+	---help---
+		UART interface with hardware flow control in the application subsystem.
+
+if CXD56_UART0
+
+config CXD56_UART0_BAUD
+	int "CXD56 UART0 BAUD"
+	default 921600
+
+config CXD56_UART0_PARITY
+	int "CXd56 UART0 parity"
+	default 0
+	range 0 2
+	---help---
+		CXD56 UART0 parity.  0=None, 1=Odd, 2=Even.  Default: None
+
+config CXD56_UART0_BITS
+	int "CXD56 UART0 number of bits"
+	default 8
+	range 5 8
+	---help---
+		CXD56 UART0 number of bits.  Default: 8
+
+config CXD56_UART0_2STOP
+	int "CXD56 UART0 two stop bits"
+	default 0
+	---help---
+		0=1 stop bit, 1=Two stop bits.  Default: 1 stop bit
+
+config CXD56_UART0_FLOWCONTROL
+	bool "CXD56 UART0 flow control"
+	default n
+	---help---
+		Enable CXD56 UART0 RTS flow control
+
+endif
 
 config CXD56_UART1
 	bool "UART1"
@@ -1642,7 +1694,8 @@ endif
 config CXD56_CHARGER
 	bool "CXD5247 battery charger"
 	default n
-	depends on BOARD_CORVO || BOARD_COLLET
+# Disable anyway
+#	depends on BOARD_CORVO || BOARD_COLLET
 	---help---
 		Enable battery charger driver.
 		This is not a lower half of power driver, but compatible with NuttX charger driver.
@@ -1665,7 +1718,20 @@ config CXD56_CHARGER_DEBUG
 
 endif
 
+config CXD56_GE2D
+	bool "Graphics Engine"
+	default n
+	---help---
+		A hardware image processor device.
+
 comment "Debug Features"
+
+config CXD56_BOOT_PROGRESS
+	bool "Boot progress"
+	default n
+	---help---
+		Enable to show boot status by a character print of showprogress().
+		If boot is successful, it will be shown 'AEG' messages on console.
 
 config CXD56_BACKUPLOG
 	bool "Backup Log driver"

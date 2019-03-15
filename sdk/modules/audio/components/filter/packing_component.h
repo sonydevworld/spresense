@@ -38,11 +38,8 @@
 
 
 #include "wien2_common_defs.h"
-#include "apus/apu_cmd.h"
-#include "dsp_driver/include/dsp_drv.h"
-
-
 #include "debug/dbg_log.h"
+#include "filter_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 using namespace MemMgrLite;
@@ -55,56 +52,80 @@ enum BitWidth
 };
 
 /*--------------------------------------------------------------------*/
-struct InitPackingParam
+/* Data structure definitions                                         */
+/*--------------------------------------------------------------------*/
+
+/* Init PackingComponent Parameters */
+
+struct InitPackingParam : public InitFilterParam
 {
-  BitWidth in_bitwidth;
-  BitWidth out_bitwidth;
 };
 
-struct ExecPackingParam
+/* Exec PackingComponent Parameters */
+
+struct ExecPackingParam : public ExecFilterParam
 {
-  BufferHeader in_buffer;
-  BufferHeader out_buffer;
 };
 
-struct StopPackingParam
+/* Stop PackingComponent Parameters */
+
+struct StopPackingParam : public StopFilterParam
 {
-  BufferHeader out_buffer;
+};
+
+/* PackingComponent Complete Reply Parameters */
+
+struct PackingCmpltParam : public FilterCompCmpltParam
+{
 };
 
 /*--------------------------------------------------------------------*/
-class PackingComponent
+/* Class definitions                                                  */
+/*--------------------------------------------------------------------*/
+
+class PackingComponent : public FilterComponent
 {
-public:
-
-  PackingComponent()
-    : m_in_bitwidth(32)
-    , m_out_bitwidth(24)
-    {}
-
-  ~PackingComponent() {}
-
-  typedef bool (*PackingCompCallback)(DspDrvComPrm_t*);
-
-  uint32_t activate_apu(PackingComponent *p_component);
-  bool deactivate_apu();
-  uint32_t init_apu(InitPackingParam param);
-  bool exec_apu(ExecPackingParam param);
-  bool flush_apu(StopPackingParam param);
-
-  bool setCallBack(PackingCompCallback func) { m_callback = func; return true; };
-  bool recv_done(void) { return true; };
-
 private:
-
-  PackingCompCallback m_callback;
 
   uint16_t m_in_bitwidth;
   uint16_t m_out_bitwidth;
 
+  uint32_t init_apu(InitPackingParam *param);
+  bool exec_apu(ExecPackingParam *param);
+  bool flush_apu(StopPackingParam *param);
+
   void cnv32to24(uint32_t samples, int8_t *in, int8_t *out);
   void cnv24to32(uint32_t samples, int8_t *in, int8_t *out);
-  void notify_reply(uint8_t evt, bool result, BufferHeader outbuf);
+  void send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf);
+
+public:
+
+  PackingComponent() :
+      m_in_bitwidth(32)
+    , m_out_bitwidth(24)
+    {}
+  ~PackingComponent() {}
+
+  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
+  virtual bool deactivate_apu();
+  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
+  {
+    return init_apu(static_cast<InitPackingParam *>(param));
+  }
+
+  virtual bool exec_apu(ExecFilterParam *param)
+  {
+    return exec_apu(static_cast<ExecPackingParam *>(param));
+  }
+
+  virtual bool flush_apu(StopFilterParam *param)
+  {
+    return flush_apu(static_cast<StopPackingParam *>(param));
+  }
+
+  virtual bool setparam_apu(SetFilterParam *param) { return true; }
+  virtual bool tuning_apu(TuningFilterParam *param) { return true; }
+  virtual bool recv_done(void) { return true; };
 };
 
 __WIEN2_END_NAMESPACE

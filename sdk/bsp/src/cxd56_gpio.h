@@ -146,20 +146,6 @@ bool cxd56_gpio_read(uint32_t pin);
 
 int cxd56_gpio_status(uint32_t pin, cxd56_gpio_status_t *stat);
 
-/********************************************************************************************
- * Function:  cxd56_gpio_dump
- *
- * Description:
- *   Dump a gpio pin configuration
- *
- ********************************************************************************************/
-
-#ifdef CONFIG_DEBUG
-int cxd56_gpio_dump(uint32_t pin, const char *msg);
-#else
-#  define cxd56_gpio_dump(p,m)
-#endif
-
 #undef EXTERN
 #if defined(__cplusplus)
 }

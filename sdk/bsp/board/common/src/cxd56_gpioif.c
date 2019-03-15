@@ -180,15 +180,13 @@ int board_gpio_intconfig(uint32_t pin, int mode, bool filter, xcpt_t isr)
         gpiocfg = GPIOINT_LEVEL_LOW;
         break;
       case INT_RISING_EDGE:
-        //gpiocfg = GPIOINT_EDGE_RISE;
         gpiocfg = GPIOINT_PSEUDO_EDGE_RISE;
         break;
       case INT_FALLING_EDGE:
-        //gpiocfg = GPIOINT_EDGE_FALL;
         gpiocfg = GPIOINT_PSEUDO_EDGE_FALL;
         break;
       case INT_BOTH_EDGE:
-        gpiocfg = GPIOINT_EDGE_BOTH;
+        gpiocfg = GPIOINT_PSEUDO_EDGE_BOTH;
         break;
       default:
         if (isr)

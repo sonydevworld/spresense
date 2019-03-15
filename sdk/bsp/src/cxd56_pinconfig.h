@@ -214,20 +214,6 @@ int cxd56_pin_configs(uint32_t pinconfs[], size_t n);
 
 int cxd56_pin_status(uint32_t pin, cxd56_pin_status_t *stat);
 
-/********************************************************************************************
- * Function:  cxd56_pin_dump
- *
- * Description:
- *   Dump a pin configuration
- *
- ********************************************************************************************/
-
-#ifdef CONFIG_DEBUG
-int cxd56_pin_dump(uint32_t pin, const char *msg);
-#else
-#  define cxd56_pin_dump(p,m)
-#endif
-
 #undef EXTERN
 #if defined(__cplusplus)
 }

@@ -66,53 +66,6 @@
 
 /****************************************************************************
  * Name: inet_pton
- *
- * Description:
- *  The inet_pton() function converts an address in its standard text
- *  presentation form into its numeric binary form.
- *
- *  If the af argument of inet_pton() is AF_INET, the src
- *  string will be in the standard IPv4 dotted-decimal form:
- *
- *    ddd.ddd.ddd.ddd
- *
- *  where "ddd" is a one to three digit decimal number between 0 and 255.
- *
- *  If the af argument of inet_pton() is AF_INET6, the src
- *  string will be in one of the following standard IPv6 text forms:
- *
- *  1. The preferred form is "x:x:x:x:x:x:x:x", where the 'x' s are the
- *     hexadecimal values of the eight 16-bit pieces of the address. Leading
- *     zeros in individual fields can be omitted, but there must be at least
- *     one numeral in every field.
- *
- *  2. A string of contiguous zero fields in the preferred form can be shown
- *     as "::". The "::" can only appear once in an address. Unspecified
- *     addresses ( "0:0:0:0:0:0:0:0" ) may be represented simply as "::".
- *
- *  3. A third form that is sometimes more convenient when dealing with a
- *     mixed environment of IPv4 and IPv6 nodes is "x:x:x:x:x:x:d.d.d.d",
- *     where the 'x' s are the hexadecimal values of the six high-order
- *     16-bit pieces of the address, and the 'd' s are the decimal values
- *     of the four low-order 8-bit pieces of the address (standard IPv4
- *     representation).
- *
- * Input Parameters:
- *   af   - The af argument specifies the family of the address. This can be
- *          AF_INET or AF_INET6.
- *   src  - The src argument points to the string being passed in.
- *   dst  - The dest argument points to memory into which the function stores
- *          the numeric address; this must be large enough to hold the numeric
- *          address (32 bits for AF_INET, 128 bits for
- *          AF_INET6).
- *
- * Returned Value:
- *   The inet_pton() function returns 1 if the conversion succeeds,
- *   with the address pointed to by dest in network byte order. It will
- *   return 0 if the input is not a valid IPv4 dotted-decimal string or
- *   a valid IPv6 address string, or -1 with errno set to EAFNOSUPPORT
- *   if the af argument is unknown.
- *
  ****************************************************************************/
 
 int inet_pton(int af, const char *src, void *dst)

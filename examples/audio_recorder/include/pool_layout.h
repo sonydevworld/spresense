@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_recorder/include/pool_layout.h
+ * pool_layout.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *

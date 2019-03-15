@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player/include/mem_layout.h
+ * mem_layout.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -49,12 +49,12 @@
 #define AUDIO_WORK_AREA_ALIGN   0x00000008
 #define AUDIO_WORK_AREA_ADDR    0x000c0000
 #define AUDIO_WORK_AREA_DRM     0x000c0000 /* _DRM is obsolete macro. to use _ADDR */
-#define AUDIO_WORK_AREA_SIZE    0x0003e000
+#define AUDIO_WORK_AREA_SIZE    0x0003d000
 
 #define MSG_QUE_AREA_ALIGN   0x00000008
-#define MSG_QUE_AREA_ADDR    0x000fe000
-#define MSG_QUE_AREA_DRM     0x000fe000 /* _DRM is obsolete macro. to use _ADDR */
-#define MSG_QUE_AREA_SIZE    0x00001000
+#define MSG_QUE_AREA_ADDR    0x000fd000
+#define MSG_QUE_AREA_DRM     0x000fd000 /* _DRM is obsolete macro. to use _ADDR */
+#define MSG_QUE_AREA_SIZE    0x00002000
 
 #define MEMMGR_WORK_AREA_ALIGN   0x00000008
 #define MEMMGR_WORK_AREA_ADDR    0x000ff000
@@ -159,6 +159,6 @@
 #define L0_PF1_APU_CMD_POOL_NUM_SEG  0x0000000a
 #define L0_PF1_APU_CMD_POOL_SEG_SIZE 0x0000005c
 
-/* Remainder AUDIO_WORK_AREA=0x000168c4 */
+/* Remainder AUDIO_WORK_AREA=0x000158c4 */
 
 #endif /* MEM_LAYOUT_H_INCLUDED */

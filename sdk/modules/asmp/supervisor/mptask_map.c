@@ -55,7 +55,7 @@ static int do_unmap(int cpuid, uint32_t va, uint32_t size)
 {
   sysctl_unmap_t arg;
 
-  arg.cpuid = cpuid;
+  arg.cpuid = cpuid + 2;
   arg.virt  = va;
   arg.size  = size;
 
@@ -74,13 +74,12 @@ static int do_unmap(int cpuid, uint32_t va, uint32_t size)
  *
  ****************************************************************************/
 
-int mptask_map(mptask_t *task)
+int mptask_map(int cpuid, uint32_t pa, uint32_t size)
 {
   sysctl_map_t arg;
-  uint32_t size;
   int ret;
 
-  ASSERT(task->cpuid != 0);
+  ASSERT(cpuid >= 0);
 
   /* Setup map arguments
    * For MP task mapping region is always starts with zero.
@@ -88,11 +87,11 @@ int mptask_map(mptask_t *task)
    * And size is must be tile size aligned.
    */
 
-  size = (task->loadsize + 0xffff) & ~0xffffu;
+  size = alignup(size, 1 << 16);
 
-  arg.cpuid = mptask_getcpuid(task);
+  arg.cpuid = cpuid + 2;
   arg.virt  = 0;
-  arg.phys  = task->loadaddr;
+  arg.phys  = pa;
   arg.size  = size;
 
   ret = cxd56_sysctlcmd(SYSCTL_MAP, (uint32_t)(uintptr_t)&arg);
@@ -116,16 +115,17 @@ int mptask_map(mptask_t *task)
  *
  ****************************************************************************/
 
-void mptask_unmap(mptask_t *task)
+void mptask_unmap(int cpuid, uint32_t size)
 {
-  uint32_t size;
   int ret;
+
+  ASSERT(cpuid >= 0);
 
   /* Set unmap arguments */
 
-  size = (task->loadsize + 0xffff) & ~0xffffu;
+  size = alignup(size, 1 << 16);
 
-  ret = do_unmap(mptask_getcpuid(task), 0, size);
+  ret = do_unmap(cpuid, 0, size);
   if (ret)
     {
       mperr("Unmap failed. %d\n", ret);
@@ -142,14 +142,49 @@ void mptask_unmap(mptask_t *task)
  *
  ****************************************************************************/
 
-void mptask_mapclear(mptask_t *task)
+void mptask_mapclear(int cpuid)
 {
   int ret;
 
-  ret = do_unmap(mptask_getcpuid(task), 0, 0x100000);
+  ASSERT(cpuid >= 0);
+
+  /*
+   * Address converter converts up to 1MB (0x100000).
+   * Clear all of 1MB conversion table.
+   */
+
+  ret = do_unmap(cpuid, 0, 0x100000);
   if (ret)
     {
       mperr("Clear failed. %d\n", ret);
+    }
+  (void) ret;
+}
+
+/****************************************************************************
+ * Name: mptask_mapshrink
+ *
+ * Description:
+ *   Shrink mapped size to @a size.
+ *
+ ****************************************************************************/
+
+void mptask_mapshrink(int cpuid, uint32_t size)
+{
+  int ret;
+  int va;
+
+  ASSERT(cpuid >= 0);
+
+  /* Clear after size to 1MB region */
+
+  va = size;
+  size = 0x100000 - size;
+
+  ret = do_unmap(cpuid, va, size);
+  if (ret)
+    {
+      mperr("Shrink failed. %d\n", ret);
     }
   (void) ret;
 }

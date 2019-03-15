@@ -37,29 +37,16 @@
 #define FILTER_COMPONENT_H
 
 #include "memutils/os_utils/chateau_osal.h"
+#include "apus/apu_cmd.h"
 #include "wien2_common_defs.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
-
-#include "packing_component.h"
-#ifdef CONFIG_AUDIOUTILS_SRC
-#include "src_filter_component.h"
-#endif
-#ifdef CONFIG_AUDIOUTILS_MFE
-#include "mfe_filter_component.h"
-#endif
-#ifdef CONFIG_AUDIOUTILS_MPP
-#include "mpp_filter_component.h"
-#endif
 
 #include "dsp_driver/include/dsp_drv.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
 using namespace MemMgrLite;
-
-
-typedef bool (*FilterCompCallback)(DspDrvComPrm_t*);
 
 /* This enumertation defines all the types of filter component can provide. 
  * For component's user, it is not necessary to know how this component is
@@ -68,73 +55,122 @@ typedef bool (*FilterCompCallback)(DspDrvComPrm_t*);
  */
 enum FilterComponentType
 {
-  SRCOnly = 0,           /* Use single core to process SRC. */
-  MfeOnly,               /* Use MFE-SRC tunnelled modules. */
-  MppEax,                /* Use master: XLOUD-SRC tunnelled
+  SampleRateConv = 0,    /* Use single core to process SRC. */
+  MicFrontEnd,           /* Use MFE-SRC tunnelled modules. */
+  MediaPlayerPost,       /* Use master: XLOUD-SRC tunnelled
                           * and slave: MFE mechenism.
                           */
-  BitWidthConv,          /* Use BitWidth Converter
+  MediaPlayerPostAsSub,
+  Packing,               /* Use BitWidth Converter
                           * (DSP will not be loaded)
                           */
+  Through,               /* Through */
   FilterComponentTypeNum
 };
 
-struct FilterComponentParam
+/* Filter Events */
+
+enum FilterComponentEvent
 {
-  Apu::ApuFilterType filter_type;
-  FilterCompCallback callback;
-
-  union
-  {
-    InitPackingParam init_packing_param;
-    ExecPackingParam exec_packing_param;
-    StopPackingParam stop_packing_param;
-
-#ifdef CONFIG_AUDIOUTILS_SRC
-    InitSRCParam init_src_param;
-    ExecSRCParam exec_src_param;
-    StopSRCParam stop_src_param;
-#endif
-#ifdef CONFIG_AUDIOUTILS_MFE
-    InitMFEParam              init_mfe_param;
-    ExecMFEParam              exec_mfe_param;
-    Apu::ApuSetParamFilterCmd set_mfe_param;
-    Apu::ApuTuningFilterCmd   tuning_mfe_param;
-#endif
-#ifdef CONFIG_AUDIOUTILS_MPP
-    InitXLOUDParam            init_xloud_param;
-    ExecXLOUDParam            exec_xloud_param;
-    Apu::ApuSetParamFilterCmd set_mpp_param;
-    Apu::ApuTuningFilterCmd   tuning_mpp_param;
-#endif
-  };
-};
-
-struct FilterCompCmpltParam
-{
-  Apu::ApuEventType event_type;
-
-  BufferHeader output_buffer;
+  InitEvent = 0,
+  ExecEvent,
+  StopEvent,
+  SetParamEvent,
+  TuningEvent
 };
 
 /*--------------------------------------------------------------------*/
-extern "C" {
+/* Data structure definitions                                         */
+/*--------------------------------------------------------------------*/
 
-uint32_t AS_filter_activate(FilterComponentType,
-                            const char *,
-                            MsgQueId,
-                            PoolId,
-                            uint32_t*);
-bool AS_filter_deactivate(FilterComponentType);
-uint32_t AS_filter_init(FilterComponentParam, uint32_t*);
-bool AS_filter_exec(FilterComponentParam);
-bool AS_filter_stop(FilterComponentParam);
-bool AS_filter_setparam(FilterComponentParam);
-bool AS_filter_tuning(FilterComponentParam);
-bool AS_filter_recv_done(Apu::ApuFilterType type);
+/* Base of Init Filter Parameters */
 
-} /* extern "C" */
+struct InitFilterParam
+{
+  int32_t  sample_per_frame;
+  uint32_t in_fs;
+  uint32_t out_fs;
+  uint16_t in_bytelength;
+  uint16_t out_bytelength;
+  uint8_t  ch_num;
+};
+
+/* Base of Exec Filter Parameters */
+
+struct ExecFilterParam
+{
+  BufferHeader in_buffer;
+  BufferHeader out_buffer;
+};
+
+/* Base of Stop Filter Parameters */
+
+struct StopFilterParam
+{
+  BufferHeader out_buffer;
+};
+
+/* Base of Set Filter Parameters */
+
+struct SetFilterParam
+{
+};
+
+/* Base of Tuning Filter Parameters */
+
+struct TuningFilterParam
+{
+};
+
+/* Base of Filter Complete Reply Parameters */
+
+struct FilterCompCmpltParam
+{
+  FilterComponentEvent event_type;
+  FilterComponentType  filter_type;
+  bool result;
+
+  BufferHeader out_buffer;
+};
+
+/* Filter Complete Reply Callback */
+
+typedef bool (*FilterCompCallback)(FilterCompCmpltParam *);
+
+/*--------------------------------------------------------------------*/
+/* Class definitions                                                  */
+/*--------------------------------------------------------------------*/
+
+/* Filter Component Class */
+
+class FilterComponent
+{
+public:
+
+  FilterComponent() {}
+  virtual ~FilterComponent() {}
+
+  virtual bool setCallBack(FilterCompCallback func) { m_callback = func; return true; }
+
+  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf) = 0;
+  virtual bool deactivate_apu(void) = 0;
+  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf) = 0;
+  virtual bool exec_apu(ExecFilterParam *param) = 0;
+  virtual bool flush_apu(StopFilterParam *param) = 0;
+
+  virtual bool setparam_apu(SetFilterParam *param) = 0;
+  virtual bool tuning_apu(TuningFilterParam *param) = 0;
+
+  virtual bool recv_done(void) = 0;
+
+private:
+
+protected:
+
+  FilterCompCallback m_callback;
+};
 
 __WIEN2_END_NAMESPACE
 
 #endif /* FILTER_COMPONENT_H */
+

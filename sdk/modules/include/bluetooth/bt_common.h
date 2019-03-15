@@ -356,6 +356,8 @@ int ble_disable(void);
 /**
  * @brief Bluetooth LE connect for Central
  *
+ * @param[in] ble_state: Bluetooth context @ref ble_state_s
+ *
  * @retval error code
  */
 
@@ -363,6 +365,8 @@ int ble_connect(struct ble_state_s *ble_state);
 
 /**
  * @brief Bluetooth LE dicsonnect for Central
+ *
+ * @param[in] ble_state: Bluetooth context @ref ble_state_s
  *
  * @retval error code
  */

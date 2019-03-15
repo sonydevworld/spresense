@@ -48,17 +48,6 @@
 
 /****************************************************************************
  * Name: altcom_freeaddrinfo
- *
- * Description:
- *   The altcom_freeaddrinfo() function frees the memory that was allocated
- *   for the dynamically allocated linked list res. 
- *
- * Parameters:
- *   res - The res returned by altcom_getaddrinfo()
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 void altcom_freeaddrinfo(struct altcom_addrinfo *res)

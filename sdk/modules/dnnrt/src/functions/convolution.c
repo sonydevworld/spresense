@@ -267,7 +267,7 @@ static int var_buf_size(rt_variable_t * var)
     }
   else
     {
-      DNN_PRINT("unsupported data type %d\n", var->type);
+      dnn_err("unsupported data type %d in convolution\n", var->type);
       return 0;
     }
 
@@ -353,7 +353,7 @@ dnnrt_convolution_alloc(nn_network_t * net, void *function_context)
 
   if (!validate_params(&func->func, &scratch_buf_bsize))
     {
-      DNN_PRINT("this NNB is unsupported by dnnrt\n");
+      dnn_info("data type combination of convolution is unsupported\n");
       return RT_RET_FUNCTION_MATCH;
     }
 

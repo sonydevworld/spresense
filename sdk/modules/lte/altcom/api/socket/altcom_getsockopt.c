@@ -68,29 +68,6 @@
 
 /****************************************************************************
  * Name: altcom_getsockopt
- *
- * Description:
- *   altcom_getsockopt() retrieve thse value for the option specified by the
- *   'option' argument for the socket specified by the 'sockfd' argument. If
- *   the size of the option value is greater than 'value_len', the value
- *   stored in the object pointed to by the 'value' argument will be silently
- *   truncated. Otherwise, the length pointed to by the 'value_len' argument
- *   will be modified to indicate the actual length of the'value'.
- *
- *   The 'level' argument specifies the protocol level of the option. To
- *   retrieve options at the socket level, specify the level argument as
- *   ALTCOM_SOL_SOCKET.
- *
- * Parameters:
- *   sockfd    Socket descriptor of socket
- *   level     Protocol level to set the option
- *   option    identifies the option to get
- *   value     Points to the argument value
- *   value_len The length of the argument value
- *
- * Returned Value:
- *   0 on success; -1 on error with errno set appropriately
- *
  ****************************************************************************/
 
 int altcom_getsockopt(int sockfd, int level, int option, void *value,

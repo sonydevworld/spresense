@@ -1543,13 +1543,13 @@ void cxd56_audio_ac_reg_enable_i2s_src2(void)
 /*--------------------------------------------------------------------------*/
 void cxd56_audio_ac_reg_enable_i2s_bcklrckout(void)
 {
-  write_ac_reg(RI_SDCK_OUTENX, 1);
+  write_ac_reg(RI_SDCK_OUTENX, 0);
 }
 
 /*--------------------------------------------------------------------------*/
 void cxd56_audio_ac_reg_disable_i2s_bcklrckout(void)
 {
-  write_ac_reg(RI_SDCK_OUTENX, 0);
+  write_ac_reg(RI_SDCK_OUTENX, 1);
 }
 
 /*--------------------------------------------------------------------------*/

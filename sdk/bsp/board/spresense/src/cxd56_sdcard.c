@@ -262,6 +262,19 @@ static int board_sdcard_detect_int(int irq, FAR void *context, FAR void *arg)
 
       g_sdhci.inserted = inserted;
 
+      if (inserted)
+        {
+          /* Card Detect = Present, Write Protect = disable */
+
+          putreg32(0, CXD56_TOPREG_IOFIX_APP);
+        }
+      else
+        {
+          /* Card Detect = Not present, Write Protect = disable */
+
+          putreg32(1, CXD56_TOPREG_IOFIX_APP);
+        }
+
       /* Check context */
 
       if (up_interrupt_context())
@@ -388,16 +401,9 @@ int board_sdcard_finalize(void)
   cxd56_gpioint_disable(PIN_SDIO_CD);
 #endif
 
-#ifdef CONFIG_SDCARD_TXS02612_PORT0
   /* Disable SDIO pin configuration */
 
   CXD56_PIN_CONFIGS(PINCONFS_SDIOA_GPIO);
-  CXD56_PIN_CONFIGS(PINCONFS_SDIOB_GPIO);
-#else
-  /* Disable SDIO pin configuration */
-
-  CXD56_PIN_CONFIGS(PINCONFS_SDIOA_GPIO);
-#endif
 
   /* Set GPIO pin to initial state */
 
@@ -463,17 +469,9 @@ void board_sdcard_pin_configuraton(void)
   cxd56_gpio_write_hiz(PIN_SDIO_DATA2);
   cxd56_gpio_write_hiz(PIN_SDIO_DATA3);
 
-#ifdef CONFIG_SDCARD_TXS02612_PORT0
   /* SDIO pin configuration */
 
   CXD56_PIN_CONFIGS(PINCONFS_SDIOA_SDIO);
-  CXD56_PIN_CONFIGS(PINCONFS_SDIOB_SDCARD);
-#else
-  /* SDIO pin configuration with CD, WP pin disabled */
-
-  putreg32(0, CXD56_TOPREG_IOFIX_APP);
-  CXD56_PIN_CONFIGS(PINCONFS_SDIOA_SDIO);
-#endif
 }
 
 /****************************************************************************

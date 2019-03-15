@@ -79,6 +79,7 @@ ifeq ($(WINTOOL),y)
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)lte}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)socket}"
+  CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)mbedtls}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)evtdisp}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)gw}"
   CFLAGS += -I "${shell cygpath -w $(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include}"
@@ -94,6 +95,7 @@ else
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)lte
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)socket
+  CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)api$(DELIM)mbedtls
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)evtdisp
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)gw
   CFLAGS += -I$(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include

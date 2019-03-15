@@ -66,17 +66,6 @@
 
 /****************************************************************************
  * Name: freeaddrinfo
- *
- * Description:
- *   The freeaddrinfo() function frees the memory that was allocated
- *   for the dynamically allocated linked list res. 
- *
- * Parameters:
- *   res - The res returned by getaddrinfo()
- *
- * Returned Value:
- *   None.
- *
  ****************************************************************************/
 
 void freeaddrinfo(struct addrinfo *res)

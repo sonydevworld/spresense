@@ -42,10 +42,6 @@
 CMSIS_NN = libcmsis_nn$(LIBEXT)
 BIN = $(CMSIS_NN)
 
-# CFLAGS definitions
-
-include ../LibIncludes.mk
-
 CMSIS_ROOT = ../CMSIS_5/CMSIS
 
 SUBDIRS := $(dir $(wildcard $(CMSIS_ROOT)/NN/Source/*/))

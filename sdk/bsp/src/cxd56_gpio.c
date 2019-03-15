@@ -295,33 +295,3 @@ int cxd56_gpio_status(uint32_t pin, cxd56_gpio_status_t *stat)
   return 0;
 }
 
-#ifdef CONFIG_DEBUG
-
-/********************************************************************************************
- * Function:  cxd56_gpio_dump
- *
- * Description:
- *   Dump a gpio pin configuration
- *
- ********************************************************************************************/
-
-int cxd56_gpio_dump(uint32_t pin, const char *msg)
-{
-  int ret = 0;
-  cxd56_gpio_status_t stat;
-
-  ret = cxd56_gpio_status(pin, &stat);
-
-  if (!ret)
-    {
-      _info("[GPIO] PIN: %3d %c%c %s --- %s\n",
-            pin,
-            stat.input_en ? 'I' : ' ',
-            stat.output_en ? 'O' : ' ',
-            cxd56_gpio_read(pin) ? "Hi " : "Lo", msg);
-    }
-
-  return ret;
-}
-
-#endif

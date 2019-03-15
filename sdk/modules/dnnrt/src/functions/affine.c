@@ -271,7 +271,7 @@ static int var_buf_size(rt_variable_t * var)
     }
   else
     {
-      DNN_PRINT("unsupported data type %d\n", var->type);
+      dnn_err("unsupported data type %d in affine\n", var->type);
       return 0;
     }
 

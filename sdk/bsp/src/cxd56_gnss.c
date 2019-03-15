@@ -55,6 +55,7 @@
 #include <arch/board/board.h>
 #include "cxd56_gnss_api.h"
 #include "cxd56_cpu1signal.h"
+#include "cxd56_gnss.h"
 
 #if defined(CONFIG_CXD56_GNSS)
 
@@ -2193,7 +2194,7 @@ static void cxd56_gnss_default_sighandler(uint32_t data, FAR void *userdata)
       if (fds)
         {
           fds->revents |= POLLIN;
-          _info("Report events: %02x\n", fds->revents);
+          gnssinfo("Report events: %02x\n", fds->revents);
           sem_post(fds->sem);
         }
     }
@@ -2792,7 +2793,7 @@ static int cxd56_gnss_register(FAR const char *devpath)
     sizeof(struct cxd56_gnss_dev_s));
   if (!priv)
     {
-      _err("Failed to allocate instance\n");
+      gnsserr("Failed to allocate instance\n");
       return -ENOMEM;
     }
 
@@ -2801,35 +2802,35 @@ static int cxd56_gnss_register(FAR const char *devpath)
   ret = sem_init(&priv->devsem, 0, 1);
   if (ret < 0)
     {
-      _err("Failed to initialize gnss devsem!\n");
+      gnsserr("Failed to initialize gnss devsem!\n");
       goto _err0;
     }
 
   ret = sem_init(&priv->apiwait, 0, 0);
   if (ret < 0)
     {
-      _err("Failed to initialize gnss apiwait!\n");
+      gnsserr("Failed to initialize gnss apiwait!\n");
       goto _err0;
     }
 
   ret = sem_init(&priv->ioctllock, 0, 1);
   if (ret < 0)
     {
-      _err("Failed to initialize gnss ioctllock!\n");
+      gnsserr("Failed to initialize gnss ioctllock!\n");
       goto _err0;
     }
 
   ret = cxd56_gnss_initialize(priv);
   if (ret < 0)
     {
-      _err("Failed to initialize gnss device!\n");
+      gnsserr("Failed to initialize gnss device!\n");
       goto _err0;
     }
 
   ret = register_driver(devpath, &g_gnssfops, 0666, priv);
   if (ret < 0)
     {
-      _err("Failed to register driver: %d\n", ret);
+      gnsserr("Failed to register driver: %d\n", ret);
       goto _err0;
     }
 
@@ -2838,7 +2839,7 @@ static int cxd56_gnss_register(FAR const char *devpath)
       ret = cxd56_cpu1siginit(devsig_table[i].sigtype, priv);
       if (ret < 0)
         {
-          _err("Failed to initialize ICC for GPS CPU: %d,%d\n", ret,
+          gnsserr("Failed to initialize ICC for GPS CPU: %d,%d\n", ret,
                 devsig_table[i].sigtype);
           goto _err2;
         }
@@ -2846,7 +2847,7 @@ static int cxd56_gnss_register(FAR const char *devpath)
                                    devsig_table[i].handler);
     }
 
-  _info("GNSS driver loaded successfully!\n");
+  gnssinfo("GNSS driver loaded successfully!\n");
 
   return ret;
 
@@ -2875,12 +2876,12 @@ int cxd56_gnssinitialize(FAR const char *devpath)
 {
   int ret;
 
-  _info("Initializing GNSS..\n");
+  gnssinfo("Initializing GNSS..\n");
 
   ret = cxd56_gnss_register(devpath);
   if (ret < 0)
     {
-      _err("Error registering GNSS\n");
+      gnsserr("Error registering GNSS\n");
     }
 
   return ret;

@@ -58,6 +58,7 @@
 #define GETHOSTBYNAME_RES_DATALEN (sizeof(struct apicmd_gethostbynameres_s))
 
 #define NAME_LENGTH (APICMD_GETHOSTBYNAME_NAME_MAX_LENGTH + 1)
+#define ALIASNAME_LENGTH (APICMD_GETHOSTBYNAME_RES_H_ALIASES_LENGTH + 1)
 
 #define GETHOSTBYNAME_REQ_SUCCESS 0
 #define GETHOSTBYNAME_REQ_FAILURE -1
@@ -74,23 +75,20 @@ int altcom_h_errno;
 
 /****************************************************************************
  * Name: gethostbyname_request
- *
- * Description:
- *   Send APICMDID_SOCK_GETHOSTBYNAME_REQ.
- *
  ****************************************************************************/
 
 static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
                                      FAR struct altcom_hostent *result)
 {
   int32_t                              ret;
-  int32_t                              err    = 0;
   uint16_t                             reslen = 0;
   FAR struct apicmd_gethostbyname_s    *cmd   = NULL;
   FAR struct apicmd_gethostbynameres_s *res   = NULL;
   static struct altcom_in6_addr        s_hostent_addr;
   static char                          *s_phostent_addr[2];
   static char                          s_hostname[NAME_LENGTH];
+  static char                          s_aliasname[ALIASNAME_LENGTH];
+  static char                          *s_paliasname[2];
   int32_t                              l_namelen;
   int32_t                              aliaslen;
 
@@ -99,6 +97,7 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
     GETHOSTBYNAME_REQ_DATALEN,
     (FAR void **)&res, GETHOSTBYNAME_RES_DATALEN))
     {
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       return GETHOSTBYNAME_REQ_FAILURE;
     }
 
@@ -110,31 +109,30 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
   if (0 > ret)
     {
       DBGIF_LOG1_ERROR("apicmdgw_send error: %d\n", ret);
-      err = -ret;
-      DBGIF_LOG1_ERROR("apicmdgw_send() :%d.\n", err);
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       goto errout_with_cmdfree;
     }
 
   if (GETHOSTBYNAME_RES_DATALEN != reslen)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
-      ret = ALTCOM_EFAULT;
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       goto errout_with_cmdfree;
     }
 
   ret = ntohl(res->ret_code);
   if (APICMD_GETHOSTBYNAME_RES_RET_CODE_OK != ret)
     {
+      DBGIF_LOG1_ERROR("API command response is err :%d.\n", ret);
       altcom_h_errno = ret;
-      err = GETHOSTBYNAME_REQ_FAILURE;
-      DBGIF_LOG1_ERROR("API command response is err :%d.\n", err);
       goto errout_with_cmdfree;
     }
 
   /* Fill command result */
 
   result->h_addrtype = ntohl(res->h_addrtype);
-  l_namelen = strlen((FAR char *)res->h_name);
+  l_namelen = strnlen((FAR char *)res->h_name,
+                      APICMD_GETHOSTBYNAME_NAME_MAX_LENGTH);
   if (0 < l_namelen)
     {
       memset(s_hostname, 0, sizeof(s_hostname));
@@ -151,21 +149,23 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
   s_phostent_addr[0] = (FAR char *)&s_hostent_addr;
 
   s_phostent_addr[1] = NULL;
-  result->h_addr_list = (FAR char**)&s_phostent_addr;
+  result->h_addr_list = s_phostent_addr;
 
   aliaslen = strnlen((FAR char *)res->h_aliases,
                      APICMD_GETHOSTBYNAME_RES_H_ALIASES_LENGTH);
-  DBGIF_LOG1_ERROR("h_aliases len =%d\n", aliaslen);
 
   if (aliaslen > 0)
     {
-      memcpy(result->h_aliases,
-             res->h_aliases, aliaslen);
+      memset(s_aliasname, 0, sizeof(s_aliasname));
+      memcpy(s_aliasname, res->h_aliases, aliaslen);
+      s_paliasname[0] = s_aliasname;
     }
   else
     {
-      result->h_aliases = NULL;
+      s_paliasname[0] = NULL;
     }
+  s_paliasname[1] = NULL;
+  result->h_aliases = s_paliasname;
 
   altcom_sock_free_cmdandresbuff(cmd, res);
 
@@ -173,7 +173,7 @@ static int32_t gethostbyname_request(FAR const char *name, int32_t namelen,
 
 errout_with_cmdfree:
   altcom_sock_free_cmdandresbuff(cmd, res);
-  return err;
+  return GETHOSTBYNAME_REQ_FAILURE;
 }
 
 /****************************************************************************
@@ -182,30 +182,6 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_gethostbyname
- *
- * Description:
- *   The altcom_gethostbyname() function returns a structure of type hostent
- *   for the given host name. Here name is either a hostname, or an IPv4
- *   address in standard dot notation (as for inet_addr(3)), or an IPv6
- *   address in colon (and possibly dot) notation.
- *
- *   If name is an IPv4 or IPv6 address, no lookup is performed and
- *   altcom_gethostbyname_r() simply copies name into the h_name field
- *   and its struct in_addr equivalent into the h_addr_list[0] field of the
- *   returned hostent structure.
- *
- * Input Parameters:
- *   name - The name of the host to find.
- *
- * Returned Value:
- *   Upon successful completion, this function will return a pointer to a
- *   hostent structure if the requested entry was found, and a null pointer
- *   if the end of the database was reached or the requested entry was not
- *   found.
- *
- *   Upon unsuccessful completion, altcom_gethostbyname() will set h_errno to
- *   indicate the error
- *
  ****************************************************************************/
 
 struct altcom_hostent *altcom_gethostbyname(const char *name)
@@ -214,15 +190,20 @@ struct altcom_hostent *altcom_gethostbyname(const char *name)
   uint32_t                     namelen = 0;
   static struct altcom_hostent s_hostent;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
       DBGIF_LOG_ERROR("Not intialized\n");
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       return NULL;
     }
 
   if (!name)
     {
       DBGIF_LOG_ERROR("Invalid param\n");
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       return NULL;
     }
 
@@ -230,6 +211,7 @@ struct altcom_hostent *altcom_gethostbyname(const char *name)
   if (!namelen || APICMD_GETHOSTBYNAME_NAME_MAX_LENGTH < namelen)
     {
       DBGIF_LOG1_ERROR("Invalid param. namelen = [%d]\n", namelen);
+      altcom_h_errno = ALTCOM_HOST_NOT_FOUND;
       return NULL;
     }
 

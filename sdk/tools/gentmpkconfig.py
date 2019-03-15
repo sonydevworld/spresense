@@ -57,6 +57,11 @@ EXCLUDES = ['nuttx', 'apps', 'sdk']
 # Search top of Kconfig in the same level directories
 
 kconfigs = glob.glob('../*/Kconfig')
+
+# Add kconfigs from user application
+if 'SPRESENSE_HOME' in os.environ:
+    kconfigs = kconfigs + glob.glob(os.path.join(os.environ['SPRESENSE_HOME'], "Kconfig"))
+
 for c in kconfigs:
     dn = os.path.dirname(c).split('/')[-1]
 

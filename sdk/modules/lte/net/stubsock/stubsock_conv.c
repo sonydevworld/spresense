@@ -66,10 +66,6 @@
 
 /****************************************************************************
  * Name: stubsock_convdomain_remote()
- *
- * Description:
- *   Convert domain to remote definition.
- *
  ****************************************************************************/
 
 int stubsock_convdomain_remote(int domain)
@@ -100,10 +96,6 @@ int stubsock_convdomain_remote(int domain)
 
 /****************************************************************************
  * Name: stubsock_convdomain_local()
- *
- * Description:
- *   Convert domain to local definition.
- *
  ****************************************************************************/
 
 int stubsock_convdomain_local(int domain)
@@ -134,10 +126,6 @@ int stubsock_convdomain_local(int domain)
 
 /****************************************************************************
  * Name: stubsock_convtype_remote()
- *
- * Description:
- *   Convert type to remote definition.
- *
  ****************************************************************************/
 
 int stubsock_convtype_remote(int type)
@@ -168,10 +156,6 @@ int stubsock_convtype_remote(int type)
 
 /****************************************************************************
  * Name: stubsock_convtype_local()
- *
- * Description:
- *   Convert type to local definition.
- *
  ****************************************************************************/
 
 int stubsock_convtype_local(int type)
@@ -202,10 +186,6 @@ int stubsock_convtype_local(int type)
 
 /****************************************************************************
  * Name: stubsock_convproto_remote()
- *
- * Description:
- *   Convert protocol to remote definition.
- *
  ****************************************************************************/
 
 int stubsock_convproto_remote(int protocol)
@@ -256,10 +236,6 @@ int stubsock_convproto_remote(int protocol)
 
 /****************************************************************************
  * Name: stubsock_convproto_local()
- *
- * Description:
- *   Convert protocol to local definition.
- *
  ****************************************************************************/
 
 int stubsock_convproto_local(int protocol)
@@ -310,10 +286,6 @@ int stubsock_convproto_local(int protocol)
 
 /****************************************************************************
  * Name: stubsock_convflags_remote()
- *
- * Description:
- *   Convert flags to remote definition.
- *
  ****************************************************************************/
 
 int stubsock_convflags_remote(int flags)
@@ -350,10 +322,6 @@ int stubsock_convflags_remote(int flags)
 
 /****************************************************************************
  * Name: stubsock_convflags_local()
- *
- * Description:
- *   Convert flags to local definition.
- *
  ****************************************************************************/
 
 int stubsock_convflags_local(int flags)
@@ -391,10 +359,6 @@ int stubsock_convflags_local(int flags)
 
 /****************************************************************************
  * Name: stubsock_convaiflags_remote()
- *
- * Description:
- *   Convert ai_flags to remote definition.
- *
  ****************************************************************************/
 
 int stubsock_convaiflags_remote(int ai_flags)
@@ -441,10 +405,6 @@ int stubsock_convaiflags_remote(int ai_flags)
 
 /****************************************************************************
  * Name: stubsock_convsockaddr_remote()
- *
- * Description:
- *   Convert sockaddr to remote definition.
- *
  ****************************************************************************/
 
 void stubsock_convsockaddr_remote(FAR const struct sockaddr *from,
@@ -481,10 +441,6 @@ void stubsock_convsockaddr_remote(FAR const struct sockaddr *from,
 
 /****************************************************************************
  * Name: stubsock_convstorage_local()
- *
- * Description:
- *   Convert sockaddr_storage to local definition.
- *
  ****************************************************************************/
 
 void stubsock_convstorage_local(FAR const struct altcom_sockaddr_storage *from,
@@ -515,6 +471,40 @@ void stubsock_convstorage_local(FAR const struct altcom_sockaddr_storage *from,
       memcpy(&in6addr_to->sin6_addr, &in6addr_from->sin6_addr,
              sizeof(struct in6_addr));
     }
+}
+
+/****************************************************************************
+ * Name: stubsock_convherrno_local()
+ ****************************************************************************/
+
+int stubsock_convherrno_local(int herr)
+{
+  int ret;
+
+  switch(herr)
+    {
+      case ALTCOM_HOST_NOT_FOUND:
+        ret = HOST_NOT_FOUND;
+        break;
+
+      case ALTCOM_NO_DATA:
+        ret = NO_DATA;
+        break;
+
+      case ALTCOM_NO_RECOVERY:
+        ret = NO_RECOVERY;
+        break;
+
+      case ALTCOM_TRY_AGAIN:
+        ret = TRY_AGAIN;
+        break;
+
+      default:
+        ret = herr;
+        break;
+    }
+
+  return ret;
 }
 
 #endif /* CONFIG_NET && CONFIG_NET_DEV_SPEC_SOCK */

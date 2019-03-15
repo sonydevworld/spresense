@@ -142,7 +142,6 @@
 
 struct pmic_gauge_s
 {
-  int reserved;
   int voltage;
   int current;
   int temp;

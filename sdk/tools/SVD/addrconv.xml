@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>ADDRCONV</name>
+  <version>1.0</version>
+  <description>Address Converter</description>
+  <baseAddress>0x02012000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x1000</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <!-- TODO: GNU MCU Eclipse plugin raise a Null pointer exception by using cluster.
+       Address Converter registers are the same in each CPUs, so we should to use
+       the cluster tag.
+  -->
+
+  <registers>
+    <!-- ACNV_P0_DST0: -->
+    <register>
+      <name>ACNV_P0_DST0</name>
+      <description>CPU 0 address conversion area 0/1</description>
+      <addressOffset>0x04</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00010000</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_0</name>
+          <description>0x00000 .. 0x10000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_1</name>
+          <description>0x10000 .. 0x20000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST1: -->
+    <register>
+      <name>ACNV_P0_DST1</name>
+      <description>CPU 0 address conversion area 2/3</description>
+      <addressOffset>0x08</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00030002</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_2</name>
+          <description>0x20000 .. 0x30000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_3</name>
+          <description>0x30000 .. 0x40000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST2: -->
+    <register>
+      <name>ACNV_P0_DST2</name>
+      <description>CPU 0 address conversion area 4/5</description>
+      <addressOffset>0x0c</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00050004</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_4</name>
+          <description>0x40000 .. 0x50000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_5</name>
+          <description>0x50000 .. 0x60000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST3: -->
+    <register>
+      <name>ACNV_P0_DST3</name>
+      <description>CPU 0 address conversion area 6/7</description>
+      <addressOffset>0x10</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00070006</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_6</name>
+          <description>0x60000 .. 0x70000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_7</name>
+          <description>0x70000 .. 0x80000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST4: -->
+    <register>
+      <name>ACNV_P0_DST4</name>
+      <description>CPU 0 address conversion area 8/9</description>
+      <addressOffset>0x14</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x00090008</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_8</name>
+          <description>0x80000 .. 0x90000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_9</name>
+          <description>0x90000 .. 0xa0000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST5: -->
+    <register>
+      <name>ACNV_P0_DST5</name>
+      <description>CPU 0 address conversion area A/B</description>
+      <addressOffset>0x18</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x000b000a</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_A</name>
+          <description>0xa0000 .. 0xb0000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_B</name>
+          <description>0xb0000 .. 0xc0000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST6: -->
+    <register>
+      <name>ACNV_P0_DST6</name>
+      <description>CPU 0 address conversion area C/D</description>
+      <addressOffset>0x1c</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x000d000c</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_C</name>
+          <description>0xc0000 .. 0xd0000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_D</name>
+          <description>0xd0000 .. 0xe0000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P0_DST7: -->
+    <register>
+      <name>ACNV_P0_DST7</name>
+      <description>CPU 0 address conversion area E/F</description>
+      <addressOffset>0x20</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x000f000e</resetValue>
+      <resetMask>0x07FF07FF</resetMask>
+      <fields>
+        <field>
+          <name>AREA_E</name>
+          <description>0xe0000 .. 0xf0000</description>
+          <bitRange>[10:0]</bitRange>
+        </field>
+        <field>
+          <name>AREA_F</name>
+          <description>0xf0000 .. 0x100000</description>
+          <bitRange>[26:16]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACNV_P1_DST0: -->
+    <register derivedFrom="ACNV_P0_DST0">
+      <name>ACNV_P1_DST0</name>
+      <description>CPU 1 address conversion area 0/1</description>
+      <addressOffset>0x24</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST1: -->
+    <register derivedFrom="ACNV_P0_DST1">
+      <name>ACNV_P1_DST1</name>
+      <description>CPU 1 address conversion area 2/3</description>
+      <addressOffset>0x28</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST2: -->
+    <register derivedFrom="ACNV_P0_DST2">
+      <name>ACNV_P1_DST2</name>
+      <description>CPU 1 address conversion area 4/5</description>
+      <addressOffset>0x2c</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST3: -->
+    <register derivedFrom="ACNV_P0_DST3">
+      <name>ACNV_P1_DST3</name>
+      <description>CPU 1 address conversion area 6/7</description>
+      <addressOffset>0x30</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST4: -->
+    <register derivedFrom="ACNV_P0_DST4">
+      <name>ACNV_P1_DST4</name>
+      <description>CPU 1 address conversion area 8/9</description>
+      <addressOffset>0x34</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST5: -->
+    <register derivedFrom="ACNV_P0_DST5">
+      <name>ACNV_P1_DST5</name>
+      <description>CPU 1 address conversion area A/B</description>
+      <addressOffset>0x38</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST6: -->
+    <register derivedFrom="ACNV_P0_DST6">
+      <name>ACNV_P1_DST6</name>
+      <description>CPU 1 address conversion area C/D</description>
+      <addressOffset>0x3c</addressOffset>
+    </register>
+    <!-- ACNV_P1_DST7: -->
+    <register derivedFrom="ACNV_P0_DST7">
+      <name>ACNV_P1_DST7</name>
+      <description>CPU 1 address conversion area E/F</description>
+      <addressOffset>0x40</addressOffset>
+    </register>
+
+    <!-- ACNV_P2_DST0: -->
+    <register derivedFrom="ACNV_P0_DST0">
+      <name>ACNV_P2_DST0</name>
+      <description>CPU 2 address conversion area 0/1</description>
+      <addressOffset>0x44</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST1: -->
+    <register derivedFrom="ACNV_P0_DST1">
+      <name>ACNV_P2_DST1</name>
+      <description>CPU 2 address conversion area 2/3</description>
+      <addressOffset>0x48</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST2: -->
+    <register derivedFrom="ACNV_P0_DST2">
+      <name>ACNV_P2_DST2</name>
+      <description>CPU 2 address conversion area 4/5</description>
+      <addressOffset>0x4c</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST3: -->
+    <register derivedFrom="ACNV_P0_DST3">
+      <name>ACNV_P2_DST3</name>
+      <description>CPU 2 address conversion area 6/7</description>
+      <addressOffset>0x50</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST4: -->
+    <register derivedFrom="ACNV_P0_DST4">
+      <name>ACNV_P2_DST4</name>
+      <description>CPU 2 address conversion area 8/9</description>
+      <addressOffset>0x54</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST5: -->
+    <register derivedFrom="ACNV_P0_DST5">
+      <name>ACNV_P2_DST5</name>
+      <description>CPU 2 address conversion area A/B</description>
+      <addressOffset>0x58</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST6: -->
+    <register derivedFrom="ACNV_P0_DST6">
+      <name>ACNV_P2_DST6</name>
+      <description>CPU 2 address conversion area C/D</description>
+      <addressOffset>0x5c</addressOffset>
+    </register>
+    <!-- ACNV_P2_DST7: -->
+    <register derivedFrom="ACNV_P0_DST7">
+      <name>ACNV_P2_DST7</name>
+      <description>CPU 2 address conversion area E/F</description>
+      <addressOffset>0x60</addressOffset>
+    </register>
+
+    <!-- ACNV_P3_DST0: -->
+    <register derivedFrom="ACNV_P0_DST0">
+      <name>ACNV_P3_DST0</name>
+      <description>CPU 3 address conversion area 0/1</description>
+      <addressOffset>0x64</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST1: -->
+    <register derivedFrom="ACNV_P0_DST1">
+      <name>ACNV_P3_DST1</name>
+      <description>CPU 3 address conversion area 2/3</description>
+      <addressOffset>0x68</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST2: -->
+    <register derivedFrom="ACNV_P0_DST2">
+      <name>ACNV_P3_DST2</name>
+      <description>CPU 3 address conversion area 4/5</description>
+      <addressOffset>0x6c</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST3: -->
+    <register derivedFrom="ACNV_P0_DST3">
+      <name>ACNV_P3_DST3</name>
+      <description>CPU 3 address conversion area 6/7</description>
+      <addressOffset>0x70</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST4: -->
+    <register derivedFrom="ACNV_P0_DST4">
+      <name>ACNV_P3_DST4</name>
+      <description>CPU 3 address conversion area 8/9</description>
+      <addressOffset>0x74</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST5: -->
+    <register derivedFrom="ACNV_P0_DST5">
+      <name>ACNV_P3_DST5</name>
+      <description>CPU 3 address conversion area A/B</description>
+      <addressOffset>0x78</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST6: -->
+    <register derivedFrom="ACNV_P0_DST6">
+      <name>ACNV_P3_DST6</name>
+      <description>CPU 3 address conversion area C/D</description>
+      <addressOffset>0x7c</addressOffset>
+    </register>
+    <!-- ACNV_P3_DST7: -->
+    <register derivedFrom="ACNV_P0_DST7">
+      <name>ACNV_P3_DST7</name>
+      <description>CPU 3 address conversion area E/F</description>
+      <addressOffset>0x80</addressOffset>
+    </register>
+
+    <!-- ACNV_P4_DST0: -->
+    <register derivedFrom="ACNV_P0_DST0">
+      <name>ACNV_P4_DST0</name>
+      <description>CPU 4 address conversion area 0/1</description>
+      <addressOffset>0x84</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST1: -->
+    <register derivedFrom="ACNV_P0_DST1">
+      <name>ACNV_P4_DST1</name>
+      <description>CPU 4 address conversion area 2/3</description>
+      <addressOffset>0x88</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST2: -->
+    <register derivedFrom="ACNV_P0_DST2">
+      <name>ACNV_P4_DST2</name>
+      <description>CPU 4 address conversion area 4/5</description>
+      <addressOffset>0x8c</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST3: -->
+    <register derivedFrom="ACNV_P0_DST3">
+      <name>ACNV_P4_DST3</name>
+      <description>CPU 4 address conversion area 6/7</description>
+      <addressOffset>0x90</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST4: -->
+    <register derivedFrom="ACNV_P0_DST4">
+      <name>ACNV_P4_DST4</name>
+      <description>CPU 4 address conversion area 8/9</description>
+      <addressOffset>0x94</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST5: -->
+    <register derivedFrom="ACNV_P0_DST5">
+      <name>ACNV_P4_DST5</name>
+      <description>CPU 4 address conversion area A/B</description>
+      <addressOffset>0x98</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST6: -->
+    <register derivedFrom="ACNV_P0_DST6">
+      <name>ACNV_P4_DST6</name>
+      <description>CPU 4 address conversion area C/D</description>
+      <addressOffset>0x9c</addressOffset>
+    </register>
+    <!-- ACNV_P4_DST7: -->
+    <register derivedFrom="ACNV_P0_DST7">
+      <name>ACNV_P4_DST7</name>
+      <description>CPU 4 address conversion area E/F</description>
+      <addressOffset>0xa0</addressOffset>
+    </register>
+
+    <!-- ACNV_P5_DST0: -->
+    <register derivedFrom="ACNV_P0_DST0">
+      <name>ACNV_P5_DST0</name>
+      <description>CPU 5 address conversion area 0/1</description>
+      <addressOffset>0xa4</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST1: -->
+    <register derivedFrom="ACNV_P0_DST1">
+      <name>ACNV_P5_DST1</name>
+      <description>CPU 5 address conversion area 2/3</description>
+      <addressOffset>0xa8</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST2: -->
+    <register derivedFrom="ACNV_P0_DST2">
+      <name>ACNV_P5_DST2</name>
+      <description>CPU 5 address conversion area 4/5</description>
+      <addressOffset>0xac</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST3: -->
+    <register derivedFrom="ACNV_P0_DST3">
+      <name>ACNV_P5_DST3</name>
+      <description>CPU 5 address conversion area 6/7</description>
+      <addressOffset>0xb0</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST4: -->
+    <register derivedFrom="ACNV_P0_DST4">
+      <name>ACNV_P5_DST4</name>
+      <description>CPU 5 address conversion area 8/9</description>
+      <addressOffset>0xb4</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST5: -->
+    <register derivedFrom="ACNV_P0_DST5">
+      <name>ACNV_P5_DST5</name>
+      <description>CPU 5 address conversion area A/B</description>
+      <addressOffset>0xb8</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST6: -->
+    <register derivedFrom="ACNV_P0_DST6">
+      <name>ACNV_P5_DST6</name>
+      <description>CPU 5 address conversion area C/D</description>
+      <addressOffset>0xbc</addressOffset>
+    </register>
+    <!-- ACNV_P5_DST7: -->
+    <register derivedFrom="ACNV_P0_DST7">
+      <name>ACNV_P5_DST7</name>
+      <description>CPU 5 address conversion area E/F</description>
+      <addressOffset>0xc0</addressOffset>
+    </register>
+  </registers>
+</peripheral>

@@ -64,6 +64,10 @@ MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
 
 endif
 
+# include path setting in external sub directories which contains 'LibIncludes.mk' file.
+
+include $(SDKDIR)/LibInclude.mk
+
 DEPCONFIG = $(SDKDIR)/.config $(TOPDIR)/.config
 
 ifeq ($(WINTOOL),y)

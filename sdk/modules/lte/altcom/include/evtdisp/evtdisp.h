@@ -57,6 +57,10 @@ struct evtdisp_s
 {
   CODE int32_t (*dispatch)(FAR struct evtdisp_s *thiz,
     FAR uint8_t *evt, uint32_t evtln);
+  CODE int32_t (*addhdlr)(FAR struct evtdisp_s *thiz,
+    FAR evthdl_if_t *hdllist);
+  CODE int32_t (*rmvhdlr)(FAR struct evtdisp_s *thiz,
+    uint8_t hdlrid);
 };
 
 /****************************************************************************

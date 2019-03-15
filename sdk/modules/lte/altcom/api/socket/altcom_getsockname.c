@@ -77,10 +77,6 @@ struct getsockname_req_s
 
 /****************************************************************************
  * Name: getsockname_request
- *
- * Description:
- *   Send ALTCOM_GETSOCKNAME_REQ.
- *
  ****************************************************************************/
 
 static int32_t getsockname_request(FAR struct altcom_socket_s *fsock,
@@ -168,42 +164,22 @@ errout_with_cmdfree:
 
 /****************************************************************************
  * Name: altcom_getsockname
- *
- * Description:
- *   The altcom_getsockname() function retrieves the locally-bound name of the
- *   specified socket, stores this address in the sockaddr structure pointed
- *   to by the 'addr' argument, and stores the length of this address in the
- *   object pointed to by the 'addrlen' argument.
- *
- *   If the actual length of the address is greater than the length of the
- *   supplied sockaddr structure, the stored address will be truncated.
- *
- *   If the socket has not been bound to a local name, the value stored in
- *   the object pointed to by address is unspecified.
- *
- * Parameters:
- *   sockfd   Socket descriptor of socket [in]
- *   addr     sockaddr structure to receive data [out]
- *   addrlen  Length of sockaddr structure [in/out]
- *
- * Returned Value:
- *   On success, 0 is returned, the 'addr' argument points to the address
- *   of the socket, and the 'addrlen' argument points to the length of the
- *   address. Otherwise, -1 is returned and errno is set to indicate the error.
- *
  ****************************************************************************/
 
 int altcom_getsockname(int sockfd, struct altcom_sockaddr *addr,
                        altcom_socklen_t *addrlen)
 {
+  int32_t                    ret;
   int32_t                    result;
   FAR struct altcom_socket_s *fsock;
   struct getsockname_req_s   req;
 
-  if (!altcom_isinit())
+  /* Check Lte library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Not intialized\n");
-      altcom_seterrno(ALTCOM_ENETDOWN);
+      altcom_seterrno(-ret);
       return -1;
     }
 
