@@ -49,6 +49,31 @@ function create_spresense_home()
     ${SCRIPT_DIR}/mkappsdir.py -s ${SPRESENSE_HOME} "User application"
 }
 
+# TAB completion for ./tools/config.py
+function _spresense_config_completion() {
+	local cur prev cword
+
+	# get command line arguments
+	_get_comp_words_by_ref -n : cur prev cword
+
+	if [ "${prev}" == "-d" -o "${prev}" == "--dir" ]; then
+		# If use '-d' or '--dir' option, use filename completion
+		compopt -o nospace
+		COMPREPLY=($(compgen -d -- "${cur}" | sed 's#$#/#g'))
+	else
+		compopt +o nospace
+		if [ "${cur:0:1}" == "-" ]; then
+			# For option prediction
+			SOPT=`${SPRESENSE_SDK}/sdk/tools/config.py -h | grep -oE "\--[a-zA-Z]+"`
+			LOPT=`${SPRESENSE_SDK}/sdk/tools/config.py -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
+			LIST="${SOPT} ${LOPT}"
+		else
+			LIST=`${COMP_WORDS[@]} -l | tail -n +2 | tr -d "\t"`
+		fi
+		COMPREPLY=($(compgen -W "${LIST}" -- "${cur}"))
+	fi
+}
+
 ############################################################################
 # Public parameter definition                                              #
 ############################################################################
@@ -89,4 +114,10 @@ else
         echo "         $ create_spresense_home"
     fi
 fi
+
+#
+# TAB completion
+#
+
+complete -F _spresense_config_completion tools/config.py ./tools/config.py
 
