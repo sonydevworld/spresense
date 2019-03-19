@@ -38,6 +38,10 @@ CURRENT_DIR=`pwd`
 SCRIPT_NAME=`readlink -e "${BASH_SOURCE[0]}"`
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
+############################################################################
+# Public function                                                          #
+############################################################################
+
 # Create Spresense home environmet with mkapp
 function create_spresense_home()
 {
@@ -45,21 +49,29 @@ function create_spresense_home()
     ${SCRIPT_DIR}/mkappsdir.py -s ${SPRESENSE_HOME} "User application"
 }
 
+############################################################################
+# Public parameter definition                                              #
+############################################################################
+
 # Set <user home>/Spresense to SPRESENSE_HOME
-SPRESENSE_HOME=${HOME}/Spresense
+export SPRESENSE_HOME=${HOME}/Spresense
 
 # Set repository root to SPRESENSE_SDK
-SPRESENSE_SDK=${SCRIPT_DIR}
+export SPRESENSE_SDK=${SCRIPT_DIR}
+
+############################################################################
+# Environment setup                                                        #
+############################################################################
+
+#
+# User application setup
+#
 
 if [ ! -d ${SPRESENSE_HOME} ]; then
     echo "Warning: Spresense user application directory is not exists."
     echo "         Please run"
     echo "         $ create_spresense_home"
 fi
-
-# Export parameters
-export SPRESENSE_HOME
-export SPRESENSE_SDK
 
 # Export parameters into configuration file
 echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
