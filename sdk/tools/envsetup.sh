@@ -74,6 +74,12 @@ function _spresense_config_completion() {
 	fi
 }
 
+# Add configuration command behalf of tools/config.py
+function spresense_config() {
+	cd ${SPRESENSE_SDK}/sdk
+	./tools/config.py $@
+}
+
 ############################################################################
 # Public parameter definition                                              #
 ############################################################################
@@ -119,5 +125,5 @@ fi
 # TAB completion
 #
 
-complete -F _spresense_config_completion tools/config.py ./tools/config.py
+complete -F _spresense_config_completion tools/config.py ./tools/config.py spresense_config
 
