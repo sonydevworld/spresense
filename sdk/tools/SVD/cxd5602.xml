@@ -75,6 +75,9 @@
 
     <!-- CPU FIFO -->
     <xi:include href="cpufifo.xml"/>
+
+    <!-- UART -->
+    <xi:include href="uart2.xml"/>
   </peripherals>
 
 
