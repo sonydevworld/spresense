@@ -110,6 +110,8 @@
 #define APICMDID_SET_REP_EVT_SIMSTATE   (0x0032)
 #define APICMDID_POWER_OFF              (0x0033)
 #define APICMDID_GET_SIMINFO            (0x0034)
+#define APICMDID_GET_DYNAMICEDRX        (0x0035)
+#define APICMDID_GET_DYNAMICPSM         (0x0036)
 
 /* SOCKET API commands */
 

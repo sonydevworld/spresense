@@ -46,6 +46,8 @@
 #include "lte/lte_api.h"
 #include "altcom_status.h"
 #include "apicmd_pdn.h"
+#include "apicmd_edrx.h"
+#include "apicmd_psm.h"
 
 /****************************************************************************
  * Public Types
@@ -263,5 +265,77 @@ int32_t altcombs_get_errinfo(lte_errinfo_t *info);
 
 int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
   lte_pdn_t *lte_pdn);
+
+/****************************************************************************
+ * Name: altcombs_check_edrx
+ *
+ * Description:
+ *   Check api comand eDRX param.
+ *
+ * Input Parameters:
+ *   set    Pointer of api command eDRX struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set);
+
+/****************************************************************************
+ * Name: altcombs_set_edrx
+ *
+ * Description:
+ *   Set lte_edrx_setting_t param.
+ *
+ * Input Parameters:
+ *   cmd_edrx    Pointer of api command edrx struct.
+ *   lte_edrx    Pointer of lte_edrx_setting_t.
+ *
+ * Returned Value:
+ *   When set success is returned 0.
+ *   When set failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
+  lte_edrx_setting_t *lte_edrx);
+
+/****************************************************************************
+ * Name: altcombs_check_psm
+ *
+ * Description:
+ *   Check api comand PSM param.
+ *
+ * Input Parameters:
+ *   set    Pointer of api command PSM struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set);
+
+/****************************************************************************
+ * Name: altcombs_set_psm
+ *
+ * Description:
+ *   Set lte_psm_setting_t param.
+ *
+ * Input Parameters:
+ *   cmd_psm    Pointer of api command PSM struct.
+ *   lte_psm    Pointer of lte_psm_setting_t.
+ *
+ * Returned Value:
+ *   When set success is returned 0.
+ *   When set failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
+  lte_psm_setting_t *lte_psm);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */

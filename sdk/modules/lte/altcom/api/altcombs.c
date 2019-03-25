@@ -508,3 +508,335 @@ int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
 
   return 0;
 }
+
+/****************************************************************************
+ * Name: altcombs_check_edrx
+ *
+ * Description:
+ *   Check api comand eDRX param.
+ *
+ * Input Parameters:
+ *   set    Pointer of api command eDRX struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
+{
+  if (!set)
+    {
+      DBGIF_LOG_ERROR("null param\n");
+      return -EINVAL;
+    }
+
+  if (set->acttype < APICMD_EDRX_ACTTYPE_NOTUSE ||
+      set->acttype > APICMD_EDRX_ACTTYPE_NBS1)
+    {
+      DBGIF_LOG1_ERROR("Invalid acttype :%d\n", set->acttype);
+      return -EINVAL;
+    }
+
+  if (set->enable < APICMD_EDRX_DISABLE ||
+      set->enable > APICMD_EDRX_ENABLE)
+    {
+      DBGIF_LOG1_ERROR("Invalid enable :%d\n", set->enable);
+      return -EINVAL;
+    }
+
+  if (set->edrx_cycle < APICMD_EDRX_CYC_512 ||
+      set->edrx_cycle > APICMD_EDRX_CYC_262144)
+    {
+      DBGIF_LOG1_ERROR("Invalid cycle :%d\n", set->edrx_cycle);
+      return -EINVAL;
+    }
+
+  if (set->ptw_val < APICMD_EDRX_PTW_128 ||
+      set->ptw_val > APICMD_EDRX_PTW_2048)
+    {
+      DBGIF_LOG1_ERROR("Invalid PTW :%d\n", set->ptw_val);
+      return -EINVAL;
+    }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_set_edrx
+ *
+ * Description:
+ *   Set lte_edrx_setting_t param.
+ *
+ * Input Parameters:
+ *   cmd_edrx    Pointer of api command edrx struct.
+ *   lte_edrx    Pointer of lte_edrx_setting_t.
+ *
+ * Returned Value:
+ *   When set success is returned 0.
+ *   When set failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
+  lte_edrx_setting_t *lte_edrx)
+{
+  if (!cmd_edrx || !lte_edrx)
+    {
+      return -EINVAL;
+    }
+
+  switch (cmd_edrx->acttype)
+    {
+      case APICMD_EDRX_ACTTYPE_WBS1:
+        lte_edrx->act_type = LTE_EDRX_ACTTYPE_WBS1;
+      break;
+      default:
+        DBGIF_LOG1_ERROR("Invalid acttype :%d\n", cmd_edrx->acttype);
+        return -EINVAL;
+    }
+
+  switch (cmd_edrx->edrx_cycle)
+    {
+      case APICMD_EDRX_CYC_512:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_512;
+      break;
+      case APICMD_EDRX_CYC_1024:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_1024;
+      break;
+      case APICMD_EDRX_CYC_2048:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_2048;
+      break;
+      case APICMD_EDRX_CYC_4096:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_4096;
+      break;
+      case APICMD_EDRX_CYC_6144:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_6144;
+      break;
+      case APICMD_EDRX_CYC_8192:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_8192;
+      break;
+      case APICMD_EDRX_CYC_10240:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_10240;
+      break;
+      case APICMD_EDRX_CYC_12288:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_12288;
+      break;
+      case APICMD_EDRX_CYC_14336:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_14336;
+      break;
+      case APICMD_EDRX_CYC_16384:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_16384;
+      break;
+      case APICMD_EDRX_CYC_32768:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_32768;
+      break;
+      case APICMD_EDRX_CYC_65536:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_65536;
+      break;
+      case APICMD_EDRX_CYC_131072:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_131072;
+      break;
+      case APICMD_EDRX_CYC_262144:
+        lte_edrx->edrx_cycle = LTE_EDRX_CYC_262144;
+      break;
+      default:
+        DBGIF_LOG1_ERROR("Invalid edrx cycle :%d\n", cmd_edrx->edrx_cycle);
+        return -EINVAL;
+    }
+
+  switch (cmd_edrx->ptw_val)
+    {
+      case APICMD_EDRX_PTW_128:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_128;
+      break;
+      case APICMD_EDRX_PTW_256:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_256;
+      break;
+      case APICMD_EDRX_PTW_384:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_384;
+      break;
+      case APICMD_EDRX_PTW_512:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_512;
+      break;
+      case APICMD_EDRX_PTW_640:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_640;
+      break;
+      case APICMD_EDRX_PTW_768:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_768;
+      break;
+      case APICMD_EDRX_PTW_896:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_896;
+      break;
+      case APICMD_EDRX_PTW_1024:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1024;
+      break;
+      case APICMD_EDRX_PTW_1152:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1152;
+      break;
+      case APICMD_EDRX_PTW_1280:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1280;
+      break;
+      case APICMD_EDRX_PTW_1408:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1408;
+      break;
+      case APICMD_EDRX_PTW_1536:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1536;
+      break;
+      case APICMD_EDRX_PTW_1664:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1664;
+      break;
+      case APICMD_EDRX_PTW_1792:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1792;
+      break;
+      case APICMD_EDRX_PTW_1920:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_1920;
+      break;
+      case APICMD_EDRX_PTW_2048:
+        lte_edrx->ptw_val = LTE_EDRX_PTW_2048;
+      break;
+      default:
+        DBGIF_LOG1_ERROR("Invalid PTW val :%d\n", cmd_edrx->ptw_val);
+      return -EINVAL;
+    }
+
+  lte_edrx->enable = cmd_edrx->enable == APICMD_EDRX_DISABLE ?
+    LTE_DISABLE : LTE_ENABLE;
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_check_psm
+ *
+ * Description:
+ *   Check api comand PSM param.
+ *
+ * Input Parameters:
+ *   set    Pointer of api command PSM struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
+{
+  if (!set)
+    {
+      DBGIF_LOG_ERROR("null param\n");
+      return -EINVAL;
+    }
+
+  if (set->enable < APICMD_PSM_DISABLE ||
+      set->enable > APICMD_PSM_ENABLE)
+    {
+      DBGIF_LOG1_ERROR("Invalid enable :%d\n", set->enable);
+      return -EINVAL;
+    }
+
+  if (set->rat_time.unit < APICMD_PSM_RAT_UNIT_2SEC ||
+      set->rat_time.unit > APICMD_PSM_RAT_UNIT_6MIN)
+    {
+      DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", set->rat_time.unit);
+      return -EINVAL;
+    }
+
+  if (set->rat_time.time_val < APICMD_PSM_TIMER_MIN ||
+      set->rat_time.time_val > APICMD_PSM_TIMER_MAX)
+    {
+      DBGIF_LOG1_ERROR("Invalid rat_time time_val :%d\n", set->rat_time.time_val);
+      return -EINVAL;
+    }
+
+  if (set->tau_time.unit < APICMD_PSM_TAU_UNIT_2SEC ||
+      set->tau_time.unit > APICMD_PSM_TAU_UNIT_320HOUR)
+    {
+      DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", set->tau_time.unit);
+      return -EINVAL;
+    }
+
+  if (set->tau_time.time_val < APICMD_PSM_TIMER_MIN ||
+      set->tau_time.time_val > APICMD_PSM_TIMER_MAX)
+    {
+      DBGIF_LOG1_ERROR("Invalid tau_time time_val :%d\n", set->tau_time.time_val);
+      return -EINVAL;
+    }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_set_psm
+ *
+ * Description:
+ *   Set lte_psm_setting_t param.
+ *
+ * Input Parameters:
+ *   cmd_psm    Pointer of api command PSM struct.
+ *   lte_psm    Pointer of lte_psm_setting_t.
+ *
+ * Returned Value:
+ *   When set success is returned 0.
+ *   When set failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
+  lte_psm_setting_t *lte_psm)
+{
+  if (!cmd_psm || !lte_psm)
+    {
+      return -EINVAL;
+    }
+
+  switch (cmd_psm->rat_time.unit)
+    {
+      case APICMD_PSM_RAT_UNIT_2SEC:
+        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_2SEC;
+      break;
+      case APICMD_PSM_RAT_UNIT_1MIN:
+        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_1MIN;
+      break;
+      case APICMD_PSM_RAT_UNIT_6MIN:
+        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_6MIN;
+      break;
+      default:
+        DBGIF_LOG1_ERROR("Invalid req act time unit :%d\n", cmd_psm->rat_time.unit);
+      return -EINVAL;
+    }
+
+  lte_psm->req_active_time.time_val = cmd_psm->rat_time.time_val;
+
+  switch (cmd_psm->tau_time.unit)
+    {
+      case APICMD_PSM_TAU_UNIT_2SEC:
+        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_2SEC;
+      break;
+      case APICMD_PSM_TAU_UNIT_30SEC:
+        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_30SEC;
+      break;
+      case APICMD_PSM_TAU_UNIT_1MIN:
+        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_1MIN;
+      break;
+      case APICMD_PSM_TAU_UNIT_10MIN:
+        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_10MIN;
+      break;
+      case APICMD_PSM_TAU_UNIT_1HOUR:
+        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_1HOUR;
+      break;
+      case APICMD_PSM_TAU_UNIT_10HOUR:
+      case APICMD_PSM_TAU_UNIT_320HOUR:
+      default:
+        DBGIF_LOG1_ERROR("Invalid TAU time unit :%d\n", cmd_psm->tau_time.unit);
+      return -EINVAL;
+    }
+
+  lte_psm->ext_periodic_tau_time.time_val = cmd_psm->tau_time.time_val;
+  lte_psm->enable = cmd_psm->enable == APICMD_PSM_DISABLE ?
+    LTE_DISABLE : LTE_ENABLE;
+
+  return 0;
+}

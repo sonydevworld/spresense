@@ -46,45 +46,47 @@
  *
  * #### API call type
  *
- * |         Sync API                |         Async API              |
- * | :------------------------------ | :----------------------------- |
- * | @ref lte_initialize             | @ref lte_radio_on              |
- * | @ref lte_finalize               | @ref lte_radio_off             |
- * | @ref lte_set_report_restart     | @ref lte_activate_pdn          |
- * | @ref lte_power_on               | @ref lte_deactivate_pdn        |
- * | @ref lte_power_off              | @ref lte_data_allow            |
- * | @ref lte_set_report_netinfo     | @ref lte_get_netinfo           |
- * | @ref lte_set_report_simstat     | @ref lte_get_imscap            |
- * | @ref lte_set_report_localtime   | @ref lte_get_version           |
- * | @ref lte_set_report_quality     | @ref lte_get_phoneno           |
- * | @ref lte_set_report_cellinfo    | @ref lte_get_imsi              |
- * | @ref lte_get_errinfo            | @ref lte_get_imei              |
- * | @ref lte_set_report_netstat     | @ref lte_get_pinset            |
- * |                                 | @ref lte_set_pinenable         |
- * |                                 | @ref lte_change_pin            |
- * |                                 | @ref lte_enter_pin             |
- * |                                 | @ref lte_get_localtime         |
- * |                                 | @ref lte_get_operator          |
- * |                                 | @ref lte_get_edrx              |
- * |                                 | @ref lte_set_edrx              |
- * |                                 | @ref lte_get_psm               |
- * |                                 | @ref lte_set_psm               |
- * |                                 | @ref lte_get_ce                |
- * |                                 | @ref lte_set_ce                |
- * |                                 | @ref lte_power_control         |
- * |                                 | @ref lte_attach_network        |
- * |                                 | @ref lte_detach_network        |
- * |                                 | @ref lte_get_netstat           |
- * |                                 | @ref lte_data_on               |
- * |                                 | @ref lte_data_off              |
- * |                                 | @ref lte_get_datastat          |
- * |                                 | @ref lte_get_dataconfig        |
- * |                                 | @ref lte_set_dataconfig        |
- * |                                 | @ref lte_get_apnset            |
- * |                                 | @ref lte_set_apn               |
- * |                                 | @ref lte_get_sleepmode         |
- * |                                 | @ref lte_set_sleepmode         |
- * |                                 | @ref lte_get_siminfo           |
+ * |         Sync API                |         Async API               |
+ * | :------------------------------ | :------------------------------ |
+ * | @ref lte_initialize             | @ref lte_radio_on               |
+ * | @ref lte_finalize               | @ref lte_radio_off              |
+ * | @ref lte_set_report_restart     | @ref lte_activate_pdn           |
+ * | @ref lte_power_on               | @ref lte_deactivate_pdn         |
+ * | @ref lte_power_off              | @ref lte_data_allow             |
+ * | @ref lte_set_report_netinfo     | @ref lte_get_netinfo            |
+ * | @ref lte_set_report_simstat     | @ref lte_get_imscap             |
+ * | @ref lte_set_report_localtime   | @ref lte_get_version            |
+ * | @ref lte_set_report_quality     | @ref lte_get_phoneno            |
+ * | @ref lte_set_report_cellinfo    | @ref lte_get_imsi               |
+ * | @ref lte_get_errinfo            | @ref lte_get_imei               |
+ * | @ref lte_set_report_netstat     | @ref lte_get_pinset             |
+ * |                                 | @ref lte_set_pinenable          |
+ * |                                 | @ref lte_change_pin             |
+ * |                                 | @ref lte_enter_pin              |
+ * |                                 | @ref lte_get_localtime          |
+ * |                                 | @ref lte_get_operator           |
+ * |                                 | @ref lte_get_edrx               |
+ * |                                 | @ref lte_set_edrx               |
+ * |                                 | @ref lte_get_psm                |
+ * |                                 | @ref lte_set_psm                |
+ * |                                 | @ref lte_get_ce                 |
+ * |                                 | @ref lte_set_ce                 |
+ * |                                 | @ref lte_power_control          |
+ * |                                 | @ref lte_attach_network         |
+ * |                                 | @ref lte_detach_network         |
+ * |                                 | @ref lte_get_netstat            |
+ * |                                 | @ref lte_data_on                |
+ * |                                 | @ref lte_data_off               |
+ * |                                 | @ref lte_get_datastat           |
+ * |                                 | @ref lte_get_dataconfig         |
+ * |                                 | @ref lte_set_dataconfig         |
+ * |                                 | @ref lte_get_apnset             |
+ * |                                 | @ref lte_set_apn                |
+ * |                                 | @ref lte_get_sleepmode          |
+ * |                                 | @ref lte_set_sleepmode          |
+ * |                                 | @ref lte_get_siminfo            |
+ * |                                 | @ref lte_get_dynamic_edrx_param |
+ * |                                 | @ref lte_get_dynamic_psm_param  |
  *
  *
  * @{
@@ -1763,6 +1765,32 @@ typedef void (*netinfo_report_cb_t)(lte_netinfo_t *info);
 
 typedef void (*get_siminfo_cb_t)(uint32_t result, lte_siminfo_t *siminfo);
 
+/** Definition of callback function.
+ *  Since lte_get_dynamic_edrx_param() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_dynamic_edrx_param().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] param : eDRX dynamic parameter. See @ref lte_edrx_setting_t
+ */
+
+typedef void (*get_dynamic_edrx_param_cb_t)(uint32_t result,
+                                            lte_edrx_setting_t *param);
+
+/** Definition of callback function.
+ *  Since lte_get_dynamic_psm_param() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_dynamic_psm_param().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] param : PSM dynamic parameter. See @ref lte_psm_setting_t
+ */
+
+typedef void (*get_dynamic_psm_param_cb_t)(uint32_t result,
+                                           lte_psm_setting_t *param);
+
 #ifdef __cplusplus
 #define EXTERN extern "C"
 extern "C"
@@ -2563,6 +2591,36 @@ int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback);
  */
 
 int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback);
+
+/**
+ * Get eDRX dynamic parameter.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get eDRX dynamic parameter is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback);
+
+/**
+ * Get PSM dynamic parameter.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get PSM dynamic parameter is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback);
 
 /** @} */
 
