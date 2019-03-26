@@ -39,7 +39,7 @@
 #include "memutils/s_stl/queue.h"
 #include "audio/audio_high_level_api.h"
 
-/* Tranck information */
+/* Track information */
 
 struct Track
 {
@@ -113,11 +113,11 @@ public:
 
     ListTypeAllTrack = 0,
 
-    /*! \brief Artist categolized track list. */
+    /*! \brief Artist categorized track list. */
 
     ListTypeArtist,
 
-    /*! \brief Album categolized track list. */
+    /*! \brief Album categorized track list. */
 
     ListTypeAlbum,
 
@@ -255,7 +255,7 @@ public:
   /**
    * @brief Delete all playlist
    * @note Delete playlist which is created internally.
-   *       track database(***.cvs) will not be deleted.
+   *       track database(***.csv) will not be deleted.
    *
    * @retval     true  : success
    * @retval     false : failure
@@ -289,7 +289,7 @@ public:
 
   /**
    * @brief Get previous track
-   * @details Get next track in playlist which is selected by select().
+   * @details Get previous track in playlist which is selected by select().
    *
    * @param[out] track: Track information
    *
