@@ -30,11 +30,4 @@ config EXAMPLES_CAMERA_STACKSIZE
 config EXAMPLES_CAMERA_OUTPUT_LCD
 	bool "Output LCD"
 
-config EXAMPLES_CAMERA_INFINITE
-	bool "Capture image infinite"
-	depends on EXAMPLES_CAMERA_OUTPUT_LCD
-	---help---
-		Capturing images in infinite loop. If this option is enabled, then
-		example never been stopped.
-
 endif

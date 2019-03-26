@@ -3,23 +3,37 @@ examples/camera
 
   This sample code gets an image from the image sensor.
 
-  Supported image sensor is ISX012.
+  Supported image sensor is ISX012 and will work with the official Spresense camera board.
 
 
-  This example can be used by camera default config.
+  This example can be used with the camera example default configuration
 
-  $ ./tools/config.py camera
+  $ ./tools/config.py examples/camera
 
-  This example can be output captured images to LCD directly.
-  If you want to work with LCD devices, type like this:
+  This example can also output captured images to an LCD directly.
+  If you want to work with LCD devices, configure like this:
 
-  $ ./tools/config.py camera ili9340
+  $ ./tools/config.py examples/camera device/lcd
 
-  And enable following options.
+  And enable following option in /sdk/configs/device/camera-defconfig
 
-  CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD -- Show captured image on the LCD
-  CONFIG_EXAMPLES_CAMERA_INFINITE   -- Capture infinitely
+  CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD=y
+  
+  Currently supports ili9340 and lpm013m091a based displays.
+  
+  Default resolution is 320x240.  
+  This can be modified in the LCD driver code at /sdk/drivers/lcd/ili9340.c
 
+  The LCD is expected to be connected on SPI4 (expansion board) or SPI5 (main board) 
+  
+  To use an LCD connected to the expansion board, set the following option in /sdk/configs/device/camera-defconfig
+  CONFIG_LCD_ON_EXTENSION_BOARD=y
+  
+  To use an LCD connected to the main board (the Spresense itself), set the following option in /sdk/configs/device/camera-defconfig
+  CONFIG_LCD_ON_MAIN_BOARD=y
+  
+  The example will capture images to an SD card if one is connected to the expansion board, otherwise it will save to flash memory.
+  
   Execute under nsh:
 
   nsh> camera
@@ -27,7 +41,7 @@ examples/camera
 
   * Display to LCD
 
-  nsh> camera moni
+  nsh> camera
   nximage_initialize: Initializing LCD
   nximage_initialize: Open NX
   nximage_initialize: Screen resolution (320,240)
