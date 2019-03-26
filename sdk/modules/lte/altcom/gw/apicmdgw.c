@@ -813,6 +813,9 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
     }
 
   hdr_ptr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
+
+  sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN;
+
   if (respbuff)
     {
       blocktbl = (FAR struct apicmdgw_blockinf_s *)
@@ -840,50 +843,57 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
         }
 
       apicmdgw_addtable(blocktbl);
-    }
 
-  sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN;
-  g_hal_if->lock(g_hal_if);
-  ret = g_hal_if->send(g_hal_if,
-    (FAR uint8_t *)hdr_ptr, sendlen);
-  g_hal_if->unlock(g_hal_if);
+      sys_lock_mutex(&blocktbl->waitcondmtx);
 
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("hal_if->send() failed.\n");
-      if (respbuff)
-        {
-          apicmdgw_remtable(blocktbl);
-        }
-
-      return ret;
-    }
-
-  if (respbuff)
-    {
-      /* Recv message wait here. */
-      
-      ret = sys_wait_thread_cond(&blocktbl->waitcond, &blocktbl->waitcondmtx,
-                                 timeout_ms);
+      g_hal_if->lock(g_hal_if);
+      ret = g_hal_if->send(g_hal_if, (FAR uint8_t *)hdr_ptr, sendlen);
+      g_hal_if->unlock(g_hal_if);
 
       if (0 > ret)
         {
-          ret = -ETIMEDOUT;
+          DBGIF_LOG_ERROR("hal_if->send() failed.\n");
         }
       else
         {
-          if (0 > blocktbl->result)
-            {
-              ret = blocktbl->result;
-            }
+          /* Wait until the response data is received or timeout. */
 
-          if (!g_isinit)
+          ret = sys_thread_cond_timedwait(&blocktbl->waitcond,
+                                          &blocktbl->waitcondmtx, timeout_ms);
+          if (0 > ret)
             {
-              ret = -ECONNABORTED;
+              ret = -ETIMEDOUT;
+            }
+          else
+            {
+              if (0 > blocktbl->result)
+                {
+                  ret = blocktbl->result;
+                }
+
+              if (!g_isinit)
+                {
+                  ret = -ECONNABORTED;
+                }
             }
         }
+      sys_unlock_mutex(&blocktbl->waitcondmtx);
 
       apicmdgw_remtable(blocktbl);
+    }
+  else
+    {
+      /* Send only */
+
+      g_hal_if->lock(g_hal_if);
+      ret = g_hal_if->send(g_hal_if, (FAR uint8_t *)hdr_ptr, sendlen);
+      g_hal_if->unlock(g_hal_if);
+
+      if (0 > ret)
+        {
+          DBGIF_LOG_ERROR("hal_if->send() failed.\n");
+          return ret;
+        }
     }
 
   if (0 <= ret)
