@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <stdint.h>
+#include <string.h>
 #include <errno.h>
 
 #include "lte/lte_api.h"
@@ -57,10 +58,6 @@
  ****************************************************************************/
 
 #define GETEDRX_DATA_LEN (0)
-#define APICMDHDLR_GETEDRX_CYC_MIN  APICMD_GETEDRX_CYC_512
-#define APICMDHDLR_GETEDRX_CYC_MAX  APICMD_GETEDRX_CYC_262144
-#define APICMDHDLR_GETEDRX_PTW_MIN  APICMD_GETEDRX_PTW_128
-#define APICMDHDLR_GETEDRX_PTW_MAX  APICMD_GETEDRX_PTW_2048
 
 /****************************************************************************
  * Private Functions
@@ -112,7 +109,7 @@ static int32_t getedrx_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void getedrx_job(FAR void *arg)
 {
   int32_t                               ret;
-  uint32_t                              result = LTE_RESULT_OK;
+  uint32_t                              result = LTE_RESULT_ERROR;
   FAR struct apicmd_cmddat_getedrxres_s *data;
   lte_edrx_setting_t                    edrx;
   get_edrx_cb_t                         callback;
@@ -124,58 +121,29 @@ static void getedrx_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
+      memset(&edrx, 0, sizeof(lte_edrx_setting_t));
       if (APICMD_GETEDRX_RES_OK == data->result)
         {
-          if (APICMD_GETEDRX_DISABLE == data->enable)
+          ret = altcombs_check_edrx(&data->set);
+          if (0 > ret)
             {
-              edrx.enable = LTE_DISABLE;
-            }
-          else if (APICMD_GETEDRX_ENABLE == data->enable)
-            {
-              edrx.enable = LTE_ENABLE;
+              DBGIF_LOG1_ERROR("Unexpected!! altcombs_check_edrx() failed. errno:%d\n", ret);
             }
           else
             {
-              DBGIF_LOG1_ERROR("Invalid parameter. enable:%d\n", data->enable);
-              result = LTE_RESULT_ERROR;
-            }
-
-          if (LTE_RESULT_OK == result)
-            {
-              if (APICMDHDLR_GETEDRX_CYC_MIN <= data->edrx_cycle &&
-                data->edrx_cycle <= APICMDHDLR_GETEDRX_CYC_MAX)
+              ret = altcombs_set_edrx(&data->set, &edrx);
+              if (0 > ret)
                 {
-                  edrx.edrx_cycle = (uint32_t)data->edrx_cycle;
+                  DBGIF_LOG1_ERROR("Unexpected!! altcombs_set_edrx() failed. errno:%d\n", ret);
                 }
               else
                 {
-                  DBGIF_LOG1_ERROR("Invalid parameter. edrx_cycle:%d\n", data->edrx_cycle);
-                  result = LTE_RESULT_ERROR;
+                  result = LTE_RESULT_OK;
                 }
             }
-
-          if (LTE_RESULT_OK == result)
-            {
-              if (APICMDHDLR_GETEDRX_PTW_MIN <= data->ptw_val &&
-                data->ptw_val <= APICMDHDLR_GETEDRX_PTW_MAX)
-                {
-                  edrx.ptw_val = (uint32_t)data->ptw_val;
-                }
-              else
-                {
-                  DBGIF_LOG1_ERROR("Invalid parameter. ptw_val:%d\n", data->ptw_val);
-                  result = LTE_RESULT_ERROR;
-                }
-            }
-
-          callback(result, &edrx);
-          DBGIF_ASSERT(LTE_RESULT_OK == result, "Result parameter error.\n");
         }
-      else
-        {
-          callback(LTE_RESULT_ERROR, NULL);
-          DBGIF_ASSERT(APICMD_GETEDRX_RES_ERR == data->result, "Result parameter error.\n");
-        }
+
+      callback(result, &edrx);
     }
   else
     {
