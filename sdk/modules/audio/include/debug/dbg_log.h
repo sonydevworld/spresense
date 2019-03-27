@@ -79,7 +79,7 @@
 #define DBG_LOGF_FATAL(id, code)  FATAL_ATTENTION(id, code)
 #define DBG_LOGF_ERROR(id, code)  ERROR_ATTENTION(id, code)
 #define DBG_LOGF_WARN(id, code)   WARNING_ATTENTION(id, code)
-#define DBG_LOGF_DEBUG(id, code)  _info("DBG : %s(L%d) %d %d\n", \
+#define DBG_LOGF_DEBUG(id, code)  _info("DBG : %d %d %s(L%d)\n", \
                                        id, code, __FILE__, __LINE__)
 
 #define MANAGER_FATAL(code) DBG_LOGF_FATAL(AS_MODULE_ID_AUDIO_MANAGER, code)
