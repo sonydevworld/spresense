@@ -183,6 +183,12 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
 
   if (settings->enable)
     {
+      if (settings->act_type != LTE_EDRX_ACTTYPE_WBS1)
+        {
+          DBGIF_LOG1_ERROR("Invalid argument. act_type:%d\n", settings->act_type);
+          return -EINVAL;
+        }
+
       if (settings->edrx_cycle < SETEDRX_CYC_MIN ||
         SETEDRX_CYC_MAX < settings->edrx_cycle)
         {
