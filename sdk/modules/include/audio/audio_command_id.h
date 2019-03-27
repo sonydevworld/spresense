@@ -114,32 +114,40 @@
 /** @name Command Effector Function code */
 /** @{ */
 
-  /*! brief Command Code: InitMFE (__not supported__) */
+/*! brief Command Code: InitMFE */
 
 #define  AUDCMD_INITMFE       (AUDCMD_CATEGORY_EFFECTOR | 0x01)
 
-/*! brief Command Code: InitMPP (__not supported__) */
+/*! brief Command Code: SetMFE */
 
-#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x02)
+#define  AUDCMD_SETMFE        (AUDCMD_CATEGORY_EFFECTOR | 0x02)
 
-/*! brief Command Code: SetMPPParam (__not supported__) */
+/*! brief Command Code: InitMPP */
 
-#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x03)
+#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x03)
+
+/*! brief Command Code: SetMPPParam */
+
+#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x04)
 
 /** @} */
 
 /** @name Effector Result code */
 /** @{ */
 
-/*! \brief Result Code: InitMFECmplt (__not supported__) */
+/*! \brief Result Code: InitMFECmplt */
 
 #define  AUDRLT_INITMFECMPLT    AUDCMD_INITMFE
 
-/*! \brief Result Code: InitMPPCmplt (__not supported__) */
+/*! \brief Result Code: SetMFECmplt */
+
+#define  AUDRLT_SETMFECMPLT     AUDCMD_SETMFE
+
+/*! \brief Result Code: InitMPPCmplt */
 
 #define  AUDRLT_INITMPPCMPLT    AUDCMD_INITMPP
 
-/*! \brief Result Code: SetMPPParamCmplt (__not supported__) */
+/*! \brief Result Code: SetMPPParamCmplt */
 
 #define  AUDRLT_SETMPPCMPLT     AUDCMD_SETMPPPARAM
 
@@ -459,6 +467,10 @@
 /*! \brief Command Code: SetPlayerStatus */
 
 #define AUDCMD_SETPLAYERSTATUSPOST  (AUDCMD_CATEGORY_TRANSITION | 0x08)
+
+/*! \brief Command Code: SetRecorderStatus */
+
+#define AUDCMD_SETRECORDERSTATUSPRE (AUDCMD_CATEGORY_TRANSITION | 0x09)
 
 /** @} */
 

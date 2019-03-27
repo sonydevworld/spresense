@@ -180,6 +180,33 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
+#define FRONT_END_REG_ATTCB(att_cb)  ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_FRONT_END_OBJ, \
+                                            att_cb)
+#define FRONT_END_UNREG_ATTCB()  ATTENTION_CB_UNREGISTER( \
+                                        AS_MODULE_ID_FRONT_END_OBJ)
+
+#define FRONT_END_FATAL(code)    DBG_LOGF_FATAL( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        code)
+#define FRONT_END_ERR(code)      DBG_LOGF_ERROR( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        code)
+#define FRONT_END_WARN(code)     DBG_LOGF_WARN( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        code)
+#define FRONT_END_INF(code)      DBG_LOGF_DEBUG( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        code)
+#define FRONT_END_DBG(fmt, ...)  AUDIO_LOG_EVENT( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        fmt, \
+                                        ##__VA_ARGS__)
+#define FRONT_END_VDBG(fmt, ...) AUDIO_LOG_DETAIL( \
+                                        AS_MODULE_ID_FRONT_END_OBJ, \
+                                        fmt, \
+                                        ##__VA_ARGS__)
+
 #define DECODER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_DECODER_CMP, \
                                                         att_cb)
 #define DECODER_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_DECODER_CMP)

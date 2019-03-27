@@ -1,0 +1,220 @@
+/****************************************************************************
+ * modules/audio/objects/front_end/front_end_obj.h
+ *
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+ *    the names of its contributors may be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************/
+
+#ifndef __MODULES_AUDIO_OBJECTS_FRONT_END_FRONT_END_OBJ_H
+#define __MODULES_AUDIO_OBJECTS_FRONT_END_FRONT_END_OBJ_H
+
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
+
+#include "memutils/os_utils/chateau_osal.h"
+#include "memutils/message/Message.h"
+#include "memutils/s_stl/queue.h"
+#include "memutils/memory_manager/MemHandle.h"
+#include "audio/audio_high_level_api.h"
+#include "audio/audio_message_types.h"
+#include "audio_state.h"
+
+#include "components/capture/capture_component.h"
+#include "components/postproc/postproc_api.h"
+
+__WIEN2_BEGIN_NAMESPACE
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define CAPTURE_PRESET_NUM        4
+#define CAPTURE_PCM_BUF_QUE_SIZE  7
+#define OUTPUT_DATA_QUE_SIZE      5
+#define FALT_HANDLE_ID            0xFF
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+struct FrontendObjPreProcDoneCmd
+{
+  PostCompEventType event_type;
+  bool              result;
+};
+
+struct FrontendObjSendDoneCmd
+{
+  bool identifier;
+  bool is_end;
+};
+
+/* Class definition */
+
+class FrontEndObject {
+public:
+  static void create(AsFrontendMsgQueId_t msgq_id,
+                     AsFrontendPoolId_t pool_id);
+
+private:
+  FrontEndObject(AsFrontendMsgQueId_t msgq_id,
+                 AsFrontendPoolId_t pool_id)
+    : m_msgq_id(msgq_id)
+    , m_pool_id(pool_id)
+    , m_state(AS_MODULE_ID_FRONT_END_OBJ, "", FrontendStateInactive)
+    , m_channel_num(2)
+    , m_pcm_bit_width(AudPcm16Bit)
+    , m_samples_per_frame(768)
+    , m_cap_bytes(2)  /* This value depends on the value of
+                       * m_pcm_bit_width.
+                       */
+    , m_capture_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM)
+    , m_capture_req(0)
+    , m_preproc_req(0)
+    , m_p_preproc_instance(NULL)
+  {}
+
+  enum FrontendState_e
+  {
+    FrontendStateInactive = 0,
+    FrontendStateReady,
+    FrontendStateActive,
+    FrontendStateStopping,
+    FrontendStateErrorStopping,
+    FrontendStateWaitStop,
+    FrontendStateNum
+  };
+
+  AsFrontendMsgQueId_t m_msgq_id;
+  AsFrontendPoolId_t   m_pool_id;
+
+  AudioState<FrontendState_e> m_state;
+  AsFrontendDataPath m_pcm_data_path;
+  AsDataDest m_pcm_data_dest;
+  int8_t  m_channel_num;
+  AudioPcmBitWidth m_pcm_bit_width;
+  uint32_t m_samples_per_frame;
+  int8_t  m_cap_bytes;
+  int32_t m_max_output_size;
+  int32_t m_max_capture_size;
+  CaptureDevice m_input_device;
+  CaptureComponentHandler m_capture_hdlr;
+  uint32_t m_capture_req;
+  uint32_t m_preproc_req;
+
+  void *m_p_preproc_instance;
+
+  typedef void (FrontEndObject::*MsgProc)(MsgPacket *);
+  static MsgProc MsgProcTbl[AUD_FED_MSG_NUM][FrontendStateNum];
+  static MsgProc RsltProcTbl[AUD_FED_RST_MSG_NUM][FrontendStateNum];
+
+  s_std::Queue<AsFrontendEvent, 1> m_external_cmd_que;
+
+  FrontendCallback m_callback;
+
+  void run();
+  void parse(MsgPacket *);
+
+  void reply(AsFrontendEvent evtype,
+             MsgType msg_type,
+             uint32_t result);
+
+  void illegal(MsgPacket *);
+  void activate(MsgPacket *);
+  void deactivate(MsgPacket *);
+
+  void init(MsgPacket *);
+  void startOnReady(MsgPacket *);
+  void stopOnActive(MsgPacket *);
+  void stopOnErrorStop(MsgPacket *);
+  void stopOnWait(MsgPacket *);
+  void initPreproc(MsgPacket *msg);
+  void setPreproc(MsgPacket *msg);
+  void setMicGain(MsgPacket *);
+
+  void illegalPreprocDone(MsgPacket *);
+  void preprocDoneOnActive(MsgPacket *);
+  void preprocDoneOnStop(MsgPacket *);
+  void preprocDoneOnErrorStop(MsgPacket *);
+  void preprocDoneOnWaitStop(MsgPacket *);
+
+  void illegalCaptureDone(MsgPacket *);
+  void captureDoneOnActive(MsgPacket *);
+  void captureDoneOnStop(MsgPacket *);
+  void captureDoneOnErrorStop(MsgPacket *);
+  void captureDoneOnWaitStop(MsgPacket *msg);
+
+  void illegalCaptureError(MsgPacket *);
+  void captureErrorOnActive(MsgPacket *);
+  void captureErrorOnStop(MsgPacket *);
+  void captureErrorOnErrorStop(MsgPacket *);
+  void captureErrorOnWaitStop(MsgPacket *);
+
+  bool startCapture();
+
+  bool setExternalCmd(AsFrontendEvent ext_event);
+  AsFrontendEvent getExternalCmd(void);
+  uint32_t checkExternalCmd(void);
+
+  MemMgrLite::MemHandle getOutputBufAddr();
+
+  uint32_t activateParamCheck(const AsActivateFrontendParam& cmd);
+  uint32_t initParamCheck(const FrontendCommand& cmd);
+
+  bool execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample);
+  bool flushPreProc(void);
+
+  bool sendData(AsPcmDataParam& data);
+  bool sendDummyEndData(void);
+
+  bool getInputDeviceHdlr(void);
+  bool delInputDeviceHdlr(void);
+
+  bool checkAndSetMemPool();
+};
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/****************************************************************************
+ * Inline Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+__WIEN2_END_NAMESPACE
+
+#endif /* __MODULES_AUDIO_OBJECTS_FRONT_END_FRONT_END_OBJ_H */
+

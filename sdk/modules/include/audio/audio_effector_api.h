@@ -81,10 +81,6 @@
 /** @name Packet length of command*/
 /** @{ */
 
-/*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
-
-#define  LENGTH_INITMFE             4
-
 /*! \brief StartBB command (#AUDCMD_STARTBB) packet length */
 
 #define  LENGTH_STARTBB             3

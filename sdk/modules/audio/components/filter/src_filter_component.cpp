@@ -301,6 +301,8 @@ bool SRCComponent::flush_apu(StopSRCParam *param)
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
+  FILTER_DBG("FLUSH SRC:\n");
+
   if (p_apu_cmd == NULL)
     {
       return false;

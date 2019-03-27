@@ -416,6 +416,8 @@ bool EncoderComponent::exec_apu(const ExecEncParam& param)
 /*--------------------------------------------------------------------*/
 bool EncoderComponent::flush_apu(const StopEncParam& param)
 {
+  ENCODER_DBG("FLUSH:\n");
+
   /* Regardless of output buffer is not allocated, send Flush Request
    * to DSP. Because it is needed by DSP to finish process correctly.
    */

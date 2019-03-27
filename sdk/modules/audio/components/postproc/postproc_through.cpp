@@ -105,6 +105,12 @@ bool PostprocThrough::set_apu(const SetPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
+bool PostprocThrough::is_enable(void)
+{
+  return false; 
+}
+
+/*--------------------------------------------------------------------*/
 bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
 {
   cmplt->output = m_req_que.top().pcm;
@@ -116,7 +122,10 @@ bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
 };
 
 /*--------------------------------------------------------------------*/
-uint32_t PostprocThrough::activate(PostprocCallback callback, void *p_requester, uint32_t *dsp_inf)
+uint32_t PostprocThrough::activate(PostprocCallback callback,
+                                   const char *image_name,
+                                   void *p_requester,
+                                   uint32_t *dsp_inf)
 {
   m_p_requester = p_requester;
   m_callback = callback;

@@ -67,6 +67,7 @@
 #endif
 #ifdef CONFIG_AUDIOUTILS_RECORDER
 #  include "audio/audio_recorder_api.h"
+#  include "audio/audio_frontend_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
 #if defined(CONFIG_AUDIOUTILS_VOICE_CALL) || defined(CONFIG_AUDIOUTILS_VOICE_COMMAND)
@@ -936,6 +937,26 @@ typedef struct
 
 #endif
 
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+
+/** InitMfe Command (#AUDCMD_INITMFE) parameter */
+
+typedef struct
+{
+  AsInitPreProcParam initpre_param;
+
+} AsInitMicFrontEnd;
+
+/** SetMfe Command (#AUDCMD_SETMFE) parameter */
+
+typedef struct
+{
+  AsSetPreProcParam setpre_param;
+
+} AsSetMicFrontEnd;
+
+#endif
+
 /** Audio command packet */
 
 #if defined(__CC_ARM)
@@ -950,12 +971,6 @@ typedef struct
   union
   {
 #ifdef AS_FEATURE_EFFECTOR_ENABLE
-    /*! \brief [in] for InitMFE (__not supported__)
-     * (header.command_code==#AUDCMD_INITMFE)
-     */
-
-    InitMFEParam init_mfe_param;
-
     /*! \brief [in] for StartBB (__not supported__)
      * (header.command_code==#AUDCMD_STARTBB)
      */
@@ -1005,6 +1020,20 @@ typedef struct
      */
 
     AsSetMediaPlayerPost set_mpp_param;
+
+#endif
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+    /*! \brief [in] for InitMFE
+     * (header.command_code==#AUDCMD_INITMFE)
+     */
+
+    AsInitMicFrontEnd init_mfe_param;
+
+    /*! \brief [in] for SetMFE
+     * (header.command_code==#AUDCMD_SETMFEPARAM)
+     */
+
+    AsSetMicFrontEnd set_mfe_param;
 
 #endif
 #ifdef AS_FEATURE_RECORDER_ENABLE
@@ -1263,6 +1292,10 @@ typedef enum
 
   /*! \brief Audio Baseband Driver Module ID */
   AS_MODULE_ID_AUDIO_DRIVER,
+
+  /*! \brief FrontEnd Object ID */
+
+  AS_MODULE_ID_FRONT_END_OBJ,
 
   /*! \brief Input Data Manager Object ID */
 
@@ -1523,6 +1556,10 @@ typedef struct
   /*! \brief [in] MsgQueID of playerObject for Sound Effect */
 
   uint8_t player_sub;
+
+  /*! \brief [in] MsgQueID of FrontendObject */
+
+  uint8_t frontend;
 
   /*! \brief [in] MsgQueID of recorderObject */
 

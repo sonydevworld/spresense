@@ -370,6 +370,7 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
                        m_apu_pool_id,
                        m_apu_dtq,
                        postfilter_done_callback,
+                       "POSTPROC",
                        static_cast<void *>(this),
                        &dsp_inf,
                        (cmd.act_param.post_enable == PostFilterEnable)

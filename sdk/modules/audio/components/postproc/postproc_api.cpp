@@ -105,6 +105,22 @@ bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance)
 }
 
 /*--------------------------------------------------------------------*/
+bool AS_postproc_is_enable(void *p_instance)
+{
+  /* Parameter check */
+
+  if (p_instance == NULL)
+    {
+      POSTPROC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  /* Execute */
+
+  return ((PostprocBase *)p_instance)->is_enable();
+}
+
+/*--------------------------------------------------------------------*/
 bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
 {
   /* Parameter check */
@@ -132,6 +148,7 @@ uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
                               PostprocCallback callback,
+                              const char *image_name,
                               void *p_requester,
                               uint32_t *dsp_inf,
                               bool through)
@@ -154,7 +171,7 @@ uint32_t AS_postproc_activate(void **p_instance,
       return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
     }
 
-  return ((PostprocBase *)*p_instance)->activate(callback, p_requester, dsp_inf);
+  return ((PostprocBase *)*p_instance)->activate(callback, image_name, p_requester, dsp_inf);
 }
 
 /*--------------------------------------------------------------------*/

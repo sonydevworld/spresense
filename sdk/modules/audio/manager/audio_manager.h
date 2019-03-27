@@ -99,6 +99,7 @@ private:
     m_obs_attentionCBFunc(obs_att_cb),
     m_active_player(0),
     m_player_transition_count(0),
+    m_recorder_transition_count(0),
     m_input_en(false),
     m_output_en(false)
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
@@ -141,6 +142,7 @@ private:
   uint32_t m_active_player;
   uint32_t m_command_code;
   int8_t m_player_transition_count;
+  int8_t m_recorder_transition_count;
   bool m_input_en;
   bool m_output_en;
 
@@ -165,6 +167,7 @@ private:
   void mpp(AudioCommand &cmd);
   void player(AudioCommand &cmd);
   void outputmixer(AudioCommand &cmd);
+  void frontend(AudioCommand &cmd);
   void recorder(AudioCommand &cmd);
   void setMicMap(AudioCommand &cmd);
   void setMicGain(AudioCommand &cmd);
