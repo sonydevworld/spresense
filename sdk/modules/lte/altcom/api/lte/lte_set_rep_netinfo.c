@@ -230,7 +230,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
     {
       /* Check callback is registered */
 
-      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
+      callback = altcomcallbacks_get_cb(APICMDID_SETREP_NETINFO);
       if (callback)
         {
           reset_flag = true;
@@ -292,14 +292,14 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
               if (!reset_flag)
                 {
                   altcomcallbacks_reg_cb((void *)netinfo_callback,
-                                          APICMDID_REPORT_NETINFO);
+                                          APICMDID_SETREP_NETINFO);
                 }
             }
           else
             {
               /* Unregistration callback. */
 
-              altcomcallbacks_unreg_cb(APICMDID_REPORT_NETINFO);
+              altcomcallbacks_unreg_cb(APICMDID_SETREP_NETINFO);
               altcomstatus_unreg_statchgcb(repnetinfo_status_chg_cb);
             }
         }
