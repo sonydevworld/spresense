@@ -251,7 +251,7 @@ int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback)
 }
 
 /****************************************************************************
- * Name: apicmdhdlr_get_dynamicedrx
+ * Name: apicmdhdlr_getdynamicedrx
  *
  * Description:
  *   This function is an API command handler for
@@ -269,7 +269,7 @@ int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback)
  *
  ****************************************************************************/
 
-enum evthdlrc_e apicmdhdlr_get_dynamicedrx(FAR uint8_t *evt, uint32_t evlen)
+enum evthdlrc_e apicmdhdlr_getdynamicedrx(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
     APICMDID_CONVERT_RES(APICMDID_GET_DYNAMICEDRX), get_dynamicedrx_job);
