@@ -90,6 +90,18 @@ SECTIONS
 		_edata = ABSOLUTE(.);
 	} > ram
 
+    .microej : {
+		_smicroej = ABSOLUTE(.);
+        . = ALIGN(4);
+        *(ICETEA_HEAP)
+        . = ALIGN(4);
+        *(_java_heap)
+        . = ALIGN(4);
+        *(_java_immortals)
+		_emicroej = ABSOLUTE(.);
+    } > ram
+
+
 	.bss : {			/* BSS				*/
 		_sbss = ABSOLUTE(.);
 		*(.bss .bss.*)
