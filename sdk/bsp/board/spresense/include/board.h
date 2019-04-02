@@ -61,6 +61,7 @@
 #include <arch/board/common/cxd56_isx012.h>
 #include <arch/board/common/cxd56_gauge.h>
 #include <arch/board/common/cxd56_charger.h>
+#include <arch/board/common/cxd56_bcm20706.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -225,59 +226,5 @@ enum board_power_device {
  */
 
 #define BOARDIOC_USBDEV_SETNOTIFYSIG      (BOARDIOC_USER+0x0001)
-
-#ifdef CONFIG_BCM20706
-
-/****************************************************************************
- * Name: board_bcm20706_pin_cfg
- *
- * Description:
- *   Initialize bcm20707 control pins, it must be called before any operation
- *   to do power control, wake up and reset.
- *
- ****************************************************************************/
-
-int board_bcm20706_pin_cfg(void);
-
-/****************************************************************************
- * Name: board_bcm20706_uart_pin_cfg
- *
- * Description:
- *   Setup UART pin configuration for bcm20706.
- *
- ****************************************************************************/
-
-int board_bcm20706_uart_pin_cfg(void);
-
-/****************************************************************************
- * Name: board_bcm20706_reset
- *
- * Description:
- *   Reset bcm20707 chip
- *
- ****************************************************************************/
-
-void board_bcm20706_reset(void);
-
-/****************************************************************************
- * Name: board_bcm20706_power_control
- *
- * Description:
- *   Power on/off bcm20707 chip
- *
- ****************************************************************************/
-
-int board_bcm20706_power_control(bool en);
-
-/****************************************************************************
- * Name: board_bcm20706_enable_sleep
- *
- * Description:
- *   Enable/disable bcm20707 enters sleep mode
- *
- ****************************************************************************/
-
-void board_bcm20706_enable_sleep(bool en);
-#endif /* CONFIG_BCM20706 */
 
 #endif  /* __BSP_BOARD_SPRESENSE_INCLUDE_BOARD_H */
