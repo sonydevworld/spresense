@@ -113,6 +113,7 @@ int board_bluetooth_uart_pin_cfg(void)
 {
   int ret = 0;
 
+  /* BCM20706 evaluation board might set pull-down. */
   /* Set float for UART2 CTS */
 
   ret = board_gpio_config(PIN_UART2_CTS, 1, 1, 0, 0);
