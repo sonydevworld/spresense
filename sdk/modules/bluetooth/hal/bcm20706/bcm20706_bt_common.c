@@ -312,15 +312,15 @@ static int bcm20706_bt_enable(bool enable)
       up_pm_acquire_wakelock(&g_wake_lock);
 
       /* Power on BT */
-      ret = board_bcm20706_power_control(true);
-      ret |= board_bcm20706_pin_cfg();
+      ret = board_bluetooth_power_control(true);
+      ret |= board_bluetooth_pin_cfg();
       if (ret)
         {
-          DBG_LOG_DEBUG("board_bcm20706_power_control(on): NG %d\n", ret);
+          DBG_LOG_DEBUG("board_bluetooth_power_control(on): NG %d\n", ret);
           return -EIO;
         }
-      board_bcm20706_reset();
-      board_bcm20706_enable_sleep(true);
+      board_bluetooth_reset();
+      board_bluetooth_enable_sleep(true);
       DBG_LOG_DEBUG("Power on BT!!\n");
 
       ret = btUartInitialization();
@@ -331,7 +331,7 @@ static int bcm20706_bt_enable(bool enable)
         }
 
       /* UART post pin configuration */
-      ret = board_bcm20706_uart_pin_cfg();
+      ret = board_bluetooth_uart_pin_cfg();
       if (ret)
         {
           ret = -ENXIO;
@@ -379,7 +379,7 @@ static int bcm20706_bt_enable(bool enable)
     {
       btUartFinalization();
       btRecvTaskEnd();
-      board_bcm20706_power_control(false);
+      board_bluetooth_power_control(false);
       /* Workaround for BT Hot Sleep Issue. After it is resolved, wakelock will be removed */
       up_pm_release_wakelock(&g_wake_lock);
     }
@@ -389,7 +389,7 @@ static int bcm20706_bt_enable(bool enable)
 release:
       btRecvTaskEnd();
 err:
-      board_bcm20706_power_control(false);
+      board_bluetooth_power_control(false);
   return ret;
 }
 
@@ -733,4 +733,3 @@ int btSetPairingEnable(uint8_t isEnable)
   UINT8_TO_STREAM(p, isEnable);
   return btUartSendData(buff, p - buff);
 }
-

@@ -139,7 +139,7 @@ static void btUartRecvBytes(UART_BUFF *inputData, uint16_t len)
   ssize_t readLen = 0;
   uint16_t recvLen = 0;
 
-  while (recvLen != len) 
+  while (recvLen != len)
     {
       readLen = read(ctx->uartFd, buff, 1);
       if (readLen < 0)
@@ -339,7 +339,7 @@ int btUartSendData(uint8_t *p, uint16_t len)
       btdbg("wait uart TX semaphore failed\n");
       return ret;
     }
-  board_bcm20706_enable_sleep(false);
+  board_bluetooth_enable_sleep(false);
 
   ret = btUartSendRawData(p, len);
   if (ret)
@@ -347,7 +347,7 @@ int btUartSendData(uint8_t *p, uint16_t len)
       btdbg("uart send data failed\n");
       return btPostTxSem();
     }
-  board_bcm20706_enable_sleep(true);
+  board_bluetooth_enable_sleep(true);
   ret = btPostTxSem();
   if (ret)
     {
@@ -503,4 +503,3 @@ int btUartStartRx(bool isStart)
 
   return ret;
 }
-

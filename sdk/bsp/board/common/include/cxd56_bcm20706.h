@@ -68,7 +68,7 @@ extern "C"
  #ifdef CONFIG_BCM20706
 
  /****************************************************************************
-  * Name: board_bcm20706_pin_cfg
+  * Name: board_bluetooth_pin_cfg
   *
   * Description:
   *   Initialize bcm20707 control pins, it must be called before any operation
@@ -76,47 +76,47 @@ extern "C"
   *
   ****************************************************************************/
 
- int board_bcm20706_pin_cfg(void);
+ int board_bluetooth_pin_cfg(void);
 
  /****************************************************************************
-  * Name: board_bcm20706_uart_pin_cfg
+  * Name: board_bluetooth_uart_pin_cfg
   *
   * Description:
   *   Setup UART pin configuration for bcm20706.
   *
   ****************************************************************************/
 
- int board_bcm20706_uart_pin_cfg(void);
+ int board_bluetooth_uart_pin_cfg(void);
 
  /****************************************************************************
-  * Name: board_bcm20706_reset
+  * Name: board_bluetooth_reset
   *
   * Description:
   *   Reset bcm20707 chip
   *
   ****************************************************************************/
 
- void board_bcm20706_reset(void);
+ void board_bluetooth_reset(void);
 
  /****************************************************************************
-  * Name: board_bcm20706_power_control
+  * Name: board_bluetooth_power_control
   *
   * Description:
   *   Power on/off bcm20707 chip
   *
   ****************************************************************************/
 
- int board_bcm20706_power_control(bool en);
+ int board_bluetooth_power_control(bool en);
 
  /****************************************************************************
-  * Name: board_bcm20706_enable_sleep
+  * Name: board_bluetooth_enable_sleep
   *
   * Description:
   *   Enable/disable bcm20707 enters sleep mode
   *
   ****************************************************************************/
 
- void board_bcm20706_enable_sleep(bool en);
+ void board_bluetooth_enable_sleep(bool en);
  #endif /* CONFIG_BCM20706 */
 
 #undef EXTERN
