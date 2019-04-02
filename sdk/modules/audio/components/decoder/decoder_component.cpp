@@ -508,7 +508,7 @@ bool DecoderComponent::recv_apu(void *p_response)
       logerr(" res_src = %d\n", packet->result.internal_result[0].res_src);
       logerr(" code    = %d\n", packet->result.internal_result[0].code);
       logerr(" value   = %d\n", packet->result.internal_result[0].value);
-      DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
+      DECODER_WARN(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
 
   if (Apu::InitEvent == packet->header.event_type)
