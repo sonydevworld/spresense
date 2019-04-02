@@ -66,7 +66,7 @@ SECTIONS
 
 	.init_section : {
 		_sinit = ABSOLUTE(.);
-		KEEP(*(.init_array .init_array.*))
+		*(.init_array .init_array.*)
 		_einit = ABSOLUTE(.);
 	} > ram
 
@@ -92,15 +92,14 @@ SECTIONS
 
     .microej : {
 		_smicroej = ABSOLUTE(.);
-        . = ALIGN(4);
         *(ICETEA_HEAP)
         . = ALIGN(4);
         *(_java_heap)
         . = ALIGN(4);
         *(_java_immortals)
+        . = ALIGN(4);
 		_emicroej = ABSOLUTE(.);
     } > ram
-
 
 	.bss : {			/* BSS				*/
 		_sbss = ABSOLUTE(.);
@@ -110,11 +109,22 @@ SECTIONS
 		_ebss = ABSOLUTE(.);
 	} > ram
 
+
+    /*
+	 * This is a hack to make the newlib libm __errno() call
+	 * use the NuttX get_errno_ptr() function.
+	 */
+	__errno = get_errno_ptr;
+
+
 	/* __stack symbol is referred from mkspk tool
 	 * and means the end address of heap region */
-	PROVIDE(__stack = ORIGIN(ram) + LENGTH(ram));
+    PROVIDE(__stack = ORIGIN(ram) + LENGTH(ram));
 
-					/* Stabs debugging sections.	*/
+    ASSERT(_ebss < __stack, ".bss zone overlap with Stack")
+
+
+    /* Stabs debugging sections.	*/
 	.stab 0 : { *(.stab) }
 	.stabstr 0 : { *(.stabstr) }
 	.stab.excl 0 : { *(.stab.excl) }
