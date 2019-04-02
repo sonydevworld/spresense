@@ -517,6 +517,18 @@
 
 #define LTE_SIMINFO_GETOPT_ICCID  (1 << 2)
 
+/** Indicates to get for IMSI of SIM */
+
+#define LTE_SIMINFO_GETOPT_IMSI   (1 << 3)
+
+/** Indicates to get for GID1(Group Identifier Level 1) of SIM */
+
+#define LTE_SIMINFO_GETOPT_GID1   (1 << 4)
+
+/** Indicates to get for GID2(Group Identifier Level 2) of SIM */
+
+#define LTE_SIMINFO_GETOPT_GID2   (1 << 5)
+
 /** Digit number of mcc */
 
 #define LTE_SIMINFO_MCC_DIGIT      LTE_MCC_DIGIT
@@ -527,6 +539,8 @@
 
 #define LTE_SIMINFO_SPN_LEN   (16)  /**< Maximum length of SPN */
 #define LTE_SIMINFO_ICCID_LEN (10)  /**< Maximum length of ICCCID */
+#define LTE_SIMINFO_IMSI_LEN  (16)  /**< Maximum length of IMSI */
+#define LTE_SIMINFO_GID_LEN   (128) /**< Maximum length of GID */
 
 /****************************************************************************
  * Public Types
@@ -1128,6 +1142,9 @@ typedef struct lte_siminfo
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
    *  - @ref LTE_SIMINFO_GETOPT_SPN@n
    *  - @ref LTE_SIMINFO_GETOPT_ICCID@n
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI@n
+   *  - @ref LTE_SIMINFO_GETOPT_GID1@n
+   *  - @ref LTE_SIMINFO_GETOPT_GID2@n
    */
 
   uint32_t option;
@@ -1167,6 +1184,36 @@ typedef struct lte_siminfo
    *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
 
   uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
+
+  /** Length of IMSI. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
+
+  uint8_t  imsi_len;
+
+  /** International Mobile Subscriber Identity. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
+
+  uint8_t  imsi[LTE_SIMINFO_IMSI_LEN];
+
+  /** Length of GID1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
+
+  uint8_t  gid1_len;
+
+  /** Group Identifier Level 1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
+
+  uint8_t  gid1[LTE_SIMINFO_GID_LEN];
+
+  /** Length of GID2. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
+
+  uint8_t  gid2_len;
+
+  /** Group Identifier Level 1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
+
+  uint8_t  gid2[LTE_SIMINFO_GID_LEN];
 } lte_siminfo_t;
 
 /** Definition of callback function.
@@ -2583,6 +2630,9 @@ int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback);
  *                       - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
  *                       - @ref LTE_SIMINFO_GETOPT_SPN@n
  *                       - @ref LTE_SIMINFO_GETOPT_ICCID@n
+ *                       - @ref LTE_SIMINFO_GETOPT_IMSI@n
+ *                       - @ref LTE_SIMINFO_GETOPT_GID1@n
+ *                       - @ref LTE_SIMINFO_GETOPT_GID2@n
  * @param [in] callback: Callback function to notify that
  *                       get of SIM information is completed.
  *
