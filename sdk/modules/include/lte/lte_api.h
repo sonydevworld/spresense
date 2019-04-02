@@ -2239,8 +2239,6 @@ int32_t lte_set_psm(lte_psm_setting_t *settings,
 /**
  * Get CE settings.
  *
- * @attention **This function is not supported yet**.
- *
  * @param [in] callback: Callback function to notify that
  *                       get CE settings is completed.
  *
@@ -2252,8 +2250,6 @@ int32_t lte_get_ce(get_ce_cb_t callback);
 
 /**
  * Set CE settings.
- *
- * @attention **This function is not supported yet**.
  *
  * @param [in] settings: CE settings
  * @param [in] callback: Callback function to notify that
