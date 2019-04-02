@@ -49,3 +49,11 @@ ifneq ($(SPRESENSE_HOME),)
 endif
 
 $(foreach SDIR, $(EXTSUBDIRS), $(eval $(call ExtSubDirectory_template,$(SDIR))))
+
+
+VAR = $(DELIM)usr$(DELIM)lib$(DELIM)arm-none-eabi$(DELIM)newlib$(DELIM)armv7e-m$(DELIM)fpu$(DELIM)libm$(LIBEXT)
+lib$(DELIM)libm$(LIBEXT): $(VAR)
+	$(Q) install $< $@
+
+EXTLIBS +=  lib$(DELIM)libm$(LIBEXT)
+
