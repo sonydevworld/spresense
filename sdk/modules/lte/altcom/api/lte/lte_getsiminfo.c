@@ -81,7 +81,10 @@ static int32_t lte_getsiminfo_checkparam(uint32_t opt)
 
   mask = (LTE_SIMINFO_GETOPT_MCCMNC |
           LTE_SIMINFO_GETOPT_SPN |
-          LTE_SIMINFO_GETOPT_ICCID);
+          LTE_SIMINFO_GETOPT_ICCID |
+          LTE_SIMINFO_GETOPT_IMSI |
+          LTE_SIMINFO_GETOPT_GID1 |
+          LTE_SIMINFO_GETOPT_GID2);
 
   if (0 == (opt & mask))
     {
@@ -202,6 +205,48 @@ static void get_siminfo_job(FAR void *arg)
                   else
                     {
                       DBGIF_LOG1_ERROR("Invalid param. ICCID length [%d]\n", data->iccid_len);
+                      result = LTE_RESULT_ERROR;
+                    }
+                }
+
+              if (siminfo.option & APICMD_GETSIMINFO_OPT_IMSI)
+                {
+                  if (LTE_SIMINFO_IMSI_LEN >= data->imsi_len)
+                    {
+                      siminfo.imsi_len = data->imsi_len;
+                      memcpy(siminfo.imsi, data->imsi, data->imsi_len);
+                    }
+                  else
+                    {
+                      DBGIF_LOG1_ERROR("Invalid param. IMSI length [%d]\n", data->imsi_len);
+                      result = LTE_RESULT_ERROR;
+                    }
+                }
+
+              if (siminfo.option & APICMD_GETSIMINFO_OPT_GID1)
+                {
+                  if (LTE_SIMINFO_GID_LEN >= data->gid1_len)
+                    {
+                      siminfo.gid1_len = data->gid1_len;
+                      memcpy(siminfo.gid1, data->gid1, data->gid1_len);
+                    }
+                  else
+                    {
+                      DBGIF_LOG1_ERROR("Invalid param. GID1 length [%d]\n", data->gid1_len);
+                      result = LTE_RESULT_ERROR;
+                    }
+                }
+
+              if (siminfo.option & APICMD_GETSIMINFO_OPT_GID2)
+                {
+                  if (LTE_SIMINFO_GID_LEN >= data->gid2_len)
+                    {
+                      siminfo.gid2_len = data->gid2_len;
+                      memcpy(siminfo.gid2, data->gid2, data->gid2_len);
+                    }
+                  else
+                    {
+                      DBGIF_LOG1_ERROR("Invalid param. GID2 length [%d]\n", data->gid2_len);
                       result = LTE_RESULT_ERROR;
                     }
                 }

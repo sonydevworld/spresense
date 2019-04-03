@@ -53,11 +53,16 @@
 #define APICMD_GETSIMINFO_OPT_MCCMNC             (1 << 0)
 #define APICMD_GETSIMINFO_OPT_SPN                (1 << 1)
 #define APICMD_GETSIMINFO_OPT_ICCID              (1 << 2)
+#define APICMD_GETSIMINFO_OPT_IMSI               (1 << 3)
+#define APICMD_GETSIMINFO_OPT_GID1               (1 << 4)
+#define APICMD_GETSIMINFO_OPT_GID2               (1 << 5)
 
 #define APICMD_GETSIMINFO_MCC_DIXIT_MAX          (3)
 #define APICMD_GETSIMINFO_MNC_DIXIT_MAX          (3)
 #define APICMD_GETSIMINFO_SPN_MAX_LEN            (16)
 #define APICMD_GETSIMINFO_ICCID_MAX_LEN          (10)
+#define APICMD_GETSIMINFO_IMSI_LEN               (16)
+#define APICMD_GETSIMINFO_GID_LEN                (128)
 
 /****************************************************************************
  * Public Types
@@ -79,6 +84,12 @@ begin_packed_struct struct apicmd_cmddat_getsiminfo_res_s
   uint8_t  spn[APICMD_GETSIMINFO_SPN_MAX_LEN];
   uint8_t  iccid_len;
   uint8_t  iccid[APICMD_GETSIMINFO_ICCID_MAX_LEN];
+  uint8_t  imsi_len;
+  uint8_t  imsi[APICMD_GETSIMINFO_IMSI_LEN];
+  uint8_t  gid1_len;
+  uint8_t  gid1[APICMD_GETSIMINFO_GID_LEN];
+  uint8_t  gid2_len;
+  uint8_t  gid2[APICMD_GETSIMINFO_GID_LEN];
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETSIMINFO_H */
