@@ -53,6 +53,14 @@
 #include <asmp/mpsignal.h>
 
 /********************************************************************************
+ * Pre-processor Definitions
+ ********************************************************************************/
+
+/* Timeout definitions for mpmq_timedreceive() */
+
+#define MPMQ_NONBLOCK 0xfffffffful  /**< Non-blocking mode */
+
+/********************************************************************************
  * Public Type Declarations
  ********************************************************************************/
 /**
@@ -160,7 +168,7 @@ int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
  * @param [in,out] mq: MP message queue object
  * @param [out] data: Message data
  *
- * @return On success, mpmq_recieve() returns message ID. On error, it returns an
+ * @return On success, mpmq_receive() returns message ID. On error, it returns an
  * error number.
  * @retval -EINVAL: Invalid argument
  */
@@ -172,11 +180,15 @@ int mpmq_receive(mpmq_t *mq, uint32_t *data);
  *
  * @param [in,out] mq: MP message queue object
  * @param [out] data: Message data
- * @param [in] ms: Time out (milliseconds)
+ * @param [in] ms: Time out (milliseconds). If ms is zero, then it waits forever
+ * until receiving message. If ms is MPMQ_NONBLOCK, then it behaves as polling
+ * without blocking.
  *
- * @return On success, mpmq_timedrecieve() returns message ID. On error, it
+ * @return On success, mpmq_timedreceive() returns message ID. On error, it
  * returns an error number.
  * @retval -EINVAL: Invalid argument
+ * @retval -ETIMEDOUT: Timed out
+ * @retval -EAGAIN: Try again when data hasn't come with non-blocking mode
  */
 
 int mpmq_timedreceive(mpmq_t *mq, uint32_t *data, uint32_t ms);
