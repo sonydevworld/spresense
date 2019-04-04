@@ -152,7 +152,7 @@ int mpmq_send(mpmq_t *mq, int8_t msgid, uint32_t data);
  * @param [in,out] mq: MP message queue object
  * @param [in] msgid: User defined message ID (0-127)
  * @param [in] data: Message data
- * @param [in] ms: Time out (milliseconds)
+ * @param [in] ms: Time out (milliseconds). This parameter is unused.
  *
  * @return On success, mpmq_timedsend() returns 0. On error, it returns an error
  * number.
