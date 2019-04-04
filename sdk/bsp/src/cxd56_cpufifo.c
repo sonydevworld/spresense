@@ -177,6 +177,7 @@ int cxd56_cfpush(uint32_t data[2])
   if (!sq_empty(&g_pushqueue))
     {
       cpufifo_reserve(data);
+      leave_critical_section(flags);
       return OK;
     }
 
