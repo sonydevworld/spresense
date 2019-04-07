@@ -118,13 +118,8 @@
 #  define CONFIG_CXD56_SD1BIT_FREQ 20000000  /* 20MHz SD 1-bit, normal clocking */
 #endif
 #ifndef CONFIG_CXD56_SD4BIT_FREQ
-#  define CONFIG_CXD56_SD4BIT_FREQ 25000000  /* 25MHz SD 4-bit, normal clocking */
+#  define CONFIG_CXD56_SD4BIT_FREQ 50000000  /* SDR25 SD 4-bit, normal clocking */
 #endif
-#ifndef CONFIG_CXD56_HSSD4BIT_FREQ
-#  define CONFIG_CXD56_HSSD4BIT_FREQ 50000000  /* 50MHz SD 4-bit, highspeed clocking */
-#endif
-
-#define CXD56_SDIO_BASECLK_FREQ (cxd56_get_sdio_baseclock()*2)
 
 /* Timing */
 
@@ -1589,7 +1584,7 @@ static void cxd56_sdio_clock(FAR struct sdio_dev_s *dev, enum sdio_clock_e rate)
   putreg32(0x01010100, CXD56_SDHCI_OTHERIOLL);
 
   /* sdclk_dly_sel */
-  if (rate <= CLOCK_SD_TRANSFER_4BIT)
+  if (rate < CLOCK_SD_TRANSFER_4BIT)
     putreg32((getreg32(CXD56_SDHCI_USERDEF2CTL) & ~(0x7))| 0x1, CXD56_SDHCI_USERDEF2CTL);
   else
     putreg32((getreg32(CXD56_SDHCI_USERDEF2CTL) & ~(0x7))| 0x0, CXD56_SDHCI_USERDEF2CTL);
