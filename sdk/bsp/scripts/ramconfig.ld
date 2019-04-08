@@ -66,7 +66,7 @@ SECTIONS
 
 	.init_section : {
 		_sinit = ABSOLUTE(.);
-		*(.init_array .init_array.*)
+		KEEP(*(.init_array .init_array.*)
 		_einit = ABSOLUTE(.);
 	} > ram
 
@@ -90,16 +90,16 @@ SECTIONS
 		_edata = ABSOLUTE(.);
 	} > ram
 
-    .microej : {
+	.microej : {
 		_smicroej = ABSOLUTE(.);
-        *(ICETEA_HEAP)
-        . = ALIGN(4);
-        *(_java_heap)
-        . = ALIGN(4);
-        *(_java_immortals)
-        . = ALIGN(4);
+		*(ICETEA_HEAP)
+		. = ALIGN(4);
+		*(_java_heap)
+		. = ALIGN(4);
+		*(_java_immortals)
+		. = ALIGN(4);
 		_emicroej = ABSOLUTE(.);
-    } > ram
+	} > ram
 
 	.bss : {			/* BSS				*/
 		_sbss = ABSOLUTE(.);
@@ -119,12 +119,12 @@ SECTIONS
 
 	/* __stack symbol is referred from mkspk tool
 	 * and means the end address of heap region */
-    PROVIDE(__stack = ORIGIN(ram) + LENGTH(ram));
+	PROVIDE(__stack = ORIGIN(ram) + LENGTH(ram));
 
-    ASSERT(_ebss < __stack, ".bss zone overlap with Stack")
+	ASSERT(_ebss < __stack, ".bss zone overlap with Stack")
 
 
-    /* Stabs debugging sections.	*/
+	/* Stabs debugging sections.	*/
 	.stab 0 : { *(.stab) }
 	.stabstr 0 : { *(.stabstr) }
 	.stab.excl 0 : { *(.stab.excl) }
