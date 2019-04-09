@@ -81,7 +81,7 @@
 #undef USE_FLOAT_CONVERSION
 
 #ifdef CONFIG_CXD56_CHARGER_TEMP_PRECISE
-#  if !defined(CONFIG_LIBM)
+#  if !defined(CONFIG_LIBM) && !defined(CONFIG_NEWLIB_MATH)
 #    error Temperature conversion in float requires math library.
 #  endif
 #  define USE_FLOAT_CONVERSION 1
