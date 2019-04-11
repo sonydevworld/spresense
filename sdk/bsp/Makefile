@@ -136,7 +136,7 @@ ifeq ($(BOARDMAKE),y)
 endif
 
 ifneq ($(CONFIG_LIBM),y)
-ifeq ($(CONFIG_NEWLIB_MATH),y)
+ifeq ($(CONFIG_LIBM_NEWLIB),y)
   # Use newlib math library instead of built-in one
   LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
   LDLIBS += $(LIBM)

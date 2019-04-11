@@ -1791,7 +1791,7 @@ endmenu
 
 menu "Library Routines"
 
-config NEWLIB_MATH
+config LIBM_NEWLIB
 	bool "Newlib Math library"
 	default y
 	---help---

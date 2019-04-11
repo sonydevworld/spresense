@@ -192,6 +192,6 @@ endif
 
 # Toolchain glue
 
-ifeq ($(CONFIG_NEWLIB_MATH),y)
+ifeq ($(CONFIG_LIBM_NEWLIB),y)
 CHIP_CSRCS += cxd56_libm_errno.c
 endif
