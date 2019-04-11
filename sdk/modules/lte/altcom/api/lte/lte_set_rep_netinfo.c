@@ -90,7 +90,7 @@ static int32_t repnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
     {
       DBGIF_LOG2_INFO("repnetinfo_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
-      altcomcallbacks_unreg_cb(APICMDID_REPORT_NETINFO);
+      altcomcallbacks_unreg_cb(APICMDID_SETREP_NETINFO);
 
       return ALTCOM_STATUS_REG_CLR;
     }
@@ -121,7 +121,7 @@ static void repnetinfo_job(FAR void *arg)
   int32_t                                ret = 0;
 
   netinfo.pdn_stat = NULL;
-  callback = altcomcallbacks_get_cb(APICMDID_REPORT_NETINFO);
+  callback = altcomcallbacks_get_cb(APICMDID_SETREP_NETINFO);
 
   if (!callback)
     {
