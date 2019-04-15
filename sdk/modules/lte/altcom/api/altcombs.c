@@ -46,6 +46,22 @@
 #include "altcombs.h"
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL (0xFF)
+#define ALTCOMBS_EDRX_ACTTYPE_MIN         (APICMD_EDRX_ACTTYPE_WBS1)
+#define ALTCOMBS_EDRX_ACTTYPE_MAX         (APICMD_EDRX_ACTTYPE_WBS1)
+#define ALTCOMBS_EDRX_CYCLE_MIN           (APICMD_EDRX_CYC_512)
+#define ALTCOMBS_EDRX_CYCLE_MAX           (APICMD_EDRX_CYC_262144)
+#define ALTCOMBS_EDRX_PTW_MIN             (APICMD_EDRX_PTW_128)
+#define ALTCOMBS_EDRX_PTW_MAX             (APICMD_EDRX_PTW_2048)
+#define ALTCOMBS_PSM_UNIT_T3324_MIN       (APICMD_PSM_RAT_UNIT_2SEC)
+#define ALTCOMBS_PSM_UNIT_T3324_MAX       (APICMD_PSM_RAT_UNIT_6MIN)
+#define ALTCOMBS_PSM_UNIT_T3412_MIN       (APICMD_PSM_TAU_UNIT_2SEC)
+#define ALTCOMBS_PSM_UNIT_T3412_MAX       (APICMD_PSM_TAU_UNIT_320HOUR)
+
+/****************************************************************************
  * Private Data
  ****************************************************************************/
 
@@ -532,13 +548,6 @@ int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
       return -EINVAL;
     }
 
-  if (set->acttype < APICMD_EDRX_ACTTYPE_NOTUSE ||
-      set->acttype > APICMD_EDRX_ACTTYPE_NBS1)
-    {
-      DBGIF_LOG1_ERROR("Invalid acttype :%d\n", set->acttype);
-      return -EINVAL;
-    }
-
   if (set->enable < APICMD_EDRX_DISABLE ||
       set->enable > APICMD_EDRX_ENABLE)
     {
@@ -546,18 +555,28 @@ int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
       return -EINVAL;
     }
 
-  if (set->edrx_cycle < APICMD_EDRX_CYC_512 ||
-      set->edrx_cycle > APICMD_EDRX_CYC_262144)
+  if (APICMD_EDRX_ENABLE == set->enable)
     {
-      DBGIF_LOG1_ERROR("Invalid cycle :%d\n", set->edrx_cycle);
-      return -EINVAL;
-    }
+      if (set->acttype < APICMD_EDRX_ACTTYPE_NOTUSE ||
+          set->acttype > APICMD_EDRX_ACTTYPE_NBS1)
+        {
+          DBGIF_LOG1_ERROR("Invalid acttype :%d\n", set->acttype);
+          return -EINVAL;
+        }
 
-  if (set->ptw_val < APICMD_EDRX_PTW_128 ||
-      set->ptw_val > APICMD_EDRX_PTW_2048)
-    {
-      DBGIF_LOG1_ERROR("Invalid PTW :%d\n", set->ptw_val);
-      return -EINVAL;
+      if (set->edrx_cycle < APICMD_EDRX_CYC_512 ||
+          set->edrx_cycle > APICMD_EDRX_CYC_262144)
+        {
+          DBGIF_LOG1_ERROR("Invalid cycle :%d\n", set->edrx_cycle);
+          return -EINVAL;
+        }
+
+      if (set->ptw_val < APICMD_EDRX_PTW_128 ||
+          set->ptw_val > APICMD_EDRX_PTW_2048)
+        {
+          DBGIF_LOG1_ERROR("Invalid PTW :%d\n", set->ptw_val);
+          return -EINVAL;
+        }
     }
 
   return 0;
@@ -582,127 +601,79 @@ int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
 int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
   lte_edrx_setting_t *lte_edrx)
 {
+  uint8_t edrx_acttype_table[] =
+    {
+      ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL,
+      ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL,
+      ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL,
+      ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL,
+      LTE_EDRX_ACTTYPE_WBS1,
+    };
+
+  uint8_t edrx_cycle_table[] =
+    {
+      LTE_EDRX_CYC_512,
+      LTE_EDRX_CYC_1024,
+      LTE_EDRX_CYC_2048,
+      LTE_EDRX_CYC_4096,
+      LTE_EDRX_CYC_6144,
+      LTE_EDRX_CYC_8192,
+      LTE_EDRX_CYC_10240,
+      LTE_EDRX_CYC_12288,
+      LTE_EDRX_CYC_14336,
+      LTE_EDRX_CYC_16384,
+      LTE_EDRX_CYC_32768,
+      LTE_EDRX_CYC_65536,
+      LTE_EDRX_CYC_131072,
+      LTE_EDRX_CYC_262144,
+    };
+
+  uint8_t edrx_ptw_table[] =
+    {
+      LTE_EDRX_PTW_128,
+      LTE_EDRX_PTW_256,
+      LTE_EDRX_PTW_384,
+      LTE_EDRX_PTW_512,
+      LTE_EDRX_PTW_640,
+      LTE_EDRX_PTW_768,
+      LTE_EDRX_PTW_896,
+      LTE_EDRX_PTW_1024,
+      LTE_EDRX_PTW_1152,
+      LTE_EDRX_PTW_1280,
+      LTE_EDRX_PTW_1408,
+      LTE_EDRX_PTW_1536,
+      LTE_EDRX_PTW_1664,
+      LTE_EDRX_PTW_1792,
+      LTE_EDRX_PTW_1920,
+      LTE_EDRX_PTW_2048,
+    };
+
   if (!cmd_edrx || !lte_edrx)
     {
       return -EINVAL;
     }
 
-  switch (cmd_edrx->acttype)
+  if (APICMD_EDRX_ENABLE == cmd_edrx->enable)
     {
-      case APICMD_EDRX_ACTTYPE_WBS1:
-        lte_edrx->act_type = LTE_EDRX_ACTTYPE_WBS1;
-      break;
-      default:
-        DBGIF_LOG1_ERROR("Invalid acttype :%d\n", cmd_edrx->acttype);
-        return -EINVAL;
-    }
+      if ((ALTCOMBS_EDRX_ACTTYPE_MIN > cmd_edrx->acttype ||
+          ALTCOMBS_EDRX_ACTTYPE_MAX < cmd_edrx->acttype) ||
+          (ALTCOMBS_EDRX_CYCLE_MIN > cmd_edrx->edrx_cycle ||
+          ALTCOMBS_EDRX_CYCLE_MAX < cmd_edrx->edrx_cycle) ||
+          (ALTCOMBS_EDRX_PTW_MIN > cmd_edrx->ptw_val ||
+          ALTCOMBS_EDRX_PTW_MAX < cmd_edrx->ptw_val))
+        {
+          return -EINVAL;
+        }
 
-  switch (cmd_edrx->edrx_cycle)
+      lte_edrx->enable = LTE_ENABLE;
+      lte_edrx->act_type = edrx_acttype_table[cmd_edrx->acttype];
+      lte_edrx->edrx_cycle = edrx_cycle_table[cmd_edrx->edrx_cycle];
+      lte_edrx->ptw_val = edrx_ptw_table[cmd_edrx->ptw_val];
+    }
+  else
     {
-      case APICMD_EDRX_CYC_512:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_512;
-      break;
-      case APICMD_EDRX_CYC_1024:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_1024;
-      break;
-      case APICMD_EDRX_CYC_2048:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_2048;
-      break;
-      case APICMD_EDRX_CYC_4096:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_4096;
-      break;
-      case APICMD_EDRX_CYC_6144:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_6144;
-      break;
-      case APICMD_EDRX_CYC_8192:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_8192;
-      break;
-      case APICMD_EDRX_CYC_10240:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_10240;
-      break;
-      case APICMD_EDRX_CYC_12288:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_12288;
-      break;
-      case APICMD_EDRX_CYC_14336:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_14336;
-      break;
-      case APICMD_EDRX_CYC_16384:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_16384;
-      break;
-      case APICMD_EDRX_CYC_32768:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_32768;
-      break;
-      case APICMD_EDRX_CYC_65536:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_65536;
-      break;
-      case APICMD_EDRX_CYC_131072:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_131072;
-      break;
-      case APICMD_EDRX_CYC_262144:
-        lte_edrx->edrx_cycle = LTE_EDRX_CYC_262144;
-      break;
-      default:
-        DBGIF_LOG1_ERROR("Invalid edrx cycle :%d\n", cmd_edrx->edrx_cycle);
-        return -EINVAL;
+      lte_edrx->enable = LTE_DISABLE;
     }
-
-  switch (cmd_edrx->ptw_val)
-    {
-      case APICMD_EDRX_PTW_128:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_128;
-      break;
-      case APICMD_EDRX_PTW_256:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_256;
-      break;
-      case APICMD_EDRX_PTW_384:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_384;
-      break;
-      case APICMD_EDRX_PTW_512:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_512;
-      break;
-      case APICMD_EDRX_PTW_640:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_640;
-      break;
-      case APICMD_EDRX_PTW_768:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_768;
-      break;
-      case APICMD_EDRX_PTW_896:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_896;
-      break;
-      case APICMD_EDRX_PTW_1024:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1024;
-      break;
-      case APICMD_EDRX_PTW_1152:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1152;
-      break;
-      case APICMD_EDRX_PTW_1280:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1280;
-      break;
-      case APICMD_EDRX_PTW_1408:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1408;
-      break;
-      case APICMD_EDRX_PTW_1536:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1536;
-      break;
-      case APICMD_EDRX_PTW_1664:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1664;
-      break;
-      case APICMD_EDRX_PTW_1792:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1792;
-      break;
-      case APICMD_EDRX_PTW_1920:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_1920;
-      break;
-      case APICMD_EDRX_PTW_2048:
-        lte_edrx->ptw_val = LTE_EDRX_PTW_2048;
-      break;
-      default:
-        DBGIF_LOG1_ERROR("Invalid PTW val :%d\n", cmd_edrx->ptw_val);
-      return -EINVAL;
-    }
-
-  lte_edrx->enable = cmd_edrx->enable == APICMD_EDRX_DISABLE ?
-    LTE_DISABLE : LTE_ENABLE;
 
   return 0;
 }
@@ -737,32 +708,35 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
       return -EINVAL;
     }
 
-  if (set->rat_time.unit < APICMD_PSM_RAT_UNIT_2SEC ||
-      set->rat_time.unit > APICMD_PSM_RAT_UNIT_6MIN)
+  if (APICMD_PSM_ENABLE == set->enable)
     {
-      DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", set->rat_time.unit);
-      return -EINVAL;
-    }
+      if (set->rat_time.unit < APICMD_PSM_RAT_UNIT_2SEC ||
+          set->rat_time.unit > APICMD_PSM_RAT_UNIT_6MIN)
+        {
+          DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", set->rat_time.unit);
+          return -EINVAL;
+        }
 
-  if (set->rat_time.time_val < APICMD_PSM_TIMER_MIN ||
-      set->rat_time.time_val > APICMD_PSM_TIMER_MAX)
-    {
-      DBGIF_LOG1_ERROR("Invalid rat_time time_val :%d\n", set->rat_time.time_val);
-      return -EINVAL;
-    }
+      if (set->rat_time.time_val < APICMD_PSM_TIMER_MIN ||
+          set->rat_time.time_val > APICMD_PSM_TIMER_MAX)
+        {
+          DBGIF_LOG1_ERROR("Invalid rat_time time_val :%d\n", set->rat_time.time_val);
+          return -EINVAL;
+        }
 
-  if (set->tau_time.unit < APICMD_PSM_TAU_UNIT_2SEC ||
-      set->tau_time.unit > APICMD_PSM_TAU_UNIT_320HOUR)
-    {
-      DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", set->tau_time.unit);
-      return -EINVAL;
-    }
+      if (set->tau_time.unit < APICMD_PSM_TAU_UNIT_2SEC ||
+          set->tau_time.unit > APICMD_PSM_TAU_UNIT_320HOUR)
+        {
+          DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", set->tau_time.unit);
+          return -EINVAL;
+        }
 
-  if (set->tau_time.time_val < APICMD_PSM_TIMER_MIN ||
-      set->tau_time.time_val > APICMD_PSM_TIMER_MAX)
-    {
-      DBGIF_LOG1_ERROR("Invalid tau_time time_val :%d\n", set->tau_time.time_val);
-      return -EINVAL;
+      if (set->tau_time.time_val < APICMD_PSM_TIMER_MIN ||
+          set->tau_time.time_val > APICMD_PSM_TIMER_MAX)
+        {
+          DBGIF_LOG1_ERROR("Invalid tau_time time_val :%d\n", set->tau_time.time_val);
+          return -EINVAL;
+        }
     }
 
   return 0;
@@ -787,56 +761,52 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
 int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
   lte_psm_setting_t *lte_psm)
 {
+  uint8_t t3324_unit_table[] =
+    {
+      LTE_PSM_T3324_UNIT_2SEC,
+      LTE_PSM_T3324_UNIT_1MIN,
+      LTE_PSM_T3324_UNIT_6MIN,
+    };
+  uint8_t t3412_unit_table[] =
+    {
+      LTE_PSM_T3412_UNIT_2SEC,
+      LTE_PSM_T3412_UNIT_30SEC,
+      LTE_PSM_T3412_UNIT_1MIN,
+      LTE_PSM_T3412_UNIT_10MIN,
+      LTE_PSM_T3412_UNIT_1HOUR,
+      LTE_PSM_T3412_UNIT_10HOUR,
+      LTE_PSM_T3412_UNIT_320HOUR
+    };
+
   if (!cmd_psm || !lte_psm)
     {
       return -EINVAL;
     }
 
-  switch (cmd_psm->rat_time.unit)
+  if (APICMD_PSM_ENABLE == cmd_psm->enable)
     {
-      case APICMD_PSM_RAT_UNIT_2SEC:
-        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_2SEC;
-      break;
-      case APICMD_PSM_RAT_UNIT_1MIN:
-        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_1MIN;
-      break;
-      case APICMD_PSM_RAT_UNIT_6MIN:
-        lte_psm->req_active_time.unit = LTE_PSM_T3324_UNIT_6MIN;
-      break;
-      default:
-        DBGIF_LOG1_ERROR("Invalid req act time unit :%d\n", cmd_psm->rat_time.unit);
-      return -EINVAL;
+      if ((ALTCOMBS_PSM_UNIT_T3324_MIN > cmd_psm->rat_time.unit ||
+          ALTCOMBS_PSM_UNIT_T3324_MAX < cmd_psm->rat_time.unit) ||
+          (ALTCOMBS_PSM_UNIT_T3412_MIN > cmd_psm->tau_time.unit ||
+          ALTCOMBS_PSM_UNIT_T3412_MAX < cmd_psm->tau_time.unit))
+        {
+          return -EINVAL;
+        }
+
+      lte_psm->enable = LTE_ENABLE;
+
+      lte_psm->req_active_time.unit =
+        t3324_unit_table[cmd_psm->rat_time.unit];
+      lte_psm->req_active_time.time_val = cmd_psm->rat_time.time_val;
+
+      lte_psm->ext_periodic_tau_time.unit =
+        t3412_unit_table[cmd_psm->tau_time.unit];
+      lte_psm->ext_periodic_tau_time.time_val = cmd_psm->tau_time.time_val;
     }
-
-  lte_psm->req_active_time.time_val = cmd_psm->rat_time.time_val;
-
-  switch (cmd_psm->tau_time.unit)
+  else
     {
-      case APICMD_PSM_TAU_UNIT_2SEC:
-        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_2SEC;
-      break;
-      case APICMD_PSM_TAU_UNIT_30SEC:
-        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_30SEC;
-      break;
-      case APICMD_PSM_TAU_UNIT_1MIN:
-        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_1MIN;
-      break;
-      case APICMD_PSM_TAU_UNIT_10MIN:
-        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_10MIN;
-      break;
-      case APICMD_PSM_TAU_UNIT_1HOUR:
-        lte_psm->ext_periodic_tau_time.unit = LTE_PSM_T3412_UNIT_1HOUR;
-      break;
-      case APICMD_PSM_TAU_UNIT_10HOUR:
-      case APICMD_PSM_TAU_UNIT_320HOUR:
-      default:
-        DBGIF_LOG1_ERROR("Invalid TAU time unit :%d\n", cmd_psm->tau_time.unit);
-      return -EINVAL;
+      lte_psm->enable = LTE_DISABLE;
     }
-
-  lte_psm->ext_periodic_tau_time.time_val = cmd_psm->tau_time.time_val;
-  lte_psm->enable = cmd_psm->enable == APICMD_PSM_DISABLE ?
-    LTE_DISABLE : LTE_ENABLE;
 
   return 0;
 }
