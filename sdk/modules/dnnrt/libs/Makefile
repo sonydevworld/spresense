@@ -55,7 +55,11 @@ CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/runtime}
 
 # Runtime patch for missing fminf, fmaxf math functions
 
+ifeq ($(CONFIG_LIBM),y)
+ifneq ($(CONFIG_LIBM_NEWLIB),y)
 CFLAGS += -include fminf_fmaxf.h
+endif
+endif
 CFLAGS += -std=c99
 
 # Don't follow the -O. option in CFLAGS
