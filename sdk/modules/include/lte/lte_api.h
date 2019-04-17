@@ -543,7 +543,7 @@
 
 #define LTE_SIMINFO_SPN_LEN   (16)  /**< Maximum length of SPN */
 #define LTE_SIMINFO_ICCID_LEN (10)  /**< Maximum length of ICCCID */
-#define LTE_SIMINFO_IMSI_LEN  (16)  /**< Maximum length of IMSI */
+#define LTE_SIMINFO_IMSI_LEN  (15)  /**< Maximum length of IMSI */
 #define LTE_SIMINFO_GID_LEN   (128) /**< Maximum length of GID */
 
 /****************************************************************************

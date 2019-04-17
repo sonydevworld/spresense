@@ -61,7 +61,7 @@
 #define APICMD_GETSIMINFO_MNC_DIXIT_MAX          (3)
 #define APICMD_GETSIMINFO_SPN_MAX_LEN            (16)
 #define APICMD_GETSIMINFO_ICCID_MAX_LEN          (10)
-#define APICMD_GETSIMINFO_IMSI_LEN               (16)
+#define APICMD_GETSIMINFO_IMSI_LEN               (15)
 #define APICMD_GETSIMINFO_GID_LEN                (128)
 
 /****************************************************************************
