@@ -1,5 +1,5 @@
 /****************************************************************************
- * lte_tls/lte_connection.c
+ * examples/lte_tls/lte_connection.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <stdlib.h>
 
 #include "lte/lte_api.h"
 
@@ -93,8 +94,26 @@
 #endif
 
 /****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+struct app_message_header_s
+{
+  int           result;
+  unsigned int  param_size;
+};
+
+struct app_message_s
+{
+  struct app_message_header_s header;
+  unsigned char               payload;
+};
+
+/****************************************************************************
  * Private Data
  ****************************************************************************/
+
+static uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
 
 /****************************************************************************
  * Private Functions
@@ -255,115 +274,250 @@ static int app_wait_lte_callback(int *result)
 }
 
 /****************************************************************************
- * Name: app_poweron_cb
+ * Name: app_mq_notify_parameter
+ ****************************************************************************/
+
+static void app_mq_notify_parameter(int result, void* param,
+                                    unsigned int size)
+{
+  int                   ret;
+  mqd_t                 mqd;
+  int                   errcode;
+  struct app_message_s *buffer;
+
+  buffer = malloc(sizeof(struct app_message_header_s) + size);
+  if (buffer == NULL)
+    {
+      printf("failed to allocate memory\n");
+      return;
+    }
+
+  /* Fill the message */
+
+  buffer->header.result     = result;
+  buffer->header.param_size = size;
+  memcpy((void*)&buffer->payload, param, size);
+
+  /* Open message queue for send */
+
+  mqd = mq_open(APP_MQUEUE_NAME, O_WRONLY);
+  if (mqd < 0)
+    {
+      errcode = errno;
+      printf("mq_open() failed: %d\n", errcode);
+      return;
+    }
+
+  /* Send result of callback */
+
+  ret = mq_send(mqd, (FAR const char*)&buffer, sizeof(buffer), 0);
+  if (ret < 0)
+    {
+      errcode = errno;
+      printf("mq_send() failed: %d\n", errcode);
+      mq_close(mqd);
+      return;
+    }
+  mq_close(mqd);
+}
+
+/****************************************************************************
+ * Name: app_wait_lte_callback_with_parameter
+ ****************************************************************************/
+
+static int app_wait_lte_callback_with_parameter(int *result, void *param)
+{
+  int                   ret;
+  mqd_t                 mqd;
+  int                   errcode;
+  struct app_message_s *buffer;
+
+  /* Open message queue for receive */
+
+  mqd = mq_open(APP_MQUEUE_NAME, O_RDONLY);
+  if (mqd < 0)
+    {
+      errcode = errno;
+      printf("mq_open() failed: %d\n", errcode);
+      return -1;
+    }
+
+  /* Receive result of callback */
+
+  ret = mq_receive(mqd, (FAR char*)&buffer, sizeof(buffer), 0);
+  if (ret < 0)
+    {
+      errcode = errno;
+      printf("mq_send() failed: %d\n", errcode);
+      mq_close(mqd);
+      return -1;
+    }
+  mq_close(mqd);
+
+  *result = buffer->header.result;
+  memcpy(param, (void*)&buffer->payload, buffer->header.param_size);
+
+  free(buffer);
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: app_restart_cb
  *
  * Description:
  *   This callback is called when the startup is completed
  *   after power on the modem.
  ****************************************************************************/
 
-static void app_poweron_cb(uint32_t result)
+static void app_restart_cb(uint32_t reason)
 {
-  printf("%s called\n", __func__);
-
-  /* Notify the result to the lte_http_get sample application task */
-
-  app_mq_notify_result(result);
-}
-
-/****************************************************************************
- * Name: app_poweroff_cb
- *
- * Description:
- *   This callback is called when shutdown is completed
- *   after power off the modem.
- ****************************************************************************/
-
-static void app_poweroff_cb(uint32_t result)
-{
-  printf("%s called\n", __func__);
-
-  /* Notify the result to the lte_http_get sample application task */
-
-  app_mq_notify_result(result);
-}
-
-/****************************************************************************
- * Name: app_set_apn_cb
- *
- * Description:
- *   This callback is called when the APN setting is completed.
- ****************************************************************************/
-
-static void app_set_apn_cb(uint32_t result)
-{
-  printf("%s called\n", __func__);
-
-  /* Notify the result to the lte_http_get sample application task */
-
-  app_mq_notify_result(result);
-}
-
-/****************************************************************************
- * Name: app_attach_net_cb
- *
- * Description:
- *   This callback is called when connect to the LTE network is completed.
- ****************************************************************************/
-
-static void app_attach_net_cb(uint32_t result, uint32_t errcause)
-{
-  if (LTE_RESULT_ERROR == result)
+  char *reson_string[] =
     {
-      printf("%s called: result:%d errorcause:%d\n",
-             __func__, result, errcause);
-    }
-  else
-    {
-      printf("%s called: result:%d\n", __func__, result);
-    }
+      "Modem restart by application.",
+      "Modem restart by self."
+    };
+  printf("%s called. reason:%s\n", __func__, reson_string[reason]);
 
-  /* Notify the result to the lte_http_get sample application task */
+  /* Notify the result to the lte_tls sample application task */
+
+  app_mq_notify_result(reason);
+}
+
+/****************************************************************************
+ * Name: app_show_errinfo
+ *
+ * Description:
+ *   Show error information.
+ ****************************************************************************/
+
+static void app_show_errinfo(void)
+{
+  int           ret;
+  lte_errinfo_t info = {0};
+
+  ret = lte_get_errinfo(&info);
+  if (ret == 0)
+    {
+      if (info.err_indicator & LTE_ERR_INDICATOR_ERRCODE)
+        {
+          printf("err_result_code : %d\n", info.err_result_code);
+        }
+      if (info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
+        {
+          printf("err_no          : %d\n", info.err_no);
+        }
+      if (info.err_indicator & LTE_ERR_INDICATOR_ERRSTR)
+        {
+          printf("err_string      : %s\n", info.err_string);
+        }
+    }
+}
+
+/****************************************************************************
+ * Name: app_show_pdn
+ *
+ * Description:
+ *   Show PDN information.
+ ****************************************************************************/
+
+static void app_show_pdn(lte_pdn_t *pdn)
+{
+  int i;
+
+  printf("pdn.session_id : %d\n", pdn->session_id);
+  printf("pdn.active     : %d\n", pdn->active);
+  printf("pdn.apn_type   : 0x%x\n", pdn->apn_type);
+
+  for (i = 0; i < pdn->ipaddr_num; i++)
+    {
+      printf("pdn.ipaddr[%d].addr : %s\n", i, pdn->address[i].address);
+    }
+}
+
+/****************************************************************************
+ * Name: app_radio_on_cb
+ *
+ * Description:
+ *   This callback is called when the radio on is completed.
+ ****************************************************************************/
+
+static void app_radio_on_cb(uint32_t result)
+{
+  printf("%s called. result: %d\n", __func__, result);
+
+  if (result == LTE_RESULT_ERROR)
+    {
+      app_show_errinfo();
+    }
+  /* Notify the result to the lte_tls sample application task */
 
   app_mq_notify_result(result);
 }
 
 /****************************************************************************
- * Name: app_detach_net_cb
+ * Name: app_radio_off_cb
  *
  * Description:
- *   This callback is called when disconnect to the LTE network is completed.
+ *   This callback is called when the radio off is completed.
  ****************************************************************************/
 
-static void app_detach_net_cb(uint32_t result)
+static void app_radio_off_cb(uint32_t result)
 {
-  printf("%s called: result:%d\n", __func__, result);
+  printf("%s called. result: %d\n", __func__, result);
 
-  /* Notify the result to the lte_http_get sample application task */
+  if (result == LTE_RESULT_ERROR)
+    {
+      app_show_errinfo();
+    }
+
+  /* Notify the result to the lte_tls sample application task */
 
   app_mq_notify_result(result);
 }
 
 /****************************************************************************
- * Name: app_data_on_cb
+ * Name: app_activate_pdn_cb
  *
  * Description:
- *   This callback is called when data on is completed.
+ *   This callback is called when the connected to the PDN.
  ****************************************************************************/
 
-static void app_data_on_cb(uint32_t result, uint32_t errcause)
+static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
 {
-  if (LTE_RESULT_ERROR == result)
+  printf("%s called. result: %d\n", __func__, result);
+
+  if (result == LTE_RESULT_OK)
     {
-      printf("%s called: result:%d errorcause:%d\n",
-             __func__, result, errcause);
+      app_show_pdn(pdn);
     }
-  else
+  if (result == LTE_RESULT_ERROR)
     {
-      printf("%s called: result:%d\n", __func__, result);
+      app_show_errinfo();
+    }
+  /* Notify the result to the lte_tls sample application task */
+
+  app_mq_notify_parameter(result, (void*)&pdn->session_id,
+                          sizeof(pdn->session_id));
+}
+
+/****************************************************************************
+ * Name: app_deactivate_pdn_cb
+ *
+ * Description:
+ *   This callback is called when the disconnected from PDN.
+ ****************************************************************************/
+
+static void app_deactivate_pdn_cb(uint32_t result)
+{
+  printf("%s called. result: %d\n", __func__, result);
+
+  if (result == LTE_RESULT_ERROR)
+    {
+      app_show_errinfo();
     }
 
-  /* Notify the result to the lte_http_get sample application task */
+  /* Notify the result to the lte_tls sample application task */
 
   app_mq_notify_result(result);
 }
@@ -389,13 +543,14 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  ****************************************************************************/
 
 /****************************************************************************
- * app_connect_to_lte
+ * app_lte_tls_connect_to_lte
  ****************************************************************************/
 
-int app_connect_to_lte(void)
+int app_lte_tls_connect_to_lte(void)
 {
-  int ret;
-  int result = LTE_RESULT_OK;
+  int                     ret;
+  int                     result = LTE_RESULT_OK;
+  struct lte_apn_setting  apnsetting;
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.*/
@@ -415,9 +570,22 @@ int app_connect_to_lte(void)
       goto errout_with_fin;
     }
 
+  /* Register callback for modem restart.
+   * It must call this function after lte_initialize.
+   * The callback will be invoked if the modem starts successfully
+   * after calling lte_power_on.
+   */
+
+  ret = lte_set_report_restart(app_restart_cb);
+  if (ret < 0)
+    {
+      printf("Failed to set report restart :%d\n", ret);
+      goto errout_with_fin;
+    }
+
   /* Power on the LTE modem */
 
-  ret = lte_power_control(LTE_POWERON, app_poweron_cb);
+  ret = lte_power_on();
   if (ret < 0)
     {
       printf("Failed to power on the modem :%d\n", ret);
@@ -425,11 +593,11 @@ int app_connect_to_lte(void)
     }
 
   /* Wait until the modem startup normally and notification
-   * comes from the callback(app_poweron_cb)
-   * registered by lte_power_control. */
+   * comes from the callback(app_restart_cb)
+   * registered by lte_set_report_restart. */
 
   ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result != LTE_RESULT_OK))
+  if (ret < 0)
     {
       goto errout_with_lte_fin;
     }
@@ -443,21 +611,18 @@ int app_connect_to_lte(void)
       goto errout_with_lte_fin;
     }
 
-  /* Do APN setting for session ID 1 which is used by lte_attach_network.
-   * It is necessary to set the correct APN according to your environment. */
+  /* Radio on and start to search for network */
 
-  ret = lte_set_apn(APP_SESSION_ID, (int8_t*)APP_APN_NAME, APP_APN_IPTYPE,
-                    APP_APN_AUTHTYPE, (int8_t*)APP_APN_USR_NAME,
-                    (int8_t*)APP_APN_PASSWD, app_set_apn_cb);
+  ret = lte_radio_on(app_radio_on_cb);
   if (ret < 0)
     {
-      printf("Failed to set access point name :%d\n", ret);
+      printf("Failed to set radio on :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the APN setting is completed and notification
-   * comes from the callback(app_set_apn_cb)
-   * registered by lte_set_apn. */
+  /* Wait until the radio on is completed and notification
+   * comes from the callback(app_radio_on_cb)
+   * registered by lte_radio_on. */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -465,39 +630,27 @@ int app_connect_to_lte(void)
       goto errout_with_lte_fin;
     }
 
-  /* Attach to LTE network */
+  /* Attach to the LTE network and connect to the data PDN */
 
-  ret = lte_attach_network(app_attach_net_cb);
+  apnsetting.apn       = (int8_t*)APP_APN_NAME;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
+  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
   if (ret < 0)
     {
-      printf("Failed to attach to LTE network :%d\n", ret);
+      printf("Failed to activate PDN :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the LTE network is connected and notification
-   * comes from the callback(app_attach_net_cb)
-   * registered by lte_attach_network. */
+  /* Wait until the connect completed and notification
+   * comes from the callback(app_activate_pdn_cb)
+   * registered by lte_activate_pdn. */
 
-  ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
-    {
-      goto errout_with_lte_fin;
-    }
-
-  /* Data on */
-
-  ret = lte_data_on(APP_SESSION_ID, app_data_on_cb);
-  if (ret < 0)
-    {
-      printf("Failed to data on :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
-
-  /* Wait until the data on completed and notification
-   * comes from the callback(app_attach_net_cb)
-   * registered by lte_data_on. */
-
-  ret = app_wait_lte_callback(&result);
+  ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
     {
       goto errout_with_lte_fin;
@@ -515,24 +668,46 @@ errout:
   return -1;
 }
 
-int app_disconnect_from_lte(void)
+/****************************************************************************
+ * app_lte_tls_disconnect_from_lte
+ ****************************************************************************/
+
+int app_lte_tls_disconnect_from_lte(void)
 {
   int ret;
   int result = LTE_RESULT_OK;
 
-  /* Detach from LTE network */
+  /* Disconnect from the data PDN and Detach from the LTE network */
 
-  ret = lte_detach_network(app_detach_net_cb);
+  ret = lte_deactivate_pdn(data_pdn_sid, app_deactivate_pdn_cb);
   if (ret < 0)
     {
-      printf("Failed to detach from LTE network :%d\n", ret);
+      printf("Failed to deactivate PDN :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the LTE network is disconnected and notification
-   * comes from the callback(app_detach_net_cb)
-   * registered by lte_detach_network.
-   */
+  /* Wait until the deactivate PDN is completed and notification
+   * comes from the callback(app_deactivate_pdn_cb)
+   * registered by lte_deactivate_pdn. */
+
+  ret = app_wait_lte_callback(&result);
+  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+    {
+      goto errout_with_lte_fin;
+    }
+
+  /* Radio off */
+
+  ret = lte_radio_off(app_radio_off_cb);
+  if (ret < 0)
+    {
+      printf("Failed to set radio off :%d\n", ret);
+      goto errout_with_lte_fin;
+    }
+
+  /* Wait until the radio off is completed and notification
+   * comes from the callback(app_radio_off_cb)
+   * registered by lte_radio_off. */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -541,31 +716,17 @@ int app_disconnect_from_lte(void)
     }
 
   /* Power off the modem. If asynchronous API has not notified
-   * the result by callback, it will be canceled
-   */
+   * the result by callback, it will be canceled */
 
-  ret = lte_power_control(LTE_POWEROFF, app_poweroff_cb);
+  ret = lte_power_off();
   if (ret < 0)
     {
       printf("Failed to power off the modem :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the modem shutdown complete and notification
-   * comes from the callback(app_poweroff_cb)
-   * registered by lte_power_control.
-   */
-
-  ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result != LTE_RESULT_OK))
-    {
-      goto errout_with_lte_fin;
-    }
-
   /* Finalize LTE library
-   * If this function is called while the modem power is on,
-   * shutdown the modem
-   */
+   * If this function is called while the modem power is on, shutdown the modem */
 
   ret = lte_finalize();
   if (ret < 0)
