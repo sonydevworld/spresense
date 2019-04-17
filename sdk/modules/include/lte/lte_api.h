@@ -372,6 +372,10 @@
 
 #define LTE_SIMSTAT_ACTIVATE        (4)
 
+/** SIM status: SIM is deactivated */
+
+#define LTE_SIMSTAT_DEACTIVATE      (5)
+
 #define LTE_MCC_DIGIT     (3)  /**< Digit number of mcc */
 #define LTE_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
 
@@ -1667,6 +1671,7 @@ typedef void (*netstat_report_cb_t)(uint32_t netstat);
  * - @ref LTE_SIMSTAT_WAIT_PIN_UNLOCK@n
  * - @ref LTE_SIMSTAT_PERSONAL_FAILED@n
  * - @ref LTE_SIMSTAT_ACTIVATE@n
+ * - @ref LTE_SIMSTAT_DEACTIVATE@n
  */
 
 typedef void (*simstat_report_cb_t)(uint32_t simstat);
