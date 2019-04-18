@@ -871,7 +871,15 @@ static CXD56_AUDIO_ECODE set_srcin_sel(AC_REG_ID ac_reg_id,
         break;
 
       case CXD56_AUDIO_SIG_MIX:
-        val = SRCIN_SEL_CODECDSP_MIX;
+        if ((read_ac_reg(RI_COD_INSEL2) == COD_INSEL_SRC1)
+         || (read_ac_reg(RI_COD_INSEL3) == COD_INSEL_SRC1))
+          {
+            return CXD56_AUDIO_ECODE_REG_AC_SEL_INV;
+          }
+        else
+          {
+            val = SRCIN_SEL_CODECDSP_MIX;
+          }
         break;
 
       default:
