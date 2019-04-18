@@ -49,7 +49,7 @@
 #include "audio_state.h"
 
 #include "components/capture/capture_component.h"
-#include "components/postproc/postproc_api.h"
+#include "components/postproc/preproc_api.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -68,8 +68,8 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct FrontendObjPreProcDoneCmd
 {
-  PostCompEventType event_type;
-  bool              result;
+  PreCompEventType event_type;
+  bool             result;
 };
 
 struct FrontendObjSendDoneCmd

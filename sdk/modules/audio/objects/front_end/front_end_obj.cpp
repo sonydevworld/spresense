@@ -107,7 +107,7 @@ static void capture_error_callback(CaptureErrorParam param)
 }
 
 /*--------------------------------------------------------------------------*/
-static bool preproc_done_callback(PostprocCbParam *cmplt, void* p_requester)
+static bool preproc_done_callback(PreprocCbParam *cmplt, void* p_requester)
 {
   FRONT_END_VDBG("flt sz %d\n", cmplt->out_buffer.size);
 
@@ -397,7 +397,7 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   uint32_t dsp_inf = 0;
 
-  AS_postproc_activate(&m_p_preproc_instance,
+  AS_preproc_activate(&m_p_preproc_instance,
                        m_pool_id.dspcmd,
                        m_msgq_id.dsp,
                        preproc_done_callback,
@@ -431,7 +431,7 @@ void FrontEndObject::deactivate(MsgPacket *msg)
 
   /* Deactivate PreProcess */
 
-  AS_postproc_deactivate(m_p_preproc_instance);
+  AS_preproc_deactivate(m_p_preproc_instance);
 
   /* State transit */
 
@@ -616,18 +616,18 @@ void FrontEndObject::initPreproc(MsgPacket *msg)
 
   FRONT_END_DBG("Init Pre Proc:\n");
 
-  InitPostprocParam param;
+  InitPreprocParam param;
 
   param.is_userdraw = true;
   param.packet.addr = initparam.packet_addr;
   param.packet.size = initparam.packet_size;
 
-  /* Init Postproc (Copy packet to MH internally, and wait return from DSP) */
+  /* Init Preproc (Copy packet to MH internally, and wait return from DSP) */
 
-  bool send_result = AS_postproc_init(&param, m_p_preproc_instance);
+  bool send_result = AS_preproc_init(&param, m_p_preproc_instance);
 
-  PostprocCmpltParam cmplt;
-  AS_postproc_recv_done(m_p_preproc_instance, &cmplt);
+  PreprocCmpltParam cmplt;
+  AS_preproc_recv_done(m_p_preproc_instance, &cmplt);
 
   /* Reply */
 
@@ -642,15 +642,15 @@ void FrontEndObject::setPreproc(MsgPacket *msg)
 
   FRONT_END_DBG("Set Pre Proc:\n");
 
-  SetPostprocParam param;
+  SetPreprocParam param;
 
   param.is_userdraw = true;
   param.packet.addr = setparam.packet_addr;
   param.packet.size = setparam.packet_size;
 
-  /* Set Postproc (Copy packet to MH internally) */
+  /* Set Preproc (Copy packet to MH internally) */
 
-  bool send_result = AS_postproc_setparam(&param, m_p_preproc_instance);
+  bool send_result = AS_preproc_setparam(&param, m_p_preproc_instance);
 
   /* Reply (Don't wait reply from DSP because it will take long time) */
 
@@ -703,7 +703,7 @@ void FrontEndObject::illegalPreprocDone(MsgPacket *msg)
 
   if (m_p_preproc_instance)
     {
-      AS_postproc_recv_done(m_p_preproc_instance, NULL);
+      AS_preproc_recv_done(m_p_preproc_instance, NULL);
     }
 }
 
@@ -723,18 +723,18 @@ void FrontEndObject::preprocDoneOnActive(MsgPacket *msg)
 
   /* If it is not return of Exec of Flush, no need to proprocess. */
 
-  if (!(preproc_result.event_type == PostprocExec)
-   && !(preproc_result.event_type == PostprocFlush))
+  if (!(preproc_result.event_type == PreprocExec)
+   && !(preproc_result.event_type == PreprocFlush))
     {
-      AS_postproc_recv_done(m_p_preproc_instance, NULL);
+      AS_preproc_recv_done(m_p_preproc_instance, NULL);
       return;
     }
 
-  /* Get postfilter result */
+  /* Get prefilter result */
 
-  PostprocCmpltParam cmplt;
+  PreprocCmpltParam cmplt;
 
-  AS_postproc_recv_done(m_p_preproc_instance, &cmplt);
+  AS_preproc_recv_done(m_p_preproc_instance, &cmplt);
 
   /* Send to dest */
 
@@ -761,10 +761,10 @@ void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
 
   /* If it is not return of Exec of Flush, no need to rendering. */
 
-  if (!(preproc_result.event_type == PostprocExec)
-   && !(preproc_result.event_type == PostprocFlush))
+  if (!(preproc_result.event_type == PreprocExec)
+   && !(preproc_result.event_type == PreprocFlush))
     {
-      AS_postproc_recv_done(m_p_preproc_instance, NULL);
+      AS_preproc_recv_done(m_p_preproc_instance, NULL);
       return;
     }
 
@@ -772,20 +772,20 @@ void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
 
   m_preproc_req--;
 
-  /* Get postfilter result */
+  /* Get prefilter result */
 
-  PostprocCmpltParam cmplt;
+  PreprocCmpltParam cmplt;
 
-  AS_postproc_recv_done(m_p_preproc_instance, &cmplt);
+  AS_preproc_recv_done(m_p_preproc_instance, &cmplt);
 
-  if (preproc_result.event_type == PostprocExec)
+  if (preproc_result.event_type == PreprocExec)
     {
       if (cmplt.result && (cmplt.output.size > 0))
         {
           sendData(cmplt.output);
         }
     }
-  else if (preproc_result.event_type == PostprocFlush)
+  else if (preproc_result.event_type == PreprocFlush)
     {
       if (cmplt.result)
         {
@@ -855,10 +855,10 @@ void FrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
 
   /* If it is not return of Exec of Flush, no need to rendering. */
 
-  if (!(preproc_result.event_type == PostprocExec)
-   && !(preproc_result.event_type == PostprocFlush))
+  if (!(preproc_result.event_type == PreprocExec)
+   && !(preproc_result.event_type == PreprocFlush))
     {
-      AS_postproc_recv_done(m_p_preproc_instance, NULL);
+      AS_preproc_recv_done(m_p_preproc_instance, NULL);
       return;
     }
 
@@ -866,9 +866,9 @@ void FrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
 
   m_preproc_req--;
 
-  /* Get postfilter result */
+  /* Get prefilter result */
 
-  AS_postproc_recv_done(m_p_preproc_instance, NULL);
+  AS_preproc_recv_done(m_p_preproc_instance, NULL);
 
   /* If capture or preproc request remains,
    * don't ransit to Ready to avoid leak of MH.
@@ -1369,7 +1369,7 @@ uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
 /*--------------------------------------------------------------------------*/
 bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 {
-  ExecPostprocParam exec;
+  ExecPreprocParam exec;
 
   exec.input.identifier = 0;
   exec.input.callback   = NULL;
@@ -1381,7 +1381,7 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 
   /* If preprocess is not active, don't alloc output area. */
 
-  if (AS_postproc_is_enable(m_p_preproc_instance))
+  if (AS_preproc_is_enable(m_p_preproc_instance))
     {
 
       if (m_pool_id.output == MemMgrLite::NullPoolId)
@@ -1405,7 +1405,7 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 
   /* Exec PreProcess */
 
-  if (!AS_postproc_exec(&exec, m_p_preproc_instance))
+  if (!AS_preproc_exec(&exec, m_p_preproc_instance))
     {
       return false;
     }
@@ -1420,11 +1420,11 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 /*--------------------------------------------------------------------------*/
 bool FrontEndObject::flushPreProc(void)
 {
-  FlushPostprocParam flush;
+  FlushPreprocParam flush;
 
   /* Set preprocess flush output area */
 
-  if (AS_postproc_is_enable(m_p_preproc_instance))
+  if (AS_preproc_is_enable(m_p_preproc_instance))
     {
       if (m_pool_id.output == MemMgrLite::NullPoolId)
         {
@@ -1450,7 +1450,7 @@ bool FrontEndObject::flushPreProc(void)
         }
     }
 
-  if (!AS_postproc_flush(&flush, m_p_preproc_instance))
+  if (!AS_preproc_flush(&flush, m_p_preproc_instance))
     {
       return false;
     }
