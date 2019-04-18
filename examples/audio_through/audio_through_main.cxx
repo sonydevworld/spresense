@@ -79,6 +79,7 @@ enum audio_through_test_path_e
 {
   TEST_PATH_IN_MIC_OUT_SP = 0,
   TEST_PATH_IN_MIC_OUT_I2S,
+  TEST_PATH_IN_I2S_OUT_SP,
   TEST_PATH_IN_MIC_I2S_OUT_I2S_SP,
   TEST_PATH_NUM
 };
@@ -98,6 +99,7 @@ enum audio_through_test_path_e
 char s_path_name[TEST_PATH_NUM][64] =
 {
   "mic in -> sp out",
+  "mic in -> i2s out",
   "i2s in -> sp out",
   "mic in -> i2s out, and i2s in -> sp outt"
 };
@@ -263,6 +265,13 @@ static bool app_set_through_path(audio_through_test_path_e path_type)
         command.set_through_path.path1.en  = true;
         command.set_through_path.path1.in  = AS_THROUGH_PATH_IN_MIC;
         command.set_through_path.path1.out = AS_THROUGH_PATH_OUT_MIXER1;
+        command.set_through_path.path2.en  = false;
+        break;
+
+      case TEST_PATH_IN_MIC_OUT_I2S: /* mic in -> i2s out */
+        command.set_through_path.path1.en  = true;
+        command.set_through_path.path1.in  = AS_THROUGH_PATH_IN_MIC;
+        command.set_through_path.path1.out = AS_THROUGH_PATH_OUT_I2S1;
         command.set_through_path.path2.en  = false;
         break;
 
