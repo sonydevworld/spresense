@@ -245,15 +245,7 @@ enum cxd56_audio_dma_path_e
 {
   /** Mic to memory  */
 
-  CXD56_AUDIO_DMA_PATH_MIC_TO_MEM = 0,
-
-  /** I2S0 to memory  */
-
-  CXD56_AUDIO_DMA_PATH_I2S0_TO_MEM,
-
-  /** I2S1 to memory  */
-
-  CXD56_AUDIO_DMA_PATH_I2S1_TO_MEM,
+  CXD56_AUDIO_DMA_PATH_MIC_TO_MEM = 0
 
   /** Memory to BUS I/F1 */
 
@@ -312,19 +304,11 @@ enum cxd56_audio_dma_e
 {
   /** AudioCodec input */
 
-  CXD56_AUDIO_DMAC_MIC = 0,
-
-  /** I2S input */
-
-  CXD56_AUDIO_DMAC_I2S0_UP,
+  CXD56_AUDIO_DMAC_MIC = 0
 
   /** I2S_OUT */
 
   CXD56_AUDIO_DMAC_I2S0_DOWN,
-
-  /** I2S2_IN */
-
-  CXD56_AUDIO_DMAC_I2S1_UP,
 
   /** I2S2_OUT */
 
