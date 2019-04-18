@@ -86,7 +86,7 @@ E_AS dmaDrvDeactive(cxd56_audio_dma_t dmacId)
 
 static bool activateDmac[DMA_INST_NUM] =
 {
-  false, false, false, false, false
+  false, false, false
 };
 
 /*--------------------------------------------------------------------*/
