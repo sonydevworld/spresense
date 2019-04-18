@@ -1683,10 +1683,6 @@ uint32_t MediaRecorderObjectTask::isValidActivateParam(
         }
         break;
 
-      case AS_SETRECDR_STS_INPUTDEVICE_I2S:
-        m_input_device = CaptureDeviceI2S;
-        break;
-
       default:
         MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_INPUT_DEVICE;
@@ -1738,13 +1734,6 @@ uint32_t MediaRecorderObjectTask::isValidInitParamMP3(
   switch(cmd.init_param.channel_number)
     {
       case AS_CHANNEL_MONO:
-        if (m_input_device == CaptureDeviceI2S)
-          {
-            MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
-          }
-        break;
-
       case AS_CHANNEL_STEREO:
         break;
 
@@ -1839,21 +1828,8 @@ uint32_t MediaRecorderObjectTask::isValidInitParamLPCM(
   switch(cmd.init_param.channel_number)
     {
       case AS_CHANNEL_MONO:
-        if (m_input_device == CaptureDeviceI2S)
-          {
-            MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
-          }
-          break;
-
       case AS_CHANNEL_STEREO:
-          break;
       case AS_CHANNEL_4CH:
-        if (m_input_device == CaptureDeviceI2S)
-          {
-            MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
-          }
           break;
       case AS_CHANNEL_6CH:
       case AS_CHANNEL_8CH:
@@ -1921,13 +1897,6 @@ uint32_t MediaRecorderObjectTask::isValidInitParamOPUS(
   switch(cmd.init_param.channel_number)
     {
       case AS_CHANNEL_MONO:
-        if (m_input_device == CaptureDeviceI2S)
-          {
-            MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
-          }
-        break;
-
       case AS_CHANNEL_STEREO:
         break;
 
@@ -1992,24 +1961,14 @@ bool MediaRecorderObjectTask::getInputDeviceHdlr(void)
     {
       return false;
     }
-  if (m_input_device != CaptureDeviceI2S)
+
+  if (!AS_get_capture_comp_handler(&m_capture_from_mic_hdlr,
+                                   m_input_device,
+                                   m_pool_id.input))
     {
-      if (!AS_get_capture_comp_handler(&m_capture_from_mic_hdlr,
-                                       m_input_device,
-                                       m_pool_id.input))
-        {
-          return false;
-        }
+      return false;
     }
-  else
-    {
-      if (!AS_get_capture_comp_handler(&m_capture_from_mic_hdlr,
-                                       m_input_device,
-                                       m_pool_id.input))
-        {
-          return false;
-        }
-    }
+
   return true;
 }
 
