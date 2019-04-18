@@ -472,10 +472,6 @@ bool AS_get_capture_comp_handler(CaptureComponentHandler *p_handle,
           param.act_param.dma_path_id = CXD56_AUDIO_DMA_PATH_MIC_TO_MEM;
           break;
 
-      case CaptureDeviceI2S:
-          param.act_param.dma_path_id = CXD56_AUDIO_DMA_PATH_I2S0_TO_MEM;
-          break;
-
       default:
           CAPTURE_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
           return false;
