@@ -97,16 +97,22 @@
  * Private Types
  ****************************************************************************/
 
+/* These structure are format of message which send from LTE API callback
+ * function to API caller task */
+
 struct app_message_header_s
 {
-  int           result;
-  unsigned int  param_size;
+  int           result;     /* The result of LTE API obtained by callback
+                             * function */
+  unsigned int  param_size; /* Indicates size of payload */
 };
 
 struct app_message_s
 {
-  struct app_message_header_s header;
-  unsigned char               payload;
+  struct app_message_header_s header;  /* Header of the message */
+  unsigned char               payload; /* Payload of the message. This area
+                                        * is for sending parameters other
+                                        * than the result. */
 };
 
 /****************************************************************************
@@ -505,7 +511,8 @@ static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
  * Name: app_deactivate_pdn_cb
  *
  * Description:
- *   This callback is called when the disconnected from PDN.
+ *   This is a callback function to be called
+ *   when it was disconnected from PDN.
  ****************************************************************************/
 
 static void app_deactivate_pdn_cb(uint32_t result)
@@ -630,14 +637,24 @@ int app_lte_tls_connect_to_lte(void)
       goto errout_with_lte_fin;
     }
 
-  /* Attach to the LTE network and connect to the data PDN */
+  /* Set the APN to be connected.
+   * Check the APN settings of the carrier according to the your environment.
+   * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
+   * This means APN type for data traffic. */
 
   apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+
+  /* Depending on the APN, authentication may not be necessary.
+   * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
+   * and set user_name, password to NULL. */
+
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
   apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
   apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+  /* Attach to the LTE network and connect to the data PDN */
 
   ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
   if (ret < 0)
