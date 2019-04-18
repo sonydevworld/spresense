@@ -2074,12 +2074,6 @@ void AudioManager::setRecorder(AudioCommand &cmd)
       case AS_SETRECDR_STS_INPUTDEVICE_MIC:
         break;
 
-      case AS_SETRECDR_STS_INPUTDEVICE_I2S:
-        /* Enable I2S pin. */
-
-        cxd56_audio_en_i2s_io();
-        break;
-
       default:
         MANAGER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         sendErrRespResult(cmd.header.sub_code,
