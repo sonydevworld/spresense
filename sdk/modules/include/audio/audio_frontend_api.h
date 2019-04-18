@@ -69,6 +69,10 @@
 /** @name Packet length of command*/
 /** @{ */
 
+/*! \brief EnablePreProcess command (#AUDCMD_ENPREPROC) packet length */
+
+#define  LENGTH_ENPREPROC           4
+
 /*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
 
 #define  LENGTH_INITMFE             4

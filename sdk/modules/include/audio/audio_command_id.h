@@ -114,26 +114,32 @@
 /** @name Command Effector Function code */
 /** @{ */
 
+#define  AUDCMD_ENPREPROC     (AUDCMD_CATEGORY_EFFECTOR | 0x01)
+
 /*! brief Command Code: InitMFE */
 
-#define  AUDCMD_INITMFE       (AUDCMD_CATEGORY_EFFECTOR | 0x01)
+#define  AUDCMD_INITMFE       (AUDCMD_CATEGORY_EFFECTOR | 0x02)
 
 /*! brief Command Code: SetMFE */
 
-#define  AUDCMD_SETMFE        (AUDCMD_CATEGORY_EFFECTOR | 0x02)
+#define  AUDCMD_SETMFE        (AUDCMD_CATEGORY_EFFECTOR | 0x03)
 
 /*! brief Command Code: InitMPP */
 
-#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x03)
+#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x04)
 
 /*! brief Command Code: SetMPPParam */
 
-#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x04)
+#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x05)
 
 /** @} */
 
 /** @name Effector Result code */
 /** @{ */
+
+/*! \brief Result Code: EnableProProcessCmplt */
+
+#define  AUDRLT_ENPREPROCCMPLT  AUDCMD_ENPREPROC
 
 /*! \brief Result Code: InitMFECmplt */
 
@@ -467,10 +473,6 @@
 /*! \brief Command Code: SetPlayerStatus */
 
 #define AUDCMD_SETPLAYERSTATUSPOST  (AUDCMD_CATEGORY_TRANSITION | 0x08)
-
-/*! \brief Command Code: SetRecorderStatus */
-
-#define AUDCMD_SETRECORDERSTATUSPRE (AUDCMD_CATEGORY_TRANSITION | 0x09)
 
 /** @} */
 

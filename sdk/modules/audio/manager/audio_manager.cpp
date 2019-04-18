@@ -441,6 +441,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
 #endif  /* AS_FEATURE_PLAYER_ENABLE */
 #ifdef AS_FEATURE_FRONTEND_ENABLE
+      case AUDCMD_ENPREPROC:
       case AUDCMD_INITMFE:
       case AUDCMD_SETMFE:
         msg_type = MSG_AUD_MGR_CMD_FRONTEND;
@@ -484,7 +485,6 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         break;
 
       case AUDCMD_SETRECORDERSTATUS:
-      case AUDCMD_SETRECORDERSTATUSPRE:
         msg_type = MSG_AUD_MGR_CMD_SETRECORDER;
         break;
 
@@ -814,7 +814,7 @@ AudioManager::MsgProc
   /* Frontend command. */
 
   {                                    /* AudioManager all status: */
-    &AudioManager::illegal,            /*   Ready state.           */
+    &AudioManager::frontend,           /*   Ready state.           */
     &AudioManager::illegal,            /*   PlayerReady state.     */
     &AudioManager::illegal,            /*   PlayerActive state.    */
     &AudioManager::illegal,            /*   PlayerPause state.     */
@@ -1613,6 +1613,16 @@ void AudioManager::frontend(AudioCommand &cmd)
 
   switch (cmd.header.command_code)
     {
+      case AUDCMD_ENPREPROC:
+        check = packetCheck(LENGTH_INITMFE, AUDCMD_ENPREPROC, cmd);
+        if (!check)
+          {
+            return;
+          }
+        m_preproc_enable = cmd.en_preproc_param.pre_enable; 
+        sendResult(AUDRLT_ENPREPROCCMPLT);
+        return;
+
       case AUDCMD_INITMFE:
         check = packetCheck(LENGTH_INITMFE, AUDCMD_INITMFE, cmd);
         if (!check)
@@ -2290,9 +2300,7 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 
   frontend_command.act_param.param.input_device =
     cmd.set_recorder_status_param.input_device;
-  frontend_command.act_param.param.pre_enable   =
-    (cmd.header.command_code == AUDCMD_SETRECORDERSTATUS)
-      ? AsFrontendPreProcDisable : cmd.set_recorder_status_param.preproc_enable;
+  frontend_command.act_param.param.pre_enable   = m_preproc_enable;
   frontend_command.act_param.cb                 = frontend_done_callback;
 
   er = MsgLib::send<FrontendCommand>(s_fedMid,

@@ -254,12 +254,9 @@ typedef struct
 
   uint8_t  reserved1;
 
-  /*! \brief [in] Set Recorder preproc enablel.
-   *
-   * Use #AsFrontendPreProc enum type
-   */
+  /*! \brief [in] reserved */
 
-  uint8_t  preproc_enable;
+  uint8_t  reserved2;
 
   /*! \brief [in] Set Recorder input device handler, T.B.D. */
 
