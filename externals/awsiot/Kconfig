@@ -1,0 +1,25 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_AWSIOT
+	bool "AWS IoT Embedded C SDK Library"
+	default n
+	---help---
+		Enable AWS IOT Embedded C SDK Library.
+		AWS IOT Library is provided from https://github.com/aws/aws-iot-device-sdk-embedded-C
+		and licensed under Apache-2.0, EPL-1.0, EDL-1.0 and MIT.
+
+if EXTERNALS_AWSIOT
+
+config EXTERNALS_AWSIOT_IOT_DEBUG
+	bool "enables IOT_DEBUG output"
+	default n
+
+config EXTERNALS_AWSIOT_IOT_ERROR
+	bool "enables IOT_ERROR output"
+	default n
+
+endif
+
