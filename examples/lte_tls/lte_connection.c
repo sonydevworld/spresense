@@ -98,12 +98,14 @@
  ****************************************************************************/
 
 /* These structure are format of message which send from LTE API callback
- * function to API caller task */
+ * function to API caller task
+ */
 
 struct app_message_header_s
 {
   int           result;     /* The result of LTE API obtained by callback
-                             * function */
+                             * function
+                             */
   unsigned int  param_size; /* Indicates size of payload */
 };
 
@@ -112,7 +114,8 @@ struct app_message_s
   struct app_message_header_s header;  /* Header of the message */
   unsigned char               payload; /* Payload of the message. This area
                                         * is for sending parameters other
-                                        * than the result. */
+                                        * than the result.
+                                        */
 };
 
 /****************************************************************************
@@ -560,7 +563,8 @@ int app_lte_tls_connect_to_lte(void)
   struct lte_apn_setting  apnsetting;
 
   /* Create a message queue. It is used to receive result from the
-   * asynchronous API callback.*/
+   * asynchronous API callback.
+   */
 
   ret = app_mq_create(APP_MQUEUE_NAME);
   if (ret < 0)
@@ -601,7 +605,8 @@ int app_lte_tls_connect_to_lte(void)
 
   /* Wait until the modem startup normally and notification
    * comes from the callback(app_restart_cb)
-   * registered by lte_set_report_restart. */
+   * registered by lte_set_report_restart.
+   */
 
   ret = app_wait_lte_callback(&result);
   if (ret < 0)
@@ -629,7 +634,8 @@ int app_lte_tls_connect_to_lte(void)
 
   /* Wait until the radio on is completed and notification
    * comes from the callback(app_radio_on_cb)
-   * registered by lte_radio_on. */
+   * registered by lte_radio_on.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -640,7 +646,8 @@ int app_lte_tls_connect_to_lte(void)
   /* Set the APN to be connected.
    * Check the APN settings of the carrier according to the your environment.
    * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
-   * This means APN type for data traffic. */
+   * This means APN type for data traffic.
+   */
 
   apnsetting.apn       = (int8_t*)APP_APN_NAME;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
@@ -648,7 +655,8 @@ int app_lte_tls_connect_to_lte(void)
 
   /* Depending on the APN, authentication may not be necessary.
    * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
-   * and set user_name, password to NULL. */
+   * and set user_name, password to NULL.
+   */
 
   apnsetting.auth_type = APP_APN_AUTHTYPE;
   apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
@@ -665,7 +673,8 @@ int app_lte_tls_connect_to_lte(void)
 
   /* Wait until the connect completed and notification
    * comes from the callback(app_activate_pdn_cb)
-   * registered by lte_activate_pdn. */
+   * registered by lte_activate_pdn.
+   */
 
   ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -705,7 +714,8 @@ int app_lte_tls_disconnect_from_lte(void)
 
   /* Wait until the deactivate PDN is completed and notification
    * comes from the callback(app_deactivate_pdn_cb)
-   * registered by lte_deactivate_pdn. */
+   * registered by lte_deactivate_pdn.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -724,7 +734,8 @@ int app_lte_tls_disconnect_from_lte(void)
 
   /* Wait until the radio off is completed and notification
    * comes from the callback(app_radio_off_cb)
-   * registered by lte_radio_off. */
+   * registered by lte_radio_off.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -733,7 +744,8 @@ int app_lte_tls_disconnect_from_lte(void)
     }
 
   /* Power off the modem. If asynchronous API has not notified
-   * the result by callback, it will be canceled */
+   * the result by callback, it will be canceled
+   */
 
   ret = lte_power_off();
   if (ret < 0)
@@ -743,7 +755,9 @@ int app_lte_tls_disconnect_from_lte(void)
     }
 
   /* Finalize LTE library
-   * If this function is called while the modem power is on, shutdown the modem */
+   * If this function is called while the modem power is on,
+   * shutdown the modem
+   */
 
   ret = lte_finalize();
   if (ret < 0)
