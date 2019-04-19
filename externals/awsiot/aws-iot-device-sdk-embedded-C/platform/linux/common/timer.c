@@ -23,58 +23,62 @@ extern "C" {
 #endif
 
 #include <stddef.h>
-#include <sys/types.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <unistd.h>
+#include <string.h>
 
 #include "timer_platform.h"
 
 bool has_timer_expired(Timer *timer) {
-	struct timeval now, res;
-	gettimeofday(&now, NULL);
-	timersub(&timer->end_time, &now, &res);
-	return res.tv_sec < 0 || (res.tv_sec == 0 && res.tv_usec <= 0);
+	if( left_ms(timer) )
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
 }
 
 void countdown_ms(Timer *timer, uint32_t timeout) {
-	struct timeval now;
-#ifdef __cplusplus
-	struct timeval interval = {timeout / 1000, static_cast<int>((timeout % 1000) * 1000)};
-#else
-	struct timeval interval = {timeout / 1000, (int)((timeout % 1000) * 1000)};
-#endif
-	gettimeofday(&now, NULL);
-	timeradd(&now, &interval, &timer->end_time);
+	timer->TimeOut = timeout;
+	clock_gettime( CLOCK_MONOTONIC, &timer->start_time); /* Record the time at which this function was entered. */
 }
 
 uint32_t left_ms(Timer *timer) {
-	struct timeval now, res;
-	uint32_t result_ms = 0;
-	gettimeofday(&now, NULL);
-	timersub(&timer->end_time, &now, &res);
-	if(res.tv_sec >= 0) {
-		result_ms = (uint32_t) (res.tv_sec * 1000 + res.tv_usec / 1000);
+	struct timespec current_time;
+	struct timespec diff_time;
+	int difftime_msec = 0;
+	clock_gettime( CLOCK_MONOTONIC, &current_time);
+
+	diff_time.tv_sec  = current_time.tv_sec - timer->start_time.tv_sec;
+	diff_time.tv_nsec = current_time.tv_nsec - timer->start_time.tv_nsec;
+
+	if(diff_time.tv_nsec < 0)
+	{
+		diff_time.tv_sec -= 1;
+		diff_time.tv_nsec += 1000*1000*1000;
 	}
-	return result_ms;
+
+	difftime_msec = diff_time.tv_sec*1000 + diff_time.tv_nsec/(1000*1000);
+
+	if(difftime_msec < timer->TimeOut)
+	{
+		return timer->TimeOut - difftime_msec;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 void countdown_sec(Timer *timer, uint32_t timeout) {
-	struct timeval now;
-	struct timeval interval = {timeout, 0};
-	gettimeofday(&now, NULL);
-	timeradd(&now, &interval, &timer->end_time);
+	timer->TimeOut = timeout * 1000;
+	clock_gettime( CLOCK_MONOTONIC, &timer->start_time); /* Record the time at which this function was entered. */
 }
 
 void init_timer(Timer *timer) {
-	timer->end_time = (struct timeval) {0, 0};
-}
-
-void delay(unsigned milliseconds)
-{
-	useconds_t sleepTime = (useconds_t)(milliseconds * 1000);
-
-	usleep(sleepTime);
+	memset(timer, 0, sizeof(Timer));
 }
 
 #ifdef __cplusplus

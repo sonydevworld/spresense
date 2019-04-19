@@ -23,23 +23,20 @@ extern "C" {
 /**
  * @file timer_platform.h
  */
-#include <sys/time.h>
-#include <sys/select.h>
 #include "timer_interface.h"
+
+#include <pthread.h>
+#include <mqueue.h>
+#include <semaphore.h>
+#include <time.h>
 
 /**
  * definition of the Timer struct. Platform specific
  */
 struct Timer {
-	struct timeval end_time;
+	struct timespec start_time;
+	unsigned int TimeOut;
 };
-
-/**
- * @brief Delay (sleep) for the specified number of milliseconds.
- *
- * @param milliseconds The number of milliseconds to sleep.
- */
-void delay(unsigned milliseconds);
 
 #ifdef __cplusplus
 }
