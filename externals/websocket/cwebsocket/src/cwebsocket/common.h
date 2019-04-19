@@ -28,31 +28,36 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <syslog.h>
 #include <string.h>
-#include <errno.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
+
 #include "utf8.h"
+
+#include "sys/socket.h"
 
 #ifdef HAVE_CONFIG_H
     #include "../../config.h"
 #endif
 
+//#define ENABLE_WEBSOCKET_DEBUG
+
+#ifdef ENABLE_WEBSOCKET_DEBUG
+#define WS_DEBUG(...)	printf(__VA_ARGS__)
+#else
+#define WS_DEBUG(...)
+#endif
+
+//#define ENABLE_SSL
+
 #ifdef ENABLE_SSL
-	#include <openssl/rand.h>
-	#include <openssl/ssl.h>
-	#include <openssl/err.h>
+#include "mbedtls/config.h"
+#include "mbedtls/ssl.h"
+#include "mbedtls/net.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/error.h"
+#if defined(MBEDTLS_SSL_CACHE_C)
+#include "mbedtls/ssl_cache.h"
+#endif
 #endif
 
 #if defined(__linux__)
@@ -72,11 +77,11 @@
 	(char)(((p & ((uint64_t)0xff << 48)) >> 48) & 0xff), (char)(((p & ((uint64_t)0xff << 56)) >> 56) & 0xff) }
 
 #ifndef CWS_HANDSHAKE_BUFFER_MAX
-	#define CWS_HANDSHAKE_BUFFER_MAX 256  // bytes
+	#define CWS_HANDSHAKE_BUFFER_MAX 1024  // bytes
 #endif
 
 #ifndef CWS_DATA_BUFFER_MAX
-	#define CWS_DATA_BUFFER_MAX 65543     // bytes
+	#define CWS_DATA_BUFFER_MAX 4096     // bytes
 #endif
 
 #ifndef CWS_STACK_SIZE_MIN
@@ -103,10 +108,9 @@
 extern "C" {
 #endif
 
-typedef enum {
-	TRUE,
-	FALSE
-} bool;
+#define MAX_CHUNK_SIZE 256
+	
+typedef int ssize_t;
 
 typedef enum {
 	CONTINUATION = 0x00,
@@ -132,19 +136,29 @@ typedef struct {
 	uint32_t opcode;
 	uint64_t payload_len;
 	char *payload;
-} cwebsocket_message;
+} cwebsocket_dsp_message;
+
+typedef struct {
+	uint32_t opcode;
+	uint64_t payload_len;
+	uint64_t chunk_len;
+	uint64_t chunk_pos;
+	char payload[MAX_CHUNK_SIZE + 1];
+} cwebsocket_app_message;
 
 typedef struct {
 	char *name;
 	void (*onopen)(void *arg);
-	void (*onmessage)(void *arg, cwebsocket_message *message);
-	void (*onclose)(void *arg, int code, const char *message);
-	void (*onerror)(void *arg, const char *error);
+	void (*onmessage)(void *arg);
+	void (*onclose)(void *arg);
+	void (*onerror)(void *arg);
 } cwebsocket_subprotocol;
 
 char* cwebsocket_create_key_challenge_response(const char *seckey);
 char* cwebsocket_base64_encode(const unsigned char *input, int length);
 void cwebsocket_print_frame(cwebsocket_frame *frame);
+
+void ws_thread_new( const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority);
 
 #ifdef __cplusplus
 }

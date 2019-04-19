@@ -23,25 +23,27 @@
  */
 
 #include "common.h"
+#include "mbedtls/base64.h"
+#include "mbedtls/sha1.h"
+//#include <pthread.h>
+
 
 char* cwebsocket_base64_encode(const unsigned char *input, int length) {
-	BIO *bmem, *b64;
-	BUF_MEM *bptr;
-	b64 = BIO_new(BIO_f_base64());
-	bmem = BIO_new(BIO_s_mem());
-	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, input, length);
-	BIO_flush(b64);
-	BIO_get_mem_ptr(b64, &bptr);
-	char *buff = (char *)malloc(bptr->length);
-	memcpy(buff, bptr->data, bptr->length-1);
-	buff[bptr->length-1] = '\0';
-	BIO_free_all(b64);
+
+	unsigned char buffer[128];
+	size_t olen;
+	
+	mbedtls_base64_encode(buffer, sizeof( buffer ), &olen, input, length );
+
+	char *buff = (char *)malloc(olen);
+	memcpy(buff, buffer, olen-1); 
+	buff[olen-1] = '\0'; 
+	
 	return buff;
 }
 
 void cwebsocket_print_frame(cwebsocket_frame *frame) {
-	syslog(LOG_DEBUG, "cwebsocket_print_frame: fin=%i, rsv1=%i, rsv2=%i, rsv3=%i, opcode=%#04x, mask=%i, payload_len=%lld\n",
+	WS_DEBUG("print_frame: fin=%i, rsv1=%i, rsv2=%i, rsv3=%i, opcode=%#04x, mask=%i, payload_len=%lld\n",
 			frame->fin, frame->rsv1, frame->rsv2, frame->rsv3, frame->opcode, frame->mask, frame->payload_len);
 }
 
@@ -53,6 +55,25 @@ char* cwebsocket_create_key_challenge_response(const char *seckey) {
 	memcpy(sha1buf, seckey, seckey_len);
 	memcpy(&sha1buf[seckey_len], GUID, 36);
 	unsigned char sha1_bytes[20];
-	SHA1((const unsigned char *)sha1buf, total_len, sha1_bytes);
+	mbedtls_sha1((const unsigned char *)sha1buf, total_len, sha1_bytes);
 	return cwebsocket_base64_encode((const unsigned char *)sha1_bytes, sizeof(sha1_bytes));
 }
+
+#if 0
+void
+ws_thread_new( const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority )
+{
+	pthread_attr_t attr;
+	pthread_t      thread;
+
+	pthread_attr_init(&attr);
+
+	attr.priority = iPriority;
+	attr.stacksize = iStackSize;
+
+	if( pthread_create( &thread, &attr, (pthread_startroutine_t)pxThread, pvArg ) == 0 )
+	{
+		pthread_detach(thread);
+	}
+}
+#endif
