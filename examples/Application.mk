@@ -88,7 +88,6 @@ $(MAINOBJ): %$(OBJEXT): %.c
 	$(call COMPILE, $<, $@)
 endif
 
-CFLAGS += -std=c99
 .built: $(OBJS)
 	$(Q) touch $@
 
