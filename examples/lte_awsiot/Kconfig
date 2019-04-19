@@ -1,0 +1,74 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_AWSIOT
+	bool "AWS IoT using LTE example"
+	default n
+	---help---
+		Enable the AWS IoT using LTE example
+
+if EXAMPLES_LTE_AWSIOT
+
+config EXAMPLES_LTE_AWSIOT_PROGNAME
+	string "Program name"
+	default "lte_awsiot"
+	depends on BUILD_KERNEL
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_AWSIOT_PRIORITY
+	int "lte_awsiot task priority"
+	default 100
+
+config EXAMPLES_LTE_AWSIOT_STACKSIZE
+	int "lte_awsiot stack size"
+	default 2048
+
+config EXAMPLES_LTE_AWSIOT_STACKSIZE_IN_USING_MBEDTLS
+	int "lte_awsiot stack size in using mbedTLS"
+	default 5120
+
+config EXAMPLES_LTE_AWSIOT_HOST
+        string "AWS IoT server host name"
+        default "examples.iot.ap-northeast-1.amazonaws.com"
+
+config EXAMPLES_LTE_AWSIOT_PORT
+        int "AWS IoT server port number"
+        default 8883
+
+config EXAMPLES_LTE_AWSIOT_CERT
+        string "AWS IoT cert folder"
+        default "/mnt/vfat/cert"
+
+config EXAMPLES_LTE_AWSIOT_APN_NAME
+	string "Access Point Name"
+	default ""
+
+config EXAMPLES_LTE_AWSIOT_APN_IPTYPE
+	int "IP type"
+	default 0
+	range 0 2
+	---help---
+		IP type is selected from IP, IPv6 and IPv4/v6.
+		Values are IP=0, IPv6=1 and IPv4/v6=2.
+
+config EXAMPLES_LTE_AWSIOT_APN_AUTHTYPE
+	int "Authentication type"
+	default 0
+	range 0 2
+	---help---
+		Authentication type is selected from NONE, PAP and CHAP.
+		Values are NONE=0, PAP=1, CHAP=2.
+
+config EXAMPLES_LTE_AWSIOT_APN_USERNAME
+	string "Username used for authentication"
+	default ""
+
+config EXAMPLES_LTE_AWSIOT_APN_PASSWD
+	string "Password used for authentication"
+	default ""
+
+endif
