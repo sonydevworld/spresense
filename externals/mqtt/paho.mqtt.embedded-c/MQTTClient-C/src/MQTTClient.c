@@ -1,3 +1,37 @@
+/****************************************************************************
+ * externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src/MQTTClient.c
+ *
+ *   Copyright 2019 Sony Corporation
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ * 3. Neither the name NuttX nor Sony nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************/
+
 /*******************************************************************************
  * Copyright (c) 2014, 2017 IBM Corp.
  *
@@ -54,7 +88,7 @@ static int sendPacket(MQTTClient* c, int length, Timer* timer)
 }
 
 
-void MQTTClientInit(MQTTClient* c, Network* network, unsigned int command_timeout_ms,
+void MQTTClientInit(MQTTClient* c, MQTTSocket* network, unsigned int command_timeout_ms,
 		unsigned char* sendbuf, size_t sendbuf_size, unsigned char* readbuf, size_t readbuf_size)
 {
     int i;
@@ -472,7 +506,7 @@ int MQTTConnect(MQTTClient* c, MQTTPacket_connectData* options)
 }
 
 
-int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler messageHandler)
+int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler messageHandle)
 {
     int rc = FAILURE;
     int i = -1;
@@ -482,7 +516,7 @@ int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler
     {
         if (c->messageHandlers[i].topicFilter != NULL && strcmp(c->messageHandlers[i].topicFilter, topicFilter) == 0)
         {
-            if (messageHandler == NULL) /* remove existing */
+            if (messageHandle == NULL) /* remove existing */
             {
                 c->messageHandlers[i].topicFilter = NULL;
                 c->messageHandlers[i].fp = NULL;
@@ -492,7 +526,7 @@ int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler
         }
     }
     /* if no existing, look for empty slot (unless we are removing) */
-    if (messageHandler != NULL) {
+    if (messageHandle != NULL) {
         if (rc == FAILURE)
         {
             for (i = 0; i < MAX_MESSAGE_HANDLERS; ++i)
@@ -507,7 +541,7 @@ int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler
         if (i < MAX_MESSAGE_HANDLERS)
         {
             c->messageHandlers[i].topicFilter = topicFilter;
-            c->messageHandlers[i].fp = messageHandler;
+            c->messageHandlers[i].fp = messageHandle;
         }
     }
     return rc;
@@ -515,7 +549,7 @@ int MQTTSetMessageHandler(MQTTClient* c, const char* topicFilter, messageHandler
 
 
 int MQTTSubscribeWithResults(MQTTClient* c, const char* topicFilter, enum QoS qos,
-       messageHandler messageHandler, MQTTSubackData* data)
+       messageHandler messageHandle, MQTTSubackData* data)
 {
     int rc = FAILURE;
     Timer timer;
@@ -546,7 +580,7 @@ int MQTTSubscribeWithResults(MQTTClient* c, const char* topicFilter, enum QoS qo
         if (MQTTDeserialize_suback(&mypacketid, 1, &count, (int*)&data->grantedQoS, c->readbuf, c->readbuf_size) == 1)
         {
             if (data->grantedQoS != 0x80)
-                rc = MQTTSetMessageHandler(c, topicFilter, messageHandler);
+                rc = MQTTSetMessageHandler(c, topicFilter, messageHandle);
         }
     }
     else
@@ -563,10 +597,10 @@ exit:
 
 
 int MQTTSubscribe(MQTTClient* c, const char* topicFilter, enum QoS qos,
-       messageHandler messageHandler)
+       messageHandler messageHandle)
 {
     MQTTSubackData data;
-    return MQTTSubscribeWithResults(c, topicFilter, qos, messageHandler, &data);
+    return MQTTSubscribeWithResults(c, topicFilter, qos, messageHandle, &data);
 }
 
 
