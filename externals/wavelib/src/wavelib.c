@@ -4193,7 +4193,7 @@ void wpt_summary(wpt_object wt) {
 void cwt_summary(cwt_object wt) {
 
 	printf("\n");
-	printf("Wavelet : %s Parameter %lf \n", wt->wave,wt->m);
+	printf("Wavelet : %s Parameter %f \n", wt->wave,(float)wt->m);
 	printf("\n");
 	printf("Length of Input Signal : %d \n", wt->siglength);
 	printf("\n");
@@ -4201,9 +4201,9 @@ void cwt_summary(cwt_object wt) {
 	printf("\n");
 	printf("Total Number of Scales : %d \n", wt->J);
 	printf("\n");
-	printf("Smallest Scale (s0) : %lf \n", wt->s0);
+	printf("Smallest Scale (s0) : %f \n", (float)wt->s0);
 	printf("\n");
-	printf("Separation Between Scales (dj) %lf \n", wt->dj);
+	printf("Separation Between Scales (dj) %f \n", (float)wt->dj);
 	printf("\n");
 	printf("Scale Type %s \n", wt->type);
 	printf("\n");

@@ -13,7 +13,8 @@
 #include <string.h>
 #include <float.h>
 #include <math.h>
-#include "../header/wavelib.h"
+// #include "../header/wavelib.h"
+#include "wavelib.h"
 
 #ifdef __cplusplus
 extern "C" {
