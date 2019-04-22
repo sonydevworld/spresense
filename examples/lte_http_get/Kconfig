@@ -35,21 +35,33 @@ config EXAMPLES_LTE_HTTP_GET_APN_NAME
 	string "Access Point Name"
 	default ""
 
-config EXAMPLES_LTE_HTTP_GET_APN_IPTYPE
-	int "IP type"
-	default 0
-	range 0 2
-	---help---
-		IP type is selected from IP, IPv6 and IPv4/v6.
-		Values are IP=0, IPv6=1 and IPv4/v6=2.
+choice
+	prompt "IP type Selection"
+	default EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IP
 
-config EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE
-	int "Authentication type"
-	default 0
-	range 0 2
-	---help---
-		Authentication type is selected from NONE, PAP and CHAP.
-		Values are NONE=0, PAP=1, CHAP=2.
+	config EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IP
+		bool "IPv4"
+
+	config EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IPV6
+		bool "IPv6"
+
+	config EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IPV4V6
+		bool "IPv4/v6"
+endchoice
+
+choice
+	prompt "Authentication type Selection"
+	default EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_NONE
+
+	config EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_NONE
+		bool "None"
+
+	config EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_PAP
+		bool "PAP"
+
+	config EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_CHAP
+		bool "CHAP"
+endchoice
 
 config EXAMPLES_LTE_HTTP_GET_APN_USERNAME
 	string "Username used for authentication"
