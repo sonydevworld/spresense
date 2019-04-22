@@ -95,7 +95,7 @@ static bool filter_done_callback(FilterCompCmpltParam *cmplt)
 
           er = MsgLib::send<FilterCompCmpltParam>(s_msgq_id.recorder,
                                                   MsgPriNormal,
-                                                  MSG_AUD_VRC_RST_FILTER,
+                                                  MSG_AUD_MRC_RST_FILTER,
                                                   NULL,
                                                   (*cmplt));
 
@@ -110,7 +110,7 @@ static bool filter_done_callback(FilterCompCmpltParam *cmplt)
 
           er = MsgLib::send<FilterCompCmpltParam>(s_msgq_id.recorder,
                                                   MsgPriNormal,
-                                                  MSG_AUD_VRC_RST_FILTER,
+                                                  MSG_AUD_MRC_RST_FILTER,
                                                   NULL,
                                                   (*cmplt));
           F_ASSERT(er == ERR_OK);
@@ -155,7 +155,7 @@ static bool encoder_done_callback(void* p_response)
 
           er = MsgLib::send<EncCmpltParam>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_RST_ENC,
+                                           MSG_AUD_MRC_RST_ENC,
                                            NULL,
                                            cmplt);
           F_ASSERT(er == ERR_OK);
@@ -172,7 +172,7 @@ static bool encoder_done_callback(void* p_response)
 
           er = MsgLib::send<EncCmpltParam>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_RST_ENC,
+                                           MSG_AUD_MRC_RST_ENC,
                                            NULL,
                                            cmplt);
           F_ASSERT(er == ERR_OK);
@@ -313,9 +313,9 @@ void MediaRecorderObjectTask::run(void)
 
 /*--------------------------------------------------------------------------*/
 MediaRecorderObjectTask::MsgProc
-  MediaRecorderObjectTask::MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum] =
+  MediaRecorderObjectTask::MsgProcTbl[AUD_MRC_MSG_NUM][RecorderStateNum] =
 {
-  /* Message Type: MSG_AUD_VRC_CMD_ACTIVATE. */
+  /* Message Type: MSG_AUD_MRC_CMD_ACTIVATE. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::activate,       /*   Inactive.      */
@@ -326,7 +326,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_CMD_DEACTIVATE. */
+  /* Message Type: MSG_AUD_MRC_CMD_DEACTIVATE. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::illegal,        /*   Inactive.      */
@@ -337,7 +337,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_CMD_INIT. */
+  /* Message Type: MSG_AUD_MRC_CMD_INIT. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::illegal,        /*   Inactive.      */
@@ -348,7 +348,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_CMD_START. */
+  /* Message Type: MSG_AUD_MRC_CMD_START. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::illegal,        /*   Inactive.      */
@@ -359,7 +359,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_CMD_REQENCODE. */
+  /* Message Type: MSG_AUD_MRC_CMD_ENCODE. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::illegalReqEnc,  /*   Inactive.      */
@@ -370,7 +370,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegalReqEnc   /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_CMD_FLUSH. */
+  /* Message Type: MSG_AUD_MRC_CMD_FLUSH. */
 
   {                                           /* Recorder status: */
     &MediaRecorderObjectTask::illegal,        /*   Inactive.      */
@@ -384,9 +384,9 @@ MediaRecorderObjectTask::MsgProc
 
 /*--------------------------------------------------------------------------*/
 MediaRecorderObjectTask::MsgProc
-  MediaRecorderObjectTask::RsltProcTbl[AUD_VRC_RST_MSG_NUM][RecorderStateNum] =
+  MediaRecorderObjectTask::RsltProcTbl[AUD_MRC_RST_MSG_NUM][RecorderStateNum] =
 {
-  /* Message Type: MSG_AUD_VRC_RST_FILTER. */
+  /* Message Type: MSG_AUD_MRC_RST_FILTER. */
 
   {                                                  /* Recorder status: */
     &MediaRecorderObjectTask::illegalFilterDone,     /*   Inactive.      */
@@ -397,7 +397,7 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegalFilterDone      /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_VRC_RST_ENC. */
+  /* Message Type: MSG_AUD_MRC_RST_ENC. */
 
   {                                                  /* Recorder status: */
     &MediaRecorderObjectTask::illegalEncDone,        /*   Inactive.      */
@@ -417,14 +417,14 @@ void MediaRecorderObjectTask::parse(MsgPacket *msg)
   if (MSG_IS_REQUEST(msg->getType()) == 0)
     {
       event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_VRC_RST_MSG_NUM));
+      F_ASSERT((event < AUD_MRC_RST_MSG_NUM));
 
       (this->*RsltProcTbl[event][m_state.get()])(msg);
     }
   else
     {
       event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_VRC_MSG_NUM));
+      F_ASSERT((event < AUD_MRC_MSG_NUM));
 
       (this->*MsgProcTbl[event][m_state.get()])(msg);
     }
@@ -463,7 +463,7 @@ void MediaRecorderObjectTask::illegal(MsgPacket *msg)
   uint msgtype = msg->getType();
   msg->moveParam<RecorderCommand>();
 
-  uint32_t idx = msgtype - MSG_AUD_VRC_CMD_ACTIVATE;
+  uint32_t idx = msgtype - MSG_AUD_MRC_CMD_ACTIVATE;
 
   AsRecorderEvent table[] =
   {
@@ -680,7 +680,7 @@ uint32_t MediaRecorderObjectTask::initEnc(AsInitRecorderParam *param)
       if (isNeedUpsampling(param->sampling_rate))
         {
           init_param.sample_per_frame =
-            getPcmCaptureSample(param->codec_type, param->sampling_rate);
+            getCapSampleNumPerFrame(param->codec_type, param->sampling_rate);
           init_param.in_fs            =
             (cxd56_audio_get_clkmode() == CXD56_AUDIO_CLKMODE_HIRES)
               ? AS_SAMPLINGRATE_192000 : AS_SAMPLINGRATE_48000;
@@ -827,7 +827,7 @@ void MediaRecorderObjectTask::flushOnReady(MsgPacket *msg)
 {
   msg->moveParam<RecorderCommand>();
 
-  m_callback(AsRecorderEventFlush, AS_ECODE_OK, 0);
+  m_callback(AsRecorderEventStop, AS_ECODE_OK, 0);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -839,9 +839,9 @@ void MediaRecorderObjectTask::flushOnActive(MsgPacket *msg)
 
   /* Hold external command */
 
-  if (!setExternalCmd(AsRecorderEventFlush))
+  if (!setExternalCmd(AsRecorderEventStop))
     {
-      m_callback(AsRecorderEventFlush, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      m_callback(AsRecorderEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
       return;
     }
 }
@@ -871,15 +871,15 @@ void MediaRecorderObjectTask::flushOnWait(MsgPacket *msg)
 
       m_state = RecorderStateReady;
 
-      m_callback(AsRecorderEventFlush, AS_ECODE_OK, 0);
+      m_callback(AsRecorderEventStop, AS_ECODE_OK, 0);
     }
   else
     {
       /* If encode request which was issued is remaining, wait them. */
 
-      if (!setExternalCmd(AsRecorderEventFlush))
+      if (!setExternalCmd(AsRecorderEventStop))
         {
-          m_callback(AsRecorderEventFlush, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+          m_callback(AsRecorderEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
           return;
         }
     }
@@ -900,7 +900,7 @@ void MediaRecorderObjectTask::illegalFilterDone(MsgPacket *msg)
       AS_filter_recv_done(m_filter_instance);
     }
 
-  freeOutputBuf();
+  dequeEncOutBuf();
 
   if (filter_result.event_type == ExecEvent)
     {
@@ -920,7 +920,7 @@ void MediaRecorderObjectTask::illegalFilterDone(MsgPacket *msg)
             }
         }
 
-      freeCnvInBuf();
+      dequeEncInBuf();
     }
   else if (filter_result.event_type == StopEvent)
     {
@@ -992,8 +992,8 @@ void MediaRecorderObjectTask::filterDoneOnActive(MsgPacket *msg)
       m_cnv_in_que.top().callback(0, is_end);
     }
 
-  freeCnvInBuf();
-  freeOutputBuf();
+  dequeEncInBuf();
+  dequeEncOutBuf();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1033,8 +1033,8 @@ void MediaRecorderObjectTask::filterDoneOnStop(MsgPacket *msg)
 
       /* Free PCM and ES data area */
 
-      freeCnvInBuf();
-      freeOutputBuf();
+      dequeEncInBuf();
+      dequeEncOutBuf();
     }
   else if (filter_result.event_type == StopEvent)
     {
@@ -1044,7 +1044,7 @@ void MediaRecorderObjectTask::filterDoneOnStop(MsgPacket *msg)
                             filter_result.out_buffer.size);
         }
 
-      freeOutputBuf();
+      dequeEncOutBuf();
 
       m_rec_sink.finalize();
 
@@ -1096,8 +1096,8 @@ void MediaRecorderObjectTask::filterDoneOnErrorStop(MsgPacket *msg)
 
       /* Free PCM and ES data area */
 
-      freeOutputBuf();
-      freeCnvInBuf();
+      dequeEncOutBuf();
+      dequeEncInBuf();
     }
   else if (filter_result.event_type == StopEvent)
     {
@@ -1107,7 +1107,7 @@ void MediaRecorderObjectTask::filterDoneOnErrorStop(MsgPacket *msg)
                             filter_result.out_buffer.size);
         }
 
-      freeOutputBuf();
+      dequeEncOutBuf();
 
       m_rec_sink.finalize();
 
@@ -1146,7 +1146,7 @@ void MediaRecorderObjectTask::illegalEncDone(MsgPacket *msg)
 
   AS_encode_recv_done();
 
-  freeOutputBuf();
+  dequeEncOutBuf();
 
   if (enc_result.event_type == Apu::ExecEvent)
     {
@@ -1166,7 +1166,7 @@ void MediaRecorderObjectTask::illegalEncDone(MsgPacket *msg)
             }
         }
 
-      freeCnvInBuf();
+      dequeEncInBuf();
     }
   else if (enc_result.event_type == Apu::FlushEvent)
     {
@@ -1235,8 +1235,8 @@ void MediaRecorderObjectTask::encDoneOnActive(MsgPacket *msg)
 
   /* Free PCM and ES data area */
 
-  freeCnvInBuf();
-  freeOutputBuf();
+  dequeEncInBuf();
+  dequeEncOutBuf();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1271,8 +1271,8 @@ void MediaRecorderObjectTask::encDoneOnStop(MsgPacket *msg)
 
       /* Free PCM and ES data area */
 
-      freeCnvInBuf();
-      freeOutputBuf();
+      dequeEncInBuf();
+      dequeEncOutBuf();
     }
   else if (enc_result.event_type == Apu::FlushEvent)
     {
@@ -1284,7 +1284,7 @@ void MediaRecorderObjectTask::encDoneOnStop(MsgPacket *msg)
 
       /* Free ES data area */
 
-      freeOutputBuf();
+      dequeEncOutBuf();
 
       m_rec_sink.finalize();
 
@@ -1333,8 +1333,8 @@ void MediaRecorderObjectTask::encDoneOnErrorStop(MsgPacket *msg)
 
       /* Free PCM and ES data area */
 
-      freeOutputBuf();
-      freeCnvInBuf();
+      dequeEncOutBuf();
+      dequeEncInBuf();
     }
   else if (enc_result.event_type == Apu::FlushEvent)
     {
@@ -1344,7 +1344,7 @@ void MediaRecorderObjectTask::encDoneOnErrorStop(MsgPacket *msg)
                             enc_result.stop_enc_cmplt.output_buffer.size);
         }
 
-      freeOutputBuf();
+      dequeEncOutBuf();
 
       m_rec_sink.finalize();
 
@@ -1394,8 +1394,8 @@ bool MediaRecorderObjectTask::execEnc(AsPcmDataParam *inpcm)
         {
           if (AS_filter_exec(&param, m_filter_instance))
             {
-              holdCnvInBuf(*inpcm);
-              holdOutputBuf(outmh);
+              enqueEncInBuf(*inpcm);
+              enqueEncOutBuf(outmh);
             }
           else
             {
@@ -1423,8 +1423,8 @@ bool MediaRecorderObjectTask::execEnc(AsPcmDataParam *inpcm)
         {
           if (AS_encode_exec(&param))
             {
-              holdCnvInBuf(*inpcm);
-              holdOutputBuf(outmh);
+              enqueEncInBuf(*inpcm);
+              enqueEncOutBuf(outmh);
             }
           else
             {
@@ -1462,7 +1462,7 @@ bool MediaRecorderObjectTask::stopEnc(void)
 
           if (AS_filter_stop(&param, m_filter_instance))
             {
-              holdOutputBuf(outmh);
+              enqueEncOutBuf(outmh);
             }
           else
             {
@@ -1484,7 +1484,7 @@ bool MediaRecorderObjectTask::stopEnc(void)
 
       if (AS_encode_stop(&param))
         {
-          holdOutputBuf(outmh);
+          enqueEncOutBuf(outmh);
         }
       else
         {
@@ -1940,7 +1940,7 @@ bool AS_ActivateMediaRecorder(FAR AsActivateRecorder *actparam)
 
   err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_CMD_ACTIVATE,
+                                           MSG_AUD_MRC_CMD_ACTIVATE,
                                            NULL,
                                            cmd);
   F_ASSERT(er == ERR_OK);
@@ -1966,7 +1966,7 @@ bool AS_InitMediaRecorder(FAR AsInitRecorderParam *initparam)
 
   err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_CMD_INIT,
+                                           MSG_AUD_MRC_CMD_INIT,
                                            NULL,
                                            cmd);
   F_ASSERT(er == ERR_OK);
@@ -1988,7 +1988,7 @@ bool AS_ReqEncodeMediaRecorder(AsPcmDataParam *pcmparam)
 
   err_t er = MsgLib::send<AsPcmDataParam>(s_msgq_id.recorder,
                                           MsgPriNormal,
-                                          MSG_AUD_VRC_CMD_REQENCODE,
+                                          MSG_AUD_MRC_CMD_ENCODE,
                                           NULL,
                                           *pcmparam);
   F_ASSERT(er == ERR_OK);
@@ -2005,24 +2005,7 @@ bool AS_StartMediaRecorder(void)
 
   err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_CMD_START,
-                                           NULL,
-                                           cmd);
-  F_ASSERT(er == ERR_OK);
-
-  return true;
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_FlushMediaRecorder(void)
-{
-  /* Flush */
-
-  RecorderCommand cmd;
-
-  err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
-                                           MsgPriNormal,
-                                           MSG_AUD_VRC_CMD_FLUSH,
+                                           MSG_AUD_MRC_CMD_START,
                                            NULL,
                                            cmd);
   F_ASSERT(er == ERR_OK);
@@ -2033,6 +2016,17 @@ bool AS_FlushMediaRecorder(void)
 /*--------------------------------------------------------------------------*/
 bool AS_StopMediaRecorder(void)
 {
+  /* Stop */
+
+  RecorderCommand cmd;
+
+  err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
+                                           MsgPriNormal,
+                                           MSG_AUD_MRC_CMD_STOP,
+                                           NULL,
+                                           cmd);
+  F_ASSERT(er == ERR_OK);
+
   return true;
 }
 
@@ -2043,7 +2037,7 @@ bool AS_DeactivateMediaRecorder(void)
 
   err_t er = MsgLib::send<RecorderCommand>(s_msgq_id.recorder,
                                            MsgPriNormal,
-                                           MSG_AUD_VRC_CMD_DEACTIVATE,
+                                           MSG_AUD_MRC_CMD_DEACTIVATE,
                                            NULL,
                                            cmd);
   F_ASSERT(er == ERR_OK);
@@ -2069,12 +2063,6 @@ bool AS_DeleteMediaRecorder(void)
   MEDIA_RECORDER_UNREG_ATTCB();
 
   return true;
-}
-
-/*--------------------------------------------------------------------------*/
-uint32_t AS_GetPcmSampleForEncode(uint8_t codec_type, uint32_t fs)
-{
-  return MediaRecorderObjectTask::getPcmCaptureSample(codec_type, fs);
 }
 
 /*--------------------------------------------------------------------------*/

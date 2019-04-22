@@ -266,7 +266,7 @@ private:
   bool notify(const CaptureComponentParam& param);
 
   CaptureBuffer getCapBuf(uint32_t cap_sample);
-  bool holdCapBuf(CaptureBuffer buf);
+  bool enqueDmaReqQue(CaptureBuffer buf);
 };
 
 

@@ -46,6 +46,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "audio/audio_high_level_api.h"
 #include "audio/audio_message_types.h"
+#include "audio/utilities/frame_samples.h"
 #include "audio_recorder_sink.h"
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
@@ -73,49 +74,6 @@ class MediaRecorderObjectTask {
 public:
   static void create(AsRecorderMsgQueId_t msgq_id,
                      AsRecorderPoolId_t pool_id);
-
-  /* When MP3 encode and fs is 16kHz, 22.05kHz, 24kHz, sample num of
-   * 1au(access unit) is 1152/2 = 576 (It depend on MPEG2 compliant).
-   * Therefore, at first, value is (#1)"SampleNumPerFrame[m_codec_type] / 2".
-   * And sample num of captured and SRC filterd data is to be 576,
-   * return ((#1) * 48000 / m_sampling_rate(Hz)).
-   *
-   * The process below is only for fs is 48kHz, 16kHz.
-   * To correspontd to 32000Hz, 44100Hz..., need conversion process to 
-   * sample num per 1au to be 1152.
-   */
-  static uint32_t getPcmCaptureSample(uint8_t codec_type, uint32_t fs)
-    {
-      if (codec_type > AS_CODECTYPE_LPCM)
-        {
-          return 0;
-        }
-
-      AudioCodec intr_codec_def[] =
-        {
-          AudCodecMP3,
-          AudCodecLPCM,
-          AudCodecAAC,
-          AudCodecOPUS,
-          AudCodecAAC,
-          AudCodecLPCM,
-        };
-
-      AudioCodec intr_codec = intr_codec_def[codec_type]; 
-
-      if (intr_codec == AudCodecMP3 && fs < 32000)
-        {
-          return (SampleNumPerFrame[intr_codec] / 2 * 48000 /
-            fs);
-        }
-      else if (intr_codec == AudCodecOPUS)
-        {
-          /* 20ms. */
-
-          return ((fs / 50) * (48000 / fs));
-        }
-        return SampleNumPerFrame[intr_codec];
-    }
 
 private:
   MediaRecorderObjectTask(AsRecorderMsgQueId_t msgq_id,
@@ -159,8 +117,8 @@ private:
   FilterComponent *m_filter_instance;
 
   typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum];
-  static MsgProc RsltProcTbl[AUD_VRC_RST_MSG_NUM][RecorderStateNum];
+  static MsgProc MsgProcTbl[AUD_MRC_MSG_NUM][RecorderStateNum];
+  static MsgProc RsltProcTbl[AUD_MRC_RST_MSG_NUM][RecorderStateNum];
 
   typedef s_std::Queue<AsPcmDataParam, CAPTURE_PCM_BUF_QUE_SIZE> CnvInQueue;
   CnvInQueue m_cnv_in_que;
@@ -220,7 +178,7 @@ private:
 
   MemMgrLite::MemHandle getOutputBufAddr();
 
-  bool holdCnvInBuf(AsPcmDataParam in)
+  bool enqueEncInBuf(AsPcmDataParam in)
     {
       if (!m_cnv_in_que.push(in))
         {
@@ -231,7 +189,7 @@ private:
       return true;
     }
 
-  bool freeCnvInBuf()
+  bool dequeEncInBuf()
     {
       if (!m_cnv_in_que.pop())
         {
@@ -242,7 +200,7 @@ private:
       return true;
     }
 
-  bool holdOutputBuf(MemMgrLite::MemHandle mh)
+  bool enqueEncOutBuf(MemMgrLite::MemHandle mh)
     {
       if (!m_output_buf_mh_que.push(mh))
         {
@@ -253,7 +211,7 @@ private:
       return true;
     }
 
-  bool freeOutputBuf()
+  bool dequeEncOutBuf()
     {
       if (!m_output_buf_mh_que.pop())
         {

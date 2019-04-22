@@ -41,11 +41,7 @@
 #include <nuttx/arch.h>
 #include <stdlib.h>
 #include <arch/chip/cxd56_audio.h>
-#include "memutils/common_utils/common_assert.h"
 #include "front_end_obj.h"
-#include "components/encoder/encoder_component.h"
-#include "components/filter/filter_api.h"
-#include "dsp_driver/include/dsp_drv.h"
 #include "debug/dbg_log.h"
 
 __USING_WIEN2
@@ -398,13 +394,17 @@ void FrontEndObject::activate(MsgPacket *msg)
   uint32_t dsp_inf = 0;
 
   AS_preproc_activate(&m_p_preproc_instance,
-                       m_pool_id.dspcmd,
-                       m_msgq_id.dsp,
-                       preproc_done_callback,
-                       "PREPROC",
-                       static_cast<void *>(this),
-                       &dsp_inf,
-                       (act.param.pre_enable == AsFrontendPreProcDisable));
+                      m_pool_id.dspcmd,
+                      m_msgq_id.dsp,
+                      preproc_done_callback,
+                      "PREPROC",
+                      static_cast<void *>(this),
+                      &dsp_inf,
+                      static_cast<ProcType>(act.param.preproc_type));
+
+  /* Hold preproc type */
+
+  m_preproc_type = static_cast<AsFrontendPreProcType>(act.param.preproc_type);
 
   /* State transit */
 
@@ -917,8 +917,9 @@ void FrontEndObject::captureDoneOnActive(MsgPacket *msg)
 
   /* Exec PreProcess */
 
-  bool exec_result = execPreProc(cap_rslt.buf.cap_mh,
-                                 cap_rslt.buf.sample);
+  bool exec_result = (!cap_rslt.buf.validity)
+                       ? false : execPreProc(cap_rslt.buf.cap_mh,
+                                             cap_rslt.buf.sample);
 
   /* If exec failed, stop capturing */
 
@@ -944,8 +945,9 @@ void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
 
   /* Exec PreProcess */
 
-  bool exec_result = execPreProc(cap_rslt.buf.cap_mh,
-                                 cap_rslt.buf.sample);
+  bool exec_result = (!cap_rslt.buf.validity)
+                       ? false : execPreProc(cap_rslt.buf.cap_mh,
+                                             cap_rslt.buf.sample);
 
   /* If exec failed, transit to ErrorStopping.
    * Here, capture stop request was alreay issued.
@@ -1381,7 +1383,7 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 
   /* If preprocess is not active, don't alloc output area. */
 
-  if (AS_preproc_is_enable(m_p_preproc_instance))
+  if (m_preproc_type != AsFrontendPreProcThrough)
     {
 
       if (m_pool_id.output == MemMgrLite::NullPoolId)
@@ -1424,7 +1426,7 @@ bool FrontEndObject::flushPreProc(void)
 
   /* Set preprocess flush output area */
 
-  if (AS_preproc_is_enable(m_p_preproc_instance))
+  if (m_preproc_type != AsFrontendPreProcThrough)
     {
       if (m_pool_id.output == MemMgrLite::NullPoolId)
         {

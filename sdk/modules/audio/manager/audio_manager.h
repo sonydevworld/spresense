@@ -37,6 +37,7 @@
 #define __AUDIO_MANAGER_H
 
 #include <audio/audio_high_level_api.h>
+#include <audio/utilities/frame_samples.h>
 #include <arch/chip/cxd56_audio.h>
 #include "attention.h"
 #include "wien2_common_defs.h"
@@ -102,7 +103,7 @@ private:
     m_recorder_transition_count(0),
     m_input_en(false),
     m_output_en(false),
-    m_preproc_enable(AsFrontendPreProcDisable)
+    m_preproc_type(AsFrontendPreProcThrough)
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
@@ -146,7 +147,7 @@ private:
   int8_t m_recorder_transition_count;
   bool m_input_en;
   bool m_output_en;
-  uint32_t m_preproc_enable;
+  uint32_t m_preproc_type;
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   AsOutputMixDevice m_output_device;

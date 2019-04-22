@@ -137,15 +137,15 @@ typedef enum
 
 typedef enum
 {
-  /*! \brief Pre Process Disable */
+  /*! \brief Pre Process through */
 
-  AsFrontendPreProcDisable = 0,
+  AsFrontendPreProcThrough = 0,
 
-  /*! \brief Pre Process Enable */
+  /*! \brief Pre Process user defined */
 
-  AsFrontendPreProcEnable,
+  AsFrontendPreProcUserDef,
 
-} AsFrontendPreProc;
+} AsFrontendPreProcType;
 
 typedef enum
 {
@@ -172,10 +172,10 @@ typedef struct
 
   /*! \brief [in] Select pre process enable 
    *
-   * Use #AsFrontendPreProc enum type
+   * Use #AsFrontendPreProcType enum type
    */
 
-  uint32_t  pre_enable;
+  uint32_t  preproc_type;
 
 } AsActivateFrontendParam;
 
@@ -289,59 +289,85 @@ typedef struct
    */
 
   int16_t mic_gain[AS_MIC_CHANNEL_MAX];
+
 } AsFrontendMicGainParam;
+
+/** Frontendcommand header */
+
+typedef struct
+{
+  /*! \brief [in] Command code */
+
+  uint8_t command_code;
+
+  /*! \brief [in] reserved */
+
+  uint8_t reserved0;
+  uint8_t reserved1;
+  uint8_t reserved2;
+
+} FrontendCommandHeader;
 
 /** FrontendCommand definition */
 
-typedef union
+typedef struct
 {
-  /*! \brief [in] for ActivateFrontend
-   * (Object Interface==AS_ActivateFrontend)
-   */
+  /*! \brief [in] Command Header */
+
+  FrontendCommandHeader header;
+
+  /*! \brief [in] Command Parameters */
+
+  union
+  {
+    /*! \brief [in] for ActivateFrontend
+     * (Object Interface==AS_ActivateFrontend)
+     */
  
-  AsActivateFrontend act_param;
+    AsActivateFrontend act_param;
 
-  /*! \brief [in] for DeactivateFrontend
-   * (Object Interface==AS_DeactivateFrontend)
-   */
+    /*! \brief [in] for DeactivateFrontend
+     * (Object Interface==AS_DeactivateFrontend)
+     */
  
-  AsDeactivateFrontendParam deact_param;
+    AsDeactivateFrontendParam deact_param;
 
-  /*! \brief [in] for InitFrontend
-   * (Object Interface==AS_InitFrontend)
-   */
+    /*! \brief [in] for InitFrontend
+     * (Object Interface==AS_InitFrontend)
+     */
 
-  AsInitFrontendParam init_param;
+    AsInitFrontendParam init_param;
 
-  /*! \brief [in] for StartFrontend
-   * (Object Interface==AS_StartFrontend)
-   */
+    /*! \brief [in] for StartFrontend
+     * (Object Interface==AS_StartFrontend)
+     */
 
-  AsStartFrontendParam start_param;
+    AsStartFrontendParam start_param;
 
-  /*! \brief [in] for StopFrontend
-   * (Object Interface==AS_StopFrontend)
-   */
+    /*! \brief [in] for StopFrontend
+     * (Object Interface==AS_StopFrontend)
+     */
 
-  AsStopFrontendParam stop_param;
+    AsStopFrontendParam stop_param;
 
-  /*! \brief [in] for InitPreProc
-   * (Object Interface==AS_InitPreProcFrontend)
-   */
+    /*! \brief [in] for InitPreProc
+     * (Object Interface==AS_InitPreProcFrontend)
+     */
 
-  AsInitPreProcParam initpreproc_param;
+    AsInitPreProcParam initpreproc_param;
 
-  /*! \brief [in] for SetPreProc
-   * (Object Interface==AS_SetPreProcFrontend)
-   */
+    /*! \brief [in] for SetPreProc
+     * (Object Interface==AS_SetPreProcFrontend)
+     */
 
-  AsSetPreProcParam setpreproc_param;
+    AsSetPreProcParam setpreproc_param;
 
-  /*! \brief [in] for SetMicGain
-   * (Object Interface==AS_SetMicGainFrontend)
-   */
+    /*! \brief [in] for SetMicGain
+     * (Object Interface==AS_SetMicGainFrontend)
+     */
 
-  AsFrontendMicGainParam mic_gain_param;
+    AsFrontendMicGainParam mic_gain_param;
+  };
 
 } FrontendCommand;
 

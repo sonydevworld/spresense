@@ -39,6 +39,22 @@
 #include "postproc_component.h"
 #include "postproc_through.h"
 
+/* Proc type definitions */
+
+typedef enum
+{
+  /* PreProc through (No signal processing) */
+
+  ProcTypeThrough = 0,
+   
+  /* User defined process */
+
+  ProcTypeUserDefFilter,
+
+} ProcType;
+
+/* Postproc APIs */
+
 extern "C" {
 
 uint32_t AS_postproc_init(const InitPostprocParam *param,
@@ -50,18 +66,16 @@ bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance);
 
 bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance);
 
-bool AS_postproc_is_enable(void *p_instance);
-
 bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt);
 
 uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
                               PostprocCallback callback,
-                              const char *image_name,
+                              const char *dsp_name,
                               void *p_requester,
                               uint32_t *dsp_inf,
-                              bool through);
+                              ProcType type);
 
 bool AS_postproc_deactivate(void *p_instance);
 

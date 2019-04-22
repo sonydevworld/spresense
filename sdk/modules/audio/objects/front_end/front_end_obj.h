@@ -91,6 +91,7 @@ private:
     : m_msgq_id(msgq_id)
     , m_pool_id(pool_id)
     , m_state(AS_MODULE_ID_FRONT_END_OBJ, "", FrontendStateInactive)
+    , m_preproc_type(AsFrontendPreProcThrough)
     , m_channel_num(2)
     , m_pcm_bit_width(AudPcm16Bit)
     , m_samples_per_frame(768)
@@ -120,6 +121,7 @@ private:
   AudioState<FrontendState_e> m_state;
   AsFrontendDataPath m_pcm_data_path;
   AsDataDest m_pcm_data_dest;
+  AsFrontendPreProcType m_preproc_type;
   int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
   uint32_t m_samples_per_frame;

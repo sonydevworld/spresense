@@ -948,7 +948,7 @@ typedef struct
    * Use #AsFrontendPreProc enum type
    */
 
-  uint32_t  pre_enable;
+  uint32_t  preproc_type;
   
 } AsEnablePreProc;
 

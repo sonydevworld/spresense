@@ -99,7 +99,6 @@ public:
   virtual bool exec_apu(const ExecPostprocParam& param) = 0;
   virtual bool flush_apu(const FlushPostprocParam& param) = 0;
   virtual bool set_apu(const SetPostprocParam& param) = 0;
-  virtual bool is_enable(void) = 0;
   virtual bool recv_done(PostprocCmpltParam *cmplt) = 0;
   virtual bool recv_done(void) = 0;
   virtual uint32_t activate(PostprocCallback callback,

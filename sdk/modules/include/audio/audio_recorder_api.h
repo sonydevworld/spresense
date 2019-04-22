@@ -111,9 +111,9 @@ typedef enum
 
   AsRecorderEventReqEncode,
 
-  /*! \brief Flush */
+  /*! \brief Stop */
 
-  AsRecorderEventFlush
+  AsRecorderEventStop
 
 } AsRecorderEvent;
 
@@ -464,15 +464,6 @@ bool AS_InitMediaRecorder(FAR AsInitRecorderParam *initparam);
 bool AS_ReqEncodeMediaRecorder(AsPcmDataParam *pcmparam);
 
 /**
- * @brief Flush audio recorder
- *
- * @retval     true  : success
- * @retval     false : failure
- */
-
-bool AS_FlushMediaRecorder(void);
-
-/**
  * @brief Start audio recorder
  *
  * @retval     true  : success
@@ -507,17 +498,6 @@ bool AS_DeactivateMediaRecorder(void);
  */
 
 bool AS_DeleteMediaRecorder(void);
-
-/**
- * @brief Get samples per frame utility 
- *
- * @param[in] codec_type : Codec type
- * @param[in] fs         : Sampling frequency 
- *
- * @retval     samples per frame
- */
-
-uint32_t AS_GetPcmSampleForEncode(uint8_t codec_type, uint32_t fs);
 
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H */
 /**

@@ -62,7 +62,6 @@ public:
   virtual bool exec_apu(const ExecPostprocParam& param);
   virtual bool flush_apu(const FlushPostprocParam& param);
   virtual bool set_apu(const SetPostprocParam& param);
-  virtual bool is_enable(void);
   virtual bool recv_done(PostprocCmpltParam *cmplt);
   virtual bool recv_done(void) { return freeApuCmdBuf(); }
   virtual uint32_t activate(PostprocCallback callback,

@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/audio/components/postproc/preproc_api.h
+ * modules/include/audio/utilities/frame_samples.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,41 +33,57 @@
  *
  ****************************************************************************/
 
-#ifndef _PREPROC_API_H_
-#define _PREPROC_API_H_
+#ifndef MODULES_INCLUDE_AUDIO_UTILITIES_FRAME_SAMPLES_H
+#define MODULES_INCLUDE_AUDIO_UTILITIES_FRAME_SAMPLES_H
 
-#include "postproc_api.h"
+#include "audio/audio_common_defs.h"
 
-/* Wrap of APIs */
-
-#define InitPreprocParam InitPostprocParam
-#define AS_preproc_init(a,b) AS_postproc_init(a,b)
-
-#define ExecPreprocParam ExecPostprocParam
-#define AS_preproc_exec(a,b) AS_postproc_exec(a,b)
-
-#define FlushPreprocParam FlushPostprocParam
-#define AS_preproc_flush(a,b) AS_postproc_flush(a,b)
-
-#define SetPreprocParam SetPostprocParam
-#define AS_preproc_setparam(a,b) AS_postproc_setparam(a,b)
-
-#define PreprocCmpltParam PostprocCmpltParam
-#define AS_preproc_recv_done(a, b) AS_postproc_recv_done(a, b)
-
-#define AS_preproc_activate(a,b,c,d,e,f,g,h) AS_postproc_activate(a,b,c,d,e,f,g,h)
-
-#define AS_preproc_deactivate(a) AS_postproc_deactivate(a)
+/* When MP3 encode and fs is 16kHz, 22.05kHz, 24kHz, sample num of
+ * 1au(access unit) is 1152/2 = 576 (It depend on MPEG2 compliant).
+ * Therefore, at first, value is (#1)"CapSampleNumPerFrame[m_codec_type] / 2".
+ * And sample num of captured and SRC filterd data is to be 576,
+ * return ((#1) * 48000 / m_sampling_rate(Hz)).
+ *
+ * The process below is only for fs is 48kHz, 16kHz.
+ * To correspontd to 32000Hz, 44100Hz..., need conversion process to 
+ * sample num per 1au to be 1152.
+ */
 
 
-#define PreprocCbParam PostprocCbParam
+inline uint32_t getCapSampleNumPerFrame(uint8_t codec_type, uint32_t fs)
+{
+  const uint32_t CapSampleNumPerFrame[] =
+  {
+    1152,  /* MP3 */
+    768,   /* WAV */ /* Any integer in capable */
+    1024,  /* AAC */
+    160,   /* OPUS */
+    1024,  /* AAC */
+    768,   /* LPCM */
+  };
 
-#define PreCompEventType PostCompEventType
-#define PreprocInit PostprocInit
-#define PreprocExec PostprocExec
-#define PreprocFlush PostprocFlush
-#define PreprocSet PostprocSet
+  if (codec_type > AS_CODECTYPE_LPCM)
+    {
+      return 0;
+    }
 
+  if (codec_type == AS_CODECTYPE_MP3 && fs < 32000)
+    {
+      return (CapSampleNumPerFrame[codec_type] / 2 * 48000 /
+        fs);
+    }
+  else if (codec_type == AS_CODECTYPE_OPUS)
+    {
+      /* 20ms. */
 
-#endif /* _PREPROC_API_H_ */
+      return ((fs / 50) * (48000 / fs));
+    }
+  else
+    {
+    }
+
+  return CapSampleNumPerFrame[codec_type];
+}
+
+#endif /* MODULES_INCLUDE_AUDIO_UTILITIES_FRAME_SAMPLES_H */
 

@@ -220,12 +220,6 @@ bool PostprocComponent::set_apu(const SetPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::is_enable(void)
-{
-  return true; 
-}
-
-/*--------------------------------------------------------------------*/
 void PostprocComponent::send(void *p_cmd)
 {
   DspDrvComPrm_t com_param;
@@ -334,7 +328,7 @@ bool PostprocComponent::recv_done(PostprocCmpltParam *cmplt)
 
 /*--------------------------------------------------------------------*/
 uint32_t PostprocComponent::activate(PostprocCallback callback,
-                                     const char *image_name,
+                                     const char *dsp_name,
                                      void *p_requester,
                                      uint32_t *dsp_inf)
 {
@@ -346,7 +340,7 @@ uint32_t PostprocComponent::activate(PostprocCallback callback,
   m_callback = callback;
 
   snprintf(filename, sizeof(filename), "%s/%s",
-           CONFIG_AUDIOUTILS_DSP_MOUNTPT, image_name);
+           CONFIG_AUDIOUTILS_DSP_MOUNTPT, dsp_name);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   /* Lock HV performance to avoid loading time becomes too long */

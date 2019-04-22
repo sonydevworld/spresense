@@ -995,7 +995,7 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
               capbuf.validity = true;
             }
 
-          holdCapBuf(capbuf);
+          enqueDmaReqQue(capbuf);
 
           if (!m_cap_pre_que.pop())
             {
@@ -1037,7 +1037,7 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
       capbuf.validity = true;
     }
 
-  holdCapBuf(capbuf);
+  enqueDmaReqQue(capbuf);
 
   return true;
 }
@@ -1045,14 +1045,14 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool CaptureComponent::execOnError(const CaptureComponentParam& param)
 {
-  CaptureBuffer capbuf;
+  CaptureBuffer invalid_req;
 
   /* Hold as invalid capture request. */
 
-  capbuf.sample = param.exec_param.pcm_sample;
-  capbuf.validity = false;
+  invalid_req.sample = param.exec_param.pcm_sample;
+  invalid_req.validity = false;
 
-  holdCapBuf(capbuf);
+  enqueDmaReqQue(invalid_req);
 
   return true;
 }
@@ -1164,6 +1164,29 @@ bool CaptureComponent::notify(const CaptureComponentParam& param)
                 {
                   m_state = Error;
                 }
+
+              /* If DMA ERRINT occured, following capture data
+               * will not come, so reply to all of request here.  
+               */
+
+              while (!m_req_data_que.empty())
+                {
+                  CaptureDataParam capresult;
+
+                  capresult.output_device = m_output_device;
+                  capresult.end_flag      = false;
+                  capresult.buf           = m_req_data_que.top();
+                  capresult.buf.sample    = 0;
+                  capresult.buf.validity  = false;
+
+                  m_callback(capresult);
+
+                  if (!m_req_data_que.pop())
+                    {
+                      CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+                      return false;
+                    }
+                }
             }
 
           if (E_AS_OK != AS_NotifyDmaCmplt
@@ -1205,7 +1228,7 @@ CaptureBuffer CaptureComponent::getCapBuf(uint32_t cap_sample)
 }
 
 /*--------------------------------------------------------------------*/
-bool CaptureComponent::holdCapBuf(CaptureBuffer buf)
+bool CaptureComponent::enqueDmaReqQue(CaptureBuffer buf)
 {
   if (!m_req_data_que.push(buf))
     {
