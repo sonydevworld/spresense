@@ -3,6 +3,8 @@
 Location of cited source code:
 https://pdcurses.sourceforge.io/
 
+Copyright 2019 Sony Corporation
+
 Change history:
  - Changed to incorporate into Nuttx environment.
  - Deleted the steps that I do not need.
