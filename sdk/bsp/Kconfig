@@ -73,7 +73,8 @@ config CXD56_SPH
 
 config CXD56_PMIC
 	bool
-	default y
+	default y if CXD56_MAINCORE
+	default n if CXD56_SUBCORE
 
 config CXD56_CPUFIFO
 	bool

@@ -67,9 +67,12 @@ CHIP_CSRCS += cxd56_sysctl.c
 
 # Power manager
 
-CHIP_CSRCS += cxd56_powermgr.c cxd56_pmic.c
+CHIP_CSRCS += cxd56_powermgr.c
 ifeq ($(CONFIG_CXD56_PM_PROCFS),y)
 CHIP_CSRCS += cxd56_powermgr_procfs.c
+endif
+ifeq ($(CONFIG_CXD56_PMIC),y)
+CHIP_CSRCS += cxd56_pmic.c
 endif
 
 ifeq ($(CONFIG_CXD56_HOT_SLEEP),y)
