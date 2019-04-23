@@ -59,9 +59,6 @@ function spresense_config() {
 # Public parameter definition                                              #
 ############################################################################
 
-# Set <user home>/Spresense to SPRESENSE_HOME
-export SPRESENSE_HOME=${HOME}/Spresense
-
 # Set repository root to SPRESENSE_SDK
 export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
 
