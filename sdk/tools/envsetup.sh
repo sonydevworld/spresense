@@ -53,6 +53,7 @@ function create_spresense_home()
 function spresense_config() {
 	cd ${SPRESENSE_SDK}/sdk
 	./tools/config.py $@
+	cd - &> /dev/null
 }
 
 ############################################################################
