@@ -74,6 +74,9 @@ function spresense_create_apps_root() {
 		fi
 		# Save current variable
 		_save_spresense_environment
+
+		# Print current variable
+		_print_current_spresense_environment
 	fi
 }
 
@@ -97,6 +100,18 @@ function _save_spresense_environment() {
 	# Export parameters into configuration file
 	echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
 	echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
+}
+
+# Print current variable
+function _print_current_spresense_environment() {
+	echo "======================================="
+	echo "   SDK_VERSION = `cat ${SPRESENSE_SDK}/sdk/tools/mkversion.sh | grep '^SDK_VERSION' | cut -d '\"' -f 2`"
+	echo " NUTTX_VERSION = `cat ${SPRESENSE_SDK}/sdk/tools/mkversion.sh | grep '^NUTTX_VERSION' | cut -d '\"' -f 2`"
+	echo " SPRESENSE_SDK = ${SPRESENSE_SDK}"
+	echo "SPRESENSE_HOME = ${SPRESENSE_HOME}"
+	echo "   GCC_VERSION = `arm-none-eabi-gcc --version | head -n 1`"
+	echo "          HOST = `uname -sm`"
+	echo "======================================="
 }
 
 ############################################################################
@@ -130,6 +145,9 @@ if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/Application.mk" ]; then
     echo "         Please run next command for create makefiles."
     echo "         $ spresense_create_apps_root ${SPRESENSE_HOME}"
 fi
+
+# Print current variable
+_print_current_spresense_environment
 
 #
 # TAB completion
