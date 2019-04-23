@@ -64,6 +64,13 @@ function _load_spresense_environment() {
 	export SPRESENSE_HOME
 }
 
+# Save current variable
+function _save_spresense_environment() {
+	# Export parameters into configuration file
+	echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
+	echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
+}
+
 ############################################################################
 # Public parameter definition                                              #
 ############################################################################
@@ -89,10 +96,6 @@ elif [ ! -d ${SPRESENSE_HOME} ]; then
     echo "         Please run"
     echo "         $ create_spresense_home"
 fi
-
-# Export parameters into configuration file
-echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
-echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
 
 if [ -f ${SPRESENSE_HOME}/Application.mk ]; then
     # Echo result
