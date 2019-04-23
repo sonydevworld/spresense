@@ -49,6 +49,18 @@ config CXD56_WLCSP
 
 endchoice
 
+choice
+	prompt "CXD56xx core selection"
+	default CXD56_MAINCORE
+
+config CXD56_MAINCORE
+	bool "Main Core"
+
+config CXD56_SUBCORE
+	bool "Sub Core"
+
+endchoice
+
 comment "Basic Options"
 
 config CXD56_XOSC_CLOCK
@@ -65,6 +77,7 @@ config CXD56_PMIC
 
 config CXD56_CPUFIFO
 	bool
+	default y
 
 config CXD56_ICC
 	bool
@@ -72,8 +85,8 @@ config CXD56_ICC
 
 config CXD56_FARAPI
 	bool
-	default y
-	select CXD56_CPUFIFO
+	default y if CXD56_MAINCORE
+	default n if CXD56_SUBCORE
 
 menu "Far API Configuration"
 	depends on CXD56_FARAPI
@@ -174,6 +187,7 @@ comment "Storage Options"
 
 menuconfig CXD56_SFC
 	bool "SPI Flash"
+	default n if CXD56_SUBCORE
 	default y
 
 if CXD56_SFC
@@ -259,6 +273,7 @@ endif # SPISD Configuration
 config CXD56_EMMC
 	bool "eMMC"
 	default y if BOARD_CORVO
+	default n if CXD56_SUBCORE
 
 comment "Peripheral Options"
 
