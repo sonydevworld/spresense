@@ -72,6 +72,8 @@ if __name__ == '__main__':
     parser.add_argument('desc', type=str, nargs="?", help='Menu description')
     parser.add_argument('-s', '--spresense_home', action='store_true',
                         help='using spresense home')
+    parser.add_argument('-f', '--force', action='store_true', default=False,
+                        help='verbose messages')
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help='verbose messages')
     opts = parser.parse_args()
@@ -94,8 +96,9 @@ if __name__ == '__main__':
     try:
         os.mkdir(targetdir)
     except:
-        print('%s already exists' % targetdir, file=sys.stderr)
-        sys.exit(3)
+        if not opts.force:
+            print('%s already exists' % targetdir, file=sys.stderr)
+            sys.exit(3)
 
     # Required files for extending application series to outside of sdk repos.
 
