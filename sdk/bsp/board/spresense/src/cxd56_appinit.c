@@ -223,11 +223,13 @@ int board_app_initialize(uintptr_t arg)
 
 #ifdef CONFIG_FS_PROCFS
 
-#ifdef CONFIG_FS_PROCFS_REGISTER
+#  ifdef CONFIG_FS_PROCFS_REGISTER
+#    ifdef CONFIG_USBDEV
   /* register usbdev procfs */
 
   (void)cxd56_usbdev_procfs_register();
-#endif
+#    endif
+#  endif
 
   ret = mount(NULL, "/proc", "procfs", 0, NULL);
   if (ret < 0)
