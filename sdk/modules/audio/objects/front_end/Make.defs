@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_RECORDER),y)
+ifeq ($(CONFIG_AUDIOUTILS_MFE),y)
 
 CXXSRCS += front_end_obj.cpp
 VPATH   += objects/front_end
