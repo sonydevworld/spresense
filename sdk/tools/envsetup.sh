@@ -73,28 +73,28 @@ export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
 # User application setup
 #
 
-#if [ ! -d ${SPRESENSE_HOME} ]; then
-#    echo "Warning: Spresense user application directory is not exists."
-#    echo "         Please run"
-#    echo "         $ create_spresense_home"
-#fi
+if [ ! -d ${SPRESENSE_HOME} ]; then
+    echo "Warning: Spresense user application directory is not exists."
+    echo "         Please run"
+    echo "         $ create_spresense_home"
+fi
 
 # Export parameters into configuration file
 echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
 echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
 
-#if [ -f ${SPRESENSE_HOME}/Application.mk ]; then
-#    # Echo result
-#    echo "Set user application root directory to ${SPRESENSE_HOME}."
-#    echo "You can put application directory into ${SPRESENSE_HOME}"
-#else
-#    if [ -d ${SPRESENSE_HOME} ]; then
-#        # Echo warning
-#        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
-#        echo "         Please move ${SPRESENSE_HOME} to other place and run"
-#        echo "         $ create_spresense_home"
-#    fi
-#fi
+if [ -f ${SPRESENSE_HOME}/Application.mk ]; then
+    # Echo result
+    echo "Set user application root directory to ${SPRESENSE_HOME}."
+    echo "You can put application directory into ${SPRESENSE_HOME}"
+else
+    if [ -d ${SPRESENSE_HOME} ]; then
+        # Echo warning
+        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
+        echo "         Please move ${SPRESENSE_HOME} to other place and run"
+        echo "         $ create_spresense_home"
+    fi
+fi
 
 #
 # TAB completion
