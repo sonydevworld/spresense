@@ -1,5 +1,5 @@
 ############################################################################
-# configs/Board.mk
+# bsp/scripts/Board.mk
 #
 #   Copyright (C) 2015 Gregory Nutt. All rights reserved.
 #   Copyright (C) 2015 Omni Hoverboards Inc. All rights reserved.
