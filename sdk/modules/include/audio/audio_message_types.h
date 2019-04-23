@@ -40,7 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include "memutils/message/Message.h"
+#include "memutils/message/message_type.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -105,7 +105,7 @@
 #define MSG_AUD_MGR_CMD_INITMICGAIN      (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x0c))
 #define MSG_AUD_MGR_CMD_INITI2SPARAM     (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x0d))
 #define MSG_AUD_MGR_CMD_INITDEQPARAM     (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x0e))
-#define MSG_AUD_MGR_CMD_INITOUTPUTSELECT (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x1f))
+#define MSG_AUD_MGR_CMD_INITOUTPUTSELECT (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x0f))
 #define MSG_AUD_MGR_CMD_INITDNCPARAM     (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x10))
 #define MSG_AUD_MGR_CMD_INITCLEARSTEREO  (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x11))
 #define MSG_AUD_MGR_CMD_SETVOLUME        (MSG_AUD_MNG_REQ | MSG_SET_SUBTYPE(0x12))
