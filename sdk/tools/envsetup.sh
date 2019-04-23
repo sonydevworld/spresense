@@ -56,6 +56,14 @@ function spresense_config() {
 	cd - &> /dev/null
 }
 
+# Load current variable
+function _load_spresense_environment() {
+	if [ -f ${HOME}/.spresense_env ]; then
+		source ${HOME}/.spresense_env
+	fi
+	export SPRESENSE_HOME
+}
+
 ############################################################################
 # Public parameter definition                                              #
 ############################################################################
@@ -71,8 +79,13 @@ export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
 # User application setup
 #
 
-if [ ! -d ${SPRESENSE_HOME} ]; then
-    echo "Warning: Spresense user application directory is not exists."
+# Load current variable
+_load_spresense_environment
+
+if [ "${SPRESENSE_HOME}" == "" ]; then
+	echo "Warning: Spresense user application directory is not set."
+elif [ ! -d ${SPRESENSE_HOME} ]; then
+    echo "Warning: Spresense user application directory does not exist."
     echo "         Please run"
     echo "         $ create_spresense_home"
 fi
