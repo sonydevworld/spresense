@@ -80,6 +80,39 @@ function spresense_create_apps_root() {
 	fi
 }
 
+# Select Spresense home
+function spresense_set_apps_root() {
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <application home directory>"
+	else
+		if [ "${1:0:1}" == "/" ]; then
+			_SPRESENSE_HOME=${1}
+		else
+			_SPRESENSE_HOME="`pwd`/${1}"
+			_SPRESENSE_HOME="`readlink -f ${_SPRESENSE_HOME}`"
+		fi
+		if [ -d ${_SPRESENSE_HOME} ]; then
+			if [ -f ${_SPRESENSE_HOME}/Application.mk ]; then
+				SPRESENSE_HOME=${_SPRESENSE_HOME}
+
+				# Save current variable
+				_save_spresense_environment
+			else
+				echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
+				echo "         Please run next command for create makefiles."
+				echo "         $ spresense_create_apps_root ${_SPRESENSE_HOME}"
+			fi
+		else
+			echo "Warning: ${_SPRESENSE_HOME} does not exist."
+			echo "         Please run"
+			echo "         $ spresense_create_apps_root ${_SPRESENSE_HOME}"
+		fi
+
+		# Print current variable
+		_print_current_spresense_environment
+	fi
+}
+
 # Add configuration command behalf of tools/config.py
 function spresense_config() {
 	cd ${SPRESENSE_SDK}/sdk
@@ -134,6 +167,8 @@ _load_spresense_environment
 
 if [ "${SPRESENSE_HOME}" == "" ]; then
 	echo "Warning: Spresense user application directory is not set."
+    echo "         Please run"
+    echo "         $ spresense_set_apps_root <application home directory>"
 elif [ ! -d ${SPRESENSE_HOME} ]; then
     echo "Warning: ${SPRESENSE_HOME} does not exist."
     echo "         Please run"
