@@ -102,8 +102,10 @@ private:
     m_player_transition_count(0),
     m_recorder_transition_count(0),
     m_input_en(false),
-    m_output_en(false),
-    m_preproc_type(AsFrontendPreProcThrough)
+    m_output_en(false)
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+    , m_preproc_type(AsFrontendPreProcThrough)
+#endif /* AS_FEATURE_FRONTEND_ENABLE */
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
@@ -147,7 +149,9 @@ private:
   int8_t m_recorder_transition_count;
   bool m_input_en;
   bool m_output_en;
+#ifdef AS_FEATURE_FRONTEND_ENABLE
   uint32_t m_preproc_type;
+#endif /* AS_FEATURE_FRONTEND_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   AsOutputMixDevice m_output_device;

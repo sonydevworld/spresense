@@ -374,7 +374,7 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
                        static_cast<void *>(this),
                        &dsp_inf,
                        (cmd.act_param.post_enable == PostFilterEnable)
-                         ? false : true);
+                         ? ProcTypeUserDefFilter : ProcTypeThrough);
 
   /* Reply */
 
