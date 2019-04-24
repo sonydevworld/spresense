@@ -357,7 +357,7 @@ void FrontEndObject::illegal(MsgPacket *msg)
     AsFrontendEventSetMicGain
   };
 
-  m_callback(table[idx], AS_ECODE_STATE_VIOLATION, 0);
+  reply(table[idx], msg->getType(), AS_ECODE_STATE_VIOLATION);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -376,8 +376,9 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   if (!checkAndSetMemPool())
     {
-      m_callback(AsFrontendEventAct,
-                 AS_ECODE_CHECK_MEMORY_POOL_ERROR, 0);
+      reply(AsFrontendEventAct,
+            msg->getType(),
+            AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
     }
 
@@ -385,7 +386,7 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   if (rst != AS_ECODE_OK)
     {
-      m_callback(AsFrontendEventAct, rst, 0);
+      reply(AsFrontendEventAct, msg->getType(), rst);
       return;
     }
 
@@ -412,7 +413,7 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   /* Reply */
 
-  m_callback(AsFrontendEventAct, AS_ECODE_OK, 0);
+  reply(AsFrontendEventAct, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -424,8 +425,9 @@ void FrontEndObject::deactivate(MsgPacket *msg)
 
   if (!delInputDeviceHdlr())
     {
-      m_callback(AsFrontendEventDeact,
-                 AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR, 0);
+      reply(AsFrontendEventDeact,
+            msg->getType(),
+            AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR);
       return;
     }
 
@@ -439,7 +441,7 @@ void FrontEndObject::deactivate(MsgPacket *msg)
 
   /* Reply */
 
-  m_callback(AsFrontendEventDeact, AS_ECODE_OK, 0);
+  reply(AsFrontendEventDeact, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -458,7 +460,7 @@ void FrontEndObject::init(MsgPacket *msg)
   rst = initParamCheck(cmd);
   if (rst != AS_ECODE_OK)
     {
-      m_callback(AsFrontendEventInit, rst, 0);
+      reply(AsFrontendEventInit, msg->getType(), rst);
       return;
     }
 
@@ -478,13 +480,13 @@ void FrontEndObject::init(MsgPacket *msg)
 
   if (!delInputDeviceHdlr())
     {
-      m_callback(AsFrontendEventInit, AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR, 0);
+      reply(AsFrontendEventInit, msg->getType(), AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR);
       return;
     }
 
   if (!getInputDeviceHdlr())
     {
-      m_callback(AsFrontendEventInit, AS_ECODE_SET_AUDIO_DATA_PATH_ERROR, 0);
+      reply(AsFrontendEventInit, msg->getType(), AS_ECODE_SET_AUDIO_DATA_PATH_ERROR);
       return;
     }
 
@@ -501,13 +503,13 @@ void FrontEndObject::init(MsgPacket *msg)
 
   if (!AS_init_capture(&cap_comp_param))
     {
-      m_callback(AsFrontendEventStart, AS_ECODE_DMAC_INITIALIZE_ERROR, 0);
+      reply(AsFrontendEventStart, msg->getType(), AS_ECODE_DMAC_INITIALIZE_ERROR);
       return;
     }
 
   /* Reply */
 
-  m_callback(AsFrontendEventInit, AS_ECODE_OK, 0);
+  reply(AsFrontendEventInit, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -521,7 +523,7 @@ void FrontEndObject::startOnReady(MsgPacket *msg)
 
   if (!startCapture())
     {
-      m_callback(AsFrontendEventStart, AS_ECODE_DMAC_READ_ERROR, 0);
+      reply(AsFrontendEventStart, msg->getType(), AS_ECODE_DMAC_READ_ERROR);
       return;
     }
 
@@ -531,7 +533,7 @@ void FrontEndObject::startOnReady(MsgPacket *msg)
 
   /* Reply*/
 
-  m_callback(AsFrontendEventStart, AS_ECODE_OK, 0);
+  reply(AsFrontendEventStart, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -543,7 +545,7 @@ void FrontEndObject::stopOnActive(MsgPacket *msg)
 
   if (!setExternalCmd(AsFrontendEventStop))
     {
-      m_callback(AsFrontendEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+      reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -574,7 +576,7 @@ void FrontEndObject::stopOnErrorStop(MsgPacket *msg)
 
    if (!setExternalCmd(AsFrontendEventStop))
      {
-       m_callback(AsFrontendEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+       reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
        return;
      }
 }
@@ -592,7 +594,7 @@ void FrontEndObject::stopOnWait(MsgPacket *msg)
        * reply and transit to Ready state.
        */
 
-      m_callback(AsFrontendEventStop, AS_ECODE_OK, 0);
+      reply(AsFrontendEventStop, msg->getType(), AS_ECODE_OK);
 
       m_state = FrontendStateReady;
     }
@@ -602,7 +604,7 @@ void FrontEndObject::stopOnWait(MsgPacket *msg)
 
       if (!setExternalCmd(AsFrontendEventStop))
         {
-          m_callback(AsFrontendEventStop, AS_ECODE_QUEUE_OPERATION_ERROR, 0);
+          reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
           return;
         }
     }
@@ -631,7 +633,7 @@ void FrontEndObject::initPreproc(MsgPacket *msg)
 
   /* Reply */
 
-  m_callback(AsFrontendEventInitPreProc, send_result, 0);
+  reply(AsFrontendEventInitPreProc, msg->getType(), send_result);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -654,8 +656,9 @@ void FrontEndObject::setPreproc(MsgPacket *msg)
 
   /* Reply (Don't wait reply from DSP because it will take long time) */
 
-  m_callback(AsFrontendEventSetPreProc,
-             (send_result) ? AS_ECODE_OK : AS_ECODE_DSP_SET_ERROR, 0);
+  reply(AsFrontendEventSetPreProc,
+        msg->getType(),
+        (send_result) ? AS_ECODE_OK : AS_ECODE_DSP_SET_ERROR);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -686,10 +689,10 @@ void FrontEndObject::setMicGain(MsgPacket *msg)
 
   if (!AS_set_micgain_capture(&cap_comp_param))
     {
-      m_callback(AsFrontendEventSetMicGain, AS_ECODE_SET_MIC_GAIN_ERROR, 0);
+      reply(AsFrontendEventSetMicGain, msg->getType(), AS_ECODE_SET_MIC_GAIN_ERROR);
     }
 
-  m_callback(AsFrontendEventSetMicGain, AS_ECODE_OK, 0);
+  reply(AsFrontendEventSetMicGain, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -807,7 +810,7 @@ void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
                 {
                   AsFrontendEvent ext_cmd = getExternalCmd();
 
-                  m_callback(ext_cmd, AS_ECODE_OK, 0);
+                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
                   m_state = FrontendStateReady;
                 }
@@ -879,7 +882,7 @@ void FrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsFrontendEvent ext_cmd = getExternalCmd();
-          m_callback(ext_cmd, AS_ECODE_OK, 0);
+          reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
           m_state = FrontendStateReady;
         }
@@ -980,7 +983,7 @@ void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
               /* Reply */
 
               AsFrontendEvent ext_cmd = getExternalCmd();
-              m_callback(ext_cmd, AS_ECODE_OK, 0);
+              reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
               /* Transit to Ready */
 
@@ -1035,7 +1038,7 @@ void FrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsFrontendEvent ext_cmd = getExternalCmd();
-                  m_callback(ext_cmd, AS_ECODE_OK, 0);
+                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
                   m_state = FrontendStateReady;
                 }
@@ -1070,7 +1073,7 @@ void FrontEndObject::captureDoneOnWaitStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsFrontendEvent ext_cmd = getExternalCmd();
-          m_callback(ext_cmd, AS_ECODE_OK, 0);
+          reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
           m_state = FrontendStateReady;
         }
@@ -1157,7 +1160,7 @@ void FrontEndObject::captureErrorOnStop(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsFrontendEvent ext_cmd = getExternalCmd();
-                  m_callback(ext_cmd, AS_ECODE_OK, 0);
+                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
                   m_state = FrontendStateReady;
                 }
