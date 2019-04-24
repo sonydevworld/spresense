@@ -209,11 +209,11 @@ int board_app_initialize(uintptr_t arg)
     }
 #endif
 
+#ifndef CONFIG_CXD56_SUBCORE
   /* Initialize CPU clock to max frequency */
 
   board_clock_initialize();
 
-#ifndef CONFIG_CXD56_SUBCORE
   /* Setup the power of external device */
 
   board_power_setup(0);
