@@ -177,13 +177,13 @@ class DevEntry(BaseEntry):
         super().__init__(name, addr, size)
         self.ram = ram
         if verify_name(name) is None:
-            print("Bad device name found. name={0}".format(name))
+            sys.stderr.write("Bad device name found. name={0}".format(name))
             sys.exit()
         if (addr % MinAlign) != 0:  # 0 is valid
-            print("Bad device addr found at {0}".format(name))
+            sys.stderr.write("Bad device addr found at {0}".format(name))
             sys.exit()
         if (size % MinAlign) != 0 or size == 0:
-            print("Bad device size found at {0}".format(name))
+            sys.stderr.write("Bad device size found at {0}".format(name))
             sys.exit()
 
 
@@ -194,17 +194,17 @@ class MemoryDevices:
             if arg:
                 self.check_and_set_arg(*arg)
                 if len(self.devs) == 0:
-                    print("Memory device not specified.")
+                    sys.stderr.write("Memory device not specified.")
                     sys.exit()
 
     def check_and_set_arg(self, *arg):
         new_dev = DevEntry(*arg)
         for dev in self.devs:
             if dev.name == new_dev.name:
-                print("Duplication name found from MemoryDevices. name={0}".format(dev.name))
+                sys.stderr.write("Duplication name found from MemoryDevices. name={0}".format(dev.name))
                 sys.exit()
             if not dev.conflict(new_dev):
-                print("Conflict found, between {0} and {1}.".format(dev.name, new_dev.name))
+                sys.stderr.write("Conflict found, between {0} and {1}.".format(dev.name, new_dev.name))
                 sys.exit()
         self.devs.append(new_dev)
 
@@ -232,37 +232,37 @@ class AreaEntry(BaseEntry):
         self.fence_flag = fence
     
         if verify_name(name, "_AREA") is None:
-            print("Bad area name found. name={0}".format(name))
+            sys.stderr.write("Bad area name found. name={0}".format(name))
             sys.exit()
         if MemoryDevices.at(name):
-            print("Redefine name found. name={0}".format(name))
+            sys.stderr.write("Redefine name found. name={0}".format(name))
             sys.exit()
         if self.dev_entry is None:
-            print("Device not found at {0}".format(name))
+            sys.stderr.write("Device not found at {0}".format(name))
             sys.exit()
         if (align % MinAlign) != 0 or align == 0:
-            print("Bad area align found at {0}".format(name))
+            sys.stderr.write("Bad area align found at {0}".format(name))
             sys.exit()
         if align >= self.dev_entry.last_addr:
-            print("Too big area align at {0}".format(name))
+            sys.stderr.write("Too big area align at {0}".format(name))
             sys.exit()
         if size != RemainderSize:
             if (size % MinAlign) != 0 or size == 0:
-                print("Bad area size found at {0}".format(name))
+                sys.stderr.write("Bad area size found at {0}".format(name))
                 sys.exit()
             if size > self.dev_entry.remainder():
-                print("Too big area size at {0}. remainder={1:08x}".format(name, self.dev_entry.remainder())) 
+                sys.stderr.write("Too big area size at {0}. remainder={1:08x}".format(name, self.dev_entry.remainder())) 
                 sys.exit()
     
         if not UseFence:
             fence_flag = False
             if fence_flag and not self.dev_entry.ram:
-                print("Bad area fence found at {0}".format(name))
+                sys.stderr.write("Bad area fence found at {0}".format(name))
                 sys.exit()
 
         addr, skip_size, size = self.dev_entry.alloc(self.fence_flag, align, size)
         if addr is None:
-            print("Can't allocate area at {0}".format(name))
+            sys.stderr.write("Can't allocate area at {0}".format(name))
             sys.exit()
 
         # set base class
@@ -276,14 +276,14 @@ class FixedAreas:
             if arg:
                 self.check_and_set_arg(*arg)
                 if len(self.areas) == 0:
-                    print("Fixed area not specified.")
+                    sys.stderr.write("Fixed area not specified.")
                     sys.exit()
 
     def check_and_set_arg(self, *arg):
         new_area = AreaEntry(*arg)
         for area in self.areas:
             if area.name == new_area.name:
-                print("Duplication name found from FixedAreas. name={0}".format(area.name))
+                sys.stderr.write("Duplication name found from FixedAreas. name={0}".format(area.name))
                 sys.exit()
         self.areas.append(new_area)
 
@@ -347,38 +347,38 @@ class PoolEntry(BaseEntry):
         spinlock        = spinlock
 
         if not verify_name(name, "_POOL"):
-            print("Bad pool name found. name={0}".format(name))
+            sys.stderr.write("Bad pool name found. name={0}".format(name))
             sys.exit()
         if not self.area_entry:
-            print("Area not found at {0}".format(name))
+            sys.stderr.write("Area not found at {0}".format(name))
             sys.exit()
         if not self.area_entry.dev_entry.ram:
-            print("Not RAM area found at {0}".format(name))
+            sys.stderr.write("Not RAM area found at {0}".format(name))
             sys.exit()
         if MemoryDevices.at[name]:
-            print("Redefine name found at {0}".format(name))
+            sys.stderr.write("Redefine name found at {0}".format(name))
             sys.exit()
         if type != Basic and type != RingBuf:
-            print("Bad pool type found at {0}".format(name))
+            sys.stderr.write("Bad pool type found at {0}".format(name))
             sys.exit()
         if type == RingBuf and not UseRingBufPool:
-            print("Don't use RingBuf type at {0}".format(name))
+            sys.stderr.write("Don't use RingBuf type at {0}".format(name))
             sys.exit()
         if (align % MinAlign) != 0 or align == 0:
-            print("Bad pool align found at {0}".format(name))
+            sys.stderr.write("Bad pool align found at {0}".format(name))
             sys.exit()
         if align >= self.area_entry.last_addr:
-            print("Too big pool align at {0}".format(name))
+            sys.stderr.write("Too big pool align at {0}".format(name))
             sys.exit()
         if size != RemainderSize:
             if (size % MinAlign) != 0 or size == 0:
-                print("Bad pool size found at {0}".format(name))
+                sys.stderr.write("Bad pool size found at {0}".format(name))
                 sys.exit()
             if size > self.area_entry.remainder:
-                print("Too big pool size at {0}. remainder={1:08x}".format(name, self.area_entry.remainder()))
+                sys.stderr.write("Too big pool size at {0}. remainder={1:08x}".format(name, self.area_entry.remainder()))
                 sys.exit()
         if seg <= 0 or seg > MaxSegs or (size != RemainderSize and size < seg):
-            print("Bad pool seg found at {0}".format(name))
+            sys.stderr.write("Bad pool seg found at {0}".format(name))
             sys.exit()
         if not UseFence:
             fence_flag = false
@@ -387,7 +387,7 @@ class PoolEntry(BaseEntry):
 
         addr, skip_size, size = self.area_entry.alloc(fence_flag, align, size)
         if addr is None:
-            print("Can't allocate pool at {0}".format(name))
+            sys.stderr.write("Can't allocate pool at {0}".format(name))
             sys.exit()
 
         # set base class
@@ -405,39 +405,39 @@ class PoolEntryFixParam(BaseEntry):
         spinlock        = "SPL_NULL"
 
         if not verify_name(name, "_POOL"):
-            print("Bad pool name found. name={0}".format(name))
+            sys.stderr.write("Bad pool name found. name={0}".format(name))
             sys.exit()
         if not self.area_entry:
-            print("Area not found at {0}".format(name))
+            sys.stderr.write("Area not found at {0}".format(name))
             sys.exit()
         if not self.area_entry.dev_entry.ram:         
-            print("Not RAM area found at {0}".format(name))
+            sys.stderr.write("Not RAM area found at {0}".format(name))
             sys.exit()
         if MemoryDevices.at(name):
-            print("Redefine name found at {0}".format(name))
+            sys.stderr.write("Redefine name found at {0}".format(name))
             sys.exit()
         if (align % MinAlign) != 0 or align == 0:
-            print("Bad pool align found at {0}".format(name))
+            sys.stderr.write("Bad pool align found at {0}".format(name))
             sys.exit()
         if align >= self.area_entry.last_addr:
-            print("Too big pool align at {0}".format(name))
+            sys.stderr.write("Too big pool align at {0}".format(name))
             sys.exit()
         if size != RemainderSize:
             if (size % MinAlign) != 0 or size == 0:
-                print("Bad pool size found at {0}".format(name))
+                sys.stderr.write("Bad pool size found at {0}".format(name))
                 sys.exit()
             if size > self.area_entry.remainder():
-                print("Too big pool size at {0}. remainder={1:08x}".format(name, self.area_entry.remainder))
+                sys.stderr.write("Too big pool size at {0}. remainder={1:08x}".format(name, self.area_entry.remainder))
                 sys.exit()
         if seg <= 0 or seg > MaxSegs or (size != RemainderSize and size < seg):
-            print("Bad pool seg found at {0}".format(name))
+            sys.stderr.write("Bad pool seg found at {0}".format(name))
             sys.exit()
         if not UseFence:
             self.fence_flag = false
 
         addr, self.skip_size, size = self.area_entry.alloc(self.fence_flag, align, size)
         if addr is None:
-            print("Can't allocate pool at {0}".format(name))
+            sys.stderr.write("Can't allocate pool at {0}".format(name))
             sys.exit()
 
         # set base class
@@ -478,7 +478,7 @@ class PoolLayout:
             new_pool = PoolEntry(*arg)
         for pool in self.pools:
             if pool.name == new_pool.name:
-                print("Duplication name found from PoolLayout. name={0}".format(pool.name))
+                sys.stderr.write("Duplication name found from PoolLayout. name={0}".format(pool.name))
                 sys.exit()
         self.pools.append(new_pool)
 
@@ -508,13 +508,13 @@ class PoolAreas:
             if arg is not None:
                 self.layouts.append(PoolLayout(*arg))
         if len(self.layouts) == 0:
-            print("Pool layout not specified.")
+            sys.stderr.write("Pool layout not specified.")
             sys.exit()
 
         max_pool_id = MaxPoolId
         if UseDynamicPool:
             if NumDynamicPools <= 0 or NumDynamicPools > MaxPoolId:
-                print("Bad NumDynamicPools value.") 
+                sys.stderr.write("Bad NumDynamicPools value.") 
                 sys.exit()
             max_pool_id -= NumDynamicPools
 
@@ -529,7 +529,7 @@ class PoolAreas:
                 self.pool_ids.append(id)
 
         if len(self.pool_ids) - 1 > max_pool_id:
-            print("Too many pool IDs.")
+            sys.stderr.write("Too many pool IDs.")
             sys.exit()
 
     def max_work_size(self):
