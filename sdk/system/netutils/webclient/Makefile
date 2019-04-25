@@ -44,7 +44,7 @@ CSRCS		=
 
 ifeq ($(CONFIG_NET_TCP),y)
 CSRCS		= webclient.c
-ifeq ($(findstring y, $(CONFIG_EXTERNALS_MBEDTLS), $(CONFIG_LTE_NET_MBEDTLS)), y)
+ifeq ($(findstring y,$(CONFIG_EXTERNALS_MBEDTLS),$(CONFIG_LTE_NET_MBEDTLS)),y)
 CSRCS           += tls_socket.c tls_rootca_certs.c
 endif
 endif
