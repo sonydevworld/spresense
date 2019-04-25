@@ -38,6 +38,10 @@ CURRENT_DIR=`pwd`
 SCRIPT_NAME=`readlink -e "${BASH_SOURCE[0]}"`
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
+############################################################################
+# Public function                                                          #
+############################################################################
+
 # Create Spresense home environmet with mkapp
 function create_spresense_home()
 {
@@ -45,36 +49,55 @@ function create_spresense_home()
     ${SCRIPT_DIR}/mkappsdir.py -s ${SPRESENSE_HOME} "User application"
 }
 
+# Add configuration command behalf of tools/config.py
+function spresense_config() {
+	cd ${SPRESENSE_SDK}/sdk
+	./tools/config.py $@
+}
+
+############################################################################
+# Public parameter definition                                              #
+############################################################################
+
 # Set <user home>/Spresense to SPRESENSE_HOME
-SPRESENSE_HOME=${HOME}/Spresense
+export SPRESENSE_HOME=${HOME}/Spresense
 
 # Set repository root to SPRESENSE_SDK
-SPRESENSE_SDK=${SCRIPT_DIR}
+export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
 
-if [ ! -d ${SPRESENSE_HOME} ]; then
-    echo "Warning: Spresense user application directory is not exists."
-    echo "         Please run"
-    echo "         $ create_spresense_home"
-fi
+############################################################################
+# Environment setup                                                        #
+############################################################################
 
-# Export parameters
-export SPRESENSE_HOME
-export SPRESENSE_SDK
+#
+# User application setup
+#
+
+#if [ ! -d ${SPRESENSE_HOME} ]; then
+#    echo "Warning: Spresense user application directory is not exists."
+#    echo "         Please run"
+#    echo "         $ create_spresense_home"
+#fi
 
 # Export parameters into configuration file
 echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
 echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
 
-if [ -f ${SPRESENSE_HOME}/Application.mk ]; then
-    # Echo result
-    echo "Set user application root directory to ${SPRESENSE_HOME}."
-    echo "You can put application directory into ${SPRESENSE_HOME}"
-else
-    if [ -d ${SPRESENSE_HOME} ]; then
-        # Echo warning
-        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
-        echo "         Please move ${SPRESENSE_HOME} to other place and run"
-        echo "         $ create_spresense_home"
-    fi
-fi
+#if [ -f ${SPRESENSE_HOME}/Application.mk ]; then
+#    # Echo result
+#    echo "Set user application root directory to ${SPRESENSE_HOME}."
+#    echo "You can put application directory into ${SPRESENSE_HOME}"
+#else
+#    if [ -d ${SPRESENSE_HOME} ]; then
+#        # Echo warning
+#        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
+#        echo "         Please move ${SPRESENSE_HOME} to other place and run"
+#        echo "         $ create_spresense_home"
+#    fi
+#fi
 
+#
+# TAB completion
+#
+
+source ${SCRIPT_DIR}/completion.sh

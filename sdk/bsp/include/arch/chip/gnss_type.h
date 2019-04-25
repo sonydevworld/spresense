@@ -1,7 +1,7 @@
 /****************************************************************************
  * bsp/include/arch/chip/gnss_type.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -189,7 +189,7 @@ extern "C" {
 /* @} */
 
 /**
- * @name Carrier phase max satellite number 
+ * @name Carrier phase max satellite number
  */
 /* @{ */
 
@@ -211,6 +211,16 @@ extern "C" {
 
 /* @} */
 /** @endcond SPZ_INT_API */
+
+/*
+ * @name DC Report data size
+ */
+/* @{ */
+
+#define CXD56_GNSS_QSM_MSG_BIT_NUM      250
+#define CXD56_GNSS_QSM_NUM_BITS_IN_BYTE 8
+
+/* @} */
 
 /*
  * @name AGPS Measurement tracking data
@@ -354,7 +364,7 @@ struct cxd56_gnss_receiver_s
   uint8_t numsv_calcvel;  /**< [out] Number of satellites
                               to calculate the velocity */
   uint8_t assist;         /**< [out] bit field [7..5]Reserved [4]AEP Velocity
-                               [3]AEP Position [2]CEP Velocity 
+                               [3]AEP Position [2]CEP Velocity
                                [1]CEP Position, [0]user set */
   uint8_t  pos_dataexist; /**< [out] 0:none, 1:exist */
   uint16_t svtype;        /**< [out] Using sv system, bit field;
@@ -426,6 +436,17 @@ struct cxd56_gnss_positiondata_s
   uint32_t                 svcount;       /**< [out] Sv data count */
   struct cxd56_gnss_receiver_s receiver;      /**< [out] Receiver data */
   struct cxd56_gnss_sv_s   sv[CXD56_GNSS_MAX_SV_NUM]; /**< [out] Sv data array */
+};
+
+/**
+ * QZSS DC report data
+ */
+
+struct cxd56_gnss_dcreport_data_s
+{
+  uint8_t sf[CXD56_GNSS_QSM_MSG_BIT_NUM /
+              CXD56_GNSS_QSM_NUM_BITS_IN_BYTE + 1]; /**< [out] Message body */
+  uint8_t svid;                           /* [out] Satellite id */
 };
 
 /* @} */

@@ -205,7 +205,17 @@ static int sph_lock(FAR struct sph_dev_s *priv)
             {
               sph_semtake(&priv->wait);
             }
-          return OK;
+
+          /* Get latest status for determining locked owner. */
+
+          sts = getreg32(CXD56_SPH_STS(priv->id));
+        }
+
+      /* Confirm locked CPU is me. */
+
+      if (sph_state_locked(sts) && LOCK_OWNER(sts) == g_cpuid)
+        {
+          break;
         }
     }
 

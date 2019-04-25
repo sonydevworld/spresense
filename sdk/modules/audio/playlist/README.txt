@@ -19,22 +19,21 @@ _/_/ Usage
     ch-num        : 1 or 2.
     bit-length    : 16 or 24.
     sampling-rate : 8000, 16000, 24000, 32000, 44100, 48000, 64000, 88200, 96000 or 192000, 0(Auto detect for mp3) 
-    flag          : Don't care.
     ----------------------
 
     For example,
 
     <MyPlaylistFile.csv>
 
-    track-001.mp3,Anyone,1stAlbum,2,16,44100,mp3,0
-    track-002.mp3,Anyone,1stAlbum,2,16,44100,mp3,0
-    track-003.mp3,Anyone,1stAlbum,2,16,44100,mp3,0
-    music-001.wav,EveryOne,LastAlbum,2,16,48000,wav,0
-    music-002.wav,EveryOne,LastAlbum,2,16,48000,wav,0
-    music-003.wav,EveryOne,LastAlbum,2,16,48000,wav,0
-    mydir/sound-001.wav,EveryOne,LastAlbum,2,16,48000,wav,0
-    mydir/sound-002.wav,EveryOne,LastAlbum,2,16,48000,wav,0
-    mydir/sound-003.wav,EveryOne,LastAlbum,2,16,48000,wav,0
+    track-001.mp3,Anyone,1stAlbum,2,16,44100,mp3
+    track-002.mp3,Anyone,1stAlbum,2,16,44100,mp3
+    track-003.mp3,Anyone,1stAlbum,2,16,44100,mp3
+    music-001.wav,EveryOne,LastAlbum,2,16,48000,wav
+    music-002.wav,EveryOne,LastAlbum,2,16,48000,wav
+    music-003.wav,EveryOne,LastAlbum,2,16,48000,wav
+    mydir/sound-001.wav,EveryOne,LastAlbum,2,16,48000,wav
+    mydir/sound-002.wav,EveryOne,LastAlbum,2,16,48000,wav
+    mydir/sound-003.wav,EveryOne,LastAlbum,2,16,48000,wav
 
 (2) Put "Playlist-file" in any path.
 

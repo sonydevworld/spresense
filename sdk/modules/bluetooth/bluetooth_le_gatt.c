@@ -494,7 +494,7 @@ int ble_characteristic_notify(struct ble_gatt_char_s *charc, uint8_t *data, int 
 
   value = &charc->value;
 
-  if (BLE_MAX_CHAR_SIZE <= len)
+  if (BLE_MAX_CHAR_SIZE < len)
     {
       _err("%s [BLE][GATT] BLE notify failed(value size is too big).\n", __func__);
       return BT_FAIL;

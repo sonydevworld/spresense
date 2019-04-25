@@ -166,6 +166,7 @@ private:
   void player(AudioCommand &cmd);
   void outputmixer(AudioCommand &cmd);
   void recorder(AudioCommand &cmd);
+  void setMicMap(AudioCommand &cmd);
   void setMicGain(AudioCommand &cmd);
   void initI2SParam(AudioCommand &cmd);
   void setI2SParam(AudioCommand &cmd);

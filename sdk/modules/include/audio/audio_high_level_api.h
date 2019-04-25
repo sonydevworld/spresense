@@ -140,6 +140,10 @@
 
 #define LENGTH_SET_POWEROFF_STATUS  2
 
+/*! \brief SetMicMap command (#AUDCMD_SETMICMAP) packet length */
+
+#define LENGTH_SETMICMAP            4
+
 /*! \brief InitMicGain command (#AUDCMD_INITMICGAIN) packet length */
 
 #define LENGTH_INITMICGAIN          5
@@ -461,6 +465,10 @@
 
 #define AS_ECODE_SET_SPDRVMODE_ERROR             0x3C
 
+/*! \brief Set Mic Map Error */
+
+#define AS_ECODE_SET_MICMAP_ERROR                0x3D
+
 /** @} */
 
 /****************************************************************************
@@ -508,6 +516,35 @@ typedef struct
 
   uint8_t packet_length;
 } AudioResultHeader;
+
+/** SetMicMap Command (#AUDCMD_SETMICMAP) parameter */
+
+typedef struct
+{
+  /*! \brief [in] Set Mic mapping
+   *
+   *   mic_map[ch(0 <= ch < AS_MIC_CHANNEL_MAX] correspond to
+   *   each channels, and you can map analog and digital Mics.
+   *
+   *   0x1 : Analog Mic 1
+   *   0x2 : Analog Mic 2 
+   *   0x3 : Analog Mic 3
+   *   0x4 : Analog Mic 4
+   *   0x5 : Digital Mic 1
+   *   0x6 : Digital Mic 2
+   *   0x7 : Digital Mic 3
+   *   0x8 : Digital Mic 4
+   *   0x9 : Digital Mic 5
+   *   0xA : Digital Mic 6
+   *   0xB : Digital Mic 7
+   *   0xC : Digital Mic 8
+   *   other : No assing
+   *
+   */
+
+  uint8_t mic_map[AS_MIC_CHANNEL_MAX]; 
+
+} SetMicMapParam;
 
 /** InitMicGain Command (#AUDCMD_INITMICGAIN) parameter */
 
@@ -991,6 +1028,12 @@ typedef struct
 
     StartVoiceCommandParam start_voice_command_param;
 #endif
+
+    /*! \brief [in] for SetMicMap
+     * (header.command_code==#AUDCMD_SETMICMAP)
+     */
+
+    SetMicMapParam set_mic_map_param;
 
     /*! \brief [in] for InitMicGain
      * (header.command_code==#AUDCMD_INITMICGAIN)

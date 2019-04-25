@@ -60,6 +60,7 @@ struct cxd56_audio_cfg_s
   uint8_t mic_num;
   uint8_t mic_dev;
   uint8_t mic_mode;
+  uint32_t mic_map;
   cxd56_audio_clkmode_t clk_mode;
   cxd56_audio_sp_drv_t  sp_driver;
 };
@@ -68,6 +69,7 @@ static struct cxd56_audio_cfg_s g_audio_cfg =
   1,
   CXD56_AUDIO_CFG_MIC_DEV_ANADIG,
   CXD56_AUDIO_CFG_MIC_MODE_64FS,
+  CXD56_AUDIO_CFG_MIC,
   CXD56_AUDIO_CLKMODE_NORMAL,
   CXD56_AUDIO_CFG_SP_DRIVER
 };
@@ -89,7 +91,7 @@ static void set_miccfg(void)
 
   for (uint8_t i = 0; i < CXD56_AUDIO_MIC_CH_MAX; i++)
     {
-      mic_sel = (CXD56_AUDIO_CFG_MIC >> (i * MIC_CH_BITNUM)) &
+      mic_sel = (g_audio_cfg.mic_map >> (i * MIC_CH_BITNUM)) &
                 MIC_CH_BITMAP;
       if ((mic_sel >= 1) && (mic_sel <= 4))
         {
@@ -189,3 +191,16 @@ cxd56_audio_clkmode_t cxd56_audio_config_get_clkmode(void)
 {
   return g_audio_cfg.clk_mode;
 }
+
+/*--------------------------------------------------------------------------*/
+void cxd56_audio_config_set_micmap(uint32_t map)
+{
+  g_audio_cfg.mic_map = map;
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t cxd56_audio_config_get_micmap(void)
+{
+  return g_audio_cfg.mic_map;
+}
+
