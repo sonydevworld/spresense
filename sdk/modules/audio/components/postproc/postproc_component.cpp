@@ -261,7 +261,7 @@ bool PostprocComponent::recv_apu(void *p_response)
 
   if (PostprocCommand::ExecOk != packet->result.result_code)
     {
-      POSTPROC_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
+      POSTPROC_WARN(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
 
   if (PostprocCommand::Init == packet->header.cmd_type)

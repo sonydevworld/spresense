@@ -6,9 +6,8 @@
 config EXAMPLES_GNSS_ATCMD
 	bool "GNSS CXD5603 @command emulator example"
 	default n
-  select LIBC_FLOATINGPOINT
-  #depends on CXD56_GNSS && CDCACM
-  depends on CXD56_GNSS
+	select LIBC_FLOATINGPOINT
+	depends on CXD56_GNSS
 	---help---
 		Enable GNSS CXD5603 @command emulator example
 
@@ -43,9 +42,13 @@ config EXAMPLES_GNSS_ATCMD_TTYS2
 
 endchoice
 
+config EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
+	bool "Example supports QZ DC report output"
+	default y
+
 config EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM
-  bool "Example supports spectrum output"
-  default y
+	bool "Example supports spectrum output"
+	default y
 
 config EXAMPLES_GNSS_ATCMD_PRIORITY
 	int "GNSS task priority"

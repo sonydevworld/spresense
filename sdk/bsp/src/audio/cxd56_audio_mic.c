@@ -80,6 +80,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_enable(FAR cxd56_audio_mic_gain_t *gain)
   uint8_t cic_num;
   uint8_t mic_sel;
   uint8_t mic_mode;
+  uint8_t mic_map;
   cxd56_audio_mic_gain_t cic_gain;
   cxd56_audio_clkmode_t clk_mode;
 
@@ -97,9 +98,11 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_enable(FAR cxd56_audio_mic_gain_t *gain)
 
   /* Set cic gain. */
 
+  mic_map = cxd56_audio_config_get_micmap();
+
   for (uint8_t i = 0; i < CXD56_AUDIO_MIC_CH_MAX; i++)
     {
-      mic_sel = (CXD56_AUDIO_CFG_MIC >> (i * MIC_CH_BITNUM)) &
+      mic_sel = (mic_map >> (i * MIC_CH_BITNUM)) &
                 MIC_CH_BITMAP;
       if ((mic_sel >= 1) && (mic_sel <= 4))
         {
@@ -151,6 +154,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_set_gain(FAR cxd56_audio_mic_gain_t *gain)
   uint8_t mic_num;
   uint8_t cic_num;
   uint8_t mic_sel;
+  uint8_t mic_map;
   cxd56_audio_mic_gain_t cic_gain;
 
   /* Get mic number. */
@@ -163,9 +167,11 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_set_gain(FAR cxd56_audio_mic_gain_t *gain)
 
   /* Set cic gain. */
 
+  mic_map = cxd56_audio_config_get_micmap();
+
   for (uint8_t i = 0; i < CXD56_AUDIO_MIC_CH_MAX; i++)
     {
-      mic_sel = (CXD56_AUDIO_CFG_MIC >> (i * MIC_CH_BITNUM)) &
+      mic_sel = (mic_map >> (i * MIC_CH_BITNUM)) &
                 MIC_CH_BITMAP;
       if ((mic_sel >= 1) && (mic_sel <= 4))
         {

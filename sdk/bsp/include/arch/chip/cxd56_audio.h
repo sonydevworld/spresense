@@ -963,6 +963,24 @@ CXD56_AUDIO_ECODE cxd56_audio_set_spdriver(cxd56_audio_sp_drv_t sp_driver);
  */
 cxd56_audio_sp_drv_t cxd56_audio_get_spdriver(void);
 
+/**
+ * @brief Set Mic mapping 
+ *
+ * @param[in] map  mic mapping
+ *
+ * @retval CXD56_AUDIO_ECODE return code
+ */
+
+CXD56_AUDIO_ECODE cxd56_audio_set_micmap(uint32_t map);
+
+/**
+ * @brief Get Mic mapping 
+ *
+ * @retval mic mapping 
+ */
+
+uint32_t cxd56_audio_get_micmap(void);
+
 #ifdef __cplusplus
 } /* end of extern "C" */
 #endif /* __cplusplus */

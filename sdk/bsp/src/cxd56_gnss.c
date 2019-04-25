@@ -1,7 +1,7 @@
 /****************************************************************************
  * bsp/src/cxd56_gnss.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -2344,6 +2344,11 @@ static int8_t cxd56_gnss_select_notifytype(off_t fpos, FAR uint32_t *offset)
       type = CXD56_CPU1_DATA_TYPE_SBAS;
       *offset = 0;
     }
+  else if (fpos == CXD56_GNSS_READ_OFFSET_DCREPORT)
+    {
+      type = CXD56_CPU1_DATA_TYPE_DCREPORT;
+      *offset = 0;
+    }
   else
     {
       type = -1;
@@ -2590,7 +2595,7 @@ _success:
  *
  * Returned Value:
  *   Always returns -ENOENT error.
- * 
+ *
  *****************************************************************************/
 
 static ssize_t cxd56_gnss_write(FAR struct file *filep,
@@ -2785,6 +2790,10 @@ static int cxd56_gnss_register(FAR const char *devpath)
     },
     {
       CXD56_CPU1_DATA_TYPE_SBAS,
+      cxd56_gnss_common_signalhandler
+    },
+    {
+      CXD56_CPU1_DATA_TYPE_DCREPORT,
       cxd56_gnss_common_signalhandler
     }
   };

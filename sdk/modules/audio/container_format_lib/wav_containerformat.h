@@ -33,9 +33,18 @@
  *
  ****************************************************************************/
 
+/****************************************************************************
+ * !! Caution !!
+ *
+ * Don't include this file.
+ * This file will be deleted after SDK 1.3.0.
+ *
+ * Please include "#include <audio/utilities/wav_containerformat.h>".
+ ****************************************************************************/
+
 #ifndef MODULES_AUDIO_CONTAINER_FORMAT_LIB_WAV_CONTAINERFORMAT_H
 #define MODULES_AUDIO_CONTAINER_FORMAT_LIB_WAV_CONTAINERFORMAT_H
 
-#include "audio/utilities/audio_wav_containerformat.h"
+#include <audio/utilities/wav_containerformat.h>
 
 #endif /* MODULES_AUDIO_CONTAINER_FORMAT_LIB_WAV_CONTAINERFORMAT_H */

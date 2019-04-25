@@ -340,6 +340,10 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         msg_type = MSG_AUD_MGR_CMD_INITMICGAIN;
         break;
 
+      case AUDCMD_SETMICMAP:
+        msg_type = MSG_AUD_MGR_CMD_SETMICMAP;
+        break;
+
       case AUDCMD_INITI2SPARAM:
         msg_type = MSG_AUD_MGR_CMD_INITI2SPARAM;
         break;
@@ -841,6 +845,22 @@ AudioManager::MsgProc
     &AudioManager::getstatus,          /*   WaitCommandWord state. */
     &AudioManager::getstatus,          /*   PowerOff state.        */
     &AudioManager::getstatus           /*   Through state.         */
+  },
+
+  /* SetMicMap command */
+
+  {
+    &AudioManager::setMicMap,          /*   Ready state.           */
+    &AudioManager::illegal,            /*   PlayerReady state.     */
+    &AudioManager::illegal,            /*   PlayerActive state.    */
+    &AudioManager::illegal,            /*   PlayerPause state.     */
+    &AudioManager::illegal,            /*   RecorderReady state.   */
+    &AudioManager::illegal,            /*   RecorderActive state.  */
+    &AudioManager::illegal,            /*   BasebandReady state.   */
+    &AudioManager::illegal,            /*   BasebandActive state.  */
+    &AudioManager::illegal,            /*   WaitCommandWord state. */
+    &AudioManager::illegal,            /*   PowerOff state.        */
+    &AudioManager::illegal             /*   Through state.         */
   },
 
   /* InitMicGain command. */
@@ -2748,6 +2768,37 @@ int AudioManager::getAllState(void)
         F_ASSERT(0);
     }
   return allstate;
+}
+
+/*--------------------------------------------------------------------------*/
+void AudioManager::setMicMap(AudioCommand &cmd)
+{
+  bool check =
+    packetCheck(LENGTH_SETMICMAP, AUDCMD_SETMICMAP, cmd);
+  if (!check)
+    {
+      return;
+    }
+
+  uint32_t micmap = 0;
+
+  for (uint32_t ch = 0; ch < AS_MIC_CHANNEL_MAX; ch++)
+    {
+      micmap |= static_cast<uint32_t>
+                  ((cmd.set_mic_map_param.mic_map[ch] & 0x0f) << (ch * 4));
+    }
+
+  CXD56_AUDIO_ECODE error_code = cxd56_audio_set_micmap(micmap);
+  if (error_code == CXD56_AUDIO_ECODE_OK)
+    {
+      sendResult(AUDRLT_SETMICMAPCMPLT, cmd.header.sub_code);
+    }
+  else
+    {
+      sendErrRespResult(cmd.header.sub_code,
+                        AS_MODULE_ID_AUDIO_DRIVER,
+                        AS_ECODE_SET_MICMAP_ERROR);
+    }
 }
 
 /*--------------------------------------------------------------------------*/

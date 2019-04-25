@@ -1093,27 +1093,6 @@ bool Playlist::parseTrackInfo(FAR Track *track,
       return false;
     }
 
-  /* Get played Info. */
-
-  tp = strtok(NULL, ",");
-  if (tp == NULL)
-    {
-      return false;
-    }
-  int played_flag = atoi(tp);
-  if (played_flag == 1)
-    {
-      track->is_played = true;
-    }
-  else if (played_flag == 0)
-    {
-      track->is_played = false;
-    }
-  else
-    {
-      return false;
-    }
-
   return true;
 }
 
