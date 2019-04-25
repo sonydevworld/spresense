@@ -146,39 +146,39 @@ def getMsgQueParam(line, dup_chk):
 
     id = line[0]                
     if id == "":
-        raise("Empty MSGQ ID found")
+        raise ValueError("Empty MSGQ ID found")
     if id.index("MSGQ_") != 0:
-        raise("Bad ID found at {0}".format(id))
+        raise ValueError("Bad ID found at {0}".format(id))
     if id in resv_ids:
-        raise("Reserved ID found")
+        raise ValueError("Reserved ID found")
     if dup_chk.exist(id):
-        raise("Duplication ID at {0}".format(id))
+        raise ValueError("Duplication ID at {0}".format(id))
 
     n_size  = line[1]
     if n_size < MIN_PACKET_SIZE or n_size > MAX_PACKET_SIZE or n_size % 4 != 0:
-        raise("Bad n_size at {0}".format(id))
+        raise ValueError("Bad n_size at {0}".format(id))
     if MsgParamTypeMatchCheck == True and n_size > MIN_PACKET_SIZE:
         n_size += 4
 
     n_num   = line[2]
     if n_num == 0 or n_num > MAX_PACKET_NUM:
-        raise("Bad n_num at {0}".format(id))
+        raise ValueError("Bad n_num at {0}".format(id))
 
     h_size = line[3]
     if h_size != 0 and (h_size < MIN_PACKET_SIZE or h_size > MAX_PACKET_SIZE or h_size % 4 != 0):
-        raise("Bad h_size at {0}".format(id))
+        raise ValueError("Bad h_size at {0}".format(id))
 
     if MsgParamTypeMatchCheck == True and h_size > MIN_PACKET_SIZE:
         h_size += 4
 
     h_num = line[4]
     if h_num > MAX_PACKET_NUM or (h_size > 0 and h_num == 0) or (h_size == 0 and h_num > 0):
-        raise("Bad h_num at {0}".format(id))
+        raise ValueError("Bad h_num at {0}".format(id))
 
     if USE_MULTI_CORE == True:
         owner = line[5]
         if owner in CpuIds.compact is False:
-            raise("Bad owner at {0}".format(id))
+            raise ValueError("Bad owner at {0}".format(id))
 
     if USE_MULTI_CORE == True:
         spinlock = line[6];
@@ -188,7 +188,7 @@ def getMsgQueParam(line, dup_chk):
             spinlock = "SPL_NULL"
         else:
             if spinlock in SpinLockNames is False:
-                raise("Bad spinlock at {0}".format(id))
+                raise ValueError("Bad spinlock at {0}".format(id))
             n_size = (n_size + ALINGMENT_SIZE - 1) & ~(ALINGMENT_SIZE - 1)
             h_size = (h_size + ALINGMENT_SIZE - 1) & ~(ALINGMENT_SIZE - 1)
 
