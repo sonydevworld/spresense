@@ -58,6 +58,8 @@ VPATH += :$(AWSPLAT)$(DELIM)common
 VPATH += :$(AWSPLAT)$(DELIM)mbedtls
 VPATH += :$(AWSPLAT)$(DELIM)pthread
 
+CFLAGS += -I$(AWSCORE)$(DELIM)external_libs$(DELIM)jsmn
+
 # Define
 ifdef CONFIG_EXTERNALS_AWSIOT_IOT_DEBUG
  CFLAGS += -DENABLE_IOT_DEBUG
