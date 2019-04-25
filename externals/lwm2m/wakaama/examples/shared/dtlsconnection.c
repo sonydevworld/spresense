@@ -1,6 +1,7 @@
 /*******************************************************************************
  *
  * Copyright (c) 2015 Intel Corporation and others.
+ * Copyright 2019 Sony Corporation
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -26,7 +27,11 @@
 #define COAPS_PORT "5684"
 #define URI_LENGTH 256
 
-dtls_context_t * dtlsContext;
+extern int getaddrinfo(const char *nodename, const char *servname,
+                const struct addrinfo *hints, struct addrinfo **res);
+extern void freeaddrinfo(struct addrinfo *res);
+
+dtls_context_t * dtlsContext = NULL;
 
 /********************* Security Obj Helpers **********************/
 char * security_get_uri(lwm2m_object_t * obj, int instanceId, char * uriBuffer, int bufferSize){
@@ -41,7 +46,7 @@ char * security_get_uri(lwm2m_object_t * obj, int instanceId, char * uriBuffer, 
     {
         if (bufferSize > dataP->value.asBuffer.length){
             memset(uriBuffer,0,dataP->value.asBuffer.length+1);
-            strncpy(uriBuffer,(const char *)dataP->value.asBuffer.buffer,dataP->value.asBuffer.length);
+            strncpy(uriBuffer,(char*)dataP->value.asBuffer.buffer,dataP->value.asBuffer.length);
             lwm2m_data_free(size, dataP);
             return uriBuffer;
         }
@@ -148,7 +153,7 @@ int send_data(dtls_connection_t *connP,
         port = saddr->sin6_port;
     }
 
-    fprintf(stderr, "Sending %d bytes to [%s]:%hu\r\n", (int)length, s, ntohs(port));
+    fprintf(stderr, "Sending %d bytes to [%s]:%hu\r\n", length, s, ntohs(port));
 
     output_buffer(stderr, buffer, length, 0);
 #endif
@@ -187,16 +192,16 @@ static int get_psk_info(struct dtls_context_t *ctx,
         case DTLS_PSK_IDENTITY:
         {
             int idLen;
-            char * id;
-            id = security_get_public_id(cnx->securityObj, cnx->securityInstId, &idLen);
+            char * pskid;
+            pskid = security_get_public_id(cnx->securityObj, cnx->securityInstId, &idLen);
             if (result_length < idLen)
             {
                 printf("cannot set psk_identity -- buffer too small\n");
                 return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
             }
 
-            memcpy(result, id,idLen);
-            lwm2m_free(id);
+            memcpy(result, pskid,idLen);
+            lwm2m_free(pskid);
             return idLen;
         }
         case DTLS_PSK_KEY:
@@ -234,6 +239,7 @@ static int send_to_peer(struct dtls_context_t *ctx,
         session_t *session, uint8 *data, size_t len) {
 
     // find connection
+//    dtls_connection_t * connP = (dtls_connection_t *) ctx->app;
     dtls_connection_t* cnx = connection_find((dtls_connection_t *) ctx->app, &(session->addr.st),session->size);
     if (cnx != NULL)
     {
@@ -254,6 +260,7 @@ static int read_from_peer(struct dtls_context_t *ctx,
           session_t *session, uint8 *data, size_t len) {
 
     // find connection
+//    dtls_connection_t * connP = (dtls_connection_t *) ctx->app;
     dtls_connection_t* cnx = connection_find((dtls_connection_t *) ctx->app, &(session->addr.st),session->size);
     if (cnx != NULL)
     {
@@ -432,8 +439,8 @@ dtls_connection_t * connection_create(dtls_connection_t * connList,
     struct addrinfo *servinfo = NULL;
     struct addrinfo *p;
     int s;
-    struct sockaddr *sa;
-    socklen_t sl;
+    struct sockaddr *sa = NULL;
+    socklen_t sl = 0;
     dtls_connection_t * connP = NULL;
     char uriBuf[URI_LENGTH];
     char * uri;
@@ -554,7 +561,7 @@ void connection_free(dtls_connection_t * connList)
 int connection_send(dtls_connection_t *connP, uint8_t * buffer, size_t length){
     if (connP->dtlsSession == NULL) {
         // no security
-        if ( 0 != send_data(connP, buffer, length)) {
+        if ( 0 > send_data(connP, buffer, length)) {
             return -1 ;
         }
     } else {
