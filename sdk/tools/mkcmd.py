@@ -136,8 +136,8 @@ def create_from_template(template, filename, appname, configname, menudesc=None)
                                 menudesc=menudesc))
 def create_defconfig_file(configname):
     os.mkdir('configs')
-    with open('configs/default-defconfig', "w") as f:
-        f.write('CONFIG_%s=y' % configname)
+    os.system('touch configs/default-defconfig')
+    os.system("kconfig-tweak --file %s --enable CONFIG_%s" % ('configs/default-defconfig', configname))
 
 if __name__ == '__main__':
 
@@ -148,6 +148,8 @@ if __name__ == '__main__':
                                      epilog=EPILOG)
     parser.add_argument('appname', metavar='<app name>', type=str, help='New application name')
     parser.add_argument('desc', type=str, nargs="?", help='Menu description')
+    parser.add_argument('-c', '--create_config', action='store_true', default=False,
+                        help='create default defconfig file into application directory')
     parser.add_argument('-d', '--basedir', type=str, default='examples',
                         help='Base directory to create new application')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Verbose messages')
@@ -161,7 +163,7 @@ if __name__ == '__main__':
     maincsrcfile = appname + '_main.c'
     basedir = os.path.join('..', opts.basedir)
     targetdir = appname
-    isabspath = basedir.startswith('/')
+    createconf = opts.create_config
     if opts.desc:
         menudesc = opts.desc
     else:
@@ -197,7 +199,7 @@ if __name__ == '__main__':
 
     # Create defconfig file
 
-    if isabspath:
+    if createconf:
         create_defconfig_file(configname)
 
     with open('.gitignore', "w") as f:

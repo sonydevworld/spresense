@@ -113,6 +113,22 @@ function spresense_set_apps_root() {
 	fi
 }
 
+# Create application command behalf of tools/cmd.py
+function spresense_create_app() {
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <application name>"
+	elif [ "${SPRESENSE_HOME}" == "" ]; then
+		echo "Warning: Spresense user application directory is not set."
+		echo "         Please run"
+		echo "         $ spresense_set_apps_root <application home directory>"
+	else
+		cd ${SPRESENSE_SDK}/sdk
+		rm -f ${SPRESENSE_HOME}/Kconfig
+		./tools/mkcmd.py -c -d ${SPRESENSE_HOME} ${1}
+		cd - &> /dev/null
+	fi
+}
+
 # Add configuration command behalf of tools/config.py
 function spresense_config() {
 	cd ${SPRESENSE_SDK}/sdk
