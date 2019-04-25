@@ -34,17 +34,11 @@
 
 ifeq ($(CONFIG_EXTERNALS_LWM2M),y)
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/core"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/core/er-coap-13"}
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared"}
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls/aes"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls/ecc"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/core"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/core/er-coap-13"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls/aes"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/lwm2m/wakaama/examples/shared/tinydtls/ecc"}
 endif
 
 
