@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_LWM2M
+	bool "Lightweight M2M Library"
+	default n
+	---help---
+		Enable OMA Lightweight M2M Library.
+		OMA Lightweight M2M Library is provided from https://github.com/eclipse/wakaama
+		and licensed under EPL-2.0 and EDL-2.0.
+
