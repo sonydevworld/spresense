@@ -134,6 +134,10 @@ def create_from_template(template, filename, appname, configname, menudesc=None)
     with open(filename, "w") as f:
         f.write(template.format(appname=appname, configname=configname,
                                 menudesc=menudesc))
+def create_defconfig_file(configname):
+    os.mkdir('configs')
+    with open('configs/default-defconfig', "w") as f:
+        f.write('CONFIG_%s=y' % configname)
 
 if __name__ == '__main__':
 
@@ -157,6 +161,7 @@ if __name__ == '__main__':
     maincsrcfile = appname + '_main.c'
     basedir = os.path.join('..', opts.basedir)
     targetdir = appname
+    isabspath = basedir.startswith('/')
     if opts.desc:
         menudesc = opts.desc
     else:
@@ -189,6 +194,11 @@ if __name__ == '__main__':
     create_from_template(MAKEFILE_TMPL, 'Makefile', appname, configname)
     create_from_template(MAKEDEFS_TMPL, 'Make.defs', appname, configname)
     create_from_template(MAINCSRC_TMPL, maincsrcfile, appname, configname)
+
+    # Create defconfig file
+
+    if isabspath:
+        create_defconfig_file(configname)
 
     with open('.gitignore', "w") as f:
         f.write(GITIGNORE)
