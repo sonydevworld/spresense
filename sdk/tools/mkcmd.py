@@ -152,7 +152,7 @@ if __name__ == '__main__':
     verbose = opts.verbose
 
     appname = opts.appname
-    optprefix = opts.basedir.upper()
+    optprefix = os.path.basename(os.path.normpath(opts.basedir)).upper()
     configname = optprefix + '_' + appname.upper()
     maincsrcfile = appname + '_main.c'
     basedir = os.path.join('..', opts.basedir)
