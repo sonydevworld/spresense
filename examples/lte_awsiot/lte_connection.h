@@ -39,7 +39,7 @@
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
-int app_connect_to_lte(void);
-int app_disconnect_from_lte(void);
+int app_awsiot_connect_to_lte(void);
+int app_awsiot_disconnect_from_lte(void);
 
 #endif /* __EXAMPLES_LTE_AWSIOT_LTE_CONNECTION_H */

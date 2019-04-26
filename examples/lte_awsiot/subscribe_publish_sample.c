@@ -144,7 +144,7 @@ int lte_awsiot_main(int argc, char **argv) {
 
 	IoT_Error_t rc = FAILURE;
 
-	if (app_connect_to_lte())
+	if (app_awsiot_connect_to_lte())
 		return ERROR;
 
 	AWS_IoT_Client client;
@@ -274,7 +274,7 @@ int lte_awsiot_main(int argc, char **argv) {
 		IOT_INFO("Publish done\n");
 	}
 
-	app_disconnect_from_lte();
+	app_awsiot_disconnect_from_lte();
 
 	return rc;
 }
