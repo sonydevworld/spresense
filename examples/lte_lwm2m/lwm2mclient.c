@@ -64,7 +64,7 @@
 #else
 #include "connection.h"
 #endif
-#include "lte_connection.h"
+#include "lwm2m_lte_connection.h"
 
 #include <string.h>
 #include <stdlib.h>

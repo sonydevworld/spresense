@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_lwm2m/lte_connection.h
+ * examples/lte_lwm2m/lwm2m_lte_connection.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_LTE_LWM2M_LTE_CONNECTION_H
-#define __EXAMPLES_LTE_LWM2M_LTE_CONNECTION_H
+#ifndef __EXAMPLES_LTE_LWM2M_LWM2M_LTE_CONNECTION_H
+#define __EXAMPLES_LTE_LWM2M_LWM2M_LTE_CONNECTION_H
 
 /****************************************************************************
  * Public Functions Prototypes
@@ -42,4 +42,4 @@
 int app_lwm2m_connect_to_lte(void);
 int app_lwm2m_disconnect_from_lte(void);
 
-#endif /* __EXAMPLES_LTE_LWM2M_LTE_CONNECTION_H */
+#endif /* __EXAMPLES_LTE_LWM2M_LWM2M_LTE_CONNECTION_H */

@@ -75,7 +75,7 @@ CSRCS += object_server.c
 CSRCS += object_connectivity_stat.c
 CSRCS += system_api.c
 CSRCS += test_object.c
-CSRCS += lte_connection.c
+CSRCS += lwm2m_lte_connection.c
 MAINSRC = lwm2mclient.c
 
 ifeq ($(WINTOOL),y)

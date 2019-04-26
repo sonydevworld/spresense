@@ -1,5 +1,5 @@
 /****************************************************************************
- * lte_lwm2m/lte_connection.c
+ * lte_lwm2m/lwm2m_lte_connection.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -539,7 +539,7 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  ****************************************************************************/
 
 /****************************************************************************
- * app_connect_to_lte
+ * app_lwm2m_connect_to_lte
  ****************************************************************************/
 
 int app_lwm2m_connect_to_lte(void)
