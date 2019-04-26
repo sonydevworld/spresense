@@ -205,4 +205,7 @@ if __name__ == '__main__':
     with open('.gitignore', "w") as f:
         f.write(GITIGNORE)
 
-    print("New '%s' app successfully created. Please 'make clean' from sdk first." % appname)
+    print("New '%s' app successfully created at '%s'." % (appname, os.path.join(basedir, appname)))
+
+    if os.path.isfile(os.path.join('..', 'Kconfig')):
+        print("Please 'make clean' from sdk first.")
