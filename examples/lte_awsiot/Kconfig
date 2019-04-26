@@ -41,7 +41,7 @@ config EXAMPLES_LTE_AWSIOT_PORT
 
 config EXAMPLES_LTE_AWSIOT_CERT
         string "AWS IoT cert folder"
-        default "/mnt/vfat/cert"
+        default "/mnt/sd0/CERTS"
 
 config EXAMPLES_LTE_AWSIOT_APN_NAME
 	string "Access Point Name"
