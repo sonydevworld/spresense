@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--spresense_home', action='store_true',
                         help='using spresense home')
     parser.add_argument('-f', '--force', action='store_true', default=False,
-                        help='verbose messages')
+                        help='force to create application directory')
     parser.add_argument('-v', '--verbose', action='count', default=0,
                         help='verbose messages')
     opts = parser.parse_args()
