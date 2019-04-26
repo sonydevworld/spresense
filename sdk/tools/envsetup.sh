@@ -42,7 +42,9 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 # Public function                                                          #
 ############################################################################
 
-# Create Spresense home environmet with mkapp
+# Name: spresense_create_apps_root
+# Note: Create application root didectory that will contain user applications.
+# Usage: $ spresense_create_apps_root <application home directory>
 function spresense_create_apps_root() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application home directory>"
@@ -80,7 +82,9 @@ function spresense_create_apps_root() {
 	fi
 }
 
-# Select Spresense home
+# Name: spresense_set_apps_root
+# Note: Select application root didectory.
+# Usage: $ spresense_set_apps_root <application home directory>
 function spresense_set_apps_root() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application home directory>"
@@ -113,7 +117,9 @@ function spresense_set_apps_root() {
 	fi
 }
 
-# Create application command behalf of tools/cmd.py
+# Name: spresense_create_app
+# Note: Create user application into application root didectory.
+# Usage: $ spresense_create_app <application name>
 function spresense_create_app() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application name>"
@@ -129,7 +135,9 @@ function spresense_create_app() {
 	fi
 }
 
-# Add configuration command behalf of tools/config.py
+# Name: spresense_config
+# Note: Create user application into application root didectory.
+# Usage: $ spresense_config <configuration name>...
 function spresense_config() {
 	cd ${SPRESENSE_SDK}/sdk
 	./tools/config.py $@
