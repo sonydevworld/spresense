@@ -144,6 +144,18 @@ function spresense_config() {
 	cd - &> /dev/null
 }
 
+# Name: spresense_goto_sdk
+# Note: Move current directory to SDK directory.
+# Usage: $ spresense_goto_sdk
+function spresense_goto_sdk() {
+	if [ "${SPRESENSE_SDK}" != "" ]; then
+		cd ${SPRESENSE_SDK}/sdk
+	else
+		echo "Warning: SPRESENSE_SDK is not set."
+		echo "         Please run 'source tools/envsetup.sh' again."
+	fi
+}
+
 # Load current variable
 function _load_spresense_environment() {
 	if [ -f ${HOME}/.spresense_env ]; then
