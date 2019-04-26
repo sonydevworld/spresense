@@ -39,7 +39,7 @@
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
-int app_connect_to_lte(void);
-int app_disconnect_from_lte(void);
+int app_lwm2m_connect_to_lte(void);
+int app_lwm2m_disconnect_from_lte(void);
 
 #endif /* __EXAMPLES_LTE_LWM2M_LTE_CONNECTION_H */

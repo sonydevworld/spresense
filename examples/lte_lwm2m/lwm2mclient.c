@@ -965,7 +965,7 @@ int lte_lwm2m_main(int argc, char *argv[])
         opt += 1;
     }
 
-    if (app_connect_to_lte())
+    if (app_lwm2m_connect_to_lte())
         return ERROR;
 
     if (!server)
@@ -1401,7 +1401,7 @@ int lte_lwm2m_main(int argc, char *argv[])
     }
 #endif
 
-    app_disconnect_from_lte();
+    app_lwm2m_disconnect_from_lte();
 
     return 0;
 }

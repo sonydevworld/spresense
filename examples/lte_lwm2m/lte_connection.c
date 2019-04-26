@@ -542,7 +542,7 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  * app_connect_to_lte
  ****************************************************************************/
 
-int app_connect_to_lte(void)
+int app_lwm2m_connect_to_lte(void)
 {
   int                     ret;
   int                     result = LTE_RESULT_OK;
@@ -664,7 +664,7 @@ errout:
   return -1;
 }
 
-int app_disconnect_from_lte(void)
+int app_lwm2m_disconnect_from_lte(void)
 {
   int ret;
   int result = LTE_RESULT_OK;
