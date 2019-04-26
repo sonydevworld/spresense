@@ -1,5 +1,5 @@
 /****************************************************************************
- * lte_awsiot/lte_connection.c
+ * lte_awsiot/awsiot_lte_connection.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -539,7 +539,7 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  ****************************************************************************/
 
 /****************************************************************************
- * app_connect_to_lte
+ * app_awsiot_connect_to_lte
  ****************************************************************************/
 
 int app_awsiot_connect_to_lte(void)

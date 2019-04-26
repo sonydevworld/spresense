@@ -61,7 +61,7 @@ endif
 # lte_awsiot Example
 
 ASRCS =
-CSRCS =   lte_connection.c
+CSRCS =   awsiot_lte_connection.c
 MAINSRC = subscribe_publish_sample.c
 
 CONFIG_EXAMPLES_LTE_AWSIOT_PROGNAME ?= lte_awsiot$(EXEEXT)

@@ -39,7 +39,7 @@
 
 #include "sdk/config.h"
 
-#include "lte_connection.h"
+#include "awsiot_lte_connection.h"
 
 #define HOST_ADDRESS_SIZE 255
 /**

@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_awsiot/lte_connection.h
+ * examples/lte_awsiot/awsiot_lte_connection.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_LTE_AWSIOT_LTE_CONNECTION_H
-#define __EXAMPLES_LTE_AWSIOT_LTE_CONNECTION_H
+#ifndef __EXAMPLES_LTE_AWSIOT_AWSIOT_LTE_CONNECTION_H
+#define __EXAMPLES_LTE_AWSIOT_AWSIOT_LTE_CONNECTION_H
 
 /****************************************************************************
  * Public Functions Prototypes
@@ -42,4 +42,4 @@
 int app_awsiot_connect_to_lte(void);
 int app_awsiot_disconnect_from_lte(void);
 
-#endif /* __EXAMPLES_LTE_AWSIOT_LTE_CONNECTION_H */
+#endif /* __EXAMPLES_LTE_AWSIOT_AWSIOT_LTE_CONNECTION_H */
