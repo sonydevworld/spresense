@@ -156,6 +156,18 @@ function spresense_goto_sdk() {
 	fi
 }
 
+# Name: spresense_goto_apps_root
+# Note: Move current directory to user application root directory.
+# Usage: $ spresense_goto_apps_root
+function spresense_goto_apps_root() {
+	if [ "${SPRESENSE_HOME}" != "" ]; then
+		cd ${SPRESENSE_HOME}
+	else
+		echo "Warning: SPRESENSE_HOME is not set."
+		echo "         Please run 'spresense_set_apps_root' first."
+	fi
+}
+
 # Load current variable
 function _load_spresense_environment() {
 	if [ -f ${HOME}/.spresense_env ]; then
