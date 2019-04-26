@@ -168,6 +168,13 @@ function spresense_goto_apps_root() {
 	fi
 }
 
+# Name: spresense_make
+# Note: Build SDK and user application same as make command.
+# Usage: $ spresense_make [build options]
+function spresense_make() {
+	make -C ${SPRESENSE_SDK}/sdk $@
+}
+
 # Load current variable
 function _load_spresense_environment() {
 	if [ -f ${HOME}/.spresense_env ]; then
