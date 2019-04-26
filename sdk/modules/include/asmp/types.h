@@ -54,7 +54,7 @@
  * MP object initializer
  */
 
-#define mpobj_init(obj, t, k) do { (obj)->super.type = MPOBJTYPE_ ## t; (obj)->super.key = key; } while (0)
+#define mpobj_init(obj, t, k) do { (obj)->super.type = MPOBJTYPE_ ## t; (obj)->super.key = (k); } while (0)
 
 /**
  * @typedef cpuid_t
