@@ -114,7 +114,7 @@ int lte_websocket_main(int argc, char **argv) {
 	syslog(LOG_DEBUG, "starting cwebsocket client");
 #endif
 
-	if (app_connect_to_lte())
+	if (app_websocket_connect_to_lte())
 		return ERROR;
 
         cwebsocket_subprotocol* ws_protocol = cwebsocket_subprotocol_echo_client_new();
@@ -130,7 +130,7 @@ int lte_websocket_main(int argc, char **argv) {
 
 	cwebsocket_client_close(&websocket_client, 1000, "main: run loop complete");
 
-	app_disconnect_from_lte();
+	app_websocket_disconnect_from_lte();
 
 	return main_exit(EXIT_SUCCESS);
 }

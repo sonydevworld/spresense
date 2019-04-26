@@ -39,7 +39,7 @@
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
-int app_connect_to_lte(void);
-int app_disconnect_from_lte(void);
+int app_websocket_connect_to_lte(void);
+int app_websocket_disconnect_from_lte(void);
 
 #endif /* __EXAMPLES_LTE_WEBSOCKET_LTE_CONNECTION_H */
