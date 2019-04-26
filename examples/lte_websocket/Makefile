@@ -57,7 +57,7 @@ CFLAGS += -DENABLE_SSL
 
 ASRCS =
 CSRCS += echo_client.c
-CSRCS += lte_connection.c
+CSRCS += websocket_lte_connection.c
 MAINSRC = websocket-client.c
 
 CONFIG_EXAMPLES_LTE_WEBSOCKET_PROGNAME ?= lte_websocket$(EXEEXT)

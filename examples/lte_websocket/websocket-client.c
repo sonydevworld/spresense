@@ -25,7 +25,7 @@
 #include <signal.h>
 #include "client.h"
 #include "echo_client.h"
-#include "lte_connection.h"
+#include "websocket_lte_connection.h"
 
 cwebsocket_client websocket_client;
 

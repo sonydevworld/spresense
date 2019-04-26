@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_websocket/lte_connection.h
+ * examples/lte_websocket/websocket_lte_connection.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_LTE_WEBSOCKET_LTE_CONNECTION_H
-#define __EXAMPLES_LTE_WEBSOCKET_LTE_CONNECTION_H
+#ifndef __EXAMPLES_LTE_WEBSOCKET_WEBSOCKET_LTE_CONNECTION_H
+#define __EXAMPLES_LTE_WEBSOCKET_WEBSOCKET_LTE_CONNECTION_H
 
 /****************************************************************************
  * Public Functions Prototypes
@@ -42,4 +42,4 @@
 int app_websocket_connect_to_lte(void);
 int app_websocket_disconnect_from_lte(void);
 
-#endif /* __EXAMPLES_LTE_WEBSOCKET_LTE_CONNECTION_H */
+#endif /* __EXAMPLES_LTE_WEBSOCKET_WEBSOCKET_LTE_CONNECTION_H */

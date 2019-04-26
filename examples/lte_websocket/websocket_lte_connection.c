@@ -1,5 +1,5 @@
 /****************************************************************************
- * lte_websocket/lte_connection.c
+ * lte_websocket/websocket_lte_connection.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
