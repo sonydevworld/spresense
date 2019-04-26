@@ -1,5 +1,5 @@
 /****************************************************************************
- * pool_layout.h
+ * audio_player_post/worker/src/userproc/include/userproc.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,27 +33,37 @@
  *
  ****************************************************************************/
 
-#ifndef POOL_LAYOUT_H_INCLUDED
-#define POOL_LAYOUT_H_INCLUDED
+#ifndef __USERPROC_H__
+#define __USERPROC_H__
 
-#include "memutils/memory_manager/MemMgrTypes.h"
+#include <string.h>
 
-namespace MemMgrLite {
+#include "postproc_dsp_userproc_if.h"
+#include "userproc_command.h"
 
-MemPool* static_pools[NUM_MEM_POOLS];
+class UserProc : public PostprocDspUserProcIf
+{
+public:
 
-extern const PoolAttr MemoryPoolLayouts[NUM_MEM_LAYOUTS][NUM_MEM_POOLS] = {
- {/* Layout:0 */
-  /* pool_ID          type       seg fence  addr        size         */
-  { ES_BUF_POOL     , BasicType,   5, true, 0x000c0008, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { PREPROC_BUF_POOL, BasicType,   5, true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { INPUT_BUF_POOL  , BasicType,   5, true, 0x000de018, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { ENC_APU_CMD_POOL, BasicType,   3, true, 0x000ed020, 0x00000114 },  /* AUDIO_WORK_AREA */
-  { SRC_APU_CMD_POOL, BasicType,   3, true, 0x000ed140, 0x00000114 },  /* AUDIO_WORK_AREA */
-  { PRE_APU_CMD_POOL, BasicType,   3, true, 0x000ed260, 0x00000114 },  /* AUDIO_WORK_AREA */
- },
-}; /* end of MemoryPoolLayouts */
+  UserProc() :
+    m_toggle(true)
+  {}
 
-}  /* end of namespace MemMgrLite */
+  virtual void init(PostprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
+  virtual void exec(PostprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
+  virtual void flush(PostprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
+  virtual void set(PostprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
 
-#endif /* POOL_LAYOUT_H_INCLUDED */
+private:
+
+  bool m_toggle;
+
+  void init(InitParam *param);
+  void exec(ExecParam *param);
+  void flush(FlushParam *param);
+  void set(SetParam *param);
+
+};
+
+#endif /* __USERPROC_H__ */
+

@@ -38,6 +38,25 @@ Recording data is written to the optional path.
  - Default path
     contents      : /mnt/sd0/REC
 
+
+NOTE
+
+  Build PreProcess DSP and deploy
+  --------------------------
+  
+  If you would like to use PreProcess DSP.
+  Set config "EXAMPLES_AUDIO_RECORDER_USEPREPROC" = "y" before make.
+
+  When EXAMPLES_AUDIO_RECORDER_USEPREPROC is set and build this example,
+  DSP binary for PreProcess will out at "worker/src/PREPROC".
+  Please place PREPROC binary file to SD card(/mnt/sd0/BIN).
+
+  The codes of DSP is placed on "worker/userproc/src(or include)".
+  You can edit them and it will be built with framework code in sdk(*)
+  and embedded to DSP binary.
+  (*)The framework codes are at "sdk/module/audio/components/postproc/dsp_framework".
+
+
 Execute
 --------------------------
 

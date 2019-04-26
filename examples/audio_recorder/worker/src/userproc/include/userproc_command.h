@@ -1,5 +1,5 @@
 /****************************************************************************
- * pool_layout.h
+ * audio_player_post/worker/src/userproc/include/userproc_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,27 +33,43 @@
  *
  ****************************************************************************/
 
-#ifndef POOL_LAYOUT_H_INCLUDED
-#define POOL_LAYOUT_H_INCLUDED
+#ifndef __USERPROC_COMMAND_H__
+#define __USERPROC_COMMAND_H__
 
-#include "memutils/memory_manager/MemMgrTypes.h"
+#include <stdint.h>
+#include "postproc_command_base.h"
 
-namespace MemMgrLite {
+struct InitParam : public PostprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
 
-MemPool* static_pools[NUM_MEM_POOLS];
+struct ExecParam : public PostprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
 
-extern const PoolAttr MemoryPoolLayouts[NUM_MEM_LAYOUTS][NUM_MEM_POOLS] = {
- {/* Layout:0 */
-  /* pool_ID          type       seg fence  addr        size         */
-  { ES_BUF_POOL     , BasicType,   5, true, 0x000c0008, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { PREPROC_BUF_POOL, BasicType,   5, true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { INPUT_BUF_POOL  , BasicType,   5, true, 0x000de018, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { ENC_APU_CMD_POOL, BasicType,   3, true, 0x000ed020, 0x00000114 },  /* AUDIO_WORK_AREA */
-  { SRC_APU_CMD_POOL, BasicType,   3, true, 0x000ed140, 0x00000114 },  /* AUDIO_WORK_AREA */
-  { PRE_APU_CMD_POOL, BasicType,   3, true, 0x000ed260, 0x00000114 },  /* AUDIO_WORK_AREA */
- },
-}; /* end of MemoryPoolLayouts */
+struct FlushParam : public PostprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
 
-}  /* end of namespace MemMgrLite */
+struct SetParam : public PostprocCommand::CmdBase
+{
+  uint32_t postswitch;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
 
-#endif /* POOL_LAYOUT_H_INCLUDED */
+#endif /* __USERPROC_COMMAND_H__ */
+

@@ -60,6 +60,9 @@
 #include "include/msgq_pool.h"
 #include "include/pool_layout.h"
 #include "include/fixed_fence.h"
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+#include "userproc_command.h"
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
 #include <arch/chip/cxd56_audio.h>
 
@@ -443,12 +446,31 @@ static bool app_create_audio_sub_system(void)
   ids.mng         = MSGQ_AUD_MGR;
   ids.player_main = 0xFF;
   ids.player_sub  = 0xFF;
+  ids.frontend    = MSGQ_AUD_FRONTEND;
   ids.mixer       = 0xFF;
   ids.recorder    = MSGQ_AUD_RECORDER;
   ids.effector    = 0xFF;
   ids.recognizer  = 0xFF;
 
   AS_CreateAudioManager(ids, app_attention_callback);
+
+  /* Create Frontend. */
+
+  AsCreateFrontendParam_t frontend_create_param;
+  frontend_create_param.msgq_id.frontend = MSGQ_AUD_FRONTEND;
+  frontend_create_param.msgq_id.mng      = MSGQ_AUD_MGR;
+  frontend_create_param.msgq_id.dsp      = MSGQ_AUD_PREDSP;
+  frontend_create_param.pool_id.capin    = INPUT_BUF_POOL;
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+  frontend_create_param.pool_id.output   = PREPROC_BUF_POOL;
+#else
+  frontend_create_param.pool_id.output   = NULL_POOL;
+#endif
+  frontend_create_param.pool_id.dspcmd   = PRE_APU_CMD_POOL;
+
+  AS_CreateFrontend(&frontend_create_param, NULL);
+
+  /* Create Recorder. */
 
   AsCreateRecorderParam_t recorder_create_param;
   recorder_create_param.msgq_id.recorder      = MSGQ_AUD_RECORDER;
@@ -465,7 +487,7 @@ static bool app_create_audio_sub_system(void)
       return false;
     }
 
-  /* Create renderer feature. */
+  /* Create Capture feature. */
 
   AsCreateCaptureParam_t capture_create_param;
   capture_create_param.msgq_id.dev0_req  = MSGQ_AUD_CAP;
@@ -487,6 +509,7 @@ static void app_deact_audio_sub_system(void)
 {
   AS_DeleteAudioManager();
   AS_DeleteMediaRecorder();
+  AS_DeleteFrontend();
   AS_DeleteCapture();
 }
 
@@ -632,6 +655,22 @@ static bool app_set_recording_param(codec_type_e codec_type,
   return true;
 }
 
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+static bool app_en_preprocess(void)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETMFETYPE;
+  command.header.command_code  = AUDCMD_SETMFETYPE;
+  command.header.sub_code      = 0x00;
+  command.set_mfetype_param.preproc_type = AsFrontendPreProcUserCustom;
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
+
 static bool app_set_recorder_status(void)
 {
   AudioCommand command;
@@ -773,6 +812,44 @@ static bool app_stop_recorder(void)
   app_close_output_file();
   return true;
 }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+static bool app_init_mfe(void)
+{
+  static InitParam s_initparam;
+
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INITMFE;
+  command.header.command_code  = AUDCMD_INITMFE;
+  command.header.sub_code      = 0x00;
+  command.init_mfe_param.initpre_param.packet_addr = reinterpret_cast<uint8_t *>(&s_initparam);
+  command.init_mfe_param.initpre_param.packet_size = sizeof(s_initparam);
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+
+static bool app_set_mfe(void)
+{
+  static SetParam s_setparam;
+
+  s_setparam.postswitch = false;
+
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SETMFE;
+  command.header.command_code  = AUDCMD_SETMFE;
+  command.header.sub_code      = 0x00;
+  command.init_mfe_param.initpre_param.packet_addr = reinterpret_cast<uint8_t *>(&s_setparam);
+  command.init_mfe_param.initpre_param.packet_size = sizeof(s_setparam);
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
 static bool app_set_clkmode(int clk_mode)
 {
@@ -1029,6 +1106,16 @@ extern "C" int recorder_main(int argc, char *argv[])
       return 1;
     }
 
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+  /* Enable pre process. */
+
+  if (!app_en_preprocess())
+    {
+      printf("Error: app_en_preprocess() failure.\n");
+      return 1;
+    }
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
+
   /* Set recorder operation mode. */
 
   if (!app_set_recorder_status())
@@ -1047,6 +1134,20 @@ extern "C" int recorder_main(int argc, char *argv[])
       printf("Error: app_init_recorder() failure.\n");
       return 1;
     }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+  if (!app_init_mfe())
+    {
+      printf("Error: app_init_mfe() failure.\n");
+      return 1;
+    }
+
+  if (!app_set_mfe())
+    {
+      printf("Error: app_set_mfe() failure.\n");
+      return 1;
+    }
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
   /* Start recorder operation. */
 
