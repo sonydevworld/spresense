@@ -40,7 +40,7 @@ extern "C"
 /*--------------------------------------------------------------------
     C Interface
   --------------------------------------------------------------------*/
-uint32_t AS_postproc_init(const InitPostprocParam *param,
+uint32_t AS_postproc_init(const InitCustomProcParam *param,
                           void *p_instance)
 {
   /* Parameter check */
@@ -53,11 +53,11 @@ uint32_t AS_postproc_init(const InitPostprocParam *param,
 
   /* Execute */
 
-  return ((PostprocBase *)p_instance)->init_apu(*param);
+  return ((CustomProcBase *)p_instance)->init(*param);
 }
 
 /*--------------------------------------------------------------------*/
-bool AS_postproc_exec(const ExecPostprocParam *param, void *p_instance)
+bool AS_postproc_exec(const ExecCustomProcParam *param, void *p_instance)
 {
   /* Parameter check */
 
@@ -69,11 +69,11 @@ bool AS_postproc_exec(const ExecPostprocParam *param, void *p_instance)
 
   /* Execute */
 
-  return ((PostprocBase *)p_instance)->exec_apu(*param);
+  return ((CustomProcBase *)p_instance)->exec(*param);
 }
 
 /*--------------------------------------------------------------------*/
-bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance)
+bool AS_postproc_flush(const FlushCustomProcParam *param, void *p_instance)
 {
   /* Parameter check */
 
@@ -85,11 +85,11 @@ bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance)
 
   /* Execute */
 
-  return ((PostprocBase *)p_instance)->flush_apu(*param);
+  return ((CustomProcBase *)p_instance)->flush(*param);
 }
 
 /*--------------------------------------------------------------------*/
-bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance)
+bool AS_postproc_setparam(const SetCustomProcParam *param, void *p_instance)
 {
   /* Parameter check */
 
@@ -101,11 +101,11 @@ bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance)
 
   /* Execute */
 
-  return ((PostprocBase *)p_instance)->set_apu(*param);
+  return ((CustomProcBase *)p_instance)->set(*param);
 }
 
 /*--------------------------------------------------------------------*/
-bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
+bool AS_postproc_recv_done(void *p_instance, CustomProcCmpltParam *cmplt)
 {
   /* Parameter check */
 
@@ -119,11 +119,11 @@ bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
 
   if (cmplt == NULL)
     {
-      return ((PostprocBase *)p_instance)->recv_done();
+      return ((CustomProcBase *)p_instance)->recv_done();
     }
   else
     {
-      return ((PostprocBase *)p_instance)->recv_done(cmplt);
+      return ((CustomProcBase *)p_instance)->recv_done(cmplt);
     }
 }
 
@@ -131,7 +131,7 @@ bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt)
 uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
-                              PostprocCallback callback,
+                              CustomProcCallback callback,
                               const char *dsp_name,
                               void *p_requester,
                               uint32_t *dsp_inf,
@@ -148,11 +148,11 @@ uint32_t AS_postproc_activate(void **p_instance,
   switch (type)
     {
       case ProcTypeUserDefFilter:
-        *p_instance = (void*)(new PostprocComponent(apu_pool_id,apu_mid));
+        *p_instance = (void*)(new UserCustomComponent(apu_pool_id,apu_mid));
         break;
 
       default:
-        *p_instance = (void*)(new PostprocThrough());
+        *p_instance = (void*)(new ThruProcComponent());
         break;
     }
 
@@ -162,17 +162,17 @@ uint32_t AS_postproc_activate(void **p_instance,
       return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
     }
 
-  return ((PostprocBase *)*p_instance)->activate(callback, dsp_name, p_requester, dsp_inf);
+  return ((CustomProcBase *)*p_instance)->activate(callback, dsp_name, p_requester, dsp_inf);
 }
 
 /*--------------------------------------------------------------------*/
 bool AS_postproc_deactivate(void *p_instance)
 {
 
-  if ((PostprocBase *)p_instance != NULL)
+  if ((CustomProcBase *)p_instance != NULL)
     {
-      ((PostprocBase *)p_instance)->deactivate();
-      delete (PostprocBase*)p_instance;
+      ((CustomProcBase *)p_instance)->deactivate();
+      delete (CustomProcBase*)p_instance;
       return true;
     }
 

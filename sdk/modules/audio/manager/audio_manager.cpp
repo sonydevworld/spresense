@@ -441,7 +441,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
 #endif  /* AS_FEATURE_PLAYER_ENABLE */
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-      case AUDCMD_ENPREPROC:
+      case AUDCMD_SETMFETYPE:
       case AUDCMD_INITMFE:
       case AUDCMD_SETMFE:
         msg_type = MSG_AUD_MGR_CMD_MFE;
@@ -1597,13 +1597,13 @@ void AudioManager::frontend(AudioCommand &cmd)
 
   switch (cmd.header.command_code)
     {
-      case AUDCMD_ENPREPROC:
-        check = packetCheck(LENGTH_INITMFE, AUDCMD_ENPREPROC, cmd);
+      case AUDCMD_SETMFETYPE:
+        check = packetCheck(LENGTH_INITMFE, AUDCMD_SETMFETYPE, cmd);
         if (!check)
           {
             return;
           }
-        m_preproc_type = cmd.en_preproc_param.preproc_type; 
+        m_preproc_type = cmd.set_mfetype_param.preproc_type; 
         sendResult(AUDRLT_ENPREPROCCMPLT);
         return;
 

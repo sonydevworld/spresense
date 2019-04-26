@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/postproc_component.h
+ * modules/audio/components/postproc/usercustom_component.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,14 +33,14 @@
  *
  ****************************************************************************/
 
-#ifndef _POSTPROC_COMPONENT_H_
-#define _POSTPROC_COMPONENT_H_
+#ifndef _USERCUSTOM_COMPONENT_H_
+#define _USERCUSTOM_COMPONENT_H_
 
 #include "memutils/s_stl/queue.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
 #include "components/common/component_common.h"
-#include "postproc_base.h"
+#include "customproc_base.h"
 
 extern "C" {
 
@@ -48,23 +48,23 @@ bool AS_postproc_recv_apu(void *p_param, void *p_instance);
 
 } /* extern "C" */
 
-class PostprocComponent : public PostprocBase,
+class UserCustomComponent : public CustomProcBase,
                           public Wien2::ComponentCommon<uint32_t>
 {
 public:
-  PostprocComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid):
+  UserCustomComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid):
       m_apu_pool_id(apu_pool_id)
     , m_apu_mid(apu_mid)
   {}
-  ~PostprocComponent() {}
+  ~UserCustomComponent() {}
 
-  virtual uint32_t init_apu(const InitPostprocParam& param);
-  virtual bool exec_apu(const ExecPostprocParam& param);
-  virtual bool flush_apu(const FlushPostprocParam& param);
-  virtual bool set_apu(const SetPostprocParam& param);
-  virtual bool recv_done(PostprocCmpltParam *cmplt);
+  virtual uint32_t init(const InitCustomProcParam& param);
+  virtual bool exec(const ExecCustomProcParam& param);
+  virtual bool flush(const FlushCustomProcParam& param);
+  virtual bool set(const SetCustomProcParam& param);
+  virtual bool recv_done(CustomProcCmpltParam *cmplt);
   virtual bool recv_done(void) { return freeApuCmdBuf(); }
-  virtual uint32_t activate(PostprocCallback callback,
+  virtual uint32_t activate(CustomProcCallback callback,
                             const char *image_name,
                             void *p_requester,
                             uint32_t *dsp_inf);
@@ -149,5 +149,5 @@ private:
   }
 };
 
-#endif /* _POSTPROC_COMPONENT_H_ */
+#endif /* _USERCUSTOM_COMPONENT_H_ */
 

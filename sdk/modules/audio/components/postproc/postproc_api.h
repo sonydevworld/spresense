@@ -36,8 +36,8 @@
 #ifndef _POSTPROC_API_H_
 #define _POSTPROC_API_H_
 
-#include "postproc_component.h"
-#include "postproc_through.h"
+#include "usercustom_component.h"
+#include "thruproc_component.h"
 
 /* Proc type definitions */
 
@@ -57,21 +57,21 @@ typedef enum
 
 extern "C" {
 
-uint32_t AS_postproc_init(const InitPostprocParam *param,
+uint32_t AS_postproc_init(const InitCustomProcParam *param,
                           void *p_instance);
 
-bool AS_postproc_exec(const ExecPostprocParam *param, void *p_instance);
+bool AS_postproc_exec(const ExecCustomProcParam *param, void *p_instance);
 
-bool AS_postproc_flush(const FlushPostprocParam *param, void *p_instance);
+bool AS_postproc_flush(const FlushCustomProcParam *param, void *p_instance);
 
-bool AS_postproc_setparam(const SetPostprocParam *param, void *p_instance);
+bool AS_postproc_setparam(const SetCustomProcParam *param, void *p_instance);
 
-bool AS_postproc_recv_done(void *p_instance, PostprocCmpltParam *cmplt);
+bool AS_postproc_recv_done(void *p_instance, CustomProcCmpltParam *cmplt);
 
 uint32_t AS_postproc_activate(void **p_instance,
                               MemMgrLite::PoolId apu_pool_id,
                               MsgQueId apu_mid,
-                              PostprocCallback callback,
+                              CustomProcCallback callback,
                               const char *dsp_name,
                               void *p_requester,
                               uint32_t *dsp_inf,

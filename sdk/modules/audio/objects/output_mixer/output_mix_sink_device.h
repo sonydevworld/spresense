@@ -68,8 +68,8 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct OutputMixObjPostfilterDoneCmd
 {
-  PostCompEventType event_type;
-  bool              result;
+  CustomProcEventType event_type;
+  bool                result;
 };
 
 /**< Parameters for render done notify to output-mix object. */

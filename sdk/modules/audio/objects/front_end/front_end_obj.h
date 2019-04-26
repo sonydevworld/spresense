@@ -49,7 +49,8 @@
 #include "audio_state.h"
 
 #include "components/capture/capture_component.h"
-#include "components/postproc/preproc_api.h"
+#include "components/postproc/usercustom_component.h"
+#include "components/postproc/thruproc_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -68,8 +69,8 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct FrontendObjPreProcDoneCmd
 {
-  PreCompEventType event_type;
-  bool             result;
+  CustomProcEventType event_type;
+  bool                result;
 };
 
 struct FrontendObjSendDoneCmd
@@ -133,7 +134,7 @@ private:
   uint32_t m_capture_req;
   uint32_t m_preproc_req;
 
-  void *m_p_preproc_instance;
+  CustomProcBase *m_p_preproc_instance;
 
   typedef void (FrontEndObject::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_FED_MSG_NUM][FrontendStateNum];

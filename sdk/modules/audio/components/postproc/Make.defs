@@ -35,7 +35,7 @@
 
 ifeq ($(CONFIG_AUDIOUTILS_POSTPROC),y)
 
-CXXSRCS += postproc_component.cpp postproc_through.cpp postproc_api.cpp
+CXXSRCS += usercustom_component.cpp thruproc_component.cpp postproc_api.cpp
 VPATH   += components/postproc
 DEPPATH += --dep-path components/postproc
 

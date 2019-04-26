@@ -69,9 +69,9 @@
 /** @name Packet length of command*/
 /** @{ */
 
-/*! \brief EnablePreProcess command (#AUDCMD_ENPREPROC) packet length */
+/*! \brief Set MFE(PreProcess) type command (#AUDCMD_SETMFETYPE) packet length */
 
-#define  LENGTH_ENPREPROC           4
+#define  LENGTH_SETMFETYPE          4
 
 /*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
 
@@ -141,9 +141,9 @@ typedef enum
 
   AsFrontendPreProcThrough = 0,
 
-  /*! \brief Pre Process user defined */
+  /*! \brief Pre Process user customed */
 
-  AsFrontendPreProcUserDef,
+  AsFrontendPreProcUserCustom,
 
 } AsFrontendPreProcType;
 

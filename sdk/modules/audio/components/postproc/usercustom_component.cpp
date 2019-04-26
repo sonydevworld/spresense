@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/postproc_component.cpp
+ * modules/audio/components/postproc/usercustom_component.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-#include "postproc_component.h"
+#include "usercustom_component.h"
 
 #include "memutils/common_utils/common_assert.h"
 #include "audio/audio_message_types.h"
@@ -57,7 +57,7 @@ extern "C"
   --------------------------------------------------------------------*/
 bool AS_postproc_recv_apu(void *p_param, void *p_instance)
 {
-  return ((PostprocComponent *)p_instance)->recv_apu(p_param);
+  return ((UserCustomComponent *)p_instance)->recv_apu(p_param);
 }
 
 /*--------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ static void cbRcvDspRes(void *p_response, void *p_instance)
       case PostprocCommand::CommonMode:
         {
           err_t er = MsgLib::send<uint32_t>
-                    (((PostprocComponent*)p_instance)->get_apu_mid(),
+                    (((UserCustomComponent*)p_instance)->get_apu_mid(),
                      MsgPriNormal,
                      MSG_ISR_APU0,
                      0,
@@ -99,7 +99,7 @@ static void cbRcvDspRes(void *p_response, void *p_instance)
 /*--------------------------------------------------------------------
     Class Methods
   --------------------------------------------------------------------*/
-uint32_t PostprocComponent::init_apu(const InitPostprocParam& param)
+uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 {
   POSTPROC_DBG("INIT:\n");
 
@@ -139,7 +139,7 @@ uint32_t PostprocComponent::init_apu(const InitPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::exec_apu(const ExecPostprocParam& param)
+bool UserCustomComponent::exec(const ExecCustomProcParam& param)
 {
   void *p_cmd = allocApuBufs(param.input, param.output_mh);
 
@@ -165,7 +165,7 @@ bool PostprocComponent::exec_apu(const ExecPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::flush_apu(const FlushPostprocParam& param)
+bool UserCustomComponent::flush(const FlushCustomProcParam& param)
 {
   /* The number of time to send FLUSH is depend on type of codec or filter */
 
@@ -191,7 +191,7 @@ bool PostprocComponent::flush_apu(const FlushPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::set_apu(const SetPostprocParam& param)
+bool UserCustomComponent::set(const SetCustomProcParam& param)
 {
   POSTPROC_DBG("SET:\n");
 
@@ -220,7 +220,7 @@ bool PostprocComponent::set_apu(const SetPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-void PostprocComponent::send(void *p_cmd)
+void UserCustomComponent::send(void *p_cmd)
 {
   DspDrvComPrm_t com_param;
 
@@ -242,7 +242,7 @@ void PostprocComponent::send(void *p_cmd)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::recv_apu(void *p_response)
+bool UserCustomComponent::recv_apu(void *p_response)
 {
   DspDrvComPrm_t *p_param = (DspDrvComPrm_t *)p_response;
 
@@ -273,28 +273,28 @@ bool PostprocComponent::recv_apu(void *p_response)
 
   /* Notify to requester */
 
-  PostprocCbParam cbpram;
+  CustomProcCbParam cbpram;
 
   switch (packet->header.cmd_type)
     {
       case PostprocCommand::Init:
-        cbpram.event_type = PostprocInit;
+        cbpram.event_type = CustomProcInit;
         break;
 
       case PostprocCommand::Exec:
-        cbpram.event_type = PostprocExec;
+        cbpram.event_type = CustomProcExec;
         break;
 
       case PostprocCommand::Flush:
-        cbpram.event_type = PostprocFlush;
+        cbpram.event_type = CustomProcFlush;
         break;
 
       case PostprocCommand::Set:
-        cbpram.event_type = PostprocSet;
+        cbpram.event_type = CustomProcSet;
         break;
 
       default:
-        cbpram.event_type = PostprocInit;
+        cbpram.event_type = CustomProcInit;
         break;
     }
 
@@ -305,7 +305,7 @@ bool PostprocComponent::recv_apu(void *p_response)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::recv_done(PostprocCmpltParam *cmplt)
+bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
 {
   PostprocCommand::CmdBase *packet =
     static_cast<PostprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
@@ -324,10 +324,10 @@ bool PostprocComponent::recv_done(PostprocCmpltParam *cmplt)
   cmplt->result = (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
 
   return freeApuCmdBuf();
-};
+}
 
 /*--------------------------------------------------------------------*/
-uint32_t PostprocComponent::activate(PostprocCallback callback,
+uint32_t UserCustomComponent::activate(CustomProcCallback callback,
                                      const char *dsp_name,
                                      void *p_requester,
                                      uint32_t *dsp_inf)
@@ -379,7 +379,7 @@ uint32_t PostprocComponent::activate(PostprocCallback callback,
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocComponent::deactivate(void)
+bool UserCustomComponent::deactivate(void)
 {
   bool result = true;
 

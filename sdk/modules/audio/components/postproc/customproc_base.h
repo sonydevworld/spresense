@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/postproc_through.h
+ * modules/audio/components/postproc/customproc_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,42 +33,85 @@
  *
  ****************************************************************************/
 
-#ifndef _POSTPROC_THROUGH_H_
-#define _POSTPROC_THROUGH_H_
+#ifndef _CUSTOMPROC_BASE_H_
+#define _CUSTOMPROC_BASE_H_
 
-#include "audio/audio_high_level_api.h"
-#include "memutils/s_stl/queue.h"
-#include "postproc_base.h"
+#include "dsp_framework/postproc_command_base.h"
+#include "audio/audio_common_defs.h"
+#include "memutils/os_utils/chateau_osal.h"
+#include "memutils/memory_manager/MemHandle.h"
 
-class PostprocThrough : public PostprocBase
+enum CustomProcEventType
 {
-public:
-  PostprocThrough() {}
-  ~PostprocThrough() {}
-
-  virtual uint32_t init_apu(const InitPostprocParam& param);
-  virtual bool exec_apu(const ExecPostprocParam& param);
-  virtual bool flush_apu(const FlushPostprocParam& param);
-  virtual bool set_apu(const SetPostprocParam& param);
-  virtual bool recv_done(PostprocCmpltParam *cmplt);
-  virtual bool recv_done(void) { m_req_que.pop(); return true; }
-  virtual uint32_t activate(PostprocCallback callback,
-                            const char *image_name,
-                            void *p_requester,
-                            uint32_t *dsp_inf);
-  virtual bool deactivate();
-
-private:
-  #define REQ_QUEUE_SIZE 7 
-
-  struct ApuReqData
-  {
-    AsPcmDataParam       pcm;
-  };
-
-  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
-  ReqQue m_req_que;
+  CustomProcInit = 0,
+  CustomProcExec,
+  CustomProcFlush,
+  CustomProcSet,
 };
 
-#endif /* _POSTPROC_THROUGH_H_ */
+struct CustomProcCbParam
+{
+  CustomProcEventType event_type;
+  bool                result;
+};
+
+typedef bool (*CustomProcCallback)(CustomProcCbParam*, void*);
+
+struct CustomProcPacket
+{
+  uint8_t  *addr;
+  uint32_t size;
+};
+
+struct InitCustomProcParam
+{
+  uint8_t          cmd_type;
+  bool             is_userdraw;
+  CustomProcPacket packet;
+};
+typedef InitCustomProcParam SetCustomProcParam;
+
+struct ExecCustomProcParam
+{
+  AsPcmDataParam        input;
+  MemMgrLite::MemHandle output_mh;
+};
+
+struct FlushCustomProcParam
+{
+  CustomProcPacket      packet;
+  MemMgrLite::MemHandle output_mh;
+};
+
+struct CustomProcCmpltParam
+{
+  bool                 result;
+  AsPcmDataParam       output;
+};
+
+class CustomProcBase
+{
+public:
+  CustomProcBase() {}
+  virtual ~CustomProcBase() {}
+
+  virtual uint32_t init(const InitCustomProcParam& param) = 0;
+  virtual bool exec(const ExecCustomProcParam& param) = 0;
+  virtual bool flush(const FlushCustomProcParam& param) = 0;
+  virtual bool set(const SetCustomProcParam& param) = 0;
+  virtual bool recv_done(CustomProcCmpltParam *cmplt) = 0;
+  virtual bool recv_done(void) = 0;
+  virtual uint32_t activate(CustomProcCallback callback,
+                            const char *image_name,
+                            void *p_requester,
+                            uint32_t *dsp_inf) = 0;
+  virtual bool deactivate() = 0;
+
+protected:
+  CustomProcCallback m_callback;
+
+  void *m_p_requester;
+};
+
+#endif /* _CUSTOMPROC_BASE_H_ */
 

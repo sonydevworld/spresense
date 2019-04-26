@@ -939,18 +939,18 @@ typedef struct
 
 #ifdef AS_FEATURE_FRONTEND_ENABLE
 
-/** EnablePreProc Command (#AUDCMD_ENPREPROC) parameter */
+/** EnablePreProc Command (#AUDCMD_SETMFETYPE) parameter */
 
 typedef struct
 {
-  /*! \brief [in] Select pre process enable 
+  /*! \brief [in] Set pre process type 
    *
-   * Use #AsFrontendPreProc enum type
+   * Use #AsFrontendPreProcType enum type
    */
 
   uint32_t  preproc_type;
   
-} AsEnablePreProc;
+} AsSetMicFrontEndType;
 
 /** InitMfe Command (#AUDCMD_INITMFE) parameter */
 
@@ -1038,10 +1038,10 @@ typedef struct
 #ifdef AS_FEATURE_FRONTEND_ENABLE
 
     /*! \brief [in] for Enable PreProcess 
-     * (header.command_code==#AUDCMD_ENPREPROC)
+     * (header.command_code==#AUDCMD_SETMFETYPE)
      */
 
-    AsEnablePreProc en_preproc_param;
+    AsSetMicFrontEndType set_mfetype_param;
 
     /*! \brief [in] for InitMFE
      * (header.command_code==#AUDCMD_INITMFE)

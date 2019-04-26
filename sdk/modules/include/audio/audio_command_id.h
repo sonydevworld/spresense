@@ -114,7 +114,7 @@
 /** @name Command Effector Function code */
 /** @{ */
 
-#define  AUDCMD_ENPREPROC     (AUDCMD_CATEGORY_EFFECTOR | 0x01)
+#define  AUDCMD_SETMFETYPE    (AUDCMD_CATEGORY_EFFECTOR | 0x01)
 
 /*! brief Command Code: InitMFE */
 
@@ -139,7 +139,7 @@
 
 /*! \brief Result Code: EnableProProcessCmplt */
 
-#define  AUDRLT_ENPREPROCCMPLT  AUDCMD_ENPREPROC
+#define  AUDRLT_ENPREPROCCMPLT  AUDCMD_SETMFETYPE
 
 /*! \brief Result Code: InitMFECmplt */
 

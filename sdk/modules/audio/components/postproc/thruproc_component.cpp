@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/postproc_through.cpp
+ * modules/audio/components/postproc/thruproc_component.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,12 +33,12 @@
  *
  ****************************************************************************/
 
-#include "postproc_through.h"
+#include "thruproc_component.h"
 
 /*--------------------------------------------------------------------
     Class Methods
   --------------------------------------------------------------------*/
-uint32_t PostprocThrough::init_apu(const InitPostprocParam& param)
+uint32_t ThruProcComponent::init(const InitCustomProcParam& param)
 {
   ApuReqData req;
 
@@ -48,7 +48,7 @@ uint32_t PostprocThrough::init_apu(const InitPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocThrough::exec_apu(const ExecPostprocParam& param)
+bool ThruProcComponent::exec(const ExecCustomProcParam& param)
 {
   ApuReqData req;
 
@@ -56,9 +56,9 @@ bool PostprocThrough::exec_apu(const ExecPostprocParam& param)
 
   m_req_que.push(req);
 
-  PostprocCbParam cbpram;
+  CustomProcCbParam cbpram;
 
-  cbpram.event_type = PostprocExec;
+  cbpram.event_type = CustomProcExec;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -66,7 +66,7 @@ bool PostprocThrough::exec_apu(const ExecPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocThrough::flush_apu(const FlushPostprocParam& param)
+bool ThruProcComponent::flush(const FlushCustomProcParam& param)
 {
   AsPcmDataParam fls = { 0 };
 
@@ -79,9 +79,9 @@ bool PostprocThrough::flush_apu(const FlushPostprocParam& param)
 
   m_req_que.push(req);
 
-  PostprocCbParam cbpram;
+  CustomProcCbParam cbpram;
 
-  cbpram.event_type = PostprocFlush;
+  cbpram.event_type = CustomProcFlush;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -89,15 +89,15 @@ bool PostprocThrough::flush_apu(const FlushPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocThrough::set_apu(const SetPostprocParam& param)
+bool ThruProcComponent::set(const SetCustomProcParam& param)
 {
   ApuReqData req;
 
   m_req_que.push(req);
 
-  PostprocCbParam cbpram;
+  CustomProcCbParam cbpram;
 
-  cbpram.event_type = PostprocSet;
+  cbpram.event_type = CustomProcSet;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -105,7 +105,7 @@ bool PostprocThrough::set_apu(const SetPostprocParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
+bool ThruProcComponent::recv_done(CustomProcCmpltParam *cmplt)
 {
   cmplt->output = m_req_que.top().pcm;
   cmplt->result = true;
@@ -113,10 +113,18 @@ bool PostprocThrough::recv_done(PostprocCmpltParam *cmplt)
   m_req_que.pop();
 
   return true;
-};
+}
 
 /*--------------------------------------------------------------------*/
-uint32_t PostprocThrough::activate(PostprocCallback callback,
+bool ThruProcComponent::recv_done(void)
+{
+  m_req_que.pop();
+  
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+uint32_t ThruProcComponent::activate(CustomProcCallback callback,
                                    const char *dsp_name,
                                    void *p_requester,
                                    uint32_t *dsp_inf)
@@ -128,7 +136,7 @@ uint32_t PostprocThrough::activate(PostprocCallback callback,
 }
 
 /*--------------------------------------------------------------------*/
-bool PostprocThrough::deactivate(void)
+bool ThruProcComponent::deactivate(void)
 {
   return true;
 }

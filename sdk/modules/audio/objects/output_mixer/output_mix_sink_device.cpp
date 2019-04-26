@@ -84,7 +84,7 @@ static bool check_sample(AsPcmDataParam* data);
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-static bool postfilter_done_callback(PostprocCbParam *p_param,
+static bool postfilter_done_callback(CustomProcCbParam *p_param,
                                      void* p_requester)
 {
   err_t er;
@@ -422,7 +422,7 @@ void OutputMixToHPI2S::input_data_on_ready(MsgPacket* msg)
 
   /* Exec postfilter */
 
-  ExecPostprocParam exec;
+  ExecCustomProcParam exec;
 
   exec.input     = input;
   exec.output_mh = input.mh;
@@ -454,7 +454,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
 
   /* Exec postfilter */
 
-  ExecPostprocParam exec;
+  ExecCustomProcParam exec;
 
   exec.input     = input;
   exec.output_mh = input.mh;
@@ -468,7 +468,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
 
   if (input.is_end)
     {
-      FlushPostprocParam flush_param;
+      FlushCustomProcParam flush_param;
 
       if (ERR_OK != flush_param.output_mh.allocSeg(m_pcm_pool_id, m_max_pcm_buff_size))
         {
@@ -491,8 +491,8 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   /* If it is not return of Exec of Flush, no need to rendering. */
 
-  if (!(post_done.event_type == PostprocExec)
-   && !(post_done.event_type == PostprocFlush))
+  if (!(post_done.event_type == CustomProcExec)
+   && !(post_done.event_type == CustomProcFlush))
     {
       AS_postproc_recv_done(m_p_postfliter_instance, NULL);
       return;
@@ -500,7 +500,7 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   /* Get postfilter result */
 
-  PostprocCmpltParam cmplt;
+  CustomProcCmpltParam cmplt;
 
   AS_postproc_recv_done(m_p_postfliter_instance, &cmplt);
 
@@ -524,7 +524,7 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   /* If flust event done, stop renderer */
 
-  if (post_done.event_type == PostprocFlush)
+  if (post_done.event_type == CustomProcFlush)
     {
       if (!AS_stop_renderer(m_render_comp_handler, AS_DMASTOPMODE_NORMAL))
         {
@@ -738,7 +738,7 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
   OutputMixerCommand cmd =
     msg->moveParam<OutputMixerCommand>();
 
-  InitPostprocParam param;
+  InitCustomProcParam param;
 
   param.is_userdraw = true;
   param.packet.addr = cmd.initpp_param.addr;
@@ -748,7 +748,7 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
 
   bool send_result = AS_postproc_init(&param, m_p_postfliter_instance);
 
-  PostprocCmpltParam cmplt;
+  CustomProcCmpltParam cmplt;
   AS_postproc_recv_done(m_p_postfliter_instance, &cmplt);
     
   /* Reply */
@@ -770,7 +770,7 @@ void OutputMixToHPI2S::set_postproc(MsgPacket *msg)
   OutputMixerCommand cmd =
     msg->moveParam<OutputMixerCommand>();
 
-  SetPostprocParam param;
+  SetCustomProcParam param;
 
   param.is_userdraw = true;
   param.packet.addr = cmd.setpp_param.addr;

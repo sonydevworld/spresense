@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/preproc_api.h
+ * modules/audio/components/postproc/thruproc_component.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,41 +33,42 @@
  *
  ****************************************************************************/
 
-#ifndef _PREPROC_API_H_
-#define _PREPROC_API_H_
+#ifndef _THRUPROC_COMPONENT_H_
+#define _THRUPROC_COMPONENT_H_
 
-#include "postproc_api.h"
+#include "audio/audio_high_level_api.h"
+#include "memutils/s_stl/queue.h"
+#include "customproc_base.h"
 
-/* Wrap of APIs */
+class ThruProcComponent : public CustomProcBase
+{
+public:
+  ThruProcComponent() {}
+  ~ThruProcComponent() {}
 
-#define InitPreprocParam InitPostprocParam
-#define AS_preproc_init(a,b) AS_postproc_init(a,b)
+  virtual uint32_t init(const InitCustomProcParam& param);
+  virtual bool exec(const ExecCustomProcParam& param);
+  virtual bool flush(const FlushCustomProcParam& param);
+  virtual bool set(const SetCustomProcParam& param);
+  virtual bool recv_done(CustomProcCmpltParam *cmplt);
+  virtual bool recv_done(void);
+  virtual uint32_t activate(CustomProcCallback callback,
+                            const char *image_name,
+                            void *p_requester,
+                            uint32_t *dsp_inf);
+  virtual bool deactivate();
 
-#define ExecPreprocParam ExecPostprocParam
-#define AS_preproc_exec(a,b) AS_postproc_exec(a,b)
+private:
+  #define REQ_QUEUE_SIZE 7 
 
-#define FlushPreprocParam FlushPostprocParam
-#define AS_preproc_flush(a,b) AS_postproc_flush(a,b)
+  struct ApuReqData
+  {
+    AsPcmDataParam       pcm;
+  };
 
-#define SetPreprocParam SetPostprocParam
-#define AS_preproc_setparam(a,b) AS_postproc_setparam(a,b)
+  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
+  ReqQue m_req_que;
+};
 
-#define PreprocCmpltParam PostprocCmpltParam
-#define AS_preproc_recv_done(a, b) AS_postproc_recv_done(a, b)
-
-#define AS_preproc_activate(a,b,c,d,e,f,g,h) AS_postproc_activate(a,b,c,d,e,f,g,h)
-
-#define AS_preproc_deactivate(a) AS_postproc_deactivate(a)
-
-
-#define PreprocCbParam PostprocCbParam
-
-#define PreCompEventType PostCompEventType
-#define PreprocInit PostprocInit
-#define PreprocExec PostprocExec
-#define PreprocFlush PostprocFlush
-#define PreprocSet PostprocSet
-
-
-#endif /* _PREPROC_API_H_ */
+#endif /* _THRUPROC_COMPONENT_H_ */
 
