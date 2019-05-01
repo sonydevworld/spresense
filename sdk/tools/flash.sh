@@ -116,7 +116,7 @@ case "$(uname -s)" in
 		PLATFORM=linux
 		;;
 	Darwin*)
-		PLATFORM=macosx
+		PLATFORM=macos
 		;;
 	CYGWIN*|MINGW32*|MSYS*)
 		PLATFORM=windows
