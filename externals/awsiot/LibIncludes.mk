@@ -36,10 +36,8 @@ ifeq ($(CONFIG_EXTERNALS_AWSIOT),y)
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/include"}
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/platform/linux/common"}
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/platform/linux/mbedtls"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/tests/integration/include"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/include"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/platform/linux/common"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/platform/linux/mbedtls"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/awsiot/aws-iot-device-sdk-embedded-C/tests/integration/include"}
 endif
 
