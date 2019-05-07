@@ -129,8 +129,6 @@ typedef enum
 {
   AsFrontendDeviceMic = 0,
 
-  AsFrontendDeviceI2s,
-
 } AsFrontendInputDevice;
 
 /** Select Frontend PreProcess Enable */

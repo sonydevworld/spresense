@@ -1316,10 +1316,6 @@ uint32_t FrontEndObject::activateParamCheck(
         }
         break;
 
-      case AsFrontendDeviceI2s:
-        m_input_device = CaptureDeviceI2S;
-        break;
-
       default:
         FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_INPUT_DEVICE;
@@ -1338,15 +1334,8 @@ uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
   switch(cmd.init_param.channel_number)
     {
       case AS_CHANNEL_MONO:
-      case AS_CHANNEL_4CH:
-        if (m_input_device == CaptureDeviceI2S)
-          {
-            FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
-          }
-        break;
-
       case AS_CHANNEL_STEREO:
+      case AS_CHANNEL_4CH:
           break;
 
       case AS_CHANNEL_6CH:
