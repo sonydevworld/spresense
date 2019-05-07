@@ -296,6 +296,7 @@ int board_app_initialize(uintptr_t arg)
     }
 #endif
 
+#if defined(CONFIG_CXD56_SDIO) && !defined(CONFIG_CXD56_SPISD)
   /* In order to prevent Hi-Z from being input to the SD Card controller,
    * Initialize SDIO pins to GPIO low output with internal pull-down.
    */
@@ -308,7 +309,6 @@ int board_app_initialize(uintptr_t arg)
   cxd56_gpio_write(PIN_SDIO_DATA2, false);
   cxd56_gpio_write(PIN_SDIO_DATA3, false);
 
-#if defined(CONFIG_CXD56_SDIO) && !defined(CONFIG_CXD56_SPISD)
   ret = board_sdcard_initialize();
   if (ret < 0)
     {
