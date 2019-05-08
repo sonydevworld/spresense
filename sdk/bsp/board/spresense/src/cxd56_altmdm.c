@@ -176,7 +176,7 @@ void board_altmdm_poweroff(void)
 
   cxd56_gpio_write(ALTMDM_SHUTDOWN, true);
 
-  board_power_control(POWER_LTE, true);
+  board_power_control(POWER_LTE, false);
 
   cxd56_gpio_write(ALTMDM_SHUTDOWN, false);
   cxd56_gpio_write(LTE_POWER_BUTTON, false);
