@@ -25,11 +25,11 @@ config EXAMPLES_LTE_AWSIOT_PRIORITY
 
 config EXAMPLES_LTE_AWSIOT_STACKSIZE
 	int "lte_awsiot stack size"
-	default 2048
+	default 7168
 
 config EXAMPLES_LTE_AWSIOT_STACKSIZE_IN_USING_MBEDTLS
 	int "lte_awsiot stack size in using mbedTLS"
-	default 5120
+	default 10240
 
 config EXAMPLES_AWSIOT_IOT_DEBUG
 	bool "enables IOT_DEBUG output"
