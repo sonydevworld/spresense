@@ -810,3 +810,57 @@ int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
 
   return 0;
 }
+
+/****************************************************************************
+ * Name: altcombs_set_quality
+ *
+ * Description:
+ *   Set lte_quality_t.
+ *
+ * Input Parameters:
+ *   data           Pointer of lte_quality_t.
+ *   cmd_quality    Pointer of api command Quality struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_quality(FAR lte_quality_t *data,
+          FAR struct apicmd_cmddat_quality_s *cmd_quality)
+{
+  data->valid = APICMD_QUALITY_ENABLE == cmd_quality->enability ?
+                         LTE_VALID : LTE_INVALID;
+  if(data->valid)
+    {
+      data->rsrp  = ntohs(cmd_quality->rsrp);
+      data->rsrq  = ntohs(cmd_quality->rsrq);
+      data->sinr  = ntohs(cmd_quality->sinr);
+      data->rssi  = ntohs(cmd_quality->rssi);
+      if (data->rsrp < APICMD_QUALITY_RSRP_MIN ||
+        APICMD_QUALITY_RSRP_MAX < data->rsrp)
+        {
+          DBGIF_LOG1_ERROR("data.rsrp error:%d\n", data->rsrp);
+          data->valid = LTE_INVALID;
+        }
+      else if (data->rsrq < APICMD_QUALITY_RSRQ_MIN ||
+          APICMD_QUALITY_RSRQ_MAX < data->rsrq)
+        {
+          DBGIF_LOG1_ERROR("data.rsrq error:%d\n", data->rsrq);
+          data->valid = LTE_INVALID;
+        }
+      else if (data->sinr < APICMD_QUALITY_SINR_MIN ||
+          APICMD_QUALITY_SINR_MAX < data->sinr)
+        {
+          DBGIF_LOG1_ERROR("data->sinr error:%d\n", data->sinr);
+          data->valid = LTE_INVALID;
+        }
+      else
+        {
+          /* Do nothing. */
+        }
+    }
+  return 0;
+}
+

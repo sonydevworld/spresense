@@ -48,6 +48,7 @@
 #include "apicmd_pdn.h"
 #include "apicmd_edrx.h"
 #include "apicmd_psm.h"
+#include "apicmd_quality.h"
 
 /****************************************************************************
  * Public Types
@@ -337,5 +338,24 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set);
 
 int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
   lte_psm_setting_t *lte_psm);
+
+/****************************************************************************
+ * Name: altcombs_set_quality
+ *
+ * Description:
+ *   Set lte_quality_t.
+ *
+ * Input Parameters:
+ *   data           Pointer of lte_quality_t.
+ *   cmd_quality    Pointer of api command Quality struct.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_quality(FAR lte_quality_t *data,
+          FAR struct apicmd_cmddat_quality_s *cmd_quality);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */

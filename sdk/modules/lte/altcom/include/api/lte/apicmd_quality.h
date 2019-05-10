@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/lte/apicmd_repquality.h
+ * modules/lte/altcom/include/api/lte/apicmd_quality.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +33,27 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_QUALITY_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_QUALITY_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include "apicmd.h"
-#include "apicmd_quality.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SET_REPQUALITY_DISABLE      (0)
-#define APICMD_SET_REPQUALITY_ENABLE       (1)
-#define APICMD_SET_REPQUALITY_INTERVAL_MIN (1)
-#define APICMD_SET_REPQUALITY_INTERVAL_MAX (4233600)
-
-#define APICMD_SET_REPQUALITY_RES_OK      (0)
-#define APICMD_SET_REPQUALITY_RES_ERR     (1)
+#define APICMD_QUALITY_DISABLE  (0)
+#define APICMD_QUALITY_ENABLE   (1)
+#define APICMD_QUALITY_RSRP_MIN (-140)
+#define APICMD_QUALITY_RSRP_MAX (0)
+#define APICMD_QUALITY_RSRQ_MIN (-60)
+#define APICMD_QUALITY_RSRQ_MAX (0)
+#define APICMD_QUALITY_SINR_MIN (-128)
+#define APICMD_QUALITY_SINR_MAX (40)
 
 /****************************************************************************
  * Public Types
@@ -61,15 +61,13 @@
 
 /* This structure discribes the data structure of the API command */
 
-begin_packed_struct struct apicmd_cmddat_setrepquality_s
+begin_packed_struct struct apicmd_cmddat_quality_s
 {
   uint8_t enability;
-  uint32_t interval;
+  int16_t rsrp;
+  int16_t rsrq;
+  int16_t sinr;
+  int16_t rssi;
 } end_packed_struct;
 
-begin_packed_struct struct apicmd_cmddat_setrepquality_res_s
-{
-  uint8_t result;
-} end_packed_struct;
-
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H */
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_QUALITY_H */

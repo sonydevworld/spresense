@@ -112,6 +112,7 @@
 #define APICMDID_GET_SIMINFO            (0x0034)
 #define APICMDID_GET_DYNAMICEDRX        (0x0035)
 #define APICMDID_GET_DYNAMICPSM         (0x0036)
+#define APICMDID_GET_QUALITY            (0x0037)
 
 /* SOCKET API commands */
 

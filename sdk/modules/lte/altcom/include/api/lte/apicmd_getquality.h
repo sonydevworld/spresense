@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/lte/apicmd_repquality.h
+ * modules/lte/altcom/include/api/lte/apicmd_getquality.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETQUALITY_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETQUALITY_H
 
 /****************************************************************************
  * Included Files
@@ -47,13 +47,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SET_REPQUALITY_DISABLE      (0)
-#define APICMD_SET_REPQUALITY_ENABLE       (1)
-#define APICMD_SET_REPQUALITY_INTERVAL_MIN (1)
-#define APICMD_SET_REPQUALITY_INTERVAL_MAX (4233600)
-
-#define APICMD_SET_REPQUALITY_RES_OK      (0)
-#define APICMD_SET_REPQUALITY_RES_ERR     (1)
+#define APICMD_GETQUALITY_RES_OK      (0)
+#define APICMD_GETQUALITY_RES_ERR     (1)
 
 /****************************************************************************
  * Public Types
@@ -61,15 +56,11 @@
 
 /* This structure discribes the data structure of the API command */
 
-begin_packed_struct struct apicmd_cmddat_setrepquality_s
-{
-  uint8_t enability;
-  uint32_t interval;
-} end_packed_struct;
-
-begin_packed_struct struct apicmd_cmddat_setrepquality_res_s
+begin_packed_struct struct apicmd_cmddat_getqualityres_s
 {
   uint8_t result;
+  struct apicmd_cmddat_quality_s quality;
 } end_packed_struct;
 
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H */
+
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETQUALITY_H */

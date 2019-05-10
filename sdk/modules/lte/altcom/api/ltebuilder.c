@@ -78,6 +78,7 @@
 #include "apicmdhdlr_setedrx.h"
 #include "apicmdhdlr_setpin.h"
 #include "apicmdhdlr_setpsm.h"
+#include "apicmdhdlr_getquality.h"
 #include "apicmdhdlr_ver.h"
 #include "lte_radio_on.h"
 #include "lte_radio_off.h"
@@ -190,6 +191,7 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_getdynamicpsm,
   apicmdhdlr_errinfo,
   apicmdhdlr_select,
+  apicmdhdlr_getquality,
 #ifdef CONFIG_LTE_NET_MBEDTLS
   apicmdhdlr_config_verify_callback,
 #endif

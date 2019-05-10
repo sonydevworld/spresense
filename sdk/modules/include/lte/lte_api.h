@@ -87,6 +87,7 @@
  * |                                 | @ref lte_get_siminfo            |
  * |                                 | @ref lte_get_dynamic_edrx_param |
  * |                                 | @ref lte_get_dynamic_psm_param  |
+ * |                                 | @ref lte_get_quality            |
  *
  *
  * @{
@@ -718,6 +719,7 @@ typedef struct lte_localtime
  * @struct lte_quality
  * Definition of parameters for quality information.
  * This is reported by quality_report_cb_t
+ * and notified by get_quality_cb_t
  * @typedef lte_quality_t
  * See @ref lte_quality
  */
@@ -1843,6 +1845,19 @@ typedef void (*get_dynamic_edrx_param_cb_t)(uint32_t result,
 typedef void (*get_dynamic_psm_param_cb_t)(uint32_t result,
                                            lte_psm_setting_t *param);
 
+/** Definition of callback function.
+ *  Since lte_get_quality() is an asynchronous API,
+ *  the quality information is notified by this function
+ * @param[in] result : The result of lte_get_quality().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] quality : Quality information. See @ref lte_quality_t
+ */
+
+typedef void (*get_quality_cb_t)(uint32_t result,
+                                 lte_quality_t *quality);
+
 #ifdef __cplusplus
 #define EXTERN extern "C"
 extern "C"
@@ -2672,6 +2687,18 @@ int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback);
  */
 
 int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback);
+
+/**
+ * Get quality information.
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get quality information is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_quality(get_quality_cb_t callback);
 
 /** @} */
 
