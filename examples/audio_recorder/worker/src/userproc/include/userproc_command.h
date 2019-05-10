@@ -65,8 +65,8 @@ struct FlushParam : public PostprocCommand::CmdBase
 
 struct SetParam : public PostprocCommand::CmdBase
 {
-  uint32_t postswitch;
-  uint32_t reserve1;
+  uint32_t enable;
+  uint32_t coef;
   uint32_t reserve2;
   uint32_t reserve3;
 };

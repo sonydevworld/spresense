@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/include/userproc.h
+ * audio_player_post/worker/src/userproc/include/rcfilter.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,39 +33,29 @@
  *
  ****************************************************************************/
 
-#ifndef __USERPROC_H__
-#define __USERPROC_H__
+#ifndef __RCFILTER_H__
+#define __RCFILTER_H__
 
 #include <string.h>
 
-#include "postproc_dsp_userproc_if.h"
-#include "userproc_command.h"
-#include "rcfilter.h"
 
-class UserProc : public PostprocDspUserProcIf
+class RCfilter
 {
 public:
-
-  UserProc() :
-    m_enable(true)
+  RCfilter()
+    : m_coef(0)
   {}
+  ~RCfilter();
 
-  virtual void init(PostprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
-  virtual void exec(PostprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
-  virtual void flush(PostprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
-  virtual void set(PostprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
+  bool init(void);
+  uint32_t exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize);
+  uint32_t flush(int16_t *out, uint32_t outsize);
+  bool set(uint32_t coef);
 
 private:
 
-  bool m_enable;
-  RCfilter m_filter_ins;
-
-  void init(InitParam *param);
-  void exec(ExecParam *param);
-  void flush(FlushParam *param);
-  void set(SetParam *param);
-
+  int16_t m_coef;
 };
 
-#endif /* __USERPROC_H__ */
+#endif /* __RCFILTER_H__ */
 

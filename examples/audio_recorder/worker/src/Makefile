@@ -54,7 +54,7 @@ VPATH = $(SDKDIR)/modules/audio/components/postproc/dsp_framework
 VPATH += userproc/src
 
 CXXSRCS = postproc_dsp_ctrl.cpp main.cpp
-CXXSRCS += userproc.cpp
+CXXSRCS += userproc.cpp rcfilter.cpp
 
 CXXELFFLAGS += -Os
 ifeq ($(WINTOOL),y)

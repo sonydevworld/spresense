@@ -48,42 +48,20 @@ void UserProc::init(InitParam *param)
 /*--------------------------------------------------------------------*/
 void UserProc::exec(ExecParam *param)
 {
-  /* !!tentative!! simply copy from input to output */
-
   memcpy(param->exec_cmd.output.addr,
          param->exec_cmd.input.addr,
          param->exec_cmd.input.size);
 
   param->exec_cmd.output.size = param->exec_cmd.input.size;
 
-  if (m_toggle)
-  {
-    /* RC filter example */
-
-    int16_t *ls = (int16_t*)param->exec_cmd.output.addr;
-    int16_t *rs = ls + 1;
-
-    static int16_t ls_l = 0;
-    static int16_t rs_l = 0;
-
-    if (!ls_l && !rs_l)
-      {
-        ls_l = *ls;
-        rs_l = *rs;
-      }
-
-    for (uint32_t cnt = 0; cnt < param->exec_cmd.input.size; cnt += 4)
-      {
-        *ls = (ls_l * 99 / 100) + (*ls * 1 / 100);
-        *rs = (rs_l * 99 / 100) + (*rs * 1 / 100);
-
-        ls_l = *ls;
-        rs_l = *rs;
-
-        ls += 2;
-        rs += 2;
-      }
-  }
+  if (m_enable)
+    {
+      param->exec_cmd.output.size =
+        m_filter_ins.exec((int16_t *)param->exec_cmd.input.addr,
+                          param->exec_cmd.input.size,
+                          (int16_t *)param->exec_cmd.output.addr,
+                          param->exec_cmd.output.size);
+    }
 
   param->result.result_code = PostprocCommand::ExecOk;
 }
@@ -91,7 +69,9 @@ void UserProc::exec(ExecParam *param)
 /*--------------------------------------------------------------------*/
 void UserProc::flush(FlushParam *param)
 {
-  param->flush_cmd.output.size = 0;
+  param->flush_cmd.output.size = 
+    m_filter_ins.flush((int16_t *)param->flush_cmd.output.addr,
+                       param->flush_cmd.output.size);
 
   param->result.result_code = PostprocCommand::ExecOk;
 }
@@ -99,7 +79,9 @@ void UserProc::flush(FlushParam *param)
 /*--------------------------------------------------------------------*/
 void UserProc::set(SetParam *param)
 {
-  m_toggle = param->postswitch;
+  m_enable = param->enable;
+
+  m_filter_ins.set(param->coef);
 
   param->result.result_code = PostprocCommand::ExecOk;
 }

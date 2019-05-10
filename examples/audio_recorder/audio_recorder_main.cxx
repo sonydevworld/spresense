@@ -835,7 +835,8 @@ static bool app_set_mfe(void)
 {
   static SetParam s_setparam;
 
-  s_setparam.postswitch = false;
+  s_setparam.enable = true;
+  s_setparam.coef   = 99;
 
   AudioCommand command;
   command.header.packet_length = LENGTH_SETMFE;
@@ -1098,7 +1099,7 @@ extern "C" int recorder_main(int argc, char *argv[])
 
   /* Set audio clock mode. */
 
-  sampling_rate_e sampling_rate = SAMPLING_RATE_16K;
+  sampling_rate_e sampling_rate = SAMPLING_RATE_48K;
 
   if (!app_set_clkmode((sampling_rate == SAMPLING_RATE_192K) ? AS_CLKMODE_HIRES : AS_CLKMODE_NORMAL))
     {
@@ -1128,7 +1129,7 @@ extern "C" int recorder_main(int argc, char *argv[])
 
   if (!app_init_recorder(CODEC_TYPE_LPCM,
                          sampling_rate,
-                         CHAN_TYPE_MONO,
+                         CHAN_TYPE_STEREO,
                          BITWIDTH_16BIT))
     {
       printf("Error: app_init_recorder() failure.\n");
