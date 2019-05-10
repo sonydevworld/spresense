@@ -105,8 +105,6 @@ static void capture_error_callback(CaptureErrorParam param)
 /*--------------------------------------------------------------------------*/
 static bool preproc_done_callback(CustomProcCbParam *cmplt, void* p_requester)
 {
-  FRONT_END_VDBG("flt sz %d\n", cmplt->out_buffer.size);
-
   FrontendObjPreProcDoneCmd param;
 
   param.event_type = cmplt->event_type;
