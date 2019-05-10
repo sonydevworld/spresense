@@ -220,12 +220,12 @@ IoT_Error_t iot_tls_connect(Network *pNetwork, TLSConnectParams *params) {
 		IOT_ERROR(" failed\n  ! mbedtls_ssl_set_hostname returned %d\n\n", ret);
 		return SSL_CONNECTION_ERROR;
 	}
-	IOT_DEBUG("\n\nSSL state connect : %d ", tlsDataParams->ssl.state);
+//	IOT_DEBUG("\n\nSSL state connect : %d ", tlsDataParams->ssl.state);
 	mbedtls_ssl_set_bio(&(tlsDataParams->ssl), &(tlsDataParams->server_fd), mbedtls_net_send, NULL,
 						mbedtls_net_recv_timeout);
 	IOT_DEBUG(" ok\n");
 
-	IOT_DEBUG("\n\nSSL state connect : %d ", tlsDataParams->ssl.state);
+//	IOT_DEBUG("\n\nSSL state connect : %d ", tlsDataParams->ssl.state);
 	IOT_DEBUG("  . Performing the SSL/TLS handshake...");
 	while((ret = mbedtls_ssl_handshake(&(tlsDataParams->ssl))) != 0) {
 		if(ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
