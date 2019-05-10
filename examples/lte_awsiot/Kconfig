@@ -31,11 +31,11 @@ config EXAMPLES_LTE_AWSIOT_STACKSIZE_IN_USING_MBEDTLS
 	int "lte_awsiot stack size in using mbedTLS"
 	default 10240
 
-config EXAMPLES_AWSIOT_IOT_DEBUG
+config EXAMPLES_LTE_AWSIOT_IOT_DEBUG
 	bool "enables IOT_DEBUG output"
 	default n
 
-config EXAMPLES_AWSIOT_IOT_ERROR
+config EXAMPLES_LTE_AWSIOT_IOT_ERROR
 	bool "enables IOT_ERROR output"
 	default n
 
