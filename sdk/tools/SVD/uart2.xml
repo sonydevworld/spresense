@@ -74,6 +74,7 @@
           <name>DATA</name>
           <description>Data</description>
           <bitRange>[7:0]</bitRange>
+          <readAction>modify</readAction>
         </field>
       </fields>
     </register>
