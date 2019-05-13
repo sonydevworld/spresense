@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>ADMAC</name>
+  <version>1.0</version>
+  <description>DMA controller</description>
+  <baseAddress>0x4e020000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x1000</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>ADMAC</name>
+    <description>ADMAC interrupt</description>
+    <value>134</value>
+  </interrupt>
+
+  <registers>
+
+    <!-- DMACIntStatus -->
+    <register>
+      <name>DMACIntStatus</name>
+      <description></description>
+      <addressOffset>0x00</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>IntStatus</name>
+          <description>Status of the DMA interrupts after masking</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACIntTCStatus -->
+    <register>
+      <name>DMACIntTCStatus</name>
+      <description></description>
+      <addressOffset>0x04</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>IntTCStatus</name>
+          <description>Interrupt terminal count request status</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACIntTCClear -->
+    <register>
+      <name>DMACIntTCClear</name>
+      <description></description>
+      <addressOffset>0x08</addressOffset>
+      <size>32</size>
+      <access>write-only</access>
+      <fields>
+        <field>
+          <name>IntTCClear</name>
+          <description>Terminal count request clear</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACIntErrorStatus -->
+    <register>
+      <name>DMACIntErrorStatus</name>
+      <description></description>
+      <addressOffset>0x0c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>IntErrorStatus</name>
+          <description>Interrupt error status</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACIntErrClr -->
+    <register>
+      <name>DMACIntErrClr</name>
+      <description></description>
+      <addressOffset>0x10</addressOffset>
+      <size>32</size>
+      <access>write-only</access>
+      <fields>
+        <field>
+          <name>IntErrClr</name>
+          <description>Interrupt error clear</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACRawIntTCStatus -->
+    <register>
+      <name>DMACRawIntTCStatus</name>
+      <description></description>
+      <addressOffset>0x14</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>RawIntTCStatus</name>
+          <description>Status of the terminal count interrupt prior to masking</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACRawIntErrorStatus -->
+    <register>
+      <name>DMACRawIntErrorStatus</name>
+      <description></description>
+      <addressOffset>0x18</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>RawIntErrorStatus</name>
+          <description>Status of the error interrupt prior to masking</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACEnbldChns -->
+    <register>
+      <name>DMACEnbldChns</name>
+      <description></description>
+      <addressOffset>0x1c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>EnabledChannels</name>
+          <description>Channel enable status</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACSoftBReq -->
+    <register>
+      <name>DMACSoftBReq</name>
+      <description></description>
+      <addressOffset>0x20</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>SoftBReq</name>
+          <description>Software burst request</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACSoftSReq -->
+    <register>
+      <name>DMACSoftSReq</name>
+      <description></description>
+      <addressOffset>0x24</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>SoftSReq</name>
+          <description>Software single request</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACSoftLBReq -->
+    <register>
+      <name>DMACSoftLBReq</name>
+      <description></description>
+      <addressOffset>0x28</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>SoftLBReq</name>
+          <description>Software last burst request</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACSoftLSReq -->
+    <register>
+      <name>DMACSoftLSReq</name>
+      <description></description>
+      <addressOffset>0x2c</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>SoftLSReq</name>
+          <description>Software last single request</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACConfiguration -->
+    <register>
+      <name>DMACConfiguration</name>
+      <description></description>
+      <addressOffset>0x30</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>M2</name>
+          <description>AHB Master 2 endianess configuration</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>LE</name><description>Little-endian mode</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>BE</name><description>Big-endian mode</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>M1</name>
+          <description>AHB Master 1 endianess configuration</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>LE</name><description>Little-endian mode</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>BE</name><description>Big-endian mode</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>E</name>
+          <description>DMAC enable</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACSync -->
+    <register>
+      <name>DMACSync</name>
+      <description></description>
+      <addressOffset>0x34</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <resetValue>0x0000FFFF</resetValue>
+      <resetMask>0x0000FFFF</resetMask>
+      <fields>
+        <field>
+          <name>DMACSync</name>
+          <description>DMA synchronization logic for DMA request signals enabled or disabled</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+
+    <!-- DMACC0SrcAddr -->
+    <register>
+      <name>DMACC0SrcAddr</name>
+      <description></description>
+      <addressOffset>0x100</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>SrcAddr</name>
+          <description>DMA source address</description>
+          <bitRange>[31:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACC0DestAddr -->
+    <register>
+      <name>DMACC0DestAddr</name>
+      <description></description>
+      <addressOffset>0x104</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>DestAddr</name>
+          <description>DMA destination address</description>
+          <bitRange>[31:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACC0LLI -->
+    <register>
+      <name>DMACC0LLI</name>
+      <description></description>
+      <addressOffset>0x108</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>LLI</name>
+          <description>Linked list item</description>
+          <bitRange>[31:2]</bitRange>
+        </field>
+        <field>
+          <name>LM</name>
+          <description>AHB master select for loading the next LLI</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>AHB1</name><description>AHB Master 1</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>AHB2</name><description>AHB Master 2</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACC0Control -->
+    <register>
+      <name>DMACC0Control</name>
+      <description></description>
+      <addressOffset>0x10c</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>I</name>
+          <description>Terminal count interrupt enable</description>
+          <bitRange>[31:31]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>Prot</name>
+          <description>Protection</description>
+          <bitRange>[30:28]</bitRange>
+        </field>
+        <field>
+          <name>DI</name>
+          <description>Destination increment</description>
+          <bitRange>[27:27]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>SI</name>
+          <description>Source increment</description>
+          <bitRange>[26:26]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>D</name>
+          <description>Destination AHB master select</description>
+          <bitRange>[25:25]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>AHB1</name><description>AHB Master 1</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>AHB2</name><description>AHB Master 2</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>S</name>
+          <description>Source AHB master select</description>
+          <bitRange>[24:24]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>AHB1</name><description>AHB Master 1</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>AHB2</name><description>AHB Master 2</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>DWidth</name>
+          <description>Destination transfer width</description>
+          <bitRange>[23:21]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>byte</name><description>Byte, 8-bit</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>halfword</name><description>Halfword, 16-bit</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>word</name><description>Word, 32-bit</description><value>2</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field derivedFrom="DWidth">
+          <name>SWidth</name>
+          <description>Source transfer width</description>
+          <bitRange>[20:18]</bitRange>
+        </field>
+        <field>
+          <name>DBSize</name>
+          <description>Destination burst size</description>
+          <bitRange>[17:15]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>1byte</name><description>1</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>4bytes</name><description>4</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>8bytes</name><description>8</description><value>2</value></enumeratedValue>
+            <enumeratedValue><name>16bytes</name><description>16</description><value>3</value></enumeratedValue>
+            <enumeratedValue><name>32bytes</name><description>32</description><value>4</value></enumeratedValue>
+            <enumeratedValue><name>64bytes</name><description>64</description><value>5</value></enumeratedValue>
+            <enumeratedValue><name>128bytes</name><description>128</description><value>6</value></enumeratedValue>
+            <enumeratedValue><name>256bytes</name><description>256</description><value>7</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field derivedFrom="DBSize">
+          <name>SBSize</name>
+          <description>Source burst size</description>
+          <bitRange>[14:12]</bitRange>
+        </field>
+        <field>
+          <name>TransferSize</name>
+          <description>Transfer size</description>
+          <bitRange>[11:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACC0Configuration -->
+    <register>
+      <name>DMACC0Configuration</name>
+      <description></description>
+      <addressOffset>0x110</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+    </register>
+
+    <!-- DMACC1SrcAddr -->
+    <register derivedFrom="DMACC0SrcAddr">
+      <name>DMACC1SrcAddr</name>
+      <addressOffset>0x120</addressOffset>
+    </register>
+
+    <!-- DMACC0DestAddr -->
+    <register derivedFrom="DMACC0DestAddr">
+      <name>DMACC1DestAddr</name>
+      <addressOffset>0x124</addressOffset>
+    </register>
+
+    <!-- DMACC1LLI -->
+    <register derivedFrom="DMACC0LLI">
+      <name>DMACC1LLI</name>
+      <addressOffset>0x128</addressOffset>
+    </register>
+
+    <!-- DMACC1Control -->
+    <register derivedFrom="DMACC0Control">
+      <name>DMACC1Control</name>
+      <addressOffset>0x12c</addressOffset>
+    </register>
+
+    <!-- DMACC1Configuration -->
+    <register derivedFrom="DMACC0Configuration">
+      <name>DMACC1Configuration</name>
+      <addressOffset>0x130</addressOffset>
+    </register>
+
+  </registers>
+</peripheral>
