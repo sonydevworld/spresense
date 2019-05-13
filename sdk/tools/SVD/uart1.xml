@@ -1,0 +1,773 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>UART1</name>
+  <version>1.0</version>
+  <description>UART</description>
+  <baseAddress>0x041ac000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x400</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>UART1</name>
+    <description>UART1 interrupt</description>
+    <value>27</value>
+  </interrupt>
+
+  <registers>
+
+    <!-- DR -->
+    <register>
+      <name>DR</name>
+      <description></description>
+      <addressOffset>0x00</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>OE</name>
+          <description>Overrun Error</description>
+          <bitRange>[11:11]</bitRange>
+          <access>read-only</access>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>BE</name>
+          <description>Break Error</description>
+          <bitRange>[10:10]</bitRange>
+          <access>read-only</access>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>PE</name>
+          <description>Parity Error</description>
+          <bitRange>[9:9]</bitRange>
+          <access>read-only</access>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>FE</name>
+          <description>Framing Error</description>
+          <bitRange>[8:8]</bitRange>
+          <access>read-only</access>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>DATA</name>
+          <description>Data</description>
+          <bitRange>[7:0]</bitRange>
+          <readAction>modify</readAction>
+        </field>
+      </fields>
+    </register>
+
+    <!-- RSR -->
+    <register>
+      <name>RSR</name>
+      <description>Receive Status and Clear Register</description>
+      <addressOffset>0x04</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+
+      <fields>
+        <field>
+          <name>ROE</name>
+          <description>Overrun Error</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RBE</name>
+          <description>Break Error</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RPE</name>
+          <description>Parity Error</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RFE</name>
+          <description>Framing Error</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>None</name><description>no error</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Error</name><description>error</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- FR -->
+    <register>
+      <name>FR</name>
+      <description>Flags Register</description>
+      <addressOffset>0x18</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+
+      <fields>
+        <field>
+          <name>RI</name>
+          <description>Ring Indicator</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>TXFE</name>
+          <description>Transmit FIFO empty</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>RXFF</name>
+          <description>Receive FIFO full</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>TXFF</name>
+          <description>Transmit FIFO full</description>
+          <bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>RXFE</name>
+          <description>Receive FIFO empty</description>
+          <bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>BUSY</name>
+          <description>UART busy</description>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>DCD</name>
+          <description>Data carrier detect</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>DSR</name>
+          <description>Data set ready</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>CTS</name>
+          <description>Clear to send</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ILPR -->
+    <register>
+      <name>ILPR</name>
+      <description>IrDA Low-Power Counter Register</description>
+      <addressOffset>0x20</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>ILPDVSR</name>
+          <description>8-bit low-power divisor value</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- IBRD -->
+    <register>
+      <name>IBRD</name>
+      <description>The integer part of the baud rate divisor</description>
+      <addressOffset>0x24</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>BAUD_DIVINT</name>
+          <description>The integer baud rate divisor</description>
+          <bitRange>[15:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- FBRD -->
+    <register>
+      <name>FBRD</name>
+      <description>The fractional part of the baud rate divisor</description>
+      <addressOffset>0x28</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+      <fields>
+        <field>
+          <name>BAUD_DIVFRAC</name>
+          <description>The fractional baud rate divisor</description>
+          <bitRange>[5:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- LCR_H -->
+    <register>
+      <name>LCR_H</name>
+      <description>Line Control Register</description>
+      <addressOffset>0x2c</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>SPS</name>
+          <description>Stick parity select</description>
+          <bitRange>[7:7]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>WLEN</name>
+          <description>Word Length</description>
+          <bitRange>[6:5]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>8bits</name><description>8 bits</description><value>3</value></enumeratedValue>
+            <enumeratedValue><name>7bits</name><description>7 bits</description><value>2</value></enumeratedValue>
+            <enumeratedValue><name>6bits</name><description>6 bits</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>5bits</name><description>5 bits</description><value>0</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>FEN</name>
+          <description>Enable FIFOs</description>
+          <bitRange>[4:4]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>STP2</name>
+          <description>Two stop bits select</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>NotSelected</name><description>Not selected</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Selected</name><description>Selected</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>EPS</name>
+          <description>Even parity select</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>OddParity</name><description>Odd parity</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>EvenParity</name><description>Even parity</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>PEN</name>
+          <description>Parity enable</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>BRK</name>
+          <description>Send break</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>NormalOps</name><description>Normal operation</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>SendBreak</name><description>Send break</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- CR -->
+    <register>
+      <name>CR</name>
+      <description>Control Register</description>
+      <addressOffset>0x30</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>CTSEn</name>
+          <description>CTS hardware flow control enable</description>
+          <bitRange>[15:15]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RTSEn</name>
+          <description>RTS hardware flow control enable</description>
+          <bitRange>[14:14]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>Out2</name>
+          <description>nUARTOut2 modem status</description>
+          <bitRange>[13:13]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Zero</name><description>Output zero</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>One</name><description>Output one</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>Out1</name>
+          <description>nUARTOut1 modem status</description>
+          <bitRange>[12:12]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Zero</name><description>Output zero</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>One</name><description>Output one</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RTS</name>
+          <description>Request to send</description>
+          <bitRange>[11:11]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>LOW</name><description>Low</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>HIGH</name><description>High</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>DTR</name>
+          <description>Data transmit ready</description>
+          <bitRange>[10:10]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>LOW</name><description>Low</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>HIGH</name><description>High</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXE</name>
+          <description>Receive enable</description>
+          <bitRange>[9:9]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>TXE</name>
+          <description>Transmit enable</description>
+          <bitRange>[8:8]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>LBE</name>
+          <description>Loopback enable</description>
+          <bitRange>[7:7]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>SIRLP</name>
+          <description>SIR low-power IrDA</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Normal</name><description>Normal</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>LowPower</name><description>Low-power</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>SIREN</name>
+          <description>SIR enable</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>UARTEN</name>
+          <description>UART enable</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- IFLS -->
+    <register>
+      <name>IFLS</name>
+      <description>Interrupt FIFO Level Select Register</description>
+      <addressOffset>0x34</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>RXIFLSEL</name>
+          <description>Receive interrupt FIFO level select</description>
+          <bitRange>[5:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>FIFO_1_8_FULL</name><description>Receive FIFO becomes >= 1/8 full</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_1_4_FULL</name><description>Receive FIFO becomes >= 1/4 full</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_1_2_FULL</name><description>Receive FIFO becomes >= 1/2 full</description><value>2</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_3_4_FULL</name><description>Receive FIFO becomes >= 3/4 full</description><value>3</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_7_8_FULL</name><description>Receive FIFO becomes >= 7/8 full</description><value>4</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>TXIFLSEL</name>
+          <description>Transmit interrupt FIFO level select</description>
+          <bitRange>[2:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>FIFO_1_8_FULL</name><description>Receive FIFO becomes >= 1/8 full</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_1_4_FULL</name><description>Receive FIFO becomes >= 1/4 full</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_1_2_FULL</name><description>Receive FIFO becomes >= 1/2 full</description><value>2</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_3_4_FULL</name><description>Receive FIFO becomes >= 3/4 full</description><value>3</value></enumeratedValue>
+            <enumeratedValue><name>FIFO_7_8_FULL</name><description>Receive FIFO becomes >= 7/8 full</description><value>4</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- IMSC -->
+    <register>
+      <name>IMSC</name>
+      <description>Interrupt Mask Set and Clear Register</description>
+      <addressOffset>0x38</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>OEIM</name>
+          <description>Overrun error interrupt mask</description>
+          <bitRange>[10:10]</bitRange>
+        </field>
+        <field>
+          <name>BEIM</name>
+          <description>Break error interrupt mask</description>
+          <bitRange>[9:9]</bitRange>
+        </field>
+        <field>
+          <name>PEIM</name>
+          <description>Parity error interrupt mask</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>FEIM</name>
+          <description>Framing error interrupt mask</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>RTIM</name>
+          <description>Receive timeout interrupt mask</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>TXIM</name>
+          <description>Transmit interrupt mask</description>
+          <bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>RXIM</name>
+          <description>Receive interrupt mask</description>
+          <bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>DSRMIM</name>
+          <description>nUARTDSR modem interrupt mask</description>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>DCDMIM</name>
+          <description>nUARTDCD modem interrupt mask</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>CTSMIM</name>
+          <description>nUARTCTS modem interrupt mask</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>RIMIM</name>
+          <description>nUARTRI modem interrupt mask</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- RIS -->
+    <register>
+      <name>RIS</name>
+      <description>Raw Interrupt Status Register</description>
+      <addressOffset>0x3c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+
+      <fields>
+        <field>
+          <name>OERIS</name>
+          <description>Overrun error interrupt status</description>
+          <bitRange>[10:10]</bitRange>
+        </field>
+        <field>
+          <name>BERIS</name>
+          <description>Break error interrupt status</description>
+          <bitRange>[9:9]</bitRange>
+        </field>
+        <field>
+          <name>PERIS</name>
+          <description>Parity error interrupt status</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>FERIS</name>
+          <description>Framing error interrupt status</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>RTRIS</name>
+          <description>Receive timeout interrupt status</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>TXRIS</name>
+          <description>Transmit interrupt status</description>
+          <bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>RXRIS</name>
+          <description>Receive interrupt status</description>
+          <bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>DSRMRIS</name>
+          <description>nUARTDSR modem interrupt status</description>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>DCDMRIS</name>
+          <description>nUARTDCD modem interrupt status</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>CTSMRIS</name>
+          <description>nUARTCTS modem interrupt status</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>RIRRIS</name>
+          <description>nUARTRI modem interrupt status</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- MIS -->
+    <register>
+      <name>MIS</name>
+      <description>Masked Interrupt Status Register</description>
+      <addressOffset>0x40</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+
+      <fields>
+        <field>
+          <name>OEMIS</name>
+          <description>Overrun error masked interrupt status</description>
+          <bitRange>[10:10]</bitRange>
+        </field>
+        <field>
+          <name>BEMIS</name>
+          <description>Break error masked interrupt status</description>
+          <bitRange>[9:9]</bitRange>
+        </field>
+        <field>
+          <name>PEMIS</name>
+          <description>Parity error masked interrupt status</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>FEMIS</name>
+          <description>Framing error masked interrupt status</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>RTMIS</name>
+          <description>Receive timeout masked interrupt status</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>TXMIS</name>
+          <description>Transmit masked interrupt status</description>
+          <bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>RXMIS</name>
+          <description>Receive masked interrupt status</description>
+          <bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>DSRMMIS</name>
+          <description>nUARTDSR modem masked interrupt status</description>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>DCDMMIS</name>
+          <description>nUARTDCD modem masked interrupt status</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>CTSMMIS</name>
+          <description>nUARTCTS modem masked interrupt status</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>RIMMIS</name>
+          <description>nUARTRI modem masked interrupt status</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ICR -->
+    <register>
+      <name>ICR</name>
+      <description>Interrupt Clear Register</description>
+      <addressOffset>0x44</addressOffset>
+      <size>32</size>
+      <access>write-only</access>
+
+      <fields>
+        <field>
+          <name>OEIC</name>
+          <description>Overrun error interrupt clear</description>
+          <bitRange>[10:10]</bitRange>
+        </field>
+        <field>
+          <name>BEIC</name>
+          <description>Break error interrupt clear</description>
+          <bitRange>[9:9]</bitRange>
+        </field>
+        <field>
+          <name>PEIC</name>
+          <description>Parity error interrupt clear</description>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>FEIC</name>
+          <description>Framing error interrupt clear</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>RTIC</name>
+          <description>Receive timeout interrupt clear</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>TXIC</name>
+          <description>Transmit interrupt clear</description>
+          <bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>RXIC</name>
+          <description>Receive interrupt clear</description>
+          <bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>DSRMIC</name>
+          <description>nUARTDSR modem interrupt clear</description>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>DCDMIC</name>
+          <description>nUARTDCD modem interrupt clear</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>CTSMIC</name>
+          <description>nUARTCTS modem interrupt clear</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>RIMIC</name>
+          <description>nUARTRI modem interrupt clear</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- DMACR -->
+    <register>
+      <name>DMACR</name>
+      <description>DMA Control Regsiter</description>
+      <addressOffset>0x48</addressOffset>
+      <size>32</size>
+      <access>read-write</access>
+
+      <fields>
+        <field>
+          <name>DMAONERR</name>
+          <description>DMA on error</description>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>TXDMAE</name>
+          <description>Transmit DMA enable</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXDMAE</name>
+          <description>Receive DMA enable</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>Enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+
+  </registers>
+</peripheral>
