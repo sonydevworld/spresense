@@ -201,8 +201,10 @@ int gnss_factory_test(int argc, char *argv[])
 
   if (ret == OK)
     {
-      /* Call factory test */
+      /* Wait HW initialization done. */
+      sleep(3);
 
+      /* Call factory test */
       ret = gnss_factory_main(argc, argv);
     }
 
