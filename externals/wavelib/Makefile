@@ -37,4 +37,3 @@ MENUDESC = "wavelet_library"
 
 BIN = libwavelib$(LIBEXT)
 
-include $(SDKDIR)/Makefile.ext
