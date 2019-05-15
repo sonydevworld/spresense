@@ -37,3 +37,11 @@ MENUDESC = "wavelet_library"
 
 BIN = libwavelib$(LIBEXT)
 
+clean:
+	$(call DELFILE, $(BIN))
+	$(call CLEAN)
+
+distclean: clean
+	$(call DELFILE, .context)
+	$(call DELFILE, Make.dep)
+	$(call DELFILE, .depend)
