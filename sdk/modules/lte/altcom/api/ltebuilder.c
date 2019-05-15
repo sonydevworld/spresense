@@ -113,6 +113,9 @@
 
 #define BLOCKSETLIST_NUM (sizeof(g_blk_settings) / sizeof(g_blk_settings[0]))
 
+#define APICMD_TRANSACTION_SIZE_MAX \
+  (sizeof(struct apicmd_cmdhdr_s) + APICMD_PAYLOAD_SIZE_MAX)
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -139,7 +142,18 @@ static struct buffpool_blockset_s g_blk_settings[] =
      512,  6
   },
   {
-    2064,  4
+    2064,  1
+  },
+#ifdef CONFIG_MODEM_ALTMDM_MAX_PACKET_SIZE
+  {
+    CONFIG_MODEM_ALTMDM_MAX_PACKET_SIZE, 1
+  },
+#endif
+  {
+    APICMDGW_RECVBUFF_SIZE_MAX, 1
+  },
+  {
+    APICMD_TRANSACTION_SIZE_MAX, 1
   }
 };
 

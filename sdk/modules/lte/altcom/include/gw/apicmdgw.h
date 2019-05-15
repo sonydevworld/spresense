@@ -46,10 +46,14 @@
 #include "osal.h"
 #include "hal_if.h"
 #include "evtdisp.h"
+#include "apicmd.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#define APICMDGW_RECVBUFF_SIZE_MAX \
+  (APICMD_PAYLOAD_SIZE_MAX + sizeof(struct apicmd_cmdhdr_s))
 
 #define APICMDGW_SEND_ONLY(cmd) \
   (apicmdgw_send(cmd, NULL, 0, NULL, 0))
