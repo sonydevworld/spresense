@@ -91,7 +91,7 @@ int board_emmc_initialize(void)
 
   /* Mount the eMMC deivce */
 
-  ret = mount("/dev/emmc0", "/mnt/vfat", "vfat", 0, NULL);
+  ret = mount("/dev/emmc0", "/mnt/emmc", "vfat", 0, NULL);
   if (ret < 0)
     {
       ferr("ERROR: Failed to mount the eMMC. %d\n", errno);
