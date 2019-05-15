@@ -1108,7 +1108,7 @@ extern "C" int recorder_main(int argc, char *argv[])
     }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
-  /* Enable pre process. */
+  /* Enable preprocess. */
 
   if (!app_en_preprocess())
     {

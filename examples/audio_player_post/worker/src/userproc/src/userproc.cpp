@@ -42,7 +42,7 @@
 /*--------------------------------------------------------------------*/
 void UserProc::init(InitParam *param)
 {
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
@@ -85,7 +85,7 @@ void UserProc::exec(ExecParam *param)
       }
   }
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
@@ -93,7 +93,7 @@ void UserProc::flush(FlushParam *param)
 {
   param->flush_cmd.output.size = 0;
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
@@ -101,6 +101,6 @@ void UserProc::set(SetParam *param)
 {
   m_toggle = param->postswitch;
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 

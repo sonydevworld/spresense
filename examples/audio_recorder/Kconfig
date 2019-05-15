@@ -25,7 +25,7 @@ config EXAMPLES_AUDIO_RECORDER_STACKSIZE
 	default 2048
 
 config EXAMPLES_AUDIO_RECORDER_USEPREPROC
-	bool "Use pre process"
+	bool "Use preprocess"
 	default n
 
 endif

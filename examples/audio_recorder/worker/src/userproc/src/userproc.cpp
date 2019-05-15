@@ -42,12 +42,16 @@
 /*--------------------------------------------------------------------*/
 void UserProc::init(InitParam *param)
 {
-  param->result.result_code = PostprocCommand::ExecOk;
+  /* Init signal process. */
+
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
 void UserProc::exec(ExecParam *param)
 {
+  /* Execute signal process to input audio data. */
+
   memcpy(param->exec_cmd.output.addr,
          param->exec_cmd.input.addr,
          param->exec_cmd.input.size);
@@ -63,26 +67,32 @@ void UserProc::exec(ExecParam *param)
                           param->exec_cmd.output.size);
     }
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
 void UserProc::flush(FlushParam *param)
 {
+  /* Flush signal process. */
+
   param->flush_cmd.output.size = 
     m_filter_ins.flush((int16_t *)param->flush_cmd.output.addr,
                        param->flush_cmd.output.size);
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
 void UserProc::set(SetParam *param)
 {
+  /* Set signal process parameters.
+   * Enable/Disable and Coef.
+   */
+
   m_enable = param->enable;
 
   m_filter_ins.set(param->coef);
 
-  param->result.result_code = PostprocCommand::ExecOk;
+  param->result.result_code = CustomprocCommand::ExecOk;
 }
 

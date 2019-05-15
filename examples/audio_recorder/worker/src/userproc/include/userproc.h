@@ -38,11 +38,11 @@
 
 #include <string.h>
 
-#include "postproc_dsp_userproc_if.h"
+#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
 #include "userproc_command.h"
 #include "rcfilter.h"
 
-class UserProc : public PostprocDspUserProcIf
+class UserProc : public CustomprocDspUserProcIf
 {
 public:
 
@@ -50,10 +50,10 @@ public:
     m_enable(true)
   {}
 
-  virtual void init(PostprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
-  virtual void exec(PostprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
-  virtual void flush(PostprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
-  virtual void set(PostprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
+  virtual void init(CustomprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
+  virtual void exec(CustomprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
+  virtual void flush(CustomprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
+  virtual void set(CustomprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
 
 private:
 

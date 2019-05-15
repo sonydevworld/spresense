@@ -47,10 +47,9 @@ extern "C"
 #include "asmp.h"
 }
 
-#include "dsp_audio_version.h"
 #include "userproc.h"
-#include "postproc_dsp_ctrl.h"
-#include "postproc_command_base.h"
+#include <audio/dsp_framework/customproc_dsp_ctrl.h>
+#include <audio/dsp_framework/customproc_command_base.h>
 
 #define KEY_MQ 2
 #define KEY_SHM   1
@@ -76,7 +75,7 @@ static void reply_to_spu(void *addr)
 
   /* Create message ID */
 
-  msg_id = CRE_MSGID(PostprocCommand::FilterMode, COMMAND_DATATYPE_ADDRESS);
+  msg_id = CRE_MSGID(CustomprocCommand::FilterMode, COMMAND_DATATYPE_ADDRESS);
 
   /* Message data is address of APU command */
 
@@ -98,7 +97,7 @@ static void reply_to_spu(void *addr)
 int main()
 {
   UserProc userproc_ins;
-  PostprocDspCtrl ctrl_ins(&userproc_ins);
+  CustomprocDspCtrl ctrl_ins(&userproc_ins);
 
   int ret = 0;
 
@@ -115,9 +114,9 @@ int main()
 
   uint8_t msg_id = 0;
 
-  msg_id = CRE_MSGID(PostprocCommand::CommonMode, COMMAND_DATATYPE_VALUE);
+  msg_id = CRE_MSGID(CustomprocCommand::CommonMode, COMMAND_DATATYPE_VALUE);
 
-  ret = mpmq_send(&s_mq, msg_id, DSP_POSTFLTR_VERSION);
+  ret = mpmq_send(&s_mq, msg_id, ret);
 
   /* Excution loop */
 
@@ -139,7 +138,7 @@ int main()
 
       if (type == COMMAND_DATATYPE_ADDRESS)
         {
-          ctrl_ins.parse(reinterpret_cast<PostprocCommand::CmdBase *>(msgdata));
+          ctrl_ins.parse(reinterpret_cast<CustomprocCommand::CmdBase *>(msgdata));
         }
       else
         {

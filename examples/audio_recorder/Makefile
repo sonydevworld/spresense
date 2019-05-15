@@ -60,13 +60,11 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 ifeq ($(WINTOOL),y)
 CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)/components/postproc/dsp_framework}"
-CXXFLAGS += -I "${shell cygpath -w $worker/src/userproc/include}"
+CXXFLAGS += -I "${shell cygpath -w worker/src/userproc/include}"
 endif
 else
 CXXFLAGS += -I $(AUDIODIR)
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC),y)
-CXXFLAGS += -I $(AUDIODIR)/components/postproc/dsp_framework
 CXXFLAGS += -I worker/src/userproc/include
 endif
 endif

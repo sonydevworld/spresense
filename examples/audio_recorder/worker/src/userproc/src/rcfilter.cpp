@@ -48,6 +48,8 @@ bool RCfilter::init(void)
 /*--------------------------------------------------------------------*/
 uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
 {
+  /* Exec RC filter. */
+
   int16_t *ls_i = in;
   int16_t *rs_i = ls_i + 1;
   int16_t *ls_o = out;
@@ -90,6 +92,8 @@ uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
 /*--------------------------------------------------------------------*/
 bool RCfilter::set(uint32_t coef)
 {
+  /* Set RC filter coef. */
+
   m_coef = static_cast<int16_t>(coef);
 
   return true;

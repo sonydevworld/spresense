@@ -50,25 +50,19 @@ LDLIBS += -lasmpw -lc
 
 BIN = PREPROC
 
-VPATH = $(SDKDIR)/modules/audio/components/postproc/dsp_framework
+VPATH = $(SDKDIR)/modules/audio/components/customproc/dsp_framework
 VPATH += userproc/src
 
-CXXSRCS = postproc_dsp_ctrl.cpp main.cpp
+CXXSRCS = customproc_dsp_ctrl.cpp main.cpp
 CXXSRCS += userproc.cpp rcfilter.cpp
 
 CXXELFFLAGS += -Os
 ifeq ($(WINTOOL),y)
 CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
 CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
-CXXELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)audio$(DELIM)components$(DELIM)postproc$(DELIM)dsp_framework)"
-CXXELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
-CXXELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)audio$(DELIM)include)"
 else
 CXXELFFLAGS += -Iuserproc/include
 CXXELFFLAGS += -I$(APPDIR)
-CXXELFFLAGS += -I$(SDKDIR)/modules/audio/components/postproc/dsp_framework
-CXXELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
-CXXELFFLAGS += -I$(SDKDIR)/modules/audio/include
 endif
 
 CXXELFFLAGS += -D_POSIX

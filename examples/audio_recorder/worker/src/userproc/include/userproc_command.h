@@ -37,9 +37,9 @@
 #define __USERPROC_COMMAND_H__
 
 #include <stdint.h>
-#include "postproc_command_base.h"
+#include <audio/dsp_framework/customproc_command_base.h>
 
-struct InitParam : public PostprocCommand::CmdBase
+struct InitParam : public CustomprocCommand::CmdBase
 {
   uint32_t reserve0;
   uint32_t reserve1;
@@ -47,7 +47,7 @@ struct InitParam : public PostprocCommand::CmdBase
   uint32_t reserve3;
 };
 
-struct ExecParam : public PostprocCommand::CmdBase
+struct ExecParam : public CustomprocCommand::CmdBase
 {
   uint32_t reserve0;
   uint32_t reserve1;
@@ -55,7 +55,7 @@ struct ExecParam : public PostprocCommand::CmdBase
   uint32_t reserve3;
 };
 
-struct FlushParam : public PostprocCommand::CmdBase
+struct FlushParam : public CustomprocCommand::CmdBase
 {
   uint32_t reserve0;
   uint32_t reserve1;
@@ -63,7 +63,7 @@ struct FlushParam : public PostprocCommand::CmdBase
   uint32_t reserve3;
 };
 
-struct SetParam : public PostprocCommand::CmdBase
+struct SetParam : public CustomprocCommand::CmdBase
 {
   uint32_t enable;
   uint32_t coef;
