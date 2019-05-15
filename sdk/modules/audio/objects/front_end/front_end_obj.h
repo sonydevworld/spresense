@@ -49,8 +49,8 @@
 #include "audio_state.h"
 
 #include "components/capture/capture_component.h"
-#include "components/postproc/usercustom_component.h"
-#include "components/postproc/thruproc_component.h"
+#include "components/customproc/usercustom_component.h"
+#include "components/customproc/thruproc_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 

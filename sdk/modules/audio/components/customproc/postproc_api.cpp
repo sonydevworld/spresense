@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/postproc_api.cpp
+ * modules/audio/components/customproc/postproc_api.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *

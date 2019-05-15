@@ -1,5 +1,5 @@
 ############################################################################
-# modules/audio/components/postproc/Make.defs
+# modules/audio/components/customproc/Make.defs
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -36,7 +36,7 @@
 ifeq ($(CONFIG_AUDIOUTILS_POSTPROC),y)
 
 CXXSRCS += usercustom_component.cpp thruproc_component.cpp postproc_api.cpp
-VPATH   += components/postproc
-DEPPATH += --dep-path components/postproc
+VPATH   += components/customproc
+DEPPATH += --dep-path components/customproc
 
 endif

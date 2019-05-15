@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/usercustom_component.cpp
+ * modules/audio/components/customproc/usercustom_component.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -69,7 +69,7 @@ static void cbRcvDspRes(void *p_response, void *p_instance)
 
   switch (p_param->process_mode)
     {
-      case PostprocCommand::CommonMode:
+      case CustomprocCommand::CommonMode:
         {
           err_t er = MsgLib::send<uint32_t>
                     (((UserCustomComponent*)p_instance)->get_apu_mid(),
@@ -85,7 +85,7 @@ static void cbRcvDspRes(void *p_response, void *p_instance)
         }
         break;
 
-      case PostprocCommand::FilterMode:
+      case CustomprocCommand::FilterMode:
         AS_postproc_recv_apu(p_response, p_instance);
         break;
 
@@ -105,8 +105,8 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 
   /* Send command to PostprocDSP, Contents in packet are "don't care". */
 
-  PostprocCommand::CmdBase *p_cmd =
-    static_cast<PostprocCommand::CmdBase *>(allocApuBufs());
+  CustomprocCommand::CmdBase *p_cmd =
+    static_cast<CustomprocCommand::CmdBase *>(allocApuBufs());
 
   if (p_cmd == NULL)
     {
@@ -119,8 +119,8 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = PostprocCommand::Init; 
-  p_cmd->result.result_code = PostprocCommand::ExecError;
+  p_cmd->header.cmd_type    = CustomprocCommand::Init; 
+  p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
 
@@ -130,7 +130,7 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 
   /* Wait for init completion, and check result */
 
-  if (PostprocCommand::ExecOk != dsp_init_check(m_apu_mid, &dsp_inf))
+  if (CustomprocCommand::ExecOk != dsp_init_check(m_apu_mid, &dsp_inf))
     {
       return AS_ECODE_DSP_SET_ERROR;
     }
@@ -150,10 +150,10 @@ bool UserCustomComponent::exec(const ExecCustomProcParam& param)
 
   /* Set fixed parameter */
 
-  PostprocCommand::CmdBase *cmd
-    = reinterpret_cast<PostprocCommand::CmdBase *>(p_cmd);
+  CustomprocCommand::CmdBase *cmd
+    = reinterpret_cast<CustomprocCommand::CmdBase *>(p_cmd);
 
-  cmd->header.cmd_type      = PostprocCommand::Exec;
+  cmd->header.cmd_type      = CustomprocCommand::Exec;
   cmd->exec_cmd.input.addr  = param.input.mh.getPa();
   cmd->exec_cmd.input.size  = param.input.size;
   cmd->exec_cmd.output.addr = param.output_mh.getPa();
@@ -178,10 +178,10 @@ bool UserCustomComponent::flush(const FlushCustomProcParam& param)
 
   /* Set fixed parameter */
 
-  PostprocCommand::CmdBase *cmd
-    = reinterpret_cast<PostprocCommand::CmdBase *>(p_cmd);
+  CustomprocCommand::CmdBase *cmd
+    = reinterpret_cast<CustomprocCommand::CmdBase *>(p_cmd);
 
-  cmd->header.cmd_type       = PostprocCommand::Flush;
+  cmd->header.cmd_type       = CustomprocCommand::Flush;
   cmd->flush_cmd.output.addr = param.output_mh.getPa();
   cmd->flush_cmd.output.size = param.output_mh.getSize();;
 
@@ -195,8 +195,8 @@ bool UserCustomComponent::set(const SetCustomProcParam& param)
 {
   POSTPROC_DBG("SET:\n");
 
-  PostprocCommand::CmdBase *p_cmd =
-    static_cast<PostprocCommand::CmdBase *>(allocApuBufs());
+  CustomprocCommand::CmdBase *p_cmd =
+    static_cast<CustomprocCommand::CmdBase *>(allocApuBufs());
 
   if (p_cmd == NULL)
     {
@@ -209,8 +209,8 @@ bool UserCustomComponent::set(const SetCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = PostprocCommand::Set; 
-  p_cmd->result.result_code = PostprocCommand::ExecError;
+  p_cmd->header.cmd_type    = CustomprocCommand::Set; 
+  p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
 
@@ -256,15 +256,15 @@ bool UserCustomComponent::recv_apu(void *p_response)
 
   /* Get packet (APU command) */
 
-  PostprocCommand::CmdBase *packet =
-    static_cast<PostprocCommand::CmdBase *>(p_param->data.pParam);
+  CustomprocCommand::CmdBase *packet =
+    static_cast<CustomprocCommand::CmdBase *>(p_param->data.pParam);
 
-  if (PostprocCommand::ExecOk != packet->result.result_code)
+  if (CustomprocCommand::ExecOk != packet->result.result_code)
     {
       POSTPROC_WARN(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
 
-  if (PostprocCommand::Init == packet->header.cmd_type)
+  if (CustomprocCommand::Init == packet->header.cmd_type)
     {
       uint32_t dmy = 0;
       dsp_init_complete(m_apu_mid, packet->result.result_code, &dmy);
@@ -277,19 +277,19 @@ bool UserCustomComponent::recv_apu(void *p_response)
 
   switch (packet->header.cmd_type)
     {
-      case PostprocCommand::Init:
+      case CustomprocCommand::Init:
         cbpram.event_type = CustomProcInit;
         break;
 
-      case PostprocCommand::Exec:
+      case CustomprocCommand::Exec:
         cbpram.event_type = CustomProcExec;
         break;
 
-      case PostprocCommand::Flush:
+      case CustomprocCommand::Flush:
         cbpram.event_type = CustomProcFlush;
         break;
 
-      case PostprocCommand::Set:
+      case CustomprocCommand::Set:
         cbpram.event_type = CustomProcSet;
         break;
 
@@ -299,7 +299,7 @@ bool UserCustomComponent::recv_apu(void *p_response)
     }
 
   cbpram.result =
-    (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
+    (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
   return m_callback(&cbpram, m_p_requester);
 }
@@ -307,21 +307,21 @@ bool UserCustomComponent::recv_apu(void *p_response)
 /*--------------------------------------------------------------------*/
 bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
 {
-  PostprocCommand::CmdBase *packet =
-    static_cast<PostprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
+  CustomprocCommand::CmdBase *packet =
+    static_cast<CustomprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
   
   /* Set output pcm parameters (even if is not there) */
 
   cmplt->output          = m_apu_req_mh_que.top().input;
   cmplt->output.mh       = m_apu_req_mh_que.top().output_mh;
-  cmplt->output.size     = (packet->header.cmd_type == PostprocCommand::Exec) ?
+  cmplt->output.size     = (packet->header.cmd_type == CustomprocCommand::Exec) ?
                              packet->exec_cmd.output.size :
                              packet->flush_cmd.output.size;
-  cmplt->output.is_valid = (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
+  cmplt->output.is_valid = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
   /* Set function type and result */
 
-  cmplt->result = (packet->result.result_code == PostprocCommand::ExecOk) ? true : false;
+  cmplt->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
   return freeApuCmdBuf();
 }

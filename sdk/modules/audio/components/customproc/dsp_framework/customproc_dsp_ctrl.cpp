@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postfilter/dsp_framework/dsp_audio_version.h
+ * modules/audio/components/postfilter/dsp_framework/customproc_dsp_ctrl.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,40 +33,50 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
-#define __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H
+#include <audio/dsp_framework/customproc_dsp_ctrl.h>
 
-/****************************************************************************
- * Included Files
- ****************************************************************************/
+/*--------------------------------------------------------------------*/
+CustomprocDspCtrl::CtrlProc CustomprocDspCtrl::CtrlFuncTbl[CustomprocCommand::CmdTypeNum] =
+{
+  &CustomprocDspCtrl::init,
+  &CustomprocDspCtrl::exec,
+  &CustomprocDspCtrl::flush,
+  &CustomprocDspCtrl::set,
+};
 
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::parse(CustomprocCommand::CmdBase *cmd)
+{
+  (this->*CtrlFuncTbl[cmd->header.cmd_type])(cmd);
+}
 
-/* Version rule:
- * (change library).(change of DSP interface).(change of internal processing)
- */
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::init(CustomprocCommand::CmdBase *cmd)
+{
+  m_p_userproc->init(cmd);
+}
 
-/* Postfilter Version. */
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::exec(CustomprocCommand::CmdBase *cmd)
+{
+  m_p_userproc->exec(cmd);
+}
 
-#define DSP_POSTFLTR_VERSION  0x010101    /* 01.01.01 */
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::flush(CustomprocCommand::CmdBase *cmd)
+{
+  m_p_userproc->flush(cmd);
+}
 
-/****************************************************************************
- * Public Types
- ****************************************************************************/
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::set(CustomprocCommand::CmdBase *cmd)
+{
+  m_p_userproc->set(cmd);
+}
 
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-/****************************************************************************
- * Inline Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-#endif /* __MODULES_AUDIO_DSP_WORKER_DSP_AUDIO_VERSION_H */
+/*--------------------------------------------------------------------*/
+void CustomprocDspCtrl::illegal(CustomprocCommand::CmdBase *cmd)
+{
+  cmd->result.result_code = CustomprocCommand::ExecError;
+}
 

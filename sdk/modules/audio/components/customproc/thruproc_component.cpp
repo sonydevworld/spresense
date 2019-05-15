@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/thruproc_component.cpp
+ * modules/audio/components/customproc/thruproc_component.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/component/postproc/dsp_framework/postproc_command_base.h
+ * modules/include/audio/dsp_framework/customproc_command_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,12 +33,12 @@
  *
  ****************************************************************************/
 
-#ifndef __POSTPROC_COMMAND_BASE_H__
-#define __POSTPROC_COMMAND_BASE_H__
+#ifndef __CUSTOMPROC_COMMAND_BASE_H__
+#define __CUSTOMPROC_COMMAND_BASE_H__
 
 #include <stdint.h>
 
-namespace PostprocCommand
+namespace CustomprocCommand
 {
   enum command_type
   {
@@ -167,5 +167,5 @@ namespace PostprocCommand
 
 };
 
-#endif /* __POSTPROC_COMMAND_BASE_H__ */
+#endif /* __CUSTOMPROC_COMMAND_BASE_H__ */
 

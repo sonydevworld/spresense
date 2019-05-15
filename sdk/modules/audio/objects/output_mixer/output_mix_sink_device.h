@@ -50,7 +50,7 @@
 #include "wien2_internal_packet.h"
 #include "wien2_common_defs.h"
 #include "components/renderer/renderer_component.h"
-#include "components/postproc/postproc_api.h"
+#include "components/customproc/postproc_api.h"
 #include "objects/stream_parser/ram_lpcm_data_source.h"
 #include "objects/stream_parser/mp3_stream_mng.h"
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/dsp_framework/postproc_dsp_ctrl.h
+ * modules/include/audio/dsp_framework/customproc_dsp_userproc_if.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,36 +33,22 @@
  *
  ****************************************************************************/
 
-#ifndef __POSTPROC_DSP_CTRL_H__
-#define __POSTPROC_DSP_CTRL_H__
+#ifndef __CUSTOMPROC_DSP_USERPROC_IF_H__
+#define __CUSTOMPROC_DSP_USERPROC_IF_H__
 
-#include <string.h>
+#include <audio/dsp_framework/customproc_command_base.h>
 
-#include "postproc_command_base.h"
-#include "postproc_dsp_userproc_if.h"
-
-class PostprocDspCtrl
+class CustomprocDspUserProcIf
 {
 public:
-  void parse(PostprocCommand::CmdBase *cmd);
 
-  PostprocDspCtrl(PostprocDspUserProcIf *p_userproc_ins)
-    : m_p_userproc(p_userproc_ins)
-  {}
+  /* Pure abstract functions to be overided by inheritor */
 
-private:
-
-  PostprocDspUserProcIf *m_p_userproc;
-
-  typedef void (PostprocDspCtrl::*CtrlProc)(PostprocCommand::CmdBase *cmd);
-  static CtrlProc CtrlFuncTbl[PostprocCommand::CmdTypeNum];
-
-  void init(PostprocCommand::CmdBase *cmd);
-  void exec(PostprocCommand::CmdBase *cmd);
-  void flush(PostprocCommand::CmdBase *cmd);
-  void set(PostprocCommand::CmdBase *cmd);
-  void illegal(PostprocCommand::CmdBase *cmd);
+  virtual void init(CustomprocCommand::CmdBase *cmd) = 0;
+  virtual void exec(CustomprocCommand::CmdBase *cmd) = 0;
+  virtual void flush(CustomprocCommand::CmdBase *cmd) = 0;
+  virtual void set(CustomprocCommand::CmdBase *cmd) = 0;
 };
 
-#endif /* __POSTPROC_DSP_CTRL_H__ */
+#endif /* __USERCUSTOM_DSP_USERPROC_IF_H__ */
 

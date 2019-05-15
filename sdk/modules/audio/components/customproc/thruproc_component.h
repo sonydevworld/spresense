@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/dsp_framework/postproc_dsp_userproc_if.h
+ * modules/audio/components/customproc/thruproc_component.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,22 +33,42 @@
  *
  ****************************************************************************/
 
-#ifndef __POSTPROC_DSP_USERPROC_IF_H__
-#define __POSTPROC_DSP_USERPROC_IF_H__
+#ifndef _THRUPROC_COMPONENT_H_
+#define _THRUPROC_COMPONENT_H_
 
-#include "postproc_command_base.h"
+#include "audio/audio_high_level_api.h"
+#include "memutils/s_stl/queue.h"
+#include "customproc_base.h"
 
-class PostprocDspUserProcIf
+class ThruProcComponent : public CustomProcBase
 {
 public:
+  ThruProcComponent() {}
+  ~ThruProcComponent() {}
 
-  /* Pure abstract functions to be overided by inheritor */
+  virtual uint32_t init(const InitCustomProcParam& param);
+  virtual bool exec(const ExecCustomProcParam& param);
+  virtual bool flush(const FlushCustomProcParam& param);
+  virtual bool set(const SetCustomProcParam& param);
+  virtual bool recv_done(CustomProcCmpltParam *cmplt);
+  virtual bool recv_done(void);
+  virtual uint32_t activate(CustomProcCallback callback,
+                            const char *image_name,
+                            void *p_requester,
+                            uint32_t *dsp_inf);
+  virtual bool deactivate();
 
-  virtual void init(PostprocCommand::CmdBase *cmd) = 0;
-  virtual void exec(PostprocCommand::CmdBase *cmd) = 0;
-  virtual void flush(PostprocCommand::CmdBase *cmd) = 0;
-  virtual void set(PostprocCommand::CmdBase *cmd) = 0;
+private:
+  #define REQ_QUEUE_SIZE 7 
+
+  struct ApuReqData
+  {
+    AsPcmDataParam       pcm;
+  };
+
+  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
+  ReqQue m_req_que;
 };
 
-#endif /* __POSTPROC_DSP_USERPROC_IF_H__ */
+#endif /* _THRUPROC_COMPONENT_H_ */
 

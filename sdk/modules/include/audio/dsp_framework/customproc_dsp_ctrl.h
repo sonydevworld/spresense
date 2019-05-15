@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postfilter/dsp_framework/postproc_dsp_ctrl.cpp
+ * modules/include/audio/dsp_framework/customproc_dsp_ctrl.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,50 +33,36 @@
  *
  ****************************************************************************/
 
-#include "postproc_dsp_ctrl.h"
+#ifndef __CUSTOMPROC_DSP_CTRL_H__
+#define __CUSTOMPROC_DSP_CTRL_H__
 
-/*--------------------------------------------------------------------*/
-PostprocDspCtrl::CtrlProc PostprocDspCtrl::CtrlFuncTbl[PostprocCommand::CmdTypeNum] =
+#include <string.h>
+
+#include <audio/dsp_framework/customproc_command_base.h>
+#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
+
+class CustomprocDspCtrl
 {
-  &PostprocDspCtrl::init,
-  &PostprocDspCtrl::exec,
-  &PostprocDspCtrl::flush,
-  &PostprocDspCtrl::set,
+public:
+  void parse(CustomprocCommand::CmdBase *cmd);
+
+  CustomprocDspCtrl(CustomprocDspUserProcIf *p_userproc_ins)
+    : m_p_userproc(p_userproc_ins)
+  {}
+
+private:
+
+  CustomprocDspUserProcIf *m_p_userproc;
+
+  typedef void (CustomprocDspCtrl::*CtrlProc)(CustomprocCommand::CmdBase *cmd);
+  static CtrlProc CtrlFuncTbl[CustomprocCommand::CmdTypeNum];
+
+  void init(CustomprocCommand::CmdBase *cmd);
+  void exec(CustomprocCommand::CmdBase *cmd);
+  void flush(CustomprocCommand::CmdBase *cmd);
+  void set(CustomprocCommand::CmdBase *cmd);
+  void illegal(CustomprocCommand::CmdBase *cmd);
 };
 
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::parse(PostprocCommand::CmdBase *cmd)
-{
-  (this->*CtrlFuncTbl[cmd->header.cmd_type])(cmd);
-}
-
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::init(PostprocCommand::CmdBase *cmd)
-{
-  m_p_userproc->init(cmd);
-}
-
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::exec(PostprocCommand::CmdBase *cmd)
-{
-  m_p_userproc->exec(cmd);
-}
-
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::flush(PostprocCommand::CmdBase *cmd)
-{
-  m_p_userproc->flush(cmd);
-}
-
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::set(PostprocCommand::CmdBase *cmd)
-{
-  m_p_userproc->set(cmd);
-}
-
-/*--------------------------------------------------------------------*/
-void PostprocDspCtrl::illegal(PostprocCommand::CmdBase *cmd)
-{
-  cmd->result.result_code = PostprocCommand::ExecError;
-}
+#endif /* __USERCUSTOM_DSP_CTRL_H__ */
 

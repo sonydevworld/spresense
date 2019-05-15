@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/postproc/customproc_base.h
+ * modules/audio/components/customproc/customproc_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -36,7 +36,7 @@
 #ifndef _CUSTOMPROC_BASE_H_
 #define _CUSTOMPROC_BASE_H_
 
-#include "dsp_framework/postproc_command_base.h"
+#include <audio/dsp_framework/customproc_command_base.h>
 #include "audio/audio_common_defs.h"
 #include "memutils/os_utils/chateau_osal.h"
 #include "memutils/memory_manager/MemHandle.h"
