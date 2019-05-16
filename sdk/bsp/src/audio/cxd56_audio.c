@@ -1339,3 +1339,18 @@ cxd56_audio_sp_drv_t cxd56_audio_get_spdriver(void)
 {
   return cxd56_audio_config_get_spdriver();
 }
+
+/*--------------------------------------------------------------------------*/
+CXD56_AUDIO_ECODE cxd56_audio_set_micmap(uint32_t map)
+{
+  cxd56_audio_config_set_micmap(map);
+
+  return CXD56_AUDIO_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t cxd56_audio_get_micmap(void)
+{
+  return cxd56_audio_config_get_micmap();
+}
+

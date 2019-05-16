@@ -85,7 +85,8 @@ static void convert_datatype(dnn_runtime_t * rt)
     {
       /* convert the image data in-place to 16-bit fixed-point values */
       int16_t *int16_buffer = (int16_t *) s_img_buffer;
-      for (uint16_t px = 0u; px < MNIST_SIZE_PX; px++)
+      uint16_t px;
+      for (px = 0u; px < MNIST_SIZE_PX; px++)
         {
           int16_buffer[px] = (int16_t) (coefficient * s_img_buffer[px]);
         }
@@ -94,7 +95,8 @@ static void convert_datatype(dnn_runtime_t * rt)
     {
       /* convert the image data in-place to 8-bit fixed-point values */
       int8_t *int8_buffer = (int8_t *) s_img_buffer;
-      for (uint16_t px = 0u; px < MNIST_SIZE_PX; px++)
+      uint16_t px;
+      for (px = 0u; px < MNIST_SIZE_PX; px++)
         {
           int8_buffer[px] = (int8_t) (coefficient * s_img_buffer[px]);
         }

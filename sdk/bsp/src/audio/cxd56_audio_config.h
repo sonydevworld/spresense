@@ -377,5 +377,7 @@ void cxd56_audio_config_set_spdriver(cxd56_audio_sp_drv_t sp_driver);
 cxd56_audio_sp_drv_t cxd56_audio_config_get_spdriver(void);
 void cxd56_audio_config_set_clkmode(cxd56_audio_clkmode_t mode);
 cxd56_audio_clkmode_t cxd56_audio_config_get_clkmode(void);
+void cxd56_audio_config_set_micmap(uint32_t map);
+uint32_t cxd56_audio_config_get_micmap(void);
 
 #endif /* __BSP_SRC_AUDIO_CXD56_AUDIO_CONFIG_H */

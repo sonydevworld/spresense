@@ -34,7 +34,7 @@
  ****************************************************************************/
 
 #include <string.h>
-#include "wav_containerformat.h"
+#include "audio/utilities/wav_containerformat.h"
 
 /*--------------------------------------------------------------------------*/
 bool WavContainerFormat::init(uint16_t format_id,

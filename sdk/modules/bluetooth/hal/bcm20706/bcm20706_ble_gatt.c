@@ -238,10 +238,10 @@ static int bcm20706_ble_add_characteristic(uint16_t serv_handle, struct ble_gatt
         return BT_FAIL;
     }
 
-  char_value.attrValue = ble_gatt_char->value.data;
-  char_value.valueLen = ble_gatt_char->value.length;
-  char_value.attrPerm.readPerm  = BLE_SEC_MODE1LV2_NO_MITM_ENC;
-  char_value.attrPerm.writePerm = BLE_SEC_MODE1LV2_NO_MITM_ENC;
+  char_value.attrValue          = ble_gatt_char->value.data;
+  char_value.valueLen           = ble_gatt_char->value.length;
+  char_value.attrPerm.readPerm  = ble_gatt_char->value.attrPerm.readPerm;
+  char_value.attrPerm.writePerm = ble_gatt_char->value.attrPerm.writePerm;
 
   /* Add characteristic to cypress HAL */
 

@@ -332,6 +332,10 @@
 
 #define AUDCMD_SETSPDRVMODE     (AUDCMD_CATEGORY_BASEBAND | 0x0d)
 
+/*! \brief Command Code: SetMicMap */
+
+#define AUDCMD_SETMICMAP        (AUDCMD_CATEGORY_BASEBAND | 0x0e)
+
 /** @} */
 
 /** @name Baseband Result code */
@@ -348,6 +352,10 @@
 /*! \brief Result Code: InitMicGainCmplt */
 
 #define AUDRLT_INITMICGAINCMPLT         AUDCMD_INITMICGAIN
+
+/*! \brief Result Code: InitMicGainCmplt */
+
+#define AUDRLT_SETMICMAPCMPLT           AUDCMD_SETMICMAP
 
 /*! \brief Result Code: InitI2SCmplt (__not supported__) */
 

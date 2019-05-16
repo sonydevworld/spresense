@@ -37,10 +37,15 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/arch.h>
 #include <sdk/config.h>
-#include <arch/chip/cxd56_audio.h>
+
+#include <nuttx/arch.h>
+#include <sys/types.h>
+
 #include <math.h>
+
+#include <arch/chip/cxd56_audio.h>
+
 #include "audio/cxd56_audio_config.h"
 #include "audio/cxd56_audio_ac_reg.h"
 
