@@ -206,9 +206,6 @@ function _print_current_spresense_environment() {
 # Public parameter definition                                              #
 ############################################################################
 
-# Set repository root to SPRESENSE_SDK
-export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
-
 ############################################################################
 # Environment setup                                                        #
 ############################################################################
@@ -236,8 +233,14 @@ if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/Application.mk" ]; then
     echo "         $ spresense_create_apps_root ${SPRESENSE_HOME}"
 fi
 
+# Set repository root to SPRESENSE_SDK
+export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
+
 # Print current variable
 _print_current_spresense_environment
+
+# Save current variable
+_save_spresense_environment
 
 #
 # TAB completion
