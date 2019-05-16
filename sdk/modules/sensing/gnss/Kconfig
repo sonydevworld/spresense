@@ -30,7 +30,7 @@ config CXD56_GNSS_BACKUP_FILENAME
 
 config CXD56_GNSS_CEP_FILENAME
 	string "GNSS CEP file name"
-	default "/mnt/vfat/gnss_cep.bin"
+	default "/mnt/sd0/gnss_cep.bin"
 	---help---
 		Specify the path and file name of cep data.
 
