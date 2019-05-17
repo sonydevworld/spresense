@@ -180,7 +180,7 @@ int mbedtls_net_dtls_connect(mbedtls_net_context *ctx, const char *host, const c
         sin.sin_port = altcom_ntohs(source_port);
         sin.sin_family = ALTCOM_AF_INET;
         sin.sin_addr.s_addr = altcom_inet_addr("0.0.0.0");
-        if( altcom_bind( ctx->fd, (struct altcom_sockaddr *)&sin, sizeof(struct altcom_sockaddr_in) ) != 0 )
+        if( altcom_bind( ctx->alt_fd, (struct altcom_sockaddr *)&sin, sizeof(struct altcom_sockaddr_in) ) != 0 )
         {
             altcom_close( ctx->alt_fd );
             ret = MBEDTLS_ERR_NET_BIND_FAILED;
