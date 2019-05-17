@@ -2632,6 +2632,20 @@ int mbedtls_ssl_get_srtp_profile( mbedtls_ssl_context *ssl);
  * \note           use_srtp extension needs to be enabled for ClientHello and ServerHello.
  */
 int mbedtls_ssl_export_srtp_keys( mbedtls_ssl_context *ssl, uint8_t* key_buffer, uint16_t key_buffer_size );
+
+/**
+ * \brief          Setting information for TURN
+ *
+ * \param ctx           Context pointer
+ * \param turn_channel  Channel ID for sending to TURN server.
+ * \param peer_addr     Peer address for sending to TURN server.
+ * \param peer_port     Peer port for sending to TURN server.
+ *
+ * \return         0 on success,
+ *                 MBEDTLS_ERR_SSL_BAD_INPUT_DATA if used on client,
+ *
+ */
+int mbedtls_ssl_set_turn( mbedtls_ssl_context *ssl, uint16_t turn_channel, uint32_t peer_addr, uint16_t peer_port );
 #endif
 
 #ifdef __cplusplus
