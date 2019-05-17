@@ -92,6 +92,17 @@ SECTIONS
 
 	.bss : {			/* BSS				*/
 		_sbss = ABSOLUTE(.);
+		/* MicroEJ symbol for partial link */
+		_smicroej = ABSOLUTE(.);
+		*(ICETEA_HEAP)
+		. = ALIGN(4);
+		*(_java_heap)
+		. = ALIGN(4);
+		*(_java_immortals)
+		. = ALIGN(4);
+		_emicroej = ABSOLUTE(.);
+        /* End of MicroEJ symbol for partial link */
+
 		*(.bss .bss.*)
 		*(.gnu.linkonce.b.*)
 		*(COMMON)
