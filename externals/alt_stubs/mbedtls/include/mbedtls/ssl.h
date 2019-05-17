@@ -188,6 +188,16 @@
 #define MBEDTLS_SSL_CERT_REQ_CA_LIST_ENABLED       1
 #define MBEDTLS_SSL_CERT_REQ_CA_LIST_DISABLED      0
 
+/* SRTP protection profiles */
+#define MBEDTLS_SSL_SRTP_AES128_CM_HMAC_SHA1_80     0x01
+#define MBEDTLS_SSL_SRTP_AES128_CM_HMAC_SHA1_32     0x02
+#define MBEDTLS_SSL_SRTP_NULL_HMAC_SHA1_80          0x05
+#define MBEDTLS_SSL_SRTP_NULL_HMAC_SHA1_32          0x06
+
+/* SRTP key export lengths */
+#define MBEDTLS_SSL_SRTP_MASTER_KEY_LEN         16
+#define MBEDTLS_SSL_SRTP_MASTER_SALT_LEN        14
+
 /*
  * Default range for DTLS retransmission timer value, in milliseconds.
  * RFC 6347 4.2.4.1 says from 1 second to 60 seconds.
