@@ -208,6 +208,7 @@
 #define APICMDID_TLS_SSL_EXPORT_SRTP_KEYS       (0x01E0)
 #define APICMDID_TLS_SSL_USE_SRTP               (0x01E1)
 #define APICMDID_TLS_SSL_SRTP_PROFILE           (0x01E2)
+#define APICMDID_TLS_SSL_TURN                   (0x01F0)
 #define APICMDID_TLS_MPI_INIT                   (0x0200)
 #define APICMDID_TLS_MPI_FREE                   (0x0201)
 #define APICMDID_TLS_MPI_READ_STRING            (0x0202)
