@@ -124,16 +124,16 @@ CXD56_AUDIO_ECODE cxd56_audio_analog_poweron(void)
       return CXD56_AUDIO_ECODE_ANA_PWON;
     }
 
-  cxd56_audio_clock_enable(AUD_MCLK_EXT, 0);
-  if (!cxd56_audio_clock_is_enabled())
-    {
-      return CXD56_AUDIO_ECODE_ANA_CLK_EN;
-    }
-
   ret = cxd56_audio_aca_poweron();
   if (CXD56_AUDIO_ECODE_OK != ret)
     {
       return ret;
+    }
+
+  cxd56_audio_clock_enable(AUD_MCLK_EXT, 0);
+  if (!cxd56_audio_clock_is_enabled())
+    {
+      return CXD56_AUDIO_ECODE_ANA_CLK_EN;
     }
 #endif
 
@@ -146,13 +146,14 @@ CXD56_AUDIO_ECODE cxd56_audio_analog_poweroff(void)
   CXD56_AUDIO_ECODE ret = CXD56_AUDIO_ECODE_OK;
 
 #ifdef CONFIG_CXD56_AUDIO_ANALOG_CXD5247
+  cxd56_audio_clock_disable();
+
   ret = cxd56_audio_aca_poweroff();
   if (CXD56_AUDIO_ECODE_OK != ret)
     {
       return ret;
     }
 
-  cxd56_audio_clock_disable();
   board_aca_power_control(CXD5247_AVDD|CXD5247_DVDD, false);
 #endif
 
