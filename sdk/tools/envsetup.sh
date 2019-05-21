@@ -35,7 +35,7 @@
 ############################################################################
 
 CURRENT_DIR=`pwd`
-SCRIPT_NAME=`readlink -e "${BASH_SOURCE[0]}"`
+SCRIPT_NAME=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)/$(basename "${BASH_SOURCE[0]}")
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
 ############################################################################
@@ -52,8 +52,7 @@ function spresense_create_apps_root() {
 		if [ "${1:0:1}" == "/" ]; then
 			SPRESENSE_HOME=${1}
 		else
-			SPRESENSE_HOME="`pwd`/${1}"
-			SPRESENSE_HOME="`readlink -f ${SPRESENSE_HOME}`"
+			SPRESENSE_HOME="$(cd ${1}; pwd)"
 		fi
 		if [ -d ${SPRESENSE_HOME} ]; then
 			echo "Warning: Directory ${SPRESENSE_HOME} is already exists,"
@@ -92,8 +91,7 @@ function spresense_set_apps_root() {
 		if [ "${1:0:1}" == "/" ]; then
 			_SPRESENSE_HOME=${1}
 		else
-			_SPRESENSE_HOME="`pwd`/${1}"
-			_SPRESENSE_HOME="`readlink -f ${_SPRESENSE_HOME}`"
+			_SPRESENSE_HOME="$(cd ${1}; pwd)"
 		fi
 		if [ -d ${_SPRESENSE_HOME} ]; then
 			if [ -f ${_SPRESENSE_HOME}/Application.mk ]; then
