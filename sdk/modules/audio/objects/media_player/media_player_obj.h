@@ -57,6 +57,11 @@ __WIEN2_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define MEDIA_PLAYER_FATAL(code) MEDIA_PLAYERS_FATAL(m_player_id, code)
+#define MEDIA_PLAYER_ERR(code) MEDIA_PLAYERS_ERR(m_player_id, code)
+#define MEDIA_PLAYER_WARN(code) MEDIA_PLAYERS_WARN(m_player_id, code)
+#define MEDIA_PLAYER_INF(code) MEDIA_PLAYERS_INF(m_player_id, code)
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -66,7 +71,8 @@ class PlayerObj
 public:
   static void create(void **obj,
                      AsPlayerMsgQueId_t msgq_id,
-                     AsPlayerPoolId_t pool_id);
+                     AsPlayerPoolId_t pool_id,
+                     AsPlayerId player_id);
 
   MsgQueId get_selfId()
     {
@@ -76,9 +82,13 @@ public:
     {
       return m_msgq_id.dsp;
     }
+  AsPlayerId get_playerId()
+    {
+      return m_player_id;
+    }
 
 private:
-  PlayerObj(AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_t pool_id);
+  PlayerObj(AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_t pool_id, AsPlayerId player_id);
 
   AsPlayerMsgQueId_t m_msgq_id;
   AsPlayerPoolId_t   m_pool_id;
@@ -109,6 +119,7 @@ private:
   AudioState<PlayerState>    m_state;
   AudioState<PlayerSubState> m_sub_state;
 
+  AsPlayerId                m_player_id;
   PlayerInputDeviceHandler *m_input_device_handler;
   InputHandlerOfRAM         m_in_ram_device_handler;
   void*                     m_p_dec_instance;

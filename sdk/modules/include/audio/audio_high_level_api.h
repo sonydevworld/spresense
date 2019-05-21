@@ -501,9 +501,9 @@ typedef struct
 
 typedef struct
 {
-  /*! \brief reserved */
+  /*! \brief [out] instance id */
 
-  uint8_t reserved;
+  uint8_t instance_id;
 
   /*! \brief [out] sub code*/
 

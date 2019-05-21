@@ -140,7 +140,7 @@ static void outputmixer_error_callback(uint8_t handle)
  */
 
 /*--------------------------------------------------------------------------*/
-static void send_player_reply(AsPlayerEvent event, uint32_t result, uint32_t sub_result)
+static void send_player_reply(AsPlayerEvent event, uint8_t sub_module_id, uint32_t result, uint32_t sub_result)
 {
   uint8_t cmd_code[] =
   {
@@ -156,7 +156,8 @@ static void send_player_reply(AsPlayerEvent event, uint32_t result, uint32_t sub
                                0,
                                result,
                                AS_MODULE_ID_PLAYER_OBJ,
-                               sub_result);
+                               sub_result,
+                               sub_module_id);
 
   err_t er = MsgLib::send<AudioMngCmdCmpltResult>(s_selfMid,
                                                   MsgPriNormal,
@@ -169,7 +170,7 @@ static void send_player_reply(AsPlayerEvent event, uint32_t result, uint32_t sub
 /*--------------------------------------------------------------------------*/
 static bool player0_done_callback(AsPlayerEvent event, uint32_t result, uint32_t sub_result)
 {
-  send_player_reply(event, result, sub_result);
+  send_player_reply(event, AS_PLAYER_ID_0, result, sub_result);
 
   return true;
 }
@@ -177,7 +178,7 @@ static bool player0_done_callback(AsPlayerEvent event, uint32_t result, uint32_t
 /*--------------------------------------------------------------------------*/
 static bool player1_done_callback(AsPlayerEvent event, uint32_t result, uint32_t sub_result)
 {
-  send_player_reply(event, result, sub_result);
+  send_player_reply(event, AS_PLAYER_ID_1, result, sub_result);
 
   return true;
 }
@@ -1494,7 +1495,9 @@ void AudioManager::player(AudioCommand &cmd)
       default:
         sendErrRespResult(cmd.header.sub_code,
                           AS_MODULE_ID_AUDIO_MANAGER,
-                          AS_ECODE_COMMAND_CODE_ERROR);
+                          AS_ECODE_COMMAND_CODE_ERROR,
+                          0,
+                          cmd.player.player_id);
         return;
     }
 
@@ -2594,7 +2597,8 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
       sendErrRespResult(cmd.sub_code,
                         cmd.module_id,
                         cmd.result,
-                        cmd.sub_result);
+                        cmd.sub_result,
+                        cmd.sub_module_id);
       return;
     }
 
@@ -2659,11 +2663,13 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
       default:
         sendErrRespResult(cmd.sub_code,
                           AS_MODULE_ID_AUDIO_MANAGER,
-                          AS_ECODE_COMMAND_CODE_ERROR);
+                          AS_ECODE_COMMAND_CODE_ERROR,
+                          0,
+                          cmd.sub_module_id);
         return;
     }
 
-  sendResult(result_code);
+  sendResult(result_code, 0, cmd.sub_module_id);
 #else
   sendErrRespResult(cmd.sub_code,
                     AS_MODULE_ID_AUDIO_MANAGER,
@@ -2818,12 +2824,13 @@ void AudioManager::execFindCommandCallback(uint16_t key_word, uint8_t status)
 #endif  /* AS_FEATURE_RECOGNIZER_ENABLE */
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::sendResult(uint8_t code, uint8_t sub_code)
+void AudioManager::sendResult(uint8_t code, uint8_t sub_code, uint8_t instance_id)
 {
   AudioResult packet;
   packet.header.packet_length = LENGTH_AUDRLT;
   packet.header.result_code   = code;
   packet.header.sub_code      = sub_code;
+  packet.header.instance_id   = instance_id;
 
   if (code == AUDRLT_STATUSCHANGED)
     {
@@ -2842,15 +2849,17 @@ void AudioManager::sendResult(uint8_t code, uint8_t sub_code)
 void AudioManager::sendErrRespResult(uint8_t  sub_code,
                                      uint8_t  module_id,
                                      uint32_t error_code,
-                                     uint32_t error_sub_code)
+                                     uint32_t error_sub_code,
+                                     uint8_t  instance_id)
 {
   AudioResult packet;
   packet.header.packet_length = LENGTH_AUDRLT_ERRORRESPONSE_MAX;
   packet.header.result_code   = AUDRLT_ERRORRESPONSE;
   packet.header.sub_code      = sub_code;
+  packet.header.instance_id   = instance_id;
 
   packet.error_response_param.module_id      = module_id;
-  packet.error_response_param.sub_module_id  = 0;
+  packet.error_response_param.sub_module_id  = instance_id;
   packet.error_response_param.error_code     = error_code;
   packet.error_response_param.error_sub_code = error_sub_code;
 

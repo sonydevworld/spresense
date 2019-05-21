@@ -218,11 +218,12 @@ private:
   uint32_t powerOnBaseBand(uint8_t power_id);
   uint32_t powerOffBaseBand(uint8_t power_id);
   
-  void sendResult(uint8_t code, uint8_t sub_code = 0);
+  void sendResult(uint8_t code, uint8_t sub_code = 0, uint8_t instance_id = 0);
   void sendErrRespResult(uint8_t  sub_code,
                          uint8_t  module_id,
                          uint32_t error_code,
-                         uint32_t error_sub_code = 0);
+                         uint32_t error_sub_code = 0,
+                         uint8_t instance_id = 0);
   bool deactivatePlayer();
   bool deactivateRecorder();
   bool deactivateSoundFx();
