@@ -63,11 +63,11 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static pid_t s_fed_pid;
-static AsFrontendMsgQueId_t s_msgq_id;
-static AsFrontendPoolId_t   s_pool_id;
+static pid_t s_mfe_pid;
+static AsMicFrontendMsgQueId_t s_msgq_id;
+static AsMicFrontendPoolId_t   s_pool_id;
 
-static FrontEndObject *s_fed_obj = NULL;
+static MicFrontEndObject *s_mfe_obj = NULL;
 
 /****************************************************************************
  * Public Data
@@ -81,9 +81,9 @@ static void capture_done_callback(CaptureDataParam param)
 {
   err_t er;
 
-  er = MsgLib::send<CaptureDataParam>(s_msgq_id.frontend,
+  er = MsgLib::send<CaptureDataParam>(s_msgq_id.micfrontend,
                                       MsgPriNormal,
-                                      MSG_AUD_FED_RST_CAPTURE_DONE,
+                                      MSG_AUD_MFE_RST_CAPTURE_DONE,
                                       NULL,
                                       param);
   F_ASSERT(er == ERR_OK);
@@ -94,9 +94,9 @@ static void capture_error_callback(CaptureErrorParam param)
 {
   err_t er;
 
-  er = MsgLib::send<CaptureErrorParam>(s_msgq_id.frontend,
+  er = MsgLib::send<CaptureErrorParam>(s_msgq_id.micfrontend,
                                        MsgPriNormal,
-                                       MSG_AUD_FED_RST_CAPTURE_ERR,
+                                       MSG_AUD_MFE_RST_CAPTURE_ERR,
                                        NULL,
                                        param);
   F_ASSERT(er == ERR_OK);
@@ -105,16 +105,16 @@ static void capture_error_callback(CaptureErrorParam param)
 /*--------------------------------------------------------------------------*/
 static bool preproc_done_callback(CustomProcCbParam *cmplt, void* p_requester)
 {
-  FrontendObjPreProcDoneCmd param;
+  MicFrontendObjPreProcDoneCmd param;
 
   param.event_type = cmplt->event_type;
   param.result     = cmplt->result;
 
-  err_t er = MsgLib::send<FrontendObjPreProcDoneCmd>(s_msgq_id.frontend,
-                                                     MsgPriNormal,
-                                                     MSG_AUD_FED_RST_PREPROC,
-                                                     NULL,
-                                                     param);
+  err_t er = MsgLib::send<MicFrontendObjPreProcDoneCmd>(s_msgq_id.micfrontend,
+                                                        MsgPriNormal,
+                                                        MSG_AUD_MFE_RST_PREPROC,
+                                                        NULL,
+                                                        param);
 
   F_ASSERT(er == ERR_OK);
 
@@ -127,21 +127,21 @@ static void pcm_send_done_callback(int32_t identifier, bool is_end)
 }
 
 /*--------------------------------------------------------------------------*/
-int AS_FrontendObjEntry(int argc, char *argv[])
+int AS_MicFrontendObjEntry(int argc, char *argv[])
 {
-  FrontEndObject::create(s_msgq_id,
-                         s_pool_id);
+  MicFrontEndObject::create(s_msgq_id,
+                            s_pool_id);
   return 0;
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::run(void)
+void MicFrontEndObject::run(void)
 {
   err_t        err_code;
   MsgQueBlock* que;
   MsgPacket*   msg;
 
-  err_code = MsgLib::referMsgQueBlock(m_msgq_id.frontend, &que);
+  err_code = MsgLib::referMsgQueBlock(m_msgq_id.micfrontend, &que);
   F_ASSERT(err_code == ERR_OK);
 
   while(1)
@@ -157,161 +157,161 @@ void FrontEndObject::run(void)
 }
 
 /*--------------------------------------------------------------------------*/
-FrontEndObject::MsgProc
-  FrontEndObject::MsgProcTbl[AUD_FED_MSG_NUM][FrontendStateNum] =
+MicFrontEndObject::MsgProc
+  MicFrontEndObject::MsgProcTbl[AUD_MFE_MSG_NUM][MicFrontendStateNum] =
 {
-  /* Message Type: MSG_AUD_FED_CMD_ACT */
+  /* Message Type: MSG_AUD_MFE_CMD_ACT */
 
-  {                                  /* Frontend status: */
-    &FrontEndObject::activate,       /*   Inactive.      */
-    &FrontEndObject::illegal,        /*   Ready.         */
-    &FrontEndObject::illegal,        /*   Active.        */
-    &FrontEndObject::illegal,        /*   Stopping.      */
-    &FrontEndObject::illegal,        /*   ErrorStopping. */
-    &FrontEndObject::illegal         /*   WaitStop.      */
+  {                                  /* MicFrontend status: */
+    &MicFrontEndObject::activate,       /*   Inactive.      */
+    &MicFrontEndObject::illegal,        /*   Ready.         */
+    &MicFrontEndObject::illegal,        /*   Active.        */
+    &MicFrontEndObject::illegal,        /*   Stopping.      */
+    &MicFrontEndObject::illegal,        /*   ErrorStopping. */
+    &MicFrontEndObject::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_DEACT */
+  /* Message Type: MSG_AUD_MFE_CMD_DEACT */
 
-  {                                  /* Frontend status: */
-    &FrontEndObject::illegal,        /*   Inactive.      */
-    &FrontEndObject::deactivate,     /*   Ready.         */
-    &FrontEndObject::illegal,        /*   Active.        */
-    &FrontEndObject::illegal,        /*   Stopping.      */
-    &FrontEndObject::illegal,        /*   ErrorStopping. */
-    &FrontEndObject::illegal         /*   WaitStop.      */
+  {                                  /* MicFrontend status: */
+    &MicFrontEndObject::illegal,        /*   Inactive.      */
+    &MicFrontEndObject::deactivate,     /*   Ready.         */
+    &MicFrontEndObject::illegal,        /*   Active.        */
+    &MicFrontEndObject::illegal,        /*   Stopping.      */
+    &MicFrontEndObject::illegal,        /*   ErrorStopping. */
+    &MicFrontEndObject::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_INIT */
+  /* Message Type: MSG_AUD_MFE_CMD_INIT */
 
-  {                                  /* Frontend status: */
-    &FrontEndObject::illegal,        /*   Inactive.      */
-    &FrontEndObject::init,           /*   Ready.         */
-    &FrontEndObject::illegal,        /*   Active.        */
-    &FrontEndObject::illegal,        /*   Stopping.      */
-    &FrontEndObject::illegal,        /*   ErrorStopping. */
-    &FrontEndObject::illegal         /*   WaitStop.      */
+  {                                  /* MicFrontend status: */
+    &MicFrontEndObject::illegal,        /*   Inactive.      */
+    &MicFrontEndObject::init,           /*   Ready.         */
+    &MicFrontEndObject::illegal,        /*   Active.        */
+    &MicFrontEndObject::illegal,        /*   Stopping.      */
+    &MicFrontEndObject::illegal,        /*   ErrorStopping. */
+    &MicFrontEndObject::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_START */
+  /* Message Type: MSG_AUD_MFE_CMD_START */
 
-  {                                  /* Frontend status: */
-    &FrontEndObject::illegal,        /*   Inactive.      */
-    &FrontEndObject::startOnReady,   /*   Ready.         */
-    &FrontEndObject::illegal,        /*   Active.        */
-    &FrontEndObject::illegal,        /*   Stopping.      */
-    &FrontEndObject::illegal,        /*   ErrorStopping. */
-    &FrontEndObject::illegal         /*   WaitStop.      */
+  {                                  /* MicFrontend status: */
+    &MicFrontEndObject::illegal,        /*   Inactive.      */
+    &MicFrontEndObject::startOnReady,   /*   Ready.         */
+    &MicFrontEndObject::illegal,        /*   Active.        */
+    &MicFrontEndObject::illegal,        /*   Stopping.      */
+    &MicFrontEndObject::illegal,        /*   ErrorStopping. */
+    &MicFrontEndObject::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_STOP */
+  /* Message Type: MSG_AUD_MFE_CMD_STOP */
 
-  {                                   /* Frontend status: */
-    &FrontEndObject::illegal,         /*   Inactive.      */
-    &FrontEndObject::illegal,         /*   Ready.         */
-    &FrontEndObject::stopOnActive,    /*   Active.        */
-    &FrontEndObject::illegal,         /*   Stopping.      */
-    &FrontEndObject::stopOnErrorStop, /*   ErrorStopping. */
-    &FrontEndObject::stopOnWait       /*   WaitStop.      */
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::illegal,         /*   Ready.         */
+    &MicFrontEndObject::stopOnActive,    /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::stopOnErrorStop, /*   ErrorStopping. */
+    &MicFrontEndObject::stopOnWait       /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_INITPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
 
-  {                                   /* Frontend status: */
-    &FrontEndObject::illegal,         /*   Inactive.      */
-    &FrontEndObject::initPreproc,     /*   Ready.         */
-    &FrontEndObject::illegal,         /*   Active.        */
-    &FrontEndObject::illegal,         /*   Stopping.      */
-    &FrontEndObject::illegal,         /*   ErrorStopping. */
-    &FrontEndObject::illegal          /*   WaitStop.      */
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::initPreproc,     /*   Ready.         */
+    &MicFrontEndObject::illegal,         /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_SETPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_SETPREPROC */
 
-  {                                   /* Frontend status: */
-    &FrontEndObject::illegal,         /*   Inactive.      */
-    &FrontEndObject::setPreproc,      /*   Ready.         */
-    &FrontEndObject::setPreproc,      /*   Active.        */
-    &FrontEndObject::illegal,         /*   Stopping.      */
-    &FrontEndObject::illegal,         /*   ErrorStopping. */
-    &FrontEndObject::illegal          /*   WaitStop.      */
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::setPreproc,      /*   Ready.         */
+    &MicFrontEndObject::setPreproc,      /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_CMD_SET_MICGAIN. */
+  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
 
-  {                                   /* Frontend status: */
-    &FrontEndObject::illegal,         /*   Inactive.      */
-    &FrontEndObject::setMicGain,      /*   Ready.         */
-    &FrontEndObject::setMicGain,      /*   Active.        */
-    &FrontEndObject::illegal,         /*   Stopping.      */
-    &FrontEndObject::illegal,         /*   ErrorStopping. */
-    &FrontEndObject::illegal          /*   WaitStop.      */
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::setMicGain,      /*   Ready.         */
+    &MicFrontEndObject::setMicGain,      /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
   }
 };
 
 /*--------------------------------------------------------------------------*/
-FrontEndObject::MsgProc
-  FrontEndObject::RsltProcTbl[AUD_FED_RST_MSG_NUM][FrontendStateNum] =
+MicFrontEndObject::MsgProc
+  MicFrontEndObject::RsltProcTbl[AUD_MFE_RST_MSG_NUM][MicFrontendStateNum] =
 {
-  /* Message Type: MSG_AUD_FED_RST_CAPTURE_DONE. */
+  /* Message Type: MSG_AUD_MFE_RST_CAPTURE_DONE. */
 
-  {                                          /* Frontend status: */
-    &FrontEndObject::illegalCaptureDone,     /*   Inactive.      */
-    &FrontEndObject::illegalCaptureDone,     /*   Ready.         */
-    &FrontEndObject::captureDoneOnActive,    /*   Active.        */
-    &FrontEndObject::captureDoneOnStop,      /*   Stopping.      */
-    &FrontEndObject::captureDoneOnErrorStop, /*   ErrorStopping. */
-    &FrontEndObject::captureDoneOnWaitStop   /*   WaitStop.      */
+  {                                          /* MicFrontend status: */
+    &MicFrontEndObject::illegalCaptureDone,     /*   Inactive.      */
+    &MicFrontEndObject::illegalCaptureDone,     /*   Ready.         */
+    &MicFrontEndObject::captureDoneOnActive,    /*   Active.        */
+    &MicFrontEndObject::captureDoneOnStop,      /*   Stopping.      */
+    &MicFrontEndObject::captureDoneOnErrorStop, /*   ErrorStopping. */
+    &MicFrontEndObject::captureDoneOnWaitStop   /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_RST_CAPTURE_ERR. */
+  /* Message Type: MSG_AUD_MFE_RST_CAPTURE_ERR. */
 
-  {                                           /* Frontend status: */
-    &FrontEndObject::illegalCaptureError,     /*   Inactive.      */
-    &FrontEndObject::illegalCaptureError,     /*   Ready.         */
-    &FrontEndObject::captureErrorOnActive,    /*   Active.        */
-    &FrontEndObject::captureErrorOnStop,      /*   Stopping.      */
-    &FrontEndObject::captureErrorOnErrorStop, /*   ErrorStopping. */
-    &FrontEndObject::captureErrorOnWaitStop   /*   WaitStop.      */
+  {                                           /* MicFrontend status: */
+    &MicFrontEndObject::illegalCaptureError,     /*   Inactive.      */
+    &MicFrontEndObject::illegalCaptureError,     /*   Ready.         */
+    &MicFrontEndObject::captureErrorOnActive,    /*   Active.        */
+    &MicFrontEndObject::captureErrorOnStop,      /*   Stopping.      */
+    &MicFrontEndObject::captureErrorOnErrorStop, /*   ErrorStopping. */
+    &MicFrontEndObject::captureErrorOnWaitStop   /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_FED_RST_PREPROC. */
+  /* Message Type: MSG_AUD_MFE_RST_PREPROC. */
 
-  {                                           /* Frontend status: */
-    &FrontEndObject::illegalPreprocDone,      /*   Inactive.      */
-    &FrontEndObject::illegalPreprocDone,      /*   Ready.         */
-    &FrontEndObject::preprocDoneOnActive,     /*   Active.        */
-    &FrontEndObject::preprocDoneOnStop,       /*   Stopping.      */
-    &FrontEndObject::preprocDoneOnErrorStop,  /*   ErrorStopping. */
-    &FrontEndObject::preprocDoneOnWaitStop    /*   WaitStop.      */
+  {                                           /* MicFrontend status: */
+    &MicFrontEndObject::illegalPreprocDone,      /*   Inactive.      */
+    &MicFrontEndObject::illegalPreprocDone,      /*   Ready.         */
+    &MicFrontEndObject::preprocDoneOnActive,     /*   Active.        */
+    &MicFrontEndObject::preprocDoneOnStop,       /*   Stopping.      */
+    &MicFrontEndObject::preprocDoneOnErrorStop,  /*   ErrorStopping. */
+    &MicFrontEndObject::preprocDoneOnWaitStop    /*   WaitStop.      */
   }
 };
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::parse(MsgPacket *msg)
+void MicFrontEndObject::parse(MsgPacket *msg)
 {
   uint32_t event;
 
   if (MSG_IS_REQUEST(msg->getType()) == 0)
     {
       event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_FED_RST_MSG_NUM));
+      F_ASSERT((event < AUD_MFE_RST_MSG_NUM));
 
       (this->*RsltProcTbl[event][m_state.get()])(msg);
     }
   else
     {
       event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_FED_MSG_NUM));
+      F_ASSERT((event < AUD_MFE_MSG_NUM));
 
       (this->*MsgProcTbl[event][m_state.get()])(msg);
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::reply(AsFrontendEvent evtype,
-                           MsgType msg_type,
-                           uint32_t result)
+void MicFrontEndObject::reply(AsMicFrontendEvent evtype,
+                              MsgType msg_type,
+                              uint32_t result)
 {
   if (m_callback != NULL)
     {
@@ -321,12 +321,12 @@ void FrontEndObject::reply(AsFrontendEvent evtype,
     {
       AudioObjReply cmplt((uint32_t)msg_type,
                            AS_OBJ_REPLY_TYPE_REQ,
-                           AS_MODULE_ID_FRONT_END_OBJ,
+                           AS_MODULE_ID_MIC_FRONTEND_OBJ,
                            result);
       err_t er = MsgLib::send<AudioObjReply>(m_msgq_id.mng,
                                              MsgPriNormal,
                                              MSG_TYPE_AUD_RES,
-                                             m_msgq_id.frontend,
+                                             m_msgq_id.micfrontend,
                                              cmplt);
       if (ERR_OK != er)
         {
@@ -336,35 +336,35 @@ void FrontEndObject::reply(AsFrontendEvent evtype,
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::illegal(MsgPacket *msg)
+void MicFrontEndObject::illegal(MsgPacket *msg)
 {
   uint msgtype = msg->getType();
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  uint32_t idx = msgtype - MSG_AUD_FED_CMD_ACT;
+  uint32_t idx = msgtype - MSG_AUD_MFE_CMD_ACT;
 
-  AsFrontendEvent table[] =
+  AsMicFrontendEvent table[] =
   {
-    AsFrontendEventAct,
-    AsFrontendEventDeact,
-    AsFrontendEventInit,
-    AsFrontendEventStart,
-    AsFrontendEventStop,
-    AsFrontendEventInitPreProc,
-    AsFrontendEventSetPreProc,
-    AsFrontendEventSetMicGain
+    AsMicFrontendEventAct,
+    AsMicFrontendEventDeact,
+    AsMicFrontendEventInit,
+    AsMicFrontendEventStart,
+    AsMicFrontendEventStop,
+    AsMicFrontendEventInitPreProc,
+    AsMicFrontendEventSetPreProc,
+    AsMicFrontendEventSetMicGain
   };
 
   reply(table[idx], msg->getType(), AS_ECODE_STATE_VIOLATION);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::activate(MsgPacket *msg)
+void MicFrontEndObject::activate(MsgPacket *msg)
 {
   uint32_t rst;
-  AsActivateFrontend act = msg->moveParam<FrontendCommand>().act_param;
+  AsActivateMicFrontend act = msg->moveParam<MicFrontendCommand>().act_param;
 
-  FRONT_END_DBG("ACT: indev %d\n", act.param.input_device);
+  MIC_FRONTEND_DBG("ACT: indev %d\n", act.param.input_device);
 
   /* Set event callback */
 
@@ -374,7 +374,7 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   if (!checkAndSetMemPool())
     {
-      reply(AsFrontendEventAct,
+      reply(AsMicFrontendEventAct,
             msg->getType(),
             AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
@@ -384,7 +384,7 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   if (rst != AS_ECODE_OK)
     {
-      reply(AsFrontendEventAct, msg->getType(), rst);
+      reply(AsMicFrontendEventAct, msg->getType(), rst);
       return;
     }
 
@@ -394,8 +394,8 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   switch (act.param.preproc_type)
     {
-      case AsFrontendPreProcUserCustom:
-        m_p_preproc_instance = new UserCustomComponent(m_pool_id.dspcmd,
+      case AsMicFrontendPreProcUserCustom:
+        m_p_preproc_instance = new UserCustomComponent(m_pool_id.dsp,
                                                        m_msgq_id.dsp);
         break;
 
@@ -411,27 +411,27 @@ void FrontEndObject::activate(MsgPacket *msg)
 
   /* Hold preproc type */
 
-  m_preproc_type = static_cast<AsFrontendPreProcType>(act.param.preproc_type);
+  m_preproc_type = static_cast<AsMicFrontendPreProcType>(act.param.preproc_type);
 
   /* State transit */
 
-  m_state = FrontendStateReady;
+  m_state = MicFrontendStateReady;
 
   /* Reply */
 
-  reply(AsFrontendEventAct, msg->getType(), AS_ECODE_OK);
+  reply(AsMicFrontendEventAct, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::deactivate(MsgPacket *msg)
+void MicFrontEndObject::deactivate(MsgPacket *msg)
 {
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("DEACT:\n");
+  MIC_FRONTEND_DBG("DEACT:\n");
 
   if (!delInputDeviceHdlr())
     {
-      reply(AsFrontendEventDeact,
+      reply(AsMicFrontendEventDeact,
             msg->getType(),
             AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR);
       return;
@@ -444,20 +444,20 @@ void FrontEndObject::deactivate(MsgPacket *msg)
 
   /* State transit */
 
-  m_state = FrontendStateInactive;
+  m_state = MicFrontendStateInactive;
 
   /* Reply */
 
-  reply(AsFrontendEventDeact, msg->getType(), AS_ECODE_OK);
+  reply(AsMicFrontendEventDeact, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::init(MsgPacket *msg)
+void MicFrontEndObject::init(MsgPacket *msg)
 {
   uint32_t rst = AS_ECODE_OK;
-  FrontendCommand cmd = msg->moveParam<FrontendCommand>();
+  MicFrontendCommand cmd = msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("INIT: ch num %d, bit len %d, samples/frame %d\n",
+  MIC_FRONTEND_DBG("INIT: ch num %d, bit len %d, samples/frame %d\n",
                  cmd.init_param.channel_number,
                  cmd.init_param.bit_length,
                  cmd.init_param.samples_per_frame);
@@ -467,7 +467,7 @@ void FrontEndObject::init(MsgPacket *msg)
   rst = initParamCheck(cmd);
   if (rst != AS_ECODE_OK)
     {
-      reply(AsFrontendEventInit, msg->getType(), rst);
+      reply(AsMicFrontendEventInit, msg->getType(), rst);
       return;
     }
 
@@ -480,20 +480,20 @@ void FrontEndObject::init(MsgPacket *msg)
                         ? AudPcm24Bit : AudPcm32Bit);
   m_cap_bytes         = ((m_pcm_bit_width == AudPcm16Bit) ? 2 : 4);
   m_samples_per_frame = cmd.init_param.samples_per_frame;
-  m_pcm_data_path     = static_cast<AsFrontendDataPath>(cmd.init_param.data_path);
+  m_pcm_data_path     = static_cast<AsMicFrontendDataPath>(cmd.init_param.data_path);
   m_pcm_data_dest     = cmd.init_param.dest;
 
   /* Release and get capture (Input device) handler */
 
   if (!delInputDeviceHdlr())
     {
-      reply(AsFrontendEventInit, msg->getType(), AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR);
+      reply(AsMicFrontendEventInit, msg->getType(), AS_ECODE_CLEAR_AUDIO_DATA_PATH_ERROR);
       return;
     }
 
   if (!getInputDeviceHdlr())
     {
-      reply(AsFrontendEventInit, msg->getType(), AS_ECODE_SET_AUDIO_DATA_PATH_ERROR);
+      reply(AsMicFrontendEventInit, msg->getType(), AS_ECODE_SET_AUDIO_DATA_PATH_ERROR);
       return;
     }
 
@@ -510,49 +510,49 @@ void FrontEndObject::init(MsgPacket *msg)
 
   if (!AS_init_capture(&cap_comp_param))
     {
-      reply(AsFrontendEventStart, msg->getType(), AS_ECODE_DMAC_INITIALIZE_ERROR);
+      reply(AsMicFrontendEventStart, msg->getType(), AS_ECODE_DMAC_INITIALIZE_ERROR);
       return;
     }
 
   /* Reply */
 
-  reply(AsFrontendEventInit, msg->getType(), AS_ECODE_OK);
+  reply(AsMicFrontendEventInit, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::startOnReady(MsgPacket *msg)
+void MicFrontEndObject::startOnReady(MsgPacket *msg)
 {
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("START:\n");
+  MIC_FRONTEND_DBG("START:\n");
 
   /* Start capture */
 
   if (!startCapture())
     {
-      reply(AsFrontendEventStart, msg->getType(), AS_ECODE_DMAC_READ_ERROR);
+      reply(AsMicFrontendEventStart, msg->getType(), AS_ECODE_DMAC_READ_ERROR);
       return;
     }
 
   /* State transit */
 
-  m_state = FrontendStateActive;
+  m_state = MicFrontendStateActive;
 
   /* Reply*/
 
-  reply(AsFrontendEventStart, msg->getType(), AS_ECODE_OK);
+  reply(AsMicFrontendEventStart, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::stopOnActive(MsgPacket *msg)
+void MicFrontEndObject::stopOnActive(MsgPacket *msg)
 {
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("STOP:\n");
+  MIC_FRONTEND_DBG("STOP:\n");
 
-  if (!setExternalCmd(AsFrontendEventStop))
+  if (!setExternalCmd(AsMicFrontendEventStop))
     {
-      reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
+      reply(AsMicFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
       return;
     }
 
@@ -567,33 +567,33 @@ void FrontEndObject::stopOnActive(MsgPacket *msg)
 
   /* State transit */
 
-  m_state = FrontendStateStopping;
+  m_state = MicFrontendStateStopping;
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::stopOnErrorStop(MsgPacket *msg)
+void MicFrontEndObject::stopOnErrorStop(MsgPacket *msg)
 {
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("STOP:\n");
+  MIC_FRONTEND_DBG("STOP:\n");
 
   /* If STOP command received during internal error stop sequence, enque command.
    * It will be trigger of transition to Ready when all of preproc is done.
    */
 
-   if (!setExternalCmd(AsFrontendEventStop))
+   if (!setExternalCmd(AsMicFrontendEventStop))
      {
-       reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
+       reply(AsMicFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
        return;
      }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::stopOnWait(MsgPacket *msg)
+void MicFrontEndObject::stopOnWait(MsgPacket *msg)
 {
-  msg->moveParam<FrontendCommand>();
+  msg->moveParam<MicFrontendCommand>();
 
-  FRONT_END_DBG("STOP:\n");
+  MIC_FRONTEND_DBG("STOP:\n");
 
   if (!m_capture_req && !m_preproc_req)
     {
@@ -601,29 +601,29 @@ void FrontEndObject::stopOnWait(MsgPacket *msg)
        * reply and transit to Ready state.
        */
 
-      reply(AsFrontendEventStop, msg->getType(), AS_ECODE_OK);
+      reply(AsMicFrontendEventStop, msg->getType(), AS_ECODE_OK);
 
-      m_state = FrontendStateReady;
+      m_state = MicFrontendStateReady;
     }
   else
     {
       /* If capture or preproc request remains, hold command. */
 
-      if (!setExternalCmd(AsFrontendEventStop))
+      if (!setExternalCmd(AsMicFrontendEventStop))
         {
-          reply(AsFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
+          reply(AsMicFrontendEventStop, msg->getType(), AS_ECODE_QUEUE_OPERATION_ERROR);
           return;
         }
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::initPreproc(MsgPacket *msg)
+void MicFrontEndObject::initPreproc(MsgPacket *msg)
 {
   AsInitPreProcParam initparam =
-    msg->moveParam<FrontendCommand>().initpreproc_param;
+    msg->moveParam<MicFrontendCommand>().initpreproc_param;
 
-  FRONT_END_DBG("Init Pre Proc:\n");
+  MIC_FRONTEND_DBG("Init Pre Proc:\n");
 
   InitCustomProcParam param;
 
@@ -640,16 +640,16 @@ void FrontEndObject::initPreproc(MsgPacket *msg)
 
   /* Reply */
 
-  reply(AsFrontendEventInitPreProc, msg->getType(), send_result);
+  reply(AsMicFrontendEventInitPreProc, msg->getType(), send_result);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::setPreproc(MsgPacket *msg)
+void MicFrontEndObject::setPreproc(MsgPacket *msg)
 {
   AsSetPreProcParam setparam =
-    msg->moveParam<FrontendCommand>().setpreproc_param;
+    msg->moveParam<MicFrontendCommand>().setpreproc_param;
 
-  FRONT_END_DBG("Set Pre Proc:\n");
+  MIC_FRONTEND_DBG("Set Pre Proc:\n");
 
   SetCustomProcParam param;
 
@@ -663,18 +663,18 @@ void FrontEndObject::setPreproc(MsgPacket *msg)
 
   /* Reply (Don't wait reply from DSP because it will take long time) */
 
-  reply(AsFrontendEventSetPreProc,
+  reply(AsMicFrontendEventSetPreProc,
         msg->getType(),
         (send_result) ? AS_ECODE_OK : AS_ECODE_DSP_SET_ERROR);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::setMicGain(MsgPacket *msg)
+void MicFrontEndObject::setMicGain(MsgPacket *msg)
 {
-  AsFrontendMicGainParam recv_micgain =
-    msg->moveParam<FrontendCommand>().mic_gain_param;
+  AsMicFrontendMicGainParam recv_micgain =
+    msg->moveParam<MicFrontendCommand>().mic_gain_param;
 
-  FRONT_END_DBG("Set Mic Gain:\n");
+  MIC_FRONTEND_DBG("Set Mic Gain:\n");
 
   SetMicGainCaptureComponentParam set_micgain;
 
@@ -696,16 +696,16 @@ void FrontEndObject::setMicGain(MsgPacket *msg)
 
   if (!AS_set_micgain_capture(&cap_comp_param))
     {
-      reply(AsFrontendEventSetMicGain, msg->getType(), AS_ECODE_SET_MIC_GAIN_ERROR);
+      reply(AsMicFrontendEventSetMicGain, msg->getType(), AS_ECODE_SET_MIC_GAIN_ERROR);
     }
 
-  reply(AsFrontendEventSetMicGain, msg->getType(), AS_ECODE_OK);
+  reply(AsMicFrontendEventSetMicGain, msg->getType(), AS_ECODE_OK);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::illegalPreprocDone(MsgPacket *msg)
+void MicFrontEndObject::illegalPreprocDone(MsgPacket *msg)
 {
-  msg->moveParam<FrontendObjPreProcDoneCmd>();
+  msg->moveParam<MicFrontendObjPreProcDoneCmd>();
 
   /* Even if illegal reply, but need to do post handling same as usual.
    * Because allocated areas and queue for encodeing should be free.
@@ -718,16 +718,16 @@ void FrontEndObject::illegalPreprocDone(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::preprocDoneOnActive(MsgPacket *msg)
+void MicFrontEndObject::preprocDoneOnActive(MsgPacket *msg)
 {
-  FrontendObjPreProcDoneCmd preproc_result =
-    msg->moveParam<FrontendObjPreProcDoneCmd>();
+  MicFrontendObjPreProcDoneCmd preproc_result =
+    msg->moveParam<MicFrontendObjPreProcDoneCmd>();
 
   /* Check PreProcess instance exsits */
 
   if (!m_p_preproc_instance)
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
     }
 
@@ -756,16 +756,16 @@ void FrontEndObject::preprocDoneOnActive(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
+void MicFrontEndObject::preprocDoneOnStop(MsgPacket *msg)
 {
-  FrontendObjPreProcDoneCmd preproc_result =
-    msg->moveParam<FrontendObjPreProcDoneCmd>();
+  MicFrontendObjPreProcDoneCmd preproc_result =
+    msg->moveParam<MicFrontendObjPreProcDoneCmd>();
 
   /* Check PreProcess instance exsits */
 
   if (!m_p_preproc_instance)
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
     }
 
@@ -815,15 +815,15 @@ void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
 
               if (checkExternalCmd())
                 {
-                  AsFrontendEvent ext_cmd = getExternalCmd();
+                  AsMicFrontendEvent ext_cmd = getExternalCmd();
 
                   reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
-                  m_state = FrontendStateReady;
+                  m_state = MicFrontendStateReady;
                 }
               else
                 {
-                  m_state = FrontendStateWaitStop;
+                  m_state = MicFrontendStateWaitStop;
                 }
             }
           else
@@ -832,34 +832,34 @@ void FrontEndObject::preprocDoneOnStop(MsgPacket *msg)
                * transit to WaitStop to avoid leak of MH.
                */
 
-              m_state = FrontendStateWaitStop;
+              m_state = MicFrontendStateWaitStop;
             }
         }
     }
   else
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return;
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::preprocDoneOnErrorStop(MsgPacket *msg)
+void MicFrontEndObject::preprocDoneOnErrorStop(MsgPacket *msg)
 {
   preprocDoneOnStop(msg);
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
+void MicFrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
 {
-  FrontendObjPreProcDoneCmd preproc_result =
-    msg->moveParam<FrontendObjPreProcDoneCmd>();
+  MicFrontendObjPreProcDoneCmd preproc_result =
+    msg->moveParam<MicFrontendObjPreProcDoneCmd>();
 
   /* Check PreProcess instance exsits */
 
   if (!m_p_preproc_instance)
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
     }
 
@@ -888,22 +888,22 @@ void FrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
     {
       if (checkExternalCmd())
         {
-          AsFrontendEvent ext_cmd = getExternalCmd();
+          AsMicFrontendEvent ext_cmd = getExternalCmd();
           reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
-          m_state = FrontendStateReady;
+          m_state = MicFrontendStateReady;
         }
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::illegalCaptureDone(MsgPacket *msg)
+void MicFrontEndObject::illegalCaptureDone(MsgPacket *msg)
 {
   msg->moveParam<CaptureDataParam>();
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureDoneOnActive(MsgPacket *msg)
+void MicFrontEndObject::captureDoneOnActive(MsgPacket *msg)
 {
   CaptureDataParam cap_rslt = msg->moveParam<CaptureDataParam>();
   CaptureComponentParam cap_comp_param;
@@ -940,12 +940,12 @@ void FrontEndObject::captureDoneOnActive(MsgPacket *msg)
 
       AS_stop_capture(&cap_comp_param);
 
-      m_state = FrontendStateErrorStopping;
+      m_state = MicFrontendStateErrorStopping;
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
+void MicFrontEndObject::captureDoneOnStop(MsgPacket *msg)
 {
   CaptureDataParam cap_rslt = msg->moveParam<CaptureDataParam>();
 
@@ -965,7 +965,7 @@ void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
 
   if (!exec_result)
     {
-      m_state = FrontendStateErrorStopping;
+      m_state = MicFrontendStateErrorStopping;
     }
 
   /* Check endframe of capture */
@@ -989,12 +989,12 @@ void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
             {
               /* Reply */
 
-              AsFrontendEvent ext_cmd = getExternalCmd();
+              AsMicFrontendEvent ext_cmd = getExternalCmd();
               reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
               /* Transit to Ready */
 
-              m_state = FrontendStateReady;
+              m_state = MicFrontendStateReady;
             }
           else
             {
@@ -1002,14 +1002,14 @@ void FrontEndObject::captureDoneOnStop(MsgPacket *msg)
                * transit to WaitStop to avoid leak of MH.
                */
 
-              m_state = FrontendStateWaitStop;
+              m_state = MicFrontendStateWaitStop;
             }
         }
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
+void MicFrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
 {
   CaptureDataParam cap_rslt = msg->moveParam<CaptureDataParam>();
 
@@ -1044,14 +1044,14 @@ void FrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
             {
               if (checkExternalCmd())
                 {
-                  AsFrontendEvent ext_cmd = getExternalCmd();
+                  AsMicFrontendEvent ext_cmd = getExternalCmd();
                   reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
-                  m_state = FrontendStateReady;
+                  m_state = MicFrontendStateReady;
                 }
               else
                 {
-                  m_state = FrontendStateWaitStop;
+                  m_state = MicFrontendStateWaitStop;
                 }
             }
           else
@@ -1060,14 +1060,14 @@ void FrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
                * transit to WaitStop to avoid leak of MH.
                */
 
-              m_state = FrontendStateWaitStop;
+              m_state = MicFrontendStateWaitStop;
             }
         }
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureDoneOnWaitStop(MsgPacket *msg)
+void MicFrontEndObject::captureDoneOnWaitStop(MsgPacket *msg)
 {
   msg->moveParam<CaptureDataParam>();
 
@@ -1079,22 +1079,22 @@ void FrontEndObject::captureDoneOnWaitStop(MsgPacket *msg)
     {
       if (checkExternalCmd())
         {
-          AsFrontendEvent ext_cmd = getExternalCmd();
+          AsMicFrontendEvent ext_cmd = getExternalCmd();
           reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
-          m_state = FrontendStateReady;
+          m_state = MicFrontendStateReady;
         }
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::illegalCaptureError(MsgPacket *msg)
+void MicFrontEndObject::illegalCaptureError(MsgPacket *msg)
 {
   msg->moveParam<CaptureErrorParam>();
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureErrorOnActive(MsgPacket *msg)
+void MicFrontEndObject::captureErrorOnActive(MsgPacket *msg)
 {
   CaptureErrorParam param = msg->moveParam<CaptureErrorParam>();
 
@@ -1124,23 +1124,23 @@ void FrontEndObject::captureErrorOnActive(MsgPacket *msg)
 
           sendDummyEndData();
 
-          m_state = FrontendStateWaitStop;
+          m_state = MicFrontendStateWaitStop;
         }
       else
         {
-          m_state = FrontendStateErrorStopping;
+          m_state = MicFrontendStateErrorStopping;
         }
     }
   else
     {
       /* Transit to ErrorStopping state. */
 
-      m_state = FrontendStateErrorStopping;
+      m_state = MicFrontendStateErrorStopping;
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureErrorOnStop(MsgPacket *msg)
+void MicFrontEndObject::captureErrorOnStop(MsgPacket *msg)
 {
   CaptureErrorParam param = msg->moveParam<CaptureErrorParam>();
 
@@ -1166,14 +1166,14 @@ void FrontEndObject::captureErrorOnStop(MsgPacket *msg)
             {
               if (checkExternalCmd())
                 {
-                  AsFrontendEvent ext_cmd = getExternalCmd();
+                  AsMicFrontendEvent ext_cmd = getExternalCmd();
                   reply(ext_cmd, msg->getType(), AS_ECODE_OK);
 
-                  m_state = FrontendStateReady;
+                  m_state = MicFrontendStateReady;
                 }
               else
                 {
-                  m_state = FrontendStateWaitStop;
+                  m_state = MicFrontendStateWaitStop;
                 }
             }
           else
@@ -1182,24 +1182,24 @@ void FrontEndObject::captureErrorOnStop(MsgPacket *msg)
                * transit to WaitStop to avoid leak of MH.
                */
 
-              m_state = FrontendStateWaitStop;
+              m_state = MicFrontendStateWaitStop;
             }
         }
       else
         {
-          m_state = FrontendStateErrorStopping;
+          m_state = MicFrontendStateErrorStopping;
         }
     }
   else
     {
       /* Transit to ErrorStopping state. */
 
-      m_state = FrontendStateErrorStopping;
+      m_state = MicFrontendStateErrorStopping;
     }
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureErrorOnErrorStop(MsgPacket *msg)
+void MicFrontEndObject::captureErrorOnErrorStop(MsgPacket *msg)
 {
   /* Same as case of Stopping. */
 
@@ -1207,7 +1207,7 @@ void FrontEndObject::captureErrorOnErrorStop(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::captureErrorOnWaitStop(MsgPacket *msg)
+void MicFrontEndObject::captureErrorOnWaitStop(MsgPacket *msg)
 {
   msg->moveParam<CaptureErrorParam>();
 
@@ -1215,7 +1215,7 @@ void FrontEndObject::captureErrorOnWaitStop(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::startCapture()
+bool MicFrontEndObject::startCapture()
 {
   bool result = true;
 
@@ -1243,11 +1243,11 @@ bool FrontEndObject::startCapture()
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::setExternalCmd(AsFrontendEvent ext_event)
+bool MicFrontEndObject::setExternalCmd(AsMicFrontendEvent ext_event)
 {
   if (!m_external_cmd_que.push(ext_event))
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
       return false;
     }
 
@@ -1255,13 +1255,13 @@ bool FrontEndObject::setExternalCmd(AsFrontendEvent ext_event)
 }
 
 /*--------------------------------------------------------------------------*/
-AsFrontendEvent FrontEndObject::getExternalCmd(void)
+AsMicFrontendEvent MicFrontEndObject::getExternalCmd(void)
 {
-  AsFrontendEvent ext_cmd = AsFrontendEventAct;
+  AsMicFrontendEvent ext_cmd = AsMicFrontendEventAct;
 
   if (m_external_cmd_que.empty())
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_QUEUE_MISSING_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_QUEUE_MISSING_ERROR);
     }
   else
     {
@@ -1269,7 +1269,7 @@ AsFrontendEvent FrontEndObject::getExternalCmd(void)
 
       if (!m_external_cmd_que.pop())
         {
-          FRONT_END_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+          MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
         }
     }
 
@@ -1277,30 +1277,30 @@ AsFrontendEvent FrontEndObject::getExternalCmd(void)
 }
 
 /*--------------------------------------------------------------------------*/
-uint32_t FrontEndObject::checkExternalCmd(void)
+uint32_t MicFrontEndObject::checkExternalCmd(void)
 {
   return m_external_cmd_que.size();
 }
 
 /*--------------------------------------------------------------------------*/
-MemMgrLite::MemHandle FrontEndObject::getOutputBufAddr()
+MemMgrLite::MemHandle MicFrontEndObject::getOutputBufAddr()
 {
   MemMgrLite::MemHandle mh;
   if (mh.allocSeg(m_pool_id.output, m_max_output_size) != ERR_OK)
     {
-      FRONT_END_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+      MIC_FRONTEND_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
     }
 
   return mh;
 }
 
 /*--------------------------------------------------------------------------*/
-uint32_t FrontEndObject::activateParamCheck(
+uint32_t MicFrontEndObject::activateParamCheck(
   const AsActivateFrontendParam &param)
 {
   switch (param.input_device)
     {
-      case AsFrontendDeviceMic:
+      case AsMicFrontendDeviceMic:
         {
           cxd56_audio_micdev_t micdev = cxd56_audio_get_micdev();
           if (micdev == CXD56_AUDIO_MIC_DEV_ANALOG)
@@ -1315,7 +1315,7 @@ uint32_t FrontEndObject::activateParamCheck(
         break;
 
       default:
-        FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+        MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_INPUT_DEVICE;
     }
 
@@ -1323,7 +1323,7 @@ uint32_t FrontEndObject::activateParamCheck(
 }
 
 /*--------------------------------------------------------------------------*/
-uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
+uint32_t MicFrontEndObject::initParamCheck(const MicFrontendCommand& cmd)
 {
   uint32_t rst = AS_ECODE_OK;
 
@@ -1340,13 +1340,13 @@ uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
       case AS_CHANNEL_8CH:
         if (m_input_device != CaptureDeviceDigitalMic)
           {
-            FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+            MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
             return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
           }
           break;
 
       default:
-        FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+        MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
     }
 
@@ -1360,7 +1360,7 @@ uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
         break;
 
       default:
-        FRONT_END_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+        MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_BIT_LENGTH;
     }
 
@@ -1368,7 +1368,7 @@ uint32_t FrontEndObject::initParamCheck(const FrontendCommand& cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
+bool MicFrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 {
   ExecCustomProcParam exec;
 
@@ -1382,7 +1382,7 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 
   /* If preprocess is not active, don't alloc output area. */
 
-  if (m_preproc_type != AsFrontendPreProcThrough)
+  if (m_preproc_type != AsMicFrontendPreProcThrough)
     {
 
       if (m_pool_id.output == MemMgrLite::NullPoolId)
@@ -1398,7 +1398,7 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
           if (ERR_OK != exec.output_mh.allocSeg(m_pool_id.output,
                                                 m_max_output_size))
             {
-              FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+              MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;
             }
         }
@@ -1419,13 +1419,13 @@ bool FrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::flushPreProc(void)
+bool MicFrontEndObject::flushPreProc(void)
 {
   FlushCustomProcParam flush;
 
   /* Set preprocess flush output area */
 
-  if (m_preproc_type != AsFrontendPreProcThrough)
+  if (m_preproc_type != AsMicFrontendPreProcThrough)
     {
       if (m_pool_id.output == MemMgrLite::NullPoolId)
         {
@@ -1433,10 +1433,10 @@ bool FrontEndObject::flushPreProc(void)
            * If null pool id is set, allocate on input area.
            */
 
-          if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.capin,
+          if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.input,
                                                  m_max_capture_size))
             {
-              FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+              MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;
             }
         }
@@ -1445,7 +1445,7 @@ bool FrontEndObject::flushPreProc(void)
           if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.output,
                                                  m_max_capture_size))
             {
-              FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+              MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;
             }
         }
@@ -1464,7 +1464,7 @@ bool FrontEndObject::flushPreProc(void)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::sendData(AsPcmDataParam& data)
+bool MicFrontEndObject::sendData(AsPcmDataParam& data)
 {
   data.identifier = 0;
   data.callback   = pcm_send_done_callback;
@@ -1482,7 +1482,7 @@ bool FrontEndObject::sendData(AsPcmDataParam& data)
       err_t er = MsgLib::send<AsPcmDataParam>(m_pcm_data_dest.msg.msgqid,
                                               MsgPriNormal,
                                               m_pcm_data_dest.msg.msgtype,
-                                              m_msgq_id.frontend,
+                                              m_msgq_id.micfrontend,
                                               data);
       F_ASSERT(er == ERR_OK);
     }
@@ -1491,7 +1491,7 @@ bool FrontEndObject::sendData(AsPcmDataParam& data)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::sendDummyEndData(void)
+bool MicFrontEndObject::sendDummyEndData(void)
 {
   /* Send dummy end frame */
 
@@ -1503,7 +1503,7 @@ bool FrontEndObject::sendDummyEndData(void)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::getInputDeviceHdlr(void)
+bool MicFrontEndObject::getInputDeviceHdlr(void)
 {
   if (m_capture_hdlr != MAX_CAPTURE_COMP_INSTANCE_NUM)
     {
@@ -1512,7 +1512,7 @@ bool FrontEndObject::getInputDeviceHdlr(void)
 
   if (!AS_get_capture_comp_handler(&m_capture_hdlr,
                                    m_input_device,
-                                   m_pool_id.capin))
+                                   m_pool_id.input))
     {
       return false;
     }
@@ -1521,7 +1521,7 @@ bool FrontEndObject::getInputDeviceHdlr(void)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::delInputDeviceHdlr(void)
+bool MicFrontEndObject::delInputDeviceHdlr(void)
 {
   if (m_capture_hdlr != MAX_CAPTURE_COMP_INSTANCE_NUM)
     {
@@ -1536,18 +1536,18 @@ bool FrontEndObject::delInputDeviceHdlr(void)
 }
 
 /*--------------------------------------------------------------------------*/
-bool FrontEndObject::checkAndSetMemPool(void)
+bool MicFrontEndObject::checkAndSetMemPool(void)
 {
   /* Check capture in buffer pool */
 
-  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.capin))
+  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.input))
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
 
-  m_max_capture_size = (MemMgrLite::Manager::getPoolSize(m_pool_id.capin)) /
-                       (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.capin));
+  m_max_capture_size = (MemMgrLite::Manager::getPoolSize(m_pool_id.input)) /
+                       (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.input));
 
   /* check output buffer pool */
 
@@ -1555,7 +1555,7 @@ bool FrontEndObject::checkAndSetMemPool(void)
     {
       if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.output))
         {
-          FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+          MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
           return false;
         }
 
@@ -1565,17 +1565,17 @@ bool FrontEndObject::checkAndSetMemPool(void)
 
   /* check DSP command buffer pool */
 
-  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.dspcmd))
+  if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.dsp))
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
 
   if ((int)(sizeof(Apu::Wien2ApuCmd)) >
-      (MemMgrLite::Manager::getPoolSize(m_pool_id.dspcmd))/
-      (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.dspcmd)))
+      (MemMgrLite::Manager::getPoolSize(m_pool_id.dsp))/
+      (MemMgrLite::Manager::getPoolNumSegs(m_pool_id.dsp)))
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return false;
     }
 
@@ -1587,11 +1587,11 @@ bool FrontEndObject::checkAndSetMemPool(void)
  ****************************************************************************/
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateFrontend(FAR AsCreateFrontendParam_t *param, AudioAttentionCb attcb)
+bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
-  FRONT_END_REG_ATTCB(attcb);
+  MIC_FRONTEND_REG_ATTCB(attcb);
 
   /* Parameter check */
 
@@ -1608,17 +1608,17 @@ bool AS_CreateFrontend(FAR AsCreateFrontendParam_t *param, AudioAttentionCb attc
   /* Reset Message queue. */
 
   FAR MsgQueBlock *que;
-  err_t err_code = MsgLib::referMsgQueBlock(s_msgq_id.frontend, &que);
+  err_t err_code = MsgLib::referMsgQueBlock(s_msgq_id.micfrontend, &que);
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_fed_pid = task_create("FED_OBJ",
+  s_mfe_pid = task_create("FED_OBJ",
                           150, 1024 * 2,
-                          AS_FrontendObjEntry,
+                          AS_MicFrontendObjEntry,
                           NULL);
-  if (s_fed_pid < 0)
+  if (s_mfe_pid < 0)
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
 
@@ -1626,7 +1626,7 @@ bool AS_CreateFrontend(FAR AsCreateFrontendParam_t *param, AudioAttentionCb attc
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_ActivateFrontend(FAR AsActivateFrontend *actparam)
+bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam)
 {
   /* Parameter check */
 
@@ -1637,22 +1637,22 @@ bool AS_ActivateFrontend(FAR AsActivateFrontend *actparam)
 
   /* Activate */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.act_param = *actparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_ACT,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_ACT,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_InitFrontend(FAR AsInitFrontendParam *initparam)
+bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam)
 {
   /* Parameter check */
 
@@ -1663,22 +1663,22 @@ bool AS_InitFrontend(FAR AsInitFrontendParam *initparam)
 
   /* Init */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.init_param = *initparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_INIT,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_INIT,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_StartFrontend(FAR AsStartFrontendParam *startparam)
+bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam)
 {
   /* Parameter check */
 
@@ -1689,22 +1689,22 @@ bool AS_StartFrontend(FAR AsStartFrontendParam *startparam)
 
   /* Start */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.start_param = *startparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_START,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_START,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_StopFrontend(FAR AsStopFrontendParam *stopparam)
+bool AS_StopMicFrontend(FAR AsStopMicFrontendParam *stopparam)
 {
   /* Parameter check */
 
@@ -1715,15 +1715,15 @@ bool AS_StopFrontend(FAR AsStopFrontendParam *stopparam)
 
   /* Stop */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.stop_param = *stopparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_STOP,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_STOP,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
@@ -1741,22 +1741,22 @@ bool AS_InitPreprocFrontend(FAR AsInitPreProcParam *initpreparam)
 
   /* Init PreProcess */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.initpreproc_param = *initpreparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_INITPREPROC,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_INITPREPROC,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_SetPreprocFrontend(FAR AsSetPreProcParam *setpreparam)
+bool AS_SetPreprocMicFrontend(FAR AsSetPreProcParam *setpreparam)
 {
   /* Parameter check */
 
@@ -1767,15 +1767,15 @@ bool AS_SetPreprocFrontend(FAR AsSetPreProcParam *setpreparam)
 
   /* Set PreProcess */
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.setpreproc_param = *setpreparam;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_SETPREPROC,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_SETPREPROC,
+                                              NULL,
+                                              cmd);
 
   F_ASSERT(er == ERR_OK);
 
@@ -1783,76 +1783,76 @@ bool AS_SetPreprocFrontend(FAR AsSetPreProcParam *setpreparam)
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_SetMicGainFrontend(FAR AsFrontendMicGainParam *micgain_param)
+bool AS_SetMicGainMicFrontend(FAR AsMicFrontendMicGainParam *micgain_param)
 {
   if (micgain_param == NULL)
     {
       return false;
     }
 
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
   cmd.mic_gain_param = *micgain_param;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_SETMICGAIN,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_SETMICGAIN,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_DeactivateFrontend(FAR AsDeactivateFrontendParam *deactparam)
+bool AS_DeactivateMicFrontend(FAR AsDeactivateMicFrontendParam *deactparam)
 {
-  FrontendCommand cmd;
+  MicFrontendCommand cmd;
 
-  err_t er = MsgLib::send<FrontendCommand>(s_msgq_id.frontend,
-                                           MsgPriNormal,
-                                           MSG_AUD_FED_CMD_DEACT,
-                                           NULL,
-                                           cmd);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_msgq_id.micfrontend,
+                                              MsgPriNormal,
+                                              MSG_AUD_MFE_CMD_DEACT,
+                                              NULL,
+                                              cmd);
   F_ASSERT(er == ERR_OK);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_DeleteFrontend(void)
+bool AS_DeleteMicFrontend(void)
 {
-  if (s_fed_obj == NULL)
+  if (s_mfe_obj == NULL)
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
 
-  task_delete(s_fed_pid);
-  delete s_fed_obj;
-  s_fed_obj = NULL;
+  task_delete(s_mfe_pid);
+  delete s_mfe_obj;
+  s_mfe_obj = NULL;
 
   /* Unregister attention callback */
 
-  FRONT_END_UNREG_ATTCB();
+  MIC_FRONTEND_UNREG_ATTCB();
 
   return true;
 }
 
 
 /*--------------------------------------------------------------------------*/
-void FrontEndObject::create(AsFrontendMsgQueId_t msgq_id,
-                            AsFrontendPoolId_t pool_id)
+void MicFrontEndObject::create(AsMicFrontendMsgQueId_t msgq_id,
+                               AsMicFrontendPoolId_t pool_id)
 {
-  if (s_fed_obj == NULL)
+  if (s_mfe_obj == NULL)
     {
-      s_fed_obj = new FrontEndObject(msgq_id,
-                                     pool_id);
-      s_fed_obj->run();
+      s_mfe_obj = new MicFrontEndObject(msgq_id,
+                                        pool_id);
+      s_mfe_obj->run();
     }
   else
     {
-      FRONT_END_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
     }
 }

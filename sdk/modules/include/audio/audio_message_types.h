@@ -74,7 +74,7 @@
 #define MSG_CAT_AUD_MIX_SEF       (MSG_SET_CATEGORY(0x8))
 #define MSG_CAT_AUD_SEF           (MSG_SET_CATEGORY(0x9))
 #define MSG_CAT_AUD_CAP           (MSG_SET_CATEGORY(0xA))
-#define MSG_CAT_AUD_FED           (MSG_SET_CATEGORY(0xB))
+#define MSG_CAT_AUD_MFE           (MSG_SET_CATEGORY(0xB))
 
 /************************************************************************
  *
@@ -376,36 +376,36 @@
 
 /************************************************************************
  *
- *    MSG_CAT_AUD_FED: Audio Frontend Command/Result(bi-directional)
+ *    MSG_CAT_AUD_MFE: Mic Frontend Command/Result(bi-directional)
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_FED|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MFE|   MSG_SUB_TYPE                |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
  */
-#define MSG_AUD_FED_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_FED)
-#define MSG_AUD_FED_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_FED)
+#define MSG_AUD_MFE_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MFE)
+#define MSG_AUD_MFE_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MFE)
 
-#define MSG_AUD_FED_CMD_ACT          (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_FED_CMD_DEACT        (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_FED_CMD_INIT         (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_FED_CMD_START        (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_FED_CMD_STOP         (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_FED_CMD_INITPREPROC  (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x05))
-#define MSG_AUD_FED_CMD_SETPREPROC   (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x06))
-#define MSG_AUD_FED_CMD_SETMICGAIN   (MSG_AUD_FED_REQ | MSG_SET_SUBTYPE(0x07))
+#define MSG_AUD_MFE_CMD_ACT          (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MFE_CMD_DEACT        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_MFE_CMD_INIT         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x02))
+#define MSG_AUD_MFE_CMD_START        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_MFE_CMD_STOP         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_MFE_CMD_INITPREPROC  (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_MFE_CMD_SETPREPROC   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x06))
+#define MSG_AUD_MFE_CMD_SETMICGAIN   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x07))
 
-#define LAST_AUD_FED_MSG    (MSG_AUD_FED_CMD_SETMICGAIN + 1)
-#define AUD_FED_MSG_NUM     (LAST_AUD_FED_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MFE_MSG    (MSG_AUD_MFE_CMD_SETMICGAIN + 1)
+#define AUD_MFE_MSG_NUM     (LAST_AUD_MFE_MSG & MSG_TYPE_SUBTYPE)
 
-#define MSG_AUD_FED_RST_CAPTURE_DONE (MSG_AUD_FED_RES | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_FED_RST_CAPTURE_ERR  (MSG_AUD_FED_RES | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_FED_RST_PREPROC      (MSG_AUD_FED_RES | MSG_SET_SUBTYPE(0x02))
+#define MSG_AUD_MFE_RST_CAPTURE_DONE (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MFE_RST_CAPTURE_ERR  (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_MFE_RST_PREPROC      (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x02))
 
-#define LAST_AUD_FED_RST_MSG    (MSG_AUD_FED_RST_PREPROC + 1)
-#define AUD_FED_RST_MSG_NUM     (LAST_AUD_FED_RST_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MFE_RST_MSG    (MSG_AUD_MFE_RST_PREPROC + 1)
+#define AUD_MFE_RST_MSG_NUM     (LAST_AUD_MFE_RST_MSG & MSG_TYPE_SUBTYPE)
 
 
 

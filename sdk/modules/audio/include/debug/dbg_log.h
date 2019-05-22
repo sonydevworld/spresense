@@ -180,30 +180,30 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
-#define FRONT_END_REG_ATTCB(att_cb)  ATTENTION_CB_REGISTER( \
-                                            AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_REG_ATTCB(att_cb)  ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                             att_cb)
-#define FRONT_END_UNREG_ATTCB()  ATTENTION_CB_UNREGISTER( \
-                                        AS_MODULE_ID_FRONT_END_OBJ)
+#define MIC_FRONTEND_UNREG_ATTCB()  ATTENTION_CB_UNREGISTER( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ)
 
-#define FRONT_END_FATAL(code)    DBG_LOGF_FATAL( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_FATAL(code)    DBG_LOGF_FATAL( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         code)
-#define FRONT_END_ERR(code)      DBG_LOGF_ERROR( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_ERR(code)      DBG_LOGF_ERROR( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         code)
-#define FRONT_END_WARN(code)     DBG_LOGF_WARN( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_WARN(code)     DBG_LOGF_WARN( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         code)
-#define FRONT_END_INF(code)      DBG_LOGF_DEBUG( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_INF(code)      DBG_LOGF_DEBUG( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         code)
-#define FRONT_END_DBG(fmt, ...)  AUDIO_LOG_EVENT( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_DBG(fmt, ...)  AUDIO_LOG_EVENT( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         fmt, \
                                         ##__VA_ARGS__)
-#define FRONT_END_VDBG(fmt, ...) AUDIO_LOG_DETAIL( \
-                                        AS_MODULE_ID_FRONT_END_OBJ, \
+#define MIC_FRONTEND_VDBG(fmt, ...) AUDIO_LOG_DETAIL( \
+                                        AS_MODULE_ID_MIC_FRONTEND_OBJ, \
                                         fmt, \
                                         ##__VA_ARGS__)
 

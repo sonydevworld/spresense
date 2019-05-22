@@ -59,7 +59,7 @@ static MsgQueId s_appMid     = MSGQID_UNUSED;
 static MsgQueId s_plyMainMid = MSGQID_UNUSED;
 static MsgQueId s_plySubMid  = MSGQID_UNUSED;
 static MsgQueId s_mixerMid   = MSGQID_UNUSED;
-static MsgQueId s_fedMid     = MSGQID_UNUSED;
+static MsgQueId s_mfeMid     = MSGQID_UNUSED;
 static MsgQueId s_rcdMid     = MSGQID_UNUSED;
 static MsgQueId s_effectMid  = MSGQID_UNUSED;
 static MsgQueId s_rcgMid     = MSGQID_UNUSED;
@@ -289,7 +289,7 @@ static cxd56_audio_sel_t conv_path_sel(uint8_t in_path, uint8_t out_path)
  * Callback functions from Frontend 
  */
 
-static bool frontend_done_callback(AsFrontendEvent event, uint32_t result, uint32_t sub_result)
+static bool micfrontend_done_callback(AsMicFrontendEvent event, uint32_t result, uint32_t sub_result)
 {
   uint8_t cmd_code[] =
   {
@@ -305,7 +305,7 @@ static bool frontend_done_callback(AsFrontendEvent event, uint32_t result, uint3
   AudioMngCmdCmpltResult cmplt(cmd_code[event],
                                0,
                                result,
-                               AS_MODULE_ID_FRONT_END_OBJ,
+                               AS_MODULE_ID_MIC_FRONTEND_OBJ,
                                sub_result);
 
   err_t er = MsgLib::send<AudioMngCmdCmpltResult>(s_selfMid,
@@ -531,7 +531,7 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
   s_plyMainMid = (MsgQueId)ids.player_main;
   s_plySubMid  = (MsgQueId)ids.player_sub;
   s_mixerMid   = (MsgQueId)ids.mixer;
-  s_fedMid     = (MsgQueId)ids.frontend;
+  s_mfeMid     = (MsgQueId)ids.micfrontend;
   s_rcdMid     = (MsgQueId)ids.recorder;
   s_effectMid  = (MsgQueId)ids.effector;
   s_rcgMid     = (MsgQueId)ids.recognizer;
@@ -573,7 +573,7 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
   s_plyMainMid = (MsgQueId)ids.player_main;
   s_plySubMid  = (MsgQueId)ids.player_sub;
   s_mixerMid   = (MsgQueId)ids.mixer;
-  s_fedMid     = (MsgQueId)ids.frontend;
+  s_mfeMid     = (MsgQueId)ids.micfrontend;
   s_rcdMid     = (MsgQueId)ids.recorder;
   s_effectMid  = (MsgQueId)ids.effector;
   s_rcgMid     = (MsgQueId)ids.recognizer;
@@ -622,7 +622,7 @@ int AS_DeleteAudioManager(void)
       s_plyMainMid = MSGQID_UNUSED;
       s_plySubMid  = MSGQID_UNUSED;
       s_mixerMid   = MSGQID_UNUSED;
-      s_fedMid     = MSGQID_UNUSED;
+      s_mfeMid     = MSGQID_UNUSED;
       s_rcdMid     = MSGQID_UNUSED;
       s_effectMid  = MSGQID_UNUSED;
       s_rcgMid     = MSGQID_UNUSED;
@@ -843,15 +843,15 @@ AudioManager::MsgProc
     &AudioManager::illegal             /*   Through state.         */
   },
 
-  /* FrontEnd command. */
+  /* MicFrontEnd command. */
 
   {                                    /* AudioManager all status: */
-    &AudioManager::frontend,           /*   Ready state.           */
+    &AudioManager::micfrontend,        /*   Ready state.           */
     &AudioManager::illegal,            /*   PlayerReady state.     */
     &AudioManager::illegal,            /*   PlayerActive state.    */
     &AudioManager::illegal,            /*   PlayerPause state.     */
-    &AudioManager::frontend,           /*   RecorderReady state.   */
-    &AudioManager::frontend,           /*   RecorderActive state.  */
+    &AudioManager::micfrontend,        /*   RecorderReady state.   */
+    &AudioManager::micfrontend,        /*   RecorderActive state.  */
     &AudioManager::illegal,            /*   BasebandReady state.   */
     &AudioManager::illegal,            /*   BasebandActive state.  */
     &AudioManager::illegal,            /*   WaitCommandWord state. */
@@ -1588,10 +1588,10 @@ void AudioManager::outputmixer(AudioCommand &cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::frontend(AudioCommand &cmd)
+void AudioManager::micfrontend(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-  FrontendCommand frontend_command;
+  MicFrontendCommand frontend_command;
   MSG_TYPE msg_type;
   bool check = false;
 
@@ -1613,7 +1613,7 @@ void AudioManager::frontend(AudioCommand &cmd)
           {
             return;
           }
-        msg_type = MSG_AUD_FED_CMD_INITPREPROC;
+        msg_type = MSG_AUD_MFE_CMD_INITPREPROC;
         frontend_command.initpreproc_param = cmd.init_mfe_param.initpre_param;
         break;
 
@@ -1623,7 +1623,7 @@ void AudioManager::frontend(AudioCommand &cmd)
           {
             return;
           }
-        msg_type = MSG_AUD_FED_CMD_SETPREPROC;
+        msg_type = MSG_AUD_MFE_CMD_SETPREPROC;
         frontend_command.setpreproc_param = cmd.set_mfe_param.setpre_param;
         break;
 
@@ -1634,11 +1634,11 @@ void AudioManager::frontend(AudioCommand &cmd)
         return;
     }
 
-  err_t er = MsgLib::send<FrontendCommand>(s_fedMid,
-                                           MsgPriNormal,
-                                           msg_type,
-                                           m_selfDtq,
-                                           frontend_command);
+  err_t er = MsgLib::send<MicFrontendCommand>(s_mfeMid,
+                                              MsgPriNormal,
+                                              msg_type,
+                                              m_selfDtq,
+                                              frontend_command);
   F_ASSERT(er == ERR_OK);
 #else
   sendErrRespResult(cmd.header.sub_code,
@@ -1651,7 +1651,7 @@ void AudioManager::frontend(AudioCommand &cmd)
 void AudioManager::recorder(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_RECORDER_ENABLE
-  FrontendCommand frontend_command;
+  MicFrontendCommand frontend_command;
   uint32_t target = 0;
   const uint32_t TargetRecorder = 0x01;
   const uint32_t TargetFrontend = 0x02;
@@ -1680,7 +1680,7 @@ void AudioManager::recorder(AudioCommand &cmd)
         frontend_command.init_param.dest.msg.msgtype  = MSG_AUD_MRC_CMD_ENCODE;
 
         rcd_msg_type = MSG_AUD_MRC_CMD_INIT;
-        fed_msg_type = MSG_AUD_FED_CMD_INIT;
+        fed_msg_type = MSG_AUD_MFE_CMD_INIT;
         target = TargetRecorder | TargetFrontend;
         break;
 
@@ -1691,7 +1691,7 @@ void AudioManager::recorder(AudioCommand &cmd)
             return;
           }
         rcd_msg_type = MSG_AUD_MRC_CMD_START;
-        fed_msg_type = MSG_AUD_FED_CMD_START;
+        fed_msg_type = MSG_AUD_MFE_CMD_START;
         target = TargetRecorder | TargetFrontend;
         break;
 
@@ -1702,7 +1702,7 @@ void AudioManager::recorder(AudioCommand &cmd)
             return;
           }
         rcd_msg_type = MSG_AUD_MRC_CMD_STOP;
-        fed_msg_type = MSG_AUD_FED_CMD_STOP;
+        fed_msg_type = MSG_AUD_MFE_CMD_STOP;
         target = TargetRecorder | TargetFrontend;
         break;
 
@@ -1717,16 +1717,16 @@ void AudioManager::recorder(AudioCommand &cmd)
 
   if (target & TargetFrontend)
     {
-      err_t er = MsgLib::send<FrontendCommand>(s_fedMid,
-                                               MsgPriNormal,
-                                               fed_msg_type,
-                                               m_selfDtq,
-                                               frontend_command);
+      err_t er = MsgLib::send<MicFrontendCommand>(s_mfeMid,
+                                                  MsgPriNormal,
+                                                  fed_msg_type,
+                                                  m_selfDtq,
+                                                  frontend_command);
       F_ASSERT(er == ERR_OK);
 
-      if ((fed_msg_type == MSG_AUD_FED_CMD_INIT)
-       || (fed_msg_type == MSG_AUD_FED_CMD_START)
-       || (fed_msg_type == MSG_AUD_FED_CMD_STOP))
+      if ((fed_msg_type == MSG_AUD_MFE_CMD_INIT)
+       || (fed_msg_type == MSG_AUD_MFE_CMD_START)
+       || (fed_msg_type == MSG_AUD_MFE_CMD_STOP))
         {
           m_recorder_transition_count++;
         }
@@ -1911,12 +1911,12 @@ void AudioManager::setRdyOnRecorder(AudioCommand &cmd)
 
   /* Deactivate Frontend */
 
-  FrontendCommand frontend_command;
-  er = MsgLib::send<FrontendCommand>(s_fedMid,
-                                     MsgPriNormal,
-                                     MSG_AUD_FED_CMD_DEACT,
-                                     m_selfDtq,
-                                     frontend_command);
+  MicFrontendCommand frontend_command;
+  er = MsgLib::send<MicFrontendCommand>(s_mfeMid,
+                                        MsgPriNormal,
+                                        MSG_AUD_MFE_CMD_DEACT,
+                                        m_selfDtq,
+                                        frontend_command);
   F_ASSERT(er == ERR_OK);
   m_recorder_transition_count++;
 
@@ -2280,18 +2280,18 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 
   /* Activate Frontend */
 
-  FrontendCommand frontend_command;
+  MicFrontendCommand frontend_command;
 
   frontend_command.act_param.param.input_device =
     cmd.set_recorder_status_param.input_device;
   frontend_command.act_param.param.preproc_type = m_preproc_type;
-  frontend_command.act_param.cb                 = frontend_done_callback;
+  frontend_command.act_param.cb                 = micfrontend_done_callback;
 
-  er = MsgLib::send<FrontendCommand>(s_fedMid,
-                                     MsgPriNormal,
-                                     MSG_AUD_FED_CMD_ACT,
-                                     m_selfDtq,
-                                     frontend_command);
+  er = MsgLib::send<MicFrontendCommand>(s_mfeMid,
+                                        MsgPriNormal,
+                                        MSG_AUD_MFE_CMD_ACT,
+                                        m_selfDtq,
+                                        frontend_command);
   F_ASSERT(er == ERR_OK);
   m_recorder_transition_count++;
 

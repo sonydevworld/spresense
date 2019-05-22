@@ -945,7 +945,7 @@ typedef struct
 {
   /*! \brief [in] Set pre process type 
    *
-   * Use #AsFrontendPreProcType enum type
+   * Use #AsMicFrontendPreProcType enum type
    */
 
   uint32_t  preproc_type;
@@ -1315,7 +1315,7 @@ typedef enum
 
   /*! \brief FrontEnd Object ID */
 
-  AS_MODULE_ID_FRONT_END_OBJ,
+  AS_MODULE_ID_MIC_FRONTEND_OBJ,
 
   /*! \brief Input Data Manager Object ID */
 
@@ -1579,7 +1579,7 @@ typedef struct
 
   /*! \brief [in] MsgQueID of FrontendObject */
 
-  uint8_t frontend;
+  uint8_t micfrontend;
 
   /*! \brief [in] MsgQueID of recorderObject */
 

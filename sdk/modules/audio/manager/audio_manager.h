@@ -104,7 +104,7 @@ private:
     m_input_en(false),
     m_output_en(false)
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-    , m_preproc_type(AsFrontendPreProcThrough)
+    , m_preproc_type(AsMicFrontendPreProcThrough)
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
@@ -174,7 +174,7 @@ private:
   void mpp(AudioCommand &cmd);
   void player(AudioCommand &cmd);
   void outputmixer(AudioCommand &cmd);
-  void frontend(AudioCommand &cmd);
+  void micfrontend(AudioCommand &cmd);
   void recorder(AudioCommand &cmd);
   void setMicMap(AudioCommand &cmd);
   void setMicGain(AudioCommand &cmd);

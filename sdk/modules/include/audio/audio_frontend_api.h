@@ -42,11 +42,11 @@
  */
 
 /**
- * @defgroup audioutils_audio_frontend_api Audio Frontend API
+ * @defgroup audioutils_audio_frontend_api Mic Frontend API
  * @{
  *
  * @file       audio_frontend_api.h
- * @brief      CXD5602 Audio Frontend API
+ * @brief      CXD5602 Audio Mic Frontend API
  * @author     CXD5602 Audio SW Team
  */
 
@@ -87,63 +87,63 @@
  * Public Types
  ****************************************************************************/
 
-/** Event type of FrontEnd */
+/** Event type of Mic FrontEnd */
 
 typedef enum
 {
   /*! \brief Activate */
 
-  AsFrontendEventAct = 0,
+  AsMicFrontendEventAct = 0,
 
   /*! \brief Deactivate */
 
-  AsFrontendEventDeact,
+  AsMicFrontendEventDeact,
 
   /*! \brief Init */
 
-  AsFrontendEventInit,
+  AsMicFrontendEventInit,
 
   /*! \brief Start */
 
-  AsFrontendEventStart,
+  AsMicFrontendEventStart,
 
   /*! \brief Stop */
 
-  AsFrontendEventStop,
+  AsMicFrontendEventStop,
 
   /*! \brief Init PreProc */
 
-  AsFrontendEventInitPreProc,
+  AsMicFrontendEventInitPreProc,
 
   /*! \brief Set PreProc */
 
-  AsFrontendEventSetPreProc,
+  AsMicFrontendEventSetPreProc,
 
   /*! \brief Set MicGain */
 
-  AsFrontendEventSetMicGain,
+  AsMicFrontendEventSetMicGain,
 
-} AsFrontendEvent;
+} AsMicFrontendEvent;
 
 typedef enum
 {
-  AsFrontendDeviceMic = 0,
+  AsMicFrontendDeviceMic = 0,
 
-} AsFrontendInputDevice;
+} AsMicFrontendInputDevice;
 
-/** Select Frontend PreProcess Enable */
+/** Select Mic Frontend PreProcess Enable */
 
 typedef enum
 {
   /*! \brief Pre Process through */
 
-  AsFrontendPreProcThrough = 0,
+  AsMicFrontendPreProcThrough = 0,
 
   /*! \brief Pre Process user customed */
 
-  AsFrontendPreProcUserCustom,
+  AsMicFrontendPreProcUserCustom,
 
-} AsFrontendPreProcType;
+} AsMicFrontendPreProcType;
 
 typedef enum
 {
@@ -155,13 +155,13 @@ typedef enum
 
   AsDataPathMessage,
 
-} AsFrontendDataPath;
+} AsMicFrontendDataPath;
 
-/** Activate FrontEnd Command */
+/** Activate Mic FrontEnd Command */
 
 typedef struct
 {
-  /*! \brief [in] Select Frontend input device
+  /*! \brief [in] Select Mic Frontend input device
    *
    * Use #AsSetRecorderStsInputDevice enum type
    */
@@ -170,32 +170,32 @@ typedef struct
 
   /*! \brief [in] Select pre process enable 
    *
-   * Use #AsFrontendPreProcType enum type
+   * Use #AsMicFrontendPreProcType enum type
    */
 
   uint32_t  preproc_type;
 
 } AsActivateFrontendParam;
 
-typedef bool (*FrontendCallback)(AsFrontendEvent evtype, uint32_t result, uint32_t sub_result);
+typedef bool (*MicFrontendCallback)(AsMicFrontendEvent evtype, uint32_t result, uint32_t sub_result);
 
 typedef struct
 {
   AsActivateFrontendParam param;
    
-  FrontendCallback cb;
+  MicFrontendCallback cb;
 
-} AsActivateFrontend;
+} AsActivateMicFrontend;
 
-/** Deactivate FrontEnd Command */
+/** Deactivate Mic FrontEnd Command */
 
 typedef struct
 {
   uint32_t reserve;
 
-} AsDeactivateFrontendParam;
+} AsDeactivateMicFrontendParam;
 
-/** InitFrontend Command parameter */
+/** InitMicFrontend Command parameter */
 
 typedef void (*FrontendDoneCallback)(AsPcmDataParam param);
 
@@ -212,12 +212,12 @@ union AsDataDest
 
 typedef struct
 {
-  /*! \brief [in] Select InitFrontend input channels
+  /*! \brief [in] Select InitMicFrontend input channels
    */
 
   uint8_t  channel_number;
 
-  /*! \brief [in] Select InitFrontend input bit length
+  /*! \brief [in] Select InitMicFrontend input bit length
    */
 
   uint8_t  bit_length;
@@ -227,9 +227,9 @@ typedef struct
 
   uint32_t samples_per_frame;
 
-  /*! \brief [in] Select Data path from Frontend 
+  /*! \brief [in] Select Data path from MicFrontend 
    *
-   * Use #AsFrontendDataPath enum type
+   * Use #AsMicFrontendDataPath enum type
    */
 
   uint8_t  data_path;
@@ -241,23 +241,23 @@ typedef struct
 
   AsDataDest dest;
 
-} AsInitFrontendParam;
+} AsInitMicFrontendParam;
 
-/** StartFrontend Command parameter */
+/** StartMicFrontend Command parameter */
 
 typedef struct
 {
   uint32_t reserve;
 
-} AsStartFrontendParam;
+} AsStartMicFrontendParam;
 
-/** StopFrontend Command parameter */
+/** StopMicFrontend Command parameter */
 
 typedef struct
 {
   uint32_t stop_mode;
 
-} AsStopFrontendParam;
+} AsStopMicFrontendParam;
 
 /** InitPreProc, SetPreProc Command parameter */
 
@@ -288,7 +288,7 @@ typedef struct
 
   int16_t mic_gain[AS_MIC_CHANNEL_MAX];
 
-} AsFrontendMicGainParam;
+} AsMicFrontendMicGainParam;
 
 /** Frontendcommand header */
 
@@ -304,15 +304,15 @@ typedef struct
   uint8_t reserved1;
   uint8_t reserved2;
 
-} FrontendCommandHeader;
+} MicFrontendCommandHeader;
 
-/** FrontendCommand definition */
+/** MicFrontendCommand definition */
 
 typedef struct
 {
   /*! \brief [in] Command Header */
 
-  FrontendCommandHeader header;
+  MicFrontendCommandHeader header;
 
   /*! \brief [in] Command Parameters */
 
@@ -322,31 +322,31 @@ typedef struct
      * (Object Interface==AS_ActivateFrontend)
      */
  
-    AsActivateFrontend act_param;
+    AsActivateMicFrontend act_param;
 
     /*! \brief [in] for DeactivateFrontend
      * (Object Interface==AS_DeactivateFrontend)
      */
  
-    AsDeactivateFrontendParam deact_param;
+    AsDeactivateMicFrontendParam deact_param;
 
     /*! \brief [in] for InitFrontend
-     * (Object Interface==AS_InitFrontend)
+     * (Object Interface==AS_InitMicFrontend)
      */
 
-    AsInitFrontendParam init_param;
+    AsInitMicFrontendParam init_param;
 
     /*! \brief [in] for StartFrontend
-     * (Object Interface==AS_StartFrontend)
+     * (Object Interface==AS_StartMicFrontend)
      */
 
-    AsStartFrontendParam start_param;
+    AsStartMicFrontendParam start_param;
 
     /*! \brief [in] for StopFrontend
-     * (Object Interface==AS_StopFrontend)
+     * (Object Interface==AS_StopMicFrontend)
      */
 
-    AsStopFrontendParam stop_param;
+    AsStopMicFrontendParam stop_param;
 
     /*! \brief [in] for InitPreProc
      * (Object Interface==AS_InitPreProcFrontend)
@@ -364,18 +364,18 @@ typedef struct
      * (Object Interface==AS_SetMicGainFrontend)
      */
 
-    AsFrontendMicGainParam mic_gain_param;
+    AsMicFrontendMicGainParam mic_gain_param;
   };
 
-} FrontendCommand;
+} MicFrontendCommand;
 
 /** Message queue ID parameter of activate function */
 
 typedef struct
 {
-  /*! \brief [in] Message queue id of frontend */
+  /*! \brief [in] Message queue id of micfrontend */
 
-  uint8_t frontend;
+  uint8_t micfrontend;
 
   /*! \brief [in] Message queue id of audio_manager */
 
@@ -385,7 +385,7 @@ typedef struct
 
   uint8_t dsp;
 
-} AsFrontendMsgQueId_t;
+} AsMicFrontendMsgQueId_t;
 
 /** Pool ID parameter of activate function */
 
@@ -393,7 +393,7 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of input data */
 
-  uint8_t capin;
+  uint8_t input;
 
   /*! \brief [in] Memory pool id of PreProc */
 
@@ -401,9 +401,9 @@ typedef struct
 
   /*! \brief [in] Memory pool id of dsp command data */
 
-  uint8_t dspcmd;
+  uint8_t dsp;
 
-} AsFrontendPoolId_t;
+} AsMicFrontendPoolId_t;
 
 /** Activate function parameter */
 
@@ -411,13 +411,13 @@ typedef struct
 {
   /*! \brief [in] ID for sending messages to each function */
 
-  AsFrontendMsgQueId_t msgq_id;
+  AsMicFrontendMsgQueId_t msgq_id;
 
   /*! \brief [in] ID of memory pool for processing data */
 
-  AsFrontendPoolId_t   pool_id;
+  AsMicFrontendPoolId_t   pool_id;
 
-} AsCreateFrontendParam_t;
+} AsCreateMicFrontendParam_t;
 
 /****************************************************************************
  * Public Data
@@ -432,20 +432,20 @@ typedef struct
  ****************************************************************************/
 
 /**
- * @brief Create audio frontend
+ * @brief Create mic frontend
  *
- * @param[in] param: Parameters of resources used by audio frontend
+ * @param[in] param: Parameters of resources used by mic frontend
  * @param[in] attcb: Attention callback of Frontend. NULL means no callback.
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
-bool AS_CreateFrontend(FAR AsCreateFrontendParam_t *param,
-                       AudioAttentionCb attcb);
+bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param,
+                          AudioAttentionCb attcb);
 
 /**
- * @brief Activate audio frontend
+ * @brief Activate mic frontend
  *
  * @param[in] param: Activation parameters
  *
@@ -453,10 +453,10 @@ bool AS_CreateFrontend(FAR AsCreateFrontendParam_t *param,
  * @retval     false : failure
  */
 
-bool AS_ActivateFrontend(FAR AsActivateFrontend *actparam);
+bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam);
 
 /**
- * @brief Init audio frontend
+ * @brief Init mic frontend
  *
  * @param[in] param: Initialization parameters
  *
@@ -464,25 +464,25 @@ bool AS_ActivateFrontend(FAR AsActivateFrontend *actparam);
  * @retval     false : failure
  */
 
-bool AS_InitFrontend(FAR AsInitFrontendParam *initparam);
+bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam);
 
 /**
- * @brief Start audio frontend
+ * @brief Start mic frontend
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
-bool AS_StartFrontend(FAR AsStartFrontendParam *startparam);
+bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam);
 
 /**
- * @brief Stop audio frontend
+ * @brief Stop mic frontend
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
-bool AS_StopFrontend(FAR AsStopFrontendParam *stopparam);
+bool AS_StopMicFrontend(FAR AsStopMicFrontendParam *stopparam);
 
 /**
  * @brief Init pre process 
@@ -500,7 +500,7 @@ bool AS_InitPreprocFrontend(FAR AsInitPreProcParam *param);
  * @retval     false : failure
  */
 
-bool AS_SetPreprocFrontend(FAR AsSetPreProcParam *param);
+bool AS_SetPreprocMicFrontend(FAR AsSetPreProcParam *param);
 
 /**
  * @brief Set Mic gain 
@@ -509,25 +509,25 @@ bool AS_SetPreprocFrontend(FAR AsSetPreProcParam *param);
  * @retval     false : failure
  */
 
-bool AS_SetMicGainFrontend(FAR AsFrontendMicGainParam *micgain_param);
+bool AS_SetMicGainMicFrontend(FAR AsMicFrontendMicGainParam *micgain_param);
 
 /**
- * @brief Deactivate audio frontend
+ * @brief Deactivate mic frontend
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
-bool AS_DeactivateFrontend(FAR AsDeactivateFrontendParam *deactparam);
+bool AS_DeactivateMicFrontend(FAR AsDeactivateMicFrontendParam *deactparam);
 
 /**
- * @brief Deactivate audio frontend
+ * @brief Delete mic frontend
  *
  * @retval     true  : success
  * @retval     false : failure
  */
 
-bool AS_DeleteFrontend(void);
+bool AS_DeleteMicFrontend(void);
 
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_FRONTEND_API_H */
 /**

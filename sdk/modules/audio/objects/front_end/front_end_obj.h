@@ -67,13 +67,13 @@ __WIEN2_BEGIN_NAMESPACE
  * Public Types
  ****************************************************************************/
 
-struct FrontendObjPreProcDoneCmd
+struct MicFrontendObjPreProcDoneCmd
 {
   CustomProcEventType event_type;
   bool                result;
 };
 
-struct FrontendObjSendDoneCmd
+struct MicFrontendObjSendDoneCmd
 {
   bool identifier;
   bool is_end;
@@ -81,18 +81,18 @@ struct FrontendObjSendDoneCmd
 
 /* Class definition */
 
-class FrontEndObject {
+class MicFrontEndObject {
 public:
-  static void create(AsFrontendMsgQueId_t msgq_id,
-                     AsFrontendPoolId_t pool_id);
+  static void create(AsMicFrontendMsgQueId_t msgq_id,
+                     AsMicFrontendPoolId_t pool_id);
 
 private:
-  FrontEndObject(AsFrontendMsgQueId_t msgq_id,
-                 AsFrontendPoolId_t pool_id)
+  MicFrontEndObject(AsMicFrontendMsgQueId_t msgq_id,
+                    AsMicFrontendPoolId_t pool_id)
     : m_msgq_id(msgq_id)
     , m_pool_id(pool_id)
-    , m_state(AS_MODULE_ID_FRONT_END_OBJ, "", FrontendStateInactive)
-    , m_preproc_type(AsFrontendPreProcThrough)
+    , m_state(AS_MODULE_ID_MIC_FRONTEND_OBJ, "", MicFrontendStateInactive)
+    , m_preproc_type(AsMicFrontendPreProcThrough)
     , m_channel_num(2)
     , m_pcm_bit_width(AudPcm16Bit)
     , m_samples_per_frame(768)
@@ -105,24 +105,24 @@ private:
     , m_p_preproc_instance(NULL)
   {}
 
-  enum FrontendState_e
+  enum MicFrontendState_e
   {
-    FrontendStateInactive = 0,
-    FrontendStateReady,
-    FrontendStateActive,
-    FrontendStateStopping,
-    FrontendStateErrorStopping,
-    FrontendStateWaitStop,
-    FrontendStateNum
+    MicFrontendStateInactive = 0,
+    MicFrontendStateReady,
+    MicFrontendStateActive,
+    MicFrontendStateStopping,
+    MicFrontendStateErrorStopping,
+    MicFrontendStateWaitStop,
+    MicFrontendStateNum
   };
 
-  AsFrontendMsgQueId_t m_msgq_id;
-  AsFrontendPoolId_t   m_pool_id;
+  AsMicFrontendMsgQueId_t m_msgq_id;
+  AsMicFrontendPoolId_t   m_pool_id;
 
-  AudioState<FrontendState_e> m_state;
-  AsFrontendDataPath m_pcm_data_path;
+  AudioState<MicFrontendState_e> m_state;
+  AsMicFrontendDataPath m_pcm_data_path;
   AsDataDest m_pcm_data_dest;
-  AsFrontendPreProcType m_preproc_type;
+  AsMicFrontendPreProcType m_preproc_type;
   int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
   uint32_t m_samples_per_frame;
@@ -136,18 +136,18 @@ private:
 
   CustomProcBase *m_p_preproc_instance;
 
-  typedef void (FrontEndObject::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_FED_MSG_NUM][FrontendStateNum];
-  static MsgProc RsltProcTbl[AUD_FED_RST_MSG_NUM][FrontendStateNum];
+  typedef void (MicFrontEndObject::*MsgProc)(MsgPacket *);
+  static MsgProc MsgProcTbl[AUD_MFE_MSG_NUM][MicFrontendStateNum];
+  static MsgProc RsltProcTbl[AUD_MFE_RST_MSG_NUM][MicFrontendStateNum];
 
-  s_std::Queue<AsFrontendEvent, 1> m_external_cmd_que;
+  s_std::Queue<AsMicFrontendEvent, 1> m_external_cmd_que;
 
-  FrontendCallback m_callback;
+  MicFrontendCallback m_callback;
 
   void run();
   void parse(MsgPacket *);
 
-  void reply(AsFrontendEvent evtype,
+  void reply(AsMicFrontendEvent evtype,
              MsgType msg_type,
              uint32_t result);
 
@@ -184,14 +184,14 @@ private:
 
   bool startCapture();
 
-  bool setExternalCmd(AsFrontendEvent ext_event);
-  AsFrontendEvent getExternalCmd(void);
+  bool setExternalCmd(AsMicFrontendEvent ext_event);
+  AsMicFrontendEvent getExternalCmd(void);
   uint32_t checkExternalCmd(void);
 
   MemMgrLite::MemHandle getOutputBufAddr();
 
   uint32_t activateParamCheck(const AsActivateFrontendParam& cmd);
-  uint32_t initParamCheck(const FrontendCommand& cmd);
+  uint32_t initParamCheck(const MicFrontendCommand& cmd);
 
   bool execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample);
   bool flushPreProc(void);
