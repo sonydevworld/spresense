@@ -101,7 +101,7 @@ SECTIONS
 		*(_java_immortals)
 		. = ALIGN(4);
 		_emicroej = ABSOLUTE(.);
-        /* End of MicroEJ symbol for partial link */
+		/* End of MicroEJ symbol for partial link */
 
 		*(.bss .bss.*)
 		*(.gnu.linkonce.b.*)
