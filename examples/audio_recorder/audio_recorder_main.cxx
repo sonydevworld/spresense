@@ -446,7 +446,7 @@ static bool app_create_audio_sub_system(void)
   ids.mng         = MSGQ_AUD_MGR;
   ids.player_main = 0xFF;
   ids.player_sub  = 0xFF;
-  ids.frontend    = MSGQ_AUD_FRONTEND;
+  ids.micfrontend = MSGQ_AUD_FRONTEND;
   ids.mixer       = 0xFF;
   ids.recorder    = MSGQ_AUD_RECORDER;
   ids.effector    = 0xFF;
@@ -456,19 +456,19 @@ static bool app_create_audio_sub_system(void)
 
   /* Create Frontend. */
 
-  AsCreateFrontendParam_t frontend_create_param;
-  frontend_create_param.msgq_id.frontend = MSGQ_AUD_FRONTEND;
-  frontend_create_param.msgq_id.mng      = MSGQ_AUD_MGR;
-  frontend_create_param.msgq_id.dsp      = MSGQ_AUD_PREDSP;
-  frontend_create_param.pool_id.capin    = INPUT_BUF_POOL;
+  AsCreateMicFrontendParam_t frontend_create_param;
+  frontend_create_param.msgq_id.micfrontend = MSGQ_AUD_FRONTEND;
+  frontend_create_param.msgq_id.mng         = MSGQ_AUD_MGR;
+  frontend_create_param.msgq_id.dsp         = MSGQ_AUD_PREDSP;
+  frontend_create_param.pool_id.input       = INPUT_BUF_POOL;
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
-  frontend_create_param.pool_id.output   = PREPROC_BUF_POOL;
+  frontend_create_param.pool_id.output      = PREPROC_BUF_POOL;
 #else
-  frontend_create_param.pool_id.output   = NULL_POOL;
+  frontend_create_param.pool_id.output      = NULL_POOL;
 #endif
-  frontend_create_param.pool_id.dspcmd   = PRE_APU_CMD_POOL;
+  frontend_create_param.pool_id.dsp         = PRE_APU_CMD_POOL;
 
-  AS_CreateFrontend(&frontend_create_param, NULL);
+  AS_CreateMicFrontend(&frontend_create_param, NULL);
 
   /* Create Recorder. */
 
@@ -509,7 +509,7 @@ static void app_deact_audio_sub_system(void)
 {
   AS_DeleteAudioManager();
   AS_DeleteMediaRecorder();
-  AS_DeleteFrontend();
+  AS_DeleteMicFrontend();
   AS_DeleteCapture();
 }
 
@@ -662,7 +662,7 @@ static bool app_en_preprocess(void)
   command.header.packet_length = LENGTH_SETMFETYPE;
   command.header.command_code  = AUDCMD_SETMFETYPE;
   command.header.sub_code      = 0x00;
-  command.set_mfetype_param.preproc_type = AsFrontendPreProcUserCustom;
+  command.set_mfetype_param.preproc_type = AsMicFrontendPreProcUserCustom;
   AS_SendAudioCommand(&command);
 
   AudioResult result;
