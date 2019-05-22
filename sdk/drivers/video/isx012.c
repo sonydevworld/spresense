@@ -1312,13 +1312,28 @@ static int isx012_set_buftype(enum v4l2_buf_type type)
 {
   FAR struct isx012_dev_s *priv = &g_isx012_private;
   uint8_t                 mode;
+  int                     ret = OK;
 
   if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
     {
-      mode = REGVAL_MODESEL_MON;
+      if (priv->mode == REGVAL_MODESEL_HREL)
+        {
+          /* state transition : HALFRELEASE -> HALFRELEASE */
+
+          mode = REGVAL_MODESEL_HREL;
+        }
+      else
+        {
+          /* state transition : CAPTURE    -> MONITORING */
+          /*                 or MONITORING -> MONITORING */
+
+          mode = REGVAL_MODESEL_MON;
+        }
     }
   else
     {
+      /* state transition : any -> CAPTURE */
+
       mode = REGVAL_MODESEL_CAP;
     }
 
@@ -1329,7 +1344,12 @@ static int isx012_set_buftype(enum v4l2_buf_type type)
       isx012_change_device_state(priv, STATE_ISX012_ACTIVE);
     }
 
-  return isx012_change_camera_mode(priv, mode);
+  if (mode != priv->mode)
+    {
+      ret = isx012_change_camera_mode(priv, mode);
+    }
+
+  return ret;
 }
 
 static int isx012_set_buf(uint32_t bufaddr, uint32_t bufsize)
