@@ -40,10 +40,11 @@
 
 # TAB completion for ./tools/config.py
 function _spresense_config_completion() {
-	local cur prev cword
+	local cur prev
 
 	# get command line arguments
-	_get_comp_words_by_ref -n : cur prev cword
+	cur=${2}
+	prev=${3}
 
 	if [ "${prev}" == "-d" -o "${prev}" == "--dir" ]; then
 		# If use '-d' or '--dir' option, use filename completion
