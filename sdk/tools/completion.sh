@@ -72,5 +72,5 @@ function _spresense_config_completion() {
 # TAB completion
 #
 
-complete -F _spresense_config_completion tools/config.py ./tools/config.py spresense_config
+complete -F _spresense_config_completion tools/config.py ./tools/config.py spr-config
 

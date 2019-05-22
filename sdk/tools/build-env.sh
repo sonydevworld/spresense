@@ -42,10 +42,10 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 # Public function                                                          #
 ############################################################################
 
-# Name: spresense_create_apps_root
+# Name: spr-create-approot
 # Note: Create application root didectory that will contain user applications.
-# Usage: $ spresense_create_apps_root <application home directory>
-function spresense_create_apps_root() {
+# Usage: $ spr-create-approot <application home directory>
+function spr-create-approot() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application home directory>"
 	else
@@ -81,10 +81,10 @@ function spresense_create_apps_root() {
 	fi
 }
 
-# Name: spresense_set_apps_root
+# Name: spr-set-approot
 # Note: Select application root didectory.
-# Usage: $ spresense_set_apps_root <application home directory>
-function spresense_set_apps_root() {
+# Usage: $ spr-set-approot <application home directory>
+function spr-set-approot() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application home directory>"
 	else
@@ -102,12 +102,12 @@ function spresense_set_apps_root() {
 			else
 				echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
 				echo "         Please run next command for create makefiles."
-				echo "         $ spresense_create_apps_root ${_SPRESENSE_HOME}"
+				echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
 			fi
 		else
 			echo "Warning: ${_SPRESENSE_HOME} does not exist."
 			echo "         Please run"
-			echo "         $ spresense_create_apps_root ${_SPRESENSE_HOME}"
+			echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
 		fi
 
 		# Print current variable
@@ -115,16 +115,16 @@ function spresense_set_apps_root() {
 	fi
 }
 
-# Name: spresense_create_app
+# Name: spr-create-app
 # Note: Create user application into application root didectory.
-# Usage: $ spresense_create_app <application name>
-function spresense_create_app() {
+# Usage: $ spr-create-app <application name>
+function spr-create-app() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application name>"
 	elif [ "${SPRESENSE_HOME}" == "" ]; then
 		echo "Warning: Spresense user application directory is not set."
 		echo "         Please run"
-		echo "         $ spresense_set_apps_root <application home directory>"
+		echo "         $ spr-set-approot <application home directory>"
 	else
 		cd ${SPRESENSE_SDK}/sdk
 		rm -f ${SPRESENSE_HOME}/Kconfig
@@ -133,19 +133,19 @@ function spresense_create_app() {
 	fi
 }
 
-# Name: spresense_config
+# Name: spr-config
 # Note: Create user application into application root didectory.
-# Usage: $ spresense_config <configuration name>...
-function spresense_config() {
+# Usage: $ spr-config <configuration name>...
+function spr-config() {
 	cd ${SPRESENSE_SDK}/sdk
 	./tools/config.py $@
 	cd - &> /dev/null
 }
 
-# Name: spresense_goto_sdk
+# Name: spr-go-sdk
 # Note: Move current directory to SDK directory.
-# Usage: $ spresense_goto_sdk
-function spresense_goto_sdk() {
+# Usage: $ spr-go-sdk
+function spr-go-sdk() {
 	if [ "${SPRESENSE_SDK}" != "" ]; then
 		cd ${SPRESENSE_SDK}/sdk
 	else
@@ -154,22 +154,22 @@ function spresense_goto_sdk() {
 	fi
 }
 
-# Name: spresense_goto_apps_root
+# Name: spr-go-approot
 # Note: Move current directory to user application root directory.
-# Usage: $ spresense_goto_apps_root
-function spresense_goto_apps_root() {
+# Usage: $ spr-go-approot
+function spr-go-approot() {
 	if [ "${SPRESENSE_HOME}" != "" ]; then
 		cd ${SPRESENSE_HOME}
 	else
 		echo "Warning: SPRESENSE_HOME is not set."
-		echo "         Please run 'spresense_set_apps_root' first."
+		echo "         Please run 'spr-set-approot' first."
 	fi
 }
 
-# Name: spresense_make
+# Name: spr-make
 # Note: Build SDK and user application same as make command.
-# Usage: $ spresense_make [build options]
-function spresense_make() {
+# Usage: $ spr-make [build options]
+function spr-make() {
 	make -C ${SPRESENSE_SDK}/sdk $@
 }
 
@@ -218,17 +218,17 @@ _load_spresense_environment
 if [ "${SPRESENSE_HOME}" == "" ]; then
 	echo "Warning: Spresense user application directory is not set."
     echo "         Please run"
-    echo "         $ spresense_set_apps_root <application home directory>"
+    echo "         $ spr-set-approot <application home directory>"
 elif [ ! -d ${SPRESENSE_HOME} ]; then
     echo "Warning: ${SPRESENSE_HOME} does not exist."
     echo "         Please run"
-    echo "         $ spresense_create_apps_root ${SPRESENSE_HOME}"
+    echo "         $ spr-create-approot ${SPRESENSE_HOME}"
 fi
 
 if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/Application.mk" ]; then
     echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
     echo "         Please run next command for create makefiles."
-    echo "         $ spresense_create_apps_root ${SPRESENSE_HOME}"
+    echo "         $ spr-create-approot ${SPRESENSE_HOME}"
 fi
 
 # Set repository root to SPRESENSE_SDK
