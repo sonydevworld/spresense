@@ -387,12 +387,20 @@ static int (*g_cmdlist[CXD56_GNSS_IOCTL_MAX])(FAR struct file *filep,
 static int cxd56_gnss_start(FAR struct file *filep, unsigned long arg)
 {
   int     ret;
+  int     retry = 50;
   uint8_t start_mode = (uint8_t)arg;
 
   ret = board_lna_power_control(true);
   if (ret < 0)
     {
       return ret;
+    }
+
+  while (!g_rtc_enabled && 0 < retry--)
+    {
+      /* GNSS requires stable RTC */
+
+      usleep(100 * 1000);
     }
 
   ret = cxd56_gnss_cpufifo_api(filep, CXD56_GNSS_GD_GNSS_START,
@@ -1272,6 +1280,7 @@ static int cxd56_gnss_control_spectrum(FAR struct file *filep, unsigned long arg
 static int cxd56_gnss_start_test(FAR struct file *filep, unsigned long arg)
 {
   int ret;
+  int retry = 50;
   FAR struct cxd56_gnss_test_info_s *info;
 
   /* check argument */
@@ -1288,6 +1297,13 @@ static int cxd56_gnss_start_test(FAR struct file *filep, unsigned long arg)
       if (ret < 0)
         {
           return ret;
+        }
+
+      while (!g_rtc_enabled && 0 < retry--)
+        {
+          /* GNSS requires stable RTC */
+
+          usleep(100 * 1000);
         }
 
       /* set parameter */
