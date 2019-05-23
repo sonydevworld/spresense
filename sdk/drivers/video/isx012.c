@@ -908,8 +908,9 @@ void isx012_callback(uint8_t code, uint32_t size, uint32_t addr)
  ****************************************************************************/
 static int isx012_change_camera_mode(isx012_dev_t *priv, uint8_t mode)
 {
-  int ret = 0;
-  uint8_t format_data;
+  int      ret = 0;
+  uint16_t format_addr;
+  uint8_t  format_data;
   uint32_t vifmode;
 #ifdef ISX012_FRAME_SKIP_EN
   uint8_t mask_num;
@@ -924,32 +925,19 @@ static int isx012_change_camera_mode(isx012_dev_t *priv, uint8_t mode)
   switch (mode)
     {
       case REGVAL_MODESEL_MON:
-        if (priv->mode == REGVAL_MODESEL_MON)
-          {
-            return -EPERM;
-          }
-
-        format_data = isx012_getreg(priv, OUTFMT_MONI, 1);
-        break;
-      case REGVAL_MODESEL_CAP:
-        if (priv->mode == REGVAL_MODESEL_CAP)
-          {
-            return -EPERM;
-          }
-
-        format_data = isx012_getreg(priv, OUTFMT_CAP, 1);
-        break;
       case REGVAL_MODESEL_HREL:
-        if (priv->mode != REGVAL_MODESEL_MON)
-          {
-            return -EPERM;
-          }
-
-        format_data = isx012_getreg(priv, OUTFMT_MONI, 1);
+        format_addr = OUTFMT_MONI;
         break;
+
+      case REGVAL_MODESEL_CAP:
+        format_addr = OUTFMT_CAP;
+        break;
+
       default:
         return -EPERM;
     }
+
+  format_data = isx012_getreg(priv, format_addr, 1);
 
   switch (format_data) /* mode parallel */
     {
@@ -993,8 +981,6 @@ static int isx012_change_camera_mode(isx012_dev_t *priv, uint8_t mode)
     {
       return ret;
     }
-
-  priv->mode = mode;
 
 #ifdef ISX012_FRAME_SKIP_EN
   if (mode != REGVAL_MODESEL_HREL)
@@ -1289,20 +1275,38 @@ static int isx012_close(void)
 
 static int isx012_do_halfpush(bool enable)
 {
-  int ret;
   FAR struct isx012_dev_s *priv = &g_isx012_private;
+  uint8_t                 mode;
+  int                     ret = -EPERM;
 
   if (enable)
     {
       /* state transition : MONITORING -> HALFRELEASE */
 
-      ret = isx012_change_camera_mode(priv, REGVAL_MODESEL_HREL);
+      if (priv->mode == REGVAL_MODESEL_MON)
+        {
+          mode = REGVAL_MODESEL_HREL;
+          ret = OK;
+        }
     }
   else
     {
       /* state transition : HALFRELEASE -> MONITORING */
 
-      ret = isx012_change_camera_mode(priv, REGVAL_MODESEL_MON);
+      if (priv->mode == REGVAL_MODESEL_HREL)
+        {
+          mode = REGVAL_MODESEL_MON;
+          ret = OK;
+        }
+    }
+
+  if (ret == OK)
+    {
+      ret = isx012_change_camera_mode(priv, mode);
+      if (ret == OK)
+        {
+          priv->mode = mode;
+        }
     }
 
   return ret;
@@ -1347,6 +1351,10 @@ static int isx012_set_buftype(enum v4l2_buf_type type)
   if (mode != priv->mode)
     {
       ret = isx012_change_camera_mode(priv, mode);
+      if (ret == OK)
+        {
+          priv->mode = mode;
+        }
     }
 
   return ret;
