@@ -619,17 +619,18 @@ config CXD56_HPADC0_FREQ
 	default 7 if CXD56_SCU_RCOSC
 	default 7 if CXD56_SCU_XOSC
 	range 9 11 if CXD56_SCU_32K
-	range 7 7 if CXD56_SCU_RCOSC
-	range 6 7 if CXD56_SCU_XOSC
+	range 0 7 if CXD56_SCU_RCOSC
+	range 0 7 if CXD56_SCU_XOSC
 	---help---
 		This configuration set to sampling frequency calculated by the following formula.
 			Sampling frequency = adc clock / 2 ^ n [Hz]
-			adc clock = SCU clock     : if SCU clock is SCU32K or RCOSC.
-			adc clock = SCU clock / 3 : if SCU clock is XOSC.
+			adc clock = SCU32K       : if SCU clock is SCU32K.
+			adc clock = RCOSC / 4    : if SCU clock is RCOSC.
+			adc clock = XOSC / 3 / 4 : if SCU clock is XOSC 26MHz.
 		Note. Setable range depends on the SCU clock mode.
 			SCU32K : 9 to 11
-			RCOSC  : 7 (fix)
-			XOSC   : 6 to 7
+			RCOSC  : 0 to 7 (0 ~ 6 : over-sampling mode)
+			XOSC   : 0 to 7 (0 ~ 6 : over-sampling mode)
 
 config CXD56_HPADC0_OFFSET
 	int "Offset"
@@ -662,17 +663,18 @@ config CXD56_HPADC1_FREQ
 	default 7 if CXD56_SCU_RCOSC
 	default 7 if CXD56_SCU_XOSC
 	range 9 11 if CXD56_SCU_32K
-	range 7 7 if CXD56_SCU_RCOSC
-	range 6 7 if CXD56_SCU_XOSC
+	range 0 7 if CXD56_SCU_RCOSC
+	range 0 7 if CXD56_SCU_XOSC
 	---help---
 		This configuration set to sampling frequency calculated by the following formula.
 			Sampling frequency = adc clock / 2 ^ n [Hz]
-			adc clock = SCU clock     : if SCU clock is SCU32K or RCOSC.
-			adc clock = SCU clock / 3 : if SCU clock is XOSC.
+			adc clock = SCU32K       : if SCU clock is SCU32K.
+			adc clock = RCOSC / 4    : if SCU clock is RCOSC.
+			adc clock = XOSC / 3 / 4 : if SCU clock is XOSC 26MHz.
 		Note. Setable range depends on the SCU clock mode.
 			SCU32K : 9 to 11
-			RCOSC  : 7 (fix)
-			XOSC   : 6 to 7
+			RCOSC  : 0 to 7 (0 ~ 6 : over-sampling mode)
+			XOSC   : 0 to 7 (0 ~ 6 : over-sampling mode)
 
 config CXD56_HPADC1_OFFSET
 	int "Offset"
