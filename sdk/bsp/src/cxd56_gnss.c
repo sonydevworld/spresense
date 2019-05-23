@@ -1282,6 +1282,14 @@ static int cxd56_gnss_start_test(FAR struct file *filep, unsigned long arg)
     }
   else
     {
+      /* Power on the LNA device */
+
+      ret = board_lna_power_control(true);
+      if (ret < 0)
+        {
+          return ret;
+        }
+
       /* set parameter */
 
       info = (FAR struct cxd56_gnss_test_info_s *)arg;
@@ -1324,6 +1332,10 @@ static int cxd56_gnss_stop_test(FAR struct file *filep, unsigned long arg)
 
       ret = GD_Stop();
     }
+
+  /* Power off the LNA device */
+
+  board_lna_power_control(false);
 
   return ret;
 }
