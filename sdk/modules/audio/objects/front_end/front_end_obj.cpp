@@ -404,10 +404,20 @@ void MicFrontEndObject::activate(MsgPacket *msg)
         break;
     }
 
-  m_p_preproc_instance->activate(preproc_done_callback,
-                                 "PREPROC",
-                                 static_cast<void *>(this),
-                                 &dsp_inf);
+  uint32_t ret = m_p_preproc_instance->activate(preproc_done_callback,
+                                                "PREPROC",
+                                                static_cast<void *>(this),
+                                                &dsp_inf);
+  if (ret != AS_ECODE_OK)
+    {
+      delete m_p_preproc_instance;
+
+      /* Error reply */
+
+      reply(AsMicFrontendEventAct, msg->getType(), ret);
+
+      return;
+    }
 
   /* Hold preproc type */
 
@@ -439,7 +449,17 @@ void MicFrontEndObject::deactivate(MsgPacket *msg)
 
   /* Deactivate PreProcess */
 
-  m_p_preproc_instance->deactivate();
+  bool ret = m_p_preproc_instance->deactivate();
+
+  if (!ret)
+    {
+      /* Error reply */
+
+      reply(AsMicFrontendEventDeact, msg->getType(), AS_ECODE_DSP_UNLOAD_ERROR);
+
+      return;
+    }
+
   delete m_p_preproc_instance;
 
   /* State transit */
