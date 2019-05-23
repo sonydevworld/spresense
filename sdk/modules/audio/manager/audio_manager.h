@@ -233,6 +233,18 @@ private:
                                      uint8_t  output_dev,
                                      FAR void *input_handler);
   bool packetCheck(uint8_t length, uint8_t command_code, AudioCommand &cmd);
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+  bool sendMicFrontendCommand(MsgType msgtype, MicFrontendCommand *cmd);
+#endif  /* AS_FEATURE_FRONTEND_ENABLE */
+#ifdef AS_FEATURE_RECORDER_ENABLE
+  bool sendRecorderCommand(MsgType msgtype, RecorderCommand *cmd);
+#endif /* AS_FEATURE_RECORDER_ENABLE */
+#ifdef AS_FEATURE_PLAYER_ENABLE
+  bool sendPlayerCommand(AsPlayerId id, MsgType msgtype, PlayerCommand *cmd);
+#endif /* AS_FEATURE_PLAYER_ENABLE */
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
+  bool sendOutputMixerCommand(MsgType msgtype, OutputMixerCommand *cmd);
+#endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 };
 
 __WIEN2_END_NAMESPACE

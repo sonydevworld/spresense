@@ -499,6 +499,15 @@ bool AS_DeactivateMediaRecorder(void);
 
 bool AS_DeleteMediaRecorder(void);
 
+/**
+ * @brief Check availability of MediaRecorder 
+ *
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
+ */
+
+bool AS_checkAvailabilityMediaRecorder(void);
+
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H */
 /**
  * @}

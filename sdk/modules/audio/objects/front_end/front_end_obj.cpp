@@ -1859,6 +1859,11 @@ bool AS_DeleteMicFrontend(void)
   return true;
 }
 
+/*--------------------------------------------------------------------------*/
+bool AS_checkAvailabilityMicFrontend(void)
+{
+  return (s_mfe_obj != NULL);
+}
 
 /*--------------------------------------------------------------------------*/
 void MicFrontEndObject::create(AsMicFrontendMsgQueId_t msgq_id,

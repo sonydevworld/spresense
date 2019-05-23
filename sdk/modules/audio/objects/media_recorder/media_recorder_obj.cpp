@@ -2067,6 +2067,12 @@ bool AS_DeleteMediaRecorder(void)
 }
 
 /*--------------------------------------------------------------------------*/
+bool AS_checkAvailabilityMediaRecorder(void)
+{
+  return (s_rcd_obj != NULL);
+}
+
+/*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::create(AsRecorderMsgQueId_t msgq_id,
                                      AsRecorderPoolId_t pool_id)
 {

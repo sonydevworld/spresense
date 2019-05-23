@@ -470,6 +470,10 @@
 
 #define AS_ECODE_SET_MICMAP_ERROR                0x3D
 
+/*! \brief Audio SW object cannot available Error */
+
+#define AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR      0x3E
+
 /** @} */
 
 /****************************************************************************

@@ -529,6 +529,15 @@ bool AS_DeactivateMicFrontend(FAR AsDeactivateMicFrontendParam *deactparam);
 
 bool AS_DeleteMicFrontend(void);
 
+/**
+ * @brief Check availability of MicFrontend 
+ *
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
+ */
+
+bool AS_checkAvailabilityMicFrontend(void);
+
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_FRONTEND_API_H */
 /**
  * @}

@@ -2027,6 +2027,20 @@ bool AS_DeletePlayer(AsPlayerId id)
   return true;
 }
 
+/*--------------------------------------------------------------------------*/
+bool AS_checkAvailabilityMediaPlayer(AsPlayerId id)
+{
+  if (id == AS_PLAYER_ID_0)
+    {
+      return (s_play_obj != NULL);
+    }
+  else
+    {
+      return (s_sub_play_obj != NULL);
+    }
+}
+
+/*--------------------------------------------------------------------------*/
 void PlayerObj::create(FAR void **obj,
                        AsPlayerMsgQueId_t msgq_id,
                        AsPlayerPoolId_t pool_id,
