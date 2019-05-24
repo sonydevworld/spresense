@@ -54,8 +54,8 @@ function _spresense_config_completion() {
 		compopt +o nospace
 		if [ "${cur:0:1}" == "-" ]; then
 			# For option prediction
-			SOPT=`${COMP_WORDS[@]} -h | grep -oE "\--[a-zA-Z]+"`
-			LOPT=`${COMP_WORDS[@]} -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
+			SOPT=`${COMP_WORDS[0]} -h | grep -oE "\--[a-zA-Z]+"`
+			LOPT=`${COMP_WORDS[0]} -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
 			LIST="${SOPT} ${LOPT}"
 		else
 			LIST=`${COMP_WORDS[@]} -l | tail -n +2 | tr -d "\t"`
