@@ -115,7 +115,7 @@ win_install_tools()
 
 mac_install_tools()
 {
-    # do nothing
+    :  # do nothing
 }
 
 install_nxtools()
