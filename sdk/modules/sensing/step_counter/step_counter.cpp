@@ -376,20 +376,42 @@ int StepCounterClass::write(FAR sensor_command_data_mh_t *command)
 /*--------------------------------------------------------------------------*/
 void StepCounterClass::set_callback(void)
 {
-  struct exe_mh_s exe_mh = m_exe_que.top();
-  sensor_command_data_mh_t packet;
+  struct exe_mh_s           exe_mh = m_exe_que.top();
+  sensor_command_data_mh_t  packet;
+  SensorCmdStepCounter      cmd_data;
 
-  /* Create command. */
+  /* Since the area is destroyed afterward, backup it. */
 
-  packet.header.code = SendData;
-  packet.header.size = sizeof(sensor_command_header_t);
-  packet.self        = stepcounterID;
-  packet.time        = 0;
-  packet.fs          = 0;
-  packet.size        = 3;
-  packet.mh          = exe_mh.cmd;
+  memcpy(&cmd_data, exe_mh.cmd.getVa(), sizeof(SensorCmdStepCounter));
 
-  SS_SendSensorDataMH(&packet);
+  if (cmd_data.header.event_type == ExecEvent &&
+     (cmd_data.exec_cmd.cmd_type == STEP_COUNTER_CMD_UPDATE_ACCELERATION ||
+      cmd_data.exec_cmd.cmd_type == STEP_COUNTER_CMD_UPDATE_GPS))
+    {
+      /* Overwrites the contents of the memory area with steps data.
+       * 
+       * Caution:
+       *  Rewrite the memory area. Access in the original type is not possible.
+       */
+
+      memcpy(exe_mh.cmd.getVa(), &cmd_data.result, sizeof(SensorResultStepCounter));
+
+      /* Create command. */
+
+      packet.header.code = SendData;
+      packet.header.size = sizeof(sensor_command_header_t);
+      packet.self        = stepcounterID;
+      packet.time        = 0;
+      packet.fs          = 0;
+      packet.size        = 3;
+      packet.mh          = exe_mh.cmd;
+
+      SS_SendSensorDataMH(&packet);
+    }
+  else
+    {
+      /* Not update acceleration. */
+    }
 
   /* Pop exec queue (Free segment). */
 
