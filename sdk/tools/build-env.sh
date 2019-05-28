@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################################################################
-# tools/envsetup.sh
+# tools/build-env.sh
 #
 #   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
