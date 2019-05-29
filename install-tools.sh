@@ -104,6 +104,7 @@ linux_install_tools()
     done
     
     if [ -n "${_needed}" ]; then
+        sudo apt update
         sudo apt install -y ${_needed}
     fi
 }
