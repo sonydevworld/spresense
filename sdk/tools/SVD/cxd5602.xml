@@ -84,6 +84,12 @@
     <xi:include href="admac.xml"/>
     <xi:include href="idmac.xml"/>
 
+    <!-- SPI -->
+    <xi:include href="spi0.xml"/>
+    <xi:include href="spi3.xml"/>
+    <xi:include href="spi4.xml"/>
+    <xi:include href="spi5.xml"/>
+
   </peripherals>
 
 </device>
