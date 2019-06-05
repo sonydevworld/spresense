@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>CISIF</name>
+  <version>1.0</version>
+  <description>CMOS Image Sensor IF</description>
+  <baseAddress>0x02100000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x1000</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>CISIF</name>
+    <description>CISIF interrupt</description>
+    <value>124</value>
+  </interrupt>
+
+  <registers>
+    <!-- INTR_STAT: Interrupt status register -->
+    <register>
+      <name>INTR_STAT</name>
+      <description>Interrupt status register</description>
+      <addressOffset>0x00</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>jpg_err_status_int</name><bitRange>[28:28]</bitRange>
+        </field>
+        <field>
+          <name>jpg_mem_ovf_int</name><bitRange>[27:27]</bitRange>
+        </field>
+        <field>
+          <name>jpg_fifo_ovf_int</name><bitRange>[26:26]</bitRange>
+        </field>
+        <field>
+          <name>jpg_axi_trerr_int</name><bitRange>[25:25]</bitRange>
+        </field>
+        <field>
+          <name>jpg_marker_err_int</name><bitRange>[24:24]</bitRange>
+        </field>
+
+        <field>
+          <name>ycc_mem_ovf_int</name><bitRange>[21:21]</bitRange>
+        </field>
+        <field>
+          <name>ycc_fifo_ovf_int</name><bitRange>[20:20]</bitRange>
+        </field>
+        <field>
+          <name>ycc_axi_trerr__int</name><bitRange>[19:19]</bitRange>
+        </field>
+        <field>
+          <name>ycc_marker_err_int</name><bitRange>[18:18]</bitRange>
+        </field>
+        <field>
+          <name>size_under_int</name><bitRange>[17:17]</bitRange>
+        </field>
+        <field>
+          <name>size_over_int</name><bitRange>[16:16]</bitRange>
+        </field>
+        <field>
+          <name>vlatch_int</name><bitRange>[15:15]</bitRange>
+        </field>
+
+        <field>
+          <name>jpg_darea_end_int</name><bitRange>[12:12]</bitRange>
+        </field>
+        <field>
+          <name>jpg_nstorage_int</name><bitRange>[11:11]</bitRange>
+        </field>
+        <field>
+          <name>jpg_axi_trdn_int</name><bitRange>[10:10]</bitRange>
+        </field>
+        <field>
+          <name>ycc_darea_end_int</name><bitRange>[9:9]</bitRange>
+        </field>
+        <field>
+          <name>ycc_nstorage_int</name><bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>ycc_axi_trdn_int</name><bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>jpg_vact_end_int</name><bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>ycc_vact_end_int</name><bitRange>[5:5]</bitRange>
+        </field>
+        <field>
+          <name>soi_int</name><bitRange>[4:4]</bitRange>
+        </field>
+        <field>
+          <name>eoi_int</name><bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>soy_int</name><bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>eoy_int</name><bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>vs_int</name><bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- INTR_ENABLE: Interrupt enable register -->
+    <register derivedFrom="INTR_STAT">
+      <name>INTR_ENABLE</name>
+      <description>Interrupt enable register</description>
+      <addressOffset>0x04</addressOffset>
+      <access>read-write</access>
+    </register>
+
+    <!-- INTR_DISABLE: Interrupt disable register -->
+    <register derivedFrom="INTR_STAT">
+      <name>INTR_DISABLE</name>
+      <description>Interrupt disable register</description>
+      <addressOffset>0x08</addressOffset>
+      <access>write-only</access>
+    </register>
+
+    <!-- INTR_CLEAR: Interrupt clear register -->
+    <register derivedFrom="INTR_STAT">
+      <name>INTR_CLEAR</name>
+      <description>Interrupt clear register</description>
+      <addressOffset>0x0c</addressOffset>
+      <access>write-only</access>
+    </register>
+
+    <!-- DIN_ENABLE: Input data enable register -->
+    <register>
+      <name>DIN_ENABLE</name>
+      <description>Input data enable register</description>
+      <addressOffset>0x20</addressOffset>
+      <fields>
+        <field>
+          <name>ycin_enable</name>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- CIS_SIZE: CIS input activa area size setting register -->
+    <register>
+      <name>CIS_SIZE</name>
+      <description>CIS input activa area size setting register</description>
+      <addressOffset>0x24</addressOffset>
+      <fields>
+        <field>
+          <name>cis_vst</name>
+          <bitRange>[27:16]</bitRange>
+        </field>
+        <field>
+          <name>cis_hst</name>
+          <bitRange>[11:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACT_POS: Active area position setting register -->
+    <register>
+      <name>ACT_POS</name>
+      <description>Active area position setting register</description>
+      <addressOffset>0x28</addressOffset>
+      <fields>
+        <field>
+          <name>act_vst</name>
+          <bitRange>[27:16]</bitRange>
+        </field>
+        <field>
+          <name>act_hst</name>
+          <bitRange>[11:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ACT_SIZE: Active area size setting register -->
+    <register>
+      <name>ACT_SIZE</name>
+      <description>Active area size setting register</description>
+      <addressOffset>0x2c</addressOffset>
+      <fields>
+        <field>
+          <name>act_vsz</name>
+          <bitRange>[24:16]</bitRange>
+        </field>
+        <field>
+          <name>act_hsz</name>
+          <bitRange>[8:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- MODE: CIS input mode register -->
+    <register>
+      <name>MODE</name>
+      <description>CIS input mode register</description>
+      <addressOffset>0x30</addressOffset>
+      <fields>
+        <field>
+          <name>jpg_cap_mode</name>
+          <bitRange>[8:8]</bitRange>
+        </field>
+        <field>
+          <name>jpg_trns_en</name>
+          <bitRange>[3:3]</bitRange>
+        </field>
+        <field>
+          <name>ycc_trns_en</name>
+          <bitRange>[2:2]</bitRange>
+        </field>
+        <field>
+          <name>cis_mode</name>
+          <bitRange>[1:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- ILCODE: CIS input in line code setting register -->
+    <register>
+      <name>ILCODE</name>
+      <description>CIS input in line code setting register</description>
+      <addressOffset>0x34</addressOffset>
+      <resetValue>0x06050403</resetValue>
+      <resetMask>0xFFFFFFFF</resetMask>
+      <fields>
+        <field>
+          <name>eoy</name>
+          <bitRange>[31:24]</bitRange>
+        </field>
+        <field>
+          <name>soy</name>
+          <bitRange>[23:16]</bitRange>
+        </field>
+        <field>
+          <name>eosi</name>
+          <bitRange>[15:8]</bitRange>
+        </field>
+        <field>
+          <name>sosi</name>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- FORMAT: CIS input data format setting register -->
+    <register>
+      <name>FORMAT</name>
+      <description>CIS input data format setting register</description>
+      <addressOffset>0x38</addressOffset>
+      <fields>
+        <field>
+          <name>yc_order</name>
+          <bitRange>[1:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>YCbYCr</name>
+              <description>Y/Cb/Y/Cr</description>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>YCrYCb</name>
+              <description>Y/Cr/Y/Cb</description>
+              <value>1</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>CbYCrY</name>
+              <description>Cb/Y/Cr/Y</description>
+              <value>2</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>CrYCbY</name>
+              <description>Cr/Y/Cb/Y</description>
+              <value>3</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- POL: CIS input Vsync/Hsync polarity setting register -->
+    <register>
+      <name>POL</name>
+      <description>CIS input Vsync/Hsync polarity setting register</description>
+      <addressOffset>0x3c</addressOffset>
+      <fields>
+        <field>
+          <name>vpol</name>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>lowactive</name>
+              <description>Vsync low active</description>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>highactive</name>
+              <description>Vsync high active</description>
+              <value>1</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>hpol</name>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>lowactive</name>
+              <description>Hsync low active</description>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>highactive</name>
+              <description>Hsync high active</description>
+              <value>1</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- YCC_START_ADDR: YCC data frame memory start address -->
+    <register>
+      <name>YCC_START_ADDR</name>
+      <description>YCC data frame memory start address</description>
+      <addressOffset>0x40</addressOffset>
+    </register>
+
+    <!-- YCC_DAREA_SIZE: YCC data frame memory area size -->
+    <register>
+      <name>YCC_DAREA_SIZE</name>
+      <description>YCC data frame memory area size</description>
+      <addressOffset>0x44</addressOffset>
+    </register>
+
+    <!-- YCC_NSTRG_SIZE: YCC data frame memory notice of storage size -->
+    <register>
+      <name>YCC_NSTRG_SIZE</name>
+      <description>YCC data frame memory notice of storage size</description>
+      <addressOffset>0x48</addressOffset>
+    </register>
+
+    <!-- YCC_DSTRG_CONT: YCC data frame memory storage size counter -->
+    <register>
+      <name>YCC_DSTRG_CONT</name>
+      <description>YCC data frame memory storage size counter</description>
+      <addressOffset>0x4c</addressOffset>
+      <size>16</size>
+      <access>read-only</access>
+    </register>
+
+    <!-- YCC_DREAD_CONT: YCC data frame memory read counter -->
+    <register>
+      <name>YCC_DREAD_CONT</name>
+      <description>YCC data frame memory read counter</description>
+      <addressOffset>0x50</addressOffset>
+    </register>
+
+    <!-- JPG_START_ADDR: JPEG data frame memory start address -->
+    <register>
+      <name>JPG_START_ADDR</name>
+      <description>JPEG data frame memory start address</description>
+      <addressOffset>0x60</addressOffset>
+    </register>
+
+    <!-- JPG_DAREA_SIZE: JPEG data frame memory area size -->
+    <register>
+      <name>JPG_DAREA_SIZE</name>
+      <description>JPEG data frame memory area size</description>
+      <addressOffset>0x64</addressOffset>
+    </register>
+
+    <!-- JPG_NSTRG_SIZE: JPEG data frame memory notice of storage size -->
+    <register>
+      <name>JPG_NSTRG_SIZE</name>
+      <description>JPEG data frame memory notice of storage size</description>
+      <addressOffset>0x68</addressOffset>
+    </register>
+
+    <!-- JPG_DSTRG_CONT: JPEG data frame memory storage size counter-->
+    <register>
+      <name>JPG_DSTRG_CONT</name>
+      <description>JPEG data frame memory storage size counter</description>
+      <addressOffset>0x6c</addressOffset>
+      <size>16</size>
+      <access>read-only</access>
+    </register>
+
+    <!-- JPG_DREAD_CONT: JPEG data frame memory read counter -->
+    <register>
+      <name>JPG_DREAD_CONT</name>
+      <description>JPEG data frame memory read counter</description>
+      <addressOffset>0x70</addressOffset>
+    </register>
+
+    <!-- EXE_CMD: Execution command register -->
+    <register>
+      <name>EXE_CMD</name>
+      <description>Execution command register</description>
+      <addressOffset>0x80</addressOffset>
+      <access>write-only</access>
+      <fields>
+        <field>
+          <name>exe_cmd</name>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+  </registers>
+</peripheral>

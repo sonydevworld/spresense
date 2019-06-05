@@ -90,6 +90,8 @@
     <xi:include href="spi4.xml"/>
     <xi:include href="spi5.xml"/>
 
+    <!-- CISIF -->
+    <xi:include href="cisif.xml"/>
   </peripherals>
 
 </device>
