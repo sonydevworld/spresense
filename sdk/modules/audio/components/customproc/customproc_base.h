@@ -89,6 +89,13 @@ struct CustomProcCmpltParam
   AsPcmDataParam       output;
 };
 
+struct CustomProcInformParam
+{
+  bool     result;
+  uint8_t  inform_req;
+  uint8_t  param[7];
+};
+
 class CustomProcBase
 {
 public:
@@ -100,6 +107,7 @@ public:
   virtual bool flush(const FlushCustomProcParam& param) = 0;
   virtual bool set(const SetCustomProcParam& param) = 0;
   virtual bool recv_done(CustomProcCmpltParam *cmplt) = 0;
+  virtual bool recv_done(CustomProcInformParam *info) = 0;
   virtual bool recv_done(void) = 0;
   virtual uint32_t activate(CustomProcCallback callback,
                             const char *image_name,

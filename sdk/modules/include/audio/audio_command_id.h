@@ -264,13 +264,29 @@
 /** @name Command Recognition Function code */
 /** @{ */
 
-/*! \brief Command Code: StartVoiceCommand (__not supported__) */
+/*! \brief Command Code: StartRecognizer */
 
-#define AUDCMD_STARTVOICECOMMAND  (AUDCMD_CATEGORY_RECOGNITION | 0x01)
+#define AUDCMD_STARTRECOGNIZER  (AUDCMD_CATEGORY_RECOGNITION | 0x01)
 
-/*! \brief Command Code: StopVoiceCommand (__not supported__) */
+/*! \brief Command Code: StopRecognizer */
 
-#define AUDCMD_STOPVOICECOMMAND   (AUDCMD_CATEGORY_RECOGNITION | 0x02)
+#define AUDCMD_STOPRECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x02)
+
+/*! \brief command Code: InitRecognizer */
+
+#define AUDCMD_INITRECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x03)
+
+/*! \brief command Code: InitRecognitionProcessDSP */
+
+#define AUDCMD_INITRECOGNIZERPROC (AUDCMD_CATEGORY_RECOGNITION | 0x04)
+
+/*! \brief command Code: SetRecognitionProcessDSP */
+
+#define AUDCMD_SETRECOGNIZERPROC  (AUDCMD_CATEGORY_RECOGNITION | 0x05)
+
+/*! \brief command Code: SetRecognizerType */
+
+#define AUDCMD_SETRECOGNIZETYPE (AUDCMD_CATEGORY_RECOGNITION | 0x06)
 
 /** @} */
 
@@ -279,13 +295,29 @@
 /** @name Result code */
 /** @{ */
 
-/*! \brief Result Code: StartVoiceCommandCmplt (__not supported__) */
+/*! \brief Result Code: StartRecognizerCmplt */
 
-#define  AUDRLT_STARTVOICECOMMANDCMPLT  AUDCMD_STARTVOICECOMMAND
+#define  AUDRLT_STARTRECOGNIZERCMPLT  AUDCMD_STARTRECOGNIZER
 
-/*! \brief Result Code: StopVoiceCommandCmplt (__not supported__) */
+/*! \brief Result Code: StopRecognizerCmplt */
 
-#define  AUDRLT_STOPVOICECOMMANDCMPLT   AUDCMD_STOPVOICECOMMAND
+#define  AUDRLT_STOPRECOGNIZERCMPLT   AUDCMD_STOPRECOGNIZER
+
+/*! \brief Result Code: InitRecognizerCmplt */
+
+#define  AUDRLT_INITRECOGNIZERCMPLT   AUDCMD_INITRECOGNIZER
+
+/*! \brief command Code: InitRecognitionProcessDSPCmplt */
+
+#define  AUDRLT_INITRECOGNIZERPROCCMPLT AUDCMD_INITRECOGNIZERPROC
+
+/*! \brief command Code: SetRecognitionProcessDSPCmplt */
+
+#define  AUDRLT_SETRECOGNIZERPROCCMPLT  AUDCMD_SETRECOGNIZERPROC
+
+/*! \brief command Code: SetRecognizerType */
+
+#define  AUDRLT_SETRECOGNIZETYPECMPLT AUDCMD_SETRECOGNIZETYPE
 
 /** @} */
 
@@ -475,6 +507,10 @@
 /*! \brief Command Code: SetPlayerStatus */
 
 #define AUDCMD_SETPLAYERSTATUSPOST  (AUDCMD_CATEGORY_TRANSITION | 0x08)
+
+/*! \brief Command Code: SetRecognizerStatus */
+
+#define AUDCMD_SETRECOGNIZERSTATUS  (AUDCMD_CATEGORY_TRANSITION | 0x09)
 
 /** @} */
 

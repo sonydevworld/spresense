@@ -51,6 +51,7 @@ public:
   virtual bool flush(const FlushCustomProcParam& param);
   virtual bool set(const SetCustomProcParam& param);
   virtual bool recv_done(CustomProcCmpltParam *cmplt);
+  virtual bool recv_done(CustomProcInformParam *info);
   virtual bool recv_done(void);
   virtual uint32_t activate(CustomProcCallback callback,
                             const char *image_name,

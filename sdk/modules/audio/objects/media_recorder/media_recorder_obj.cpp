@@ -470,7 +470,9 @@ void MediaRecorderObjectTask::illegal(MsgPacket *msg)
     AsRecorderEventAct,
     AsRecorderEventDeact,
     AsRecorderEventInit,
+    AsRecorderEventStart,
     AsRecorderEventReqEncode,
+    AsRecorderEventStop
   };
 
   reply(table[idx], msg->getType(), AS_ECODE_STATE_VIOLATION);

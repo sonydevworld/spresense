@@ -119,7 +119,7 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = CustomprocCommand::Init; 
+  p_cmd->header.cmd_type    = CustomprocCommand::Init;
   p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
@@ -209,7 +209,7 @@ bool UserCustomComponent::set(const SetCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = CustomprocCommand::Set; 
+  p_cmd->header.cmd_type    = CustomprocCommand::Set;
   p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
@@ -309,7 +309,7 @@ bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
 {
   CustomprocCommand::CmdBase *packet =
     static_cast<CustomprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
-  
+
   /* Set output pcm parameters (even if is not there) */
 
   cmplt->output          = m_apu_req_mh_que.top().input;
@@ -322,6 +322,24 @@ bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
   /* Set function type and result */
 
   cmplt->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
+
+  return freeApuCmdBuf();
+}
+
+/*--------------------------------------------------------------------*/
+bool UserCustomComponent::recv_done(CustomProcInformParam *info)
+{
+  CustomprocCommand::CmdBase *packet =
+    static_cast<CustomprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
+
+  /* Set inform parameters. */
+
+  info->inform_req = packet->exec_cmd.recog.inform_req;
+  memcpy(info->param, packet->exec_cmd.recog.param, sizeof(info->param));
+
+  /* Set function type and result */
+
+  info->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
   return freeApuCmdBuf();
 }

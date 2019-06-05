@@ -99,13 +99,16 @@ private:
     m_attentionCBFunc(att_cb),
     m_obs_attentionCBFunc(obs_att_cb),
     m_active_player(0),
-    m_player_transition_count(0),
-    m_recorder_transition_count(0),
+    m_req_complete_bits(0),
+    m_req_reference_bits(0),
     m_input_en(false),
     m_output_en(false)
 #ifdef AS_FEATURE_FRONTEND_ENABLE
     , m_preproc_type(AsMicFrontendPreProcThrough)
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+    , m_recognizer_type(AsRecognizerTypeUserCustom)
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
@@ -120,8 +123,6 @@ private:
   AsMngStatus    m_State;
   AsMngSubStatus m_SubState;
 
-  static AsVadStatus m_VadState;
-
   enum MngAllState
   {
       MNG_ALLSTATE_READY = 0,
@@ -130,6 +131,8 @@ private:
       MNG_ALLSTATE_PLAYPAUSE,
       MNG_ALLSTATE_RECODERREADY,
       MNG_ALLSTATE_RECODERACTIVE,
+      MNG_ALLSTATE_RECOGNIZERREADY,
+      MNG_ALLSTATE_RECOGNIZERACTIVE,
       MNG_ALLSTATE_BBREADY,
       MNG_ALLSTATE_BBACTIVE,
       MNG_ALLSTATE_WAITCMDWORD,
@@ -138,20 +141,34 @@ private:
       MNG_ALLSTATE_NUM
   };
 
+  enum TransitionElement
+  {
+    ElementPlayer0 = 0,
+    ElementPlayer1,
+    ElementOutmixer0,
+    ElementOutmixer1,
+    ElementMicFrontend,
+    ElementRecorder,
+    ElementRecognizer,
+  };
+
   AudioAttentionCb m_attentionCBFunc;
   obs_AudioAttentionCb m_obs_attentionCBFunc;
-#ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
-  static AudioFindCommandCallbackFunction m_findCommandCBFunc;
-#endif
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+  RecognizerFindCallback m_rcgfind_cb;
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
   uint32_t m_active_player;
   uint32_t m_command_code;
-  int8_t m_player_transition_count;
-  int8_t m_recorder_transition_count;
+  int32_t m_req_complete_bits;
+  int32_t m_req_reference_bits;
   bool m_input_en;
   bool m_output_en;
 #ifdef AS_FEATURE_FRONTEND_ENABLE
   uint32_t m_preproc_type;
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+  uint32_t m_recognizer_type;
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   AsOutputMixDevice m_output_device;
@@ -161,6 +178,9 @@ private:
   typedef void (AudioManager::*RstProc)(const AudioMngCmdCmpltResult &result);
   static MsgProc MsgProcTbl[AUD_MGR_MSG_NUM][MNG_ALLSTATE_NUM];
   static RstProc RstProcTbl[1][AS_MNG_STATUS_NUM];
+
+  typedef s_std::Queue<AudioMngCmdCmpltResult, 4> ReplyQueue;
+  ReplyQueue m_reply_que;
 
   void run(void);
   void parse(FAR MsgPacket *, FAR MsgQueBlock *);
@@ -191,11 +211,14 @@ private:
   void setRdyOnAct(AudioCommand &cmd);
   void setRdyOnPlay(AudioCommand &cmd);
   void setRdyOnRecorder(AudioCommand &cmd);
+  void setRdyOnRecognizer(AudioCommand &cmd);
   void setRdyOnThrough(AudioCommand &cmd);
   void setBaseBandStatus(AudioCommand &cmd);
   void setPlayerStatus(AudioCommand &cmd);
+  void setRecognizer(AudioCommand &cmd);
   void setRecorder(AudioCommand &cmd);
-  void voiceCommand(AudioCommand &cmd);
+  void recognizerOnReady(AudioCommand &cmd);
+  void recognizer(AudioCommand &cmd);
   void setThroughStatus(AudioCommand &cmd);
   void setThroughPath(AudioCommand &cmd);
   void getstatus(AudioCommand &cmd);
@@ -206,7 +229,9 @@ private:
   void cmpltOnSoundFx(const AudioMngCmdCmpltResult &cmd);
   void cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd);
   void cmpltOnRecorder(const AudioMngCmdCmpltResult &cmd);
+  void cmpltOnRecognizer(const AudioMngCmdCmpltResult &cmd);
   void cmpltOnPowerOff(const AudioMngCmdCmpltResult &cmd);
+  bool checkCmpltQueue(void);
 
   int getAllState(void);
 
@@ -226,6 +251,7 @@ private:
                          uint8_t instance_id = 0);
   bool deactivatePlayer();
   bool deactivateRecorder();
+  bool deactivateRecognizer();
   bool deactivateSoundFx();
   bool deactivateOutputMix();
 
@@ -235,10 +261,15 @@ private:
   bool packetCheck(uint8_t length, uint8_t command_code, AudioCommand &cmd);
 #ifdef AS_FEATURE_FRONTEND_ENABLE
   bool sendMicFrontendCommand(MsgType msgtype, MicFrontendCommand *cmd);
+  uint8_t convertMicFrontendEvent(AsMicFrontendEvent event);
 #endif  /* AS_FEATURE_FRONTEND_ENABLE */
 #ifdef AS_FEATURE_RECORDER_ENABLE
   bool sendRecorderCommand(MsgType msgtype, RecorderCommand *cmd);
 #endif /* AS_FEATURE_RECORDER_ENABLE */
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+  bool sendRecognizerCommand(MsgType msgtype, RecognizerCommand *cmd);
+  uint8_t convertRecognizerEvent(AsRecognizerEvent event);
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
 #ifdef AS_FEATURE_PLAYER_ENABLE
   bool sendPlayerCommand(AsPlayerId id, MsgType msgtype, PlayerCommand *cmd);
 #endif /* AS_FEATURE_PLAYER_ENABLE */

@@ -70,14 +70,14 @@
 #  include "audio/audio_frontend_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
-#if defined(CONFIG_AUDIOUTILS_VOICE_CALL) || defined(CONFIG_AUDIOUTILS_VOICE_COMMAND)
+#if defined(CONFIG_AUDIOUTILS_VOICE_CALL)
 #  include "audio/audio_effector_api.h"
 #  include "audio/audio_renderer_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
-#ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
+#ifdef CONFIG_AUDIOUTILS_SOUND_RECOGNIZER
+#  include "audio/audio_frontend_api.h"
 #  include "audio/audio_recognizer_api.h"
-#  include "audio/audio_effector_api.h"
 #  include "audio/audio_renderer_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
@@ -120,6 +120,10 @@
 /*! \brief SetRecorderStatus command (#AUDCMD_SETRECORDERSTATUS) packet length */
 
 #define LENGTH_SET_RECORDER_STATUS  4
+
+/*! \brief SetRecorderStatus command (#AUDCMD_SETRECOGNIZERSTATUS) packet length */
+
+#define LENGTH_SET_RECOGNIZER_STATUS  4
 
 /*! \brief SetBaseBandStatus command (#AUDCMD_SETBASEBANDSTATUS) packet length */
 
@@ -974,6 +978,82 @@ typedef struct
 
 #endif
 
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+
+/** SetRecognizer Command (#AUDCMD_SETRECOGNIZERSTATUS) parameter */
+
+typedef struct
+{
+  /*! \brief [in] Select recognizer type 
+   *
+   * Use #AsRecognizerType enum type
+   */
+
+  uint32_t recognizer_type; 
+} AsSetRecognizerType;
+
+/** SetRecognizerStatus Command (#AUDCMD_SETRECOGNIZERSTATUS) parameter */
+
+typedef struct
+{
+  /*! \brief [in] Select Recorder input device
+   *
+   * Use #AsMicFrontendInputDevice enum type
+   */
+
+  uint8_t  input_device;
+
+} AsSetRecognizerStatus;
+
+/** InitVoiceCommand Command (#AUDCMD_INITRECOGNIZER) parameter */
+
+typedef void (*RecognizerFindCallback)(const uint8_t param[7]);
+
+typedef struct
+{
+  /*! \brief [in] Select InitMicFrontend input channels
+   */
+
+  uint8_t  ch_num;
+
+  /*! \brief [in] Select InitMicFrontend input bit length
+   */
+
+  uint8_t  bit_length;
+
+  /*! \brief [in] Samples per a frame
+   */
+
+  uint32_t samples;
+  
+  /*! \brief [in] Required fs by recognizer 
+   */
+
+  uint32_t fs;
+
+  /*! \brief [in] Recognizer find callback */
+
+  RecognizerFindCallback fcb;
+
+} AsInitRecognizer;
+
+/** StartVoiceCommand Command (#AUDCMD_STARTRECOGNIZER) parameter */
+
+typedef struct
+{
+  uint32_t reserve;
+
+} AsStartRecognizer;
+
+/** StopVoiceCommand Command (#AUDCMD_STOPRECOGNIZER) parameter */
+
+typedef struct
+{
+  uint32_t reserve;
+
+} AsStopRecognizer;
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
+
 /** Audio command packet */
 
 #if defined(__CC_ARM)
@@ -1075,11 +1155,48 @@ typedef struct
 
 #endif
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-    /*! \brief [in] for StratVoiceCommand (__not supported__)
-     * (header.command_code==#AUDCMD_STARTVOICECOMMAND)
+
+    /*! \brief [in] for SetRecognizerType
+     * (header.command_code==#AUDCMD_SETRECOGNIZETYPE)
      */
 
-    StartVoiceCommandParam start_voice_command_param;
+    AsSetRecognizerType set_recognizer_type;
+
+    /*! \brief [in] for SetRecognizerStatus 
+     * (header.command_code==#AUDCMD_SETRECOGNIZERSTATUS)
+     */
+
+    AsSetRecognizerStatus set_recognizer_status_param;
+
+    /*! \brief [in] for InitVoiceCommand
+     * (header.command_code==#AUDCMD_INITRECOGNIZER)
+     */
+
+    AsInitRecognizer init_recognizer;
+
+    /*! \brief [in] for StratVoiceCommand
+     * (header.command_code==#AUDCMD_STARTRECOGNIZER)
+     */
+
+    AsStartRecognizer start_recognizer;
+
+    /*! \brief [in] for StopVoiceCommand
+     * (header.command_code==#AUDCMD_STOPRECOGNIZER)
+     */
+
+    AsStopRecognizer stop_recognizer;
+
+    /*! \brief [in] for InitRcgProcDSPCommand 
+     * (header.command_code==#AUDCMD_INITRECOGNIZERPROC)
+     */
+
+    AsInitRcgProcParam init_rcg_param;
+
+    /*! \brief [in] for SetRcgProcDSPCommand 
+     * (header.command_code==#AUDCMD_SETRECOGNIZERPROC)
+     */
+
+    AsSetRcgProcParam set_rcg_param;
 #endif
 
     /*! \brief [in] for SetMicMap
@@ -1203,6 +1320,10 @@ typedef enum
 
   AS_MNG_STATUS_RECORDER,
 
+  /*! \brief Recorder */
+
+  AS_MNG_STATUS_RECOGNIZER,
+
   /*! \brief PowerOff */
 
   AS_MNG_STATUS_POWEROFF,
@@ -1241,6 +1362,14 @@ typedef enum
   /*! \brief RecorderActive */
 
   AS_MNG_SUB_STATUS_RECORDERACTIVE,
+
+  /*! \brief RecognizerReady */
+
+  AS_MNG_SUB_STATUS_RECOGNIZERREADY,
+
+  /*! \brief RecognizerActive */
+
+  AS_MNG_SUB_STATUS_RECOGNIZERACTIVE,
 
   /*! \brief BaseBandReady */
 

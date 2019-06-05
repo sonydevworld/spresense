@@ -66,100 +66,257 @@
 /** @name Packet length of command */
 /** @{ */
 
-/*! \brief StartVoiceComamnd command (#AUDCMD_STARTVOICECOMMAND) packet length */
+/*! \brief SetRecognizerType command (#AUDCMD_SETRECOGNIZERTYPE) packet length */
 
-#define LENGTH_START_VOICE_COMMAND 3
+#define LENGTH_SET_RECOGNIZERTYPE  2
 
-/*! \brief StopVoiceCommand command (#AUDCMD_STOPVOICECOMMAND) packet length */
+/*! \brief InitRecognizer command (#AUDCMD_INITRECOGNIZER) packet length */
 
-#define LENGTH_STOP_VOICE_COMMAND  2
+#define LENGTH_INIT_RECOGNIZER 3
+
+/*! \brief StartRecognizer command (#AUDCMD_STARTRECOGNIZER) packet length */
+
+#define LENGTH_START_RECOGNIZER 2 
+
+/*! \brief StopRecognizer command (#AUDCMD_STOPRECOGNIZER) packet length */
+
+#define LENGTH_STOP_RECOGNIZER  2
+
+/*! \brief InitRecognizeProcDSP command (#AUDCMD_INITRECOGNIZERPROC) packet length */
+
+#define LENGTH_INIT_RECOGNIZERPROC 4 
+
+/*! \brief SetRecognizeProcDSP command (#AUDCMD_SETRECOGNIZERPROC) packet length */
+
+#define LENGTH_SET_RECOGNIZERPROC 4 
 
 /** @} */
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
-
-/* StartVoiceCommand */
-
-/** Select Voice Command mode */
+/** Event type of Recognizer */
 
 typedef enum
 {
-  /*! \brief Normal Voice Command feature(VAD + WUWSR) */
+  /*! \brief Activate */
 
-  AS_VOICE_COMMAND_USUAL = 0,
+  AsRecognizerEventAct = 0,
 
-  /*! \brief VAD only */
+  /*! \brief Deactivate */
 
-  AS_VOICE_COMMAND_VAD_ONLY,
-  AS_VOICE_COMMAND_NUM
-} AsVoiceCommandVadOnly;
+  AsRecognizerEventDeact,
 
-/** Voice Command Status */
+  /*! \brief Init */
+
+  AsRecognizerEventInit,
+
+  /*! \brief Start */
+
+  AsRecognizerEventStart,
+
+  /*! \brief Exec */
+
+  AsRecognizerEventExec,
+
+  /*! \brief Stop */
+
+  AsRecognizerEventStop,
+
+  /*! \brief Init RecognizerProc */
+
+  AsRecognizerEventInitRecognizerProc,
+
+  /*! \brief Set RecognizerProc */
+
+  AsRecognizerEventSetRecognizerProc,
+
+} AsRecognizerEvent;
 
 typedef enum
 {
-  /*! \brief Voice Unrecognitzed */
+  /*! \brief Recognizer type is UserCustom */
 
-  AS_RECOGNITION_STATUS_VOICE_UNRECOGNIZED = 0,
+  AsRecognizerTypeUserCustom = 0,
 
-  /*! \brief Voice Recognized */
+} AsRecognizerType;
 
-  AS_RECOGNITION_STATUS_VOICE_RECOGNIZED,
+typedef enum
+{
+  /*! \brief Recognition result is notify by callback */
 
-  /*! \brief Keyword Recognized */
+  AsNotifyPathCallback = 0,
 
-  AS_RECOGNITION_STATUS_KEYWORD_RECOGNIZED,
-  AS_RECOGNITION_STATUS_NUM
-} AsVoiceRecognitionStatus;
+  /*! \brief Recognition result is notify by message */
 
-/** Voice Command Callback function
- * @param[in] keyword : currently 0 only
- * @param[in] status  : Use #AsVoiceRecognitionStatus enum type
- */
+  AsNotifyPathMessage,
 
-typedef void (*AudioFindCommandCallbackFunction)(uint16_t keyword,
-                                                 uint8_t status);
+} AsRecognizerNotifyPath;
 
-/** StartVoiceCommand Command (#AUDCMD_STARTVOICECOMMAND)
- * callback argument parameter
- */
+/** Recongizer Object Result header paramter */
 
 typedef struct
 {
-  /*! \brief [in] keyword, Copied from #StartVoiceCommandParam.keyword */
+  uint32_t result_code;
 
-  uint16_t keyword;
+  uint32_t command_id;
 
-  /*! \brief [in] Voice Command Status, #AsVoiceRecognitionStatus enum type */
+  AsRecognizerEvent event;
 
-  uint8_t status;
-} AudioFindCommandInfo;
+} RecognizerResultHeader;
 
-/** StartVoiceCommand Command (#AUDCMD_STARTVOICECOMMAND) parameter */
+/** Recongizer Object Result paramter */
 
 typedef struct
 {
-  /*! \brief [in] Select Voice Command mode
+  RecognizerResultHeader header;
+
+} RecognizerResult;
+
+/** Recognize result notify paramter */
+
+typedef struct
+{
+  /*! \brief [in] Recongnition informed parameters */
+
+  uint8_t  param[7];
+
+} RecognizerNotifyInfo;
+
+/** Activate parameter */
+
+typedef void (*RecognizerCallback)(RecognizerResult *result);
+
+typedef struct
+{
+  /*! \brief [in] Recognizer type */
+
+  uint32_t recognizer_type;
+
+  /*! \brief [in] Event callback */  
+
+  RecognizerCallback cb;
+
+} AsActivateRecognizerParam;
+
+/** Init parameter */
+
+typedef void (*RecognizerNotifyCallback)(RecognizerNotifyInfo *info);
+
+union AsNotifyDest
+{
+  /*! \brief [in] Recognition result notify callback */
+
+  RecognizerNotifyCallback cb;
+
+  struct __st_tunnel
+  {
+    uint8_t msgqid;
+    uint32_t msgtype;
+  } msg;
+};
+
+typedef struct
+{
+  /*! \brief [in] Select Data path from MicFrontend 
    *
-   * Use #AsVoiceCommandVadOnly enum type
+   * Use #AsRecognizerNotifyPath enum type
    */
 
-  uint8_t  vad_only;
+  uint8_t  notify_path;
 
-  /*! \brief [in] reserved */
+  AsNotifyDest dest;
 
-  uint8_t  reserved1;
+} AsInitRecognizerParam;
 
-  /*! \brief [in] Select keyword, 0:"Hello Sony" */
+/** Start parameter */
 
-  uint16_t keyword;
+typedef struct
+{
+  uint32_t reserve;
 
-  /*! \brief [in] callback function */
+} AsStartRecognizerParam;
 
-  AudioFindCommandCallbackFunction  callback_function;
-} StartVoiceCommandParam;
+/** Stop parameter */
+
+typedef struct
+{
+  uint32_t reserve; 
+
+} AsStopRecognizerParam;
+
+/** Deactivate parameter */
+
+typedef struct
+{
+  uint32_t reserve; 
+
+} AsDeactivateRecognizerParam;
+
+/** InitRcgProc, SetRcgProc parameter */
+
+typedef struct
+{
+  /*! \brief [in] Command packet address */
+
+  uint8_t  *packet_addr;
+
+  /*! \brief [in] Command packet size */
+
+  uint32_t packet_size;
+
+} AsInitRcgProcParam, AsSetRcgProcParam;
+
+/** Recognizer command */
+
+typedef struct
+{
+  /*! \brief [in] Command ID */
+
+  uint32_t command_id;
+
+} RecognizerCommandHeader;
+
+typedef struct
+{
+  /* Command Header */
+
+  RecognizerCommandHeader header;
+
+  /* Command Parameters */
+
+  union
+  {
+    /* Activate Paramters */
+
+    AsActivateRecognizerParam act_param;
+
+    /* Init Paramters */
+
+    AsInitRecognizerParam init_param;
+
+    /* Start Paramters */
+
+    AsStartRecognizerParam start_param;
+
+    /* Stop Paramters */
+
+    AsStopRecognizerParam stop_param;
+
+    /* Init Rcgproc Paramters */
+
+    AsInitRcgProcParam initrcgproc_param;
+
+    /* Set Rcgproc Paramters */
+
+    AsSetRcgProcParam setrcgproc_param;
+
+    /* Deactivate Paramters */
+
+    AsDeactivateRecognizerParam deact_param;
+  };
+
+} RecognizerCommand;
 
 /** Message queue ID parameter of activate function */
 
@@ -176,6 +333,7 @@ typedef struct
   /*! \brief [in] Message queue id of DSP */
 
   uint8_t dsp;
+
 } AsRecognizerMsgQueId_t;
 
 /** Pool ID parameter of activate function */
@@ -184,7 +342,12 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of wuwsr input data */
 
-  uint8_t wuwsr_in;
+  MemMgrLite::PoolId wuwsr_in;
+
+  /*! \brief [in] Message queue id of DSP */
+
+  MemMgrLite::PoolId dsp;
+
 } AsRecognizerPoolId_t;
 
 /** Activate function parameter */
@@ -198,6 +361,7 @@ typedef struct
   /*! \brief [in] ID of memory pool for processing data */
 
   AsRecognizerPoolId_t   pool_id;
+
 } AsCreateRecognizerParam_t;
 
 /****************************************************************************
@@ -242,6 +406,15 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param);
  */
 
 bool AS_DeleteRecognizer(void);
+
+/**
+ * @brief Check availability of Recognizer 
+ *
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
+ */
+
+bool AS_checkAvailabilityRecognizer(void);
 
 #endif  /* AUDIO_RECOGNIZER_API_H */
 /**

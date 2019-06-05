@@ -351,56 +351,56 @@
                                               fmt, \
                                               ##__VA_ARGS__)
 
-#define RECOGNITION_OBJ_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+#define RECOGNIZER_OBJ_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
                                             AS_MODULE_ID_RECOGNITION_OBJ, \
                                             att_cb)
-#define RECOGNITION_OBJ_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+#define RECOGNIZER_OBJ_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
                                             AS_MODULE_ID_RECOGNITION_OBJ)
 
-#define RECOGNITION_OBJ_FATAL(code)   DBG_LOGF_FATAL( \
+#define RECOGNIZER_OBJ_FATAL(code)   DBG_LOGF_FATAL( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         0, \
                                         code)
-#define RECOGNITION_OBJ_ERR(code)     DBG_LOGF_ERROR( \
+#define RECOGNIZER_OBJ_ERR(code)     DBG_LOGF_ERROR( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         0, \
                                         code)
-#define RECOGNITION_OBJ_WARN(code)    DBG_LOGF_WARN( \
+#define RECOGNIZER_OBJ_WARN(code)    DBG_LOGF_WARN( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         0, \
                                         code)
-#define RECOGNITION_OBJ_INF(code)     DBG_LOGF_DEBUG( \
+#define RECOGNIZER_OBJ_INF(code)     DBG_LOGF_DEBUG( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         0, \
                                         code)
-#define RECOGNITION_OBJ_DBG(fmt, ...) AUDIO_LOG_EVENT( \
+#define RECOGNIZER_OBJ_DBG(fmt, ...) AUDIO_LOG_EVENT( \
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         fmt, \
                                         ##__VA_ARGS__)
 
-#define RECOGNITION_CMP_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+#define RECOGNIZER_CMP_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
                                             AS_MODULE_ID_RECOGNITION_CMP, \
                                             att_cb)
-#define RECOGNITION_CMP_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+#define RECOGNIZER_CMP_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
                                             AS_MODULE_ID_RECOGNITION_CMP)
 
-#define RECOGNITION_CMP_FATAL(code)   DBG_LOGF_FATAL( \
+#define RECOGNIZER_CMP_FATAL(code)   DBG_LOGF_FATAL( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         0, \
                                         code)
-#define RECOGNITION_CMP_ERR(code)     DBG_LOGF_ERROR( \
+#define RECOGNIZER_CMP_ERR(code)     DBG_LOGF_ERROR( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         0, \
                                         code)
-#define RECOGNITION_CMP_WARN(code)    DBG_LOGF_WARN( \
+#define RECOGNIZER_CMP_WARN(code)    DBG_LOGF_WARN( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         0, \
                                         code)
-#define RECOGNITION_CMP_INF(code)     DBG_LOGF_DEBUG( \
+#define RECOGNIZER_CMP_INF(code)     DBG_LOGF_DEBUG( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         0, \
                                         code)
-#define RECOGNITION_CMP_DBG(fmt, ...) AUDIO_LOG_EVENT( \
+#define RECOGNIZER_CMP_DBG(fmt, ...) AUDIO_LOG_EVENT( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
                                         fmt, \
                                         ##__VA_ARGS__)

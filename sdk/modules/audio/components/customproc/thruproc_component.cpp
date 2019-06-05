@@ -116,10 +116,21 @@ bool ThruProcComponent::recv_done(CustomProcCmpltParam *cmplt)
 }
 
 /*--------------------------------------------------------------------*/
+bool ThruProcComponent::recv_done(CustomProcInformParam *info)
+{
+  memset(info, 0, sizeof(CustomProcInformParam));
+
+  m_req_que.pop();
+
+  return true;
+}
+
+
+/*--------------------------------------------------------------------*/
 bool ThruProcComponent::recv_done(void)
 {
   m_req_que.pop();
-  
+
   return true;
 }
 

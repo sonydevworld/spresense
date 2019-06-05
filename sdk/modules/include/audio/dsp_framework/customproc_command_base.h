@@ -78,6 +78,12 @@ namespace CustomprocCommand
     uint32_t size;
   };
 
+  struct Recognition
+  {
+    uint8_t  inform_req;
+    uint8_t  param[7];
+  };
+
   /*! Command header */
 
   struct command_header_s
@@ -106,7 +112,12 @@ namespace CustomprocCommand
     /* Fixed parameters */
 
     Buffer input;
-    Buffer output;
+
+    union
+    {
+      Buffer      output;
+      Recognition recog;
+    };
   };
   typedef exec_command_base_s ExecParamBase;
 
