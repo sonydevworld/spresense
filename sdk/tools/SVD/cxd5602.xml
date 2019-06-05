@@ -81,8 +81,8 @@
     <xi:include href="uart2.xml"/>
 
     <!-- DMAC -->
-    <xi:include href="admac.xml"/>
-    <xi:include href="idmac.xml"/>
+    <xi:include href="dmac1.xml"/>
+    <xi:include href="dmac3.xml"/>
 
     <!-- SPI -->
     <xi:include href="spi0.xml"/>

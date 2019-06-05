@@ -3794,10 +3794,10 @@
     <!-- DMAC -->
 
     <peripheral>
-      <name>ADMAC</name>
+      <name>DMAC1</name>
       <version>1.0</version>
-      <description>DMA controller</description>
-      <baseAddress>0x4e020000</baseAddress>
+      <description>DMA controller (ADMAC)</description>
+      <baseAddress>0x02020000</baseAddress>
       <size>32</size>
       <access>read-write</access>
       <addressBlock>
@@ -3806,8 +3806,8 @@
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>ADMAC</name>
-        <description>ADMAC interrupt</description>
+        <name>DMAC1</name>
+        <description>DMAC1 interrupt</description>
         <value>134</value>
       </interrupt>
       <registers>
@@ -4353,10 +4353,10 @@
 
 
     <peripheral>
-      <name>IDMAC</name>
+      <name>DMAC3</name>
       <version>1.0</version>
-      <description>DMA controller</description>
-      <baseAddress>0x4e102000</baseAddress>
+      <description>DMA controller (IDMAC)</description>
+      <baseAddress>0x02102000</baseAddress>
       <size>32</size>
       <access>read-write</access>
       <addressBlock>
@@ -4365,8 +4365,8 @@
         <usage>registers</usage>
       </addressBlock>
       <interrupt>
-        <name>IDMAC</name>
-        <description>IDMAC interrupt</description>
+        <name>DMAC3</name>
+        <description>DMAC3 interrupt</description>
         <value>126</value>
       </interrupt>
       <registers>
@@ -5885,7 +5885,7 @@
       <name>SPI4</name>
       <version>1.0</version>
       <description>Synchronous Serial Port Controller (IMG SPI)</description>
-      <baseAddress>0x4e103400</baseAddress>
+      <baseAddress>0x02103400</baseAddress>
       <size>32</size>
       <access>read-write</access>
       <addressBlock>
@@ -6522,7 +6522,7 @@
       <name>SPI5</name>
       <version>1.0</version>
       <description>Synchronous Serial Port Controller (IMG WSPI)</description>
-      <baseAddress>0x4e103c00</baseAddress>
+      <baseAddress>0x02103c00</baseAddress>
       <size>32</size>
       <access>read-write</access>
       <addressBlock>
