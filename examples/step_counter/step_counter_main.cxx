@@ -442,7 +442,8 @@ extern "C" int step_counter_main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
+#if defined(CONFIG_CPUFREQ_RELEASE_LOCK) && \
+    !defined(CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS)
   /* After here,
    * because this example program doesn't access to flash
    * and doesn't use TCXO,
@@ -543,7 +544,8 @@ extern "C" int step_counter_main(int argc, char *argv[])
   rel.self        = gnssID;
   SS_SendSensorRelease(&rel);
 
-#ifndef CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS
+#if defined(CONFIG_CPUFREQ_RELEASE_LOCK) && \
+    !defined(CONFIG_EXAMPLES_STEP_COUNTER_ENABLE_GNSS)
   /* Turn flash and TCXO power on */
 
   board_xtal_power_control(true);
