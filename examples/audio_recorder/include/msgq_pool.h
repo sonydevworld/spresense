@@ -41,12 +41,14 @@
 extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] = {
    /* n_drm, n_size, n_num, h_drm, h_size, h_num */
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd1dc, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
-  { 0xfdc2c, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfdcac, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfdd10, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RECORDER */
-  { 0xfde00, 24, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
-  { 0xfdf80, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
+  { 0xfd264, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
+  { 0xfdcb4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
+  { 0xfdd34, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
+  { 0xfdd98, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RECORDER */
+  { 0xfde88, 24, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
+  { 0xfe008, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
+  { 0xfe088, 48, 10, 0xffffffff, 0, 0 }, /* MSGQ_AUD_FRONTEND */
+  { 0xfe268, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PREDSP */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

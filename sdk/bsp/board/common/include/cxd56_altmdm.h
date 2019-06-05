@@ -107,7 +107,7 @@ extern "C"
  *
  ****************************************************************************/
 
-int board_altmdm_initialize(FAR const char *devpath, int bus);
+int board_altmdm_initialize(FAR const char *devpath);
 
 /****************************************************************************
  * Name: board_altmdm_uninitialize

@@ -114,6 +114,12 @@ public:
     */
   static err_t  createStaticPools(NumLayout layout_no, void* work_area, uint32_t area_size, const PoolAttr *pool_attr);
 
+  static err_t  createStaticPools(NumLayout       layout_no,
+                                  void           *work_area,
+                                  uint32_t        area_size,
+                                  const PoolAttr *pool_attr,
+                                  void           *top_work_area);
+
   /** The static memory layout destroy method.
     * This mathod provide clear the memory layout. 
     * @return void

@@ -88,7 +88,6 @@ bool InputHandlerOfRAM::initialize(PlayerInHandle* p_handle)
   if (p_handle->p_ram_device_handle->simple_fifo_handler == NULL ||
       p_handle->p_ram_device_handle->callback_function == NULL)
     {
-      MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
     }
 
@@ -131,7 +130,6 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
         break;
 #endif
       default:
-        MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_CODEC_TYPE;
     }
 
@@ -152,7 +150,6 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
       case AS_CHANNEL_STEREO:
         break;
       default:
-        MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
     }
   m_ch_num = param.channel_number;
@@ -163,7 +160,6 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
         if (param.codec_type != AS_CODECTYPE_MP3 &&
             param.codec_type != AS_CODECTYPE_AAC)
           {
-            MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
             return AS_ECODE_COMMAND_PARAM_SAMPLING_RATE;
           }
         break;
@@ -185,7 +181,6 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
         m_cur_wav_au_sample_num = LPCM_SAMPLE_HIGH;
         break;
       default:
-        MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_SAMPLING_RATE;
     }
   m_es_sampling_rate = param.sampling_rate;
@@ -201,7 +196,6 @@ uint32_t InputHandlerOfRAM::setParam(const AsInitPlayerParam& param)
           }
         break;
       default:
-        MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_BIT_LENGTH;
     }
   m_bit_len = param.bit_length;
@@ -217,7 +211,6 @@ uint32_t InputHandlerOfRAM::start()
     m_in_device_handler.simple_fifo_handler);
   if (!ret)
     {
-      MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_SIMPLE_FIFO_OVERFLOW);
       return AS_ECODE_SIMPLE_FIFO_UNDERFLOW;
     }
 
@@ -230,14 +223,12 @@ uint32_t InputHandlerOfRAM::start()
   init_param.in_ch_num             = m_ch_num;
   if (!m_p_es_source_hdl->init(init_param))
     {
-      MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_STREAM_PARSER_ERROR);
       return AS_ECODE_COMMAND_PARAM_INPUT_HANDLER;
     }
 
   uint32_t sampling_rate_value = 0;
   if (!m_p_es_source_hdl->getSamplingRate(&sampling_rate_value))
     {
-      MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_STREAM_PARSER_ERROR);
       return AS_ECODE_COMMAND_PARAM_SAMPLING_RATE;
     }
   m_es_sampling_rate = sampling_rate_value;
@@ -245,7 +236,6 @@ uint32_t InputHandlerOfRAM::start()
   uint32_t ch_num = 0;
   if (!m_p_es_source_hdl->getChNum(&ch_num))
     {
-      MEDIA_PLAYER_ERR(AS_ATTENTION_SUB_CODE_STREAM_PARSER_ERROR);
       return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
     }
   m_ch_num = ch_num;

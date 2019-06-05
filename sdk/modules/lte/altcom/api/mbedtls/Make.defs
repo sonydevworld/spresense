@@ -111,6 +111,7 @@ CSRCS += mbedtls_file_wrapper.c
 CSRCS += ssl_export_srtp_keys.c
 CSRCS += ssl_use_srtp.c
 CSRCS += ssl_srtp_profile.c
+CSRCS += ssl_turn.c
 
 CSRCS += mpi_init.c
 CSRCS += mpi_free.c

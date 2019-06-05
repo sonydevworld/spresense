@@ -56,7 +56,7 @@
 /* Command definitions for mpshm_control. */
 
 #define MPC_POWERON    1        /**< Set shared memory to power on */
-#define MPC_POWEROFF   2        /**< Set shared memory to power on */
+#define MPC_POWEROFF   2        /**< Set shared memory to power off */
 #define MPC_RETENTION  3        /**< Set shared memory to retention state */
 
 /**

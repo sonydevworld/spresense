@@ -113,10 +113,11 @@ struct hal_altmdm_spi_obj_s
 static int32_t hal_altmdm_spi_send(FAR struct hal_if_s *thiz,
     FAR const uint8_t *data, uint32_t len )
 {
-  int32_t  ret;
+  int32_t  ret = 0;
   int32_t  fd;
-  uint32_t sendlen =  HAL_ALTMDM_SPI_ROUNDUP(len,
-    HAL_ALTMDM_SPI_DMA_TRANSACTION_ALIGN);
+
+  uint32_t remsendlen = len;
+  uint32_t writelen   = 0;
 
   fd = open(DEV_PATH, O_WRONLY);
   if (fd < 0)
@@ -125,24 +126,41 @@ static int32_t hal_altmdm_spi_send(FAR struct hal_if_s *thiz,
       return -ENODEV;
     }
 
-  ret = write(fd, data, sendlen);
-  if (0 > ret)
+  while (0 < remsendlen)
     {
-      ret = -errno;
-      DBGIF_LOG1_ERROR("write() failed:%d\n", ret);
-    }
-  else
-    {
-      DBGIF_LOG1_DEBUG("write success:%d\n", ret);
-      if (sendlen == ret)
+
+      if (HAL_ALTMDM_SPI_BUFFER_SIZE_MAX < remsendlen)
         {
-          ret = len;
+          writelen = HAL_ALTMDM_SPI_BUFFER_SIZE_MAX;
         }
+      else
+        {
+          writelen = remsendlen;
+        }
+
+      ret = write(fd, data + (len - remsendlen), writelen);
+
+      if (0 > ret)
+        {
+          ret = -errno;
+          DBGIF_LOG1_ERROR("write() failed:%d\n", ret);
+
+          close(fd);
+          return ret;
+
+        }
+      else
+        {
+          DBGIF_LOG1_DEBUG("write success:%d\n", ret);
+        }
+
+      remsendlen -= ret;
+
     }
 
   close(fd);
 
-  return ret;
+  return len;
 }
 
 /****************************************************************************
@@ -364,12 +382,6 @@ static FAR void *hal_altmdm_spi_allocbuff(
 
   size = HAL_ALTMDM_SPI_ROUNDUP(len,
     HAL_ALTMDM_SPI_DMA_TRANSACTION_ALIGN);
-
-  if (HAL_ALTMDM_SPI_BUFFER_SIZE_MAX < size)
-    {
-      DBGIF_LOG1_ERROR("alloc request size err. size=[%d]\n", size);
-      return NULL;
-    }
 
   return BUFFPOOL_ALLOC(size);
 }

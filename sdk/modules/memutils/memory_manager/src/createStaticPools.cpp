@@ -33,6 +33,7 @@
  *
  ****************************************************************************/
 
+#include <stdint.h>
 #include "FastMemAlloc.h"
 #include "ScopedLock.h"
 #include "memutils/memory_manager/Manager.h"
@@ -85,6 +86,93 @@ err_t Manager::createStaticPools(NumLayout layout_no, void* work_area, uint32_t 
     }
   }
   theManager->m_layout_no = layout_no;  /* 生成に成功したのでレイアウト番号を設定する */
+
+  return ERR_OK;
+}
+
+
+err_t Manager::createStaticPools(NumLayout       layout_no,
+                                 void           *work_area,
+                                 uint32_t        area_size,
+                                 const PoolAttr *pool_attr,
+                                 void           *top_work_area)
+{
+#ifdef USE_MEMMGR_DEBUG_OUTPUT
+  printf("Manager::createStaticPools(layout_no=%d, work_area=%08x\n",
+    layout_no, work_area);
+#endif
+  if (reinterpret_cast<uint32_t>(work_area) % sizeof(uint32_t) != 0)
+    {
+      /* Incorrect alignment. */
+
+      return ERR_ADR_ALIGN;
+    }
+
+  if (theManager == NULL)
+    {
+      return ERR_STS;
+    }
+
+  if (isStaticPoolAvailable())
+    {
+      /* Memory pool is registered. */
+
+      return ERR_STS;
+    }
+
+  /* Allocate work memory. */
+
+  FastMemAlloc  fma(work_area, area_size);
+
+  /* Disable interrupts.  */
+
+  ScopedLock lock;
+
+  /* Initialize address. */
+
+  uintptr_t addr = reinterpret_cast<uintptr_t>(top_work_area);
+
+  for (uint32_t i = 0; i < theManager->m_pool_num; i++)
+    {
+      if (pool_attr[i].id == NullPoolId)
+        {
+          /* ID:NullPoolId is pool end. */
+
+          break;
+        }
+
+      /* Replicate memory pool. */
+
+      PoolAttr* attr;
+
+      attr = new(fma, sizeof(uint32_t)) PoolAttr(pool_attr[i]);
+      D_ASSERT(attr);
+
+      /* Calculate memory pool address. */
+
+      addr += attr->fence ? 8 : 0;
+      attr->addr = static_cast<PoolAddr>(addr);
+      addr += attr->size;
+
+      /* Create memory pool. */
+
+      MemPool*  pool = createPool(*attr, fma);
+      
+      /* Register  memory pool. */
+
+      theManager->m_static_pools[attr->id] = pool;
+
+      if (pool == NULL)
+        {
+          /* Insufficient size of work_area. */
+
+          return ERR_DATA_SIZE;
+        }
+    }
+
+  /* Set the layout number because generation was successful. */
+
+  theManager->m_layout_no = layout_no;  
 
   return ERR_OK;
 }

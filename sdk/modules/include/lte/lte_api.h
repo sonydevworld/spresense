@@ -46,44 +46,48 @@
  *
  * #### API call type
  *
- * |         Sync API                |         Async API              |
- * | :------------------------------ | :----------------------------- |
- * | @ref lte_initialize             | @ref lte_radio_on              |
- * | @ref lte_finalize               | @ref lte_radio_off             |
- * | @ref lte_set_report_restart     | @ref lte_activate_pdn          |
- * | @ref lte_power_on               | @ref lte_deactivate_pdn        |
- * | @ref lte_power_off              | @ref lte_data_allow            |
- * | @ref lte_set_report_netinfo     | @ref lte_get_netinfo           |
- * | @ref lte_set_report_simstat     | @ref lte_get_imscap            |
- * | @ref lte_set_report_localtime   | @ref lte_get_version           |
- * | @ref lte_set_report_quality     | @ref lte_get_phoneno           |
- * | @ref lte_set_report_cellinfo    | @ref lte_get_imsi              |
- * | @ref lte_get_errinfo            | @ref lte_get_imei              |
- * | @ref lte_set_report_netstat     | @ref lte_get_pinset            |
- * |                                 | @ref lte_set_pinenable         |
- * |                                 | @ref lte_change_pin            |
- * |                                 | @ref lte_enter_pin             |
- * |                                 | @ref lte_get_localtime         |
- * |                                 | @ref lte_get_operator          |
- * |                                 | @ref lte_get_edrx              |
- * |                                 | @ref lte_set_edrx              |
- * |                                 | @ref lte_get_psm               |
- * |                                 | @ref lte_set_psm               |
- * |                                 | @ref lte_get_ce                |
- * |                                 | @ref lte_set_ce                |
- * |                                 | @ref lte_power_control         |
- * |                                 | @ref lte_attach_network        |
- * |                                 | @ref lte_detach_network        |
- * |                                 | @ref lte_get_netstat           |
- * |                                 | @ref lte_data_on               |
- * |                                 | @ref lte_data_off              |
- * |                                 | @ref lte_get_datastat          |
- * |                                 | @ref lte_get_dataconfig        |
- * |                                 | @ref lte_set_dataconfig        |
- * |                                 | @ref lte_get_apnset            |
- * |                                 | @ref lte_set_apn               |
- * |                                 | @ref lte_get_sleepmode         |
- * |                                 | @ref lte_set_sleepmode         |
+ * |         Sync API                |         Async API               |
+ * | :------------------------------ | :------------------------------ |
+ * | @ref lte_initialize             | @ref lte_radio_on               |
+ * | @ref lte_finalize               | @ref lte_radio_off              |
+ * | @ref lte_set_report_restart     | @ref lte_activate_pdn           |
+ * | @ref lte_power_on               | @ref lte_deactivate_pdn         |
+ * | @ref lte_power_off              | @ref lte_data_allow             |
+ * | @ref lte_set_report_netinfo     | @ref lte_get_netinfo            |
+ * | @ref lte_set_report_simstat     | @ref lte_get_imscap             |
+ * | @ref lte_set_report_localtime   | @ref lte_get_version            |
+ * | @ref lte_set_report_quality     | @ref lte_get_phoneno            |
+ * | @ref lte_set_report_cellinfo    | @ref lte_get_imsi               |
+ * | @ref lte_get_errinfo            | @ref lte_get_imei               |
+ * | @ref lte_set_report_netstat     | @ref lte_get_pinset             |
+ * |                                 | @ref lte_set_pinenable          |
+ * |                                 | @ref lte_change_pin             |
+ * |                                 | @ref lte_enter_pin              |
+ * |                                 | @ref lte_get_localtime          |
+ * |                                 | @ref lte_get_operator           |
+ * |                                 | @ref lte_get_edrx               |
+ * |                                 | @ref lte_set_edrx               |
+ * |                                 | @ref lte_get_psm                |
+ * |                                 | @ref lte_set_psm                |
+ * |                                 | @ref lte_get_ce                 |
+ * |                                 | @ref lte_set_ce                 |
+ * |                                 | @ref lte_power_control          |
+ * |                                 | @ref lte_attach_network         |
+ * |                                 | @ref lte_detach_network         |
+ * |                                 | @ref lte_get_netstat            |
+ * |                                 | @ref lte_data_on                |
+ * |                                 | @ref lte_data_off               |
+ * |                                 | @ref lte_get_datastat           |
+ * |                                 | @ref lte_get_dataconfig         |
+ * |                                 | @ref lte_set_dataconfig         |
+ * |                                 | @ref lte_get_apnset             |
+ * |                                 | @ref lte_set_apn                |
+ * |                                 | @ref lte_get_sleepmode          |
+ * |                                 | @ref lte_set_sleepmode          |
+ * |                                 | @ref lte_get_siminfo            |
+ * |                                 | @ref lte_get_dynamic_edrx_param |
+ * |                                 | @ref lte_get_dynamic_psm_param  |
+ * |                                 | @ref lte_get_quality            |
  *
  *
  * @{
@@ -369,8 +373,20 @@
 
 #define LTE_SIMSTAT_ACTIVATE        (4)
 
-#define LTE_CELLINFO_MCC_DIGIT     (3)  /**< Digit number of mcc */
-#define LTE_CELLINFO_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
+/** SIM status: SIM is deactivated */
+
+#define LTE_SIMSTAT_DEACTIVATE      (5)
+
+#define LTE_MCC_DIGIT     (3)  /**< Digit number of mcc */
+#define LTE_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
+
+/** Digit number of mcc */
+
+#define LTE_CELLINFO_MCC_DIGIT     LTE_MCC_DIGIT
+
+/** Max digit number of mnc */
+
+#define LTE_CELLINFO_MNC_DIGIT_MAX LTE_MNC_DIGIT_MAX
 
 #define LTE_EDRX_ACTTYPE_WBS1 (0) /**< E-UTRAN (WB-S1 mode) */
 #define LTE_EDRX_CYC_512      (0) /**< eDRX cycle:    5.12 sec */
@@ -493,6 +509,43 @@
 /** Maximum length of the error string */
 
 #define LTE_ERROR_STRING_MAX_LEN   (64)
+
+/** Indicates to get for MCC/MNC of SIM */
+
+#define LTE_SIMINFO_GETOPT_MCCMNC (1 << 0)
+
+/** Indicates to get for SPN of SIM */
+
+#define LTE_SIMINFO_GETOPT_SPN    (1 << 1)
+
+/** Indicates to get for ICCID of SIM */
+
+#define LTE_SIMINFO_GETOPT_ICCID  (1 << 2)
+
+/** Indicates to get for IMSI of SIM */
+
+#define LTE_SIMINFO_GETOPT_IMSI   (1 << 3)
+
+/** Indicates to get for GID1(Group Identifier Level 1) of SIM */
+
+#define LTE_SIMINFO_GETOPT_GID1   (1 << 4)
+
+/** Indicates to get for GID2(Group Identifier Level 2) of SIM */
+
+#define LTE_SIMINFO_GETOPT_GID2   (1 << 5)
+
+/** Digit number of mcc */
+
+#define LTE_SIMINFO_MCC_DIGIT      LTE_MCC_DIGIT
+
+/** Max digit number of mnc */
+
+#define LTE_SIMINFO_MNC_DIGIT_MAX  LTE_MNC_DIGIT_MAX
+
+#define LTE_SIMINFO_SPN_LEN   (16)  /**< Maximum length of SPN */
+#define LTE_SIMINFO_ICCID_LEN (10)  /**< Maximum length of ICCCID */
+#define LTE_SIMINFO_IMSI_LEN  (15)  /**< Maximum length of IMSI */
+#define LTE_SIMINFO_GID_LEN   (128) /**< Maximum length of GID */
 
 /****************************************************************************
  * Public Types
@@ -666,6 +719,7 @@ typedef struct lte_localtime
  * @struct lte_quality
  * Definition of parameters for quality information.
  * This is reported by quality_report_cb_t
+ * and notified by get_quality_cb_t
  * @typedef lte_quality_t
  * See @ref lte_quality
  */
@@ -1078,6 +1132,95 @@ typedef struct lte_ce_setting
 
   bool mode_b_enable;
 } lte_ce_setting_t;
+
+/**
+ * @struct lte_siminfo
+ * Definition of parameters for SIM information.
+ * This is notified by get_siminfo_cb_t
+ * @typedef lte_siminfo_t
+ * See @ref lte_siminfo
+ */
+
+typedef struct lte_siminfo
+{
+  /** Indicates which parameter to get.
+   *  Bit setting definition is as below.@n
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
+   *  - @ref LTE_SIMINFO_GETOPT_SPN@n
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID@n
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI@n
+   *  - @ref LTE_SIMINFO_GETOPT_GID1@n
+   *  - @ref LTE_SIMINFO_GETOPT_GID2@n
+   */
+
+  uint32_t option;
+
+  /** Mobile Country Code (000-999). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mcc[LTE_SIMINFO_MCC_DIGIT];
+
+  /** Digit number of mnc(2-3). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mnc_digit;
+
+  /** Mobile Network Code (00-999). It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
+
+  uint8_t  mnc[LTE_SIMINFO_MNC_DIGIT_MAX];
+
+  /** Length of Service provider name. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
+
+  uint8_t  spn_len;
+
+  /** Service provider name. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
+
+  uint8_t  spn[LTE_SIMINFO_SPN_LEN];
+
+  /** Length of ICCID. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
+
+  uint8_t  iccid_len;
+
+  /** ICCID. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.@n
+   *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
+
+  uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
+
+  /** Length of IMSI. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
+
+  uint8_t  imsi_len;
+
+  /** International Mobile Subscriber Identity. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
+
+  uint8_t  imsi[LTE_SIMINFO_IMSI_LEN];
+
+  /** Length of GID1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
+
+  uint8_t  gid1_len;
+
+  /** Group Identifier Level 1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
+
+  uint8_t  gid1[LTE_SIMINFO_GID_LEN];
+
+  /** Length of GID2. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
+
+  uint8_t  gid2_len;
+
+  /** Group Identifier Level 1. It can be referneced when
+   *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
+
+  uint8_t  gid2[LTE_SIMINFO_GID_LEN];
+} lte_siminfo_t;
 
 /** Definition of callback function.
  *  Since lte_power_control() is an asynchronous API,
@@ -1530,6 +1673,7 @@ typedef void (*netstat_report_cb_t)(uint32_t netstat);
  * - @ref LTE_SIMSTAT_WAIT_PIN_UNLOCK@n
  * - @ref LTE_SIMSTAT_PERSONAL_FAILED@n
  * - @ref LTE_SIMSTAT_ACTIVATE@n
+ * - @ref LTE_SIMSTAT_DEACTIVATE@n
  */
 
 typedef void (*simstat_report_cb_t)(uint32_t simstat);
@@ -1662,6 +1806,57 @@ typedef void (*restart_report_cb_t)(uint32_t reason);
  */
 
 typedef void (*netinfo_report_cb_t)(lte_netinfo_t *info);
+
+/** Definition of callback function.
+ *  Since lte_get_siminfo() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_siminfo().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] siminfo : SIM information. See @ref lte_siminfo_t
+ */
+
+typedef void (*get_siminfo_cb_t)(uint32_t result, lte_siminfo_t *siminfo);
+
+/** Definition of callback function.
+ *  Since lte_get_dynamic_edrx_param() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_dynamic_edrx_param().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] param : eDRX dynamic parameter. See @ref lte_edrx_setting_t
+ */
+
+typedef void (*get_dynamic_edrx_param_cb_t)(uint32_t result,
+                                            lte_edrx_setting_t *param);
+
+/** Definition of callback function.
+ *  Since lte_get_dynamic_psm_param() is an asynchronous API,
+ *  the result is notified by this function
+ * @param[in] result : The result of lte_get_dynamic_psm_param().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] param : PSM dynamic parameter. See @ref lte_psm_setting_t
+ */
+
+typedef void (*get_dynamic_psm_param_cb_t)(uint32_t result,
+                                           lte_psm_setting_t *param);
+
+/** Definition of callback function.
+ *  Since lte_get_quality() is an asynchronous API,
+ *  the quality information is notified by this function
+ * @param[in] result : The result of lte_get_quality().
+ *                     As below value stored.@n
+ * - @ref LTE_RESULT_OK@n
+ * - @ref LTE_RESULT_ERROR@n
+ * @param[in] quality : Quality information. See @ref lte_quality_t
+ */
+
+typedef void (*get_quality_cb_t)(uint32_t result,
+                                 lte_quality_t *quality);
 
 #ifdef __cplusplus
 #define EXTERN extern "C"
@@ -2064,8 +2259,6 @@ int32_t lte_set_psm(lte_psm_setting_t *settings,
 /**
  * Get CE settings.
  *
- * @attention **This function is not supported yet**.
- *
  * @param [in] callback: Callback function to notify that
  *                       get CE settings is completed.
  *
@@ -2077,8 +2270,6 @@ int32_t lte_get_ce(get_ce_cb_t callback);
 
 /**
  * Set CE settings.
- *
- * @attention **This function is not supported yet**.
  *
  * @param [in] settings: CE settings
  * @param [in] callback: Callback function to notify that
@@ -2446,6 +2637,68 @@ int32_t lte_set_sleepmode(uint32_t sleepmode, set_slpmode_cb_t callback);
  */
 
 int32_t lte_set_report_netstat(netstat_report_cb_t netstat_callback);
+
+/**
+ * Get SIM information such as MCC/MNC.
+ *
+ * @param [in] option:   Indicates which parameter to get.
+ *                       Bit setting definition is as below.@n
+ *                       - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
+ *                       - @ref LTE_SIMINFO_GETOPT_SPN@n
+ *                       - @ref LTE_SIMINFO_GETOPT_ICCID@n
+ *                       - @ref LTE_SIMINFO_GETOPT_IMSI@n
+ *                       - @ref LTE_SIMINFO_GETOPT_GID1@n
+ *                       - @ref LTE_SIMINFO_GETOPT_GID2@n
+ * @param [in] callback: Callback function to notify that
+ *                       get of SIM information is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback);
+
+/**
+ * Get eDRX dynamic parameter.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get eDRX dynamic parameter is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback);
+
+/**
+ * Get PSM dynamic parameter.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get PSM dynamic parameter is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback);
+
+/**
+ * Get quality information.
+ *
+ * @param [in] callback: Callback function to notify that
+ *                       get quality information is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_quality(get_quality_cb_t callback);
 
 /** @} */
 

@@ -73,6 +73,7 @@ void _UnregisterAttentionCb(uint32_t module_id)
 #ifdef ATTENTION_USE_FILENAME_LINE
 
 void _Attention(uint8_t module_id,
+                uint8_t sub_module_id,
                 uint8_t attention_id,
                 uint8_t sub_code,
                 FAR const char* file_name,
@@ -80,8 +81,9 @@ void _Attention(uint8_t module_id,
 {
 #  ifndef CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE
   syslog(LOG_ERR,
-         "Attention: module[%d] attention id[%d]/code[%d] (%s L%d)\n",
+         "Attention: module[%d][%d] attention id[%d]/code[%d] (%s L%d)\n",
          module_id,
+         sub_module_id,
          attention_id,
          sub_code,
          file_name,
@@ -93,7 +95,7 @@ void _Attention(uint8_t module_id,
       0,            /* reserve */
       attention_id, /* attention id */
       0,            /* cpu id */
-      0,            /* sub module id */
+      sub_module_id,/* sub module id */
       module_id,    /* module id */
       sub_code,     /* attention code */
       0,            /* reserve */
@@ -134,13 +136,15 @@ void _Attention(uint8_t module_id,
 #else /* ATTENTION_USE_FILENAME_LINE */
 
 void _Attention(uint8_t module_id,
+                uint8_t sub_module_id,
                 uint8_t attention_id,
                 uint8_t sub_code)
 {
 #  ifndef CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE
   syslog(LOG_ERR,
-         "Attention: module[%d] attention id[%d]/code[%d]\n",
+         "Attention: module[%d][%d] attention id[%d]/code[%d]\n",
          module_id,
+         sub_module_id,
          attention_id,
          sub_code);
 #  endif /* CONFIG_AUDIOUTILS_ATTENTIONLOG_DISABLE */
@@ -150,7 +154,7 @@ void _Attention(uint8_t module_id,
       0,            /* reserve */
       attention_id, /* attention id */
       0,            /* cpu id */
-      0,            /* sub module id */
+      sub_module_id,/* sub module id */
       module_id,    /* module id */
       sub_code,     /* attention code */
       0,            /* reserve */

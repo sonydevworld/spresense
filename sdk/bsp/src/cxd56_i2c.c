@@ -752,7 +752,7 @@ static int cxd56_i2c_scurecv(int port, int addr, uint8_t *buf, ssize_t buflen)
       inst[0] = SCU_INST_RECV(len0);
       if (len1)
         {
-          inst[1] = SCU_INST_RECV(len0);
+          inst[1] = SCU_INST_RECV(len1);
           instn = 2;
         }
       else

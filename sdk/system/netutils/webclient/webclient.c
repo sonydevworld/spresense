@@ -95,7 +95,9 @@
 #  endif
 #endif
 
+#if defined(CONFIG_EXTERNALS_MBEDTLS) || defined(CONFIG_LTE_NET_MBEDTLS)
 #include "tls_internal.h"
+#endif
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -121,6 +123,39 @@
 
 #define WGET_MODE_GET              0
 #define WGET_MODE_POST             1
+
+#if defined(CONFIG_EXTERNALS_MBEDTLS) || defined(CONFIG_LTE_NET_MBEDTLS)
+/* If mbedTLS is configured,
+ * the mbedTLS control functions are defined in tls_socket.c
+ */
+#else
+static inline int tls_socket_create(int domain, int type, int protocol)
+{
+  return ERROR;
+}
+
+static inline int tls_socket_connect(int s,
+                                     const char *hostname,
+                                     const struct sockaddr *addr)
+{
+  return ERROR;
+}
+
+static inline int tls_socket_write(int s, const char *buf, size_t len)
+{
+  return ERROR;
+}
+
+static inline int tls_socket_read(int s, char *buf, size_t len)
+{
+  return ERROR;
+}
+
+static inline void tls_socket_close(int s)
+{
+  return;
+}
+#endif
 
 /****************************************************************************
  * Private Types
@@ -479,7 +514,12 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
 
   if (https)
     {
+#if defined(CONFIG_EXTERNALS_MBEDTLS) || defined(CONFIG_LTE_NET_MBEDTLS)
       tls_socket_init();
+#else
+      nerr("ERROR: TLS is not configured\n");
+      return ERROR;
+#endif
     }
 
   /* The following sequence may repeat indefinitely if we are redirected */

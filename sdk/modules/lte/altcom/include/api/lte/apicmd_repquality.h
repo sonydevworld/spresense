@@ -41,6 +41,7 @@
  ****************************************************************************/
 
 #include "apicmd.h"
+#include "apicmd_quality.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -53,15 +54,6 @@
 
 #define APICMD_SET_REPQUALITY_RES_OK      (0)
 #define APICMD_SET_REPQUALITY_RES_ERR     (1)
-
-#define APICMD_REP_QUALITY_DISABLE  (0)
-#define APICMD_REP_QUALITY_ENABLE   (1)
-#define APICMD_REP_QUALITY_RSRP_MIN (-140)
-#define APICMD_REP_QUALITY_RSRP_MAX (0)
-#define APICMD_REP_QUALITY_RSRQ_MIN (-60)
-#define APICMD_REP_QUALITY_RSRQ_MAX (0)
-#define APICMD_REP_QUALITY_SINR_MIN (-128)
-#define APICMD_REP_QUALITY_SINR_MAX (40)
 
 /****************************************************************************
  * Public Types
@@ -78,15 +70,6 @@ begin_packed_struct struct apicmd_cmddat_setrepquality_s
 begin_packed_struct struct apicmd_cmddat_setrepquality_res_s
 {
   uint8_t result;
-} end_packed_struct;
-
-begin_packed_struct struct apicmd_cmddat_repquality_s
-{
-  uint8_t enability;
-  int16_t rsrp;
-  int16_t rsrq;
-  int16_t sinr;
-  int16_t rssi;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPQUALITY_H */

@@ -626,22 +626,6 @@ void AsDmaDrv::dmaCmplt(void)
                                 (void *)dmaParam.addr_dest);
     }
 
-  if ((cxd56_audio_get_dmafmt() == CXD56_AUDIO_DMA_FMT_RL)
-   && (m_dma_byte_len == AS_DMAC_BYTE_WT_16BIT) )
-    {
-      switch (m_dmac_id)
-        {
-          case CXD56_AUDIO_DMAC_I2S0_UP:
-          case CXD56_AUDIO_DMAC_I2S1_UP:
-              AS_AudioDrvDmaGetSwapData(dmaParam.split_addr,
-                                        dmaParam.split_size);
-              break;
-
-          default:
-              break;
-        }
-    }
-
   if (dmaParam.overlap_cnt == 0)
     {
       if (dmaParam.p_dmadone_func != NULL)

@@ -122,6 +122,12 @@ struct AudioObjReply
  * @retval     false : failure
  */
 
+template <typename T>
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           T *reply);
+
+/* Default template cannot use at C++99 */
+
 bool AS_ReceiveObjectReply(MsgQueId msgq_id,
                            AudioObjReply *reply);
 
@@ -136,6 +142,11 @@ bool AS_ReceiveObjectReply(MsgQueId msgq_id,
  * @retval     true  : success
  * @retval     false : failure
  */
+
+template <typename T>
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           uint32_t ms,
+                           T *reply);
 
 bool AS_ReceiveObjectReply(MsgQueId msgq_id,
                            uint32_t ms,

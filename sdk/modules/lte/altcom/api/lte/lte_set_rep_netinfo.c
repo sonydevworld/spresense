@@ -90,7 +90,7 @@ static int32_t repnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
     {
       DBGIF_LOG2_INFO("repnetinfo_status_chg_cb(%d -> %d)\n",
         old_stat, new_stat);
-      altcomcallbacks_unreg_cb(APICMDID_REPORT_NETINFO);
+      altcomcallbacks_unreg_cb(APICMDID_SETREP_NETINFO);
 
       return ALTCOM_STATUS_REG_CLR;
     }
@@ -121,7 +121,7 @@ static void repnetinfo_job(FAR void *arg)
   int32_t                                ret = 0;
 
   netinfo.pdn_stat = NULL;
-  callback = altcomcallbacks_get_cb(APICMDID_REPORT_NETINFO);
+  callback = altcomcallbacks_get_cb(APICMDID_SETREP_NETINFO);
 
   if (!callback)
     {
@@ -230,7 +230,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
     {
       /* Check callback is registered */
 
-      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
+      callback = altcomcallbacks_get_cb(APICMDID_SETREP_NETINFO);
       if (callback)
         {
           reset_flag = true;
@@ -292,14 +292,14 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
               if (!reset_flag)
                 {
                   altcomcallbacks_reg_cb((void *)netinfo_callback,
-                                          APICMDID_REPORT_NETINFO);
+                                          APICMDID_SETREP_NETINFO);
                 }
             }
           else
             {
               /* Unregistration callback. */
 
-              altcomcallbacks_unreg_cb(APICMDID_REPORT_NETINFO);
+              altcomcallbacks_unreg_cb(APICMDID_SETREP_NETINFO);
               altcomstatus_unreg_statchgcb(repnetinfo_status_chg_cb);
             }
         }

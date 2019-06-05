@@ -266,7 +266,7 @@ int lte_tls_main(int argc, char *argv[])
    *    (The contents is the same as lte_http_get example.)
    */
 
-  if (app_connect_to_lte()) 
+  if (app_lte_tls_connect_to_lte()) 
     {
       return ERROR;
     }
@@ -547,7 +547,7 @@ exit:
    *     (The contents is the same as lte_http_get examples.)
    */
 
-  app_disconnect_from_lte();
+  app_lte_tls_disconnect_from_lte();
 
   return OK;
 }

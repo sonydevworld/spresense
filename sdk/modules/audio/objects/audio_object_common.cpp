@@ -50,16 +50,24 @@ __USING_WIEN2
  ****************************************************************************/
 
 /*--------------------------------------------------------------------------*/
+template <typename T>
 bool AS_ReceiveObjectReply(MsgQueId msgq_id,
-                           AudioObjReply *reply)
+                           T *reply)
 {
   return AS_ReceiveObjectReply(msgq_id, TIME_FOREVER, reply);
 }
 
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           AudioObjReply *reply)
+{
+  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, reply);
+}
+
 /*--------------------------------------------------------------------------*/
+template <typename T>
 bool AS_ReceiveObjectReply(MsgQueId msgq_id,
                            uint32_t ms,
-                           AudioObjReply *reply)
+                           T *reply)
 {
   err_t           err_code;
   FAR MsgQueBlock *que;
@@ -93,7 +101,7 @@ bool AS_ReceiveObjectReply(MsgQueId msgq_id,
 
   /* Store reply information. */
 
-  *reply = msg->moveParam<AudioObjReply>();
+  *reply = msg->moveParam<T>();
 
   /* Delete received data. */
 
@@ -105,3 +113,12 @@ bool AS_ReceiveObjectReply(MsgQueId msgq_id,
 
   return true;
 }
+
+/*--------------------------------------------------------------------------*/
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           uint32_t ms,
+                           AudioObjReply *reply)
+{
+  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, ms, reply);
+}
+

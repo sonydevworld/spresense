@@ -79,7 +79,7 @@
 #endif
 
 #ifndef MOUNTPT
-#define MOUNTPT "/mnt/vfat/BIN"
+#define MOUNTPT "/mnt/sd0/BIN"
 #endif
 
 #define MSG_ID_SAYHELLO 1

@@ -6,6 +6,7 @@
 config FSUTILS_MKSMARTFS
 	bool "mksmartfs utility"
 	default y
+	depends on CXD56_SFC
 #	depends on FS_SMARTFS && !DISABLE_PSEUDOFS_OPERATIONS
 	---help---
 		Enables support for the mksmartfs utility

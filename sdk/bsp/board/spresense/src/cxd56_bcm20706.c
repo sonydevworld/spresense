@@ -79,14 +79,14 @@ static const struct
  ****************************************************************************/
 
 /****************************************************************************
- * Name: board_bcm20706_pin_cfg
+ * Name: board_bluetooth_pin_cfg
  *
  * Description:
  *   Setup pin configuration for bcm20706.
  *
  ****************************************************************************/
 
-int board_bcm20706_pin_cfg(void)
+int board_bluetooth_pin_cfg(void)
 {
   int ret = 0;
   int i = 0;
@@ -102,17 +102,18 @@ int board_bcm20706_pin_cfg(void)
 }
 
 /****************************************************************************
- * Name: board_bcm20706_uart_pin_cfg
+ * Name: board_bluetooth_uart_pin_cfg
  *
  * Description:
  *   Setup UART pin configuration for bcm20706.
  *
  ****************************************************************************/
 
-int board_bcm20706_uart_pin_cfg(void)
+int board_bluetooth_uart_pin_cfg(void)
 {
   int ret = 0;
 
+  /* BCM20706 evaluation board might set pull-down. */
   /* Set float for UART2 CTS */
 
   ret = board_gpio_config(PIN_UART2_CTS, 1, 1, 0, 0);
@@ -121,14 +122,14 @@ int board_bcm20706_uart_pin_cfg(void)
 }
 
 /****************************************************************************
- * Name: board_bcm20706_reset
+ * Name: board_bluetooth_reset
  *
  * Description:
  *   Reset BCM20706.
  *
  ****************************************************************************/
 
-void board_bcm20706_reset(void)
+void board_bluetooth_reset(void)
 {
   cxd56_gpio_write(BCM20707_RST_N, false);
   usleep(BCM20707_RST_DELAY);
@@ -137,14 +138,14 @@ void board_bcm20706_reset(void)
 }
 
 /****************************************************************************
- * Name: board_bcm20706_power_control
+ * Name: board_bluetooth_power_control
  *
  * Description:
  *   Power ON/OFF BCM20706.
  *
  ****************************************************************************/
 
-int board_bcm20706_power_control(bool en)
+int board_bluetooth_power_control(bool en)
 {
   int ret = 0;
   ret = board_power_control(POWER_BTBLE, en);
@@ -152,15 +153,14 @@ int board_bcm20706_power_control(bool en)
 }
 
 /****************************************************************************
- * Name: board_bcm20706_enable_sleep
+ * Name: board_bluetooth_enable_sleep
  *
  * Description:
  *   Sleep mode ON/OFF BCM20706.
  *
  ****************************************************************************/
 
-void board_bcm20706_enable_sleep(bool en)
+void board_bluetooth_enable_sleep(bool en)
 {
   cxd56_gpio_write(BCM20707_DEV_WAKE, en);
 }
-

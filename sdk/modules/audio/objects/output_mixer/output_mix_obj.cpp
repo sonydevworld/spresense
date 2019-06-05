@@ -535,6 +535,12 @@ bool AS_DeleteOutputMix(void)
 }
 
 /*--------------------------------------------------------------------------*/
+bool AS_checkAvailabilityOutputMixer(void)
+{
+  return (s_omix_ojb != NULL);
+}
+
+/*--------------------------------------------------------------------------*/
 void OutputMixObjectTask::create(AsOutputMixMsgQueId_t msgq_id,
                                  AsOutputMixPoolId_t pool_id)
 {

@@ -46,9 +46,11 @@ extern const PoolAttr MemoryPoolLayouts[NUM_MEM_LAYOUTS][NUM_MEM_POOLS] = {
  {/* Layout:0 */
   /* pool_ID          type       seg fence  addr        size         */
   { ES_BUF_POOL     , BasicType,   5, true, 0x000c0008, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { INPUT_BUF_POOL  , BasicType,   5, true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
-  { ENC_APU_CMD_POOL, BasicType,   3, true, 0x000de018, 0x00000114 },  /* AUDIO_WORK_AREA */
-  { SRC_APU_CMD_POOL, BasicType,   3, true, 0x000de138, 0x00000114 },  /* AUDIO_WORK_AREA */
+  { PREPROC_BUF_POOL, BasicType,   5, true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
+  { INPUT_BUF_POOL  , BasicType,   5, true, 0x000de018, 0x0000f000 },  /* AUDIO_WORK_AREA */
+  { ENC_APU_CMD_POOL, BasicType,   3, true, 0x000ed020, 0x00000114 },  /* AUDIO_WORK_AREA */
+  { SRC_APU_CMD_POOL, BasicType,   3, true, 0x000ed140, 0x00000114 },  /* AUDIO_WORK_AREA */
+  { PRE_APU_CMD_POOL, BasicType,   3, true, 0x000ed260, 0x00000114 },  /* AUDIO_WORK_AREA */
  },
 }; /* end of MemoryPoolLayouts */
 

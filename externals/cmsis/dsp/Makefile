@@ -48,9 +48,6 @@ endif
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP_ARM_MATH_ROUNDING),y)
 CFLAGS += -DARM_MATH_ROUNDING
 endif
-ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP_FFT_LENGTH_4096_DISABLE),y)
-CFLAGS += -DFFT_LENGTH_4096_DISABLE
-endif
 CFLAGS += -fno-strict-aliasing -ffunction-sections -fdata-sections
 CFLAGS += -ffast-math
 

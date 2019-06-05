@@ -69,5 +69,7 @@ void asmp_initialize(void)
 {
   mptask_initialize();
   mpmutex_initialize();
+#ifndef CONFIG_CXD56_SUBCORE
   mpshm_initialize();
+#endif
 }

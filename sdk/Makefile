@@ -42,7 +42,7 @@ NUTTXDIR ?= ../nuttx
 
 # Setup for Windows vs Linux/Cygwin/OSX environments
 
-ifeq ("$(shell uname -o)","Cygwin")
+ifeq ("$(shell uname -o 2>/dev/null)","Cygwin")
     WINTOOL = y
 endif
 
@@ -128,7 +128,7 @@ all: $(BIN)
 # automatically.
 
 buildkernel:
-	$(Q) $(SDKDIR)/tools/mkversion.sh
+	$(Q) TOPDIR=$(TOPDIR) $(SDKDIR)/tools/mkversion.sh
 ifneq ($(KERNCONF),)
 	$(Q) $(SDKDIR)/tools/config.py --kernel $(KERNCONF)
 endif

@@ -435,8 +435,17 @@ void imageproc_finalize(void)
   up_disable_irq(CXD56_IRQ_ROT);
   irq_detach(CXD56_IRQ_ROT);
 
+  if (g_gfd > 0)
+    {
+      close(g_gfd);
+      g_gfd = -1;
+    }
+
+  cxd56_ge2duninitialize(GEDEVNAME);
+
   sem_destroy(&g_rotwait);
   sem_destroy(&g_rotexc);
+  sem_destroy(&g_geexc);
 }
 
 void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
@@ -447,7 +456,6 @@ void imageproc_convert_yuv2rgb(uint8_t * ibuf, uint32_t hsize, uint32_t vsize)
     {
       return;
     }
-
 
   ret = ip_semtake(&g_rotexc);
   if (ret)

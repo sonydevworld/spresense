@@ -255,6 +255,11 @@ static void repevt_simstate_report(
           result = LTE_SIMSTAT_ACTIVATE;
         }
       break;
+      case APICMD_REPORT_EVT_SIMSTATE_DEACTIVATED:
+        {
+          result = LTE_SIMSTAT_DEACTIVATE;
+        }
+      break;
       default:
         {
           DBGIF_LOG1_ERROR("Unsupport SIM state. status:%d\n", simstate->state);

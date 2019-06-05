@@ -109,6 +109,10 @@
 #define APICMDID_SET_REP_EVT_LTIME      (0x0031)
 #define APICMDID_SET_REP_EVT_SIMSTATE   (0x0032)
 #define APICMDID_POWER_OFF              (0x0033)
+#define APICMDID_GET_SIMINFO            (0x0034)
+#define APICMDID_GET_DYNAMICEDRX        (0x0035)
+#define APICMDID_GET_DYNAMICPSM         (0x0036)
+#define APICMDID_GET_QUALITY            (0x0037)
 
 /* SOCKET API commands */
 
@@ -204,6 +208,7 @@
 #define APICMDID_TLS_SSL_EXPORT_SRTP_KEYS       (0x01E0)
 #define APICMDID_TLS_SSL_USE_SRTP               (0x01E1)
 #define APICMDID_TLS_SSL_SRTP_PROFILE           (0x01E2)
+#define APICMDID_TLS_SSL_TURN                   (0x01F0)
 #define APICMDID_TLS_MPI_INIT                   (0x0200)
 #define APICMDID_TLS_MPI_FREE                   (0x0201)
 #define APICMDID_TLS_MPI_READ_STRING            (0x0202)
@@ -243,6 +248,8 @@
 /* In the case of a response, set 15th bit of the command ID. */
 
 #define APICMDID_CONVERT_RES(cmdid)     (cmdid | 0x8000)
+
+#define APICMD_PAYLOAD_SIZE_MAX         (4112)
 
 /****************************************************************************
  * Public Types

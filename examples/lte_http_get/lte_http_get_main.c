@@ -67,14 +67,18 @@
 #  define APP_APN_NAME     "lte_http_get_sample_apn"
 #endif
 
-#ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_APN_IPTYPE
-#  define APP_APN_IPTYPE   CONFIG_EXAMPLES_LTE_HTTP_GET_APN_IPTYPE
+#ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IPV6
+#  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV6
+#elif defined CONFIG_EXAMPLES_LTE_HTTP_GET_APN_IPTYPE_IPV4V6
+#  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV4V6
 #else
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IP
 #endif
 
-#ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE
-#  define APP_APN_AUTHTYPE CONFIG_EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE
+#ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_PAP
+#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_PAP
+#elif defined CONFIG_EXAMPLES_LTE_HTTP_GET_APN_AUTHTYPE_CHAP
+#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_CHAP
 #else
 #  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_NONE
 #endif
@@ -97,16 +101,25 @@
  * Private Types
  ****************************************************************************/
 
+/* These structure are format of message which send from LTE API callback
+ * function to API caller task
+ */
+
 struct app_message_header_s
 {
-  int           result;
-  unsigned int  param_size;
+  int           result;     /* The result of LTE API obtained by callback
+                             * function
+                             */
+  unsigned int  param_size; /* Indicates size of payload */
 };
 
 struct app_message_s
 {
-  struct app_message_header_s header;
-  unsigned char               payload;
+  struct app_message_header_s header;  /* Header of the message */
+  unsigned char               payload; /* Payload of the message. This area
+                                        * is for sending parameters other
+                                        * than the result.
+                                        */
 };
 
 /****************************************************************************
@@ -505,7 +518,8 @@ static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
  * Name: app_deactivate_pdn_cb
  *
  * Description:
- *   This callback is called when the disconnected from PDN.
+ *   This is a callback function to be called
+ *   when it was disconnected from PDN.
  ****************************************************************************/
 
 static void app_deactivate_pdn_cb(uint32_t result)
@@ -579,7 +593,8 @@ int lte_http_get_main(int argc, char *argv[])
    * The URL is specified by the second argument.
    * If URL is not specified, use the default URL.
    * The URL starts with "http://"
-   * (eg, http://example.com/index.html, or http://192.0.2.1:80/index.html) */
+   * (eg, http://example.com/index.html, or http://192.0.2.1:80/index.html)
+   */
 
   if (argc > 1)
     {
@@ -587,7 +602,8 @@ int lte_http_get_main(int argc, char *argv[])
     }
 
   /* Create a message queue. It is used to receive result from the
-   * asynchronous API callback.*/
+   * asynchronous API callback.
+   */
 
   ret = app_mq_create(APP_MQUEUE_NAME);
   if (ret < 0)
@@ -628,7 +644,8 @@ int lte_http_get_main(int argc, char *argv[])
 
   /* Wait until the modem startup normally and notification
    * comes from the callback(app_restart_cb)
-   * registered by lte_set_report_restart. */
+   * registered by lte_set_report_restart.
+   */
 
   ret = app_wait_lte_callback(&result);
   if (ret < 0)
@@ -656,7 +673,8 @@ int lte_http_get_main(int argc, char *argv[])
 
   /* Wait until the radio on is completed and notification
    * comes from the callback(app_radio_on_cb)
-   * registered by lte_radio_on. */
+   * registered by lte_radio_on.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -664,14 +682,26 @@ int lte_http_get_main(int argc, char *argv[])
       goto errout_with_lte_fin;
     }
 
-  /* Attach to the LTE network and connect to the data PDN */
+  /* Set the APN to be connected.
+   * Check the APN settings of the carrier according to the your environment.
+   * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
+   * This means APN type for data traffic.
+   */
 
   apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+
+  /* Depending on the APN, authentication may not be necessary.
+   * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
+   * and set user_name, password to NULL.
+   */
+
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
   apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
   apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+  /* Attach to the LTE network and connect to the data PDN */
 
   ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
   if (ret < 0)
@@ -682,7 +712,8 @@ int lte_http_get_main(int argc, char *argv[])
 
   /* Wait until the connect completed and notification
    * comes from the callback(app_activate_pdn_cb)
-   * registered by lte_activate_pdn. */
+   * registered by lte_activate_pdn.
+   */
 
   ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -705,7 +736,8 @@ int lte_http_get_main(int argc, char *argv[])
 
   /* Wait until the deactivate PDN is completed and notification
    * comes from the callback(app_deactivate_pdn_cb)
-   * registered by lte_deactivate_pdn. */
+   * registered by lte_deactivate_pdn.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -724,7 +756,8 @@ int lte_http_get_main(int argc, char *argv[])
 
   /* Wait until the radio off is completed and notification
    * comes from the callback(app_radio_off_cb)
-   * registered by lte_radio_off. */
+   * registered by lte_radio_off.
+   */
 
   ret = app_wait_lte_callback(&result);
   if ((ret < 0) || (result == LTE_RESULT_ERROR))
@@ -733,7 +766,8 @@ int lte_http_get_main(int argc, char *argv[])
     }
 
   /* Power off the modem. If asynchronous API has not notified
-   * the result by callback, it will be canceled */
+   * the result by callback, it will be canceled
+   */
 
   ret = lte_power_off();
   if (ret < 0)
@@ -743,7 +777,9 @@ int lte_http_get_main(int argc, char *argv[])
     }
 
   /* Finalize LTE library
-   * If this function is called while the modem power is on, shutdown the modem */
+   * If this function is called while the modem power is on,
+   * shutdown the modem
+   */
 
   ret = lte_finalize();
   if (ret < 0)

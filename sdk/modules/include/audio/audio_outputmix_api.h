@@ -462,6 +462,15 @@ bool AS_DeactivateOutputMixer(uint8_t handle, FAR AsDeactivateOutputMixer *deact
 
 bool AS_DeleteOutputMix(void);
 
+/**
+ * @brief Check availability of OutputMixer 
+ *
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
+ */
+
+bool AS_checkAvailabilityOutputMixer(void);
+
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_OUTPUTMIX_API_H */
 /**
  * @}

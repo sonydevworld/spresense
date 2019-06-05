@@ -95,6 +95,10 @@ typedef enum
 
   AsRecorderEventAct = 0,
 
+  /*! \brief Deactivate */
+
+  AsRecorderEventDeact,
+
   /*! \brief Init */
 
   AsRecorderEventInit,
@@ -103,17 +107,13 @@ typedef enum
 
   AsRecorderEventStart,
 
+  /*! \brief Req Encode */
+
+  AsRecorderEventReqEncode,
+
   /*! \brief Stop */
 
-  AsRecorderEventStop,
-
-  /*! \brief Deactivate */
-
-  AsRecorderEventDeact,
-
-  /*! \brief SetMicGain */
-
-  AsRecorderEventSetMicGain
+  AsRecorderEventStop
 
 } AsRecorderEvent;
 
@@ -127,17 +127,12 @@ typedef enum
 
   AS_SETRECDR_STS_INPUTDEVICE_MIC = 0,
 
-  /*! \brief I2S Input */
-
-  AS_SETRECDR_STS_INPUTDEVICE_I2S,
-
   /* Note:
    * Delete this definition with Ver 1.1.0
    */
 
   AS_SETRECDR_STS_INPUTDEVICE_MIC_A = AS_SETRECDR_STS_INPUTDEVICE_MIC,
   AS_SETRECDR_STS_INPUTDEVICE_MIC_D = AS_SETRECDR_STS_INPUTDEVICE_MIC,
-  AS_SETRECDR_STS_INPUTDEVICE_I2S_IN = AS_SETRECDR_STS_INPUTDEVICE_I2S,
 
   AS_SETRECDR_STS_INPUTDEVICE_NUM
 } AsSetRecorderStsInputDevice;
@@ -336,20 +331,6 @@ typedef struct
 
 } AsInitRecorderParam;
 
-typedef struct
-{
-  /*! \brief [in] Mic gain
-   * 
-   *  Analog microphone can set every 0.5 dB between 0 dB and 21 dB.
-   *  In this parameter, a value from 0 to 210 is set for every 5.
-   *
-   *  Digital microphone can set every 0.01 dB between 78.50 dB and 0.00 dB
-   *  In this parameter, a value from -7850 to 0 is set for every 1.
-   */
-
-  int16_t mic_gain[AS_MIC_CHANNEL_MAX];
-} AsRecorderMicGainParam;
-
 /** RecorderCommand definition */
 typedef union
 {
@@ -365,12 +346,6 @@ typedef union
    */
 
   AsInitRecorderParam init_param;
-
-  /*! \brief [in] for SetMicGain
-   * (Object Interface==AS_SetMicGainMediaRecorder)
-   */
-
-  AsRecorderMicGainParam set_micgain_param;
 
 } RecorderCommand;
 
@@ -478,6 +453,17 @@ bool AS_ActivateMediaRecorder(FAR AsActivateRecorder *actparam);
 bool AS_InitMediaRecorder(FAR AsInitRecorderParam *initparam);
 
 /**
+ * @brief Request encode to audio recorder
+ *
+ * @param[in] pcmparam: Information of target PCM data
+ *
+ * @retval     true  : success
+ * @retval     false : failure
+ */
+
+bool AS_ReqEncodeMediaRecorder(AsPcmDataParam *pcmparam);
+
+/**
  * @brief Start audio recorder
  *
  * @retval     true  : success
@@ -514,16 +500,13 @@ bool AS_DeactivateMediaRecorder(void);
 bool AS_DeleteMediaRecorder(void);
 
 /**
- * @brief Set mic gain for audio recorder
+ * @brief Check availability of MediaRecorder 
  *
- * @param[in] gain    : Mic gain
- *
- * @retval     true  : success
- * @retval     false : failure
- * @note Refer to AsRecorderMicGainParam for gain setting range.
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
  */
 
-bool AS_SetMicGainMediaRecorder(FAR AsRecorderMicGainParam *micgain_param);
+bool AS_checkAvailabilityMediaRecorder(void);
 
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_RECORDER_API_H */
 /**

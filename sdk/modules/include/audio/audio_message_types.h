@@ -40,7 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include "memutils/message/Message.h"
+#include "memutils/message/message_type.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -68,12 +68,13 @@
 #define MSG_CAT_AUD_PLY           (MSG_SET_CATEGORY(0x2))
 #define MSG_CAT_AUD_BB            (MSG_SET_CATEGORY(0x3))
 #define MSG_CAT_AUD_RCG           (MSG_SET_CATEGORY(0x4))
-#define MSG_CAT_AUD_VRC           (MSG_SET_CATEGORY(0x5))
+#define MSG_CAT_AUD_MRC           (MSG_SET_CATEGORY(0x5))
 #define MSG_CAT_AUD_SNK           (MSG_SET_CATEGORY(0x6))
 #define MSG_CAT_AUD_MIX           (MSG_SET_CATEGORY(0x7))
 #define MSG_CAT_AUD_MIX_SEF       (MSG_SET_CATEGORY(0x8))
 #define MSG_CAT_AUD_SEF           (MSG_SET_CATEGORY(0x9))
 #define MSG_CAT_AUD_CAP           (MSG_SET_CATEGORY(0xA))
+#define MSG_CAT_AUD_MFE           (MSG_SET_CATEGORY(0xB))
 
 /************************************************************************
  *
@@ -236,35 +237,33 @@
 
 /************************************************************************
  *
- *    MSG_CAT_AUD_VRC: Voice recorder Command/Result(bi-directional)
+ *    MSG_CAT_AUD_MRC: Media recorder Command/Result(bi-directional)
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_VRC|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MRC|   MSG_SUB_TYPE                |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
  */
-#define MSG_AUD_VRC_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_VRC)
-#define MSG_AUD_VRC_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_VRC)
+#define MSG_AUD_MRC_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MRC)
+#define MSG_AUD_MRC_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MRC)
 
-#define MSG_AUD_VRC_CMD_ACTIVATE    (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_VRC_CMD_DEACTIVATE  (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_VRC_CMD_INIT        (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_VRC_CMD_START       (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_VRC_CMD_STOP        (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_VRC_CMD_SET_MICGAIN (MSG_AUD_VRC_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_MRC_CMD_ACTIVATE    (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MRC_CMD_DEACTIVATE  (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_MRC_CMD_INIT        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x02))
+#define MSG_AUD_MRC_CMD_START       (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_MRC_CMD_ENCODE      (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_MRC_CMD_STOP        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x05))
 
-#define LAST_AUD_VRC_MSG    (MSG_AUD_VRC_CMD_SET_MICGAIN + 1)
-#define AUD_VRC_MSG_NUM     (LAST_AUD_VRC_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MRC_MSG    (MSG_AUD_MRC_CMD_STOP + 1)
+#define AUD_MRC_MSG_NUM     (LAST_AUD_MRC_MSG & MSG_TYPE_SUBTYPE)
 
-#define MSG_AUD_VRC_RST_CAPTURE     (MSG_AUD_VRC_RES | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_VRC_RST_CAPTURE_ERR (MSG_AUD_VRC_RES | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_VRC_RST_FILTER      (MSG_AUD_VRC_RES | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_VRC_RST_ENC         (MSG_AUD_VRC_RES | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_MRC_RST_FILTER      (MSG_AUD_MRC_RES | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MRC_RST_ENC         (MSG_AUD_MRC_RES | MSG_SET_SUBTYPE(0x01))
 
-#define LAST_AUD_VRC_RST_MSG    (MSG_AUD_VRC_RST_ENC + 1)
-#define AUD_VRC_RST_MSG_NUM     (LAST_AUD_VRC_RST_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MRC_RST_MSG    (MSG_AUD_MRC_RST_ENC + 1)
+#define AUD_MRC_RST_MSG_NUM     (LAST_AUD_MRC_RST_MSG & MSG_TYPE_SUBTYPE)
 
 /************************************************************************
  *
@@ -374,6 +373,41 @@
 #define AUD_CAP_MSG_NUM      (LAST_AUD_CAP_MSG & MSG_TYPE_SUBTYPE)
 
 #define MSG_AUD_CAP_RST      (MSG_AUD_CAP_RES | MSG_SET_SUBTYPE(0x00))
+
+/************************************************************************
+ *
+ *    MSG_CAT_AUD_MFE: Mic Frontend Command/Result(bi-directional)
+ *
+ *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
+ *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MFE|   MSG_SUB_TYPE                |
+ *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+ *
+ ************************************************************************
+ */
+#define MSG_AUD_MFE_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MFE)
+#define MSG_AUD_MFE_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MFE)
+
+#define MSG_AUD_MFE_CMD_ACT          (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MFE_CMD_DEACT        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_MFE_CMD_INIT         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x02))
+#define MSG_AUD_MFE_CMD_START        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_MFE_CMD_STOP         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_MFE_CMD_INITPREPROC  (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_MFE_CMD_SETPREPROC   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x06))
+#define MSG_AUD_MFE_CMD_SETMICGAIN   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x07))
+
+#define LAST_AUD_MFE_MSG    (MSG_AUD_MFE_CMD_SETMICGAIN + 1)
+#define AUD_MFE_MSG_NUM     (LAST_AUD_MFE_MSG & MSG_TYPE_SUBTYPE)
+
+#define MSG_AUD_MFE_RST_CAPTURE_DONE (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MFE_RST_CAPTURE_ERR  (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x01))
+#define MSG_AUD_MFE_RST_PREPROC      (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x02))
+
+#define LAST_AUD_MFE_RST_MSG    (MSG_AUD_MFE_RST_PREPROC + 1)
+#define AUD_MFE_RST_MSG_NUM     (LAST_AUD_MFE_RST_MSG & MSG_TYPE_SUBTYPE)
+
+
 
 /************************************************************************
  *

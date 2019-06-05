@@ -80,7 +80,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_enable(FAR cxd56_audio_mic_gain_t *gain)
   uint8_t cic_num;
   uint8_t mic_sel;
   uint8_t mic_mode;
-  uint8_t mic_map;
+  uint32_t mic_map;
   cxd56_audio_mic_gain_t cic_gain;
   cxd56_audio_clkmode_t clk_mode;
 
@@ -154,7 +154,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mic_set_gain(FAR cxd56_audio_mic_gain_t *gain)
   uint8_t mic_num;
   uint8_t cic_num;
   uint8_t mic_sel;
-  uint8_t mic_map;
+  uint32_t mic_map;
   cxd56_audio_mic_gain_t cic_gain;
 
   /* Get mic number. */

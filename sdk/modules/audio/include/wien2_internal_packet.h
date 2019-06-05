@@ -60,7 +60,7 @@ struct AudioMngCmdCmpltResult
   uint8_t    command_code;  /**< command code of high level API */
   uint8_t    sub_code;      /**< sub code of high level API */
   uint8_t    module_id;     /**< module id of high level API */
-  uint8_t    reserved;
+  uint8_t    sub_module_id; /**< sub module id */
   uint32_t   result;        /**< result code of high level API */
   uint32_t   sub_result;
 
@@ -76,10 +76,12 @@ struct AudioMngCmdCmpltResult
                          uint8_t arg_sub_code,
                          uint32_t arg_result,
                          uint8_t arg_module_id,
-                         uint32_t arg_sub_result = 0):
+                         uint32_t arg_sub_result = 0,
+                         uint8_t arg_sub_module_id = 0):
     command_code(arg_command_code),
     sub_code(arg_sub_code),
     module_id(arg_module_id),
+    sub_module_id(arg_sub_module_id),
     result(arg_result),
     sub_result(arg_sub_result)
   {}

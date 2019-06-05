@@ -72,6 +72,10 @@
 
 const uint32_t g_idle_topstack = (uint32_t)&_ebss + CONFIG_IDLETHREAD_STACKSIZE;
 
+/* __stack is the end of the ram region (see the linker script). */
+
+extern uint32_t __stack;
+
 /****************************************************************************
  * Private Definitions
  ****************************************************************************/
@@ -152,7 +156,11 @@ void up_allocate_heap(FAR void **heap_start, size_t *heap_size)
 
   board_autoled_on(LED_HEAPALLOCATE);
   *heap_start = (FAR void *)g_idle_topstack;
+#ifdef CONFIG_CXD56_SUBCORE
+  *heap_size = (uint32_t)&__stack - g_idle_topstack;
+#else
   *heap_size = MM_RAM1_END - g_idle_topstack;
+#endif
 
   /* Colorize the heap for debug */
 

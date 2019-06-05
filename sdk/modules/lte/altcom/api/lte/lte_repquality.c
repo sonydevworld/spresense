@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_repevt.c
+ * modules/lte/altcom/api/lte/lte_repquality.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -44,6 +44,7 @@
 #include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_repquality.h"
+#include "apicmd_quality.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
 #include "altcom_callbacks.h"
@@ -114,7 +115,7 @@ static int32_t repquality_status_chg_cb(int32_t new_stat, int32_t old_stat)
 
 static void repquality_job(FAR void *arg)
 {
-  FAR struct apicmd_cmddat_repquality_s *data;
+  FAR struct apicmd_cmddat_quality_s *data;
   lte_quality_t                         *repdat = NULL;
   quality_report_cb_t                    callback;
 
@@ -125,7 +126,7 @@ static void repquality_job(FAR void *arg)
     }
   else
     {
-      data = (FAR struct apicmd_cmddat_repquality_s *)arg;
+      data = (FAR struct apicmd_cmddat_quality_s *)arg;
 
       repdat = (lte_quality_t *)BUFFPOOL_ALLOC(sizeof(lte_quality_t));
       if (!repdat)
@@ -134,38 +135,7 @@ static void repquality_job(FAR void *arg)
         }
       else
         {
-          repdat->valid = APICMD_REP_QUALITY_ENABLE == data->enability ?
-                               LTE_VALID : LTE_INVALID;
-          if (repdat->valid)
-            {
-              repdat->rsrp  = ntohs(data->rsrp);
-              repdat->rsrq  = ntohs(data->rsrq);
-              repdat->sinr  = ntohs(data->sinr);
-              repdat->rssi  = ntohs(data->rssi);
-              if (repdat->rsrp < APICMD_REP_QUALITY_RSRP_MIN ||
-                APICMD_REP_QUALITY_RSRP_MAX < repdat->rsrp)
-                {
-                  DBGIF_LOG1_ERROR("repdat->rsrp error:%d\n", repdat->rsrp);
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (repdat->rsrq < APICMD_REP_QUALITY_RSRQ_MIN ||
-                APICMD_REP_QUALITY_RSRQ_MAX < repdat->rsrq)
-                {
-                  DBGIF_LOG1_ERROR("repdat->rsrq error:%d\n", repdat->rsrq);
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (repdat->sinr < APICMD_REP_QUALITY_SINR_MIN ||
-                APICMD_REP_QUALITY_SINR_MAX < repdat->sinr)
-                {
-                  DBGIF_LOG1_ERROR("repdat->sinr error:%d\n", repdat->sinr);
-                  repdat->valid = LTE_INVALID;
-                }
-              else
-                {
-                  /* Do nothing. */
-                }
-            }
-
+          altcombs_set_quality(repdat, data);
           callback(repdat);
           (void)BUFFPOOL_FREE((FAR void *)repdat);
         }

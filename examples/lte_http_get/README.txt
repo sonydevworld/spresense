@@ -16,8 +16,17 @@ examples/lte_http_get
   $ ./tools/config.py examples/lte_http_get
   $ make
 
+  The web client also support HTTPS.
+  HTTPS can be used by adding the mbed TLS configuration as follows:
+
+  $ ./tools/config.py examples/lte_http_get feature/externals_mbedtls
+    or                                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  $ ./tools/config.py examples/lte_http_get feature/lte_stub_mbedtls
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^
   Execute under nsh:
 
   Type 'lte_http_get <url>' on nsh like this.
   nsh> lte_http_get http://example.com/index.html
+    or
+  nsh> lte_http_get https://example.com/index.html
 

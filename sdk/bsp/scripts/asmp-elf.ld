@@ -1,5 +1,5 @@
 /****************************************************************************
- * configs/corvo/scripts/asmp-elf.ld
+ * bsp/scripts/asmp-elf.ld
  *
  *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>

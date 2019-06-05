@@ -764,6 +764,15 @@ bool AS_DeactivatePlayer(AsPlayerId id, FAR AsDeactivatePlayer *deactparam);
 
 bool AS_DeletePlayer(AsPlayerId id);
 
+/**
+ * @brief Check availability of MediaPlayer 
+ *
+ * @retval     true  : avaliable 
+ * @retval     false : Not available 
+ */
+
+bool AS_checkAvailabilityMediaPlayer(AsPlayerId id);
+
 #endif  /* __MODULES_INCLUDE_AUDIO_AUDIO_PLAYER_API_H */
 /**
  * @}

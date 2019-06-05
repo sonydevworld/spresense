@@ -46,6 +46,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "audio/audio_high_level_api.h"
 #include "audio/audio_message_types.h"
+#include "audio/utilities/frame_samples.h"
 #include "audio_recorder_sink.h"
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
@@ -80,16 +81,11 @@ private:
     m_msgq_id(msgq_id),
     m_pool_id(pool_id),
     m_state(AS_MODULE_ID_MEDIA_RECORDER_OBJ, "", RecorderStateInactive),
-    m_channel_num(2),
     m_pcm_bit_width(AudPcm16Bit),
-    m_cap_byte_len(2),  /* This value depends on the value of
-                         * m_pcm_bit_width.
-                         */
     m_sampling_rate(48000),
     m_codec_type(InvalidCodecType),
     m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
     m_p_output_device_handler(NULL),
-    m_capture_from_mic_hdlr(MAX_CAPTURE_COMP_INSTANCE_NUM),
     m_filter_instance(NULL)
   {}
 
@@ -97,7 +93,7 @@ private:
   {
     RecorderStateInactive = 0,
     RecorderStateReady,
-    RecorderStateRecording,
+    RecorderStateActive,
     RecorderStateStopping,
     RecorderStateErrorStopping,
     RecorderStateWaitStop,
@@ -108,27 +104,24 @@ private:
   AsRecorderPoolId_t   m_pool_id;
 
   AudioState<RecorderState_e> m_state;
-  int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
-  int8_t  m_cap_byte_len;
   int32_t m_sampling_rate;
-  int32_t m_max_capture_pcm_size;
   int32_t m_max_output_pcm_size;
   AudioCodec m_codec_type;
   AsSetRecorderStsOutputDevice m_output_device;
   AsRecorderOutputDeviceHdlr* m_p_output_device_handler;
-  CaptureDevice m_input_device;
   int8_t  m_complexity;
   int32_t m_bit_rate;
   AudioRecorderSink m_rec_sink;
 
-  CaptureComponentHandler m_capture_from_mic_hdlr;
-
   FilterComponent *m_filter_instance;
 
   typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_VRC_MSG_NUM][RecorderStateNum];
-  static MsgProc RstProcTbl[AUD_VRC_RST_MSG_NUM][RecorderStateNum];
+  static MsgProc MsgProcTbl[AUD_MRC_MSG_NUM][RecorderStateNum];
+  static MsgProc RsltProcTbl[AUD_MRC_RST_MSG_NUM][RecorderStateNum];
+
+  typedef s_std::Queue<AsPcmDataParam, CAPTURE_PCM_BUF_QUE_SIZE> CnvInQueue;
+  CnvInQueue m_cnv_in_que;
 
   typedef s_std::Queue<MemMgrLite::MemHandle, OUTPUT_DATA_QUE_SIZE>
     OutputBufMhQueue;
@@ -137,15 +130,6 @@ private:
   s_std::Queue<AsRecorderEvent, 1> m_external_cmd_que;
 
   MediaRecorderCallback m_callback;
-
-  typedef struct
-  {
-    MemMgrLite::MemHandle mh;
-    bool                  is_end;
-  } ConvIn;
-
-  typedef s_std::Queue<ConvIn, CAPTURE_PCM_BUF_QUE_SIZE> CnvInMhQueue;
-  CnvInMhQueue m_cnv_in_buf_mh_que;
 
   void run();
   void parse(MsgPacket *);
@@ -159,48 +143,44 @@ private:
   void deactivate(MsgPacket *);
 
   void init(MsgPacket *);
-  void startOnReady(MsgPacket *);
-  void stopOnRec(MsgPacket *);
-  void stopOnErrorStop(MsgPacket *);
-  void stopOnWait(MsgPacket *);
-  void setMicGain(MsgPacket *);
+
+  void startOnReady(MsgPacket *msg);
+
+  void illegalReqEnc(MsgPacket *msg);
+  void reqEncOnActive(MsgPacket *msg);
+
+  void flushOnReady(MsgPacket *msg);
+  void flushOnActive(MsgPacket *msg);
+  void flushOnStop(MsgPacket *msg);
+  void flushOnErrorStop(MsgPacket *msg);
+  void flushOnWait(MsgPacket *msg);
 
   void illegalFilterDone(MsgPacket *);
-  void filterDoneOnRec(MsgPacket *);
+  void filterDoneOnActive(MsgPacket *);
   void filterDoneOnStop(MsgPacket *);
   void filterDoneOnErrorStop(MsgPacket *);
 
   void illegalEncDone(MsgPacket *);
-  void encDoneOnRec(MsgPacket *);
+  void encDoneOnActive(MsgPacket *);
   void encDoneOnStop(MsgPacket *);
   void encDoneOnErrorStop(MsgPacket *);
 
-  void illegalCaptureDone(MsgPacket *);
-  void captureDoneOnRec(MsgPacket *);
-  void captureDoneOnStop(MsgPacket *);
-  void captureDoneOnErrorStop(MsgPacket *);
-
-  void captureErrorOnRec(MsgPacket *);
-  void captureErrorOnStop(MsgPacket *);
-  void captureErrorOnErrorStop(MsgPacket *);
-  void captureErrorOnWaitStop(MsgPacket *);
-
-  bool startCapture();
-  bool execEnc(MemMgrLite::MemHandle mh, uint32_t pcm_size, bool is_end);
+  bool execEnc(AsPcmDataParam *pcm);
   bool stopEnc(void);
 
   bool setExternalCmd(AsRecorderEvent ext_event);
   AsRecorderEvent getExternalCmd(void);
   uint32_t checkExternalCmd(void);
 
-  MemMgrLite::MemHandle getOutputBufAddr();
-
   uint32_t loadCodec(AudioCodec, char *, int32_t, int32_t, uint32_t *);
   bool unloadCodec(void);
+  uint32_t initEnc(AsInitRecorderParam *param);
 
-  bool holdCnvInBuf(ConvIn in)
+  MemMgrLite::MemHandle getOutputBufAddr();
+
+  bool enqueEncInBuf(AsPcmDataParam in)
     {
-      if (!m_cnv_in_buf_mh_que.push(in))
+      if (!m_cnv_in_que.push(in))
         {
           MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
           return false;
@@ -208,9 +188,10 @@ private:
 
       return true;
     }
-  bool freeCnvInBuf()
+
+  bool dequeEncInBuf()
     {
-      if (!m_cnv_in_buf_mh_que.pop())
+      if (!m_cnv_in_que.pop())
         {
           MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
           return false;
@@ -218,7 +199,8 @@ private:
 
       return true;
     }
-  bool holdOutputBuf(MemMgrLite::MemHandle mh)
+
+  bool enqueEncOutBuf(MemMgrLite::MemHandle mh)
     {
       if (!m_output_buf_mh_que.push(mh))
         {
@@ -228,7 +210,8 @@ private:
 
       return true;
     }
-  bool freeOutputBuf()
+
+  bool dequeEncOutBuf()
     {
       if (!m_output_buf_mh_que.pop())
         {
@@ -239,31 +222,6 @@ private:
       return true;
     }
 
-  /* When MP3 encode and fs is 16kHz, 22.05kHz, 24kHz, sample num of
-   * 1au(access unit) is 1152/2 = 576 (It depend on MPEG2 compliant).
-   * Therefore, at first, value is (#1)"SampleNumPerFrame[m_codec_type] / 2".
-   * And sample num of captured and SRC filterd data is to be 576,
-   * return ((#1) * 48000 / m_sampling_rate(Hz)).
-   *
-   * The process below is only for fs is 48kHz, 16kHz.
-   * To correspontd to 32000Hz, 44100Hz..., need conversion process to 
-   * sample num per 1au to be 1152.
-   */
-  uint32_t getPcmCaptureSample()
-    {
-      if (m_codec_type == AudCodecMP3 && m_sampling_rate < 32000)
-        {
-          return (SampleNumPerFrame[m_codec_type] / 2 * 48000 /
-            m_sampling_rate);
-        }
-      else if (m_codec_type == AudCodecOPUS)
-        {
-          /* 20ms. */
-
-          return ((m_sampling_rate / 50) * (48000 / m_sampling_rate));
-        }
-        return SampleNumPerFrame[m_codec_type];
-    }
 
   uint32_t isValidActivateParam(const AsActivateRecorderParam& cmd);
   uint32_t isValidInitParam(const RecorderCommand& cmd);
@@ -271,9 +229,6 @@ private:
   uint32_t isValidInitParamLPCM(const RecorderCommand& cmd);
   uint32_t isValidInitParamOPUS(const RecorderCommand& cmd);
   bool writeToDataSinker(const MemMgrLite::MemHandle& mh, uint32_t byte_size);
-
-  bool getInputDeviceHdlr(void);
-  bool delInputDeviceHdlr(void);
 
   bool checkAndSetMemPool();
   bool isNeedUpsampling(int32_t sampling_rate);

@@ -78,6 +78,7 @@
 #include "apicmdhdlr_setedrx.h"
 #include "apicmdhdlr_setpin.h"
 #include "apicmdhdlr_setpsm.h"
+#include "apicmdhdlr_getquality.h"
 #include "apicmdhdlr_ver.h"
 #include "lte_radio_on.h"
 #include "lte_radio_off.h"
@@ -87,6 +88,9 @@
 #include "lte_getnetinfo.h"
 #include "lte_rep_netinfo.h"
 #include "lte_getimscap.h"
+#include "lte_getsiminfo.h"
+#include "lte_getdynamicedrx.h"
+#include "lte_getdynamicpsm.h"
 #include "lte_geterrinfo.h"
 #include "apicmdhdlr_select.h"
 #ifdef CONFIG_LTE_NET_MBEDTLS
@@ -108,6 +112,9 @@
 #define THRDSETLIST_NUM                (2)
 
 #define BLOCKSETLIST_NUM (sizeof(g_blk_settings) / sizeof(g_blk_settings[0]))
+
+#define APICMD_TRANSACTION_SIZE_MAX \
+  (sizeof(struct apicmd_cmdhdr_s) + APICMD_PAYLOAD_SIZE_MAX)
 
 /****************************************************************************
  * Private Function Prototypes
@@ -135,7 +142,18 @@ static struct buffpool_blockset_s g_blk_settings[] =
      512,  6
   },
   {
-    2064,  4
+    2064,  1
+  },
+#ifdef CONFIG_MODEM_ALTMDM_MAX_PACKET_SIZE
+  {
+    CONFIG_MODEM_ALTMDM_MAX_PACKET_SIZE, 1
+  },
+#endif
+  {
+    APICMDGW_RECVBUFF_SIZE_MAX, 1
+  },
+  {
+    APICMD_TRANSACTION_SIZE_MAX, 1
   }
 };
 
@@ -182,8 +200,12 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_repnetinfo,
   apicmdhdlr_getnetinfo,
   apicmdhdlr_getimscap,
+  apicmdhdlr_getsiminfo,
+  apicmdhdlr_getdynamicedrx,
+  apicmdhdlr_getdynamicpsm,
   apicmdhdlr_errinfo,
   apicmdhdlr_select,
+  apicmdhdlr_getquality,
 #ifdef CONFIG_LTE_NET_MBEDTLS
   apicmdhdlr_config_verify_callback,
 #endif

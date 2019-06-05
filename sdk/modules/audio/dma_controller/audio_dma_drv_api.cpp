@@ -134,8 +134,6 @@ E_AS AS_ReadDmac(asReadDmacParam *pReadDmacParam)
   switch (pReadDmacParam->dmacId)
     {
       case CXD56_AUDIO_DMAC_MIC:
-      case CXD56_AUDIO_DMAC_I2S0_UP:
-      case CXD56_AUDIO_DMAC_I2S1_UP:
           break;
 
       case CXD56_AUDIO_DMAC_I2S0_DOWN:
@@ -227,8 +225,6 @@ E_AS AS_WriteDmac(asWriteDmacParam *pWriteDmacParam)
   switch (pWriteDmacParam->dmacId)
     {
       case CXD56_AUDIO_DMAC_MIC:
-      case CXD56_AUDIO_DMAC_I2S0_UP:
-      case CXD56_AUDIO_DMAC_I2S1_UP:
           DMAC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
           _err("ERR: dma(%d) ID error\n", pWriteDmacParam->dmacId);
           return E_AS_DMAC_ID_PARAM;

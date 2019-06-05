@@ -49,8 +49,10 @@ CSRCS += mpmq.c
 CSRCS += mpshm.c
 CSRCS += mpmutex.c
 
+ifeq ($(CONFIG_CXD56_SUBCORE),)
 include rawelf/Make.defs
 include mm_tile/Make.defs
+endif
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))

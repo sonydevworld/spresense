@@ -43,8 +43,8 @@
 #define APICMD_PDN_SESSIONID_MIN          (0)
 #define APICMD_PDN_SESSIONID_MAX          (255)
 
-#define APICMD_PDN_ACT_ACTIVE             (0)
-#define APICMD_PDN_ACT_INACTIVE           (1)
+#define APICMD_PDN_ACT_INACTIVE           (0)
+#define APICMD_PDN_ACT_ACTIVE             (1)
 
 #define APICMD_PDN_IMS_REG                (0)
 #define APICMD_PDN_IMS_UNREG              (1)

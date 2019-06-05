@@ -41,7 +41,6 @@
 #include <string.h>
 
 #include "dbg_if.h"
-#include "apicmd.h"
 #include "buffpoolwrapper.h"
 #include "apicmdgw.h"
 #include "apicmd_errind.h"
@@ -61,9 +60,6 @@
 #define APICMDGW_CHKSUM_LENGTH          (12)
 
 #define APICMDGW_APICMDHDR_LEN          (sizeof(struct apicmd_cmdhdr_s))
-#define APICMDGW_APICMDPAYLOAD_SIZE_MAX (2048)
-#define APICMDGW_BUFF_SIZE_MAX \
-  (APICMDGW_APICMDPAYLOAD_SIZE_MAX + APICMDGW_APICMDHDR_LEN)
 
 #define APICMDGW_HDR_ERR_VER            (-1)
 #define APICMDGW_HDR_ERR_CHKSUM         (-2)
@@ -205,7 +201,7 @@ static int32_t apicmdgw_checkheader(FAR uint8_t *evt)
       return APICMDGW_HDR_ERR_VER;
     }
 
-  if (APICMDGW_APICMDPAYLOAD_SIZE_MAX < APICMDGW_GET_DATA_LEN(hdr))
+  if (APICMD_PAYLOAD_SIZE_MAX < APICMDGW_GET_DATA_LEN(hdr))
     {
       DBGIF_LOG1_ERROR("Data length error. [data len:%d]\n", APICMDGW_GET_DATA_LEN(hdr));
       return APICMDGW_HDR_ERR_VER;
@@ -507,7 +503,7 @@ static void apicmdgw_recvtask(void *arg)
     }
 
   rcvbuff = (uint8_t *)g_hal_if->allocbuff(
-              g_hal_if, APICMDGW_BUFF_SIZE_MAX);
+              g_hal_if, APICMDGW_RECVBUFF_SIZE_MAX);
   DBGIF_ASSERT(rcvbuff, "g_hal_atunsolevt->allocbuff()\n");
   rcvptr = rcvbuff;
 
@@ -515,9 +511,9 @@ static void apicmdgw_recvtask(void *arg)
     {
       if (rcvlen)
         {
-          if (APICMDGW_BUFF_SIZE_MAX < totallen + rcvlen)
+          if (APICMDGW_RECVBUFF_SIZE_MAX < totallen + rcvlen)
             {
-              memset(rcvbuff, 0, APICMDGW_BUFF_SIZE_MAX);
+              memset(rcvbuff, 0, APICMDGW_RECVBUFF_SIZE_MAX);
               APICMDGW_RECV_STATUS_INIT();
             }
 
@@ -813,6 +809,9 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
     }
 
   hdr_ptr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
+
+  sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN;
+
   if (respbuff)
     {
       blocktbl = (FAR struct apicmdgw_blockinf_s *)
@@ -840,50 +839,57 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
         }
 
       apicmdgw_addtable(blocktbl);
-    }
 
-  sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN;
-  g_hal_if->lock(g_hal_if);
-  ret = g_hal_if->send(g_hal_if,
-    (FAR uint8_t *)hdr_ptr, sendlen);
-  g_hal_if->unlock(g_hal_if);
+      sys_lock_mutex(&blocktbl->waitcondmtx);
 
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("hal_if->send() failed.\n");
-      if (respbuff)
-        {
-          apicmdgw_remtable(blocktbl);
-        }
-
-      return ret;
-    }
-
-  if (respbuff)
-    {
-      /* Recv message wait here. */
-      
-      ret = sys_wait_thread_cond(&blocktbl->waitcond, &blocktbl->waitcondmtx,
-                                 timeout_ms);
+      g_hal_if->lock(g_hal_if);
+      ret = g_hal_if->send(g_hal_if, (FAR uint8_t *)hdr_ptr, sendlen);
+      g_hal_if->unlock(g_hal_if);
 
       if (0 > ret)
         {
-          ret = -ETIMEDOUT;
+          DBGIF_LOG_ERROR("hal_if->send() failed.\n");
         }
       else
         {
-          if (0 > blocktbl->result)
-            {
-              ret = blocktbl->result;
-            }
+          /* Wait until the response data is received or timeout. */
 
-          if (!g_isinit)
+          ret = sys_thread_cond_timedwait(&blocktbl->waitcond,
+                                          &blocktbl->waitcondmtx, timeout_ms);
+          if (0 > ret)
             {
-              ret = -ECONNABORTED;
+              ret = -ETIMEDOUT;
+            }
+          else
+            {
+              if (0 > blocktbl->result)
+                {
+                  ret = blocktbl->result;
+                }
+
+              if (!g_isinit)
+                {
+                  ret = -ECONNABORTED;
+                }
             }
         }
+      sys_unlock_mutex(&blocktbl->waitcondmtx);
 
       apicmdgw_remtable(blocktbl);
+    }
+  else
+    {
+      /* Send only */
+
+      g_hal_if->lock(g_hal_if);
+      ret = g_hal_if->send(g_hal_if, (FAR uint8_t *)hdr_ptr, sendlen);
+      g_hal_if->unlock(g_hal_if);
+
+      if (0 > ret)
+        {
+          DBGIF_LOG_ERROR("hal_if->send() failed.\n");
+          return ret;
+        }
     }
 
   if (0 <= ret)
@@ -957,7 +963,7 @@ FAR uint8_t *apicmdgw_cmd_allocbuff(uint16_t cmdid, uint16_t len)
       return NULL;
     }
 
-  if (APICMDGW_APICMDPAYLOAD_SIZE_MAX < len)
+  if (APICMD_PAYLOAD_SIZE_MAX < len)
     {
       DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
       return NULL;
@@ -1019,7 +1025,7 @@ FAR uint8_t *apicmdgw_reply_allocbuff(FAR const uint8_t *cmd, uint16_t len)
       return NULL;
     }
 
-  if (APICMDGW_APICMDPAYLOAD_SIZE_MAX < len)
+  if (APICMD_PAYLOAD_SIZE_MAX < len)
     {
       DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
       return NULL;

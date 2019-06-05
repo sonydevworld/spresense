@@ -81,6 +81,11 @@ public:
       return (m_state == state);
     }
 
+  bool operator!=(T state)
+    {
+      return (m_state != state);
+    }
+
   T get()
     {
       return m_state;

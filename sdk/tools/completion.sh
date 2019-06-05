@@ -40,10 +40,11 @@
 
 # TAB completion for ./tools/config.py
 function _spresense_config_completion() {
-	local cur prev cword
+	local cur prev
 
 	# get command line arguments
-	_get_comp_words_by_ref -n : cur prev cword
+	cur=${2}
+	prev=${3}
 
 	if [ "${prev}" == "-d" -o "${prev}" == "--dir" ]; then
 		# If use '-d' or '--dir' option, use filename completion
@@ -53,8 +54,8 @@ function _spresense_config_completion() {
 		compopt +o nospace
 		if [ "${cur:0:1}" == "-" ]; then
 			# For option prediction
-			SOPT=`${COMP_WORDS[@]} -h | grep -oE "\--[a-zA-Z]+"`
-			LOPT=`${COMP_WORDS[@]} -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
+			SOPT=`${COMP_WORDS[0]} -h | grep -oE "\--[a-zA-Z]+"`
+			LOPT=`${COMP_WORDS[0]} -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
 			LIST="${SOPT} ${LOPT}"
 		else
 			LIST=`${COMP_WORDS[@]} -l | tail -n +2 | tr -d "\t"`
@@ -71,5 +72,5 @@ function _spresense_config_completion() {
 # TAB completion
 #
 
-complete -F _spresense_config_completion tools/config.py ./tools/config.py spresense_config
+complete -F _spresense_config_completion tools/config.py ./tools/config.py spr-config
 

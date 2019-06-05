@@ -37,6 +37,7 @@
 #define __AUDIO_MANAGER_H
 
 #include <audio/audio_high_level_api.h>
+#include <audio/utilities/frame_samples.h>
 #include <arch/chip/cxd56_audio.h>
 #include "attention.h"
 #include "wien2_common_defs.h"
@@ -99,8 +100,12 @@ private:
     m_obs_attentionCBFunc(obs_att_cb),
     m_active_player(0),
     m_player_transition_count(0),
+    m_recorder_transition_count(0),
     m_input_en(false),
     m_output_en(false)
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+    , m_preproc_type(AsMicFrontendPreProcThrough)
+#endif /* AS_FEATURE_FRONTEND_ENABLE */
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
@@ -141,8 +146,12 @@ private:
   uint32_t m_active_player;
   uint32_t m_command_code;
   int8_t m_player_transition_count;
+  int8_t m_recorder_transition_count;
   bool m_input_en;
   bool m_output_en;
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+  uint32_t m_preproc_type;
+#endif /* AS_FEATURE_FRONTEND_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   AsOutputMixDevice m_output_device;
@@ -165,6 +174,7 @@ private:
   void mpp(AudioCommand &cmd);
   void player(AudioCommand &cmd);
   void outputmixer(AudioCommand &cmd);
+  void micfrontend(AudioCommand &cmd);
   void recorder(AudioCommand &cmd);
   void setMicMap(AudioCommand &cmd);
   void setMicGain(AudioCommand &cmd);
@@ -208,11 +218,12 @@ private:
   uint32_t powerOnBaseBand(uint8_t power_id);
   uint32_t powerOffBaseBand(uint8_t power_id);
   
-  void sendResult(uint8_t code, uint8_t sub_code = 0);
+  void sendResult(uint8_t code, uint8_t sub_code = 0, uint8_t instance_id = 0);
   void sendErrRespResult(uint8_t  sub_code,
                          uint8_t  module_id,
                          uint32_t error_code,
-                         uint32_t error_sub_code = 0);
+                         uint32_t error_sub_code = 0,
+                         uint8_t instance_id = 0);
   bool deactivatePlayer();
   bool deactivateRecorder();
   bool deactivateSoundFx();
@@ -222,6 +233,18 @@ private:
                                      uint8_t  output_dev,
                                      FAR void *input_handler);
   bool packetCheck(uint8_t length, uint8_t command_code, AudioCommand &cmd);
+#ifdef AS_FEATURE_FRONTEND_ENABLE
+  bool sendMicFrontendCommand(MsgType msgtype, MicFrontendCommand *cmd);
+#endif  /* AS_FEATURE_FRONTEND_ENABLE */
+#ifdef AS_FEATURE_RECORDER_ENABLE
+  bool sendRecorderCommand(MsgType msgtype, RecorderCommand *cmd);
+#endif /* AS_FEATURE_RECORDER_ENABLE */
+#ifdef AS_FEATURE_PLAYER_ENABLE
+  bool sendPlayerCommand(AsPlayerId id, MsgType msgtype, PlayerCommand *cmd);
+#endif /* AS_FEATURE_PLAYER_ENABLE */
+#ifdef AS_FEATURE_OUTPUTMIX_ENABLE
+  bool sendOutputMixerCommand(MsgType msgtype, OutputMixerCommand *cmd);
+#endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 };
 
 __WIEN2_END_NAMESPACE

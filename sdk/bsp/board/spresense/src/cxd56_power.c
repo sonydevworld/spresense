@@ -107,7 +107,11 @@ static struct pm_cpu_freqlock_s g_hv_lock =
 
 int board_pmic_read(uint8_t addr, void *buf, uint32_t size)
 {
+#ifdef CONFIG_CXD56_PMIC
   return cxd56_pmic_read(addr, buf, size);
+#else
+  return 0;
+#endif
 }
 
 /****************************************************************************
@@ -128,7 +132,11 @@ int board_pmic_read(uint8_t addr, void *buf, uint32_t size)
 
 int board_pmic_write(uint8_t addr, void *buf, uint32_t size)
 {
+#ifdef CONFIG_CXD56_PMIC
   return cxd56_pmic_write(addr, buf, size);
+#else
+  return 0;
+#endif
 }
 
 /****************************************************************************
@@ -141,7 +149,8 @@ int board_pmic_write(uint8_t addr, void *buf, uint32_t size)
 
 int board_power_setup(int status)
 {
-#ifdef CONFIG_BOARD_USB_DISABLE_IN_DEEP_SLEEPING
+#ifdef CONFIG_CXD56_PMIC
+#  ifdef CONFIG_BOARD_USB_DISABLE_IN_DEEP_SLEEPING
   uint8_t val;
   uint32_t bootcause;
 
@@ -165,7 +174,7 @@ int board_power_setup(int status)
       default:
         break;
     }
-#endif
+#  endif
 
   /* Disable unused DDC/LDO permanently */
 
@@ -184,7 +193,7 @@ int board_power_setup(int status)
   /* Set GPO0 to Hi-Z */
 
   cxd56_pmic_set_gpo_hiz(PMIC_GET_CH(PMIC_GPO(0)));
-
+#endif /* CONFIG_CXD56_PMIC */
   return 0;
 }
 
@@ -479,6 +488,7 @@ int board_reset(int status)
 #ifdef CONFIG_BOARDCTL_POWEROFF
 int board_power_off(int status)
 {
+#ifdef CONFIG_CXD56_PMIC
   enum pm_sleepmode_e mode;
   uint8_t val;
 
@@ -505,12 +515,12 @@ int board_power_off(int status)
     }
   else
     {
-#ifdef CONFIG_BOARD_USB_DISABLE_IN_DEEP_SLEEPING
+#  ifdef CONFIG_BOARD_USB_DISABLE_IN_DEEP_SLEEPING
       /* Disable USB detection to enter deep sleep with USB attached */
 
       val = PMIC_SET_CHGOFF;
       cxd56_pmic_write(PMIC_REG_CNT_USB2, &val, sizeof(val));
-#endif
+#  endif
 
       /* Enter deep sleep mode */
 
@@ -520,7 +530,7 @@ int board_power_off(int status)
   /* this function never returns */
 
   up_pm_sleep(mode);
-
+#endif /* CONFIG_CXD56_PMIC */
   return 0;
 }
 #endif

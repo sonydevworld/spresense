@@ -179,11 +179,26 @@ static void AS_CaptureNotifyDmaDoneDev0(AudioDrvDmaResult *p_param)
       return;
     }
 
-  /* When receive end frame, Clera remaing que */
+  /* Notify invalid frames which couldn't read DMA. */
 
-  if (result.end_flag)
+  while (!instance->m_req_data_que.empty())
     {
-      instance->m_req_data_que.clear();
+      if (instance->m_req_data_que.top().validity)
+        {
+          break;
+        }
+
+      result.output_device = instance->m_output_device;
+      result.end_flag      = false;
+      result.buf           = instance->m_req_data_que.top();
+
+      instance->m_callback(result);
+
+      if (!instance->m_req_data_que.pop())
+        {
+          CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+          return;
+        }
     }
 }
 
@@ -213,9 +228,24 @@ static void AS_CaptureNotifyDmaDoneDev1(AudioDrvDmaResult *p_param)
       return;
     }
 
-  if (result.end_flag)
+  while (!instance->m_req_data_que.empty())
     {
-      instance->m_req_data_que.clear();
+      if (instance->m_req_data_que.top().validity)
+        {
+          break;
+        }
+
+      result.output_device = instance->m_output_device;
+      result.end_flag      = false;
+      result.buf           = instance->m_req_data_que.top();
+
+      instance->m_callback(result);
+
+      if (!instance->m_req_data_que.pop())
+        {
+          CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+          return;
+        }
     }
 }
 #endif
@@ -472,10 +502,6 @@ bool AS_get_capture_comp_handler(CaptureComponentHandler *p_handle,
           param.act_param.dma_path_id = CXD56_AUDIO_DMA_PATH_MIC_TO_MEM;
           break;
 
-      case CaptureDeviceI2S:
-          param.act_param.dma_path_id = CXD56_AUDIO_DMA_PATH_I2S0_TO_MEM;
-          break;
-
       default:
           CAPTURE_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
           return false;
@@ -696,7 +722,7 @@ CaptureComponent::EvtProc CaptureComponent::EvetProcTbl[AUD_CAP_MSG_NUM][StateNu
     &CaptureComponent::execOnRdy,    /*   Ready         */
     &CaptureComponent::execOnPreAct, /*   PreAct        */
     &CaptureComponent::execOnAct,    /*   Act           */
-    &CaptureComponent::illegal       /*   Error         */
+    &CaptureComponent::execOnError   /*   Error         */
   },
 
   /* Message type: MSG_AUD_CAP_CMD_STOP */
@@ -962,12 +988,14 @@ bool CaptureComponent::execOnPreAct(const CaptureComponentParam& param)
 
           if (E_AS_OK != AS_ReadDmac(&dmac_param))
             {
-              return false;
+              capbuf.validity = false;
             }
           else
             {
-              holdCapBuf(capbuf);
+              capbuf.validity = true;
             }
+
+          enqueDmaReqQue(capbuf);
 
           if (!m_cap_pre_que.pop())
             {
@@ -1002,12 +1030,29 @@ bool CaptureComponent::execOnAct(const CaptureComponentParam& param)
 
   if (E_AS_OK != AS_ReadDmac(&dmac_param))
     {
-      return false;
+      capbuf.validity = false;
     }
   else
     {
-      holdCapBuf(capbuf);
+      capbuf.validity = true;
     }
+
+  enqueDmaReqQue(capbuf);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool CaptureComponent::execOnError(const CaptureComponentParam& param)
+{
+  CaptureBuffer invalid_req;
+
+  /* Hold as invalid capture request. */
+
+  invalid_req.sample = param.exec_param.pcm_sample;
+  invalid_req.validity = false;
+
+  enqueDmaReqQue(invalid_req);
 
   return true;
 }
@@ -1065,8 +1110,6 @@ bool CaptureComponent::stopOnAct(const CaptureComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool CaptureComponent::stopOnError(const CaptureComponentParam& param)
 {
-  m_req_data_que.clear();
-
   return stopOnAct(param);
 }
 
@@ -1117,7 +1160,33 @@ bool CaptureComponent::notify(const CaptureComponentParam& param)
         {
           if (param.notify_param.code == E_AS_DMA_INT_ERR)
             {
-              m_state = Error;
+              if (m_state != Ready)
+                {
+                  m_state = Error;
+                }
+
+              /* If DMA ERRINT occured, following capture data
+               * will not come, so reply to all of request here.  
+               */
+
+              while (!m_req_data_que.empty())
+                {
+                  CaptureDataParam capresult;
+
+                  capresult.output_device = m_output_device;
+                  capresult.end_flag      = false;
+                  capresult.buf           = m_req_data_que.top();
+                  capresult.buf.sample    = 0;
+                  capresult.buf.validity  = false;
+
+                  m_callback(capresult);
+
+                  if (!m_req_data_que.pop())
+                    {
+                      CAPTURE_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+                      return false;
+                    }
+                }
             }
 
           if (E_AS_OK != AS_NotifyDmaCmplt
@@ -1159,7 +1228,7 @@ CaptureBuffer CaptureComponent::getCapBuf(uint32_t cap_sample)
 }
 
 /*--------------------------------------------------------------------*/
-bool CaptureComponent::holdCapBuf(CaptureBuffer buf)
+bool CaptureComponent::enqueDmaReqQue(CaptureBuffer buf)
 {
   if (!m_req_data_que.push(buf))
     {

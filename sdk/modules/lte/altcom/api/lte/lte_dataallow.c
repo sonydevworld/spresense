@@ -247,7 +247,7 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
   if (0 > ret)
     {
       DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_ACTIVATE_PDN);
+      altcomcallbacks_unreg_cb(APICMDID_DATA_ALLOW);
       return ret;
     }
 

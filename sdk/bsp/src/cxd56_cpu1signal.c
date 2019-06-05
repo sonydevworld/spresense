@@ -97,7 +97,7 @@ static FAR void *cxd56cpu1_worker(FAR void *arg)
 
   while (1)
     {
-      ret = cxd56_iccrecvmsg(&msg, -1);
+      ret = cxd56_iccrecvmsg(&msg, 0);
       if (ret < 0)
         {
           continue;

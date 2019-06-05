@@ -34,37 +34,39 @@
 ############################################################################
 # Dnnrt Library
 
-ifeq ($(CONFIG_DNN_RT),y)
-
 LIBDNN  = libdnnrt$(LIBEXT)
+LIBRT   = libnnablart_runtime$(LIBEXT)
+LIBFUNC = libnnablart_functions$(LIBEXT)
 DNNDIR  = modules$(DELIM)dnnrt
 
+ifeq ($(CONFIG_DNN_RT),y)
 SDKLIBS += lib$(DELIM)$(LIBDNN)
-SDKCLEANDIRS += $(DNNDIR)
 SDKMODDIRS += $(DNNDIR)
 CONTEXTDIRS += $(DNNDIR)
+
+ifneq ($(CONFIG_DNN_RT_MP),y)
+SDKLIBS += lib$(DELIM)$(LIBRT)
+SDKLIBS += lib$(DELIM)$(LIBFUNC)
+SDKMODDIRS += $(DNNDIR)/libs
+CONTEXTDIRS += $(DNNDIR)/libs
+endif
+
+endif
+
+# Must be cleaned in any conditions
+SDKCLEANDIRS += $(DNNDIR) $(DNNDIR)/libs
 
 lib$(DELIM)$(LIBDNN): $(DNNDIR)$(DELIM)$(LIBDNN)
 	install $< $@
 
-ifeq ($(CONFIG_DNN_RT_MP),y)
+lib$(DELIM)$(LIBRT): $(DNNDIR)$(DELIM)libs$(DELIM)$(LIBRT)
+	install $< $@
+
+lib$(DELIM)$(LIBFUNC): $(DNNDIR)$(DELIM)libs$(DELIM)$(LIBFUNC)
+	install $< $@
+
 $(DNNDIR)$(DELIM)$(LIBDNN): context
 	$(Q) $(MAKE) -C $(DNNDIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)"
-else
-LIBRT = libnnablart_runtime$(LIBEXT)
-LIBFUNC = libnnablart_functions$(LIBEXT)
-SDKLIBS += lib$(DELIM)$(LIBRT)
-SDKLIBS += lib$(DELIM)$(LIBFUNC)
 
-lib$(DELIM)$(LIBRT): $(DNNDIR)$(DELIM)$(LIBRT)
-	install $< $@
-
-lib$(DELIM)$(LIBFUNC): $(DNNDIR)$(DELIM)$(LIBFUNC)
-	install $< $@
-
-$(DNNDIR)$(DELIM)$(LIBRT) $(DNNDIR)$(DELIM)$(LIBFUNC) $(DNNDIR)$(DELIM)$(LIBDNN): context
-	$(Q) $(MAKE) -C $(DNNDIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)"
-
-endif
-
-endif
+$(DNNDIR)$(DELIM)libs$(DELIM)$(LIBRT) $(DNNDIR)$(DELIM)libs$(DELIM)$(LIBFUNC): context
+	$(Q) $(MAKE) -C $(DNNDIR)/libs TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(notdir $@)

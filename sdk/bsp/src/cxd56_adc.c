@@ -453,19 +453,19 @@ static int adc_start(adc_ch_t ch, uint8_t freq, FAR struct seq_s *seq,
       uint32_t xoscfreq = cxd56_get_xosc_clock();
       if (xoscfreq <= 24000000)
         {
-          val = 0x00000001;
+          val = 0x00000000;
         }
       else if (xoscfreq <= 30000000)
         {
-          val = 0x00000011;
+          val = 0x00000010;
         }
       else if (xoscfreq <= 45000000)
         {
-          val = 0x00000021;
+          val = 0x00000020;
         }
       else
         {
-          val = 0x00000031;
+          val = 0x00000030;
         }
 #endif
       putreg32(val, SCUADCIF_HPADC_AC0);

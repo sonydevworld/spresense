@@ -279,7 +279,39 @@ static int fft(float *pSrc, float *pDst, uint32_t fftLen)
 {
   arm_rfft_fast_instance_f32 S;
 
-  arm_rfft_fast_init_f32(&S, (uint16_t)fftLen);
+  switch (fftLen)
+    {
+      case 32:
+        arm_rfft_32_fast_init_f32(&S);
+        break;
+      case 64:
+        arm_rfft_64_fast_init_f32(&S);
+        break;
+      case 128:
+        arm_rfft_128_fast_init_f32(&S);
+        break;
+      case 256:
+        arm_rfft_256_fast_init_f32(&S);
+        break;
+      case 512:
+        arm_rfft_512_fast_init_f32(&S);
+        break;
+      case 1024:
+        arm_rfft_1024_fast_init_f32(&S);
+        break;
+      case 2048:
+        arm_rfft_2048_fast_init_f32(&S);
+        break;
+#if 0
+      /* Exclude to save the program size */
+
+      case 4096:
+        arm_rfft_4096_fast_init_f32(&S);
+        break;
+#endif
+      default:
+        return ERROR;
+    }
 
   /* pre-process */
 
