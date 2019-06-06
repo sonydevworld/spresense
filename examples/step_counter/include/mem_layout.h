@@ -1,7 +1,8 @@
+/* Auto is generated file. */
 /****************************************************************************
  * mem_layout.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,9 +14,10 @@
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
- * 3. Neither the name Sony nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+ *    the names of its contributors may be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -68,43 +70,55 @@
 /*
  * Memory Manager max work area size
  */
-#define MEMMGR_MAX_WORK_SIZE  0x00000060
+
+#define S0_MEMMGR_WORK_AREA_ADDR  MEMMGR_WORK_AREA_ADDR
+#define S0_MEMMGR_WORK_AREA_SIZE  0x00000060
+
+/*
+ * Section IDs
+ */
+#define SECTION_NO0       0
+
+#define NUM_MEM_SECTIONS  1
 
 /*
  * Pool IDs
  */
-#define NULL_POOL  0
-#define SENSOR_DSP_CMD_BUF_POOL  1
-#define ACCEL_DATA_BUF_POOL  2
-#define GNSS_DATA_BUF_POOL  3
+const MemMgrLite::PoolId S0_NULL_POOL                = { 0, SECTION_NO0};  /*  0 */
+const MemMgrLite::PoolId S0_SENSOR_DSP_CMD_BUF_POOL  = { 1, SECTION_NO0};  /*  1 */
+const MemMgrLite::PoolId S0_ACCEL_DATA_BUF_POOL      = { 2, SECTION_NO0};  /*  2 */
+const MemMgrLite::PoolId S0_GNSS_DATA_BUF_POOL       = { 3, SECTION_NO0};  /*  3 */
 
-#define NUM_MEM_LAYOUTS  1
-#define NUM_MEM_POOLS  4
+#define NUM_MEM_S0_LAYOUTS   1
+#define NUM_MEM_S0_POOLS     4
+
+#define NUM_MEM_LAYOUTS      1
+#define NUM_MEM_POOLS        4
 
 
 /*
  * Pool areas
  */
-/* Layout0: */
-#define MEMMGR_L0_WORK_SIZE   0x00000060
+/* Section0 Layout0: */
+#define MEMMGR_S0_L0_WORK_SIZE   0x00000060
 
-#define L0_SENSOR_DSP_CMD_BUF_POOL_ALIGN    0x00000008
-#define L0_SENSOR_DSP_CMD_BUF_POOL_ADDR     0x000e0000
-#define L0_SENSOR_DSP_CMD_BUF_POOL_SIZE     0x00000380
-#define L0_SENSOR_DSP_CMD_BUF_POOL_NUM_SEG  0x00000008
-#define L0_SENSOR_DSP_CMD_BUF_POOL_SEG_SIZE 0x00000070
+#define S0_L0_SENSOR_DSP_CMD_BUF_POOL_ALIGN    0x00000008
+#define S0_L0_SENSOR_DSP_CMD_BUF_POOL_ADDR     0x000e0000
+#define S0_L0_SENSOR_DSP_CMD_BUF_POOL_SIZE     0x00000380
+#define S0_L0_SENSOR_DSP_CMD_BUF_POOL_NUM_SEG  0x00000008
+#define S0_L0_SENSOR_DSP_CMD_BUF_POOL_SEG_SIZE 0x00000070
 
-#define L0_ACCEL_DATA_BUF_POOL_ALIGN    0x00000008
-#define L0_ACCEL_DATA_BUF_POOL_ADDR     0x000e0380
-#define L0_ACCEL_DATA_BUF_POOL_SIZE     0x00000c00
-#define L0_ACCEL_DATA_BUF_POOL_NUM_SEG  0x00000008
-#define L0_ACCEL_DATA_BUF_POOL_SEG_SIZE 0x00000180
+#define S0_L0_ACCEL_DATA_BUF_POOL_ALIGN    0x00000008
+#define S0_L0_ACCEL_DATA_BUF_POOL_ADDR     0x000e0380
+#define S0_L0_ACCEL_DATA_BUF_POOL_SIZE     0x00000c00
+#define S0_L0_ACCEL_DATA_BUF_POOL_NUM_SEG  0x00000008
+#define S0_L0_ACCEL_DATA_BUF_POOL_SEG_SIZE 0x00000180
 
-#define L0_GNSS_DATA_BUF_POOL_ALIGN    0x00000008
-#define L0_GNSS_DATA_BUF_POOL_ADDR     0x000e0f80
-#define L0_GNSS_DATA_BUF_POOL_SIZE     0x00000180
-#define L0_GNSS_DATA_BUF_POOL_NUM_SEG  0x00000008
-#define L0_GNSS_DATA_BUF_POOL_SEG_SIZE 0x00000030
+#define S0_L0_GNSS_DATA_BUF_POOL_ALIGN    0x00000008
+#define S0_L0_GNSS_DATA_BUF_POOL_ADDR     0x000e0f80
+#define S0_L0_GNSS_DATA_BUF_POOL_SIZE     0x00000180
+#define S0_L0_GNSS_DATA_BUF_POOL_NUM_SEG  0x00000008
+#define S0_L0_GNSS_DATA_BUF_POOL_SEG_SIZE 0x00000030
 
 /* Remainder SENSOR_WORK_AREA=0x0001cf00 */
 
