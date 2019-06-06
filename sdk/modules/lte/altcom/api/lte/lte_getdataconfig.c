@@ -123,11 +123,11 @@ static void getdataconfig_job(FAR void *arg)
   if ((ret == 0) && (callback))
     {
       result   = (int32_t)data->result;
-      type     = APICMD_GETDATACONFIG_TYPE_USERDATA == data->type ?
+      type     = LTE_DATA_TYPE_USER == data->type ?
                  LTE_DATA_TYPE_USER : LTE_DATA_TYPE_IMS;
-      general  = APICMD_GETDATACONFIG_RES_GENERAL_ENABLE == data->general ?
+      general  = LTE_ENABLE == data->general ?
                  LTE_ENABLE : LTE_DISABLE;
-      roaming  = APICMD_GETDATACONFIG_RES_ROAMING_ENABLE == data->roaming ?
+      roaming  = LTE_ENABLE == data->roaming ?
                  LTE_ENABLE : LTE_DISABLE;
       callback(result, type, general, roaming);
     }
@@ -228,11 +228,11 @@ int32_t lte_get_dataconfig(uint32_t data_type, get_dataconfig_cb_t callback)
 
       if (LTE_DATA_TYPE_USER == data_type)
         {
-          cmddat->type = APICMD_GETDATACONFIG_TYPE_USERDATA;
+          cmddat->type = LTE_DATA_TYPE_USER;
         }
       else
         {
-          cmddat->type = APICMD_GETDATACONFIG_TYPE_IMS;
+          cmddat->type = LTE_DATA_TYPE_IMS;
         }
 
       /* Send API command to modem */

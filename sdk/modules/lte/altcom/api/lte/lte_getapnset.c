@@ -123,12 +123,12 @@ static void getapnset_job(FAR void *arg)
       apnset.listnum = data->listnum;
       apnset.apnlist = NULL;
 
-      if (APICMD_GETAPNSET_RES_OK == result)
+      if (LTE_RESULT_OK == result)
         {
           if (APICMD_GETAPNSET_RES_LIST_MAX_NUM < apnset.listnum)
             {
               DBGIF_LOG1_ERROR("apnset.listnum error:%d\n", apnset.listnum);
-              result = APICMD_GETAPNSET_RES_ERR;
+              result = LTE_RESULT_ERROR;
             }
           else
             {

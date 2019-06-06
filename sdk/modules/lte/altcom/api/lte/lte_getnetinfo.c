@@ -126,7 +126,7 @@ static void getnetinfo_job(FAR void *arg)
     {
       data = (FAR struct apicmd_cmddat_getnetinfores_s *)arg;
 
-      if (data->result == APICMD_GETNETINFO_RES_OK)
+      if (data->result == LTE_RESULT_OK)
         {
           /* Fill network infomation */
 

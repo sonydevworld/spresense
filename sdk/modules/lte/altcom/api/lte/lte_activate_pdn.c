@@ -205,8 +205,8 @@ static void activatepdn_job(FAR void *arg)
   else
     {
       result =
-        data->result == APICMD_ACTIVATEPDN_RES_OK ? LTE_RESULT_OK :
-        data->result == APICMD_ACTIVATEPDN_RES_ERR ? LTE_RESULT_ERROR :
+        data->result == LTE_RESULT_OK ? LTE_RESULT_OK :
+        data->result == LTE_RESULT_ERROR ? LTE_RESULT_ERROR :
         LTE_RESULT_CANCEL;
 
       if (result == LTE_RESULT_OK)

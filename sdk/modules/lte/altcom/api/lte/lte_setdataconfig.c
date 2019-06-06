@@ -236,14 +236,14 @@ int32_t lte_set_dataconfig(uint32_t data_type, bool general, bool roaming,
   else
     {
       cmdbuff->type    = LTE_DATA_TYPE_USER == data_type ?
-                         (uint8_t)APICMD_SETDATACONFIG_TYPE_USERDATA :
-                         (uint8_t)APICMD_SETDATACONFIG_TYPE_IMS;
+                         (uint8_t)LTE_DATA_TYPE_USER :
+                         (uint8_t)LTE_DATA_TYPE_IMS;
       cmdbuff->general = LTE_ENABLE == general ?
-                         (uint8_t)APICMD_SETDATACONFIG_GENERAL_ENABLE :
-                         (uint8_t)APICMD_SETDATACONFIG_GENERAL_DISABLE;
+                         (uint8_t)LTE_ENABLE :
+                         (uint8_t)LTE_DISABLE;
       cmdbuff->roaming = LTE_ENABLE == roaming ?
-                         (uint8_t)APICMD_SETDATACONFIG_ROAMING_ENABLE :
-                         (uint8_t)APICMD_SETDATACONFIG_ROAMING_DISABLE;
+                         (uint8_t)LTE_ENABLE :
+                         (uint8_t)LTE_DISABLE;
 
       /* Send API command to modem */
 

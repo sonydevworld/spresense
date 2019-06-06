@@ -120,7 +120,7 @@ static void get_dynamicedrx_job(FAR void *arg)
   else
     {
       memset(&edrx_set, 0, sizeof(lte_edrx_setting_t));
-      if (APICMD_GETDYNAMICEDRX_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           ret = altcombs_check_edrx(&data->set);
           if (0 > ret)

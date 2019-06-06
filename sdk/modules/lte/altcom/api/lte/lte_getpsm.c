@@ -57,10 +57,10 @@
  ****************************************************************************/
 
 #define GETPSM_DATA_LEN (0)
-#define APICMDHDLR_GETPSM_RAT_UNIT_MIN   APICMD_GETPSM_RAT_UNIT_2SEC
-#define APICMDHDLR_GETPSM_RAT_UNIT_MAX   APICMD_GETPSM_RAT_UNIT_6MIN
-#define APICMDHDLR_GETPSM_TAU_UNIT_MIN   APICMD_GETPSM_TAU_UNIT_2SEC
-#define APICMDHDLR_GETPSM_TAU_UNIT_MAX   APICMD_GETPSM_TAU_UNIT_320HOUR
+#define APICMDHDLR_GETPSM_RAT_UNIT_MIN   LTE_PSM_T3324_UNIT_2SEC
+#define APICMDHDLR_GETPSM_RAT_UNIT_MAX   LTE_PSM_T3324_UNIT_6MIN
+#define APICMDHDLR_GETPSM_TAU_UNIT_MIN   LTE_PSM_T3412_UNIT_2SEC
+#define APICMDHDLR_GETPSM_TAU_UNIT_MAX   LTE_PSM_T3412_UNIT_320HOUR
 
 /****************************************************************************
  * Private Functions
@@ -124,13 +124,13 @@ static void getpsm_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_GETPSM_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
-          if (APICMD_GETPSM_DISABLE == data->enable)
+          if (LTE_DISABLE == data->enable)
             {
               psm.enable = LTE_DISABLE;
             }
-          else if (APICMD_GETPSM_ENABLE == data->enable)
+          else if (LTE_ENABLE == data->enable)
             {
               psm.enable = LTE_ENABLE;
 
@@ -199,7 +199,7 @@ static void getpsm_job(FAR void *arg)
       else
         {
           callback(LTE_RESULT_ERROR, NULL);
-          DBGIF_ASSERT(APICMD_GETPSM_RES_ERR == data->result, "Result parameter error.\n");
+          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "Result parameter error.\n");
         }
     }
   else

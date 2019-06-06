@@ -119,7 +119,7 @@ static void get_imscap_job(FAR void *arg)
     }
   else
     {
-      if (APICMD_GETIMSCAP_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           result = LTE_RESULT_OK;
           cap = data->ims_cap != APICMD_IMSCAP_ENABLE ?

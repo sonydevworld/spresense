@@ -117,11 +117,11 @@ static void dataoff_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_DATAOFF_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           result = LTE_RESULT_OK;
         }
-      else if (APICMD_DATAOFF_RES_ERR == data->result)
+      else if (LTE_RESULT_ERROR == data->result)
         {
           result = LTE_RESULT_ERROR;
           switch(data->errorcause)

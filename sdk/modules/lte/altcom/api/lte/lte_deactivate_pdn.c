@@ -122,8 +122,8 @@ static void deactivatepdn_job(FAR void *arg)
     }
   else
     {
-      result = data->result == APICMD_DEACTIVATEPDN_RES_OK ? LTE_RESULT_OK :
-               data->result == APICMD_DEACTIVATEPDN_RES_ERR ? LTE_RESULT_ERROR :
+      result = data->result == LTE_RESULT_OK ? LTE_RESULT_OK :
+               data->result == LTE_RESULT_ERROR ? LTE_RESULT_ERROR :
                LTE_RESULT_CANCEL;
       callback(result);
     }

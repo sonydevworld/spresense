@@ -154,7 +154,7 @@ static void get_siminfo_job(FAR void *arg)
   else
     {
       memset(&siminfo, 0, sizeof(lte_siminfo_t));
-      if (APICMD_GETSIMINFO_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           siminfo.option = ntohl(data->option);
           if (0 > lte_getsiminfo_checkparam(siminfo.option))
@@ -166,7 +166,7 @@ static void get_siminfo_job(FAR void *arg)
             {
               result = LTE_RESULT_OK;
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_MCCMNC)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_MCCMNC)
                 {
                   if (LTE_SIMINFO_MNC_DIGIT_MAX >= data->mnc_digit)
                     {
@@ -181,7 +181,7 @@ static void get_siminfo_job(FAR void *arg)
                     }
                 }
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_SPN)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_SPN)
                 {
                   if (LTE_SIMINFO_SPN_LEN >= data->spn_len)
                     {
@@ -195,7 +195,7 @@ static void get_siminfo_job(FAR void *arg)
                     }
                 }
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_ICCID)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_ICCID)
                 {
                   if (LTE_SIMINFO_ICCID_LEN >= data->iccid_len)
                     {
@@ -209,7 +209,7 @@ static void get_siminfo_job(FAR void *arg)
                     }
                 }
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_IMSI)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_IMSI)
                 {
                   if (LTE_SIMINFO_IMSI_LEN >= data->imsi_len)
                     {
@@ -223,7 +223,7 @@ static void get_siminfo_job(FAR void *arg)
                     }
                 }
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_GID1)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_GID1)
                 {
                   if (LTE_SIMINFO_GID_LEN >= data->gid1_len)
                     {
@@ -237,7 +237,7 @@ static void get_siminfo_job(FAR void *arg)
                     }
                 }
 
-              if (siminfo.option & APICMD_GETSIMINFO_OPT_GID2)
+              if (siminfo.option & LTE_SIMINFO_GETOPT_GID2)
                 {
                   if (LTE_SIMINFO_GID_LEN >= data->gid2_len)
                     {

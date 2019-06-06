@@ -120,7 +120,7 @@ static void get_dynamicpsm_job(FAR void *arg)
   else
     {
       memset(&psm_set, 0, sizeof(lte_psm_setting_t));
-      if (APICMD_GETDYNAMICPSM_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           ret = altcombs_check_psm(&data->set);
           if (0 > ret)

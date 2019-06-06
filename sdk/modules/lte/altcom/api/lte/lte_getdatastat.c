@@ -120,7 +120,7 @@ static void getdatastat_job(FAR void *arg)
     {
       state.statelist = NULL;
       result = (int32_t)data->result;
-      if (APICMD_GETDATASTAT_RES_ERR != result)
+      if (LTE_RESULT_ERROR != result)
         {
           state.listnum = data->listnum;
           state.statelist = BUFFPOOL_ALLOC(sizeof(lte_getapnset_t) * data->listnum);

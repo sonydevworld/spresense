@@ -124,14 +124,14 @@ static void setpsm_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_SETPSM_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           callback(LTE_RESULT_OK);
         }
       else
         {
           callback(LTE_RESULT_ERROR);
-          DBGIF_ASSERT(APICMD_SETPSM_RES_ERR == data->result, "result parameter error.\n");
+          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "result parameter error.\n");
         }
     }
   else
@@ -251,7 +251,7 @@ int32_t lte_set_psm(lte_psm_setting_t *settings, set_psm_cb_t callback)
   else
     {
       cmddat->enable = settings->enable ?
-        APICMD_SETPSM_ENABLE : APICMD_SETPSM_DISABLE;
+        LTE_ENABLE : LTE_DISABLE;
       cmddat->rat_val.unit     = settings->req_active_time.unit;
       cmddat->rat_val.time_val = settings->req_active_time.time_val;
       cmddat->tau_val.unit     = settings->ext_periodic_tau_time.unit;

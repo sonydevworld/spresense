@@ -122,14 +122,14 @@ static void setedrx_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_SETEDRX_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           callback(LTE_RESULT_OK);
         }
       else
         {
           callback(LTE_RESULT_ERROR);
-          DBGIF_ASSERT(APICMD_SETEDRX_RES_ERR == data->result, "result parameter error.\n");
+          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "result parameter error.\n");
         }
     }
   else
@@ -242,7 +242,7 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
     {
       cmddat->acttype = APICMD_SETEDRX_ACTTYPE_WBS1;
       cmddat->enable  = settings->enable ?
-        APICMD_SETEDRX_ENABLE : APICMD_SETEDRX_DISABLE;
+        LTE_ENABLE : LTE_DISABLE;
       cmddat->edrx_cycle = settings->edrx_cycle;
       cmddat->ptw_val    = settings->ptw_val;
 

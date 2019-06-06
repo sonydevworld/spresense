@@ -119,7 +119,7 @@ static void getver_job(FAR void *arg)
     {
       result = (int32_t)data->result;
 
-      if (APICMD_VERSION_RES_OK == result)
+      if (LTE_RESULT_OK == result)
         {
           version =
             (FAR lte_version_t *)BUFFPOOL_ALLOC(sizeof(lte_version_t));

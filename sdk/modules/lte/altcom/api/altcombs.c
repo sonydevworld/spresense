@@ -52,14 +52,14 @@
 #define ALTCOMBS_EDRX_ACTTYPE_INVALID_VAL (0xFF)
 #define ALTCOMBS_EDRX_ACTTYPE_MIN         (APICMD_EDRX_ACTTYPE_WBS1)
 #define ALTCOMBS_EDRX_ACTTYPE_MAX         (APICMD_EDRX_ACTTYPE_WBS1)
-#define ALTCOMBS_EDRX_CYCLE_MIN           (APICMD_EDRX_CYC_512)
-#define ALTCOMBS_EDRX_CYCLE_MAX           (APICMD_EDRX_CYC_262144)
-#define ALTCOMBS_EDRX_PTW_MIN             (APICMD_EDRX_PTW_128)
-#define ALTCOMBS_EDRX_PTW_MAX             (APICMD_EDRX_PTW_2048)
-#define ALTCOMBS_PSM_UNIT_T3324_MIN       (APICMD_PSM_RAT_UNIT_2SEC)
-#define ALTCOMBS_PSM_UNIT_T3324_MAX       (APICMD_PSM_RAT_UNIT_6MIN)
-#define ALTCOMBS_PSM_UNIT_T3412_MIN       (APICMD_PSM_TAU_UNIT_2SEC)
-#define ALTCOMBS_PSM_UNIT_T3412_MAX       (APICMD_PSM_TAU_UNIT_320HOUR)
+#define ALTCOMBS_EDRX_CYCLE_MIN           (LTE_EDRX_CYC_512)
+#define ALTCOMBS_EDRX_CYCLE_MAX           (LTE_EDRX_CYC_262144)
+#define ALTCOMBS_EDRX_PTW_MIN             (LTE_EDRX_PTW_128)
+#define ALTCOMBS_EDRX_PTW_MAX             (LTE_EDRX_PTW_2048)
+#define ALTCOMBS_PSM_UNIT_T3324_MIN       (LTE_PSM_T3324_UNIT_2SEC)
+#define ALTCOMBS_PSM_UNIT_T3324_MAX       (LTE_PSM_T3324_UNIT_6MIN)
+#define ALTCOMBS_PSM_UNIT_T3412_MIN       (LTE_PSM_T3412_UNIT_2SEC)
+#define ALTCOMBS_PSM_UNIT_T3412_MAX       (LTE_PSM_T3412_UNIT_320HOUR)
 
 /****************************************************************************
  * Private Data
@@ -548,14 +548,14 @@ int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
       return -EINVAL;
     }
 
-  if (set->enable < APICMD_EDRX_DISABLE ||
-      set->enable > APICMD_EDRX_ENABLE)
+  if (set->enable < LTE_DISABLE ||
+      set->enable > LTE_ENABLE)
     {
       DBGIF_LOG1_ERROR("Invalid enable :%d\n", set->enable);
       return -EINVAL;
     }
 
-  if (APICMD_EDRX_ENABLE == set->enable)
+  if (LTE_ENABLE == set->enable)
     {
       if (set->acttype < APICMD_EDRX_ACTTYPE_NOTUSE ||
           set->acttype > APICMD_EDRX_ACTTYPE_NBS1)
@@ -564,15 +564,15 @@ int32_t altcombs_check_edrx(struct apicmd_edrxset_s *set)
           return -EINVAL;
         }
 
-      if (set->edrx_cycle < APICMD_EDRX_CYC_512 ||
-          set->edrx_cycle > APICMD_EDRX_CYC_262144)
+      if (set->edrx_cycle < LTE_EDRX_CYC_512 ||
+          set->edrx_cycle > LTE_EDRX_CYC_262144)
         {
           DBGIF_LOG1_ERROR("Invalid cycle :%d\n", set->edrx_cycle);
           return -EINVAL;
         }
 
-      if (set->ptw_val < APICMD_EDRX_PTW_128 ||
-          set->ptw_val > APICMD_EDRX_PTW_2048)
+      if (set->ptw_val < LTE_EDRX_PTW_128 ||
+          set->ptw_val > LTE_EDRX_PTW_2048)
         {
           DBGIF_LOG1_ERROR("Invalid PTW :%d\n", set->ptw_val);
           return -EINVAL;
@@ -653,7 +653,7 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
       return -EINVAL;
     }
 
-  if (APICMD_EDRX_ENABLE == cmd_edrx->enable)
+  if (LTE_ENABLE == cmd_edrx->enable)
     {
       if ((ALTCOMBS_EDRX_ACTTYPE_MIN > cmd_edrx->acttype ||
           ALTCOMBS_EDRX_ACTTYPE_MAX < cmd_edrx->acttype) ||
@@ -701,17 +701,17 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
       return -EINVAL;
     }
 
-  if (set->enable < APICMD_PSM_DISABLE ||
-      set->enable > APICMD_PSM_ENABLE)
+  if (set->enable < LTE_DISABLE ||
+      set->enable > LTE_ENABLE)
     {
       DBGIF_LOG1_ERROR("Invalid enable :%d\n", set->enable);
       return -EINVAL;
     }
 
-  if (APICMD_PSM_ENABLE == set->enable)
+  if (LTE_ENABLE == set->enable)
     {
-      if (set->rat_time.unit < APICMD_PSM_RAT_UNIT_2SEC ||
-          set->rat_time.unit > APICMD_PSM_RAT_UNIT_6MIN)
+      if (set->rat_time.unit < LTE_PSM_T3324_UNIT_2SEC ||
+          set->rat_time.unit > LTE_PSM_T3324_UNIT_6MIN)
         {
           DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", set->rat_time.unit);
           return -EINVAL;
@@ -724,8 +724,8 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
           return -EINVAL;
         }
 
-      if (set->tau_time.unit < APICMD_PSM_TAU_UNIT_2SEC ||
-          set->tau_time.unit > APICMD_PSM_TAU_UNIT_320HOUR)
+      if (set->tau_time.unit < LTE_PSM_T3412_UNIT_2SEC ||
+          set->tau_time.unit > LTE_PSM_T3412_UNIT_320HOUR)
         {
           DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", set->tau_time.unit);
           return -EINVAL;
@@ -783,7 +783,7 @@ int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
       return -EINVAL;
     }
 
-  if (APICMD_PSM_ENABLE == cmd_psm->enable)
+  if (LTE_ENABLE == cmd_psm->enable)
     {
       if ((ALTCOMBS_PSM_UNIT_T3324_MIN > cmd_psm->rat_time.unit ||
           ALTCOMBS_PSM_UNIT_T3324_MAX < cmd_psm->rat_time.unit) ||

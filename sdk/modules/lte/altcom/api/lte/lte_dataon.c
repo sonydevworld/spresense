@@ -117,36 +117,36 @@ static void dataon_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_DATAON_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           result = (uint32_t)LTE_RESULT_OK;
         }
-      else if (APICMD_DATAON_RES_ERR == data->result)
+      else if (LTE_RESULT_ERROR == data->result)
         {
           result = (uint32_t)LTE_RESULT_ERROR;
           switch(data->errorcause)
             {
-              case APICMD_DATAON_RES_ERRCAUSE_WAITENTERPIN:
+              case LTE_ERR_WAITENTERPIN:
                 {
                   errcause = (uint32_t)LTE_ERR_WAITENTERPIN;
                 }
               break;
-              case APICMD_DATAON_RES_ERRCAUSE_REJECT:
+              case LTE_ERR_REJECT:
                 {
                   errcause = (uint32_t)LTE_ERR_REJECT;
                 }
               break;
-              case APICMD_DATAON_RES_ERRCAUSE_MAXRETRY:
+              case LTE_ERR_MAXRETRY:
                 {
                   errcause = (uint32_t)LTE_ERR_MAXRETRY;
                 }
               break;
-              case APICMD_DATAON_RES_ERRCAUSE_BARRING:
+              case LTE_ERR_BARRING:
                 {
                   errcause = (uint32_t)LTE_ERR_BARRING;
                 }
               break;
-              case APICMD_DATAON_RES_ERRCAUSE_DETACHED:
+              case LTE_ERR_DETACHED:
                 {
                   errcause = (uint32_t)LTE_ERR_DETACHED;
                 }
