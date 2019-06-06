@@ -35,6 +35,8 @@
 #ifndef __AUDIO_LAYOUT_H_INCLUDED__
 #define __AUDIO_LAYOUT_H_INCLUDED__
 
+#define AUDIO_SECTION                 (0)
+
 #define MEM_LAYOUT_PLAYER_MAIN_ONLY   (0)
 
 #endif /* __AUDIO_LAYOUT_H_INCLUDED__ */

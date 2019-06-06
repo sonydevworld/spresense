@@ -516,15 +516,15 @@ static bool app_create_audio_sub_system(void)
 
   /* Create player feature. */
 
-  AsCreatePlayerParam_t player_create_param;
+  AsCreatePlayerParams_t player_create_param;
   player_create_param.msgq_id.player   = MSGQ_AUD_PLY;
   player_create_param.msgq_id.mng      = MSGQ_AUD_MNG;
   player_create_param.msgq_id.mixer    = MSGQ_AUD_OUTPUT_MIX;
   player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP;
-  player_create_param.pool_id.es       = DEC_ES_MAIN_BUF_POOL;
-  player_create_param.pool_id.pcm      = REND_PCM_BUF_POOL;
-  player_create_param.pool_id.dsp      = DEC_APU_CMD_POOL;
-  player_create_param.pool_id.src_work = SRC_WORK_BUF_POOL;
+  player_create_param.pool_id.es       = S0_DEC_ES_MAIN_BUF_POOL;
+  player_create_param.pool_id.pcm      = S0_REND_PCM_BUF_POOL;
+  player_create_param.pool_id.dsp      = S0_DEC_APU_CMD_POOL;
+  player_create_param.pool_id.src_work = S0_SRC_WORK_BUF_POOL;
 
   /* When calling AS_CreatePlayerMulti(), use the pool area
    * for multi-core playback processing.
@@ -541,14 +541,14 @@ static bool app_create_audio_sub_system(void)
 
   /* Create mixer feature. */
 
-  AsCreateOutputMixParam_t output_mix_act_param;
+  AsCreateOutputMixParams_t output_mix_act_param;
   output_mix_act_param.msgq_id.mixer = MSGQ_AUD_OUTPUT_MIX;
   output_mix_act_param.msgq_id.render_path0_filter_dsp = MSGQ_AUD_PFDSP0;
   output_mix_act_param.msgq_id.render_path1_filter_dsp = MSGQ_AUD_PFDSP1;
-  output_mix_act_param.pool_id.render_path0_filter_pcm = PF0_PCM_BUF_POOL;
-  output_mix_act_param.pool_id.render_path1_filter_pcm = PF1_PCM_BUF_POOL;
-  output_mix_act_param.pool_id.render_path0_filter_dsp = PF0_APU_CMD_POOL;
-  output_mix_act_param.pool_id.render_path1_filter_dsp = PF1_APU_CMD_POOL;
+  output_mix_act_param.pool_id.render_path0_filter_pcm = S0_PF0_PCM_BUF_POOL;
+  output_mix_act_param.pool_id.render_path1_filter_pcm = S0_PF1_PCM_BUF_POOL;
+  output_mix_act_param.pool_id.render_path0_filter_dsp = S0_PF0_APU_CMD_POOL;
+  output_mix_act_param.pool_id.render_path1_filter_dsp = S0_PF1_APU_CMD_POOL;
 
   result = AS_CreateOutputMixer(&output_mix_act_param, NULL);
   if (!result)
@@ -799,21 +799,23 @@ static bool app_init_libraries(void)
       return false;
     }
 
-  err = Manager::initPerCpu(mml_data_area, NUM_MEM_POOLS);
+  err = Manager::initPerCpu(mml_data_area, static_pools, pool_num, layout_no);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. 0x%x\n", err);
       return false;
     }
 
-  /* Create static memory pool of VoiceCall. */
+  /* Create static memory pool. */
 
+  const uint8_t sec_no = AUDIO_SECTION;
   const NumLayout layout_no = MEM_LAYOUT_PLAYER_MAIN_ONLY;
-  void* work_va = translatePoolAddrToVa(MEMMGR_WORK_AREA_ADDR);
-  err = Manager::createStaticPools(layout_no,
+  void* work_va = translatePoolAddrToVa(S0_MEMMGR_WORK_AREA_ADDR);
+  const PoolSectionAttr *ptr  = &MemoryPoolLayouts[AUDIO_SECTION][layout_no][0];
+  err = Manager::createStaticPools(sec_no, layout_no,
                              work_va,
-                             MEMMGR_MAX_WORK_SIZE,
-                             MemoryPoolLayouts[layout_no]);
+                             S0_MEMMGR_WORK_AREA_SIZE,
+                             ptr);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. %d\n", err);
@@ -831,7 +833,7 @@ static bool app_finalize_libraries(void)
 
   /* Destroy static pools. */
 
-  MemMgrLite::Manager::destroyStaticPools();
+  MemMgrLite::Manager::destroyStaticPools(AUDIO_SECTION);
 
   /* Finalize memory manager. */
 
