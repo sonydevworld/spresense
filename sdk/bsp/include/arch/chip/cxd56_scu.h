@@ -541,7 +541,7 @@ void seq_setaddress(FAR struct seq_s *seq, uint32_t slave_addr);
  * @param [in]  inst     : Sequencer instruction
  * @param [in]  nr_insts : Number of instructions
  * @param [out] buffer   : Pointer to receive buffer, if no need to receive, then NULL.
- * @param [in]  len      : buffer length (ignored when buffer is NULL)
+ * @param [in]  len      : buffer length (ignored when buffer is NULL), up to 16 bytes.
  *
  * @return  OK(0) is success. negative value is failure.
  */
@@ -561,7 +561,7 @@ int scu_spitransfer(int slavesel, uint16_t *inst, uint32_t nr_insts,
  * @param [in]  inst     : Sequencer instruction
  * @param [in]  nr_insts : Number of instructions
  * @param [out] buffer   : Pointer to receive buffer, if no need to receive, then NULL.
- * @param [in]  len      : buffer length (ignored when buffer is NULL)
+ * @param [in]  len      : buffer length (ignored when buffer is NULL), up to 16 bytes.
  *
  * @return OK(0) is success. negative value is failure.
  */
