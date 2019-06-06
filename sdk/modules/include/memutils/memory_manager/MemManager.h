@@ -55,6 +55,7 @@
 
 #include <string.h>		/* memset */
 #include "memutils/memory_manager/MemHandleBase.h"
+#include "memutils/memory_manager/MemMgrTypes.h"
 
 /**
  * @namespace MemMgrLite
@@ -103,6 +104,7 @@ public:
 		MemHandleBase(id, size, use_deleter) {}
 #else
 	MemHandle(PoolId id, size_t size) : MemHandleBase(id, size) {}
+	MemHandle(uint8_t id, size_t size) : MemHandleBase(id, size) {}
 #endif
 	MemHandle(const MemHandle& mh) : MemHandleBase(mh) {}
 

@@ -90,8 +90,8 @@ err_t Manager::finalize()
  * Constructor
  *****************************************************************/
 Manager::Manager() :
-	m_layout_no(BadLayoutNo),
-	m_static_pools()
+	m_layout_no(0),
+	m_static_pools(0)
 #ifdef USE_MEMMGR_DYNAMIC_POOL
 	, m_dynamic_pools()
 	, m_pool_no_que(m_pool_no_array, NUM_DYN_POOLS)

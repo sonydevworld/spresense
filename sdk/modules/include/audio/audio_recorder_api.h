@@ -372,6 +372,22 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of input data */
 
+  MemMgrLite::PoolId input;
+
+  /*! \brief [in] Memory pool id of output data */
+
+  MemMgrLite::PoolId output;
+
+  /*! \brief [in] Memory pool id of dsp command data */
+
+  MemMgrLite::PoolId dsp;
+
+} AsRecorderPoolId_t;
+
+typedef struct
+{
+  /*! \brief [in] Memory pool id of input data */
+
   uint8_t input;
 
   /*! \brief [in] Memory pool id of output data */
@@ -381,9 +397,22 @@ typedef struct
   /*! \brief [in] Memory pool id of dsp command data */
 
   uint8_t dsp;
-} AsRecorderPoolId_t;
+
+} AsRecorderPoolId_old_t;
 
 /** Activate function parameter */
+
+typedef struct
+{
+  /*! \brief [in] ID for sending messages to each function */
+
+  AsRecorderMsgQueId_t    msgq_id;
+
+  /*! \brief [in] ID of memory pool for processing data */
+
+  AsRecorderPoolId_old_t  pool_id;
+
+} AsCreateRecorderParam_t;
 
 typedef struct
 {
@@ -394,7 +423,8 @@ typedef struct
   /*! \brief [in] ID of memory pool for processing data */
 
   AsRecorderPoolId_t   pool_id;
-} AsCreateRecorderParam_t;
+
+} AsCreateRecorderParams_t;
 
 /****************************************************************************
  * Public Data
@@ -419,6 +449,9 @@ typedef struct
  */
 
 bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param,
+                            AudioAttentionCb attcb);
+
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParams_t *param,
                             AudioAttentionCb attcb);
 
 __attribute__((deprecated(

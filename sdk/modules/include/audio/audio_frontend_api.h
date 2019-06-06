@@ -393,6 +393,22 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of input data */
 
+  MemMgrLite::PoolId input;
+
+  /*! \brief [in] Memory pool id of PreProc */
+
+  MemMgrLite::PoolId output;
+
+  /*! \brief [in] Memory pool id of dsp command data */
+
+  MemMgrLite::PoolId dsp;
+
+} AsMicFrontendPoolId_t;
+
+typedef struct
+{
+  /*! \brief [in] Memory pool id of input data */
+
   uint8_t input;
 
   /*! \brief [in] Memory pool id of PreProc */
@@ -403,9 +419,21 @@ typedef struct
 
   uint8_t dsp;
 
-} AsMicFrontendPoolId_t;
+} AsMicFrontendPoolId_old_t;
 
 /** Activate function parameter */
+
+typedef struct
+{
+  /*! \brief [in] ID for sending messages to each function */
+
+  AsMicFrontendMsgQueId_t   msgq_id;
+
+  /*! \brief [in] ID of memory pool for processing data */
+
+  AsMicFrontendPoolId_old_t pool_id;
+
+} AsCreateMicFrontendParam_t;
 
 typedef struct
 {
@@ -417,7 +445,7 @@ typedef struct
 
   AsMicFrontendPoolId_t   pool_id;
 
-} AsCreateMicFrontendParam_t;
+} AsCreateMicFrontendParams_t;
 
 /****************************************************************************
  * Public Data
@@ -442,6 +470,9 @@ typedef struct
  */
 
 bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param,
+                          AudioAttentionCb attcb);
+
+bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParams_t *param,
                           AudioAttentionCb attcb);
 
 /**

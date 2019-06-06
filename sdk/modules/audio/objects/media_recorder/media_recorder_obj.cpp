@@ -1879,29 +1879,18 @@ bool MediaRecorderObjectTask::isNeedUpsampling(int32_t sampling_rate)
  ****************************************************************************/
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
+static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t pool_id, AudioAttentionCb attcb)
 {
-  return AS_CreateMediaRecorder(param, NULL);
-}
 
-/*--------------------------------------------------------------------------*/
-bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb attcb)
-{
   /* Register attention callback */
 
   MEDIA_RECORDER_REG_ATTCB(attcb);
 
-  /* Parameter check */
-
-  if (param == NULL)
-    {
-      return false;
-    }
 
   /* Create */
 
-  s_msgq_id = param->msgq_id;
-  s_pool_id = param->pool_id;
+  s_msgq_id = msgq_id;
+  s_pool_id = pool_id;
 
   /* Reset Message queue. */
 
@@ -1921,6 +1910,51 @@ bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb
     }
 
   return true;
+}
+
+/*--------------------------------------------------------------------------*/
+static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_old_t pool_id, AudioAttentionCb attcb)
+{
+  AsRecorderPoolId_t tmp;
+  tmp.input.sec = tmp.output.sec = tmp.dsp.sec = 0;
+  tmp.input.pool  = pool_id.input;
+  tmp.output.pool = pool_id.output;
+  tmp.dsp.pool    = pool_id.dsp;
+
+  return CreateMediaRecorder(msgq_id, tmp, attcb);
+
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      return false;
+    }
+
+  return CreateMediaRecorder(param->msgq_id,param->pool_id,attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
+{
+  return AS_CreateMediaRecorder(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParams_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      return false;
+    }
+
+  return CreateMediaRecorder(param->msgq_id,param->pool_id,attcb);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -39,29 +39,44 @@
 namespace MemMgrLite {
 
 /*****************************************************************
- * 静的メモリプール群の破棄(削除)
- * 静的メモリプール未生成時は、何もしない
+ * Destroy (delete) static memory pools.
+ * When static memory pool is not generated, nothing is done.
  *****************************************************************/
-void Manager::destroyStaticPools()
+void Manager::destroyStaticPools(uint8_t sec_no)
 {
 #ifdef USE_MEMMGR_DEBUG_OUTPUT
-	printf("Manager::destroyStaticPools: layout_no=%d\n", getCurrentLayoutNo());
+  printf("Manager::destroyStaticPools: layout_no=%d\n", getCurrentLayoutNo());
 #endif
 
-	if (isStaticPoolAvailable()) {
-		ScopedLock lock;
+  if ( sec_no > 3)
+    {
+      /* sec_no is out of range! */
 
-		/* プールID=0は予約 */
-		for (uint32_t i = 1; i < theManager->m_pool_num; ++i) {
-			if (theManager->m_static_pools[i] != NULL) {
-				destroyPool(theManager->m_static_pools[i]);
-				theManager->m_static_pools[i] = NULL;
-			}
-		}
-		theManager->m_layout_no = BadLayoutNo;	/* レイアウト番号を無効化 */
-	}
+      printf("Out of range sec_no=%d!\n", sec_no);
+      return;
+    }
+
+  if (isStaticPoolAvailable(sec_no))
+    {
+      ScopedLock lock;
+
+      /* Pool ID = 0 is reserved. */
+
+      for (uint32_t i = 1; i < theManager->m_pool_num[sec_no]; ++i)
+        {
+          if (theManager->m_static_pools[sec_no][i] != NULL)
+            {
+              destroyPool(theManager->m_static_pools[sec_no][i]);
+              theManager->m_static_pools[sec_no][i] = NULL;
+            }
+        }
+
+      /* Disable layout number. */
+
+      theManager->m_layout_no[sec_no] = BadLayoutNo;
+    }
 }
 
-} /* end of namespace MemMgrLite */
+} /* End of namespace MemMgrLite. */
 
 /* destroyStaticPools.cxx */

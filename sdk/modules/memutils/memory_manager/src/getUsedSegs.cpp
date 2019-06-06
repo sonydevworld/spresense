@@ -40,16 +40,16 @@ namespace MemMgrLite {
 /********************************************************************************
  * 静的プール群の使用中のセグメントをメモリハンドルに格納し、格納した数を返す
  ********************************************************************************/
-uint32_t Manager::getStaticPoolsUsedSegs(MemHandleBase* mhs, uint32_t num_mhs)
+uint32_t Manager::getStaticPoolsUsedSegs(uint8_t sec, MemHandleBase* mhs, uint32_t num_mhs)
 {
 	D_ASSERT(mhs && num_mhs);
-	D_ASSERT(isStaticPoolAvailable());
+	D_ASSERT(isStaticPoolAvailable(sec));
 
 	uint32_t n = 0;
 
 	/* プールID=0は予約 */
-	for (PoolId id = 1; id < theManager->m_pool_num; ++id) {
-		MemPool* pool = theManager->m_static_pools[id];
+	for (uint8_t id = 1; id < theManager->m_pool_num[sec]; ++id) {
+		MemPool* pool = theManager->m_static_pools[sec][id];
 		if (pool) {
 			n += pool->getUsedSegs(mhs + n, num_mhs - n);
 			if (n == num_mhs) break;

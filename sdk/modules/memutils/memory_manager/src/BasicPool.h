@@ -47,7 +47,7 @@ namespace MemMgrLite {
 class BasicPool : public MemPool {
 	friend class Manager;
 protected:
-	BasicPool(const PoolAttr& attr, FastMemAlloc& fma);
+	BasicPool(const PoolSectionAttr& attr, FastMemAlloc& fma);
 	~BasicPool();
 
   /* allocate a memory segment */

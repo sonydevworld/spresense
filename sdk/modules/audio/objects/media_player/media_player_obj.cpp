@@ -67,7 +67,6 @@ using namespace MemMgrLite;
 
 /* Definition when not using Memory pool. */
 
-#define INVALID_POOL_ID   0
 #define SRC_WORK_BUF_SIZE 8192 /* 1024sample * 2ch * 4bytes */
 
 /****************************************************************************
@@ -1539,7 +1538,7 @@ void* PlayerObj::allocSrcWorkBuf(uint32_t size)
 {
   void *work_buf_addr;
 
-  if (m_pool_id.src_work != INVALID_POOL_ID)
+  if (m_pool_id.src_work.pool != NullPoolId.pool)
     {
       MemMgrLite::MemHandle mh;
       if (mh.allocSeg(m_pool_id.src_work, size) != ERR_OK)
@@ -1638,7 +1637,7 @@ bool PlayerObj::checkAndSetMemPool()
       return false;
     }
 
-  if (m_pool_id.src_work != INVALID_POOL_ID)
+  if (m_pool_id.src_work.pool != NullPoolId.pool)
     {
       if (!MemMgrLite::Manager::isPoolAvailable(m_pool_id.src_work))
         {
@@ -1695,24 +1694,7 @@ int AS_SubPlayerObjEntry(int argc, char *argv[])
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreatePlayer(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
-{
-  /* Do not use memory pool for work area of src.
-   * Set invalid value in memory pool.
-   */
-
-  param->pool_id.src_work = INVALID_POOL_ID;
-  return AS_CreatePlayerMulti(id, param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
-{
-  return AS_CreatePlayerMulti(id, param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, AudioAttentionCb attcb)
+static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_t pool_id, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
@@ -1720,18 +1702,12 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
 
   /* Parameter check */
 
-  if (param == NULL)
-    {
-      MEDIA_PLAYERS_ERR(id, AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
   /* Create */
 
   if (id == AS_PLAYER_ID_0)
     {
-      s_msgq_id = param->msgq_id;
-      s_pool_id = param->pool_id;
+      s_msgq_id = msgq_id;
+      s_pool_id = pool_id;
       s_player_id = id;
 
       /* Reset Message queue. */
@@ -1753,8 +1729,8 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
     }
   else
     {
-      s_sub_msgq_id = param->msgq_id;
-      s_sub_pool_id = param->pool_id;
+      s_sub_msgq_id = msgq_id;
+      s_sub_pool_id = pool_id;
       s_sub_player_id = id;
 
       /* Reset Message queue. */
@@ -1776,6 +1752,73 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
     }
 
   return true;
+}
+
+/*--------------------------------------------------------------------------*/
+static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id,AsPlayerPoolId_old_t pool_id, AudioAttentionCb attcb)
+{
+  AsPlayerPoolId_t tmp;
+  tmp.es.sec = tmp.pcm.sec = tmp.dsp.sec = tmp.src_work.sec = 0;
+  tmp.es.pool = pool_id.es;
+  tmp.pcm.pool = pool_id.pcm;
+  tmp.dsp.pool = pool_id.dsp;
+  tmp.src_work.pool = pool_id.src_work;
+
+  return CreatePlayerMulti(id, msgq_id, tmp, attcb);
+
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, AudioAttentionCb attcb)
+{
+  return CreatePlayerMulti(id, param->msgq_id, param->pool_id, attcb);
+}
+
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param, AudioAttentionCb attcb)
+{
+  return CreatePlayerMulti(id, param->msgq_id, param->pool_id, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
+{
+  return AS_CreatePlayerMulti(id, param, NULL);
+}
+
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param)
+{
+  return AS_CreatePlayerMulti(id, param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+static bool CreatePlayer(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlayerPoolId_old_t pool_id)
+{
+  /* Do not use memory pool for work area of src.
+   * Set invalid value in memory pool.
+   */
+
+  AsPlayerPoolId_t tmp;
+  tmp.es.sec = tmp.pcm.sec = tmp.dsp.sec = 0;
+  tmp.es.pool = pool_id.es;
+  tmp.pcm.pool = pool_id.pcm;
+  tmp.dsp.pool = pool_id.dsp;
+  tmp.src_work = NullPoolId;
+
+  return CreatePlayerMulti(id, msgq_id, tmp, NULL);
+
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreatePlayer(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
+{
+  if (param == NULL)
+    {
+      MEDIA_PLAYERS_ERR(id, AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  return CreatePlayer(id, param->msgq_id, param->pool_id);
+
 }
 
 /*--------------------------------------------------------------------------*/
