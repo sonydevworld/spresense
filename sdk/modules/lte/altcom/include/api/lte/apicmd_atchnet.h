@@ -43,20 +43,6 @@
 #include "apicmd.h"
 
 /****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define APICMD_ATCHNET_RES_OK      (0)
-#define APICMD_ATCHNET_RES_ERR     (1)
-#define APICMD_ATCHNET_RES_CANCEL  (2)
-
-#define APICMD_ATCHNET_RES_ERRCAUSE_WAITENTERPIN (1)
-#define APICMD_ATCHNET_RES_ERRCAUSE_REJECT       (2)
-#define APICMD_ATCHNET_RES_ERRCAUSE_MAXRETRY     (3)
-#define APICMD_ATCHNET_RES_ERRCAUSE_BARRING      (4)
-#define APICMD_ATCHNET_RES_ERRCAUSE_UNEXPECTED   (255)
-
-/****************************************************************************
  * Public Types
  ****************************************************************************/
 

@@ -46,10 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_ERRINFO_INDICATOR_ENABLE_ERRCODE      (1 << 0)
-#define APICMD_ERRINFO_INDICATOR_ENABLE_ERRNO        (1 << 1)
-#define APICMD_ERRINFO_INDICATOR_ENABLE_ERRSTR       (1 << 2)
-
 #define APICMD_ERRINFO_ERRSTR_MAX_LEN                (64)
 
 /****************************************************************************

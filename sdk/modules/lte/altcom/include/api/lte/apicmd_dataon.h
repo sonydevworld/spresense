@@ -46,19 +46,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_DATAON_SESSIONID_MIN (1)
-#define APICMD_DATAON_SESSIONID_MAX (5)
-
-#define APICMD_DATAON_RES_OK        (0)
-#define APICMD_DATAON_RES_ERR       (1)
-#define APICMD_DATAON_RES_CANCEL    (2)
-
-#define APICMD_DATAON_RES_ERRCAUSE_WAITENTERPIN (1)
-#define APICMD_DATAON_RES_ERRCAUSE_REJECT       (2)
-#define APICMD_DATAON_RES_ERRCAUSE_MAXRETRY     (3)
-#define APICMD_DATAON_RES_ERRCAUSE_BARRING      (4)
 #define APICMD_DATAON_RES_ERRCAUSE_DETACHED     (5)
-#define APICMD_DATAON_RES_ERRCAUSE_UNEXPECTED   (255)
 
 /****************************************************************************
  * Public Types

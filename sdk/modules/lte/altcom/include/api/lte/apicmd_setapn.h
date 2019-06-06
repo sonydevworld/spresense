@@ -46,23 +46,9 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SETAPN_SESSIONID_MIN (1)
-#define APICMD_SETAPN_SESSIONID_MAX (5)
-
-#define APICMD_SETAPN_IPTYPE_IP     (0)
-#define APICMD_SETAPN_IPTYPE_IPV6   (1)
-#define APICMD_SETAPN_IPTYPE_IPV4V6 (2)
-
-#define APICMD_SETAPN_AUTHTYPE_NONE (0)
-#define APICMD_SETAPN_AUTHTYPE_PAP  (1)
-#define APICMD_SETAPN_AUTHTYPE_CHAP (2)
-
 #define APICMD_SETAPN_APN_LEN       101
 #define APICMD_SETAPN_USERNAME_LEN  64
 #define APICMD_SETAPN_PASS_LEN      32
-
-#define APICMD_SETAPN_RES_OK        (0)
-#define APICMD_SETAPN_RES_ERR       (1)
 
 /****************************************************************************
  * Public Types

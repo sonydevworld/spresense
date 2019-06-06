@@ -47,21 +47,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETNETINFO_RES_OK        (0)
-#define APICMD_GETNETINFO_RES_ERR       (1)
-
-#define APICMD_GETNETINFO_NETSTAT_NOT_REG_NOT_SEARCHING      (0)
-#define APICMD_GETNETINFO_NETSTAT_REG_HOME                   (1)
-#define APICMD_GETNETINFO_NETSTAT_NOT_REG_SEARCHING          (2)
-#define APICMD_GETNETINFO_NETSTAT_REG_DENIED                 (3)
-#define APICMD_GETNETINFO_NETSTAT_UNKNOWN                    (4)
-#define APICMD_GETNETINFO_NETSTAT_REG_ROAMING                (5)
-#define APICMD_GETNETINFO_NETSTAT_REG_SMS_ONLY_HOME          (6)
-#define APICMD_GETNETINFO_NETSTAT_REG_SMS_ONLY_ROAMING       (7)
-#define APICMD_GETNETINFO_NETSTAT_NOT_REG_EMERGENCY          (8)
-#define APICMD_GETNETINFO_NETSTAT_REG_CSFB_NOT_PREF_HOME     (9)
-#define APICMD_GETNETINFO_NETSTAT_REG_CSFB_NOT_PREF_ROAMING  (10)
-
 #define APICMD_GETNETINFO_PDNCOUNT_MAX  (5)
 
 /****************************************************************************

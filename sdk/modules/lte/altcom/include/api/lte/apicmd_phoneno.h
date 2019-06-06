@@ -46,12 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_PHONENO_RES_OK                (0)
-#define APICMD_PHONENO_RES_ERR               (1)
-
-#define APICMD_PHONENO_ERRCAUSE_WAITENTERPIN (1)
-#define APICMD_PHONENO_ERRCAUSE_UNEXPECTED   (255)
-
 #define APICMD_PHONENO_LEN                   41
 
 /****************************************************************************

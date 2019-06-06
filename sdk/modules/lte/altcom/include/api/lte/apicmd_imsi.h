@@ -46,12 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_IMSI_RES_OK                (0)
-#define APICMD_IMSI_RES_ERR               (1)
-
-#define APICMD_IMSI_ERRCAUSE_WAITENTERPIN (1)
-#define APICMD_IMSI_ERRCAUSE_UNEXPECTED   (255)
-
 #define APICMD_IMSI_LEN                   16
 
 /****************************************************************************

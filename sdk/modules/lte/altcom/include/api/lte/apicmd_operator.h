@@ -46,8 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_OPERATOR_RES_OK  (0)
-#define APICMD_OPERATOR_RES_ERR (1)
 #define APICMD_OPERATOR_LEN     17
 
 /****************************************************************************

@@ -43,16 +43,6 @@
 #include "apicmd.h"
 
 /****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define APICMD_REP_NETSTAT_ATTACH     (0)
-#define APICMD_REP_NETSTAT_DETACH     (1)
-#define APICMD_REP_NETSTAT_CONNECT    (2)
-#define APICMD_REP_NETSTAT_DISCONNECT (3)
-#define APICMD_REP_NETSTAT_CHANGE_APN (4)
-
-/****************************************************************************
  * Public Types
  ****************************************************************************/
 

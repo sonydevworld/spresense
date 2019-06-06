@@ -47,9 +47,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_DATAALLOW_RES_OK                 (0)
-#define APICMD_DATAALLOW_RES_ERR                (1)
-
 #define APICMD_DATAALLOW_DATAALLOW_ALLOW        (0)
 #define APICMD_DATAALLOW_DATAALLOW_DISALLOW     (1)
 

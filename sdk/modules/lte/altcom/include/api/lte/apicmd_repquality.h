@@ -52,9 +52,6 @@
 #define APICMD_SET_REPQUALITY_INTERVAL_MIN (1)
 #define APICMD_SET_REPQUALITY_INTERVAL_MAX (4233600)
 
-#define APICMD_SET_REPQUALITY_RES_OK      (0)
-#define APICMD_SET_REPQUALITY_RES_ERR     (1)
-
 /****************************************************************************
  * Public Types
  ****************************************************************************/

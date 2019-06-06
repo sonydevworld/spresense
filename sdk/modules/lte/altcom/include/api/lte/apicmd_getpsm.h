@@ -46,29 +46,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETPSM_RES_OK           (0)
-#define APICMD_GETPSM_RES_ERR          (1)
-#define APICMD_GETPSM_DISABLE          (0)
-#define APICMD_GETPSM_ENABLE           (1)
-
 #define APICMD_GETPSM_TIMER_MIN        (1)
 #define APICMD_GETPSM_TIMER_MAX        (31)
-
-/* Unit value of Requested Active Time */
-
-#define APICMD_GETPSM_RAT_UNIT_2SEC    (0)
-#define APICMD_GETPSM_RAT_UNIT_1MIN    (1)
-#define APICMD_GETPSM_RAT_UNIT_6MIN    (2)
-
-/* Unit value of extended periodic Tracking Area Update */
-
-#define APICMD_GETPSM_TAU_UNIT_2SEC    (0)
-#define APICMD_GETPSM_TAU_UNIT_30SEC   (1)
-#define APICMD_GETPSM_TAU_UNIT_1MIN    (2)
-#define APICMD_GETPSM_TAU_UNIT_10MIN   (3)
-#define APICMD_GETPSM_TAU_UNIT_1HOUR   (4)
-#define APICMD_GETPSM_TAU_UNIT_10HOUR  (5)
-#define APICMD_GETPSM_TAU_UNIT_320HOUR (6)
 
 /****************************************************************************
  * Public Types

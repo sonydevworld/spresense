@@ -43,19 +43,6 @@
 #include "apicmd.h"
 
 /****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define APICMD_GETDATACONFIG_TYPE_USERDATA       (0)
-#define APICMD_GETDATACONFIG_TYPE_IMS            (1)
-#define APICMD_GETDATACONFIG_RES_OK              (0)
-#define APICMD_GETDATACONFIG_RES_ERR             (1)
-#define APICMD_GETDATACONFIG_RES_GENERAL_DISABLE (0)
-#define APICMD_GETDATACONFIG_RES_GENERAL_ENABLE  (1)
-#define APICMD_GETDATACONFIG_RES_ROAMING_DISABLE (0)
-#define APICMD_GETDATACONFIG_RES_ROAMING_ENABLE  (1)
-
-/****************************************************************************
  * Public Types
  ****************************************************************************/
 

@@ -46,14 +46,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETAPNSET_RES_OK           (0)
-#define APICMD_GETAPNSET_RES_ERR          (1)
-
 #define APICMD_GETAPNSET_APN_LEN          101
-
-#define APICMD_GETAPNSET_IPTYPE_IP        (0)
-#define APICMD_GETAPNSET_IPTYPE_IPV6      (1)
-#define APICMD_GETAPNSET_IPTYPE_IPV4V6    (2)
 
 #define APICMD_GETAPNSET_RES_LIST_MAX_NUM (5)
 

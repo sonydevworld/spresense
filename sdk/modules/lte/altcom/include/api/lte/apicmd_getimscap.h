@@ -46,8 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETIMSCAP_RES_OK      (0)
-#define APICMD_GETIMSCAP_RES_ERR     (1)
 #define APICMD_IMSCAP_ENABLE         (0)
 #define APICMD_IMSCAP_DISABLE        (1)
 

@@ -46,8 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_VERSION_RES_OK  (0)
-#define APICMD_VERSION_RES_ERR (1)
 #define APICMD_VERSION_RES_BB_PRODUCT_LEN   5
 #define APICMD_VERSION_RES_NP_PACKAGE_LEN   32
 

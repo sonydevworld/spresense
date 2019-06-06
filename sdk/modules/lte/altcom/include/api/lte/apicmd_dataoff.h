@@ -46,13 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_DATAOFF_SESSIONID_MIN (1)
-#define APICMD_DATAOFF_SESSIONID_MAX (5)
-
-#define APICMD_DATAOFF_RES_OK      (0)
-#define APICMD_DATAOFF_RES_ERR     (1)
-#define APICMD_DATAOFF_RES_CANCEL  (2)
-
 #define APICMD_DATAOFF_RES_ERRCAUSE_DETACHED     (1)
 #define APICMD_DATAOFF_RES_ERRCAUSE_UNEXPECTED   (255)
 

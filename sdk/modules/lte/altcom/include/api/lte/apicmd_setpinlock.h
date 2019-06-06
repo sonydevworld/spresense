@@ -48,12 +48,6 @@
 
 #define APICMD_SETPINLOCK_PINCODE_LEN    9
 
-#define APICMD_SETPINLOCK_PINMODE_UNLOCK (0)
-#define APICMD_SETPINLOCK_PINMODE_LOCK   (1)
-
-#define APICMD_SETPINLOCK_RES_OK         (0)
-#define APICMD_SETPINLOCK_RES_ERR        (1)
-
 /****************************************************************************
  * Public Types
  ****************************************************************************/

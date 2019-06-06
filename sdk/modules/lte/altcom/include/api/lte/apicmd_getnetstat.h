@@ -46,8 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETNETSTAT_RES_OK      (0)
-#define APICMD_GETNETSTAT_RES_ERR     (1)
 #define APICMD_GETNETSTAT_RES_DSCNCT  (0)
 #define APICMD_GETNETSTAT_RES_CNCT    (1)
 
