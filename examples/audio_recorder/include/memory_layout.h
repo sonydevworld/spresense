@@ -35,6 +35,8 @@
 #ifndef __AUDIO_LAYOUT_H_INCLUDED__
 #define __AUDIO_LAYOUT_H_INCLUDED__
 
+#define AUDIO_SECTION       (0)
+
 #define MEM_LAYOUT_PLAYER   (0xff)
 #define MEM_LAYOUT_RECORDER (0)
 #define MEM_LAYOUT_VOICETRIGGER  (0xff)
