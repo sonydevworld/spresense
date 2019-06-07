@@ -98,6 +98,7 @@ template = "\
  ****************************************************************************/\n\n"
 
 def output_header_comment(out, title):
+    out.write("/* Auto is generated file. */\n")
     out.write(template.format(title))
 
 def make_include_guard_name(filename):
@@ -125,18 +126,18 @@ def output_msgq_pool(out, pools):
     
     out.write("};\n\n")
 
-def make_msgq_pool_header(pools):
+def make_msgq_pool_header(io, pools):
     title = os.path.basename(MsgqPoolFile)
     guard_name = make_include_guard_name(MsgqPoolFile)
 
-    output_header_comment(sys.stdout, title)
-    sys.stdout.write("#ifndef {0}\n".format(guard_name))
-    sys.stdout.write("#define {0}\n\n".format(guard_name))
+    output_header_comment(io, title)
+    io.write("#ifndef {0}\n".format(guard_name))
+    io.write("#define {0}\n\n".format(guard_name))
 
-    sys.stdout.write("#include \"{0}\"\n\n".format(os.path.basename(MsgqIdFile)))
-    output_msgq_pool(sys.stdout, pools)
+    io.write("#include \"{0}\"\n\n".format(os.path.basename(MsgqIdFile)))
+    output_msgq_pool(io, pools)
 
-    sys.stdout.write("#endif /* {0} */\n".format(guard_name))
+    io.write("#endif /* {0} */\n".format(guard_name))
 
 def cache_align(addr):
     return (addr + ALINGMENT_SIZE - 1) & ~(ALINGMENT_SIZE - 1)
@@ -227,17 +228,17 @@ def parseMsgQuePool():
 
             # create macros for pool information
             macros.append("/************************************************************************/")
-            macros.append("{0}_QUE_BLOCK_DRM\t0x{1:x}".format(id, que_area_drm))
-            macros.append("{0}_N_QUE_DRM\t0x{1:x}".format(id, n_drm))
-            macros.append("{0}_N_SIZE\t{1:d}".format(id, n_size))
-            macros.append("{0}_N_NUM\t{1:d}".format(id, n_num))
-            macros.append("{0}_H_QUE_DRM\t0x{1:x}".format(id, h_drm))
-            macros.append("{0}_H_SIZE\t{1:d}".format(id, h_size))
-            macros.append("{0}_H_NUM\t{1:d}".format(id, h_num))
+            macros.append("{0}_QUE_BLOCK_DRM 0x{1:x}".format(id, que_area_drm))
+            macros.append("{0}_N_QUE_DRM 0x{1:x}".format(id, n_drm))
+            macros.append("{0}_N_SIZE {1:d}".format(id, n_size))
+            macros.append("{0}_N_NUM {1:d}".format(id, n_num))
+            macros.append("{0}_H_QUE_DRM 0x{1:x}".format(id, h_drm))
+            macros.append("{0}_H_SIZE {1:d}".format(id, h_size))
+            macros.append("{0}_H_NUM {1:d}".format(id, h_num))
             if USE_MULTI_CORE == True:
-                macros.append("{0}_OWNER\t{1}".format(id, owner))
+                macros.append("{0}_OWNER {1}".format(id, owner))
             if USE_MULTI_CORE == True:
-                macros.append("{0}_SPINLOCK\t{1}\n".format(id, spinlock))
+                macros.append("{0}_SPINLOCK {1}\n".format(id, spinlock))
 
             # create pool entry
             if USE_MULTI_CORE == True:
@@ -265,42 +266,38 @@ def make_msgq_id_header(io, macros, end_addr):
     title = os.path.basename(MsgqIdFile)
     guard_name = make_include_guard_name(MsgqIdFile)
 
-    output_header_comment(sys.stdout, title)
-    sys.stdout.write("#ifndef {0}\n".format(guard_name))
-    sys.stdout.write("#define {0}\n\n".format(guard_name))
+    output_header_comment(io, title)
+    io.write("#ifndef {0}\n".format(guard_name))
+    io.write("#define {0}\n\n".format(guard_name))
 
     if USE_MULTI_CORE == True:
-        sys.stdout.write("#include \"spl_id.h\"\n\n")
+        io.write("#include \"spl_id.h\"\n\n")
 
-    sys.stdout.write("/* Message area size: {0} bytes */\n".format(end_addr - START_DRM))
-    sys.stdout.write("#define MSGQ_TOP_DRM\t0x%x\n" % START_DRM)
-    sys.stdout.write("#define MSGQ_END_DRM\t0x%x\n\n" % end_addr)
+    io.write("/* Message area size: {0} bytes */\n".format(end_addr - START_DRM))
+    io.write("#define MSGQ_TOP_DRM 0x%x\n" % START_DRM)
+    io.write("#define MSGQ_END_DRM 0x%x\n\n" % end_addr)
 
-    sys.stdout.write("/* Message area fill value after message poped */\n")
-    sys.stdout.write("#define MSG_FILL_VALUE_AFTER_POP\t0x%x\n\n" % MsgFillValueAfterPop)
+    io.write("/* Message area fill value after message poped */\n")
+    io.write("#define MSG_FILL_VALUE_AFTER_POP 0x%x\n\n" % MsgFillValueAfterPop)
 
-    sys.stdout.write("/* Message parameter type match check */\n")
-    sys.stdout.write("#define MSG_PARAM_TYPE_MATCH_CHECK\t{0}\n\n".format("true" if MsgParamTypeMatchCheck else "false"))
+    io.write("/* Message parameter type match check */\n")
+    io.write("#define MSG_PARAM_TYPE_MATCH_CHECK {0}\n\n".format("true" if MsgParamTypeMatchCheck else "false"))
 
-    sys.stdout.write("/* Message queue pool IDs */\n")
+    io.write("/* Message queue pool IDs */\n")
     for index, name in enumerate(create_msgq_ids()):
-        sys.stdout.write("#define {0}\t{1}\n".format(name, index))
-    sys.stdout.write("\n")
+        io.write("#define {0} {1}\n".format(name, index))
+    io.write("\n")
 
-    sys.stdout.write("/* User defined constants */\n")
-#   Object.constants.sort.each{|cnst|
-#       str = cnst.to_s  # 格納される定数は、v1.8までは文字列で、v1.9以降はシンボル
-#       sys.stdout.write("#define #{str}\t#{eval(str)}\t/* 0x#{eval(str).to_s(16)} */\n") if str =~ /^U_MSGQ_/
-#   }
-    sys.stdout.write("\n")
+    io.write("/* User defined constants */\n")
+    io.write("\n")
 
     for name in macros:
         if re.match("^\/\*", name):
-            sys.stdout.write("{0}\n".format(name))
+            io.write("{0}\n".format(name))
         else:
-            sys.stdout.write("#define {0}\n".format(name))
+            io.write("#define {0}\n".format(name))
 
-    sys.stdout.write("#endif /* {0} */\n".format(guard_name))
+    io.write("#endif /* {0} */\n".format(guard_name))
 
 
 # Create a message for python later.
@@ -340,19 +337,29 @@ try:
     MemLayoutFile = "mem_layout.h"
     TargetCore    = None
 
-    if len(sys.argv) < 1:
-        usage() 
-        sys.exit()
-    if len(sys.argv) > 1:
-        MemLayoutFile = sys.argv[1]
-    if len(sys.argv) > 2:
-        MsgQueArea = sys.argv[2]
-    if len(sys.argv) > 3:
-        MsgqIdFile = sys.argv[3]
-    if len(sys.argv) > 4:
-        MsgqPoolFile = sys.argv[4]
-    if len(sys.argv) > 5:
-        TargetCore   = sys.argv[5]
+    arguments = sys.argv
+    arguments.pop(0)
+
+    options = [option for option in arguments if option.startswith('-')]
+    if len(options):
+        arguments.pop(0)
+
+    if len(arguments):
+        MemLayoutFile = arguments[0]
+        arguments.pop(0)
+    if len(arguments):
+        MsgQueArea    = arguments[0]
+        arguments.pop(0)
+    if len(arguments):
+        MsgqIdFile    = arguments[0]
+        arguments.pop(0)
+    if len(arguments):
+        MsgqPoolFile  = arguments[0]
+        arguments.pop(0)
+    if len(arguments):
+        TargetCore    = arguments[0]
+        arguments.pop(0)
+
 
     # If the first character is not 0,
     # it is assumed to be the file name of Fixed memory layout.
@@ -376,8 +383,8 @@ try:
         START_DRM   = int(msgq_drm, 16)
         AREA_SIZE   = int(msgq_size, 16)
     else:
-        START_DRM   = int(sys.argv[1], 16)
-        AREA_SIZE   = int(sys.argv[2], 16)
+        START_DRM   = int(MemLayoutFile, 16)
+        AREA_SIZE   = int(MsgQueArea, 16)
 
     if not (START_DRM != 0 and (START_DRM % ALINGMENT_SIZE) == 0):
         raise ValueError("Bad addr. (require 4bytes align) -- 0x%08x" % START_DRM)
@@ -397,7 +404,8 @@ except ValueError as e:
     die(e)
 
 def generate_files():
-    sys.stdout.write("/* Auto is generated file. */\n")
     macros, pools, end_addr = parseMsgQuePool()
-    make_msgq_id_header(sys.stdout, macros, end_addr)
-    make_msgq_pool_header(pools)
+    with open(MsgqIdFile, mode='w') as f:
+        make_msgq_id_header(f, macros, end_addr)
+    with open(MsgqPoolFile, mode='w') as f:
+        make_msgq_pool_header(f, pools)
