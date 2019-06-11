@@ -61,6 +61,10 @@
 #include <audio/utilities/playlist.h>
 #endif
 
+/* Section number of memory layout to use */
+
+#define AUDIO_SECTION   SECTION_NO0
+
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -1334,4 +1338,3 @@ errout_act_audio_sub_system:
 
   return 0;
 }
-

@@ -63,6 +63,10 @@
 #include <audio/utilities/playlist.h>
 #endif
 
+/* Section number of memory layout to use */
+
+#define AUDIO_SECTION   SECTION_NO0
+
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -924,7 +928,7 @@ static bool app_finalize_libraries(void)
 
   /* Destroy static pools. */
 
-  MemMgrLite::Manager::destroyStaticPools();
+  MemMgrLite::Manager::destroyStaticPools(AUDIO_SECTION);
 
   /* Finalize memory manager. */
 

@@ -57,6 +57,10 @@
 #include "include/msgq_pool.h"
 #include "include/fixed_fence.h"
 
+/* Section number of memory layout to use */
+
+#define SENSOR_SECTION   SECTION_NO0
+
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -145,7 +149,7 @@ static bool sensor_init_libraries(void)
 
   /* Create static memory pool of VoiceCall. */
 
-  const uint8_t sec_no      = 0;
+  const uint8_t sec_no      = SECTION_NO0;
   const NumLayout layout_no = 0;
   void* work_va = translatePoolAddrToVa(S0_MEMMGR_WORK_AREA_ADDR);
   const PoolSectionAttr *ptr  = &MemoryPoolLayouts[sec_no][layout_no][0];
@@ -172,7 +176,7 @@ static bool sensor_finalize_libraries(void)
 
   /* Destroy static pools. */
 
-  MemMgrLite::Manager::destroyStaticPools();
+  MemMgrLite::Manager::destroyStaticPools(SENSOR_SECTION);
 
   /* Finalize memory manager. */
 
