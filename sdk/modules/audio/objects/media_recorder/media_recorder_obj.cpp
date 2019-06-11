@@ -1908,7 +1908,10 @@ static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t
   return true;
 }
 
-/*--------------------------------------------------------------------------*/
+/*
+ * The following tree functions are Old functions for compatibility.
+ */
+
 static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_old_t pool_id, AudioAttentionCb attcb)
 {
   AsRecorderPoolId_t tmp;
@@ -1939,7 +1942,10 @@ bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
   return AS_CreateMediaRecorder(param, NULL);
 }
 
-/*--------------------------------------------------------------------------*/
+/*
+ * New functions for multi-section memory layout.
+ */
+
 bool AS_CreateMediaRecorder(FAR AsCreateRecorderParams_t *param, AudioAttentionCb attcb)
 {
   /* Parameter check */

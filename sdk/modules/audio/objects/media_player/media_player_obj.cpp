@@ -1754,7 +1754,11 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
   return true;
 }
 
-/*--------------------------------------------------------------------------*/
+
+/*
+ * The following tree functions are Old functions for compatibility.
+ */
+
 static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id,AsPlayerPoolId_old_t pool_id, AudioAttentionCb attcb)
 {
   AsPlayerPoolId_t tmp;
@@ -1774,17 +1778,22 @@ bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param, Audio
   return CreatePlayerMulti(id, param->msgq_id, param->pool_id, attcb);
 }
 
-bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param, AudioAttentionCb attcb)
-{
-  return CreatePlayerMulti(id, param->msgq_id, param->pool_id, attcb);
-}
-
 /*--------------------------------------------------------------------------*/
 bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param)
 {
   return AS_CreatePlayerMulti(id, param, NULL);
 }
 
+/*
+ * The following two functions are New functions for multi-section memory layout.
+ */
+
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param, AudioAttentionCb attcb)
+{
+  return CreatePlayerMulti(id, param->msgq_id, param->pool_id, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
 bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param)
 {
   return AS_CreatePlayerMulti(id, param, NULL);

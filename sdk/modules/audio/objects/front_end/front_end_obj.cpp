@@ -1638,7 +1638,10 @@ static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_
   return true;
 }
 
-/*--------------------------------------------------------------------------*/
+/*
+ * The following two functions are Old functions for compatibility.
+ */
+
 static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_old_t pool_id, AudioAttentionCb attcb)
 {
   AsMicFrontendPoolId_t tmp;
@@ -1655,6 +1658,10 @@ bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param, AudioAttentionC
 {
   return CreateFrontend(param->msgq_id, param->pool_id, attcb);
 }
+
+/*
+ * New functions for multi-section memory layout.
+ */
 
 bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParams_t *param, AudioAttentionCb attcb)
 {

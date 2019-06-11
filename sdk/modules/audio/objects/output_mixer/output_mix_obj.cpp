@@ -338,7 +338,10 @@ static bool CreateOutputMixer(AsOutputMixMsgQueId_t msgq_id, AsOutputMixPoolId_t
   return true;
 }
 
-/*--------------------------------------------------------------------------*/
+/*
+ * The following tree functions are Old functions for compatibility.
+ */
+
 static bool CreateOutputMixer(AsOutputMixMsgQueId_t msgq_id, AsOutputMixPoolId_old_t pool_id, AudioAttentionCb attcb)
 {
   AsOutputMixPoolId_t tmp;
@@ -359,12 +362,6 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param)
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param)
-{
-  return AS_CreateOutputMixer(param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb attcb)
 {
   /* Parameter check */
@@ -376,6 +373,15 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
     }
 
   return CreateOutputMixer(param->msgq_id, param->pool_id, attcb);
+}
+
+/*
+ * The following two functions are New functions for multi-section memory layout.
+ */
+
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param)
+{
+  return AS_CreateOutputMixer(param, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
