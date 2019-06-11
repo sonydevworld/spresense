@@ -268,6 +268,26 @@
 
 #define LTE_APN_TYPE_EMERGENCY (0x400)
 
+/** Network error type: MAX_RETRY */
+
+#define LTE_NETERR_MAXRETRY    (0)
+
+/** Network error type: REJECT */
+
+#define LTE_NETERR_REJECT      (1)
+
+/** Network error type: Network Detach */
+
+#define LTE_NETERR_NWDTCH      (2)
+
+/** Network reject category: NAS-EMM */
+
+#define LTE_REJECT_CATEGORY_EMM  (0)
+
+/** Network reject category: NAS-ESM */
+
+#define LTE_REJECT_CATEGORY_ESM  (1)
+
 /** Length of character string for BB product */
 
 #define LTE_VER_BB_PRODUCT_LEN (5)
@@ -1048,6 +1068,51 @@ typedef struct lte_pdn
 } lte_pdn_t;
 
 /**
+ * @struct lte_reject_cause
+ * Definition of LTE network reject cause used in lte_nw_err_info_t.
+ * @typedef lte_reject_cause_t
+ * See @ref lte_reject_cause
+ */
+
+typedef struct lte_reject_cause
+{
+
+  /** Category of reject cause. Definition is as below..
+   *  - @ref LTE_REJECT_CATEGORY_EMM@n
+   *  - @ref LTE_REJECT_CATEGORY_ESM@n */
+
+  uint8_t category;
+
+  /** Value of LTE newtwork reject cause.
+   *  Definition is See 3GPP TS 24.008 13.7.0 */
+
+  uint8_t value;
+} lte_reject_cause_t;
+
+/**
+ * @struct lte_nw_err_info
+ * Definition of LTE network error infomation used in lte_netinfo_t.
+ * @typedef lte_nw_err_info_t
+ * See @ref lte_nw_err_info
+ */
+
+typedef struct lte_nw_err_info
+{
+  /** Type of LTE network error. Definition is as below.@n
+   *  - @ref LTE_NETERR_MAXRETRY@n
+   *  - @ref LTE_NETERR_REJECT@n
+   *  - @ref LTE_NETERR_NWDTCH@n */
+
+  uint8_t            err_type;
+
+  /** LTE network attach request reject cause. It can be referneced when
+   *  - @ref LTE_NETERR_REJECT is ser in err_type field@n
+   *  See @ref lte_reject_cause_t */
+
+  lte_reject_cause_t reject_cause;
+} lte_nw_err_info_t;
+
+/**
  * @struct lte_netinfo
  * Definition of lte network information used in get_netinfo_cb_t.
  * @typedef lte_netinfo_t
@@ -1069,15 +1134,21 @@ typedef struct lte_netinfo
    *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_HOME@n
    *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_ROAMING@n */
 
-  uint8_t   nw_stat;
+  uint8_t           nw_stat;
+
+  /** LTE network error infomation. It can be referneced when
+   *  - @ref LTE_NETSTAT_REG_DENIED is set in nw_stat field.@n
+   *  See @ref lte_nw_err_info_t */
+
+  lte_nw_err_info_t nw_err;
 
   /** Number of PDN status informations. */
 
-  uint8_t   pdn_num;
+  uint8_t           pdn_num;
 
   /** List of PDN status. See @ref lte_pdn_t*/
 
-  lte_pdn_t *pdn_stat;
+  lte_pdn_t         *pdn_stat;
 } lte_netinfo_t;
 
 /**

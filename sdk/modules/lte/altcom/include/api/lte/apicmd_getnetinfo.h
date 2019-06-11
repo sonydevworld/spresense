@@ -40,8 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include "apicmd.h"
-#include "apicmd_pdn.h"
+#include "apicmd_netinfo.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -62,9 +61,7 @@
 begin_packed_struct struct apicmd_cmddat_getnetinfores_s
 {
   uint8_t result;
-  uint8_t nw_stat;
-  uint8_t pdn_count;
-  struct apicmd_pdnset_s pdn[APICMD_PDN_IPCOUNT_MAX];
+  struct apicmd_netinfo_s netinfo;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETNETINFO_H */

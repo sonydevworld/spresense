@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/lte/apicmd_rep_netinfo.h
+ * modules/lte/altcom/include/api/lte/apicmd_netinfo.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,47 +33,44 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPNETINFO_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPNETINFO_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_NETINFO_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_NETINFO_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include "apicmd_netinfo.h"
+#include "apicmd.h"
+#include "apicmd_pdn.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_REPNETINFO_RES_OK                 (0)
-#define APICMD_REPNETINFO_RES_ERR                (1)
-
-#define APICMD_REPNETINFO_REPORT_ENABLE          (0)
-#define APICMD_REPNETINFO_REPORT_DISABLE         (1)
-
-#define APICMD_REPNETINFO_NWSTAT_ATCH            (0)
-#define APICMD_REPNETINFO_NWSTAT_DTCH            (1)
+#define APICMD_NETINFO_PDNCOUNT_MAX           (5)
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
-/* This structure discribes the data structure of the API command */
-
-begin_packed_struct struct apicmd_cmddat_set_repnetinfo_s
+begin_packed_struct struct apicmd_netinfo_rejectcause_s
 {
-  uint8_t report;
+  uint8_t category;
+  uint8_t value;
 } end_packed_struct;
 
-begin_packed_struct struct apicmd_cmddat_set_repnetinfores_s
+begin_packed_struct struct apicmd_netinfo_nwerrinfo_s
 {
-  uint8_t result;
+  uint8_t err_type;
+  struct apicmd_netinfo_rejectcause_s reject_cause;
 } end_packed_struct;
 
-begin_packed_struct struct apicmd_cmddat_rep_netinfo_s
+begin_packed_struct struct apicmd_netinfo_s
 {
-  struct apicmd_netinfo_s netinfo;
+  uint8_t nw_stat;
+  uint8_t pdn_count;
+  struct apicmd_netinfo_nwerrinfo_s err_info;
+  struct apicmd_pdnset_s pdn[APICMD_NETINFO_PDNCOUNT_MAX];
 } end_packed_struct;
 
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPNETINFO_H */
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_NETINFO_H */

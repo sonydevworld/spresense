@@ -134,12 +134,17 @@ static void repnetinfo_job(FAR void *arg)
 
       /* Fill network infomation */
 
-      netinfo.nw_stat = data->nw_stat;
-      netinfo.pdn_num = data->pdn_count;
-      if (0 < data->pdn_count)
+      netinfo.nw_stat = data->netinfo.nw_stat;
+      netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
+      netinfo.nw_err.reject_cause.category =
+        data->netinfo.err_info.reject_cause.category;
+      netinfo.nw_err.reject_cause.value =
+        data->netinfo.err_info.reject_cause.value;
+      netinfo.pdn_num = data->netinfo.pdn_count;
+      if (0 < data->netinfo.pdn_count)
         {
           netinfo.pdn_stat = (FAR lte_pdn_t *)
-            BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->pdn_count);
+            BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
           if (!netinfo.pdn_stat)
             {
               DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
@@ -147,10 +152,10 @@ static void repnetinfo_job(FAR void *arg)
             }
           else
             {
-              for (i = 0; i < data->pdn_count; i++)
+              for (i = 0; i < data->netinfo.pdn_count; i++)
                 {
-                  ret = altcombs_set_pdninfo(&data->pdn[i],
-                    &netinfo.pdn_stat[i]);
+                  ret = altcombs_set_pdninfo(&data->netinfo.pdn[i],
+                                             &netinfo.pdn_stat[i]);
                   if (0 > ret)
                     {
                       DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
