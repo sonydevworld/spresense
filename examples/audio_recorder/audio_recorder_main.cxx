@@ -1051,7 +1051,6 @@ extern "C" int recorder_main(int argc, char *argv[])
 {
   printf("Start AudioRecorder example\n");
 
-  
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
 
   if (!app_init_libraries())

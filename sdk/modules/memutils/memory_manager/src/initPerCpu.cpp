@@ -65,7 +65,6 @@ err_t Manager::initPerCpu(void* manager_area, MemPool** pools[], uint8_t* pool_n
   theManager->m_layout_no    = layout_no;
   theManager->m_static_pools = pools;
 
-
   /* initFirst()が実行済みか、署名を確認する */
 
   if (memcmp(theManager->m_signature, MEMMGR_SIGNATURE, sizeof(theManager->m_signature)) != 0)
@@ -88,7 +87,7 @@ err_t Manager::initPerCpu(void* manager_area, uint32_t pool_num)
   tmp_sec[0]    = pool_num;
   tmp_layout[0] = BadLayoutNo;
   tmp_pools[0]  = static_pools;
-   
+
   return initPerCpu(manager_area, tmp_pools, tmp_sec, tmp_layout);
 }
 

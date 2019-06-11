@@ -729,7 +729,6 @@ static bool app_set_volume(int master_db)
   return true;
 }
 
-
 static bool app_activate_player_system(void)
 {
   /* Activate MediaPlayer */

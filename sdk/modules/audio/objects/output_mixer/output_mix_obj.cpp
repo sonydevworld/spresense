@@ -357,6 +357,8 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param)
 {
   return AS_CreateOutputMixer(param, NULL);
 }
+
+/*--------------------------------------------------------------------------*/
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param)
 {
   return AS_CreateOutputMixer(param, NULL);
@@ -375,6 +377,8 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
 
   return CreateOutputMixer(param->msgq_id, param->pool_id, attcb);
 }
+
+/*--------------------------------------------------------------------------*/
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param, AudioAttentionCb attcb)
 {
   /* Parameter check */
@@ -595,5 +599,3 @@ void OutputMixObjectTask::create(AsOutputMixMsgQueId_t msgq_id,
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
     }
 }
-
-

@@ -91,7 +91,6 @@ typedef struct {
 } PoolId;
 const PoolId    NullPoolId = {0,0}; /* Pool ID 0 is unused. */
 
-
 /** Type of segment pools */
 typedef uint8_t    PoolType;    /* Type of memory pool. */
 
@@ -222,6 +221,5 @@ inline bool operator != (PoolId id1, PoolId id2)
 /**
  * @}
  */
-
 
 #endif /* MEMMGRTYPES_H_INCLUDED */

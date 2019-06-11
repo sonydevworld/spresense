@@ -1648,7 +1648,6 @@ static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_
   tmp.dsp.pool    = pool_id.dsp;
 
   return CreateFrontend(msgq_id, tmp, attcb);
-
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1898,4 +1897,3 @@ void MicFrontEndObject::create(AsMicFrontendMsgQueId_t msgq_id,
       return;
     }
 }
-

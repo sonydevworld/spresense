@@ -635,8 +635,6 @@ typedef struct{
   uint8_t src_work;
 } AsPlayerPoolId_old_t;
 
-
-
 /** Activate function parameter */
 
 typedef struct

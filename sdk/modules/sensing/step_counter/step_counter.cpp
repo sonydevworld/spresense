@@ -503,6 +503,7 @@ FAR StepCounterClass *StepCounterCreate(MemMgrLite::PoolId cmd_pool_id)
   return new StepCounterClass(cmd_pool_id);
 }
 
+/*--------------------------------------------------------------------------*/
 FAR StepCounterClass *StepCounterCreate(uint8_t cmd_pool_id)
 {
   MemMgrLite::PoolId pool_id;

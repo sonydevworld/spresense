@@ -385,7 +385,6 @@ static bool app_get_next_track(Track* track)
   return ret;
 }
 
-
 static void app_input_device_callback(uint32_t size)
 {
     /* do nothing */

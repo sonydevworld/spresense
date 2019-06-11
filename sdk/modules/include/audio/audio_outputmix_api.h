@@ -379,7 +379,6 @@ typedef struct
     AsInitPostProc          initpp_param;
     AsSetPostProc           setpp_param;
   };
-
 } OutputMixerCommand;
 
 /****************************************************************************

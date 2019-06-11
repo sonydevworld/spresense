@@ -476,7 +476,6 @@ void MediaRecorderObjectTask::illegal(MsgPacket *msg)
   reply(table[idx], msg->getType(), AS_ECODE_STATE_VIOLATION);
 }
 
-
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::activate(MsgPacket *msg)
 {
@@ -669,7 +668,6 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 uint32_t MediaRecorderObjectTask::initEnc(AsInitRecorderParam *param)
 {
-
   bool result = true;
   uint32_t apu_result = AS_ECODE_OK;
   uint32_t dsp_inf = 0;
@@ -1881,11 +1879,9 @@ bool MediaRecorderObjectTask::isNeedUpsampling(int32_t sampling_rate)
 /*--------------------------------------------------------------------------*/
 static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t pool_id, AudioAttentionCb attcb)
 {
-
   /* Register attention callback */
 
   MEDIA_RECORDER_REG_ATTCB(attcb);
-
 
   /* Create */
 
@@ -1922,7 +1918,6 @@ static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_o
   tmp.dsp.pool    = pool_id.dsp;
 
   return CreateMediaRecorder(msgq_id, tmp, attcb);
-
 }
 
 /*--------------------------------------------------------------------------*/

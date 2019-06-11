@@ -33,8 +33,6 @@
  *
  ****************************************************************************/
 
-
-
 #include <string.h>
 #include "ScopedLock.h"
 #include "memutils/memory_manager/MemManager.h"

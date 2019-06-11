@@ -173,7 +173,6 @@ S_ASSERT(sizeof(MemHandleBase) == 4);
  * @}
  */
 
-
 /**
  * @}
  */

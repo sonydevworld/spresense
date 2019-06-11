@@ -221,8 +221,8 @@ private:
   static Manager*  theManager;    /* for singleton */
 
   uint8_t    m_signature[3]; /* Initialize determination and
-                             * mark for dumping.
-                             */
+                              * mark for dumping.
+                              */
   uint32_t   m_fix_fene_num; /* Number of fence. */
 
   uint8_t*   m_layout_no;    /* Current memory layout number. */

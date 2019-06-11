@@ -38,7 +38,6 @@
  * @{
  */
 
-
 #ifndef MEMMANAGER_H_INCLUDED
 #define MEMMANAGER_H_INCLUDED
 
