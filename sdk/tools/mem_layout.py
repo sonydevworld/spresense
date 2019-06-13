@@ -744,7 +744,7 @@ class HeaderFile:
         self.guard_name = os.path.basename(filename.upper().replace(".", "_")) + "_INCLUDED"
         self.add_def    = add_def
         self.io         = io
-        self.io.write("/* Auto is generated file. */\n")
+        self.io.write("/* This file is generated automatically. */\n")
         self.io.write(template.format(filename))
         self.io.write("#ifndef {0}\n".format(self.guard_name))
         self.io.write("#define {0}\n\n".format(self.guard_name))

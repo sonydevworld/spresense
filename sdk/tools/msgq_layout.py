@@ -98,7 +98,7 @@ template = "\
  ****************************************************************************/\n\n"
 
 def output_header_comment(out, title):
-    out.write("/* Auto is generated file. */\n")
+    out.write("/* This file is generated automatically. */\n")
     out.write(template.format(title))
 
 def make_include_guard_name(filename):
