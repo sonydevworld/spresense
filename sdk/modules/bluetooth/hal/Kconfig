@@ -4,6 +4,6 @@
 #
 
 menu "Device support"
-source modules/bluetooth/hal/bcm20706/Kconfig
+source "modules/bluetooth/hal/bcm20706/Kconfig"
 endmenu
 
