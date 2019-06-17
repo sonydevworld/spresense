@@ -1,4 +1,4 @@
-/* Auto is generated file. */
+/* This file is generated automatically. */
 /****************************************************************************
  * pool_layout.h
  *
