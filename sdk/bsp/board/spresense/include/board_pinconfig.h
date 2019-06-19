@@ -76,6 +76,11 @@
 #define PINCONF_PWM2                        PINCONF(PIN_PWM2,           1, 0, 1, 0)
 #define PINCONF_PWM3                        PINCONF(PIN_PWM3,           1, 0, 1, 0)
 
+#undef PINCONF_I2C0_BCK
+#undef PINCONF_I2C0_BDT
+#define PINCONF_I2C0_BCK                    PINCONF(PIN_I2C0_BCK,       1, 1, 1, 0)
+#define PINCONF_I2C0_BDT                    PINCONF(PIN_I2C0_BDT,       1, 1, 1, 0)
+
 #undef PINCONF_SDIO_CLK_GPIO
 #undef PINCONF_SDIO_CMD_GPIO
 #undef PINCONF_SDIO_DATA0_GPIO
