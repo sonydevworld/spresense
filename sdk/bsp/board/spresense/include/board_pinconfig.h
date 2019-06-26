@@ -67,6 +67,21 @@
 #define PINCONF_SPI4_SCK                    PINCONF(PIN_SPI4_SCK,       1, 0, 1, 0)
 #define PINCONF_SPI4_MOSI                   PINCONF(PIN_SPI4_MOSI,      1, 0, 1, 0)
 
+
+#undef PINCONF_SPI3_CS0_X
+#undef PINCONF_SPI3_CS1_X
+#undef PINCONF_SPI3_CS2_X
+#undef PINCONF_SPI3_SCK
+#undef PINCONF_SPI3_MOSI
+#undef PINCONF_SPI3_MISO
+#define PINCONF_SPI3_CS0_X                  PINCONF(PIN_SPI3_CS0_X,     1, 0, 1, 0)
+#define PINCONF_SPI3_CS1_X                  PINCONF(PIN_SPI3_CS1_X,     1, 0, 1, 0)
+#define PINCONF_SPI3_CS2_X                  PINCONF(PIN_SPI3_CS2_X,     1, 0, 1, 0)
+#define PINCONF_SPI3_SCK                    PINCONF(PIN_SPI3_SCK,       1, 0, 1, 0)
+#define PINCONF_SPI3_MOSI                   PINCONF(PIN_SPI3_MOSI,      1, 0, 1, 0)
+#define PINCONF_SPI3_MISO                   PINCONF(PIN_SPI3_MISO,      1, 1, 1, 0)
+
+
 #undef PINCONF_PWM0
 #undef PINCONF_PWM1
 #undef PINCONF_PWM2
