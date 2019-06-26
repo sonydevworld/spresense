@@ -276,39 +276,35 @@ bool step_counter_receive_data(sensor_command_data_mh_t& data)
 bool step_counter_recieve_result(sensor_command_data_mh_t& data)
 {
   bool ret = true;
-  FAR SensorCmdStepCounter *result_data =
-    reinterpret_cast<SensorCmdStepCounter *>(data.mh.getVa());
-  if (SensorOK == result_data->result.exec_result)
+  FAR SensorResultStepCounter *result =
+    reinterpret_cast<SensorResultStepCounter *>(data.mh.getVa());
+  if (SensorOK == result->exec_result)
     {
-      if (result_data->exec_cmd.cmd_type == 
-            STEP_COUNTER_CMD_UPDATE_ACCELERATION)
-        {
 #ifndef CONFIG_CPUFREQ_RELEASE_LOCK
-          message("   %8ld,   %8ld,   %8ld,   %8ld,   %8lld,",
-            (uint32_t)result_data->result.steps.tempo,
-            (uint32_t)result_data->result.steps.stride,
-            (uint32_t)result_data->result.steps.speed,
-            (uint32_t)result_data->result.steps.distance,
-            result_data->result.steps.time_stamp
-          );
+      message("   %8ld,   %8ld,   %8ld,   %8ld,   %8lld,",
+        (uint32_t)result->steps.tempo,
+        (uint32_t)result->steps.stride,
+        (uint32_t)result->steps.speed,
+        (uint32_t)result->steps.distance,
+        result->steps.time_stamp
+      );
 #endif
-          message("   %8ld,", result_data->result.steps.step);
-          switch (result_data->result.steps.movement_type)
-          {
-          case STEP_COUNTER_MOVEMENT_TYPE_STILL:
-            message("   stopping\r");
-            break;
-          case STEP_COUNTER_MOVEMENT_TYPE_WALK:
-            message("   walking\r");
-            break;
-          case STEP_COUNTER_MOVEMENT_TYPE_RUN:
-            message("   running\r");
-            break;
-          default:
-            message("   UNKNOWN\r");
-            break;
-          }
-        }
+      message("   %8ld,", result->steps.step);
+      switch (result->steps.movement_type)
+      {
+      case STEP_COUNTER_MOVEMENT_TYPE_STILL:
+        message("   stopping\r");
+        break;
+      case STEP_COUNTER_MOVEMENT_TYPE_WALK:
+        message("   walking \r");
+        break;
+      case STEP_COUNTER_MOVEMENT_TYPE_RUN:
+        message("   running \r");
+        break;
+      default:
+        message("   UNKNOWN \r");
+        break;
+      }
     }
   else
     {
