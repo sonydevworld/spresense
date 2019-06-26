@@ -281,11 +281,26 @@ bool step_counter_recieve_result(sensor_command_data_mh_t& data)
   if (SensorOK == result->exec_result)
     {
 #ifndef CONFIG_CPUFREQ_RELEASE_LOCK
-      message("   %8ld,   %8ld,   %8ld,   %8ld,   %8lld,",
-        (uint32_t)result->steps.tempo,
-        (uint32_t)result->steps.stride,
-        (uint32_t)result->steps.speed,
-        (uint32_t)result->steps.distance,
+      float  tempo = 0;
+
+      switch (result->steps.movement_type)
+        {
+          case STEP_COUNTER_MOVEMENT_TYPE_WALK:
+          case STEP_COUNTER_MOVEMENT_TYPE_RUN:
+
+            /* Tempo values are valid for walking and running only. */
+
+            tempo = result->steps.tempo;
+            break;
+          default:
+            break;
+        }
+
+      message("%11.5f,%11.2f,%11.5f,%11.2f,%11lld,",
+        tempo,
+        result->steps.stride,
+        result->steps.speed,
+        result->steps.distance,
         result->steps.time_stamp
       );
 #endif
