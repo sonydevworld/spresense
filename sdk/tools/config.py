@@ -164,6 +164,16 @@ def disable_config(opt, config):
     os.system("kconfig-tweak --file %s --disable %s" % (config, opt))
 
 def tweak_platform(config):
+    # Check kconfig-frontend installation
+
+    ret = os.system("which kconfig-tweak > /dev/null")
+
+    # If kconfig-frontend is missing, exit.
+
+    if ret != 0:
+        print("Error: kconfig-frontend is missing. Please setup your environment.")
+        sys.exit(4)
+
     # Same as uname -s
 
     platform = os.uname()[0]
