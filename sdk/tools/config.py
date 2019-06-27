@@ -178,6 +178,9 @@ def tweak_platform(config):
         enable_config('HOST_WINDOWS', config)
         enable_config('TOOLCHAIN_WINDOWS', config)
         enable_config('WINDOWS_MSYS', config)
+    elif re.match(r'MINGW.*', platform):
+        print('Error: MinGW is not supported.')
+        sys.exit(4)
 
 def apply_defconfig(defconfigs, topdir, sdkdir, kernel):
     # Convert config names to "*-defconfig" and check it already exists
