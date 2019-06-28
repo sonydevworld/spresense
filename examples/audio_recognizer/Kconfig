@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_RECOGNIZER
+	bool "Audio recognizer example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio recognizer example
+
+if EXAMPLES_AUDIO_RECOGNIZER
+
+config EXAMPLES_AUDIO_RECOGNIZER_PROGNAME
+	string "Program name"
+	default "audio_recognizer"
+
+config EXAMPLES_AUDIO_RECOGNIZER_PRIORITY
+	int "Audio recognizer task priority"
+	default 100
+
+config EXAMPLES_AUDIO_RECOGNIZER_STACKSIZE
+	int "Audio recognizer stack size"
+	default 2048
+
+config EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
+	bool "Use pre process at Frontend"
+	default n
+
+endif
