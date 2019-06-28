@@ -670,7 +670,7 @@ extern "C" int recognizer_main(int argc, char *argv[])
   /* Initialize recognizer. */
 
   if (!app_init_recognizer(SAMPLING_RATE_48K,
-                           CHAN_TYPE_STEREO,
+                           CHAN_TYPE_MONO,
                            BITWIDTH_16BIT))
     {
       printf("Error: app_init_recognizer() failure.\n");
