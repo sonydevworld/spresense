@@ -80,7 +80,10 @@
 #define MODEM_PM_CB_TYPE_ERROR        1
 #define MODEM_PM_STATE_SLEEP          0
 #define MODEM_PM_STATE_WAKE           1
-#define MODEM_PM_ERR_STATE_RESET      1
+#define MODEM_PM_ERR_RESET_BOOTSTAT_NONE      0x00
+#define MODEM_PM_ERR_RESET_BOOTSTAT_BOOTING   0x01
+#define MODEM_PM_ERR_RESET_BOOTSTAT_UPDATING  0x02
+#define MODEM_PM_ERR_RESET_BOOTSTAT_DONE      0x10
 
 /****************************************************************************
  * Public Types

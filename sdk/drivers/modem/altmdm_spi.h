@@ -118,6 +118,7 @@ struct altmdm_spi_rx_s
   struct altmdm_sys_lock_s    lock;        /* Lock on accessing the
                                             * following parameters. */
   struct altmdm_spi_xferhdr_s header;      /* Rx header. */
+  int8_t                      status_info; /* Header status information */
   int32_t                     actual_size; /* Actual data size */
   int32_t                     total_size;  /* Data size of 4byte
                                             * alignment. */

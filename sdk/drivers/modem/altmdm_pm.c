@@ -127,6 +127,7 @@ static int                      g_taskid;
 static altmdm_pm_cbfunc_t       g_pm_callback = NULL;
 static altmdm_pm_cbfunc_t       g_pm_errcallback = NULL;
 static sq_queue_t               g_wakelock;
+static uint32_t                 g_boot_stat = MODEM_PM_ERR_RESET_BOOTSTAT_NONE;
 
 /****************************************************************************
  * Name: init_h2d_gpio
@@ -1109,6 +1110,11 @@ static int sleep_is_possible(FAR struct altmdm_dev_s *priv)
       return -EBUSY;
     }
 
+  if (g_boot_stat != MODEM_PM_ERR_RESET_BOOTSTAT_DONE)
+    {
+      return -EBUSY;
+    }
+
   return 0;
 #endif
 }
@@ -1254,7 +1260,15 @@ static int pm_task(int argc, FAR char *argv[])
 
           if (ptn & EVENT_MODEM_RESET_NOTIF)
             {
-              exe_callback(MODEM_PM_CB_TYPE_ERROR, MODEM_PM_ERR_STATE_RESET);
+              if (MODEM_PM_ERR_RESET_BOOTSTAT_NONE != g_boot_stat)
+                {
+                  exe_callback(MODEM_PM_CB_TYPE_ERROR, g_boot_stat);
+                }
+              else
+                {
+                  m_err("ERR:%04d Unexpected boot stat:%d.\n",
+                        __LINE__, g_boot_stat);
+                }
             }
 
           if (ptn & EVENT_EXIT)
@@ -1823,6 +1837,26 @@ int altmdm_pm_poweroff(FAR struct altmdm_dev_s *priv)
     {
       ret = wait_for_poweroff_done(priv);
     }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altmdm_pm_set_bootstatus
+ *
+ * Description:
+ *   Set boot status.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_set_bootstatus(FAR struct altmdm_dev_s *priv, uint32_t status)
+{
+  if (!g_is_initdone)
+    {
+      return -EPERM;
+    }
+
+  g_boot_stat = status;
 
   return 0;
 }
