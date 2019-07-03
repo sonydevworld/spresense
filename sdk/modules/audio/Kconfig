@@ -3,6 +3,8 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
+menu "SDK Audio"
+
 config SDK_AUDIO
 	bool "SDK audio"
 	default n
@@ -214,3 +216,5 @@ config AUDIOUTILS_SOUND_EFFECTOR
 endmenu # Audio Utilities
 
 endif
+
+endmenu
