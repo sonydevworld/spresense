@@ -67,17 +67,6 @@ void UserProc::exec(ExecParam *param)
                           param->exec_cmd.output.size);
     }
 
-  static int s_inform_cnt = 0;
-  param->exec_cmd.recog.inform_req = ((s_inform_cnt % 100) == 0) ? 1 : 0;
-  param->exec_cmd.recog.param[0] = 0;
-  param->exec_cmd.recog.param[1] = 1;
-  param->exec_cmd.recog.param[2] = 2;
-  param->exec_cmd.recog.param[3] = 3;
-  param->exec_cmd.recog.param[4] = 4;
-  param->exec_cmd.recog.param[5] = 5;
-  param->exec_cmd.recog.param[6] = 6;
-  s_inform_cnt++;
-
   param->result.result_code = CustomprocCommand::ExecOk;
 }
 
