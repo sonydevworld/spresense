@@ -36,36 +36,65 @@
 #include <audio/dsp_framework/customproc_dsp_ctrl.h>
 
 /*--------------------------------------------------------------------*/
-CustomprocDspCtrl::CtrlProc CustomprocDspCtrl::CtrlFuncTbl[CustomprocCommand::CmdTypeNum] =
+CustomprocDspCtrl::CtrlProc CustomprocDspCtrl::CtrlFuncTbl[CustomprocCommand::CmdTypeNum][DspStateNum] =
 {
-  &CustomprocDspCtrl::init,
-  &CustomprocDspCtrl::exec,
-  &CustomprocDspCtrl::flush,
-  &CustomprocDspCtrl::set,
+               /* Booted */                 /* Ready */                  /* Active */
+/* Init  */  { &CustomprocDspCtrl::init,    &CustomprocDspCtrl::init,    &CustomprocDspCtrl::illegal },
+/* Exec  */  { &CustomprocDspCtrl::illegal, &CustomprocDspCtrl::exec,    &CustomprocDspCtrl::exec    },
+/* Flush */  { &CustomprocDspCtrl::illegal, &CustomprocDspCtrl::illegal, &CustomprocDspCtrl::flush   },
+/* Set   */  { &CustomprocDspCtrl::illegal, &CustomprocDspCtrl::set,     &CustomprocDspCtrl::set     }
 };
 
 /*--------------------------------------------------------------------*/
 void CustomprocDspCtrl::parse(CustomprocCommand::CmdBase *cmd)
 {
-  (this->*CtrlFuncTbl[cmd->header.cmd_type])(cmd);
+  if (cmd->header.cmd_type < CustomprocCommand::CmdTypeNum)
+    {
+      (this->*CtrlFuncTbl[cmd->header.cmd_type][m_state])(cmd);
+    }
+  else
+    {
+      illegal(cmd);
+    }
 }
 
 /*--------------------------------------------------------------------*/
 void CustomprocDspCtrl::init(CustomprocCommand::CmdBase *cmd)
 {
   m_p_userproc->init(cmd);
+
+  /* Check result and change state. */
+
+  if (cmd->result.result_code == CustomprocCommand::ExecOk)
+    {
+      m_state = Ready;
+    }
 }
 
 /*--------------------------------------------------------------------*/
 void CustomprocDspCtrl::exec(CustomprocCommand::CmdBase *cmd)
 {
   m_p_userproc->exec(cmd);
+
+  /* Check result and change state. */
+
+  if (cmd->result.result_code == CustomprocCommand::ExecOk)
+    {
+      m_state = Active;
+    }
 }
 
 /*--------------------------------------------------------------------*/
 void CustomprocDspCtrl::flush(CustomprocCommand::CmdBase *cmd)
 {
   m_p_userproc->flush(cmd);
+
+  /* Check result and change state. */
+
+  if (cmd->result.result_code == CustomprocCommand::ExecOk)
+    {
+      m_state = Ready;
+    }
 }
 
 /*--------------------------------------------------------------------*/
