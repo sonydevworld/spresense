@@ -255,7 +255,6 @@ static cxd56_audio_sel_t conv_path_sel(uint8_t in_path, uint8_t out_path)
 
     case AS_THROUGH_PATH_IN_I2S2:
       {
-        sel_info.au_dat_sel1 = true;
         if (AS_THROUGH_PATH_OUT_MIXER1 == out_path)
           {
             sel_info.cod_insel2  = true;
