@@ -162,9 +162,13 @@ static void app_attention_callback(const ErrorAttentionParam *attparam)
           attparam->error_att_sub_code);
 }
 
-static void recognizer_find_callback(const uint8_t param[7])
+static void recognizer_find_callback(AsRecognitionInfo info)
 {
-  printf("app:recognizer_find_callback %d %d %d %d %d %d %d\n", param[0], param[1], param[2], param[3], param[4], param[5], param[6]);
+  printf("app:recognizer_find_callback size %d\n", info.size);
+
+  int16_t *param = (int16_t *)info.mh.getVa();
+
+  printf(">> %d %d %d %d\n", param[0], param[1], param[2], param[3]); 
 }
 
 static bool app_create_audio_sub_system(void)
@@ -208,7 +212,7 @@ static bool app_create_audio_sub_system(void)
   recognizer_create_param.msgq_id.recognizer = MSGQ_AUD_RECOGNIZER;
   recognizer_create_param.msgq_id.mng        = MSGQ_AUD_MNG;
   recognizer_create_param.msgq_id.dsp        = MSGQ_AUD_RCGDSP;
-  recognizer_create_param.pool_id.wuwsr_in   = S0_OUTPUT_BUF_POOL;
+  recognizer_create_param.pool_id.out        = S0_OUTPUT_BUF_POOL;
   recognizer_create_param.pool_id.dsp        = S0_RCG_APU_CMD_POOL;
 
   result = AS_CreateRecognizer(&recognizer_create_param, NULL);
@@ -442,6 +446,8 @@ static bool app_set_mfe(void)
 static bool app_init_rcgproc(void)
 {
   static InitRcgParam s_initrcgparam;
+  s_initrcgparam.ch_num       = 1;
+  s_initrcgparam.sample_width = 2;
 
   AudioCommand command;
   command.header.packet_length = LENGTH_INIT_RECOGNIZERPROC;
@@ -459,6 +465,7 @@ static bool app_init_rcgproc(void)
 static bool app_set_rcgproc(void)
 {
   static SetRcgParam s_setrcgparam;
+  s_setrcgparam.enable = true;
 
   AudioCommand command;
   command.header.packet_length = LENGTH_SET_RECOGNIZERPROC;

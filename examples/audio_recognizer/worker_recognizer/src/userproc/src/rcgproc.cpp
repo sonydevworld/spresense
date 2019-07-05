@@ -42,7 +42,10 @@
 /*--------------------------------------------------------------------*/
 void RcgProc::init(InitRcgParam *param)
 {
-  /* Init signal process. */
+  /* Init recognition process. */
+
+  m_ch_num       = param->ch_num;
+  m_sample_width = param->sample_width;
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }
@@ -50,24 +53,65 @@ void RcgProc::init(InitRcgParam *param)
 /*--------------------------------------------------------------------*/
 void RcgProc::exec(ExecRcgParam *param)
 {
-  /* Execute signal process to input audio data. */
+  /* Execute recognition process to input audio data. */
 
-  memcpy(param->exec_cmd.output.addr,
-         param->exec_cmd.input.addr,
-         param->exec_cmd.input.size);
+  /* Here, in this example, simply return max, min, average
+   * and sample num of each audio frames to application.
+   */
 
-  param->exec_cmd.output.size = param->exec_cmd.input.size;
+  if (!m_enable)
+    {
+      /* If not enabled, do not inform result to application. */
+
+      param->exec_cmd.output.size = 0;
+      param->result.inform_req  = 0;
+      param->result.result_code = CustomprocCommand::ExecOk;
+
+      return;
+    }
+
+  int16_t *data = (int16_t *)param->exec_cmd.input.addr;
+  int16_t max = 0x8000;
+  int16_t min = 0x7fff;
+  int16_t smp = param->exec_cmd.input.size / m_ch_num / m_sample_width;
+  int16_t avg = 0;
+  int32_t sum = 0;
+
+  for (uint32_t cnt = 0; cnt < param->exec_cmd.input.size; cnt += (m_ch_num * m_sample_width))
+    {
+      max = (*data > max) ? *data : max;
+      min = (min > *data) ? *data : min;
+      sum += *data;
+
+      /* Next sample */
+
+      data += m_ch_num;
+    }
+
+  avg = (int16_t)(sum / smp);
+
+  /* Set output data and size. */
+
+  param->exec_cmd.output.size = 8;
+  
+  int16_t *output = (int16_t *)param->exec_cmd.output.addr;
+
+  output[0] = max;
+  output[1] = min;
+  output[2] = avg;
+  output[3] = smp;
+
+  /* Set inform request. */
+
+  /* In this example, inform output to application every 100 frames.
+   * This parameter can use for notify change point of recognition too.
+   */
 
   static int s_inform_cnt = 0;
-  param->exec_cmd.recog.inform_req = ((s_inform_cnt % 100) == 0) ? 1 : 0;
-  param->exec_cmd.recog.param[0] = (s_inform_cnt / 100);
-  param->exec_cmd.recog.param[1] = 1;
-  param->exec_cmd.recog.param[2] = 2;
-  param->exec_cmd.recog.param[3] = 3;
-  param->exec_cmd.recog.param[4] = 4;
-  param->exec_cmd.recog.param[5] = 5;
-  param->exec_cmd.recog.param[6] = 6;
-  s_inform_cnt++;
+
+  param->result.inform_req  = ((s_inform_cnt++ % 100) == 0) ? 1 : 0;
+
+  /* Set result code. */
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }
@@ -85,8 +129,9 @@ void RcgProc::flush(FlushRcgParam *param)
 /*--------------------------------------------------------------------*/
 void RcgProc::set(SetRcgParam *param)
 {
-  /* Set signal process parameters.
-   * Enable/Disable and Coef.
+  /* Set recognition process parameters. */
+
+  /* In this examples, set Enable/Disable.
    */
 
   m_enable = param->enable;

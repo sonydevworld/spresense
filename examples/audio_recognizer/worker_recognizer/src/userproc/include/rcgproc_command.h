@@ -41,8 +41,8 @@
 
 struct InitRcgParam : public CustomprocCommand::CmdBase
 {
-  uint32_t reserve0;
-  uint32_t reserve1;
+  uint32_t ch_num;
+  uint32_t sample_width;
   uint32_t reserve2;
   uint32_t reserve3;
 };
@@ -66,7 +66,7 @@ struct FlushRcgParam : public CustomprocCommand::CmdBase
 struct SetRcgParam : public CustomprocCommand::CmdBase
 {
   uint32_t enable;
-  uint32_t coef;
+  uint32_t reserve1;
   uint32_t reserve2;
   uint32_t reserve3;
 };

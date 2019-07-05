@@ -57,6 +57,8 @@ public:
 private:
 
   bool m_enable;
+  uint32_t m_ch_num;
+  uint32_t m_sample_width;
 
   void init(InitRcgParam *param);
   void exec(ExecRcgParam *param);
