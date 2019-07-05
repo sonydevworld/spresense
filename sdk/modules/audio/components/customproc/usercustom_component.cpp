@@ -334,8 +334,9 @@ bool UserCustomComponent::recv_done(CustomProcInformParam *info)
 
   /* Set inform parameters. */
 
-  info->inform_req = packet->exec_cmd.recog.inform_req;
-  memcpy(info->param, packet->exec_cmd.recog.param, sizeof(info->param));
+  info->inform_req       = packet->result.inform_req;
+  info->inform_data.mh   = m_apu_req_mh_que.top().output_mh;
+  info->inform_data.size = packet->exec_cmd.output.size;
 
   /* Set function type and result */
 

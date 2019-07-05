@@ -78,12 +78,6 @@ namespace CustomprocCommand
     uint32_t size;
   };
 
-  struct Recognition
-  {
-    uint8_t  inform_req;
-    uint8_t  param[7];
-  };
-
   /*! Command header */
 
   struct command_header_s
@@ -112,12 +106,7 @@ namespace CustomprocCommand
     /* Fixed parameters */
 
     Buffer input;
-
-    union
-    {
-      Buffer      output;
-      Recognition recog;
-    };
+    Buffer output;
   };
   typedef exec_command_base_s ExecParamBase;
 
@@ -154,8 +143,9 @@ namespace CustomprocCommand
   struct result_s
   {
     uint32_t result_code;
+    uint32_t inform_req;
   };
-  typedef result_s RestltParam;
+  typedef result_s ResultParam;
 
 
   /*! Command structure definition */
@@ -163,7 +153,7 @@ namespace CustomprocCommand
   struct command_base_s
   {
     CmdHeader header;
-    RestltParam result;
+    ResultParam result;
 
     union
     {

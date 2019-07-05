@@ -646,6 +646,18 @@ typedef struct
 
 } AsPcmDataParam;
 
+typedef struct
+{
+  /*! \brief [in] Memory handle for recognition result information. */
+
+  MemMgrLite::MemHandle mh;
+
+  /*! \brief [in] Size recognition result information. */
+
+  uint32_t size;
+
+} AsRecognitionInfo;
+
 /** ErrorAttention Result (#AUDRLT_ERRORATTENTION) parameter */
 
 #define ATTENTION_FILE_NAME_LEN 32

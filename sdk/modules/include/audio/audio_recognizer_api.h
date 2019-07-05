@@ -173,16 +173,6 @@ typedef struct
 
 } RecognizerResult;
 
-/** Recognize result notify paramter */
-
-typedef struct
-{
-  /*! \brief [in] Recongnition informed parameters */
-
-  uint8_t  param[7];
-
-} RecognizerNotifyInfo;
-
 /** Activate parameter */
 
 typedef void (*RecognizerCallback)(RecognizerResult *result);
@@ -201,7 +191,7 @@ typedef struct
 
 /** Init parameter */
 
-typedef void (*RecognizerNotifyCallback)(RecognizerNotifyInfo *info);
+typedef void (*RecognizerNotifyCallback)(AsRecognitionInfo info);
 
 union AsNotifyDest
 {
@@ -342,7 +332,7 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of wuwsr input data */
 
-  MemMgrLite::PoolId wuwsr_in;
+  MemMgrLite::PoolId out;
 
   /*! \brief [in] Message queue id of DSP */
 

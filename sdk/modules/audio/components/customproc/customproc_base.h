@@ -91,9 +91,9 @@ struct CustomProcCmpltParam
 
 struct CustomProcInformParam
 {
-  bool     result;
-  uint8_t  inform_req;
-  uint8_t  param[7];
+  bool              result;
+  uint32_t          inform_req;
+  AsRecognitionInfo inform_data;
 };
 
 class CustomProcBase

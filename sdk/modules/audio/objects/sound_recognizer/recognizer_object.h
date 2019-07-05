@@ -126,7 +126,7 @@ private:
   void recognizeDoneOnStopping(MsgPacket *msg);
   void illegalRecognizeDone(MsgPacket *msg);
 
-  bool notify(RecognizerNotifyInfo& info);
+  bool notify(AsRecognitionInfo info);
   void reply(AsRecognizerEvent event, uint32_t command_id, uint32_t result);
 
   CustomProcBase *m_p_rcgproc_instance;

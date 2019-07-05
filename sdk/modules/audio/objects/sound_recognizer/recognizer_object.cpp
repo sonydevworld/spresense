@@ -66,7 +66,7 @@ using namespace MemMgrLite;
 static MsgQueId s_self_dtq;
 static MsgQueId s_manager_dtq;
 static MsgQueId s_dsp_msgq_id;
-static PoolId   s_in_pool_id;
+static PoolId   s_out_pool_id;
 static PoolId   s_dsp_pool_id;
 static pid_t    s_recognizer_pid;
 
@@ -348,7 +348,7 @@ void RecognizerObject::stop(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != flush.output_mh.allocSeg(s_in_pool_id, VAD_IN_DATA_SIZE))
+  if (ERR_OK != flush.output_mh.allocSeg(s_out_pool_id, VAD_IN_DATA_SIZE))
     {
       reply(AsRecognizerEventStop, msg->getType(), AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
@@ -424,7 +424,7 @@ void RecognizerObject::exec(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != exec.output_mh.allocSeg(s_in_pool_id, exec.input.size))
+  if (ERR_OK != exec.output_mh.allocSeg(s_out_pool_id, exec.input.size))
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return;
@@ -508,9 +508,7 @@ void RecognizerObject::recognizeDoneOnActive(MsgPacket *msg)
 
               if (info.inform_req)
                 {
-                  RecognizerNotifyInfo notify_info;
-                  memcpy(notify_info.param, info.param, sizeof(notify_info.param));
-                  notify(notify_info);
+                  notify(info.inform_data);
                 }
             }
         }
@@ -556,9 +554,7 @@ void RecognizerObject::recognizeDoneOnStopping(MsgPacket *msg)
 
               if (info.inform_req)
                 {
-                  RecognizerNotifyInfo notify_info;
-                  memcpy(notify_info.param, info.param, sizeof(notify_info.param));
-                  notify(notify_info);
+                  notify(info.inform_data);
                 }
             }
         }
@@ -591,7 +587,7 @@ void RecognizerObject::illegalRecognizeDone(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-bool RecognizerObject::notify(RecognizerNotifyInfo& info)
+bool RecognizerObject::notify(AsRecognitionInfo info)
 {
   if(m_notify_path == AsNotifyPathCallback)
     {
@@ -599,7 +595,7 @@ bool RecognizerObject::notify(RecognizerNotifyInfo& info)
 
       if (m_notify_dest.cb != NULL)
         {
-          m_notify_dest.cb(&info);
+          m_notify_dest.cb(info);
         }
     }
   else
@@ -608,11 +604,11 @@ bool RecognizerObject::notify(RecognizerNotifyInfo& info)
 
       if (m_notify_dest.msg.msgqid != MSG_QUE_NULL)
         {
-          err_t er = MsgLib::send<RecognizerNotifyInfo>(m_notify_dest.msg.msgqid,
-                                                        MsgPriNormal,
-                                                        m_notify_dest.msg.msgtype,
-                                                        m_self_msgq_id,
-                                                        info);
+          err_t er = MsgLib::send<AsRecognitionInfo>(m_notify_dest.msg.msgqid,
+                                                     MsgPriNormal,
+                                                     m_notify_dest.msg.msgtype,
+                                                     m_self_msgq_id,
+                                                     info);
           F_ASSERT(er == ERR_OK);
         }
     }
@@ -732,7 +728,7 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
   s_self_dtq    = param->msgq_id.recognizer;
   s_manager_dtq = param->msgq_id.mng;
   s_dsp_msgq_id = param->msgq_id.dsp;
-  s_in_pool_id  = param->pool_id.wuwsr_in;
+  s_out_pool_id = param->pool_id.out;
   s_dsp_pool_id = param->pool_id.dsp;
 
   /* Reset Message queue. */

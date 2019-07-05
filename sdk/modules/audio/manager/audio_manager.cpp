@@ -368,13 +368,13 @@ static void recognizer_done_callback(RecognizerResult *result_param)
 }
 
 /*--------------------------------------------------------------------------*/
-static void recognizer_notify_callback(RecognizerNotifyInfo *info)
+static void recognizer_notify_callback(AsRecognitionInfo info)
 {
-  err_t er = MsgLib::send<RecognizerNotifyInfo>(s_selfMid,
-                                                MsgPriNormal,
-                                                MSG_AUD_MGR_FIND_COMMAND,
-                                                s_selfMid,
-                                                *info);
+  err_t er = MsgLib::send<AsRecognitionInfo>(s_selfMid,
+                                             MsgPriNormal,
+                                             MSG_AUD_MGR_FIND_COMMAND,
+                                             s_selfMid,
+                                             info);
   F_ASSERT(ERR_OK == er);
 }
 #endif /* AS_FEATURE_RECOGNIZER_ENABLE */
@@ -1342,11 +1342,11 @@ void AudioManager::parse(FAR MsgPacket *msg, FAR MsgQueBlock *que)
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
       else if (msg->getType() == MSG_AUD_MGR_FIND_COMMAND)
         {
-          const RecognizerNotifyInfo info =
-            msg->moveParam<RecognizerNotifyInfo>();
+          const AsRecognitionInfo info =
+            msg->moveParam<AsRecognitionInfo>();
           err_code = que->pop();
           F_ASSERT(err_code == ERR_OK);
-          m_rcgfind_cb(info.param);
+          m_rcgfind_cb(info);
         }
 #endif  /* AS_FEATURE_RECOGNIZER_ENABLE */
     }

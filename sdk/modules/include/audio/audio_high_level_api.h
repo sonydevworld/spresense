@@ -1007,7 +1007,7 @@ typedef struct
 
 /** InitVoiceCommand Command (#AUDCMD_INITRECOGNIZER) parameter */
 
-typedef void (*RecognizerFindCallback)(const uint8_t param[7]);
+typedef void (*RecognizerFindCallback)(AsRecognitionInfo info);
 
 typedef struct
 {
