@@ -3,6 +3,17 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
+if LTE
+
+config LTE_USE_BUFFPOOL
+	bool "LTE API uses buffpool"
+	default y
+	---help---
+		When this config is enabled, the memory used by the LTE functions is supplied from buffpool.
+		If disabled, memory is allocated from the heap area.
+
+endif
+
 if MODEM
 
 config MODEM_DEVICE_PATH
