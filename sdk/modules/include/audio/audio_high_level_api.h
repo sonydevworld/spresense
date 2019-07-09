@@ -980,18 +980,6 @@ typedef struct
 
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
 
-/** SetRecognizer Command (#AUDCMD_SETRECOGNIZERSTATUS) parameter */
-
-typedef struct
-{
-  /*! \brief [in] Select recognizer type 
-   *
-   * Use #AsRecognizerType enum type
-   */
-
-  uint32_t recognizer_type; 
-} AsSetRecognizerType;
-
 /** SetRecognizerStatus Command (#AUDCMD_SETRECOGNIZERSTATUS) parameter */
 
 typedef struct
@@ -1030,6 +1018,16 @@ typedef struct
    */
 
   uint32_t fs;
+
+  /*! \brief [in] Recognizer type 
+   */
+
+  uint8_t recognizer_type;
+
+  /*! \brief [in] Recognizer file name and path 
+   */
+
+  char recognizer_dsp_path[AS_RECOGNIZER_FILE_PATH_LEN];
 
   /*! \brief [in] Recognizer find callback */
 
@@ -1155,12 +1153,6 @@ typedef struct
 
 #endif
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-
-    /*! \brief [in] for SetRecognizerType
-     * (header.command_code==#AUDCMD_SETRECOGNIZETYPE)
-     */
-
-    AsSetRecognizerType set_recognizer_type;
 
     /*! \brief [in] for SetRecognizerStatus 
      * (header.command_code==#AUDCMD_SETRECOGNIZERSTATUS)

@@ -482,7 +482,6 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
 #endif  /* AS_FEATURE_RECORDER_ENABLE */
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-      case AUDCMD_SETRECOGNIZETYPE:
       case AUDCMD_STARTRECOGNIZER:
       case AUDCMD_STOPRECOGNIZER:
       case AUDCMD_INITRECOGNIZER:
@@ -841,7 +840,7 @@ AudioManager::MsgProc
   /* Recognizer command. */
 
   {                                    /* AudioManager all status: */
-    &AudioManager::recognizerOnReady,  /*   Ready state.           */
+    &AudioManager::illegal,            /*   Ready state.           */
     &AudioManager::illegal,            /*   PlayerReady state.     */
     &AudioManager::illegal,            /*   PlayerActive state.    */
     &AudioManager::illegal,            /*   PlayerPause state.     */
@@ -2433,8 +2432,7 @@ void AudioManager::setRecognizer(AudioCommand &cmd)
 
   RecognizerCommand recognizer_command;
 
-  recognizer_command.act_param.recognizer_type = m_recognizer_type;
-  recognizer_command.act_param.cb              = recognizer_done_callback;
+  recognizer_command.act_param.cb = recognizer_done_callback;
 
   if (!sendRecognizerCommand(MSG_AUD_RCG_ACT, &recognizer_command))
     {
@@ -2546,34 +2544,6 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::recognizerOnReady(AudioCommand &cmd)
-{
-#ifdef AS_FEATURE_RECOGNIZER_ENABLE
-  switch (cmd.header.command_code)
-    {
-      case AUDCMD_SETRECOGNIZETYPE:
-        if (!packetCheck(LENGTH_SET_RECOGNIZERTYPE, AUDCMD_SETRECOGNIZETYPE, cmd))
-          {
-            return;
-          }
-        m_recognizer_type = cmd.set_recognizer_type.recognizer_type;
-        sendResult(AUDRLT_SETRECOGNIZETYPECMPLT);
-        break;
-
-      default:
-        sendErrRespResult(cmd.header.sub_code,
-                          AS_MODULE_ID_AUDIO_MANAGER,
-                          AS_ECODE_STATE_VIOLATION);
-        break;
-    }
-#else
-  sendErrRespResult(cmd.header.sub_code,
-                    AS_MODULE_ID_AUDIO_MANAGER,
-                    AS_ECODE_COMMAND_NOT_SUPPOT);
-#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
-}
-
-/*--------------------------------------------------------------------------*/
 void AudioManager::recognizer(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
@@ -2582,8 +2552,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
   const uint32_t TargetFrontend = 0x02;
   MSG_TYPE rcg_msg_type = 0;
   MSG_TYPE fed_msg_type = 0;
-  MicFrontendCommand frontend_command;
-  RecognizerCommand recognizer_command;
+  MicFrontendCommand frontend_command = { 0 };
+  RecognizerCommand recognizer_command = { 0 };
 
   switch (cmd.header.command_code)
     {
@@ -2605,6 +2575,10 @@ void AudioManager::recognizer(AudioCommand &cmd)
 
         /* Init Recognizer */
 
+        recognizer_command.init_param.type        = cmd.init_recognizer.recognizer_type;
+        strncpy(recognizer_command.init_param.dsp_path,
+                cmd.init_recognizer.recognizer_dsp_path,
+                AS_RECOGNIZER_FILE_PATH_LEN - 1);
         recognizer_command.init_param.notify_path = AsNotifyPathCallback;
         recognizer_command.init_param.dest.cb     = recognizer_notify_callback;
         m_rcgfind_cb = cmd.init_recognizer.fcb;

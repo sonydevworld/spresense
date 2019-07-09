@@ -226,50 +226,7 @@ void RecognizerObject::activate(MsgPacket *msg)
 
   m_callback = act_param.cb;
 
-  /* Set type */
-
-  m_recognizer_type = static_cast<AsRecognizerType>(act_param.recognizer_type);
-
-  /* Create component */
-
-  switch (m_recognizer_type)
-    {
-      case AsRecognizerTypeUserCustom:
-         m_p_rcgproc_instance = new UserCustomComponent(s_dsp_pool_id,
-                                                        s_dsp_msgq_id);
-         break;
-
-      default:
-         break;
-    }
-
-  if (m_p_rcgproc_instance == NULL)
-    {
-      /* Error reply */
-
-      reply(AsRecognizerEventAct, msg->getType(), AS_ECODE_CHECK_MEMORY_POOL_ERROR);
-
-      return;
-    }
-
-  /* Activate recognition proc */
-
-  uint32_t dsp_inf = 0;
-
-  uint32_t ret = m_p_rcgproc_instance->activate(recognition_done_callback,
-                                                "RCGPROC",
-                                                static_cast<void *>(this),
-                                                &dsp_inf);
-  if (ret != AS_ECODE_OK)
-    {
-      delete m_p_rcgproc_instance;
-
-      /* Error reply */
-
-      reply(AsRecognizerEventAct, msg->getType(), ret);
-
-      return;
-    }
+  /* Set state */
 
   m_state = StateReady;
 
@@ -287,22 +244,19 @@ void RecognizerObject::deactivate(MsgPacket *msg)
 
   /* Deactivate recognition proc */
 
-  bool ret = m_p_rcgproc_instance->deactivate();
-
-  if (!ret)
+  uint32_t ret = unloadComponent();
+  if (ret != AS_ECODE_OK)
     {
       /* Error reply */
 
-      reply(AsRecognizerEventDeact, msg->getType(), AS_ECODE_DSP_UNLOAD_ERROR);
+      reply(AsRecognizerEventDeact, msg->getType(), ret);
 
       return;
     }
 
-  delete m_p_rcgproc_instance;
-
   m_state = StateBooted;
 
-  reply(AsRecognizerEventDeact, msg->getType(), AS_ECODE_OK);
+  reply(AsRecognizerEventDeact, msg->getType(), ret);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -316,9 +270,110 @@ void RecognizerObject::init(MsgPacket *msg)
   m_notify_path = init_param.notify_path;
   m_notify_dest = init_param.dest;
 
+  /* Check type and dsp name. If differ from current of them, do reload. */
+
+  if ((m_recognizer_type != static_cast<AsRecognizerType>(init_param.type))
+   || (strncmp(m_dsp_path, init_param.dsp_path, sizeof(m_dsp_path))))
+    {
+      uint32_t ret = unloadComponent();
+
+      if (ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          reply(AsRecognizerEventInit, msg->getType(), ret);
+          return;
+        }
+
+      ret = loadComponent(static_cast<AsRecognizerType>(init_param.type),
+                          init_param.dsp_path);
+
+      if(ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          reply(AsRecognizerEventInit, msg->getType(), ret);
+          return;
+        }
+    }
+
   /* Reply */
 
   reply(AsRecognizerEventInit, msg->getType(), AS_ECODE_OK);
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t RecognizerObject::loadComponent(AsRecognizerType type, char *dsp_path)
+{
+  /* Create component */
+
+  switch (type)
+    {
+      case AsRecognizerTypeUserCustom:
+         m_p_rcgproc_instance = new UserCustomComponent(s_dsp_pool_id,
+                                                        s_dsp_msgq_id);
+         break;
+
+      default:
+         break;
+    }
+
+  if (m_p_rcgproc_instance == NULL)
+    {
+      return AS_ECODE_DSP_LOAD_ERROR;
+    }
+
+  /* Activate recognition proc */
+
+  uint32_t dsp_inf = 0;
+
+  uint32_t ret = m_p_rcgproc_instance->activate(recognition_done_callback,
+                                                dsp_path,
+                                                static_cast<void *>(this),
+                                                &dsp_inf);
+  if (ret != AS_ECODE_OK)
+    {
+      delete m_p_rcgproc_instance;
+
+      return ret;
+    }
+
+  /* When load complete successfully, set type and dsp name. */
+
+  m_recognizer_type = type;
+
+  strncpy(m_dsp_path, dsp_path, sizeof(m_dsp_path) - 1);
+  m_dsp_path[sizeof(m_dsp_path) -1] = '\0';
+
+  return AS_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t RecognizerObject::unloadComponent(void)
+{
+  if (m_p_rcgproc_instance == NULL)
+    {
+      return AS_ECODE_OK;
+    }
+
+  /* Deactivate recognition proc */
+
+  bool ret = m_p_rcgproc_instance->deactivate();
+
+  if (!ret)
+    {
+      return AS_ECODE_DSP_UNLOAD_ERROR;
+    }
+
+  delete m_p_rcgproc_instance;
+
+  /* When unload complete successfully, set invalid type and dsp_name. */
+
+  m_recognizer_type = AsRecognizerTypeInvalid;
+
+  memset(m_dsp_path, 0, sizeof(m_dsp_path));
+
+  return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -371,7 +426,7 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
   AsInitRcgProcParam initparam =
     msg->moveParam<RecognizerCommand>().initrcgproc_param;
 
-  RECOGNIZER_OBJ_DBG("Init Pre Proc:\n");
+  RECOGNIZER_OBJ_DBG("Init Recognizer Proc:\n");
 
   InitCustomProcParam param;
 
@@ -396,7 +451,7 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
   AsSetRcgProcParam setparam =
     msg->moveParam<RecognizerCommand>().setrcgproc_param;
 
-  RECOGNIZER_OBJ_DBG("Set Pre Proc:\n");
+  RECOGNIZER_OBJ_DBG("Set Recognizer Proc:\n");
 
   SetCustomProcParam param;
 

@@ -101,12 +101,11 @@ private:
     m_parent_msgq_id(manager_msg_id),
     m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted),
     m_callback(NULL),
-    m_recognizer_type(AsRecognizerTypeUserCustom),
-    m_notify_path(AsNotifyPathCallback),
-    m_key_word(0),
-    m_vad_only(0),
-    m_vad_previous_status(0),
-    m_vad_buf_pointer(NULL) {}
+    m_recognizer_type(AsRecognizerTypeInvalid),
+    m_notify_path(AsNotifyPathCallback)
+  { 
+    memset(m_dsp_path, 0, sizeof(m_dsp_path));
+  }
 
   void run();
   void parse(MsgPacket *msg);
@@ -126,6 +125,9 @@ private:
   void recognizeDoneOnStopping(MsgPacket *msg);
   void illegalRecognizeDone(MsgPacket *msg);
 
+  uint32_t loadComponent(AsRecognizerType type, char *dsp_path);
+  uint32_t unloadComponent(void);
+
   bool notify(AsRecognitionInfo info);
   void reply(AsRecognizerEvent event, uint32_t command_id, uint32_t result);
 
@@ -136,12 +138,9 @@ private:
   AudioState<RecognizerState_e> m_state;
   RecognizerCallback m_callback;
   AsRecognizerType m_recognizer_type;
+  char m_dsp_path[AS_RECOGNIZER_FILE_PATH_LEN];
   uint8_t m_notify_path;
   AsNotifyDest m_notify_dest;
-  uint16_t m_key_word;
-  uint8_t  m_vad_only;
-  bool     m_vad_previous_status;
-  uint8_t *m_vad_buf_pointer;
 };
 
 /****************************************************************************

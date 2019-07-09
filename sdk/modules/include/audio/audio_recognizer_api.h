@@ -66,10 +66,6 @@
 /** @name Packet length of command */
 /** @{ */
 
-/*! \brief SetRecognizerType command (#AUDCMD_SETRECOGNIZERTYPE) packet length */
-
-#define LENGTH_SET_RECOGNIZERTYPE  2
-
 /*! \brief InitRecognizer command (#AUDCMD_INITRECOGNIZER) packet length */
 
 #define LENGTH_INIT_RECOGNIZER 3
@@ -91,6 +87,10 @@
 #define LENGTH_SET_RECOGNIZERPROC 4 
 
 /** @} */
+
+/*! \brief Length of Recognizer dsp file name and path */
+
+#define AS_RECOGNIZER_FILE_PATH_LEN (AS_AUDIO_DSP_PATH_LEN)
 
 /****************************************************************************
  * Public Types
@@ -139,6 +139,10 @@ typedef enum
 
   AsRecognizerTypeUserCustom = 0,
 
+  /*! \brief Invalid type */
+
+  AsRecognizerTypeInvalid = 0xff
+
 } AsRecognizerType;
 
 typedef enum
@@ -179,10 +183,6 @@ typedef void (*RecognizerCallback)(RecognizerResult *result);
 
 typedef struct
 {
-  /*! \brief [in] Recognizer type */
-
-  uint32_t recognizer_type;
-
   /*! \brief [in] Event callback */  
 
   RecognizerCallback cb;
@@ -208,6 +208,18 @@ union AsNotifyDest
 
 typedef struct
 {
+  /*! \brief [in] Set recognizer type 
+   *
+   * Use #AsRecognizerType enum type
+   */
+
+  uint8_t type;
+
+  /*! \brief [in] Set dsp file name and path 
+   */
+
+  char dsp_path[AS_RECOGNIZER_FILE_PATH_LEN];
+
   /*! \brief [in] Select Data path from MicFrontend 
    *
    * Use #AsRecognizerNotifyPath enum type

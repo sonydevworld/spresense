@@ -106,9 +106,6 @@ private:
 #ifdef AS_FEATURE_FRONTEND_ENABLE
     , m_preproc_type(AsMicFrontendPreProcThrough)
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
-#ifdef AS_FEATURE_RECOGNIZER_ENABLE
-    , m_recognizer_type(AsRecognizerTypeUserCustom)
-#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
@@ -166,9 +163,6 @@ private:
 #ifdef AS_FEATURE_FRONTEND_ENABLE
   uint32_t m_preproc_type;
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
-#ifdef AS_FEATURE_RECOGNIZER_ENABLE
-  uint32_t m_recognizer_type;
-#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   AsOutputMixDevice m_output_device;
@@ -217,7 +211,6 @@ private:
   void setPlayerStatus(AudioCommand &cmd);
   void setRecognizer(AudioCommand &cmd);
   void setRecorder(AudioCommand &cmd);
-  void recognizerOnReady(AudioCommand &cmd);
   void recognizer(AudioCommand &cmd);
   void setThroughStatus(AudioCommand &cmd);
   void setThroughPath(AudioCommand &cmd);

@@ -284,10 +284,6 @@
 
 #define AUDCMD_SETRECOGNIZERPROC  (AUDCMD_CATEGORY_RECOGNITION | 0x05)
 
-/*! \brief command Code: SetRecognizerType */
-
-#define AUDCMD_SETRECOGNIZETYPE (AUDCMD_CATEGORY_RECOGNITION | 0x06)
-
 /** @} */
 
 /* result code */
@@ -314,10 +310,6 @@
 /*! \brief command Code: SetRecognitionProcessDSPCmplt */
 
 #define  AUDRLT_SETRECOGNIZERPROCCMPLT  AUDCMD_SETRECOGNIZERPROC
-
-/*! \brief command Code: SetRecognizerType */
-
-#define  AUDRLT_SETRECOGNIZETYPECMPLT AUDCMD_SETRECOGNIZETYPE
 
 /** @} */
 

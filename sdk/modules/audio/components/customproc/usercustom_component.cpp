@@ -351,15 +351,10 @@ uint32_t UserCustomComponent::activate(CustomProcCallback callback,
                                      void *p_requester,
                                      uint32_t *dsp_inf)
 {
-  char filename[32];
-
   POSTPROC_DBG("ACT:\n");
 
   m_p_requester = p_requester;
   m_callback = callback;
-
-  snprintf(filename, sizeof(filename), "%s/%s",
-           CONFIG_AUDIOUTILS_DSP_MOUNTPT, dsp_name);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   /* Lock HV performance to avoid loading time becomes too long */
@@ -375,7 +370,7 @@ uint32_t UserCustomComponent::activate(CustomProcCallback callback,
 
   /* Load DSP */
 
-  int ret = DD_Load(filename, cbRcvDspRes, (void*)this, &m_dsp_handler);
+  int ret = DD_Load(dsp_name, cbRcvDspRes, (void*)this, &m_dsp_handler);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   up_pm_release_freqlock(&g_decode_hvlock);
