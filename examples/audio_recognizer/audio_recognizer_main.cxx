@@ -325,20 +325,6 @@ static bool app_set_preprocess_type(void)
 }
 #endif /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
 
-static bool app_set_recognizer_type(void)
-{
-  AudioCommand command;
-  command.header.packet_length = LENGTH_SET_RECOGNIZERTYPE;
-  command.header.command_code  = AUDCMD_SETRECOGNIZETYPE;
-  command.header.sub_code      = 0x00;
-  command.set_recognizer_type.recognizer_type = AsRecognizerTypeUserCustom;
-  AS_SendAudioCommand(&command);
-
-  AudioResult result;
-  AS_ReceiveAudioResult(&result);
-  return printAudCmdResult(command.header.command_code, result);
-}
-
 static bool app_set_recognizer_status(void)
 {
   AudioCommand command;
@@ -355,7 +341,8 @@ static bool app_set_recognizer_status(void)
 
 static bool app_init_recognizer(sampling_rate_e sampling_rate,
                                 channel_type_e ch_type,
-                                bitwidth_e bitwidth)
+                                bitwidth_e bitwidth,
+                                const char *dsp_name)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_INIT_RECOGNIZER;
@@ -365,6 +352,10 @@ static bool app_init_recognizer(sampling_rate_e sampling_rate,
   command.init_recognizer.bit_length = AS_BITLENGTH_16;
   command.init_recognizer.samples    = 320;
   command.init_recognizer.fcb        = recognizer_find_callback;
+  command.init_recognizer.recognizer_type = AsRecognizerTypeUserCustom;
+  snprintf(command.init_recognizer.recognizer_dsp_path,
+           AS_RECOGNIZER_FILE_PATH_LEN,
+           "%s", dsp_name);
 
   AS_SendAudioCommand(&command);
 
@@ -658,14 +649,6 @@ extern "C" int recognizer_main(int argc, char *argv[])
     }
 #endif /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
 
-  /* Set recognizer type. */
-
-  if (!app_set_recognizer_type())
-    {
-      printf("Error: app_set_recognizer_type() failure.\n");
-      return 1;
-    }
-
   /* Set recognizer operation mode. */
 
   if (!app_set_recognizer_status())
@@ -678,7 +661,8 @@ extern "C" int recognizer_main(int argc, char *argv[])
 
   if (!app_init_recognizer(SAMPLING_RATE_48K,
                            CHAN_TYPE_MONO,
-                           BITWIDTH_16BIT))
+                           BITWIDTH_16BIT,
+                           "/mnt/sd0/BIN/RCGPROC"))
     {
       printf("Error: app_init_recognizer() failure.\n");
       return 1;
