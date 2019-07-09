@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/src/rcfilter.cpp
+ * audio_recognizer/worker_preprocess/userproc/include/userproc.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,69 +33,39 @@
  *
  ****************************************************************************/
 
+#ifndef __USERPROC_H__
+#define __USERPROC_H__
+
+#include <string.h>
+
+#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
+#include "userproc_command.h"
 #include "rcfilter.h"
 
-/*--------------------------------------------------------------------*/
-/*                                                                    */
-/*--------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------*/
-bool RCfilter::init(void)
+class UserProc : public CustomprocDspUserProcIf
 {
-  return true;
-}
+public:
 
-/*--------------------------------------------------------------------*/
-uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
-{
-  /* Exec RC filter. */
+  UserProc() :
+    m_enable(true)
+  {}
 
-  int16_t *ls_i = in;
-  int16_t *rs_i = ls_i + 1;
-  int16_t *ls_o = out;
-  int16_t *rs_o = ls_o + 1;
+  virtual void init(CustomprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
+  virtual void exec(CustomprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
+  virtual void flush(CustomprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
+  virtual void set(CustomprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
 
-  static int16_t ls_l = 0;
-  static int16_t rs_l = 0;
+private:
 
-  if (!ls_l && !rs_l)
-    {
-      ls_l = *ls_i;
-      rs_l = *rs_i;
-    }
+  bool m_enable;
+  RCfilter m_filter_ins;
 
-  uint32_t cnt = 0;
+  void init(InitParam *param);
+  void exec(ExecParam *param);
+  void flush(FlushParam *param);
+  void set(SetParam *param);
 
-  for (cnt = 0; cnt < insize; cnt += 4)
-    {
-      *ls_o = (ls_l * m_coef / 100) + (*ls_i * (100 - m_coef) / 100);
-      *rs_o = (rs_l * m_coef / 100) + (*rs_i * (100 - m_coef) / 100);
+};
 
-      ls_l = *ls_o;
-      rs_l = *rs_o;
-
-      ls_i += 2;
-      rs_i += 2;
-      ls_o += 2;
-      rs_o += 2;
-    }
-
-  return cnt;
-}
-
-/*--------------------------------------------------------------------*/
-uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
-{
-  return 0;
-}
-
-/*--------------------------------------------------------------------*/
-bool RCfilter::set(uint32_t coef)
-{
-  /* Set RC filter coef. */
-
-  m_coef = static_cast<int16_t>(coef);
-
-  return true;
-}
+#endif /* __USERPROC_H__ */
 

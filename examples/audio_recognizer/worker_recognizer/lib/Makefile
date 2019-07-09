@@ -1,5 +1,5 @@
 ############################################################################
-# audio_player/worker/lib/Makefile
+# audio_recognizer/worker_recognizer/lib/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -53,6 +53,7 @@ $(BIN): $(LIB)
 	$(Q) install $< $@
 
 clean:
+	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 
 distclean: clean

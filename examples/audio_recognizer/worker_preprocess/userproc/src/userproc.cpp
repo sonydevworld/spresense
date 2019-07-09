@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/src/rcgproc.cpp
+ * audio_recognizer/worker_preprocess/userproc/src/userproc.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,108 +33,65 @@
  *
  ****************************************************************************/
 
-#include "rcgproc.h"
+#include "userproc.h"
 
 /*--------------------------------------------------------------------*/
 /*                                                                    */
 /*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------*/
-void RcgProc::init(InitRcgParam *param)
+void UserProc::init(InitParam *param)
 {
-  /* Init recognition process. */
-
-  m_ch_num       = param->ch_num;
-  m_sample_width = param->sample_width;
+  /* Init signal process. */
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-void RcgProc::exec(ExecRcgParam *param)
+void UserProc::exec(ExecParam *param)
 {
-  /* Execute recognition process to input audio data. */
+  /* Execute signal process to input audio data. */
 
-  /* Here, in this example, simply return max, min, average
-   * and sample num of each audio frames to application.
-   */
+  memcpy(param->exec_cmd.output.addr,
+         param->exec_cmd.input.addr,
+         param->exec_cmd.input.size);
 
-  if (!m_enable)
+  param->exec_cmd.output.size = param->exec_cmd.input.size;
+
+  if (m_enable)
     {
-      /* If not enabled, do not inform result to application. */
-
-      param->exec_cmd.output.size = 0;
-      param->result.inform_req  = 0;
-      param->result.result_code = CustomprocCommand::ExecOk;
-
-      return;
+      param->exec_cmd.output.size =
+        m_filter_ins.exec((int16_t *)param->exec_cmd.input.addr,
+                          param->exec_cmd.input.size,
+                          (int16_t *)param->exec_cmd.output.addr,
+                          param->exec_cmd.output.size);
     }
-
-  int16_t *data = (int16_t *)param->exec_cmd.input.addr;
-  int16_t max = 0x8000;
-  int16_t min = 0x7fff;
-  int16_t smp = param->exec_cmd.input.size / m_ch_num / m_sample_width;
-  int16_t avg = 0;
-  int32_t sum = 0;
-
-  for (uint32_t cnt = 0; cnt < param->exec_cmd.input.size; cnt += (m_ch_num * m_sample_width))
-    {
-      max = (*data > max) ? *data : max;
-      min = (min > *data) ? *data : min;
-      sum += *data;
-
-      /* Next sample */
-
-      data += m_ch_num;
-    }
-
-  avg = (int16_t)(sum / smp);
-
-  /* Set output data and size. */
-
-  param->exec_cmd.output.size = 8;
-  
-  int16_t *output = (int16_t *)param->exec_cmd.output.addr;
-
-  output[0] = max;
-  output[1] = min;
-  output[2] = avg;
-  output[3] = smp;
-
-  /* Set inform request. */
-
-  /* In this example, inform output to application every 100 frames.
-   * This parameter can use for notify change point of recognition too.
-   */
-
-  static int s_inform_cnt = 0;
-
-  param->result.inform_req  = ((s_inform_cnt++ % 100) == 0) ? 1 : 0;
-
-  /* Set result code. */
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-void RcgProc::flush(FlushRcgParam *param)
+void UserProc::flush(FlushParam *param)
 {
   /* Flush signal process. */
 
-  param->flush_cmd.output.size = 0;
+  param->flush_cmd.output.size = 
+    m_filter_ins.flush((int16_t *)param->flush_cmd.output.addr,
+                       param->flush_cmd.output.size);
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }
 
 /*--------------------------------------------------------------------*/
-void RcgProc::set(SetRcgParam *param)
+void UserProc::set(SetParam *param)
 {
-  /* Set recognition process parameters. */
-
-  /* In this examples, set Enable/Disable.
+  /* Set signal process parameters.
+   * Enable/Disable and Coef.
    */
 
   m_enable = param->enable;
+
+  m_filter_ins.set(param->coef);
 
   param->result.result_code = CustomprocCommand::ExecOk;
 }

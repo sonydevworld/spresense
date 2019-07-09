@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/include/userproc.h
+ * audio_recognizer/worker_preprocess/userproc/include/userproc_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,39 +33,43 @@
  *
  ****************************************************************************/
 
-#ifndef __USERPROC_H__
-#define __USERPROC_H__
+#ifndef __USERPROC_COMMAND_H__
+#define __USERPROC_COMMAND_H__
 
-#include <string.h>
+#include <stdint.h>
+#include <audio/dsp_framework/customproc_command_base.h>
 
-#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
-#include "userproc_command.h"
-#include "rcfilter.h"
-
-class UserProc : public CustomprocDspUserProcIf
+struct InitParam : public CustomprocCommand::CmdBase
 {
-public:
-
-  UserProc() :
-    m_enable(true)
-  {}
-
-  virtual void init(CustomprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
-  virtual void exec(CustomprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
-  virtual void flush(CustomprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
-  virtual void set(CustomprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
-
-private:
-
-  bool m_enable;
-  RCfilter m_filter_ins;
-
-  void init(InitParam *param);
-  void exec(ExecParam *param);
-  void flush(FlushParam *param);
-  void set(SetParam *param);
-
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
 };
 
-#endif /* __USERPROC_H__ */
+struct ExecParam : public CustomprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+struct FlushParam : public CustomprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+struct SetParam : public CustomprocCommand::CmdBase
+{
+  uint32_t enable;
+  uint32_t coef;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+#endif /* __USERPROC_COMMAND_H__ */
 

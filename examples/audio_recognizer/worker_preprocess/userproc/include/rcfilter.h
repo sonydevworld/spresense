@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/include/rcgproc.h
+ * audio_recognizer/worker_preprocess/userproc/include/rcfilter.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,39 +33,29 @@
  *
  ****************************************************************************/
 
-#ifndef __RCGPROC_H__
-#define __RCGPROC_H__
+#ifndef __RCFILTER_H__
+#define __RCFILTER_H__
 
 #include <string.h>
 
-#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
-#include "rcgproc_command.h"
 
-class RcgProc : public CustomprocDspUserProcIf
+class RCfilter
 {
 public:
-
-  RcgProc() :
-    m_enable(true)
+  RCfilter()
+    : m_coef(0)
   {}
+  ~RCfilter();
 
-  virtual void init(CustomprocCommand::CmdBase *cmd) { init(static_cast<InitRcgParam *>(cmd)); }
-  virtual void exec(CustomprocCommand::CmdBase *cmd) { exec(static_cast<ExecRcgParam *>(cmd)); }
-  virtual void flush(CustomprocCommand::CmdBase *cmd) { flush(static_cast<FlushRcgParam *>(cmd)); }
-  virtual void set(CustomprocCommand::CmdBase *cmd) { set(static_cast<SetRcgParam *>(cmd)); }
+  bool init(void);
+  uint32_t exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize);
+  uint32_t flush(int16_t *out, uint32_t outsize);
+  bool set(uint32_t coef);
 
 private:
 
-  bool m_enable;
-  uint32_t m_ch_num;
-  uint32_t m_sample_width;
-
-  void init(InitRcgParam *param);
-  void exec(ExecRcgParam *param);
-  void flush(FlushRcgParam *param);
-  void set(SetRcgParam *param);
-
+  int16_t m_coef;
 };
 
-#endif /* __RCGPROC_H__ */
+#endif /* __RCFILTER_H__ */
 

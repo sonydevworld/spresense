@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/include/userproc_command.h
+ * audio_recognizer/worker_preprocess/userproc/src/rcfilter.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,43 +33,69 @@
  *
  ****************************************************************************/
 
-#ifndef __USERPROC_COMMAND_H__
-#define __USERPROC_COMMAND_H__
+#include "rcfilter.h"
 
-#include <stdint.h>
-#include <audio/dsp_framework/customproc_command_base.h>
+/*--------------------------------------------------------------------*/
+/*                                                                    */
+/*--------------------------------------------------------------------*/
 
-struct InitParam : public CustomprocCommand::CmdBase
+/*--------------------------------------------------------------------*/
+bool RCfilter::init(void)
 {
-  uint32_t reserve0;
-  uint32_t reserve1;
-  uint32_t reserve2;
-  uint32_t reserve3;
-};
+  return true;
+}
 
-struct ExecParam : public CustomprocCommand::CmdBase
+/*--------------------------------------------------------------------*/
+uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
 {
-  uint32_t reserve0;
-  uint32_t reserve1;
-  uint32_t reserve2;
-  uint32_t reserve3;
-};
+  /* Exec RC filter. */
 
-struct FlushParam : public CustomprocCommand::CmdBase
+  int16_t *ls_i = in;
+  int16_t *rs_i = ls_i + 1;
+  int16_t *ls_o = out;
+  int16_t *rs_o = ls_o + 1;
+
+  static int16_t ls_l = 0;
+  static int16_t rs_l = 0;
+
+  if (!ls_l && !rs_l)
+    {
+      ls_l = *ls_i;
+      rs_l = *rs_i;
+    }
+
+  uint32_t cnt = 0;
+
+  for (cnt = 0; cnt < insize; cnt += 4)
+    {
+      *ls_o = (ls_l * m_coef / 100) + (*ls_i * (100 - m_coef) / 100);
+      *rs_o = (rs_l * m_coef / 100) + (*rs_i * (100 - m_coef) / 100);
+
+      ls_l = *ls_o;
+      rs_l = *rs_o;
+
+      ls_i += 2;
+      rs_i += 2;
+      ls_o += 2;
+      rs_o += 2;
+    }
+
+  return cnt;
+}
+
+/*--------------------------------------------------------------------*/
+uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
 {
-  uint32_t reserve0;
-  uint32_t reserve1;
-  uint32_t reserve2;
-  uint32_t reserve3;
-};
+  return 0;
+}
 
-struct SetParam : public CustomprocCommand::CmdBase
+/*--------------------------------------------------------------------*/
+bool RCfilter::set(uint32_t coef)
 {
-  uint32_t enable;
-  uint32_t coef;
-  uint32_t reserve2;
-  uint32_t reserve3;
-};
+  /* Set RC filter coef. */
 
-#endif /* __USERPROC_COMMAND_H__ */
+  m_coef = static_cast<int16_t>(coef);
+
+  return true;
+}
 
