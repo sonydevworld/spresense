@@ -1629,7 +1629,7 @@ void AudioManager::outputmixer(AudioCommand &cmd)
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   MSG_TYPE msg_type = MSG_AUD_MIX_CMD_CLKRECOVERY;
   bool check = false;
-  OutputMixerCommand omix_cmd;
+  OutputMixerCommand omix_cmd = {0};
 
   switch (cmd.header.command_code)
     {
@@ -1683,6 +1683,9 @@ void AudioManager::outputmixer(AudioCommand &cmd)
         break;
 
       default:
+        sendErrRespResult(cmd.header.sub_code,
+                          AS_MODULE_ID_OUTPUT_MIX_OBJ,
+                          AS_ECODE_COMMAND_CODE_ERROR);
         break;
     }
 
