@@ -1,5 +1,5 @@
 ############################################################################
-# audio_player_post/worker/Makefile
+# audio_recorder/worker/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -37,28 +37,59 @@
 -include $(TOPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
-WORKER_ELFS = src/POSTPROC
+ifeq ($(WINTOOL),y)
+LIB_DIR = "${shell cygpath -w lib}"
+else
+LIB_DIR = "lib"
+endif
 
-define DIR_template
-$(1)_$(2):
-	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-endef
+LDLIBPATH += -L $(LIB_DIR)
+LDLIBPATH += -L "$(SDKDIR)/lib"
 
-SUBDIRS = $(dir $(WORKER_ELFS))
+LDLIBS += -lasmpw -lc
 
-all: $(WORKER_ELFS)
+WORKER_ELF = PREPROC
+
+VPATH = $(SDKDIR)/modules/audio/components/customproc/dsp_framework
+VPATH += userproc/src
+
+CXXSRCS = customproc_dsp_ctrl.cpp main.cpp
+CXXSRCS += rcfilter.cpp userproc.cpp
+
+CXXELFFLAGS += -Os
+ifeq ($(WINTOOL),y)
+CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
+CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
+else
+CXXELFFLAGS += -Iuserproc/include
+CXXELFFLAGS += -I$(APPDIR)
+endif
+
+CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
+
+# Build
+
+all: lib $(WORKER_ELF)
 
 # Build ASMP worker library
 
-lib/libasmpw.a:
+libasmpw.a:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-lib: lib/libasmpw.a
+lib: libasmpw.a
+
+# Complile
+
+$(CXXOBJS): %$(OBJEXT):%.cpp
+	@echo "CXX: $<"
+	$(Q) $(CXX) -c $(CXXELFFLAGS) $< -o $@
 
 # Build workers
 
-$(WORKER_ELFS): lib
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+$(WORKER_ELF): $(CXXOBJS)
+	@echo "LD: $@"
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	$(Q) $(STRIP) -d $(WORKER_ELF)
 
 .depend:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
@@ -67,9 +98,9 @@ $(WORKER_ELFS): lib
 depend: .depend
 
 lib_clean:
-	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" clean
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean) lib_clean
-	$(Q) rm -rf romfs romfs.img romfs.h
+clean: lib_clean
+	$(call DELFILE, $(WORKER_ELF))
+	$(call CLEAN)
 
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))

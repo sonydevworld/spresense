@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/include/userproc.h
+ * audio_recorder/worker/userproc/include/userproc.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *

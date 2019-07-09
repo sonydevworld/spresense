@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/src/rcfilter.cpp
+ * audio_recorder/worker/userproc/include/rcfilter.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,69 +33,29 @@
  *
  ****************************************************************************/
 
-#include "rcfilter.h"
+#ifndef __RCFILTER_H__
+#define __RCFILTER_H__
 
-/*--------------------------------------------------------------------*/
-/*                                                                    */
-/*--------------------------------------------------------------------*/
+#include <string.h>
 
-/*--------------------------------------------------------------------*/
-bool RCfilter::init(void)
+
+class RCfilter
 {
-  return true;
-}
+public:
+  RCfilter()
+    : m_coef(0)
+  {}
+  ~RCfilter();
 
-/*--------------------------------------------------------------------*/
-uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
-{
-  /* Exec RC filter. */
+  bool init(void);
+  uint32_t exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize);
+  uint32_t flush(int16_t *out, uint32_t outsize);
+  bool set(uint32_t coef);
 
-  int16_t *ls_i = in;
-  int16_t *rs_i = ls_i + 1;
-  int16_t *ls_o = out;
-  int16_t *rs_o = ls_o + 1;
+private:
 
-  static int16_t ls_l = 0;
-  static int16_t rs_l = 0;
+  int16_t m_coef;
+};
 
-  if (!ls_l && !rs_l)
-    {
-      ls_l = *ls_i;
-      rs_l = *rs_i;
-    }
-
-  uint32_t cnt = 0;
-
-  for (cnt = 0; cnt < insize; cnt += 4)
-    {
-      *ls_o = (ls_l * m_coef / 100) + (*ls_i * (100 - m_coef) / 100);
-      *rs_o = (rs_l * m_coef / 100) + (*rs_i * (100 - m_coef) / 100);
-
-      ls_l = *ls_o;
-      rs_l = *rs_o;
-
-      ls_i += 2;
-      rs_i += 2;
-      ls_o += 2;
-      rs_o += 2;
-    }
-
-  return cnt;
-}
-
-/*--------------------------------------------------------------------*/
-uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
-{
-  return 0;
-}
-
-/*--------------------------------------------------------------------*/
-bool RCfilter::set(uint32_t coef)
-{
-  /* Set RC filter coef. */
-
-  m_coef = static_cast<int16_t>(coef);
-
-  return true;
-}
+#endif /* __RCFILTER_H__ */
 

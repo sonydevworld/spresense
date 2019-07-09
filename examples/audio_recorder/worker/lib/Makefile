@@ -53,6 +53,7 @@ $(BIN): $(LIB)
 	$(Q) install $< $@
 
 clean:
+	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 
 distclean: clean

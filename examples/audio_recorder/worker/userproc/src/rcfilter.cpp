@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/userproc/src/userproc.cpp
+ * audio_recorder/worker/userproc/src/rcfilter.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,66 +33,69 @@
  *
  ****************************************************************************/
 
-#include "userproc.h"
+#include "rcfilter.h"
 
 /*--------------------------------------------------------------------*/
 /*                                                                    */
 /*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------*/
-void UserProc::init(InitParam *param)
+bool RCfilter::init(void)
 {
-  /* Init signal process. */
-
-  param->result.result_code = CustomprocCommand::ExecOk;
+  return true;
 }
 
 /*--------------------------------------------------------------------*/
-void UserProc::exec(ExecParam *param)
+uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
 {
-  /* Execute signal process to input audio data. */
+  /* Exec RC filter. */
 
-  memcpy(param->exec_cmd.output.addr,
-         param->exec_cmd.input.addr,
-         param->exec_cmd.input.size);
+  int16_t *ls_i = in;
+  int16_t *rs_i = ls_i + 1;
+  int16_t *ls_o = out;
+  int16_t *rs_o = ls_o + 1;
 
-  param->exec_cmd.output.size = param->exec_cmd.input.size;
+  static int16_t ls_l = 0;
+  static int16_t rs_l = 0;
 
-  if (m_enable)
+  if (!ls_l && !rs_l)
     {
-      param->exec_cmd.output.size =
-        m_filter_ins.exec((int16_t *)param->exec_cmd.input.addr,
-                          param->exec_cmd.input.size,
-                          (int16_t *)param->exec_cmd.output.addr,
-                          param->exec_cmd.output.size);
+      ls_l = *ls_i;
+      rs_l = *rs_i;
     }
 
-  param->result.result_code = CustomprocCommand::ExecOk;
+  uint32_t cnt = 0;
+
+  for (cnt = 0; cnt < insize; cnt += 4)
+    {
+      *ls_o = (ls_l * m_coef / 100) + (*ls_i * (100 - m_coef) / 100);
+      *rs_o = (rs_l * m_coef / 100) + (*rs_i * (100 - m_coef) / 100);
+
+      ls_l = *ls_o;
+      rs_l = *rs_o;
+
+      ls_i += 2;
+      rs_i += 2;
+      ls_o += 2;
+      rs_o += 2;
+    }
+
+  return cnt;
 }
 
 /*--------------------------------------------------------------------*/
-void UserProc::flush(FlushParam *param)
+uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
 {
-  /* Flush signal process. */
-
-  param->flush_cmd.output.size = 
-    m_filter_ins.flush((int16_t *)param->flush_cmd.output.addr,
-                       param->flush_cmd.output.size);
-
-  param->result.result_code = CustomprocCommand::ExecOk;
+  return 0;
 }
 
 /*--------------------------------------------------------------------*/
-void UserProc::set(SetParam *param)
+bool RCfilter::set(uint32_t coef)
 {
-  /* Set signal process parameters.
-   * Enable/Disable and Coef.
-   */
+  /* Set RC filter coef. */
 
-  m_enable = param->enable;
+  m_coef = static_cast<int16_t>(coef);
 
-  m_filter_ins.set(param->coef);
-
-  param->result.result_code = CustomprocCommand::ExecOk;
+  return true;
 }
 

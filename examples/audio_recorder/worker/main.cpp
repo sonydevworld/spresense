@@ -1,5 +1,5 @@
 /****************************************************************************
- * audio_player_post/worker/src/main.cpp
+ * audio_recorder/worker/userproc/main.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
