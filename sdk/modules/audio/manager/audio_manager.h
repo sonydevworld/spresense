@@ -161,7 +161,7 @@ private:
   bool m_input_en;
   bool m_output_en;
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-  uint32_t m_preproc_type;
+  uint8_t m_preproc_type;
 #endif /* AS_FEATURE_FRONTEND_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE

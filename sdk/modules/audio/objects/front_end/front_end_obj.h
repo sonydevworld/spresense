@@ -92,7 +92,7 @@ private:
     : m_msgq_id(msgq_id)
     , m_pool_id(pool_id)
     , m_state(AS_MODULE_ID_MIC_FRONTEND_OBJ, "", MicFrontendStateInactive)
-    , m_preproc_type(AsMicFrontendPreProcThrough)
+    , m_preproc_type(AsMicFrontendPreProcInvalid)
     , m_channel_num(2)
     , m_pcm_bit_width(AudPcm16Bit)
     , m_samples_per_frame(768)
@@ -103,7 +103,9 @@ private:
     , m_capture_req(0)
     , m_preproc_req(0)
     , m_p_preproc_instance(NULL)
-  {}
+  {
+    memset(m_dsp_path, 0, sizeof(m_dsp_path));
+  }
 
   enum MicFrontendState_e
   {
@@ -123,6 +125,7 @@ private:
   AsMicFrontendDataPath m_pcm_data_path;
   AsDataDest m_pcm_data_dest;
   AsMicFrontendPreProcType m_preproc_type;
+  char m_dsp_path[AS_PREPROCESS_FILE_PATH_LEN];
   int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
   uint32_t m_samples_per_frame;
@@ -181,6 +184,9 @@ private:
   void captureErrorOnStop(MsgPacket *);
   void captureErrorOnErrorStop(MsgPacket *);
   void captureErrorOnWaitStop(MsgPacket *);
+
+  uint32_t loadComponent(AsMicFrontendPreProcType type, char *dsp_path);
+  uint32_t unloadComponent(void);
 
   bool startCapture();
 

@@ -388,41 +388,6 @@ void MicFrontEndObject::activate(MsgPacket *msg)
       return;
     }
 
-  /* Select Proc type and Activate PreProcess */
-
-  uint32_t dsp_inf = 0;
-
-  switch (act.param.preproc_type)
-    {
-      case AsMicFrontendPreProcUserCustom:
-        m_p_preproc_instance = new UserCustomComponent(m_pool_id.dsp,
-                                                       m_msgq_id.dsp);
-        break;
-
-      default:
-        m_p_preproc_instance = new ThruProcComponent();
-        break;
-    }
-
-  uint32_t ret = m_p_preproc_instance->activate(preproc_done_callback,
-                                                "PREPROC",
-                                                static_cast<void *>(this),
-                                                &dsp_inf);
-  if (ret != AS_ECODE_OK)
-    {
-      delete m_p_preproc_instance;
-
-      /* Error reply */
-
-      reply(AsMicFrontendEventAct, msg->getType(), ret);
-
-      return;
-    }
-
-  /* Hold preproc type */
-
-  m_preproc_type = static_cast<AsMicFrontendPreProcType>(act.param.preproc_type);
-
   /* State transit */
 
   m_state = MicFrontendStateReady;
@@ -449,18 +414,15 @@ void MicFrontEndObject::deactivate(MsgPacket *msg)
 
   /* Deactivate PreProcess */
 
-  bool ret = m_p_preproc_instance->deactivate();
-
+  uint32_t ret = unloadComponent();
   if (!ret)
     {
       /* Error reply */
 
-      reply(AsMicFrontendEventDeact, msg->getType(), AS_ECODE_DSP_UNLOAD_ERROR);
+      reply(AsMicFrontendEventDeact, msg->getType(), ret);
 
       return;
     }
-
-  delete m_p_preproc_instance;
 
   /* State transit */
 
@@ -534,9 +496,106 @@ void MicFrontEndObject::init(MsgPacket *msg)
       return;
     }
 
+  /* Check type and dsp name. If differ from current of them, do reload. */
+
+  if ((m_preproc_type != static_cast<AsMicFrontendPreProcType>(cmd.init_param.preproc_type))
+   || (strncmp(m_dsp_path, cmd.init_param.dsp_path, sizeof(m_dsp_path))))
+    {
+      uint32_t ret = unloadComponent();
+
+      if (ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          reply(AsMicFrontendEventInit, msg->getType(), ret);
+          return;
+        }
+
+      ret = loadComponent(static_cast<AsMicFrontendPreProcType>(cmd.init_param.preproc_type),
+                          cmd.init_param.dsp_path);
+
+      if(ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          reply(AsMicFrontendEventInit, msg->getType(), ret);
+          return;
+        }
+    }
+
   /* Reply */
 
   reply(AsMicFrontendEventInit, msg->getType(), AS_ECODE_OK);
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t MicFrontEndObject::loadComponent(AsMicFrontendPreProcType type, char *dsp_path)
+{
+  /* Create component */
+
+  switch (type)
+    {
+      case AsMicFrontendPreProcUserCustom:
+        m_p_preproc_instance = new UserCustomComponent(m_pool_id.dsp,
+                                                       m_msgq_id.dsp);
+        break;
+
+      default:
+        m_p_preproc_instance = new ThruProcComponent();
+        break;
+    }
+
+  /* Activate proprocess proc */
+
+  uint32_t dsp_inf = 0;
+
+  uint32_t ret = m_p_preproc_instance->activate(preproc_done_callback,
+                                                dsp_path,
+                                                static_cast<void *>(this),
+                                                &dsp_inf);
+  if (ret != AS_ECODE_OK)
+    {
+      delete m_p_preproc_instance;
+
+      return ret;
+    }
+
+  /* Hold preproc type */
+
+  m_preproc_type = type;
+
+  strncpy(m_dsp_path, dsp_path, sizeof(m_dsp_path) - 1);
+  m_dsp_path[sizeof(m_dsp_path) -1] = '\0';
+
+  return AS_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t MicFrontEndObject::unloadComponent(void)
+{
+  if (m_p_preproc_instance == NULL)
+    {
+      return AS_ECODE_OK;
+    }
+
+  /* Deactivate recognition proc */
+
+  bool ret = m_p_preproc_instance->deactivate();
+
+  if (!ret)
+    {
+      return AS_ECODE_DSP_UNLOAD_ERROR;
+    }
+
+  delete m_p_preproc_instance;
+
+  /* When unload complete successfully, set invalid type and dsp_name. */
+
+  m_preproc_type = AsMicFrontendPreProcInvalid;
+
+  memset(m_dsp_path, 0, sizeof(m_dsp_path));
+
+  return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------------*/

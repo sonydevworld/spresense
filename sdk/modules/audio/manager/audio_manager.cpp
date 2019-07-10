@@ -1794,6 +1794,11 @@ void AudioManager::recorder(AudioCommand &cmd)
         frontend_command.init_param.samples_per_frame =
           getCapSampleNumPerFrame(cmd.recorder.init_param.codec_type,
                                   cmd.recorder.init_param.sampling_rate);
+        frontend_command.init_param.preproc_type = m_preproc_type;
+        snprintf(frontend_command.init_param.dsp_path,
+                 AS_PREPROCESS_FILE_PATH_LEN,
+                 "%s/PREPROC",
+                 CONFIG_AUDIOUTILS_DSP_MOUNTPT);
         frontend_command.init_param.data_path         = AsDataPathMessage;
         frontend_command.init_param.dest.msg.msgqid   = s_rcdMid;
         frontend_command.init_param.dest.msg.msgtype  = MSG_AUD_MRC_CMD_ENCODE;
@@ -2416,7 +2421,6 @@ void AudioManager::setRecognizer(AudioCommand &cmd)
 
   frontend_command.act_param.param.input_device =
     cmd.set_recognizer_status_param.input_device;
-  frontend_command.act_param.param.preproc_type = m_preproc_type;
   frontend_command.act_param.cb                 = micfrontend_done_callback;
 
   if (!sendMicFrontendCommand(MSG_AUD_MFE_CMD_ACT, &frontend_command))
@@ -2507,7 +2511,6 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 
   frontend_command.act_param.param.input_device =
     cmd.set_recorder_status_param.input_device;
-  frontend_command.act_param.param.preproc_type = m_preproc_type;
   frontend_command.act_param.cb                 = micfrontend_done_callback;
 
   if (!sendMicFrontendCommand(MSG_AUD_MFE_CMD_ACT, &frontend_command))
@@ -2568,6 +2571,11 @@ void AudioManager::recognizer(AudioCommand &cmd)
         frontend_command.init_param.channel_number = cmd.init_recognizer.ch_num;
         frontend_command.init_param.bit_length = cmd.init_recognizer.bit_length;
         frontend_command.init_param.samples_per_frame = cmd.init_recognizer.samples;
+        frontend_command.init_param.preproc_type = m_preproc_type;
+        snprintf(frontend_command.init_param.dsp_path,
+                 AS_PREPROCESS_FILE_PATH_LEN,
+                 "%s/PREPROC",
+                 CONFIG_AUDIOUTILS_DSP_MOUNTPT);
         frontend_command.init_param.data_path         = AsDataPathMessage;
         frontend_command.init_param.dest.msg.msgqid   = s_rcgMid;
         frontend_command.init_param.dest.msg.msgtype  = MSG_AUD_RCG_EXEC;
