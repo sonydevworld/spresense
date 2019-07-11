@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/compass_command.h
+ * modules/include/sensing/logical_sensor/compass_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_COMPASS_COMMAND_H
 
 /**
- * @defgroup logical_compass API
+ * @defgroup logical_compass Compass API
  * @{
  */
 

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/compass.h
+ * modules/include/sensing/logical_sensor/compass.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define  __INCLUDE_SENSING_COMPASS_H
 
 /**
- * @defgroup logical_compass Compass API 
+ * @defgroup logical_compass Compass API
  * @{
  */
 
@@ -58,6 +58,11 @@
 /****************************************************************************
  * Public Types
  ****************************************************************************/
+
+/**
+ * @struct CompassResult
+ * @brief The structure of result on compass commands.
+ */
 
 typedef struct
 {

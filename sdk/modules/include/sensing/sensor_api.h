@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_SENSOR_API_H
 
 /**
- * @defgroup sensor_manger Sensor Manager
+ * @defgroup sensor_manger Sensor Manager API
  * @{
  */
 

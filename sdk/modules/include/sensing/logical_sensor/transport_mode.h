@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_LOGICAL_SENSOR_TRANSPORT_MODE_H
 
 /**
- * @defgroup logical_tramsport TRAnsport Mode rcognition API 
+ * @defgroup logical_tramsport TRAnsport Mode rcognition API
  * @{
  */
 
@@ -59,55 +59,71 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define TRAM_NUMBER_OF_MODES 13
+#define TRAM_NUMBER_OF_MODES 13             /**< Number of transportation mode */
 
-#define ACCEL_SAMPLING_FREQUENCY_MS   16    /* Hz */
-#define ACCEL_SAMPLING_FREQUENCY_CMD  64    /* Hz */
-#define ACCEL_SAMPLING_FREQUENCY_TMI  64    /* Hz */
-#define ACCEL_WATERMARK_NUM           320   /* samples */
-#define ACCEL_FIFO_NUM                (ACCEL_WATERMARK_NUM * 2)  /* samples */
-#define ACCEL_TRIGGER_RISE_THRESS     50
-#define ACCEL_TRIGGER_RISE_COUNT0     2
-#define ACCEL_TRIGGER_RISE_COUNT1     20
-#define ACCEL_TRIGGER_RISE_DELAY      0
-#define ACCEL_TRIGGER_FALL_THRESS     49
-#define ACCEL_TRIGGER_FALL_COUNT0     2
-#define ACCEL_TRIGGER_FALL_COUNT1     4
-#define ACCEL_TRIGGER_FALL_DELAY      0
+#define ACCEL_SAMPLING_FREQUENCY_MS   16    /**< Accel sensor frequency in MS state[Hz] */
+#define ACCEL_SAMPLING_FREQUENCY_CMD  64    /**< Accel sensor frequency in CMD state[Hz] */
+#define ACCEL_SAMPLING_FREQUENCY_TMI  64    /**< Accel sensor frequency in TMI state[Hz] */
+#define ACCEL_WATERMARK_NUM           320   /**< Accel sensor sample data watermark */
+#define ACCEL_FIFO_NUM                (ACCEL_WATERMARK_NUM * 2)  /**< FIFO sample data watermark */
+#define ACCEL_TRIGGER_RISE_THRESS     50    /**< Accel sensor rise threshold */
+#define ACCEL_TRIGGER_RISE_COUNT0     2     /**< Accel sensor rise preventing counts */
+#define ACCEL_TRIGGER_RISE_COUNT1     20    /**< Accel sensor rise actual counts */
+#define ACCEL_TRIGGER_RISE_DELAY      0     /**< Rise event notification delay in samples */
+#define ACCEL_TRIGGER_FALL_THRESS     49    /**< Accel sensor fall threshold */
+#define ACCEL_TRIGGER_FALL_COUNT0     2     /**< Accel sensor fall preventing counts */
+#define ACCEL_TRIGGER_FALL_COUNT1     4     /**< Accel sensor fall actual counts */
+#define ACCEL_TRIGGER_FALL_DELAY      0     /**< Fall event notification delay in samples */
 
-#define GET_SCU_ACCEL_SAMPLING_FREQUENCY(_x_) (512 / (1 << (_x_)))  /* sampling rate = 32768 / 64 / (2 ^ (_x_) ) */
+#define GET_SCU_ACCEL_SAMPLING_FREQUENCY(_x_) (512 / (1 << (_x_)))  /**< sampling rate = 32768 / 64 / (2 ^ (_x_) )Hz */
 
-#define MAG_SAMPLING_FREQUENCY  8   /* Hz */
-#define MAG_WATERMARK_NUM       40  /* samples */
+#define MAG_SAMPLING_FREQUENCY  8           /**< Mag sensor frequency[Hz] */
+#define MAG_WATERMARK_NUM       40          /**< Mag sensor sample data watermark */
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
+/**
+ * TRAM state
+ */
+
 typedef enum
 {
-  TRAM_STATE_UNINITIALIZED = 0,   /* uninitialized state */
-  TRAM_STATE_MS,                  /* motion sensing state */
-  TRAM_STATE_CMD,                 /* continuous motion detection state */
-  TRAM_STATE_TMI,                 /* transportation mode inference state */
+  TRAM_STATE_UNINITIALIZED = 0,   /**< uninitialized state */
+  TRAM_STATE_MS,                  /**< motion sensing state */
+  TRAM_STATE_CMD,                 /**< continuous motion detection state */
+  TRAM_STATE_TMI,                 /**< transportation mode inference state */
   TRAM_STATE_NUM
 } tram_state_e;
 
+/**
+ * TRAM event type
+ */
+
 enum TramEvent {
-  MathFuncEvent,
+  MathFuncEvent,                  /**< Math function request from SCU */
 };
+
+/**
+ * TRAM result type
+ */
 
 enum TramNotification {
-  ChangeScuSettings,
+  ChangeScuSettings,              /**< SCU setting change request from TRAM */
 };
 
+/**
+ * SCU setting
+ */
+
 struct ScuSettings {
-  uint16_t fifosize;
-  uint8_t samplingrate;
-  uint8_t elements;
-  FAR struct scuev_notify_s *ev;
-  FAR struct math_filter_s *mf;
-  FAR struct scufifo_wm_s *wm;
+  uint16_t fifosize;              /**< Accel secsor FIFO size */
+  uint8_t samplingrate;           /**< Accel secsor sampling rate[Hz] */
+  uint8_t elements;               /**< Accel secsor trigger event */
+  FAR struct scuev_notify_s *ev;  /**< Event notifier setting */
+  FAR struct math_filter_s *mf;   /**< Math Function IIR filter setting */
+  FAR struct scufifo_wm_s *wm;    /**< Watermark notification */
 };
 
 /*--------------------------------------------------------------------

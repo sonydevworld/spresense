@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_LOGICAL_SENSOR_ARM_GESTURE_H
 
 /**
- * @defgroup logical_armgesture Gesture API 
+ * @defgroup logical_armgesture Gesture API
  * @{
  */
 

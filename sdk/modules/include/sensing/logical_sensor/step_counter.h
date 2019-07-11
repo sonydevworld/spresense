@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/step_counter.h
+ * modules/include/sensing/logical_sensor/step_counter.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -60,12 +60,11 @@
  ****************************************************************************/
 
 /**
- * @def
- * initial step length of each move type
+ * @def initial step length of each move type
  */
 
-#define STEP_COUNTER_INITIAL_WALK_STEP_LENGTH 60   /* [cm] */
-#define STEP_COUNTER_INITIAL_RUN_STEP_LENGTH  80   /* [cm] */
+#define STEP_COUNTER_INITIAL_WALK_STEP_LENGTH 60   /**< Walking stride [cm] */
+#define STEP_COUNTER_INITIAL_RUN_STEP_LENGTH  80   /**< Running stride [cm] */
 
 /****************************************************************************
  * Public Types
