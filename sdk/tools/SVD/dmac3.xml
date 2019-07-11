@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <peripheral>
-  <name>IDMAC</name>
+  <name>DMAC3</name>
   <version>1.0</version>
-  <description>DMA controller</description>
-  <baseAddress>0x4e102000</baseAddress>
+  <description>DMA controller (IDMAC)</description>
+  <baseAddress>0x02102000</baseAddress>
   <size>32</size>
   <access>read-write</access>
 
@@ -14,8 +14,8 @@
   </addressBlock>
 
   <interrupt>
-    <name>IDMAC</name>
-    <description>IDMAC interrupt</description>
+    <name>DMAC3</name>
+    <description>DMAC3 interrupt</description>
     <value>126</value>
   </interrupt>
 

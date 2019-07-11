@@ -114,21 +114,23 @@
 /** @name Command Effector Function code */
 /** @{ */
 
+/*! \brief Command Code: EnablePreProc */
+
 #define  AUDCMD_SETMFETYPE    (AUDCMD_CATEGORY_EFFECTOR | 0x01)
 
-/*! brief Command Code: InitMFE */
+/*! \brief Command Code: InitMFE */
 
 #define  AUDCMD_INITMFE       (AUDCMD_CATEGORY_EFFECTOR | 0x02)
 
-/*! brief Command Code: SetMFE */
+/*! \brief Command Code: SetMFE */
 
 #define  AUDCMD_SETMFE        (AUDCMD_CATEGORY_EFFECTOR | 0x03)
 
-/*! brief Command Code: InitMPP */
+/*! \brief Command Code: InitMPP */
 
 #define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x04)
 
-/*! brief Command Code: SetMPPParam */
+/*! \brief Command Code: SetMPPParam */
 
 #define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x05)
 
@@ -294,11 +296,11 @@
 /** @name Command Baseband Function code */
 /** @{ */
 
-/*! brief Command Code: StartBB (__not supported__) */
+/*! \brief Command Code: StartBB (__not supported__) */
 
 #define AUDCMD_STARTBB          (AUDCMD_CATEGORY_BASEBAND | 0x01)
 
-/*! brief Command Code: StopBB (__not supported__) */
+/*! \brief Command Code: StopBB (__not supported__) */
 
 #define AUDCMD_STOPBB           (AUDCMD_CATEGORY_BASEBAND | 0x02)
 

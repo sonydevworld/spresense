@@ -164,6 +164,16 @@ def disable_config(opt, config):
     os.system("kconfig-tweak --file %s --disable %s" % (config, opt))
 
 def tweak_platform(config):
+    # Check kconfig-frontend installation
+
+    ret = os.system("which kconfig-tweak > /dev/null")
+
+    # If kconfig-frontend is missing, exit.
+
+    if ret != 0:
+        print("Error: kconfig-frontend is missing. Please setup your environment.")
+        sys.exit(4)
+
     # Same as uname -s
 
     platform = os.uname()[0]
@@ -178,6 +188,9 @@ def tweak_platform(config):
         enable_config('HOST_WINDOWS', config)
         enable_config('TOOLCHAIN_WINDOWS', config)
         enable_config('WINDOWS_MSYS', config)
+    elif re.match(r'MINGW.*', platform):
+        print('Error: MinGW is not supported.')
+        sys.exit(4)
 
 def apply_defconfig(defconfigs, topdir, sdkdir, kernel):
     # Convert config names to "*-defconfig" and check it already exists

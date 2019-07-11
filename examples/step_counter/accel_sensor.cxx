@@ -267,7 +267,7 @@ int AccelSensorClass::receive_scu_wm_ev()
   /* Get segment of memory handle. */
 
   if (ERR_OK != mh_src.allocSeg(
-                  ACCEL_DATA_BUF_POOL,
+                  S0_ACCEL_DATA_BUF_POOL,
                   (sizeof(struct accel_t) * ACCEL_WATERMARK_NUM)))
     {
       /* Fatal error occured. */
@@ -278,7 +278,7 @@ int AccelSensorClass::receive_scu_wm_ev()
   p_src = reinterpret_cast<char *>(mh_src.getPa());
 
   if (ERR_OK != mh_dst.allocSeg(
-                  ACCEL_DATA_BUF_POOL,
+                  S0_ACCEL_DATA_BUF_POOL,
                   (sizeof(accel_float_t) * ACCEL_WATERMARK_NUM)))
     {
       /* Fatal error occured. */

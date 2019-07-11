@@ -7,10 +7,15 @@ examples/tilt
   Supported sensors are:
 
   - Bosch BMI160 sensor
+  - Kionix KX022/KX122 acceleration sensor
+
+  This application depends on these devices and SCU configuration, but each
+  sensors can't be used on the same time.
 
   Configuration Pre-requisites:
 
     CONFIG_BMI160    - BMI160
+    CONFIG_KX022     - KX022
     CONFIG_CXD56_SCU - CXD56xx Sensor Control Unit
 
   Example Configuration:
@@ -22,6 +27,5 @@ examples/tilt
 
   Operation:
 
-    Program will be stop when hit space to console.
-    If you can't stop this example, keep pressing the space until finished.
-    Or enable CONFIG_SCHED_WAITPID to run as foreground task.
+    Run this application from nsh. If you tilt the board, it detects
+    the motion and displays the results.

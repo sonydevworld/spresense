@@ -51,7 +51,7 @@ namespace MemMgrLite {
 class MemPool : CopyGuard {
 	friend class Manager;
 protected:
-	MemPool(const PoolAttr& attr, FastMemAlloc& fma);
+	MemPool(const PoolSectionAttr& attr, FastMemAlloc& fma);
 	~MemPool();
 
   /* Since exceptions can not be used, constructor errors are
@@ -115,7 +115,7 @@ protected:
    * separate PoolAttr storage places should be prepared
    */
 
-	const PoolAttr&	m_attr;		/* pool attributes */
+	const PoolSectionAttr&	m_attr;		/* pool attributes */
 
   /* A queue (8 or 12 bytes) holding an usable segment number (1 origin).
    * It is necessary to separately prepare the area for queue data.

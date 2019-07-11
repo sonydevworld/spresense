@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral derivedFrom="SPI4">
+  <name>SPI5</name>
+  <version>1.0</version>
+  <description>Synchronous Serial Port Controller (IMG WSPI)</description>
+  <baseAddress>0x02103c00</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x400</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>SPI5</name>
+    <description>SPI5 interrupt</description>
+    <value>125</value>
+  </interrupt>
+
+</peripheral>

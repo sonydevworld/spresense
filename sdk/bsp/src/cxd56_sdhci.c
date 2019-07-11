@@ -1316,11 +1316,17 @@ static int cxd56_interrupt(int irq, FAR void *context, FAR void *arg)
 #ifdef CONFIG_SDIO_MUXBUS
 static int cxd56_sdio_lock(FAR struct sdio_dev_s *dev, bool lock)
 {
-  /* Single SDIO instance so there is only one possibility.  The multiplex
-   * bus is part of board support package.
-   */
+  /* Enable SD clock only while accessing to the SDIO. */
 
-  cxd56_muxbus_sdio_lock(lock);
+  if (lock)
+    {
+      modifyreg32(CXD56_SDHCI_SYSCTL, 0, SDHCI_SYSCTL_SDCLKEN);
+    }
+  else
+    {
+      modifyreg32(CXD56_SDHCI_SYSCTL, SDHCI_SYSCTL_SDCLKEN, 0);
+    }
+
   return OK;
 }
 #endif

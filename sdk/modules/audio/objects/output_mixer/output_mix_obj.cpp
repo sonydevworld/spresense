@@ -307,30 +307,16 @@ int AS_OutputMixObjEntry(int argc, char *argv[])
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param)
-{
-  return AS_CreateOutputMixer(param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb attcb)
+static bool CreateOutputMixer(AsOutputMixMsgQueId_t msgq_id, AsOutputMixPoolId_t pool_id, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
   OUTPUT_MIX_REG_ATTCB(attcb);
 
-  /* Parameter check */
-
-  if (param == NULL)
-    {
-      OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
   /* Create */
 
-  s_msgq_id = param->msgq_id;
-  s_pool_id = param->pool_id;
+  s_msgq_id = msgq_id;
+  s_pool_id = pool_id;
 
   /* Reset Message queue. */
 
@@ -352,6 +338,66 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb 
   return true;
 }
 
+/*
+ * The following tree functions are Old functions for compatibility.
+ */
+
+static bool CreateOutputMixer(AsOutputMixMsgQueId_t msgq_id, AsOutputMixPoolId_old_t pool_id, AudioAttentionCb attcb)
+{
+  AsOutputMixPoolId_t tmp;
+  tmp.render_path0_filter_pcm.sec = tmp.render_path1_filter_pcm.sec = 0;
+  tmp.render_path0_filter_dsp.sec = tmp.render_path1_filter_dsp.sec = 0;
+  tmp.render_path0_filter_pcm.pool = pool_id.render_path0_filter_pcm;
+  tmp.render_path1_filter_pcm.pool = pool_id.render_path1_filter_pcm;
+  tmp.render_path0_filter_dsp.pool = pool_id.render_path0_filter_dsp;
+  tmp.render_path1_filter_dsp.pool = pool_id.render_path1_filter_dsp;
+
+  return CreateOutputMixer(msgq_id, tmp, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param)
+{
+  return AS_CreateOutputMixer(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  return CreateOutputMixer(param->msgq_id, param->pool_id, attcb);
+}
+
+/*
+ * The following two functions are New functions for multi-section memory layout.
+ */
+
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param)
+{
+  return AS_CreateOutputMixer(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+      return false;
+    }
+
+  return CreateOutputMixer(param->msgq_id, param->pool_id, attcb);
+}
+  
 /*--------------------------------------------------------------------------*/
 bool AS_ActivateOutputMixer(uint8_t handle, FAR AsActivateOutputMixer *actparam)
 {
@@ -559,5 +605,3 @@ void OutputMixObjectTask::create(AsOutputMixMsgQueId_t msgq_id,
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
     }
 }
-
-

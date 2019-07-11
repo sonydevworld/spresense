@@ -81,9 +81,17 @@
     <xi:include href="uart2.xml"/>
 
     <!-- DMAC -->
-    <xi:include href="admac.xml"/>
-    <xi:include href="idmac.xml"/>
+    <xi:include href="dmac1.xml"/>
+    <xi:include href="dmac3.xml"/>
 
+    <!-- SPI -->
+    <xi:include href="spi0.xml"/>
+    <xi:include href="spi3.xml"/>
+    <xi:include href="spi4.xml"/>
+    <xi:include href="spi5.xml"/>
+
+    <!-- CISIF -->
+    <xi:include href="cisif.xml"/>
   </peripherals>
 
 </device>

@@ -601,6 +601,25 @@ typedef struct
 {
   /*! \brief [in] Memory pool id of es data */
 
+  MemMgrLite::PoolId es;
+
+  /*! \brief [in] Memory pool id of pcm data */
+
+  MemMgrLite::PoolId pcm;
+
+  /*! \brief [in] Memory pool id of dsp command data */
+
+  MemMgrLite::PoolId dsp;
+
+  /*! \brief [in] Memory pool id of src work area */
+
+  MemMgrLite::PoolId src_work;
+} AsPlayerPoolId_t;
+
+
+typedef struct{
+  /*! \brief [in] Memory pool id of es data */
+
   uint8_t es;
 
   /*! \brief [in] Memory pool id of pcm data */
@@ -614,7 +633,21 @@ typedef struct
   /*! \brief [in] Memory pool id of src work area */
 
   uint8_t src_work;
-} AsPlayerPoolId_t;
+} AsPlayerPoolId_old_t;
+
+/** Activate function parameter */
+
+typedef struct
+{
+  /*! \brief [in] ID for sending messages to each function */
+
+  AsPlayerMsgQueId_t msgq_id;
+
+  /*! \brief [in] ID of memory pool for processing data */
+
+  AsPlayerPoolId_old_t   pool_id;
+
+} AsCreatePlayerParam_t;
 
 /** Activate function parameter */
 
@@ -627,7 +660,8 @@ typedef struct
   /*! \brief [in] ID of memory pool for processing data */
 
   AsPlayerPoolId_t   pool_id;
-} AsCreatePlayerParam_t;
+
+} AsCreatePlayerParams_t;
 
 /****************************************************************************
  * Public Data
@@ -668,6 +702,10 @@ bool AS_CreatePlayerMulti(AsPlayerId id,
                           FAR AsCreatePlayerParam_t *param,
                           AudioAttentionCb attcb);
 
+bool AS_CreatePlayerMulti(AsPlayerId id,
+                          FAR AsCreatePlayerParams_t *param,
+                          AudioAttentionCb attcb);
+
 __attribute__((deprecated(
                  "\n \
                   \n Deprecated create API is used. \
@@ -677,6 +715,8 @@ __attribute__((deprecated(
                   \n \
                   \n")))
 bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParam_t *param);
+
+bool AS_CreatePlayerMulti(AsPlayerId id, FAR AsCreatePlayerParams_t *param);
 
 /**
  * @brief Activate audio (sub)player

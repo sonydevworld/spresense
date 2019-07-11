@@ -1607,23 +1607,16 @@ bool MicFrontEndObject::checkAndSetMemPool(void)
  ****************************************************************************/
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param, AudioAttentionCb attcb)
+static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_t pool_id, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
   MIC_FRONTEND_REG_ATTCB(attcb);
 
-  /* Parameter check */
-
-  if (param == NULL)
-    {
-      return false;
-    }
-
   /* Create */
 
-  s_msgq_id = param->msgq_id;
-  s_pool_id = param->pool_id;
+  s_msgq_id = msgq_id;
+  s_pool_id = pool_id;
 
   /* Reset Message queue. */
 
@@ -1643,6 +1636,36 @@ bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param, AudioAttentionC
     }
 
   return true;
+}
+
+/*
+ * The following two functions are Old functions for compatibility.
+ */
+
+static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_old_t pool_id, AudioAttentionCb attcb)
+{
+  AsMicFrontendPoolId_t tmp;
+  tmp.input.sec   = tmp.output.sec = tmp.dsp.sec = 0;
+  tmp.input.pool  = pool_id.input;
+  tmp.output.pool = pool_id.output;
+  tmp.dsp.pool    = pool_id.dsp;
+
+  return CreateFrontend(msgq_id, tmp, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParam_t *param, AudioAttentionCb attcb)
+{
+  return CreateFrontend(param->msgq_id, param->pool_id, attcb);
+}
+
+/*
+ * New functions for multi-section memory layout.
+ */
+
+bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParams_t *param, AudioAttentionCb attcb)
+{
+  return CreateFrontend(param->msgq_id, param->pool_id, attcb);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1881,4 +1904,3 @@ void MicFrontEndObject::create(AsMicFrontendMsgQueId_t msgq_id,
       return;
     }
 }
-

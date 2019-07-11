@@ -126,6 +126,8 @@ private:
  */
 StepCounterClass* StepCounterCreate(MemMgrLite::PoolId cmd_pool_id);
 
+StepCounterClass* StepCounterCreate(uint8_t cmd_pool_id);
+
 /**
  * @brief     Load StepCounter library and boot up as worker task.
  *            After booted up, send initialize and wait complete.

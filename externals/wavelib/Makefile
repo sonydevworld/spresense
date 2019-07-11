@@ -1,7 +1,7 @@
 ############################################################################
 # Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,9 +33,67 @@
 #
 ############################################################################
 
-MENUDESC = "wavelet_library"
+-include $(TOPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
+DELIM ?= $(strip /)
+CXXEXT ?= .cpp
 
-BIN = libwavelib$(LIBEXT)
+# C_SRCS
+ASRCS =
+CSRCS  = src/conv.c
+CSRCS += src/cwt.c
+CSRCS += src/cwtmath.c
+CSRCS += src/hsfft.c
+CSRCS += src/real.c
+CSRCS += src/wavefilt.c
+CSRCS += src/wavefunc.c
+CSRCS += src/wavelib.c
+CSRCS += src/wtmath.c
+
+AOBJS = $(ASRCS:.S=$(OBJEXT))
+COBJS = $(CSRCS:.c=$(OBJEXT))
+
+SRCS = $(ASRCS) $(CSRCS)
+OBJS = $(AOBJS) $(COBJS)
+
+BIN = libwavelib.a
+
+DEPPATH = --dep-path .
+
+INCLUDES := -I header
+CFLAGS += $(INCLUDES)
+
+# Common build
+
+VPATH =
+
+all: $(BIN)
+.PHONY: context depend clean distclean
+
+$(AOBJS): %$(OBJEXT): %.S
+	$(call ASSEMBLE, $<, $@)
+
+$(COBJS): %$(OBJEXT): %.c
+	$(call COMPILE, $<, $@)
+
+$(BIN): $(OBJS)
+	$(call ARCHIVE, $@, $(OBJS))
+
+# Create dependencies
+
+.depend: Makefile $(SRCS)
+	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
+	$(Q) touch $@
+
+depend: .depend
+
+# context target proceeds before depend. User can be used this rule
+# to prerequisite process (e.g. generate header file).
+
+.context:
+	$(Q) touch $@
+
+context:
 
 clean:
 	$(call DELFILE, $(BIN))
@@ -45,3 +103,9 @@ distclean: clean
 	$(call DELFILE, .context)
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
+
+-include Make.dep
+.PHONY: preconfig
+preconfig:
+
+

@@ -504,6 +504,15 @@ FAR StepCounterClass *StepCounterCreate(MemMgrLite::PoolId cmd_pool_id)
 }
 
 /*--------------------------------------------------------------------------*/
+FAR StepCounterClass *StepCounterCreate(uint8_t cmd_pool_id)
+{
+  MemMgrLite::PoolId pool_id;
+  pool_id.sec  = 0;
+  pool_id.pool = cmd_pool_id;
+  return new StepCounterClass(pool_id);
+}
+
+/*--------------------------------------------------------------------------*/
 int StepCounterOpen(FAR StepCounterClass *ins)
 {
   int ret;

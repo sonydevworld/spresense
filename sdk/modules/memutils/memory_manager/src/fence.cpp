@@ -33,8 +33,6 @@
  *
  ****************************************************************************/
 
-
-
 #include <string.h>
 #include "ScopedLock.h"
 #include "memutils/memory_manager/MemManager.h"
@@ -126,16 +124,16 @@ uint32_t MemPool::verifyPoolFence()
 /*****************************************************************
  * 静的メモリプールのフェンスを検証
  *****************************************************************/
-uint32_t Manager::verifyStaticPoolsFence()
+uint32_t Manager::verifyStaticPoolsFence(uint8_t sec_no)
 {
   uint32_t ng_cnt = 0;
 
   ScopedLock lock;
 
   /* プールID=0は予約 */
-  for (uint32_t i = 1; i < theManager->m_pool_num; ++i) {
-    if (theManager->m_static_pools[i] != NULL) {
-      ng_cnt += theManager->m_static_pools[i]->verifyPoolFence();
+  for (uint32_t i = 1; i < theManager->m_pool_num[sec_no]; ++i) {
+    if (theManager->m_static_pools[sec_no][i] != NULL) {
+      ng_cnt += theManager->m_static_pools[sec_no][i]->verifyPoolFence();
     }
   }
   return ng_cnt;

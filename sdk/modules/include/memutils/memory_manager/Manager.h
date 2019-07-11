@@ -93,6 +93,7 @@ public:
     */
   static err_t  initPerCpu(void* manager_area, uint32_t pool_num);
 
+  static err_t  initPerCpu(void* manager_area, MemPool ** static_pools[], uint8_t* pool_num, uint8_t* layout_no);
 
   /* MemoryManager Finalize Process */
   /** The finalize method on power-off. 
@@ -112,25 +113,23 @@ public:
     * @return ERR_DATA_SIZE : error, area_size less than MEMMGR_MAX_WORK_SIZE
     * @return ERR_ADR_ALIGN : error, work area is not 4bytes alignment
     */
-  static err_t  createStaticPools(NumLayout layout_no, void* work_area, uint32_t area_size, const PoolAttr *pool_attr);
-
-  static err_t  createStaticPools(NumLayout       layout_no,
-                                  void           *work_area,
-                                  uint32_t        area_size,
-                                  const PoolAttr *pool_attr,
-                                  void           *top_work_area);
+  static err_t  createStaticPools(uint8_t sec_no, NumLayout layout_no, void* work_area, uint32_t area_size, const PoolSectionAttr *pool_attr);
+  static err_t  createStaticPools(NumLayout layout_no, void* work_area, uint32_t area_size, const PoolAttr *pool_attr){
+    return createStaticPools(0, layout_no, work_area, area_size, reinterpret_cast <const PoolSectionAttr*>(pool_attr));
+  }
 
   /** The static memory layout destroy method.
     * This mathod provide clear the memory layout. 
     * @return void
     */
-  static void  destroyStaticPools();
+  static void  destroyStaticPools(uint8_t sec_no);
+  static void  destroyStaticPools(){ destroyStaticPools(0); }
 
   /** The getter method for layout number.
     * @return NumLayout The current layout number.
     */
-  static NumLayout  getCurrentLayoutNo() { return theManager->m_layout_no; }
-  static bool    isStaticPoolAvailable() { return getCurrentLayoutNo() != BadLayoutNo; }
+  static NumLayout  getCurrentLayoutNo(uint8_t sec_no) { return theManager->m_layout_no[sec_no]; }
+  static bool isStaticPoolAvailable(uint8_t sec_no) { return getCurrentLayoutNo(sec_no) != BadLayoutNo; }
 
 #ifdef USE_MEMMGR_DYNAMIC_POOL
   /* Create/destroy dynamic memory pool. */
@@ -142,8 +141,8 @@ public:
 
   /* Get used memory segment information. */
 
-  static uint32_t  getStaticPoolsUsedSegs(MemHandleBase* mhs, uint32_t num_mhs);
-  static uint32_t  getUsedSegs(PoolId id, MemHandleBase* mhs, uint32_t num_mhs) {
+  static uint32_t  getStaticPoolsUsedSegs(uint8_t sec,MemHandleBase* mhs, uint32_t num_mhs);
+  static uint32_t  getUsedSegs(uint8_t sec,PoolId id, MemHandleBase* mhs, uint32_t num_mhs) {
     return findPool(id)->getUsedSegs(mhs, num_mhs);
   }
 
@@ -170,14 +169,14 @@ public:
   /* Verify the fence and return the error detection count. */
 
   static uint32_t  verifyFixedAreaFences();
-  static uint32_t  verifyStaticPoolsFence();
+  static uint32_t  verifyStaticPoolsFence(uint8_t sec);
   static uint32_t  verifyPoolFence(PoolId id) { return findPool(id)->verifyPoolFence(); }
 #endif
 
 private:
   Manager();  /* called from initFirst */
 
-  static MemPool* createPool(const PoolAttr& attr, FastMemAlloc& fma);
+  static MemPool* createPool(const PoolSectionAttr& attr, FastMemAlloc& fma);
   static void  destroyPool(MemPool* pool);
   static void  initFixedAreaFences();
 
@@ -186,17 +185,18 @@ private:
    */
 
   static MemPool* getPoolObject(PoolId id) {
-    if (id < theManager->m_pool_num) {
-      return theManager->m_static_pools[id];
+    if (id.pool < theManager->m_pool_num[id.sec]) {
+      return theManager->m_static_pools[id.sec][id.pool];
 #ifdef USE_MEMMGR_DYNAMIC_POOL
     } else if (id < theManager->m_pool_num + NUM_DYN_POOLS) {
-      return theManager->m_dynamic_pools[id - theManager->m_pool_num];
+      return theManager->m_dynamic_pools[id.pool - theManager->m_pool_num];
 #endif
     } else {
       D_ASSERT(0);  /* Illegal pool ID. */
       return NULL;
     }
   }
+
   static MemPool* findPool(PoolId id) {
     MemPool* p = getPoolObject(id);
     D_ASSERT(p);
@@ -211,22 +211,24 @@ private:
 #else
   static err_t allocSeg(PoolId id, size_t size_for_check, MemHandleProxy &proxy);
 #endif
-  static void    freeSeg(MemHandleBase& mh);
-  static PoolAddr    getSegAddr(const MemHandleBase& mh);
-  static PoolSize    getSegSize(const MemHandleBase& mh);
-  static SegRefCnt  getSegRefCnt(PoolId id, NumSeg seg_no) { return findPool(id)->getSegRefCnt(seg_no); }
-  static void    incSegRefCnt(PoolId id, NumSeg seg_no) { findPool(id)->incSegRefCnt(seg_no); }
+  static void      freeSeg(MemHandleBase& mh);
+  static PoolAddr  getSegAddr(const MemHandleBase& mh);
+  static PoolSize  getSegSize(const MemHandleBase& mh);
+  static SegRefCnt getSegRefCnt(PoolId id, NumSeg seg_no) { return findPool(id)->getSegRefCnt(seg_no); }
+  static void      incSegRefCnt(PoolId id, NumSeg seg_no) { findPool(id)->incSegRefCnt(seg_no); }
 
 private:
   static Manager*  theManager;    /* for singleton */
 
-  uint8_t   m_signature[3]; /* Initialize determination and
-                             * mark for dumping.
-                             */
-  uint8_t   m_layout_no;    /* Current memory layout number. */
-  uint32_t  m_fix_fene_num; /* Numver of fence. */
-  uint32_t  m_pool_num;     /* Number of pool. */
-  MemPool** m_static_pools;
+  uint8_t    m_signature[3]; /* Initialize determination and
+                              * mark for dumping.
+                              */
+  uint32_t   m_fix_fene_num; /* Number of fence. */
+
+  uint8_t*   m_layout_no;    /* Current memory layout number. */
+  uint8_t*   m_pool_num;     /* Number of pool. */
+  MemPool*** m_static_pools;
+
 #ifdef USE_MEMMGR_DYNAMIC_POOL
   MemPool*  m_dynamic_pools[NUM_DYN_POOLS];
   RuntimeQue<PoolId, PoolId>  m_pool_no_que; /* 8bytes */

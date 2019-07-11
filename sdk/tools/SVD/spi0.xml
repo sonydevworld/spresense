@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="utf-8"?>
+<peripheral>
+  <name>SPI0</name>
+  <version>1.0</version>
+  <description>Synchronous Serial Port Controller (SPIM)</description>
+  <baseAddress>0x041aa000</baseAddress>
+  <size>32</size>
+  <access>read-write</access>
+
+  <addressBlock>
+    <offset>0</offset>
+    <size>0x1000</size>
+    <usage>registers</usage>
+  </addressBlock>
+
+  <interrupt>
+    <name>SPI0</name>
+    <description>SPI0 interrupt</description>
+    <value>90</value>
+  </interrupt>
+
+  <registers>
+
+    <!-- SSPCR0 -->
+    <register>
+      <name>SSPCR0</name>
+      <description>Control register 0</description>
+      <addressOffset>0x00</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>SCR</name>
+          <description>Serial clock rate</description>
+          <bitRange>[15:8]</bitRange>
+        </field>
+        <field>
+          <name>SPH</name>
+          <description>SSPCLKOUT phase</description>
+          <bitRange>[7:7]</bitRange>
+        </field>
+        <field>
+          <name>SPO</name>
+          <description>SSPCLKOUT polarity</description>
+          <bitRange>[6:6]</bitRange>
+        </field>
+        <field>
+          <name>FRF</name>
+          <description>Frame format</description>
+          <bitRange>[5:4]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>Motorola</name><description>Motorola SPI frame format</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>TI</name><description>TI synchronous serial frame format</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>NM</name><description>National Microwire frame format</description><value>2</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>DSS</name>
+          <description>Data Size Select</description>
+          <bitRange>[3:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>4bit</name><description>4bit data</description><value>3</value></enumeratedValue>
+            <enumeratedValue><name>5bit</name><description>5bit data</description><value>4</value></enumeratedValue>
+            <enumeratedValue><name>6bit</name><description>6bit data</description><value>5</value></enumeratedValue>
+            <enumeratedValue><name>7bit</name><description>7bit data</description><value>6</value></enumeratedValue>
+            <enumeratedValue><name>8bit</name><description>8bit data</description><value>7</value></enumeratedValue>
+            <enumeratedValue><name>9bit</name><description>9bit data</description><value>8</value></enumeratedValue>
+            <enumeratedValue><name>10bit</name><description>10bit data</description><value>9</value></enumeratedValue>
+            <enumeratedValue><name>11bit</name><description>11bit data</description><value>10</value></enumeratedValue>
+            <enumeratedValue><name>12bit</name><description>12bit data</description><value>11</value></enumeratedValue>
+            <enumeratedValue><name>13bit</name><description>13bit data</description><value>12</value></enumeratedValue>
+            <enumeratedValue><name>14bit</name><description>14bit data</description><value>13</value></enumeratedValue>
+            <enumeratedValue><name>15bit</name><description>15bit data</description><value>14</value></enumeratedValue>
+            <enumeratedValue><name>16bit</name><description>16bit data</description><value>15</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPCR1 -->
+    <register>
+      <name>SSPCR1</name>
+      <description>Control register 1</description>
+      <addressOffset>0x04</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>SOD</name>
+          <description>Slave-mode output disable</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue>
+              <name>enable</name>
+              <description>SSP can drive the SSPTXD output in slave mode</description>
+              <value>0</value>
+            </enumeratedValue>
+            <enumeratedValue>
+              <name>disable</name>
+              <description>SSP must not drive the SSPTXD output in slave mode</description>
+              <value>1</value>
+            </enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>MS</name>
+          <description>Master or slave mode select</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>master</name><description>Master mode</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>slave</name><description>Slave mode</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>SSE</name>
+          <description>Synchronous serial port enable</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>SSP operation disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>SSP operation enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>LBM</name>
+          <description>Loop back mode</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Normal serial port operation enabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Output of transmit serial shifter is connected to input of recieve serial shifter internally</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPDR -->
+    <register>
+      <name>SSPDR</name>
+      <description>Data register</description>
+      <addressOffset>0x08</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>DATA</name>
+          <description>Transmit/Receive FIFO</description>
+          <bitRange>[15:0]</bitRange>
+          <readAction>modify</readAction>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPSR -->
+    <register>
+      <name>SSPSR</name>
+      <description>Status register</description>
+      <addressOffset>0x0c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>BSY</name>
+          <description>SSP busy flag</description>
+          <bitRange>[4:4]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>idle</name><description>SSP is idle</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>busy</name><description>SSP is currently transmitting and/or receiving a frame or the transmit FIFO is not empty</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RFF</name>
+          <description>Receive FIFO full</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>notfull</name><description>Receive FIFO is not full</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>full</name><description>Recieve FIFO is full</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RNE</name>
+          <description>Rceive FIFIO not empty</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>empty</name><description>Receive FIFO is empty</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notempty</name><description>Receive FIFO is not empty</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>TNF</name>
+          <description>Transmit FIFO not full</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>full</name><description>Transmit FIFO is full</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notfull</name><description>Transmit FIFO is not full</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>TFE</name>
+          <description>Transmit FIFO empty</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>notempty</name><description>Transmit FIFO is not empty</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>empty</name><description>Transmit FIFO is empty</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPCPSR -->
+    <register>
+      <name>SSPCPSR</name>
+      <description>Clock prescale register</description>
+      <addressOffset>0x10</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>CPSDVSR</name>
+          <description>Clock prescale divisor</description>
+          <bitRange>[7:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPIMSC -->
+    <register>
+      <name>SSPIMSC</name>
+      <description>Interrupt mask set or clear register</description>
+      <addressOffset>0x14</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>TXIM</name>
+          <description>Transmit FIFO interrupt mask</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXIM</name>
+          <description>Receive FIFO interrupt mask</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RTIM</name>
+          <description>Receive timeout interrupt mask</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RORIM</name>
+          <description>Receive overrun interrupt mask</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPRIS -->
+    <register>
+      <name>SSPRIS</name>
+      <description>Raw interrupt status register</description>
+      <addressOffset>0x18</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>TXRIS</name>
+          <description>Transmit FIFO interrupt mask</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXRIS</name>
+          <description>Receive FIFO interrupt mask</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RTRIS</name>
+          <description>Receive timeout interrupt mask</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RORRIS</name>
+          <description>Receive overrun interrupt mask</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPMIS -->
+    <register>
+      <name>SSPMIS</name>
+      <description>Masked interrupt status register</description>
+      <addressOffset>0x1c</addressOffset>
+      <size>32</size>
+      <access>read-only</access>
+      <fields>
+        <field>
+          <name>TXMIS</name>
+          <description>Transmit FIFO interrupt mask</description>
+          <bitRange>[3:3]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXMIS</name>
+          <description>Receive FIFO interrupt mask</description>
+          <bitRange>[2:2]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RTMIS</name>
+          <description>Receive timeout interrupt mask</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RORMIS</name>
+          <description>Receive overrun interrupt mask</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>masked</name><description>Masked</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>notmasked</name><description>Not masked</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPICR -->
+    <register>
+      <name>SSPICR</name>
+      <description>Interrupt clear register</description>
+      <addressOffset>0x20</addressOffset>
+      <size>32</size>
+      <access>write-only</access>
+      <fields>
+        <field>
+          <name>RTIC</name>
+          <description>Clear the SSPRTINTR interrupt</description>
+          <bitRange>[1:1]</bitRange>
+        </field>
+        <field>
+          <name>RORIC</name>
+          <description>Clear the SSPRORINTR interrupt</description>
+          <bitRange>[0:0]</bitRange>
+        </field>
+      </fields>
+    </register>
+
+    <!-- SSPDMACR -->
+    <register>
+      <name>SSPDMACR</name>
+      <description>DMA control register</description>
+      <addressOffset>0x24</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>TXDMAE</name>
+          <description>Transmit DMA enable</description>
+          <bitRange>[1:1]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+        <field>
+          <name>RXDMAE</name>
+          <description>Receive DMA enable</description>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>disabled</name><description>Disabled</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>enabled</name><description>Enabled</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>CSMODE</name>
+      <addressOffset>0x90</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>CS_MODE</name>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>auto</name><description>CS controled by controller</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>manual</name><description>CS controled by CS register</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>SSPCS</name>
+      <addressOffset>0x94</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>SSP_CS</name>
+          <bitRange>[0:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>low</name><description>Output low to the CS</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>high</name><description>Output high to the CS</description><value>1</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+    <register>
+      <name>SLAVETYPE</name>
+      <addressOffset>0x98</addressOffset>
+      <size>32</size>
+      <fields>
+        <field>
+          <name>SLAVE_TYPE</name>
+          <bitRange>[1:0]</bitRange>
+          <enumeratedValues>
+            <enumeratedValue><name>CS0</name><description>Select CS0</description><value>0</value></enumeratedValue>
+            <enumeratedValue><name>CS1</name><description>Select CS1</description><value>1</value></enumeratedValue>
+            <enumeratedValue><name>CS2</name><description>Select CS2</description><value>2</value></enumeratedValue>
+          </enumeratedValues>
+        </field>
+      </fields>
+    </register>
+
+  </registers>
+</peripheral>

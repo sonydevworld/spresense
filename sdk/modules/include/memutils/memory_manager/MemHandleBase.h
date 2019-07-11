@@ -75,6 +75,14 @@ public:
   MemHandleBase(PoolId id, size_t size_for_check) {
     Manager::allocSeg(id, size_for_check, m_proxy);
   }
+
+  MemHandleBase(uint8_t id, size_t size_for_check) {
+    PoolId pool_id;
+    pool_id.sec = 0;
+    pool_id.pool = id;
+    Manager::allocSeg(pool_id, size_for_check, m_proxy);
+  }
+
 #endif
 
   MemHandleBase(const MemHandleBase& mh) {
@@ -97,6 +105,13 @@ public:
     *  @return ERR_MEM_EMPTY : error, there are no segments available
     */
   err_t allocSeg(PoolId id, size_t size_for_check);
+
+  err_t allocSeg(uint8_t id, size_t size_for_check){
+    PoolId pool_id;
+    pool_id.sec = 0;
+    pool_id.pool = id;
+    return allocSeg(pool_id, size_for_check);
+  }
 #endif
   /** The free from a pool area for MemHandle.
     * @return void (If this handler did not allocate, this method do nothing.)
@@ -120,8 +135,8 @@ private:
   friend class MemPool;
 
   struct SegInfo {
-    PoolId    pool_id;  /* pool ID (1 origin) */
-    uint8_t    flags;
+    PoolId    pool_id;
+    uint8_t   flags;
     NumSeg    seg_no;    /* segment number (1 origin) */
 #ifndef USE_MEMMGR_OVER255_SEGMENTS
     uint8_t    resv;
@@ -157,7 +172,6 @@ S_ASSERT(sizeof(MemHandleBase) == 4);
 /**
  * @}
  */
-
 
 /**
  * @}

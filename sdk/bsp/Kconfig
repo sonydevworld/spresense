@@ -84,6 +84,16 @@ config CXD56_ICC
 	bool
 	default y
 
+config CXD56_CPUFIFO_ENTRIES
+	int "CPU Tx FIFO elements"
+	default 8
+	depends on CXD56_CPUFIFO
+
+config CXD56_CPUFIFO_NBUFFERS
+	int "CPU Rx FIFO elements"
+	default 8
+	depends on CXD56_ICC
+
 config CXD56_FARAPI
 	bool
 	default y if CXD56_MAINCORE

@@ -45,7 +45,7 @@ extern MemPool* static_pools[];
 /*****************************************************************
  * MemoryManagerのCPU毎の初期化。各CPUで1回だけ呼出すこと
  *****************************************************************/
-err_t Manager::initPerCpu(void* manager_area, uint32_t pool_num)
+err_t Manager::initPerCpu(void* manager_area, MemPool** pools[], uint8_t* pool_num, uint8_t* layout_no)
 {
 #ifdef USE_MEMMGR_DEBUG_OUTPUT
   printf("Manager::initPerCpu(addr=%08x)\n", manager_area);
@@ -62,7 +62,8 @@ err_t Manager::initPerCpu(void* manager_area, uint32_t pool_num)
 
   theManager->m_fix_fene_num = CONFIG_MEMUTILS_MEMORY_MANAGER_NUM_FIXED_AREA_FENCES;
   theManager->m_pool_num     = pool_num;
-  theManager->m_static_pools = static_pools;
+  theManager->m_layout_no    = layout_no;
+  theManager->m_static_pools = pools;
 
   /* initFirst()が実行済みか、署名を確認する */
 
@@ -76,6 +77,18 @@ err_t Manager::initPerCpu(void* manager_area, uint32_t pool_num)
 #endif
 
   return ERR_OK;
+}
+
+err_t Manager::initPerCpu(void* manager_area, uint32_t pool_num)
+{
+  static uint8_t   tmp_sec[1];
+  static uint8_t   tmp_layout[1];
+  static MemPool **tmp_pools[1];
+  tmp_sec[0]    = pool_num;
+  tmp_layout[0] = BadLayoutNo;
+  tmp_pools[0]  = static_pools;
+
+  return initPerCpu(manager_area, tmp_pools, tmp_sec, tmp_layout);
 }
 
 } /* end of namespace MemMgrLite */

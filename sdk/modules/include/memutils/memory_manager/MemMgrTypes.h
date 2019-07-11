@@ -80,11 +80,16 @@ typedef uint32_t  MemHandleProxy; /* For avoiding cross reference with
 
 /** Number of Memory Layouts */
 typedef uint8_t    NumLayout;    /* Number of memory layout(Max 255)/ */
-const NumLayout    BadLayoutNo = 0xff;  /* The layout number is 0 origin. */
+typedef uint8_t    NumSection;   /* Number of memory section(Max 255)/ */
+const NumLayout    BadLayoutNo = 0xff;   /* The layout number is 0 origin. */
+const NumSection   BadSectionNo = 0xff;  /* The section number is 0 origin. */
 
 /** ID of a segment pool */
-typedef uint8_t    PoolId;      /* Memory pool ID(1 origin. Max 255). */
-const PoolId    NullPoolId = 0; /* Pool ID 0 is unused. */
+typedef struct {
+  uint8_t pool:6;	/* Memory pool ID(1 origin. Max 63). */
+  uint8_t sec:2;  /* Memory section ID(0 origin. Max 3). */
+} PoolId;
+const PoolId    NullPoolId = {0,0}; /* Pool ID 0 is unused. */
 
 /** Type of segment pools */
 typedef uint8_t    PoolType;    /* Type of memory pool. */
@@ -142,7 +147,7 @@ const CpuId    MaxCpuId = MaskCpuId;
  * Memory Pool Attributes (12 or 16bytes)
  *****************************************************************/
 struct PoolAttr {
-  PoolId    id;    /* pool ID */
+  uint8_t   id;
   PoolType  type;    /* pool type */
   NumSeg    num_segs;  /* number of memory segments */
 #ifdef CONFIG_MEMUTILS_MEMORY_MANAGER_USE_FENCE
@@ -169,6 +174,44 @@ struct PoolAttr {
 #endif /* USE_MEMMGR_DEBUG_OUTPUT */
 }; /* struct PoolAttr */
 
+struct PoolSectionAttr {
+  PoolId    id;      /* pool ID */
+  PoolType  type;    /* pool type */
+  NumSeg    num_segs;  /* number of memory segments */
+#ifdef CONFIG_MEMUTILS_MEMORY_MANAGER_USE_FENCE
+  bool    fence;
+#endif
+#ifdef USE_MEMMGR_MULTI_CORE
+  LockId    spl_id;
+#endif
+  PoolAddr  addr;    /* pool address */
+  PoolSize  size;    /* pool size (bytes) */
+
+#ifdef USE_MEMMGR_DEBUG_OUTPUT
+  void printInfo(bool newline = true) const {
+    printf("PoolId=%d Type=%d NumSegs=%3d Addr=%08x Size=%08x",
+      id, type, num_segs, addr, size);
+#ifdef CONFIG_MEMUTILS_MEMORY_MANAGER_USE_FENCE
+    printf(" fence=%d", fence);
+#endif
+#ifdef USE_MEMMGR_MULTI_CORE
+    printf(" Spinlock=%d", spl_id);
+#endif
+    if (newline) printf("\n");
+  }
+#endif /* USE_MEMMGR_DEBUG_OUTPUT */
+}; /* struct PoolAttr */
+
+inline bool operator == (PoolId id1, PoolId id2)
+{
+  return (id1.sec == id2.sec && id1.pool == id2.pool);
+}
+
+inline bool operator != (PoolId id1, PoolId id2)
+{
+  return !(id1.sec == id2.sec && id1.pool == id2.pool);
+}
+
 } /* namespace MemMgrLite */
 
 /**
@@ -178,6 +221,5 @@ struct PoolAttr {
 /**
  * @}
  */
-
 
 #endif /* MEMMGRTYPES_H_INCLUDED */

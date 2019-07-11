@@ -11,5 +11,5 @@ define hookpost-load
 end
 
 define connect
-  target remote | openocd -f interface/cmsis-dap.cfg -f target/cxd5602_adsp$arg0.cfg -c "gdb_port pipe; log_output openocd.log"
+  target remote | openocd -f interface/cmsis-dap.cfg -f target/cxd5602.cfg -c "gdb_port pipe; log_output openocd.log"
 end

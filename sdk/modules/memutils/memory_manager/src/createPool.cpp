@@ -43,7 +43,7 @@ namespace MemMgrLite {
 /*****************************************************************
  * Create a memory pool object
  *****************************************************************/
-MemPool* Manager::createPool(const PoolAttr& attr, FastMemAlloc& fma)
+MemPool* Manager::createPool(const PoolSectionAttr& attr, FastMemAlloc& fma)
 {
   MemPool* pool = NULL;
 #ifdef USE_MEMMGR_RINGBUF_POOL
@@ -76,7 +76,7 @@ MemPool* Manager::createPool(const PoolAttr& attr, FastMemAlloc& fma)
 /*****************************************************************
  * Basicプールのコンストラクタ
  *****************************************************************/
-BasicPool::BasicPool(const PoolAttr& attr, FastMemAlloc& fma) :
+BasicPool::BasicPool(const PoolSectionAttr& attr, FastMemAlloc& fma) :
   MemPool(attr, fma)
 {
 #ifdef USE_MEMMGR_DEBUG_OUTPUT
@@ -88,7 +88,7 @@ BasicPool::BasicPool(const PoolAttr& attr, FastMemAlloc& fma) :
 /*****************************************************************
  * メモリプールのコンストラクタ
  *****************************************************************/
-MemPool::MemPool(const PoolAttr& attr, FastMemAlloc& fma) :
+MemPool::MemPool(const PoolSectionAttr& attr, FastMemAlloc& fma) :
   m_attr(attr),
   m_seg_no_que(fma.alloc(sizeof(NumSeg) * attr.num_segs, sizeof(NumSeg)), attr.num_segs),
   m_ref_cnt_array(static_cast<SegRefCnt*>(fma.alloc(sizeof(SegRefCnt) * attr.num_segs, sizeof(SegRefCnt))))

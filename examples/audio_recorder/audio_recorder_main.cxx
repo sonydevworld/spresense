@@ -66,6 +66,10 @@
 
 #include <arch/chip/cxd56_audio.h>
 
+/* Section number of memory layout to use */
+
+#define AUDIO_SECTION   SECTION_NO0
+
 using namespace MemMgrLite;
 
 /****************************************************************************
@@ -456,29 +460,29 @@ static bool app_create_audio_sub_system(void)
 
   /* Create Frontend. */
 
-  AsCreateMicFrontendParam_t frontend_create_param;
+  AsCreateMicFrontendParams_t frontend_create_param;
   frontend_create_param.msgq_id.micfrontend = MSGQ_AUD_FRONTEND;
   frontend_create_param.msgq_id.mng         = MSGQ_AUD_MGR;
   frontend_create_param.msgq_id.dsp         = MSGQ_AUD_PREDSP;
-  frontend_create_param.pool_id.input       = INPUT_BUF_POOL;
+  frontend_create_param.pool_id.input       = S0_INPUT_BUF_POOL;
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
-  frontend_create_param.pool_id.output      = PREPROC_BUF_POOL;
+  frontend_create_param.pool_id.output      = S0_PREPROC_BUF_POOL;
 #else
-  frontend_create_param.pool_id.output      = NULL_POOL;
+  frontend_create_param.pool_id.output      = S0_NULL_POOL;
 #endif
-  frontend_create_param.pool_id.dsp         = PRE_APU_CMD_POOL;
+  frontend_create_param.pool_id.dsp         = S0_PRE_APU_CMD_POOL;
 
   AS_CreateMicFrontend(&frontend_create_param, NULL);
 
   /* Create Recorder. */
 
-  AsCreateRecorderParam_t recorder_create_param;
+  AsCreateRecorderParams_t recorder_create_param;
   recorder_create_param.msgq_id.recorder      = MSGQ_AUD_RECORDER;
   recorder_create_param.msgq_id.mng           = MSGQ_AUD_MGR;
   recorder_create_param.msgq_id.dsp           = MSGQ_AUD_DSP;
-  recorder_create_param.pool_id.input         = INPUT_BUF_POOL;
-  recorder_create_param.pool_id.output        = ES_BUF_POOL;
-  recorder_create_param.pool_id.dsp           = ENC_APU_CMD_POOL;
+  recorder_create_param.pool_id.input         = S0_INPUT_BUF_POOL;
+  recorder_create_param.pool_id.output        = S0_ES_BUF_POOL;
+  recorder_create_param.pool_id.dsp           = S0_ENC_APU_CMD_POOL;
 
   result = AS_CreateMediaRecorder(&recorder_create_param, NULL);
   if (!result)
@@ -944,7 +948,7 @@ static bool app_init_libraries(void)
       return false;
     }
 
-  err = Manager::initPerCpu(mml_data_area, NUM_MEM_POOLS);
+  err = Manager::initPerCpu(mml_data_area, static_pools, pool_num, layout_no);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. 0x%x\n", err);
@@ -953,12 +957,15 @@ static bool app_init_libraries(void)
 
   /* Create static memory pool of VoiceCall. */
 
+  const uint8_t sec_no = AUDIO_SECTION;
   const NumLayout layout_no = MEM_LAYOUT_RECORDER;
-  void* work_va = translatePoolAddrToVa(MEMMGR_WORK_AREA_ADDR);
-  err = Manager::createStaticPools(layout_no,
-                             work_va,
-                             MEMMGR_MAX_WORK_SIZE,
-                             MemoryPoolLayouts[layout_no]);
+  void* work_va = translatePoolAddrToVa(S0_MEMMGR_WORK_AREA_ADDR);
+  const PoolSectionAttr *ptr  = &MemoryPoolLayouts[AUDIO_SECTION][layout_no][0];
+  err = Manager::createStaticPools(sec_no,
+                                   layout_no,
+                                   work_va,
+                                   S0_MEMMGR_WORK_AREA_SIZE,
+                                   ptr);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. %d\n", err);
@@ -982,7 +989,7 @@ static bool app_finalize_libraries(void)
 
   /* Destroy static pools. */
 
-  MemMgrLite::Manager::destroyStaticPools();
+  MemMgrLite::Manager::destroyStaticPools(AUDIO_SECTION);
 
   /* Finalize memory manager. */
 
@@ -1044,7 +1051,6 @@ extern "C" int recorder_main(int argc, char *argv[])
 {
   printf("Start AudioRecorder example\n");
 
-  
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
 
   if (!app_init_libraries())

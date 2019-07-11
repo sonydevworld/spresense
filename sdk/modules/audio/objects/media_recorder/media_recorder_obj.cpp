@@ -476,7 +476,6 @@ void MediaRecorderObjectTask::illegal(MsgPacket *msg)
   reply(table[idx], msg->getType(), AS_ECODE_STATE_VIOLATION);
 }
 
-
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::activate(MsgPacket *msg)
 {
@@ -669,7 +668,6 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 uint32_t MediaRecorderObjectTask::initEnc(AsInitRecorderParam *param)
 {
-
   bool result = true;
   uint32_t apu_result = AS_ECODE_OK;
   uint32_t dsp_inf = 0;
@@ -1879,29 +1877,16 @@ bool MediaRecorderObjectTask::isNeedUpsampling(int32_t sampling_rate)
  ****************************************************************************/
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
-{
-  return AS_CreateMediaRecorder(param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb attcb)
+static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t pool_id, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
   MEDIA_RECORDER_REG_ATTCB(attcb);
 
-  /* Parameter check */
-
-  if (param == NULL)
-    {
-      return false;
-    }
-
   /* Create */
 
-  s_msgq_id = param->msgq_id;
-  s_pool_id = param->pool_id;
+  s_msgq_id = msgq_id;
+  s_pool_id = pool_id;
 
   /* Reset Message queue. */
 
@@ -1921,6 +1906,56 @@ bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb
     }
 
   return true;
+}
+
+/*
+ * The following tree functions are Old functions for compatibility.
+ */
+
+static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_old_t pool_id, AudioAttentionCb attcb)
+{
+  AsRecorderPoolId_t tmp;
+  tmp.input.sec = tmp.output.sec = tmp.dsp.sec = 0;
+  tmp.input.pool  = pool_id.input;
+  tmp.output.pool = pool_id.output;
+  tmp.dsp.pool    = pool_id.dsp;
+
+  return CreateMediaRecorder(msgq_id, tmp, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      return false;
+    }
+
+  return CreateMediaRecorder(param->msgq_id,param->pool_id,attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param)
+{
+  return AS_CreateMediaRecorder(param, NULL);
+}
+
+/*
+ * New functions for multi-section memory layout.
+ */
+
+bool AS_CreateMediaRecorder(FAR AsCreateRecorderParams_t *param, AudioAttentionCb attcb)
+{
+  /* Parameter check */
+
+  if (param == NULL)
+    {
+      return false;
+    }
+
+  return CreateMediaRecorder(param->msgq_id,param->pool_id,attcb);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -196,6 +196,24 @@ typedef struct
    *              Effective only when use postfilter
    */
 
+  MemMgrLite::PoolId render_path0_filter_pcm;
+  MemMgrLite::PoolId render_path1_filter_pcm;
+
+  /*! \brief [in] Memory pool id of dsp command data
+   *              Effective only when use postfilter
+   */
+
+  MemMgrLite::PoolId render_path0_filter_dsp;
+  MemMgrLite::PoolId render_path1_filter_dsp;
+
+} AsOutputMixPoolId_t;
+
+typedef struct
+{
+  /*! \brief [in] Memory pool id of pcm data
+   *              Effective only when use postfilter
+   */
+
   uint8_t render_path0_filter_pcm;
   uint8_t render_path1_filter_pcm;
 
@@ -206,8 +224,7 @@ typedef struct
   uint8_t render_path0_filter_dsp;
   uint8_t render_path1_filter_dsp;
 
-} AsOutputMixPoolId_t;
-
+} AsOutputMixPoolId_old_t;
 
 /** Activate function parameter */
 
@@ -219,9 +236,21 @@ typedef struct
 
   /*! \brief [in] ID of memory pool for processing data */
 
-  AsOutputMixPoolId_t   pool_id;
+  AsOutputMixPoolId_old_t   pool_id;
 
 } AsCreateOutputMixParam_t;
+
+typedef struct
+{
+  /*! \brief [in] ID for sending messages to each function */
+
+  AsOutputMixMsgQueId_t msgq_id;
+
+  /*! \brief [in] ID of memory pool for processing data */
+
+  AsOutputMixPoolId_t   pool_id;
+
+} AsCreateOutputMixParams_t;
 
 /** Activate function parameter */
 
@@ -350,7 +379,6 @@ typedef struct
     AsInitPostProc          initpp_param;
     AsSetPostProc           setpp_param;
   };
-
 } OutputMixerCommand;
 
 /****************************************************************************
@@ -378,6 +406,9 @@ typedef struct
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param,
                           AudioAttentionCb attcb);
 
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param,
+                          AudioAttentionCb attcb);
+
 __attribute__((deprecated(
                  "\n \
                   \n Deprecated create API is used. \
@@ -386,6 +417,8 @@ __attribute__((deprecated(
                   \n \
                   \n")))
 bool AS_CreateOutputMixer(FAR AsCreateOutputMixParam_t *param);
+
+bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param);
 
 /**
  * @brief Activate audio output mixer
