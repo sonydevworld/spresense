@@ -59,7 +59,7 @@ void MQTTSslInit(MQTTSocket* n)
   mbedtls_pk_init(&pkey);
 
   // Set up for random bits generation
-  if ((r = mbedtls_ctr_drbg_seed(&g_ctr_drbg, NULL, &g_entropy,
+  if ((r = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
                                  (const unsigned char *)pers, strlen(pers))) != 0) {
     goto exit;
   }
@@ -174,7 +174,7 @@ int MQTTSslConnect(MQTTSocket* n, char* hostname)
   if ((ret = mbedtls_ssl_set_hostname(mqtt_context, hostname)) != 0) {
     return -1;
   }
-  mbedtls_ssl_set_bio(mqtt_context, &n->mqtt_net_context, NULL, NULL, NULL);
+  mbedtls_ssl_set_bio(mqtt_context, &n->mqtt_net_context, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout);
 
   if ((ret = mbedtls_ssl_handshake(mqtt_context)) != 0) {
     mbedtls_printf("TLS handshake failed\n");
