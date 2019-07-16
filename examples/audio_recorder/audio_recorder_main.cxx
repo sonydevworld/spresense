@@ -54,6 +54,7 @@
 #include "memutils/message/Message.h"
 #include "audio/audio_high_level_api.h"
 #include <audio/utilities/wav_containerformat.h>
+#include <audio/utilities/frame_samples.h>
 #include "include/msgq_id.h"
 #include "include/mem_layout.h"
 #include "include/memory_layout.h"
@@ -659,22 +660,6 @@ static bool app_set_recording_param(codec_type_e codec_type,
   return true;
 }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
-static bool app_en_preprocess(void)
-{
-  AudioCommand command;
-  command.header.packet_length = LENGTH_SETMFETYPE;
-  command.header.command_code  = AUDCMD_SETMFETYPE;
-  command.header.sub_code      = 0x00;
-  command.set_mfetype_param.preproc_type = AsMicFrontendPreProcUserCustom;
-  AS_SendAudioCommand(&command);
-
-  AudioResult result;
-  AS_ReceiveAudioResult(&result);
-  return printAudCmdResult(command.header.command_code, result);
-}
-#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
-
 static bool app_set_recorder_status(void)
 {
   AudioCommand command;
@@ -685,6 +670,29 @@ static bool app_set_recorder_status(void)
   command.set_recorder_status_param.input_device_handler  = 0x00;
   command.set_recorder_status_param.output_device         = AS_SETRECDR_STS_OUTPUTDEVICE_RAM;
   command.set_recorder_status_param.output_device_handler = &s_recorder_info.fifo.output_device;
+  AS_SendAudioCommand(&command);
+
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+
+static bool app_init_micfrontend(uint8_t preproc_type,
+                                 const char *dsp_name)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INIT_MICFRONTEND;
+  command.header.command_code  = AUDCMD_INIT_MICFRONTEND;
+  command.header.sub_code      = 0x00;
+  command.init_micfrontend_param.ch_num       = s_recorder_info.file.channel_number;
+  command.init_micfrontend_param.bit_length   = s_recorder_info.file.bitwidth;
+  command.init_micfrontend_param.samples      = getCapSampleNumPerFrame(s_recorder_info.file.codec_type,
+                                                                        s_recorder_info.file.sampling_rate);
+  command.init_micfrontend_param.preproc_type = preproc_type;
+  snprintf(command.init_micfrontend_param.preprocess_dsp_path,
+           AS_PREPROCESS_FILE_PATH_LEN,
+           "%s", dsp_name);
+  command.init_micfrontend_param.data_dest = AsMicFrontendDataToRecorder;
   AS_SendAudioCommand(&command);
 
   AudioResult result;
@@ -1113,16 +1121,6 @@ extern "C" int recorder_main(int argc, char *argv[])
       return 1;
     }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
-  /* Enable preprocess. */
-
-  if (!app_en_preprocess())
-    {
-      printf("Error: app_en_preprocess() failure.\n");
-      return 1;
-    }
-#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
-
   /* Set recorder operation mode. */
 
   if (!app_set_recorder_status())
@@ -1139,6 +1137,20 @@ extern "C" int recorder_main(int argc, char *argv[])
                          BITWIDTH_16BIT))
     {
       printf("Error: app_init_recorder() failure.\n");
+      return 1;
+    }
+
+  /* Initialize MicFrontend. */
+
+  if (!app_init_micfrontend(
+#ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
+                            AsMicFrontendPreProcUserCustom,
+#else /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
+                            AsMicFrontendPreProcThrough,
+#endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
+                            "/mnt/sd0/BIN/PREPROC"))
+    {
+      printf("Error: app_init_micfrontend() failure.\n");
       return 1;
     }
 
