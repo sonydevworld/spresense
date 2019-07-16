@@ -114,9 +114,9 @@
 /** @name Command Effector Function code */
 /** @{ */
 
-/*! \brief Command Code: EnablePreProc */
+/*! \brief Command Code: Init Mic Frontend */
 
-#define  AUDCMD_SETMFETYPE    (AUDCMD_CATEGORY_EFFECTOR | 0x01)
+#define  AUDCMD_INIT_MICFRONTEND (AUDCMD_CATEGORY_EFFECTOR | 0x01)
 
 /*! \brief Command Code: InitMFE */
 
@@ -141,7 +141,7 @@
 
 /*! \brief Result Code: EnableProProcessCmplt */
 
-#define  AUDRLT_ENPREPROCCMPLT  AUDCMD_SETMFETYPE
+#define  AUDRLT_INIT_MICFRONTEND  AUDCMD_INIT_MICFRONTEND
 
 /*! \brief Result Code: InitMFECmplt */
 

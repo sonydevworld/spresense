@@ -69,9 +69,9 @@
 /** @name Packet length of command*/
 /** @{ */
 
-/*! \brief Set MFE(PreProcess) type command (#AUDCMD_SETMFETYPE) packet length */
+/*! \brief Init Mic Frontend command (#AUDCMD_INIT_MICFRONTEND) packet length */
 
-#define  LENGTH_SETMFETYPE          4
+#define  LENGTH_INIT_MICFRONTEND    4
 
 /*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
 

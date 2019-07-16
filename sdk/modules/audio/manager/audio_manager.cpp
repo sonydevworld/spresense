@@ -466,7 +466,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
 #endif  /* AS_FEATURE_PLAYER_ENABLE */
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-      case AUDCMD_SETMFETYPE:
+      case AUDCMD_INIT_MICFRONTEND:
       case AUDCMD_INITMFE:
       case AUDCMD_SETMFE:
         msg_type = MSG_AUD_MGR_CMD_MFE;
@@ -1708,21 +1708,38 @@ void AudioManager::outputmixer(AudioCommand &cmd)
 void AudioManager::micfrontend(AudioCommand &cmd)
 {
 #ifdef AS_FEATURE_FRONTEND_ENABLE
-  MicFrontendCommand frontend_command;
+  MicFrontendCommand frontend_command = { 0 };
   MSG_TYPE msg_type;
   bool check = false;
 
   switch (cmd.header.command_code)
     {
-      case AUDCMD_SETMFETYPE:
-        check = packetCheck(LENGTH_INITMFE, AUDCMD_SETMFETYPE, cmd);
+      case AUDCMD_INIT_MICFRONTEND:
+        check = packetCheck(LENGTH_INIT_MICFRONTEND, AUDCMD_INIT_MICFRONTEND, cmd);
         if (!check)
           {
             return;
           }
-        m_preproc_type = cmd.set_mfetype_param.preproc_type; 
-        sendResult(AUDRLT_ENPREPROCCMPLT);
-        return;
+        frontend_command.init_param.channel_number = cmd.init_micfrontend_param.ch_num;
+        frontend_command.init_param.bit_length = cmd.init_micfrontend_param.bit_length;
+        frontend_command.init_param.samples_per_frame = cmd.init_micfrontend_param.samples;
+        frontend_command.init_param.preproc_type = cmd.init_micfrontend_param.preproc_type;
+        snprintf(frontend_command.init_param.dsp_path,
+                 sizeof(frontend_command.init_param.dsp_path),
+                 "%s", cmd.init_micfrontend_param.preprocess_dsp_path);
+        frontend_command.init_param.data_path = AsDataPathMessage;
+        if (cmd.init_micfrontend_param.data_dest == AsMicFrontendDataToRecorder)
+          {
+            frontend_command.init_param.dest.msg.msgqid  = s_rcdMid;
+            frontend_command.init_param.dest.msg.msgtype = MSG_AUD_MRC_CMD_ENCODE;
+          }
+        else
+          {
+            frontend_command.init_param.dest.msg.msgqid  = s_rcgMid;
+            frontend_command.init_param.dest.msg.msgtype = MSG_AUD_RCG_EXEC;
+          }
+        msg_type = MSG_AUD_MFE_CMD_INIT;
+        break;
 
       case AUDCMD_INITMFE:
         check = packetCheck(LENGTH_INITMFE, AUDCMD_INITMFE, cmd);
@@ -1786,26 +1803,8 @@ void AudioManager::recorder(AudioCommand &cmd)
           {
             return;
           }
-
-        /* Struct FrontendObject Init parameter */
-
-        frontend_command.init_param.channel_number    = cmd.recorder.init_param.channel_number;
-        frontend_command.init_param.bit_length        = cmd.recorder.init_param.bit_length;
-        frontend_command.init_param.samples_per_frame =
-          getCapSampleNumPerFrame(cmd.recorder.init_param.codec_type,
-                                  cmd.recorder.init_param.sampling_rate);
-        frontend_command.init_param.preproc_type = m_preproc_type;
-        snprintf(frontend_command.init_param.dsp_path,
-                 AS_PREPROCESS_FILE_PATH_LEN,
-                 "%s/PREPROC",
-                 CONFIG_AUDIOUTILS_DSP_MOUNTPT);
-        frontend_command.init_param.data_path         = AsDataPathMessage;
-        frontend_command.init_param.dest.msg.msgqid   = s_rcdMid;
-        frontend_command.init_param.dest.msg.msgtype  = MSG_AUD_MRC_CMD_ENCODE;
-
         rcd_msg_type = MSG_AUD_MRC_CMD_INIT;
-        fed_msg_type = MSG_AUD_MFE_CMD_INIT;
-        target = TargetRecorder | TargetFrontend;
+        target = TargetRecorder;
         break;
 
       case AUDCMD_STARTREC:
@@ -2566,33 +2565,18 @@ void AudioManager::recognizer(AudioCommand &cmd)
             return;
           }
 
-        /* Init MicFrontend */
-
-        frontend_command.init_param.channel_number = cmd.init_recognizer.ch_num;
-        frontend_command.init_param.bit_length = cmd.init_recognizer.bit_length;
-        frontend_command.init_param.samples_per_frame = cmd.init_recognizer.samples;
-        frontend_command.init_param.preproc_type = m_preproc_type;
-        snprintf(frontend_command.init_param.dsp_path,
-                 AS_PREPROCESS_FILE_PATH_LEN,
-                 "%s/PREPROC",
-                 CONFIG_AUDIOUTILS_DSP_MOUNTPT);
-        frontend_command.init_param.data_path         = AsDataPathMessage;
-        frontend_command.init_param.dest.msg.msgqid   = s_rcgMid;
-        frontend_command.init_param.dest.msg.msgtype  = MSG_AUD_RCG_EXEC;
-        fed_msg_type = MSG_AUD_MFE_CMD_INIT;
-
         /* Init Recognizer */
 
         recognizer_command.init_param.type        = cmd.init_recognizer.recognizer_type;
-        strncpy(recognizer_command.init_param.dsp_path,
-                cmd.init_recognizer.recognizer_dsp_path,
-                AS_RECOGNIZER_FILE_PATH_LEN - 1);
+        snprintf(recognizer_command.init_param.dsp_path,
+                 sizeof(recognizer_command.init_param.dsp_path),
+                 "%s", cmd.init_recognizer.recognizer_dsp_path);
         recognizer_command.init_param.notify_path = AsNotifyPathCallback;
         recognizer_command.init_param.dest.cb     = recognizer_notify_callback;
         m_rcgfind_cb = cmd.init_recognizer.fcb;
         rcg_msg_type = MSG_AUD_RCG_INIT;
 
-        target = TargetFrontend | TargetRecognizer;
+        target = TargetRecognizer;
 
         break;
 
@@ -3059,6 +3043,10 @@ void AudioManager::cmpltOnRecorder(const AudioMngCmdCmpltResult &cmd)
         m_SubState = AS_MNG_SUB_STATUS_RECORDERREADY;
         break;
 
+      case AUDCMD_INIT_MICFRONTEND:
+        result_code = AUDRLT_INIT_MICFRONTEND;
+        break;
+ 
       case AUDCMD_INITMFE:
         result_code = AUDRLT_INITMFECMPLT;
         break;
@@ -3172,6 +3160,10 @@ void AudioManager::cmpltOnRecognizer(const AudioMngCmdCmpltResult &cmd)
         result_code = AUDRLT_SETRECOGNIZERPROCCMPLT;
         break;
 
+      case AUDCMD_INIT_MICFRONTEND:
+        result_code = AUDRLT_INIT_MICFRONTEND;
+        break;
+      
       case AUDCMD_INITMFE:
         result_code = AUDRLT_INITMFECMPLT;
         break;
@@ -4139,7 +4131,7 @@ uint8_t AudioManager::convertMicFrontendEvent(AsMicFrontendEvent event)
   {
     AUDCMD_SETRECORDERSTATUS,
     AUDCMD_SETREADYSTATUS,
-    AUDCMD_INITREC,
+    AUDCMD_INIT_MICFRONTEND,
     AUDCMD_STARTREC,
     AUDCMD_STOPREC,
     AUDCMD_INITMFE,
@@ -4150,7 +4142,7 @@ uint8_t AudioManager::convertMicFrontendEvent(AsMicFrontendEvent event)
   {
     AUDCMD_SETRECOGNIZERSTATUS,
     AUDCMD_SETREADYSTATUS,
-    AUDCMD_INITRECOGNIZER,
+    AUDCMD_INIT_MICFRONTEND,
     AUDCMD_STARTRECOGNIZER,
     AUDCMD_STOPRECOGNIZER,
     AUDCMD_INITMFE,
