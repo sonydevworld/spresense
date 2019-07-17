@@ -399,6 +399,12 @@ void RecognizerObject::stop(MsgPacket *msg)
 
   msg->moveParam<RecognizerCommand>();
 
+  if (m_p_rcgproc_instance == NULL)
+    {
+      reply(AsRecognizerEventStop, msg->getType(), AS_ECODE_DSP_STOP_ERROR);
+      return;
+    }
+
   FlushCustomProcParam flush;
 
   /* Allocate output buffer */
@@ -428,6 +434,14 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
 
   RECOGNIZER_OBJ_DBG("Init Recognizer Proc:\n");
 
+  if (m_p_rcgproc_instance == NULL)
+    {
+      reply(AsRecognizerEventInitRecognizerProc,
+            msg->getType(),
+            AS_ECODE_DSP_SET_ERROR);
+      return;
+    }
+
   InitCustomProcParam param;
 
   param.is_userdraw = true;
@@ -453,6 +467,14 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
 
   RECOGNIZER_OBJ_DBG("Set Recognizer Proc:\n");
 
+  if (m_p_rcgproc_instance == NULL)
+    {
+      reply(AsRecognizerEventInitRecognizerProc,
+            msg->getType(),
+            AS_ECODE_DSP_SET_ERROR);
+      return;
+    }
+
   SetCustomProcParam param;
 
   param.is_userdraw = true;
@@ -476,6 +498,12 @@ void RecognizerObject::exec(MsgPacket *msg)
   ExecCustomProcParam exec;
 
   exec.input = msg->moveParam<AsPcmDataParam>();
+
+  if (m_p_rcgproc_instance == NULL)
+    {
+      RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return;
+    }
 
   /* Allocate output buffer */
 
@@ -508,7 +536,7 @@ void RecognizerObject::recognizeDoneOnReady(MsgPacket *msg)
   RecognizerObject::RecognitionDoneCmd recog_result =
     msg->moveParam<RecognizerObject::RecognitionDoneCmd>();
 
-  if (!m_p_rcgproc_instance)
+  if (m_p_rcgproc_instance == NULL)
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
@@ -535,7 +563,7 @@ void RecognizerObject::recognizeDoneOnActive(MsgPacket *msg)
   RecognizerObject::RecognitionDoneCmd recog_result =
     msg->moveParam<RecognizerObject::RecognitionDoneCmd>();
 
-  if (!m_p_rcgproc_instance)
+  if (m_p_rcgproc_instance == NULL)
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
@@ -581,7 +609,7 @@ void RecognizerObject::recognizeDoneOnStopping(MsgPacket *msg)
   RecognizerObject::RecognitionDoneCmd recog_result =
     msg->moveParam<RecognizerObject::RecognitionDoneCmd>();
 
-  if (!m_p_rcgproc_instance)
+  if (m_p_rcgproc_instance == NULL)
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;

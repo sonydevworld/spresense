@@ -545,6 +545,11 @@ uint32_t MicFrontEndObject::loadComponent(AsMicFrontendPreProcType type, char *d
         break;
     }
 
+  if (m_p_preproc_instance == NULL)
+    {
+      return AS_ECODE_DSP_LOAD_ERROR;
+    }
+
   /* Activate proprocess proc */
 
   uint32_t dsp_inf = 0;
@@ -704,6 +709,14 @@ void MicFrontEndObject::initPreproc(MsgPacket *msg)
 
   MIC_FRONTEND_DBG("Init Pre Proc:\n");
 
+  if (m_p_preproc_instance == NULL)
+    {
+      reply(AsMicFrontendEventInitPreProc,
+            msg->getType(),
+            AS_ECODE_DSP_SET_ERROR);
+      return;
+    }
+
   InitCustomProcParam param;
 
   param.is_userdraw = true;
@@ -729,6 +742,14 @@ void MicFrontEndObject::setPreproc(MsgPacket *msg)
     msg->moveParam<MicFrontendCommand>().setpreproc_param;
 
   MIC_FRONTEND_DBG("Set Pre Proc:\n");
+
+  if (m_p_preproc_instance == NULL)
+    {
+      reply(AsMicFrontendEventInitPreProc,
+            msg->getType(),
+            AS_ECODE_DSP_SET_ERROR);
+      return;
+    }
 
   SetCustomProcParam param;
 
@@ -804,7 +825,7 @@ void MicFrontEndObject::preprocDoneOnActive(MsgPacket *msg)
 
   /* Check PreProcess instance exsits */
 
-  if (!m_p_preproc_instance)
+  if (m_p_preproc_instance == NULL)
     {
       MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
@@ -842,7 +863,7 @@ void MicFrontEndObject::preprocDoneOnStop(MsgPacket *msg)
 
   /* Check PreProcess instance exsits */
 
-  if (!m_p_preproc_instance)
+  if (m_p_preproc_instance == NULL)
     {
       MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
@@ -936,7 +957,7 @@ void MicFrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
 
   /* Check PreProcess instance exsits */
 
-  if (!m_p_preproc_instance)
+  if (m_p_preproc_instance == NULL)
     {
       MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return;
@@ -1449,6 +1470,12 @@ uint32_t MicFrontEndObject::initParamCheck(const MicFrontendCommand& cmd)
 /*--------------------------------------------------------------------------*/
 bool MicFrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 {
+  if (m_p_preproc_instance == NULL)
+    {
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return false;
+    }
+
   ExecCustomProcParam exec;
 
   exec.input.identifier = 0;
@@ -1500,6 +1527,12 @@ bool MicFrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
 /*--------------------------------------------------------------------------*/
 bool MicFrontEndObject::flushPreProc(void)
 {
+  if (m_p_preproc_instance == NULL)
+    {
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return false;
+    }
+
   FlushCustomProcParam flush;
 
   /* Set preprocess flush output area */
