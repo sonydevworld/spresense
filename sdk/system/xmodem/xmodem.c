@@ -34,7 +34,20 @@
 
  */
 
-#include "crc16.h"
+//#include "crc16.h"
+
+#include <sdk/config.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sched.h>
+#include <errno.h>
+#include <crc16.h>
+
+#include "system/xmodem.h"
 
 #define SOH  0x01
 #define STX  0x02
@@ -47,12 +60,128 @@
 #define DLY_1S 1000
 #define MAXRETRANS 25
 
+#define MAXBUFFSZ  1030 /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
+
+#define xm_timerstop(h) xm_timerstart(h,0)
+
+#ifdef CONFIG_DEBUG_XMODEM
+#  define   xmdbg(format, ...)   fprintf(stderr, format, ##__VA_ARGS__)
+#else
+#  ifdef CONFIG_CPP_HAVE_VARARGS
+#    define xmdbg(x...)
+#  else
+#    define xmdbg                (void)
+#  endif
+#endif
+
+struct xmhandle_s
+{
+  int          fd;
+  timer_t      timer;
+  unsigned int flags;
+};
+
+static int xm_timerinit(struct xmhandle_s *handle)
+{
+	int ret;
+	int errorcode;
+
+	ret = timer_create(CLOCK_REALTIME, NULL, &handle->timer);
+	if (ret < 0) {
+		errorcode = errno;
+		xmdbg("ERROR: Failed to create a timer: %d\n", errorcode);
+		return -errorcode;
+	}
+
+	return 0;
+}
+
+static int xm_timerstart(struct xmhandle_s *handle, unsigned int msec)
+{
+	struct itimerspec todelay;
+	int ret;
+	int errorcode;
+
+	/* Start, restart, or stop the timer */
+
+	todelay.it_interval.tv_sec  = 0;   /* Nonrepeating */
+	todelay.it_interval.tv_nsec = 0;
+	todelay.it_value.tv_sec     = msec / 1000;
+	todelay.it_value.tv_nsec    = (msec % 1000) * 1000 * 1000;
+
+	ret = timer_settime(handle->timer, 0, &todelay, NULL);
+	if (ret < 0) {
+		errorcode = errno;
+		xmdbg("ERROR: Failed to set the timer: %d\n", errorcode);
+		return -errorcode;
+	}
+
+	return 0;
+}
+
+static int xm_timerrelease(struct xmhandle_s *handle)
+{
+	int ret;
+	int errorcode;
+
+	ret = timer_delete(handle->timer);
+	if (ret < 0) {
+		errorcode = errno;
+		xmdbg("ERROR: Failed to delete a timer: %d\n", errorcode);
+		return -errorcode;
+	}
+
+	return 0;
+}
+
+static int _inbyte(struct xmhandle_s *handle, unsigned short timeout)
+{
+	char c;
+	ssize_t nread;
+	int errorcode;
+
+	xm_timerstart(handle, timeout);
+
+	nread = read(handle->fd, &c, sizeof(c));
+
+	xm_timerstop(handle);
+
+	if (nread < 0) {
+		errorcode = errno;
+		if (errorcode != EINTR) {
+			xmdbg("ERROR: Failed to read device: %d\n", errorcode);
+		}
+		return -errorcode;
+	}
+
+	return c;
+}
+
+static int _outbyte(struct xmhandle_s *handle, char data)
+{
+	ssize_t nwrite;
+	char c = data;
+	int errorcode;
+
+	nwrite = write(handle->fd, &c, sizeof(c));
+	if (nwrite < 0) {
+		errorcode = errno;
+		xmdbg("ERROR: Failed to write device: %d\n", errorcode);
+		return -errorcode;
+	}
+
+	return nwrite;
+}
+
+
 static int check(int crc, const unsigned char *buf, int sz)
 {
 	if (crc) {
-		unsigned short crc = crc16_ccitt(buf, sz);
+		//unsigned short crc = crc16_ccitt(buf, sz);
+		unsigned short ccrc = crc16(buf, sz);
 		unsigned short tcrc = (buf[sz]<<8)+buf[sz+1];
-		if (crc == tcrc)
+		//if (crc == tcrc)
+		if (ccrc == tcrc)
 			return 1;
 	}
 	else {
@@ -68,26 +197,75 @@ static int check(int crc, const unsigned char *buf, int sz)
 	return 0;
 }
 
-static void flushinput(void)
+//static void flushinput(void)
+static void flushinput(struct xmhandle_s *handle)
 {
-	while (_inbyte(((DLY_1S)*3)>>1) >= 0)
+	//while (_inbyte(((DLY_1S)*3)>>1) >= 0)
+	while (_inbyte(handle, ((DLY_1S)*3)>>1) >= 0)
 		;
 }
 
-int xmodemReceive(unsigned char *dest, int destsz)
+XMHANDLE xmodemHandleInit(int fd)
 {
-	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
+	struct xmhandle_s *handle;
+	int ret;
+
+	handle = (struct xmhandle_s*)malloc(sizeof(struct xmhandle_s));
+	if (!handle) {
+		xmdbg("ERROR: Failed to allocate memory\n");
+		return NULL;
+	}
+	memset(handle, 0, sizeof(struct xmhandle_s));
+
+	handle->fd = fd;
+
+	ret = xm_timerinit(handle);
+	if (ret < 0) {
+		free(handle);
+		return NULL;
+	}
+
+	return (XMHANDLE)handle;
+}
+
+int xmodemHandleRelease(XMHANDLE handle)
+{
+	struct xmhandle_s *hdl = handle;
+
+	if (hdl) {
+		xm_timerrelease(hdl);
+		free(hdl);
+	}
+
+	return 0;
+}
+
+//int xmodemReceive(unsigned char *dest, int destsz)
+int xmodemReceive(XMHANDLE handle, unsigned char *dest, int destsz)
+{
+//	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
+	unsigned char *xbuff;
 	unsigned char *p;
 	int bufsz, crc = 0;
 	unsigned char trychar = 'C';
 	unsigned char packetno = 1;
 	int i, c, len = 0;
 	int retry, retrans = MAXRETRANS;
+	struct xmhandle_s *hdl = handle;
 
+	if (!hdl) {
+		return XM_ERR_INVAL; /* invalid parameter */
+	}
+	xbuff = (unsigned char *)malloc(MAXBUFFSZ);
+	if (!xbuff) {
+		return XM_ERR_NOSPC; /* no space left on device */
+	}
 	for(;;) {
 		for( retry = 0; retry < 16; ++retry) {
-			if (trychar) _outbyte(trychar);
-			if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
+			//if (trychar) _outbyte(trychar);
+			if (trychar) _outbyte(hdl, trychar);
+			//if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
+			if ((c = _inbyte(hdl, (DLY_1S)<<1)) >= 0) {
 				switch (c) {
 				case SOH:
 					bufsz = 128;
@@ -96,14 +274,22 @@ int xmodemReceive(unsigned char *dest, int destsz)
 					bufsz = 1024;
 					goto start_recv;
 				case EOT:
-					flushinput();
-					_outbyte(ACK);
+					//flushinput();
+					flushinput(hdl);
+					//_outbyte(ACK);
+					_outbyte(hdl, ACK);
+					free(xbuff);
 					return len; /* normal end */
 				case CAN:
-					if ((c = _inbyte(DLY_1S)) == CAN) {
-						flushinput();
-						_outbyte(ACK);
-						return -1; /* canceled by remote */
+					//if ((c = _inbyte(DLY_1S)) == CAN) {
+					if ((c = _inbyte(hdl, DLY_1S)) == CAN) {
+						//flushinput();
+						flushinput(hdl);
+						//_outbyte(ACK);
+						_outbyte(hdl, ACK);
+						free(xbuff);
+						//return -1; /* canceled by remote */
+						return XM_ERR_CANCEL; /* canceled by remote */
 					}
 					break;
 				default:
@@ -112,11 +298,17 @@ int xmodemReceive(unsigned char *dest, int destsz)
 			}
 		}
 		if (trychar == 'C') { trychar = NAK; continue; }
-		flushinput();
-		_outbyte(CAN);
-		_outbyte(CAN);
-		_outbyte(CAN);
-		return -2; /* sync error */
+		//flushinput();
+		flushinput(hdl);
+		//_outbyte(CAN);
+		//_outbyte(CAN);
+		//_outbyte(CAN);
+		_outbyte(hdl, CAN);
+		_outbyte(hdl, CAN);
+		_outbyte(hdl, CAN);
+		free(xbuff);
+		//return -2; /* sync error */
+		return XM_ERR_NOSYNC; /* sync error */
 
 	start_recv:
 		if (trychar == 'C') crc = 1;
@@ -124,7 +316,8 @@ int xmodemReceive(unsigned char *dest, int destsz)
 		p = xbuff;
 		*p++ = c;
 		for (i = 0;  i < (bufsz+(crc?1:0)+3); ++i) {
-			if ((c = _inbyte(DLY_1S)) < 0) goto reject;
+			//if ((c = _inbyte(DLY_1S)) < 0) goto reject;
+			if ((c = _inbyte(hdl, DLY_1S)) < 0) goto reject;
 			*p++ = c;
 		}
 
@@ -142,32 +335,53 @@ int xmodemReceive(unsigned char *dest, int destsz)
 				retrans = MAXRETRANS+1;
 			}
 			if (--retrans <= 0) {
-				flushinput();
-				_outbyte(CAN);
-				_outbyte(CAN);
-				_outbyte(CAN);
-				return -3; /* too many retry error */
+				//flushinput();
+				flushinput(hdl);
+				//_outbyte(CAN);
+				//_outbyte(CAN);
+				//_outbyte(CAN);
+				_outbyte(hdl, CAN);
+				_outbyte(hdl, CAN);
+				_outbyte(hdl, CAN);
+				free(xbuff);
+				//return -3; /* too many retry error */
+				return XM_ERR_RETRYOUT; /* too many retry error */
 			}
-			_outbyte(ACK);
+			//_outbyte(ACK);
+			_outbyte(hdl, ACK);
 			continue;
 		}
 	reject:
-		flushinput();
-		_outbyte(NAK);
+		//flushinput();
+		flushinput(hdl);
+		//_outbyte(NAK);
+		_outbyte(hdl, NAK);
 	}
 }
 
-int xmodemTransmit(unsigned char *src, int srcsz)
+//int xmodemTransmit(unsigned char *src, int srcsz)
+int xmodemTransmit(XMHANDLE handle, unsigned char *src, int srcsz)
 {
-	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
+//	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
+	unsigned char *xbuff;
 	int bufsz, crc = -1;
 	unsigned char packetno = 1;
 	int i, c, len = 0;
 	int retry;
+	struct xmhandle_s *hdl = handle;
+
+	if (!hdl) {
+		return XM_ERR_INVAL; /* invalid parameter */
+	}
+	xbuff = malloc(MAXBUFFSZ);
+	if (!xbuff) {
+		return XM_ERR_NOSPC; /* no space left on device */
+	}
 
 	for(;;) {
 		for( retry = 0; retry < 16; ++retry) {
-			if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
+			//if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
+			if ((c = _inbyte(hdl, (DLY_1S)<<1)) >= 0) {
 				switch (c) {
 				case 'C':
 					crc = 1;
@@ -176,10 +390,15 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 					crc = 0;
 					goto start_trans;
 				case CAN:
-					if ((c = _inbyte(DLY_1S)) == CAN) {
-						_outbyte(ACK);
-						flushinput();
-						return -1; /* canceled by remote */
+					//if ((c = _inbyte(DLY_1S)) == CAN) {
+					if ((c = _inbyte(hdl, DLY_1S)) == CAN) {
+						//_outbyte(ACK);
+						_outbyte(hdl, ACK);
+						//flushinput();
+						flushinput(hdl);
+						free(xbuff);
+						//return -1; /* canceled by remote */
+						return XM_ERR_CANCEL; /* canceled by remote */
 					}
 					break;
 				default:
@@ -187,11 +406,17 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 				}
 			}
 		}
-		_outbyte(CAN);
-		_outbyte(CAN);
-		_outbyte(CAN);
-		flushinput();
-		return -2; /* no sync */
+		//_outbyte(CAN);
+		//_outbyte(CAN);
+		//_outbyte(CAN);
+		_outbyte(hdl, CAN);
+		_outbyte(hdl, CAN);
+		_outbyte(hdl, CAN);
+		//flushinput();
+		flushinput(hdl);
+		free(xbuff);
+		//return -2; /* no sync */
+		return XM_ERR_NOSYNC; /* no sync */
 
 		for(;;) {
 		start_trans:
@@ -210,7 +435,8 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 					if (c < bufsz) xbuff[3+c] = CTRLZ;
 				}
 				if (crc) {
-					unsigned short ccrc = crc16_ccitt(&xbuff[3], bufsz);
+					//unsigned short ccrc = crc16_ccitt(&xbuff[3], bufsz);
+					unsigned short ccrc = crc16(&xbuff[3], bufsz);
 					xbuff[bufsz+3] = (ccrc>>8) & 0xFF;
 					xbuff[bufsz+4] = ccrc & 0xFF;
 				}
@@ -223,19 +449,26 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 				}
 				for (retry = 0; retry < MAXRETRANS; ++retry) {
 					for (i = 0; i < bufsz+4+(crc?1:0); ++i) {
-						_outbyte(xbuff[i]);
+						//_outbyte(xbuff[i]);
+						_outbyte(hdl, xbuff[i]);
 					}
-					if ((c = _inbyte(DLY_1S)) >= 0 ) {
+					//if ((c = _inbyte(DLY_1S)) >= 0 ) {
+					if ((c = _inbyte(hdl, DLY_1S)) >= 0 ) {
 						switch (c) {
 						case ACK:
 							++packetno;
 							len += bufsz;
 							goto start_trans;
 						case CAN:
-							if ((c = _inbyte(DLY_1S)) == CAN) {
-								_outbyte(ACK);
-								flushinput();
-								return -1; /* canceled by remote */
+							//if ((c = _inbyte(DLY_1S)) == CAN) {
+							if ((c = _inbyte(hdl, DLY_1S)) == CAN) {
+								//_outbyte(ACK);
+								_outbyte(hdl, ACK);
+								//flushinput();
+								flushinput(hdl);
+								free(xbuff);
+								//return -1; /* canceled by remote */
+								return XM_ERR_CANCEL; /* canceled by remote */
 							}
 							break;
 						case NAK:
@@ -244,19 +477,30 @@ int xmodemTransmit(unsigned char *src, int srcsz)
 						}
 					}
 				}
-				_outbyte(CAN);
-				_outbyte(CAN);
-				_outbyte(CAN);
-				flushinput();
-				return -4; /* xmit error */
+				//_outbyte(CAN);
+				//_outbyte(CAN);
+				//_outbyte(CAN);
+				_outbyte(hdl, CAN);
+				_outbyte(hdl, CAN);
+				_outbyte(hdl, CAN);
+				//flushinput();
+				flushinput(hdl);
+				free(xbuff);
+				//return -4; /* xmit error */
+				return XM_ERR_XMIT; /* xmit error */
 			}
 			else {
 				for (retry = 0; retry < 10; ++retry) {
-					_outbyte(EOT);
-					if ((c = _inbyte((DLY_1S)<<1)) == ACK) break;
+					//_outbyte(EOT);
+					_outbyte(hdl, EOT);
+					//if ((c = _inbyte((DLY_1S)<<1)) == ACK) break;
+					if ((c = _inbyte(hdl, (DLY_1S)<<1)) == ACK) break;
 				}
-				flushinput();
-				return (c == ACK)?len:-5;
+				//flushinput();
+				flushinput(hdl);
+				free(xbuff);
+				//return (c == ACK)?len:-5;
+				return (c == ACK)?len:XM_ERR_XMIT_NOACK;
 			}
 		}
 	}

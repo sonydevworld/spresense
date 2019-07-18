@@ -8,4 +8,15 @@ config SYSTEM_XMODEM
 	default n
 	---help---
 		Enable support for XMODEM.
+if SYSTEM_XMODEM
 
+config DEBUG_XMODEM
+	bool "Xmodem debug"
+	default n
+	---help---
+		Enable Xmodem debug output.  This debug is unrelated to the internal
+		NuttX debug option; it does not use the SYSLOG channel but, instead,
+		outputs debug information on stderr.  Obviously, enabling this
+		option will likely cause you all kinds of problems if you intend to
+		use /dev/console to transfer files!
+endif
