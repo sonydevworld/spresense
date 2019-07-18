@@ -425,15 +425,17 @@ int xmodemTransmit(XMHANDLE handle, unsigned char *src, int srcsz)
 			xbuff[2] = ~packetno;
 			c = srcsz - len;
 			if (c > bufsz) c = bufsz;
-			if (c >= 0) {
-				memset (&xbuff[3], 0, bufsz);
-				if (c == 0) {
-					xbuff[3] = CTRLZ;
-				}
-				else {
+			//if (c >= 0) {
+			if (c > 0) {
+				//memset (&xbuff[3], 0, bufsz);
+				memset (&xbuff[3], CTRLZ, bufsz);
+				//if (c == 0) {
+				//	xbuff[3] = CTRLZ;
+				//}
+				//else {
 					memcpy (&xbuff[3], &src[len], c);
-					if (c < bufsz) xbuff[3+c] = CTRLZ;
-				}
+				//	if (c < bufsz) xbuff[3+c] = CTRLZ;
+				//}
 				if (crc) {
 					//unsigned short ccrc = crc16_ccitt(&xbuff[3], bufsz);
 					unsigned short ccrc = crc16(&xbuff[3], bufsz);
