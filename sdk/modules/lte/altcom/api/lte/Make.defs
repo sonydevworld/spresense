@@ -34,19 +34,11 @@
 ############################################################################
 
 CSRCS += apicmdhdlr_errind.c
-CSRCS += lte_attach_net.c
-CSRCS += lte_dataoff.c
-CSRCS += lte_dataon.c
-CSRCS += lte_detach_net.c
 CSRCS += lte_enterpin.c
 CSRCS += lte_finalize.c
-CSRCS += lte_getapnset.c
 CSRCS += lte_getce.c
-CSRCS += lte_getdataconfig.c
-CSRCS += lte_getdatastat.c
 CSRCS += lte_getedrx.c
 CSRCS += lte_getltime.c
-CSRCS += lte_getnetstat.c
 CSRCS += lte_getpinset.c
 CSRCS += lte_getpsm.c
 CSRCS += lte_imei.c
@@ -57,11 +49,8 @@ CSRCS += lte_phoneno.c
 CSRCS += lte_power.c
 CSRCS += lte_repcellinfo.c
 CSRCS += lte_repevt.c
-CSRCS += lte_repnetstat.c
 CSRCS += lte_repquality.c
-CSRCS += lte_setapn.c
 CSRCS += lte_setce.c
-CSRCS += lte_setdataconfig.c
 CSRCS += lte_setedrx.c
 CSRCS += lte_setpin.c
 CSRCS += lte_setpsm.c
