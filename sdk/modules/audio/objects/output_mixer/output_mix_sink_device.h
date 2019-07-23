@@ -50,7 +50,8 @@
 #include "wien2_internal_packet.h"
 #include "wien2_common_defs.h"
 #include "components/renderer/renderer_component.h"
-#include "components/customproc/postproc_api.h"
+#include "components/customproc/usercustom_component.h"
+#include "components/customproc/thruproc_component.h"
 #include "objects/stream_parser/ram_lpcm_data_source.h"
 #include "objects/stream_parser/mp3_stream_mng.h"
 
@@ -151,7 +152,7 @@ private:
   typedef s_std::Queue<AsPcmDataParam, 10> RenderDataQueue;
   RenderDataQueue m_render_data_queue;
 
-  void *m_p_postfliter_instance;
+  CustomProcBase *m_p_postfliter_instance;
   RenderComponentHandler m_render_comp_handler;
 
   OutputMixerCallback m_callback;

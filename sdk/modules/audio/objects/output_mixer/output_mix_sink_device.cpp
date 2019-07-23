@@ -366,15 +366,34 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
 
   uint32_t dsp_inf = 0;
 
-  AS_postproc_activate(&m_p_postfliter_instance,
-                       m_apu_pool_id,
-                       m_apu_dtq,
-                       postfilter_done_callback,
-                       "POSTPROC",
-                       static_cast<void *>(this),
-                       &dsp_inf,
-                       (cmd.act_param.post_enable == PostFilterEnable)
-                         ? ProcTypeUserDefFilter : ProcTypeThrough);
+  switch (cmd.act_param.post_enable)
+    {
+      case PostFilterEnable:
+        m_p_postfliter_instance = new UserCustomComponent(m_apu_pool_id,
+                                                          m_apu_dtq);
+        break;
+
+      default:
+        m_p_postfliter_instance = new ThruProcComponent();
+        break;
+    }
+
+  if (m_p_postfliter_instance == NULL)
+    {
+      done_param.handle    = cmd.handle;
+      done_param.done_type = OutputMixActDone;
+      done_param.result    = false;
+
+      reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+    }
+
+  char filepath[64];
+  snprintf(filepath, sizeof(filepath), "%s/POSTPROC", CONFIG_AUDIOUTILS_DSP_MOUNTPT);
+
+  m_p_postfliter_instance->activate(postfilter_done_callback,
+                                    filepath,
+                                    static_cast<void *>(this),
+                                    &dsp_inf);
 
   /* Reply */
 
@@ -400,7 +419,9 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
       return;
     }
 
-  AS_postproc_deactivate(m_p_postfliter_instance);
+  m_p_postfliter_instance->deactivate();
+
+  delete m_p_postfliter_instance;
 
   /* Replay */
 
@@ -427,7 +448,7 @@ void OutputMixToHPI2S::input_data_on_ready(MsgPacket* msg)
   exec.input     = input;
   exec.output_mh = input.mh;
 
-  if (!AS_postproc_exec(&exec, m_p_postfliter_instance))
+  if (!m_p_postfliter_instance->exec(exec))
     {
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
@@ -459,7 +480,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
   exec.input     = input;
   exec.output_mh = input.mh;
 
-  if (!AS_postproc_exec(&exec, m_p_postfliter_instance))
+  if (!m_p_postfliter_instance->exec(exec))
     {
       OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
@@ -475,7 +496,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
         }
 
-      if (!AS_postproc_flush(&flush_param, m_p_postfliter_instance))
+      if (!m_p_postfliter_instance->flush(flush_param))
         {
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
           return;
@@ -494,7 +515,7 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
   if (!(post_done.event_type == CustomProcExec)
    && !(post_done.event_type == CustomProcFlush))
     {
-      AS_postproc_recv_done(m_p_postfliter_instance, NULL);
+      m_p_postfliter_instance->recv_done();
       return;
     }
 
@@ -502,7 +523,7 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
   CustomProcCmpltParam cmplt;
 
-  AS_postproc_recv_done(m_p_postfliter_instance, &cmplt);
+  m_p_postfliter_instance->recv_done(&cmplt);
 
   /* Check minimum trans size and send filtered data to renderer */
 
@@ -746,19 +767,19 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
 
   /* Init Postproc (Copy packet to MH internally, and wait return from DSP) */
 
-  bool send_result = AS_postproc_init(&param, m_p_postfliter_instance);
+  bool send_result = m_p_postfliter_instance->init(param);
 
   CustomProcCmpltParam cmplt;
-  AS_postproc_recv_done(m_p_postfliter_instance, &cmplt);
-    
+  m_p_postfliter_instance->recv_done(&cmplt);
+
   /* Reply */
 
   AsOutputMixDoneParam done_param;
-  
+
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixInitPostDone;
   done_param.result    = send_result;
-  
+
   m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_INITMPP, &done_param);
 }
 
@@ -778,16 +799,16 @@ void OutputMixToHPI2S::set_postproc(MsgPacket *msg)
 
   /* Set Postproc (Copy packet to MH internally) */
 
-  bool send_result = AS_postproc_setparam(&param, m_p_postfliter_instance);
+  bool send_result = m_p_postfliter_instance->set(param);
 
   /* Reply (Don't wait reply from DSP because it will take long time) */
 
   AsOutputMixDoneParam done_param;
-  
+
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixSetPostDone;
   done_param.result    = send_result;
- 
+
   m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_SETMPP, &done_param);
 }
 
