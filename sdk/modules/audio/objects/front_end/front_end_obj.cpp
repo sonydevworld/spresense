@@ -523,6 +523,26 @@ void MicFrontEndObject::init(MsgPacket *msg)
         }
     }
 
+  /* Init Samplint Rate Converter. */
+
+  if (m_preproc_type == AsMicFrontendPreProcSampleRateCnv)
+    {
+      InitSrcParam init_src_param;
+
+      init_src_param.param.sample_per_frame = cmd.init_param.samples_per_frame;
+      init_src_param.param.in_fs            =
+        (cxd56_audio_get_clkmode() == CXD56_AUDIO_CLKMODE_HIRES)
+          ? AS_SAMPLINGRATE_192000 : AS_SAMPLINGRATE_48000;
+      init_src_param.param.out_fs           = cmd.init_param.out_fs;
+      init_src_param.param.in_bytelength    =
+        (cmd.init_param.bit_length == AS_BITLENGTH_16) ? 2 : 4;
+      init_src_param.param.out_bytelength   =
+        (cmd.init_param.bit_length == AS_BITLENGTH_16) ? 2 : 4;
+      init_src_param.param.ch_num           = cmd.init_param.channel_number;
+
+      static_cast<SrcWrapComponent * >(m_p_preproc_instance)->init_src(init_src_param);
+    }
+
   /* Reply */
 
   reply(AsMicFrontendEventInit, msg->getType(), AS_ECODE_OK);
@@ -538,6 +558,11 @@ uint32_t MicFrontEndObject::loadComponent(AsMicFrontendPreProcType type, char *d
       case AsMicFrontendPreProcUserCustom:
         m_p_preproc_instance = new UserCustomComponent(m_pool_id.dsp,
                                                        m_msgq_id.dsp);
+        break;
+
+      case AsMicFrontendPreProcSampleRateCnv:
+        m_p_preproc_instance = new SrcWrapComponent(m_pool_id.dsp,
+                                                    m_msgq_id.dsp);
         break;
 
       default:

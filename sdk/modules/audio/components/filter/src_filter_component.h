@@ -142,6 +142,7 @@ public:
   ~SRCComponent() {}
 
   virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
+  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf, bool is_fullpath);
   virtual bool deactivate_apu();
 
   virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)

@@ -1701,6 +1701,7 @@ void AudioManager::micfrontend(AudioCommand &cmd)
         frontend_command.init_param.channel_number = cmd.init_micfrontend_param.ch_num;
         frontend_command.init_param.bit_length = cmd.init_micfrontend_param.bit_length;
         frontend_command.init_param.samples_per_frame = cmd.init_micfrontend_param.samples;
+        frontend_command.init_param.out_fs = cmd.init_micfrontend_param.out_fs;
         frontend_command.init_param.preproc_type = cmd.init_micfrontend_param.preproc_type;
         snprintf(frontend_command.init_param.dsp_path,
                  sizeof(frontend_command.init_param.dsp_path),

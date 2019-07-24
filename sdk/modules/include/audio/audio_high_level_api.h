@@ -978,6 +978,13 @@ typedef struct
 
   uint16_t samples;
 
+  /*! \brief [in] Output Fs
+   *
+   * !! effective only when preproc_type is "AsMicFrontendPreProcSampleRateCnv" !! 
+   */
+
+  uint32_t out_fs;
+
   /*! \brief [in] Select pre process enable 
    *
    * Use #AsMicFrontendPreProcType enum type
