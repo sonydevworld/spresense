@@ -169,7 +169,7 @@ static bool app_create_audio_sub_system(void)
   frontend_create_param.msgq_id.mng         = MSGQ_AUD_MNG;
   frontend_create_param.msgq_id.dsp         = MSGQ_AUD_PREDSP;
   frontend_create_param.pool_id.input       = S0_MIC_IN_BUF_POOL;
-#ifdef CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
+#if defined(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC) || defined(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_SAMPLERATECONV)
   frontend_create_param.pool_id.output      = S0_PREPROC_BUF_POOL;
 #else
   frontend_create_param.pool_id.output      = S0_NULL_POOL;
@@ -293,7 +293,8 @@ static bool app_init_micfrontend(uint32_t sampling_rate,
   command.header.sub_code      = 0x00;
   command.init_micfrontend_param.ch_num       = ch_num;
   command.init_micfrontend_param.bit_length   = bitlength;
-  command.init_micfrontend_param.samples      = 320;
+  command.init_micfrontend_param.samples      = 768;
+  command.init_micfrontend_param.out_fs       = AS_SAMPLINGRATE_16000;
   command.init_micfrontend_param.preproc_type = preproc_type;
   snprintf(command.init_micfrontend_param.preprocess_dsp_path,
            AS_RECOGNIZER_FILE_PATH_LEN,
@@ -627,12 +628,17 @@ extern "C" int audio_recognizer_main(int argc, char *argv[])
   if (!app_init_micfrontend(AS_SAMPLINGRATE_48000,
                             AS_CHANNEL_MONO,
                             AS_BITLENGTH_16,
-#ifdef CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
+#ifdef CONFIG_EXAMPLES_AUDIO_RECOGNIZER_SAMPLERATECONV
+                            AsMicFrontendPreProcSampleRateCnv,
+                            "/mnt/sd0/BIN/SRC"
+#elif defined CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
                             AsMicFrontendPreProcUserCustom,
-#else /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
+                            "/mnt/sd0/BIN/PREPROC"
+#else /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_THROUGH */
                             AsMicFrontendPreProcThrough,
-#endif /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
-                            "/mnt/sd0/BIN/PREPROC"))
+                            "/mnt/sd0/BIN/PREPROC" /* Not effective */
+#endif /* End */
+                           ))
     {
       printf("Error: app_init_micfrontend() failure.\n");
       return 1;

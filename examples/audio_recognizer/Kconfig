@@ -24,8 +24,19 @@ config EXAMPLES_AUDIO_RECOGNIZER_STACKSIZE
 	int "Audio recognizer stack size"
 	default 2048
 
+choice
+	prompt "Pre process"
+    default EXAMPLES_AUDIO_RECOGNIZER_THROUGH
+   
 config EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
-	bool "Use pre process at Frontend"
-	default n
+	bool "User process at Frontend"
+
+config EXAMPLES_AUDIO_RECOGNIZER_SAMPLERATECONV
+	bool "Use sample rate converter at Frontend"
+
+config EXAMPLES_AUDIO_RECOGNIZER_THROUGH
+	bool "Do not Use"
+
+endchoice
 
 endif
