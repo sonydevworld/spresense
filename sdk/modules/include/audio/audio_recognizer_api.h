@@ -66,15 +66,15 @@
 /** @name Packet length of command */
 /** @{ */
 
-/*! \brief InitRecognizer command (#AUDCMD_INITRECOGNIZER) packet length */
+/*! \brief InitRecognizer command (#AUDCMD_INIT_RECOGNIZER) packet length */
 
 #define LENGTH_INIT_RECOGNIZER 3
 
-/*! \brief StartRecognizer command (#AUDCMD_STARTRECOGNIZER) packet length */
+/*! \brief StartRecognizer command (#AUDCMD_START_RECOGNIZER) packet length */
 
 #define LENGTH_START_RECOGNIZER 2 
 
-/*! \brief StopRecognizer command (#AUDCMD_STOPRECOGNIZER) packet length */
+/*! \brief StopRecognizer command (#AUDCMD_STOP_RECOGNIZER) packet length */
 
 #define LENGTH_STOP_RECOGNIZER  2
 
@@ -267,7 +267,7 @@ typedef struct
 
   uint32_t packet_size;
 
-} AsInitRcgProcParam, AsSetRcgProcParam;
+} AsInitRecognizerProcParam, AsSetRecognizerProcParam;
 
 /** Recognizer command */
 
@@ -307,11 +307,11 @@ typedef struct
 
     /* Init Rcgproc Paramters */
 
-    AsInitRcgProcParam initrcgproc_param;
+    AsInitRecognizerProcParam initrcgproc_param;
 
     /* Set Rcgproc Paramters */
 
-    AsSetRcgProcParam setrcgproc_param;
+    AsSetRecognizerProcParam setrcgproc_param;
 
     /* Deactivate Paramters */
 

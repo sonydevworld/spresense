@@ -1018,7 +1018,7 @@ typedef struct
 
 } AsSetRecognizerStatus;
 
-/** InitVoiceCommand Command (#AUDCMD_INITRECOGNIZER) parameter */
+/** InitVoiceCommand Command (#AUDCMD_INIT_RECOGNIZER) parameter */
 
 typedef void (*RecognizerFindCallback)(AsRecognitionInfo info);
 
@@ -1040,7 +1040,7 @@ typedef struct
 
 } AsInitRecognizer;
 
-/** StartVoiceCommand Command (#AUDCMD_STARTRECOGNIZER) parameter */
+/** StartVoiceCommand Command (#AUDCMD_START_RECOGNIZER) parameter */
 
 typedef struct
 {
@@ -1048,7 +1048,7 @@ typedef struct
 
 } AsStartRecognizer;
 
-/** StopVoiceCommand Command (#AUDCMD_STOPRECOGNIZER) parameter */
+/** StopVoiceCommand Command (#AUDCMD_STOP_RECOGNIZER) parameter */
 
 typedef struct
 {
@@ -1166,19 +1166,19 @@ typedef struct
     AsSetRecognizerStatus set_recognizer_status_param;
 
     /*! \brief [in] for InitVoiceCommand
-     * (header.command_code==#AUDCMD_INITRECOGNIZER)
+     * (header.command_code==#AUDCMD_INIT_RECOGNIZER)
      */
 
     AsInitRecognizer init_recognizer;
 
     /*! \brief [in] for StratVoiceCommand
-     * (header.command_code==#AUDCMD_STARTRECOGNIZER)
+     * (header.command_code==#AUDCMD_START_RECOGNIZER)
      */
 
     AsStartRecognizer start_recognizer;
 
     /*! \brief [in] for StopVoiceCommand
-     * (header.command_code==#AUDCMD_STOPRECOGNIZER)
+     * (header.command_code==#AUDCMD_STOP_RECOGNIZER)
      */
 
     AsStopRecognizer stop_recognizer;
@@ -1187,13 +1187,14 @@ typedef struct
      * (header.command_code==#AUDCMD_INIT_RECOGNIZER_DSP)
      */
 
-    AsInitRcgProcParam init_rcg_param;
+    AsInitRecognizerProcParam init_rcg_param;
 
     /*! \brief [in] for SetRecognizerDSPCommand 
      * (header.command_code==#AUDCMD_SET_RECOGNIZER_DSP)
      */
 
-    AsSetRcgProcParam set_rcg_param;
+    AsSetRecognizerProcParam set_rcg_param;
+
 #endif
 
     /*! \brief [in] for SetMicMap

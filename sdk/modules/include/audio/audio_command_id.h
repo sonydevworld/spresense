@@ -266,15 +266,15 @@
 
 /*! \brief Command Code: StartRecognizer */
 
-#define AUDCMD_STARTRECOGNIZER  (AUDCMD_CATEGORY_RECOGNITION | 0x01)
+#define AUDCMD_START_RECOGNIZER  (AUDCMD_CATEGORY_RECOGNITION | 0x01)
 
 /*! \brief Command Code: StopRecognizer */
 
-#define AUDCMD_STOPRECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x02)
+#define AUDCMD_STOP_RECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x02)
 
 /*! \brief command Code: InitRecognizer */
 
-#define AUDCMD_INITRECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x03)
+#define AUDCMD_INIT_RECOGNIZER   (AUDCMD_CATEGORY_RECOGNITION | 0x03)
 
 /*! \brief command Code: InitRecognitionProcessDSP */
 
@@ -293,15 +293,15 @@
 
 /*! \brief Result Code: StartRecognizerCmplt */
 
-#define  AUDRLT_STARTRECOGNIZERCMPLT  AUDCMD_STARTRECOGNIZER
+#define  AUDRLT_START_RECOGNIZER_CMPLT  AUDCMD_START_RECOGNIZER
 
 /*! \brief Result Code: StopRecognizerCmplt */
 
-#define  AUDRLT_STOPRECOGNIZERCMPLT   AUDCMD_STOPRECOGNIZER
+#define  AUDRLT_STOP_RECOGNIZER_CMPLT   AUDCMD_STOP_RECOGNIZER
 
 /*! \brief Result Code: InitRecognizerCmplt */
 
-#define  AUDRLT_INITRECOGNIZERCMPLT   AUDCMD_INITRECOGNIZER
+#define  AUDRLT_INIT_RECOGNIZER_CMPLT   AUDCMD_INIT_RECOGNIZER
 
 /*! \brief command Code: InitRecognitionProcessDSPCmplt */
 

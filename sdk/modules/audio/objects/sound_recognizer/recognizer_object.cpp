@@ -429,7 +429,7 @@ void RecognizerObject::stop(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::initRcgproc(MsgPacket *msg)
 {
-  AsInitRcgProcParam initparam =
+  AsInitRecognizerProcParam initparam =
     msg->moveParam<RecognizerCommand>().initrcgproc_param;
 
   RECOGNIZER_OBJ_DBG("Init Recognizer Proc:\n");
@@ -462,7 +462,7 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::setRcgproc(MsgPacket *msg)
 {
-  AsSetRcgProcParam setparam =
+  AsSetRecognizerProcParam setparam =
     msg->moveParam<RecognizerCommand>().setrcgproc_param;
 
   RECOGNIZER_OBJ_DBG("Set Recognizer Proc:\n");

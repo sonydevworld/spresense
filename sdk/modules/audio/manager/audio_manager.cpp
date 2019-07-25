@@ -482,9 +482,9 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
 #endif  /* AS_FEATURE_RECORDER_ENABLE */
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-      case AUDCMD_STARTRECOGNIZER:
-      case AUDCMD_STOPRECOGNIZER:
-      case AUDCMD_INITRECOGNIZER:
+      case AUDCMD_START_RECOGNIZER:
+      case AUDCMD_STOP_RECOGNIZER:
+      case AUDCMD_INIT_RECOGNIZER:
       case AUDCMD_INIT_RECOGNIZER_DSP:
       case AUDCMD_SET_RECOGNIZER_DSP:
         msg_type = MSG_AUD_MGR_CMD_RECOGNIZER;
@@ -2559,8 +2559,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
 
   switch (cmd.header.command_code)
     {
-      case AUDCMD_INITRECOGNIZER:
-        if (!packetCheck(LENGTH_INIT_RECOGNIZER, AUDCMD_INITRECOGNIZER, cmd))
+      case AUDCMD_INIT_RECOGNIZER:
+        if (!packetCheck(LENGTH_INIT_RECOGNIZER, AUDCMD_INIT_RECOGNIZER, cmd))
           {
             return;
           }
@@ -2580,8 +2580,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
 
         break;
 
-      case AUDCMD_STARTRECOGNIZER:
-        if (!packetCheck(LENGTH_START_RECOGNIZER, AUDCMD_STARTRECOGNIZER, cmd))
+      case AUDCMD_START_RECOGNIZER:
+        if (!packetCheck(LENGTH_START_RECOGNIZER, AUDCMD_START_RECOGNIZER, cmd))
           {
             return;
           }
@@ -2598,8 +2598,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
 
         break;
 
-      case AUDCMD_STOPRECOGNIZER:
-        if (!packetCheck(LENGTH_STOP_RECOGNIZER, AUDCMD_STOPRECOGNIZER, cmd))
+      case AUDCMD_STOP_RECOGNIZER:
+        if (!packetCheck(LENGTH_STOP_RECOGNIZER, AUDCMD_STOP_RECOGNIZER, cmd))
           {
             return;
           }
@@ -2859,13 +2859,13 @@ void AudioManager::cmpltOnSoundFx(const AudioMngCmdCmpltResult &cmd)
 
 #endif  /* AS_FEATURE_EFFECTOR_ENABLE */
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
-      case AUDCMD_STARTRECOGNIZER:
-        result_code = AUDRLT_STARTRECOGNIZERCMPLT;
+      case AUDCMD_START_RECOGNIZER:
+        result_code = AUDRLT_START_RECOGNIZER_CMPLT;
         m_SubState = AS_MNG_SUB_STATUS_WAITCMDWORD;
         break;
 
-      case AUDCMD_STOPRECOGNIZER:
-        result_code = AUDRLT_STOPRECOGNIZERCMPLT;
+      case AUDCMD_STOP_RECOGNIZER:
+        result_code = AUDRLT_STOP_RECOGNIZER_CMPLT;
         m_SubState = AS_MNG_SUB_STATUS_BASEBANDACTIVE;
         break;
 
@@ -3138,17 +3138,17 @@ void AudioManager::cmpltOnRecognizer(const AudioMngCmdCmpltResult &cmd)
           }
         break;
 
-      case AUDCMD_INITRECOGNIZER:
-        result_code = AUDRLT_INITRECOGNIZERCMPLT;
+      case AUDCMD_INIT_RECOGNIZER:
+        result_code = AUDRLT_INIT_RECOGNIZER_CMPLT;
         break;
 
-      case AUDCMD_STARTRECOGNIZER:
-        result_code = AUDRLT_STARTRECOGNIZERCMPLT;
+      case AUDCMD_START_RECOGNIZER:
+        result_code = AUDRLT_START_RECOGNIZER_CMPLT;
         m_SubState = AS_MNG_SUB_STATUS_RECOGNIZERACTIVE;
         break;
 
-      case AUDCMD_STOPRECOGNIZER:
-        result_code = AUDRLT_STOPRECOGNIZERCMPLT;
+      case AUDCMD_STOP_RECOGNIZER:
+        result_code = AUDRLT_STOP_RECOGNIZER_CMPLT;
         m_SubState = AS_MNG_SUB_STATUS_RECOGNIZERREADY;
         break;
 
@@ -4143,8 +4143,8 @@ uint8_t AudioManager::convertMicFrontendEvent(AsMicFrontendEvent event)
     AUDCMD_SETRECOGNIZERSTATUS,
     AUDCMD_SETREADYSTATUS,
     AUDCMD_INIT_MICFRONTEND,
-    AUDCMD_STARTRECOGNIZER,
-    AUDCMD_STOPRECOGNIZER,
+    AUDCMD_START_RECOGNIZER,
+    AUDCMD_STOP_RECOGNIZER,
     AUDCMD_INIT_PREPROCESS_DSP,
     AUDCMD_SET_PREPROCESS_DSP,
   };
@@ -4206,10 +4206,10 @@ uint8_t AudioManager::convertRecognizerEvent(AsRecognizerEvent event)
   {
     AUDCMD_SETRECOGNIZERSTATUS,
     AUDCMD_SETREADYSTATUS,
-    AUDCMD_INITRECOGNIZER,
-    AUDCMD_STARTRECOGNIZER,
+    AUDCMD_INIT_RECOGNIZER,
+    AUDCMD_START_RECOGNIZER,
     0, /* Exec is used internally. It isn't return to AudioMangaer.*/
-    AUDCMD_STOPRECOGNIZER,
+    AUDCMD_STOP_RECOGNIZER,
     AUDCMD_INIT_RECOGNIZER_DSP,
     AUDCMD_SET_RECOGNIZER_DSP,
   };
@@ -4340,12 +4340,12 @@ S_ASSERT((LENGTH_STOP_SUBPLAYER << 2) ==
 
 #ifdef AS_FEATURE_RECOGNIZER_ENABLE
 
-/* StartVoiceComamnd command (AUDCMD_STARTRECOGNIZER) packet length. */
+/* StartVoiceComamnd command (AUDCMD_START_RECOGNIZER) packet length. */
 
 S_ASSERT((LENGTH_START_RECOGNIZER << 2) ==
   (sizeof(AudioCommandHeader) + sizeof(AsStartRecognizer)));
 
-/* StopVoiceCommand command (AUDCMD_STOPRECOGNIZER) packet length. */
+/* StopVoiceCommand command (AUDCMD_STOP_RECOGNIZER) packet length. */
 
 S_ASSERT((LENGTH_STOP_RECOGNIZER << 2) ==
   (sizeof(AudioCommandHeader) + sizeof(AsStopRecognizer)));
