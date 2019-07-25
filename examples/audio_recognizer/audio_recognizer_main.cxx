@@ -324,7 +324,7 @@ static bool app_init_recognizer(const char *dsp_name)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_INIT_RECOGNIZER;
-  command.header.command_code  = AUDCMD_INITRECOGNIZER;
+  command.header.command_code  = AUDCMD_INIT_RECOGNIZER;
   command.header.sub_code      = 0x00;
   command.init_recognizer.fcb        = recognizer_find_callback;
   command.init_recognizer.recognizer_type = AsRecognizerTypeUserCustom;
@@ -343,7 +343,7 @@ static bool app_start_recognizer(void)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_START_RECOGNIZER;
-  command.header.command_code  = AUDCMD_STARTRECOGNIZER;
+  command.header.command_code  = AUDCMD_START_RECOGNIZER;
   command.header.sub_code      = 0x00;
   AS_SendAudioCommand(&command);
 
@@ -356,7 +356,7 @@ static bool app_stop_recognizer(void)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_STOP_RECOGNIZER;
-  command.header.command_code  = AUDCMD_STOPRECOGNIZER;
+  command.header.command_code  = AUDCMD_STOP_RECOGNIZER;
   command.header.sub_code      = 0x00;
   AS_SendAudioCommand(&command);
 
