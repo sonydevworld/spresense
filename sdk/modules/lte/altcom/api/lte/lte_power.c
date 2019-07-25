@@ -168,10 +168,6 @@ static void restart_callback(uint32_t state)
       /* Call restart callback input modem restart */
 
       lte_set_report_reason(LTE_RESTART_MODEM_INITIATED);
-
-      /* Abort send apicmd for Release waiting sync API responce. */
-
-      apicmdgw_sendabort();
     }
   else
     {
@@ -179,6 +175,10 @@ static void restart_callback(uint32_t state)
     }
 
   altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
+
+  /* Abort send apicmd for Release waiting sync API responce. */
+
+  apicmdgw_sendabort();
 
   /* Call the API callback function in the context of worker thread */
 
@@ -386,6 +386,10 @@ int32_t lte_power_off(void)
         if (ret == 0)
           {
             altcom_set_status(ALTCOM_STATUS_INITIALIZED);
+
+            /* Abort send apicmd for Release waiting sync API responce. */
+
+            apicmdgw_sendabort();
           }
 
         break;
