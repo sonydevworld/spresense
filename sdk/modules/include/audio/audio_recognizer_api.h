@@ -78,13 +78,13 @@
 
 #define LENGTH_STOP_RECOGNIZER  2
 
-/*! \brief InitRecognizeProcDSP command (#AUDCMD_INITRECOGNIZERPROC) packet length */
+/*! \brief InitRecognizeProcDSP command (#AUDCMD_INIT_RECOGNIZER_DSP) packet length */
 
-#define LENGTH_INIT_RECOGNIZERPROC 4 
+#define LENGTH_INIT_RECOGNIZER_DSP 4 
 
-/*! \brief SetRecognizeProcDSP command (#AUDCMD_SETRECOGNIZERPROC) packet length */
+/*! \brief SetRecognizeProcDSP command (#AUDCMD_SET_RECOGNIZER_DSP) packet length */
 
-#define LENGTH_SET_RECOGNIZERPROC 4 
+#define LENGTH_SET_RECOGNIZER_DSP 4 
 
 /** @} */
 

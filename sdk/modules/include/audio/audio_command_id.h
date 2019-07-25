@@ -118,13 +118,13 @@
 
 #define  AUDCMD_INIT_MICFRONTEND (AUDCMD_CATEGORY_EFFECTOR | 0x01)
 
-/*! \brief Command Code: InitMFE */
+/*! \brief Command Code: InitPreProcessDSP */
 
-#define  AUDCMD_INITMFE       (AUDCMD_CATEGORY_EFFECTOR | 0x02)
+#define  AUDCMD_INIT_PREPROCESS_DSP (AUDCMD_CATEGORY_EFFECTOR | 0x02)
 
-/*! \brief Command Code: SetMFE */
+/*! \brief Command Code: SetPreProcessDSP */
 
-#define  AUDCMD_SETMFE        (AUDCMD_CATEGORY_EFFECTOR | 0x03)
+#define  AUDCMD_SET_PREPROCESS_DSP  (AUDCMD_CATEGORY_EFFECTOR | 0x03)
 
 /*! \brief Command Code: InitMPP */
 
@@ -139,17 +139,17 @@
 /** @name Effector Result code */
 /** @{ */
 
-/*! \brief Result Code: EnableProProcessCmplt */
+/*! \brief Result Code: InitMicFrontendCmplt */
 
 #define  AUDRLT_INIT_MICFRONTEND  AUDCMD_INIT_MICFRONTEND
 
-/*! \brief Result Code: InitMFECmplt */
+/*! \brief Result Code: InitPreProcessDSPCmplt */
 
-#define  AUDRLT_INITMFECMPLT    AUDCMD_INITMFE
+#define  AUDRLT_INIT_PREPROCESS_DSP_CMPLT  AUDCMD_INIT_PREPROCESS_DSP
 
-/*! \brief Result Code: SetMFECmplt */
+/*! \brief Result Code: SetPreProcessDSPCmplt */
 
-#define  AUDRLT_SETMFECMPLT     AUDCMD_SETMFE
+#define  AUDRLT_SET_PREPROCESS_DSP_CMPLT   AUDCMD_SET_PREPROCESS_DSP
 
 /*! \brief Result Code: InitMPPCmplt */
 
@@ -278,11 +278,11 @@
 
 /*! \brief command Code: InitRecognitionProcessDSP */
 
-#define AUDCMD_INITRECOGNIZERPROC (AUDCMD_CATEGORY_RECOGNITION | 0x04)
+#define AUDCMD_INIT_RECOGNIZER_DSP (AUDCMD_CATEGORY_RECOGNITION | 0x04)
 
 /*! \brief command Code: SetRecognitionProcessDSP */
 
-#define AUDCMD_SETRECOGNIZERPROC  (AUDCMD_CATEGORY_RECOGNITION | 0x05)
+#define AUDCMD_SET_RECOGNIZER_DSP  (AUDCMD_CATEGORY_RECOGNITION | 0x05)
 
 /** @} */
 
@@ -305,11 +305,11 @@
 
 /*! \brief command Code: InitRecognitionProcessDSPCmplt */
 
-#define  AUDRLT_INITRECOGNIZERPROCCMPLT AUDCMD_INITRECOGNIZERPROC
+#define  AUDRLT_INIT_RECOGNIZER_DSP_CMPLT AUDCMD_INIT_RECOGNIZER_DSP
 
 /*! \brief command Code: SetRecognitionProcessDSPCmplt */
 
-#define  AUDRLT_SETRECOGNIZERPROCCMPLT  AUDCMD_SETRECOGNIZERPROC
+#define  AUDRLT_SET_RECOGNIZER_DSP_CMPLT  AUDCMD_SET_RECOGNIZER_DSP
 
 /** @} */
 

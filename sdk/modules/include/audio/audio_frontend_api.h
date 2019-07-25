@@ -73,13 +73,13 @@
 
 #define  LENGTH_INIT_MICFRONTEND    4
 
-/*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
+/*! \brief InitPreProcessDSP command (#AUDCMD_INIT_PREPROCESS) packet length */
 
-#define  LENGTH_INITMFE             4
+#define  LENGTH_INIT_PREPROCESS_DSP  4
 
-/*! \brief InitMFE command (#AUDCMD_SETMFE) packet length */
+/*! \brief SetPreProcessDSP command (#AUDCMD_SET_PREPROCESS_DSP) packet length */
 
-#define  LENGTH_SETMFE             4
+#define  LENGTH_SET_PREPROCESS_DSP   4
 
 /** @} */
 

@@ -467,8 +467,8 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 #endif  /* AS_FEATURE_PLAYER_ENABLE */
 #ifdef AS_FEATURE_FRONTEND_ENABLE
       case AUDCMD_INIT_MICFRONTEND:
-      case AUDCMD_INITMFE:
-      case AUDCMD_SETMFE:
+      case AUDCMD_INIT_PREPROCESS_DSP:
+      case AUDCMD_SET_PREPROCESS_DSP:
         msg_type = MSG_AUD_MGR_CMD_MFE;
         break;
 
@@ -485,8 +485,8 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
       case AUDCMD_STARTRECOGNIZER:
       case AUDCMD_STOPRECOGNIZER:
       case AUDCMD_INITRECOGNIZER:
-      case AUDCMD_INITRECOGNIZERPROC:
-      case AUDCMD_SETRECOGNIZERPROC:
+      case AUDCMD_INIT_RECOGNIZER_DSP:
+      case AUDCMD_SET_RECOGNIZER_DSP:
         msg_type = MSG_AUD_MGR_CMD_RECOGNIZER;
         break;
 
@@ -1741,24 +1741,24 @@ void AudioManager::micfrontend(AudioCommand &cmd)
         msg_type = MSG_AUD_MFE_CMD_INIT;
         break;
 
-      case AUDCMD_INITMFE:
-        check = packetCheck(LENGTH_INITMFE, AUDCMD_INITMFE, cmd);
+      case AUDCMD_INIT_PREPROCESS_DSP:
+        check = packetCheck(LENGTH_INIT_PREPROCESS_DSP, AUDCMD_INIT_PREPROCESS_DSP, cmd);
         if (!check)
           {
             return;
           }
         msg_type = MSG_AUD_MFE_CMD_INITPREPROC;
-        frontend_command.initpreproc_param = cmd.init_mfe_param.initpre_param;
+        frontend_command.initpreproc_param = cmd.init_preproc_param;
         break;
 
-      case AUDCMD_SETMFE:
-        check = packetCheck(LENGTH_SETMFE, AUDCMD_SETMFE, cmd);
+      case AUDCMD_SET_PREPROCESS_DSP:
+        check = packetCheck(LENGTH_SET_PREPROCESS_DSP, AUDCMD_SET_PREPROCESS_DSP, cmd);
         if (!check)
           {
             return;
           }
         msg_type = MSG_AUD_MFE_CMD_SETPREPROC;
-        frontend_command.setpreproc_param = cmd.set_mfe_param.setpre_param;
+        frontend_command.setpreproc_param = cmd.set_preproc_param;
         break;
 
       default:
@@ -2616,8 +2616,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
 
         break;
 
-      case AUDCMD_INITRECOGNIZERPROC:
-        if (!packetCheck(LENGTH_INIT_RECOGNIZERPROC, AUDCMD_INITRECOGNIZERPROC, cmd))
+      case AUDCMD_INIT_RECOGNIZER_DSP:
+        if (!packetCheck(LENGTH_INIT_RECOGNIZER_DSP, AUDCMD_INIT_RECOGNIZER_DSP, cmd))
           {
             return;
           }
@@ -2630,8 +2630,8 @@ void AudioManager::recognizer(AudioCommand &cmd)
         target = TargetRecognizer;
         break;
 
-      case AUDCMD_SETRECOGNIZERPROC:
-        if (!packetCheck(LENGTH_SET_RECOGNIZERPROC, AUDCMD_SETRECOGNIZERPROC, cmd))
+      case AUDCMD_SET_RECOGNIZER_DSP:
+        if (!packetCheck(LENGTH_SET_RECOGNIZER_DSP, AUDCMD_SET_RECOGNIZER_DSP, cmd))
           {
             return;
           }
@@ -3047,12 +3047,12 @@ void AudioManager::cmpltOnRecorder(const AudioMngCmdCmpltResult &cmd)
         result_code = AUDRLT_INIT_MICFRONTEND;
         break;
  
-      case AUDCMD_INITMFE:
-        result_code = AUDRLT_INITMFECMPLT;
+      case AUDCMD_INIT_PREPROCESS_DSP:
+        result_code = AUDRLT_INIT_PREPROCESS_DSP_CMPLT;
         break;
 
-      case AUDCMD_SETMFE:
-        result_code = AUDRLT_SETMFECMPLT;
+      case AUDCMD_SET_PREPROCESS_DSP:
+        result_code = AUDRLT_SET_PREPROCESS_DSP_CMPLT;
         break;
 
       case AUDCMD_SETREADYSTATUS:
@@ -3152,24 +3152,24 @@ void AudioManager::cmpltOnRecognizer(const AudioMngCmdCmpltResult &cmd)
         m_SubState = AS_MNG_SUB_STATUS_RECOGNIZERREADY;
         break;
 
-      case AUDCMD_INITRECOGNIZERPROC:
-        result_code = AUDRLT_INITRECOGNIZERPROCCMPLT;
+      case AUDCMD_INIT_RECOGNIZER_DSP:
+        result_code = AUDRLT_INIT_RECOGNIZER_DSP_CMPLT;
         break;
 
-      case AUDCMD_SETRECOGNIZERPROC:
-        result_code = AUDRLT_SETRECOGNIZERPROCCMPLT;
+      case AUDCMD_SET_RECOGNIZER_DSP:
+        result_code = AUDRLT_SET_RECOGNIZER_DSP_CMPLT;
         break;
 
       case AUDCMD_INIT_MICFRONTEND:
         result_code = AUDRLT_INIT_MICFRONTEND;
         break;
       
-      case AUDCMD_INITMFE:
-        result_code = AUDRLT_INITMFECMPLT;
+      case AUDCMD_INIT_PREPROCESS_DSP:
+        result_code = AUDRLT_INIT_PREPROCESS_DSP_CMPLT;
         break;
 
-      case AUDCMD_SETMFE:
-        result_code = AUDRLT_SETMFECMPLT;
+      case AUDCMD_SET_PREPROCESS_DSP:
+        result_code = AUDRLT_SET_PREPROCESS_DSP_CMPLT;
         break;
 
       default:
@@ -4134,8 +4134,8 @@ uint8_t AudioManager::convertMicFrontendEvent(AsMicFrontendEvent event)
     AUDCMD_INIT_MICFRONTEND,
     AUDCMD_STARTREC,
     AUDCMD_STOPREC,
-    AUDCMD_INITMFE,
-    AUDCMD_SETMFE,
+    AUDCMD_INIT_PREPROCESS_DSP,
+    AUDCMD_SET_PREPROCESS_DSP,
   };
 
   uint8_t cmd_code_rcg[] =
@@ -4145,8 +4145,8 @@ uint8_t AudioManager::convertMicFrontendEvent(AsMicFrontendEvent event)
     AUDCMD_INIT_MICFRONTEND,
     AUDCMD_STARTRECOGNIZER,
     AUDCMD_STOPRECOGNIZER,
-    AUDCMD_INITMFE,
-    AUDCMD_SETMFE,
+    AUDCMD_INIT_PREPROCESS_DSP,
+    AUDCMD_SET_PREPROCESS_DSP,
   };
 
   if (m_req_reference_bits & (1 << ElementRecorder))
@@ -4210,8 +4210,8 @@ uint8_t AudioManager::convertRecognizerEvent(AsRecognizerEvent event)
     AUDCMD_STARTRECOGNIZER,
     0, /* Exec is used internally. It isn't return to AudioMangaer.*/
     AUDCMD_STOPRECOGNIZER,
-    AUDCMD_INITRECOGNIZERPROC,
-    AUDCMD_SETRECOGNIZERPROC,
+    AUDCMD_INIT_RECOGNIZER_DSP,
+    AUDCMD_SET_RECOGNIZER_DSP,
   };
 
   return cmd_code[event];
