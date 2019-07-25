@@ -87,21 +87,21 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
       return -EINVAL;
     }
 
-  if (!apn->apn || strlen((char *)apn->apn) > LTE_APN_LEN)
+  if ((!apn->apn) || (strlen((char *)apn->apn) > LTE_APN_LEN))
     {
       DBGIF_LOG_ERROR("apn is length overflow.\n");
       return  -EINVAL;
     }
 
-  if (apn->ip_type < LTE_APN_IPTYPE_IP &&
-    apn->ip_type > LTE_APN_IPTYPE_IPV4V6)
+  if ((apn->ip_type < LTE_APN_IPTYPE_IP) ||
+      (apn->ip_type > LTE_APN_IPTYPE_IPV4V6))
     {
       DBGIF_LOG1_ERROR("ip type is invalid. iptype=%d\n", apn->ip_type);
       return -EINVAL;
     }
 
-  if (apn->auth_type < LTE_APN_AUTHTYPE_NONE ||
-      apn->auth_type > LTE_APN_AUTHTYPE_CHAP)
+  if ((apn->auth_type < LTE_APN_AUTHTYPE_NONE) ||
+      (apn->auth_type > LTE_APN_AUTHTYPE_CHAP))
     {
       DBGIF_LOG1_ERROR("auth type is invalid. authtype=%d\n", apn->auth_type);
       return -EINVAL;
