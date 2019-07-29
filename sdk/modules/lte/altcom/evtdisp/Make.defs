@@ -35,6 +35,10 @@
 
 CSRCS += evtdisp.c thrdfctry.c buffpoolwrapper.c evthdlbs.c evtdispfctry.c
 
+ifeq ($(CONFIG_LTE_USE_BUFFPOOL), y)
+CFLAGS += -DCONFIG_LTE_USE_BUFFPOOL
+endif
+
 # Add the src directory to the build
 
 DEPPATH += --dep-path altcom$(DELIM)evtdisp
