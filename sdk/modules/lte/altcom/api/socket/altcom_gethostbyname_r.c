@@ -85,7 +85,7 @@ static int32_t gethostbynamer_request(FAR const char *name, int32_t namelen,
 {
   int32_t                                cmdret;
   int32_t                                err;
-  uint16_t                               reslen;
+  uint16_t                               reslen = 0;
   size_t                                 h_namelen;
   size_t                                 h_aliaseslen;
   size_t                                 expect_buflen;
