@@ -115,11 +115,11 @@ static int32_t actpdncancel_status_chg_cb(int32_t new_stat, int32_t old_stat)
 
 int32_t lte_activate_pdn_cancel(void)
 {
-  int32_t                                           ret      = 0;
-  FAR uint8_t                                       *cmdbuff = NULL;
-  FAR struct apicmd_cmddat_activatepdn_cancel_res_s *resbuff = NULL;
-  uint16_t                                          resbufflen = 0;
-  uint16_t                                          reslen     = 0;
+  int32_t                                        ret        = 0;
+  FAR uint8_t                                   *cmdbuff    = NULL;
+  struct apicmd_cmddat_activatepdn_cancel_res_s  resbuff;
+  uint16_t                                       resbufflen = 0;
+  uint16_t                                       reslen     = 0;
 
   resbufflen = ACTPDN_CANCEL_RES_DATA_LEN;
 
@@ -162,20 +162,11 @@ int32_t lte_activate_pdn_cancel(void)
       return -ENOMEM;
     }
 
-  resbuff = (FAR struct apicmd_cmddat_activatepdn_cancel_res_s *)
-    BUFFPOOL_ALLOC(resbufflen);
-  if (!resbuff)
-    {
-      DBGIF_LOG_ERROR("Failed to allocate command response buffer.\n");
-      altcom_free_cmd((FAR uint8_t *)cmdbuff);
-      g_lte_actpdncancel_isproc = false;
-      altcomstatus_unreg_statchgcb(actpdncancel_status_chg_cb);
-      return -ENOMEM;
-    }
+  memset(&resbuff, 0, sizeof(resbuff));
 
   /* Send API command to modem */
 
-  ret = apicmdgw_send(cmdbuff, (FAR uint8_t *)resbuff,
+  ret = apicmdgw_send(cmdbuff, (FAR uint8_t *)&resbuff,
                       resbufflen, &reslen, SYS_TIMEO_FEVR);
 
   if (0 <= ret)
@@ -184,7 +175,7 @@ int32_t lte_activate_pdn_cancel(void)
 
       /* Register API callback */
 
-      if (LTE_RESULT_OK != resbuff->result)
+      if (LTE_RESULT_OK != resbuff.result)
         {
           DBGIF_LOG_ERROR("API command response is err.\n");
           ret = -EIO;
@@ -193,7 +184,6 @@ int32_t lte_activate_pdn_cancel(void)
 
   altcomstatus_unreg_statchgcb(actpdncancel_status_chg_cb);
   altcom_free_cmd(cmdbuff);
-  (void)BUFFPOOL_FREE(resbuff);
   g_lte_actpdncancel_isproc = false;
 
   return ret;

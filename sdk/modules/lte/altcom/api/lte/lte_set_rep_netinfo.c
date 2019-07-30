@@ -206,14 +206,14 @@ static void repnetinfo_job(FAR void *arg)
 
 int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
 {
-  int32_t                                      ret        = 0;
-  FAR struct apicmd_cmddat_set_repnetinfo_s    *cmdbuff   = NULL;
-  FAR struct apicmd_cmddat_set_repnetinfores_s *resbuff   = NULL;
-  uint16_t                                     resbufflen =
+  int32_t                                    ret        = 0;
+  FAR struct apicmd_cmddat_set_repnetinfo_s *cmdbuff    = NULL;
+  struct apicmd_cmddat_set_repnetinfores_s   resbuff;
+  uint16_t                                   resbufflen =
                                                SETREP_NETINFO_RES_DATA_LEN;
-  uint16_t                                     reslen     = 0;
-  bool                                         reset_flag = false;
-  netinfo_report_cb_t                          callback;
+  uint16_t                                   reslen     = 0;
+  bool                                       reset_flag = false;
+  netinfo_report_cb_t                        callback;
 
   /* Check Lte library status */
 
@@ -265,15 +265,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
     }
   else
     {
-      resbuff = (FAR struct apicmd_cmddat_set_repnetinfores_s *)
-        BUFFPOOL_ALLOC(resbufflen);
-      if (!resbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          altcom_free_cmd((FAR uint8_t *)cmdbuff);
-          g_lte_setrepnetinfo_isproc = false;
-          return -ENOMEM;
-        }
+      memset(&resbuff, 0, sizeof(resbuff));
 
       /* Set command parameter. */
 
@@ -282,15 +274,15 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
 
       /* Send API command to modem */
 
-      ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)resbuff,
-        resbufflen, &reslen, SYS_TIMEO_FEVR);
+      ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)&resbuff,
+                          resbufflen, &reslen, SYS_TIMEO_FEVR);
     }
 
   if (0 <= ret)
     {
       /* Register API callback */
 
-      if (APICMD_REPNETINFO_RES_OK == resbuff->result)
+      if (APICMD_REPNETINFO_RES_OK == resbuff.result)
         {
           if (netinfo_callback)
             {
@@ -321,7 +313,6 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
     }
 
   altcom_free_cmd((FAR uint8_t *)cmdbuff);
-  (void)BUFFPOOL_FREE(resbuff);
   g_lte_setrepnetinfo_isproc = false;
 
   return ret;
