@@ -1054,7 +1054,7 @@ void app_recorde_process(uint32_t rec_time)
 #ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
 #else
-extern "C" int recorder_main(int argc, char *argv[])
+extern "C" int audio_recorder_main(int argc, char *argv[])
 #endif
 {
   printf("Start AudioRecorder example\n");
