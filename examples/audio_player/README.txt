@@ -75,8 +75,8 @@ The file list when using these samples is as follows.
 Execute
 --------------------------
 
-Type 'player' on nsh.
-nsh>player
+Type 'audio_player' on nsh.
+nsh>audio_player
 
 The first content of playlist will be played for 10 seconds.
 
