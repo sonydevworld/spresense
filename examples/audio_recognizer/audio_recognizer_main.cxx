@@ -572,7 +572,7 @@ void app_recognizer_process(uint32_t rec_time)
 #ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
 #else
-extern "C" int recognizer_main(int argc, char *argv[])
+extern "C" int audio_recognizer_main(int argc, char *argv[])
 #endif
 {
   printf("Start AudioRecognizer example\n");

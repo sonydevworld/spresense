@@ -60,8 +60,8 @@ NOTE
 Execute
 --------------------------
 
-Type 'recorder' on nsh.
-nsh>recorder
+Type 'audio_recorder' on nsh.
+nsh>audio_recorder
 
 Audio from the microphone is recorded in the WAV file for 10 seconds.
 
