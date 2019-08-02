@@ -1383,18 +1383,6 @@ uint32_t MicFrontEndObject::checkExternalCmd(void)
 }
 
 /*--------------------------------------------------------------------------*/
-MemMgrLite::MemHandle MicFrontEndObject::getOutputBufAddr()
-{
-  MemMgrLite::MemHandle mh;
-  if (mh.allocSeg(m_pool_id.output, m_max_output_size) != ERR_OK)
-    {
-      MIC_FRONTEND_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-    }
-
-  return mh;
-}
-
-/*--------------------------------------------------------------------------*/
 uint32_t MicFrontEndObject::activateParamCheck(
   const AsActivateFrontendParam &param)
 {

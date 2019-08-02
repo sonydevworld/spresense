@@ -103,6 +103,7 @@ private:
     , m_capture_req(0)
     , m_preproc_req(0)
     , m_p_preproc_instance(NULL)
+    , m_callback(NULL)
   {
     memset(m_dsp_path, 0, sizeof(m_dsp_path));
   }
@@ -193,8 +194,6 @@ private:
   bool setExternalCmd(AsMicFrontendEvent ext_event);
   AsMicFrontendEvent getExternalCmd(void);
   uint32_t checkExternalCmd(void);
-
-  MemMgrLite::MemHandle getOutputBufAddr();
 
   uint32_t activateParamCheck(const AsActivateFrontendParam& cmd);
   uint32_t initParamCheck(const MicFrontendCommand& cmd);

@@ -912,7 +912,7 @@ AudioManager::MsgProc
   /* MicFrontEnd command. */
 
   {                                    /* AudioManager all status: */
-    &AudioManager::micfrontend,        /*   Ready state.           */
+    &AudioManager::illegal,            /*   Ready state.           */
     &AudioManager::illegal,            /*   PlayerReady state.     */
     &AudioManager::illegal,            /*   PlayerActive state.    */
     &AudioManager::illegal,            /*   PlayerPause state.     */
