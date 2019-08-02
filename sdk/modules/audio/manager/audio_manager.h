@@ -98,6 +98,9 @@ private:
     m_SubState(AS_MNG_SUB_STATUS_NONE),
     m_attentionCBFunc(att_cb),
     m_obs_attentionCBFunc(obs_att_cb),
+#ifdef AS_FEATURE_RECOGNIZER_ENABLE
+    m_rcgfind_cb(NULL),
+#endif /* AS_FEATURE_RECOGNIZER_ENABLE */
     m_active_player(0),
     m_req_complete_bits(0),
     m_req_reference_bits(0),

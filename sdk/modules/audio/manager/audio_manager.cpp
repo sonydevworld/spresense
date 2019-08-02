@@ -1345,7 +1345,11 @@ void AudioManager::parse(FAR MsgPacket *msg, FAR MsgQueBlock *que)
             msg->moveParam<AsRecognitionInfo>();
           err_code = que->pop();
           F_ASSERT(err_code == ERR_OK);
-          m_rcgfind_cb(info);
+
+          if (m_rcgfind_cb != NULL)
+            {
+              m_rcgfind_cb(info);
+            }
         }
 #endif  /* AS_FEATURE_RECOGNIZER_ENABLE */
     }
@@ -2562,6 +2566,14 @@ void AudioManager::recognizer(AudioCommand &cmd)
       case AUDCMD_INIT_RECOGNIZER:
         if (!packetCheck(LENGTH_INIT_RECOGNIZER, AUDCMD_INIT_RECOGNIZER, cmd))
           {
+            return;
+          }
+
+        if (cmd.init_recognizer.fcb == NULL)
+          {
+            sendErrRespResult(cmd.header.sub_code,
+                              AS_MODULE_ID_AUDIO_MANAGER,
+                              AS_ECODE_COMMAND_PARAM_CALLBACK);
             return;
           }
 
