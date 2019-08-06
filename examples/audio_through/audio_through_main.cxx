@@ -323,22 +323,6 @@ static bool app_init_mic_gain(void)
   return printAudCmdResult(command.header.command_code, result);
 }
 
-static bool app_init_i2s_param(void)
-{
-  AudioCommand command;
-  command.header.packet_length  = LENGTH_INITI2SPARAM;
-  command.header.command_code   = AUDCMD_INITI2SPARAM;
-  command.header.sub_code       = 0;
-  command.init_i2s_param.i2s_id = AS_I2S1;
-  command.init_i2s_param.rate   = 48000;
-  command.init_i2s_param.bypass_mode_en = AS_I2S_BYPASS_MODE_DISABLE;
-  AS_SendAudioCommand(&command);
-
-  AudioResult result;
-  AS_ReceiveAudioResult(&result);
-  return printAudCmdResult(command.header.command_code, result);
-}
-
 static bool app_init_libraries(void)
 {
   int ret;
@@ -450,14 +434,6 @@ extern "C" int audio_through_main(int argc, char *argv[])
   if (!app_set_through_status())
     {
       printf("Error: app_set_through_status() failure.\n");
-      return 1;
-    }
-
-  /* Initialize I2S parameter */
-
-  if (!app_init_i2s_param())
-    {
-      printf("Error: app_init_mic_gain() failure.\n");
       return 1;
     }
 
