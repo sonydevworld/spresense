@@ -41,13 +41,11 @@
  ****************************************************************************/
 
 #include "apicmd.h"
+#include "apicmd_psm.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-#define APICMD_GETPSM_TIMER_MIN        (1)
-#define APICMD_GETPSM_TIMER_MAX        (31)
 
 /****************************************************************************
  * Public Types
@@ -55,22 +53,12 @@
 
 /* This structure discribes the data structure of the API command */
 
-/* APICMDID_GET_PSM */
-
 /* APICMDID_GET_PSM_RES */
-
-begin_packed_struct struct apicmd_cmddat_getpsm_timeval_s
-{
-  uint8_t unit;
-  uint8_t time_val;
-} end_packed_struct;
 
 begin_packed_struct struct apicmd_cmddat_getpsmres_s
 {
   uint8_t result;
-  uint8_t enable;
-  struct apicmd_cmddat_getpsm_timeval_s rat_val;
-  struct apicmd_cmddat_getpsm_timeval_s tau_val;
+  struct apicmd_cmddat_psm_set_s set;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETPSM_H */

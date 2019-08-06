@@ -682,10 +682,10 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
  * Name: altcombs_check_psm
  *
  * Description:
- *   Check api comand PSM param.
+ *   Check PSM parameter of LTE API.
  *
  * Input Parameters:
- *   set    Pointer of api command PSM struct.
+ *   api_set  Pointer to PSM parameter of LTE API.
  *
  * Returned Value:
  *   When check success is returned 0.
@@ -693,48 +693,41 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
  *
  ****************************************************************************/
 
-int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
+int32_t altcombs_check_psm(FAR lte_psm_setting_t *api_set)
 {
-  if (!set)
+  if (!api_set)
     {
       DBGIF_LOG_ERROR("null param\n");
       return -EINVAL;
     }
 
-  if (set->enable < LTE_DISABLE ||
-      set->enable > LTE_ENABLE)
+  if (LTE_ENABLE == api_set->enable)
     {
-      DBGIF_LOG1_ERROR("Invalid enable :%d\n", set->enable);
-      return -EINVAL;
-    }
-
-  if (LTE_ENABLE == set->enable)
-    {
-      if (set->rat_time.unit < LTE_PSM_T3324_UNIT_2SEC ||
-          set->rat_time.unit > LTE_PSM_T3324_UNIT_6MIN)
+      if (api_set->req_active_time.unit < LTE_PSM_T3324_UNIT_2SEC ||
+          api_set->req_active_time.unit > LTE_PSM_T3324_UNIT_DEACT)
         {
-          DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", set->rat_time.unit);
+          DBGIF_LOG1_ERROR("Invalid rat_time unit :%d\n", api_set->req_active_time.unit);
           return -EINVAL;
         }
 
-      if (set->rat_time.time_val < APICMD_PSM_TIMER_MIN ||
-          set->rat_time.time_val > APICMD_PSM_TIMER_MAX)
+      if (api_set->req_active_time.time_val < LTE_PSM_TIMEVAL_MIN ||
+          api_set->req_active_time.time_val > LTE_PSM_TIMEVAL_MAX)
         {
-          DBGIF_LOG1_ERROR("Invalid rat_time time_val :%d\n", set->rat_time.time_val);
+          DBGIF_LOG1_ERROR("Invalid rat_time time_val :%d\n", api_set->req_active_time.time_val);
           return -EINVAL;
         }
 
-      if (set->tau_time.unit < LTE_PSM_T3412_UNIT_2SEC ||
-          set->tau_time.unit > LTE_PSM_T3412_UNIT_320HOUR)
+      if (api_set->ext_periodic_tau_time.unit < LTE_PSM_T3412_UNIT_2SEC ||
+          api_set->ext_periodic_tau_time.unit > LTE_PSM_T3412_UNIT_DEACT)
         {
-          DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", set->tau_time.unit);
+          DBGIF_LOG1_ERROR("Invalid tau_time unit :%d\n", api_set->ext_periodic_tau_time.unit);
           return -EINVAL;
         }
 
-      if (set->tau_time.time_val < APICMD_PSM_TIMER_MIN ||
-          set->tau_time.time_val > APICMD_PSM_TIMER_MAX)
+      if (api_set->ext_periodic_tau_time.time_val < LTE_PSM_TIMEVAL_MIN ||
+          api_set->ext_periodic_tau_time.time_val > LTE_PSM_TIMEVAL_MAX)
         {
-          DBGIF_LOG1_ERROR("Invalid tau_time time_val :%d\n", set->tau_time.time_val);
+          DBGIF_LOG1_ERROR("Invalid tau_time time_val :%d\n", api_set->ext_periodic_tau_time.time_val);
           return -EINVAL;
         }
     }
@@ -746,11 +739,11 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
  * Name: altcombs_set_psm
  *
  * Description:
- *   Set lte_psm_setting_t param.
+ *   Set to PSM parameter from API command.
  *
  * Input Parameters:
- *   cmd_psm    Pointer of api command PSM struct.
- *   lte_psm    Pointer of lte_psm_setting_t.
+ *   cmd_set    Pointer to PSM parameter of API command.
+ *   api_set    Pointer to PSM parameter of LTE API.
  *
  * Returned Value:
  *   When set success is returned 0.
@@ -758,55 +751,19 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set)
  *
  ****************************************************************************/
 
-int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
-  lte_psm_setting_t *lte_psm)
+int32_t altcombs_set_psm(FAR struct apicmd_cmddat_psm_set_s *cmd_set,
+                         FAR lte_psm_setting_t *api_set)
 {
-  uint8_t t3324_unit_table[] =
-    {
-      LTE_PSM_T3324_UNIT_2SEC,
-      LTE_PSM_T3324_UNIT_1MIN,
-      LTE_PSM_T3324_UNIT_6MIN,
-    };
-  uint8_t t3412_unit_table[] =
-    {
-      LTE_PSM_T3412_UNIT_2SEC,
-      LTE_PSM_T3412_UNIT_30SEC,
-      LTE_PSM_T3412_UNIT_1MIN,
-      LTE_PSM_T3412_UNIT_10MIN,
-      LTE_PSM_T3412_UNIT_1HOUR,
-      LTE_PSM_T3412_UNIT_10HOUR,
-      LTE_PSM_T3412_UNIT_320HOUR
-    };
-
-  if (!cmd_psm || !lte_psm)
+  if (!cmd_set || !api_set)
     {
       return -EINVAL;
     }
 
-  if (LTE_ENABLE == cmd_psm->enable)
-    {
-      if ((ALTCOMBS_PSM_UNIT_T3324_MIN > cmd_psm->rat_time.unit ||
-          ALTCOMBS_PSM_UNIT_T3324_MAX < cmd_psm->rat_time.unit) ||
-          (ALTCOMBS_PSM_UNIT_T3412_MIN > cmd_psm->tau_time.unit ||
-          ALTCOMBS_PSM_UNIT_T3412_MAX < cmd_psm->tau_time.unit))
-        {
-          return -EINVAL;
-        }
-
-      lte_psm->enable = LTE_ENABLE;
-
-      lte_psm->req_active_time.unit =
-        t3324_unit_table[cmd_psm->rat_time.unit];
-      lte_psm->req_active_time.time_val = cmd_psm->rat_time.time_val;
-
-      lte_psm->ext_periodic_tau_time.unit =
-        t3412_unit_table[cmd_psm->tau_time.unit];
-      lte_psm->ext_periodic_tau_time.time_val = cmd_psm->tau_time.time_val;
-    }
-  else
-    {
-      lte_psm->enable = LTE_DISABLE;
-    }
+  api_set->enable                         = cmd_set->enable;
+  api_set->req_active_time.unit           = cmd_set->rat_time.unit;
+  api_set->req_active_time.time_val       = cmd_set->rat_time.time_val;
+  api_set->ext_periodic_tau_time.unit     = cmd_set->tau_time.unit;
+  api_set->ext_periodic_tau_time.time_val = cmd_set->tau_time.time_val;
 
   return 0;
 }

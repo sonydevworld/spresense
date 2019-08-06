@@ -57,12 +57,6 @@
  ****************************************************************************/
 
 #define SETPSM_DATA_LEN      (sizeof(struct apicmd_cmddat_setpsm_s))
-#define SETPSM_RAT_UNIT_MIN  LTE_PSM_T3324_UNIT_2SEC
-#define SETPSM_RAT_UNIT_MAX  LTE_PSM_T3324_UNIT_6MIN
-#define SETPSM_TAU_UNIT_MIN  LTE_PSM_T3412_UNIT_2SEC
-#define SETPSM_TAU_UNIT_MAX  LTE_PSM_T3412_UNIT_320HOUR
-#define SETPSM_TIMER_VAL_MIN (1)
-#define SETPSM_TIMER_VAL_MAX (31)
 
 /****************************************************************************
  * Private Functions
@@ -183,35 +177,12 @@ int32_t lte_set_psm(lte_psm_setting_t *settings, set_psm_cb_t callback)
       return -EINVAL;
     }
 
-  if (settings->enable)
+  /* Check input PSM prameters */
+
+  ret = altcombs_check_psm(settings);
+  if (0 > ret)
     {
-      if (settings->req_active_time.unit < SETPSM_RAT_UNIT_MIN ||
-        SETPSM_RAT_UNIT_MAX < settings->req_active_time.unit)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. RAT unit:%d\n", settings->req_active_time.unit);
-          return -EINVAL;
-        }
-
-      if (settings->req_active_time.time_val < SETPSM_TIMER_VAL_MIN ||
-        SETPSM_TIMER_VAL_MAX < settings->req_active_time.time_val)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. RAT time_val:%d\n", settings->req_active_time.time_val);
-          return -EINVAL;
-        }
-
-      if (settings->ext_periodic_tau_time.unit < SETPSM_TAU_UNIT_MIN ||
-        SETPSM_TAU_UNIT_MAX < settings->ext_periodic_tau_time.unit)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. TAU unit:%d\n", settings->ext_periodic_tau_time.unit);
-          return -EINVAL;
-        }
-
-      if (settings->ext_periodic_tau_time.time_val < SETPSM_TIMER_VAL_MIN ||
-        SETPSM_TIMER_VAL_MAX < settings->ext_periodic_tau_time.time_val)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. TAU time_val:%d\n", settings->ext_periodic_tau_time.time_val);
-          return -EINVAL;
-        }
+      return ret;
     }
 
   /* Check Lte library status */
@@ -250,13 +221,11 @@ int32_t lte_set_psm(lte_psm_setting_t *settings, set_psm_cb_t callback)
     }
   else
     {
-      cmddat->enable = settings->enable ?
-        LTE_ENABLE : LTE_DISABLE;
-      cmddat->rat_val.unit     = settings->req_active_time.unit;
-      cmddat->rat_val.time_val = settings->req_active_time.time_val;
-      cmddat->tau_val.unit     = settings->ext_periodic_tau_time.unit;
-      cmddat->tau_val.time_val =
-        settings->ext_periodic_tau_time.time_val;
+      cmddat->set.enable            = settings->enable;
+      cmddat->set.rat_time.unit     = settings->req_active_time.unit;
+      cmddat->set.rat_time.time_val = settings->req_active_time.time_val;
+      cmddat->set.tau_time.unit     = settings->ext_periodic_tau_time.unit;
+      cmddat->set.tau_time.time_val = settings->ext_periodic_tau_time.time_val;
 
       /* Send API command to modem */
 

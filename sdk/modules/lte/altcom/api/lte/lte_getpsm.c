@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <stdint.h>
+#include <string.h>
 #include <errno.h>
 
 #include "lte/lte_api.h"
@@ -57,10 +58,6 @@
  ****************************************************************************/
 
 #define GETPSM_DATA_LEN (0)
-#define APICMDHDLR_GETPSM_RAT_UNIT_MIN   LTE_PSM_T3324_UNIT_2SEC
-#define APICMDHDLR_GETPSM_RAT_UNIT_MAX   LTE_PSM_T3324_UNIT_6MIN
-#define APICMDHDLR_GETPSM_TAU_UNIT_MIN   LTE_PSM_T3412_UNIT_2SEC
-#define APICMDHDLR_GETPSM_TAU_UNIT_MAX   LTE_PSM_T3412_UNIT_320HOUR
 
 /****************************************************************************
  * Private Functions
@@ -112,95 +109,36 @@ static int32_t getpsm_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void getpsm_job(FAR void *arg)
 {
   int32_t                              ret;
-  uint32_t                             result = LTE_RESULT_OK;
   FAR struct apicmd_cmddat_getpsmres_s *data;
-  lte_psm_setting_t                    psm;
   get_psm_cb_t                         callback;
+  uint32_t                             result = LTE_RESULT_ERROR;
+  lte_psm_setting_t                    psm_set;
 
   data = (FAR struct apicmd_cmddat_getpsmres_s *)arg;
 
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_PSM,
-    (void **)&callback);
+                                     (void **)&callback);
 
   if ((ret == 0) && (callback))
     {
+      memset(&psm_set, 0, sizeof(lte_psm_setting_t));
+
       if (LTE_RESULT_OK == data->result)
         {
-          if (LTE_DISABLE == data->enable)
+          altcombs_set_psm(&data->set, &psm_set);
+
+          ret = altcombs_check_psm(&psm_set);
+          if (0 > ret)
             {
-              psm.enable = LTE_DISABLE;
-            }
-          else if (LTE_ENABLE == data->enable)
-            {
-              psm.enable = LTE_ENABLE;
-
-              if (APICMDHDLR_GETPSM_RAT_UNIT_MIN <= data->rat_val.unit &&
-                data->rat_val.unit <= APICMDHDLR_GETPSM_RAT_UNIT_MAX)
-                {
-                  psm.req_active_time.unit = (uint32_t)data->rat_val.unit;
-                }
-              else
-                {
-                  DBGIF_LOG1_ERROR("Invalid parameter. RAT unit:%d\n", data->rat_val.unit);
-                  result = LTE_RESULT_ERROR;
-                }
-
-              if (LTE_RESULT_OK == result)
-                {
-                  if (APICMD_GETPSM_TIMER_MIN <= data->rat_val.time_val &&
-                    data->rat_val.time_val <= APICMD_GETPSM_TIMER_MAX)
-                    {
-                      psm.req_active_time.time_val = (uint32_t)data->rat_val.time_val;
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid parameter. RAT time_val:%d\n", data->rat_val.time_val);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (LTE_RESULT_OK == result)
-                {
-                  if (APICMDHDLR_GETPSM_TAU_UNIT_MIN <= data->tau_val.unit &&
-                    data->tau_val.unit <= APICMDHDLR_GETPSM_TAU_UNIT_MAX)
-                    {
-                      psm.ext_periodic_tau_time.unit = (uint32_t)data->tau_val.unit;
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid parameter. TAU unit:%d\n", data->tau_val.unit);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (LTE_RESULT_OK == result)
-                {
-                  if (APICMD_GETPSM_TIMER_MIN <= data->tau_val.time_val &&
-                    data->tau_val.time_val <= APICMD_GETPSM_TIMER_MAX)
-                    {
-                      psm.ext_periodic_tau_time.time_val = (uint32_t)data->tau_val.time_val;
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid parameter. TAU time_val:%d\n", data->tau_val.time_val);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
+              DBGIF_LOG1_ERROR("altcombs_check_psm() failed: %d\n", ret);
             }
           else
             {
-              DBGIF_LOG1_ERROR("Invalid parameter. enable:%d\n", data->enable);
-              result = LTE_RESULT_ERROR;
+              result = LTE_RESULT_OK;
             }
+        }
 
-          callback(result, &psm);
-          DBGIF_ASSERT(LTE_RESULT_OK == result, "Result parameter error.\n");
-        }
-      else
-        {
-          callback(LTE_RESULT_ERROR, NULL);
-          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "Result parameter error.\n");
-        }
+      callback(result, &psm_set);
     }
   else
     {

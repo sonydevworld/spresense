@@ -111,8 +111,9 @@ static void get_dynamicpsm_job(FAR void *arg)
   lte_psm_setting_t                           psm_set;
 
   data = (FAR struct apicmd_cmddat_getdynamicpsmres_s *)arg;
+
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_DYNAMICPSM,
-    (void **)&callback);
+                                     (void **)&callback);
   if ((0 != ret) || (!callback))
     {
       DBGIF_LOG_ERROR("Unexpected!! callback is NULL.\n");
@@ -120,25 +121,19 @@ static void get_dynamicpsm_job(FAR void *arg)
   else
     {
       memset(&psm_set, 0, sizeof(lte_psm_setting_t));
+
       if (LTE_RESULT_OK == data->result)
         {
-          ret = altcombs_check_psm(&data->set);
+          altcombs_set_psm(&data->set, &psm_set);
+
+          ret = altcombs_check_psm(&psm_set);
           if (0 > ret)
             {
-              DBGIF_LOG1_ERROR("Unexpected!! altcombs_check_psm() failed. errno:%d\n", ret);
+              DBGIF_LOG1_ERROR("altcombs_check_psm() failed: %d\n", ret);
             }
           else
             {
-              ret = altcombs_set_psm(&data->set, &psm_set);
-              if (0 > ret)
-                {
-                  DBGIF_LOG1_ERROR("Unexpected!! altcombs_set_psm() failed. errno:%d\n", ret);
-                  result = LTE_RESULT_ERROR;
-                }
-              else
-                {
-                  result = LTE_RESULT_OK;
-                }
+              result = LTE_RESULT_OK;
             }
         }
 

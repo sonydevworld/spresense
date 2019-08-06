@@ -44,10 +44,8 @@
 
 /****************************************************************************
  * Pre-processor Definitions
- ****************************************************************************/
+****************************************************************************/
 
-#define APICMD_SETPSM_TIMER_MIN        (1)
-#define APICMD_SETPSM_TIMER_MAX        (31)
 
 /****************************************************************************
  * Public Types
@@ -55,22 +53,14 @@
 
 /* This structure discribes the data structure of the API command */
 
-/* APICMDID_GET_PSM */
-
-begin_packed_struct struct apicmd_cmddat_setpsm_timeval_s
-{
-  uint8_t unit;
-  uint8_t time_val;
-} end_packed_struct;
+/* APICMDID_SET_PSM */
 
 begin_packed_struct struct apicmd_cmddat_setpsm_s
 {
-  uint8_t enable;
-  struct apicmd_cmddat_setpsm_timeval_s rat_val;
-  struct apicmd_cmddat_setpsm_timeval_s tau_val;
+  struct apicmd_cmddat_psm_set_s set;
 } end_packed_struct;
 
-/* APICMDID_GET_PSM_RES */
+/* APICMDID_SET_PSM_RES */
 
 begin_packed_struct struct apicmd_cmddat_setpsmres_s
 {

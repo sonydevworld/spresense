@@ -307,10 +307,10 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
  * Name: altcombs_check_psm
  *
  * Description:
- *   Check api comand PSM param.
+ *   Check PSM parameter of LTE API.
  *
  * Input Parameters:
- *   set    Pointer of api command PSM struct.
+ *   api_set  Pointer to PSM parameter of LTE API.
  *
  * Returned Value:
  *   When check success is returned 0.
@@ -318,17 +318,17 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
  *
  ****************************************************************************/
 
-int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set);
+int32_t altcombs_check_psm(FAR lte_psm_setting_t *api_set);
 
 /****************************************************************************
  * Name: altcombs_set_psm
  *
  * Description:
- *   Set lte_psm_setting_t param.
+ *   Set to PSM parameter from API command.
  *
  * Input Parameters:
- *   cmd_psm    Pointer of api command PSM struct.
- *   lte_psm    Pointer of lte_psm_setting_t.
+ *   cmd_set    Pointer to PSM parameter of API command.
+ *   api_set    Pointer to PSM parameter of LTE API.
  *
  * Returned Value:
  *   When set success is returned 0.
@@ -336,8 +336,8 @@ int32_t altcombs_check_psm(struct apicmd_cmddat_psm_set_s *set);
  *
  ****************************************************************************/
 
-int32_t altcombs_set_psm(struct apicmd_cmddat_psm_set_s *cmd_psm,
-  lte_psm_setting_t *lte_psm);
+int32_t altcombs_set_psm(FAR struct apicmd_cmddat_psm_set_s *cmd_set,
+                         FAR lte_psm_setting_t *api_set);
 
 /****************************************************************************
  * Name: altcombs_set_quality

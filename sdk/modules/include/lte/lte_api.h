@@ -399,15 +399,20 @@
 
 /** Unit of request active time(T3324): 2 sec */
 
-#define LTE_PSM_T3324_UNIT_2SEC (0)
+#define LTE_PSM_T3324_UNIT_2SEC    (0)
 
 /** Unit of request active time(T3324): 1 min */
 
-#define LTE_PSM_T3324_UNIT_1MIN (1)
+#define LTE_PSM_T3324_UNIT_1MIN    (1)
 
 /** Unit of request active time(T3324): 6 min */
 
-#define LTE_PSM_T3324_UNIT_6MIN (2)
+#define LTE_PSM_T3324_UNIT_6MIN    (2)
+
+/** Unit of request active time(T3324): The value indicates that
+ *  the timer is deactivated. */
+
+#define LTE_PSM_T3324_UNIT_DEACT   (3)
 
 /** Unit of extended periodic TAU time(T3412): 2 sec */
 
@@ -436,6 +441,19 @@
 /** Unit of extended periodic TAU time(T3412): 320 hour */
 
 #define LTE_PSM_T3412_UNIT_320HOUR (6)
+
+/** Unit of extended periodic TAU time(T3412): The value indicates that
+ *  the timer is deactivated. */
+
+#define LTE_PSM_T3412_UNIT_DEACT   (7)
+
+/** The minimum timer value used by PSM related timers */
+
+#define LTE_PSM_TIMEVAL_MIN        (0)
+
+/** The maxmum timer value used by PSM related timers */
+
+#define LTE_PSM_TIMEVAL_MAX        (31)
 
 #define LTE_IPTYPE_V4      (0)  /**< IP address type: IPv4 */
 #define LTE_IPTYPE_V6      (1)  /**< IP address type: IPv6 */
@@ -755,16 +773,20 @@ typedef struct lte_psm_timeval
    *    - @ref LTE_PSM_T3324_UNIT_2SEC@n
    *    - @ref LTE_PSM_T3324_UNIT_1MIN@n
    *    - @ref LTE_PSM_T3324_UNIT_6MIN@n
+   *    - @ref LTE_PSM_T3324_UNIT_DEACT@n
    *  - When kind of timer is Extended periodic TAU Time
    *    - @ref LTE_PSM_T3412_UNIT_2SEC@n
    *    - @ref LTE_PSM_T3412_UNIT_30SEC@n
    *    - @ref LTE_PSM_T3412_UNIT_1MIN@n
    *    - @ref LTE_PSM_T3412_UNIT_10MIN@n
-   *    - @ref LTE_PSM_T3412_UNIT_1HOUR@n */
+   *    - @ref LTE_PSM_T3412_UNIT_1HOUR@n
+   *    - @ref LTE_PSM_T3412_UNIT_10HOUR@n
+   *    - @ref LTE_PSM_T3412_UNIT_320HOUR@n
+   *    - @ref LTE_PSM_T3412_UNIT_DEACT@n */
 
   uint8_t unit;
 
-  /** Timer value (1-31) */
+  /** Timer value (0-31) */
 
   uint8_t time_val;
 } lte_psm_timeval_t;
