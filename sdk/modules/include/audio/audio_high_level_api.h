@@ -70,11 +70,6 @@
 #  include "audio/audio_frontend_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
-#if defined(CONFIG_AUDIOUTILS_VOICE_CALL)
-#  include "audio/audio_effector_api.h"
-#  include "audio/audio_renderer_api.h"
-#  include "audio/audio_capture_api.h"
-#endif
 #ifdef CONFIG_AUDIOUTILS_SOUND_RECOGNIZER
 #  include "audio/audio_frontend_api.h"
 #  include "audio/audio_recognizer_api.h"
@@ -632,7 +627,8 @@ typedef struct
   uint16_t reserved2;
 } InitOutputSelectParam;
 
-/** (__not supported__) InitDNCParam Command (#AUDCMD_INITDNCPARAM) parameter
+/** \brief InitDNCParam Command (#AUDCMD_INITDNCPARAM) parameter
+ *  \deprecated It will be removed in the future
  */
 
 typedef enum
@@ -813,7 +809,9 @@ typedef enum
 
   AS_DISABLE_SOUNDEFFECT = 0,
 
-  /*! \brief Enable effect sound (__not supported__) */
+  /*! \brief Enable effect sound
+   *  \deprecated It will be removed in the future
+   */
 
   AS_ENABLE_SOUNDEFFECT,
   AS_SOUNDEFFECT_NUM
@@ -1071,20 +1069,23 @@ typedef struct
   union
   {
 #ifdef AS_FEATURE_EFFECTOR_ENABLE
-    /*! \brief [in] for StartBB (__not supported__)
+    /*! \brief [in] for StartBB
      * (header.command_code==#AUDCMD_STARTBB)
+     *  \deprecated It will be removed in the future
      */
 
     StartBBParam start_bb_param;
 
-    /*! \brief [in] for StopBB (__not supported__)
+    /*! \brief [in] for StopBB
      * (header.command_code==#AUDCMD_STOPBB)
+     *  \deprecated It will be removed in the future
      */
 
     StopBBParam stop_bb_param;
 
-    /*! \brief [in] for SetBaseBandStatus (__not supported__)
+    /*! \brief [in] for SetBaseBandStatus
      * (header.command_code==#AUDCMD_SETBASEBANDSTATUS)
+     *  \deprecated It will be removed in the future
      */
 
     SetBaseBandStatusParam set_baseband_status_param;
@@ -1209,8 +1210,9 @@ typedef struct
 
     InitMicGainParam init_mic_gain_param;
 
-    /*! \brief [in] for InitI2SParam (__not supported__)
+    /*! \brief [in] for InitI2SParam
      * (header.command_code==#AUDCMD_INITI2SPARAM)
+     *  \deprecated It will be removed in the future
      */
 
     InitI2SParam init_i2s_param;
@@ -1221,14 +1223,16 @@ typedef struct
 
     InitOutputSelectParam init_output_select_param;
 
-    /*! \brief [in] for InitDNCParam (__not supported__)
+    /*! \brief [in] for InitDNCParam
      * (header.command_code==#AUDCMD_INITDNCPARAM)
+     *  \deprecated It will be removed in the future
      */
 
     InitDNCParam init_dnc_param;
 
-    /*! \brief [in] for InitClearStereo (__not supported__)
+    /*! \brief [in] for InitClearStereo
      * (header.command_code==#AUDCMD_INITCLEARSTEREO)
+     *  \deprecated It will be removed in the future
      */
 
     InitClearStereoParam init_clear_stereo_param;

@@ -108,11 +108,15 @@
 
 typedef enum
 {
-  /*! \brief I2S 2ch (__not supported__) */
+  /*! \brief I2S 2ch
+   *  \deprecated It will be removed in the future
+   */
 
   AS_OUTPUT_DEVICE_I2S2CH = 0x03,
 
-  /*! \brief SP/HP 2ch (__not supported__) */
+  /*! \brief SP/HP 2ch
+   *  \deprecated It will be removed in the future
+   */
 
   AS_OUTPUT_DEVICE_SP2CH = 0x30,
 
@@ -125,11 +129,15 @@ typedef enum
 
 typedef enum
 {
-  /*! \brief I2S 2ch (__not supported__) */
+  /*! \brief I2S 2ch
+   *  \deprecated It will be removed in the future
+   */
 
   AS_INPUT_DEVICE_I2S2CH = 0x0003,
 
-  /*! \brief Analog Mic 1ch (__not supported__) */
+  /*! \brief Analog Mic 1ch
+   *  \deprecated It will be removed in the future
+   */
 
   AS_INPUT_DEVICE_AMIC1CH = 0x0100,
 
@@ -137,7 +145,9 @@ typedef enum
 
   AS_INPUT_DEVICE_AMIC1CH_I2S2CH = (AS_INPUT_DEVICE_I2S2CH | AS_INPUT_DEVICE_AMIC1CH),
 
-  /*! \brief Analog Mic 4ch, I2S 2ch (__not supported__) */
+  /*! \brief Analog Mic 4ch, I2S 2ch
+   *  \deprecated It will be removed in the future
+   */
 
   AS_INPUT_DEVICE_AMIC4CH_I2S2CH = (AS_INPUT_DEVICE_I2S2CH | 0x0F00)
 } AsInputDevice;
@@ -219,7 +229,9 @@ typedef enum
 
   AS_DISABLE_ECHOCANCEL = 0,
 
-  /*! \brief EchoCancel ON (__not supported__) */
+  /*! \brief EchoCancel ON
+   *  \deprecated It will be removed in the future
+   */
 
   AS_ENABLE_ECHOCANCEL,
   AS_MFE_ENBL_ECHOCANCEL_NUM
@@ -321,7 +333,9 @@ typedef enum
 
   AS_SET_BBSTS_WITH_MPP_NONE = 0,
 
-  /*! \brief MPP active (__not supported__) */
+  /*! \brief MPP active
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SET_BBSTS_WITH_MPP_ACTIVE,
   AS_SET_BBSTS_WITH_MPP_NUM

@@ -195,8 +195,6 @@ private:
   void recorder(AudioCommand &cmd);
   void setMicMap(AudioCommand &cmd);
   void setMicGain(AudioCommand &cmd);
-  void initI2SParam(AudioCommand &cmd);
-  void setI2SParam(AudioCommand &cmd);
   void initDEQParam(AudioCommand &cmd);
   void setOutputSelect(AudioCommand &cmd);
   void initDNCParam(AudioCommand &cmd);

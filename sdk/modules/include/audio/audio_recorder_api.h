@@ -141,7 +141,9 @@ typedef enum
 
 typedef enum
 {
-  /*! \brief eMMC FileSystem (__not supported__) */
+  /*! \brief eMMC FileSystem
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SETRECDR_STS_OUTPUTDEVICE_EMMC = 0,
 

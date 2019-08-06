@@ -406,10 +406,6 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         msg_type = MSG_AUD_MGR_CMD_SETMICMAP;
         break;
 
-      case AUDCMD_INITI2SPARAM:
-        msg_type = MSG_AUD_MGR_CMD_INITI2SPARAM;
-        break;
-
       case AUDCMD_INITDEQPARAM:
         msg_type = MSG_AUD_MGR_CMD_INITDEQPARAM;
         break;
@@ -501,10 +497,6 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
 
       case AUDCMD_SETREADYSTATUS:
         msg_type = MSG_AUD_MGR_CMD_SETREADY;
-        break;
-
-      case AUDCMD_SETBASEBANDSTATUS:
-        msg_type = MSG_AUD_MGR_CMD_SETBASEBAND;
         break;
 
       case AUDCMD_SETPLAYERSTATUS:
@@ -997,24 +989,6 @@ AudioManager::MsgProc
     &AudioManager::illegal,            /*   WaitCommandWord state. */
     &AudioManager::setMicGain,         /*   PowerOff state.        */
     &AudioManager::setMicGain          /*   Through state.         */
-  },
-
-  /* InitI2SPARaram command. */
-
-  {                                    /* AudioManager all status: */
-    &AudioManager::setI2SParam,        /*   Ready state.           */
-    &AudioManager::setI2SParam,        /*   PlayerReady state.     */
-    &AudioManager::illegal,            /*   PlayerActive state.    */
-    &AudioManager::illegal,            /*   PlayerPause state.     */
-    &AudioManager::setI2SParam,        /*   RecorderReady state.   */
-    &AudioManager::illegal,            /*   RecorderActive state.  */
-    &AudioManager::setI2SParam,        /*   RecognizerReady state. */
-    &AudioManager::illegal,            /*   RecognizerActive state.*/
-    &AudioManager::setI2SParam,        /*   BasebandReady state.   */
-    &AudioManager::illegal,            /*   BasebandActive state.  */
-    &AudioManager::illegal,            /*   WaitCommandWord state. */
-    &AudioManager::initI2SParam,       /*   PowerOff state.        */
-    &AudioManager::setI2SParam         /*   Through state.         */
   },
 
   /* InitDEQParam command. */
@@ -2485,7 +2459,6 @@ void AudioManager::setRecorder(AudioCommand &cmd)
 
   switch (cmd.set_recorder_status_param.output_device)
     {
-      case AS_SETRECDR_STS_OUTPUTDEVICE_EMMC:
       case AS_SETRECDR_STS_OUTPUTDEVICE_RAM:
         break;
 
@@ -3515,18 +3488,7 @@ void AudioManager::setMicGain(AudioCommand &cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::initI2SParam(AudioCommand &cmd)
-{
-  sendResult(AUDRLT_INITI2SPARAMCMPLT, cmd.header.sub_code);
-}
 
-/*--------------------------------------------------------------------------*/
-void AudioManager::setI2SParam(AudioCommand &cmd)
-{
-  sendResult(AUDRLT_INITI2SPARAMCMPLT, cmd.header.sub_code);
-}
-
-/*--------------------------------------------------------------------------*/
 void AudioManager::initDEQParam(AudioCommand &cmd)
 {
   bool check =
@@ -3611,7 +3573,7 @@ void AudioManager::setClearStereo(AudioCommand &cmd)
     {
       error_code = cxd56_audio_dis_cstereo();
     }
-  
+
   if (error_code == CXD56_AUDIO_ECODE_OK)
     {
       sendResult(AUDRLT_INITCLEARSTEREOCMPLT, cmd.header.sub_code);

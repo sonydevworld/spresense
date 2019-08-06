@@ -84,7 +84,7 @@ private:
     m_pcm_bit_width(AudPcm16Bit),
     m_sampling_rate(48000),
     m_codec_type(InvalidCodecType),
-    m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
+    m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_RAM),
     m_p_output_device_handler(NULL),
     m_filter_instance(NULL)
   {}
