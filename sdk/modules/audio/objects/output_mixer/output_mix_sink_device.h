@@ -69,7 +69,7 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct OutputMixObjPostfilterDoneCmd
 {
-  CustomProcEventType event_type;
+  ComponentEventType event_type;
   bool                result;
 };
 

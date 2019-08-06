@@ -73,7 +73,7 @@ class RecognizerObject
 public:
   typedef struct
   {
-    CustomProcEventType event_type;
+    ComponentEventType event_type;
     bool                result;
   } RecognitionDoneCmd;
 
@@ -131,7 +131,7 @@ private:
   bool notify(AsRecognitionInfo info);
   void reply(AsRecognizerEvent event, uint32_t command_id, uint32_t result);
 
-  CustomProcBase *m_p_rcgproc_instance;
+  ComponentBase *m_p_rcgproc_instance;
 
   MsgQueId m_self_msgq_id;    /* Message ID of myself. */
   MsgQueId m_parent_msgq_id;

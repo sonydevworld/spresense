@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/customproc/customproc_base.h
+ * modules/audio/components/common/component_base.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -41,21 +41,31 @@
 #include "memutils/os_utils/chateau_osal.h"
 #include "memutils/memory_manager/MemHandle.h"
 
-enum CustomProcEventType
+enum ComponentEventType
 {
-  CustomProcInit = 0,
-  CustomProcExec,
-  CustomProcFlush,
-  CustomProcSet,
+  ComponentInit = 0,
+  ComponentExec,
+  ComponentFlush,
+  ComponentSet,
 };
 
-struct CustomProcCbParam
+struct ComponentCbParam
 {
-  CustomProcEventType event_type;
-  bool                result;
+  ComponentEventType event_type;
+  bool               result;
 };
 
-typedef bool (*CustomProcCallback)(CustomProcCbParam*, void*);
+typedef bool (*ComponentCallback)(ComponentCbParam*, void*);
+
+struct FixedInitParam
+{
+  uint32_t samples;
+  uint32_t in_fs;
+  uint32_t out_fs;
+  uint16_t in_bitlength;
+  uint16_t out_bitlength;
+  uint8_t  ch_num;
+};
 
 struct CustomProcPacket
 {
@@ -63,60 +73,65 @@ struct CustomProcPacket
   uint32_t size;
 };
 
-struct InitCustomProcParam
+struct InitComponentParam
 {
   uint8_t          cmd_type;
   bool             is_userdraw;
-  CustomProcPacket packet;
-};
-typedef InitCustomProcParam SetCustomProcParam;
 
-struct ExecCustomProcParam
+  union
+  {
+    FixedInitParam   fixparam;
+    CustomProcPacket packet;
+  };
+};
+typedef InitComponentParam SetComponentParam;
+
+struct ExecComponentParam
 {
   AsPcmDataParam        input;
   MemMgrLite::MemHandle output_mh;
 };
 
-struct FlushCustomProcParam
+struct FlushComponentParam
 {
   CustomProcPacket      packet;
   MemMgrLite::MemHandle output_mh;
 };
 
-struct CustomProcCmpltParam
+struct ComponentCmpltParam
 {
   bool                 result;
   AsPcmDataParam       output;
 };
 
-struct CustomProcInformParam
+struct ComponentInformParam
 {
   bool              result;
   uint32_t          inform_req;
   AsRecognitionInfo inform_data;
 };
 
-class CustomProcBase
+class ComponentBase
 {
 public:
-  CustomProcBase() {}
-  virtual ~CustomProcBase() {}
+  ComponentBase() {}
+  virtual ~ComponentBase() {}
 
-  virtual uint32_t init(const InitCustomProcParam& param) = 0;
-  virtual bool exec(const ExecCustomProcParam& param) = 0;
-  virtual bool flush(const FlushCustomProcParam& param) = 0;
-  virtual bool set(const SetCustomProcParam& param) = 0;
-  virtual bool recv_done(CustomProcCmpltParam *cmplt) = 0;
-  virtual bool recv_done(CustomProcInformParam *info) = 0;
+  virtual uint32_t init(const InitComponentParam& param) = 0;
+  virtual bool exec(const ExecComponentParam& param) = 0;
+  virtual bool flush(const FlushComponentParam& param) = 0;
+  virtual bool set(const SetComponentParam& param) = 0;
+  virtual bool recv_done(ComponentCmpltParam *cmplt) = 0;
+  virtual bool recv_done(ComponentInformParam *info) = 0;
   virtual bool recv_done(void) = 0;
-  virtual uint32_t activate(CustomProcCallback callback,
+  virtual uint32_t activate(ComponentCallback callback,
                             const char *image_name,
                             void *p_requester,
                             uint32_t *dsp_inf) = 0;
   virtual bool deactivate() = 0;
 
 protected:
-  CustomProcCallback m_callback;
+  ComponentCallback m_callback;
 
   void *m_p_requester;
 };

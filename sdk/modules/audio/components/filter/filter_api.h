@@ -50,7 +50,6 @@
 #ifdef CONFIG_AUDIOUTILS_MPP
 #include "mpp_filter_component.h"
 #endif
-#include "through_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 

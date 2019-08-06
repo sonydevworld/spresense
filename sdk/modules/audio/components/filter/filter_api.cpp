@@ -60,29 +60,6 @@ uint32_t AS_filter_activate(FilterComponentType type,
 {
   switch (type)
     {
-      case Packing:
-        *pp_ins = new PackingComponent();
-        if (*pp_ins == NULL)
-          {
-            FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-            return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
-          }
-
-        (*pp_ins)->setCallBack(callback);
-        return (*pp_ins)->activate_apu(path, dsp_inf);
-
-#ifdef CONFIG_AUDIOUTILS_SRC
-      case SampleRateConv:
-        *pp_ins = new SRCComponent(apu_dtq, apu_pool_id);
-        if (*pp_ins == NULL)
-          {
-            FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-            return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
-          }
-
-        (*pp_ins)->setCallBack(callback);
-        return (*pp_ins)->activate_apu(path, dsp_inf);
-#endif
 #ifdef CONFIG_AUDIOUTILS_MFE
       case MicFrontEnd:
         {
@@ -131,17 +108,6 @@ uint32_t AS_filter_activate(FilterComponentType type,
         (*pp_ins)->setCallBack(callback);
         return (*pp_ins)->activate_apu(path, dsp_inf);
 #endif
-      case Through:
-        *pp_ins = new ThroughComponent();
-        if (*pp_ins == NULL)
-          {
-            FILTER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-            return AS_ECODE_COMMAND_PARAM_OUTPUT_DATE;
-          }
-
-        (*pp_ins)->setCallBack(callback);
-        return (*pp_ins)->activate_apu(path, dsp_inf);
-
       default:
         return AS_ECODE_COMMAND_PARAM_CODEC_TYPE;
     }

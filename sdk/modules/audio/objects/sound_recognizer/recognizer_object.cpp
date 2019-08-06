@@ -79,7 +79,7 @@ static RecognizerObject *s_rcg_obj = NULL;
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-static bool recognition_done_callback(CustomProcCbParam *cmplt, void* p_requester)
+static bool recognition_done_callback(ComponentCbParam *cmplt, void* p_requester)
 {
   RecognizerObject::RecognitionDoneCmd result_param;
 
@@ -405,7 +405,7 @@ void RecognizerObject::stop(MsgPacket *msg)
       return;
     }
 
-  FlushCustomProcParam flush;
+  FlushComponentParam flush;
 
   /* Allocate output buffer */
 
@@ -442,7 +442,7 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
       return;
     }
 
-  InitCustomProcParam param;
+  InitComponentParam param;
 
   param.is_userdraw = true;
   param.packet.addr = initparam.packet_addr;
@@ -475,7 +475,7 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
       return;
     }
 
-  SetCustomProcParam param;
+  SetComponentParam param;
 
   param.is_userdraw = true;
   param.packet.addr = setparam.packet_addr;
@@ -495,7 +495,7 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::exec(MsgPacket *msg)
 {
-  ExecCustomProcParam exec;
+  ExecComponentParam exec;
 
   exec.input = msg->moveParam<AsPcmDataParam>();
 
@@ -544,8 +544,8 @@ void RecognizerObject::recognizeDoneOnReady(MsgPacket *msg)
 
   switch(recog_result.event_type)
     {
-      case CustomProcInit:
-      case CustomProcSet:
+      case ComponentInit:
+      case ComponentSet:
         {
           m_p_rcgproc_instance->recv_done();
         }
@@ -571,18 +571,18 @@ void RecognizerObject::recognizeDoneOnActive(MsgPacket *msg)
 
   switch(recog_result.event_type)
     {
-      case CustomProcInit:
-      case CustomProcSet:
+      case ComponentInit:
+      case ComponentSet:
         {
           m_p_rcgproc_instance->recv_done();
         }
         break;
 
-      case CustomProcExec:
+      case ComponentExec:
         {
           /* Receive result as recognition notify. */
 
-          CustomProcInformParam info;
+          ComponentInformParam info;
           m_p_rcgproc_instance->recv_done(&info);
 
           if (true == recog_result.result)
@@ -617,18 +617,18 @@ void RecognizerObject::recognizeDoneOnStopping(MsgPacket *msg)
 
   switch(recog_result.event_type)
     {
-      case CustomProcInit:
-      case CustomProcSet:
+      case ComponentInit:
+      case ComponentSet:
         {
           m_p_rcgproc_instance->recv_done();
         }
         break;
 
-      case CustomProcExec:
+      case ComponentExec:
         {
           /* Receive result as recognition notify. */
 
-          CustomProcInformParam info;
+          ComponentInformParam info;
           m_p_rcgproc_instance->recv_done(&info);
 
           if (true == recog_result.result)
@@ -643,7 +643,7 @@ void RecognizerObject::recognizeDoneOnStopping(MsgPacket *msg)
         }
         break;
 
-      case CustomProcFlush:
+      case ComponentFlush:
         {
           m_p_rcgproc_instance->recv_done();
 

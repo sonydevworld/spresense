@@ -39,7 +39,8 @@
 
 #include "wien2_common_defs.h"
 #include "debug/dbg_log.h"
-#include "filter_component.h"
+#include "memutils/s_stl/queue.h"
+#include "components/common/component_base.h"
 
 __WIEN2_BEGIN_NAMESPACE
 using namespace MemMgrLite;
@@ -55,48 +56,30 @@ enum BitWidth
 /* Data structure definitions                                         */
 /*--------------------------------------------------------------------*/
 
-/* Init PackingComponent Parameters */
-
-struct InitPackingParam : public InitFilterParam
-{
-};
-
-/* Exec PackingComponent Parameters */
-
-struct ExecPackingParam : public ExecFilterParam
-{
-};
-
-/* Stop PackingComponent Parameters */
-
-struct StopPackingParam : public StopFilterParam
-{
-};
-
-/* PackingComponent Complete Reply Parameters */
-
-struct PackingCmpltParam : public FilterCompCmpltParam
-{
-};
 
 /*--------------------------------------------------------------------*/
 /* Class definitions                                                  */
 /*--------------------------------------------------------------------*/
 
-class PackingComponent : public FilterComponent
+class PackingComponent : public ComponentBase
 {
 private:
+
+  /* Request queue */
+
+  static const uint32_t ReqQueueSize = 7;
+
+  s_std::Queue<AsPcmDataParam, ReqQueueSize> m_req_que;
+
+  MsgQueId m_apu_dtq;
+  PoolId m_apu_pool_id;
 
   uint16_t m_in_bitwidth;
   uint16_t m_out_bitwidth;
 
-  uint32_t init_apu(InitPackingParam *param);
-  bool exec_apu(ExecPackingParam *param);
-  bool flush_apu(StopPackingParam *param);
-
   void cnv32to24(uint32_t samples, int8_t *in, int8_t *out);
   void cnv24to32(uint32_t samples, int8_t *in, int8_t *out);
-  void send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf);
+  void send_resp(ComponentEventType evt, bool result);
 
 public:
 
@@ -106,26 +89,18 @@ public:
     {}
   ~PackingComponent() {}
 
-  virtual uint32_t activate_apu(const char *path, uint32_t *dsp_inf);
-  virtual bool deactivate_apu();
-  virtual uint32_t init_apu(InitFilterParam *param, uint32_t *dsp_inf)
-  {
-    return init_apu(static_cast<InitPackingParam *>(param));
-  }
-
-  virtual bool exec_apu(ExecFilterParam *param)
-  {
-    return exec_apu(static_cast<ExecPackingParam *>(param));
-  }
-
-  virtual bool flush_apu(StopFilterParam *param)
-  {
-    return flush_apu(static_cast<StopPackingParam *>(param));
-  }
-
-  virtual bool setparam_apu(SetFilterParam *param) { return true; }
-  virtual bool tuning_apu(TuningFilterParam *param) { return true; }
-  virtual bool recv_done(void) { return true; };
+  virtual uint32_t init(const InitComponentParam& param);
+  virtual bool exec(const ExecComponentParam& param);
+  virtual bool flush(const FlushComponentParam& param);
+  virtual bool set(const SetComponentParam& param);
+  virtual bool recv_done(ComponentCmpltParam *cmplt);
+  virtual bool recv_done(ComponentInformParam *info);
+  virtual bool recv_done(void);
+  virtual uint32_t activate(ComponentCallback callback,
+                            const char *image_name,
+                            void *p_requester,
+                            uint32_t *dsp_inf);
+  virtual bool deactivate();
 };
 
 __WIEN2_END_NAMESPACE

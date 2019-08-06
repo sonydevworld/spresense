@@ -51,7 +51,7 @@
 #include "components/capture/capture_component.h"
 #include "components/customproc/usercustom_component.h"
 #include "components/customproc/thruproc_component.h"
-#include "components/customproc/srcwrap_component.h"
+#include "components/filter/src_filter_component.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -70,7 +70,7 @@ __WIEN2_BEGIN_NAMESPACE
 
 struct MicFrontendObjPreProcDoneCmd
 {
-  CustomProcEventType event_type;
+  ComponentEventType event_type;
   bool                result;
 };
 
@@ -139,7 +139,7 @@ private:
   uint32_t m_capture_req;
   uint32_t m_preproc_req;
 
-  CustomProcBase *m_p_preproc_instance;
+  ComponentBase *m_p_preproc_instance;
 
   typedef void (MicFrontEndObject::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_MFE_MSG_NUM][MicFrontendStateNum];

@@ -38,22 +38,22 @@
 
 #include "audio/audio_high_level_api.h"
 #include "memutils/s_stl/queue.h"
-#include "customproc_base.h"
+#include "components/common/component_base.h"
 
-class ThruProcComponent : public CustomProcBase
+class ThruProcComponent : public ComponentBase
 {
 public:
   ThruProcComponent() {}
   ~ThruProcComponent() {}
 
-  virtual uint32_t init(const InitCustomProcParam& param);
-  virtual bool exec(const ExecCustomProcParam& param);
-  virtual bool flush(const FlushCustomProcParam& param);
-  virtual bool set(const SetCustomProcParam& param);
-  virtual bool recv_done(CustomProcCmpltParam *cmplt);
-  virtual bool recv_done(CustomProcInformParam *info);
+  virtual uint32_t init(const InitComponentParam& param);
+  virtual bool exec(const ExecComponentParam& param);
+  virtual bool flush(const FlushComponentParam& param);
+  virtual bool set(const SetComponentParam& param);
+  virtual bool recv_done(ComponentCmpltParam *cmplt);
+  virtual bool recv_done(ComponentInformParam *info);
   virtual bool recv_done(void);
-  virtual uint32_t activate(CustomProcCallback callback,
+  virtual uint32_t activate(ComponentCallback callback,
                             const char *image_name,
                             void *p_requester,
                             uint32_t *dsp_inf);

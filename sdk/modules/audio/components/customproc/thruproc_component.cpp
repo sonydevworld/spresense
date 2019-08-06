@@ -38,7 +38,7 @@
 /*--------------------------------------------------------------------
     Class Methods
   --------------------------------------------------------------------*/
-uint32_t ThruProcComponent::init(const InitCustomProcParam& param)
+uint32_t ThruProcComponent::init(const InitComponentParam& param)
 {
   ApuReqData req;
 
@@ -48,7 +48,7 @@ uint32_t ThruProcComponent::init(const InitCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool ThruProcComponent::exec(const ExecCustomProcParam& param)
+bool ThruProcComponent::exec(const ExecComponentParam& param)
 {
   ApuReqData req;
 
@@ -56,9 +56,9 @@ bool ThruProcComponent::exec(const ExecCustomProcParam& param)
 
   m_req_que.push(req);
 
-  CustomProcCbParam cbpram;
+  ComponentCbParam cbpram;
 
-  cbpram.event_type = CustomProcExec;
+  cbpram.event_type = ComponentExec;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -66,7 +66,7 @@ bool ThruProcComponent::exec(const ExecCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool ThruProcComponent::flush(const FlushCustomProcParam& param)
+bool ThruProcComponent::flush(const FlushComponentParam& param)
 {
   AsPcmDataParam fls = { 0 };
 
@@ -79,9 +79,9 @@ bool ThruProcComponent::flush(const FlushCustomProcParam& param)
 
   m_req_que.push(req);
 
-  CustomProcCbParam cbpram;
+  ComponentCbParam cbpram;
 
-  cbpram.event_type = CustomProcFlush;
+  cbpram.event_type = ComponentFlush;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -89,15 +89,15 @@ bool ThruProcComponent::flush(const FlushCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool ThruProcComponent::set(const SetCustomProcParam& param)
+bool ThruProcComponent::set(const SetComponentParam& param)
 {
   ApuReqData req;
 
   m_req_que.push(req);
 
-  CustomProcCbParam cbpram;
+  ComponentCbParam cbpram;
 
-  cbpram.event_type = CustomProcSet;
+  cbpram.event_type = ComponentSet;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -105,7 +105,7 @@ bool ThruProcComponent::set(const SetCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool ThruProcComponent::recv_done(CustomProcCmpltParam *cmplt)
+bool ThruProcComponent::recv_done(ComponentCmpltParam *cmplt)
 {
   cmplt->output = m_req_que.top().pcm;
   cmplt->result = true;
@@ -116,9 +116,9 @@ bool ThruProcComponent::recv_done(CustomProcCmpltParam *cmplt)
 }
 
 /*--------------------------------------------------------------------*/
-bool ThruProcComponent::recv_done(CustomProcInformParam *info)
+bool ThruProcComponent::recv_done(ComponentInformParam *info)
 {
-  memset(info, 0, sizeof(CustomProcInformParam));
+  memset(info, 0, sizeof(ComponentInformParam));
 
   m_req_que.pop();
 
@@ -135,7 +135,7 @@ bool ThruProcComponent::recv_done(void)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t ThruProcComponent::activate(CustomProcCallback callback,
+uint32_t ThruProcComponent::activate(ComponentCallback callback,
                                    const char *dsp_name,
                                    void *p_requester,
                                    uint32_t *dsp_inf)
