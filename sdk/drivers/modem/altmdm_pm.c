@@ -875,7 +875,7 @@ static int exe_callback(uint32_t type, uint32_t cb_event)
  *
  ****************************************************************************/
 
-static int wakeup_modem_itself(FAR struct altmdm_dev_s *priv)
+static int wakeup_modem_itself(FAR struct altmdm_dev_s *priv, bool wakeupreq)
 {
   int ret;
 
@@ -888,9 +888,15 @@ static int wakeup_modem_itself(FAR struct altmdm_dev_s *priv)
 
       altmdm_pm_setinternalstate(MODEM_PM_INTERNAL_STATE_WAKE);
 
-      /* Perform processing at the time of state transition. */
+      /* When the EVENT_MODEM_WAKEUP_REQ is simultaneous,
+       * there is no need to notify. */
 
-      send_modem_wakeup_notif(priv);
+      if (!wakeupreq)
+        {
+          /* Perform processing at the time of state transition. */
+
+          send_modem_wakeup_notif(priv);
+        }
       exe_callback(MODEM_PM_CB_TYPE_NORMAL, MODEM_PM_CB_WAKE);
     }
 
@@ -1114,7 +1120,7 @@ static int pm_task(int argc, FAR char *argv[])
                 {
                   /* Modem already wakeup. */
 
-                  ret = wakeup_modem_itself(priv);
+                  ret = wakeup_modem_itself(priv, true);
 
 #ifdef CONFIG_MODEM_ALTMDM_PROTCOL_V2_1
                   set_mreq_up(priv);
@@ -1147,7 +1153,7 @@ static int pm_task(int argc, FAR char *argv[])
             {
               /* Modem has wake itself. */
 
-              wakeup_modem_itself(priv);
+              wakeup_modem_itself(priv, false);
             }
           else if (ptn & EVENT_D2H_DOWN)
             {
