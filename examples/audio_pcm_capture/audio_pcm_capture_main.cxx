@@ -593,7 +593,7 @@ static bool app_init_libraries(void)
                                    ptr);
   if (err != ERR_OK)
     {
-      printf("Error: Manager::initPerCpu() failure. %d\n", err);
+      printf("Error: Manager::createStaticPools() failure. %d\n", err);
       return false;
     }
 
