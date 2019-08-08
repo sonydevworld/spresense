@@ -90,7 +90,6 @@
 
 /* Timeout is counted in units of millisecond. */
 
-#define D2H_DOWN_EVENT_TIMEOUT (1*1000)
 #define D2H_UP_EVENT_TIMEOUT   (5*1000)
 #define ST_TRANS_EVENT_TIMEOUT (ALTMDM_SYS_FLAG_TMOFEVR)
 
@@ -103,18 +102,12 @@
 #define GPIO_MASTER_REQUEST            (ALTMDM_GPIO_MASTER_REQ)
 #define GPIO_SLAVE_REQUEST             (ALTMDM_GPIO_SLAVE_REQ)
 #define GPIO_MODEM_WAKEUP              (ALTMDM_GPIO_MODEM_WAKEUP)
-#define GPIO_INT_ENABLE                (true)
-#define GPIO_INT_DISABLE               (false)
-#define GPIO_SREQ_INT_POLARITY         (ALTMDM_GPIOINT_LEVEL_HIGH)
-#define GPIO_SREQ_INT_REVERSE_POLARITY (ALTMDM_GPIOINT_LEVEL_LOW)
-#define GPIO_SREQ_INT_NOISE_FILTER     (ALTMDM_GPIOINT_NOISE_FILTER_DISABLE)
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
 static struct altmdm_dev_s      *g_privdata = NULL;
-static struct altmdm_sys_flag_s g_d2h_flag;
 static struct altmdm_sys_flag_s g_statetrans_flag;
 static struct altmdm_sys_flag_s g_pmtask_flag;
 static struct altmdm_sys_flag_s g_wakeup_done_flag;
@@ -178,28 +171,6 @@ static int init_d2h_gpio(FAR struct altmdm_dev_s *priv)
 
 static int uninit_d2h_gpio(FAR struct altmdm_dev_s *priv)
 {
-  return 0;
-}
-
-/****************************************************************************
- * Name: change_polarity_d2h_gpio
- *
- * Description:
- *   Change polarity of Device to Host GPIO.
- *
- ****************************************************************************/
-
-static int change_polarity_d2h_gpio(FAR struct altmdm_dev_s *priv,
-                                    uint32_t polarity)
-{
-  board_altmdm_gpio_int_control(GPIO_SLAVE_REQUEST, GPIO_INT_DISABLE);
-
-  board_altmdm_gpio_irq(GPIO_SLAVE_REQUEST, polarity,
-                        GPIO_SREQ_INT_NOISE_FILTER,
-                        altmdm_spi_gpioreadyisr);
-
-  board_altmdm_gpio_int_control(GPIO_SLAVE_REQUEST, GPIO_INT_ENABLE);
-
   return 0;
 }
 
@@ -316,25 +287,12 @@ static int set_h2d_up(FAR struct altmdm_dev_s *priv)
 
 static int send_d2h_down_notif(FAR struct altmdm_dev_s *priv)
 {
-  int      ret = 0;
-  uint32_t pm_state;
+  int ret = 0;
 
-  pm_state = altmdm_pm_getinternalstate();
-  if (pm_state == MODEM_PM_INTERNAL_STATE_GOING_TO_SLEEP)
+  ret = altmdm_sys_setflag(&g_pmtask_flag, EVENT_D2H_DOWN);
+  if (ret != 0)
     {
-      ret = altmdm_sys_setflag(&g_d2h_flag, EVENT_D2H_DOWN);
-      if (ret != 0)
-        {
-          m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
-        }
-    }
-  else
-    {
-      ret = altmdm_sys_setflag(&g_pmtask_flag, EVENT_D2H_DOWN);
-      if (ret != 0)
-        {
-          m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
-        }
+      m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
     }
 
   return ret;
@@ -354,17 +312,10 @@ static int send_d2h_up_notif(FAR struct altmdm_dev_s *priv)
   uint32_t pm_state;
 
   pm_state = altmdm_pm_getinternalstate();
-  if (pm_state == MODEM_PM_INTERNAL_STATE_SLEEP)
+  if ((pm_state == MODEM_PM_INTERNAL_STATE_SLEEP) ||
+      (pm_state == MODEM_PM_INTERNAL_STATE_GOING_TO_WAKE))
     {
       ret = altmdm_sys_setflag(&g_pmtask_flag, EVENT_D2H_UP);
-      if (ret != 0)
-        {
-          m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
-        }
-    }
-  else if (pm_state == MODEM_PM_INTERNAL_STATE_GOING_TO_WAKE)
-    {
-      ret = altmdm_sys_setflag(&g_d2h_flag, EVENT_D2H_UP);
       if (ret != 0)
         {
           m_err("ERR:%04d Set flag:%d.\n", __LINE__, ret);
@@ -663,26 +614,6 @@ static int send_modem_poweroff_done(FAR struct altmdm_dev_s *priv)
 }
 
 /****************************************************************************
- * Name: wait_for_d2h_down_complete
- *
- * Description:
- *   Wait until the Device to Host GPIO line is deassert.
- *
- ****************************************************************************/
-
-static int wait_for_d2h_down_complete(FAR struct altmdm_dev_s *priv)
-{
-  int      ret;
-  uint32_t ptn;
-
-  ret = altmdm_sys_waitflag(&g_d2h_flag, EVENT_D2H_DOWN,
-                            ALTMDM_SYS_FLAG_WMODEOR, &ptn,
-                            D2H_DOWN_EVENT_TIMEOUT);
-
-  return ret;
-}
-
-/****************************************************************************
  * Name: wait_for_d2h_up_complete
  *
  * Description:
@@ -695,7 +626,7 @@ static int wait_for_d2h_up_complete(FAR struct altmdm_dev_s *priv)
   int      ret;
   uint32_t ptn;
 
-  ret = altmdm_sys_waitflag(&g_d2h_flag, EVENT_D2H_UP,
+  ret = altmdm_sys_waitflag(&g_pmtask_flag, EVENT_D2H_UP,
                             ALTMDM_SYS_FLAG_WMODEOR, &ptn,
                             D2H_UP_EVENT_TIMEOUT);
 
@@ -1002,25 +933,12 @@ static int modem_sleep_procedure(FAR struct altmdm_dev_s *priv)
 {
   int ret;
 
-  /* Reverse polarity of Device to Host GPIO line before deaseert. */
-
-  change_polarity_d2h_gpio(priv, GPIO_SREQ_INT_REVERSE_POLARITY);
-
   ret = set_h2d_down(priv);
   if (ret == 0)
     {
-      ret = wait_for_d2h_down_complete(priv);
-      if (ret != 0)
-        {
-          m_err("ERR:%04d device is not down.\n", __LINE__);
-        }
       /* Transitions to the sleep state. */
 
       altmdm_pm_setinternalstate(MODEM_PM_INTERNAL_STATE_SLEEP);
-
-      /* Reverse polarity of Device to Host GPIO line. */
-
-      change_polarity_d2h_gpio(priv, GPIO_SREQ_INT_POLARITY);
 
       /* Perform processing at the time of state transition. */
 
@@ -1310,7 +1228,6 @@ int altmdm_pm_init(FAR struct altmdm_dev_s *priv)
 
   /* Create event flags. */
 
-  altmdm_sys_initflag(&g_d2h_flag);
   altmdm_sys_initflag(&g_statetrans_flag);
   altmdm_sys_initflag(&g_pmtask_flag);
   altmdm_sys_initflag(&g_wakeup_done_flag);
@@ -1372,7 +1289,6 @@ int altmdm_pm_uninit(FAR struct altmdm_dev_s *priv)
 
   /* Delete event flags. */
 
-  altmdm_sys_deleteflag(&g_d2h_flag);
   altmdm_sys_deleteflag(&g_statetrans_flag);
   altmdm_sys_deleteflag(&g_pmtask_flag);
   altmdm_sys_deleteflag(&g_wakeup_done_flag);
