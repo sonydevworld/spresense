@@ -537,11 +537,12 @@ class PoolLayout:
 
 
 class PoolAreas:
-    section     = 0
-    layouts     = []
-    pool_ids    = []
-    pool_id_num = []
-    layout_num  = []
+    section      = 0
+    layouts      = []
+    pool_ids     = []
+    pool_id_num  = []
+    layout_num   = []
+    section_name = []
     def init(self, *args):
         layout_no  = 0
         for arg in args:
@@ -584,6 +585,10 @@ class PoolAreas:
 
         self.section += 1
 
+    def init_with_section_name(self, section_name, *args):
+        self.section_name.append("#define %-17s SECTION_NO%d" % (section_name, self.section))
+        self.init(*args)
+
     def max_work_size(self, section):
         max = 0
         for layout in self.layouts:
@@ -615,6 +620,12 @@ class PoolAreas:
         for num in range(self.section):
             io.write("#define SECTION_NO{0}       {0}\n".format(num))
         io.write("\n")
+
+        if len(self.section_name) > 0:
+            io.write("/*\n * Supports named section IDs\n */\n\n")
+            for nam in self.section_name:
+                io.write("{0}\n".format(nam))
+            io.write("\n")
 
         io.write("/*\n * Number of sections\n */\n\n")
         io.write("#define NUM_MEM_SECTIONS  {}\n\n".format(self.section))
