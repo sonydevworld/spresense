@@ -219,9 +219,9 @@ class MemoryDevices:
         self.devs.append(new_dev)
 
     def output_macros(self, io):
-        io.write("/*\n * Memory devices\n */\n")
+        io.write("/*\n * Memory devices\n */\n\n")
         for dev in self.devs:
-            io.write("/* {0}: type={1}, use=0x{2:08x}, remainder=0x{3:08x} */\n"
+            io.write("/* {0}: type={1}, use=0x{2:08x}, remainder=0x{3:08x} */\n\n"
                 .format(dev.name, "RAM" if (dev.ram) else "ROM", dev.size - dev.remainder(), dev.remainder()))
             io.write("#define {0}_ADDR  0x{1:08x}\n".format(dev.name, dev.begin_addr))
             io.write("#define {0}_SIZE  0x{1:08x}\n".format(dev.name, dev.size))
@@ -328,7 +328,7 @@ class FixedAreas:
 
     def output_macros(self, io):
         num_fences = 0
-        io.write("/*\n * Fixed areas\n */\n")
+        io.write("/*\n * Fixed areas\n */\n\n")
         for area in self.areas:
             if area.skip_size > 0:
                 io.write("/* Skip 0x{:04x} bytes for alignment. */\n".format(area.skip_size))
@@ -611,17 +611,18 @@ class PoolAreas:
             io.write("#define S{0}_MEMMGR_WORK_AREA_SIZE  0x{1:08x}\n".format(num, self.max_work_size(num)))
         io.write("\n")
 
-        io.write("/*\n * Section IDs\n */\n")
+        io.write("/*\n * Section IDs\n */\n\n")
         for num in range(self.section):
             io.write("#define SECTION_NO{0}       {0}\n".format(num))
         io.write("\n")
+
+        io.write("/*\n * Number of sections\n */\n\n")
         io.write("#define NUM_MEM_SECTIONS  {}\n\n".format(self.section))
 
-        io.write("/*\n * Pool IDs\n */\n")
+        io.write("/*\n * Pool IDs\n */\n\n")
         for index, name in enumerate(self.pool_ids):
             io.write("{0};  /* {1:2d} */\n".format(name, index))
         io.write("\n")
-
 
         for num in range(self.section):
             io.write("#define NUM_MEM_S{0}_LAYOUTS  {1:2d}\n".format(num, self.layout_num[num]))
@@ -629,21 +630,21 @@ class PoolAreas:
         io.write("\n")
 
         io.write("#define NUM_MEM_LAYOUTS     {0:2d}\n".format(max(self.layout_num)))
-        io.write("#define NUM_MEM_POOLS       {0:2d}\n\n".format(max(self.pool_id_num)))
+        io.write("#define NUM_MEM_POOLS       {0:2d}\n".format(max(self.pool_id_num)))
         if UseDynamicPool:
             io.write("#define NUM_DYN_POOLS  {0}\n".format(NumDynamicPools))
             io.write("#define DYN_POOL_WORK_SIZE(attr) \\\n")
             io.write(" ROUND_UP(sizeof(MemMgrLite::PoolAttr) + #{} +".format(BasicPoolDataSize))
             io.write(" {0} * (attr).num_segs + {1} * (attr).num_segs, 4)\n".format(NumSegSize, SegRefCntSize))
 
-        io.write("\n/*\n * Pool areas\n */\n")
+        io.write("\n/*\n * Pool areas\n */\n\n")
         for layout in self.layouts:
             for index, pool in enumerate(layout.pools):
                 if index == 0:
-                    io.write("/* Section{0} Layout{1}: */\n".format(pool.section, pool.layout))
+                    io.write("/* Section{0} Layout{1}: */\n\n".format(pool.section, pool.layout))
                     io.write("#define MEMMGR_S{0}_L{1}_WORK_SIZE   0x{2:08x}\n\n".format(pool.section, pool.layout, layout.work_size(pool.section)))
                 if pool.skip_size > 0:
-                    io.write("/* Skip 0x{0:04x} bytes for alignment. */\n".format(pool.skip_size))
+                    io.write("/* Skip 0x{0:04x} bytes for alignment. */\n\n".format(pool.skip_size))
                 io.write("#define S{0}_L{1}_{2}_ALIGN    0x{3:08x}\n".format(pool.section, pool.layout, pool.name, pool.align))
                 if pool.fence_flag:
                     io.write("#define S{0}_L{1}_{2}_L_FENCE  0x{3:08x}\n".format(pool.section, pool.layout, pool.name, pool.begin_addr - FenceSize))
@@ -682,15 +683,15 @@ class PoolAreas:
                     for index, pool in enumerate(layout.pools):
                         if index == 0:
                             io.write("    {/* Layout:%d */\n" % layout.layout)
-                            io.write("     /* pool_ID          type       seg")
+                            io.write("     /* %-31s  %-11s  %-3s" % ("pool_ID", "type", "seg"))
                             if UseFence:
-                                io.write(" fence")
+                                io.write("  fence")
                                 if UseMultiCore:
                                     io.write(" spinlock")
                                 io.write("  addr        size         */\n")
-                        io.write("      { S%d_%-28s, %-6s, %3u" % (pool.section, pool.name, pool.type, pool.num_seg))
+                        io.write("      { S%d_%-28s, %-11s, %3u" % (pool.section, pool.name, pool.type, pool.num_seg))
                         if UseFence:
-                            io.write(", {0}".format("true" if pool.fence_flag else "false"))
+                            io.write(", {0}".format(" true" if pool.fence_flag else "false"))
                         if UseMultiCore:
                             io.write(", {0}".format(pool.spinlock))
                         io.write(", 0x{0:08x}, 0x{1:08x}".format(pool.begin_addr, pool.size))
