@@ -87,7 +87,7 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
       return -EINVAL;
     }
 
-  if ((!apn->apn) || (strlen((char *)apn->apn) > LTE_APN_LEN))
+  if ((!apn->apn) || (strlen((char *)apn->apn) >= LTE_APN_LEN))
     {
       DBGIF_LOG_ERROR("apn is length overflow.\n");
       return  -EINVAL;
@@ -109,13 +109,13 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
 
   if (apn->user_name && apn->password)
     {
-      if (strlen((char *)apn->user_name) > LTE_APN_USER_NAME_LEN)
+      if (strlen((char *)apn->user_name) >= LTE_APN_USER_NAME_LEN)
         {
           DBGIF_LOG_ERROR("username is length overflow.\n");
           return -EINVAL;
         }
 
-      if (strlen((char *)apn->password) > LTE_APN_PASSWD_LEN)
+      if (strlen((char *)apn->password) >= LTE_APN_PASSWD_LEN)
         {
           DBGIF_LOG_ERROR("password is length overflow.\n");
           return  -EINVAL;
