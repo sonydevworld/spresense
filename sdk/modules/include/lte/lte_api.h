@@ -828,7 +828,7 @@ typedef struct lte_psm_setting
 typedef struct lte_apn_setting
 {
   /** Access point name. It is terminated with '\0'.
-   *  Maximum length is @ref LTE_APN_USER_NAME_LEN */
+   *  Maximum length is @ref LTE_APN_LEN including '\0'. */
 
   int8_t   *apn;
 
@@ -862,12 +862,12 @@ typedef struct lte_apn_setting
   uint32_t apn_type;
 
   /** User name. It is terminated with '\0'.
-   *  Maximum length is @ref LTE_APN_USER_NAME_LEN. */
+   *  Maximum length is @ref LTE_APN_USER_NAME_LEN including '\0'. */
 
   int8_t   *user_name;
 
   /** Password. It is terminated with '\0'.
-   *  Maximum length is @ref LTE_APN_PASSWD_LEN. */
+   *  Maximum length is @ref LTE_APN_PASSWD_LEN including '\0'. */
 
   int8_t   *password;
 } lte_apn_setting_t;
