@@ -118,6 +118,10 @@ static void getphoneno_job(FAR void *arg)
     {
       result = (int32_t)data->result;
 
+      /* Fixed to include "\0" at the end of output string. */
+
+      data->phoneno[APICMD_PHONENO_LEN - 1] = '\0';
+
       callback(result, data->errcause, (FAR int8_t*)data->phoneno);
     }
   else

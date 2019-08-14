@@ -119,6 +119,10 @@ static void getoperator_job(FAR void *arg)
     {
       result = (int32_t)data->result;
 
+      /* Fixed to include "\0" at the end of output string. */
+
+      data->oper[APICMD_OPERATOR_LEN - 1] = '\0';
+
       callback(result, (FAR int8_t *)data->oper);
     }
   else
