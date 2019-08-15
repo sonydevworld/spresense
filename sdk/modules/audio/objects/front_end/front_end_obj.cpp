@@ -415,7 +415,7 @@ void MicFrontEndObject::deactivate(MsgPacket *msg)
   /* Deactivate PreProcess */
 
   uint32_t ret = unloadComponent();
-  if (!ret)
+  if (ret != AS_ECODE_OK)
     {
       /* Error reply */
 
