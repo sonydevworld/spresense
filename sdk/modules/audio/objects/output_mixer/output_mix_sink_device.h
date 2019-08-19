@@ -152,7 +152,7 @@ private:
   typedef s_std::Queue<AsPcmDataParam, 10> RenderDataQueue;
   RenderDataQueue m_render_data_queue;
 
-  CustomProcBase *m_p_postfliter_instance;
+  ComponentBase *m_p_postfliter_instance;
   RenderComponentHandler m_render_comp_handler;
 
   OutputMixerCallback m_callback;
