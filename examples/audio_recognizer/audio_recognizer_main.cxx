@@ -629,7 +629,7 @@ extern "C" int audio_recognizer_main(int argc, char *argv[])
                             AS_CHANNEL_MONO,
                             AS_BITLENGTH_16,
 #ifdef CONFIG_EXAMPLES_AUDIO_RECOGNIZER_SAMPLERATECONV
-                            AsMicFrontendPreProcSampleRateCnv,
+                            AsMicFrontendPreProcSrc,
                             "/mnt/sd0/BIN/SRC"
 #elif defined CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
                             AsMicFrontendPreProcUserCustom,
