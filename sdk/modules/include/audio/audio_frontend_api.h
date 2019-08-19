@@ -145,7 +145,7 @@ typedef enum
 
   /*! \brief Pre Process Sampling Rate Conveter */
 
-  AsMicFrontendPreProcSampleRateCnv,
+  AsMicFrontendPreProcSrc,
 
   /*! \brief Pre Process user customed */
 
@@ -232,7 +232,7 @@ typedef struct
 
   /*! \brief [in] Output Fs
    *
-   * !! effective only when preproc_type is "AsMicFrontendPreProcSampleRateCnv" !! 
+   * !! effective only when preproc_type is "AsMicFrontendPreProcSrc" !!
    */
 
   uint32_t out_fs;

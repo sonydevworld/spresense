@@ -525,7 +525,7 @@ void MicFrontEndObject::init(MsgPacket *msg)
 
   /* Init Samplint Rate Converter. */
 
-  if (m_preproc_type == AsMicFrontendPreProcSampleRateCnv)
+  if (m_preproc_type == AsMicFrontendPreProcSrc)
     {
       InitComponentParam init_src_param;
 
@@ -559,7 +559,7 @@ uint32_t MicFrontEndObject::loadComponent(AsMicFrontendPreProcType type, char *d
                                                        m_msgq_id.dsp);
         break;
 
-      case AsMicFrontendPreProcSampleRateCnv:
+      case AsMicFrontendPreProcSrc:
         m_p_preproc_instance = new SRCComponent(m_pool_id.dsp,
                                                 m_msgq_id.dsp);
         break;
@@ -733,7 +733,7 @@ void MicFrontEndObject::initPreproc(MsgPacket *msg)
 
   MIC_FRONTEND_DBG("Init Pre Proc:\n");
 
-  if (m_preproc_type == AsMicFrontendPreProcSampleRateCnv)
+  if (m_preproc_type == AsMicFrontendPreProcSrc)
     {
       reply(AsMicFrontendEventInitPreProc,
             msg->getType(),
