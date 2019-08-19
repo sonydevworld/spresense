@@ -293,7 +293,7 @@ static bool app_init_micfrontend(uint32_t sampling_rate,
   command.header.sub_code      = 0x00;
   command.init_micfrontend_param.ch_num       = ch_num;
   command.init_micfrontend_param.bit_length   = bitlength;
-  command.init_micfrontend_param.samples      = 768;
+  command.init_micfrontend_param.samples      = 384;
   command.init_micfrontend_param.out_fs       = AS_SAMPLINGRATE_16000;
   command.init_micfrontend_param.preproc_type = preproc_type;
   snprintf(command.init_micfrontend_param.preprocess_dsp_path,
