@@ -27,15 +27,23 @@ config EXAMPLES_AUDIO_RECOGNIZER_STACKSIZE
 choice
 	prompt "Pre process"
     default EXAMPLES_AUDIO_RECOGNIZER_THROUGH
+	---help---
+        Select pre process which is applied at Frontend
    
 config EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
-	bool "User process at Frontend"
+	bool "User custom process"
+	---help---
+	    Use user custom process at Frontend
 
 config EXAMPLES_AUDIO_RECOGNIZER_SAMPLERATECONV
-	bool "Use sample rate converter at Frontend"
+	bool "Sample rate converter"
+	---help---
+	    Use sample rate converter at Frontend
 
 config EXAMPLES_AUDIO_RECOGNIZER_THROUGH
-	bool "Do not Use"
+	bool "Through"
+	---help---
+	    No signal processing is applied at Frontend
 
 endchoice
 
