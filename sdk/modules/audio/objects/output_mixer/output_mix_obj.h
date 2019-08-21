@@ -68,9 +68,9 @@ public:
 
 private:
   AsOutputMixMsgQueId_t m_msgq_id;
-  static const int HPI2SoutChNum = 2;
 
-  OutputMixToHPI2S m_output_mix_to_hpi2s[HPI2SoutChNum];
+  OutputMixToHPI2S m_output_mix_to_hpi2s_0;
+  OutputMixToHPI2S m_output_mix_to_hpi2s_1;
 
   AsOutputMixDevice m_output_device;
 

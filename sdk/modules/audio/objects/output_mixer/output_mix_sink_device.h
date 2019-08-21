@@ -97,40 +97,36 @@ struct OutputMixObjParam
 class OutputMixToHPI2S
 {
 public:
-  OutputMixToHPI2S():
-    m_state(AS_MODULE_ID_OUTPUT_MIX_OBJ, "", Booted),
-    m_callback(NULL),
-    m_adjust_direction(OutputMixNoAdjust),
-    m_adjustment_times(0)
-    {}
+  OutputMixToHPI2S(MsgQueId self_dtq,
+                   MsgQueId dsp_dtq,
+                   MemMgrLite::PoolId cmd_pool,
+                   MemMgrLite::PoolId pcm_pool)
+    : m_self_dtq(self_dtq)
+    , m_apu_dtq(dsp_dtq)
+    , m_apu_pool_id(cmd_pool)
+    , m_pcm_pool_id(pcm_pool)
+    , m_state(AS_MODULE_ID_OUTPUT_MIX_OBJ, "", Booted)
+    , m_p_postfliter_instance(NULL)
+    , m_usercstm_instance(cmd_pool, dsp_dtq)
+    , m_thruproc_instance()
+    , m_callback(NULL)
+    , m_adjust_direction(OutputMixNoAdjust)
+    , m_adjustment_times(0)
+  {}
+
+  ~OutputMixToHPI2S()
+  {}
 
     MsgQueId m_self_dtq, m_requester_dtq, m_apu_dtq;
     MemMgrLite::PoolId m_apu_pool_id;
     MemMgrLite::PoolId m_pcm_pool_id;
     int m_self_handle;
 
-  ~OutputMixToHPI2S() {}
   void parse(MsgPacket* msg);
 
   bool is_active(void)
     {
       return ((m_state.get() != Booted) ? true : false);
-    }
-  void set_self_dtq(MsgQueId dtqid)
-    {
-      m_self_dtq = dtqid;
-    }
-  void set_apu_dtq(MsgQueId dtqid)
-    {
-      m_apu_dtq = dtqid;
-    }
-  void set_pcm_pool_id(MemMgrLite::PoolId poolid)
-    {
-      m_pcm_pool_id = poolid;
-    }
-  void set_apu_pool_id(MemMgrLite::PoolId poolid)
-    {
-      m_apu_pool_id = poolid;
     }
 
 private:
@@ -153,6 +149,9 @@ private:
   RenderDataQueue m_render_data_queue;
 
   ComponentBase *m_p_postfliter_instance;
+  UserCustomComponent m_usercstm_instance;
+  ThruProcComponent m_thruproc_instance;
+
   RenderComponentHandler m_render_comp_handler;
 
   OutputMixerCallback m_callback;
