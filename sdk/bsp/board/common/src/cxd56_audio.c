@@ -73,6 +73,34 @@
 #endif
 
 /****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: check_pin_i2s_mode
+ *
+ * Description:
+ *   Check if the pin is I2S.
+ *
+ ****************************************************************************/
+
+static bool check_pin_i2s_mode(uint32_t pin)
+{
+  bool                res = false;
+  cxd56_pin_status_t  pstat;
+
+  if (cxd56_pin_status(pin, &pstat) >= 0)
+    {
+      if (pstat.mode == 1)
+        {
+          res = true;
+        }
+    }
+
+  return res;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -275,14 +303,19 @@ void board_audio_i2s_disable(void)
 #ifdef CONFIG_CXD56_I2S0
   /* Select GPIO(P1v_00/01/02/03) */
 
-  CXD56_PIN_CONFIGS(PINCONFS_I2S0_GPIO);
-
+  if (check_pin_i2s_mode(PIN_I2S0_BCK))
+    {
+      CXD56_PIN_CONFIGS(PINCONFS_I2S0_GPIO);
+    }
 #endif
 
 #ifdef CONFIG_CXD56_I2S1
   /* Select GPIO(P1v_00/01/02/03) */
 
-  CXD56_PIN_CONFIGS(PINCONFS_I2S1_GPIO);
+  if (check_pin_i2s_mode(PIN_I2S1_BCK))
+    {
+      CXD56_PIN_CONFIGS(PINCONFS_I2S1_GPIO);
+    }
 #endif
 }
 
