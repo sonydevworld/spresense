@@ -102,6 +102,7 @@ ${SCRIPT_DIR}/eula.py -c
 
 if [ "${LOADR_PATH}" != "" ]; then
 	ESPK_FILES="`find ${LOADR_PATH} -name "*.espk"`"
+	SPK_FILES="`find ${LOADR_PATH} -name "*.spk"`"
 fi
 
 if [ "${SPK_FILES}${ESPK_FILES}" == "" ]; then
