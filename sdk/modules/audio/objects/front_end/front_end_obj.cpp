@@ -1605,6 +1605,29 @@ bool MicFrontEndObject::sendData(AsPcmDataParam& data)
 
       m_pcm_data_dest.cb(data);
     }
+  else if (m_pcm_data_path == AsDataPathSimpleFIFO)
+    {
+      /* Get into the FIFO for PCM data notify */
+
+      if (data.size == 0)
+        {
+          return true;
+        }
+
+      if (CMN_SimpleFifoGetVacantSize(m_pcm_data_dest.simple_fifo_handler) < data.size)
+        {
+          MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_SIMPLE_FIFO_OVERFLOW);
+          return false;
+        }
+
+      if (CMN_SimpleFifoOffer(m_pcm_data_dest.simple_fifo_handler,
+                              static_cast<const void*>(data.mh.getVa()),
+                              data.size) != data.size)
+        {
+          MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_SIMPLE_FIFO_OVERFLOW);
+          return false;
+        }
+    }
   else
     {
       /* Send message for PCM data notify */

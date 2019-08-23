@@ -59,6 +59,7 @@
 
 #include "audio/audio_common_defs.h"
 #include "audio/audio_object_common_api.h"
+#include "memutils/simple_fifo/CMN_SimpleFifo.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -165,6 +166,10 @@ typedef enum
 
   AsDataPathMessage,
 
+  /*! \brief PCM data is send by simple FIFO */
+
+  AsDataPathSimpleFIFO,
+
 } AsMicFrontendDataPath;
 
 /** Activate Mic FrontEnd Command */
@@ -205,6 +210,8 @@ typedef void (*FrontendDoneCallback)(AsPcmDataParam param);
 union AsDataDest
 {
   FrontendDoneCallback cb;
+
+  CMN_SimpleFifoHandle *simple_fifo_handler;
 
   struct __st_tunnel
   {
