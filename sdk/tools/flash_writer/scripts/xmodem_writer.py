@@ -215,7 +215,7 @@ class XmodemWriter:
 
 		while True :
 			rx = self.serial.readline().decode(errors="replace").strip()
-			if "nsh>" in rx :
+			if NSH_MSG in rx :
 				break
 			# Workaround : Sometime first character is dropped.
 			# Send line feed as air shot before actual command.
@@ -237,7 +237,7 @@ class XmodemWriter:
 				break
 
 	def wait_for_prompt(self):
-		prompt_pat = re.compile(b"nsh>")
+		prompt_pat = re.compile(NSH_MSG.encode())
 		while True:
 			rx = self.recv()
 			if prompt_pat.search(rx):
@@ -308,7 +308,7 @@ def main():
 		for i in range(3):
 			writer.send("")
 			rx = writer.recv()
-			if "updater".encode() in rx:
+			if NSH_MSG.encode() in rx:
 				# No need to wait for reset
 				do_wait_reset = False
 				break
