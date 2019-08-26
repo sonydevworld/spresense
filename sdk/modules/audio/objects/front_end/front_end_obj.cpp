@@ -586,6 +586,8 @@ uint32_t MicFrontEndObject::loadComponent(AsMicFrontendPreProcType type, char *d
     {
       delete m_p_preproc_instance;
 
+      m_p_preproc_instance = NULL;
+
       return ret;
     }
 
@@ -617,6 +619,8 @@ uint32_t MicFrontEndObject::unloadComponent(void)
     }
 
   delete m_p_preproc_instance;
+
+  m_p_preproc_instance = NULL;
 
   /* When unload complete successfully, set invalid type and dsp_name. */
 

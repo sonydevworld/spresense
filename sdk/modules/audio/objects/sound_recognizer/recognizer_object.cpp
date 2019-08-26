@@ -335,6 +335,8 @@ uint32_t RecognizerObject::loadComponent(AsRecognizerType type, char *dsp_path)
     {
       delete m_p_rcgproc_instance;
 
+      m_p_rcgproc_instance = NULL;
+
       return ret;
     }
 
@@ -366,6 +368,8 @@ uint32_t RecognizerObject::unloadComponent(void)
     }
 
   delete m_p_rcgproc_instance;
+
+  m_p_rcgproc_instance = NULL;
 
   /* When unload complete successfully, set invalid type and dsp_name. */
 
