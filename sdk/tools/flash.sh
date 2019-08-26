@@ -136,7 +136,7 @@ if [ "${FLASH_MODE}" == "SPK" ]; then
 	# Flash spk files into spresense board
 	${SCRIPT_DIR}/${PLATFORM}/flash_writer -s -c ${UART_PORT} -d -b ${UART_BAUDRATE} -n ${ESPK_FILES} ${SPK_FILES}
 elif [ "${FLASH_MODE}" == "ELF" ]; then
-	if [ "$@" == "" ]; then
+	if [ "$#" == "0" ]; then
 		echo "ERROR: No elf files are contains."
 		echo ""
 		show_help
