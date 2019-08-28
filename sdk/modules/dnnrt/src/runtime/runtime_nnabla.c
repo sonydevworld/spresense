@@ -103,6 +103,12 @@ int dnn_runtime_initialize(dnn_runtime_t * rt, const nn_network_t * network)
     {
       goto rt_init_err;
     }
+  err =
+    (int)rt_add_callback(ctx, NN_FUNCTION_CONVOLUTION_0, dnnrt_convolution_alloc);
+  if (err != RT_RET_NOERROR)
+    {
+      goto rt_init_err;
+    }
   err = (int)rt_add_callback(ctx, NN_FUNCTION_AFFINE, dnnrt_affine_alloc);
   if (err != RT_RET_NOERROR)
     {
