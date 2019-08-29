@@ -1389,16 +1389,29 @@ static void cxd56_sdio_sdhci_reset(FAR struct sdio_dev_s *dev)
         getreg32(CXD56_SDHCI_SYSCTL), getreg32(CXD56_SDHCI_PRSSTAT),
         getreg32(CXD56_SDHCI_IRQSTATEN));
 
+  /* Initialize the SDHC slot structure data structure */
+  /* Initialize semaphores */
+
+  sem_init(&priv->waitsem, 0, 0);
+
+  /* The waitsem semaphore is used for signaling and, hence, should not have
+   * priority inheritance enabled.
+   */
+
+  sem_setprotocol(&priv->waitsem, SEM_PRIO_NONE);
+
+  /* Create a watchdog timer */
+
+  priv->waitwdog = wd_create();
+  DEBUGASSERT(priv->waitwdog);
+
   /* The next phase of the hardware reset would be to set the SYSCTRL INITA
    * bit to send 80 clock ticks for card to power up and then reset the card
    * with CMD0.  This is done elsewhere.
    */
 
   /* Reset state data */
-  sem_init(&priv->waitsem, 0, 1);
-  priv->waitwdog = wd_create();
-  DEBUGASSERT(priv->waitwdog);
-  sem_init(&priv->waitsem, 0, 1);
+
   priv->waitevents = 0;      /* Set of events to be waited for */
   priv->waitints   = 0;      /* Interrupt enables for event waiting */
   priv->wkupevent  = 0;      /* The event that caused the wakeup */
