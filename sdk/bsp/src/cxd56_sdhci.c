@@ -1258,6 +1258,16 @@ static int cxd56_interrupt(int irq, FAR void *context, FAR void *arg)
     }
 #endif /* CONFIG_CXD56_SDIO_ENABLE_MULTIFUNCTION */
 
+  /* Handle error interrupts ************************************************/
+
+  if ((getreg32(CXD56_SDHCI_IRQSTAT) & SDHCI_INT_EINT) != 0)
+    {
+      /* Clear error interrupts */
+
+      mcerr("ERROR: Occur error interrupts: %08x\n", enabled);
+      putreg32(enabled & SDHCI_EINT_MASK, CXD56_SDHCI_IRQSTAT);
+    }
+
   /* Handle wait events *****************************************************/
 
   pending  = enabled & priv->waitints;
