@@ -337,8 +337,7 @@ struct cxd56_sdhcregs_s
   uint32_t htcapblt;  /* Host Controller Capabilities */
   uint32_t admaes;    /* ADMA Error Status Register */
   uint32_t adsaddr;   /* ADMA System Address Register */
-  uint32_t vendor;    /* Vendor Specific Register */
-  uint32_t hostver;   /* Host Controller Version */
+  uint32_t vendspec;  /* Vendor Specific Register */
 };
 #endif
 
@@ -680,8 +679,7 @@ static void cxd56_sdhcsample(struct cxd56_sdhcregs_s *regs)
   regs->htcapblt  = getreg32(CXD56_SDHCI_HTCAPBLT);  /* Host Controller Capabilities */
   regs->admaes    = getreg32(CXD56_SDHCI_ADMAES);    /* ADMA Error Status Register */
   regs->adsaddr   = getreg32(CXD56_SDHCI_ADSADDR);   /* ADMA System Address Register */
-  regs->vendor    = getreg32(CXD56_SDHCI_VENDOR);    /* Vendor Specific Register */
-  regs->hostver   = getreg32(CXD56_SDHCI_HOSTVER);   /* Host Controller Version */
+  regs->vendspec  = getreg32(CXD56_SDHCI_VENDSPEC);  /* Vendor Specific Register */
 }
 #endif
 
@@ -731,7 +729,7 @@ static void cxd56_dumpsample(struct cxd56_sdiodev_s *priv,
   mcinfo(" HTCAPBLT[%08x]: %08x\n", CXD56_SDHCI_HTCAPBLT,  regs->htcapblt);
   mcinfo("   ADMAES[%08x]: %08x\n", CXD56_SDHCI_ADMAES,    regs->admaes);
   mcinfo("  ADSADDR[%08x]: %08x\n", CXD56_SDHCI_ADSADDR,   regs->adsaddr);
-  mcinfo("  HOSTVER[%08x]: %08x\n", CXD56_SDHCI_HOSTVER,   regs->hostver);
+  mcinfo(" VENDSPEC[%08x]: %08x\n", CXD56_SDHCI_VENDSPEC,  regs->hostver);
 }
 #endif
 
