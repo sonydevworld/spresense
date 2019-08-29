@@ -88,6 +88,7 @@ public:
     m_msgq_id(msgq_id),
     m_pool_id(pool_id),
     m_state(AS_MODULE_ID_MEDIA_RECORDER_OBJ, "", RecorderStateInactive),
+    m_channel_num(2),
     m_pcm_bit_width(AudPcm16Bit),
     m_sampling_rate(48000),
     m_codec_type(InvalidCodecType),
@@ -128,6 +129,7 @@ private:
   AsRecorderPoolId_t   m_pool_id;
 
   AudioState<RecorderState_e> m_state;
+  int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
   int32_t m_sampling_rate;
   int32_t m_max_output_pcm_size;

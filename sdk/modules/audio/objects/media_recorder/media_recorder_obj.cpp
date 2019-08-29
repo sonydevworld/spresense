@@ -596,6 +596,7 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
       return;
     }
 
+  m_channel_num   = cmd.init_param.channel_number;
   m_pcm_bit_width =
     ((cmd.init_param.bit_length == AS_BITLENGTH_16)
       ? AudPcm16Bit : (cmd.init_param.bit_length == AS_BITLENGTH_24)
@@ -761,15 +762,42 @@ uint32_t MediaRecorderObjectTask::initEnc(AsInitRecorderParam *param)
 /*--------------------------------------------------------------------------*/
 void MediaRecorderObjectTask::startOnReady(MsgPacket *msg)
 {
+  bool result = true;
+  uint32_t apu_result = AS_ECODE_OK;
+  uint32_t dsp_inf = 0;
+
   msg->moveParam<RecorderCommand>();
 
   /* Transit to Active */
 
   m_state = RecorderStateActive;
 
+  /* Codec DSP processing resumed */
+
+  if ((m_codec_type == AudCodecMP3) || (m_codec_type == AudCodecOPUS))
+    {
+      InitEncParam enc_param;
+      enc_param.codec_type           = m_codec_type;
+      enc_param.input_sampling_rate  = AS_SAMPLINGRATE_48000;
+      enc_param.output_sampling_rate = m_sampling_rate;
+      enc_param.bit_width            = m_pcm_bit_width;
+      enc_param.channel_num          = m_channel_num;
+      enc_param.callback             = encoder_done_callback;
+      enc_param.bit_rate             = m_bit_rate;
+      enc_param.complexity           =
+        (m_codec_type == AudCodecOPUS) ? m_complexity : 0;
+
+      apu_result = AS_encode_init(&enc_param, &dsp_inf);
+      result = AS_encode_recv_done();
+      if (!result)
+        {
+          apu_result = AS_ECODE_QUEUE_OPERATION_ERROR;
+        }
+    }
+
   /* Reply */
 
-  reply(AsRecorderEventStart, msg->getType(), AS_ECODE_OK);
+  reply(AsRecorderEventStart, msg->getType(), apu_result);
 }
 
 /*--------------------------------------------------------------------------*/
