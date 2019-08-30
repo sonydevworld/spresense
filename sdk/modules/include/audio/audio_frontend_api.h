@@ -507,7 +507,7 @@ bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParams_t *param,
 /**
  * @brief Activate mic frontend
  *
- * @param[in] param: Activation parameters
+ * @param[in] actparam: Activation parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -518,7 +518,7 @@ bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam);
 /**
  * @brief Init mic frontend
  *
- * @param[in] param: Initialization parameters
+ * @param[in] initparam: Initialization parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -529,6 +529,8 @@ bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam);
 /**
  * @brief Start mic frontend
  *
+ * @param[in] startparam: Start parameters
+ *
  * @retval     true  : success
  * @retval     false : failure
  */
@@ -537,6 +539,8 @@ bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam);
 
 /**
  * @brief Stop mic frontend
+ *
+ * @param[in] stopparam: Stop parameters
  *
  * @retval     true  : success
  * @retval     false : failure

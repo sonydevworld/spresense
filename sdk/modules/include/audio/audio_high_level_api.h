@@ -661,7 +661,7 @@ typedef struct {
   /*! \brief [in] Set ClearStero Volume
    *
    * -825:-82.5dB(default), ... -195:-19.5dB,
-   * #AS_ CS_VOL_HOLD:keep setting
+   * #AS_CS_VOL_HOLD:keep setting
    */
 
   int16_t cs_vol;

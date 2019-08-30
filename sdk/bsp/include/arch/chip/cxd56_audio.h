@@ -46,7 +46,7 @@
  * @defgroup cxd56_audio_api Audio Driver API
  * @{
  *
- * @file       cxd56_audio.h
+ * @file       chip/cxd56_audio.h
  * @brief      CXD5602 Audio Driver API
  * @author     CXD5602 Audio SW Team
  */
@@ -482,16 +482,12 @@ extern "C" {
 /**
  * @brief Power on Audio driver
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_poweron(void);
 
 /**
  * @brief Power off BaseBand driver
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -500,9 +496,8 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff(void);
 /**
  * @brief Enable clear stereo
  *
- * @param[in] bool Sign inversion(false: positive, true:negative)
- * @param[in] int16_t volume, -825:-82.5dB, ... -195:-19.5dB,
- * step:5
+ * @param[in] sign_inv: Sign inversion(false: positive, true:negative)
+ * @param[in] vol: volume, -825:-82.5dB, ... -195:-19.5dB, step:5
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -511,16 +506,12 @@ CXD56_AUDIO_ECODE cxd56_audio_en_cstereo(bool sign_inv, int16_t vol);
 /**
  * @brief Disable clear stereo
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_cstereo(void);
 
 /**
  * @brief Power on DNC
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -529,8 +520,6 @@ CXD56_AUDIO_ECODE cxd56_audio_poweron_dnc(void);
 /**
  * @brief Power off DNC
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_poweroff_dnc(void);
@@ -538,8 +527,8 @@ CXD56_AUDIO_ECODE cxd56_audio_poweroff_dnc(void);
 /**
  * @brief Enable DNC
  *
- * @param[in] cxd56_audio_dnc_id_t target DNC device
- * @param[in] cxd56_audio_dnc_bin_t firmware and configurator
+ * @param[in] id: target DNC device
+ * @param[in] bin: firmware and configurator
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -549,7 +538,7 @@ CXD56_AUDIO_ECODE cxd56_audio_en_dnc(cxd56_audio_dnc_id_t id,
 /**
  * @brief Disable DNC
  *
- * @param[in] cxd56_audio_dnc_id_t target DNC device
+ * @param[in] id: target DNC device
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -558,7 +547,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_dnc(cxd56_audio_dnc_id_t id);
 /**
  * @brief Disable DEQ
  *
- * @param[in] cxd56_audio_dnc_coef_t coef data
+ * @param[in] coef: coef data
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -568,16 +557,12 @@ CXD56_AUDIO_ECODE cxd56_audio_en_deq(FAR cxd56_audio_deq_coef_t *coef);
 /**
  * @brief Disable DEQ
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_deq(void);
 
 /**
  * @brief Enable BaseBand driver input
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -586,16 +571,12 @@ CXD56_AUDIO_ECODE cxd56_audio_en_input(void);
 /**
  * @brief Enable BaseBand driver output
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_en_output(void);
 
 /**
  * @brief Disable BaseBand driver input
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -604,8 +585,6 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_input(void);
 /**
  * @brief Disable BaseBand driver output
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_output(void);
@@ -613,7 +592,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_output(void);
 /**
  * @brief Set speaker output status
  *
- * @param[in] bool Whether speaker output is done or not
+ * @param[in] sp_out_en: Whether speaker output is done or not
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -622,8 +601,8 @@ CXD56_AUDIO_ECODE cxd56_audio_set_spout(bool sp_out_en);
 /**
  * @brief Set volume
  *
- * @param[in] cxd56_audio_volid_t target volume device id
- * @param[in] int16_t volume[-1020:-102.0dB, ... 120:12.0dB]
+ * @param[in] id: target volume device id
+ * @param[in] vol: volume[-1020:-102.0dB, ... 120:12.0dB]
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -632,7 +611,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_vol(cxd56_audio_volid_t id, int16_t vol);
 /**
  * @brief Mute volume
  *
- * @param[in] cxd56_audio_volid_t target volume device id
+ * @param[in] id: target volume device id
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -641,7 +620,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mute_vol(cxd56_audio_volid_t id);
 /**
  * @brief Unmute volume
  *
- * @param[in] cxd56_audio_volid_t target volume device id
+ * @param[in] id: target volume device id
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -650,8 +629,8 @@ CXD56_AUDIO_ECODE cxd56_audio_unmute_vol(cxd56_audio_volid_t id);
 /**
  * @brief mute volume with fade-out
  *
- * @param[in] cxd56_audio_volid_t target volume device id
- * @param[in] bool wait fade-out end
+ * @param[in] id: target volume device id
+ * @param[in] wait: wait fade-out end
 
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -661,8 +640,8 @@ CXD56_AUDIO_ECODE cxd56_audio_mute_vol_fade(cxd56_audio_volid_t id,
 /**
  * @brief unmute volume with fade-in
  *
- * @param[in] cxd56_audio_volid_t target volume device id
- * @param[in] bool wait fade-in end
+ * @param[in] id: target volume device id
+ * @param[in] wait: wait fade-in end
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -672,7 +651,7 @@ CXD56_AUDIO_ECODE cxd56_audio_unmute_vol_fade(cxd56_audio_volid_t id,
 /**
  * @brief Set beep frequency parameter
  *
- * @param[in] utin16_t beep frequency, 94:94Hz, ... 4085:4085Hz, step:1
+ * @param[in] freq: beep frequency, 94:94Hz, ... 4085:4085Hz, step:1
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -681,7 +660,7 @@ CXD56_AUDIO_ECODE cxd56_audio_set_beep_freq(uint16_t freq);
 /**
  * @brief Set beep volume parameter
  *
- * @param[in] int16_t beep volume, -90:-90dB, ... 0:0dB, step:3, default:-12,
+ * @param[in] vol: beep volume, -90:-90dB, ... 0:0dB, step:3, default:-12,
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -690,16 +669,12 @@ CXD56_AUDIO_ECODE cxd56_audio_set_beep_vol(int16_t vol);
 /**
  * @brief Play beep
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_play_beep(void);
 
 /**
  * @brief Stop beep
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -708,7 +683,7 @@ CXD56_AUDIO_ECODE cxd56_audio_stop_beep(void);
 /**
  * @brief Set MIC gain
  *
- * @param[in] cxd56_audio_mic_gain_t* MIC gain[Analog:0~210[dB*10], Digital:-7850~0[dB*100]]
+ * @param[in] gain: MIC gain[Analog:0~210[dB*10], Digital:-7850~0[dB*100]]
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -718,8 +693,8 @@ CXD56_AUDIO_ECODE cxd56_audio_set_micgain(FAR cxd56_audio_mic_gain_t *gain);
 /**
  * @brief Set DEQ table
  *
- * @param[in] bool  DEQ enable or disable
- * @param[in] cxd56_audio_deq_coef_t* coef table
+ * @param[in] en:  DEQ enable or disable
+ * @param[in] deq: coef table
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -728,8 +703,8 @@ CXD56_AUDIO_ECODE cxd56_audio_set_deq(bool en, FAR cxd56_audio_deq_coef_t *deq);
 /**
  * @brief Get dma handle
  *
- * @param[in]  cxd56_audio_dma_path_t dma path type
- * @param[out] cxd56_audio_dma_t* dma handle
+ * @param[in]  path: dma path type
+ * @param[out] handle: dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -739,7 +714,7 @@ CXD56_AUDIO_ECODE cxd56_audio_get_dmahandle(cxd56_audio_dma_path_t path,
 /**
  * @brief Free dma handle
  *
- * @param[in]  cxd56_audio_dma_t Dma handle
+ * @param[in] handle: Dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -748,8 +723,8 @@ CXD56_AUDIO_ECODE cxd56_audio_free_dmahandle(FAR cxd56_audio_dma_t handle);
 /**
  * @brief Set internal data path
  *
- * @param[in] cxd56_audio_signal_t Internal singal type
- * @param[in] cxd56_audio_sel_t Internal selector type
+ * @param[in] sig: Internal singal type
+ * @param[in] sel: Internal selector type
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -759,9 +734,9 @@ CXD56_AUDIO_ECODE cxd56_audio_set_datapath(cxd56_audio_signal_t sig,
 /**
  * @brief Initialize dma transfer function
  *
- * @param[in]  cxd56_audio_dma_t      Dma handle
- * @param[in]  cxd56_audio_samp_fmt_t sampling data format 24bits or 16bits
- * @param[out] uint8_t*               Channel data numbers in DMA data
+ * @param[in]  handle: Dma handle
+ * @param[in]  fmt:    sampling data format 24bits or 16bits
+ * @param[out] ch_num: Channel data numbers in DMA data
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -772,8 +747,8 @@ CXD56_AUDIO_ECODE cxd56_audio_init_dma(cxd56_audio_dma_t handle,
 /**
  * @brief Initialize dma transfer function
  *
- * @param[in] cxd56_audio_dma_t     Dma handle
- * @param[in] cxd56_audio_dma_cb_t  Call back function for notify dma state
+ * @param[in] handle: Dma handle
+ * @param[in] cb:     Call back function for notify dma state
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -783,16 +758,12 @@ CXD56_AUDIO_ECODE cxd56_audio_set_dmacb(cxd56_audio_dma_t handle,
 /**
  * @brief Enable dma interrupt
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_en_dmaint(void);
 
 /**
  * @brief Disable dma interrupt
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -801,7 +772,7 @@ CXD56_AUDIO_ECODE cxd56_audio_dis_dmaint(void);
 /**
  * @brief Clear dma error interrupt state
  *
- * @param[in] cxd56_audio_dma_t  Dma handle
+ * @param[in] handle: Dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -810,7 +781,7 @@ CXD56_AUDIO_ECODE cxd56_audio_clear_dmaerrint(cxd56_audio_dma_t handle);
 /**
  * @brief Mask dma error interrupt
  *
- * @param[in] cxd56_audio_dma_t  Dma handle
+ * @param[in] handle: Dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -819,7 +790,7 @@ CXD56_AUDIO_ECODE cxd56_audio_mask_dmaerrint(cxd56_audio_dma_t handle);
 /**
  * @brief Unmask dma error interrupt
  *
- * @param[in] cxd56_audio_dma_t  Dma handle
+ * @param[in] handle: Dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -828,9 +799,9 @@ CXD56_AUDIO_ECODE cxd56_audio_unmask_dmaerrint(cxd56_audio_dma_t handle);
 /**
  * @brief Start dma transfer
  *
- * @param[in] cxd56_audio_dma_t  Dma handle
- * @param[in] uint32_t  data address
- * @param[in] uint32_t  number of samples
+ * @param[in] handle: Dma handle
+ * @param[in] addr:   data address
+ * @param[in] sample: number of samples
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -841,7 +812,7 @@ CXD56_AUDIO_ECODE cxd56_audio_start_dma(cxd56_audio_dma_t handle,
 /**
  * @brief Stop dma transfer
  *
- * @param[in] cxd56_audio_dma_t  Dma handle
+ * @param[in] handle: Dma handle
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -851,7 +822,7 @@ CXD56_AUDIO_ECODE cxd56_audio_stop_dma(cxd56_audio_dma_t handle);
 /**
  * @brief Set audio clock mode
  *
- * @param[in] cxd56_audio_clkmode_t  clock mode
+ * @param[in] mode: clock mode
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -860,16 +831,12 @@ CXD56_AUDIO_ECODE cxd56_audio_set_clkmode(cxd56_audio_clkmode_t mode);
 /**
  * @brief Get audio clock mode
  *
- * @param none
- *
  * @retval cxd56_audio_clkmode_t clock mode
  */
 cxd56_audio_clkmode_t cxd56_audio_get_clkmode(void);
 
 /**
  * @brief Get data format type of dma
- *
- * @param none
  *
  * @retval cxd56_audio_dmafmt_t clock mode
  */
@@ -878,8 +845,6 @@ cxd56_audio_dmafmt_t cxd56_audio_get_dmafmt(void);
 /**
  * @brief Get mic device type
  *
- * @param none
- *
  * @retval cxd56_audio_micdev_t mic device type
  */
 cxd56_audio_micdev_t cxd56_audio_get_micdev(void);
@@ -887,7 +852,7 @@ cxd56_audio_micdev_t cxd56_audio_get_micdev(void);
 /**
  * @brief Enable digital soft ramp rate control
  *
- * @param[in] cxd56_audio_dsr_rate_t  Ramp rate
+ * @param[in] rate: Ramp rate
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -896,16 +861,12 @@ CXD56_AUDIO_ECODE cxd56_audio_en_digsft(cxd56_audio_dsr_rate_t rate);
 /**
  * @brief Disable digital soft ramp rate control
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_digsft(void);
 
 /**
  * @brief Enable I2S I/O
- *
- * @param none
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -914,16 +875,12 @@ CXD56_AUDIO_ECODE cxd56_audio_en_i2s_io(void);
 /**
  * @brief Disable I2S I/O
  *
- * @param none
- *
  * @retval CXD56_AUDIO_ECODE return code
  */
 CXD56_AUDIO_ECODE cxd56_audio_dis_i2s_io(void);
 
 /**
  * @brief Get audio driver status
- *
- * @param none
  *
  * @retval cxd56_audio_state_t value : current status
  */
@@ -932,7 +889,7 @@ cxd56_audio_state_t cxd56_audio_get_status(void);
 /**
  * @brief Set audio speaker driver mode
  *
- * @param[in] cxd56_audio_sp_drv_t  speaker driver mode
+ * @param[in] sp_driver: speaker driver mode
  *
  * @retval CXD56_AUDIO_ECODE return code
  */
@@ -940,8 +897,6 @@ CXD56_AUDIO_ECODE cxd56_audio_set_spdriver(cxd56_audio_sp_drv_t sp_driver);
 
 /**
  * @brief Get audio speaker driver mode
- *
- * @param none
  *
  * @retval cxd56_audio_sp_drv_t  speaker driver mode
  */

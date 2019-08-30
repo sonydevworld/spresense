@@ -468,7 +468,7 @@ bool AS_CreateMediaRecorder(FAR AsCreateRecorderParam_t *param);
 /**
  * @brief Activate audio recorder
  *
- * @param[in] param: Activation parameters
+ * @param[in] actparam: Activation parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -479,7 +479,7 @@ bool AS_ActivateMediaRecorder(FAR AsActivateRecorder *actparam);
 /**
  * @brief Init audio recorder
  *
- * @param[in] param: Initialization parameters
+ * @param[in] initparam: Initialization parameters
  *
  * @retval     true  : success
  * @retval     false : failure
