@@ -44,7 +44,7 @@
  * @defgroup memutils_memory_manager Memory Manager Lite
  *
  * @{
- * @file   MemMgeTypes.h
+ * @file   MemMgrTypes.h
  * @brief  Types definitions for "Memory Manager".
  * @author CXD5602 Media SW Team
  */
