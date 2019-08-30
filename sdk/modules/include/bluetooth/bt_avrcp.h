@@ -71,7 +71,7 @@ typedef enum
 } BT_AVRCP_ROLE;
 
 /**
- * @enum BT_AVRC_TRACK_INFO
+ * @struct BT_AVRC_TRACK_INFO
  * @brief BT avrc track info type
  */
 typedef struct avrcTrackInfo {
