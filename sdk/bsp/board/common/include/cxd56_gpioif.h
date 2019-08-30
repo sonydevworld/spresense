@@ -32,6 +32,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+/**
+ * @file cxd56_gpioif.h
+ */
 
 #ifndef __BSP_BOARD_COMMON_INCLUDE_CXD56_GPIOIF_H
 #define __BSP_BOARD_COMMON_INCLUDE_CXD56_GPIOIF_H
@@ -66,13 +69,9 @@ extern "C"
  ****************************************************************************/
 
 /**
- * @defgroup gpioif_defs Defines
- * @{
- */
-
-/**
  * @name Pin Pull Setting
  * Pin floating, pull up, pull down definitions
+ * @{
  */
 
 #define PIN_FLOAT               (0) /**< Floating */
@@ -80,9 +79,12 @@ extern "C"
 #define PIN_PULLDOWN            (2) /**< Internal Weak Pull Down */
 #define PIN_BUSKEEPER           (3) /**< Internal Bus-Keeper */
 
+/* @} */
+
 /**
  * @name GPIO Interrupt Setting
  * GPIO interrupt level and edge trigger types
+ * @{
  */
 
 #define INT_HIGH_LEVEL          (2) /**< High Level */
@@ -91,7 +93,7 @@ extern "C"
 #define INT_FALLING_EDGE        (5) /**< Falling Edge */
 #define INT_BOTH_EDGE           (7) /**< Both Edge */
 
-/* @} gpioif_defs */
+/* @} */
 
 #ifndef __ASSEMBLY__
 
