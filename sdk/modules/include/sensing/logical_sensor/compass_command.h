@@ -102,7 +102,7 @@ typedef enum {
 } CompassCmdType;
 
 /**
- * @enum CompassStateType
+ * @enum CompassWalkStateType
  * @brief Sensor state specified by COMPASS_CMD_SET_WALKSTATE
  */
 typedef enum {
