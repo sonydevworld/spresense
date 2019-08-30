@@ -32,6 +32,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+/**
+ * @file video_controls.h
+ */
 
 #ifndef __MODULES_INCLUDE_VIDEO_VIDEO_CONTROLS_H
 #define __MODULES_INCLUDE_VIDEO_VIDEO_CONTROLS_H

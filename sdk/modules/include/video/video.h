@@ -32,6 +32,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+/**
+ * @file video.h
+ */
 
 #ifndef __MODULES_INCLUDE_VIDEO_VIDEO_H
 #define __MODULES_INCLUDE_VIDEO_VIDEO_H
@@ -629,6 +632,8 @@ struct v4l2_streamparm {
   } parm;
 };
 
+/** Control type.
+ */
 enum v4l2_ctrl_type {
   V4L2_CTRL_TYPE_INTEGER          = 1,
   V4L2_CTRL_TYPE_BOOLEAN          = 2,
