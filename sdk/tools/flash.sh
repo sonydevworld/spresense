@@ -43,7 +43,7 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 function show_help()
 {
 	echo "  Usage:"
-	echo "       $0 [-c <UART Poart> -b <UART Baudrate>] <(e)spk file> [<(e)spk file> ...]"
+	echo "       $0 [-c <UART Port> -b <UART Baudrate>] <(e)spk file> [<(e)spk file> ...]"
 	echo ""
 	echo "  Mandatory argument:"
 	echo "       (e)spk file path"
