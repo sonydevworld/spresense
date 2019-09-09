@@ -821,7 +821,7 @@ static bool app_init_libraries(void)
                              ptr);
   if (err != ERR_OK)
     {
-      printf("Error: Manager::initPerCpu() failure. %d\n", err);
+      printf("Error: Manager::createStaticPools() failure. %d\n", err);
       return false;
     }
 
@@ -1017,7 +1017,7 @@ void app_play_process(uint32_t play_time)
 #ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
 #else
-extern "C" int player_main(int argc, char *argv[])
+extern "C" int audio_player_main(int argc, char *argv[])
 #endif
 {
   /* Initialize clock mode.

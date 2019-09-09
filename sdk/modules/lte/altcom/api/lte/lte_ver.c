@@ -119,14 +119,23 @@ static void getver_job(FAR void *arg)
     {
       result = (int32_t)data->result;
 
-      if (APICMD_VERSION_RES_OK == result)
+      if (LTE_RESULT_OK == result)
         {
           version =
             (FAR lte_version_t *)BUFFPOOL_ALLOC(sizeof(lte_version_t));
-          strncpy((char *)version->bb_product,
-            (char *)data->bb_product, LTE_VER_BB_PRODUCT_LEN);
-          strncpy((char *)version->np_package,
-            (char *)data->np_package, LTE_VER_NP_PACKAGE_LEN);
+          if (!version)
+            {
+              DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+              ret = -ENOMEM;
+            }
+          else
+            {
+              memset(version, 0, sizeof(version));
+              strncpy((char *)version->bb_product,
+                (char *)data->bb_product, LTE_VER_BB_PRODUCT_LEN - 1);
+              strncpy((char *)version->np_package,
+                (char *)data->np_package, LTE_VER_NP_PACKAGE_LEN - 1);
+            }
         }
 
       callback(result, version);

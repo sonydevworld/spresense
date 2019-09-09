@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/sensor_assertion.h
+ * modules/include/sensing/logical_sensor/sensor_assertion.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_SENSOR_ASSERTION_H
 
 /**
- * @defgroup logical_sensor Logical Sensors
+ * @defgroup logical_sensor Logical sensors definition
  * @{
  */
 

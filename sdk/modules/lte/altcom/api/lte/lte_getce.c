@@ -120,15 +120,15 @@ static void getce_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_GETCE_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           if (LTE_RESULT_OK == result)
             {
-              if (APICMD_GETCE_DISABLE == data->mode_a_enable)
+              if (LTE_DISABLE == data->mode_a_enable)
                 {
                   ce.mode_a_enable = LTE_DISABLE;
                 }
-              else if (APICMD_GETCE_ENABLE == data->mode_a_enable)
+              else if (LTE_ENABLE == data->mode_a_enable)
                 {
                   ce.mode_a_enable = LTE_ENABLE;
                 }
@@ -141,11 +141,11 @@ static void getce_job(FAR void *arg)
 
           if (LTE_RESULT_OK == result)
             {
-              if (APICMD_GETCE_DISABLE == data->mode_b_enable)
+              if (LTE_DISABLE == data->mode_b_enable)
                 {
                   ce.mode_b_enable = LTE_DISABLE;
                 }
-              else if (APICMD_GETCE_ENABLE == data->mode_b_enable)
+              else if (LTE_ENABLE == data->mode_b_enable)
                 {
                   ce.mode_b_enable = LTE_ENABLE;
                 }
@@ -162,7 +162,7 @@ static void getce_job(FAR void *arg)
       else
         {
           callback(LTE_RESULT_ERROR, NULL);
-          DBGIF_ASSERT(APICMD_GETCE_RES_ERR == data->result, "Result parameter error.\n");
+          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "Result parameter error.\n");
         }
     }
   else

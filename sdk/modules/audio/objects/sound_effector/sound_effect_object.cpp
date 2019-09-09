@@ -36,7 +36,7 @@
 #include "sound_effect_object.h"
 
 #include "memutils/common_utils/common_assert.h"
-#ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
+#ifdef CONFIG_AUDIOUTILS_SOUND_RECOGNIZER
 #include "objects/sound_recognizer/voice_recognition_command_object.h"
 #endif
 
@@ -207,7 +207,7 @@ static bool handle_mfe_done_notification(MfeCmpltParam *p_cmplt)
       case InitEvent:
         break;
       case ExecEvent:
-#ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND
+#ifdef CONFIG_AUDIOUTILS_SOUND_RECOGNIZER
         {
           VoiceRecognitionCommandObject::CommandExecParam_t exec_param;
 
@@ -223,7 +223,7 @@ static bool handle_mfe_done_notification(MfeCmpltParam *p_cmplt)
                                                          exec_param);
           F_ASSERT(er == ERR_OK);
         }
-#endif /* #ifdef CONFIG_AUDIOUTILS_VOICE_COMMAND */
+#endif /* #ifdef CONFIG_AUDIOUTILS_SOUND_RECOGNIZER */
         break;
 
       case StopEvent:

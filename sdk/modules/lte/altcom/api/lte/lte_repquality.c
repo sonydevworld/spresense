@@ -253,8 +253,8 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
       /* Set event field */
 
       cmdbuff->enability = !quality_callback ?
-        APICMD_SET_REPQUALITY_DISABLE :
-        APICMD_SET_REPQUALITY_ENABLE;
+        LTE_DISABLE :
+        LTE_ENABLE;
       cmdbuff->interval = htonl(period);
 
       ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)resbuff,
@@ -263,7 +263,7 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
 
   if (0 <= ret && resbufflen == reslen)
     {
-      if (APICMD_SET_REPQUALITY_RES_OK == resbuff->result)
+      if (LTE_RESULT_OK == resbuff->result)
         {
           if (quality_callback)
             {

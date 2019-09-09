@@ -118,14 +118,14 @@ static void setce_job(FAR void *arg)
 
   if ((ret == 0) && (callback))
     {
-      if (APICMD_SETCE_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           callback(LTE_RESULT_OK);
         }
       else
         {
           callback(LTE_RESULT_ERROR);
-          DBGIF_ASSERT(APICMD_SETCE_RES_ERR == data->result, "result parameter error.\n");
+          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "result parameter error.\n");
         }
     }
   else
@@ -214,9 +214,9 @@ int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
   else
     {
       cmddat->mode_a_enable = settings->mode_a_enable ?
-        APICMD_SETCE_ENABLE : APICMD_SETCE_DISABLE;
+        LTE_ENABLE : LTE_DISABLE;
       cmddat->mode_b_enable = settings->mode_b_enable ?
-        APICMD_SETCE_ENABLE : APICMD_SETCE_DISABLE;
+        LTE_ENABLE : LTE_DISABLE;
 
       /* Send API command to modem */
 

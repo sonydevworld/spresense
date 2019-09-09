@@ -59,6 +59,7 @@
 
 #include "audio/audio_common_defs.h"
 #include "audio/audio_object_common_api.h"
+#include "memutils/simple_fifo/CMN_SimpleFifo.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -69,19 +70,23 @@
 /** @name Packet length of command*/
 /** @{ */
 
-/*! \brief Set MFE(PreProcess) type command (#AUDCMD_SETMFETYPE) packet length */
+/*! \brief Init Mic Frontend command (#AUDCMD_INIT_MICFRONTEND) packet length */
 
-#define  LENGTH_SETMFETYPE          4
+#define  LENGTH_INIT_MICFRONTEND    4
 
-/*! \brief InitMFE command (#AUDCMD_INITMFE) packet length */
+/*! \brief InitPreProcessDSP command (#AUDCMD_INIT_PREPROCESS) packet length */
 
-#define  LENGTH_INITMFE             4
+#define  LENGTH_INIT_PREPROCESS_DSP  4
 
-/*! \brief InitMFE command (#AUDCMD_SETMFE) packet length */
+/*! \brief SetPreProcessDSP command (#AUDCMD_SET_PREPROCESS_DSP) packet length */
 
-#define  LENGTH_SETMFE             4
+#define  LENGTH_SET_PREPROCESS_DSP   4
 
 /** @} */
+
+/*! \brief Length of Recognizer dsp file name and path */
+
+#define AS_PREPROCESS_FILE_PATH_LEN 22
 
 /****************************************************************************
  * Public Types
@@ -139,9 +144,15 @@ typedef enum
 
   AsMicFrontendPreProcThrough = 0,
 
+  /*! \brief Pre Process Sampling Rate Conveter */
+
+  AsMicFrontendPreProcSrc,
+
   /*! \brief Pre Process user customed */
 
   AsMicFrontendPreProcUserCustom,
+
+  AsMicFrontendPreProcInvalid = 0xff,
 
 } AsMicFrontendPreProcType;
 
@@ -155,6 +166,10 @@ typedef enum
 
   AsDataPathMessage,
 
+  /*! \brief PCM data is send by simple FIFO */
+
+  AsDataPathSimpleFIFO,
+
 } AsMicFrontendDataPath;
 
 /** Activate Mic FrontEnd Command */
@@ -167,13 +182,6 @@ typedef struct
    */
 
   uint8_t  input_device;
-
-  /*! \brief [in] Select pre process enable 
-   *
-   * Use #AsMicFrontendPreProcType enum type
-   */
-
-  uint32_t  preproc_type;
 
 } AsActivateFrontendParam;
 
@@ -203,10 +211,12 @@ union AsDataDest
 {
   FrontendDoneCallback cb;
 
+  CMN_SimpleFifoHandle *simple_fifo_handler;
+
   struct __st_tunnel
   {
     uint8_t msgqid;
-    uint32_t msgtype;
+    uint16_t msgtype;
   } msg;
 };
 
@@ -225,7 +235,26 @@ typedef struct
   /*! \brief [in] Samples per a frame
    */
 
-  uint32_t samples_per_frame;
+  uint16_t samples_per_frame;
+
+  /*! \brief [in] Output Fs
+   *
+   * !! effective only when preproc_type is "AsMicFrontendPreProcSrc" !!
+   */
+
+  uint32_t out_fs;
+
+  /*! \brief [in] Select pre process enable 
+   *
+   * Use #AsMicFrontendPreProcType enum type
+   */
+
+  uint8_t  preproc_type;
+
+  /*! \brief [in] Set dsp file name and path 
+   */
+
+  char dsp_path[AS_PREPROCESS_FILE_PATH_LEN];
 
   /*! \brief [in] Select Data path from MicFrontend 
    *
@@ -478,7 +507,7 @@ bool AS_CreateMicFrontend(FAR AsCreateMicFrontendParams_t *param,
 /**
  * @brief Activate mic frontend
  *
- * @param[in] param: Activation parameters
+ * @param[in] actparam: Activation parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -489,7 +518,7 @@ bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam);
 /**
  * @brief Init mic frontend
  *
- * @param[in] param: Initialization parameters
+ * @param[in] initparam: Initialization parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -500,6 +529,8 @@ bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam);
 /**
  * @brief Start mic frontend
  *
+ * @param[in] startparam: Start parameters
+ *
  * @retval     true  : success
  * @retval     false : failure
  */
@@ -508,6 +539,8 @@ bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam);
 
 /**
  * @brief Stop mic frontend
+ *
+ * @param[in] stopparam: Stop parameters
  *
  * @retval     true  : success
  * @retval     false : failure

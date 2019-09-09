@@ -175,7 +175,7 @@ public:
   /**
    * @brief Set repeat mode
    *
-   * @param[in] play_mode: RepeatModeOff, RepeatModeOn
+   * @param[in] repeat_mode: RepeatModeOff, RepeatModeOn
    *
    * @retval     true  : success
    * @retval     false : failure
@@ -228,7 +228,7 @@ public:
    * @note Target playlist is always user defined playlist(ListTypeUser).
    *
    * @param[in] key_str:  Key string to filter playlist. Author name, album name, etc...
-   * @param[in] track_no: Track number of which would like to remove from playlist.
+   * @param[in] remove_pos: Track number of which would like to remove from playlist.
    *
    * @retval     true  : success
    * @retval     false : failure

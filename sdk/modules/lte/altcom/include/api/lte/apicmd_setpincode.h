@@ -51,9 +51,6 @@
 #define APICMD_SETPINCODE_CHGTYPE_PIN  (1)
 #define APICMD_SETPINCODE_CHGTYPE_PIN2 (2)
 
-#define APICMD_SETPINCODE_RES_OK       (0)
-#define APICMD_SETPINCODE_RES_ERR      (1)
-
 /****************************************************************************
  * Public Types
  ****************************************************************************/

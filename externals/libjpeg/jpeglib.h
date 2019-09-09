@@ -1019,7 +1019,7 @@ EXTERN(void) jpeg_stdio_src JPP((j_decompress_ptr cinfo, FILE * infile));
  * @note Caller is responsible for opening the file before and closing after.
  *
  * @param [in,out] cinfo:  Pointer to JPEG decompression object
- * @param [in]     infile: JPEG file descriptor to be decoded
+ * @param [in]     infd: JPEG file descriptor to be decoded
  *
  * @return void
  */

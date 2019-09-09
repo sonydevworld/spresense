@@ -34,22 +34,27 @@
  ****************************************************************************/
 
 #include "components/filter/packing_component.h"
-#include "debug/dbg_log.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
 /*--------------------------------------------------------------------*/
 /* Methods of PackingComponent class */
 /*--------------------------------------------------------------------*/
-uint32_t PackingComponent::activate_apu(const char *path, uint32_t *dsp_inf)
+uint32_t PackingComponent::activate(ComponentCallback callback,
+                                    const char *image_name,
+                                    void *p_requester,
+                                    uint32_t *dsp_inf)
 {
   FILTER_DBG("ACT BITCNV:\n");
+
+  m_p_requester = p_requester;
+  m_callback = callback;
 
   return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
-bool PackingComponent::deactivate_apu(void)
+bool PackingComponent::deactivate(void)
 {
   FILTER_DBG("DEACT BITCNV:\n");
 
@@ -57,19 +62,47 @@ bool PackingComponent::deactivate_apu(void)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t PackingComponent::init_apu(InitPackingParam *param)
+uint32_t PackingComponent::init(const InitComponentParam& param)
 {
   FILTER_DBG("INIT BITCNV: in bytewidth %d, out bytewidth %d\n",
-             param->in_bytelength, param->out_bytelength);
+             param.fixparam.in_bitlength, param.fixparam.out_bitlength);
 
-  m_in_bitwidth  = param->in_bytelength * 8;
-  m_out_bitwidth = param->out_bytelength * 8;
+  m_in_bitwidth  = param.fixparam.in_bitlength;
+  m_out_bitwidth = param.fixparam.out_bitlength;
+
+  /* Hold dummy. */
+
+  AsPcmDataParam dummy;
+
+  if (!m_req_que.push(dummy))
+    {
+      return AS_ECODE_QUEUE_OPERATION_ERROR;
+    }
 
   return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
-bool PackingComponent::exec_apu(ExecPackingParam *param)
+bool PackingComponent::set(const SetComponentParam& param)
+{
+  /* Hold dummy */
+
+  AsPcmDataParam dummy;
+
+  if (!m_req_que.push(dummy))
+    {
+      return false;
+    }
+
+  /* Call reply callback function */
+  
+  send_resp(ComponentSet, true);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool PackingComponent::exec(const ExecComponentParam& param)
 {
   void (PackingComponent::*convfunc)(uint32_t, int8_t *, int8_t *);
   uint32_t outsize = 0;
@@ -77,8 +110,8 @@ bool PackingComponent::exec_apu(ExecPackingParam *param)
 
   /* Filter data area check */
 
-  if ((param->in_buffer.p_buffer == NULL)
-   || (param->out_buffer.p_buffer == NULL))
+  if ((param.input.mh.getPa() == NULL)
+   || (param.output_mh.getPa() == NULL))
     {
       FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
@@ -89,12 +122,12 @@ bool PackingComponent::exec_apu(ExecPackingParam *param)
   if ((m_in_bitwidth == BitWidth32bit) && (m_out_bitwidth == BitWidth24bit))
     {
       convfunc = &PackingComponent::cnv32to24;
-      outsize  = param->in_buffer.size * BitWidth24bit / BitWidth32bit;
+      outsize  = param.input.size * BitWidth24bit / BitWidth32bit;
     }
   else if ((m_in_bitwidth == BitWidth24bit) && (m_out_bitwidth == BitWidth32bit))
     {
       convfunc = &PackingComponent::cnv24to32;
-      outsize  = param->in_buffer.size * BitWidth32bit / BitWidth24bit;
+      outsize  = param.input.size * BitWidth32bit / BitWidth24bit;
     }
   else
     {
@@ -103,30 +136,97 @@ bool PackingComponent::exec_apu(ExecPackingParam *param)
 
   /* Excec convert */
 
-  if (outsize <= param->out_buffer.size)
+  if (outsize <= param.output_mh.getSize())
     {
-      (this->*convfunc)(param->in_buffer.size / (m_in_bitwidth / 8),
-                        reinterpret_cast<int8_t *>(param->in_buffer.p_buffer),
-                        reinterpret_cast<int8_t *>(param->out_buffer.p_buffer));
-
-      param->out_buffer.size = outsize;
-
+      (this->*convfunc)(param.input.size / (m_in_bitwidth / 8),
+                        reinterpret_cast<int8_t *>(param.input.mh.getPa()),
+                        reinterpret_cast<int8_t *>(param.output_mh.getPa()));
       result = true;
     }
  
-  send_resp(ExecEvent, result, param->out_buffer);
+  /* Hold result */
+
+  AsPcmDataParam output = param.input;
+
+  output.mh       = param.output_mh;
+  output.size     = outsize;
+  output.is_valid = result;
+
+  if (!m_req_que.push(output))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      return false;
+    }
+
+  /* Send response */
+
+  send_resp(ComponentExec, result);
 
   return true;
 }
 
 /*--------------------------------------------------------------------*/
-bool PackingComponent::flush_apu(StopPackingParam *param)
+bool PackingComponent::flush(const FlushComponentParam& param)
 {
   FILTER_DBG("FLUSH BITCNV:\n");
 
-  param->out_buffer.size = 0;
+  /* Hold result */
 
-  send_resp(StopEvent, true, param->out_buffer);
+  AsPcmDataParam output;
+
+  output.mh       = param.output_mh;
+  output.size     = 0;
+  output.is_valid = true;
+
+  if (!m_req_que.push(output))
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+      return false;
+    }
+
+  /* Send response */
+
+  send_resp(ComponentFlush, true);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------*/
+bool PackingComponent::recv_done(ComponentCmpltParam *cmplt)
+{
+  /* Set output pcm parameters (even if is not there) */
+
+  cmplt->output          = m_req_que.top();
+  cmplt->output.is_valid = true;
+
+  /* Set result */
+
+  cmplt->result = cmplt->output.is_valid;
+
+  if (!m_req_que.pop())
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+      return false;
+    }
+
+  return true;
+}
+
+
+/*--------------------------------------------------------------------*/
+bool PackingComponent::recv_done(ComponentInformParam *info)
+{
+  return recv_done();
+}
+
+/*--------------------------------------------------------------------*/
+bool PackingComponent::recv_done(void)
+{
+  if (!m_req_que.pop())
+    {
+      FILTER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_POP_ERROR);
+      return false;
+    }
 
   return true;
 }
@@ -171,16 +271,14 @@ void PackingComponent::cnv24to32(uint32_t samples, int8_t *in, int8_t *out)
 }
 
 /*--------------------------------------------------------------------*/
-void PackingComponent::send_resp(FilterComponentEvent evt, bool result, BufferHeader outbuf)
+void PackingComponent::send_resp(ComponentEventType evt, bool result)
 {
-  PackingCmpltParam cmplt;
+  ComponentCbParam cbpram;
 
-  cmplt.filter_type = Packing;
-  cmplt.event_type  = evt;
-  cmplt.result      = result;
-  cmplt.out_buffer  = outbuf;
+  cbpram.event_type = evt;
+  cbpram.result     = result;
 
-  m_callback(&cmplt);
+  m_callback(&cbpram, m_p_requester);
 }
 
 

@@ -51,7 +51,9 @@
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
 
-#include "components/filter/filter_component.h"
+#include "components/common/component_base.h"
+#include "components/encoder/encoder_component.h"
+#include "components/customproc/thruproc_component.h"
 #include "components/filter/src_filter_component.h"
 #include "components/filter/packing_component.h"
 
@@ -72,23 +74,46 @@ __WIEN2_BEGIN_NAMESPACE
 
 class MediaRecorderObjectTask {
 public:
+  typedef struct
+  {
+    ComponentEventType event_type;
+    bool                result;
+  } FilterDoneCmd;
+
   static void create(AsRecorderMsgQueId_t msgq_id,
                      AsRecorderPoolId_t pool_id);
 
-private:
   MediaRecorderObjectTask(AsRecorderMsgQueId_t msgq_id,
                           AsRecorderPoolId_t pool_id):
     m_msgq_id(msgq_id),
     m_pool_id(pool_id),
     m_state(AS_MODULE_ID_MEDIA_RECORDER_OBJ, "", RecorderStateInactive),
+    m_channel_num(2),
     m_pcm_bit_width(AudPcm16Bit),
     m_sampling_rate(48000),
     m_codec_type(InvalidCodecType),
-    m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_EMMC),
+    m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_RAM),
     m_p_output_device_handler(NULL),
     m_filter_instance(NULL)
-  {}
+  {
+    /* Create instance of components when MediaRecorderObj is created. 
+     * Don't new and delete while MediaRecorderObj is active to avoid
+     * heap memory area leak.
+     */
 
+    m_src_instance = new SRCComponent(m_pool_id.dsp, m_msgq_id.dsp);
+    m_packing_instance = new PackingComponent();
+    m_thruproc_instance = new ThruProcComponent();
+  }
+
+  ~MediaRecorderObjectTask()
+  {
+    delete m_src_instance;
+    delete m_packing_instance;
+    delete m_thruproc_instance;
+  }
+
+private:
   enum RecorderState_e
   {
     RecorderStateInactive = 0,
@@ -104,6 +129,7 @@ private:
   AsRecorderPoolId_t   m_pool_id;
 
   AudioState<RecorderState_e> m_state;
+  int8_t  m_channel_num;
   AudioPcmBitWidth m_pcm_bit_width;
   int32_t m_sampling_rate;
   int32_t m_max_output_pcm_size;
@@ -114,7 +140,10 @@ private:
   int32_t m_bit_rate;
   AudioRecorderSink m_rec_sink;
 
-  FilterComponent *m_filter_instance;
+  ComponentBase *m_filter_instance;
+  SRCComponent *m_src_instance;
+  PackingComponent *m_packing_instance;
+  ThruProcComponent *m_thruproc_instance;
 
   typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_MRC_MSG_NUM][RecorderStateNum];

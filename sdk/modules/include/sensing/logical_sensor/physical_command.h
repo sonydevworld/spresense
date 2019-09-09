@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/physical_command.h
+ * modules/include/sensing/logical_sensor/physical_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_PHYSICAL_COMMAND_H
 
 /**
- * @defgroup physical API
+ * @defgroup physical Physical sensor API
  * @{
  */
 

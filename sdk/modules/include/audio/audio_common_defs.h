@@ -47,7 +47,7 @@
  * @defgroup audioutils_audio_high_level_api Audio High Level API
  * @{
  *
- * @file       audio_comomn_defs.h
+ * @file       audio_common_defs.h
  * @brief      CXD5602 Audio Common Definitions
  * @author     CXD5602 Audio SW Team
  */
@@ -520,7 +520,7 @@
 #define AS_ATTENTION_SUB_CODE_DSP_RESULT_ERROR      0x15
 
 /*! \brief DSP Illegal Reply
- *  \detail Command packet from DSP may be broken.
+ *  \details Command packet from DSP may be broken.
  *          If uses multi DSP, Check duplication of command buffer.
  */
 
@@ -646,6 +646,18 @@ typedef struct
 
 } AsPcmDataParam;
 
+typedef struct
+{
+  /*! \brief [in] Memory handle for recognition result information. */
+
+  MemMgrLite::MemHandle mh;
+
+  /*! \brief [in] Size recognition result information. */
+
+  uint32_t size;
+
+} AsRecognitionInfo;
+
 /** ErrorAttention Result (#AUDRLT_ERRORATTENTION) parameter */
 
 #define ATTENTION_FILE_NAME_LEN 32
@@ -721,4 +733,9 @@ typedef void (*obs_AudioAttentionCb)(uint8_t module_id,
 #endif
 
 #endif /* __MODULES_INCLUDE_AUDIO_AUDIO_COMMON_DEFS_H */
-
+/**
+ * @}
+ */
+/**
+ * @}
+ */

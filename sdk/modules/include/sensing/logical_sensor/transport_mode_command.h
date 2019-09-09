@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/tram_command.h
+ * modules/include/sensing/logical_sensor/transport_mode_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_TRAM_COMMAD_H
 
 /**
- * @defgroup logical_tram TRAM API
+ * @defgroup logical_tramsport TRAnsport Mode rcognition API
  * @{
  */
 
@@ -52,7 +52,7 @@
 #include "sensing/logical_sensor/physical_command.h"
 
 /**
- * @file tram_command.h
+ * @file transport_mode_command.h
  */
 
 #ifdef __cplusplus
@@ -64,17 +64,17 @@ extern "C" {
  ****************************************************************************/
 
 /**
- * Accelerometer sensor sampling frequency
+ * Accelerometer sensor sampling frequency[Hz]
  */
 #define TRAM_ACC_SAMPLING  64
 
 /**
- * Magnetmeter sensor sampling frequency
+ * Magnetmeter sensor sampling frequency[Hz]
  */
 #define TRAM_MAG_SAMPLING  8
 
 /**
- * Barometer sensor sampling frequency
+ * Barometer sensor sampling frequency[Hz]
  */
 #define TRAM_BAR_SAMPLING  8
 
@@ -223,4 +223,3 @@ typedef struct
  */
 
 #endif /*  __INCLUDE_SENSING_TRAM_COMMAD_H */
-

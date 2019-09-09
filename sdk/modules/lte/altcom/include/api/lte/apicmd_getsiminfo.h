@@ -47,16 +47,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_GETSIMINFO_RES_OK                 (0)
-#define APICMD_GETSIMINFO_RES_ERR                (1)
-
-#define APICMD_GETSIMINFO_OPT_MCCMNC             (1 << 0)
-#define APICMD_GETSIMINFO_OPT_SPN                (1 << 1)
-#define APICMD_GETSIMINFO_OPT_ICCID              (1 << 2)
-#define APICMD_GETSIMINFO_OPT_IMSI               (1 << 3)
-#define APICMD_GETSIMINFO_OPT_GID1               (1 << 4)
-#define APICMD_GETSIMINFO_OPT_GID2               (1 << 5)
-
 #define APICMD_GETSIMINFO_MCC_DIXIT_MAX          (3)
 #define APICMD_GETSIMINFO_MNC_DIXIT_MAX          (3)
 #define APICMD_GETSIMINFO_SPN_MAX_LEN            (16)

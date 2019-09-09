@@ -46,10 +46,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_DEACTIVATEPDN_RES_OK                 (0)
-#define APICMD_DEACTIVATEPDN_RES_ERR                (1)
-#define APICMD_DEACTIVATEPDN_RES_CANCEL             (2)
-
 #define APICMD_DEACTIVATEPDN_SESSIONID_MIN          (0)
 #define APICMD_DEACTIVATEPDN_SESSIONID_MAX          (255)
 

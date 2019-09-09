@@ -99,7 +99,7 @@ static void cbRcvDspRes(void *p_response, void *p_instance)
 /*--------------------------------------------------------------------
     Class Methods
   --------------------------------------------------------------------*/
-uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
+uint32_t UserCustomComponent::init(const InitComponentParam& param)
 {
   POSTPROC_DBG("INIT:\n");
 
@@ -119,7 +119,7 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = CustomprocCommand::Init; 
+  p_cmd->header.cmd_type    = CustomprocCommand::Init;
   p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
@@ -139,7 +139,7 @@ uint32_t UserCustomComponent::init(const InitCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool UserCustomComponent::exec(const ExecCustomProcParam& param)
+bool UserCustomComponent::exec(const ExecComponentParam& param)
 {
   void *p_cmd = allocApuBufs(param.input, param.output_mh);
 
@@ -165,7 +165,7 @@ bool UserCustomComponent::exec(const ExecCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool UserCustomComponent::flush(const FlushCustomProcParam& param)
+bool UserCustomComponent::flush(const FlushComponentParam& param)
 {
   /* The number of time to send FLUSH is depend on type of codec or filter */
 
@@ -191,7 +191,7 @@ bool UserCustomComponent::flush(const FlushCustomProcParam& param)
 }
 
 /*--------------------------------------------------------------------*/
-bool UserCustomComponent::set(const SetCustomProcParam& param)
+bool UserCustomComponent::set(const SetComponentParam& param)
 {
   POSTPROC_DBG("SET:\n");
 
@@ -209,7 +209,7 @@ bool UserCustomComponent::set(const SetCustomProcParam& param)
 
   /* Edit command base (hearder) */
 
-  p_cmd->header.cmd_type    = CustomprocCommand::Set; 
+  p_cmd->header.cmd_type    = CustomprocCommand::Set;
   p_cmd->result.result_code = CustomprocCommand::ExecError;
 
   /* Send to Post DSP */
@@ -273,28 +273,28 @@ bool UserCustomComponent::recv_apu(void *p_response)
 
   /* Notify to requester */
 
-  CustomProcCbParam cbpram;
+  ComponentCbParam cbpram;
 
   switch (packet->header.cmd_type)
     {
       case CustomprocCommand::Init:
-        cbpram.event_type = CustomProcInit;
+        cbpram.event_type = ComponentInit;
         break;
 
       case CustomprocCommand::Exec:
-        cbpram.event_type = CustomProcExec;
+        cbpram.event_type = ComponentExec;
         break;
 
       case CustomprocCommand::Flush:
-        cbpram.event_type = CustomProcFlush;
+        cbpram.event_type = ComponentFlush;
         break;
 
       case CustomprocCommand::Set:
-        cbpram.event_type = CustomProcSet;
+        cbpram.event_type = ComponentSet;
         break;
 
       default:
-        cbpram.event_type = CustomProcInit;
+        cbpram.event_type = ComponentInit;
         break;
     }
 
@@ -305,11 +305,11 @@ bool UserCustomComponent::recv_apu(void *p_response)
 }
 
 /*--------------------------------------------------------------------*/
-bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
+bool UserCustomComponent::recv_done(ComponentCmpltParam *cmplt)
 {
   CustomprocCommand::CmdBase *packet =
     static_cast<CustomprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
-  
+
   /* Set output pcm parameters (even if is not there) */
 
   cmplt->output          = m_apu_req_mh_que.top().input;
@@ -327,20 +327,34 @@ bool UserCustomComponent::recv_done(CustomProcCmpltParam *cmplt)
 }
 
 /*--------------------------------------------------------------------*/
-uint32_t UserCustomComponent::activate(CustomProcCallback callback,
+bool UserCustomComponent::recv_done(ComponentInformParam *info)
+{
+  CustomprocCommand::CmdBase *packet =
+    static_cast<CustomprocCommand::CmdBase *>(m_apu_req_mh_que.top().cmd_mh.getPa());
+
+  /* Set inform parameters. */
+
+  info->inform_req       = packet->result.inform_req;
+  info->inform_data.mh   = m_apu_req_mh_que.top().output_mh;
+  info->inform_data.size = packet->exec_cmd.output.size;
+
+  /* Set function type and result */
+
+  info->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
+
+  return freeApuCmdBuf();
+}
+
+/*--------------------------------------------------------------------*/
+uint32_t UserCustomComponent::activate(ComponentCallback callback,
                                      const char *dsp_name,
                                      void *p_requester,
                                      uint32_t *dsp_inf)
 {
-  char filename[32];
-
   POSTPROC_DBG("ACT:\n");
 
   m_p_requester = p_requester;
   m_callback = callback;
-
-  snprintf(filename, sizeof(filename), "%s/%s",
-           CONFIG_AUDIOUTILS_DSP_MOUNTPT, dsp_name);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   /* Lock HV performance to avoid loading time becomes too long */
@@ -356,7 +370,7 @@ uint32_t UserCustomComponent::activate(CustomProcCallback callback,
 
   /* Load DSP */
 
-  int ret = DD_Load(filename, cbRcvDspRes, (void*)this, &m_dsp_handler);
+  int ret = DD_Load(dsp_name, cbRcvDspRes, (void*)this, &m_dsp_handler);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   up_pm_release_freqlock(&g_decode_hvlock);

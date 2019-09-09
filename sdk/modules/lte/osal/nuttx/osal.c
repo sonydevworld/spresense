@@ -678,7 +678,10 @@ int32_t sys_create_mqueue(FAR sys_mq_t *mq, FAR const sys_cremq_s *params)
       return -errno;
     }
 
-  mq->mqd = mqd;
+  /* Close message queue here, because other sys_xxx_mqueue() may be called
+   * by different task context. */
+
+  mq_close(mqd);
 
   return 0;
 
@@ -704,12 +707,6 @@ int32_t sys_delete_mqueue(FAR sys_mq_t *mq)
 {
   int32_t ret;
 
-  ret = mq_close(mq->mqd);
-  if (ret < 0)
-    {
-      DBGIF_LOG2_ERROR("Failed to close mq:%d errno:%d\n", ret, errno);
-      return -errno;
-    }
   ret = mq_unlink((char*)mq->name);
   if (ret < 0)
     {
@@ -749,12 +746,18 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
   int32_t         l_errno;
   struct timespec abs_time;
   struct timespec curr_time;
+  mqd_t           mqd;
+
+  /* Need to mq_open() and close() each time this function called.
+   * Because task context which called this function may be different. */
+
+  mqd = mq_open((char *)mq->name, O_WRONLY);
 
   if (timeout_ms == SYS_TIMEO_FEVR)
     {
       for (;;)
         {
-          ret = mq_send(mq->mqd, (const char*)message, len, MQ_PRIO);
+          ret = mq_send(mqd, (const char*)message, len, MQ_PRIO);
           if (ret < 0)
             {
               l_errno = errno;
@@ -763,7 +766,8 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
                   continue;
                 }
               DBGIF_LOG2_ERROR("Failed to send mq:%d errno:%d\n", ret, l_errno);
-              return -errno;
+              mq_close(mqd);
+              return -l_errno;
             }
           break;
         }
@@ -775,8 +779,10 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
       ret = clock_gettime(CLOCK_REALTIME, &curr_time);
       if (ret != OK)
         {
-          DBGIF_LOG2_ERROR("Failed to get time:%d errno:%d\n", ret, errno);
-          return -errno;
+          l_errno = errno;
+          DBGIF_LOG2_ERROR("Failed to get time:%d errno:%d\n", ret, l_errno);
+          mq_close(mqd);
+          return -l_errno;
         }
 
       abs_time.tv_sec = timeout_ms / 1000;
@@ -794,14 +800,18 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
           abs_time.tv_nsec -= (1000 * 1000 * 1000);
         }
 
-      ret = mq_timedsend(mq->mqd, (const char*)message, len, MQ_PRIO,
+      ret = mq_timedsend(mqd, (const char*)message, len, MQ_PRIO,
                          &abs_time);
       if (ret < 0)
         {
-          DBGIF_LOG2_ERROR("Failed to send mq:%d errno:%d\n", ret, errno);
-          return -errno;
+          l_errno = errno;
+          DBGIF_LOG2_ERROR("Failed to send mq:%d errno:%d\n", ret, l_errno);
+          mq_close(mqd);
+          return -l_errno;
         }
     }
+
+  mq_close(mqd);
 
   return 0;
 }
@@ -836,12 +846,18 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
   int32_t         prio;
   struct timespec abs_time;
   struct timespec curr_time;
+  mqd_t           mqd;
+
+  /* Need to mq_open() and close() each time this function called.
+   * Because task context which called this function may be different. */
+
+  mqd = mq_open((char *)mq->name, O_RDONLY);
 
   if (timeout_ms == SYS_TIMEO_FEVR)
     {
       for (;;)
         {
-          ret = mq_receive(mq->mqd, (char*)message, len, &prio);
+          ret = mq_receive(mqd, (char*)message, len, &prio);
           if (ret < 0)
             {
               l_errno = errno;
@@ -850,6 +866,7 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
                   continue;
                 }
               DBGIF_LOG2_ERROR("Failed to receive mq:%d errno:%d\n", ret, l_errno);
+              mq_close(mqd);
               return -l_errno;
             }
           break;
@@ -862,8 +879,10 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
       ret = clock_gettime(CLOCK_REALTIME, &curr_time);
       if (ret != OK)
         {
-          DBGIF_LOG2_ERROR("Failed to get time:%d errno:%d\n", ret, errno);
-          return -errno;
+          l_errno = errno;
+          DBGIF_LOG2_ERROR("Failed to get time:%d errno:%d\n", ret, l_errno);
+          mq_close(mqd);
+          return -l_errno;
         }
 
       abs_time.tv_sec = timeout_ms / 1000;
@@ -881,13 +900,17 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
           abs_time.tv_nsec -= (1000 * 1000 * 1000);
         }
 
-      ret = mq_timedreceive(mq->mqd, (char*)message, len, &prio, &abs_time);
+      ret = mq_timedreceive(mqd, (char*)message, len, &prio, &abs_time);
       if (ret < 0)
         {
-         DBGIF_LOG2_ERROR("Failed to receive mq:%d errno:%d\n", ret, errno);
-          return -errno;
+          l_errno = errno;
+          DBGIF_LOG2_ERROR("Failed to receive mq:%d errno:%d\n", ret, l_errno);
+          mq_close(mqd);
+          return -l_errno;
         }
     }
+
+  mq_close(mqd);
 
   return ret;
 }

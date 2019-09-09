@@ -225,5 +225,15 @@ int altmdm_pm_poweron(FAR struct altmdm_dev_s *priv);
 
 int altmdm_pm_poweroff(FAR struct altmdm_dev_s *priv);
 
+/****************************************************************************
+ * Name: altmdm_pm_set_bootstatus
+ *
+ * Description:
+ *   Set boot status.
+ *
+ ****************************************************************************/
+
+int altmdm_pm_set_bootstatus(FAR struct altmdm_dev_s *priv, uint32_t status);
+
 #endif
 #endif /* __DRIVERS_MODEM_ALTMDM_PM_H */

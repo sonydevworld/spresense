@@ -171,7 +171,7 @@ int mpshm_detach(mpshm_t *shm);
  *     - #MPC_POWEROFF
  *     - #MPC_RETENTION
  *
- * @param [in,out]: Arguments for @a cmd
+ * @param [in,out] buf: Arguments for @a cmd
  *
  * @return On success, mpshm_control() returns 0. On error it returns an error
  * number.

@@ -40,12 +40,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_PDN_SESSIONID_MIN          (0)
-#define APICMD_PDN_SESSIONID_MAX          (255)
-
-#define APICMD_PDN_ACT_INACTIVE           (0)
-#define APICMD_PDN_ACT_ACTIVE             (1)
-
 #define APICMD_PDN_IMS_REG                (0)
 #define APICMD_PDN_IMS_UNREG              (1)
 
@@ -57,21 +51,6 @@
 
 #define APICMD_PDN_IPCOUNT_MAX            (2)
 #define APICMD_PDN_IPADDR_MAXLEN          (40)
-#define APICMD_PDN_IPTYPE_IP              (0)
-#define APICMD_PDN_IPTYPE_IPV6            (1)
-#define APICMD_PDN_IPTYPE_IPV4V6          (2)
-
-#define APICMD_PDN_APN_TYPE_UNKNOWN       (1 << 0)
-#define APICMD_PDN_APN_TYPE_DEFAULT       (1 << 1)
-#define APICMD_PDN_APN_TYPE_MMS           (1 << 2)
-#define APICMD_PDN_APN_TYPE_SUPL          (1 << 3)
-#define APICMD_PDN_APN_TYPE_DUN           (1 << 4)
-#define APICMD_PDN_APN_TYPE_HIPRI         (1 << 5)
-#define APICMD_PDN_APN_TYPE_FOTA          (1 << 6)
-#define APICMD_PDN_APN_TYPE_IMS           (1 << 7)
-#define APICMD_PDN_APN_TYPE_CBS           (1 << 8)
-#define APICMD_PDN_APN_TYPE_IA            (1 << 9)
-#define APICMD_PDN_APN_TYPE_EMERGENCY     (1 << 10)
 
 /****************************************************************************
  * Public Types

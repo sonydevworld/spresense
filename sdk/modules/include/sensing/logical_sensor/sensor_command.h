@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/sensor_command.h
+ * modules/include/sensing/logical_sensor/sensor_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -35,8 +35,9 @@
 
 #ifndef __INCLUDE_SENSING_SENSOR_COMMAND_H
 #define __INCLUDE_SENSING_SENSOR_COMMAND_H
+
 /**
- * @defgroup logical_sensor Logical Sensors
+ * @defgroup logical_sensor Logical sensors definition
  * @{
  */
 

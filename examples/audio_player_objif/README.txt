@@ -40,8 +40,8 @@ Store worker binary, playlist and play contents in the path specified by option.
 Execute
 --------------------------
 
-Type 'player_objif' on nsh.
-nsh>player_objif
+Type 'audio_player_objif' on nsh.
+nsh>audio_player_objif
 
 The first content of playlist will be played for 10 seconds.
 

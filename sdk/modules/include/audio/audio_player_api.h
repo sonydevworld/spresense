@@ -183,15 +183,21 @@ typedef enum
 
 typedef enum
 {
-  /*! \brief eMMC FileSystem (__not supported__) */
+  /*! \brief eMMC FileSystem
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SETPLAYER_INPUTDEVICE_EMMC = 0,
 
-  /*! \brief A2DP Media Packet FIFO (__not supported__) */
+  /*! \brief A2DP Media Packet FIFO
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SETPLAYER_INPUTDEVICE_A2DPFIFO,
 
-  /*! \brief I2S input (__not supported__) */
+  /*! \brief I2S input
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SETPLAYER_INPUTDEVICE_I2SINPUT,
 
@@ -214,7 +220,9 @@ typedef enum
 
   AS_SETPLAYER_OUTPUTDEVICE_I2SOUTPUT,
 
-  /*! \brief A2DP Media Packet FIFO (__not supported__) */
+  /*! \brief A2DP Media Packet FIFO
+   *  \deprecated It will be removed in the future
+   */
 
   AS_SETPLAYER_OUTPUTDEVICE_A2DPFIFO,
   AS_SETPLAYER_OUTPUTDEVICE_NUM

@@ -145,6 +145,16 @@
 #define TRANS_WAITRCVRTMO        (-4) /* NG when receiver ready timeout. */
 #define TRANS_OK_RCVBUFFUL       (-5) /* OK when receiver is buffer full. */
 
+#define RESET_BOOTSTAT_BOOTING   (0)  /* Boot stat: booting */
+#define RESET_BOOTSTAT_UPDATING  (1)  /* Boot stat: updating */
+
+#define STAT_INF_GET_BOOTSTAT    (1 << 1) /* Status info: Get bootstatus bit */
+#define STAT_INF_RESET           (1 << 2) /* Status info: Reset bit */
+#define STAT_INF_BUFFFULL        (1 << 3) /* Status info: Buffer full bit */
+
+#define STAT_INF_IS_RESET(info)     ((info & STAT_INF_RESET)    >> 2)
+#define STAT_INF_IS_BUFF_FULL(info) ((info & STAT_INF_BUFFFULL) >> 3)
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -711,8 +721,10 @@ static void parse_rxheader(FAR struct altmdm_dev_s *priv,
   *actual_size = ((rx_header->header[2] & 0x3F) << 8) +
     (rx_header->header[3] & 0xFF);
 
-  *is_reset  = (rx_header->header[0] & 0x40) >> 6;
-  *is_bufful = (rx_header->header[0] & 0x80) >> 7;
+  priv->spidev.rx_param.status_info = (rx_header->header[0] & 0xF0) >> 4;
+
+  *is_reset  = STAT_INF_IS_RESET(priv->spidev.rx_param.status_info);
+  *is_bufful = STAT_INF_IS_BUFF_FULL(priv->spidev.rx_param.status_info);
 
   m_info("t=%d a=%d r=%d b=%d\n",
          *total_size, *actual_size, *is_reset, *is_bufful);
@@ -1151,6 +1163,40 @@ static int do_receivereset(FAR struct altmdm_dev_s *priv)
     {
       m_err("ERR:%04d Rcv Reset Failed. ret = %d.\n", __LINE__, ret);
       clear_rxheader(priv);
+    }
+  else
+    {
+      if ((STAT_INF_GET_BOOTSTAT | STAT_INF_RESET) ==
+          (spidev->rx_param.status_info & (STAT_INF_GET_BOOTSTAT | STAT_INF_RESET)))
+        {
+          switch(g_tmp_rxbuff[0])
+            {
+              case RESET_BOOTSTAT_BOOTING:
+                altmdm_pm_set_bootstatus(priv,
+                                         MODEM_PM_ERR_RESET_BOOTSTAT_BOOTING);
+                break;
+              case RESET_BOOTSTAT_UPDATING:
+                altmdm_pm_set_bootstatus(priv,
+                                         MODEM_PM_ERR_RESET_BOOTSTAT_UPDATING);
+                break;
+              default:
+                m_err("ERR:%04d Invalid payload of reset packet. %02x,%02x,%02x,%02x\n",
+                      __LINE__,
+                      g_tmp_rxbuff[0], g_tmp_rxbuff[1],
+                      g_tmp_rxbuff[2], g_tmp_rxbuff[3]);
+                break;
+            }
+        }
+      else if (STAT_INF_RESET ==
+              (spidev->rx_param.status_info & STAT_INF_RESET))
+        {
+          altmdm_pm_set_bootstatus(priv, MODEM_PM_ERR_RESET_BOOTSTAT_DONE);
+        }
+      else
+        {
+          m_err("ERR:%04d Unexpected status info. %04x\n", __LINE__,
+                spidev->rx_param.status_info);
+        }
     }
 
   return ret;

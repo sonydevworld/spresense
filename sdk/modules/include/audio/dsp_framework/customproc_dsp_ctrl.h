@@ -48,14 +48,25 @@ public:
 
   CustomprocDspCtrl(CustomprocDspUserProcIf *p_userproc_ins)
     : m_p_userproc(p_userproc_ins)
+    , m_state(Booted)
   {}
 
 private:
 
+  typedef enum
+  {
+    Booted = 0,
+    Ready,
+    Active,
+
+    DspStateNum
+  } DspState;
+
   CustomprocDspUserProcIf *m_p_userproc;
+  DspState m_state;
 
   typedef void (CustomprocDspCtrl::*CtrlProc)(CustomprocCommand::CmdBase *cmd);
-  static CtrlProc CtrlFuncTbl[CustomprocCommand::CmdTypeNum];
+  static CtrlProc CtrlFuncTbl[CustomprocCommand::CmdTypeNum][DspStateNum];
 
   void init(CustomprocCommand::CmdBase *cmd);
   void exec(CustomprocCommand::CmdBase *cmd);

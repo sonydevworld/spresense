@@ -48,19 +48,11 @@
 #include "apicmdgw.h"
 #include "stubsock.h"
 
-#include "apicmdhdlr_attachnet.h"
-#include "apicmdhdlr_dataoff.h"
-#include "apicmdhdlr_dataon.h"
-#include "apicmdhdlr_detachnet.h"
 #include "apicmdhdlr_enterpin.h"
 #include "apicmdhdlr_errind.h"
-#include "apicmdhdlr_getapnset.h"
 #include "apicmdhdlr_getce.h"
-#include "apicmdhdlr_getdataconfig.h"
-#include "apicmdhdlr_getdatastat.h"
 #include "apicmdhdlr_getedrx.h"
 #include "apicmdhdlr_getltime.h"
-#include "apicmdhdlr_getnetstat.h"
 #include "apicmdhdlr_getpinset.h"
 #include "apicmdhdlr_getpsm.h"
 #include "apicmdhdlr_imei.h"
@@ -70,11 +62,8 @@
 #include "apicmdhdlr_power.h"
 #include "apicmdhdlr_repcellinfo.h"
 #include "apicmdhdlr_repevt.h"
-#include "apicmdhdlr_repnetstat.h"
 #include "apicmdhdlr_repquality.h"
-#include "apicmdhdlr_setapn.h"
 #include "apicmdhdlr_setce.h"
-#include "apicmdhdlr_setdataconfig.h"
 #include "apicmdhdlr_setedrx.h"
 #include "apicmdhdlr_setpin.h"
 #include "apicmdhdlr_setpsm.h"
@@ -167,23 +156,12 @@ static evthdl_if_t g_apicmdhdlrs[] =
   apicmdhdlr_getltime,
   apicmdhdlr_repcellinfo,
   apicmdhdlr_repquality,
-  apicmdhdlr_attachnet,
-  apicmdhdlr_detachnet,
-  apicmdhdlr_dataon,
-  apicmdhdlr_dataoff,
   apicmdhdlr_enterpin,
   apicmdhdlr_errindication,
-  apicmdhdlr_getapnset,
-  apicmdhdlr_getdataconfig,
-  apicmdhdlr_getdatastat,
-  apicmdhdlr_getnetstat,
   apicmdhdlr_getpinset,
   apicmdhdlr_imsi,
   apicmdhdlr_operator,
   apicmdhdlr_phoneno,
-  apicmdhdlr_repnetstat,
-  apicmdhdlr_setapn,
-  apicmdhdlr_setdataconfig,
   apicmdhdlr_setpin,
   apicmdhdlr_repevt,
   apicmdhdlr_getedrx,

@@ -69,6 +69,11 @@ FAR buffpool_t g_buffpoolwrapper_obj = NULL;
 int32_t buffpoolwrapper_init(
   FAR struct buffpool_blockset_s set[], uint8_t setnum)
 {
+
+  /* Create buffpool only if CONFIG_LTE_USE_BUFFPOOL is enabled. */
+
+#ifdef CONFIG_LTE_USE_BUFFPOOL
+
   if (g_buffpoolwrapper_obj)
     {
       DBGIF_LOG_ERROR("buffpool object has already been created.\n");
@@ -80,6 +85,8 @@ int32_t buffpoolwrapper_init(
     {
       return -errno;
     }
+
+#endif
 
   return 0;
 }
@@ -101,6 +108,9 @@ int32_t buffpoolwrapper_init(
 
 int32_t buffpoolwrapper_fin(void)
 {
+
+#ifdef CONFIG_LTE_USE_BUFFPOOL
+
   int32_t ret = 0;
 
   if (!g_buffpoolwrapper_obj)
@@ -117,5 +127,8 @@ int32_t buffpoolwrapper_fin(void)
     }
 
   g_buffpoolwrapper_obj = NULL;
+
+#endif
+
   return 0;
 }

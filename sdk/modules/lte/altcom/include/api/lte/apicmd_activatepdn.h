@@ -48,14 +48,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_ACTIVATEPDN_RES_OK                 (0)
-#define APICMD_ACTIVATEPDN_RES_ERR                (1)
-#define APICMD_ACTIVATEPDN_RES_CANCEL             (2)
-
-#define APICMD_ACTIVATEPDN_AUTHTYPE_NONE          (0)
-#define APICMD_ACTIVATEPDN_AUTHTYPE_PAP           (1)
-#define APICMD_ACTIVATEPDN_AUTHTYPE_CHAP          (2)
-
 #define APICMD_ACTIVATEPDN_APNNAME_MAXLEN         (101)
 #define APICMD_ACTIVATEPDN_USERNAME_MAXLEN        (64)
 #define APICMD_ACTIVATEPDN_PASSWORD_MAXLEN        (32)

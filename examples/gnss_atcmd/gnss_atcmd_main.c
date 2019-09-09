@@ -399,14 +399,14 @@ static FAR void atcmd_emulator(FAR void *arg)
   bufhead       = cmd_rbuf;
   remain        = sizeof(cmd_rbuf);
 
-#ifdef USE_ATCMD_SUB_THREAD
-  sem_post(&syncsem);
-#endif /* ifdef USE_ATCMD_SUB_THREAD */
-
   do
     {
-      char *p;
       int   sz;
+      int   n;
+
+#ifdef USE_ATCMD_SUB_THREAD
+      sem_post(&syncsem);
+#endif /* ifdef USE_ATCMD_SUB_THREAD */
 
       memset(fds, 0, sizeof(fds));
       fds[0].fd     = READ_FD;
@@ -420,6 +420,11 @@ static FAR void atcmd_emulator(FAR void *arg)
           printf("poll error %d,%d,%x,%x\n", ret, errno, fds[0].events,
                   fds[0].revents);
           break;
+        }
+
+      if (fds[1].revents & POLLIN)
+        {
+          print_nmea(fd);
         }
 
 #ifdef USE_ATCMD_SUB_THREAD
@@ -439,47 +444,44 @@ static FAR void atcmd_emulator(FAR void *arg)
               continue;
             }
           remain -= sz;
-          bufhead += sz;
           if (remain > 0)
             {
-              *bufhead = '\0';
-              p = strchr(cmd_rbuf, '\r');
-              if (p == NULL)
+              for (n = 0; n < sz; n++, bufhead++)
                 {
-                  p = strchr(cmd_rbuf, '\n');
-                  if (p == NULL)
+                  if (*bufhead == '\r' || *bufhead == '\n' || *bufhead == '\0')
                     {
-                      goto _continue;
+                      break;
                     }
                 }
-              sz = p - cmd_rbuf + 1;
+
+              if (n == sz)
+                {
+                  continue;
+                }
+
+              sz = bufhead - cmd_rbuf + 1;
             }
           else
             {
               sz = sizeof(cmd_rbuf);
-              p  = &cmd_rbuf[sz - 1];
+              bufhead  = &cmd_rbuf[sz - 1];
             }
-          *p = '\0';
-          remain  = sizeof(cmd_rbuf);
-          bufhead = cmd_rbuf;
+          *bufhead = '\0';
           dbg_printf("# %*s\n", sz, cmd_rbuf);
 #ifdef _DEBUG
           write(WRITE_FD, cmd_rbuf, sz);
 #endif
           ret = gnss_atcmd_exec(&atcmd_info, cmd_rbuf, sz);
-        }
 
-_continue:
-      if (fds[1].revents & POLLIN)
-        {
-          print_nmea(fd);
+          remain  = sizeof(cmd_rbuf);
+          bufhead = cmd_rbuf;
         }
-
-#ifdef USE_ATCMD_SUB_THREAD
-      sem_post(&syncsem);
-#endif /* ifdef USE_ATCMD_SUB_THREAD */
     }
   while (ret != -ESHUTDOWN);
+
+#ifdef USE_ATCMD_SUB_THREAD
+  sem_post(&syncsem);
+#endif /* ifdef USE_ATCMD_SUB_THREAD */
 
   /* close tty */
 

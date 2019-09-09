@@ -41,34 +41,11 @@
  ****************************************************************************/
 
 #include "apicmd.h"
+#include "apicmd_psm.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-#define APICMD_GETPSM_RES_OK           (0)
-#define APICMD_GETPSM_RES_ERR          (1)
-#define APICMD_GETPSM_DISABLE          (0)
-#define APICMD_GETPSM_ENABLE           (1)
-
-#define APICMD_GETPSM_TIMER_MIN        (1)
-#define APICMD_GETPSM_TIMER_MAX        (31)
-
-/* Unit value of Requested Active Time */
-
-#define APICMD_GETPSM_RAT_UNIT_2SEC    (0)
-#define APICMD_GETPSM_RAT_UNIT_1MIN    (1)
-#define APICMD_GETPSM_RAT_UNIT_6MIN    (2)
-
-/* Unit value of extended periodic Tracking Area Update */
-
-#define APICMD_GETPSM_TAU_UNIT_2SEC    (0)
-#define APICMD_GETPSM_TAU_UNIT_30SEC   (1)
-#define APICMD_GETPSM_TAU_UNIT_1MIN    (2)
-#define APICMD_GETPSM_TAU_UNIT_10MIN   (3)
-#define APICMD_GETPSM_TAU_UNIT_1HOUR   (4)
-#define APICMD_GETPSM_TAU_UNIT_10HOUR  (5)
-#define APICMD_GETPSM_TAU_UNIT_320HOUR (6)
 
 /****************************************************************************
  * Public Types
@@ -76,22 +53,12 @@
 
 /* This structure discribes the data structure of the API command */
 
-/* APICMDID_GET_PSM */
-
 /* APICMDID_GET_PSM_RES */
-
-begin_packed_struct struct apicmd_cmddat_getpsm_timeval_s
-{
-  uint8_t unit;
-  uint8_t time_val;
-} end_packed_struct;
 
 begin_packed_struct struct apicmd_cmddat_getpsmres_s
 {
   uint8_t result;
-  uint8_t enable;
-  struct apicmd_cmddat_getpsm_timeval_s rat_val;
-  struct apicmd_cmddat_getpsm_timeval_s tau_val;
+  struct apicmd_cmddat_psm_set_s set;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETPSM_H */

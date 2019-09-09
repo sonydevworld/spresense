@@ -44,7 +44,7 @@
  * @defgroup memutils_message Message Library (for class object send)
  * @{
  *
- * @file   MsgLib.h
+ * @file   Message.h
  * @brief  Message Library API
  * @author CXD5602 Media SW Team
  */

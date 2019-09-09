@@ -153,7 +153,8 @@ int cwebsocket_client_ssl_init(cwebsocket_client *websocket, char *cert_name, ch
 	mbedtls_ctr_drbg_init( &websocket->ctr_drbg );
 	mbedtls_entropy_init( &websocket->entropy );
 
-	if( ( ret = mbedtls_ctr_drbg_seed( &websocket->ctr_drbg, NULL, &websocket->entropy,
+	if( ( ret = mbedtls_ctr_drbg_seed( &websocket->ctr_drbg, mbedtls_entropy_func,
+                                                           &websocket->entropy,
 							   (const unsigned char *) "ssl_client1",
 							   strlen( "ssl_client1" ) ) ) != 0 )
 	{
@@ -354,7 +355,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			}
 		}
 			
-		mbedtls_ssl_set_bio( &websocket->ssl, &websocket->ssl_net_ctx, NULL, NULL, NULL);
+		mbedtls_ssl_set_bio( &websocket->ssl, &websocket->ssl_net_ctx, mbedtls_net_send, mbedtls_net_recv, mbedtls_net_recv_timeout );
 
 		while( ( ret = mbedtls_ssl_handshake( &websocket->ssl ) ) != 0 )
 		{

@@ -118,6 +118,10 @@ static void getimsi_job(FAR void *arg)
     {
       result = (int32_t)data->result;
 
+      /* Fixed to include "\0" at the end of output string. */
+
+      data->imsi[APICMD_IMSI_LEN - 1] = '\0';
+
       callback(result, data->errcause, (FAR int8_t*)data->imsi);
     }
   else

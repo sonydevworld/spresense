@@ -3,6 +3,8 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
+menu "Memory Manager"
+
 config MEMUTILS
 	bool "Memory manager"
 	default n
@@ -19,3 +21,5 @@ source "$SDKDIR/modules/memutils/simple_fifo/Kconfig"
 
 endmenu # Memory Utilities
 endif
+
+endmenu

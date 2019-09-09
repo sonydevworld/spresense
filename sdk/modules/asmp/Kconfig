@@ -1,5 +1,7 @@
 
-menuconfig ASMP
+menu "ASMP"
+
+config ASMP
 	bool "ASMP"
 	---help---
 		A hybrid multi processor framework
@@ -40,3 +42,5 @@ config ASMP_DEBUG_INFO
 endif # ASMP_DEBUG_FEATURE
 
 endif # ASMP
+
+endmenu

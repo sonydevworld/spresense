@@ -46,31 +46,9 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-
 #define APICMD_ENTERPIN_NEWPINCODE_UNUSE         (0)
 #define APICMD_ENTERPIN_NEWPINCODE_USE           (1)
 #define APICMD_ENTERPIN_PINCODE_LEN              9
-
-#define APICMD_ENTERPIN_RES_OK                   (0)
-#define APICMD_ENTERPIN_RES_ERR                  (1)
-
-#define APICMD_ENTERPIN_SIM_STATUS_READY         (0)
-#define APICMD_ENTERPIN_SIM_STATUS_SIM_PIN       (1)
-#define APICMD_ENTERPIN_SIM_STATUS_SIM_PUK       (2)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_SIM_PIN    (3)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_FSIM_PIN   (4)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_FSIM_PUK   (5)
-#define APICMD_ENTERPIN_SIM_STATUS_SIM_PIN2      (6)
-#define APICMD_ENTERPIN_SIM_STATUS_SIM_PUK2      (7)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_NET_PIN    (8)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_NET_PUK    (9)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_NETSUB_PIN (10)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_NETSUB_PUK (11)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_SP_PIN     (12)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_SP_PUK     (13)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_CORP_PIN   (14)
-#define APICMD_ENTERPIN_SIM_STATUS_PH_CORP_PUK   (15)
-#define APICMD_ENTERPIN_SIM_STATUS_GET_ERR       (16)
 
 /****************************************************************************
  * Public Types

@@ -423,7 +423,7 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param);
 /**
  * @brief Activate audio output mixer
  *
- * @param[in] param: Activation parameters
+ * @param[in] actparam: Activation parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -434,7 +434,7 @@ bool AS_ActivateOutputMixer(uint8_t handle, FAR AsActivateOutputMixer *actparam)
 /**
  * @brief Send audio data via outputmixer
  *
- * @param[in] param: Send data parameters
+ * @param[in] sendparam: Send data parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -445,7 +445,7 @@ bool AS_SendDataOutputMixer(FAR AsSendDataOutputMixer *sendparam);
 /**
  * @brief Set clock recovery parameters
  *
- * @param[in] param: clock recovery parameters
+ * @param[in] ftermparam: clock recovery parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -456,7 +456,7 @@ bool AS_FrameTermFineControlOutputMixer(uint8_t handle, FAR AsFrameTermFineContr
 /**
  * @brief Init Postproces DSP
  *
- * @param[in] param: command parameters
+ * @param[in] initppparam: command parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -467,7 +467,7 @@ bool AS_InitPostprocOutputMixer(uint8_t handle, FAR AsInitPostProc *initppparam)
 /**
  * @brief Set parameters Postproces DSP
  *
- * @param[in] param: command parameters
+ * @param[in] setppparam: command parameters
  *
  * @retval     true  : success
  * @retval     false : failure
@@ -478,7 +478,7 @@ bool AS_SetPostprocOutputMixer(uint8_t handle, FAR AsSetPostProc *setppparam);
 /**
  * @brief Deactivate audio output mixer
  *
- * @param[in] param: Deactivation parameters
+ * @param[in] deactparam: Deactivation parameters
  *
  * @retval     true  : success
  * @retval     false : failure

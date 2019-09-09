@@ -111,6 +111,7 @@ _SRCS +=   implements/array/shift.c
 _SRCS +=   implements/array/slice.c
 _SRCS +=   implements/array/flip.c
 _SRCS +=   implements/array/transpose.c
+_SRCS +=   implements/array/pad.c
 
 _SRCS +=   implements/normalization/batch_normalization.c
 _SRCS +=   implements/normalization/mean_subtraction.c

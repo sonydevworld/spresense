@@ -47,14 +47,50 @@
  ****************************************************************************/
 
 #define BUFFPOOL_ALLOC(reqsize) \
-  (buffpool_alloc(g_buffpoolwrapper_obj, reqsize))
-#define BUFFPOOL_FREE(buff) (buffpool_free(g_buffpoolwrapper_obj, buff))
+    (buffpoolwrapper_alloc(reqsize))
+
+#define BUFFPOOL_FREE(buff) (buffpoolwrapper_free(buff))
 
 /****************************************************************************
  * Public Data
  ****************************************************************************/
 
 extern buffpool_t g_buffpoolwrapper_obj;
+
+/****************************************************************************
+ * Inline functions
+ ****************************************************************************/
+
+FAR static inline void * buffpoolwrapper_alloc(uint32_t reqsize)
+{
+
+#ifdef CONFIG_LTE_USE_BUFFPOOL
+
+  return buffpool_alloc(g_buffpoolwrapper_obj, reqsize);
+
+#else
+
+  return SYS_MALLOC(reqsize);
+
+#endif
+
+}
+
+static inline int32_t buffpoolwrapper_free(FAR void *buff)
+{
+
+#ifdef CONFIG_LTE_USE_BUFFPOOL
+
+  return buffpool_free(g_buffpoolwrapper_obj, buff);
+
+#else
+
+  SYS_FREE(buff);
+  return 0;
+
+#endif
+
+}
 
 /****************************************************************************
  * Public Function Prototypes

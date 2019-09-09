@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/barometer.h
+ * modules/include/sensing/logical_sensor/barometer.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -58,10 +58,10 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define BAROMETER_PRESSURE_SAMPLING_FREQUENCY    8  /* 8Hz */
-#define BAROMETER_PRESSURE_WATERMARK_NUM         40 /* 40 samples */
-#define BAROMETER_TEMPERATURE_SAMPLING_FREQUENCY 8  /* 8Hz */
-#define BAROMETER_TEMPERATURE_WATERMARK_NUM      40 /* 40 samples */
+#define BAROMETER_PRESSURE_SAMPLING_FREQUENCY    8  /**< Pressure sensor sampling frequency[Hz] */
+#define BAROMETER_PRESSURE_WATERMARK_NUM         40 /**< Pressure sample data watermark */
+#define BAROMETER_TEMPERATURE_SAMPLING_FREQUENCY 8  /**< Temperature sensor sampling frequency[Hz] */
+#define BAROMETER_TEMPERATURE_WATERMARK_NUM      40 /**< Temperature sample data watermark */
 
 #define PRESSURE_SAMPLING_FREQUENCY BAROMETER_PRESSURE_SAMPLING_FREQUENCY
 #define PRESSURE_WATERMARK_NUM      BAROMETER_PRESSURE_WATERMARK_NUM
@@ -73,11 +73,21 @@
  * Public Types
  ****************************************************************************/
 
+/**
+ * @struct BarometerTempData
+ * @brief Input temperature data to DSP.
+ */
+
 typedef struct
 {
   uint32_t data[BAROMETER_PRESSURE_WATERMARK_NUM];
 } BarometerTempData;
-  
+
+/**
+ * @struct BarometerPressData
+ * @brief Input pressure data to DSP.
+ */
+
 typedef struct
 {
   uint32_t data[BAROMETER_TEMPERATURE_WATERMARK_NUM];

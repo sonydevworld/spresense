@@ -40,8 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include "apicmd.h"
-#include "apicmd_pdn.h"
+#include "apicmd_netinfo.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -52,8 +51,6 @@
 
 #define APICMD_REPNETINFO_REPORT_ENABLE          (0)
 #define APICMD_REPNETINFO_REPORT_DISABLE         (1)
-
-#define APICMD_REPNETINFO_PDNCOUNT_MAX           (5)
 
 #define APICMD_REPNETINFO_NWSTAT_ATCH            (0)
 #define APICMD_REPNETINFO_NWSTAT_DTCH            (1)
@@ -76,9 +73,7 @@ begin_packed_struct struct apicmd_cmddat_set_repnetinfores_s
 
 begin_packed_struct struct apicmd_cmddat_rep_netinfo_s
 {
-  uint8_t nw_stat;
-  uint8_t pdn_count;
-  struct apicmd_pdnset_s pdn[APICMD_REPNETINFO_PDNCOUNT_MAX];
+  struct apicmd_netinfo_s netinfo;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPNETINFO_H */

@@ -646,9 +646,9 @@ extern "C" {
 */
 /* @{ */
 
-#define CXD56_GNSS_PVTLOG_THRESHOLD_FULL            0 /* Limit of the storage size */
-#define CXD56_GNSS_PVTLOG_THRESHOLD_HALF            1 /* 1/2 of the Storage size */
-#define CXD56_GNSS_PVTLOG_THRESHOLD_ONE_DATA        2 /* Each log stored */
+#define CXD56_GNSS_PVTLOG_THRESHOLD_FULL            0 /**< Limit of the storage size */
+#define CXD56_GNSS_PVTLOG_THRESHOLD_HALF            1 /**< 1/2 of the Storage size */
+#define CXD56_GNSS_PVTLOG_THRESHOLD_ONE_DATA        2 /**< Each log stored */
 
 /* @} */
 

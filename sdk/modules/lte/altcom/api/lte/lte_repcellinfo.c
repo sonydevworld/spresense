@@ -166,7 +166,7 @@ static void repcellinfo_job(FAR void *arg)
         }
       else
         {
-          repdat->valid = APICMD_REP_CELLINFO_ENABLE == data->enability ?
+          repdat->valid = LTE_VALID == data->enability ?
                           LTE_VALID : LTE_INVALID;
           if (repdat->valid)
             {

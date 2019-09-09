@@ -149,8 +149,8 @@ static void setpin_lock_job(FAR void *arg)
   FAR struct apicmd_cmddat_setpinlockres_s *resdat            = NULL;
 
   resdat = (FAR struct apicmd_cmddat_setpinlockres_s *)arg;
-  if (APICMD_SETPINLOCK_RES_OK > resdat->result ||
-      APICMD_SETPINLOCK_RES_ERR < resdat->result)
+  if (LTE_RESULT_OK > resdat->result ||
+      LTE_RESULT_ERROR < resdat->result)
     {
       DBGIF_ASSERT(NULL, "Invalid response.\n");
     }
@@ -195,8 +195,8 @@ static void setpin_code_job(FAR void *arg)
   FAR struct apicmd_cmddat_setpincoderes_s *resdat            = NULL;
 
   resdat = (FAR struct apicmd_cmddat_setpincoderes_s *)arg;
-  if (APICMD_SETPINCODE_RES_OK > resdat->result ||
-      APICMD_SETPINCODE_RES_ERR < resdat->result)
+  if (LTE_RESULT_OK > resdat->result ||
+      LTE_RESULT_ERROR < resdat->result)
     {
       DBGIF_ASSERT(NULL, "Invalid response.\n");
     }

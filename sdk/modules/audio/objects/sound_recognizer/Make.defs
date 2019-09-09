@@ -33,9 +33,9 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_VOICE_COMMAND),y)
+ifeq ($(CONFIG_AUDIOUTILS_SOUND_RECOGNIZER),y)
 
-CXXSRCS += voice_recognition_command_object.cpp
+CXXSRCS += recognizer_object.cpp
 VPATH   += objects/sound_recognizer
 DEPPATH += --dep-path objects/sound_recognizer
 

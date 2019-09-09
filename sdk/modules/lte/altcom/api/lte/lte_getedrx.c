@@ -122,7 +122,7 @@ static void getedrx_job(FAR void *arg)
   if ((ret == 0) && (callback))
     {
       memset(&edrx, 0, sizeof(lte_edrx_setting_t));
-      if (APICMD_GETEDRX_RES_OK == data->result)
+      if (LTE_RESULT_OK == data->result)
         {
           ret = altcombs_check_edrx(&data->set);
           if (0 > ret)

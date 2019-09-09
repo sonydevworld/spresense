@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/arm_gesture_command.h
+ * modules/include/sensing/logical_sensor/arm_gesture_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_GESTURE_COMMAND_H
 
 /**
- * @defgroup logical_arm_gesture command
+ * @defgroup logical_armgesture Gesture API
  * @{
  */
 

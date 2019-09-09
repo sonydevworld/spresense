@@ -216,7 +216,7 @@ typedef struct
 /**
  * @struct ble_gatt_peripheral_ops_s
  * @brief Bluetooth LE characteristic callbacks(for Peripheral)
- * @detail If characteristic get event from target, this callback will
+ * @details If characteristic get event from target, this callback will
  *         call for request(Peripheral).
  */
 struct ble_gatt_peripheral_ops_s
@@ -357,7 +357,7 @@ struct ble_gatt_event_db_discovery_t
 /**
  * @struct ble_gatt_central_ops_s
  * @brief Bluetooth LE characteristic callbacks(for Central)
- * @detail If characteristic get event from target, this callback will
+ * @details If characteristic get event from target, this callback will
  *         call for response(Central).
  */
 struct ble_gatt_central_ops_s
@@ -424,7 +424,7 @@ int ble_add_characteristic(struct ble_gatt_service_s *service, struct ble_gatt_c
  * @brief BLE Notify Characteristic value
  *        Notify characteristic value to Central (For Peripheral role)
  *
- * @param[in] ble_gatt_char_s: Target characteristic @ref ble_gatt_char_s
+ * @param[in] charc: Target characteristic @ref ble_gatt_char_s
  * @param[in] data: Notify data
  * @param[in] len: Notify data length
  *

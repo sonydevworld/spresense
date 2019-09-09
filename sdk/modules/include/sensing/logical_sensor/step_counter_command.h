@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/include/sensing/step_counter_command.h
+ * modules/include/sensing/logical_sensor/step_counter_command.h
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -37,7 +37,7 @@
 #define __INCLUDE_SENSING_STEP_COUNTER_COMMAND_H
 
 /**
- * @defgroup logical_step_counter STEP_COUNTER API
+ * @defgroup logical_stepcounter Step Counter API 
  * @{
  */
 

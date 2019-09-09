@@ -9,6 +9,8 @@ config SDKDIR
 	string
 	option env="SDKDIR"
 
+menu "General"
+
 config SDK_USER_ENTRYPOINT
 	string "SDK Application entry point"
 	default "nsh_main"
@@ -16,6 +18,8 @@ config SDK_USER_ENTRYPOINT
 		The name of the SDK entry point for user applications.  For the example
 		applications this is of the form 'app_main' where 'app' is the application
 		name. If not defined, SDK_USER_ENTRYPOINT defaults to "nsh_main".
+
+endmenu
 
 source "$SDKDIR/bsp/Kconfig"
 source "$SDKDIR/drivers/Kconfig"

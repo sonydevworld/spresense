@@ -105,6 +105,7 @@ int32_t evtdispfctry_init(struct evtdispfctry_evtdispset_s set[],
       obj = (FAR struct evtdisp_obj_s *)evtdisp_create(set[i].evthdllist);
       if (!obj)
         {
+          BUFFPOOL_FREE(disp_block);
           ret = -1;
           goto errout_with_fin;
         }
