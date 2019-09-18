@@ -271,9 +271,9 @@
  *         ----------------------------------------------
  *         |                 data length                |
  *         ----------------------------------------------
- *         |                  check sum                 |
+ *         |              check sum(header part)        |
  *         ----------------------------------------------
- *         |                   reserve                  |
+ *         |              check sum(data part)          |
  *         ----------------------------------------------
  ****************************************************************************/
 
@@ -286,7 +286,7 @@ begin_packed_struct struct apicmd_cmdhdr_s
   uint16_t transid;
   uint16_t dtlen;
   uint16_t chksum;
-  uint16_t reserve;
+  uint16_t dtchksum;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_APICMD_H */

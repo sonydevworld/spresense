@@ -12,6 +12,12 @@ config LTE_USE_BUFFPOOL
 		When this config is enabled, the memory used by the LTE functions is supplied from buffpool.
 		If disabled, memory is allocated from the heap area.
 
+config LTE_CMD_DATA_CHECKSUM_DISABLE
+	bool "Disable checksum for API command data"
+	default n
+	---help---
+		When this config is enabled, the checksum of the data part is disabled.
+
 endif
 
 if MODEM
