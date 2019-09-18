@@ -211,8 +211,7 @@ static int32_t apicmdgw_checkheader(FAR uint8_t *evt)
 
   if (chksum != ntohs(hdr->chksum))
     {
-      DBGIF_LOG2_ERROR("checksum error [header:0x%04x, calculation:0x%04x]\n",
-        ntohs(hdr->chksum), chksum);
+      DBGIF_LOG2_ERROR("checksum error [header:0x%04x, calculation:0x%04x]\n", ntohs(hdr->chksum), chksum);
       return APICMDGW_HDR_ERR_CHKSUM;
     }
 
@@ -591,6 +590,7 @@ static void apicmdgw_recvtask(void *arg)
                         {
                           apicmdgw_errind(
                             (FAR struct apicmd_cmdhdr_s *)rcvbuff);
+                          DBGIF_ASSERT(0, "apicmdgw_checkheader() error\n");
                           APICMDGW_RECV_STATUS_INIT();
                         }
                     }
