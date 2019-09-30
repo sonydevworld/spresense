@@ -51,6 +51,8 @@
  * Public Types
  ****************************************************************************/
 
+typedef void (*hal_restart_cb_t)(uint32_t state);
+
 struct hal_if_s
 {
   CODE int32_t (*send)(
@@ -62,6 +64,10 @@ struct hal_if_s
   CODE int32_t (*unlock)(FAR struct hal_if_s *thiz);
   CODE void    *(*allocbuff)(FAR struct hal_if_s *thiz, uint32_t len);
   CODE int32_t (*freebuff)(FAR struct hal_if_s *thiz, FAR void *buff);
+  CODE int32_t (*poweron_modem)(
+    FAR struct hal_if_s *thiz, hal_restart_cb_t restart_cb);
+  CODE int32_t (*poweroff_modem)(FAR struct hal_if_s *thiz);
+  CODE int32_t (*reset_modem)(FAR struct hal_if_s *thiz);
 };
 
 #endif /* __MODULES_LTE_ALTCOM_GW_HAL_IF_H */

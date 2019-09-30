@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/lte/apicmdhdlr_power.h
+ * modules/lte/altcom/include/api/lte/lte_power.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMDHDLR_POWER_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMDHDLR_POWER_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_POWER_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_POWER_H
 
 /****************************************************************************
  * Included Files
@@ -66,4 +66,20 @@
 
 enum evthdlrc_e apicmdhdlr_power(FAR uint8_t *evt, uint32_t evlen);
 
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMDHDLR_POWER_H */
+/****************************************************************************
+ * Name: lte_power_set_hal_instance
+ *
+ * Description:
+ *   Set the HAL instance.
+ *
+ * Input Parameters:
+ *  halif  HAL instance.
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void lte_power_set_hal_instance(FAR struct hal_if_s *halif);
+
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_POWER_H */

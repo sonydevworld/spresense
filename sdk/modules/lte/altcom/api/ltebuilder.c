@@ -59,7 +59,7 @@
 #include "apicmdhdlr_imsi.h"
 #include "apicmdhdlr_operator.h"
 #include "apicmdhdlr_phoneno.h"
-#include "apicmdhdlr_power.h"
+#include "lte_power.h"
 #include "apicmdhdlr_repcellinfo.h"
 #include "apicmdhdlr_repevt.h"
 #include "apicmdhdlr_repquality.h"
@@ -441,6 +441,8 @@ static int32_t halspi_initialize(void)
       ret = -1;
     }
 
+  lte_power_set_hal_instance(g_halif);
+
   return ret;
 }
 
@@ -462,6 +464,8 @@ static int32_t halspi_initialize(void)
 static int32_t halspi_uninitialize(void)
 {
   int32_t ret;
+
+  lte_power_set_hal_instance(NULL);
 
   ret = hal_altmdm_spi_delete(g_halif);
   if (0 > ret)

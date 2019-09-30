@@ -721,8 +721,8 @@ static void apicmdgw_recvtask(void *arg)
                         {
                           apicmdgw_errind(
                             (FAR struct apicmd_cmdhdr_s *)rcvbuff);
-                          DBGIF_ASSERT(0, "apicmdgw_checkheader() error\n");
                           APICMDGW_RECV_STATUS_INIT();
+                          g_hal_if->reset_modem(g_hal_if);
                         }
                     }
                   else
@@ -766,7 +766,7 @@ static void apicmdgw_recvtask(void *arg)
                         {
                           apicmdgw_errind(
                             (FAR struct apicmd_cmdhdr_s *)rcvbuff);
-                          DBGIF_ASSERT(0, "apicmdgw_checkdata() error\n");
+                          g_hal_if->reset_modem(g_hal_if);
                         }
 
                       APICMDGW_RECV_STATUS_INIT();
