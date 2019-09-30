@@ -53,7 +53,8 @@
  ****************************************************************************/
 
 #define APICMDGW_RECVBUFF_SIZE_MAX \
-  (APICMD_PAYLOAD_SIZE_MAX + sizeof(struct apicmd_cmdhdr_s))
+  (APICMD_PAYLOAD_SIZE_MAX + sizeof(struct apicmd_cmdhdr_s) \
+    + sizeof(struct apicmd_cmdftr_s))
 
 #define APICMDGW_SEND_ONLY(cmd) \
   (apicmdgw_send(cmd, NULL, 0, NULL, 0))

@@ -55,6 +55,7 @@ begin_packed_struct struct apicmd_cmddat_errind_s
   uint16_t cmdid;
   uint16_t transid;
   uint16_t dtlen;
+  uint16_t options;
   uint16_t chksum;
 } end_packed_struct;
 
