@@ -211,7 +211,8 @@ uint32_t EncoderComponent::activate_apu(AudioCodec param,
   int ret = DD_Load(filepath, 
                     enc_dsp_done_callback, 
                     (void *)this, 
-                    &m_dsp_handler);
+                    &m_dsp_handler,
+                    DspBinTypeELFwoBind);
 
   if (ret != DSPDRV_NOERROR)
     {

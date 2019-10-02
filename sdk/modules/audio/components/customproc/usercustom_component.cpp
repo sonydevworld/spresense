@@ -370,7 +370,7 @@ uint32_t UserCustomComponent::activate(ComponentCallback callback,
 
   /* Load DSP */
 
-  int ret = DD_Load(dsp_name, cbRcvDspRes, (void*)this, &m_dsp_handler);
+  int ret = DD_Load(dsp_name, cbRcvDspRes, (void*)this, &m_dsp_handler, DspBinTypeELF);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   up_pm_release_freqlock(&g_decode_hvlock);

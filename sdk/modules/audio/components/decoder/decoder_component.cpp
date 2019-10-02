@@ -581,7 +581,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
 
   /* Load DSP */
 
-  int ret = DD_Load(filepath, cbRcvDspRes, (void*)this, &m_dsp_handler);
+  int ret = DD_Load(filepath, cbRcvDspRes, (void*)this, &m_dsp_handler, DspBinTypeELFwoBind);
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
   up_pm_release_freqlock(&g_decode_hvlock);
@@ -616,7 +616,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
 
   if (param->dsp_multi_core)
     {
-      ret = DD_Load(filepath, cbRcvDspRes, (void*)this, &m_dsp_slave_handler);
+      ret = DD_Load(filepath, cbRcvDspRes, (void*)this, &m_dsp_slave_handler, DspBinTypeELFwoBind);
       if (ret != DSPDRV_NOERROR)
         {
           logerr("DD_Load(%s) failure. %d\n", filepath, ret);
