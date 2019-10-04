@@ -59,7 +59,7 @@
 #include "apicmdhdlr_imsi.h"
 #include "apicmdhdlr_operator.h"
 #include "apicmdhdlr_phoneno.h"
-#include "apicmdhdlr_power.h"
+#include "lte_power.h"
 #include "apicmdhdlr_repcellinfo.h"
 #include "apicmdhdlr_repevt.h"
 #include "apicmdhdlr_repquality.h"
@@ -102,9 +102,6 @@
 
 #define BLOCKSETLIST_NUM (sizeof(g_blk_settings) / sizeof(g_blk_settings[0]))
 
-#define APICMD_TRANSACTION_SIZE_MAX \
-  (sizeof(struct apicmd_cmdhdr_s) + APICMD_PAYLOAD_SIZE_MAX)
-
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
@@ -139,10 +136,7 @@ static struct buffpool_blockset_s g_blk_settings[] =
   },
 #endif
   {
-    APICMDGW_RECVBUFF_SIZE_MAX, 1
-  },
-  {
-    APICMD_TRANSACTION_SIZE_MAX, 1
+    APICMDGW_RECVBUFF_SIZE_MAX, 2
   }
 };
 
@@ -447,6 +441,8 @@ static int32_t halspi_initialize(void)
       ret = -1;
     }
 
+  lte_power_set_hal_instance(g_halif);
+
   return ret;
 }
 
@@ -468,6 +464,8 @@ static int32_t halspi_initialize(void)
 static int32_t halspi_uninitialize(void)
 {
   int32_t ret;
+
+  lte_power_set_hal_instance(NULL);
 
   ret = hal_altmdm_spi_delete(g_halif);
   if (0 > ret)

@@ -753,6 +753,13 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
 
   mqd = mq_open((char *)mq->name, O_WRONLY);
 
+  if (mqd < 0)
+    {
+      l_errno = errno;
+      DBGIF_LOG1_ERROR("Failed to mq_open errno:%d\n", l_errno);
+      return -l_errno;
+    }
+
   if (timeout_ms == SYS_TIMEO_FEVR)
     {
       for (;;)
