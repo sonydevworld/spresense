@@ -28,6 +28,8 @@ XMODEM_BUFF_SIZE = 128 * 1024
 PRINT_RAW_COMMAND = True
 REBOOT_AT_END = True
 DEST_DIR="/mnt/spif"
+VT100_ESC = chr(0x1B)
+VT100_ERACE_EOL = VT100_ESC + "[K"
 
 # configure parameters and default value
 class ConfigArgs:
@@ -225,6 +227,7 @@ class XmodemWriter:
 		rx = self.serial.readline()
 		if PRINT_RAW_COMMAND :
 			serial_line = rx.decode(errors="replace")
+			serial_line = serial_line.replace(VT100_ERACE_EOL, "")
 			if serial_line.strip() != "":
 				print(serial_line, end="")
 		return rx
@@ -248,7 +251,9 @@ class XmodemWriter:
 		self.serial.write(str(string).encode() + b"\n")
 		rx = self.serial.readline()
 		if PRINT_RAW_COMMAND :
-			print(rx.decode(errors="replace"), end="")
+			serial_line = rx.decode(errors="replace")
+			serial_line = serial_line.replace(VT100_ERACE_EOL, "")
+			print(serial_line, end="")
 
 	def install_files(self, files, command) :
 		if ConfigArgs.XMODEM_BAUD:
