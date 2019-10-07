@@ -176,8 +176,10 @@ private:
   void input_data_on_active(MsgPacket *msg);
   void input_data_on_under(MsgPacket *msg);
 
+  void postdone_on_ready(MsgPacket *msg);
   void postdone_on_active(MsgPacket *msg);
   void postdone_on_stopping(MsgPacket *msg);
+  void postdone_on_underflow(MsgPacket *msg);
 
   void illegal_done(MsgPacket *msg);
   void done_on_active(MsgPacket *msg);

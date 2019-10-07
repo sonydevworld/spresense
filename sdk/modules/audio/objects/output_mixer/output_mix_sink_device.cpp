@@ -184,10 +184,10 @@ OutputMixToHPI2S::MsgProc OutputMixToHPI2S::MsgProcTbl[AUD_MIX_MSG_NUM][StateNum
 
   {                                           /* OutputMixToHPI2S State: */
     &OutputMixToHPI2S::illegal_done,          /*  Booted                 */
-    &OutputMixToHPI2S::illegal_done,          /*  Ready                  */
+    &OutputMixToHPI2S::postdone_on_ready,     /*  Ready                  */
     &OutputMixToHPI2S::postdone_on_active,    /*  Active                 */
     &OutputMixToHPI2S::postdone_on_stopping,  /*  Stopping               */
-    &OutputMixToHPI2S::illegal_done           /*  Underflow              */
+    &OutputMixToHPI2S::postdone_on_underflow  /*  Underflow              */
   },
 
   /* Message type: DONE */
@@ -505,6 +505,14 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
 }
 
 /*--------------------------------------------------------------------------*/
+void OutputMixToHPI2S::postdone_on_ready(MsgPacket* msg)
+{
+  /* On Ready state, reply of SET command may come. */
+
+  postdone_on_active(msg);
+}
+
+/*--------------------------------------------------------------------------*/
 void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 {
   OutputMixObjPostfilterDoneCmd post_done =
@@ -560,6 +568,12 @@ void OutputMixToHPI2S::postdone_on_active(MsgPacket* msg)
 
 /*--------------------------------------------------------------------------*/
 void OutputMixToHPI2S::postdone_on_stopping(MsgPacket* msg)
+{
+  postdone_on_active(msg);
+}
+
+/*--------------------------------------------------------------------------*/
+void OutputMixToHPI2S::postdone_on_underflow(MsgPacket* msg)
 {
   postdone_on_active(msg);
 }
