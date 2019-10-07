@@ -113,6 +113,13 @@ private:
     , m_output_device(HPOutputDevice)
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
   {
+#if defined(AS_FEATURE_PLAYER_ENABLE) || defined(AS_FEATURE_OUTPUTMIX_ENABLE)
+    for (int i = 0; i < AS_PLAYER_ID_NUM; i++)
+      {
+        m_req_player_complete_bits[i]  = 0;
+        m_req_player_reference_bits[i] = 0;
+      }
+#endif /* AS_FEATURE_PLAYER_ENABLE || AS_FEATURE_OUTPUTMIX_ENABLE */
   };
 
   MsgQueId m_selfDtq;
@@ -143,10 +150,8 @@ private:
 
   enum TransitionElement
   {
-    ElementPlayer0 = 0,
-    ElementPlayer1,
-    ElementOutmixer0,
-    ElementOutmixer1,
+    ElementPlayer = 0,
+    ElementOutmixer,
     ElementMicFrontend,
     ElementRecorder,
     ElementRecognizer,
@@ -161,6 +166,10 @@ private:
   uint32_t m_command_code;
   int32_t m_req_complete_bits;
   int32_t m_req_reference_bits;
+#if defined(AS_FEATURE_PLAYER_ENABLE) || defined(AS_FEATURE_OUTPUTMIX_ENABLE)
+  int32_t m_req_player_complete_bits[AS_PLAYER_ID_NUM];
+  int32_t m_req_player_reference_bits[AS_PLAYER_ID_NUM];
+#endif /* AS_FEATURE_PLAYER_ENABLE || AS_FEATURE_OUTPUTMIX_ENABLE */
   bool m_input_en;
   bool m_output_en;
 #ifdef AS_FEATURE_FRONTEND_ENABLE

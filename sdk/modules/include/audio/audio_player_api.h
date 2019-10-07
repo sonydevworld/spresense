@@ -159,6 +159,8 @@ typedef enum
 
   AS_PLAYER_ID_1,
 
+  AS_PLAYER_ID_NUM,
+
 } AsPlayerId;
 
 /** Select activate player */
