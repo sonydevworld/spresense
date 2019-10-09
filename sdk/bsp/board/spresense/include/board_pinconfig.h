@@ -57,8 +57,14 @@
  *                                                  i                   d  Z  m  l
  *                                                  n                   e  I  A  l
  */
+#undef PINCONF_UART2_TXD
+#undef PINCONF_UART2_RXD
 #undef PINCONF_UART2_CTS
-#define PINCONF_UART2_CTS                   PINCONF(PIN_UART2_CTS,      1, 1, 0, PINCONF_PULLDOWN)
+#undef PINCONF_UART2_RTS
+#define PINCONF_UART2_TXD                   PINCONF(PIN_UART2_TXD,      1, 0, 1, 0)
+#define PINCONF_UART2_RXD                   PINCONF(PIN_UART2_RXD,      1, 1, 1, 0)
+#define PINCONF_UART2_CTS                   PINCONF(PIN_UART2_CTS,      1, 1, 1, PINCONF_PULLDOWN)
+#define PINCONF_UART2_RTS                   PINCONF(PIN_UART2_RTS,      1, 0, 1, 0)
 
 #undef PINCONF_SPI4_CS_X
 #undef PINCONF_SPI4_SCK
