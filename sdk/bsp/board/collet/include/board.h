@@ -178,6 +178,13 @@ enum board_power_device {
 
 #define DISPLAY_SPI     4
 
+#define DISPLAY_DMA_TXCH       (2)
+#define DISPLAY_DMA_RXCH       (3)
+#define DISPLAY_DMA_TXCH_CFG   CXD56_DMA_PERIPHERAL_SPI4_TX
+#define DISPLAY_DMA_RXCH_CFG   CXD56_DMA_PERIPHERAL_SPI4_RX
+#define DISPLAY_DMA_TX_MAXSIZE (192000)
+#define DISPLAY_DMA_RX_MAXSIZE (192000)
+
 /* External pin definitions for EINK deivce */
 
 #define EINK_RST    PIN_SPI2_CS_X

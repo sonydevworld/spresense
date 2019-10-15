@@ -47,6 +47,7 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <debug.h>
+#include <string.h>
 
 #include <arch/board/board.h>
 #include <nuttx/irq.h>
@@ -100,6 +101,7 @@ struct cxd56_spidev_s
   uint8_t          port;       /* Port number */
   int              initialized; /* Initialized flag */
 #ifdef CONFIG_CXD56_DMAC
+  bool             dmaenable;  /* Use DMA or not */
   DMA_HANDLE       rxdmach;    /* RX DMA channel handle */
   DMA_HANDLE       txdmach;    /* TX DMA channel handle */
   sem_t            dmasem;     /* Wait for DMA to complete */
@@ -185,19 +187,10 @@ static const struct spi_ops_s g_spi4ops =
 #endif
   .send              = spi_send,
 #ifdef CONFIG_SPI_EXCHANGE
-#  if defined(CONFIG_CXD56_DMAC_SPI4_TX) || defined(CONFIG_CXD56_DMAC_SPI4_RX)
-  .exchange          = spi_dmaexchange,
-#  else
   .exchange          = spi_exchange,
-#  endif
 #else
-#  if defined(CONFIG_CXD56_DMAC_SPI4_TX) || defined(CONFIG_CXD56_DMAC_SPI4_RX)
-  .sndblock          = spi_dmasndblock,
-  .recvblock         = spi_dmarecvblock,
-#  else
   .sndblock          = spi_sndblock,
   .recvblock         = spi_recvblock,
-#  endif
 #endif
 #ifdef CONFIG_SPI_CALLBACK
   .registercallback  = cxd56_spi4register, /* Provided externally */
@@ -234,19 +227,10 @@ static const struct spi_ops_s g_spi5ops =
 #endif
   .send              = spi_send,
 #ifdef CONFIG_SPI_EXCHANGE
-#  if defined(CONFIG_CXD56_DMAC_SPI5_TX) || defined(CONFIG_CXD56_DMAC_SPI5_RX)
-  .exchange          = spi_dmaexchange,
-#  else
   .exchange          = spi_exchange,
-#  endif
 #else
-#  if defined(CONFIG_CXD56_DMAC_SPI5_TX) || defined(CONFIG_CXD56_DMAC_SPI5_RX)
-  .sndblock          = spi_dmasndblock,
-  .recvblock         = spi_dmarecvblock,
-#  else
   .sndblock          = spi_sndblock,
   .recvblock         = spi_recvblock,
-#  endif
 #endif
 #ifdef CONFIG_SPI_CALLBACK
   .registercallback  = cxd56_spi5register, /* Provided externally */
@@ -628,6 +612,7 @@ static void spi_setbits(FAR struct spi_dev_s *dev, int nbits)
        */
 
       priv->nbits = nbits;
+#ifdef CONFIG_CXD56_DMAC
       if (priv->nbits > 8)
         {
           priv->txconfig.dest_width = CXD56_DMAC_WIDTH16;
@@ -642,6 +627,7 @@ static void spi_setbits(FAR struct spi_dev_s *dev, int nbits)
           priv->rxconfig.dest_width = CXD56_DMAC_WIDTH8;
           priv->rxconfig.src_width = CXD56_DMAC_WIDTH8;
         }
+#endif
     }
 }
 
@@ -711,10 +697,10 @@ static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd)
 }
 
 /****************************************************************************
- * Name: spi_exchange
+ * Name: spi_do_exchange
  *
  * Description:
- *   Exahange a block of data from SPI. Required.
+ *   Exchange a block of data from SPI. Required.
  *
  * Input Parameters:
  *   dev      - Device-specific state data
@@ -731,8 +717,8 @@ static uint16_t spi_send(FAR struct spi_dev_s *dev, uint16_t wd)
  *
  ****************************************************************************/
 
-static void spi_exchange(FAR struct spi_dev_s *dev, FAR const void *txbuffer,
-                         FAR void *rxbuffer, size_t nwords)
+static void spi_do_exchange(FAR struct spi_dev_s *dev, FAR const void *txbuffer,
+                            FAR void *rxbuffer, size_t nwords)
 {
   FAR struct cxd56_spidev_s *priv = (FAR struct cxd56_spidev_s *)dev;
   uint32_t regval                 = 0;
@@ -832,6 +818,44 @@ static void spi_exchange(FAR struct spi_dev_s *dev, FAR const void *txbuffer,
   /* Enable clock gating (clock disable) */
 
   cxd56_spi_clock_gate_enable(priv->port);
+}
+
+/****************************************************************************
+ * Name: spi_exchange
+ *
+ * Description:
+ *   Wrapper function of exchange a block of data from SPI.
+ *
+ * Input Parameters:
+ *   dev      - Device-specific state data
+ *   txbuffer - A pointer to the buffer of data to be sent
+ *   rxbuffer - A pointer to the buffer in which to receive data
+ *   nwords   - the length of data that to be exchanged in units of words.
+ *              The wordsize is determined by the number of bits-per-word
+ *              selected for the SPI interface.  If nbits <= 8, the data is
+ *              packed into uint8_t's; if nbits >8, the data is packed into
+ *              uint16_t's
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+static void spi_exchange(FAR struct spi_dev_s *dev, FAR const void *txbuffer,
+                         FAR void *rxbuffer, size_t nwords)
+{
+#ifdef CONFIG_CXD56_DMAC
+  FAR struct cxd56_spidev_s *priv = (FAR struct cxd56_spidev_s *)dev;
+
+  if (priv->dmaenable)
+    {
+      spi_dmaexchange(dev, txbuffer, rxbuffer, nwords);
+    }
+  else
+#endif
+    {
+      spi_do_exchange(dev, txbuffer, rxbuffer, nwords);
+    }
 }
 
 /****************************************************************************
@@ -1150,54 +1174,10 @@ FAR struct spi_dev_s *cxd56_spibus_initialize(int port)
 
   /* DMA settings */
 
-#if defined(CONFIG_CXD56_DMAC_SPI4_TX) || defined(CONFIG_CXD56_DMAC_SPI4_RX)
-  if (port == 4)
-    {
-#if defined(CONFIG_CXD56_DMAC_SPI4_TX)
-      priv->txconfig.channel_cfg = CXD56_DMA_PERIPHERAL_SPI4_TX;
-      priv->txdmach  = cxd56_dmachannel(CONFIG_CXD56_DMAC_SPI4_TX_CH,
-                                        CONFIG_CXD56_DMAC_SPI4_TX_MAXSIZE);
-      if (priv->txdmach == NULL)
-        {
-          return NULL;
-        }
-#endif
-#if defined(CONFIG_CXD56_DMAC_SPI4_RX)
-      priv->rxconfig.channel_cfg = CXD56_DMA_PERIPHERAL_SPI4_RX;
-      priv->rxdmach  = cxd56_dmachannel(CONFIG_CXD56_DMAC_SPI4_RX_CH,
-                                        CONFIG_CXD56_DMAC_SPI4_RX_MAXSIZE);
-      if (priv->rxdmach == NULL)
-        {
-          return NULL;
-        }
-#endif
-      sem_init(&priv->dmasem, 0, 0);
-    }
-#endif
-
-#if defined(CONFIG_CXD56_DMAC_SPI5_TX) || defined(CONFIG_CXD56_DMAC_SPI5_RX)
-  if (port == 5)
-    {
-#if defined(CONFIG_CXD56_DMAC_SPI5_TX)
-      priv->txconfig.channel_cfg = CXD56_DMA_PERIPHERAL_SPI5_TX;
-      priv->txdmach  = cxd56_dmachannel(CONFIG_CXD56_DMAC_SPI5_TX_CH,
-                                        CONFIG_CXD56_DMAC_SPI5_TX_MAXSIZE);
-      if (priv->txdmach == NULL)
-        {
-          return NULL;
-        }
-#endif
-#if defined(CONFIG_CXD56_DMAC_SPI5_RX)
-      priv->rxconfig.channel_cfg = CXD56_DMA_PERIPHERAL_SPI5_RX;
-      priv->rxdmach  = cxd56_dmachannel(CONFIG_CXD56_DMAC_SPI5_RX_CH,
-                                        CONFIG_CXD56_DMAC_SPI5_RX_MAXSIZE);
-      if (priv->rxdmach == NULL)
-        {
-          return NULL;
-        }
-#endif
-      sem_init(&priv->dmasem, 0, 0);
-    }
+#ifdef CONFIG_CXD56_DMAC
+  priv->dmaenable = false;
+  priv->txdmach   = NULL;
+  priv->rxdmach   = NULL;
 #endif
 
   /* CS control */
@@ -1268,6 +1248,81 @@ FAR struct spi_dev_s *cxd56_spibus_initialize(int port)
 
   return &priv->spidev;
 }
+
+#ifdef CONFIG_CXD56_DMAC
+
+/****************************************************************************
+ * Name: cxd56_spi_dmaconfig
+ *
+ * Description:
+ *   Enable DMA configuration.
+ *
+ * Input Parameter:
+ *   port   - Port number
+ *   chtype - Channel type(TX or RX)
+ *   handle - DMA channel handle
+ *   conf   - DMA configuration
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void cxd56_spi_dmaconfig(int port, int chtype, DMA_HANDLE handle,
+                         FAR dma_config_t *conf)
+{
+  FAR struct cxd56_spidev_s *priv = NULL;
+
+  switch (port)
+    {
+#if defined(CONFIG_CXD56_SPI4) && defined(CONFIG_CXD56_DMAC_SPI4_TX)
+      case 4:
+        priv = &g_spi4dev;
+        break;
+#endif
+
+#if defined(CONFIG_CXD56_SPI5) && defined(CONFIG_CXD56_DMAC_SPI5_TX)
+      case 5:
+        priv = &g_spi5dev;
+        break;
+#endif
+
+      default:
+        break;
+    }
+
+  if (priv && priv->initialized)
+    {
+      if ((chtype == CXD56_SPI_DMAC_CHTYPE_TX) && (!priv->txdmach))
+        {
+          /* TX DMA setting */
+
+          priv->txdmach = handle;
+          memcpy(&priv->txconfig, conf, sizeof(dma_config_t));
+
+          if (!priv->dmaenable)
+            {
+              sem_init(&priv->dmasem, 0, 0);
+              priv->dmaenable = true;
+            }
+        }
+      else if ((chtype == CXD56_SPI_DMAC_CHTYPE_RX) && (!priv->rxdmach))
+        {
+          /* RX DMA setting */
+
+          priv->rxdmach = handle;
+          memcpy(&priv->rxconfig, conf, sizeof(dma_config_t));
+
+          if (!priv->dmaenable)
+            {
+              sem_init(&priv->dmasem, 0, 0);
+              priv->dmaenable = true;
+            }
+        }
+    }
+}
+
+#endif
 
 /****************************************************************************
  * Name: spi_flush
