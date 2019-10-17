@@ -47,6 +47,7 @@
 #include <nuttx/modem/altmdm.h>
 #include <nuttx/arch.h>
 #include <nuttx/sched.h>
+#include <arch/board/common/cxd56_altmdm.h>
 
 #include "dbg_if.h"
 #include "buffpoolwrapper.h"
@@ -661,7 +662,8 @@ FAR struct hal_if_s *hal_altmdm_spi_create(void)
   if (ret < 0)
     {
       DBGIF_LOG1_ERROR("Failed to create mutex :%d\n", ret);
-      goto errout;
+      (void)BUFFPOOL_FREE(obj);
+      return NULL;
     }
   
   obj->buff =
@@ -670,18 +672,24 @@ FAR struct hal_if_s *hal_altmdm_spi_create(void)
     {
       DBGIF_LOG_ERROR("Failed to allocate memory\n");
       (void)sys_delete_mutex(&obj->objmtx);
-      goto errout;
+      (void)BUFFPOOL_FREE(obj);
+      return NULL;
     }
 
   obj->datalen = 0;
   obj->rp      = 0;
 
+  ret = board_altmdm_initialize(DEV_PATH);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("Failed to board_altmdm_initialize() :%d\n", ret);
+      (void)sys_delete_mutex(&obj->objmtx);
+      (void)BUFFPOOL_FREE(obj->buff);
+      (void)BUFFPOOL_FREE(obj);
+      return NULL;
+    }
+
   return (FAR struct hal_if_s *)obj;
-
-errout:
-  (void)BUFFPOOL_FREE(obj);
-
-  return NULL;
 }
 
 /****************************************************************************
@@ -708,6 +716,12 @@ int32_t hal_altmdm_spi_delete(FAR struct hal_if_s *thiz)
     {
       DBGIF_LOG_ERROR("null parameter.\n");
       return -EINVAL;
+    }
+
+  ret = board_altmdm_uninitialize();
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("Failed to board_altmdm_uninitialize() :%d\n", ret);
     }
 
   obj = (FAR struct hal_altmdm_spi_obj_s *)thiz;

@@ -297,6 +297,12 @@ void board_altmdm_gpio_irq(uint32_t pin, uint32_t polarity,
                                    (GPIOINT_TOGGLE_MODE_MASK | nf | pol),
                                    irqhandler);
             }
+          else
+            {
+              /* Disable the interrupt handler */
+
+              cxd56_gpioint_config(pincfg[pin].pin, 0, NULL);
+            }
         }
     }
 }
