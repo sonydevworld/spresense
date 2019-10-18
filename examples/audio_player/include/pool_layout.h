@@ -51,18 +51,16 @@ uint8_t layout_no[NUM_MEM_SECTIONS] = {
 uint8_t pool_num[NUM_MEM_SECTIONS] = {
   NUM_MEM_S0_POOLS,
 };
-extern const PoolSectionAttr MemoryPoolLayouts[NUM_MEM_SECTIONS][NUM_MEM_LAYOUTS][9] = {
+extern const PoolSectionAttr MemoryPoolLayouts[NUM_MEM_SECTIONS][NUM_MEM_LAYOUTS][7] = {
   {  /* Section:0 */
     {/* Layout:0 */
-     /* pool_ID          type       seg fence  addr        size         */
-      { S0_DEC_ES_MAIN_BUF_POOL        , BasicType,   4, true, 0x000c0008, 0x00006000 },  /* AUDIO_WORK_AREA */
-      { S0_REND_PCM_BUF_POOL           , BasicType,   5, true, 0x000c6010, 0x00015f90 },  /* AUDIO_WORK_AREA */
-      { S0_DEC_APU_CMD_POOL            , BasicType,  10, true, 0x000dbfa8, 0x00000398 },  /* AUDIO_WORK_AREA */
-      { S0_SRC_WORK_BUF_POOL           , BasicType,   1, true, 0x000dc348, 0x00002000 },  /* AUDIO_WORK_AREA */
-      { S0_PF0_PCM_BUF_POOL            , BasicType,   1, true, 0x000de350, 0x00004650 },  /* AUDIO_WORK_AREA */
-      { S0_PF1_PCM_BUF_POOL            , BasicType,   1, true, 0x000e29a8, 0x00004650 },  /* AUDIO_WORK_AREA */
-      { S0_PF0_APU_CMD_POOL            , BasicType,  10, true, 0x000e7000, 0x00000398 },  /* AUDIO_WORK_AREA */
-      { S0_PF1_APU_CMD_POOL            , BasicType,  10, true, 0x000e73a0, 0x00000398 },  /* AUDIO_WORK_AREA */
+     /* pool_ID                          type         seg  fence  addr        size         */
+      { S0_DEC_ES_MAIN_BUF_POOL        , BasicType  ,   4,  true, 0x000c0008, 0x00006000 },  /* AUDIO_WORK_AREA */
+      { S0_REND_PCM_BUF_POOL           , BasicType  ,   5,  true, 0x000c6010, 0x00015f90 },  /* AUDIO_WORK_AREA */
+      { S0_DEC_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000dbfa8, 0x00000398 },  /* AUDIO_WORK_AREA */
+      { S0_SRC_WORK_BUF_POOL           , BasicType  ,   1,  true, 0x000dc348, 0x00002000 },  /* AUDIO_WORK_AREA */
+      { S0_PF0_PCM_BUF_POOL            , BasicType  ,   1,  true, 0x000de350, 0x00004650 },  /* AUDIO_WORK_AREA */
+      { S0_PF0_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000e29a8, 0x00000398 },  /* AUDIO_WORK_AREA */
       { S0_NULL_POOL, 0, 0, false, 0, 0 },
     },
   },

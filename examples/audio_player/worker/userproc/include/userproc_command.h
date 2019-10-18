@@ -1,8 +1,7 @@
-/* This file is generated automatically. */
 /****************************************************************************
- * msgq_pool.h
+ * audio_recorder/worker/userproc/include/userproc_command.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,24 +33,43 @@
  *
  ****************************************************************************/
 
-#ifndef MSGQ_POOL_H_INCLUDED
-#define MSGQ_POOL_H_INCLUDED
+#ifndef __USERPROC_COMMAND_H__
+#define __USERPROC_COMMAND_H__
 
-#include "msgq_id.h"
+#include <stdint.h>
+#include <audio/dsp_framework/customproc_command_base.h>
 
-extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
+struct InitParam : public CustomprocCommand::CmdBase
 {
-  /* n_drm, n_size, n_num, h_drm, h_size, h_num */
-
-  { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd264, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MNG */
-  { 0xfdcb4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfdd34, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfdd98, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfddfc, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY */
-  { 0xfdeec, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe06c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY */
-  { 0xfe26c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY_SYNC */
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
 };
 
-#endif /* MSGQ_POOL_H_INCLUDED */
+struct ExecParam : public CustomprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+struct FlushParam : public CustomprocCommand::CmdBase
+{
+  uint32_t reserve0;
+  uint32_t reserve1;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+struct SetParam : public CustomprocCommand::CmdBase
+{
+  uint32_t enable;
+  uint32_t coef;
+  uint32_t reserve2;
+  uint32_t reserve3;
+};
+
+#endif /* __USERPROC_COMMAND_H__ */
+

@@ -40,6 +40,10 @@ config EXAMPLES_AUDIO_PLAYER_MODE_HIRES
 	bool "Hi-Res mode"
 endchoice
 
+config EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+    bool "Use Posstprocess"
+    default n
+
 config EXAMPLES_AUDIO_PLAYER_PROGNAME
 	string "Program name"
 	default "audio_player"

@@ -1,8 +1,7 @@
-/* This file is generated automatically. */
 /****************************************************************************
- * msgq_pool.h
+ * audio_recorder/worker/userproc/src/rcfilter.cpp
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,24 +33,69 @@
  *
  ****************************************************************************/
 
-#ifndef MSGQ_POOL_H_INCLUDED
-#define MSGQ_POOL_H_INCLUDED
+#include "rcfilter.h"
 
-#include "msgq_id.h"
+/*--------------------------------------------------------------------*/
+/*                                                                    */
+/*--------------------------------------------------------------------*/
 
-extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
+/*--------------------------------------------------------------------*/
+bool RCfilter::init(void)
 {
-  /* n_drm, n_size, n_num, h_drm, h_size, h_num */
+  return true;
+}
 
-  { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd264, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MNG */
-  { 0xfdcb4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfdd34, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfdd98, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfddfc, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY */
-  { 0xfdeec, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe06c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY */
-  { 0xfe26c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY_SYNC */
-};
+/*--------------------------------------------------------------------*/
+uint32_t RCfilter::exec(int16_t *in, uint32_t insize, int16_t *out, uint32_t outsize)
+{
+  /* Exec RC filter. */
 
-#endif /* MSGQ_POOL_H_INCLUDED */
+  int16_t *ls_i = in;
+  int16_t *rs_i = ls_i + 1;
+  int16_t *ls_o = out;
+  int16_t *rs_o = ls_o + 1;
+
+  static int16_t ls_l = 0;
+  static int16_t rs_l = 0;
+
+  if (!ls_l && !rs_l)
+    {
+      ls_l = *ls_i;
+      rs_l = *rs_i;
+    }
+
+  uint32_t cnt = 0;
+
+  for (cnt = 0; cnt < insize; cnt += 4)
+    {
+      *ls_o = (ls_l * m_coef / 100) + (*ls_i * (100 - m_coef) / 100);
+      *rs_o = (rs_l * m_coef / 100) + (*rs_i * (100 - m_coef) / 100);
+
+      ls_l = *ls_o;
+      rs_l = *rs_o;
+
+      ls_i += 2;
+      rs_i += 2;
+      ls_o += 2;
+      rs_o += 2;
+    }
+
+  return cnt;
+}
+
+/*--------------------------------------------------------------------*/
+uint32_t RCfilter::flush(int16_t *out, uint32_t outsize)
+{
+  return 0;
+}
+
+/*--------------------------------------------------------------------*/
+bool RCfilter::set(uint32_t coef)
+{
+  /* Set RC filter coef. */
+
+  m_coef = static_cast<int16_t>(coef);
+
+  return true;
+}
+

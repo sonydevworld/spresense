@@ -1,8 +1,7 @@
-/* This file is generated automatically. */
 /****************************************************************************
- * msgq_pool.h
+ * audio_recorder/worker/userproc/include/userproc.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,24 +33,39 @@
  *
  ****************************************************************************/
 
-#ifndef MSGQ_POOL_H_INCLUDED
-#define MSGQ_POOL_H_INCLUDED
+#ifndef __USERPROC_H__
+#define __USERPROC_H__
 
-#include "msgq_id.h"
+#include <string.h>
 
-extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
+#include <audio/dsp_framework/customproc_dsp_userproc_if.h>
+#include "userproc_command.h"
+#include "rcfilter.h"
+
+class UserProc : public CustomprocDspUserProcIf
 {
-  /* n_drm, n_size, n_num, h_drm, h_size, h_num */
+public:
 
-  { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd264, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MNG */
-  { 0xfdcb4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfdd34, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfdd98, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfddfc, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY */
-  { 0xfdeec, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe06c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY */
-  { 0xfe26c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY_SYNC */
+  UserProc() :
+    m_enable(true)
+  {}
+
+  virtual void init(CustomprocCommand::CmdBase *cmd) { init(static_cast<InitParam *>(cmd)); }
+  virtual void exec(CustomprocCommand::CmdBase *cmd) { exec(static_cast<ExecParam *>(cmd)); }
+  virtual void flush(CustomprocCommand::CmdBase *cmd) { flush(static_cast<FlushParam *>(cmd)); }
+  virtual void set(CustomprocCommand::CmdBase *cmd) { set(static_cast<SetParam *>(cmd)); }
+
+private:
+
+  bool m_enable;
+  RCfilter m_filter_ins;
+
+  void init(InitParam *param);
+  void exec(ExecParam *param);
+  void flush(FlushParam *param);
+  void set(SetParam *param);
+
 };
 
-#endif /* MSGQ_POOL_H_INCLUDED */
+#endif /* __USERPROC_H__ */
+
