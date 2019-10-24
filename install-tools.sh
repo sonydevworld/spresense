@@ -36,7 +36,7 @@
 
 #set -x
 
-SPRROOT=$HOME/spresenseenv
+SPRBASENAME=spresenseenv
 
 NXTOOLURL=https://bitbucket.org/nuttx/tools
 NXTOOL=nuttx-tools
@@ -322,6 +322,13 @@ case "`uname -s`" in
         ;;
 esac
 
+# Switch SPRROOT by platform
+if [ "${OS}" == "win" ]; then
+	SPRROOT=/opt/${SPRBASENAME}
+else
+	SPRROOT=${HOME}/${SPRBASENAME}
+fi
+
 # Setup base tools for current system
 
 echo "== Install base command line tools"
@@ -344,7 +351,8 @@ ${OS}_install_openocd
 
 # Create PATH environment setup support script
 
-_setup=${SPRROOT}/setup
+_setup=${HOME}/${SPRBASENAME}/setup
+mkdir -p ${HOME}/${SPRBASENAME}
 
 echo "#!/usr/bin/env bash" > ${_setup}
 echo "PATH=${SPRROOT}/usr/bin:"'${PATH}' >> ${_setup}
