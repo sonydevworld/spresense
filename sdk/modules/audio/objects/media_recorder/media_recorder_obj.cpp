@@ -65,7 +65,7 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static pid_t s_rcd_pid;
+static pthread_t s_rcd_pid = INVALID_PROCESS_ID;
 static AsRecorderMsgQueId_t s_msgq_id;
 static AsRecorderPoolId_t   s_pool_id;
 
@@ -297,11 +297,10 @@ bool MediaRecorderObjectTask::unloadCodec(void)
 }
 
 /*--------------------------------------------------------------------------*/
-int AS_MediaRecorderObjEntry(int argc, char *argv[])
+FAR void AS_MediaRecorderObjEntry(FAR void *arg)
 {
   MediaRecorderObjectTask::create(s_msgq_id,
                                   s_pool_id);
-  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1937,11 +1936,28 @@ static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_rcd_pid = task_create("REC_OBJ",
-                          150, 1024 * 2,
-                          AS_MediaRecorderObjEntry,
-                          NULL);
-  if (s_rcd_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = 150;
+  attr.stacksize           = 1024 * 2;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_rcd_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_MediaRecorderObjEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
@@ -2132,7 +2148,17 @@ bool AS_DeleteMediaRecorder(void)
       return false;
     }
 
-  task_delete(s_rcd_pid);
+  if (s_rcd_pid == INVALID_PROCESS_ID)
+    {
+      MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return false;
+    }
+
+  pthread_cancel(s_rcd_pid);
+  pthread_join(s_rcd_pid, NULL);
+
+  s_rcd_pid = INVALID_PROCESS_ID;
+
   delete s_rcd_obj;
   s_rcd_obj = NULL;
 

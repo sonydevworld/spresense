@@ -141,7 +141,7 @@ private:
 
 static RenderCompFactory *s_pFactory=NULL;
 
-static pid_t    s_render_pid[MAX_RENDER_COMP_INSTANCE_NUM];
+static pthread_t s_render_pid[MAX_RENDER_COMP_INSTANCE_NUM];
 static MsgQueId s_self_dtq[MAX_RENDER_COMP_INSTANCE_NUM];
 static MsgQueId s_self_sync_dtq[MAX_RENDER_COMP_INSTANCE_NUM];
 
@@ -193,7 +193,7 @@ static void AS_RendererNotifyDmaError(AudioDrvDmaError *p_param)
 
 
 /*--------------------------------------------------------------------*/
-int AS_RendererCmpEntryDev0(int argc, char *argv[])
+FAR void AS_RendererCmpEntryDev0(FAR void *arg)
 {
   RendererComponent *instance = s_pFactory->getRenderCompInstance(0);
 
@@ -201,13 +201,11 @@ int AS_RendererCmpEntryDev0(int argc, char *argv[])
                    AS_RendererNotifyDmaError,
                    s_self_dtq[0],
                    s_self_sync_dtq[0]);
-
-  return 0;
 }
 
 /*--------------------------------------------------------------------*/
 #if MAX_RENDER_COMP_INSTANCE_NUM > 1
-int AS_RendererCmpEntryDev1(int argc, char *argv[])
+FAR void AS_RendererCmpEntryDev1(FAR void *arg)
 {
   RendererComponent *instance = s_pFactory->getRenderCompInstance(1);
 
@@ -215,8 +213,6 @@ int AS_RendererCmpEntryDev1(int argc, char *argv[])
                    AS_RendererNotifyDmaError,
                    s_self_dtq[1],
                    s_self_sync_dtq[1]);
-
-  return 0;
 }
 #endif
 
@@ -249,9 +245,9 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
       return false;
     }
 
-  s_render_pid[0] = -1;
+  s_render_pid[0] = INVALID_PROCESS_ID;
 #if MAX_RENDER_COMP_INSTANCE_NUM > 1
-  s_render_pid[1] = -1;
+  s_render_pid[1] = INVALID_PROCESS_ID;
 #endif
 
   /* dev0 setting */
@@ -266,13 +262,28 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_render_pid[0] = task_create("RENDER_CMP_DEV0",
-                                200,
-                                1024 * 2,
-                                AS_RendererCmpEntryDev0,
-                                NULL);
+  /* Init pthread attributes object. */
 
-  if (s_render_pid[0] < 0)
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = 200;
+  attr.stacksize           = 1024 * 2;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_render_pid[0],
+                           &attr,
+                           (pthread_startroutine_t)AS_RendererCmpEntryDev0,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       RENDERER_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
@@ -289,8 +300,9 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
         || dev0_self_sync_dtq == dev1_self_sync_dtq)
         {
           RENDERER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-          task_delete(s_render_pid[0]);
-          s_render_pid[0] = -1;
+          pthread_cancel(s_render_pid[0]);
+          pthread_join(s_render_pid[0], NULL);
+          s_render_pid[0] = INVALID_PROCESS_ID;
           delete s_pFactory;
           s_pFactory = NULL;
           return false;
@@ -305,13 +317,14 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
       F_ASSERT(err_code == ERR_OK);
       que->reset();
 
-      s_render_pid[1] = task_create("RENDER_CMP_DEV1",
-                                    200,
-                                    1024 * 2,
-                                    AS_RendererCmpEntryDev1,
-                                    NULL);
-
-      if (s_render_pid[1] < 0)
+      /* Create thread. */
+      /* Attributes are as same as capture dev0. */
+    
+      ret = pthread_create(&s_render_pid[1],
+                           &attr,
+                           (pthread_startroutine_t)AS_RendererCmpEntryDev1,
+                           (pthread_addr_t)NULL);
+      if (ret < 0)
         {
           RENDERER_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
@@ -332,14 +345,16 @@ bool AS_DeleteRenderer(void)
     {
       if (s_pFactory->isEmptyRenderCompHandler())
         {
-          task_delete(s_render_pid[0]);
-          s_render_pid[0] = -1;
+          pthread_cancel(s_render_pid[0]);
+          pthread_join(s_render_pid[0], NULL);
+          s_render_pid[0] = INVALID_PROCESS_ID;
 
 #if MAX_RENDER_COMP_INSTANCE_NUM > 1
-          if (s_render_pid[1] != -1)
+          if (s_render_pid[1] != INVALID_PROCESS_ID)
             {
-              task_delete(s_render_pid[1]);
-              s_render_pid[1] = -1;
+              pthread_cancel(s_render_pid[1]);
+              pthread_join(s_render_pid[1], NULL);
+              s_render_pid[1] = INVALID_PROCESS_ID;
             }
 #endif
           delete s_pFactory;

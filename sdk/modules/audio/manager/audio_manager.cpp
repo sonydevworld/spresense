@@ -535,16 +535,15 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
   return AS_ERR_CODE_OK;
 }
 
-static pid_t s_amng_pid = -1;
+static pthread_t s_amng_pid = INVALID_PROCESS_ID;
 
 #define AUDIO_TASK_PRIORITY 100
 #define AUDIO_TASK_MANAGER_STACK_SIZE (1024 * 2)
 
 /*--------------------------------------------------------------------------*/
-int AS_AudioManagerEntry(void)
+FAR void AS_AudioManagerEntry(FAR void *arg)
 {
   AudioManager::create(s_selfMid, s_plyMainMid, s_plySubMid, s_mixerMid, s_attention_cb, s_obs_attention_cb);
-  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -569,12 +568,28 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_amng_pid = task_create("AMNG",
-                           AUDIO_TASK_PRIORITY,
-                           AUDIO_TASK_MANAGER_STACK_SIZE,
-                           (main_t)AS_AudioManagerEntry,
-                           0);
-  if (s_amng_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = AUDIO_TASK_PRIORITY;
+  attr.stacksize           = AUDIO_TASK_MANAGER_STACK_SIZE;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_amng_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_AudioManagerEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
@@ -611,12 +626,28 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_amng_pid = task_create("AMNG",
-                           AUDIO_TASK_PRIORITY,
-                           AUDIO_TASK_MANAGER_STACK_SIZE,
-                           (main_t)AS_AudioManagerEntry,
-                           0);
-  if (s_amng_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = AUDIO_TASK_PRIORITY;
+  attr.stacksize           = AUDIO_TASK_MANAGER_STACK_SIZE;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_amng_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_AudioManagerEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
@@ -628,13 +659,16 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
 /*--------------------------------------------------------------------------*/
 int AS_DeleteAudioManager(void)
 {
-  if (s_amng_pid < 0)
+  if (s_amng_pid == INVALID_PROCESS_ID)
     {
       MANAGER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return AS_ERR_CODE_ILLEGAL_STATE;
     }
 
-  task_delete(s_amng_pid);
+  pthread_cancel(s_amng_pid);
+  pthread_join(s_amng_pid, NULL);
+
+  s_amng_pid = INVALID_PROCESS_ID;
 
   if (s_mng != NULL)
     {
