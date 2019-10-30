@@ -53,6 +53,7 @@ CSRCS += ssl_record_expansion.c
 CSRCS += ssl_verify_result.c
 CSRCS += ssl_timer_cb.c
 CSRCS += ssl_peer_cert.c
+CSRCS += ssl_bytes_avail.c
 CSRCS += ssl_session_init.c
 CSRCS += ssl_session_free.c
 CSRCS += ssl_session_get.c

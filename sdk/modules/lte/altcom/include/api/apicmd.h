@@ -154,6 +154,7 @@
 #define APICMDID_TLS_SSL_VERIFY_RESULT          (0x010D)
 #define APICMDID_TLS_SSL_TIMER_CB               (0x010E)
 #define APICMDID_TLS_SSL_PEER_CERT              (0x010F)
+#define APICMDID_TLS_SSL_BYTES_AVAIL            (0x0110)
 #define APICMDID_TLS_CONFIG_INIT                (0x0120)
 #define APICMDID_TLS_CONFIG_FREE                (0x0121)
 #define APICMDID_TLS_CONFIG_DEFAULTS            (0x0112)
