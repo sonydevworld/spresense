@@ -562,6 +562,8 @@ int camera_main(int argc, char *argv[])
 
   if (buf_type == V4L2_BUF_TYPE_STILL_CAPTURE)
     {
+      sleep(1); /* Wait for completion of auto whitebalance adjustment */
+
       ret = ioctl(v_fd, VIDIOC_TAKEPICT_START, 0);
       if (ret < 0)
         {
