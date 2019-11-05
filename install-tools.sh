@@ -52,7 +52,7 @@ TOOLCHAINSUM_win=bc8ae26d7c429f30d583a605a4bcf9bc
 TOOLCHAINSUM_mac=a66be9828cf3c57d7d21178e07cd8904
 TOOLCHAINSUM_linux=299ebd3f1c2c90930d28ab82e5d8d6c0
 
-OPENOCDBASEURL=https://github.com/gnu-mcu-eclipse/openocd/releases/download
+OPENOCDBASEURL=https://github.com/ilg-archived/openocd/releases/download
 OPENOCDRELEASE=v0.10.0-12-20190422
 OPENOCDVERDATE=0.10.0-12-20190422-2015
 OPENOCDFILE=gnu-mcu-eclipse-openocd-${OPENOCDVERDATE}
