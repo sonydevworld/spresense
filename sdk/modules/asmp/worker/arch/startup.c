@@ -52,7 +52,7 @@ extern uint32_t _sbss, _ebss;
 extern int main(void);
 extern void exception_common(void);
 extern uint32_t __stack_pointer;
-static void __start(void);
+void __start(void);
 
 unsigned __vectors[] __attribute__((section(".vectors"))) = {
   (unsigned)&__stack_pointer - 4,
