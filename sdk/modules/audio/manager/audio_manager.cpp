@@ -2907,6 +2907,13 @@ void AudioManager::cmpltOnReady(const AudioMngCmdCmpltResult &cmd)
   m_req_reference_bits = 0;
   m_req_complete_bits = 0;
 
+#ifdef AS_FEATURE_PLAYER_ENABLE
+  m_req_player_complete_bits[AS_PLAYER_ID_0]  = 0;
+  m_req_player_reference_bits[AS_PLAYER_ID_0] = 0;
+  m_req_player_complete_bits[AS_PLAYER_ID_1]  = 0;
+  m_req_player_reference_bits[AS_PLAYER_ID_1] = 0;
+#endif /* AS_FEATURE_PLAYER_ENABLE */
+
   sendResult(result_code);
 }
 
