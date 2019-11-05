@@ -38,28 +38,65 @@ import os
 import re
 import traceback
 
-#
 # constants
 
-ALINGMENT_SIZE = 4          # アラインメントサイズ
-QUE_BLOCK_SIZE =  68            # メッセージキューブロックサイズ sizeof(MsgQueBlock)
-MIN_PACKET_SIZE = 8         # 最小メッセージパケットサイズ
-MAX_PACKET_SIZE = 512           # 最大メッセージパケットサイズ
-MAX_PACKET_NUM = 16384          # 最大メッセージパケット数
-INVALID_DRM = 0xffffffff        # 不正なDRMアドレス
+ALINGMENT_SIZE  = 4             # Alignment size
+QUE_BLOCK_SIZE  = 68            # Message queue block size sizeof (MsgQueBlock)
+MIN_PACKET_SIZE = 8             # Minimum message packet size
+MAX_PACKET_SIZE = 512           # Maximum message packet size
+MAX_PACKET_NUM  = 16384         # Maximum number of message packets
+INVALID_DRM     = 0xffffffff    # Invalid DRM address
 
 # false:Not Support multi core , ture: Support multi core
+
 USE_MULTI_CORE = False
+
+# Parameter initialization
 
 MsgFillValueAfterPop   = 0x00
 MsgParamTypeMatchCheck = False
 MsgQuePool             = []
 SpinLockPool           = []
 
+# Automatically created buffer name
+
+MsgBufferName = "AutoGenMesgBuff"
+
+# Auto buffer creation flag
+
+IsAutoGenBuff = False
+
+# ---------------------------------------------------------------------------
+# Class definition
+# ---------------------------------------------------------------------------
+
+#
+# Duplicate check
+#
+
+class DuplicationCheck:
+    def __init__(self):
+        self.m_array = []
+
+    def exist(self, obj):
+        result = obj in self.m_array
+        self.m_array.append(obj)
+        return result
+
+# ---------------------------------------------------------------------------
 # Sub routines
+# ---------------------------------------------------------------------------
+
+#
+# Show error message
+#
 
 def die(msg):
-    sys.stderr.write("{0}: *** Error! {1} ***\n".format(os.path.basename(sys.argv[0]), msg))
+    sys.stderr.write("\n*** Error! {0}\n\n\n".format(msg))
+
+#
+# Header comment templete
+#
 
 template = "\
 /****************************************************************************\n\
@@ -97,50 +134,100 @@ template = "\
  *\n\
  ****************************************************************************/\n\n"
 
+#
+# Header comment output
+#
+
 def output_header_comment(out, title):
     out.write("/* This file is generated automatically. */\n")
-    out.write(template.format(title))
+    out.write(template.format(os.path.basename(title)))
+
+#
+# Include guard prevention macro creation
+#
 
 def make_include_guard_name(filename):
     name = os.path.basename(filename.upper()) + "_INCLUDED"
     return name.replace(".", "_")
 
-class DuplicationCheck:
-    def __init__(self):
-        self.m_array = []
+#
+# Output message pool templete
+#
 
-    def exist(self, obj):
-        result = obj in self.m_array
-        self.m_array.append(obj)
-        return result
+msg_pool_templete = "\
+#ifndef {0}\n\
+#define {0}\n\
+\n\
+#include \"{1}\"\n\
+\n\
+extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =\n\
+{{\n\
+  {2}\n\
+\n\
+{3}\
+}};\n\
+\n\
+#endif /* {0} */\n"
 
-def output_msgq_pool(out, pools):
-    out.write("extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] = {\n")
-    if USE_MULTI_CORE == True:
-        out.write("   /* n_drm, n_size, n_num, h_drm, h_size, h_num, owner, spinlock */\n")
-    else:
-        out.write("   /* n_drm, n_size, n_num, h_drm, h_size, h_num */\n")
+#
+# Output message pool templete(--without_memory_layout)
+#
 
-    for line in pools:
-        out.write(line)
-    
-    out.write("};\n\n")
+msg_pool_templete_auto_gen = "\
+#ifndef {0}\n\
+#define {0}\n\
+\n\
+#include \"{1}\"\n\
+\n\
+uint8_t {4}[{5}];\n\
+\n\
+extern MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS];\n\
+\n\
+MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =\n\
+{{\n\
+  {2}\n\
+\n\
+{3}\
+}};\n\
+\n\
+#endif /* {0} */\n"
 
-def make_msgq_pool_header(io, pools):
-    title = os.path.basename(MsgqPoolFile)
+#
+# Output message pool list
+#
+
+def make_msgq_pool_header(io, pools, end_addr):
     guard_name = make_include_guard_name(MsgqPoolFile)
 
-    output_header_comment(io, title)
-    io.write("#ifndef {0}\n".format(guard_name))
-    io.write("#define {0}\n\n".format(guard_name))
+    output_header_comment(io, MsgqPoolFile)
 
-    io.write("#include \"{0}\"\n\n".format(os.path.basename(MsgqIdFile)))
-    output_msgq_pool(io, pools)
+    if USE_MULTI_CORE == True:
+        comment  = "/* n_drm, n_size, n_num, h_drm, h_size, h_num, owner, spinlock */"
+    else:
+        comment = "/* n_drm, n_size, n_num, h_drm, h_size, h_num */"
 
-    io.write("#endif /* {0} */\n".format(guard_name))
+    if not IsAutoGenBuff:
+        templete = msg_pool_templete
+    else:
+        templete = msg_pool_templete_auto_gen
+
+    io.write(templete.format(guard_name,
+                             os.path.basename(MsgqIdFile),
+                             comment,
+                             "".join(pools),
+                             MsgBufferName,
+                             end_addr))
+
+#
+# Address alignment
+#
 
 def cache_align(addr):
     return (addr + ALINGMENT_SIZE - 1) & ~(ALINGMENT_SIZE - 1)
+
+#
+# Message queue size and stage number analysis
+#
 
 def getMsgQueParam(line, dup_chk):
     resv_ids = ["MSGQ_NULL", "MSGQ_TOP", "MSGQ_END"]
@@ -198,6 +285,10 @@ def getMsgQueParam(line, dup_chk):
     else:
         return id, n_size, n_num, h_size, h_num
 
+#
+# Create message pool list
+#
+
 def parseMsgQuePool():
     macros = []
     if USE_MULTI_CORE == True:
@@ -241,13 +332,23 @@ def parseMsgQuePool():
                 macros.append("{0}_SPINLOCK {1}\n".format(id, spinlock))
 
             # create pool entry
-            if USE_MULTI_CORE == True:
-                pools.append("  { 0x%x, %d, %d, 0x%x, %d, %d, %d, %d }, /* %s */\n" % (n_drm, n_size, n_num, h_drm, h_size, h_num, owner, spinlock, id))
+            if not IsAutoGenBuff:
+                if USE_MULTI_CORE == True:
+                    pools.append("  { 0x%x, %d, %d, 0x%x, %d, %d, %d, %d }, /* %s */\n" % (n_drm, n_size, n_num, h_drm, h_size, h_num, owner, spinlock, id))
+                else:
+                    pools.append("  { 0x%x, %d, %d, 0x%x, %d, %d }, /* %s */\n" % (n_drm, n_size, n_num, h_drm, h_size, h_num, id))
             else:
-                pools.append("  { 0x%x, %d, %d, 0x%x, %d, %d }, /* %s */\n" % (n_drm, n_size, n_num, h_drm, h_size, h_num, id))
+                if USE_MULTI_CORE == True:
+                    pools.append("  { (drm_t)%s + 0x%x, %d, %d, 0x%x, %d, %d, %d, %d }, /* %s */\n" % (MsgBufferName, n_drm, n_size, n_num, h_drm, h_size, h_num, owner, spinlock, id))
+                else:
+                    pools.append("  { (drm_t)%s + 0x%x, %d, %d, 0x%x, %d, %d }, /* %s */\n" % (MsgBufferName, n_drm, n_size, n_num, h_drm, h_size, h_num, id))
 
             que_area_drm += QUE_BLOCK_SIZE
     return macros, pools, msg_area_drm
+
+#
+# Create message ID list
+#
 
 def create_msgq_ids():
     ids = ["MSGQ_NULL"]
@@ -262,63 +363,128 @@ def create_msgq_ids():
     ids.append("NUM_MSGQ_POOLS")
     return ids
 
-def make_msgq_id_header(io, macros, end_addr):
-    title = os.path.basename(MsgqIdFile)
-    guard_name = make_include_guard_name(MsgqIdFile)
+#
+# Output message ID templete
+#
 
-    output_header_comment(io, title)
-    io.write("#ifndef {0}\n".format(guard_name))
-    io.write("#define {0}\n\n".format(guard_name))
+msg_id_templete = "\
+#ifndef {0}\n\
+#define {0}\n\
+\n\
+{1}\
+{9}\
+/* Message area size: {2} bytes */\n\
+\n\
+#define MSGQ_TOP_DRM {3}\n\
+#define MSGQ_END_DRM {4}\n\
+\n\
+/* Message area fill value after message poped */\n\
+\n\
+#define MSG_FILL_VALUE_AFTER_POP 0x{5:x}\n\
+\n\
+/* Message parameter type match check */\n\
+\n\
+#define MSG_PARAM_TYPE_MATCH_CHECK {6}\n\
+\n\
+/* Message queue pool IDs */\n\
+\n\
+{7}\
+\n\
+/* User defined constants */\n\
+\n\
+{8}\
+\n\
+#endif /* {0} */\n"
+
+#
+# Message ID header output
+#
+
+def make_msgq_id_header(io, macros, end_addr):
+
+    # Output header comment
+
+    output_header_comment(io, MsgqIdFile)
 
     if USE_MULTI_CORE == True:
-        io.write("#include \"spl_id.h\"\n\n")
+        comment = "#include \"spl_id.h\"\n\n"
+    else:
+        comment = ""
 
-    io.write("/* Message area size: {0} bytes */\n".format(end_addr - START_DRM))
-    io.write("#define MSGQ_TOP_DRM 0x%x\n" % START_DRM)
-    io.write("#define MSGQ_END_DRM 0x%x\n\n" % end_addr)
+    if not IsAutoGenBuff:
+        comment_msg_buf = ""
+        top_dram = "0x{:x}".format(START_DRM)
+        end_dram = "0x{:x}".format(end_addr)
+    else:
+        comment_msg_buf = "/* Message area buffer */\n\n"\
+                          "extern uint8_t {0}[];\n\n".format(MsgBufferName)
+        top_dram = "(uint32_t){}".format(MsgBufferName)
+        end_dram = "(uint32_t){} + 0x{:x}".format(MsgBufferName, end_addr)
 
-    io.write("/* Message area fill value after message poped */\n")
-    io.write("#define MSG_FILL_VALUE_AFTER_POP 0x%x\n\n" % MsgFillValueAfterPop)
+    # Create message id list
 
-    io.write("/* Message parameter type match check */\n")
-    io.write("#define MSG_PARAM_TYPE_MATCH_CHECK {0}\n\n".format("true" if MsgParamTypeMatchCheck else "false"))
+    id_list = ""
 
-    io.write("/* Message queue pool IDs */\n")
     for index, name in enumerate(create_msgq_ids()):
-        io.write("#define {0} {1}\n".format(name, index))
-    io.write("\n")
+        id_list += "#define {0} {1}\n".format(name, index)
 
-    io.write("/* User defined constants */\n")
-    io.write("\n")
+    # Create message id define list
+
+    de_list = ""
 
     for name in macros:
         if re.match("^\/\*", name):
-            io.write("{0}\n".format(name))
+            de_list += "{0}\n".format(name)
         else:
-            io.write("#define {0}\n".format(name))
+            de_list += "#define {0}\n".format(name)
 
-    io.write("#endif /* {0} */\n".format(guard_name))
+    io.write(msg_id_templete.format(make_include_guard_name(MsgqIdFile),
+                                    comment,
+                                    end_addr - START_DRM,
+                                    top_dram,
+                                    end_dram,
+                                    MsgFillValueAfterPop,
+                                    ("true" if MsgParamTypeMatchCheck else "false"),
+                                    id_list,
+                                    de_list,
+                                    comment_msg_buf))
 
+#
+# Usage template
+#
 
-# Create a message for python later.
 usage_template = "\
-Usage:\n\
-python3 {0} start_drm size id_header pool_header\n\
+usage: {0} [--help] [-h] [--without_memory_layout] [-n]\n\
+           [address | fixed_file] [size | fixed_ID]\n\
+           [id_header] [pool_header]\n\
+\n\
+-n, --without_memory_layout  Allocate message memory in a global variable\n\
+-h, --help                   Show this usage and exit\n\
+\n\
+ex)\n\
+  $ python3 msgq_layout.conf\n\
              or\n\
-python3 {0} fixed_file fixed_ID id_header pool_header\n\n\
-ex) ruby msgq_layout.conf 0x00800000 0x20000 msgq_id.h msgq_pool.h\n\
+  $ python3 msgq_layout.conf 0x00800000 0x20000\n\
              or\n\
-python3 msgq_layout.conf mem_fixed_layout.h MSG_QUE_AREA msgq_id.h msgq_pool.h\n\
+  $ python3 msgq_layout.conf mem_fixed_layout.h\n\
              or\n\
-python3 msgq_layout.conf mem_fixed_layout.h MSG_QUE_AREA msgq_id.h msgq_pool.h core_id\n\n"
+  $ python3 msgq_layout.conf --without_memory_layout\n\
+             or\n\
+  $ python3 msgq_layout.conf mem_layout.h MSG_QUE_AREA msgq_id.h msgq_pool.h\n\
+\n"
+
+#
+# Show command usage
+#
 
 def usage():
-    sys.stderr.write(usage_template.format(os.path.basename(sys.argv[0])))
-
+    sys.stderr.write(usage_template.format(os.path.basename(__file__)))
+    sys.exit()
 
 #
 # Main routine
 #
+
 try:
     if USE_MULTI_CORE == True:
         def collectItem(list, index):
@@ -331,45 +497,67 @@ try:
         SpinLockNames = collectItem(SpinLockPool, 0)
 
     # Init parameters
+
     MsgqIdFile    = "msgq_id.h"
     MsgqPoolFile  = "msgq_pool.h"
     MsgQueArea    = "MSG_QUE_AREA"
     MemLayoutFile = "mem_layout.h"
     TargetCore    = None
 
+    # Argument acquisition
+
     arguments = sys.argv
     arguments.pop(0)
 
     options = [option for option in arguments if option.startswith('-')]
-    if len(options):
-        arguments.pop(0)
 
-    if len(arguments):
-        MemLayoutFile = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        MsgQueArea    = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        MsgqIdFile    = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        MsgqPoolFile  = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        TargetCore    = arguments[0]
-        arguments.pop(0)
+    # Option analysis
 
+    for option in options:
+        if option == "--help" or option == "-h":
+            usage()
+        elif option.upper() == "--without_memory_layout".upper() or option == "-n":
+            IsAutoGenBuff = True
+        else:
+            print("Unknown option: {}\n".format(option))
+            usage()
+
+    params = [option for option in arguments if not option.startswith('-')]
+
+    if len(params):
+        MemLayoutFile = params[0]
+        params.pop(0)
+    if len(params):
+        MsgQueArea    = params[0]
+        params.pop(0)
+    if len(params):
+        MsgqIdFile    = params[0]
+        params.pop(0)
+    if len(params):
+        MsgqPoolFile  = params[0]
+        params.pop(0)
+    if len(params):
+        TargetCore    = params[0]
+        params.pop(0)
 
     # If the first character is not 0,
     # it is assumed to be the file name of Fixed memory layout.
 
-    if not re.match("^0", MemLayoutFile):
+    if IsAutoGenBuff:
+
+        # Dummy size setting
+
+        START_DRM = 0x00000
+        AREA_SIZE = 0x20000
+    elif not re.match("^0", MemLayoutFile):
+
         # Analyze the file and get the dump area address and size.
-        drm_str  = MsgQueArea + "_DRM"
-        size_str = MsgQueArea + "_SIZE"
+
+        drm_str   = MsgQueArea + "_DRM"
+        size_str  = MsgQueArea + "_SIZE"
         msgq_drm  = ""
         msgq_size = ""
+
         for line in open(MemLayoutFile).readlines():
             if re.match("^#define {0}".format(drm_str), line):
                 msgq_drm  = line.split()[2]
@@ -380,16 +568,22 @@ try:
             raise ValueError("{0} not found".format(drm_str))
         if msgq_size == "":
             raise ValueError("{0} not found".format(size_str))
-        START_DRM   = int(msgq_drm, 16)
-        AREA_SIZE   = int(msgq_size, 16)
-    else:
-        START_DRM   = int(MemLayoutFile, 16)
-        AREA_SIZE   = int(MsgQueArea, 16)
 
-    if not (START_DRM != 0 and (START_DRM % ALINGMENT_SIZE) == 0):
+        START_DRM = int(msgq_drm, 16)
+        AREA_SIZE = int(msgq_size, 16)
+    else:
+        START_DRM = int(MemLayoutFile, 16)
+        AREA_SIZE = int(MsgQueArea, 16)
+
+    # Address and size validity check
+
+    if not ((IsAutoGenBuff or START_DRM != 0) and (START_DRM % ALINGMENT_SIZE) == 0):
         raise ValueError("Bad addr. (require 4bytes align) -- 0x%08x" % START_DRM)
     if not (AREA_SIZE != 0 and (AREA_SIZE % ALINGMENT_SIZE) == 0):
         raise ValueError("Bad size. (require 4bytes align) -- 0x%08x" % AREA_SIZE)
+
+    # Set the upper limit of usable addresses
+
     LIMIT_DRM = START_DRM + AREA_SIZE
 
     if not MsgFillValueAfterPop <= 0xff:
@@ -403,9 +597,13 @@ except Exception as e:
 except ValueError as e:
     die(e)
 
+#
+# File output
+#
+
 def generate_files():
     macros, pools, end_addr = parseMsgQuePool()
     with open(MsgqIdFile, mode='w') as f:
         make_msgq_id_header(f, macros, end_addr)
     with open(MsgqPoolFile, mode='w') as f:
-        make_msgq_pool_header(f, pools)
+        make_msgq_pool_header(f, pools, end_addr)
