@@ -330,6 +330,11 @@ cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* "${EXPORTNXDIR}
 cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* "${EXPORTNXDIR}/include/cmsis"
 cp -rp "${SDKDIR}"/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* "${EXPORTNXDIR}/include/cmsis"
 
+# Copy External mbedTLS header files
+
+mkdir "${EXPORTNXDIR}/include/mbedtls" || { echo "MK: 'mkdir ${EXPORTNXDIR}/include/mbedtls' failed"; exit 1; }
+cp -rp "${SDKDIR}"/../externals/alt_stubs/mbedtls/include/mbedtls/* "${EXPORTNXDIR}/include/mbedtls"
+
 # Add the board library to the list of libraries
 
 LIBLIST="${LIBLIST} bsp/board/libboard${LIBEXT}"
