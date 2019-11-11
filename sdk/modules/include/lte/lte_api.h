@@ -680,9 +680,9 @@ typedef struct lte_version
 
 typedef struct lte_getpin
 {
-  /** PIN enable. Definition is as below.@n
-   *  - @ref LTE_ENABLE@n
-   *  - @ref LTE_DISABLE@n */
+  /** PIN enable. Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE */
 
   uint8_t enable;
 
@@ -738,9 +738,9 @@ typedef struct lte_localtime
 
 typedef struct lte_quality
 {
-  /** Valid flag. Definition is as below.@n
-   *  - @ref LTE_VALID@n
-   *  - @ref LTE_INVALID@n
+  /** Valid flag. Definition is as below.
+   *  - @ref LTE_VALID
+   *  - @ref LTE_INVALID
    *  Refer to the following parameters only when this flag
    *  is @ref LTE_VALID. This is because valid parameters can not be
    *  acquired when RF function is OFF and so on */
@@ -774,9 +774,9 @@ typedef struct lte_quality
 
 typedef struct lte_cellinfo
 {
-  /** Valid flag. Definition is as below.@n
-   *  - @ref LTE_VALID@n
-   *  - @ref LTE_INVALID@n
+  /** Valid flag. Definition is as below.
+   *  - @ref LTE_VALID
+   *  - @ref LTE_INVALID
    *  Refer to the following parameters only when this flag
    *  is @ref LTE_VALID. This is because valid parameters can not be
    *  acquired when RF function is OFF and so on */
@@ -814,52 +814,52 @@ typedef struct lte_cellinfo
 
 typedef struct lte_edrx_setting
 {
-  /** eDRX act type. Definition is as below.@n
-   *  - @ref LTE_EDRX_ACTTYPE_WBS1@n */
+  /** eDRX act type. Definition is as below.
+   *  - @ref LTE_EDRX_ACTTYPE_WBS1 */
 
   uint8_t  act_type;
 
-  /** eDRX enable. Definition is as below.@n
-   *  - @ref LTE_ENABLE@n
-   *  - @ref LTE_DISABLE@n */
+  /** eDRX enable. Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE */
 
   bool     enable;
 
-  /** eDRX cycle. Definition is as below.@n
-   *  - @ref LTE_EDRX_CYC_512@n
-   *  - @ref LTE_EDRX_CYC_1024@n
-   *  - @ref LTE_EDRX_CYC_2048@n
-   *  - @ref LTE_EDRX_CYC_4096@n
-   *  - @ref LTE_EDRX_CYC_6144@n
-   *  - @ref LTE_EDRX_CYC_8192@n
-   *  - @ref LTE_EDRX_CYC_10240@n
-   *  - @ref LTE_EDRX_CYC_12288@n
-   *  - @ref LTE_EDRX_CYC_14336@n
-   *  - @ref LTE_EDRX_CYC_16384@n
-   *  - @ref LTE_EDRX_CYC_32768@n
-   *  - @ref LTE_EDRX_CYC_65536@n
-   *  - @ref LTE_EDRX_CYC_131072@n
-   *  - @ref LTE_EDRX_CYC_262144@n */
+  /** eDRX cycle. Definition is as below.
+   *  - @ref LTE_EDRX_CYC_512
+   *  - @ref LTE_EDRX_CYC_1024
+   *  - @ref LTE_EDRX_CYC_2048
+   *  - @ref LTE_EDRX_CYC_4096
+   *  - @ref LTE_EDRX_CYC_6144
+   *  - @ref LTE_EDRX_CYC_8192
+   *  - @ref LTE_EDRX_CYC_10240
+   *  - @ref LTE_EDRX_CYC_12288
+   *  - @ref LTE_EDRX_CYC_14336
+   *  - @ref LTE_EDRX_CYC_16384
+   *  - @ref LTE_EDRX_CYC_32768
+   *  - @ref LTE_EDRX_CYC_65536
+   *  - @ref LTE_EDRX_CYC_131072
+   *  - @ref LTE_EDRX_CYC_262144 */
 
   uint32_t edrx_cycle;
 
-  /** Paging time window. Definition is as below.@n
-   *  - @ref LTE_EDRX_PTW_128@n
-   *  - @ref LTE_EDRX_PTW_256@n
-   *  - @ref LTE_EDRX_PTW_384@n
-   *  - @ref LTE_EDRX_PTW_512@n
-   *  - @ref LTE_EDRX_PTW_640@n
-   *  - @ref LTE_EDRX_PTW_768@n
-   *  - @ref LTE_EDRX_PTW_896@n
-   *  - @ref LTE_EDRX_PTW_1024@n
-   *  - @ref LTE_EDRX_PTW_1152@n
-   *  - @ref LTE_EDRX_PTW_1280@n
-   *  - @ref LTE_EDRX_PTW_1408@n
-   *  - @ref LTE_EDRX_PTW_1536@n
-   *  - @ref LTE_EDRX_PTW_1664@n
-   *  - @ref LTE_EDRX_PTW_1792@n
-   *  - @ref LTE_EDRX_PTW_1920@n
-   *  - @ref LTE_EDRX_PTW_2048@n */
+  /** Paging time window. Definition is as below.
+   *  - @ref LTE_EDRX_PTW_128
+   *  - @ref LTE_EDRX_PTW_256
+   *  - @ref LTE_EDRX_PTW_384
+   *  - @ref LTE_EDRX_PTW_512
+   *  - @ref LTE_EDRX_PTW_640
+   *  - @ref LTE_EDRX_PTW_768
+   *  - @ref LTE_EDRX_PTW_896
+   *  - @ref LTE_EDRX_PTW_1024
+   *  - @ref LTE_EDRX_PTW_1152
+   *  - @ref LTE_EDRX_PTW_1280
+   *  - @ref LTE_EDRX_PTW_1408
+   *  - @ref LTE_EDRX_PTW_1536
+   *  - @ref LTE_EDRX_PTW_1664
+   *  - @ref LTE_EDRX_PTW_1792
+   *  - @ref LTE_EDRX_PTW_1920
+   *  - @ref LTE_EDRX_PTW_2048 */
 
   uint32_t ptw_val;
 } lte_edrx_setting_t;
@@ -873,21 +873,21 @@ typedef struct lte_edrx_setting
 
 typedef struct lte_psm_timeval
 {
-  /** Unit of timer value. Definition is as below.@n
+  /** Unit of timer value. Definition is as below.
    *  - When kind of timer is Requested Active Time
-   *    - @ref LTE_PSM_T3324_UNIT_2SEC@n
-   *    - @ref LTE_PSM_T3324_UNIT_1MIN@n
-   *    - @ref LTE_PSM_T3324_UNIT_6MIN@n
-   *    - @ref LTE_PSM_T3324_UNIT_DEACT@n
+   *    - @ref LTE_PSM_T3324_UNIT_2SEC
+   *    - @ref LTE_PSM_T3324_UNIT_1MIN
+   *    - @ref LTE_PSM_T3324_UNIT_6MIN
+   *    - @ref LTE_PSM_T3324_UNIT_DEACT
    *  - When kind of timer is Extended periodic TAU Time
-   *    - @ref LTE_PSM_T3412_UNIT_2SEC@n
-   *    - @ref LTE_PSM_T3412_UNIT_30SEC@n
-   *    - @ref LTE_PSM_T3412_UNIT_1MIN@n
-   *    - @ref LTE_PSM_T3412_UNIT_10MIN@n
-   *    - @ref LTE_PSM_T3412_UNIT_1HOUR@n
-   *    - @ref LTE_PSM_T3412_UNIT_10HOUR@n
-   *    - @ref LTE_PSM_T3412_UNIT_320HOUR@n
-   *    - @ref LTE_PSM_T3412_UNIT_DEACT@n */
+   *    - @ref LTE_PSM_T3412_UNIT_2SEC
+   *    - @ref LTE_PSM_T3412_UNIT_30SEC
+   *    - @ref LTE_PSM_T3412_UNIT_1MIN
+   *    - @ref LTE_PSM_T3412_UNIT_10MIN
+   *    - @ref LTE_PSM_T3412_UNIT_1HOUR
+   *    - @ref LTE_PSM_T3412_UNIT_10HOUR
+   *    - @ref LTE_PSM_T3412_UNIT_320HOUR
+   *    - @ref LTE_PSM_T3412_UNIT_DEACT */
 
   uint8_t unit;
 
@@ -906,9 +906,9 @@ typedef struct lte_psm_timeval
 
 typedef struct lte_psm_setting
 {
-  /** PSM enable. Definition is as below.@n
-   *  - @ref LTE_ENABLE@n
-   *  - @ref LTE_DISABLE@n */
+  /** PSM enable. Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE */
 
   bool              enable;
 
@@ -937,32 +937,32 @@ typedef struct lte_apn_setting
 
   int8_t   *apn;
 
-  /** Type of IP for APN. Definition is as below.@n
-   *  - @ref LTE_APN_IPTYPE_IP@n
-   *  - @ref LTE_APN_IPTYPE_IPV6@n
-   *  - @ref LTE_APN_IPTYPE_IPV4V6@n */
+  /** Type of IP for APN. Definition is as below.
+   *  - @ref LTE_APN_IPTYPE_IP
+   *  - @ref LTE_APN_IPTYPE_IPV6
+   *  - @ref LTE_APN_IPTYPE_IPV4V6 */
 
   uint8_t  ip_type;
 
-  /** Type of Authentication. Definition is as below.@n
-   *  - @ref LTE_APN_AUTHTYPE_NONE@n
-   *  - @ref LTE_APN_AUTHTYPE_PAP@n
-   *  - @ref LTE_APN_AUTHTYPE_CHAP@n */
+  /** Type of Authentication. Definition is as below.
+   *  - @ref LTE_APN_AUTHTYPE_NONE
+   *  - @ref LTE_APN_AUTHTYPE_PAP
+   *  - @ref LTE_APN_AUTHTYPE_CHAP */
 
   uint8_t  auth_type;
 
-  /** Type of APN. Bit setting definition is as below.@n
-   *  - @ref LTE_APN_TYPE_UNKNOWN@n
-   *  - @ref LTE_APN_TYPE_DEFAULT@n
-   *  - @ref LTE_APN_TYPE_MMS@n
-   *  - @ref LTE_APN_TYPE_SUPL@n
-   *  - @ref LTE_APN_TYPE_DUN@n
-   *  - @ref LTE_APN_TYPE_HIPRI@n
-   *  - @ref LTE_APN_TYPE_FOTA@n
-   *  - @ref LTE_APN_TYPE_IMS@n
-   *  - @ref LTE_APN_TYPE_CBS@n
-   *  - @ref LTE_APN_TYPE_IA@n
-   *  - @ref LTE_APN_TYPE_EMERGENCY@n */
+  /** Type of APN. Bit setting definition is as below.
+   *  - @ref LTE_APN_TYPE_UNKNOWN
+   *  - @ref LTE_APN_TYPE_DEFAULT
+   *  - @ref LTE_APN_TYPE_MMS
+   *  - @ref LTE_APN_TYPE_SUPL
+   *  - @ref LTE_APN_TYPE_DUN
+   *  - @ref LTE_APN_TYPE_HIPRI
+   *  - @ref LTE_APN_TYPE_FOTA
+   *  - @ref LTE_APN_TYPE_IMS
+   *  - @ref LTE_APN_TYPE_CBS
+   *  - @ref LTE_APN_TYPE_IA
+   *  - @ref LTE_APN_TYPE_EMERGENCY */
 
   uint32_t apn_type;
 
@@ -986,13 +986,13 @@ typedef struct lte_apn_setting
 
 typedef struct lte_ipaddr
 {
-  /** Type of IP address. Definition is as below.@n
-   *  - @ref LTE_IPTYPE_V4@n
-   *  - @ref LTE_IPTYPE_V6@n */
+  /** Type of IP address. Definition is as below.
+   *  - @ref LTE_IPTYPE_V4
+   *  - @ref LTE_IPTYPE_V6 */
 
   uint8_t ip_type;
 
-  /** IP address. It is terminated with '\0'.@n
+  /** IP address. It is terminated with '\0'.
    *  eg. (IPv4) 192.0.2.1, (IPv6) 2001:db8:85a3:0:0:8a2e:370:7334 */
 
   int8_t  address[LTE_IPADDR_MAX_LEN];
@@ -1012,24 +1012,24 @@ typedef struct lte_pdn
 
   uint8_t      session_id;
 
-  /** PDN active status. Definition is as below.@n
-   *  - @ref LTE_PDN_ACTIVE@n
-   *  - @ref LTE_PDN_DEACTIVE@n */
+  /** PDN active status. Definition is as below.
+   *  - @ref LTE_PDN_ACTIVE
+   *  - @ref LTE_PDN_DEACTIVE */
 
   uint8_t      active;
 
-  /** APN type of PDN. Bit setting definition is as below.@n
-   *  - @ref LTE_APN_TYPE_UNKNOWN@n
-   *  - @ref LTE_APN_TYPE_DEFAULT@n
-   *  - @ref LTE_APN_TYPE_MMS@n
-   *  - @ref LTE_APN_TYPE_SUPL@n
-   *  - @ref LTE_APN_TYPE_DUN@n
-   *  - @ref LTE_APN_TYPE_HIPRI@n
-   *  - @ref LTE_APN_TYPE_FOTA@n
-   *  - @ref LTE_APN_TYPE_IMS@n
-   *  - @ref LTE_APN_TYPE_CBS@n
-   *  - @ref LTE_APN_TYPE_IA@n
-   *  - @ref LTE_APN_TYPE_EMERGENCY@n */
+  /** APN type of PDN. Bit setting definition is as below.
+   *  - @ref LTE_APN_TYPE_UNKNOWN
+   *  - @ref LTE_APN_TYPE_DEFAULT
+   *  - @ref LTE_APN_TYPE_MMS
+   *  - @ref LTE_APN_TYPE_SUPL
+   *  - @ref LTE_APN_TYPE_DUN
+   *  - @ref LTE_APN_TYPE_HIPRI
+   *  - @ref LTE_APN_TYPE_FOTA
+   *  - @ref LTE_APN_TYPE_IMS
+   *  - @ref LTE_APN_TYPE_CBS
+   *  - @ref LTE_APN_TYPE_IA
+   *  - @ref LTE_APN_TYPE_EMERGENCY */
 
   uint32_t     apn_type;
 
@@ -1042,23 +1042,23 @@ typedef struct lte_pdn
   lte_ipaddr_t address[LTE_PDN_IPADDR_MAX_COUNT];
 
   /** IMS registored status.
-   *  This is valid when LTE_APN_TYPE_IMS is set in apn_type.@n
-   *  Definition is as below.@n
-   *  - @ref LTE_IMS_NOT_REGISTERED@n
-   *  - @ref LTE_IMS_REGISTERED@n */
+   *  This is valid when LTE_APN_TYPE_IMS is set in apn_type.
+   *  Definition is as below.
+   *  - @ref LTE_IMS_NOT_REGISTERED
+   *  - @ref LTE_IMS_REGISTERED */
 
   uint8_t      ims_register;
 
-  /** Status of data communication enability. Definition is as below.@n
-   *  - @ref LTE_DATA_ALLOW@n
-   *  - @ref LTE_DATA_DISALLOW@n */
+  /** Status of data communication enability. Definition is as below.
+   *  - @ref LTE_DATA_ALLOW
+   *  - @ref LTE_DATA_DISALLOW */
 
   uint8_t      data_allow;
 
   /** Status of roaming data communication enability.
-   *  Definition is as below.@n
-   *  - @ref LTE_DATA_ALLOW@n
-   *  - @ref LTE_DATA_DISALLOW@n */
+   *  Definition is as below.
+   *  - @ref LTE_DATA_ALLOW
+   *  - @ref LTE_DATA_DISALLOW */
 
   uint8_t      data_roaming_allow;
 } lte_pdn_t;
@@ -1075,8 +1075,8 @@ typedef struct lte_reject_cause
 
   /**
    * Category of reject cause. Definition is as below..
-   *  - @ref LTE_REJECT_CATEGORY_EMM@n
-   *  - @ref LTE_REJECT_CATEGORY_ESM@n
+   *  - @ref LTE_REJECT_CATEGORY_EMM
+   *  - @ref LTE_REJECT_CATEGORY_ESM
    */
 
   uint8_t category;
@@ -1099,17 +1099,17 @@ typedef struct lte_reject_cause
 typedef struct lte_nw_err_info
 {
   /**
-   * Type of LTE network error. Definition is as below.@n
-   *  - @ref LTE_NETERR_MAXRETRY@n
-   *  - @ref LTE_NETERR_REJECT@n
-   *  - @ref LTE_NETERR_NWDTCH@n
+   * Type of LTE network error. Definition is as below.
+   *  - @ref LTE_NETERR_MAXRETRY
+   *  - @ref LTE_NETERR_REJECT
+   *  - @ref LTE_NETERR_NWDTCH
    */
 
   uint8_t            err_type;
 
   /**
    * LTE network attach request reject cause. It can be referneced when
-   *  - @ref LTE_NETERR_REJECT is ser in err_type field@n
+   *  - @ref LTE_NETERR_REJECT is ser in err_type field
    *  See @ref lte_reject_cause_t
    */
 
@@ -1125,24 +1125,24 @@ typedef struct lte_nw_err_info
 
 typedef struct lte_netinfo
 {
-  /** LTE network status. Definition is as below.@n
-   *  - @ref LTE_NETSTAT_NOT_REG_NOT_SEARCHING@n
-   *  - @ref LTE_NETSTAT_REG_HOME@n
-   *  - @ref LTE_NETSTAT_NOT_REG_SEARCHING@n
-   *  - @ref LTE_NETSTAT_REG_DENIED@n
-   *  - @ref LTE_NETSTAT_UNKNOWN@n
-   *  - @ref LTE_NETSTAT_REG_ROAMING@n
-   *  - @ref LTE_NETSTAT_REG_SMS_ONLY_HOME@n
-   *  - @ref LTE_NETSTAT_REG_SMS_ONLY_ROAMING@n
-   *  - @ref LTE_NETSTAT_NOT_REG_EMERGENCY@n
-   *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_HOME@n
-   *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_ROAMING@n */
+  /** LTE network status. Definition is as below.
+   *  - @ref LTE_NETSTAT_NOT_REG_NOT_SEARCHING
+   *  - @ref LTE_NETSTAT_REG_HOME
+   *  - @ref LTE_NETSTAT_NOT_REG_SEARCHING
+   *  - @ref LTE_NETSTAT_REG_DENIED
+   *  - @ref LTE_NETSTAT_UNKNOWN
+   *  - @ref LTE_NETSTAT_REG_ROAMING
+   *  - @ref LTE_NETSTAT_REG_SMS_ONLY_HOME
+   *  - @ref LTE_NETSTAT_REG_SMS_ONLY_ROAMING
+   *  - @ref LTE_NETSTAT_NOT_REG_EMERGENCY
+   *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_HOME
+   *  - @ref LTE_NETSTAT_REG_CSFB_NOT_PREF_ROAMING */
 
   uint8_t           nw_stat;
 
   /**
    * LTE network error information. It can be referneced when
-   *  - @ref LTE_NETSTAT_REG_DENIED is set in nw_stat field.@n
+   *  - @ref LTE_NETSTAT_REG_DENIED is set in nw_stat field.
    *  See @ref lte_nw_err_info_t
    */
 
@@ -1166,10 +1166,10 @@ typedef struct lte_netinfo
 
 typedef struct lte_error_info
 {
-  /** Enable error indicator. Bit setting definition is as below.@n
-   *  - @ref LTE_ERR_INDICATOR_ERRCODE@n
-   *  - @ref LTE_ERR_INDICATOR_ERRNO@n
-   *  - @ref LTE_ERR_INDICATOR_ERRSTR@n */
+  /** Enable error indicator. Bit setting definition is as below.
+   *  - @ref LTE_ERR_INDICATOR_ERRCODE
+   *  - @ref LTE_ERR_INDICATOR_ERRNO
+   *  - @ref LTE_ERR_INDICATOR_ERRSTR */
 
   uint8_t err_indicator;
 
@@ -1197,15 +1197,15 @@ typedef struct lte_error_info
 
 typedef struct lte_ce_setting
 {
-  /** Mode A enable. Definition is as below.@n
-   *  - @ref LTE_ENABLE@n
-   *  - @ref LTE_DISABLE@n */
+  /** Mode A enable. Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE */
 
   bool mode_a_enable;
 
-  /** Mode B enable. Definition is as below.@n
-   *  - @ref LTE_ENABLE@n
-   *  - @ref LTE_DISABLE@n */
+  /** Mode B enable. Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE */
 
   bool mode_b_enable;
 } lte_ce_setting_t;
@@ -1221,13 +1221,13 @@ typedef struct lte_ce_setting
 typedef struct lte_siminfo
 {
   /** Indicates which parameter to get.
-   *  Bit setting definition is as below.@n
-   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC@n
-   *  - @ref LTE_SIMINFO_GETOPT_SPN@n
-   *  - @ref LTE_SIMINFO_GETOPT_ICCID@n
-   *  - @ref LTE_SIMINFO_GETOPT_IMSI@n
-   *  - @ref LTE_SIMINFO_GETOPT_GID1@n
-   *  - @ref LTE_SIMINFO_GETOPT_GID2@n
+   *  Bit setting definition is as below.
+   *  - @ref LTE_SIMINFO_GETOPT_MCCMNC
+   *  - @ref LTE_SIMINFO_GETOPT_SPN
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID
+   *  - @ref LTE_SIMINFO_GETOPT_IMSI
+   *  - @ref LTE_SIMINFO_GETOPT_GID1
+   *  - @ref LTE_SIMINFO_GETOPT_GID2
    */
 
   uint32_t option;
@@ -1263,7 +1263,7 @@ typedef struct lte_siminfo
   uint8_t  iccid_len;
 
   /** ICCID. It can be referneced when
-   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.@n
+   *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.
    *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
 
   uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
@@ -1303,9 +1303,9 @@ typedef struct lte_siminfo
  *  Since lte_get_version() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_version().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] version : The version information of the modem.
  *                      See @ref lte_version_t
  */
@@ -1316,13 +1316,13 @@ typedef void (*get_ver_cb_t)(uint32_t result, lte_version_t *version);
  *  Since lte_get_phoneno() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_phoneno().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] errcause : Error cause. It is set only if the result is
- *                       not successful. As below value stored.@n
- * - @ref LTE_ERR_WAITENTERPIN@n
- * - @ref LTE_ERR_UNEXPECTED@n
+ *                       not successful. As below value stored.
+ * - @ref LTE_ERR_WAITENTERPIN
+ * - @ref LTE_ERR_UNEXPECTED
  *
  * @param[in] phoneno : A character string indicating phone number.
  *                      It is terminated with '\0'
@@ -1335,13 +1335,13 @@ typedef void (*get_phoneno_cb_t)(uint32_t result, uint8_t errcause,
  *  Since lte_get_imsi() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_imsi().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] errcause : Error cause. It is set only if the result is
- *                       not successful. As below value stored.@n
- * - @ref LTE_ERR_WAITENTERPIN@n
- * - @ref LTE_ERR_UNEXPECTED@n
+ *                       not successful. As below value stored.
+ * - @ref LTE_ERR_WAITENTERPIN
+ * - @ref LTE_ERR_UNEXPECTED
  * @param[in] imsi : A character string indicating IMSI.
  *                   It is terminated with '\0'
  */
@@ -1353,9 +1353,9 @@ typedef void (*get_imsi_cb_t)(uint32_t result, uint8_t errcause,
  *  Since lte_get_imei() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_imei().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] imei : A character string indicating IMEI.
  *                   It is terminated with '\0'
  */
@@ -1366,9 +1366,9 @@ typedef void (*get_imei_cb_t)(uint32_t result, int8_t *imei);
  *  Since lte_get_pinset() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_pinset().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] pinset : PIN settings information.
  *                     See @ref lte_getpin_t
  */
@@ -1379,9 +1379,9 @@ typedef void (*get_pinset_cb_t)(uint32_t result, lte_getpin_t *pinset);
  *  Since lte_set_pinenable() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_set_pinenable().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] attemptsleft : Number of attempts left.
  *                           It is set only if the result is not successful.
  */
@@ -1392,9 +1392,9 @@ typedef void (*set_pinenable_cb_t)(uint32_t result, uint8_t attemptsleft);
  *  Since lte_change_pin() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_change_pin().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] attemptsleft : Number of attempts left.
  *                           It is set only if the result is not successful.
  */
@@ -1405,27 +1405,27 @@ typedef void (*change_pin_cb_t)(uint32_t result, uint8_t attemptsleft);
  *  Since lte_enter_pin() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_enter_pin().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] simstat : State after PIN enter.
- *                      As below value stored.@n
- * - @ref LTE_PINSTAT_READY@n
- * - @ref LTE_PINSTAT_SIM_PIN@n
- * - @ref LTE_PINSTAT_SIM_PUK@n
- * - @ref LTE_PINSTAT_PH_SIM_PIN@n
- * - @ref LTE_PINSTAT_PH_FSIM_PIN@n
- * - @ref LTE_PINSTAT_PH_FSIM_PUK@n
- * - @ref LTE_PINSTAT_SIM_PIN2@n
- * - @ref LTE_PINSTAT_SIM_PUK2@n
- * - @ref LTE_PINSTAT_PH_NET_PIN@n
- * - @ref LTE_PINSTAT_PH_NET_PUK@n
- * - @ref LTE_PINSTAT_PH_NETSUB_PIN@n
- * - @ref LTE_PINSTAT_PH_NETSUB_PUK@n
- * - @ref LTE_PINSTAT_PH_SP_PIN@n
- * - @ref LTE_PINSTAT_PH_SP_PUK@n
- * - @ref LTE_PINSTAT_PH_CORP_PIN@n
- * - @ref LTE_PINSTAT_PH_CORP_PUK@n
+ *                      As below value stored.
+ * - @ref LTE_PINSTAT_READY
+ * - @ref LTE_PINSTAT_SIM_PIN
+ * - @ref LTE_PINSTAT_SIM_PUK
+ * - @ref LTE_PINSTAT_PH_SIM_PIN
+ * - @ref LTE_PINSTAT_PH_FSIM_PIN
+ * - @ref LTE_PINSTAT_PH_FSIM_PUK
+ * - @ref LTE_PINSTAT_SIM_PIN2
+ * - @ref LTE_PINSTAT_SIM_PUK2
+ * - @ref LTE_PINSTAT_PH_NET_PIN
+ * - @ref LTE_PINSTAT_PH_NET_PUK
+ * - @ref LTE_PINSTAT_PH_NETSUB_PIN
+ * - @ref LTE_PINSTAT_PH_NETSUB_PUK
+ * - @ref LTE_PINSTAT_PH_SP_PIN
+ * - @ref LTE_PINSTAT_PH_SP_PUK
+ * - @ref LTE_PINSTAT_PH_CORP_PIN
+ * - @ref LTE_PINSTAT_PH_CORP_PUK
  * @param[in] attemptsleft : Number of attempts left.
  *                           It is set only if the result is not successful.
  *                           If simstat is other than PIN, PUK, PIN2, PUK2,
@@ -1440,9 +1440,9 @@ typedef void (*enter_pin_cb_t)(uint32_t result,
  *  Since lte_get_localtime() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_localtime().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] localtime : Local time. See @ref lte_localtime_t
  */
 
@@ -1453,9 +1453,9 @@ typedef void (*get_localtime_cb_t)(uint32_t result,
  *  Since lte_get_operator() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_operator().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] oper : A character string indicating network operator.
  *                   It is terminated with '\0' If it is not connected,
  *                   the first character is '\0'.
@@ -1467,9 +1467,9 @@ typedef void (*get_operator_cb_t)(uint32_t result, int8_t *oper);
  *  Since lte_get_edrx() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_edrx().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] settings : eDRX settings. See @ref lte_edrx_setting_t
  */
 
@@ -1479,9 +1479,9 @@ typedef void (*get_edrx_cb_t)(uint32_t result, lte_edrx_setting_t *settings);
  *  Since lte_set_edrx() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_set_edrx().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*set_edrx_cb_t)(uint32_t result);
@@ -1490,9 +1490,9 @@ typedef void (*set_edrx_cb_t)(uint32_t result);
  *  Since lte_get_psm() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_psm().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] settings : PSM settings. See @ref lte_psm_setting_t
  */
 
@@ -1502,9 +1502,9 @@ typedef void (*get_psm_cb_t)(uint32_t result, lte_psm_setting_t *settings);
  *  Since lte_set_psm() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_set_psm().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*set_psm_cb_t)(uint32_t result);
@@ -1513,9 +1513,9 @@ typedef void (*set_psm_cb_t)(uint32_t result);
  *  Since lte_get_ce() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_ce().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] settings : CE settings. See @ref lte_ce_setting_t
  */
 
@@ -1525,9 +1525,9 @@ typedef void (*get_ce_cb_t)(uint32_t result, lte_ce_setting_t *settings);
  *  Since lte_set_ce() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_set_ce().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*set_ce_cb_t)(uint32_t result);
@@ -1536,13 +1536,13 @@ typedef void (*set_ce_cb_t)(uint32_t result);
  *  When the SIM state changes, the SIM state is
  *  reported by this function.
  * @param[in] simstat : The SIM state.
- *                      As below value stored.@n
- * - @ref LTE_SIMSTAT_REMOVAL@n
- * - @ref LTE_SIMSTAT_INSERTION@n
- * - @ref LTE_SIMSTAT_WAIT_PIN_UNLOCK@n
- * - @ref LTE_SIMSTAT_PERSONAL_FAILED@n
- * - @ref LTE_SIMSTAT_ACTIVATE@n
- * - @ref LTE_SIMSTAT_DEACTIVATE@n
+ *                      As below value stored.
+ * - @ref LTE_SIMSTAT_REMOVAL
+ * - @ref LTE_SIMSTAT_INSERTION
+ * - @ref LTE_SIMSTAT_WAIT_PIN_UNLOCK
+ * - @ref LTE_SIMSTAT_PERSONAL_FAILED
+ * - @ref LTE_SIMSTAT_ACTIVATE
+ * - @ref LTE_SIMSTAT_DEACTIVATE
  */
 
 typedef void (*simstat_report_cb_t)(uint32_t simstat);
@@ -1575,9 +1575,9 @@ typedef void (*cellinfo_report_cb_t)(lte_cellinfo_t *cellinfo);
  *  Since lte_radio_on() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_radio_on().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*radio_on_cb_t)(uint32_t result);
@@ -1586,9 +1586,9 @@ typedef void (*radio_on_cb_t)(uint32_t result);
  *  Since lte_radio_off() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_radio_off().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*radio_off_cb_t)(uint32_t result);
@@ -1597,9 +1597,9 @@ typedef void (*radio_off_cb_t)(uint32_t result);
  *  Since lte_get_netinfo() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_netinfo().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] info : Pointer of LTE network information.
  *                   See @ref lte_netinfo_t
  */
@@ -1610,13 +1610,13 @@ typedef void (*get_netinfo_cb_t)(uint32_t result, lte_netinfo_t *info);
  *  Since lte_get_imscap() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_imscap.
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] imscap : The IMS capability.
- *                     As below value stored.@n
- * - @ref LTE_ENABLE@n
- * - @ref LTE_DISABLE@n
+ *                     As below value stored.
+ * - @ref LTE_ENABLE
+ * - @ref LTE_DISABLE
  */
 
 typedef void (*get_imscap_cb_t)(uint32_t result, bool imscap);
@@ -1625,10 +1625,10 @@ typedef void (*get_imscap_cb_t)(uint32_t result, bool imscap);
  *  Since lte_activate_pdn() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_activate_pdn.
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
- * - @ref LTE_RESULT_CANCEL@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
+ * - @ref LTE_RESULT_CANCEL
  * @param[in] pdn : The connect pdn information. See @ref lte_pdn_t
  */
 
@@ -1638,9 +1638,9 @@ typedef void (*activate_pdn_cb_t)(uint32_t result, lte_pdn_t *pdn);
  *  Since lte_deactivate_pdn() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_deactivate_pdn.
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*deactivate_pdn_cb_t)(uint32_t result);
@@ -1649,9 +1649,9 @@ typedef void (*deactivate_pdn_cb_t)(uint32_t result);
  *  Since lte_dataallow() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_dataallow.
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  */
 
 typedef void (*data_allow_cb_t)(uint32_t result);
@@ -1660,9 +1660,9 @@ typedef void (*data_allow_cb_t)(uint32_t result);
  *  The modem restart is reported by this function. It is reported
  *  at modem reset.
  * @param[in] reason : Reason of modem restart.
- *                     As below value stored.@n
- * - @ref LTE_RESTART_USER_INITIATED@n
- * - @ref LTE_RESTART_MODEM_INITIATED@n
+ *                     As below value stored.
+ * - @ref LTE_RESTART_USER_INITIATED
+ * - @ref LTE_RESTART_MODEM_INITIATED
  */
 
 typedef void (*restart_report_cb_t)(uint32_t reason);
@@ -1680,9 +1680,9 @@ typedef void (*netinfo_report_cb_t)(lte_netinfo_t *info);
  *  Since lte_get_siminfo() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_siminfo().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] siminfo : SIM information. See @ref lte_siminfo_t
  */
 
@@ -1692,9 +1692,9 @@ typedef void (*get_siminfo_cb_t)(uint32_t result, lte_siminfo_t *siminfo);
  *  Since lte_get_dynamic_edrx_param() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_dynamic_edrx_param().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] param : eDRX dynamic parameter. See @ref lte_edrx_setting_t
  */
 
@@ -1705,9 +1705,9 @@ typedef void (*get_dynamic_edrx_param_cb_t)(uint32_t result,
  *  Since lte_get_dynamic_psm_param() is an asynchronous API,
  *  the result is notified by this function
  * @param[in] result : The result of lte_get_dynamic_psm_param().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] param : PSM dynamic parameter. See @ref lte_psm_setting_t
  */
 
@@ -1718,9 +1718,9 @@ typedef void (*get_dynamic_psm_param_cb_t)(uint32_t result,
  *  Since lte_get_quality() is an asynchronous API,
  *  the quality information is notified by this function
  * @param[in] result : The result of lte_get_quality().
- *                     As below value stored.@n
- * - @ref LTE_RESULT_OK@n
- * - @ref LTE_RESULT_ERROR@n
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
  * @param[in] quality : Quality information. See @ref lte_quality_t
  */
 
