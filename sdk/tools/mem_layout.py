@@ -38,12 +38,13 @@ import os
 import re
 import sys
 import argparse
+import getopt
 
 #
 # Editable parameters
 #
-UseFence = 1  # Use of a pool fence
 
+UseFence = 1  # Use of a pool fence
 
 #
 # Fixed parameters of feature
@@ -93,6 +94,20 @@ MaxSegs       = 65535 if UseOver255Segments else 255
 RemainderSize = -1
 
 AREA_FENCES_IS_KCONFIG = True
+
+# Default output file name
+
+MemLayout   = "mem_layout.h"
+FixedFence  = "fixed_fence.h"
+PoollLayout = "pool_layout.h"
+
+# Default output file name
+
+IsNotUsedshareMemory = False
+
+# Memory area name
+
+MemoryPoolAreaName = "StaticMemoryPoolArea"
 
 #
 # class and method
@@ -208,7 +223,13 @@ class MemoryDevices:
                     sys.exit()
 
     def check_and_set_arg(self, *arg):
-        new_dev = DevEntry(*arg)
+        if IsNotUsedshareMemory:
+            new_dev = DevEntry(arg[0],
+                               arg[1],
+                               0,
+                               arg[3])
+        else:
+            new_dev = DevEntry(*arg)
         for dev in self.devs:
             if dev.name == new_dev.name:
                 sys.stderr.write("Duplication name found from MemoryDevices. name={0}".format(dev.name))
@@ -219,12 +240,19 @@ class MemoryDevices:
         self.devs.append(new_dev)
 
     def output_macros(self, io):
+        if IsNotUsedshareMemory:
+            io.write("/* Static pool memory area */\n\n")
+            io.write("extern uint8_t {}[];\n\n".format(MemoryPoolAreaName))
         io.write("/*\n * Memory devices\n */\n\n")
         for dev in self.devs:
             io.write("/* {0}: type={1}, use=0x{2:08x}, remainder=0x{3:08x} */\n\n"
                 .format(dev.name, "RAM" if (dev.ram) else "ROM", dev.size - dev.remainder(), dev.remainder()))
-            io.write("#define {0}_ADDR  0x{1:08x}\n".format(dev.name, dev.begin_addr))
-            io.write("#define {0}_SIZE  0x{1:08x}\n".format(dev.name, dev.size))
+            if IsNotUsedshareMemory:
+                io.write("#define {0}_ADDR  (uint32_t){1}\n".format(dev.name, MemoryPoolAreaName))
+                io.write("#define {0}_SIZE  0x{1:08x}\n".format(dev.name, PoolAreas.all_size()))
+            else:
+                io.write("#define {0}_ADDR  0x{1:08x}\n".format(dev.name, dev.begin_addr))
+                io.write("#define {0}_SIZE  0x{1:08x}\n".format(dev.name, dev.size))
             io.write("\n")
 
     def at(self, name_str):
@@ -276,6 +304,7 @@ class AreaEntry(BaseEntry):
             sys.exit()
 
         # set base class
+
         super().__init__(name, addr, size)
 
 
@@ -326,7 +355,24 @@ class FixedAreas:
                 break
         return work_size
 
+    def output_macros_not_used_share_memory(self, io):
+        io.write("#define MSG_QUE_AREA_ALIGN      0x00000008\n")
+        io.write("#define MSG_QUE_AREA_ADDR       (MEMMGR_DATA_AREA_ADDR + MEMMGR_DATA_AREA_SIZE)\n")
+        io.write("#define MSG_QUE_AREA_DRM        MSG_QUE_AREA_ADDR\n")
+        io.write("#define MSG_QUE_AREA_SIZE       0x00002000\n")
+        io.write("#define MEMMGR_WORK_AREA_ALIGN  0x00000008\n")
+        io.write("#define MEMMGR_WORK_AREA_ADDR   ((uint32_t){} + 0x{:08x})\n".format(MemoryPoolAreaName, PoolAreas.max_size()))
+        io.write("#define MEMMGR_WORK_AREA_DRM    MEMMGR_WORK_AREA_ADDR\n")
+        io.write("#define MEMMGR_WORK_AREA_SIZE   0x{:08x}\n\n".format(PoolAreas.all_work_size()))
+        io.write("#define MEMMGR_DATA_AREA_ALIGN  0x00000008\n")
+        io.write("#define MEMMGR_DATA_AREA_ADDR   (MEMMGR_WORK_AREA_ADDR + MEMMGR_WORK_AREA_SIZE)\n")
+        io.write("#define MEMMGR_DATA_AREA_DRM    MEMMGR_DATA_AREA_ADDR\n")
+        io.write("#define MEMMGR_DATA_AREA_SIZE   0x00000100\n\n")
+
     def output_macros(self, io):
+        if IsNotUsedshareMemory:
+            self.output_macros_not_used_share_memory(io)
+            return
         num_fences = 0
         io.write("/*\n * Fixed areas\n */\n\n")
         for area in self.areas:
@@ -464,7 +510,8 @@ class PoolEntryFixParam(BaseEntry):
             sys.stderr.write("Can't allocate pool at {0}".format(name))
             sys.exit()
 
-        # set base class
+        # Set base class
+
         super().__init__(name, addr, size)
 
 
@@ -475,6 +522,7 @@ class PoolEntryFixParam(BaseEntry):
 #  - RingBufPool area                              : To be determined(MemPool Area+alpha)
 #  - Data area of the segment number queue         : Number of segments * sizeof(NumSeg)
 #  - Reference counter area                        : Number of segments * sizeof(SegRefCnt)
+
 NumSegSize              = 2 if UseOver255Segments else 1
 SegRefCntSize           = 1
 PoolAttrSize            = round_up(10 + NumSegSize + (1 if UseFence else 0) + (1 if UseMultiCore else 0), 4)
@@ -513,6 +561,7 @@ class PoolLayout:
         self.pools.append(new_pool)
 
     # Calculate necessary work area for each layout
+
     def work_size(self, section):
         layout_work_size = 0
         for pool in self.pools:
@@ -521,7 +570,9 @@ class PoolLayout:
                 pool_work_size += BasicPoolDataSize if pool.type == Basic else RingBufPoolDataSize
                 pool_work_size += pool.num_seg * NumSegSize    # Data area of the segment number queue
                 pool_work_size += pool.num_seg * SegRefCntSize # Reference counter area
+
                 # Round up to the MinAlign unit and integrate
+
                 layout_work_size += round_up(pool_work_size, MinAlign)
                 if layout_work_size > FixedAreas.memmgr_work_size():
                     sys.stderr.write("MMGER_WORK_AREA 0x{0:x} Over! SECTION={1} LAYOUT={2}:{3}\n".format(layout_work_size, pool.section, pool.layout, pool.name))
@@ -564,6 +615,7 @@ class PoolAreas:
             max_pool_id -= NumDynamicPools
 
         # Create Pool IDs
+
         t_list = []
         for layout in self.layouts:
             t_list = t_list + layout.names(self.section)
@@ -705,15 +757,43 @@ class PoolAreas:
                             io.write(", {0}".format(" true" if pool.fence_flag else "false"))
                         if UseMultiCore:
                             io.write(", {0}".format(pool.spinlock))
-                        io.write(", 0x{0:08x}, 0x{1:08x}".format(pool.begin_addr, pool.size))
+                        if IsNotUsedshareMemory:
+                            io.write(", (PoolAddr){0} + 0x{1:08x}, 0x{2:08x}".format(MemoryPoolAreaName, pool.begin_addr, pool.size))
+                        else:
+                            io.write(", 0x{0:08x}, 0x{1:08x}".format(pool.begin_addr, pool.size))
                         io.write(" },  /* %s */\n" % (pool.area_entry.name))
                     io.write("      { S%d_NULL_POOL, 0, 0, false, 0, 0 },\n" % (layout.section))
                     io.write("    },\n")
             io.write("  },\n")
         io.write("}; /* end of MemoryPoolLayouts */\n\n")
 
+    def max_size(self):
+        max = 0
+        for num in range(self.section):
+            for layout in self.layouts:
+                for index, pool in enumerate(layout.pools):
+                    layout_size = pool.begin_addr + pool.size + 8
+                    if max < layout_size:
+                        max = layout_size
+        return max
+
+    def all_work_size(self):
+        max = 0
+        for num in range(self.section):
+            for layout in self.layouts:
+                if max < layout.work_size(num):
+                    max = layout.work_size(num)
+        return max
+
+    def all_size(self):
+        return self.max_size() + self.all_work_size() + 0x100
+
+#
+# Header templete
+#
 
 template = "\
+/* This file is generated automatically. */\n\
 /****************************************************************************\n\
  * {0}\n\
  *\n\
@@ -750,13 +830,15 @@ template = "\
  ****************************************************************************/\n\
 \n"
 
+#
+# Output Header
+#
 
 class HeaderFile:
     def create(self, io, filename, add_def):
         self.guard_name = os.path.basename(filename.upper().replace(".", "_")) + "_INCLUDED"
         self.add_def    = add_def
         self.io         = io
-        self.io.write("/* This file is generated automatically. */\n")
         self.io.write(template.format(filename))
         self.io.write("#ifndef {0}\n".format(self.guard_name))
         self.io.write("#define {0}\n\n".format(self.guard_name))
@@ -764,36 +846,29 @@ class HeaderFile:
             self.io.write("#include \"memutils/memory_manager/MemMgrTypes.h\"\n")
             self.io.write("\nnamespace MemMgrLite {\n\n")
 
+    def create_not_used_share_memory(self, io, filename):
+        self.guard_name = os.path.basename(filename.upper().replace(".", "_")) + "_INCLUDED"
+        self.add_def    = True
+        self.io         = io
+        self.io.write(template.format(filename))
+        self.io.write("#ifndef {0}\n".format(self.guard_name))
+        self.io.write("#define {0}\n\n".format(self.guard_name))
+        self.io.write("#include \"memutils/memory_manager/MemMgrTypes.h\"\n")
+        self.io.write("\n")
+        self.io.write("/* Static pool memory area */\n\n")
+        self.io.write("uint8_t {}[0x{:x}];\n".format(MemoryPoolAreaName, PoolAreas.all_size()))
+        self.io.write("\nnamespace MemMgrLite {\n\n")
+
     def close(self):
         if self.add_def:
             self.io.write("}  /* end of namespace MemMgrLite */\n\n")
         self.io.write("#endif /* {0} */\n".format(self.guard_name))
 
+#
+# Output files
+#
 
 def generate_files():
-
-    # Init parameters
-    MemLayout    = "mem_layout.h"
-    FixedFence   = "fixed_fence.h"
-    PoollLayout  = "pool_layout.h"
-
-    arguments = sys.argv
-    arguments.pop(0)
-
-    options = [option for option in arguments if option.startswith('-')]
-    if len(options):
-        arguments.pop(0)
-
-    if len(arguments):
-        MemLayout   = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        FixedFence  = arguments[0]
-        arguments.pop(0)
-    if len(arguments):
-        PoollLayout = arguments[0]
-        arguments.pop(0)
-
     with open(MemLayout, mode='w') as f:
         HeaderFile.create(f, MemLayout, False)
         MemoryDevices.output_macros(f)
@@ -807,10 +882,53 @@ def generate_files():
         HeaderFile.close()
 
     with open(PoollLayout, mode='w') as f:
-        HeaderFile.create(f, PoollLayout, True)
+        if IsNotUsedshareMemory:
+            HeaderFile.create_not_used_share_memory(f, PoollLayout)
+        else:
+            HeaderFile.create(f, PoollLayout, True)
         PoolAreas.output_table(f)
         HeaderFile.close()
 
+#
+# Display usage
+#
+
+def usage():
+    print("usage: {} [--not_shared_memory | -n] [--help | -h]".format(sys.argv[0]))
+    print("                       [mem_layout] [fixed_fence] [pool_layout]\n")
+    print("-n, --not_shared_memory  Layout creation without using shared memory")
+    print("-h, --help               Show this usage and exit")
+    sys.exit()
+
+#
+# Main routine
+#
+
+try:
+    shortopt = "hn"
+    longopt  = ["help", "not_shared_memory"]
+    opts, args = getopt.getopt(sys.argv[1:], shortopt, longopt)
+except getopt.GetoptError as err:
+    print(err)
+    usage()
+
+for o, a in opts:
+    if o in ('-n', '--not_shared_memory'):
+        IsNotUsedshareMemory = True
+    elif o in ('-h', '--help'):
+        usage()
+
+if len(args):
+    MemLayout   = args[0]
+    args.pop(0)
+if len(args):
+    FixedFence  = args[0]
+    args.pop(0)
+if len(args):
+    PoollLayout = args[0]
+    args.pop(0)
+
+# Create class
 
 MemoryDevices = MemoryDevices()
 FixedAreas    = FixedAreas()
