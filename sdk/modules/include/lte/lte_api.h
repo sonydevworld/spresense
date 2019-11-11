@@ -173,9 +173,24 @@
 
 #define LTE_APN_PASSWD_LEN    (32)
 
-#define LTE_APN_IPTYPE_IP     (0) /**< Internet protocol type: IP */
-#define LTE_APN_IPTYPE_IPV6   (1) /**< Internet protocol type: IPv6 */
-#define LTE_APN_IPTYPE_IPV4V6 (2) /**< Internet protocol type: IPv4/v6 */
+#define LTE_IPTYPE_V4         (0) /**< Internet protocol type: IPv4 */
+#define LTE_IPTYPE_V6         (1) /**< Internet protocol type: IPv6 */
+#define LTE_IPTYPE_V4V6       (2) /**< Internet protocol type: IPv4/v6 */
+
+/** Internet protocol type: IP 
+ *  @deprecated Use @ref LTE_IPTYPE_V4 instead. */
+
+#define LTE_APN_IPTYPE_IP     LTE_IPTYPE_V4 
+
+/** Internet protocol type: IPv6 
+ *  @deprecated Use @ref LTE_IPTYPE_V6 instead. */
+
+#define LTE_APN_IPTYPE_IPV6   LTE_IPTYPE_V6
+
+/** Internet protocol type: IPv4/v6 
+ *  @deprecated Use @ref LTE_IPTYPE_V4V6 instead. */
+
+#define LTE_APN_IPTYPE_IPV4V6 LTE_IPTYPE_V4V6
 
 #define LTE_APN_AUTHTYPE_NONE (0) /**< PPP authentication type: NONE */
 #define LTE_APN_AUTHTYPE_PAP  (1) /**< PPP authentication type: PAP */
@@ -253,8 +268,15 @@
 
 #define LTE_VER_NP_PACKAGE_LEN (32)
 
-#define LTE_PIN_ENABLE  (true)  /**< Enable setting of PIN lock */
-#define LTE_PIN_DISABLE (false) /**< Disable setting of PIN lock */
+/** Enable setting of PIN lock
+ *  @deprecated Use @ref LTE_ENABLE instead. */
+
+#define LTE_PIN_ENABLE  LTE_ENABLE
+
+/** Disable setting of PIN lock
+ *  @deprecated Use @ref LTE_DISABLE instead. */
+
+#define LTE_PIN_DISABLE LTE_DISABLE
 
 /** PIN status: Not pending for any password */
 
@@ -357,11 +379,13 @@
 #define LTE_MCC_DIGIT     (3)  /**< Digit number of mcc */
 #define LTE_MNC_DIGIT_MAX (3)  /**< Max digit number of mnc */
 
-/** Digit number of mcc */
+/** Digit number of mcc
+ *  @deprecated Use @ref LTE_MCC_DIGIT instead. */
 
 #define LTE_CELLINFO_MCC_DIGIT     LTE_MCC_DIGIT
 
-/** Max digit number of mnc */
+/** Max digit number of mnc
+ *  @deprecated Use @ref LTE_MNC_DIGIT_MAX instead. */
 
 #define LTE_CELLINFO_MNC_DIGIT_MAX LTE_MNC_DIGIT_MAX
 
@@ -455,8 +479,6 @@
 
 #define LTE_PSM_TIMEVAL_MAX        (31)
 
-#define LTE_IPTYPE_V4      (0)  /**< IP address type: IPv4 */
-#define LTE_IPTYPE_V6      (1)  /**< IP address type: IPv6 */
 #define LTE_IPADDR_MAX_LEN (40) /**< Maximum length of the IP address */
 
 /** Invalid Session ID */
@@ -529,11 +551,13 @@
 
 #define LTE_SIMINFO_GETOPT_GID2   (1 << 5)
 
-/** Digit number of mcc */
+/** Digit number of mcc
+ *  @deprecated Use @ref LTE_MCC_DIGIT instead. */
 
 #define LTE_SIMINFO_MCC_DIGIT      LTE_MCC_DIGIT
 
-/** Max digit number of mnc */
+/** Max digit number of mnc
+ *  @deprecated Use @ref LTE_MNC_DIGIT_MAX instead. */
 
 #define LTE_SIMINFO_MNC_DIGIT_MAX  LTE_MNC_DIGIT_MAX
 
@@ -576,13 +600,13 @@ typedef struct lte_version
 typedef struct lte_getpin
 {
   /** PIN enable. Definition is as below.@n
-   *  - @ref LTE_PIN_ENABLE@n
-   *  - @ref LTE_PIN_DISABLE@n */
+   *  - @ref LTE_ENABLE@n
+   *  - @ref LTE_DISABLE@n */
 
   uint8_t enable;
 
   /** PIN status. Refer to the this parameter only
-      when enable is @ref LTE_PIN_ENABLE. */
+      when enable is @ref LTE_ENABLE. */
 
   uint8_t status;
 
@@ -688,7 +712,7 @@ typedef struct lte_cellinfo
 
   /** Mobile Country Code (000-999) */
 
-  uint8_t  mcc[LTE_CELLINFO_MCC_DIGIT];
+  uint8_t  mcc[LTE_MCC_DIGIT];
 
   /** Digit number of mnc(2-3) */
 
@@ -696,7 +720,7 @@ typedef struct lte_cellinfo
 
   /** Mobile Network Code (00-999) */
 
-  uint8_t  mnc[LTE_CELLINFO_MNC_DIGIT_MAX];
+  uint8_t  mnc[LTE_MNC_DIGIT_MAX];
 } lte_cellinfo_t;
 
 /**
@@ -1130,7 +1154,7 @@ typedef struct lte_siminfo
   /** Mobile Country Code (000-999). It can be referneced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
-  uint8_t  mcc[LTE_SIMINFO_MCC_DIGIT];
+  uint8_t  mcc[LTE_MCC_DIGIT];
 
   /** Digit number of mnc(2-3). It can be referneced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
@@ -1140,7 +1164,7 @@ typedef struct lte_siminfo
   /** Mobile Network Code (00-999). It can be referneced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
-  uint8_t  mnc[LTE_SIMINFO_MNC_DIGIT_MAX];
+  uint8_t  mnc[LTE_MNC_DIGIT_MAX];
 
   /** Length of Service provider name. It can be referneced when
    *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
@@ -1892,8 +1916,8 @@ int32_t lte_get_pinset(get_pinset_cb_t callback);
  *
  * @param [in] enable: "Enable" or "Disable".
  *                      Definition is as below.@n
- *  - @ref LTE_PIN_ENABLE@n
- *  - @ref LTE_PIN_DISABLE@n
+ *  - @ref LTE_ENABLE@n
+ *  - @ref LTE_DISABLE@n
  * @param [in] pincode: Current PIN code. Minimum number of digits is 4.
  *                      Maximum number of digits is 8, end with '\0'.
  *                      (i.e. Max 9 byte)

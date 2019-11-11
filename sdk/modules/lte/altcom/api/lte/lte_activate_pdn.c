@@ -93,8 +93,8 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
       return  -EINVAL;
     }
 
-  if ((apn->ip_type < LTE_APN_IPTYPE_IP) ||
-      (apn->ip_type > LTE_APN_IPTYPE_IPV4V6))
+  if ((apn->ip_type < LTE_IPTYPE_V4) ||
+      (apn->ip_type > LTE_IPTYPE_V4V6))
     {
       DBGIF_LOG1_ERROR("ip type is invalid. iptype=%d\n", apn->ip_type);
       return -EINVAL;

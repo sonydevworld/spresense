@@ -168,9 +168,9 @@ static void get_siminfo_job(FAR void *arg)
 
               if (siminfo.option & LTE_SIMINFO_GETOPT_MCCMNC)
                 {
-                  if (LTE_SIMINFO_MNC_DIGIT_MAX >= data->mnc_digit)
+                  if (LTE_MNC_DIGIT_MAX >= data->mnc_digit)
                     {
-                      memcpy(siminfo.mcc, data->mcc, LTE_SIMINFO_MCC_DIGIT);
+                      memcpy(siminfo.mcc, data->mcc, LTE_MCC_DIGIT);
                       siminfo.mnc_digit = data->mnc_digit;
                       memcpy(siminfo.mnc, data->mnc, data->mnc_digit);
                     }
