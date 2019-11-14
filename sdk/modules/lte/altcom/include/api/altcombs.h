@@ -358,4 +358,41 @@ int32_t altcombs_set_psm(FAR struct apicmd_cmddat_psm_set_s *cmd_set,
 int32_t altcombs_set_quality(FAR lte_quality_t *data,
           FAR struct apicmd_cmddat_quality_s *cmd_quality);
 
+/****************************************************************************
+ * Name: altcombs_setup_apicallback
+ *
+ * Description:
+ *   Setup the callback of API.
+ *
+ * Input Parameters:
+ *   id       API command ID.
+ *   api_cb   Pointer of API callback to register.
+ *   stat_cb  Pointer of state change callback to register.
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_setup_apicallback(int32_t id, FAR void *api_cb,
+                                   altcom_stat_chg_cb_t stat_cb);
+
+/****************************************************************************
+ * Name: altcombs_teardown_apicallback
+ *
+ * Description:
+ *   Teardown the callback of API.
+ *
+ * Input Parameters:
+ *   id       API command ID.
+ *   stat_cb  Pointer of state change callback to register.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+void altcombs_teardown_apicallback(int32_t id, altcom_stat_chg_cb_t stat_cb);
+
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */
