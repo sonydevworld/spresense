@@ -111,7 +111,8 @@ uint32_t SRCComponent::activate(ComponentCallback callback,
   int ret = DD_Load(dsp_name,
                     src_filter_dsp_done_callback,
                     (void *)this,
-                    &m_dsp_handler);
+                    &m_dsp_handler,
+                    DspBinTypeELFwoBind);
   
   if (ret != DSPDRV_NOERROR)
     {

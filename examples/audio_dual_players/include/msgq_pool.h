@@ -42,18 +42,19 @@
 extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] = {
    /* n_drm, n_size, n_num, h_drm, h_size, h_num */
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd374, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
-  { 0xfddc4, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfde44, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP */
-  { 0xfdea8, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY */
-  { 0xfdf98, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfdffc, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
-  { 0xfe060, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_SUB_PLY */
-  { 0xfe150, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe2d0, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY */
-  { 0xfe4d0, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY_SYNC */
-  { 0xfe4f0, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SUB */
-  { 0xfe6f0, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SUB_SYNC */
+  { 0xfd3b8, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
+  { 0xfde08, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
+  { 0xfde88, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP0 */
+  { 0xfdeec, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP1 */
+  { 0xfdf50, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY */
+  { 0xfe040, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
+  { 0xfe0a4, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
+  { 0xfe108, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_SUB_PLY */
+  { 0xfe1f8, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
+  { 0xfe378, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY */
+  { 0xfe578, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY_SYNC */
+  { 0xfe598, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SUB */
+  { 0xfe798, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SUB_SYNC */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

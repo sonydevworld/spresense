@@ -63,7 +63,7 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static pid_t s_mfe_pid;
+static pthread_t  s_mfe_pid = INVALID_PROCESS_ID;
 static AsMicFrontendMsgQueId_t s_msgq_id;
 static AsMicFrontendPoolId_t   s_pool_id;
 
@@ -127,11 +127,10 @@ static void pcm_send_done_callback(int32_t identifier, bool is_end)
 }
 
 /*--------------------------------------------------------------------------*/
-int AS_MicFrontendObjEntry(int argc, char *argv[])
+FAR void AS_MicFrontendObjEntry(FAR void *arg)
 {
   MicFrontEndObject::create(s_msgq_id,
                             s_pool_id);
-  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1762,11 +1761,28 @@ static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_mfe_pid = task_create("FED_OBJ",
-                          150, 1024 * 2,
-                          AS_MicFrontendObjEntry,
-                          NULL);
-  if (s_mfe_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = 150;
+  attr.stacksize           = 1024 * 2;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_mfe_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_MicFrontendObjEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
@@ -2008,7 +2024,17 @@ bool AS_DeleteMicFrontend(void)
       return false;
     }
 
-  task_delete(s_mfe_pid);
+  if (s_mfe_pid == INVALID_PROCESS_ID)
+    {
+      MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return false;
+    }
+
+  pthread_cancel(s_mfe_pid);
+  pthread_join(s_mfe_pid, NULL);
+
+  s_mfe_pid = INVALID_PROCESS_ID;
+
   delete s_mfe_obj;
   s_mfe_obj = NULL;
 

@@ -126,6 +126,7 @@ using namespace MemMgrLite;
 #define PLAYBACK0_BIT_LEN       AS_BITLENGTH_16
 #define PLAYBACK0_SAMPLING_RATE AS_SAMPLINGRATE_AUTO
 #define PLAYBACK0_CODEC_TYPE    AS_CODECTYPE_MP3
+#define PLAYBACK0_REPEAT_COUNT  4
 
 /* Content number 2 information definition. */
 
@@ -134,6 +135,7 @@ using namespace MemMgrLite;
 #define PLAYBACK1_BIT_LEN       AS_BITLENGTH_16
 #define PLAYBACK1_SAMPLING_RATE AS_SAMPLINGRATE_AUTO
 #define PLAYBACK1_CODEC_TYPE    AS_CODECTYPE_MP3
+#define PLAYBACK1_REPEAT_COUNT  4
 
 /*------------------------------
  * Definition specified by config
@@ -168,6 +170,10 @@ using namespace MemMgrLite;
 
 #define NUMBER_OF_RETRY 3
 
+/* Timeout waiting for command reception. Unit is milliseconds. */
+
+#define RESPONSE_TIMEOUT 10
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -188,6 +194,7 @@ struct Track
   uint8_t   bit_length;      /* Bit length.     */
   uint32_t  sampling_rate;   /* Sampling rate.  */
   uint8_t   codec_type;      /* Codec type.     */
+  int       repeat_count;    /* Repeat count.   */
 };
 
 /* For play file */
@@ -234,10 +241,6 @@ static mpshm_t s_shm;
 
 static struct pm_cpu_freqlock_s s_player_lock;
 
-/* Semaphore for AS_SendAudioCommand */
-
-sem_t s_sem;
-
 /* Play time(sec) */
 
 uint32_t  s_player_play_time = 0;   /* 0: No limit */
@@ -270,12 +273,14 @@ static void app_get_next_track(Track* track0, Track* track1)
   track0->bit_length     = PLAYBACK0_BIT_LEN;
   track0->sampling_rate  = PLAYBACK0_SAMPLING_RATE;
   track0->codec_type     = PLAYBACK0_CODEC_TYPE;
+  track0->repeat_count   = PLAYBACK0_REPEAT_COUNT;
 
   snprintf(track1->title, sizeof(track1->title), "%s", PLAYBACK1_FILE_NAME);
   track1->channel_number = PLAYBACK1_CH_NUM;
   track1->bit_length     = PLAYBACK1_BIT_LEN;
   track1->sampling_rate  = PLAYBACK1_SAMPLING_RATE;
   track1->codec_type     = PLAYBACK1_CODEC_TYPE;
+  track1->repeat_count   = PLAYBACK1_REPEAT_COUNT;
 }
 
 static void app_input_device_callback(uint32_t size)
@@ -310,7 +315,7 @@ static int app_push_simple_fifo(struct player_info_s *info)
       return FIFO_RESULT_ERR;
     }
 
-  if (CMN_SimpleFifoOffer(&info->fifo.handle, (const void*)(info->fifo.read_buf), ret) == 0)
+  if (ret > 0 && CMN_SimpleFifoOffer(&info->fifo.handle, (const void*)(info->fifo.read_buf), ret) == 0)
     {
       return FIFO_RESULT_FUL;
     }
@@ -418,7 +423,7 @@ static bool app_create_audio_sub_system(void)
   player_create_param.msgq_id.player   = MSGQ_AUD_PLY;
   player_create_param.msgq_id.mng      = MSGQ_AUD_MGR;
   player_create_param.msgq_id.mixer    = MSGQ_AUD_OUTPUT_MIX;
-  player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP;
+  player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP0;
   player_create_param.pool_id.es       = S0_DEC_ES_MAIN_BUF_POOL;
   player_create_param.pool_id.pcm      = S0_REND_PCM_BUF_POOL;
   player_create_param.pool_id.dsp      = S0_DEC_APU_CMD_POOL;
@@ -442,7 +447,7 @@ static bool app_create_audio_sub_system(void)
   player_create_param.msgq_id.player   = MSGQ_AUD_SUB_PLY;
   player_create_param.msgq_id.mng      = MSGQ_AUD_MGR;
   player_create_param.msgq_id.mixer    = MSGQ_AUD_OUTPUT_MIX;
-  player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP;
+  player_create_param.msgq_id.dsp      = MSGQ_AUD_DSP1;
   player_create_param.pool_id.es       = S0_DEC_ES_SUB_BUF_POOL;
   player_create_param.pool_id.pcm      = S0_REND_PCM_SUB_BUF_POOL;
   player_create_param.pool_id.dsp      = S0_DEC_APU_CMD_POOL;
@@ -505,18 +510,25 @@ static bool sendAudioCommandAndWait(AudioCommand *command, AudioResult *out_resu
 {
   AudioResult result;
 
-  sem_wait(&s_sem);
-
   AS_SendAudioCommand(command);
 
   AS_ReceiveAudioResult(&result);
-
-  sem_post(&s_sem);
 
   if (out_result)
     {
       *out_result = result;
     }
+
+  return printAudCmdResult(command->header.command_code, result);
+}
+
+static bool sendAudioCommandAndWait(AudioCommand *command, AsPlayerId id)
+{
+  AudioResult result;
+
+  AS_SendAudioCommand(command);
+
+  while (AS_ERR_CODE_OK != AS_ReceiveAudioResult(&result, id, RESPONSE_TIMEOUT));
 
   return printAudCmdResult(command->header.command_code, result);
 }
@@ -635,7 +647,7 @@ static int app_init_player(AsPlayerId id,
            "%s",
            DSPBIN_FILE_PATH);
 
-  return sendAudioCommandAndWait(&command);
+  return sendAudioCommandAndWait(&command, id);
 }
 
 static int app_play_player(AsPlayerId id)
@@ -646,7 +658,7 @@ static int app_play_player(AsPlayerId id)
   command.header.sub_code      = 0x00;
   command.player.player_id     = id;
 
-  return sendAudioCommandAndWait(&command);
+  return sendAudioCommandAndWait(&command, id);
 }
 
 static bool app_stop_player(AsPlayerId id, int mode)
@@ -658,7 +670,7 @@ static bool app_stop_player(AsPlayerId id, int mode)
   command.player.player_id            = id;
   command.player.stop_param.stop_mode = mode;
 
-  return sendAudioCommandAndWait(&command);
+  return sendAudioCommandAndWait(&command, id);
 }
 
 static bool app_set_clkmode(int clk_mode)
@@ -875,55 +887,59 @@ static void app_play_process(struct player_info_s *info, uint32_t play_time = 0)
   app_stop_player(info->id, stop_mode);
 }
 
-static int es_reader(int argc, FAR char *argv[])
+static int player_thread(int argc, FAR char *argv[])
 {
   struct player_info_s *info = (struct player_info_s*)strtoul(argv[1], NULL, 16);
 
   Track *t = &info->file.track;
 
-  /* File open check. */
-
-  if (!app_open_next_play_file(info))
+  for (int i = 0; i < t->repeat_count; i++)
     {
-      printf("File(%s) not found. \n", t->title);
-    }
+      /* File open check. */
 
-  /* Initialize simple fifo. */
+      if (!app_open_next_play_file(info))
+        {
+          printf("File(%s) not found. \n", t->title);
+          break;
+        }
 
-  else if (!app_init_simple_fifo(&info->fifo))
-    {
-      printf("Error: app_init_simple_fifo(%d) failure.\n", info->id);
-    }
+      /* Initialize simple fifo. */
 
-  /* Audio data is first packed into FIFO. */
+      if (!app_init_simple_fifo(&info->fifo))
+        {
+          printf("Error: app_init_simple_fifo(%d) failure.\n", info->id);
+          break;
+        }
 
-  else if (!app_first_push_simple_fifo(info))
-    {
-      printf("Error: app_first_push_simple_fifo(%d) failure.\n", info->id);
-    }
+      /* Audio data is first packed into FIFO. */
 
-  /* Initialize player */
+      if (!app_first_push_simple_fifo(info))
+        {
+          printf("Error: app_first_push_simple_fifo(%d) failure.\n", info->id);
+          break;
+        }
 
-  else if (!app_init_player(info->id,
-                            t->codec_type,
-                            t->sampling_rate,
-                            t->channel_number,
-                            t->bit_length))
-    {
-      printf("Error: app_init_player(%d) failure.\n", info->id);
-    }
+      /* Initialize player */
 
-  /* play! */
+      if (!app_init_player(info->id,
+                           t->codec_type,
+                           t->sampling_rate,
+                           t->channel_number,
+                           t->bit_length))
+        {
+          printf("Error: app_init_player(%d) failure.\n", info->id);
+        }
 
-  else if (!app_play_player(info->id))
-    {
-      printf("Error: app_play_player(%d) failure.\n", info->id);
-    }
+      /* play! */
 
-  /* Load audio data from file and push to FIFO. */
+      if (!app_play_player(info->id))
+        {
+          printf("Error: app_play_player(%d) failure.\n", info->id);
+          break;
+        }
 
-  else
-    {
+      /* Load audio data from file and push to FIFO. */
+
       app_play_process(info, s_player_play_time);
 
       /* File close. */
@@ -1006,10 +1022,6 @@ extern "C" int audio_dual_players_main(int argc, char *argv[])
       printf("Error: act_audiosubsystem() failure.\n");
       goto errout_create_audio_sub_system;
     }
-
-  /* Initialize semaphore. */
-
-  sem_init(&s_sem, 0, 1);
 
   /* Initialize frequency lock parameter. */
 
@@ -1099,8 +1111,10 @@ extern "C" int audio_dual_players_main(int argc, char *argv[])
       printf("Running...\n");
     }
 
-  tsk0 = task_create("Player0", 155, 1024, es_reader, (FAR char* const*)argv0);
-  tsk1 = task_create("Player1", 155, 1024, es_reader, (FAR char* const*)argv1);
+  /* Task start */
+
+  tsk0 = task_create("Player0", 155, 1024, player_thread, (FAR char* const*)argv0);
+  tsk1 = task_create("Player1", 155, 1024, player_thread, (FAR char* const*)argv1);
 
   /* Wait task end. */
 
@@ -1152,10 +1166,6 @@ errout_power_on:
   /* Unlock cpu frequency. */
 
   app_freq_release();
-
-  /* Release semaphore. */
-
-  sem_destroy(&s_sem);
 
   /* Deactivate the features used by AudioSubSystem. */
 

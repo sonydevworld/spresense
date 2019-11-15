@@ -1,8 +1,8 @@
 #!/bin/bash
-############################################################################
-# tools/mkversion.sh
+# tools/mkmsys2deps.sh
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright (C) 2016 Gregory Nutt. All rights reserved.
+#   Author: Gregory Nutt <gnutt@nuttx.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -14,10 +14,9 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
-#    the names of its contributors may be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
+# 3. Neither the name NuttX nor the names of its contributors may be
+#    used to endorse or promote products derived from this software
+#    without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -32,36 +31,31 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-############################################################################
 
-TAG=${1:-HEAD}
+# Uncomment to enable debug options
+# set -x
+# DEBUG=--dep-debug
 
-if [ "X${TOPDIR}" = "X" ]; then
-    echo "Please specify a TOPDIR variable"
-    exit 1
+# Make sure that we know where we are
+
+TOOLDIR=$(cd $(dirname $0) && pwd)
+NXTOOLSDIR=$(cd ${TOOLDIR}/../../nuttx/tools && pwd)
+
+if [ ! -x ${TOOLDIR}/mkmsys2deps.sh ]; then
+  echo "# ERROR: tools/ directory not found"
+  exit 1
 fi
 
-APP_VERSION="0.0.0"
-SDK_VERSION="SDK1.4.2"
-if [ -r sdk_version ]; then
-    SDK_VERSION="SDK`cat sdk_version`"
+# Make sure that executables are ready
+
+MKDEPS=${NXTOOLSDIR}/mkdeps.exe
+
+if [ ! -x ${MKDEPS} ]; then
+  echo "# ERROR: tools/mkdeps.exe does not exist"
+  exit 1
 fi
 
-NUTTX_VERSION="7.22"
+# Run the mkdeps.exe program to generate a Windows dependency file
 
-# Get short hash for specified tag
-GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
+${MKDEPS} ${DEBUG} $* | iconv -f cp932 -t utf-8
 
-if [ "${GIT_REVISION}" != "" ]; then
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}-${GIT_REVISION}"
-else
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}"
-fi
-
-# BUILD_ID must be 40 characters or less
-if [ ${#BUILD_ID} -gt 40 ]; then
-    echo "BUILD_ID too long! ${BUILD_ID}"
-    exit 1
-fi
-
-${TOPDIR}/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${TOPDIR}/.version

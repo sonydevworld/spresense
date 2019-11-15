@@ -63,6 +63,13 @@ typedef enum {
   DSPDRV_INIT_PTHREAD_FAIL  /* Failed on DspDrv Init pthread sequence. */
 } dspdrv_errorcode_e;
 
+typedef enum
+{
+  DspBinTypeELF = 0,   /* ELF format.                        */
+  DspBinTypeELFwoBind, /* ELF format without ASMP bind area. */
+  DspBinTypeSPK        /* SPK format.                        */
+} dsp_bin_type_e;
+
 struct DspDrvComPrm_s
 {
   uint32_t process_mode:4;  /* Mode of process. A use case is a case where
@@ -90,7 +97,7 @@ public:
   int init(FAR const char *pfilename,
            DspDoneCallback p_cbfunc,
            FAR void        *p_parent_instance,
-           bool            is_secure);
+           dsp_bin_type_e  bintype);
   int destroy(bool force);
   int send(FAR const DspDrvComPrm_t *p_param);
   int receive();
@@ -116,7 +123,8 @@ private:
 extern int DD_Load(FAR const char  *filename,
                    DspDoneCallback p_cbfunc,
                    FAR void        *p_parent_instance,
-                   FAR void        **dsp_handler);
+                   FAR void        **dsp_handler,
+                   dsp_bin_type_e  bintype);
 
 extern int DD_Load_Secure(FAR const char  *filename,
                           DspDoneCallback p_cbfunc,

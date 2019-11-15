@@ -535,16 +535,15 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
   return AS_ERR_CODE_OK;
 }
 
-static pid_t s_amng_pid = -1;
+static pthread_t s_amng_pid = INVALID_PROCESS_ID;
 
 #define AUDIO_TASK_PRIORITY 100
 #define AUDIO_TASK_MANAGER_STACK_SIZE (1024 * 2)
 
 /*--------------------------------------------------------------------------*/
-int AS_AudioManagerEntry(void)
+FAR void AS_AudioManagerEntry(FAR void *arg)
 {
   AudioManager::create(s_selfMid, s_plyMainMid, s_plySubMid, s_mixerMid, s_attention_cb, s_obs_attention_cb);
-  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -569,12 +568,28 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_amng_pid = task_create("AMNG",
-                           AUDIO_TASK_PRIORITY,
-                           AUDIO_TASK_MANAGER_STACK_SIZE,
-                           (main_t)AS_AudioManagerEntry,
-                           0);
-  if (s_amng_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = AUDIO_TASK_PRIORITY;
+  attr.stacksize           = AUDIO_TASK_MANAGER_STACK_SIZE;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_amng_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_AudioManagerEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
@@ -611,12 +626,28 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_amng_pid = task_create("AMNG",
-                           AUDIO_TASK_PRIORITY,
-                           AUDIO_TASK_MANAGER_STACK_SIZE,
-                           (main_t)AS_AudioManagerEntry,
-                           0);
-  if (s_amng_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = AUDIO_TASK_PRIORITY;
+  attr.stacksize           = AUDIO_TASK_MANAGER_STACK_SIZE;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_amng_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_AudioManagerEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
@@ -628,13 +659,16 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
 /*--------------------------------------------------------------------------*/
 int AS_DeleteAudioManager(void)
 {
-  if (s_amng_pid < 0)
+  if (s_amng_pid == INVALID_PROCESS_ID)
     {
       MANAGER_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
       return AS_ERR_CODE_ILLEGAL_STATE;
     }
 
-  task_delete(s_amng_pid);
+  pthread_cancel(s_amng_pid);
+  pthread_join(s_amng_pid, NULL);
+
+  s_amng_pid = INVALID_PROCESS_ID;
 
   if (s_mng != NULL)
     {
@@ -677,6 +711,58 @@ int AS_ReceiveAudioResult(FAR AudioResult *packet)
   F_ASSERT(err_code == ERR_OK);
 
   return AS_ERR_CODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+int AS_ReceiveAudioResult(FAR AudioResult *packet, uint8_t id, uint32_t tmo)
+{
+  int             ret = AS_ERR_CODE_OK;
+
+  AS_ReceiveAudioResult(packet);
+
+  do
+    {
+      /* Wait until the specified PlayerId comes */
+
+      err_t            err_code;
+      FAR MsgQueBlock *que;
+      FAR MsgPacket   *msg;
+
+      err_code = MsgLib::referMsgQueBlock(s_appMid, &que);
+      F_ASSERT(err_code == ERR_OK);
+
+      if (packet->header.instance_id == id)
+        {
+          break;
+        }
+
+      err_code = que->recv(tmo, &msg);
+
+      err_t er = MsgLib::send<AudioResult>(s_appMid,
+                                           MsgPriNormal,
+                                           MSG_AUD_MGR_RST,
+                                           s_appMid,
+                                          *packet);
+      F_ASSERT(er == ERR_OK);
+
+      if (err_code == ERR_SEM_TAKE)
+        {
+          ret = AS_ERR_CODE_ILLEGAL_STATE;
+          break;
+        }
+
+      F_ASSERT(err_code == ERR_OK);
+      F_ASSERT(msg->getType() == MSG_AUD_MGR_RST);
+
+      *packet = msg->moveParam<AudioResult>();
+
+      err_code = que->pop();
+
+      F_ASSERT(err_code == ERR_OK);
+    }
+  while(1);
+
+  return ret;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1591,8 +1677,7 @@ void AudioManager::player(AudioCommand &cmd)
                         AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
       return;
     }
-  m_req_reference_bits |= (1 << ((cmd.player.player_id == AS_PLAYER_ID_0)
-                                 ? ElementPlayer0 : ElementPlayer1));
+  m_req_player_reference_bits[cmd.player.player_id] |= (1 << ElementPlayer);
 #else
   sendErrRespResult(cmd.header.sub_code,
                     AS_MODULE_ID_AUDIO_MANAGER,
@@ -1673,8 +1758,15 @@ void AudioManager::outputmixer(AudioCommand &cmd)
                         AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
       return;
     }
-  m_req_reference_bits |= (1 << ((omix_cmd.handle == OutputMixer0)
-                                 ? ElementOutmixer0 : ElementOutmixer1));
+
+  if (omix_cmd.handle == OutputMixer0)
+    {
+      m_req_player_reference_bits[AS_PLAYER_ID_0] |= (1 << ElementOutmixer);
+    }
+  else
+    {
+      m_req_player_reference_bits[AS_PLAYER_ID_1] |= (1 << ElementOutmixer);
+    }
 #else
   sendErrRespResult(cmd.header.sub_code,
                     AS_MODULE_ID_AUDIO_MANAGER,
@@ -1933,7 +2025,7 @@ void AudioManager::setRdyOnPlay(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementPlayer0);
+      m_req_player_reference_bits[AS_PLAYER_ID_0] |= (1 << ElementPlayer);
 
       /* Deactivate OutputMixer */
 
@@ -1948,7 +2040,7 @@ void AudioManager::setRdyOnPlay(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementOutmixer0);
+      m_req_player_reference_bits[AS_PLAYER_ID_0] |= (1 << ElementOutmixer);
 
       m_active_player &= ~AS_ACTPLAYER_MAIN;
     }
@@ -1964,7 +2056,7 @@ void AudioManager::setRdyOnPlay(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementPlayer1);
+      m_req_player_reference_bits[AS_PLAYER_ID_1] |= (1 << ElementPlayer);
 
       /* Deactivate OutputMixer */
 
@@ -1979,7 +2071,7 @@ void AudioManager::setRdyOnPlay(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementOutmixer1);
+      m_req_player_reference_bits[AS_PLAYER_ID_1] |= (1 << ElementOutmixer);
 
       m_active_player &= ~AS_ACTPLAYER_SUB;
     }
@@ -2299,7 +2391,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
                            AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
          return;
        }
-      m_req_reference_bits |= (1 << ElementPlayer0);
+      m_req_player_reference_bits[AS_PLAYER_ID_0] |= (1 << ElementPlayer);
 
       /* Activate OutputMixer */
 
@@ -2320,7 +2412,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementOutmixer0);
+      m_req_player_reference_bits[AS_PLAYER_ID_0] |= (1 << ElementOutmixer);
     }
 
   if (m_active_player & AS_ACTPLAYER_SUB)
@@ -2339,7 +2431,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementPlayer1);
+      m_req_player_reference_bits[AS_PLAYER_ID_1] |= (1 << ElementPlayer);
 
       /* Activate OutputMixer */
 
@@ -2360,7 +2452,7 @@ void AudioManager::setPlayerStatus(AudioCommand &cmd)
                             AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR);
           return;
         }
-      m_req_reference_bits |= (1 << ElementOutmixer1);
+      m_req_player_reference_bits[AS_PLAYER_ID_1] |= (1 << ElementOutmixer);
     }
 #else
   sendErrRespResult(cmd.header.sub_code,
@@ -2695,16 +2787,14 @@ void AudioManager::cmpltOnReady(const AudioMngCmdCmpltResult &cmd)
 #ifdef AS_FEATURE_PLAYER_ENABLE
   if (cmd.module_id == AS_MODULE_ID_PLAYER_OBJ)
     {
-      m_req_complete_bits |= (1 << ((cmd.sub_module_id == AS_PLAYER_ID_0)
-                                      ? ElementPlayer0 : ElementPlayer1));
+      m_req_player_complete_bits[cmd.sub_module_id] |= (1 << ElementPlayer);
     }
 #endif /* AS_FEATURE_PLAYER_ENABLE */
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
   if (cmd.module_id == AS_MODULE_ID_OUTPUT_MIX_OBJ)
     {
-      m_req_complete_bits |= (1 << ((cmd.sub_module_id == OutputMixer0)
-                                      ? ElementOutmixer0 : ElementOutmixer1));
+      m_req_player_complete_bits[cmd.sub_module_id] |= (1 << ElementOutmixer);
     }
 #endif /* AS_FEATURE_OUTPUTMIX_ENABLE */
 
@@ -2741,6 +2831,14 @@ void AudioManager::cmpltOnReady(const AudioMngCmdCmpltResult &cmd)
 
   /* Check transition state */
 
+#if defined(AS_FEATURE_PLAYER_ENABLE) || defined(AS_FEATURE_OUTPUTMIX_ENABLE)
+   if (m_req_player_complete_bits[AS_PLAYER_ID_0] != m_req_player_reference_bits[AS_PLAYER_ID_0]
+    || m_req_player_complete_bits[AS_PLAYER_ID_1] != m_req_player_reference_bits[AS_PLAYER_ID_1])
+    {
+      return;
+    }
+#endif /* AS_FEATURE_PLAYER_ENABLE || AS_FEATURE_OUTPUTMIX_ENABLE */
+
   if (m_req_complete_bits != m_req_reference_bits)
     {
       return;
@@ -2752,12 +2850,15 @@ void AudioManager::cmpltOnReady(const AudioMngCmdCmpltResult &cmd)
     {
       if (m_reply_que.top().result != AS_ECODE_OK)
         {
-          if ((m_req_reference_bits & (1 << ElementPlayer0))
-           || (m_req_reference_bits & (1 << ElementPlayer1)))
+#ifdef AS_FEATURE_PLAYER_ENABLE
+          if ((m_req_player_complete_bits[AS_PLAYER_ID_0] & (1 << ElementPlayer))
+           || (m_req_player_complete_bits[AS_PLAYER_ID_1] & (1 << ElementPlayer)))
             {
                deactivatePlayer();
             }
-          else if (m_req_reference_bits & (1 << ElementRecorder))
+          else
+#endif /* AS_FEATURE_PLAYER_ENABLE */
+          if (m_req_reference_bits & (1 << ElementRecorder))
             {
               deactivateRecorder();
             }
@@ -2805,6 +2906,13 @@ void AudioManager::cmpltOnReady(const AudioMngCmdCmpltResult &cmd)
 
   m_req_reference_bits = 0;
   m_req_complete_bits = 0;
+
+#ifdef AS_FEATURE_PLAYER_ENABLE
+  m_req_player_complete_bits[AS_PLAYER_ID_0]  = 0;
+  m_req_player_reference_bits[AS_PLAYER_ID_0] = 0;
+  m_req_player_complete_bits[AS_PLAYER_ID_1]  = 0;
+  m_req_player_reference_bits[AS_PLAYER_ID_1] = 0;
+#endif /* AS_FEATURE_PLAYER_ENABLE */
 
   sendResult(result_code);
 }
@@ -2886,21 +2994,42 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
 
   if (cmd.module_id == AS_MODULE_ID_PLAYER_OBJ)
     {
-      m_req_complete_bits |= (1 << ((cmd.sub_module_id == AS_PLAYER_ID_0)
-                                      ? ElementPlayer0 : ElementPlayer1));
+      m_req_player_complete_bits[cmd.sub_module_id] |= (1 << ElementPlayer);
     }
 
   if (cmd.module_id == AS_MODULE_ID_OUTPUT_MIX_OBJ)
     {
-      m_req_complete_bits |= (1 << ((cmd.sub_module_id == OutputMixer0)
-                                      ? ElementOutmixer0 : ElementOutmixer1));
+      m_req_player_complete_bits[cmd.sub_module_id] |= (1 << ElementOutmixer);
     }
 
   /* Check transition state */
 
-  if (m_req_complete_bits != m_req_reference_bits)
+  if (AUDCMD_SETREADYSTATUS == cmd.command_code)
     {
-      return;
+      /* Wait for all completions to transition to Ready */
+
+      if (m_req_player_complete_bits[AS_PLAYER_ID_0] != m_req_player_reference_bits[AS_PLAYER_ID_0]
+       || m_req_player_complete_bits[AS_PLAYER_ID_1] != m_req_player_reference_bits[AS_PLAYER_ID_1])
+        {
+          return;
+        }
+
+      m_req_player_complete_bits[AS_PLAYER_ID_0]  = 0;
+      m_req_player_reference_bits[AS_PLAYER_ID_0] = 0;
+      m_req_player_complete_bits[AS_PLAYER_ID_1]  = 0;
+      m_req_player_reference_bits[AS_PLAYER_ID_1] = 0;
+    }
+  else
+    {
+      /* Wait for a response for each PlayerID */
+
+      if (m_req_player_complete_bits[cmd.sub_module_id] != m_req_player_reference_bits[cmd.sub_module_id])
+        {
+          return;
+        }
+
+      m_req_player_complete_bits[cmd.sub_module_id]  = 0;
+      m_req_player_reference_bits[cmd.sub_module_id] = 0;
     }
 
   /* Check result error */
@@ -2959,9 +3088,6 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
                           cmd.sub_module_id);
         return;
     }
-
-  m_req_complete_bits = 0;
-  m_req_reference_bits = 0;
 
   sendResult(result_code, 0, cmd.sub_module_id);
 #else

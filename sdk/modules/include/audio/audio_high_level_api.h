@@ -1773,6 +1773,22 @@ int AS_SendAudioCommand(AudioCommand* packet);
 int AS_ReceiveAudioResult(AudioResult* packet);
 
 /**
+ * @brief Receive Audio Result for multithread
+ *
+ * @param[out] packet: AudioResult*: Result packet
+ *
+ * @param[in] rply: Request message id
+ *
+ * @param[in] id: AsPlayerId
+ *
+ * @param[in] tmo: Timeout (ms)
+ *
+ * @retval error code
+ */
+
+int AS_ReceiveAudioResult(FAR AudioResult *packet, uint8_t id, uint32_t tmo);
+
+/**
  * @brief Activate AudioSubSystem
  *
  * @param[in] ids: AudioSubSystemIDs* Message Queue ID of Audio Module

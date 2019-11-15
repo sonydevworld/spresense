@@ -123,7 +123,8 @@ uint32_t MPPComponent::activate_apu(const char *path,
   int ret = DD_Load(filepath,
                     mpp_filter_dsp_done_callback,
                     (void *)this,
-                    &m_dsp_handler);
+                    &m_dsp_handler,
+                    DspBinTypeELFwoBind);
 
   if (ret != DSPDRV_NOERROR)
     {

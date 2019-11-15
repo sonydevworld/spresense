@@ -68,7 +68,7 @@ static MsgQueId s_manager_dtq;
 static MsgQueId s_dsp_msgq_id;
 static PoolId   s_out_pool_id;
 static PoolId   s_dsp_pool_id;
-static pid_t    s_recognizer_pid;
+static pthread_t s_recognizer_pid;
 
 static RecognizerObject *s_rcg_obj = NULL;
 
@@ -783,10 +783,9 @@ void RecognizerObject::run()
  * Public Functions
  ****************************************************************************/
 
-int AS_RecognizerObjEntry(int argc, char *argv[])
+FAR void AS_RecognizerObjEntry(FAR void *arg)
 {
   RecognizerObject::create(s_self_dtq, s_manager_dtq);
-  return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -825,12 +824,28 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_recognizer_pid = task_create("VCMD_OBJ",
-                                 150,
-                                 2048,
-                                 AS_RecognizerObjEntry,
-                                 NULL);
-  if (s_recognizer_pid < 0)
+  /* Init pthread attributes object. */
+
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = 150;
+  attr.stacksize           = 2048;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_recognizer_pid,
+                           &attr,
+                           (pthread_startroutine_t)AS_RecognizerObjEntry,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
@@ -848,7 +863,17 @@ bool AS_DeleteRecognizer(void)
       return false;
     }
 
-  task_delete(s_recognizer_pid);
+  if (s_recognizer_pid == INVALID_PROCESS_ID)
+    {
+      RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
+      return false;
+    }
+
+  pthread_cancel(s_recognizer_pid);
+  pthread_join(s_recognizer_pid, NULL);
+
+  s_recognizer_pid = INVALID_PROCESS_ID;
+
   delete s_rcg_obj;
   s_rcg_obj = NULL;
 

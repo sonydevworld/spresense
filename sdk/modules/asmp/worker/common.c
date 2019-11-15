@@ -48,11 +48,7 @@
 
 #define WORKER_RESERVED_AREA   128
 
-/* Const value with initialize value to make it to be rodata.
- * Do not remove initialize value.
- */
-
-const char __attribute__((aligned(4)))
+char __attribute__((aligned(4)))
 mpframework_reserved[WORKER_RESERVED_AREA] = "RSVD";
 
 void *wk_memset(void *s, int c, size_t n)

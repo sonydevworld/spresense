@@ -139,7 +139,7 @@ private:
 
 static CaptureCompFactory *s_pFactory = NULL;
 
-static pid_t    s_capture_pid[MAX_CAPTURE_COMP_INSTANCE_NUM];
+static pthread_t s_capture_pid[MAX_CAPTURE_COMP_INSTANCE_NUM];
 static MsgQueId s_self_dtq[MAX_CAPTURE_COMP_INSTANCE_NUM];
 static MsgQueId s_self_sync_dtq[MAX_CAPTURE_COMP_INSTANCE_NUM];
 
@@ -292,7 +292,7 @@ static void AS_CaptureNotifyDmaError(AudioDrvDmaError *p_param)
 }
 
 /*--------------------------------------------------------------------*/
-int AS_CaptureCmpEntryDev0(int argc, char *argv[])
+FAR void AS_CaptureCmpEntryDev0(FAR void *arg)
 {
   CaptureComponent *instance = s_pFactory->getCaptureCompInstance(0);
 
@@ -300,13 +300,11 @@ int AS_CaptureCmpEntryDev0(int argc, char *argv[])
                    AS_CaptureNotifyDmaError,
                    s_self_dtq[0],
                    s_self_sync_dtq[0]);
-
-  return 0;
 }
 
 /*--------------------------------------------------------------------*/
 #if MAX_CAPTURE_COMP_INSTANCE_NUM > 1
-int AS_CaptureCmpEntryDev1(int argc, char *argv[])
+FAR void AS_CaptureCmpEntryDev1(FAR void *arg)
 {
   CaptureComponent *instance = s_pFactory->getCaptureCompInstance(1);
 
@@ -314,8 +312,6 @@ int AS_CaptureCmpEntryDev1(int argc, char *argv[])
                    AS_CaptureNotifyDmaError,
                    s_self_dtq[1],
                    s_self_sync_dtq[1]);
-
-  return 0;
 }
 #endif
 
@@ -358,9 +354,9 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
       return false;
     }
 
-  s_capture_pid[0] = -1;
+  s_capture_pid[0] = INVALID_PROCESS_ID;
 #if MAX_CAPTURE_COMP_INSTANCE_NUM > 1
-  s_capture_pid[1] = -1;
+  s_capture_pid[1] = INVALID_PROCESS_ID;
 #endif
 
   /* dev0 setting */
@@ -375,13 +371,28 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
-  s_capture_pid[0] = task_create("CAPTURE_CMP_DEV0",
-                                 200,
-                                 1024 * 2,
-                                 AS_CaptureCmpEntryDev0,
-                                 NULL);
+  /* Init pthread attributes object. */
 
-  if (s_capture_pid[0] < 0)
+  pthread_attr_t attr;
+
+  pthread_attr_init(&attr);
+
+  /* Set pthread scheduling parameter. */
+
+  struct sched_param sch_param;
+
+  sch_param.sched_priority = 200;
+  attr.stacksize           = 1024 * 2;
+
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  /* Create thread. */
+
+  int ret = pthread_create(&s_capture_pid[0],
+                           &attr,
+                           (pthread_startroutine_t)AS_CaptureCmpEntryDev0,
+                           (pthread_addr_t)NULL);
+  if (ret < 0)
     {
       CAPTURE_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
@@ -398,8 +409,9 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
         || dev0_self_sync_dtq == dev1_self_sync_dtq)
         {
           CAPTURE_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-          task_delete(s_capture_pid[0]);
-          s_capture_pid[0] = -1;
+          pthread_cancel(s_capture_pid[0]);
+          pthread_join(s_capture_pid[0], NULL);
+          s_capture_pid[0] = INVALID_PROCESS_ID;
           delete s_pFactory;
           s_pFactory = NULL;
           return false;
@@ -414,13 +426,14 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
       F_ASSERT(err_code == ERR_OK);
       que->reset();
 
-      s_capture_pid[1] = task_create("CAPTURE_CMP_DEV1",
-                                     200,
-                                     1024 * 2,
-                                     AS_CaptureCmpEntryDev1,
-                                     NULL);
+      /* Create thread. */
+      /* Attributes are as same as capture dev0. */
 
-      if (s_capture_pid[1] < 0)
+      ret = pthread_create(&s_capture_pid[1],
+                           &attr,
+                           (pthread_startroutine_t)AS_CaptureCmpEntryDev1,
+                           (pthread_addr_t)NULL);
+      if (ret < 0)
         {
           CAPTURE_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
@@ -441,14 +454,16 @@ bool AS_DeleteCapture(void)
     {
       if (s_pFactory->isEmptyCaptureCompHandler())
         {
-          task_delete(s_capture_pid[0]);
-          s_capture_pid[0] = -1;
+          pthread_cancel(s_capture_pid[0]);
+          pthread_join(s_capture_pid[0], NULL);
+          s_capture_pid[0] = INVALID_PROCESS_ID;
 
 #if MAX_CAPTURE_COMP_INSTANCE_NUM > 1
-          if (s_capture_pid[1] != -1)
+          if (s_capture_pid[1] != INVALID_PROCESS_ID)
             {
-              task_delete(s_capture_pid[1]);
-              s_capture_pid[1] = -1;
+              pthread_cancel(s_capture_pid[1]);
+              pthread_join(s_capture_pid[1], NULL);
+              s_capture_pid[1] = INVALID_PROCESS_ID;
             }
 #endif
           delete s_pFactory;
