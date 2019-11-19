@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETCE_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getceres_s))
 
 /****************************************************************************
  * Private Functions
@@ -92,6 +93,28 @@ static int32_t getce_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
+ * Name: getce_parse_response
+ *
+ * Description:
+ *   Parse CE settings from response buffer.
+ *
+ * Input Parameters:
+ *  resp  Pointer to response buffer.
+ *  ce    Pointer to store CE settings.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getce_parse_response(FAR struct apicmd_cmddat_getceres_s *resp,
+                                 FAR lte_ce_setting_t *ce)
+{
+  ce->mode_a_enable = resp->mode_a_enable;
+  ce->mode_b_enable = resp->mode_b_enable;
+}
+
+/****************************************************************************
  * Name: getce_job
  *
  * Description:
@@ -108,7 +131,6 @@ static int32_t getce_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void getce_job(FAR void *arg)
 {
   int32_t                             ret;
-  uint32_t                            result = LTE_RESULT_OK;
   FAR struct apicmd_cmddat_getceres_s *data;
   lte_ce_setting_t                    ce;
   get_ce_cb_t                         callback;
@@ -122,47 +144,13 @@ static void getce_job(FAR void *arg)
     {
       if (LTE_RESULT_OK == data->result)
         {
-          if (LTE_RESULT_OK == result)
-            {
-              if (LTE_DISABLE == data->mode_a_enable)
-                {
-                  ce.mode_a_enable = LTE_DISABLE;
-                }
-              else if (LTE_ENABLE == data->mode_a_enable)
-                {
-                  ce.mode_a_enable = LTE_ENABLE;
-                }
-              else
-                {
-                  DBGIF_LOG1_ERROR("Invalid parameter. mode_a_enable:%d\n", data->mode_a_enable);
-                  result = LTE_RESULT_ERROR;
-                }
-            }
+          getce_parse_response(data, &ce);
 
-          if (LTE_RESULT_OK == result)
-            {
-              if (LTE_DISABLE == data->mode_b_enable)
-                {
-                  ce.mode_b_enable = LTE_DISABLE;
-                }
-              else if (LTE_ENABLE == data->mode_b_enable)
-                {
-                  ce.mode_b_enable = LTE_ENABLE;
-                }
-              else
-                {
-                  DBGIF_LOG1_ERROR("Invalid parameter. mode_b_enable:%d\n", data->mode_b_enable);
-                  result = LTE_RESULT_ERROR;
-                }
-            }
-
-          callback(result, &ce);
-          DBGIF_ASSERT(LTE_RESULT_OK == result, "Result parameter error.\n");
+          callback(LTE_RESULT_OK, &ce);
         }
       else
         {
           callback(LTE_RESULT_ERROR, NULL);
-          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "Result parameter error.\n");
         }
     }
   else
@@ -182,8 +170,136 @@ static void getce_job(FAR void *arg)
 }
 
 /****************************************************************************
+ * Name: lte_getce_impl
+ *
+ * Description:
+ *   Get CE settings.
+ *
+ * Input Parameters:
+ *   settings CE settings.
+ *   callback Callback function to notify when getting CE settings are
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+static int32_t lte_getce_impl(lte_ce_setting_t *settings,
+                              get_ce_cb_t callback)
+{
+  int32_t                          ret;
+  FAR uint8_t                     *reqbuff    = NULL;
+  FAR uint8_t                     *presbuff   = NULL;
+  struct apicmd_cmddat_getceres_s  resbuff;
+  uint16_t                         resbufflen = RES_DATA_LEN;
+  uint16_t                         reslen     = 0;
+  int                              sync       = (callback == NULL);
+
+  /* Check input parameter */
+
+  if (!settings && !callback)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  /* Check LTE library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  if (sync)
+    {
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_CE, callback,
+                                       getce_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
+    }
+
+  /* Allocate API command buffer to send */
+
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_CE,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
+
+  if (0 > ret)
+    {
+      goto errout;
+    }
+
+  ret = 0;
+
+  if (sync)
+    {
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse CE settings */
+
+          getce_parse_response(&resbuff, settings);
+        }
+    }
+
+  return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_CE,
+                                    getce_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_ce_sync
+ *
+ * Description:
+ *   Get CE settings.
+ *
+ * Input Parameters:
+ *   settings CE settings.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_ce_sync(lte_ce_setting_t *settings)
+{
+  return lte_getce_impl(settings, NULL);
+}
 
 /****************************************************************************
  * Name: lte_get_ce
@@ -192,85 +308,18 @@ static void getce_job(FAR void *arg)
  *   Get CE settings.
  *
  * Input Parameters:
- *   callback Callback function to notify that get CE settings is
+ *   callback Callback function to notify when getting CE settings are
  *            completed.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
 int32_t lte_get_ce(get_ce_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
-
-  /* Check Lte library status */
-
-  ret = altcombs_check_poweron_status();
-  if (0 > ret)
-    {
-      return ret;
-    }
-
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_CE);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
-    }
-
-  ret = altcomstatus_reg_statchgcb(getce_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_CE);
-      return ret;
-    }
-
-  /* Allocate API command buffer to send */
-
-  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_CE,
-    GETCE_DATA_LEN);
-  if (!cmdbuff)
-    {
-      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
-    }
-
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
-
-  if (ret < 0)
-    {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_CE);
-      altcomstatus_unreg_statchgcb(getce_status_chg_cb);
-    }
-  else
-    {
-      ret = 0;
-    }
-
-  return ret;
+  return lte_getce_impl(NULL, callback);
 }
 
 /****************************************************************************

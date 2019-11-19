@@ -2563,6 +2563,17 @@ int32_t lte_set_psm(lte_psm_setting_t *settings,
 /**
  * Get CE settings.
  *
+ * @param [out] settings: CE settings. See @ref lte_ce_setting_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_ce_sync(lte_ce_setting_t *settings);
+
+/**
+ * Get CE settings.
+ *
  * @param [in] callback: Callback function to notify when 
  *                       getting CE settings are completed.
  *
