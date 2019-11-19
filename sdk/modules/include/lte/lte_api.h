@@ -2223,6 +2223,18 @@ int32_t lte_get_imscap(get_imscap_cb_t callback);
 /**
  * Acquires the FW version information of the modem.
  *
+ * @param [out] version: The version information of the modem.
+ *                        See @ref lte_version_t
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_version_sync(lte_version_t *version);
+
+/**
+ * Acquires the FW version information of the modem.
+ *
  * @param [in] callback: Callback function to notify when
  *                       getting the version is completed.
  *
