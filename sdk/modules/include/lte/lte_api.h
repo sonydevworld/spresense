@@ -2414,6 +2414,17 @@ int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
 /**
  * Get local time.
  *
+ * @param [out] localtime: Local time. See @ref lte_localtime_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_localtime_sync(lte_localtime_t *localtime);
+
+/**
+ * Get local time.
+ *
  * @param [in] callback: Callback function to notify when
  *                       getting local time is completed.
  *
