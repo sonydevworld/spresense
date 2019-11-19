@@ -2329,6 +2329,18 @@ int32_t lte_get_imei(get_imei_cb_t callback);
 /**
  * Get Personal Identification Number settings.
  *
+ * @param [out] pinset: PIN settings information.
+ *                      See @ref lte_getpin_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_pinset_sync(lte_getpin_t *pinset);
+
+/**
+ * Get Personal Identification Number settings.
+ *
  * @param [in] callback: Callback function to notify when
  *                       getting the PIN setting is completed.
  *

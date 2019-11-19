@@ -53,7 +53,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETPINSET_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getpinsetres_s))
 
 /****************************************************************************
  * Private Functions
@@ -89,6 +90,33 @@ static int32_t getpinset_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
+ * Name: getpinset_parse_response
+ *
+ * Description:
+ *   Parse PIN settings from response buffer.
+ *
+ * Input Parameters:
+ *  resp    Pointer to response buffer.
+ *  pinset  Pointer to store PIN settings.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getpinset_parse_response(
+  FAR struct apicmd_cmddat_getpinsetres_s *resp,
+  FAR lte_getpin_t *pinset)
+{
+  pinset->enable            = resp->active;
+  pinset->status            = resp->status;
+  pinset->pin_attemptsleft  = resp->pin_attemptsleft;
+  pinset->puk_attemptsleft  = resp->puk_attemptsleft;
+  pinset->pin2_attemptsleft = resp->pin2_attemptsleft;
+  pinset->puk2_attemptsleft = resp->puk2_attemptsleft;
+}
+
+/****************************************************************************
  * Name: getpinset_job
  *
  * Description:
@@ -118,12 +146,7 @@ static void getpinset_job(FAR void *arg)
   if ((ret == 0) && (callback))
     {
       result = (int32_t)data->result;
-      pinset.enable            = data->active;
-      pinset.status            = data->status;
-      pinset.pin_attemptsleft  = data->pin_attemptsleft;
-      pinset.puk_attemptsleft  = data->puk_attemptsleft;
-      pinset.pin2_attemptsleft = data->pin2_attemptsleft;
-      pinset.puk2_attemptsleft = data->puk2_attemptsleft;
+      getpinset_parse_response(data, &pinset);
       callback(result, &pinset);
     }
   else
@@ -143,39 +166,44 @@ static void getpinset_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_pinset
+ * Name: lte_getpinset_impl
  *
  * Description:
- *   Get PIN settings information.
+ *   Get Personal Identification Number settings.
  *
  * Input Parameters:
- *   callback  Callback function to notify that
- *             get of PIN settings is completed.
+ *   pinset    PIN settings information.
+ *   callback  Callback function to notify when getting the PIN setting is
+ *             completed.
+ *             If the callback is NULL, operates with synchronous API,
+ *             otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_pinset(get_pinset_cb_t callback)
+static int32_t lte_getpinset_impl(lte_getpin_t *pinset,
+                                  get_pinset_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
+  int32_t                              ret;
+  FAR uint8_t                         *reqbuff    = NULL;
+  FAR uint8_t                         *presbuff   = NULL;
+  struct apicmd_cmddat_getpinsetres_s  resbuff;
+  uint16_t                             resbufflen = RES_DATA_LEN;
+  uint16_t                             reslen     = 0;
+  int                                  sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!pinset && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -183,55 +211,111 @@ int32_t lte_get_pinset(get_pinset_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_PINSET);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(getpinset_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_PINSET);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_PINSET, callback,
+                                       getpinset_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_PINSET,
-    GETPINSET_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_PINSET,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_PINSET);
-      altcomstatus_unreg_statchgcb(getpinset_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse PIN settings */
+
+          getpinset_parse_response(&resbuff, pinset);
+        }
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_PINSET,
+                                    getpinset_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_pinset_sync
+ *
+ * Description:
+ *   Get Personal Identification Number settings.
+ *
+ * Input Parameters:
+ *   pinset    PIN settings information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_pinset_sync(lte_getpin_t *pinset)
+{
+  return lte_getpinset_impl(pinset, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_pinset
+ *
+ * Description:
+ *   Get Personal Identification Number settings.
+ *
+ * Input Parameters:
+ *   callback  Callback function to notify when getting the PIN setting is
+ *             completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_pinset(get_pinset_cb_t callback)
+{
+  return lte_getpinset_impl(NULL, callback);
 }
 
 /****************************************************************************
