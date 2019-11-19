@@ -649,6 +649,7 @@
 
 #define LTE_PHONENO_LEN  (41)  /**< Maximum length of phone number */
 #define LTE_IMEI_LEN     (16)  /**< Maximum length of IMEI */
+#define LTE_OPERATOR_LEN (17)  /**< Maximum length of network operator */
 
 /****************************************************************************
  * Public Types
@@ -2433,6 +2434,21 @@ int32_t lte_get_localtime_sync(lte_localtime_t *localtime);
  */
 
 int32_t lte_get_localtime(get_localtime_cb_t callback);
+
+/**
+ * Get connected network operator information.
+ *
+ * @param [out] oper: A character string indicating network operator.
+ *                    It is terminated with '\0' If it is not connected,
+ *                    the first character is '\0'.
+ *                    The maximum number of network operator areas 
+ *                    must be allocated. See @ref LTE_OPERATOR_LEN.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_operator_sync(int8_t *oper);
 
 /**
  * Get connected network operator information.
