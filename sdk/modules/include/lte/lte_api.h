@@ -2588,6 +2588,17 @@ int32_t lte_get_ce(get_ce_cb_t callback);
  *
  * @param [in] settings: CE settings
  *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_ce_sync(lte_ce_setting_t *settings);
+
+/**
+ * Set CE settings.
+ *
+ * @param [in] settings: CE settings
+ *
  * @param [in] callback: Callback function to notify that
  *                       CE settings are completed.
  *

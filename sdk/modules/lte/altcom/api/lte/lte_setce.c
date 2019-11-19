@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define SETCE_DATA_LEN (sizeof(struct apicmd_cmddat_setce_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_setce_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_setceres_s))
 
 /****************************************************************************
  * Private Functions
@@ -125,7 +126,6 @@ static void setce_job(FAR void *arg)
       else
         {
           callback(LTE_RESULT_ERROR);
-          DBGIF_ASSERT(LTE_RESULT_ERROR == data->result, "result parameter error.\n");
         }
     }
   else
@@ -145,39 +145,43 @@ static void setce_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_set_ce
+ * Name: lte_setce_impl
  *
  * Description:
- *   Get CE settings.
+ *   Set CE settings.
  *
  * Input Parameters:
- *   callback Callback function to notify that set CE settings is
- *            completed.
+ *   settings CE settings.
+ *   callback Callback function to notify that CE settings are completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
+static int32_t lte_setce_impl(lte_ce_setting_t *settings,
+                              set_ce_cb_t callback)
 {
-  int32_t                        ret;
-  struct apicmd_cmddat_setce_s *cmddat;
+  int32_t                           ret;
+  FAR struct apicmd_cmddat_setce_s *reqbuff    = NULL;
+  FAR uint8_t                      *presbuff   = NULL;
+  struct apicmd_cmddat_setceres_s   resbuff;
+  uint16_t                          resbufflen = RES_DATA_LEN;
+  uint16_t                          reslen     = 0;
+  int                               sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!settings || !callback)
+  if (!settings)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -185,62 +189,110 @@ int32_t lte_set_ce(lte_ce_setting_t *settings, set_ce_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_CE);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(setce_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_SET_CE);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_SET_CE, callback,
+                                       setce_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmddat = (struct apicmd_cmddat_setce_s *)apicmdgw_cmd_allocbuff(
-    APICMDID_SET_CE, SETCE_DATA_LEN);
-  if (!cmddat)
+  reqbuff = (FAR struct apicmd_cmddat_setce_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_SET_CE, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      cmddat->mode_a_enable = settings->mode_a_enable ?
-        LTE_ENABLE : LTE_DISABLE;
-      cmddat->mode_b_enable = settings->mode_b_enable ?
-        LTE_ENABLE : LTE_DISABLE;
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((FAR uint8_t *)cmddat);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->mode_a_enable = settings->mode_a_enable;
+  reqbuff->mode_b_enable = settings->mode_b_enable;
 
-  if (ret < 0)
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
+
+  if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_SET_CE);
-      altcomstatus_unreg_statchgcb(setce_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_SET_CE,
+                                    setce_status_chg_cb);
+    }
+  return ret;
 }
 
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_set_ce_sync
+ *
+ * Description:
+ *   Set CE settings.
+ *
+ * Input Parameters:
+ *   settings CE settings.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_ce_sync(lte_ce_setting_t *settings)
+{
+  return lte_setce_impl(settings, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_set_ce
+ *
+ * Description:
+ *   Set CE settings.
+ *
+ * Input Parameters:
+ *   settings CE settings.
+ *   callback Callback function to notify that CE settings are completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_ce(lte_ce_setting_t *settings,
+                   set_ce_cb_t callback)
+{
+  return lte_setce_impl(settings, callback);
+}
 
 /****************************************************************************
  * Name: apicmdhdlr_setce
