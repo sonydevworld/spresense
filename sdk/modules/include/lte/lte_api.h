@@ -115,6 +115,12 @@
  *    - Blocks the task that called the API until 
  *      processing is completed on the modem.
  *
+ *    - If the retrun value is -EPROTO, you can get the error code 
+ *      with lte_get_errinfo.
+ *
+ *    - If the argument attribute is out, the argument must be allocated 
+ *      by the caller.
+ *
  *  - Asynchronous API
  *    - The processing result is notified by callback.
  *      The callback is invoked in the task context.
@@ -133,35 +139,51 @@
  *    - If the callback reports an error (LTE_RESULT_ERROR), 
  *      detailed error information can be acquired with lte_get_errinfo.
  *
- * | Synchronous API                 | Asynchronous API                |
- * | :------------------------------ | :------------------------------ |
- * | @ref lte_initialize             | @ref lte_radio_on               |
- * | @ref lte_finalize               | @ref lte_radio_off              |
- * | @ref lte_set_report_restart     | @ref lte_activate_pdn           |
- * | @ref lte_power_on               | @ref lte_deactivate_pdn         |
- * | @ref lte_power_off              | @ref lte_data_allow             |
- * | @ref lte_set_report_netinfo     | @ref lte_get_netinfo            |
- * | @ref lte_set_report_simstat     | @ref lte_get_imscap             |
- * | @ref lte_set_report_localtime   | @ref lte_get_version            |
- * | @ref lte_set_report_quality     | @ref lte_get_phoneno            |
- * | @ref lte_set_report_cellinfo    | @ref lte_get_imsi               |
- * | @ref lte_get_errinfo            | @ref lte_get_imei               |
- * | @ref lte_activate_pdn_cancel    | @ref lte_get_pinset             |
- * |                                 | @ref lte_set_pinenable          |
- * |                                 | @ref lte_change_pin             |
- * |                                 | @ref lte_enter_pin              |
- * |                                 | @ref lte_get_localtime          |
- * |                                 | @ref lte_get_operator           |
- * |                                 | @ref lte_get_edrx               |
- * |                                 | @ref lte_set_edrx               |
- * |                                 | @ref lte_get_psm                |
- * |                                 | @ref lte_set_psm                |
- * |                                 | @ref lte_get_ce                 |
- * |                                 | @ref lte_set_ce                 |
- * |                                 | @ref lte_get_siminfo            |
- * |                                 | @ref lte_get_dynamic_edrx_param |
- * |                                 | @ref lte_get_dynamic_psm_param  |
- * |                                 | @ref lte_get_quality            |
+ *  For some APIs, both synchronous and asynchronous APIs are available.
+ *  The correspondence table of API is as follows.
+ *  
+ *
+ * | Synchronous API                   | Asynchronous API                |
+ * | :-------------------------------- | :------------------------------ |
+ * | @ref lte_initialize               |                                 |
+ * | @ref lte_finalize                 |                                 |
+ * | @ref lte_set_report_restart       |                                 |
+ * | @ref lte_power_on                 |                                 |
+ * | @ref lte_power_off                |                                 |
+ * | @ref lte_set_report_netinfo       |                                 |
+ * | @ref lte_set_report_simstat       |                                 |
+ * | @ref lte_set_report_localtime     |                                 |
+ * | @ref lte_set_report_quality       |                                 |
+ * | @ref lte_set_report_cellinfo      |                                 |
+ * | @ref lte_get_errinfo              |                                 |
+ * | @ref lte_activate_pdn_cancel      |                                 |
+ * | @ref lte_radio_on_sync            | @ref lte_radio_on               |
+ * | @ref lte_radio_off_sync           | @ref lte_radio_off              |
+ * | @ref lte_activate_pdn_sync        | @ref lte_activate_pdn           |
+ * | @ref lte_deactivate_pdn_sync      | @ref lte_deactivate_pdn         |
+ * | @ref lte_data_allow_sync          | @ref lte_data_allow             |
+ * | @ref lte_get_netinfo_sync         | @ref lte_get_netinfo            |
+ * | @ref lte_get_imscap_sync          | @ref lte_get_imscap             |
+ * | @ref lte_get_version_sync         | @ref lte_get_version            |
+ * | @ref lte_get_phoneno_sync         | @ref lte_get_phoneno            |
+ * | @ref lte_get_imsi_sync            | @ref lte_get_imsi               |
+ * | @ref lte_get_imei_sync            | @ref lte_get_imei               |
+ * | @ref lte_get_pinset_sync          | @ref lte_get_pinset             |
+ * | @ref lte_set_pinenable_sync       | @ref lte_set_pinenable          |
+ * | @ref lte_change_pin_sync          | @ref lte_change_pin             |
+ * | @ref lte_enter_pin_sync           | @ref lte_enter_pin              |
+ * | @ref lte_get_localtime_sync       | @ref lte_get_localtime          |
+ * | @ref lte_get_operator_sync        | @ref lte_get_operator           |
+ * | @ref lte_get_edrx_sync            | @ref lte_get_edrx               |
+ * | @ref lte_set_edrx_sync            | @ref lte_set_edrx               |
+ * | @ref lte_get_psm_sync             | @ref lte_get_psm                |
+ * | @ref lte_set_psm_sync             | @ref lte_set_psm                |
+ * | @ref lte_get_ce_sync              | @ref lte_get_ce                 |
+ * | @ref lte_set_ce_sync              | @ref lte_set_ce                 |
+ * | @ref lte_get_siminfo_sync         | @ref lte_get_siminfo            |
+ * | @ref lte_get_current_edrx_sync    | @ref lte_get_current_edrx       |
+ * | @ref lte_get_current_psm_sync     | @ref lte_get_current_psm        |
+ * | @ref lte_get_quality_sync         | @ref lte_get_quality            |
  *
  */
 
