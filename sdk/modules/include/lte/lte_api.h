@@ -2464,6 +2464,51 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
  *                          Maximum number of digits is 8,
  *                          end with '\0'. (i.e. Max 9 byte)
  *
+ * @param [out] simstat: State after PIN enter.
+ *                       As below value stored.
+ * - @ref LTE_PINSTAT_READY
+ * - @ref LTE_PINSTAT_SIM_PIN
+ * - @ref LTE_PINSTAT_SIM_PUK
+ * - @ref LTE_PINSTAT_PH_SIM_PIN
+ * - @ref LTE_PINSTAT_PH_FSIM_PIN
+ * - @ref LTE_PINSTAT_PH_FSIM_PUK
+ * - @ref LTE_PINSTAT_SIM_PIN2
+ * - @ref LTE_PINSTAT_SIM_PUK2
+ * - @ref LTE_PINSTAT_PH_NET_PIN
+ * - @ref LTE_PINSTAT_PH_NET_PUK
+ * - @ref LTE_PINSTAT_PH_NETSUB_PIN
+ * - @ref LTE_PINSTAT_PH_NETSUB_PUK
+ * - @ref LTE_PINSTAT_PH_SP_PIN
+ * - @ref LTE_PINSTAT_PH_SP_PUK
+ * - @ref LTE_PINSTAT_PH_CORP_PIN
+ * - @ref LTE_PINSTAT_PH_CORP_PUK
+ *
+ * @param [out] attemptsleft: Number of attempts left.
+ *                            Set only if failed.
+ *                            If simstat is other than PIN, PUK, PIN2, PUK2,
+ *                            set the number of PIN.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_enter_pin_sync(int8_t *pincode, int8_t *new_pincode,
+                           uint8_t *simstat, uint8_t *attemptsleft);
+
+/**
+ * Enter Personal Identification Number.
+ *
+ * @param [in] pincode: Current PIN code. Minimum number of digits is 4.
+ *                      Maximum number of digits is 8, end with '\0'.
+ *                      (i.e. Max 9 byte)
+ *
+ * @param [in] new_pincode: If not used, set NULL.
+ *                          If the PIN is SIM PUK or SIM PUK2,
+ *                          the new_pincode is required.
+ *                          Minimum number of digits is 4.
+ *                          Maximum number of digits is 8,
+ *                          end with '\0'. (i.e. Max 9 byte)
+ *
  * @param [in] callback: Callback function to notify that
  *                       PIN enter is completed.
  *
