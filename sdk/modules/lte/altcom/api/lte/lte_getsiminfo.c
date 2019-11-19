@@ -54,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GET_SIMINFO_DATA_LEN (sizeof(struct apicmd_cmddat_getsiminfo_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_getsiminfo_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getsiminfo_res_s))
 
 /****************************************************************************
  * Private Functions
@@ -123,6 +124,89 @@ static int32_t getsiminfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
+ * Name: getsiminfo_parse_response
+ *
+ * Description:
+ *   Parse SIM information from response buffer.
+ *
+ * Input Parameters:
+ *  resp     Pointer to response buffer.
+ *  siminfo  Pointer to store SIM information.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getsiminfo_parse_response(
+  FAR struct apicmd_cmddat_getsiminfo_res_s *resp,
+  FAR lte_siminfo_t *siminfo)
+{
+  siminfo->option = ntohl(resp->option);
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_MCCMNC)
+    {
+      if (LTE_MNC_DIGIT_MAX < resp->mnc_digit)
+        {
+          resp->mnc_digit = LTE_MNC_DIGIT_MAX;
+        }
+      memcpy(siminfo->mcc, resp->mcc, LTE_MCC_DIGIT);
+      siminfo->mnc_digit = resp->mnc_digit;
+      memcpy(siminfo->mnc, resp->mnc, resp->mnc_digit);
+    }
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_SPN)
+    {
+      if (LTE_SIMINFO_SPN_LEN < resp->spn_len)
+        {
+          resp->spn_len = LTE_SIMINFO_SPN_LEN;
+        }
+      siminfo->spn_len = resp->spn_len;
+      memcpy(siminfo->spn, resp->spn, resp->spn_len);
+    }
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_ICCID)
+    {
+      if (LTE_SIMINFO_ICCID_LEN < resp->iccid_len)
+        {
+          resp->imsi_len = LTE_SIMINFO_ICCID_LEN;
+        }
+      siminfo->iccid_len = resp->iccid_len;
+      memcpy(siminfo->iccid, resp->iccid, resp->iccid_len);
+    }
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_IMSI)
+    {
+      if (LTE_SIMINFO_IMSI_LEN < resp->imsi_len)
+        {
+          resp->imsi_len = LTE_SIMINFO_IMSI_LEN;
+        }
+      siminfo->imsi_len = resp->imsi_len;
+      memcpy(siminfo->imsi, resp->imsi, resp->imsi_len);
+    }
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_GID1)
+    {
+      if (LTE_SIMINFO_GID_LEN < resp->gid1_len)
+        {
+          resp->gid1_len = LTE_SIMINFO_GID_LEN;
+        }
+      siminfo->gid1_len = resp->gid1_len;
+      memcpy(siminfo->gid1, resp->gid1, resp->gid1_len);
+    }
+
+  if (siminfo->option & LTE_SIMINFO_GETOPT_GID2)
+    {
+      if (LTE_SIMINFO_GID_LEN < resp->gid2_len)
+        {
+          resp->gid2_len = LTE_SIMINFO_GID_LEN;
+        }
+      siminfo->gid2_len = resp->gid2_len;
+      memcpy(siminfo->gid2, resp->gid2, resp->gid2_len);
+    }
+}
+
+/****************************************************************************
  * Name: get_siminfo_job
  *
  * Description:
@@ -156,101 +240,8 @@ static void get_siminfo_job(FAR void *arg)
       memset(&siminfo, 0, sizeof(lte_siminfo_t));
       if (LTE_RESULT_OK == data->result)
         {
-          siminfo.option = ntohl(data->option);
-          if (0 > lte_getsiminfo_checkparam(siminfo.option))
-            {
-              DBGIF_LOG1_ERROR("Invalid param. Option[%d]\n", siminfo.option);
-              result = LTE_RESULT_ERROR;
-            }
-          else
-            {
-              result = LTE_RESULT_OK;
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_MCCMNC)
-                {
-                  if (LTE_MNC_DIGIT_MAX >= data->mnc_digit)
-                    {
-                      memcpy(siminfo.mcc, data->mcc, LTE_MCC_DIGIT);
-                      siminfo.mnc_digit = data->mnc_digit;
-                      memcpy(siminfo.mnc, data->mnc, data->mnc_digit);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. MNC digit [%d]\n", data->mnc_digit);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_SPN)
-                {
-                  if (LTE_SIMINFO_SPN_LEN >= data->spn_len)
-                    {
-                      siminfo.spn_len = data->spn_len;
-                      memcpy(siminfo.spn, data->spn, data->spn_len);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. SPN length [%d]\n", data->spn_len);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_ICCID)
-                {
-                  if (LTE_SIMINFO_ICCID_LEN >= data->iccid_len)
-                    {
-                      siminfo.iccid_len = data->iccid_len;
-                      memcpy(siminfo.iccid, data->iccid, data->iccid_len);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. ICCID length [%d]\n", data->iccid_len);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_IMSI)
-                {
-                  if (LTE_SIMINFO_IMSI_LEN >= data->imsi_len)
-                    {
-                      siminfo.imsi_len = data->imsi_len;
-                      memcpy(siminfo.imsi, data->imsi, data->imsi_len);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. IMSI length [%d]\n", data->imsi_len);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_GID1)
-                {
-                  if (LTE_SIMINFO_GID_LEN >= data->gid1_len)
-                    {
-                      siminfo.gid1_len = data->gid1_len;
-                      memcpy(siminfo.gid1, data->gid1, data->gid1_len);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. GID1 length [%d]\n", data->gid1_len);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-
-              if (siminfo.option & LTE_SIMINFO_GETOPT_GID2)
-                {
-                  if (LTE_SIMINFO_GID_LEN >= data->gid2_len)
-                    {
-                      siminfo.gid2_len = data->gid2_len;
-                      memcpy(siminfo.gid2, data->gid2, data->gid2_len);
-                    }
-                  else
-                    {
-                      DBGIF_LOG1_ERROR("Invalid param. GID2 length [%d]\n", data->gid2_len);
-                      result = LTE_RESULT_ERROR;
-                    }
-                }
-            }
+          getsiminfo_parse_response(data, &siminfo);
+          result = LTE_RESULT_OK;
         }
 
       callback(result, &siminfo);
@@ -268,46 +259,42 @@ static void get_siminfo_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_siminfo
+ * Name: lte_getsiminfo_impl
  *
  * Description:
- *   Get SIM infomation.
+ *   Get SIM information such as Mobile Country Code/Mobile Network Code.
  *
  * Input Parameters:
- *   callback Callback function to notify that get SIM infomation completed.
+ *   option   Indicates which parameter to get.
+ *   siminfo  SIM information.
+ *   callback Callback function to notify that get of SIM information is
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
+static int32_t lte_getsiminfo_impl(uint32_t option, lte_siminfo_t *siminfo,
+                                   get_siminfo_cb_t callback)
 {
-  int32_t     ret;
-  FAR struct apicmd_cmddat_getsiminfo_s *cmdbuff;
+  int32_t                                    ret;
+  FAR struct apicmd_cmddat_getsiminfo_s     *reqbuff    = NULL;
+  FAR struct apicmd_cmddat_getsiminfo_res_s *presbuff   = NULL;
+  uint16_t                                   resbufflen = RES_DATA_LEN;
+  uint16_t                                   reslen     = 0;
+  int                                        sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!siminfo && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
-
-  /* Check Lte library status */
-
-  ret = altcombs_check_poweron_status();
-  if (0 > ret)
-    {
-      return ret;
-    }
-
-  /* Check input param */
 
   ret = lte_getsiminfo_checkparam(option);
   if (0 > ret)
@@ -316,58 +303,136 @@ int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
+  /* Check LTE library status */
 
-  ret = altcomcallbacks_chk_reg_cb(callback, APICMDID_GET_SIMINFO);
+  ret = altcombs_check_poweron_status();
   if (0 > ret)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
-    }
-
-  ret = altcomstatus_reg_statchgcb(getsiminfo_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_SIMINFO);
       return ret;
     }
 
-  /* Accept the API
-   * Allocate API command buffer to send */
+  if (sync)
+    {
+      /* Allocate API command buffer to receive */
 
-  cmdbuff = (FAR struct apicmd_cmddat_getsiminfo_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_GET_SIMINFO,
-    GET_SIMINFO_DATA_LEN);
-  if (!cmdbuff)
+      presbuff = (FAR struct apicmd_cmddat_getsiminfo_res_s *)
+                   altcom_alloc_resbuff(resbufflen);
+      if (!presbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          return -ENOMEM;
+        }
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_SIMINFO, callback,
+                                       getsiminfo_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
+    }
+
+  /* Allocate API command buffer to send */
+
+  reqbuff = (FAR struct apicmd_cmddat_getsiminfo_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_GET_SIMINFO, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      cmdbuff->option = htonl(option);
-      ret = altcom_send_and_free((FAR uint8_t *)cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->option = htonl(option);
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, (FAR uint8_t *)presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_SIMINFO);
-      altcomstatus_unreg_statchgcb(getsiminfo_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse SIM information */
+
+          getsiminfo_parse_response(presbuff, siminfo);
+        }
+      BUFFPOOL_FREE(presbuff);
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_SIMINFO,
+                                    getsiminfo_status_chg_cb);
+    }
+  if (presbuff)
+    {
+      BUFFPOOL_FREE(presbuff);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_siminfo_sync
+ *
+ * Description:
+ *   Get SIM information such as Mobile Country Code/Mobile Network Code.
+ *
+ * Input Parameters:
+ *   option   Indicates which parameter to get.
+ *   siminfo  SIM information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_siminfo_sync(uint32_t option, lte_siminfo_t *siminfo)
+{
+  return lte_getsiminfo_impl(option, siminfo, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_siminfo
+ *
+ * Description:
+ *   Get SIM information such as Mobile Country Code/Mobile Network Code.
+ *
+ * Input Parameters:
+ *   option   Indicates which parameter to get.
+ *   callback Callback function to notify that get of SIM information is
+ *            completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
+{
+  return lte_getsiminfo_impl(option, NULL, callback);
 }
 
 /****************************************************************************

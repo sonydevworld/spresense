@@ -2720,6 +2720,26 @@ int32_t lte_get_errinfo(lte_errinfo_t *info);
  *                       - @ref LTE_SIMINFO_GETOPT_GID1
  *                       - @ref LTE_SIMINFO_GETOPT_GID2
  *
+ * @param [out] siminfo: SIM information. See @ref lte_siminfo_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_siminfo_sync(uint32_t option, lte_siminfo_t *siminfo);
+
+/**
+ * Get SIM information such as Mobile Country Code/Mobile Network Code.
+ *
+ * @param [in] option:   Indicates which parameter to get.
+ *                       Bit setting definition is as below.
+ *                       - @ref LTE_SIMINFO_GETOPT_MCCMNC
+ *                       - @ref LTE_SIMINFO_GETOPT_SPN
+ *                       - @ref LTE_SIMINFO_GETOPT_ICCID
+ *                       - @ref LTE_SIMINFO_GETOPT_IMSI
+ *                       - @ref LTE_SIMINFO_GETOPT_GID1
+ *                       - @ref LTE_SIMINFO_GETOPT_GID2
+ *
  * @param [in] callback: Callback function to notify that
  *                       get of SIM information is completed.
  *
