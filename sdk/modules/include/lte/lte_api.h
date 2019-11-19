@@ -2275,6 +2275,20 @@ int32_t lte_get_phoneno(get_phoneno_cb_t callback);
 /**
  * Get International Mobile Subscriber Identity from SIM.
  *
+ * @param [out] imsi: A character string indicating IMSI.
+ *                    It is terminated with '\0'.
+ *                    The maximum number of IMSI areas 
+ *                    must be allocated. See @ref LTE_SIMINFO_IMSI_LEN.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_imsi_sync(int8_t *imsi);
+
+/**
+ * Get International Mobile Subscriber Identity from SIM.
+ *
  * @param [in] callback: Callback function to notify when
  *                       getting IMSI is completed.
  *
