@@ -1862,6 +1862,22 @@ typedef void (*get_current_edrx_cb_t)(uint32_t result,
 
 /** Definition of callback function.
  *
+ *  Since lte_get_current_psm() is an asynchronous API,
+ *  the result is notified by this function.
+ *
+ * @param[in] result : The result of lte_get_current_psm().
+ *                     As below value stored.
+ * - @ref LTE_RESULT_OK
+ * - @ref LTE_RESULT_ERROR
+ *
+ * @param[in] settings : Current PSM settings. See @ref lte_psm_setting_t
+ */
+
+typedef void (*get_current_psm_cb_t)(uint32_t result,
+                                     lte_psm_setting_t *settings);
+
+/** Definition of callback function.
+ *
  *  Since lte_get_quality() is an asynchronous API,
  *  the quality information is notified by this function.
  *
@@ -2926,6 +2942,8 @@ int32_t lte_get_current_edrx(get_current_edrx_cb_t callback);
 /**
  * Get PSM dynamic parameter.
  *
+ * @deprecated Use @ref lte_get_current_psm instead.
+ *
  * This API can be issued after connect to the LTE network
  * with lte_activate_pdn().
  *
@@ -2937,6 +2955,40 @@ int32_t lte_get_current_edrx(get_current_edrx_cb_t callback);
  */
 
 int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback);
+
+/**
+ * Get current PSM settings.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * Get the settings negotiated between the modem and the network.
+ *
+ * @param [OUT] settings: Current PSM settings.
+ *                        See @ref lte_psm_setting_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_current_psm_sync(lte_psm_setting_t *settings);
+
+/**
+ * Get current PSM settings.
+ *
+ * This API can be issued after connect to the LTE network
+ * with lte_activate_pdn().
+ *
+ * Get the settings negotiated between the modem and the network.
+ *
+ * @param [in] callback: Callback function to notify when
+ *                       getting current PSM settings is completed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_current_psm(get_current_psm_cb_t callback);
 
 /**
  * Get communication quality information.
