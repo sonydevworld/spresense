@@ -2537,7 +2537,18 @@ int32_t lte_get_psm(get_psm_cb_t callback);
 /**
  * Set PSM settings.
  *
- * @param [in] settings: PSM settings
+ * @param [in] settings: PSM settings.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_psm_sync(lte_psm_setting_t *settings);
+
+/**
+ * Set PSM settings.
+ *
+ * @param [in] settings: PSM settings.
  *
  * @param [in] callback: Callback function to notify that 
  *                       PSM settings are completed.
