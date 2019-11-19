@@ -1982,6 +1982,18 @@ int32_t lte_radio_on(radio_on_cb_t callback);
  * If this function is called when a PDN has already been constructed, 
  * the PDN is discarded.
  *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_radio_off_sync(void);
+
+/**
+ * Exit LTE network searches with the radio off.
+ *
+ * If this function is called when a PDN has already been constructed, 
+ * the PDN is discarded.
+ *
  * @param [in] callback: Callback function to notify that
  *                       radio off is completed.
  *
