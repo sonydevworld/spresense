@@ -2112,6 +2112,24 @@ int32_t lte_activate_pdn_cancel(void);
  * @param [in] session_id: The numeric value of the session ID.
  *                         Use the value obtained by the lte_activate_pdn.
  *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_deactivate_pdn_sync(uint8_t session_id);
+
+/**
+ * Discard the constructed PDN.
+ *
+ * Discards the PDN corresponding to the session ID 
+ * obtained by lte_activate_pdn.
+ *
+ * When the discard process is successful, the IP address assigned to 
+ * the modem is released to the LTE network.
+ *
+ * @param [in] session_id: The numeric value of the session ID.
+ *                         Use the value obtained by the lte_activate_pdn.
+ *
  * @param [in] callback: Callback function to notify that
  *                       LTE PDN deactivation completed.
  *
