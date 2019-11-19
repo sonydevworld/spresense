@@ -54,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETQUALITY_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getqualityres_s))
 
 /****************************************************************************
  * Private Data
@@ -142,33 +143,38 @@ static void getquality_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_quality
+ * Name: lte_getquality_impl
  *
  * Description:
- *   Get quality.
+ *   Get communication quality information.
  *
  * Input Parameters:
- *   callback  Callback function to notify that
- *             get quality is completed.
+ *   quality   Quality information.
+ *   callback  Callback function to notify when getting quality information is
+ *             completed.
+ *             If the callback is NULL, operates with synchronous API,
+ *             otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_quality(get_quality_cb_t callback)
+static int32_t lte_getquality_impl(lte_quality_t *quality,
+                                   get_quality_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff   = NULL;
+  int32_t                               ret;
+  FAR uint8_t                          *reqbuff    = NULL;
+  FAR uint8_t                          *presbuff   = NULL;
+  struct apicmd_cmddat_getqualityres_s  resbuff;
+  uint16_t                              resbufflen = RES_DATA_LEN;
+  uint16_t                              reslen     = 0;
+  int                                   sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!quality && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
@@ -182,55 +188,111 @@ int32_t lte_get_quality(get_quality_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_QUALITY);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(getquality_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_QUALITY);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_QUALITY, callback,
+                                       getquality_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_QUALITY,
-    GETQUALITY_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_QUALITY,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_QUALITY);
-      altcomstatus_unreg_statchgcb(getquality_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse quality information */
+
+          altcombs_set_quality(quality, &resbuff.quality);
+        }
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_QUALITY,
+                                    getquality_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_quality_sync
+ *
+ * Description:
+ *   Get communication quality information.
+ *
+ * Input Parameters:
+ *   quality   Quality information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_quality_sync(lte_quality_t *quality)
+{
+  return lte_getquality_impl(quality, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_quality
+ *
+ * Description:
+ *   Get communication quality information.
+ *
+ * Input Parameters:
+ *   callback  Callback function to notify when getting quality information is
+ *             completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_quality(get_quality_cb_t callback)
+{
+  return lte_getquality_impl(NULL, callback);
 }
 
 /****************************************************************************

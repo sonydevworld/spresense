@@ -2782,6 +2782,17 @@ int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback);
 /**
  * Get communication quality information.
  *
+ * @param [out] quality: Quality information. See @ref lte_quality_t
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_quality_sync(lte_quality_t *quality);
+
+/**
+ * Get communication quality information.
+ *
  * @param [in] callback: Callback function to notify when 
  *                       getting quality information is completed.
  *
