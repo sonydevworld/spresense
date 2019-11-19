@@ -2514,6 +2514,17 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings,
 /**
  * Get PSM settings.
  *
+ * @param [out] settings: PSM settings. See @ref lte_psm_setting_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_psm_sync(lte_psm_setting_t *settings);
+
+/**
+ * Get PSM settings.
+ *
  * @param [in] callback: Callback function to notify when 
  *                       getting PSM settings are completed.
  *
