@@ -1179,11 +1179,16 @@ typedef struct lte_netinfo
 
   lte_nw_err_info_t nw_err;
 
-  /** Number of PDN status informations. */
+  /** Number of PDN status informations.
+   *  The maximum number of PDNs is @ref LTE_SESSION_ID_MAX. */
 
   uint8_t           pdn_num;
 
-  /** List of PDN status. See @ref lte_pdn_t*/
+  /** List of PDN status. See @ref lte_pdn_t
+   *
+   *  @attention When using the lte_getnetinfo, 
+   *             the maximum number of PDNs status areas must be allocated.
+   */
 
   lte_pdn_t         *pdn_stat;
 } lte_netinfo_t;
@@ -2002,6 +2007,21 @@ int32_t lte_radio_off_sync(void);
  */
 
 int32_t lte_radio_off(radio_off_cb_t callback);
+
+/**
+ * Get LTE network information.
+ *
+ * @attention The maximum number of PDNs status areas must be allocated 
+ *            before calls this API.
+ *
+ * @param [out] info: The LTE network information.
+ *                    See @ref lte_netinfo_t
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_netinfo_sync(lte_netinfo_t *info);
 
 /**
  * Get LTE network information.
