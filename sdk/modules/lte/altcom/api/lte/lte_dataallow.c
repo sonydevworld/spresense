@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define DATAALLOW_DATA_LEN (sizeof(struct apicmd_cmddat_dataallow_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_dataallow_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_dataallowres_s))
 
 /****************************************************************************
  * Private Functions
@@ -182,41 +183,39 @@ static void dataallow_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_data_allow
+ * Name: lte_dataallow_impl
  *
  * Description:
- *   Change configration of data communication allow.
+ *   Allow or disallow to data communication for specified PDN.
  *
  * Input Parameters:
- *   session_id        Target connection id.
- *   allow             General data communication allow.
- *   roaming_allow     Roaming data communication allow.
+ *   session_id        The numeric value of the session ID.
+ *   allow             Allow or disallow to data communication
+ *                     for all network.
+ *   roaming_allow     Allow or disallow to data communication
+ *                     for roaming network.
  *   callback          Callback function to notify that
- *                     change data allow completed.
+ *                     configuration has changed.
+ *                     If the callback is NULL, operates with synchronous API,
+ *                     otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
-                       uint8_t roaming_allow, data_allow_cb_t callback)
+static int32_t lte_dataallow_impl(uint8_t session_id, uint8_t allow,
+                                  uint8_t roaming_allow,
+                                  data_allow_cb_t callback)
 {
-  int32_t                                ret;
-  FAR struct apicmd_cmddat_dataallow_s *cmdbuff;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
+  int32_t                                  ret;
+  FAR struct apicmd_cmddat_dataallow_s    *reqbuff    = NULL;
+  FAR uint8_t                             *presbuff   = NULL;
+  struct apicmd_cmddat_dataallowres_s      resbuff;
+  uint16_t                                 resbufflen = RES_DATA_LEN;
+  uint16_t                                 reslen     = 0;
+  int                                      sync       = (callback == NULL);
 
   /* Check input parameter */
 
@@ -226,7 +225,7 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
       return ret;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -234,66 +233,124 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_DATA_ALLOW);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_DATA_ALLOW, callback,
+                                       dataallow_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
-  ret = altcomstatus_reg_statchgcb(dataallow_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_DATA_ALLOW);
-      return ret;
-    }
+  /* Allocate API command buffer to send */
 
-  /* Accept the API
-   * Allocate API command buffer to send */
-
-  cmdbuff = (FAR struct apicmd_cmddat_dataallow_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_DATA_ALLOW, DATAALLOW_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR struct apicmd_cmddat_dataallow_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_DATA_ALLOW, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Fill parameter. */
-
-      cmdbuff->session_id = session_id;
-      cmdbuff->data_allow = allow == LTE_DATA_ALLOW ?
-        APICMD_DATAALLOW_DATAALLOW_ALLOW :
-        APICMD_DATAALLOW_DATAALLOW_DISALLOW;
-      cmdbuff->dataroam_allow = allow == LTE_DATA_ALLOW ?
-        APICMD_DATAALLOW_DATAROAMALLOW_ALLOW :
-        APICMD_DATAALLOW_DATAROAMALLOW_DISALLOW;
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((uint8_t *)cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->session_id = session_id;
+  reqbuff->data_allow = allow == LTE_DATA_ALLOW ?
+    APICMD_DATAALLOW_DATAALLOW_ALLOW :
+    APICMD_DATAALLOW_DATAALLOW_DISALLOW;
+  reqbuff->dataroam_allow = roaming_allow == LTE_DATA_ALLOW ?
+    APICMD_DATAALLOW_DATAROAMALLOW_ALLOW :
+    APICMD_DATAALLOW_DATAROAMALLOW_DISALLOW;
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_DATA_ALLOW);
-      altcomstatus_unreg_statchgcb(dataallow_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_DATA_ALLOW,
+                                    dataallow_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_data_allow_sync
+ *
+ * Description:
+ *   Allow or disallow to data communication for specified PDN.
+ *
+ * Input Parameters:
+ *   session_id        The numeric value of the session ID.
+ *   allow             Allow or disallow to data communication
+ *                     for all network.
+ *   roaming_allow     Allow or disallow to data communication
+ *                     for roaming network.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_data_allow_sync(uint8_t session_id, uint8_t allow,
+                            uint8_t roaming_allow)
+{
+  return lte_dataallow_impl(session_id, allow, roaming_allow, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_data_allow
+ *
+ * Description:
+ *   Allow or disallow to data communication for specified PDN.
+ *
+ * Input Parameters:
+ *   session_id        The numeric value of the session ID.
+ *   allow             Allow or disallow to data communication
+ *                     for all network.
+ *   roaming_allow     Allow or disallow to data communication
+ *                     for roaming network.
+ *   callback          Callback function to notify that
+ *                     configuration has changed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
+                       uint8_t roaming_allow, data_allow_cb_t callback)
+{
+  return lte_dataallow_impl(session_id, allow, roaming_allow, callback);
 }
 
 /****************************************************************************
