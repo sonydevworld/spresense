@@ -57,7 +57,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETEDRX_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getedrxres_s))
 
 /****************************************************************************
  * Private Functions
@@ -162,8 +163,141 @@ static void getedrx_job(FAR void *arg)
 }
 
 /****************************************************************************
+ * Name: lte_getedrx_impl
+ *
+ * Description:
+ *   Get eDRX settings.
+ *
+ * Input Parameters:
+ *   settings eDRX settings.
+ *   callback Callback function to notify when getting eDRX settings are
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+static int32_t lte_getedrx_impl(lte_edrx_setting_t *settings,
+                                get_edrx_cb_t callback)
+{
+  int32_t                            ret;
+  FAR uint8_t                       *reqbuff    = NULL;
+  FAR uint8_t                       *presbuff   = NULL;
+  struct apicmd_cmddat_getedrxres_s  resbuff;
+  uint16_t                           resbufflen = RES_DATA_LEN;
+  uint16_t                           reslen     = 0;
+  int                                sync       = (callback == NULL);
+
+  /* Check input parameter */
+
+  if (!settings && !callback)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  /* Check LTE library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  if (sync)
+    {
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_EDRX, callback,
+                                       getedrx_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
+    }
+
+  /* Allocate API command buffer to send */
+
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_EDRX,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
+
+  if (0 > ret)
+    {
+      goto errout;
+    }
+
+  ret = 0;
+
+  if (sync)
+    {
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse eDRX settings */
+
+          ret = altcombs_set_edrx(&resbuff.set, settings);
+          if (0 > ret)
+            {
+              DBGIF_LOG1_ERROR("altcombs_set_edrx() failed: %d\n", ret);
+              ret = -EFAULT;
+            }
+        }
+    }
+
+  return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_EDRX,
+                                    getedrx_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_edrx_sync
+ *
+ * Description:
+ *   Get eDRX settings.
+ *
+ * Input Parameters:
+ *   settings eDRX settings.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_edrx_sync(lte_edrx_setting_t *settings)
+{
+  return lte_getedrx_impl(settings, NULL);
+}
 
 /****************************************************************************
  * Name: lte_get_edrx
@@ -172,85 +306,18 @@ static void getedrx_job(FAR void *arg)
  *   Get eDRX settings.
  *
  * Input Parameters:
- *   callback Callback function to notify that get eDRX settings is
+ *   callback Callback function to notify when getting eDRX settings are
  *            completed.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
 int32_t lte_get_edrx(get_edrx_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
-
-  /* Check Lte library status */
-
-  ret = altcombs_check_poweron_status();
-  if (0 > ret)
-    {
-      return ret;
-    }
-
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_EDRX);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
-    }
-
-  ret = altcomstatus_reg_statchgcb(getedrx_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_EDRX);
-      return ret;
-    }
-
-  /* Allocate API command buffer to send */
-
-  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_EDRX,
-    GETEDRX_DATA_LEN);
-  if (!cmdbuff)
-    {
-      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
-    }
-
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
-
-  if (ret < 0)
-    {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_EDRX);
-      altcomstatus_unreg_statchgcb(getedrx_status_chg_cb);
-    }
-  else
-    {
-      ret = 0;
-    }
-
-  return ret;
+  return lte_getedrx_impl(NULL, callback);
 }
 
 /****************************************************************************
