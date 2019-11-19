@@ -2362,6 +2362,28 @@ int32_t lte_get_pinset(get_pinset_cb_t callback);
  *                      Maximum number of digits is 8, end with '\0'.
  *                      (i.e. Max 9 byte)
  *
+ * @param [out] attemptsleft: Number of attempts left.
+ *                            Set only if failed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_pinenable_sync(bool enable, int8_t *pincode,
+                               uint8_t *attemptsleft);
+
+/**
+ * Set Personal Identification Number enable.
+ *
+ * @param [in] enable: "Enable" or "Disable".
+ *                      Definition is as below.
+ *  - @ref LTE_ENABLE
+ *  - @ref LTE_DISABLE
+ *
+ * @param [in] pincode: Current PIN code. Minimum number of digits is 4.
+ *                      Maximum number of digits is 8, end with '\0'.
+ *                      (i.e. Max 9 byte)
+ *
  * @param [in] callback: Callback function to notify that
  *                       setting of PIN enables/disables is completed.
  *
@@ -2371,6 +2393,34 @@ int32_t lte_get_pinset(get_pinset_cb_t callback);
 
 int32_t lte_set_pinenable(bool enable, int8_t *pincode,
                           set_pinenable_cb_t callback);
+
+/**
+ * Change Personal Identification Number.
+ *
+ * It can be changed only when PIN is enable.
+ *
+ * @param [in] target_pin: Target of change PIN.
+ *                      Definition is as below.
+ *  - @ref LTE_TARGET_PIN
+ *  - @ref LTE_TARGET_PIN2
+ *
+ * @param [in] pincode: Current PIN code. Minimum number of digits is 4.
+ *                      Maximum number of digits is 8, end with '\0'.
+ *                      (i.e. Max 9 byte)
+ *
+ * @param [in] new_pincode: New PIN code. Minimum number of digits is 4.
+ *                          Maximum number of digits is 8, end with '\0'.
+ *                          (i.e. Max 9 byte)
+ *
+ * @param [out] attemptsleft: Number of attempts left.
+ *                            Set only if failed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_change_pin_sync(int8_t target_pin, int8_t *pincode,
+                            int8_t *new_pincode, uint8_t *attemptsleft);
 
 /**
  * Change Personal Identification Number.
