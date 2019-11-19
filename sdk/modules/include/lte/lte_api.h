@@ -2488,7 +2488,18 @@ int32_t lte_get_edrx(get_edrx_cb_t callback);
 /**
  * Set eDRX settings.
  *
- * @param [in] settings: eDRX settings
+ * @param [in] settings: eDRX settings.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_edrx_sync(lte_edrx_setting_t *settings);
+
+/**
+ * Set eDRX settings.
+ *
+ * @param [in] settings: eDRX settings.
  *
  * @param [in] callback: Callback function to notify that 
  *                       eDRX settings are completed.

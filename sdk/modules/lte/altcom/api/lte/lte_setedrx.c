@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define SETEDRX_DATA_LEN (sizeof(struct apicmd_cmddat_setedrx_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_setedrx_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_setedrxres_s))
 #define SETEDRX_CYC_MIN  LTE_EDRX_CYC_512
 #define SETEDRX_CYC_MAX  LTE_EDRX_CYC_262144
 #define SETEDRX_PTW_MIN  LTE_EDRX_PTW_128
@@ -149,33 +150,37 @@ static void setedrx_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_set_edrx
+ * Name: lte_setedrx_impl
  *
  * Description:
- *   Get eDRX settings.
+ *   Set eDRX settings.
  *
  * Input Parameters:
- *   callback Callback function to notify that set eDRX settings is
- *            completed.
+ *   settings eDRX settings.
+ *   callback Callback function to notify that eDRX settings are completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
+static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
+                                set_edrx_cb_t callback)
 {
-  int32_t                        ret;
-  struct apicmd_cmddat_setedrx_s *cmddat;
+  int32_t                             ret;
+  FAR struct apicmd_cmddat_setedrx_s *reqbuff    = NULL;
+  FAR uint8_t                        *presbuff   = NULL;
+  struct apicmd_cmddat_setedrxres_s   resbuff;
+  uint16_t                            resbufflen = RES_DATA_LEN;
+  uint16_t                            reslen     = 0;
+  int                                 sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!settings || !callback)
+  if (!settings)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
@@ -204,7 +209,7 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
         }
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -212,61 +217,111 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings, set_edrx_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_EDRX);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(setedrx_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_SET_EDRX);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_SET_EDRX, callback,
+                                       setedrx_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmddat = (struct apicmd_cmddat_setedrx_s *)apicmdgw_cmd_allocbuff(
-    APICMDID_SET_EDRX, SETEDRX_DATA_LEN);
-  if (!cmddat)
+  reqbuff = (FAR struct apicmd_cmddat_setedrx_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_SET_EDRX, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      cmddat->acttype = APICMD_SETEDRX_ACTTYPE_WBS1;
-      cmddat->enable  = settings->enable ?
-        LTE_ENABLE : LTE_DISABLE;
-      cmddat->edrx_cycle = settings->edrx_cycle;
-      cmddat->ptw_val    = settings->ptw_val;
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((FAR uint8_t *)cmddat);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->acttype    = APICMD_SETEDRX_ACTTYPE_WBS1;
+  reqbuff->enable     = settings->enable;
+  reqbuff->edrx_cycle = settings->edrx_cycle;
+  reqbuff->ptw_val    = settings->ptw_val;
 
-  if (ret < 0)
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
+
+  if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_SET_EDRX);
-      altcomstatus_unreg_statchgcb(setedrx_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_SET_EDRX,
+                                    setedrx_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_set_edrx_sync
+ *
+ * Description:
+ *   Set eDRX settings.
+ *
+ * Input Parameters:
+ *   settings eDRX settings.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_edrx_sync(lte_edrx_setting_t *settings)
+{
+  return lte_setedrx_impl(settings, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_set_edrx
+ *
+ * Description:
+ *   Set eDRX settings.
+ *
+ * Input Parameters:
+ *   settings eDRX settings.
+ *   callback Callback function to notify that eDRX settings are completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_edrx(lte_edrx_setting_t *settings,
+                     set_edrx_cb_t callback)
+{
+  return lte_setedrx_impl(settings, callback);
 }
 
 /****************************************************************************
