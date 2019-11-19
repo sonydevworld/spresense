@@ -2197,6 +2197,20 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
 /**
  * Get whether the modem supports IMS or not.
  *
+ * @param [out] imscap: The IMS capability.
+ *                      As below value stored.
+ *  - @ref LTE_ENABLE
+ *  - @ref LTE_DISABLE
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_imscap_sync(bool *imscap);
+
+/**
+ * Get whether the modem supports IMS or not.
+ *
  * @param [in] callback: Callback function to notify when
  *                       getting IMS capability is completed.
  *
