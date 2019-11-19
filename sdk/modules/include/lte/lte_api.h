@@ -647,6 +647,8 @@
 #define LTE_SIMINFO_IMSI_LEN  (15)  /**< Maximum length of IMSI */
 #define LTE_SIMINFO_GID_LEN   (128) /**< Maximum length of GID */
 
+#define LTE_PHONENO_LEN  (41)  /**< Maximum length of phone number */
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -2243,6 +2245,20 @@ int32_t lte_get_version_sync(lte_version_t *version);
  */
 
 int32_t lte_get_version(get_ver_cb_t callback);
+
+/**
+ * Get phone number from SIM.
+ *
+ * @param [out] phoneno: A character string indicating phone number.
+ *                       It is terminated with '\0'.
+ *                       The maximum number of phone number areas 
+ *                       must be allocated. See @ref LTE_PHONENO_LEN.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_phoneno_sync(int8_t *phoneno);
 
 /**
  * Get phone number from SIM.
