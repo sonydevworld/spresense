@@ -1955,6 +1955,18 @@ int32_t lte_power_off(void);
  * @attention Attention to the following when this API calling.
  * - If SIM is PIN locked, the result will be an error.
  *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_radio_on_sync(void);
+
+/**
+ * With the radio on, to start the LTE network search.
+ *
+ * @attention Attention to the following when this API calling.
+ * - If SIM is PIN locked, the result will be an error.
+ *
  * @param [in] callback: Callback function to notify that
  *                       radio on is completed.
  *
