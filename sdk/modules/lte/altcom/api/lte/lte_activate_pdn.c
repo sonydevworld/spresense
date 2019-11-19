@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define ACTIVATEPDN_DATA_LEN (sizeof(struct apicmd_cmddat_activatepdn_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_activatepdn_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_activatepdnres_s))
 
 /****************************************************************************
  * Private Functions
@@ -249,39 +250,41 @@ static void activatepdn_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_activate_pdn
+ * Name: lte_activatepdn_impl
  *
  * Description:
- *   Activate PDN cpnnection.
+ *   Constructs a PDN with the specified APN settings.
  *
  * Input Parameters:
- *   apn        APN setting of Activate PDN.
- *   callback   Callback function to notify that activate pdn completed.
+ *   apn        The pointer of the apn setting.
+ *   pdn        The construction PDN information.
+ *   callback   Callback function to notify that PDN activation completed.
+ *              If the callback is NULL, operates with synchronous API,
+ *              otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
+static int32_t lte_activatepdn_impl(lte_apn_setting_t *apn, lte_pdn_t *pdn,
+                                    activate_pdn_cb_t callback)
 {
-  int32_t                                ret;
-  FAR struct apicmd_cmddat_activatepdn_s *cmdbuff;
+  int32_t                                    ret;
+  FAR struct apicmd_cmddat_activatepdn_s    *reqbuff    = NULL;
+  FAR struct apicmd_cmddat_activatepdnres_s *presbuff   = NULL;
+  uint16_t                                   resbufflen = RES_DATA_LEN;
+  uint16_t                                   reslen     = 0;
+  int                                        sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!pdn && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
-
-  /* Check input parameter */
 
   ret = activatepdn_check_apn(apn);
   if (0 > ret)
@@ -289,7 +292,7 @@ int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
       return ret;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -297,67 +300,138 @@ int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_ACTIVATE_PDN);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      /* Allocate API command buffer to receive */
+
+      presbuff = (FAR struct apicmd_cmddat_activatepdnres_s *)
+                   altcom_alloc_resbuff(resbufflen);
+      if (!presbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          return -ENOMEM;
+        }
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_ACTIVATE_PDN, callback,
+                                       activatepdn_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
-  ret = altcomstatus_reg_statchgcb(activatepdn_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_ACTIVATE_PDN);
-      return ret;
-    }
+  /* Allocate API command buffer to send */
 
-  /* Accept the API
-   * Allocate API command buffer to send */
-
-  cmdbuff = (FAR struct apicmd_cmddat_activatepdn_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_ACTIVATE_PDN, ACTIVATEPDN_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR struct apicmd_cmddat_activatepdn_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_ACTIVATE_PDN, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Fill parameter. */
-
-      cmdbuff->apntype = htonl(apn->apn_type);
-      cmdbuff->iptype = apn->ip_type;
-      memcpy(cmdbuff->apnname, apn->apn, strlen((char *)apn->apn));
-      cmdbuff->authtype = apn->auth_type;
-      memcpy(cmdbuff->username,
-        apn->user_name, strlen((char *)apn->user_name));
-      memcpy((void *)cmdbuff->password,
-        (char *)apn->password, strlen((char *)apn->password));
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((uint8_t *)cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->apntype  = htonl(apn->apn_type);
+  reqbuff->iptype   = apn->ip_type;
+  reqbuff->authtype = apn->auth_type;
+  memcpy(reqbuff->apnname, apn->apn, strlen((FAR char *)apn->apn));
+  memcpy(reqbuff->username,
+         apn->user_name, strlen((FAR char *)apn->user_name));
+  memcpy((FAR void *)reqbuff->password,
+         (FAR char *)apn->password, strlen((FAR char *)apn->password));
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, (FAR uint8_t *)presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_ACTIVATE_PDN);
-      altcomstatus_unreg_statchgcb(activatepdn_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      if (LTE_RESULT_OK == presbuff->result)
+        {
+          /* Parse PDN information */
+
+          altcombs_set_pdninfo(&presbuff->pdnset, pdn);
+        }
+      else
+        {
+          ret = (LTE_RESULT_CANCEL == presbuff->result) ? -ECANCELED :
+                                                          -EPROTO;
+        }
+      BUFFPOOL_FREE(presbuff);
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_ACTIVATE_PDN,
+                                    activatepdn_status_chg_cb);
+    }
+  if (presbuff)
+    {
+      BUFFPOOL_FREE(presbuff);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_activate_pdn_sync
+ *
+ * Description:
+ *   Constructs a PDN with the specified APN settings.
+ *
+ * Input Parameters:
+ *   apn        The pointer of the apn setting.
+ *   pdn        The construction PDN information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn)
+{
+  return lte_activatepdn_impl(apn, pdn, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_activate_pdn
+ *
+ * Description:
+ *   Constructs a PDN with the specified APN settings.
+ *
+ * Input Parameters:
+ *   apn        The pointer of the apn setting.
+ *   callback   Callback function to notify that PDN activation completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
+{
+  return lte_activatepdn_impl(apn, NULL, callback);
 }
 
 /****************************************************************************

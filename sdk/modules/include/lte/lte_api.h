@@ -2048,6 +2048,34 @@ int32_t lte_get_netinfo(get_netinfo_cb_t callback);
  * - The initial PDN construction may take a few minutes 
  *   depending on radio conditions.
  *
+ * - If API is not returned, please check if the APN settings are correct.
+ *
+ * @param [in] apn: The pointer of the apn setting.
+ *                  See @ref lte_apn_setting_t for valid parameters.
+ *
+ * @param [out] pdn: The construction PDN information. 
+ *                   See @ref lte_pdn_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ * If canceling, -ECANCELED is returned.
+ */
+
+int32_t lte_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn);
+
+/**
+ * Constructs a PDN with the specified APN settings.
+ *
+ * When constructs the initial PDN, 
+ * LTE_APN_TYPE_IA must be set to the APN type. 
+ *
+ * When PDN construction is successful, 
+ * an IP address is given from the LTE network.
+ *
+ * @attention Attention to the following when this API calling.
+ * - The initial PDN construction may take a few minutes 
+ *   depending on radio conditions.
+ *
  * - If the callback is not notified, please check 
  *   if the APN settings are correct.
  *
