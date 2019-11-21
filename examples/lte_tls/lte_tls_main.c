@@ -367,12 +367,6 @@ int lte_tls_main(int argc, char *argv[])
       goto exit;
     }
 
-  mbedtls_ssl_set_bio(&g_ssl,
-                      &g_server_fd,
-                      mbedtls_net_send,
-                      mbedtls_net_recv,
-                      NULL);
-
   /* 6. Start the connection.
    *    mbedtls_net_connect execute address resolution, socket create,
    *    and connect.
@@ -386,6 +380,12 @@ int lte_tls_main(int argc, char *argv[])
       printf("mbedtls_net_connect() fail\n");
       goto exit;
     }
+
+  mbedtls_ssl_set_bio(&g_ssl,
+                      &g_server_fd,
+                      mbedtls_net_send,
+                      mbedtls_net_recv,
+                      NULL);
 
   /* 7. Do SSL handshake */
 
