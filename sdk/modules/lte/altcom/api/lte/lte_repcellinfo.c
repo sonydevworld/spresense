@@ -229,8 +229,8 @@ static void repcellinfo_job(FAR void *arg)
  * Name: lte_set_report_cellinfo
  *
  * Description:
- *   Change the report setting of the cell information. The default report
- *   setting is disable.
+ *   Invoke the callback at the specified report interval.
+ *   The default report setting is disable.
  *
  * Input Parameters:
  *   cellinfo_callback Callback function to notify that cell information.
@@ -238,8 +238,8 @@ static void repcellinfo_job(FAR void *arg)
  *   period            Reporting cycle in sec (1-4233600).
  *
  * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On success, 0 is returned. On failure,
+ *   negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 

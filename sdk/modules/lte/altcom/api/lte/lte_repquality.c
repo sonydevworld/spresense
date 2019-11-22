@@ -156,19 +156,17 @@ static void repquality_job(FAR void *arg)
  * Name: lte_set_report_quality
  *
  * Description:
- *   Change the report setting of the quality information.
+ *   Invoke the callback at the specified report interval.
  *   The default report setting is disable.
  *
  * Input Parameters:
- *   quality_callback Callback function to notify that quality.
+ *   quality_callback Callback function to notify that quality information.
  *                    If NULL is set, the report setting is disabled.
  *   period           Reporting cycle in sec (1-4233600).
- *   result_callback  Callback function to notify that report setting has
- *                    changed.
  *
  * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On success, 0 is returned. On failure,
+ *   negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 

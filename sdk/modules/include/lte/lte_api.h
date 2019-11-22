@@ -2807,6 +2807,8 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback);
  *
  * The default report setting is disable.
  *
+ * @attention When changing the notification cycle, stop and start again.
+ *
  * @param [in] quality_callback: Callback function to notify that
  *                               quality information. If NULL is set,
  *                               the report setting is disabled.
@@ -2826,6 +2828,8 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
  * Invoke the callback at the specified report interval.
  *
  * The default report setting is disable.
+ *
+ * @attention When changing the notification cycle, stop and start again.
  *
  * @param [in] cellinfo_callback: Callback function to notify that
  *                                cell information. If NULL is set,
