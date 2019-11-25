@@ -72,21 +72,30 @@ static inline void* translatePoolAddrToVa(PoolAddr addr)
 
 static inline void* translateVaToPa(void* addr)
 {
-	uint32_t tileId;
-	uint32_t tileVal;
-	uint32_t cpuId;
-	uint32_t reg;
-	uint32_t pa;
-	uint32_t va;
-	
-	va = (uint32_t)addr;
-	tileId = (va >> 16) & 0xf;
-	cpuId  = *(volatile uint32_t *)((0x4c000000 | 0x02002000) + 0x40);
-	reg = (0x02012000 + 0x04) + (0x04 * (tileId / 2)) + ((cpuId - 2) * 0x20);
-	pa = *(volatile uint32_t *)(reg);
-	tileVal = ((pa >> ((tileId & 0x1) * 16)) & 0x01ff) << 16;
-	
-	return (void *)(0x0c000000 | tileVal | (va & 0xffff));
+  /* If the address is in the virtual address converter support area
+   * (0x00000000 to 0x000FFFFF), convert it to a physical address
+   */
+
+  if (addr < reinterpret_cast<void*>(0x00100000))
+    {
+      uint32_t tileId;
+      uint32_t tileVal;
+      uint32_t cpuId;
+      uint32_t reg;
+      uint32_t pa;
+      uint32_t va;
+
+      va = (uint32_t)addr;
+      tileId = (va >> 16) & 0xf;
+      cpuId  = *(volatile uint32_t *)((0x4c000000 | 0x02002000) + 0x40);
+      reg = (0x02012000 + 0x04) + (0x04 * (tileId / 2)) + ((cpuId - 2) * 0x20);
+      pa = *(volatile uint32_t *)(reg);
+      tileVal = ((pa >> ((tileId & 0x1) * 16)) & 0x01ff) << 16;
+
+      return (void *)(0x0c000000 | tileVal | (va & 0xffff));
+    }
+
+  return addr;
 }
 
 /**
