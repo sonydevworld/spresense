@@ -392,6 +392,9 @@ for lib in ${LIBLIST}; do
 	fi
 done
 
+# Copy LICENSE file
+cp -f "${SDKDIR}"/../LICENSE "${EXPORTDIR}"/LICENSE
+
 # Now tar up the whole export directory
 
 cd "${TMPDIR}" || \
