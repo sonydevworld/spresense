@@ -375,27 +375,6 @@ static int app_wait_lte_callback_with_parameter(int *result, void *param)
   return 0;
 }
 
-/****************************************************************************
- * Name: app_restart_cb
- *
- * Description:
- *   This callback is called when the startup is completed
- *   after power on the modem.
- ****************************************************************************/
-
-static void app_restart_cb(uint32_t reason)
-{
-  char *reson_string[] =
-    {
-      "Modem restart by application.",
-      "Modem restart by self."
-    };
-  printf("%s called. reason:%s\n", __func__, reson_string[reason]);
-
-  /* Notify the result to the lte_http_get sample application task */
-
-  app_mq_notify_result(reason);
-}
 
 /****************************************************************************
  * Name: app_show_errinfo
@@ -566,6 +545,135 @@ static void app_wget_cb(FAR char **buffer, int offset, int datend,
   /* Write HTTP data to standard output */
 
   (void)write(1, &((*buffer)[offset]), datend - offset);
+}
+
+/****************************************************************************
+ * Name: app_modem_recovery
+ * Description:
+ *   Recovery process executed when the modem is reset by restart callback.
+ ****************************************************************************/
+
+static void* app_modem_recovery(void *arg)
+{
+  int                     ret          = 0;
+  int                     result       = LTE_RESULT_OK;
+  lte_apn_setting_t       apnsetting   = {0};
+  uint8_t                 data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
+
+  /* Enable to receive events of local time change */
+
+  ret = lte_set_report_localtime(app_localtime_report_cb);
+  if (ret < 0)
+    {
+      printf("Failed to set report local time :%d\n", ret);
+      goto errout;
+    }
+
+  /* Radio on and start to search for network */
+
+  ret = lte_radio_on(app_radio_on_cb);
+  if (ret < 0)
+    {
+      printf("Failed to set radio on :%d\n", ret);
+      goto errout;
+    }
+
+  /* Wait until the radio on is completed and notification
+   * comes from the callback(app_radio_on_cb)
+   * registered by lte_radio_on.
+   */
+
+  ret = app_wait_lte_callback(&result);
+  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+    {
+      goto errout;
+    }
+
+  /* Set the APN to be connected.
+   * Check the APN settings of the carrier according to the your environment.
+   * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
+   * This means APN type for data traffic.
+   */
+
+  apnsetting.apn       = (int8_t*)APP_APN_NAME;
+  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+
+  /* Depending on the APN, authentication may not be necessary.
+   * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
+   * and set user_name, password to NULL.
+   */
+
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
+  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+  /* Attach to the LTE network and connect to the data PDN */
+
+  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+  if (ret < 0)
+    {
+      printf("Failed to activate PDN :%d\n", ret);
+      goto errout;
+    }
+
+  /* Wait until the connect completed and notification
+   * comes from the callback(app_activate_pdn_cb)
+   * registered by lte_activate_pdn.
+   */
+
+  ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
+  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+    {
+      goto errout;
+    }
+  pthread_exit(NULL);
+  return NULL;
+
+errout:
+  pthread_exit(NULL);
+  return NULL;
+}
+
+/****************************************************************************
+ * Name: app_restart_cb
+ *
+ * Description:
+ *   This callback is called when the startup is completed
+ *   after power on the modem.
+ ****************************************************************************/
+
+static void app_restart_cb(uint32_t reason)
+{
+  int       ret            = 0;
+  char     *reson_string[] =
+  {
+    "Modem restart by application.",
+    "Modem restart by self."
+  };
+  pthread_t thread_id;
+
+  printf("%s called. reason:%s\n", __func__, reson_string[reason]);
+
+  if(reason == LTE_RESTART_USER_INITIATED)
+    {
+
+      /* Notify the result to the lte_http_get sample application task */
+
+      app_mq_notify_result(reason);
+    }
+  else
+    {
+
+      /* Recovery process when the modem restarts */
+
+      ret = pthread_create(&thread_id, NULL, app_modem_recovery, NULL);
+      if (ret < 0)
+        {
+          printf("Failed to recovery process :%d\n", ret);
+        }
+      pthread_detach(thread_id);
+    }
 }
 
 /****************************************************************************
