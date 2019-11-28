@@ -449,6 +449,20 @@ int mptask_assign_cpus(mptask_t *task, int ncpus);
 cpuid_t mptask_getcpuid(mptask_t *task);
 
 /**
+ * Get assigned sub core ID
+ *
+ * mptask_getsubcoreid() returns assigned sub core ID for @a task.
+ *
+ * @param [in,out] task: MP task object.
+ *
+ * @return On success, mptask_getcpuid() returns sub core ID (1-5). On error, it returns
+ * an error number.
+ * @retval -ENOENT: CPU not assigned yet
+ */
+
+cpuid_t mptask_getsubcoreid(mptask_t *task);
+
+/**
  * Get assigned CPU ID list
  *
  * mptask_getcpuid() returns assigned CPU ID list for @a task. This API is used for
