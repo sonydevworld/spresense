@@ -19,6 +19,17 @@ config EXAMPLES_LTE_HTTP_GET_PROGNAME
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
+choice
+	prompt "API call type Selection"
+	default EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
+
+	config EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
+		bool "Use Synchronous API"
+
+	config EXAMPLES_LTE_HTTP_GET_USE_ASYNC_API
+		bool "Use Asynchronous API"
+endchoice
+
 config EXAMPLES_LTE_HTTP_GET_PRIORITY
 	int "lte_http_get task priority"
 	default 100
