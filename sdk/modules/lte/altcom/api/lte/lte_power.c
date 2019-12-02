@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_power.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,21 +155,19 @@ static void restart_callback(uint32_t state)
 {
   int ret;
 
-  if (ALTCOM_STATUS_POWER_ON == altcom_get_status())
+  if (ALTCOM_STATUS_POWER_ON == altcom_get_status() ||
+      ALTCOM_STATUS_RESET_ONGOING == altcom_get_status())
     {
-      /* When receive reset packet in current status power on,
-       * This case is modem reset. */
 
-      /* Call restart callback input modem restart */
+      /* When receive reset packet in current status power on or
+       * reset on going, this case is modem reset.
+       */
 
+      /* Call restart callback input modem restart. */
+
+      altcom_set_status(ALTCOM_STATUS_RESET_ONGOING);
       lte_set_report_reason(LTE_RESTART_MODEM_INITIATED);
     }
-  else
-    {
-      lte_set_report_reason(LTE_RESTART_USER_INITIATED);
-    }
-
-  altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
 
   /* Abort send apicmd for Release waiting sync API responce. */
 
@@ -255,11 +253,13 @@ int32_t lte_power_on(void)
         ret = g_halif->poweron_modem(g_halif, restart_callback);
         if (ret == 0)
           {
-            altcom_set_status(ALTCOM_STATUS_RESTART_ONGOING);
+            altcom_set_status(ALTCOM_STATUS_POWERON_ONGOING);
+            lte_set_report_reason(LTE_RESTART_USER_INITIATED);
           }
 
         break;
-      case ALTCOM_STATUS_RESTART_ONGOING:
+      case ALTCOM_STATUS_POWERON_ONGOING:
+      case ALTCOM_STATUS_RESET_ONGOING:
         ret = -EINPROGRESS;
         break;
       case ALTCOM_STATUS_POWER_ON:
@@ -301,7 +301,8 @@ int32_t lte_power_off(void)
       case ALTCOM_STATUS_INITIALIZED:
         ret = -EALREADY;
         break;
-      case ALTCOM_STATUS_RESTART_ONGOING:
+      case ALTCOM_STATUS_POWERON_ONGOING:
+      case ALTCOM_STATUS_RESET_ONGOING:
       case ALTCOM_STATUS_POWER_ON:
         if (!g_halif)
           {
