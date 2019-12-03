@@ -1,7 +1,7 @@
-/****************************************************************************
+ /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getnetinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,6 +63,8 @@
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+#define LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW "PDN buffer overflow:%d."
 
 /****************************************************************************
  * Name: getnetinfo_status_chg_cb
@@ -206,6 +209,8 @@ static void getnetinfo_job(FAR void *arg)
  *   Get LTE network information.
  *
  * Input Parameters:
+ *   pdn_num   Number of pdn_stat allocated by the user. The range is from
+ *             @ref LTE_PDN_SESSIONID_MIN to @ref LTE_PDN_SESSIONID_MAX.
  *   info      The LTE network information.
  *   callback  Callback function to notify that get network information
  *             completed.
@@ -218,7 +223,8 @@ static void getnetinfo_job(FAR void *arg)
  *
  ****************************************************************************/
 
-static int32_t lte_getnetinfo_impl(lte_netinfo_t *info,
+static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
+                                   lte_netinfo_t *info,
                                    get_netinfo_cb_t callback)
 {
   int32_t                                   ret;
@@ -227,6 +233,7 @@ static int32_t lte_getnetinfo_impl(lte_netinfo_t *info,
   uint16_t                                  resbufflen = RES_DATA_LEN;
   uint16_t                                  reslen     = 0;
   int                                       sync       = (callback == NULL);
+  lte_errinfo_t                             errinfo    = {0};
 
   /* Check input parameter */
 
@@ -252,6 +259,11 @@ static int32_t lte_getnetinfo_impl(lte_netinfo_t *info,
 
   if (sync)
     {
+      if (LTE_SESSION_ID_MIN > pdn_num || LTE_SESSION_ID_MAX < pdn_num)
+        {
+          return -EINVAL;
+        }
+
       /* Allocate API command buffer to receive */
 
       presbuff = (FAR struct apicmd_cmddat_getnetinfores_s *)
@@ -264,6 +276,7 @@ static int32_t lte_getnetinfo_impl(lte_netinfo_t *info,
     }
   else
     {
+
       /* Setup API callback */
 
       ret = altcombs_setup_apicallback(APICMDID_GET_NETINFO, callback,
@@ -303,6 +316,20 @@ static int32_t lte_getnetinfo_impl(lte_netinfo_t *info,
       ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
       if (0 == ret)
         {
+          if (pdn_num < presbuff->netinfo.pdn_count)
+          {
+            ret = -EPROTO;
+            errinfo.err_indicator = LTE_ERR_INDICATOR_ERRNO |
+                                    LTE_ERR_INDICATOR_ERRSTR;
+            errinfo.err_no = -EINVAL;
+            snprintf((char *)errinfo.err_string,
+                     LTE_ERROR_STRING_MAX_LEN - 1,
+                     LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW,
+                     presbuff->netinfo.pdn_count);
+            altcombs_set_errinfo(&errinfo);
+            goto errout;
+          }
+
           /* Parse network information */
 
           getnetinfo_parse_response(presbuff, info);
@@ -336,6 +363,8 @@ errout:
  *   Get LTE network information.
  *
  * Input Parameters:
+ *   pdn_num   Number of pdn_stat allocated by the user. The range is from
+ *             @ref LTE_PDN_SESSIONID_MIN to @ref LTE_PDN_SESSIONID_MAX.
  *   info      The LTE network information.
  *
  * Returned Value:
@@ -344,9 +373,9 @@ errout:
  *
  ****************************************************************************/
 
-int32_t lte_get_netinfo_sync(lte_netinfo_t *info)
+int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info)
 {
-  return lte_getnetinfo_impl(info, NULL);
+  return lte_getnetinfo_impl(pdn_num, info, NULL);
 }
 
 /****************************************************************************
@@ -367,7 +396,7 @@ int32_t lte_get_netinfo_sync(lte_netinfo_t *info)
 
 int32_t lte_get_netinfo(get_netinfo_cb_t callback)
 {
-  return lte_getnetinfo_impl(NULL, callback);
+  return lte_getnetinfo_impl(0, NULL, callback);
 }
 
 /****************************************************************************

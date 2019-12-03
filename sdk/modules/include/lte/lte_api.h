@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_api.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -2069,8 +2069,12 @@ int32_t lte_radio_off(radio_off_cb_t callback);
 /**
  * Get LTE network information.
  *
- * @attention The maximum number of PDNs status areas must be allocated 
+ * @attention The maximum number of PDNs status areas must be allocated
  *            before calls this API.
+ *
+ * @param [in] pdn_num: Number of pdn_stat allocated by the user.
+ *                      The range is from @ref LTE_PDN_SESSIONID_MIN to
+ *                      @ref LTE_PDN_SESSIONID_MAX.
  *
  * @param [out] info: The LTE network information.
  *                    See @ref lte_netinfo_t
@@ -2079,7 +2083,7 @@ int32_t lte_radio_off(radio_off_cb_t callback);
  * negative value is returned according to <errno.h>.
  */
 
-int32_t lte_get_netinfo_sync(lte_netinfo_t *info);
+int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info);
 
 /**
  * Get LTE network information.
