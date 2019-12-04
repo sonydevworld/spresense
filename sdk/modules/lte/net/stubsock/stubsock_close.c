@@ -72,23 +72,20 @@ int stubsock_close(FAR struct socket *psock)
     (FAR struct devspecsock_conn_s*)psock->s_conn;
   FAR struct stubsock_conn_s    *conn = ds_conn->devspec_conn;
   int                            ret;
-  int                            err;
 
   ret = altcom_close(conn->stubsockid);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("altcom_close failed: %d\n", ret);
+
+      /* Even if altcom_close returns an error, the return value of
+       * this function is normal. This is because socket resources are not
+       * released if returns an error. */
+    }
 
   /* Free the connection structure */
 
   stubsock_free(conn);
-
-  if (ret < 0)
-    {
-      /* Return with error code, but free resources. */
-
-      DBGIF_LOG1_ERROR("altcom_close failed: %d\n", ret);
-
-      err = altcom_errno();
-      return -err;
-    }
 
   return OK;
 }
