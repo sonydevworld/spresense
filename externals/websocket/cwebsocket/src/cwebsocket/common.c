@@ -36,11 +36,17 @@ char* cwebsocket_base64_encode(const unsigned char *input, int length) {
 	
 	mbedtls_base64_encode(buffer, sizeof( buffer ), &olen, input, length );
 
-	char *buff = (char *)malloc(olen);
-	memcpy(buff, buffer, olen-1); 
-	buff[olen-1] = '\0'; 
-	
-	return buff;
+	if ((olen > 1) && (olen <= 128))
+	{
+		char *buff = (char *)malloc(olen);
+		if (buff != NULL)
+		{
+			memcpy(buff, buffer, olen-1); 
+			buff[olen-1] = '\0'; 
+			return buff;
+		}
+	}
+	return NULL;
 }
 
 void cwebsocket_print_frame(cwebsocket_frame *frame) {
