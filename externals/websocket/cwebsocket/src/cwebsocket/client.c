@@ -258,7 +258,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 	WS_DEBUG ("client_connect: hostname=%s, port=%s, resource=%s, querystring=%s, secure=%i\n",
 			hostname, port, resource, querystring, (websocket->flags & WEBSOCKET_FLAG_SSL));
 
-	char handshake[CWS_HANDSHAKE_BUFFER_MAX];
+	char handshake[CWS_HANDSHAKE_BUFFER_MAX+1];
 	struct addrinfo hints, *servinfo;
 	time_t Tick0 = 0;
 	time(&Tick0);
