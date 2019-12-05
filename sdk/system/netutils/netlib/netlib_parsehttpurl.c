@@ -191,7 +191,7 @@ int netlib_parsehttpsurl(bool *https,
                          char *filename, int namelen)
 {
   int ret = OK;
-  int protocol_index;
+  int protocol_index = 0;
 //  const char *chk_protocol[3] = {"http://", "https://", NULL};
   const char *chk_protocol[3] = {g_http, g_https, NULL};
 
