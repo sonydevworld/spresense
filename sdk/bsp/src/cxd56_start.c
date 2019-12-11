@@ -77,6 +77,7 @@
 #include "nvic.h"
 #include "sched/sched.h"
 #include "init/init.h"
+#include "itm_syslog.h"
 
 #include "cxd56_uart.h"
 
@@ -331,6 +332,12 @@ void __start(void)
   /* Initialize the FPU (if configured) */
 
   fpuconfig();
+
+#ifdef CONFIG_ARMV7M_ITMSYSLOG
+  /* Perform ARMv7-M ITM SYSLOG initialization */
+
+  itm_syslog_initialize();
+#endif
 
   /* Perform early serial initialization */
 
