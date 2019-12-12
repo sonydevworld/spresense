@@ -36,7 +36,7 @@
 
 #set -x
 
-SPRBASENAME=spresenseenv
+SPRBASENAME=${1:-spresenseenv}
 
 NXTOOLURL=https://bitbucket.org/nuttx/tools
 NXTOOL=nuttx-tools
@@ -52,10 +52,14 @@ TOOLCHAINSUM_win=bc8ae26d7c429f30d583a605a4bcf9bc
 TOOLCHAINSUM_mac=a66be9828cf3c57d7d21178e07cd8904
 TOOLCHAINSUM_linux=299ebd3f1c2c90930d28ab82e5d8d6c0
 
-OPENOCDBASEURL=https://github.com/ilg-archived/openocd/releases/download
-OPENOCDRELEASE=v0.10.0-12-20190422
-OPENOCDVERDATE=0.10.0-12-20190422-2015
-OPENOCDFILE=gnu-mcu-eclipse-openocd-${OPENOCDVERDATE}
+OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
+OPENOCDRELEASE=v0.10.0-spr1
+OPENOCDVERDATE=openocd-0.10.0-spr1-20191113
+
+# This variable takes from openocd binary. Please check "openocd -v" and update if needed.
+# Open On-Chip Debugger 0.10.0+dev-00948-g7542ae67 (2019-11-25-05:46)
+#                                  ^^^^^
+OPENOCDREV=00948
 
 VERBOSE=
 
@@ -220,17 +224,28 @@ mac_install_toolchain()
     run_progress tar vjxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
 }
 
+openocd_need_update()
+{
+    [ -e ${SPRROOT}/usr/bin/openocd ] || return 0
+
+    local _rev=`${SPRROOT}/usr/bin/openocd 2>&1 | head -n1 | sed -e 's/.*dev-\([0-9]*\)-.*/\1/'`
+
+    # Test if unknown revision or revision less than OPENOCDREV
+    [ -z "${_rev}" ] || [ "${_rev}" -lt "${OPENOCDREV}" ] && return 0
+    return 1
+}
+
 linux_install_openocd()
 {
-    local _fn=${OPENOCDFILE}
+    local _fn=${OPENOCDVERDATE}
     local _sha
 
-    [ -e ${SPRROOT}/usr/bin/openocd ] && return
+    openocd_need_update || return
 	
     if [ "`uname -m 2>/dev/null`" = "x86_64" ]; then
-        _fn=${_fn}-centos64.tgz
+        _fn=${_fn}-linux64.tar.bz2
     else
-        _fn=${_fn}-centos32.tgz
+        _fn=${_fn}-linux32.tar.bz2
     fi
     _sha=${_fn}.sha
 
@@ -239,15 +254,15 @@ linux_install_openocd()
 
     shasum -c ${_sha} || exit 1
 
-    run_progress tar vzxf ${_fn}  --strip-components=3 -C ${SPRROOT}/usr || exit 1
+    run_progress tar vjxf ${_fn}  --strip-components=1 -C ${SPRROOT}/usr || exit 1
 }
 
 win_install_openocd()
 {
-    local _fn=${OPENOCDFILE}
+    local _fn=${OPENOCDVERDATE}
     local _sha=${_fn}.sha
 
-    [ -e ${SPRROOT}/usr/bin/openocd ] && return
+    openocd_need_update || return
 	
     if [ "`uname -m 2>/dev/null`" = "x86_64" ]; then
         _fn=${_fn}-win64.zip
@@ -266,23 +281,23 @@ win_install_openocd()
     # and move from appropriate directory level to SPRROOT.
 
     run_progress unzip -o  ${_fn}
-    cp -ar "GNU MCU Eclipse/OpenOCD/${OPENOCDVERDATE}/"* ${SPRROOT}/usr || exit 1
-    rm -rf "GNU MCU Eclipse"
+    cp -ar "${OPENOCDVERDATE}/"* ${SPRROOT}/usr || exit 1
+    rm -rf "${OPENOCDVERDATE}"
 }
 
 mac_install_openocd()
 {
-    local _fn=${OPENOCDFILE}-macos.tgz
+    local _fn=${OPENOCDVERDATE}-macosx.tar.bz2
     local _sha=${_fn}.sha
 
-    [ -e ${SPRROOT}/usr/bin/openocd ] && return
-	
+    openocd_need_update || return
+
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_fn} ${_fn}
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_sha} ${_sha}
 
     shasum -c ${_sha} || exit 1
 
-    run_progress tar vzxf ${_fn}  --strip-components=3 -C ${SPRROOT}/usr
+    run_progress tar vjxf ${_fn}  --strip-components=1 -C ${SPRROOT}/usr
 }
 
 while [ ! -z "$*" ]
@@ -347,7 +362,6 @@ ${OS}_install_toolchain
 # Install openocd prebuilt binary
 
 ${OS}_install_openocd
-# TODO: Download config for CXD5602 into ${SPRROOT}/usr/scripts/target
 
 # Create PATH environment setup support script
 
