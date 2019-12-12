@@ -37,9 +37,8 @@
 #define __MODULES_INCLUDE_LTE_LTE_API_H
 
 /**
- *
- * @file  lte_api.h
- * @brief LTE API definitions.
+ * @defgroup lte LTE Library API
+ * @brief LTE library for using LTE network
  *
  * - Abbreviations and terms
  *  - PDN : Packet Data Network
@@ -185,6 +184,8 @@
  * | @ref lte_get_current_psm_sync     | @ref lte_get_current_psm        |
  * | @ref lte_get_quality_sync         | @ref lte_get_quality            |
  *
+ * @{
+ * @file  lte_api.h
  */
 
 /****************************************************************************
@@ -3042,6 +3043,8 @@ int32_t lte_get_quality_sync(lte_quality_t *quality);
  */
 
 int32_t lte_get_quality(get_quality_cb_t callback);
+
+/** @} */
 
 /** @} */
 
