@@ -36,7 +36,7 @@
 
 #set -x
 
-SPRBASENAME=${1:-spresenseenv}
+SPRBASENAME=spresenseenv
 
 NXTOOLURL=https://bitbucket.org/nuttx/tools
 NXTOOL=nuttx-tools
