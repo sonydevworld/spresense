@@ -44,6 +44,8 @@
 #include "dbg_if.h"
 #include "buffpoolwrapper.h"
 #include "altcombs.h"
+#include "altcom_callbacks.h"
+#include "altcom_status.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -819,5 +821,71 @@ int32_t altcombs_set_quality(FAR lte_quality_t *data,
         }
     }
   return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_setup_apicallback
+ *
+ * Description:
+ *   Setup the callback of API.
+ *
+ * Input Parameters:
+ *   id       API command ID.
+ *   api_cb   Pointer of API callback to register.
+ *   stat_cb  Pointer of state change callback to register.
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_setup_apicallback(int32_t id, FAR void *api_cb,
+                                   altcom_stat_chg_cb_t stat_cb)
+{
+  int32_t ret;
+  /* Register API callback */
+
+  ret = altcomcallbacks_chk_reg_cb(api_cb, id);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Currently API is busy.\n");
+      return -EINPROGRESS;
+    }
+
+  /* Register state change callback */
+
+  ret = altcomstatus_reg_statchgcb(stat_cb);
+  if (0 > ret)
+    {
+      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
+      altcomcallbacks_unreg_cb(id);
+      return ret;
+    }
+
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_teardown_apicallback
+ *
+ * Description:
+ *   Teardown the callback of API.
+ *
+ * Input Parameters:
+ *   id       API command ID.
+ *   stat_cb  Pointer of state change callback to register.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+void altcombs_teardown_apicallback(int32_t id, altcom_stat_chg_cb_t stat_cb)
+{
+  /* Unregister callbacks */
+
+  altcomcallbacks_unreg_cb(id);
+  altcomstatus_unreg_statchgcb(stat_cb);
 }
 

@@ -53,7 +53,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GET_IMSCAP_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getimscapres_s))
 
 /****************************************************************************
  * Private Functions
@@ -141,38 +142,43 @@ static void get_imscap_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_imscap
+ * Name: lte_getimscap_impl
  *
  * Description:
- *   Get IMS Capability.
+ *   Get whether the modem supports IMS or not.
  *
  * Input Parameters:
- *   callback Callback function to notify that get ims capability completed.
+ *   imscap   The IMS capability.
+ *   callback Callback function to notify when getting IMS capability is
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_imscap(get_imscap_cb_t callback)
+static int32_t lte_getimscap_impl(bool *imscap, get_imscap_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
+  int32_t                              ret;
+  FAR uint8_t                         *reqbuff    = NULL;
+  FAR uint8_t                         *presbuff   = NULL;
+  struct apicmd_cmddat_getimscapres_s  resbuff;
+  uint16_t                             resbufflen = RES_DATA_LEN;
+  uint16_t                             reslen     = 0;
+  int                                  sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!imscap && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -180,56 +186,110 @@ int32_t lte_get_imscap(get_imscap_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb(callback, APICMDID_GET_IMS_CAP);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_IMS_CAP, callback,
+                                       getimscap_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
-  ret = altcomstatus_reg_statchgcb(getimscap_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_IMS_CAP);
-      return ret;
-    }
+  /* Allocate API command buffer to send */
 
-  /* Accept the API
-   * Allocate API command buffer to send */
-
-  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_IMS_CAP,
-    GET_IMSCAP_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_IMS_CAP,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_IMS_CAP);
-      altcomstatus_unreg_statchgcb(getimscap_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          *imscap = (resbuff.ims_cap == APICMD_IMSCAP_ENABLE) ?
+                      LTE_ENABLE : LTE_DISABLE;
+        }
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_IMS_CAP,
+                                    getimscap_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_imscap_sync
+ *
+ * Description:
+ *   Get whether the modem supports IMS or not.
+ *
+ * Input Parameters:
+ *   imscap   The IMS capability.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_imscap_sync(bool *imscap)
+{
+  return lte_getimscap_impl(imscap, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_imscap
+ *
+ * Description:
+ *   Get whether the modem supports IMS or not.
+ *
+ * Input Parameters:
+ *   callback Callback function to notify when getting IMS capability is
+ *            completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_imscap(get_imscap_cb_t callback)
+{
+  return lte_getimscap_impl(NULL, callback);
 }
 
 /****************************************************************************

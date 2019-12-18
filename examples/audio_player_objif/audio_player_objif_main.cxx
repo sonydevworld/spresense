@@ -545,7 +545,7 @@ static bool app_create_audio_sub_system(void)
   bool result = false;
 
   AsCreatePlayerParams_t player_create_param;
-  player_create_param.msgq_id.player = MSGQ_AUD_PLY;
+  player_create_param.msgq_id.player = MSGQ_AUD_PLY0;
   player_create_param.msgq_id.mng    = MSGQ_AUD_MNG;
   player_create_param.msgq_id.mixer  = MSGQ_AUD_OUTPUT_MIX;
   player_create_param.msgq_id.dsp    = MSGQ_AUD_DSP;
@@ -584,8 +584,8 @@ static bool app_create_audio_sub_system(void)
   /* Create renderer feature. */
 
   AsCreateRendererParam_t renderer_create_param;
-  renderer_create_param.msgq_id.dev0_req  = MSGQ_AUD_RND_PLY;
-  renderer_create_param.msgq_id.dev0_sync = MSGQ_AUD_RND_PLY_SYNC;
+  renderer_create_param.msgq_id.dev0_req  = MSGQ_AUD_RND_PLY0;
+  renderer_create_param.msgq_id.dev0_sync = MSGQ_AUD_RND_PLY0_SYNC;
   renderer_create_param.msgq_id.dev1_req  = 0xFF;
   renderer_create_param.msgq_id.dev1_sync = 0xFF;
 

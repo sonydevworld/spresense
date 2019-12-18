@@ -54,17 +54,14 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define QUALITY_DATA_LEN (sizeof(struct apicmd_cmddat_setrepquality_s))
-#define QUALITY_SETRES_DATA_LEN \
-  (sizeof(FAR struct apicmd_cmddat_setrepquality_res_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_setrepquality_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_setrepquality_res_s))
 #define QUALITY_PERIOD_MIN (1)
 #define QUALITY_PERIOD_MAX (4233600)
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
-
-static bool g_lte_setrepquality_isproc = false;
 
 /****************************************************************************
  * Private Functions
@@ -156,33 +153,30 @@ static void repquality_job(FAR void *arg)
  * Name: lte_set_report_quality
  *
  * Description:
- *   Change the report setting of the quality information.
+ *   Invoke the callback at the specified report interval.
  *   The default report setting is disable.
  *
  * Input Parameters:
- *   quality_callback Callback function to notify that quality.
+ *   quality_callback Callback function to notify that quality information.
  *                    If NULL is set, the report setting is disabled.
  *   period           Reporting cycle in sec (1-4233600).
- *   result_callback  Callback function to notify that report setting has
- *                    changed.
  *
  * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On success, 0 is returned. On failure,
+ *   negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
 int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
                                uint32_t period)
 {
-  int32_t                                      ret        = 0;
-  FAR struct apicmd_cmddat_setrepquality_s     *cmdbuff   = NULL;
-  FAR struct apicmd_cmddat_setrepquality_res_s *resbuff   = NULL;
-  uint16_t                                     resbufflen =
-                                                 QUALITY_SETRES_DATA_LEN;
-  uint16_t                                     reslen     = 0;
-  bool                                         reset_flag = false;
-  quality_report_cb_t                          callback;
+  int32_t                                       ret        = 0;
+  FAR struct apicmd_cmddat_setrepquality_res_s  resbuff    = {0};
+  uint16_t                                      resbufflen = RES_DATA_LEN;
+  FAR struct apicmd_cmddat_setrepquality_s     *reqbuff    = NULL;
+  uint16_t                                      reslen     = 0;
+
+  /* Check input parameter */
 
   if (quality_callback)
     {
@@ -193,7 +187,7 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
         }
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -201,102 +195,63 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
       return ret;
     }
 
-  if (g_lte_setrepquality_isproc)
-    {
-      return -EBUSY;
-    }
-  g_lte_setrepquality_isproc = true;
+  /* Setup API callback */
 
   if (quality_callback)
     {
-      /* Check callback is registered */
-
-      callback = altcomcallbacks_get_cb(APICMDID_SET_REP_QUALITY);
-      if (callback)
+      ret = altcombs_setup_apicallback(APICMDID_SET_REP_QUALITY,
+                                       quality_callback,
+                                       repquality_status_chg_cb);
+      if (0 > ret)
         {
-          reset_flag = true;
-        }
-      else
-        {
-          ret = altcomstatus_reg_statchgcb(repquality_status_chg_cb);
-          if (0 > ret)
-            {
-              DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-              g_lte_setrepquality_isproc = false;
-              return ret;
-            }
+          return ((ret == -EINPROGRESS) ? -EALREADY : ret);
         }
     }
 
-  /* Allocate API command buffer to send */
+   /* Allocate API command buffer to send */
 
-  cmdbuff = (FAR struct apicmd_cmddat_setrepquality_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_SET_REP_QUALITY, QUALITY_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR struct apicmd_cmddat_setrepquality_s *)
+             apicmdgw_cmd_allocbuff(APICMDID_SET_REP_QUALITY, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      g_lte_setrepquality_isproc = false;
-      return -ENOSPC;
+      ret = -ENOMEM;
+      goto errout;
     }
-  else
+
+  /* Set event field */
+
+  reqbuff->enability = !quality_callback ? LTE_DISABLE : LTE_ENABLE;
+  reqbuff->interval = htonl(period);
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff,
+                      (FAR uint8_t *)&resbuff,
+                      resbufflen,
+                      &reslen,
+                      SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
+
+  if (0 > ret)
     {
-      resbuff = (FAR struct apicmd_cmddat_setrepquality_res_s *)
-        BUFFPOOL_ALLOC(resbufflen);
-      if (!resbuff)
-        {
-          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          altcom_free_cmd((FAR uint8_t *)cmdbuff);
-          g_lte_setrepquality_isproc = false;
-          return -ENOSPC;
-        }
-
-      /* Set event field */
-
-      cmdbuff->enability = !quality_callback ?
-        LTE_DISABLE :
-        LTE_ENABLE;
-      cmdbuff->interval = htonl(period);
-
-      ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)resbuff,
-        resbufflen, &reslen, SYS_TIMEO_FEVR);
+      goto errout;
     }
-
-  if (0 <= ret && resbufflen == reslen)
+  ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EIO;
+  if (ret == 0 && !quality_callback)
     {
-      if (LTE_RESULT_OK == resbuff->result)
-        {
-          if (quality_callback)
-            {
-              if (!reset_flag)
-                {
-                  altcomcallbacks_reg_cb((void *)quality_callback,
-                                          APICMDID_SET_REP_QUALITY);
-                }
-            }
-          else
-            {
-              /* Unregistration callback. */
-
-              altcomcallbacks_unreg_cb(APICMDID_SET_REP_QUALITY);
-              altcomstatus_unreg_statchgcb(repquality_status_chg_cb);
-            }
-        }
-      else
-        {
-          DBGIF_LOG_ERROR("API command response is err.\n");
-          ret= -EIO;
-        }
+      altcombs_teardown_apicallback(APICMDID_SET_REP_QUALITY,
+                                    repquality_status_chg_cb);
     }
 
-  if (0 <= ret)
+  return ret;
+
+errout:
+  if (quality_callback)
     {
-      ret = 0;
+      altcombs_teardown_apicallback(APICMDID_SET_REP_QUALITY,
+                                    repquality_status_chg_cb);
     }
-
-  altcom_free_cmd((FAR uint8_t *)cmdbuff);
-  (void)BUFFPOOL_FREE(resbuff);
-  g_lte_setrepquality_isproc = false;
-
   return ret;
 }
 

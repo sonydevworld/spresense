@@ -60,6 +60,9 @@
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
 #include <audio/utilities/playlist.h>
 #endif
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+#include "userproc_command.h"
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
 
 /* Section number of memory layout to use */
 
@@ -547,11 +550,11 @@ static bool app_create_audio_sub_system(void)
   AsCreateOutputMixParams_t output_mix_act_param;
   output_mix_act_param.msgq_id.mixer = MSGQ_AUD_OUTPUT_MIX;
   output_mix_act_param.msgq_id.render_path0_filter_dsp = MSGQ_AUD_PFDSP0;
-  output_mix_act_param.msgq_id.render_path1_filter_dsp = MSGQ_AUD_PFDSP1;
+  output_mix_act_param.msgq_id.render_path1_filter_dsp = 0xFF;
   output_mix_act_param.pool_id.render_path0_filter_pcm = S0_PF0_PCM_BUF_POOL;
-  output_mix_act_param.pool_id.render_path1_filter_pcm = S0_PF1_PCM_BUF_POOL;
+  output_mix_act_param.pool_id.render_path1_filter_pcm = S0_NULL_POOL;
   output_mix_act_param.pool_id.render_path0_filter_dsp = S0_PF0_APU_CMD_POOL;
-  output_mix_act_param.pool_id.render_path1_filter_dsp = S0_PF1_APU_CMD_POOL;
+  output_mix_act_param.pool_id.render_path1_filter_dsp = S0_NULL_POOL;
 
   result = AS_CreateOutputMixer(&output_mix_act_param, NULL);
   if (!result)
@@ -673,15 +676,25 @@ static bool app_set_player_status(void)
 {
     AudioCommand command;
     command.header.packet_length = LENGTH_SET_PLAYER_STATUS;
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+    command.header.command_code = AUDCMD_SETPLAYERSTATUSPOST;
+#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
     command.header.command_code = AUDCMD_SETPLAYERSTATUS;
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
     command.header.sub_code = 0x00;
     command.set_player_sts_param.active_player         = AS_ACTPLAYER_MAIN;
     command.set_player_sts_param.player0.input_device  = AS_SETPLAYER_INPUTDEVICE_RAM;
     command.set_player_sts_param.player0.ram_handler   = &s_player_info.fifo.input_device;
     command.set_player_sts_param.player0.output_device = PLAYER_OUTPUT_DEV;
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+    command.set_player_sts_param.post0_enable          = PostFilterEnable;
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
     command.set_player_sts_param.player1.input_device  = 0x00;
     command.set_player_sts_param.player1.ram_handler   = NULL;
     command.set_player_sts_param.player1.output_device = 0x00;
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+    command.set_player_sts_param.post1_enable          = PostFilterDisable;
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
     AS_SendAudioCommand(&command);
 
     AudioResult result;
@@ -756,6 +769,53 @@ static bool app_set_clkmode(int clk_mode)
   AS_ReceiveAudioResult(&result);
   return printAudCmdResult(command.header.command_code, result);
 }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+static bool app_send_initpostproc_command(void)
+{
+  InitParam initpostcmd;
+
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INITMPP;
+  command.header.command_code  = AUDCMD_INITMPP;
+  command.init_mpp_param.player_id        = AS_PLAYER_ID_0;
+  command.init_mpp_param.initpp_param.addr = reinterpret_cast<uint8_t *>(&initpostcmd);
+  command.init_mpp_param.initpp_param.size = sizeof(initpostcmd);
+ 
+  /* Create Postfilter command */
+
+  AS_SendAudioCommand(&command);
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+
+}
+
+static bool app_send_setpostproc_command(void)
+{
+  static bool s_toggle = false;
+  s_toggle = (s_toggle) ? false : true;
+
+  /* Create packet area (have to ensure until API returns.)  */
+
+  SetParam setpostcmd;
+  setpostcmd.enable = s_toggle;
+
+  AudioCommand command;
+  command.header.packet_length = LENGTH_SUB_SETMPP_COMMON;
+  command.header.command_code  = AUDCMD_SETMPPPARAM;
+  command.init_mpp_param.player_id        = AS_PLAYER_ID_0;
+  command.init_mpp_param.initpp_param.addr = reinterpret_cast<uint8_t *>(&setpostcmd);
+  command.init_mpp_param.initpp_param.size = sizeof(SetParam);
+ 
+  /* Create Postfilter command */
+
+  AS_SendAudioCommand(&command);
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
 
 static bool app_init_libraries(void)
 {
@@ -1007,6 +1067,16 @@ void app_play_process(uint32_t play_time)
         {
           break;
         }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+      static int cnt = 0;
+      if (cnt++ > 100)
+        {
+          app_send_setpostproc_command();
+          cnt = 0;
+        }
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+
     } while((time(&cur_time) - start_time) < play_time);
 }
 
@@ -1213,6 +1283,12 @@ extern "C" int audio_player_main(int argc, char *argv[])
 
               goto errout_set_player_status;
             }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+           /* Init Postproc. */
+
+           app_send_initpostproc_command();
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
 
            /* Cancel output mute. */
 

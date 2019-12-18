@@ -228,7 +228,7 @@ int altcom_sendto(int sockfd, const void *buf, size_t len, int flags,
   req.to     = to;
   req.tolen  = tolen;
 
-  if (fsock->flags & ALTCOM_O_NONBLOCK)
+  if ((fsock->flags & ALTCOM_O_NONBLOCK) || (flags & ALTCOM_MSG_DONTWAIT))
     {
       /* Check send buffer is available */
 

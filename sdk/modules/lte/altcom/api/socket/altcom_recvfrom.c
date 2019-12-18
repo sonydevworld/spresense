@@ -263,7 +263,7 @@ int altcom_recvfrom(int sockfd, void *buf, size_t len, int flags,
   req.from    = from;
   req.fromlen = fromlen;
 
-  if (fsock->flags & ALTCOM_O_NONBLOCK)
+  if ((fsock->flags & ALTCOM_O_NONBLOCK) || (flags & ALTCOM_MSG_DONTWAIT))
     {
       /* Check recv buffer is available */
 

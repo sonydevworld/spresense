@@ -59,8 +59,14 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 ifeq ($(WINTOOL),y)
 CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
+ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC),y)
+CXXFLAGS += -I "${shell cygpath -w worker/userproc/include}"
+endif
 else
 CXXFLAGS += -I $(AUDIODIR)
+ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC),y)
+CXXFLAGS += -I worker/userproc/include
+endif
 endif
 
 CXXFLAGS += -D_POSIX
@@ -71,3 +77,17 @@ CONFIG_EXAMPLES_AUDIO_PLAYER_PROGNAME ?= audio_player$(EXEEXT)
 PROGNAME = $(CONFIG_EXAMPLES_AUDIO_PLAYER_PROGNAME)
 
 include $(APPDIR)/Application.mk
+
+ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC),y)
+
+build_worker:
+	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+.built: build_worker
+
+clean_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+clean: clean_worker
+
+endif

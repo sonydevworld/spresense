@@ -53,7 +53,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETLTIME_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getltimeres_s))
 
 /****************************************************************************
  * Private Functions
@@ -89,6 +90,34 @@ static int32_t getltime_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
+ * Name: getltime_parse_response
+ *
+ * Description:
+ *   Parse local time from response buffer.
+ *
+ * Input Parameters:
+ *  resp       Pointer to response buffer.
+ *  localtime  Pointer to store local time.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getltime_parse_response(
+  FAR struct apicmd_cmddat_getltimeres_s *resp,
+  FAR lte_localtime_t *localtime)
+{
+  localtime->year   = resp->ltime.year;
+  localtime->mon    = resp->ltime.month;
+  localtime->mday   = resp->ltime.day;
+  localtime->hour   = resp->ltime.hour;
+  localtime->min    = resp->ltime.minutes;
+  localtime->sec    = resp->ltime.seconds;
+  localtime->tz_sec = ntohl(resp->ltime.timezone);
+}
+
+/****************************************************************************
  * Name: getltime_job
  *
  * Description:
@@ -118,13 +147,7 @@ static void getltime_job(FAR void *arg)
   if ((ret == 0) && (callback))
     {
       result = (int32_t)data->result;
-      ltime.year   = data->ltime.year;
-      ltime.mon    = data->ltime.month;
-      ltime.mday   = data->ltime.day;
-      ltime.hour   = data->ltime.hour;
-      ltime.min    = data->ltime.minutes;
-      ltime.sec    = data->ltime.seconds;
-      ltime.tz_sec = ntohl(data->ltime.timezone);
+      getltime_parse_response(data, &ltime);
       callback(result, &ltime);
     }
   else
@@ -144,8 +167,136 @@ static void getltime_job(FAR void *arg)
 }
 
 /****************************************************************************
+ * Name: lte_getlocaltime_impl
+ *
+ * Description:
+ *   Get local time.
+ *
+ * Input Parameters:
+ *   localtime  Local time.
+ *   callback   Callback function to notify when getting local time is
+ *              completed.
+ *              If the callback is NULL, operates with synchronous API,
+ *              otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+static int32_t lte_getlocaltime_impl(lte_localtime_t *localtime,
+                                     get_localtime_cb_t callback)
+{
+  int32_t                             ret;
+  FAR uint8_t                        *reqbuff    = NULL;
+  FAR uint8_t                        *presbuff   = NULL;
+  struct apicmd_cmddat_getltimeres_s  resbuff;
+  uint16_t                            resbufflen = RES_DATA_LEN;
+  uint16_t                            reslen     = 0;
+  int                                 sync       = (callback == NULL);
+
+  /* Check input parameter */
+
+  if (!localtime && !callback)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  /* Check LTE library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  if (sync)
+    {
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_LTIME, callback,
+                                       getltime_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
+    }
+
+  /* Allocate API command buffer to send */
+
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_LTIME,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
+
+  if (0 > ret)
+    {
+      goto errout;
+    }
+
+  ret = 0;
+
+  if (sync)
+    {
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          /* Parse local time */
+
+          getltime_parse_response(&resbuff, localtime);
+        }
+    }
+
+  return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_LTIME,
+                                    getltime_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_localtime_sync
+ *
+ * Description:
+ *   Get local time.
+ *
+ * Input Parameters:
+ *   localtime  Local time.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_localtime_sync(lte_localtime_t *localtime)
+{
+  return lte_getlocaltime_impl(localtime, NULL);
+}
 
 /****************************************************************************
  * Name: lte_get_localtime
@@ -154,85 +305,18 @@ static void getltime_job(FAR void *arg)
  *   Get local time.
  *
  * Input Parameters:
- *   callback  Callback function to notify that
- *             get of local time is completed.
+ *   callback   Callback function to notify when getting local time is
+ *              completed.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
 int32_t lte_get_localtime(get_localtime_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff = NULL;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
-
-  /* Check Lte library status */
-
-  ret = altcombs_check_poweron_status();
-  if (0 > ret)
-    {
-      return ret;
-    }
-
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_LTIME);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
-    }
-
-  ret = altcomstatus_reg_statchgcb(getltime_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_LTIME);
-      return ret;
-    }
-
-  /* Allocate API command buffer to send */
-
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_LTIME,
-    GETLTIME_DATA_LEN);
-  if (!cmdbuff)
-    {
-      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
-    }
-
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
-
-  if (0 > ret)
-    {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_LTIME);
-      altcomstatus_unreg_statchgcb(getltime_status_chg_cb);
-    }
-  else
-    {
-      ret = 0;
-    }
-
-  return ret;
+  return lte_getlocaltime_impl(NULL, callback);
 }
 
 /****************************************************************************

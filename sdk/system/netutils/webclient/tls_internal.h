@@ -44,13 +44,6 @@
 void tls_socket_init(void);
 
 /**
- * Enable or disable the TLS session cache.
- * By default, the session cache is enabled.
- * @param enable 0:disable / 1:enable
- */
-void tls_socket_session_cache_enable(int enable);
-
-/**
  * Set root CA certificate information for mbedTLS.
  * @param g_ssl_ca root CA certificate information
  */

@@ -62,7 +62,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 #define TLS_MAX_SOCKETS       3
-#define TLS_MAX_SESSIONS      3
 #define TLS_CERT_FILENAME_LEN 128
 
 #ifndef CONFIG_EXTERNALS_MBEDTLS
@@ -83,13 +82,6 @@
 #if !CONFIG_EXTERNALS_MBEDTLS && !CONFIG_LTE_NET_MBEDTLS
 void
 tls_socket_init(void)
-{
-  nerr("mbedTLS is not configured. \
-        Check CONFIG_EXTERNALS_MBEDTLS or CONFIG_LTE_NET_MBEDTLS.\n");
-  return;
-}
-
-void tls_socket_session_cache_enable(int enable)
 {
   nerr("mbedTLS is not configured. \
         Check CONFIG_EXTERNALS_MBEDTLS or CONFIG_LTE_NET_MBEDTLS.\n");
@@ -150,14 +142,7 @@ typedef struct {
   mbedtls_net_context tls_net_context;
 } tls_socket_t;
 
-typedef struct {
-  mbedtls_ssl_session *session;
-  struct sockaddr address;
-} tls_session_t;
-
 static tls_socket_t g_tls_sockets[TLS_MAX_SOCKETS];
-static tls_session_t g_tls_sessions[TLS_MAX_SESSIONS];
-static int g_tls_session_cache_enabled = 1;
 static int g_tls_initialized = 0;
 static char g_tls_cert_filename[TLS_CERT_FILENAME_LEN];
 
@@ -166,9 +151,6 @@ static mbedtls_entropy_context g_entropy;
 static mbedtls_ctr_drbg_context g_ctr_drbg;
 static mbedtls_ssl_config g_ssl_conf;
 static mbedtls_x509_crt g_ssl_ca;
-
-static mbedtls_ssl_session *tls_session_find(const struct sockaddr *addr);
-static void tls_session_update(mbedtls_ssl_context *ctx, const struct sockaddr *addr);
 
 void
 tls_socket_init(void)
@@ -266,10 +248,6 @@ tls_socket_init(void)
       g_tls_sockets[i].tcp_socket = -1;
       g_tls_sockets[i].tls_context = NULL;
     }
-  for (i = 0; i < TLS_MAX_SESSIONS; i++)
-    {
-      g_tls_sessions[i].session = NULL;
-    }
 
   g_tls_initialized = 1;
 
@@ -284,11 +262,6 @@ exit:
   mbedtls_ssl_config_free(&g_ssl_conf);
   mbedtls_ctr_drbg_free(&g_ctr_drbg);
   mbedtls_entropy_free(&g_entropy);
-}
-
-void tls_socket_session_cache_enable(int enable)
-{
-  g_tls_session_cache_enabled = enable;
 }
 
 int
@@ -374,12 +347,6 @@ tls_socket_connect(int s, const char *hostname, const struct sockaddr *addr)
                       mbedtls_net_recv,
                       NULL);
 
-  mbedtls_ssl_session *session = tls_session_find(addr);
-  if (session != NULL)
-    {
-      mbedtls_ssl_set_session(tls_context, session);
-    }
-
   if ((ret = mbedtls_ssl_handshake(tls_context)) != 0)
     {
       nerr("TLS handshake failed\n");
@@ -389,7 +356,6 @@ tls_socket_connect(int s, const char *hostname, const struct sockaddr *addr)
     }
 
   ninfo("TLS handshake succeeded\n");
-  tls_session_update(tls_context, addr);
 
   return 0;
 }
@@ -419,95 +385,6 @@ int tls_socket_write(int s, const char *buf, size_t len)
 
   return mbedtls_ssl_write(g_tls_sockets[s].tls_context,
                            (unsigned char *)buf, len);
-}
-
-
-static mbedtls_ssl_session *
-tls_session_find(const struct sockaddr *addr)
-{
-  size_t i;
-  if (g_tls_session_cache_enabled)
-    {
-      for (i = 0; i < TLS_MAX_SESSIONS; i++)
-        {
-          if (g_tls_sessions[i].session != NULL &&
-              memcmp(addr,
-                     &g_tls_sessions[i].address,
-                     sizeof(struct sockaddr)) == 0)
-            {
-              return g_tls_sessions[i].session;
-            }
-        }
-    }
-
-  return NULL;
-}
-
-static void
-tls_session_update(mbedtls_ssl_context *ctx, const struct sockaddr *addr)
-{
-  int idx = -1;
-  mbedtls_ssl_session *session;
-  size_t i;
-
-  if (!g_tls_session_cache_enabled)
-    return;
-
-  /* Find an empty slot or a matching entry */
-
-  for (i = 0; i < TLS_MAX_SESSIONS; i++)
-    {
-      if (g_tls_sessions[i].session == NULL)
-        {
-          if (idx < 0)
-            {
-              idx = i;
-            }
-        }
-      else if (memcmp(addr,
-                      &g_tls_sessions[i].address,
-                      sizeof(struct sockaddr)) == 0)
-        {
-          idx = i;
-          break;
-        }
-    }
-  if (idx < 0)
-    {
-      /* Table is full, and no entry matches.
-       * Delete the oldest entry (at index 0).
-       */
-
-      session = g_tls_sessions[0].session;
-      mbedtls_ssl_session_free(session);
-      free(session);
-      for (i = 0; i < TLS_MAX_SESSIONS - 1; i++)
-        {
-          g_tls_sessions[i] = g_tls_sessions[i + 1];
-        }
-      idx = TLS_MAX_SESSIONS - 1;
-      g_tls_sessions[idx].session = NULL;
-    }
-
-  session = g_tls_sessions[idx].session;
-  if (session == NULL)
-    {
-      session = calloc(1, sizeof(mbedtls_ssl_session));
-    }
-  else
-    {
-      mbedtls_ssl_session_free(session);
-    }
-  mbedtls_ssl_session_init(session);
-  if (mbedtls_ssl_get_session(ctx, session))
-    {
-      mbedtls_ssl_session_free(session);
-      free(session);
-      g_tls_sessions[idx].session = NULL;
-      return;
-    }
-  g_tls_sessions[idx].session = session;
-  memcpy(&g_tls_sessions[idx].address, addr, sizeof(struct sockaddr));
 }
 
 void

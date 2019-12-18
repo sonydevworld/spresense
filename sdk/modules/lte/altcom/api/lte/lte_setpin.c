@@ -55,10 +55,14 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define SETPIN_LOCK_DATA_LEN \
+#define PIN_LOCK_REQ_DATA_LEN \
   (sizeof(struct apicmd_cmddat_setpinlock_s))
-#define SETPIN_CODE_DATA_LEN \
+#define PIN_LOCK_RES_DATA_LEN \
+  (sizeof(struct apicmd_cmddat_setpinlockres_s))
+#define PIN_CODE_REQ_DATA_LEN \
   (sizeof(struct apicmd_cmddat_setpincode_s))
+#define PIN_CODE_RES_DATA_LEN \
+  (sizeof(struct apicmd_cmddat_setpincoderes_s))
 
 #define SETPIN_TARGETPIN_MIN LTE_TARGET_PIN
 #define SETPIN_TARGETPIN_MAX LTE_TARGET_PIN2
@@ -221,39 +225,50 @@ static void setpin_code_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_set_pinenable
+ * Name: lte_setpinenable_impl
  *
  * Description:
  *   Set Personal Identification Number enable.
  *
  * Input Parameters:
- *   enable    "Enable" or "Disable".
- *   pincode   Current PIN code.
- *             Specify 4 to 8 digits,end with '\0'. (i.e. Max 9 byte)
- *   callback  Callback function to notify that
- *             set of PIN settings is completed.
+ *   enable        "Enable" or "Disable".
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
+ *   attemptsleft  Number of attempts left. Set only if failed.
+ *   callback      Callback function to notify that setting of PIN
+ *                 enables/disables is completed.
+ *                 If the callback is NULL, operates with synchronous API,
+ *                 otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_set_pinenable(bool enable,
-                          int8_t *pincode,
-                          set_pinenable_cb_t callback)
+static int32_t lte_setpinenable_impl(bool enable,
+                                     int8_t *pincode, uint8_t *attemptsleft,
+                                     set_pinenable_cb_t callback)
 {
-  int32_t                               ret;
-  FAR struct apicmd_cmddat_setpinlock_s *cmddat = NULL;
-  uint8_t                               pinlen  = 0;
+  int32_t                                ret;
+  FAR struct apicmd_cmddat_setpinlock_s *reqbuff    = NULL;
+  FAR uint8_t                           *presbuff   = NULL;
+  struct apicmd_cmddat_setpinlockres_s   resbuff;
+  uint16_t                               resbufflen = PIN_LOCK_RES_DATA_LEN;
+  uint16_t                               reslen     = 0;
+  int                                    sync       = (callback == NULL);
+  uint8_t                                pinlen     = 0;
 
-  /* Return error if argument is NULL */
+  /* Check input parameter */
 
-  if (!pincode || !callback)
+  if (!pincode)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  if (!attemptsleft && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
@@ -265,7 +280,7 @@ int32_t lte_set_pinenable(bool enable,
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -273,94 +288,120 @@ int32_t lte_set_pinenable(bool enable,
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_PIN_LOCK);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(setpin_lock_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_SET_PIN_LOCK);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_SET_PIN_LOCK, callback,
+                                       setpin_lock_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmddat = (FAR struct apicmd_cmddat_setpinlock_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_LOCK, SETPIN_LOCK_DATA_LEN);
-  if (!cmddat)
+  reqbuff = (FAR struct apicmd_cmddat_setpinlock_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_LOCK,
+                                     PIN_LOCK_REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      return -ENOSPC;
-    }
-  else
-    {
-      /* Get PIN settings parameters */
-
-      cmddat->mode = enable;
-      strncpy((FAR char *)cmddat->pincode,
-        (FAR char *)pincode, sizeof(cmddat->pincode));
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((FAR uint8_t *)cmddat);
+      ret = -ENOMEM;
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Get PIN input parameters */
+
+  reqbuff->mode = enable;
+  strncpy((FAR char *)reqbuff->pincode,
+          (FAR char *)pincode, sizeof(reqbuff->pincode));
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_SET_PIN_LOCK);
-      altcomstatus_unreg_statchgcb(setpin_lock_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (ret != 0)
+        {
+          *attemptsleft = resbuff.attemptsleft;
+        }
     }
 
+  return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_SET_PIN_LOCK,
+                                    setpin_lock_status_chg_cb);
+    }
   return ret;
 }
 
 /****************************************************************************
- * Name: lte_change_pin
+ * Name: lte_changepin_impl
  *
  * Description:
  *   Change Personal Identification Number.
  *
  * Input Parameters:
  *   target_pin   Target of change PIN.
- *   pincode      Current PIN code.
- *                Specify 4 to 8 digits, end with '\0'. (i.e. Max 9 byte)
- *   new_pincode  New PIN code.
- *                Specify 4 to 8 digits, end with '\0'. (i.e. Max 9 byte)
+ *   pincode      Current PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   new_pincode  New PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   attemptsleft Number of attempts left. Set only if failed.
  *   callback     Callback function to notify that
- *                change of PIN settings is completed.
+ *                change of PIN is completed.
+ *                If the callback is NULL, operates with synchronous API,
+ *                otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
-                       int8_t *new_pincode, change_pin_cb_t callback)
+static int32_t lte_changepin_impl(int8_t target_pin, int8_t *pincode,
+                                  int8_t *new_pincode, uint8_t *attemptsleft,
+                                  change_pin_cb_t callback)
 {
-  int32_t                               ret;
-  FAR struct apicmd_cmddat_setpincode_s *cmddat = NULL;
-  uint8_t                               pinlen  = 0;
+  int32_t                                ret;
+  FAR struct apicmd_cmddat_setpincode_s *reqbuff    = NULL;
+  FAR uint8_t                           *presbuff   = NULL;
+  struct apicmd_cmddat_setpincoderes_s   resbuff;
+  uint16_t                               resbufflen = PIN_CODE_RES_DATA_LEN;
+  uint16_t                               reslen     = 0;
+  int                                    sync       = (callback == NULL);
+  uint8_t                                pinlen     = 0;
 
   /* Return error if argument is NULL */
 
-  if (!pincode || !new_pincode || !callback)
+  if (!pincode || !new_pincode)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+  else if (!callback && !attemptsleft)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
@@ -384,7 +425,7 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -392,71 +433,192 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_SET_PIN_CODE);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(setpin_code_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_SET_PIN_CODE);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_SET_PIN_CODE, callback,
+                                       setpin_code_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmddat = (FAR struct apicmd_cmddat_setpincode_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_CODE, SETPIN_CODE_DATA_LEN);
-  if (!cmddat)
+  reqbuff = (FAR struct apicmd_cmddat_setpincode_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_CODE,
+                                     PIN_CODE_REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      ret = -ENOSPC;
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  if (LTE_TARGET_PIN == target_pin)
+    {
+      reqbuff->chgtype = APICMD_SETPINCODE_CHGTYPE_PIN;
     }
   else
     {
-      /* Get PIN settings parameters */
-
-      if (LTE_TARGET_PIN == target_pin)
-        {
-          cmddat->chgtype = APICMD_SETPINCODE_CHGTYPE_PIN;
-        }
-      else
-        {
-          cmddat->chgtype = APICMD_SETPINCODE_CHGTYPE_PIN2;
-        }
-
-      strncpy((FAR char *)cmddat->pincode,
-        (FAR char *)pincode, sizeof(cmddat->pincode));
-      strncpy((FAR char *)cmddat->newpincode,
-        (FAR char *)new_pincode, sizeof(cmddat->newpincode));
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((FAR uint8_t *)cmddat);
+      reqbuff->chgtype = APICMD_SETPINCODE_CHGTYPE_PIN2;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  strncpy((FAR char *)reqbuff->pincode,
+          (FAR char *)pincode, sizeof(reqbuff->pincode));
+  strncpy((FAR char *)reqbuff->newpincode,
+          (FAR char *)new_pincode, sizeof(reqbuff->newpincode));
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_SET_PIN_CODE);
-      altcomstatus_unreg_statchgcb(setpin_code_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (ret != 0)
+        {
+          *attemptsleft = resbuff.attemptsleft;
+        }
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_SET_PIN_CODE,
+                                    setpin_code_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_set_pinenable_sync
+ *
+ * Description:
+ *   Set Personal Identification Number enable.
+ *
+ * Input Parameters:
+ *   enable        "Enable" or "Disable".
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
+ *   attemptsleft  Number of attempts left. Set only if failed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_pinenable_sync(bool enable, int8_t *pincode,
+                               uint8_t *attemptsleft)
+{
+  return lte_setpinenable_impl(enable, pincode, attemptsleft, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_set_pinenable
+ *
+ * Description:
+ *   Set Personal Identification Number enable.
+ *
+ * Input Parameters:
+ *   enable        "Enable" or "Disable".
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
+ *   callback      Callback function to notify that setting of PIN
+ *                 enables/disables is completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_pinenable(bool enable, int8_t *pincode,
+                          set_pinenable_cb_t callback)
+{
+  return lte_setpinenable_impl(enable, pincode, NULL, callback);
+}
+
+/****************************************************************************
+ * Name: lte_change_pin_sync
+ *
+ * Description:
+ *   Change Personal Identification Number.
+ *
+ * Input Parameters:
+ *   target_pin   Target of change PIN.
+ *   pincode      Current PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   new_pincode  New PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   attemptsleft Number of attempts left. Set only if failed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_change_pin_sync(int8_t target_pin, int8_t *pincode,
+                            int8_t *new_pincode, uint8_t *attemptsleft)
+{
+  return lte_changepin_impl(target_pin, pincode, new_pincode, attemptsleft,
+                            NULL);
+}
+
+/****************************************************************************
+ * Name: lte_change_pin
+ *
+ * Description:
+ *   Change Personal Identification Number.
+ *
+ * Input Parameters:
+ *   target_pin   Target of change PIN.
+ *   pincode      Current PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   new_pincode  New PIN code. Minimum number of digits is 4.
+ *                Maximum number of digits is 8, end with '\0'.
+ *                (i.e. Max 9 byte)
+ *   callback     Callback function to notify that
+ *                change of PIN is completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
+                       int8_t *new_pincode, change_pin_cb_t callback)
+{
+  return lte_changepin_impl(target_pin, pincode, new_pincode, NULL, callback);
 }
 
 /****************************************************************************

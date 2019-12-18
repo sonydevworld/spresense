@@ -324,7 +324,7 @@ typedef struct
 
 typedef struct
 {
-  /*! \brief [in] Message queue id of voice recognizer */
+  /*! \brief [in] Message queue id of sound recognizer */
 
   uint8_t recognizer;
 
@@ -342,11 +342,11 @@ typedef struct
 
 typedef struct
 {
-  /*! \brief [in] Memory pool id of wuwsr input data */
+  /*! \brief [in] Memory pool id of recognition result data */
 
   MemMgrLite::PoolId out;
 
-  /*! \brief [in] Message queue id of DSP */
+  /*! \brief [in] Memory pool id of DSP communication Message */
 
   MemMgrLite::PoolId dsp;
 

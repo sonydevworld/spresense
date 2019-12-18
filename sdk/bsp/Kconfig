@@ -432,13 +432,15 @@ config CXD56_DMAC_SPI4_TX_CH
 	int "TX channel"
 	default 2
 	range 2 6
+	---help---
+		Deprecated
 
 config CXD56_DMAC_SPI4_TX_MAXSIZE
 	int "Max size to be sent in bytes"
 	default 192000
 	range 1 1572864
 	---help---
-		This value should be same as RX.
+		Deprecated. This value should be same as RX.
 
 endif # CXD56_DMAC_SPI4_TX
 
@@ -456,13 +458,15 @@ config CXD56_DMAC_SPI4_RX_CH
 	int "RX channel"
 	default 3
 	range 2 6
+	---help---
+		Deprecated
 
 config CXD56_DMAC_SPI4_RX_MAXSIZE
 	int "Max size to be received in bytes"
 	default 192000
 	range 1 1572864
 	---help---
-		This value should be same as TX.
+		Deprecated. This value should be same as TX.
 
 endif # CXD56_DMAC_SPI4_RX
 
@@ -501,13 +505,15 @@ config CXD56_DMAC_SPI5_TX_CH
 	int "TX channel"
 	default 4
 	range 2 6
+	---help---
+		Deprecated
 
 config CXD56_DMAC_SPI5_TX_MAXSIZE
 	int "Max size to be sent in bytes"
 	default 1516
 	range 1 1572864
 	---help---
-		This value should be same as RX.
+		Deprecated. This value should be same as RX.
 
 endif # CXD56_DMAC_SPI5_TX
 
@@ -525,13 +531,15 @@ config CXD56_DMAC_SPI5_RX_CH
 	int "RX channel"
 	default 5
 	range 2 6
+	---help---
+		Deprecated
 
 config CXD56_DMAC_SPI5_RX_MAXSIZE
 	int "Max size to be received in bytes"
 	default 1516
 	range 1 1572864
 	---help---
-		This value should be same as TX.
+		Deprecated. This value should be same as TX.
 
 endif # CXD56_DMAC_SPI5_RX
 

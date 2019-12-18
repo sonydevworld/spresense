@@ -1953,6 +1953,8 @@ int altmdm_spi_uninit(FAR struct altmdm_dev_s *priv)
     }
   destroy_rxbufffifo(priv);
 
+  board_altmdm_gpio_irq(GPIO_SLAVE_REQUEST, 0, 0, NULL);
+
   /* Uninitalize modem power management driver */
 
   altmdm_pm_uninit(priv);

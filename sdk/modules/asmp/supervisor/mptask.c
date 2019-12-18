@@ -383,6 +383,12 @@ cpuid_t mptask_getcpuid(mptask_t *task)
   return cpu < 0 ? -ENOENT : cpu + 2;
 }
 
+cpuid_t mptask_getsubcoreid(mptask_t *task)
+{
+  int cpu = find_firstcpu(task);
+  return cpu < 0 ? -ENOENT : cpu;
+}
+
 int mptask_getcpuidset(mptask_t *task, cpu_set_t *set)
 {
   if (set)

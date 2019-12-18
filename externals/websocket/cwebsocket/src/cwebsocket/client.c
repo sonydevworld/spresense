@@ -258,7 +258,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 	WS_DEBUG ("client_connect: hostname=%s, port=%s, resource=%s, querystring=%s, secure=%i\n",
 			hostname, port, resource, querystring, (websocket->flags & WEBSOCKET_FLAG_SSL));
 
-	char handshake[CWS_HANDSHAKE_BUFFER_MAX];
+	char handshake[CWS_HANDSHAKE_BUFFER_MAX+1];
 	struct addrinfo hints, *servinfo;
 	time_t Tick0 = 0;
 	time(&Tick0);
@@ -1125,8 +1125,8 @@ void cwebsocket_client_close(cwebsocket_client *websocket, uint16_t code, const 
 
 		if(code > 0) {
 			code = code ? htons(code) : htons(1005);
-			int message_len = (message == NULL) ? 2 : strlen(message) + 2;
-			uint8_t close_frame[message_len];
+			int message_len = (message == NULL) ? 0 : strlen(message);
+			uint8_t close_frame[message_len+2];
 			close_frame[0] = code & 0xFF;
 			close_frame[1] = (code >> 8);
 			code32 = (close_frame[0] << 8) + (close_frame[1]);
@@ -1134,7 +1134,7 @@ void cwebsocket_client_close(cwebsocket_client *websocket, uint16_t code, const 
 			for(i=0; i<message_len; i++) {
 				close_frame[i+2] = message[i];
 			}
-			cwebsocket_client_send_control_frame(websocket, CLOSE, "CLOSE", close_frame, message_len);
+			cwebsocket_client_send_control_frame(websocket, CLOSE, "CLOSE", close_frame, message_len+2);
 		}
 		else {
 			cwebsocket_client_send_control_frame(websocket, CLOSE, "CLOSE", NULL, 0);

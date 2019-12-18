@@ -108,10 +108,6 @@
 #  include "cxd56_geofence.h"
 #endif
 
-#ifdef CONFIG_MODEM_ALTMDM
-#  include <arch/board/common/cxd56_altmdm.h>
-#endif
-
 #ifdef CONFIG_USERLED
 #  include <nuttx/leds/userled.h>
 #endif
@@ -324,14 +320,6 @@ int board_app_initialize(uintptr_t arg)
     {
       ferr("ERROR: Failed to initialize SPI device to MMC/SD: %d\n",
            ret);
-    }
-#endif
-
-#ifdef CONFIG_MODEM_ALTMDM
-  ret = board_altmdm_initialize("/dev/altmdm");
-  if (ret < 0)
-    {
-      _err("ERROR: Failed to initialze Altair modem. \n");
     }
 #endif
 

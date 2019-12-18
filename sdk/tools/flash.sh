@@ -53,6 +53,7 @@ function show_help()
 	echo "       -b: Serial baudrate (default: 115200)"
 	echo "       -e: Extract loader archive"
 	echo "       -l: Flash loader"
+	echo "       -r: Remove nuttx(Main Core SPK) file from spresense board"
 	echo "       -w: Worker load mode"
 	echo "       -h: Show help (This message)"
 	exit
@@ -85,13 +86,14 @@ UART_PORT="/dev/ttyUSB0"
 UPDATE_ZIP=""
 LOADR_PATH=""
 FLASH_MODE="SPK"
-while getopts b:c:s:e:l:wh OPT
+while getopts b:c:s:e:l:rwh OPT
 do
 	case $OPT in
 		'b' ) UART_BAUDRATE=$OPTARG;;
 		'c' ) UART_PORT=$OPTARG;;
 		'e' ) UPDATE_ZIP=$OPTARG;;
 		'l' ) LOADR_PATH=$OPTARG;;
+		'r' ) FLASH_MODE="REMOVE";;
 		'w' ) FLASH_MODE="ELF";;
 		'h' ) show_help;;
 	esac
@@ -144,4 +146,7 @@ elif [ "${FLASH_MODE}" == "ELF" ]; then
 
 	# Flash elf files into spresense board
 	${SCRIPT_DIR}/${PLATFORM}/xmodem_writer -d -c ${UART_PORT} $@
+elif [ "${FLASH_MODE}" == "REMOVE" ]; then
+	# Remove nuttx spk file from spresense board
+	${SCRIPT_DIR}/${PLATFORM}/flash_writer -s -c ${UART_PORT} -d -e nuttx
 fi

@@ -114,7 +114,7 @@ int StepCounterClass::open(void)
   int errout_ret;
   int ret;
   int id;
-  uint32_t msgdata;
+  uint32_t msgdata = 0;
 
   /* Initalize Worker as task. */
 
@@ -277,18 +277,25 @@ int StepCounterClass::sendInit(void)
 
   /* Wait for initialize finished. */
 
-  uint32_t msgdata;
 
-  int id = mpmq_receive(&m_mq, &msgdata);
-  if ((id != STEPCOUNTER_CMD_ID) &&
-      (reinterpret_cast<FAR SensorCmdStepCounter *>
-        (msgdata)->result.exec_result != SensorOK))
+  FAR SensorCmdStepCounter *msgdata = NULL;
+
+  int id = mpmq_receive(&m_mq, (uint32_t *)&msgdata);
+  if (id != STEPCOUNTER_CMD_ID)
     {
-      sc_err("init error! %08x : %d\n",
-              id,
-              reinterpret_cast<FAR SensorCmdStepCounter *>
-                (msgdata)->result.exec_result);
-      return SS_ECODE_DSP_INIT_ERROR;
+      if (msgdata == NULL)
+        {
+          sc_err("init error! %08x\n", id);
+          return SS_ECODE_DSP_INIT_ERROR;
+        }
+
+      if (msgdata->result.exec_result != SensorOK)
+        {
+          sc_err("init error! %08x : %d\n",
+                 id,
+                 msgdata->result.exec_result);
+          return SS_ECODE_DSP_INIT_ERROR;
+        }
     }
 
   return SS_ECODE_OK;
@@ -425,7 +432,7 @@ void StepCounterClass::set_callback(void)
 int StepCounterClass::receive(void)
 {
   int      command;
-  uint32_t msgdata;
+  uint32_t msgdata = 0;
   bool     active = true;
 
   /* Wait for worker message */

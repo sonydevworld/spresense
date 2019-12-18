@@ -54,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETVER_DATA_LEN 0
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getverres_s))
 
 /****************************************************************************
  * Private Functions
@@ -87,6 +88,31 @@ static int32_t getver_status_chg_cb(int32_t new_stat, int32_t old_stat)
     }
 
   return ALTCOM_STATUS_REG_KEEP;
+}
+
+/****************************************************************************
+ * Name: getver_parse_response
+ *
+ * Description:
+ *   Parse version information from response buffer.
+ *
+ * Input Parameters:
+ *  resp     Pointer to response buffer.
+ *  siminfo  Pointer to store version information.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getver_parse_response(FAR struct apicmd_cmddat_getverres_s *resp,
+                                  FAR lte_version_t *version)
+{
+  memset(version, 0, sizeof(version));
+  strncpy((FAR char *)version->bb_product,
+          (FAR const char *)resp->bb_product, LTE_VER_BB_PRODUCT_LEN - 1);
+  strncpy((FAR char *)version->np_package,
+          (FAR const char *)resp->np_package, LTE_VER_NP_PACKAGE_LEN - 1);
 }
 
 /****************************************************************************
@@ -130,11 +156,7 @@ static void getver_job(FAR void *arg)
             }
           else
             {
-              memset(version, 0, sizeof(version));
-              strncpy((char *)version->bb_product,
-                (char *)data->bb_product, LTE_VER_BB_PRODUCT_LEN - 1);
-              strncpy((char *)version->np_package,
-                (char *)data->np_package, LTE_VER_NP_PACKAGE_LEN - 1);
+              getver_parse_response(data, version);
             }
         }
 
@@ -162,38 +184,43 @@ static void getver_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_version
+ * Name: lte_getversion_impl
  *
  * Description:
- *   Get the version of the modem.
+ *   Acquires the FW version information of the modem.
  *
  * Input Parameters:
- *   callback Callback function to notify that get of version is completed.
+ *   version  The version information of the modem.
+ *   callback Callback function to notify when getting the version is
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_version(get_ver_cb_t callback)
+static int32_t lte_getversion_impl(lte_version_t *version,
+                                   get_ver_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
+  int32_t                               ret;
+  FAR uint8_t                          *reqbuff    = NULL;
+  FAR struct apicmd_cmddat_getverres_s *presbuff   = NULL;
+  uint16_t                              resbufflen = RES_DATA_LEN;
+  uint16_t                              reslen     = 0;
+  int                                   sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!version && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -201,55 +228,124 @@ int32_t lte_get_version(get_ver_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_VERSION);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      /* Allocate API command buffer to receive */
+
+      presbuff = (FAR struct apicmd_cmddat_getverres_s *)
+                   altcom_alloc_resbuff(resbufflen);
+      if (!presbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          return -ENOMEM;
+        }
     }
-
-  ret = altcomstatus_reg_statchgcb(getver_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_VERSION);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_VERSION, callback,
+                                       getver_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_VERSION,
-    GETVER_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_VERSION,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, (FAR uint8_t *)presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_VERSION);
-      altcomstatus_unreg_statchgcb(getver_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
+      if (ret == 0)
+        {
+          /* Parse version information */
+
+          getver_parse_response(presbuff, version);
+        }
+      BUFFPOOL_FREE(presbuff);
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_VERSION,
+                                    getver_status_chg_cb);
+    }
+  if (presbuff)
+    {
+      BUFFPOOL_FREE(presbuff);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_version_sync
+ *
+ * Description:
+ *   Acquires the FW version information of the modem.
+ *
+ * Input Parameters:
+ *   version  The version information of the modem.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_version_sync(lte_version_t *version)
+{
+  return lte_getversion_impl(version, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_version
+ *
+ * Description:
+ *   Acquires the FW version information of the modem.
+ *
+ * Input Parameters:
+ *   callback Callback function to notify when getting the version is
+ *            completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_version(get_ver_cb_t callback)
+{
+  return lte_getversion_impl(NULL, callback);
 }
 
 /****************************************************************************

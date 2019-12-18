@@ -54,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define ENTERPIN_DATA_LEN (sizeof(struct apicmd_cmddat_enterpin_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_enterpin_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_enterpinres_s))
 
 #define ENTERPIN_MIN_PIN_LEN (4)
 #define ENTERPIN_MAX_PIN_LEN ((APICMD_ENTERPIN_PINCODE_LEN) - 1)
@@ -141,39 +142,54 @@ static void enterpin_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_enter_pin
+ * Name: lte_enterpin_impl
  *
  * Description:
  *   Enter Personal Identification Number.
  *
  * Input Parameters:
- *   pincode       Current PIN code.
- *                 Specify 4 to 8 digits,end with '\0'. (i.e. Max 9 byte)
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
  *   new_pincode   If not used, set NULL. If the PIN is SIM PUK or SIM PUK2,
  *                 the new_pincode is required.
- *                 Specify 4 to 8 digits,end with '\0'. (i.e. Max 9 byte)
+ *                 Minimum number of digits is 4. Maximum number of digits
+ *                 is 8, end with '\0'. (i.e. Max 9 byte)
+ *   simstat       State after PIN enter.
+ *   attemptsleft  Number of attempts left. Set only if failed. If simstat is
+ *                 other than PIN, PUK, PIN2, PUK2, set the number of PIN.
  *   callback      Callback function to notify that PIN enter is completed.
+ *                 If the callback is NULL, operates with synchronous API,
+ *                 otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
-                      enter_pin_cb_t callback)
+static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
+                                 uint8_t *simstat, uint8_t *attemptsleft,
+                                 enter_pin_cb_t callback)
 {
-  int32_t                             ret;
-  FAR struct apicmd_cmddat_enterpin_s *cmddat = NULL;
-  uint8_t                             pinlen  = 0;
+  int32_t                              ret;
+  FAR struct apicmd_cmddat_enterpin_s *reqbuff    = NULL;
+  FAR uint8_t                         *presbuff   = NULL;
+  struct apicmd_cmddat_enterpinres_s   resbuff;
+  uint16_t                             resbufflen = RES_DATA_LEN;
+  uint16_t                             reslen     = 0;
+  int                                  sync       = (callback == NULL);
+  uint8_t                              pinlen     = 0;
 
-  /* Return error if argument is NULL */
+  /* Check input parameter */
 
-  if (!pincode || !callback)
+  if (!pincode)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  if ((!simstat || !attemptsleft) && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
@@ -194,7 +210,7 @@ int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
         }
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -202,67 +218,134 @@ int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_ENTER_PIN);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(enterpin_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_ENTER_PIN);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_ENTER_PIN, callback,
+                                       enterpin_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmddat = (FAR struct apicmd_cmddat_enterpin_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_ENTER_PIN, ENTERPIN_DATA_LEN);
-  if (!cmddat)
+  reqbuff = (FAR struct apicmd_cmddat_enterpin_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_ENTER_PIN, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
+      goto errout;
     }
-  else
+
+  strncpy((FAR char *)reqbuff->pincode,
+          (FAR char *)pincode, sizeof(reqbuff->pincode));
+
+  if (new_pincode)
     {
-      /* Get PIN input parameters */
-
-      strncpy((FAR char *)cmddat->pincode,
-        (FAR char *)pincode, sizeof(cmddat->pincode));
-
-      if (new_pincode)
-        {
-          cmddat->newpincodeuse = APICMD_ENTERPIN_NEWPINCODE_USE;
-          strncpy((FAR char *)cmddat->newpincode,
-            (FAR char *)new_pincode, sizeof(cmddat->newpincode));
-        }
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((FAR uint8_t *)cmddat);
+      reqbuff->newpincodeuse = APICMD_ENTERPIN_NEWPINCODE_USE;
+      strncpy((FAR char *)reqbuff->newpincode,
+              (FAR char *)new_pincode, sizeof(reqbuff->newpincode));
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_ENTER_PIN);
-      altcomstatus_unreg_statchgcb(enterpin_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      *simstat      = resbuff.simstat;
+      *attemptsleft = resbuff.attemptsleft;
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_ENTER_PIN,
+                                    enterpin_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_enter_pin_sync
+ *
+ * Description:
+ *   Enter Personal Identification Number.
+ *
+ * Input Parameters:
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
+ *   new_pincode   If not used, set NULL. If the PIN is SIM PUK or SIM PUK2,
+ *                 the new_pincode is required.
+ *                 Minimum number of digits is 4. Maximum number of digits
+ *                 is 8, end with '\0'. (i.e. Max 9 byte)
+ *   simstat       State after PIN enter.
+ *   attemptsleft  Number of attempts left. Set only if failed. If simstat is
+ *                 other than PIN, PUK, PIN2, PUK2, set the number of PIN.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_enter_pin_sync(int8_t *pincode, int8_t *new_pincode,
+                           uint8_t *simstat, uint8_t *attemptsleft)
+{
+  return lte_enterpin_impl(pincode, new_pincode, simstat, attemptsleft, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_enter_pin
+ *
+ * Description:
+ *   Enter Personal Identification Number.
+ *
+ * Input Parameters:
+ *   pincode       Current PIN code. Minimum number of digits is 4.
+ *                 Maximum number of digits is 8, end with '\0'.
+ *                 (i.e. Max 9 byte)
+ *   new_pincode   If not used, set NULL. If the PIN is SIM PUK or SIM PUK2,
+ *                 the new_pincode is required.
+ *                 Minimum number of digits is 4. Maximum number of digits
+ *                 is 8, end with '\0'. (i.e. Max 9 byte)
+ *   callback      Callback function to notify that PIN enter is completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
+                      enter_pin_cb_t callback)
+{
+  return lte_enterpin_impl(pincode, new_pincode, NULL, NULL, callback);
 }
 
 /****************************************************************************

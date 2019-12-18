@@ -56,7 +56,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define DEACTIVATEPDN_DATA_LEN (sizeof(struct apicmd_cmddat_deactivatepdn_s))
+#define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_deactivatepdn_s))
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_deactivatepdnres_s))
 
 /****************************************************************************
  * Private Functions
@@ -140,37 +141,34 @@ static void deactivatepdn_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_deactivate_pdn
+ * Name: lte_deactivatepdn_impl
  *
  * Description:
- *   Deactivate PDN connection.
+ *   Discard the constructed PDN.
  *
  * Input Parameters:
- *   session_id  Value of deactivate target PDN session id.
- *   callback   Callback function to notify that radio on completed.
+ *   session_id  The numeric value of the session ID.
+ *   callback    Callback function to notify that
+ *               LTE PDN deactivation completed.
+ *               If the callback is NULL, operates with synchronous API,
+ *               otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
+static int32_t lte_deactivatepdn_impl(uint8_t session_id,
+                                      deactivate_pdn_cb_t callback)
 {
-  int32_t                                ret;
-  FAR struct apicmd_cmddat_deactivatepdn_s *cmdbuff;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
+  int32_t                                   ret;
+  FAR struct apicmd_cmddat_deactivatepdn_s *reqbuff    = NULL;
+  FAR uint8_t                              *presbuff   = NULL;
+  struct apicmd_cmddat_deactivatepdnres_s   resbuff;
+  uint16_t                                  resbufflen = RES_DATA_LEN;
+  uint16_t                                  reslen     = 0;
+  int                                       sync       = (callback == NULL);
 
   /* Check input parameter */
 
@@ -178,10 +176,10 @@ int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
       LTE_SESSION_ID_MAX < session_id)
     {
       DBGIF_LOG1_ERROR("Invalid session id %d.\n", session_id);
-      ret = -EINVAL;
+      return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -189,60 +187,108 @@ int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_DEACTIVATE_PDN);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_DEACTIVATE_PDN, callback,
+                                       deactivatepdn_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
-  ret = altcomstatus_reg_statchgcb(deactivatepdn_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_DEACTIVATE_PDN);
-      return ret;
-    }
+  /* Allocate API command buffer to send */
 
-  /* Accept the API
-   * Allocate API command buffer to send */
-
-  cmdbuff = (FAR struct apicmd_cmddat_deactivatepdn_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_DEACTIVATE_PDN, DEACTIVATEPDN_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR struct apicmd_cmddat_deactivatepdn_s *)
+              apicmdgw_cmd_allocbuff(APICMDID_DEACTIVATE_PDN, REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Fill parameter. */
-
-      cmdbuff->session_id = session_id;
-
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((uint8_t *)cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  reqbuff->session_id = session_id;
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send((FAR uint8_t *)reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd((FAR uint8_t *)reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_DEACTIVATE_PDN);
-      altcomstatus_unreg_statchgcb(deactivatepdn_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_DEACTIVATE_PDN,
+                                    deactivatepdn_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_deactivate_pdn_sync
+ *
+ * Description:
+ *   Discard the constructed PDN.
+ *
+ * Input Parameters:
+ *   session_id  The numeric value of the session ID.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_deactivate_pdn_sync(uint8_t session_id)
+{
+ return lte_deactivatepdn_impl(session_id, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_deactivate_pdn
+ *
+ * Description:
+ *   Discard the constructed PDN.
+ *
+ * Input Parameters:
+ *   session_id  The numeric value of the session ID.
+ *   callback    Callback function to notify that
+ *               LTE PDN deactivation completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
+{
+ return lte_deactivatepdn_impl(session_id, callback);
 }
 
 /****************************************************************************

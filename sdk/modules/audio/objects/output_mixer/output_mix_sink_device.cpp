@@ -369,12 +369,11 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
   switch (cmd.act_param.post_enable)
     {
       case PostFilterEnable:
-        m_p_postfliter_instance = new UserCustomComponent(m_apu_pool_id,
-                                                          m_apu_dtq);
+        m_p_postfliter_instance = &m_usercstm_instance;
         break;
 
       default:
-        m_p_postfliter_instance = new ThruProcComponent();
+        m_p_postfliter_instance = &m_thruproc_instance;
         break;
     }
 
@@ -421,7 +420,7 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
 
   m_p_postfliter_instance->deactivate();
 
-  delete m_p_postfliter_instance;
+  m_p_postfliter_instance = NULL;
 
   /* Replay */
 

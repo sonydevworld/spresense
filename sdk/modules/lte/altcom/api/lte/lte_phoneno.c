@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <stdint.h>
+#include <string.h>
 #include <errno.h>
 
 #include "lte/lte_api.h"
@@ -53,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETPHONENO_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_phonenores_s))
 
 /****************************************************************************
  * Private Functions
@@ -120,7 +122,7 @@ static void getphoneno_job(FAR void *arg)
 
       /* Fixed to include "\0" at the end of output string. */
 
-      data->phoneno[APICMD_PHONENO_LEN - 1] = '\0';
+      data->phoneno[LTE_PHONENO_LEN - 1] = '\0';
 
       callback(result, data->errcause, (FAR int8_t*)data->phoneno);
     }
@@ -141,17 +143,161 @@ static void getphoneno_job(FAR void *arg)
 }
 
 /****************************************************************************
+ * Name: lte_getphoneno_impl
+ *
+ * Description:
+ *   Get phone number from SIM.
+ *
+ * Input Parameters:
+ *   phoneno   A character string indicating phone number. It is terminated
+ *             with '\0'. When using the synchronous API, the maximum number
+ *             of phone number areas must be allocated.
+ *   callback  Callback function to notify when getting the phone number is
+ *             completed.
+ *             If the callback is NULL, operates with synchronous API,
+ *             otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+static int32_t lte_getphoneno_impl(int8_t *phoneno, get_phoneno_cb_t callback)
+{
+  int32_t                                ret;
+  FAR uint8_t                           *reqbuff    = NULL;
+  FAR struct apicmd_cmddat_phonenores_s *presbuff   = NULL;
+  uint16_t                               resbufflen = RES_DATA_LEN;
+  uint16_t                               reslen     = 0;
+  int                                    sync       = (callback == NULL);
+
+  /* Check input parameter */
+
+  if (!phoneno && !callback)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  /* Check LTE library status */
+
+  ret = altcombs_check_poweron_status();
+  if (0 > ret)
+    {
+      return ret;
+    }
+
+  if (sync)
+    {
+      /* Allocate API command buffer to receive */
+
+      presbuff = (FAR struct apicmd_cmddat_phonenores_s *)
+                   altcom_alloc_resbuff(resbufflen);
+      if (!presbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          return -ENOMEM;
+        }
+    }
+  else
+    {
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_PHONENO, callback,
+                                       getphoneno_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
+    }
+
+  /* Allocate API command buffer to send */
+
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_PHONENO,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      ret = -ENOMEM;
+      goto errout;
+    }
+
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, (FAR uint8_t *)presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
+
+  if (0 > ret)
+    {
+      goto errout;
+    }
+
+  ret = 0;
+
+  if (sync)
+    {
+      ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          strncpy((FAR char *)phoneno, (FAR const char *)presbuff->phoneno,
+                  LTE_PHONENO_LEN);
+          phoneno[LTE_PHONENO_LEN - 1] = '\0';
+        }
+      BUFFPOOL_FREE(presbuff);
+    }
+
+  return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_PHONENO,
+                                    getphoneno_status_chg_cb);
+    }
+  if (presbuff)
+    {
+      BUFFPOOL_FREE(presbuff);
+    }
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_phoneno_sync
+ *
+ * Description:
+ *   Get phone number from SIM.
+ *
+ * Input Parameters:
+ *   phoneno   A character string indicating phone number. It is terminated
+ *             with '\0'. When using the synchronous API, the maximum number
+ *             of phone number areas must be allocated.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_phoneno_sync(int8_t *phoneno)
+{
+  return lte_getphoneno_impl(phoneno, NULL);
+}
 
 /****************************************************************************
  * Name: lte_get_phoneno
  *
  * Description:
- *   Get phone number.
+ *   Get phone number from SIM.
  *
  * Input Parameters:
- *   callback  Callback function to notify that get of phoneno is completed.
+ *   callback  Callback function to notify when getting the phone number is
+ *             completed.
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -161,74 +307,7 @@ static void getphoneno_job(FAR void *arg)
 
 int32_t lte_get_phoneno(get_phoneno_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
-
-  /* Return error if callback is NULL */
-
-  if (!callback)
-    {
-      DBGIF_LOG_ERROR("Input argument is NULL.\n");
-      return -EINVAL;
-    }
-
-  /* Check Lte library status */
-
-  ret = altcombs_check_poweron_status();
-  if (0 > ret)
-    {
-      return ret;
-    }
-
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_PHONENO);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
-    }
-
-  ret = altcomstatus_reg_statchgcb(getphoneno_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_PHONENO);
-      return ret;
-    }
-
-  /* Allocate API command buffer to send */
-
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_PHONENO,
-    GETPHONENO_DATA_LEN);
-  if (!cmdbuff)
-    {
-      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-      ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
-    }
-
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
-
-  if (0 > ret)
-    {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_PHONENO);
-      altcomstatus_unreg_statchgcb(getphoneno_status_chg_cb);
-    }
-  else
-    {
-      ret = 0;
-    }
-
-  return ret;
+  return lte_getphoneno_impl(NULL, callback);
 }
 
 /****************************************************************************

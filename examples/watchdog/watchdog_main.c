@@ -74,13 +74,13 @@ struct wdog_example_s
 
 static void wdog_help(void)
 {
-  printf("Usage: wdog [-h] [-d <pingtime] [-p <pingdelay>] [-t <timeout>]\n");
-  printf("\nInitialize the watchdog to the <timeout>.  Start the watchdog\n");
-  printf("timer.  Ping for the watchdog for <pingtime> seconds, then let it expire.\n");
+  printf("Usage: wdog [-h] [-d <pingdelay>] [-p <pingtime>] [-t <timeout>]\n");
+  printf("\nInitialize the watchdog to the <timeout>. Start the watchdog\n");
+  printf("timer. Ping for the watchdog for <pingtime> seconds, then let it expire.\n");
   printf("\nOptions include:\n");
-  printf("  [-d <pingtime>] = Selects the <delay> time in milliseconds.  Default: %d\n",
+  printf("  [-d <pingdelay>] = Time delay between pings in milliseconds. Default: %d\n",
         CONFIG_EXAMPLES_WATCHDOG_PINGDELAY);
-  printf("  [-p <pingdelay] = Time delay between pings in milliseconds.  Default: %d\n",
+  printf("  [-p <pingtime>] = Selects the <pingtime> time in milliseconds. Default: %d\n",
         CONFIG_EXAMPLES_WATCHDOG_PINGTIME);
   printf("  [-t timeout] = Time in milliseconds that the example will ping the watchdog\n");
   printf("    before letting the watchdog expire. Default: %d\n",

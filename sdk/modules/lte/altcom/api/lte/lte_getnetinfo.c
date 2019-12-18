@@ -1,7 +1,7 @@
-/****************************************************************************
+ /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getnetinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,11 +57,14 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETNETINFO_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getnetinfores_s))
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+#define LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW "PDN buffer overflow:%d."
 
 /****************************************************************************
  * Name: getnetinfo_status_chg_cb
@@ -92,6 +96,45 @@ static int32_t getnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
+ * Name: getnetinfo_parse_response
+ *
+ * Description:
+ *   Parse network information from response buffer.
+ *
+ * Input Parameters:
+ *  resp     Pointer to response buffer.
+ *  netinfo  Pointer to store network information.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getnetinfo_parse_response(
+  FAR struct apicmd_cmddat_getnetinfores_s *resp,
+  FAR lte_netinfo_t *netinfo)
+{
+  uint8_t i;
+
+  netinfo->nw_stat         = resp->netinfo.nw_stat;
+  netinfo->nw_err.err_type = resp->netinfo.err_info.err_type;
+  netinfo->nw_err.reject_cause.category =
+    resp->netinfo.err_info.reject_cause.category;
+  netinfo->nw_err.reject_cause.value =
+    resp->netinfo.err_info.reject_cause.value;
+  netinfo->pdn_num = resp->netinfo.pdn_count;
+
+  if ((0 < resp->netinfo.pdn_count) && (netinfo->pdn_stat))
+    {
+      for (i = 0; i < resp->netinfo.pdn_count; i++)
+        {
+          altcombs_set_pdninfo(&resp->netinfo.pdn[i],
+                               &netinfo->pdn_stat[i]);
+        }
+    }
+}
+
+/****************************************************************************
  * Name: getnetinfo_job
  *
  * Description:
@@ -108,7 +151,6 @@ static int32_t getnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void getnetinfo_job(FAR void *arg)
 {
   int32_t                                  ret;
-  uint8_t                                  i;
   FAR struct apicmd_cmddat_getnetinfores_s *data;
   get_netinfo_cb_t                         callback;
   uint32_t                                 result = LTE_RESULT_ERROR;
@@ -128,45 +170,17 @@ static void getnetinfo_job(FAR void *arg)
 
       if (data->result == LTE_RESULT_OK)
         {
-          /* Fill network infomation */
-
-          netinfo.nw_stat = data->netinfo.nw_stat;
-          netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
-          netinfo.nw_err.reject_cause.category =
-            data->netinfo.err_info.reject_cause.category;
-          netinfo.nw_err.reject_cause.value =
-            data->netinfo.err_info.reject_cause.value;
-          netinfo.pdn_num = data->netinfo.pdn_count;
           if (0 < data->netinfo.pdn_count)
             {
               netinfo.pdn_stat = (FAR lte_pdn_t *)
                 BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
               if (!netinfo.pdn_stat)
                 {
-                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-                }
-              else
-                {
-                  result = LTE_RESULT_OK;
-                  for (i = 0; i < data->netinfo.pdn_count; i++)
-                    {
-                      ret = altcombs_set_pdninfo(&data->netinfo.pdn[i],
-                                                 &netinfo.pdn_stat[i]);
-                      if (0 > ret)
-                        {
-                          DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
-                          result = LTE_RESULT_ERROR;
-                          break;
-                        }
-                    }
+                  DBGIF_LOG_ERROR("memory allocation failed.\n");
                 }
             }
-          else
-            {
-              /* When not connected PDN */
-
-              result = LTE_RESULT_OK;
-            }
+          getnetinfo_parse_response(data, &netinfo);
+          result = LTE_RESULT_OK;
         }
 
       callback(result, &netinfo);
@@ -189,38 +203,53 @@ static void getnetinfo_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_netinfo
+ * Name: lte_getnetinfo_impl
  *
  * Description:
- *   Get network infomation.
+ *   Get LTE network information.
  *
  * Input Parameters:
- *   callback   Callback function to notify that get netinfo completed.
+ *   pdn_num   Number of pdn_stat allocated by the user. The range is from
+ *             @ref LTE_PDN_SESSIONID_MIN to @ref LTE_PDN_SESSIONID_MAX.
+ *   info      The LTE network information.
+ *   callback  Callback function to notify that get network information
+ *             completed.
+ *             If the callback is NULL, operates with synchronous API,
+ *             otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_netinfo(get_netinfo_cb_t callback)
+static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
+                                   lte_netinfo_t *info,
+                                   get_netinfo_cb_t callback)
 {
-  int32_t                                ret;
-  FAR uint8_t *cmdbuff;
+  int32_t                                   ret;
+  FAR uint8_t                              *reqbuff    = NULL;
+  FAR struct apicmd_cmddat_getnetinfores_s *presbuff   = NULL;
+  uint16_t                                  resbufflen = RES_DATA_LEN;
+  uint16_t                                  reslen     = 0;
+  int                                       sync       = (callback == NULL);
+  lte_errinfo_t                             errinfo    = {0};
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-  if (!callback)
+  if (!info && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  if (!callback && info && !info->pdn_stat)
+    {
+      DBGIF_LOG_ERROR("Input argument is NULL.\n");
+      return -EINVAL;
+    }
+
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -228,55 +257,146 @@ int32_t lte_get_netinfo(get_netinfo_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_NETINFO);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      if (LTE_SESSION_ID_MIN > pdn_num || LTE_SESSION_ID_MAX < pdn_num)
+        {
+          return -EINVAL;
+        }
+
+      /* Allocate API command buffer to receive */
+
+      presbuff = (FAR struct apicmd_cmddat_getnetinfores_s *)
+                   altcom_alloc_resbuff(resbufflen);
+      if (!presbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          return -ENOMEM;
+        }
+    }
+  else
+    {
+
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_NETINFO, callback,
+                                       getnetinfo_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
-  ret = altcomstatus_reg_statchgcb(getnetinfo_status_chg_cb);
-  if (0 > ret)
-    {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_NETINFO);
-      return ret;
-    }
+  /* Allocate API command buffer to send */
 
-  /* Accept the API
-   * Allocate API command buffer to send */
-
-  cmdbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_NETINFO, GETNETINFO_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_NETINFO,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free((uint8_t *)cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, (FAR uint8_t *)presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_NETINFO);
-      altcomstatus_unreg_statchgcb(getnetinfo_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          if (pdn_num < presbuff->netinfo.pdn_count)
+          {
+            ret = -EPROTO;
+            errinfo.err_indicator = LTE_ERR_INDICATOR_ERRNO |
+                                    LTE_ERR_INDICATOR_ERRSTR;
+            errinfo.err_no = -EINVAL;
+            snprintf((char *)errinfo.err_string,
+                     LTE_ERROR_STRING_MAX_LEN - 1,
+                     LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW,
+                     presbuff->netinfo.pdn_count);
+            altcombs_set_errinfo(&errinfo);
+            goto errout;
+          }
+
+          /* Parse network information */
+
+          getnetinfo_parse_response(presbuff, info);
+        }
+      BUFFPOOL_FREE(presbuff);
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_NETINFO,
+                                    getnetinfo_status_chg_cb);
+    }
+  if (presbuff)
+    {
+      BUFFPOOL_FREE(presbuff);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_netinfo_sync
+ *
+ * Description:
+ *   Get LTE network information.
+ *
+ * Input Parameters:
+ *   pdn_num   Number of pdn_stat allocated by the user. The range is from
+ *             @ref LTE_PDN_SESSIONID_MIN to @ref LTE_PDN_SESSIONID_MAX.
+ *   info      The LTE network information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info)
+{
+  return lte_getnetinfo_impl(pdn_num, info, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_netinfo
+ *
+ * Description:
+ *   Get LTE network information.
+ *
+ * Input Parameters:
+ *   callback  Callback function to notify that get network information
+ *             completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_netinfo(get_netinfo_cb_t callback)
+{
+  return lte_getnetinfo_impl(0, NULL, callback);
 }
 
 /****************************************************************************

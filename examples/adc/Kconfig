@@ -29,8 +29,8 @@ config EXAMPLES_ADC_STACKSIZE
 	default 2048
 
 config EXAMPLES_ADC_DEVPATH
-    string "ADC device path"
-    default "/dev/lpadc0"
+	string "ADC device path"
+	default "/dev/lpadc0"
 	---help---
 		The default path to the ADC device. Default: /dev/lpadc0
 

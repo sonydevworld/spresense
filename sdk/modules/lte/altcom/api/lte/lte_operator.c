@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <stdint.h>
+#include <string.h>
 #include <errno.h>
 
 #include "lte/lte_api.h"
@@ -53,7 +54,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define GETOPERATOR_DATA_LEN (0)
+#define REQ_DATA_LEN (0)
+#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getoperatorres_s))
 
 /****************************************************************************
  * Private Functions
@@ -121,7 +123,7 @@ static void getoperator_job(FAR void *arg)
 
       /* Fixed to include "\0" at the end of output string. */
 
-      data->oper[APICMD_OPERATOR_LEN - 1] = '\0';
+      data->oper[LTE_OPERATOR_LEN - 1] = '\0';
 
       callback(result, (FAR int8_t *)data->oper);
     }
@@ -142,40 +144,46 @@ static void getoperator_job(FAR void *arg)
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
- * Name: lte_get_operator
+ * Name: lte_getoperator_impl
  *
  * Description:
- *   Get network operator information.
+ *   Get connected network operator information.
  *
  * Input Parameters:
- *   callback  Callback function to notify that get of network operator
+ *   oper      A character string indicating network operator. It is
+ *             terminated with '\0' If it is not connected, the first
+ *             character is '\0'. When using the synchronous API,
+ *             the maximum number of network operator areas must be allocated.
+ *   callback  Callback function to notify when getting network operator
  *             information is completed.
+ *             If the callback is NULL, operates with synchronous API,
+ *             otherwise operates with asynchronous API.
  *
  * Returned Value:
  *   On success, 0 is returned.
- *   On failure, negative value is returned.
+ *   On failure, negative value is returned according to <errno.h>.
  *
  ****************************************************************************/
 
-int32_t lte_get_operator(get_operator_cb_t callback)
+static int32_t lte_getoperator_impl(int8_t *oper, get_operator_cb_t callback)
 {
-  int32_t     ret;
-  FAR uint8_t *cmdbuff;
+  int32_t                                ret;
+  FAR uint8_t                           *reqbuff    = NULL;
+  FAR uint8_t                           *presbuff   = NULL;
+  struct apicmd_cmddat_getoperatorres_s  resbuff;
+  uint16_t                               resbufflen = RES_DATA_LEN;
+  uint16_t                               reslen     = 0;
+  int                                    sync       = (callback == NULL);
 
-  /* Return error if callback is NULL */
+  /* Check input parameter */
 
-
-  if (!callback)
+  if (!oper && !callback)
     {
       DBGIF_LOG_ERROR("Input argument is NULL.\n");
       return -EINVAL;
     }
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -183,55 +191,114 @@ int32_t lte_get_operator(get_operator_cb_t callback)
       return ret;
     }
 
-  /* Register API callback */
-
-  ret = altcomcallbacks_chk_reg_cb((void *)callback, APICMDID_GET_OPERATOR);
-  if (0 > ret)
+  if (sync)
     {
-      DBGIF_LOG_ERROR("Currently API is busy.\n");
-      return -EINPROGRESS;
+      presbuff = (FAR uint8_t *)&resbuff;
     }
-
-  ret = altcomstatus_reg_statchgcb(getoperator_status_chg_cb);
-  if (0 > ret)
+  else
     {
-      DBGIF_LOG_ERROR("Failed to registration status change callback.\n");
-      altcomcallbacks_unreg_cb(APICMDID_GET_OPERATOR);
-      return ret;
+      /* Setup API callback */
+
+      ret = altcombs_setup_apicallback(APICMDID_GET_OPERATOR, callback,
+                                       getoperator_status_chg_cb);
+      if (0 > ret)
+        {
+          return ret;
+        }
     }
 
   /* Allocate API command buffer to send */
 
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_GET_OPERATOR,
-    GETOPERATOR_DATA_LEN);
-  if (!cmdbuff)
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_OPERATOR,
+                                                  REQ_DATA_LEN);
+  if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
-    }
-  else
-    {
-      /* Send API command to modem */
-
-      ret = altcom_send_and_free(cmdbuff);
+      goto errout;
     }
 
-  /* If fail, there is no opportunity to execute the callback,
-   * so clear it here. */
+  /* Send API command to modem */
+
+  ret = apicmdgw_send(reqbuff, presbuff,
+                      resbufflen, &reslen, SYS_TIMEO_FEVR);
+  altcom_free_cmd(reqbuff);
 
   if (0 > ret)
     {
-      /* Clear registered callback */
-
-      altcomcallbacks_unreg_cb(APICMDID_GET_OPERATOR);
-      altcomstatus_unreg_statchgcb(getoperator_status_chg_cb);
+      goto errout;
     }
-  else
+
+  ret = 0;
+
+  if (sync)
     {
-      ret = 0;
+      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
+      if (0 == ret)
+        {
+          strncpy((FAR char *)oper,(FAR const char *) &resbuff.oper,
+                  LTE_OPERATOR_LEN);
+          oper[LTE_OPERATOR_LEN - 1] = '\0';
+        }
     }
 
   return ret;
+
+errout:
+  if (!sync)
+    {
+      altcombs_teardown_apicallback(APICMDID_GET_OPERATOR,
+                                    getoperator_status_chg_cb);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: lte_get_operator_sync
+ *
+ * Description:
+ *   Get connected network operator information.
+ *
+ * Input Parameters:
+ *   oper      A character string indicating network operator. It is
+ *             terminated with '\0' If it is not connected, the first
+ *             character is '\0'. When using the synchronous API,
+ *             the maximum number of network operator areas must be allocated.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_operator_sync(int8_t *oper)
+{
+  return lte_getoperator_impl(oper, NULL);
+}
+
+/****************************************************************************
+ * Name: lte_get_operator
+ *
+ * Description:
+ *   Get connected network operator information.
+ *
+ * Input Parameters:
+ *   callback  Callback function to notify when getting network operator
+ *             information is completed.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_get_operator(get_operator_cb_t callback)
+{
+  return lte_getoperator_impl(NULL, callback);
 }
 
 /****************************************************************************
