@@ -298,6 +298,10 @@ int32_t lte_get_operator_sync(int8_t *oper)
 
 int32_t lte_get_operator(get_operator_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getoperator_impl(NULL, callback);
 }
 

@@ -317,6 +317,10 @@ int32_t lte_get_edrx_sync(lte_edrx_setting_t *settings)
 
 int32_t lte_get_edrx(get_edrx_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getedrx_impl(NULL, callback);
 }
 

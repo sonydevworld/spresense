@@ -293,6 +293,10 @@ int32_t lte_get_imsi_sync(int8_t *imsi)
 
 int32_t lte_get_imsi(get_imsi_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getimsi_impl(NULL, callback);
 }
 

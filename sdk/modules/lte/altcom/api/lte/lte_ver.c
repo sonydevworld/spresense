@@ -345,6 +345,10 @@ int32_t lte_get_version_sync(lte_version_t *version)
 
 int32_t lte_get_version(get_ver_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getversion_impl(NULL, callback);
 }
 

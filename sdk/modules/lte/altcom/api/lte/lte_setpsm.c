@@ -300,6 +300,10 @@ int32_t lte_set_psm_sync(lte_psm_setting_t *settings)
 int32_t lte_set_psm(lte_psm_setting_t *settings,
                     set_psm_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_setpsm_impl(settings, callback);
 }
 

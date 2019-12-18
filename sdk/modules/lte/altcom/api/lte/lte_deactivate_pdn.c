@@ -288,6 +288,10 @@ int32_t lte_deactivate_pdn_sync(uint8_t session_id)
 
 int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
  return lte_deactivatepdn_impl(session_id, callback);
 }
 

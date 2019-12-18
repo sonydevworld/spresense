@@ -268,6 +268,10 @@ int32_t lte_radio_on_sync(void)
 
 int32_t lte_radio_on(radio_on_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_radioon_impl(callback);
 }
 

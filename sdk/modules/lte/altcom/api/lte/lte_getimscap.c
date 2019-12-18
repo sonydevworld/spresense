@@ -289,6 +289,10 @@ int32_t lte_get_imscap_sync(bool *imscap)
 
 int32_t lte_get_imscap(get_imscap_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getimscap_impl(NULL, callback);
 }
 

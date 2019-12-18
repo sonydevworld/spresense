@@ -292,6 +292,10 @@ int32_t lte_get_quality_sync(lte_quality_t *quality)
 
 int32_t lte_get_quality(get_quality_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getquality_impl(NULL, callback);
 }
 
