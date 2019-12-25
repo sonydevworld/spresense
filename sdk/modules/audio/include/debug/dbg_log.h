@@ -377,6 +377,27 @@
                                         AS_MODULE_ID_RECOGNITION_OBJ, \
                                         fmt, \
                                         ##__VA_ARGS__)
+#define SYNTHESIZER_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+                                        AS_MODULE_ID_SYNTHESIZER_OBJ, \
+                                        att_cb)
+#define SYNTHESIZER_OBJ_ERR(code)     DBG_LOGF_ERROR( \
+                                        AS_MODULE_ID_SYNTHESIZER_OBJ, \
+                                        0, \
+                                        code)
+#define SYNTHESIZER_OBJ_WARN(code)    DBG_LOGF_WARN( \
+                                        AS_MODULE_ID_SYNTHESIZER_OBJ, \
+                                        0, \
+                                        code)
+#define SYNTHESIZER_OBJ_DBG(fmt, ...) AUDIO_LOG_EVENT( \
+                                        AS_MODULE_ID_SYNTHESIZER_OBJ, \
+                                        fmt, \
+                                        ##__VA_ARGS__)
+#define SYNTHESIZER_OBJ_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
+                                            AS_MODULE_ID_RECOGNITION_OBJ, \
+                                            att_cb)
+#define SYNTHESIZER_OBJ_UNREG_ATTCB() ATTENTION_CB_UNREGISTER( \
+                                        AS_MODULE_ID_SYNTHESIZER_OBJ)
+
 
 #define RECOGNIZER_CMP_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER( \
                                             AS_MODULE_ID_RECOGNITION_CMP, \
@@ -402,6 +423,23 @@
                                         code)
 #define RECOGNIZER_CMP_DBG(fmt, ...) AUDIO_LOG_EVENT( \
                                         AS_MODULE_ID_RECOGNITION_CMP, \
+                                        fmt, \
+                                        ##__VA_ARGS__)
+
+#define OSCILLATOR_CMP_ERR(code)      DBG_LOGF_ERROR( \
+                                        AS_MODULE_ID_OSCILLATOR_CMP, \
+                                        0, \
+                                        code)
+#define OSCILLATOR_CMP_WARN(code)     DBG_LOGF_WARN( \
+                                        AS_MODULE_ID_OSCILLATOR_CMP, \
+                                        0, \
+                                        code)
+#define OSCILLATOR_CMP_INF(code)      DBG_LOGF_DEBUG( \
+                                        AS_MODULE_ID_OSCILLATOR_CMP, \
+                                        0, \
+                                        code)
+#define OSCILLATOR_CMP_DBG(fmt, ...)  AUDIO_LOG_EVENT( \
+                                        AS_MODULE_ID_OSCILLATOR_CMP, \
                                         fmt, \
                                         ##__VA_ARGS__)
 

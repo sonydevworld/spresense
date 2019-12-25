@@ -74,6 +74,7 @@ enum ApuProcessMode
   FilterMode,
   EncMode,
   RecognitionMode,
+  OscMode,
   ApuProcessModeNum
 };
 

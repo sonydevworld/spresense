@@ -303,6 +303,77 @@ public:
 
 /****************************************************************************/
 /**
+ *    Apu command for oscillator control
+ */
+/**
+ * Initializing processing
+ */
+
+enum SetOscCmdType
+{
+  OscTypeFrequency = 0x00000001,
+  OscTypeEnvelope  = 0x00000002,
+};
+
+struct SetOscCmdEnv
+{
+  uint16_t      attack;          /**< Attack of data */
+  uint16_t      decay;           /**< Decay of data */
+  uint16_t      sustain;         /**< Sustain of data */
+  uint16_t      release;         /**< Release of data */
+};
+
+typedef int32_t SetOscCmdFreq;
+
+struct ApuInitOscCmd
+{
+  WaveMode      type;            /**< Wave type of data */
+  uint8_t       channel_num;     /**< Channel number of data */
+  uint8_t       bit_length;      /**< Bit length of data */
+  uint32_t      sampling_rate;   /**< Sampling rate of data */
+  SetOscCmdEnv  env;
+  DebugDumpInfo debug_dump_info; /**< Debug dump information */
+};
+
+/**
+ * Executing processing
+ */
+
+struct ApuExecOscCmd
+{
+public:
+  BufferHeader buffer;           /**< Output buffer information */
+                                 /**<  (including at least buffer address */
+                                 /**<  or pointer and buffer size) */
+  uint8_t      channel_no;       /**< Channel number of data */
+};
+
+/**
+ * Flushing processing
+ */
+
+struct ApuFlushOscCmd
+{
+public:
+  uint8_t channel_no;            /**< Channel number of data */
+};
+
+/**
+ * Set paramter processing
+ */
+
+struct ApuSetOscCmd
+{
+public:
+  uint8_t       channel_no;      /**< Channel number of data */
+  uint32_t      type;            /**< Type of parameter to set */
+  SetOscCmdFreq frequency;       /**< frequency of genarated wave */
+  SetOscCmdEnv  env;             /**< envelope of data */
+  DebugDumpInfo debug_dump_info; /**< Debug dump information */
+};
+
+/****************************************************************************/
+/**
  *    Apu command for filter control
  */
 /**
@@ -707,7 +778,6 @@ public:
                                /**<  or pointer and buffer size) */
 };
 
-
 /****************************************************************************/
 /**
  *    Apu command for recognition control
@@ -752,7 +822,6 @@ public:
                                /**<  or pointer and buffer size) */
 };
 
-
 /****************************************************************************/
 /**
  * Apu command
@@ -773,7 +842,8 @@ struct Wien2ApuCmd
                                                    /**<  encoder processing */
     ApuInitRecognitionCmd   init_recognition_cmd;  /**< Parameters for initializing */
                                                    /**<  recognition processing */
-
+    ApuInitOscCmd           init_osc_cmd;          /**< Parameters for initializing */
+                                                   /**<  recognition processing */
     ApuExecDecCmd           exec_dec_cmd;          /**< Parameters for executing */
                                                    /**<  decoder processing */
     ApuExecFilterCmd        exec_filter_cmd;       /**< Parameters for executing */
@@ -784,7 +854,8 @@ struct Wien2ApuCmd
                                                    /**<  encoder processing */
     ApuExecRecognitionCmd   exec_recognition_cmd;  /**< Parameters for executing */
                                                    /**<  recognition processing */
-
+    ApuExecOscCmd           exec_osc_cmd;          /**< Parameters for executing */
+                                                   /**<  oscillator processing */
     ApuFlushDecCmd          flush_dec_cmd;         /**< Parameters for flushing */
                                                    /**<  decoder processing */
     ApuFlushFilterCmd       flush_filter_cmd;      /**< Parameters for flushing */
@@ -795,16 +866,18 @@ struct Wien2ApuCmd
                                                    /**<  encoder processing */
     ApuFlushRecognitionCmd  flush_recognition_cmd; /**< Parameters for flushing */
                                                    /**<  recognition processing */
-
-    ApuSetParamDecCmd        setparam_dec_cmd;        /**< Parameters for setting */
-                                                      /**<  decoder processing */
-    ApuSetParamFilterCmd     setparam_filter_cmd;     /**< Parameters for setting */
-                                                      /**<  filter processing */
+    ApuFlushOscCmd          flush_osc_cmd;         /**< Parameters for flushing */
+                                                   /**<  oscillator processing */
+    ApuSetParamDecCmd       setparam_dec_cmd;      /**< Parameters for setting */
+                                                   /**<  decoder processing */
+    ApuSetParamFilterCmd    setparam_filter_cmd;   /**< Parameters for setting */
+                                                   /**<  filter processing */
     ApuSetParamPostFilterCmd setparam_postfilter_cmd; /**< Parameters for setting */
-                                                      /**<  Postfilter processing */
-
-    ApuTuningFilterCmd       tuning_filter_cmd;       /**< Parameters for tuning */
-                                                      /**<  filter processing */
+                                                   /**<  Postfilter processing */
+    ApuSetOscCmd            setparam_osc_cmd;      /**< Parameters for setting */
+                                                   /**<  recognition processing */
+    ApuTuningFilterCmd      tuning_filter_cmd;     /**< Parameters for tuning */
+                                                   /**<  filter processing */
   };
   ApuResult  result;  /**< Retrun value of current command */
 #if !defined(__CC_ARM)
@@ -838,4 +911,3 @@ __APU_END_NAMESPACE /* Namespace of Apu */
 __WIEN2_END_NAMESPACE /* Namespace of Wien2 */
 
 #endif /* __MODULES_AUDIO_INCLUDE_APUS_APU_CMD_H */
-

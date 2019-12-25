@@ -129,6 +129,21 @@ config AUDIOUTILS_SOUND_RECOGNIZER
 	---help---
 		Support Voice Command Feature
 
+config AUDIOUTILS_SYNTHESIZER
+	bool "Audio Synthesizer"
+	default n
+	select AUDIOUTILS_PLAYER
+	select AUDIOUTILS_MANAGER
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_POSTPROC
+	select AUDIOUTILS_RENDERER
+	select AUDIOUTILS_DSP_DRIVER
+	---help---
+		Support Synthesizer Feature
+
 if AUDIOUTILS_RECORDER
 
 config AUDIOUTILS_SRC
