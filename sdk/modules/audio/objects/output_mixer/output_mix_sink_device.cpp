@@ -793,7 +793,7 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
   done_param.done_type = OutputMixInitPostDone;
   done_param.result    = send_result;
 
-  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_INITMPP, &done_param);
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_INITMPP, &done_param);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -822,7 +822,7 @@ void OutputMixToHPI2S::set_postproc(MsgPacket *msg)
   done_param.done_type = OutputMixSetPostDone;
   done_param.result    = send_result;
 
-  m_callback(m_requester_dtq, MSG_AUD_MIX_CMD_SETMPP, &done_param);
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_SETMPP, &done_param);
 }
 
 /*--------------------------------------------------------------------------*/
