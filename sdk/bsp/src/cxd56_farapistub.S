@@ -449,6 +449,10 @@ _modulelist_rtc_mgr:
     nop
     nop
 
+    /* GNSP_PoffLNA */
+    nop
+    nop
+
     /* GNSP_Sleep */
     nop
     nop
@@ -501,6 +505,14 @@ _modulelist_rtc_mgr:
     nop
     nop
 
+    /* GNSP_ChangeClockGPSCPUClkup */
+    nop
+    nop
+
+    /* GNSP_ChangeClockGPSCPUClkdwn */
+    nop
+    nop
+
     /* GNSP_GetBootCause */
     nop
     nop
@@ -521,11 +533,23 @@ _modulelist_rtc_mgr:
     nop
     nop
 
+    /* GNSP_Start_KeepITPOut */
+    nop
+    nop
+
+    /* GNSP_Stop_KeepITPOut */
+    nop
+    nop
+
     /* GNSP_SetSleepState */
     nop
     nop
 
     /* GNSP_FreeSysMemory */
+    nop
+    nop
+
+    /* GNSP_ReadAlmanacFile */
     nop
     nop
 
