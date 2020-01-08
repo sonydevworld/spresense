@@ -947,7 +947,7 @@ void MicFrontEndObject::preprocDoneOnStop(MsgPacket *msg)
                 {
                   AsMicFrontendEvent ext_cmd = getExternalCmd();
 
-                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+                  reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
                   m_state = MicFrontendStateReady;
                 }
@@ -1019,7 +1019,7 @@ void MicFrontEndObject::preprocDoneOnWaitStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsMicFrontendEvent ext_cmd = getExternalCmd();
-          reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+          reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
           m_state = MicFrontendStateReady;
         }
@@ -1120,7 +1120,7 @@ void MicFrontEndObject::captureDoneOnStop(MsgPacket *msg)
               /* Reply */
 
               AsMicFrontendEvent ext_cmd = getExternalCmd();
-              reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+              reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
               /* Transit to Ready */
 
@@ -1175,7 +1175,7 @@ void MicFrontEndObject::captureDoneOnErrorStop(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsMicFrontendEvent ext_cmd = getExternalCmd();
-                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+                  reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
                   m_state = MicFrontendStateReady;
                 }
@@ -1210,7 +1210,7 @@ void MicFrontEndObject::captureDoneOnWaitStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsMicFrontendEvent ext_cmd = getExternalCmd();
-          reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+          reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
           m_state = MicFrontendStateReady;
         }
@@ -1297,7 +1297,7 @@ void MicFrontEndObject::captureErrorOnStop(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsMicFrontendEvent ext_cmd = getExternalCmd();
-                  reply(ext_cmd, msg->getType(), AS_ECODE_OK);
+                  reply(ext_cmd, MSG_AUD_MFE_CMD_STOP, AS_ECODE_OK);
 
                   m_state = MicFrontendStateReady;
                 }
