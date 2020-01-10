@@ -46,7 +46,6 @@
 #include "director.h"
 #include "dbg_if.h"
 #include "altcombs.h"
-#include "altcom_callbacks.h"
 #include "altcom_status.h"
 
 /****************************************************************************
@@ -93,16 +92,7 @@ int32_t lte_initialize(void)
     }
   else
     {
-      ret = altcomcallbacks_init();
-      if (ret < 0)
-        {
-          DBGIF_LOG1_ERROR("callbacks_initialize() failed %d\n", ret);
-          director_destruct(&g_ltebuilder);
-        }
-      else
-        {
-          altcom_set_status(ALTCOM_STATUS_INITIALIZED);
-        }
+      altcom_set_status(ALTCOM_STATUS_INITIALIZED);
     }
 
   return ret;
