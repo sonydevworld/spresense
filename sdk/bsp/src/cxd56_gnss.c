@@ -2424,9 +2424,17 @@ static int cxd56_gnss_open(FAR struct file *filep)
   FAR struct inode *           inode;
   FAR struct cxd56_gnss_dev_s *priv;
   int                          ret = OK;
+  int                          retry = 50;
 
   inode = filep->f_inode;
   priv  = (FAR struct cxd56_gnss_dev_s *)inode->i_private;
+
+  while (!g_rtc_enabled && 0 < retry--)
+    {
+      /* GNSS requires stable RTC */
+
+      usleep(100 * 1000);
+    }
 
   ret = sem_wait(&priv->devsem);
   if (ret < 0)
