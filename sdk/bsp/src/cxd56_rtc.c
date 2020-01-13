@@ -205,16 +205,6 @@ static int cxd56_rtc_interrupt(int irq, FAR void *context, FAR void *arg)
       id = RTC_ALARM0;
       clear = source & RTCREG_ALM0_MASK;
     }
-  else if (source & RTCREG_ALM1_MASK)
-    {
-      id = RTC_ALARM1;
-      clear = source & RTCREG_ALM1_MASK;
-    }
-  else if (source & RTCREG_ALM2_MASK)
-    {
-      id = RTC_ALARM2;
-      clear = source & RTCREG_ALM2_MASK;
-    }
   else
     {
       rtcerr("ERROR: Invalid ALARM\n");
@@ -307,10 +297,8 @@ static void cxd56_rtc_initialize(int argc, uint32_t arg)
   /* Configure RTC interrupt to catch overflow and alarm interrupts. */
 
   irq_attach(CXD56_IRQ_RTC0_A0, cxd56_rtc_interrupt, NULL);
-  irq_attach(CXD56_IRQ_RTC0_A2, cxd56_rtc_interrupt, NULL);
   irq_attach(CXD56_IRQ_RTC_INT, cxd56_rtc_interrupt, NULL);
   up_enable_irq(CXD56_IRQ_RTC0_A0);
-  up_enable_irq(CXD56_IRQ_RTC0_A2);
   up_enable_irq(CXD56_IRQ_RTC_INT);
 #endif
 
