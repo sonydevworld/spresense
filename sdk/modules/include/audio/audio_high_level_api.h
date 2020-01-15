@@ -917,6 +917,22 @@ typedef struct
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 
+/* Init OutputMixer Command (#AUDCMD_INIT_OUTPUTMIXER) */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  /*! \brief [in] Set postproc type. Use AsPostprocType enum type */
+
+  uint8_t postproc_type;
+
+  /*! \brief [in] Set dsp file name and path */
+
+  char dsp_path[AS_POSTPROC_FILE_PATH_LEN];
+
+} AsInitMixerParam;
+
 /** Request Clock Recovery Command (#AUDCMD_CLKRECOVERY) parameter */
 
 typedef struct
@@ -1121,6 +1137,12 @@ typedef struct
 
 #endif
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
+    /*! \brief [in] for Init OutputMixer 
+     * (header.command_code==#AUDCMD_INIT_OUTPUTMIXER)
+     */
+
+    AsInitMixerParam init_mixer_param;
+
     /*! \brief [in] for Adjust sound period
      * (header.command_code==#AUDCMD_CLKRECOVERY)
      */

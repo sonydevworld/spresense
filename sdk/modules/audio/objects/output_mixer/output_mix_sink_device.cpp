@@ -160,6 +160,16 @@ OutputMixToHPI2S::MsgProc OutputMixToHPI2S::MsgProcTbl[AUD_MIX_MSG_NUM][StateNum
     &OutputMixToHPI2S::illegal                /*   Underflow             */
   },
 
+  /* Message type: INIT  */
+
+  {                                           /* OutputMixToHPI2S State: */
+    &OutputMixToHPI2S::illegal,               /*  Booted                 */
+    &OutputMixToHPI2S::init,                  /*  Ready                  */
+    &OutputMixToHPI2S::illegal,               /*  Active                 */
+    &OutputMixToHPI2S::illegal,               /*  Stopping               */
+    &OutputMixToHPI2S::illegal                /*  Underflow              */
+  },
+
   /* Message type: DATA  */
 
   {                                           /* OutputMixToHPI2S State: */
@@ -251,7 +261,7 @@ void OutputMixToHPI2S::reply(MsgQueId requester_dtq,
       AudioObjReply cmplt((uint32_t)msg_type,
                            AS_OBJ_REPLY_TYPE_REQ,
                            AS_MODULE_ID_OUTPUT_MIX_OBJ,
-                           AS_ECODE_OK);
+                           done_param->ecode);
       err_t er = MsgLib::send<AudioObjReply>(requester_dtq,
                                              MsgPriNormal,
                                              MSG_TYPE_AUD_RES,
@@ -278,6 +288,7 @@ void OutputMixToHPI2S::illegal(MsgPacket* msg)
   switch (event)
     {
       case MSG_AUD_MIX_CMD_ACT:
+      case MSG_AUD_MIX_CMD_INIT:
       case MSG_AUD_MIX_CMD_DEACT:
       case MSG_AUD_MIX_CMD_CLKRECOVERY:
       case MSG_AUD_MIX_CMD_INITMPP:
@@ -303,21 +314,25 @@ void OutputMixToHPI2S::illegal(MsgPacket* msg)
 void OutputMixToHPI2S::act(MsgPacket* msg)
 {
   AsOutputMixDoneParam done_param;
-
-  m_requester_dtq = msg->getReply();
   OutputMixerCommand cmd = msg->moveParam<OutputMixerCommand>();
 
+  m_requester_dtq = msg->getReply();
 
-  OUTPUT_MIX_DBG("ACT: dev %d, type %d, post enable %d\n",
+  /* Initialize reply value */
+
+  done_param.handle    = cmd.handle;
+  done_param.done_type = OutputMixActDone;
+  done_param.result    = true;
+  done_param.ecode     = AS_ECODE_OK;
+
+  OUTPUT_MIX_DBG("ACT: dev %d, type %d\n",
                  cmd.act_param.output_device,
-                 cmd.act_param.mixer_type,
-                 cmd.act_param.post_enable);
+                 cmd.act_param.mixer_type);
 
   if (!checkMemPool())
     {
-      done_param.handle    = cmd.handle;
-      done_param.done_type = OutputMixActDone;
-      done_param.result    = false;
+      done_param.result = false;
+      done_param.ecode  = AS_ECODE_CHECK_MEMORY_POOL_ERROR;
 
       reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
       return;
@@ -338,6 +353,7 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
             {
               render_device = RenderDeviceI2S;
             }
+
           if (!AS_get_render_comp_handler(&m_render_comp_handler,
                                           render_device))
             {
@@ -364,11 +380,94 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
 
   m_error_callback = cmd.act_param.error_cb;
 
-  uint32_t dsp_inf = 0;
+  /* Activation of component */
 
-  switch (cmd.act_param.post_enable)
+  char filepath[64];
+  snprintf(filepath, sizeof(filepath), "%s/POSTPROC", CONFIG_AUDIOUTILS_DSP_MOUNTPT);
+
+  uint32_t ret =loadComponent((cmd.act_param.post_enable == PostFilterEnable)
+                                ? AsPostprocTypeUserCustom : AsPostprocTypeThrough,
+                              filepath);
+
+  if(ret != AS_ECODE_OK)
     {
-      case PostFilterEnable:
+      done_param.result = false;
+      done_param.ecode  = ret;
+
+      reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+      return;
+    }
+
+  /* Reply "Success" */
+
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+
+  m_state = Ready;
+}
+
+/*--------------------------------------------------------------------------*/
+void OutputMixToHPI2S::init(MsgPacket* msg)
+{
+  AsOutputMixDoneParam done_param;
+  OutputMixerCommand cmd = msg->moveParam<OutputMixerCommand>();
+
+  OUTPUT_MIX_DBG("INIT: post_type %d, dsp %s\n",
+                 cmd.init_param.postproc_type,
+                 cmd.init_param.dsp_path);
+
+  /* Initialize reply value */
+
+  done_param.handle    = cmd.handle;
+  done_param.done_type = OutputMixInitDone;
+  done_param.result    = true;
+  done_param.ecode     = AS_ECODE_OK;
+
+  /* Check component load */
+
+  if ((m_postproc_type != cmd.init_param.postproc_type)
+   || (strncmp(m_dsp_path, cmd.init_param.dsp_path, sizeof(m_dsp_path))))
+    {
+      uint32_t ret = unloadComponent();
+
+      if (ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          done_param.result    = false;
+          done_param.ecode     = ret;
+
+          reply(m_requester_dtq, MSG_AUD_MIX_CMD_INIT, &done_param);
+          return;
+        }
+
+      ret = loadComponent(static_cast<AsPostprocType>(cmd.init_param.postproc_type),
+                          cmd.init_param.dsp_path);
+
+      if(ret != AS_ECODE_OK)
+        {
+          /* Error reply */
+
+          done_param.result    = false;
+          done_param.ecode     = ret;
+
+          reply(m_requester_dtq, MSG_AUD_MIX_CMD_INIT, &done_param);
+          return;
+        }
+    }
+
+  /* Reply "Success" */
+
+  reply(m_requester_dtq, MSG_AUD_MIX_CMD_INIT, &done_param);
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t OutputMixToHPI2S::loadComponent(AsPostprocType type, char *dsp_path)
+{
+  /* Set component */
+
+  switch (type)
+    {
+      case AsPostprocTypeUserCustom:
         m_p_postfliter_instance = &m_usercstm_instance;
         break;
 
@@ -377,32 +476,71 @@ void OutputMixToHPI2S::act(MsgPacket* msg)
         break;
     }
 
+  /* If component cannot be set, reply error. */
+
   if (m_p_postfliter_instance == NULL)
     {
-      done_param.handle    = cmd.handle;
-      done_param.done_type = OutputMixActDone;
-      done_param.result    = false;
-
-      reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+      return AS_ECODE_DSP_LOAD_ERROR;
     }
 
-  char filepath[64];
-  snprintf(filepath, sizeof(filepath), "%s/POSTPROC", CONFIG_AUDIOUTILS_DSP_MOUNTPT);
+  /* Activate component */
 
-  m_p_postfliter_instance->activate(postfilter_done_callback,
-                                    filepath,
-                                    static_cast<void *>(this),
-                                    &dsp_inf);
+  uint32_t dsp_inf = 0;
 
-  /* Reply */
+  uint32_t ret = m_p_postfliter_instance->activate(postfilter_done_callback,
+                                                   dsp_path,
+                                                   static_cast<void *>(this),
+                                                   &dsp_inf);
 
-  done_param.handle    = cmd.handle;
-  done_param.done_type = OutputMixActDone;
-  done_param.result    = true;
+  if (ret != AS_ECODE_OK)
+    {
+      m_p_postfliter_instance = NULL;
 
-  reply(m_requester_dtq, MSG_AUD_MIX_CMD_ACT, &done_param);
+      return ret;
+    }
 
-  m_state = Ready;
+  /* Hold postproc type */
+
+  m_postproc_type = type;
+
+  /* Hold dsp_path */
+
+  strncpy(m_dsp_path, dsp_path, sizeof(m_dsp_path) - 1);
+  m_dsp_path[sizeof(m_dsp_path) -1] = '\0';
+
+  /* return success */
+
+  return AS_ECODE_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+uint32_t OutputMixToHPI2S::unloadComponent(void)
+{
+  /* If there is no component to deactivate, return OK. */
+
+  if (m_p_postfliter_instance == NULL)
+    {
+      return AS_ECODE_OK;
+    }
+
+  /* Deactivate post proc */
+
+  bool ret = m_p_postfliter_instance->deactivate();
+
+  if (!ret)
+    {
+      return AS_ECODE_DSP_UNLOAD_ERROR;
+    }
+
+  m_p_postfliter_instance = NULL;
+
+  /* When unload complete successfully, set invalid type and dsp_name. */
+
+  m_postproc_type = AsPostprocTypeInvalid;
+
+  memset(m_dsp_path, 0, sizeof(m_dsp_path));
+
+  return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -411,6 +549,11 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
   AsOutputMixDoneParam done_param;
   uint8_t handle = msg->moveParam<OutputMixerCommand>().handle;
 
+  done_param.handle    = handle;
+  done_param.done_type = OutputMixDeactDone;
+  done_param.result    = true;
+  done_param.ecode     = AS_ECODE_OK;
+
   OUTPUT_MIX_DBG("DEACT:\n");
 
   if (!AS_release_render_comp_handler(m_render_comp_handler))
@@ -418,15 +561,15 @@ void OutputMixToHPI2S::deact(MsgPacket* msg)
       return;
     }
 
-  m_p_postfliter_instance->deactivate();
+  uint32_t ret = unloadComponent();
 
-  m_p_postfliter_instance = NULL;
+  if (ret != AS_ECODE_OK)
+    {
+      done_param.result = false;
+      done_param.ecode  = ret;
+    }
 
   /* Replay */
-
-  done_param.handle    = handle;
-  done_param.done_type = OutputMixDeactDone;
-  done_param.result    = true;
 
   reply(m_requester_dtq, MSG_AUD_MIX_CMD_DEACT, &done_param);
 
@@ -715,6 +858,7 @@ void OutputMixToHPI2S::clock_recovery(MsgPacket* msg)
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixSetClkRcvDone;
   done_param.result    = true;
+  done_param.ecode     = AS_ECODE_OK;
 
   reply(m_requester_dtq, MSG_AUD_MIX_CMD_CLKRECOVERY, &done_param);
 
@@ -780,7 +924,7 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
 
   /* Init Postproc (Copy packet to MH internally, and wait return from DSP) */
 
-  bool send_result = m_p_postfliter_instance->init(param);
+  uint32_t send_result = m_p_postfliter_instance->init(param);
 
   ComponentCmpltParam cmplt;
   m_p_postfliter_instance->recv_done(&cmplt);
@@ -791,7 +935,8 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
 
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixInitPostDone;
-  done_param.result    = send_result;
+  done_param.result    = (send_result == AS_ECODE_OK) ? true : false;
+  done_param.ecode     = send_result;
 
   reply(m_requester_dtq, MSG_AUD_MIX_CMD_INITMPP, &done_param);
 }
@@ -821,6 +966,7 @@ void OutputMixToHPI2S::set_postproc(MsgPacket *msg)
   done_param.handle    = cmd.handle;
   done_param.done_type = OutputMixSetPostDone;
   done_param.result    = send_result;
+  done_param.ecode     = send_result ? AS_ECODE_OK : AS_ECODE_DSP_SET_ERROR;
 
   reply(m_requester_dtq, MSG_AUD_MIX_CMD_SETMPP, &done_param);
 }

@@ -99,6 +99,7 @@ int OutputMixObjectTask::getHandle(MsgPacket* msg)
   switch (msgtype)
     {
       case MSG_AUD_MIX_CMD_ACT:
+      case MSG_AUD_MIX_CMD_INIT:
       case MSG_AUD_MIX_CMD_DEACT:
       case MSG_AUD_MIX_CMD_CLKRECOVERY:
       case MSG_AUD_MIX_CMD_INITMPP:
@@ -435,6 +436,33 @@ bool AS_ActivateOutputMixer(uint8_t handle, FAR AsActivateOutputMixer *actparam)
   err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
                                               MsgPriNormal,
                                               MSG_AUD_MIX_CMD_ACT,
+                                              s_msgq_id.mng,
+                                              cmd);
+  F_ASSERT(er == ERR_OK);
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_InitOutputMixer(uint8_t handle, FAR AsInitOutputMixer *initparam)
+{
+  /* Parameter check */
+
+  if (initparam == NULL)
+    {
+      return false;
+    }
+
+  /* Set init param */
+
+  OutputMixerCommand cmd;
+
+  cmd.handle     = handle;
+  cmd.init_param = *initparam;
+
+  err_t er = MsgLib::send<OutputMixerCommand>(s_msgq_id.mixer,
+                                              MsgPriNormal,
+                                              MSG_AUD_MIX_CMD_INIT,
                                               s_msgq_id.mng,
                                               cmd);
   F_ASSERT(er == ERR_OK);

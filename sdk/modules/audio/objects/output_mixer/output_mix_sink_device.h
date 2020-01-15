@@ -111,10 +111,13 @@ public:
     , m_p_postfliter_instance(NULL)
     , m_usercstm_instance(cmd_pool, dsp_dtq)
     , m_thruproc_instance()
+    , m_postproc_type(AsPostprocTypeInvalid)
     , m_callback(NULL)
     , m_adjust_direction(OutputMixNoAdjust)
     , m_adjustment_times(0)
-  {}
+  {
+    memset(m_dsp_path, 0, sizeof(m_dsp_path));
+  }
 
   ~OutputMixToHPI2S()
   {}
@@ -153,6 +156,8 @@ private:
   ComponentBase *m_p_postfliter_instance;
   UserCustomComponent m_usercstm_instance;
   ThruProcComponent m_thruproc_instance;
+  AsPostprocType m_postproc_type;
+  char m_dsp_path[AS_POSTPROC_FILE_PATH_LEN];
 
   RenderComponentHandler m_render_comp_handler;
 
@@ -171,6 +176,9 @@ private:
 
   void illegal(MsgPacket *msg);
   void act(MsgPacket *msg);
+  void init(MsgPacket *msg);
+  uint32_t loadComponent(AsPostprocType type, char *dsp_path);
+  uint32_t unloadComponent(void);
   void deact(MsgPacket *msg);
 
   void input_data_on_ready(MsgPacket *msg);
