@@ -52,6 +52,7 @@
 #include <nuttx/board.h>
 #include <nuttx/spi/spi.h>
 #include <arch/chip/gnss.h>
+#include <arch/chip/pm.h>
 #include <arch/board/board.h>
 #include "cxd56_gnss_api.h"
 #include "cxd56_cpu1signal.h"
@@ -360,6 +361,9 @@ static int (*g_cmdlist[CXD56_GNSS_IOCTL_MAX])(FAR struct file *filep,
   cxd56_gnss_get_var_ephemeris,
   /* max                       CXD56_GNSS_IOCTL_MAX */
 };
+
+static struct pm_cpu_freqlock_s g_lv_lock =
+  PM_CPUFREQLOCK_INIT(PM_CPUFREQLOCK_TAG('G', 'T', 0), PM_CPUFREQLOCK_FLAG_LV);
 
 /****************************************************************************
  * Private Functions
@@ -699,6 +703,7 @@ static int cxd56_gnss_get_tcxo_offset(FAR struct file *filep,
 static int cxd56_gnss_set_time(FAR struct file *filep, unsigned long arg)
 {
   FAR struct cxd56_gnss_datetime_s *date_time;
+  int ret;
 
   if (!arg)
     {
@@ -707,7 +712,11 @@ static int cxd56_gnss_set_time(FAR struct file *filep, unsigned long arg)
 
   date_time = (FAR struct cxd56_gnss_datetime_s *)arg;
 
-  return GD_SetTime(&date_time->date, &date_time->time);
+  up_pm_acquire_freqlock(&g_lv_lock);
+  ret = GD_SetTime(&date_time->date, &date_time->time);
+  up_pm_release_freqlock(&g_lv_lock);
+
+  return ret;
 }
 
 /****************************************************************************
