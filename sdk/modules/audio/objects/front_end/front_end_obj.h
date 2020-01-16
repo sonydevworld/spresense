@@ -129,7 +129,7 @@ private:
   AsMicFrontendPreProcType m_preproc_type;
   char m_dsp_path[AS_PREPROCESS_FILE_PATH_LEN];
   int8_t  m_channel_num;
-  AudioPcmBitWidth m_pcm_bit_width;
+  uint8_t m_pcm_bit_width;
   uint32_t m_samples_per_frame;
   int8_t  m_cap_bytes;
   int32_t m_max_output_size;

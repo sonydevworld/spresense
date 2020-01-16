@@ -909,12 +909,12 @@ bool CaptureComponent::init(const CaptureComponentParam& param)
 
   switch (param.init_param.capture_bit_width)
     {
-      case AudPcm16Bit:
+      case AS_BITLENGTH_16:
           init_param.format = CXD56_AUDIO_SAMP_FMT_16;
           break;
 
-      case AudPcm24Bit:
-      case AudPcm32Bit:
+      case AS_BITLENGTH_24:
+      case AS_BITLENGTH_32:
           init_param.format = CXD56_AUDIO_SAMP_FMT_24;
           break;
 
