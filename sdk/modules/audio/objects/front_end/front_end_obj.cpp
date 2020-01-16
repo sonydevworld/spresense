@@ -1503,6 +1503,7 @@ bool MicFrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
   exec.input.size       = m_channel_num * m_cap_bytes * sample;
   exec.input.is_end     = false;
   exec.input.is_valid   = true;
+  exec.input.bit_length = m_pcm_bit_width;
 
   /* If preprocess is not active, don't alloc output area. */
 
