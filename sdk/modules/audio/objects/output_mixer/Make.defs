@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_PLAYER),y)
+ifeq ($(CONFIG_AUDIOUTILS_OUTPUTMIXER),y)
 
 CXXSRCS += output_mix_obj.cpp output_mix_sink_device.cpp
 VPATH   += objects/output_mixer

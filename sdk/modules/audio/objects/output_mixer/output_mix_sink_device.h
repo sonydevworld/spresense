@@ -47,6 +47,8 @@
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/common_utils/common_assert.h"
 #include "audio/audio_message_types.h"
+#include "audio/audio_outputmix_api.h"
+#include "audio/audio_object_common_api.h"
 #include "wien2_internal_packet.h"
 #include "wien2_common_defs.h"
 #include "components/renderer/renderer_component.h"

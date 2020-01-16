@@ -44,6 +44,8 @@
 #include "memutils/message/MsgPacket.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "audio/audio_message_types.h"
+#include "audio/audio_outputmix_api.h"
+#include "audio/audio_object_common_api.h"
 #include "output_mix_sink_device.h"
 #include "wien2_common_defs.h"
 

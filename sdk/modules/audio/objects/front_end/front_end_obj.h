@@ -44,8 +44,8 @@
 #include "memutils/message/Message.h"
 #include "memutils/s_stl/queue.h"
 #include "memutils/memory_manager/MemHandle.h"
-#include "audio/audio_high_level_api.h"
 #include "audio/audio_message_types.h"
+#include "audio/audio_frontend_api.h"
 #include "audio_state.h"
 
 #include "components/capture/capture_component.h"
