@@ -50,23 +50,12 @@ else
 STACKSIZE = $(CONFIG_EXAMPLES_LTE_AWSIOT_STACKSIZE)
 endif
 
-# define
-
-ifdef CONFIG_EXAMPLES_LTE_AWSIOT_IOT_DEBUG
- CFLAGS += -DENABLE_IOT_DEBUG
-endif
-ifdef CONFIG_EXAMPLES_LTE_AWSIOT_IOT_ERROR
- CFLAGS += -DENABLE_IOT_ERROR
-endif
-
 # lte_awsiot Example
 
 ASRCS =
 CSRCS += awsiot_lte_connection.c
 
 # build AWS-IoT device SDK
-
-include $(EXTERNAL_DIR)$(DELIM)awsiot$(DELIM)awsiot.mk
 
 MAINSRC = subscribe_publish_sample.c
 
