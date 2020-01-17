@@ -1,0 +1,256 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig EXTERNALS_AWSIOT
+	bool "AWS IoT Device SDK for Embedded C"
+	default n
+	---help---
+		Enable AWS IoT Device SDK for Embedded C.
+		This SDK is provided from https://github.com/aws/aws-iot-device-sdk-embedded-c.git
+		and licensed under the Apache License, Version 2.0.
+
+if EXTERNALS_AWSIOT
+menu "AWS-IoT console"
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_HOST
+	string "AWS_IOT_MQTT_HOST"
+	default ""
+	---help---
+		Customer specific MQTT HOST. The same will be used for Thing Shadow.
+
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_PORT
+	int "AWS_IOT_MQTT_PORT"
+	default 443
+	---help---
+		default port for MQTT/S.
+
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_CLIENT_ID
+	string "AWS_IOT_MQTT_CLIENT_ID"
+	default "AWS-IoT-C-SDK"
+	---help---
+		MQTT client ID should be unique for every device.
+
+config EXTERNALS_AWSIOT_AWS_IOT_MY_THING_NAME
+	string "AWS_IOT_MY_THING_NAME"
+	default "AWS-IoT-C-SDK"
+	---help---
+		Thing Name of the Shadow this device is associated with.
+
+config EXTERNALS_AWSIOT_AWS_IOT_ROOT_CA_FILENAME
+	string "AWS_IOT_ROOT_CA_FILENAME"
+	default "rootCA.crt"
+	---help---
+		Root CA file name.
+		This file can be downloaded from AWS-IoT console.
+
+config EXTERNALS_AWSIOT_AWS_IOT_CERTIFICATE_FILENAME
+	string "AWS_IOT_CERTIFICATE_FILENAME"
+	default "cert.pem"
+	---help---
+		Device signed certificate file name.
+		This file can be downloaded from AWS-IoT console.
+
+config EXTERNALS_AWSIOT_AWS_IOT_PRIVATE_KEY_FILENAME
+	string "AWS_IOT_PRIVATE_KEY_FILENAME"
+	default "privkey.pem"
+	---help---
+		Device private key filename.
+		This file can be downloaded from AWS-IoT console.
+
+endmenu # AWS-IoT console
+
+
+menu "MQTT layer"
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_RX_BUF_LEN
+	int "AWS_IOT_MQTT_RX_BUF_LEN"
+	default 512
+	---help---
+		Any message that comes into the device should be less than this buffer size.
+		If a received message is bigger than this buffer size the message will be dropped.
+
+
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_TX_BUF_LEN
+	int "AWS_IOT_MQTT_TX_BUF_LEN"
+	default 512
+	---help---
+		Any time a message is sent out through the MQTT layer.
+		The message is copied into this buffer anytime a publish is done.
+		This will also be used in the case of Thing Shadow.
+
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_NUM_SUBSCRIBE_HANDLERS
+	int "AWS_IOT_MQTT_NUM_SUBSCRIBE_HANDLERS"
+	default 5
+	---help---
+		Maximum number of topic filters the MQTT client can handle at any given time.
+		This should be increased appropriately when using Thing Shadow.
+
+endmenu # MQTT layer
+
+menu "Thing Shadow and Job"
+menu "Common for Thing Shadow and Job"
+config EXTERNALS_AWSIOT_MAX_SIZE_OF_UNIQUE_CLIENT_ID_BYTES
+	int "MAX_SIZE_OF_UNIQUE_CLIENT_ID_BYTES"
+	default 80
+	---help---
+		Maximum size of the Unique Client Id. For More info on the Client Id refer \ref response "Acknowledgments".
+
+config EXTERNALS_AWSIOT_MAX_SIZE_CLIENT_ID_WITH_SEQUENCE
+	int "MAX_SIZE_CLIENT_ID_WITH_SEQUENCE"
+	default 90
+	---help---
+		This is size of the extra sequence number that will be appended to the Unique client Id.
+
+config EXTERNALS_AWSIOT_MAX_SIZE_CLIENT_TOKEN_CLIENT_SEQUENCE
+	int "MAX_SIZE_CLIENT_TOKEN_CLIENT_SEQUENCE"
+	default 100
+	---help---
+		This is size of the the total clientToken key and value pair in the JSON.
+
+
+config EXTERNALS_AWSIOT_MAX_SIZE_OF_THING_NAME
+	int "MAX_SIZE_OF_THING_NAME"
+	default 30
+	---help---
+		The Thing Name should not be bigger than this value. Modify this if the Thing Name needs to be bigger.
+endmenu # Common for Thing Shadow and Job
+
+menu "Thing Shadow specific"
+config EXTERNALS_AWSIOT_SHADOW_MAX_SIZE_OF_RX_BUFFER
+	int "SHADOW_MAX_SIZE_OF_RX_BUFFER"
+	default 512
+	---help---
+		Maximum size of the SHADOW buffer to store the received Shadow message.
+
+config EXTERNALS_AWSIOT_MAX_ACKS_TO_COMEIN_AT_ANY_GIVEN_TIME
+	int "MAX_ACKS_TO_COMEIN_AT_ANY_GIVEN_TIME"
+	default 10
+	---help---
+		At Any given time we will wait for this many responses.
+		 This will correlate to the rate at which the shadow actions are requested.
+
+config EXTERNALS_AWSIOT_MAX_THINGNAME_HANDLED_AT_ANY_GIVEN_TIME
+	int "MAX_THINGNAME_HANDLED_AT_ANY_GIVEN_TIME"
+	default 10
+	---help---
+		We could perform shadow action on any thing Name and this is maximum Thing Names we can act on at any given time.
+
+config EXTERNALS_AWSIOT_MAX_JSON_TOKEN_EXPECTED
+	int "MAX_JSON_TOKEN_EXPECTED"
+	default 120
+	---help---
+		These are the max tokens that is expected to be in the Shadow JSON document. Include the metadata that gets published.
+
+config EXTERNALS_AWSIOT_MAX_SHADOW_TOPIC_LENGTH_WITHOUT_THINGNAME
+	int "MAX_SHADOW_TOPIC_LENGTH_WITHOUT_THINGNAME"
+	default 60
+	---help---
+		All shadow actions have to be published or subscribed to a topic which is of the format $aws/things/{thingName}/shadow/update/accepted.
+		This refers to the size of the topic without the Thing Name
+
+config EXTERNALS_AWSIOT_MAX_SHADOW_TOPIC_LENGTH_BYTES
+	int "MAX_SHADOW_TOPIC_LENGTH_BYTES"
+	default 180
+	---help---
+		This size includes the length of topic with Thing Name.
+
+endmenu # Thing Shadow specific
+
+menu "Job specific"
+config EXTERNALS_AWSIOT_DISABLE_IOT_JOBS
+	bool "DISABLE_IOT_JOBS"
+	default n
+	---help---
+		Disable AWS-IoT jobs.
+
+if !EXTERNALS_AWSIOT_DISABLE_IOT_JOBS
+config EXTERNALS_AWSIOT_MAX_SIZE_OF_JOB_ID
+	int "MAX_SIZE_OF_JOB_ID"
+	default 64
+	---help---
+		Max size of job id.
+
+config EXTERNALS_AWSIOT_MAX_JOB_JSON_TOKEN_EXPECTED
+	int "MAX_JOB_JSON_TOKEN_EXPECTED"
+	default 120
+	---help---
+		These are the max tokens that is expected to be in the Job JSON document.
+
+config EXTERNALS_AWSIOT_MAX_SIZE_OF_JOB_REQUEST
+	int "MAX_SIZE_OF_JOB_REQUEST"
+	default 512
+	---help---
+		Max size of Job request.
+
+config EXTERNALS_AWSIOT_MAX_JOB_TOPIC_LENGTH_WITHOUT_JOB_ID_OR_THING_NAME
+	int "MAX_JOB_TOPIC_LENGTH_WITHOUT_JOB_ID_OR_THING_NAME"
+	default 40
+	---help---
+		Max length of Job topic without Job Id/Thing name.
+
+config EXTERNALS_AWSIOT_MAX_JOB_TOPIC_LENGTH_BYTES
+	int "MAX_JOB_TOPIC_LENGTH_BYTES"
+	default 96
+	---help---
+		Max length of Job topic.
+
+endif # !EXTERNALS_AWSIOT_DISABLE_IOT_JOBS
+endmenu # Job specific
+endmenu # Thing Shadow and Job
+
+menu "Auto Reconnect"
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_MIN_RECONNECT_WAIT_INTERVAL
+	int "AWS_IOT_MQTT_MIN_RECONNECT_WAIT_INTERVAL"
+	default 1000
+	---help---
+		Minimum time before the First reconnect attempt is made as part of the exponential back-off algorithm.
+
+config EXTERNALS_AWSIOT_AWS_IOT_MQTT_MAX_RECONNECT_WAIT_INTERVAL
+	int "AWS_IOT_MQTT_MAX_RECONNECT_WAIT_INTERVAL"
+	default 128000
+	---help---
+		Maximum time interval after which exponential back-off will stop attempting to reconnect.
+endmenu # Auto Reconnect
+
+menu "Metrics"
+config EXTERNALS_AWSIOT_DISABLE_METRICS
+	bool "DISABLE_METRICS"
+	default	n
+	---help---
+		Disable the collection of metrics by setting this to true.
+endmenu # Metrics
+
+menu "Debug"
+config EXTERNALS_AWSIOT_ENABLE_IOT_DEBUG
+	bool "ENABLE_IOT_DEBUG"
+	default n
+	---help---
+		Enable IOT_DEBUG macro.
+
+config EXTERNALS_AWSIOT_ENABLE_IOT_TRACE
+        bool "ENABLE_IOT_TRACE"
+        default n
+        ---help---
+                Enable FUNC_ENTRY, FUNC_EXIT, and FINC_EXIT_RC macros.
+
+config EXTERNALS_AWSIOT_ENABLE_IOT_INFO
+        bool "ENABLE_IOT_INFO"
+        default n
+        ---help---
+                Enable IOT_INFO macro.
+
+config EXTERNALS_AWSIOT_ENABLE_IOT_WARN
+        bool "ENABLE_IOT_WARN"
+        default n
+        ---help---
+                Enable IOT_WARN macro.
+
+config EXTERNALS_AWSIOT_ENABLE_IOT_ERROR
+        bool "ENABLE_IOT_ERROR"
+        default n
+        ---help---
+                Enable IOT_ERROR macro.
+
+
+endmenu # Debug
+endif # EXTERNALS_AWSIOT
