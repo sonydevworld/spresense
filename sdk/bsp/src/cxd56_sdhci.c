@@ -4602,4 +4602,23 @@ void cxd56_sdhci_wrprotect(FAR struct sdio_dev_s *dev, bool wrprotect)
   mcinfo("cdstatus: %02x\n", priv->cdstatus);
   leave_critical_section(flags);
 }
+
+/****************************************************************************
+ * Name: cxd56_sdio_resetstatus
+ *
+ * Description:
+ *   Reset SDIO status.
+ *
+ * Input Parameters:
+ *   dev   - Device-specific state data
+ *
+ ****************************************************************************/
+
+void cxd56_sdio_resetstatus(FAR struct sdio_dev_s *dev)
+{
+  struct cxd56_sdiodev_s *priv = (struct cxd56_sdiodev_s *)dev;
+  priv->cdstatus = 0;
+  priv->cbevents = SDIOMEDIA_INSERTED;
+}
+
 #endif /* CONFIG_CXD56_SDIO */
