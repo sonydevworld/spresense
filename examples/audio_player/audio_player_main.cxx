@@ -770,6 +770,28 @@ static bool app_set_clkmode(int clk_mode)
   return printAudCmdResult(command.header.command_code, result);
 }
 
+static bool app_init_outputmixer(void)
+{
+  AudioCommand command;
+  command.header.packet_length = LENGTH_INIT_OUTPUTMIXER;
+  command.header.command_code  = AUDCMD_INIT_OUTPUTMIXER;
+  command.header.sub_code      = 0x00;
+  command.init_mixer_param.player_id     = AS_PLAYER_ID_0;
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+  command.init_mixer_param.postproc_type = AsPostprocTypeUserCustom;
+#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+  command.init_mixer_param.postproc_type = AsPostprocTypeThrough;
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
+  snprintf(command.init_mixer_param.dsp_path,
+           sizeof(command.init_mixer_param.dsp_path),
+           "%s/POSTPROC", DSPBIN_FILE_PATH);
+
+  AS_SendAudioCommand(&command);
+  AudioResult result;
+  AS_ReceiveAudioResult(&result);
+  return printAudCmdResult(command.header.command_code, result);
+}
+
 #ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
 static bool app_send_initpostproc_command(void)
 {
@@ -800,6 +822,7 @@ static bool app_send_setpostproc_command(void)
 
   SetParam setpostcmd;
   setpostcmd.enable = s_toggle;
+  setpostcmd.coef = 99;
 
   AudioCommand command;
   command.header.packet_length = LENGTH_SUB_SETMPP_COMMON;
@@ -1284,10 +1307,24 @@ extern "C" int audio_player_main(int argc, char *argv[])
               goto errout_set_player_status;
             }
 
-#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
-           /* Init Postproc. */
+          /* Init OutputMixer. */
 
-           app_send_initpostproc_command();
+          if (!app_init_outputmixer())
+            {
+              printf("Error: app_init_outputmixer() failure.\n");
+
+              goto errout_init_outputmixer;
+            }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+          /* Init Postproc. */
+
+          if (!app_send_initpostproc_command())
+            {
+              printf("Error: app_send_initpostproc_command() failure.\n");
+
+              goto errout_init_postproc;
+            }
 #endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
 
            /* Cancel output mute. */
@@ -1347,13 +1384,17 @@ errout_start:
 
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
 errout_open_playlist:
-#endif
+#endif /* CONFIG_AUDIOUTILS_PLAYLIST */
 errout_init_simple_fifo:
 errout_init_output_select:
 errout_open_next_play_file:
 errout_set_ready_status:
 errout_set_clkmode:
 errout_set_player_status:
+errout_init_outputmixer:
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
+errout_init_postproc:
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC */
 errout_amp_mute_control:
   if (AS_MNG_STATUS_READY != app_get_status())
     {
