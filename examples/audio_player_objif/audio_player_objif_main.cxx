@@ -62,6 +62,9 @@
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
 #include <audio/utilities/playlist.h>
 #endif
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC
+#include "userproc_command.h"
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
 
 /* Section number of memory layout to use */
 
@@ -286,35 +289,6 @@ static void player_decode_done_callback(AsPcmDataParam pcm)
   data.pcm      = pcm;
 
   /* You can imprement any audio signal process */
-
-  if (pcm.bit_length == AS_BITLENGTH_16)
-    {
-      /* Example : RC filter for 16bit PCM */
-
-      int16_t *ls = (int16_t*)data.pcm.mh.getPa();
-      int16_t *rs = ls + 1;
-
-      static int16_t ls_l = 0;
-      static int16_t rs_l = 0;
-
-      if (!ls_l && !rs_l)
-        {
-          ls_l = *ls * 10/*gain*/;
-          rs_l = *rs * 10/*gain*/;
-        }
-
-      for (uint32_t cnt = 0; cnt < data.pcm.size; cnt += 4)
-        {
-          *ls = (ls_l * 995 / 1000) + ((*ls * 10/*gain*/) * 5 / 1000);
-          *rs = (rs_l * 995 / 1000) + ((*rs * 10/*gain*/) * 5 / 1000);
-
-          ls_l = *ls;
-          rs_l = *rs;
-
-          ls += 2;
-          rs += 2;
-        }
-    }
 
   AS_SendDataOutputMixer(&data);
 }
@@ -779,6 +753,75 @@ static bool app_init_player(uint8_t codec_type,
   return true;
 }
 
+static bool app_init_outputmixer(void)
+{
+  AsInitOutputMixer omix_init;
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC
+  omix_init.postproc_type = AsPostprocTypeUserCustom;
+#else /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
+  omix_init.postproc_type = AsPostprocTypeThrough;
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
+  snprintf(omix_init.dsp_path, sizeof(omix_init.dsp_path), "%s/POSTPROC", DSPBIN_FILE_PATH);
+
+  AS_InitOutputMixer(OutputMixer0, &omix_init);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_INIT))
+    {
+      printf("AS_InitOutputMixer() error!\n");
+      return false;
+    }
+
+  return true;
+}
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC
+static bool app_init_postprocess_dsp()
+{
+  AsInitPostProc param;
+  InitParam initpostcmd;
+
+  param.addr = reinterpret_cast<uint8_t *>(&initpostcmd);
+  param.size = sizeof(initpostcmd);
+  
+  AS_InitPostprocOutputMixer(OutputMixer0, &param);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_INITMPP))
+    {
+      printf("AS_InitPostprocOutputMixer() error!\n");
+      return false;
+    }
+
+  return true;
+}
+
+static bool app_set_postprocess_dsp(void)
+{
+  AsSetPostProc param;
+  static bool s_toggle = false;
+  s_toggle = (s_toggle) ? false : true;
+
+  /* Create packet area (have to ensure until API returns.)  */
+
+  SetParam setpostcmd;
+  setpostcmd.enable = s_toggle;
+  setpostcmd.coef = 99;
+
+  param.addr = reinterpret_cast<uint8_t *>(&setpostcmd);
+  param.size = sizeof(SetParam);
+
+  AS_SetPostprocOutputMixer(OutputMixer0, &param);
+
+  if (!app_receive_object_reply(MSG_AUD_MIX_CMD_SETMPP))
+    {
+      printf("AS_SetPostprocOutputMixer() error!\n");
+      return false;
+    }
+ 
+  return true;
+}
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
+
 static bool app_play_player(void)
 {
   AsPlayPlayerParam player_play;
@@ -1041,6 +1084,22 @@ static bool app_start(void)
       return false;
     }
 
+  if (!app_init_outputmixer())
+    {
+      printf("Error: app_init_outputmixer() failure.\n");
+      app_close_play_file();
+      return false;
+    }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC
+  if (!app_init_postprocess_dsp())
+    {
+      printf("Error: app_init_postprocess_dsp() failure.\n");
+      app_close_play_file();
+      return false;
+    }
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
+
   if (!app_play_player())
     {
       printf("Error: app_play_player() failure.\n");
@@ -1098,6 +1157,16 @@ void app_play_process(uint32_t play_time)
         {
           break;
         }
+
+#ifdef CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC
+      static int cnt = 0;
+      if (cnt++ > 100)
+        {
+          app_set_postprocess_dsp();
+          cnt = 0;
+        }
+#endif /* CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC */
+
     } while((time(&cur_time) - start_time) < play_time);
 }
 

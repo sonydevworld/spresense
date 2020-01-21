@@ -1,5 +1,5 @@
 ############################################################################
-# examples/audio_player_objif/Makefile
+# audio_recorder/worker/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -35,59 +35,72 @@
 
 -include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
-
-# Audio application info
-
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_STACKSIZE ?= 2048
-
-APPNAME   = audio_player_objif
-PRIORITY  = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_STACKSIZE)
-
-# Audio Example
-
-MAINSRC = audio_player_objif_main.cxx
-
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
-# Audio Example flags
+include $(SDKDIR)/Make.defs
 
 ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
-CXXFLAGS += -I "${shell cygpath -w worker/userproc/include}"
-endif
+LIB_DIR = "${shell cygpath -w lib}"
 else
-CXXFLAGS += -I $(AUDIODIR)
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
-CXXFLAGS += -I worker/userproc/include
-endif
+LIB_DIR = "lib"
 endif
 
-CXXFLAGS += -D_POSIX
-CXXFLAGS += -DUSE_MEMMGR_FENCE
-CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
+LDLIBPATH += -L $(LIB_DIR)
+LDLIBPATH += -L "$(SDKDIR)/lib"
 
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME ?= audio_player_objif$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME)
+LDLIBS += -lasmpw -lc
 
-include $(APPDIR)/Application.mk
+WORKER_ELF = POSTPROC
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
+VPATH = $(SDKDIR)/modules/audio/components/customproc/dsp_framework
+VPATH += userproc/src
 
-build_worker:
-	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+CXXSRCS = customproc_dsp_ctrl.cpp main.cpp
+CXXSRCS += rcfilter.cpp userproc.cpp
 
-.built: build_worker
-
-clean_worker:
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
-
-clean: clean_worker
-
+CXXELFFLAGS += -Os
+ifeq ($(WINTOOL),y)
+CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
+CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
+else
+CXXELFFLAGS += -Iuserproc/include
+CXXELFFLAGS += -I$(APPDIR)
 endif
+
+CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
+
+# Build
+
+all: lib $(WORKER_ELF)
+
+# Build ASMP worker library
+
+libasmpw.a:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+lib: libasmpw.a
+
+# Complile
+
+$(CXXOBJS): %$(OBJEXT):%.cpp
+	@echo "CXX: $<"
+	$(Q) $(CXX) -c $(CXXELFFLAGS) $< -o $@
+
+# Build workers
+
+$(WORKER_ELF): $(CXXOBJS)
+	@echo "LD: $@"
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	$(Q) $(STRIP) -d $(WORKER_ELF)
+
+.depend:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
+	@touch $@
+
+depend: .depend
+
+lib_clean:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+clean: lib_clean
+	$(call DELFILE, $(WORKER_ELF))
+	$(call CLEAN)
+

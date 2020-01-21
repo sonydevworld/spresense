@@ -1,5 +1,5 @@
 ############################################################################
-# examples/audio_player_objif/Makefile
+# audio_player/worker/lib/Makefile
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -33,61 +33,27 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
 
-# Audio application info
+BIN = libasmpw$(LIBEXT)
+WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
+LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_STACKSIZE ?= 2048
+all: $(BIN)
+.PHONY: depend clean distclean
 
-APPNAME   = audio_player_objif
-PRIORITY  = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_STACKSIZE)
+depend:
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend
 
-# Audio Example
+$(LIB): depend
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(BIN)
 
-MAINSRC = audio_player_objif_main.cxx
+$(BIN): $(LIB)
+	$(Q) install $< $@
 
-# Audio Example paths
+clean:
+	$(call DELFILE, $(BIN))
+	$(call CLEAN)
 
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
-# Audio Example flags
-
-ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
-CXXFLAGS += -I "${shell cygpath -w worker/userproc/include}"
-endif
-else
-CXXFLAGS += -I $(AUDIODIR)
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
-CXXFLAGS += -I worker/userproc/include
-endif
-endif
-
-CXXFLAGS += -D_POSIX
-CXXFLAGS += -DUSE_MEMMGR_FENCE
-CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
-
-CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME ?= audio_player_objif$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_PROGNAME)
-
-include $(APPDIR)/Application.mk
-
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
-
-build_worker:
-	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-.built: build_worker
-
-clean_worker:
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
-
-clean: clean_worker
-
-endif
+distclean: clean
