@@ -105,6 +105,7 @@ struct altmdm_lower_s
   bool (*sready)(void);
   void (*master_request)(bool request);
   void (*wakeup)(bool wakeup);
+  uint32_t (*spi_maxfreq)(void);
 };
 
 typedef void (*altmdm_pm_cbfunc_t)(uint32_t state);

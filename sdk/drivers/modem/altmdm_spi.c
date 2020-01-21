@@ -104,8 +104,6 @@
 #define WRITE_WAIT_TIMEOUT    (ALTMDM_SYS_FLAG_TMOFEVR)
 #define SREQ_WAIT_TIMEOUT     (ALTMDM_SYS_FLAG_TMOFEVR)
 
-#define SPI_MAXFREQUENCY            (13000000)      /* 13MHz. */
-
 /* Defines for transfer mode */
 
 #define MODE_RXDATA             (0) /* Data receive mode. */
@@ -1905,7 +1903,14 @@ int altmdm_spi_init(FAR struct altmdm_dev_s *priv)
   (void)SPI_LOCK(priv->spi, true);
   SPI_SETMODE(priv->spi, SPIDEV_MODE0);
   SPI_SETBITS(priv->spi, 8);
-  (void)SPI_SETFREQUENCY(priv->spi, SPI_MAXFREQUENCY);
+    if (priv->lower)
+    {
+      SPI_SETFREQUENCY(priv->spi, priv->lower->spi_maxfreq());
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
   (void)SPI_LOCK(priv->spi, false);
 
   if (priv->lower)

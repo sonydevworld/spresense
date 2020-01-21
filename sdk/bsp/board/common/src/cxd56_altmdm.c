@@ -69,6 +69,7 @@
 
 #if defined(CONFIG_CXD56_LTE_SPI4)
 #  define SPI_CH           (4)
+#  define SPI_MAXFREQUENCY (9750000)
 #  if  defined(CONFIG_CXD56_LTE_SPI4_DMAC)
 #    define DMA_TXCH       (2)
 #    define DMA_RXCH       (3)
@@ -77,6 +78,7 @@
 #  endif
 #elif defined(CONFIG_CXD56_LTE_SPI5)
 #  define SPI_CH           (5)
+#  define SPI_MAXFREQUENCY (13000000)
 #  if  defined(CONFIG_CXD56_LTE_SPI5_DMAC)
 #    define DMA_TXCH       (4)
 #    define DMA_RXCH       (5)
@@ -98,6 +100,7 @@ static void altmdm_sready_irqenable(bool enable);
 static bool altmdm_sready(void);
 static void altmdm_master_request(bool request);
 static void altmdm_wakeup(bool wakeup);
+static uint32_t altmdm_spi_maxfreq(void);
 
 /****************************************************************************
  * Private Data
@@ -113,6 +116,7 @@ static const struct altmdm_lower_s g_altmdm_lower =
   .sready           = altmdm_sready,
   .master_request   = altmdm_master_request,
   .wakeup           = altmdm_wakeup,
+  .spi_maxfreq      = altmdm_spi_maxfreq
 };
 
 /****************************************************************************
@@ -338,6 +342,19 @@ static void altmdm_master_request(bool request)
 static void altmdm_wakeup(bool wakeup)
 {
   cxd56_gpio_write(ALTMDM_WAKEUP, wakeup);
+}
+
+/****************************************************************************
+ * Name: altmdm_spi_maxfreq
+ *
+ * Description:
+ *   Get the maximum SPI clock frequency.
+ *
+ ****************************************************************************/
+
+static uint32_t altmdm_spi_maxfreq(void)
+{
+  return SPI_MAXFREQUENCY;
 }
 
 /****************************************************************************
