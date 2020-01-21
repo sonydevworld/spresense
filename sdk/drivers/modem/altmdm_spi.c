@@ -105,14 +105,6 @@
 #define SREQ_WAIT_TIMEOUT     (ALTMDM_SYS_FLAG_TMOFEVR)
 
 #define SPI_MAXFREQUENCY            (13000000)      /* 13MHz. */
-#define GPIO_MASTER_REQUEST         (ALTMDM_GPIO_MASTER_REQ)
-#define GPIO_SLAVE_REQUEST          (ALTMDM_GPIO_SLAVE_REQ)
-#define GPIO_SREQ_INT_POLARITY      (ALTMDM_GPIOINT_LEVEL_HIGH)
-#define GPIO_SREQ_INT_NOISE_FILTER  (ALTMDM_GPIOINT_NOISE_FILTER_DISABLE)
-#define GPIO_LOW                    (false)
-#define GPIO_HIGH                   (true)
-#define GPIO_INT_ENABLE             (true)
-#define GPIO_INT_DISABLE            (false)
 
 /* Defines for transfer mode */
 
@@ -796,7 +788,14 @@ static int do_xferheader(FAR struct altmdm_dev_s *priv,
 
   if ((is_sleepreq) || (is_txreq))
     {
-      board_altmdm_gpio_write(GPIO_MASTER_REQUEST, GPIO_HIGH);
+      if (priv->lower)
+        {
+          priv->lower->master_request(true);
+        }
+      else
+        {
+          m_err("ERR:%04d pointer is NULL\n", __LINE__);
+        }
 
       if (is_sleepreq)
         {
@@ -1288,9 +1287,15 @@ static int do_xfersleep(FAR struct altmdm_dev_s *priv, uint32_t is_rcvrready)
     {
       ret = SLEEP_NG;
     }
-  /* Fall down GPIO. */
 
-  board_altmdm_gpio_write(GPIO_MASTER_REQUEST, GPIO_LOW);
+  if (priv && priv->lower)
+    {
+      priv->lower->master_request(false);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   if (is_reset)
     {
@@ -1796,9 +1801,14 @@ static int xfer_task(int argc, char *argv[])
 
               if (is_txreq)
                 {
-                  /* Fall down GPIO. */
-
-                  board_altmdm_gpio_write(GPIO_MASTER_REQUEST, GPIO_LOW);
+                  if (priv->lower)
+                    {
+                      priv->lower->master_request(false);
+                    }
+                  else
+                    {
+                      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+                    }
                 }
 
               m_info("m=%d\n", xfer_mode);
@@ -1898,12 +1908,14 @@ int altmdm_spi_init(FAR struct altmdm_dev_s *priv)
   (void)SPI_SETFREQUENCY(priv->spi, SPI_MAXFREQUENCY);
   (void)SPI_LOCK(priv->spi, false);
 
-  /* GPIO settings */
-
-  board_altmdm_gpio_irq(GPIO_SLAVE_REQUEST, GPIO_SREQ_INT_POLARITY,
-                        GPIO_SREQ_INT_NOISE_FILTER,
-                        altmdm_spi_gpioreadyisr);
-
+  if (priv->lower)
+    {
+      priv->lower->sready_irqattach(true, altmdm_spi_gpioreadyisr);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   priv->spidev.task_id = task_create(XFER_TASK_NAME, XFER_TASK_PRI,
                                      XFER_TASK_STKSIZE, xfer_task, NULL);
@@ -1953,7 +1965,14 @@ int altmdm_spi_uninit(FAR struct altmdm_dev_s *priv)
     }
   destroy_rxbufffifo(priv);
 
-  board_altmdm_gpio_irq(GPIO_SLAVE_REQUEST, 0, 0, NULL);
+  if (priv->lower)
+    {
+      priv->lower->sready_irqattach(false, NULL);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   /* Uninitalize modem power management driver */
 
@@ -1972,7 +1991,14 @@ int altmdm_spi_uninit(FAR struct altmdm_dev_s *priv)
 
 int altmdm_spi_enable(FAR struct altmdm_dev_s *priv)
 {
-  board_altmdm_gpio_int_control(GPIO_SLAVE_REQUEST, GPIO_INT_ENABLE);
+  if (priv && priv->lower)
+    {
+      priv->lower->sready_irqenable(true);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   return 0;
 }
@@ -1989,7 +2015,14 @@ int altmdm_spi_disable(FAR struct altmdm_dev_s *priv)
 {
   FAR struct altmdm_spi_dev_s *spidev = &priv->spidev;
 
-  board_altmdm_gpio_int_control(GPIO_SLAVE_REQUEST, GPIO_INT_DISABLE);
+  if (priv->lower)
+    {
+      priv->lower->sready_irqenable(false);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   spidev->is_xferready = false;
 

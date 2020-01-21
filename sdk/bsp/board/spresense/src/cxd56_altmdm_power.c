@@ -1,5 +1,5 @@
 /****************************************************************************
- * bsp/board/common/include/cxd56_altmdm.h
+ * bsp/board/spresense/src/cxd56_altmdm_power.c
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,59 +33,20 @@
  *
  ****************************************************************************/
 
-#ifndef __BSP_BOARD_COMMON_INCLUDE_CXD56_ALTMDM_H
-#define __BSP_BOARD_COMMON_INCLUDE_CXD56_ALTMDM_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <sdk/config.h>
 
-/****************************************************************************
- * Public Types
- ****************************************************************************/
-
-#ifndef __ASSEMBLY__
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-#undef EXTERN
-#if defined(__cplusplus)
-#define EXTERN extern "C"
-extern "C"
-{
-#else
-#define EXTERN extern
-#endif
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
 #if defined(CONFIG_MODEM_ALTMDM)
 
-/****************************************************************************
- * Name: board_altmdm_initialize
- *
- * Description:
- *   Initialize Altair modem
- *
- ****************************************************************************/
-
-int board_altmdm_initialize(FAR const char *devpath);
+#include <arch/board/board.h>
+#include "cxd56_gpio.h"
 
 /****************************************************************************
- * Name: board_altmdm_uninitialize
- *
- * Description:
- *   Uninitialize Altair modem
- *
+ * Public Functions
  ****************************************************************************/
-
-int board_altmdm_uninitialize(void);
 
 /****************************************************************************
  * Name: board_altmdm_poweron
@@ -95,7 +56,18 @@ int board_altmdm_uninitialize(void);
  *
  ****************************************************************************/
 
-void board_altmdm_poweron(void);
+void board_altmdm_poweron(void)
+{
+  /* Power on altair modem device */
+
+  cxd56_gpio_config(ALTMDM_SHUTDOWN, false);
+  cxd56_gpio_write(ALTMDM_SHUTDOWN, true);
+
+  cxd56_gpio_config(ALTMDM_LTE_POWER_BUTTON, false);
+  cxd56_gpio_write(ALTMDM_LTE_POWER_BUTTON, true);
+
+  board_power_control(POWER_LTE, true);
+}
 
 /****************************************************************************
  * Name: board_altmdm_poweroff
@@ -105,14 +77,16 @@ void board_altmdm_poweron(void);
  *
  ****************************************************************************/
 
-void board_altmdm_poweroff(void);
+void board_altmdm_poweroff(void)
+{
+  /* Power off Altair modem device */
 
-#endif
+  cxd56_gpio_write(ALTMDM_SHUTDOWN, true);
 
-#undef EXTERN
-#if defined(__cplusplus)
+  board_power_control(POWER_LTE, false);
+
+  cxd56_gpio_write(ALTMDM_SHUTDOWN, false);
+  cxd56_gpio_write(ALTMDM_LTE_POWER_BUTTON, false);
 }
-#endif
 
-#endif /* __ASSEMBLY__ */
-#endif  /* __BSP_BOARD_COMMON_INCLUDE_CXD56_ALTMDM_H */
+#endif

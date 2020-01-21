@@ -225,4 +225,11 @@ enum board_power_device {
 
 #define BOARDIOC_USBDEV_SETNOTIFYSIG      (BOARDIOC_USER+0x0001)
 
+/* Altair modem device pin definitions *************************************/
+
+#define ALTMDM_SLAVE_REQ          PIN_EMMC_DATA3
+#define ALTMDM_MASTER_REQ         PIN_EMMC_DATA2
+#define ALTMDM_WAKEUP             PIN_AP_CLK
+#define ALTMDM_SHUTDOWN           PIN_PWM1
+
 #endif  /* __BSP_BOARD_CORVO_INCLUDE_BOARD_H */
