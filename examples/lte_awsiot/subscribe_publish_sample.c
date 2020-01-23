@@ -50,12 +50,12 @@ static char certDirectory[PATH_MAX + 1] = CONFIG_EXAMPLES_LTE_AWSIOT_CERT;
 /**
  * @brief Default MQTT HOST URL is pulled from the aws_iot_config.h
  */
-static char HostAddress[HOST_ADDRESS_SIZE] = CONFIG_EXAMPLES_LTE_AWSIOT_HOST;
+static char HostAddress[HOST_ADDRESS_SIZE] = AWS_IOT_MQTT_HOST;
 
 /**
  * @brief Default MQTT port is pulled from the aws_iot_config.h
  */
-static uint32_t port = CONFIG_EXAMPLES_LTE_AWSIOT_PORT;
+static uint32_t port = AWS_IOT_MQTT_PORT;
 
 /**
  * @brief This parameter will avoid infinite loop of publish and exit the program after certain number of publishes
