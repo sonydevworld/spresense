@@ -150,8 +150,6 @@
  ****************************************************************************/
 
 static struct altmdm_dev_s *g_privdata = NULL;
-static char g_tmp_rxbuff[MAX_PKT_SIZE];
-static char g_tmp_txbuff[MAX_PKT_SIZE];
 
 /****************************************************************************
  * Private Functions
@@ -879,7 +877,7 @@ static int do_receivedata(FAR struct altmdm_dev_s *priv)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff, rxbuff, dma_xfer_size);
+      ret = do_dmaxfer(priv, NULL, rxbuff, dma_xfer_size);
     }
   if (ret < 0)
     {
@@ -916,7 +914,7 @@ static int do_senddata(FAR struct altmdm_dev_s *priv)
       /* Do DMA transfer */
 
       ret = do_dmaxfer(priv, (void *)spidev->tx_param.buff_addr,
-                       (void *)g_tmp_rxbuff, dma_xfer_size);
+                       NULL, dma_xfer_size);
     }
   if (ret < 0)
     {
@@ -1006,7 +1004,7 @@ static int do_receivedata_nobuff(FAR struct altmdm_dev_s *priv)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff, (void *)g_tmp_rxbuff,
+      ret = do_dmaxfer(priv, NULL, NULL,
                        dma_xfer_size);
     }
   if (ret < 0)
@@ -1061,7 +1059,7 @@ static int do_trxdata_norxbuff(FAR struct altmdm_dev_s *priv)
       /* Do DMA transfer */
 
       ret = do_dmaxfer(priv, (void *)spidev->tx_param.buff_addr,
-                       (void *)g_tmp_rxbuff, dma_xfer_size);
+                       NULL, dma_xfer_size);
     }
   if (ret < 0)
     {
@@ -1089,6 +1087,7 @@ static int do_receivesleepdata(FAR struct altmdm_dev_s *priv, FAR int *resp)
 {
   int ret;
   int dma_xfer_size;
+  char rxbuff[UNIT_SIZE];
 
   /* Wait for Receiver Ready to receive. */
 
@@ -1101,7 +1100,7 @@ static int do_receivesleepdata(FAR struct altmdm_dev_s *priv, FAR int *resp)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff, (void *)g_tmp_rxbuff,
+      ret = do_dmaxfer(priv, NULL, (void *)rxbuff,
                        dma_xfer_size);
     }
   if (ret < 0)
@@ -1112,10 +1111,10 @@ static int do_receivesleepdata(FAR struct altmdm_dev_s *priv, FAR int *resp)
   else
     {
       m_info("[SRESP] 0x%02x,0x%02x,0x%02x,0x%02x\n",
-             g_tmp_rxbuff[0], g_tmp_rxbuff[1],
-             g_tmp_rxbuff[2], g_tmp_rxbuff[3]);
+             rxbuff[0], rxbuff[1],
+             rxbuff[2], rxbuff[3]);
 
-      if (!memcmp(g_tmp_rxbuff, "OK", 2))
+      if (!memcmp(rxbuff, "OK", 2))
         {
           *resp = SLEEP_OK;
         }
@@ -1141,6 +1140,7 @@ static int do_receivereset(FAR struct altmdm_dev_s *priv)
   int                         ret;
   int                         dma_xfer_size;
   FAR struct altmdm_spi_dev_s *spidev = &priv->spidev;
+  char rxbuff[UNIT_SIZE];
 
   /* Wait for Receiver Ready to receive. */
 
@@ -1153,7 +1153,7 @@ static int do_receivereset(FAR struct altmdm_dev_s *priv)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff, (void *)g_tmp_rxbuff,
+      ret = do_dmaxfer(priv, NULL, (void *)rxbuff,
                        dma_xfer_size);
     }
   if (ret < 0)
@@ -1166,7 +1166,7 @@ static int do_receivereset(FAR struct altmdm_dev_s *priv)
       if ((STAT_INF_GET_BOOTSTAT | STAT_INF_RESET) ==
           (spidev->rx_param.status_info & (STAT_INF_GET_BOOTSTAT | STAT_INF_RESET)))
         {
-          switch(g_tmp_rxbuff[0])
+          switch(rxbuff[0])
             {
               case RESET_BOOTSTAT_BOOTING:
                 altmdm_pm_set_bootstatus(priv,
@@ -1179,8 +1179,8 @@ static int do_receivereset(FAR struct altmdm_dev_s *priv)
               default:
                 m_err("ERR:%04d Invalid payload of reset packet. %02x,%02x,%02x,%02x\n",
                       __LINE__,
-                      g_tmp_rxbuff[0], g_tmp_rxbuff[1],
-                      g_tmp_rxbuff[2], g_tmp_rxbuff[3]);
+                      rxbuff[0], rxbuff[1],
+                      rxbuff[2], rxbuff[3]);
                 break;
             }
         }
@@ -1231,8 +1231,8 @@ static int do_trxreset(FAR struct altmdm_dev_s *priv)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff,
-                       (void *)g_tmp_rxbuff, dma_xfer_size);
+      ret = do_dmaxfer(priv, NULL,
+                       NULL, dma_xfer_size);
     }
   if (ret < 0)
     {
@@ -1255,7 +1255,7 @@ static int do_trxreset(FAR struct altmdm_dev_s *priv)
 static int do_xfersleep(FAR struct altmdm_dev_s *priv, uint32_t is_rcvrready)
 {
   int ret;
-  int resp;
+  int resp = 0;
   int is_reset = 0;
   int total_size;
   int actual_size;
@@ -1878,7 +1878,6 @@ int altmdm_spi_init(FAR struct altmdm_dev_s *priv)
   altmdm_pm_init(priv);
 
   memset(&priv->spidev, 0, sizeof(struct altmdm_spi_dev_s));
-  memset(g_tmp_txbuff, 0, sizeof(g_tmp_txbuff));
   priv->spidev.is_not_run = false;
   priv->spidev.is_xferready = false;
 
