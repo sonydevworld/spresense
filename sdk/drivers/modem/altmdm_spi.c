@@ -91,7 +91,7 @@
 
 /* Timeout is counted in units of millisecond. */
 
-#define WAIT_RXREQ_TIMEOUT    (1000)
+#define WAIT_RXREQ_TIMEOUT    (500)
 #define WAIT_XFERRDY_TIMEOUT  (25 * 1000)
 #if defined(CONFIG_MODEM_ALTMDM_SLEEP_TIMER_VAL)
 #  if (CONFIG_MODEM_ALTMDM_SLEEP_TIMER_VAL < 20)
