@@ -1219,16 +1219,11 @@ static int do_trxreset(FAR struct altmdm_dev_s *priv)
   ret = wait_receiverready(priv);
   if (ret >= 0)
     {
-      /* Choose the larger one. */
+      /* If a conflict occurs with the reset packet,
+       * the packet is transferred by the size specified
+       * by the receiving side. Discard the data on the sending side. */
 
-      if (spidev->tx_param.total_size < spidev->rx_param.total_size)
-        {
-          xfer_size = spidev->rx_param.total_size;
-        }
-      else
-        {
-          xfer_size = spidev->tx_param.total_size;
-        }
+      xfer_size = spidev->rx_param.total_size;
 
       /* Get DMA transfer size */
 
@@ -1236,7 +1231,7 @@ static int do_trxreset(FAR struct altmdm_dev_s *priv)
 
       /* Do DMA transfer */
 
-      ret = do_dmaxfer(priv, (void *)spidev->tx_param.buff_addr,
+      ret = do_dmaxfer(priv, (void *)g_tmp_txbuff,
                        (void *)g_tmp_rxbuff, dma_xfer_size);
     }
   if (ret < 0)
