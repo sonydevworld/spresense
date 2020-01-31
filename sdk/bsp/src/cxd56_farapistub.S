@@ -1179,6 +1179,36 @@ GD_RtkGetEphNotify:
     mov     r12, pc
     b       1b
 
+    .global	GD_SetUseCase
+    .thumb_func
+GD_SetUseCase:
+    mov     r12, pc
+    b       1b
+
+    .global	GD_SetUseCaseBitmap
+    .thumb_func
+GD_SetUseCaseBitmap:
+    mov     r12, pc
+    b       1b
+
+    .global	GD_GetUseCase
+    .thumb_func
+GD_GetUseCase:
+    mov     r12, pc
+    b       1b
+
+    .global	GD_Set1ppsOutput
+    .thumb_func
+GD_Set1ppsOutput:
+    mov     r12, pc
+    b       1b
+
+    .global	GD_Get1ppsOutput
+    .thumb_func
+GD_Get1ppsOutput:
+    mov     r12, pc
+    b       1b
+
     .section	.modulelist, "ax"
     .align	2
     .global  _modulelist_gnss
