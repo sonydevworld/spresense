@@ -40,6 +40,22 @@ config CXD56_GNSS_FW_RTK
 	---help---
 		This is experimental function.
 
+choice
+	prompt "GNSS 1PPS output"
+	default CXD56_GNSS_1PPS_PIN_HIF_IRQ_OUT
+
+config CXD56_GNSS_1PPS_PIN_GNSS_1PPS_OUT
+	bool "Use PIN_GNSS_1PPS_OUT"
+	depends on CXD56_FCBGA
+	---help---
+		GNSS 1PPS output from PIN_GNSS_1PPS_OUT pin.
+
+config CXD56_GNSS_1PPS_PIN_HIF_IRQ_OUT
+	bool "Use PIN_HIF_IRQ_OUT"
+	---help---
+		GNSS 1PPS output from PIN_HIF_IRQ_OUT pin.
+endchoice
+
 config CXD56_GNSS_DEBUG_FEATURE
 	bool "GNSS debug feature"
 
