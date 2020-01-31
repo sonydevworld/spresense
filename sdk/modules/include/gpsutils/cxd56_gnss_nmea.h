@@ -157,6 +157,15 @@ uint16_t NMEA_Output(FAR const struct cxd56_gnss_positiondata_s* pposdat);
  */
 uint16_t NMEA_DcReport_Output(const struct cxd56_gnss_dcreport_data_s* dcrdat);
 
+/*
+ * Output GAL SAR/RLM sentence
+ * @param[in] dat : Galileo SAR/RLM data
+ * @retval >0 : success, output total sentence size
+ * @retval <0 : fail
+ */
+
+uint16_t NMEA_GalSarRlm_Output(const struct cxd56_gnss_gal_sarrlm_s* dat);
+
 /**
  * Output Spectrum data as TEXT sentence
  * @param[in] spectrumdat : Spectrum data output from GNSS
