@@ -46,6 +46,10 @@ config EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
 	bool "Example supports QZ DC report output"
 	default y
 
+config EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+	bool "Example supports GAL SAR/RLM output"
+	default y
+
 config EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM
 	bool "Example supports spectrum output"
 	default y
