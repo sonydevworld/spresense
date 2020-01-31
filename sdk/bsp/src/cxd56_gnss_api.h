@@ -470,5 +470,34 @@ int GD_SetVarEphemeris(uint32_t *ephemeris, uint32_t ephemerisSize);
 int GD_GetVarEphemeris(uint32_t satellite, uint32_t* ephemeris,
                        uint32_t ephemerisSize);
 
+/*
+ * Set usecase mode
+ */
+
+int GD_SetUseCase(uint32_t usecase);
+
+/*
+ * Set usecase mode as bitmap
+ */
+
+int GD_SetUseCaseBitmap(uint32_t bitmap, uint8_t mode);
+
+/*
+ * Get usecase mode
+ */
+
+int GD_GetUseCase(uint32_t *usecase);
+
+/*
+ * Set enable or disable of 1PPS output
+ */
+
+int GD_Set1ppsOutput(uint32_t enable);
+
+/*
+ * Get the current 1PPS output setting
+ */
+
+int GD_Get1ppsOutput(uint32_t *enable);
 
 #endif /* __SDK_BSP_SRC_CXD56XX_CXD56_GNSS_API_H */

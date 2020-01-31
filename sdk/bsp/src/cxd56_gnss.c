@@ -267,6 +267,16 @@ static int cxd56_gnss_get_var_ephemeris(FAR struct file *filep,
                                         unsigned long arg);
 static int cxd56_gnss_set_var_ephemeris(FAR struct file *filep,
                                         unsigned long arg);
+static int cxd56_gnss_set_usecase(FAR struct file *filep,
+                                  unsigned long arg);
+static int cxd56_gnss_set_usecase_bitmap(FAR struct file *filep,
+                                         unsigned long arg);
+static int cxd56_gnss_get_usecase(FAR struct file *filep,
+                                  unsigned long arg);
+static int cxd56_gnss_set_1pps_output(FAR struct file *filep,
+                                      unsigned long arg);
+static int cxd56_gnss_get_1pps_output(FAR struct file *filep,
+                                      unsigned long arg);
 
 /* file operation functions */
 
@@ -359,6 +369,11 @@ static int (*g_cmdlist[CXD56_GNSS_IOCTL_MAX])(FAR struct file *filep,
   cxd56_gnss_start_navmsg_output,
   cxd56_gnss_set_var_ephemeris,
   cxd56_gnss_get_var_ephemeris,
+  cxd56_gnss_set_usecase,
+  cxd56_gnss_set_usecase_bitmap,
+  cxd56_gnss_get_usecase,
+  cxd56_gnss_set_1pps_output,
+  cxd56_gnss_get_1pps_output,
   /* max                       CXD56_GNSS_IOCTL_MAX */
 };
 
@@ -1914,6 +1929,142 @@ static int cxd56_gnss_get_var_ephemeris(FAR struct file *filep,
   return GD_GetVarEphemeris(param->type, param->data, param->size);
 }
 
+/****************************************************************************
+ * Name: cxd56_gnss_set_usecase
+ *
+ * Description:
+ *   Set usecase mode
+ *
+ * Input Parameters:
+ *   filep - File structure pointer
+ *   arg   - Data for command
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int cxd56_gnss_set_usecase(FAR struct file *filep,
+                                  unsigned long arg)
+{
+  return GD_SetUseCase(arg);
+}
+
+/****************************************************************************
+ * Name: cxd56_gnss_set_usecase_bitmap
+ *
+ * Description:
+ *   Set usecase mode as bitmap
+ *
+ * Input Parameters:
+ *   filep - File structure pointer
+ *   arg   - Data for command
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int cxd56_gnss_set_usecase_bitmap(FAR struct file *filep,
+                                         unsigned long arg)
+{
+  FAR struct cxd56_gnss_usecase_param_s *param;
+
+  if (!arg)
+    {
+      return -EINVAL;
+    }
+
+  param = (FAR struct cxd56_gnss_usecase_param_s *)arg;
+
+  return GD_SetUseCaseBitmap(param->bitmap, param->mode);
+}
+
+/****************************************************************************
+ * Name: cxd56_gnss_get_usecase
+ *
+ * Description:
+ *   Get usecase mode
+ *
+ * Input Parameters:
+ *   filep - File structure pointer
+ *   arg   - Data for command
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int cxd56_gnss_get_usecase(FAR struct file *filep,
+                                  unsigned long arg)
+{
+  int ret;
+  uint32_t usecase = 0;
+
+  if (!arg)
+    {
+      return -EINVAL;
+    }
+
+  ret = GD_GetUseCase(&usecase);
+  *(uint32_t *)arg = usecase;
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: cxd56_gnss_set_1pps_output
+ *
+ * Description:
+ *   Set enable or disable of 1PPS output
+ *
+ * Input Parameters:
+ *   filep - File structure pointer
+ *   arg   - Data for command
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int cxd56_gnss_set_1pps_output(FAR struct file *filep,
+                                      unsigned long arg)
+{
+  return GD_Set1ppsOutput(arg);
+}
+
+/****************************************************************************
+ * Name: cxd56_gnss_get_1pps_output
+ *
+ * Description:
+ *   Get the current 1PPS output setting
+ *
+ * Input Parameters:
+ *   filep - File structure pointer
+ *   arg   - Data for command
+ *
+ * Returned Value:
+ *   Zero (OK) on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+static int cxd56_gnss_get_1pps_output(FAR struct file *filep,
+                                      unsigned long arg)
+{
+  int ret;
+  uint32_t enable = 0;
+
+  if (!arg)
+    {
+      return -EINVAL;
+    }
+
+  ret = GD_Get1ppsOutput(&enable);
+  *(uint32_t *)arg = enable;
+
+  return ret;
+}
+
 /*
  *  Synchronized with processes and CPUs
  *  CXD56_GNSS signal handler and utils
@@ -2386,6 +2537,11 @@ static int8_t cxd56_gnss_select_notifytype(off_t fpos, FAR uint32_t *offset)
       type = CXD56_CPU1_DATA_TYPE_DCREPORT;
       *offset = 0;
     }
+  else if (fpos == CXD56_GNSS_READ_OFFSET_SARRLM)
+    {
+      type = CXD56_CPU1_DATA_TYPE_SARRLM;
+      *offset = 0;
+    }
   else
     {
       type = -1;
@@ -2839,6 +2995,10 @@ static int cxd56_gnss_register(FAR const char *devpath)
     },
     {
       CXD56_CPU1_DATA_TYPE_DCREPORT,
+      cxd56_gnss_common_signalhandler
+    },
+    {
+      CXD56_CPU1_DATA_TYPE_SARRLM,
       cxd56_gnss_common_signalhandler
     }
   };

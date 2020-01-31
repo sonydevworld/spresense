@@ -594,10 +594,58 @@ extern "C" {
 
 #define CXD56_GNSS_IOCTL_GET_VAR_EPHEMERIS 49
 
+/**
+ * Set usecase mode
+ * This command must be issued in idle mode.
+ *
+ * @param[in] arg
+ * The usecase definitions
+ */
+
+#define CXD56_GNSS_IOCTL_SET_USECASE 50
+
+/**
+ * Set usecase mode as bitmap
+ * This command must be issued in idle mode.
+ *
+ * @param[in] arg
+ * Address pointing to struct #cxd56_gnss_usecase_param_s object.
+ */
+
+#define CXD56_GNSS_IOCTL_SET_USECASE_BITMAP 51
+
+/**
+ * Get usecase mode
+ *
+ * @param[out] arg
+ * The usecase definitions
+ */
+
+#define CXD56_GNSS_IOCTL_GET_USECASE 52
+
+/**
+ * Set enable or disable of 1PPS output
+ * This command must be issued in idle mode.
+ *
+ * @param[in] arg
+ * enable(1) or disable(0)
+ */
+
+#define CXD56_GNSS_IOCTL_SET_1PPS_OUTPUT 53
+
+/**
+ * Get the current 1PPS output setting
+ *
+ * @param[out] arg
+ * enable(1) or disable(0)
+ */
+
+#define CXD56_GNSS_IOCTL_GET_1PPS_OUTPUT 54
+
 /* check macros for GNSS commands */
 
 #define CXD56_GNSS_IOCTL_INVAL 0
-#define CXD56_GNSS_IOCTL_MAX   50
+#define CXD56_GNSS_IOCTL_MAX   55
 
 /* @} gnss_ioctl */
 
@@ -689,6 +737,10 @@ extern "C" {
 
 #define CXD56_GNSS_READ_OFFSET_DCREPORT     0x9800
 
+/** Offset for SAR/RLM */
+
+#define CXD56_GNSS_READ_OFFSET_SARRLM       0x9900
+
 /** Offset for Spectrum data */
 
 #define CXD56_GNSS_READ_OFFSET_SPECTRUM     0xa000
@@ -743,6 +795,10 @@ extern "C" {
 /** Signal type is QZSS DC report */
 
 #define CXD56_GNSS_SIG_DCREPORT     15
+
+/** Signal type is GAL SAR/RLM */
+
+#define CXD56_GNSS_SIG_SARRLM       16
 
 /* @} */
 
@@ -1028,6 +1084,16 @@ struct cxd56_gnss_get_var_ephemeris_s
                        #CXD56_GNSS_DATA_GLONASS. */
   uint32_t *data; /**< Address pointing to ephemeris data buffer */
   uint32_t  size; /**< ephemeris data buffer size */
+};
+
+/** @struct cxd56_gnss_usecase_param_s
+ *  @brief  The usecase bitmap data
+ */
+
+struct cxd56_gnss_usecase_param_s
+{
+  uint32_t bitmap;
+  uint8_t  mode;
 };
 
 /* @} gnss_datatypes */

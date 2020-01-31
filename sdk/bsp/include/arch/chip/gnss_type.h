@@ -560,6 +560,28 @@ struct cxd56_gnss_dcreport_data_s
   uint8_t svid;                           /* [out] Satellite id */
 };
 
+/**
+ * Galileo SAR/RLM data
+ */
+
+struct cxd56_gnss_sarrlm_data_s
+{
+  uint8_t  svid;        /* SVID */
+  uint8_t  rlmtype;     /* 0x0:Short, 0x1:Long */
+  uint8_t  datacmplt;   /* 0xf:Short, 0xff:Long */
+  uint8_t  msgcode;     /* Massage code(4bit) */
+  uint32_t beacon_id1;  /* Beacon ID (bit[31:0]) */
+  uint32_t beacon_id2;  /* Beacon ID (bit[59:32]) */
+  uint32_t param1;      /* Short:16bit, Long:96bit(bit[31:0]) */
+  uint32_t param2;      /* Long:96bit(bit[63:31]) */
+  uint32_t param3;      /* Long:96bit(bit[95:63]) */
+};
+
+struct cxd56_gnss_gal_sarrlm_s
+{
+  struct cxd56_gnss_sarrlm_data_s data;
+};
+
 /* @} */
 
 /* SF_EVENT_GNSS_MEASUREMENT_VALUE */
