@@ -57,6 +57,7 @@
 #include "cxd56_gnss_api.h"
 #include "cxd56_cpu1signal.h"
 #include "cxd56_gnss.h"
+#include "cxd56_pinconfig.h"
 
 #if defined(CONFIG_CXD56_GNSS)
 
@@ -2030,6 +2031,27 @@ static int cxd56_gnss_get_usecase(FAR struct file *filep,
 static int cxd56_gnss_set_1pps_output(FAR struct file *filep,
                                       unsigned long arg)
 {
+  if (arg)
+    {
+      /* Enable 1PPS output pin */
+
+#ifdef CONFIG_CXD56_GNSS_1PPS_PIN_GNSS_1PPS_OUT
+      CXD56_PIN_CONFIGS(PINCONFS_GNSS_1PPS_OUT);
+#else
+      CXD56_PIN_CONFIGS(PINCONFS_HIF_IRQ_OUT_GNSS_1PPS_OUT);
+#endif
+    }
+  else
+    {
+      /* Disable 1PPS output pin */
+
+#ifdef CONFIG_CXD56_GNSS_1PPS_PIN_GNSS_1PPS_OUT
+      CXD56_PIN_CONFIGS(PINCONFS_GNSS_1PPS_OUT_GPIO);
+#else
+      CXD56_PIN_CONFIGS(PINCONFS_HIF_IRQ_OUT_GPIO);
+#endif
+    }
+
   return GD_Set1ppsOutput(arg);
 }
 
