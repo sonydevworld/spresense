@@ -347,7 +347,7 @@ static int signal2own(int signo, void *data)
 
 static FAR void atcmd_emulator(FAR void *arg)
 {
-  int            fd;
+  int            fd = -1;
   int            ret;
   int            remain;
   struct pollfd  fds[GNSS_POLL_FD_NUM];
@@ -367,7 +367,7 @@ static FAR void atcmd_emulator(FAR void *arg)
     {
       printf("open error:%d,%d\n", fd, errno);
       ret = -ENODEV;
-      goto _err0;
+      goto _err;
     }
 
   /* Init NMEA library */
@@ -386,7 +386,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   if (ret < 0)
     {
       printf("usb open error. %d\n", ret);
-      goto _err1;
+      goto _err;
     }
 #else
 # if defined(CONFIG_EXAMPLES_GNSS_ATCMD_STDINOUT)
@@ -404,7 +404,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   if (cmdfds[GNSS_ATCMD_WRITE_FD] < 0 || cmdfds[GNSS_ATCMD_READ_FD] < 0)
     {
       printf("%s open error. %d\n", TTYS_NAME, ret);
-      goto _err1;
+      goto _err;
     }
 
   /* tty: setup parameters */
@@ -467,7 +467,7 @@ static FAR void atcmd_emulator(FAR void *arg)
       if (ret < 0)
         {
           printf("unexpected wait syncsem error%d\n", ret);
-          goto _err1;
+          goto _err;
         }
 #endif /* ifdef USE_ATCMD_SUB_THREAD */
 
@@ -528,17 +528,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   close(cmdfds[GNSS_ATCMD_WRITE_FD]);
 #endif
 
-_err1:
-
-  /* close GPS device */
-
-  ret = close(fd);
-  if (ret < 0)
-    {
-      printf("device close error\n");
-    }
-
-_err0:
+_err:
 #ifdef USE_ATCMD_SUB_THREAD
 
   /* Send signal to sub pthread and force exit it */
@@ -547,6 +537,17 @@ _err0:
   pthread_join(atcmd_sub_tid, NULL);
   sem_destroy(&syncsem);
 #endif /* ifdef USE_ATCMD_SUB_THREAD */
+
+  /* close GPS device */
+
+  if (fd >= 0)
+    {
+      ret = close(fd);
+      if (ret < 0)
+        {
+          printf("device close error\n");
+        }
+    }
 
   printf("Stop GNSS_ATCMD!!\n");
 
