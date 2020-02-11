@@ -350,7 +350,7 @@ static int pwm_setup(FAR struct pwm_lowerhalf_s *dev)
   ret = pwm_pin_config(priv->ch);
   if (ret < 0)
     {
-      pwmerr("Failed to pinconf():%d\n", channel);
+      pwmerr("Failed to pinconf() channel: %d\n", priv->ch);
       return -EINVAL;
     }
 
