@@ -84,6 +84,7 @@ extern "C"
  ****************************************************************************/
 
 struct fwup_client_s *fwup_client_setup(void);
+uint32_t fwup_client_getfreespace(void);
 
 #undef EXTERN
 #ifdef __cplusplus

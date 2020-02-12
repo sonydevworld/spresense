@@ -49,6 +49,8 @@
 #include <mqueue.h>
 #include <fcntl.h>
 
+#include "chip/cxd5602_backupmem.h"
+
 #include "fwuputils/fwup_manager.h"
 #include "fwuputils/fwup_client.h"
 
@@ -211,3 +213,7 @@ struct fwup_client_s *fwup_client_setup(void)
   return client;
 }
 
+uint32_t fwup_client_getfreespace(void)
+{
+  return BKUP->fw_free_space;
+}
