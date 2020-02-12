@@ -42,6 +42,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <fwuputils/fwup_client.h>
+
 #include "fwupdate_local.h"
 
 /****************************************************************************
@@ -118,6 +120,8 @@ int fwupdate_main(int argc, char *argv[])
           return EXIT_FAILURE;
         }
     }
+
+  printf("Free space %u bytes\n", fwup_client_getfreespace());
 
   if (farg)
     {
