@@ -9,6 +9,6 @@ menuconfig LTE_NET
 		Enable or disable network features.
 
 if LTE_NET
-source "modules/lte/net/inet/Kconfig"
-source "modules/lte/net/netdb/Kconfig"
+source "$APPSDIR/../modules/lte/net/inet/Kconfig"
+source "$APPSDIR/../modules/lte/net/netdb/Kconfig"
 endif

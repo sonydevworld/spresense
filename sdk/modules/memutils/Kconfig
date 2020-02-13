@@ -14,10 +14,10 @@ config MEMUTILS
 if MEMUTILS
 menu "Memory Utilities"
 
-source "$SDKDIR/modules/memutils/memory_manager/Kconfig"
-source "$SDKDIR/modules/memutils/message/Kconfig"
-source "$SDKDIR/modules/memutils/s_stl/Kconfig"
-source "$SDKDIR/modules/memutils/simple_fifo/Kconfig"
+source "$APPSDIR/../modules/memutils/memory_manager/Kconfig"
+source "$APPSDIR/../modules/memutils/message/Kconfig"
+source "$APPSDIR/../modules/memutils/s_stl/Kconfig"
+source "$APPSDIR/../modules/memutils/simple_fifo/Kconfig"
 
 endmenu # Memory Utilities
 endif

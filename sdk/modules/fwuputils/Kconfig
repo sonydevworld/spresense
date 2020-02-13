@@ -12,8 +12,8 @@ config FWUPUTILS
 
 if FWUPUTILS
 
-source "modules/fwuputils/manager/Kconfig"
-source "modules/fwuputils/clients/Kconfig"
+source "$APPSDIR/../modules/fwuputils/manager/Kconfig"
+source "$APPSDIR/../modules/fwuputils/clients/Kconfig"
 
 endif
 

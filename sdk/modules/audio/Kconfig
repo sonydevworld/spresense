@@ -15,7 +15,7 @@ if SDK_AUDIO
 
 menu "Audio Utilities"
 
-source "$SDKDIR/modules/audio/manager/Kconfig"
+source "$APPSDIR/../modules/audio/manager/Kconfig"
 
 config AUDIOUTILS_PLAYER
 	bool "Audio Player"
@@ -34,7 +34,7 @@ config AUDIOUTILS_PLAYER
 		Support Player Feature
 
 if AUDIOUTILS_PLAYER
-source "$SDKDIR/modules/audio/playlist/Kconfig"
+source "$APPSDIR/../modules/audio/playlist/Kconfig"
 
 menu "Audio Player Supported Formats"
 config AUDIOUTILS_PLAYER_CODEC_PCM
@@ -218,7 +218,7 @@ config AUDIOUTILS_ATTENTIONLOG_DISABLE
 		Disable attention log to print in console. default is [n].
 
 menu "Audio component menu"
-source "$SDKDIR/modules/audio/components/Kconfig"
+source "$APPSDIR/../modules/audio/components/Kconfig"
 endmenu
 
 config AUDIOUTILS_UNUSE_ORIGINAL_OPUS_FORMAT

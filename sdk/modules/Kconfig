@@ -3,13 +3,13 @@
 # see the file kconfig-language.txt in the NuttX tools repository.
 #
 
-source "modules/sensing/Kconfig"
-source "modules/audio/Kconfig"
-source "modules/memutils/Kconfig"
-source "modules/asmp/Kconfig"
-source "modules/fwuputils/Kconfig"
-source "modules/lte/Kconfig"
-source "modules/video/Kconfig"
-source "modules/bluetooth/Kconfig"
-source "modules/dnnrt/Kconfig"
-source "modules/imageproc/Kconfig"
+source "$APPSDIR/../modules/sensing/Kconfig"
+source "$APPSDIR/../modules/audio/Kconfig"
+source "$APPSDIR/../modules/memutils/Kconfig"
+source "$APPSDIR/../modules/asmp/Kconfig"
+source "$APPSDIR/../modules/fwuputils/Kconfig"
+source "$APPSDIR/../modules/lte/Kconfig"
+source "$APPSDIR/../modules/video/Kconfig"
+source "$APPSDIR/../modules/bluetooth/Kconfig"
+source "$APPSDIR/../modules/dnnrt/Kconfig"
+source "$APPSDIR/../modules/imageproc/Kconfig"

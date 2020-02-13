@@ -36,10 +36,10 @@ config SENSING_MANAGER_DEBUG_INFO
 endif # SENSING_MANAGER_DEBUG_FEATURE
 endif # SENSING_MANAGER
 
-source "$SDKDIR/modules/sensing/gnss/Kconfig"
-source "$SDKDIR/modules/sensing/barometer/Kconfig"
-source "$SDKDIR/modules/sensing/tap/Kconfig"
-source "$SDKDIR/modules/sensing/step_counter/Kconfig"
-source "$SDKDIR/modules/sensing/transport_mode/Kconfig"
+source "$APPSDIR/../modules/sensing/gnss/Kconfig"
+source "$APPSDIR/../modules/sensing/barometer/Kconfig"
+source "$APPSDIR/../modules/sensing/tap/Kconfig"
+source "$APPSDIR/../modules/sensing/step_counter/Kconfig"
+source "$APPSDIR/../modules/sensing/transport_mode/Kconfig"
 
 endmenu # Sensing Utilities
