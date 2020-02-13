@@ -78,12 +78,12 @@ BOARD_COMMON_DIR = $(SDKDIR)$(DELIM)bsp$(DELIM)board$(DELIM)common
 APPDIR := ../apps
 
 ifeq ($(CONFIG_BUILD_PROTECTED),y)
-include $(TOPDIR)/ProtectedLibs.mk
+include $(TOPDIR)/tools/ProtectedLibs.mk
 else
 ifeq ($(CONFIG_BUILD_KERNEL),y)
-include $(TOPDIR)/KernelLibs.mk
+include $(TOPDIR)/tools/KernelLibs.mk
 else
-include $(TOPDIR)/FlatLibs.mk
+include $(TOPDIR)/tools/FlatLibs.mk
 endif
 endif
 
