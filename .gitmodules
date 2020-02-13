@@ -4,3 +4,6 @@
 [submodule "externals/nnabla-c-runtime"]
 	path = externals/nnabla-c-runtime
 	url = https://github.com/sony/nnabla-c-runtime
+[submodule "sdk/apps"]
+	path = sdk/apps
+	url = ../spresense-nuttx-apps.git
