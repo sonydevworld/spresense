@@ -34,7 +34,7 @@
 #
 ############################################################################
 
--include $(SDKDIR)/.config
+-include $(TOPDIR)/.config
 
 # Platforms are: Linux, Darwin, MSYS, CYGWIN
 
@@ -44,24 +44,13 @@ ifeq ($(PLATFORM),CYGWIN)
 
 # Cygwin-native toolchain
 
-CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/bsp/include)"
 CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
-
-CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/bsp/include)"
 CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
-
 INCDIROPT = -w
-
 else
-
 # Linux/macOS/MSYS2-native toolchain
-
-CFLAGS += -isystem $(SDKDIR)/bsp/include
 CFLAGS += -isystem $(SDKDIR)/modules/include
-
-CXXFLAGS += -I$(SDKDIR)/bsp/include
 CXXFLAGS += -I$(SDKDIR)/modules/include
-
 endif
 
 # mkspk for create spk packaging file
@@ -77,12 +66,11 @@ else
   MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
 endif
 
-
 # include path setting in external sub directories which contains 'LibIncludes.mk' file.
 
-include $(SDKDIR)/LibInclude.mk
+-include $(SDKDIR)/LibInclude.mk
 
-DEPCONFIG = $(SDKDIR)/.config $(TOPDIR)/.config
+DEPCONFIG = $(TOPDIR)/.config
 
 ifeq ($(WINTOOL),y)
   LDRAWELFFLAGS += -T "${shell cygpath -w $(SDKDIR)/bsp/scripts/asmp-elf.ld}"
