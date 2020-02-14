@@ -30,3 +30,4 @@ Make.dep
 /*.log
 .*.tmp
 .context
+/Kconfig
