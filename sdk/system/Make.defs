@@ -58,9 +58,9 @@ endif
 # Tools
 
 ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  MKKCONFIG = $(SDKDIR)\tools\mkkconfig.bat
+  MKKCONFIG = $(SDKDIR)\apps\tools\mkkconfig.bat
 else
-  MKKCONFIG = $(SDKDIR)/tools/mkkconfig.sh
+  MKKCONFIG = $(SDKDIR)/apps/tools/mkkconfig.sh
 endif
 
 ifeq ($(WINTOOL),y)
