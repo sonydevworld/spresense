@@ -3,7 +3,7 @@
 ############################################################################
 # tools/mkdefconfig.py
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -38,17 +38,11 @@
 import os
 import sys
 import logging
-import re
 
-CONFIG_APPS_DIR = 'CONFIG_APPS_DIR="../sdk/tools/empty_apps"'
-
-def remove_config(opt, config):
-    os.system("kconfig-tweak --file %s --undefine %s" % (config, opt))
-
-def make_savedefconfig(d):
+def make_savedefconfig():
     ''' Run 'make savedefconfig' at specified directory
     '''
-    command = 'make -C ' + d + ' savedefconfig'
+    command = 'make savedefconfig'
     if logging.getLogger().getEffectiveLevel() > logging.INFO:
         command += ' 2>&1 >/dev/null'
 
@@ -70,43 +64,6 @@ def confirm(msg):
         if res == 'n':
             return False
 
-def save_default_config(basedir, confpath, kernel):
-    ret = make_savedefconfig(basedir)
-    if ret != 0:
-        print("Create defconfig failed. %d" % (ret), file=sys.stderr)
-        sys.exit(ret)
-
-    defconfig = os.path.join(basedir, 'defconfig')
-    if os.path.exists(confpath):
-        yes = confirm(configname + ' is already exists, overwrite? ')
-        if not yes:
-            sys.exit(0)
-
-    logging.debug("Output: %s\n" % (confpath))
-    if kernel:
-        os.replace(defconfig, confpath)
-        with open(confpath, 'a') as dest:
-            dest.write(CONFIG_APPS_DIR + "\n")
-
-        # Remove host related options
-
-        remove_config('CONFIG_HOST_LINUX', confpath)
-        remove_config('CONFIG_HOST_WINDOWS', confpath)
-        remove_config('CONFIG_HOST_OSX', confpath)
-        remove_config('CONFIG_HOST_MACOS', confpath) # for latest NuttX
-        remove_config('TOOLCHAIN_WINDOWS', confpath)
-        remove_config('WINDOWS_NATIVE', confpath)
-        remove_config('WINDOWS_CYGWIN', confpath)
-        remove_config('WINDOWS_UBUNTU', confpath)
-        remove_config('WINDOWS_MSYS', confpath)
-        remove_config('WINDOWS_OTHER', confpath)
-    else:
-        with open(confpath, 'w') as dest:
-            with open(defconfig, 'r') as src:
-                for line in src:
-                    if not re.match(r'CONFIG_BOARD_.*', line):
-                        dest.write(line)
-
 if __name__ == '__main__':
 
     import argparse
@@ -127,15 +84,6 @@ if __name__ == '__main__':
 
     configname = opts.configname[0]
 
-    savesdk = True
-    savekernel = False
-    if opts.kernel:
-        savesdk = False
-        savekernel = True
-    if opts.all:
-        savesdk = True
-        savekernel = True
-
     loglevel = logging.WARNING
     if opts.verbose == 1:
         loglevel = logging.INFO
@@ -143,57 +91,40 @@ if __name__ == '__main__':
         loglevel = logging.DEBUG
     logging.basicConfig(level=loglevel)
 
-    sdkdir = os.getcwd()
-    topdir = os.path.abspath(os.path.join(sdkdir, '..', 'nuttx'))
-
-    # This script allows run in 'sdk'
-
-    if not os.path.isdir('../nuttx'):
-        print('Error: NuttX directory not found.', file=sys.stderr)
-        sys.exit(1)
-
-    # Test kernel and sdk already configured
-
-    if savesdk and not os.path.exists(os.path.join(sdkdir, '.config')):
-        print('Error: SDK not configured.', file=sys.stderr)
-        sys.exit(2)
-
-    if not os.path.exists(os.path.join(topdir, '.config')):
-        print('Error: Kernel not configured.', file=sys.stderr)
-        sys.exit(3)
-
-    # Setup all of paths
-
-    configdir = os.path.join(sdkdir, 'configs')
-    kconfigdir = os.path.join(sdkdir, 'configs', 'kernel')
+    if opts.kernel:
+        logging.warning("-k option is deprecated. Ignored.")
+    if opts.all:
+        logging.warning("--all option is deprecated. Ignored.")
 
     # If -d options has been specified, then replace base config directory to
     # specified ones.
 
     if opts.dir:
-        d = opts.dir[0]
-        configdir = d
-        kconfigdir = os.path.join(d, 'kernel')
+        path = os.path.realpath(opts.dir[0])
+        if path.endswith('configs'):
+            configdir = os.path.join(path, configname)
+        else:
+            configdir = os.path.join(path, 'configs', configname)
+    else:
+        configdir = os.path.join('configs', configname)
 
-    if savekernel:
-        if not os.path.isdir(kconfigdir):
-            print('Error: kernel configuration directory not found.', file=sys.stderr)
-            sys.exit(4)
-    elif savesdk:
+    if os.path.exists(configdir):
         if not os.path.isdir(configdir):
-            print('Error: configuration directory not found.', file=sys.stderr)
-            sys.exit(5)
+            print("configuration couldn't saved.")
+            sys.exit(1)
+        else:
+            yes = confirm(configname + ' is already exists, overwrite? ')
+            if not yes:
+                sys.exit(0)
 
-    logging.debug('Kernel dir: %s', topdir)
-    logging.debug('SDK dir   : %s', sdkdir)
-    logging.debug('Config dir: %s\n', configdir)
+    # Create defconfig file by savedefconfig, this target moves defconfig
+    # from nuttx/ to sdk/.
+    
+    ret = make_savedefconfig()
+    if ret:
+        sys.exit(ret)
 
-    # Do 'savedefconfig' target
+    # Move generated defconfig file to target directory
 
-    if savesdk:
-        confpath = os.path.join(configdir, configname + '-defconfig')
-        save_default_config(sdkdir, confpath, False)
-
-    if savekernel:
-        confpath = os.path.join(kconfigdir, configname + '-defconfig')
-        save_default_config(topdir, confpath, True)
+    os.makedirs(configdir, exist_ok=True)
+    os.replace('defconfig', os.path.join(configdir, 'defconfig'))
