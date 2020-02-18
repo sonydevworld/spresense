@@ -3,7 +3,7 @@
 ############################################################################
 # tools/config.py
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -42,97 +42,173 @@ import glob
 import shutil
 import re
 
-import eula
-
 MODE_MENUCONFIG = "menuconfig"
 MODE_QCONFIG = "qconfig"
 MODE_GCONFIG = "gconfig"
 
-CAT_ROOT     = "configroot"
-CAT_KERNEL   = "kernel"
-CAT_BOARD    = "board"
-CAT_FEATURE  = "feature"
-CAT_DEVICE   = "device"
-CAT_EXAMPLES = "examples"
-CAT_MYAPP    = "myapp"
+SPRESENSE_HOME = 'SPRESENSE_HOME'
 
-DEF_CATEGORY = [CAT_ROOT, CAT_BOARD, CAT_FEATURE, CAT_DEVICE, CAT_EXAMPLES, CAT_MYAPP]
+# defconfigs in 'configs' directory are not categorized
+NO_CATEGORY = 'configs'
 
-#
-# Configuration database
-#
-# Structure: {<category>:{<name>:<defconfig>, ...}, ...}
-# e.g. {'default':{'default':'path/to/default-defconfig'},
-#       'board':{'spresense':'path/to/spresense-defconfig'},
-#       'feature':{'zmodem':'path/to/spresense-defconfig'},
-#       ...}
-configs = dict()
+# Path to apps directory from nuttx
+APPSDIR = '../sdk/apps'
 
-# Store defconfig information into database
-def store_defconfig_db(category, name, defconfig):
-    global configs
+class Defconfig:
 
-    if category not in configs:
-        configs[category] = dict()
-
-    configs[category][name] = defconfig
-
-# Search all defconfig files from directory
-def get_defconfigs(directory, category=CAT_ROOT, prefix=''):
-    global configs
-
-    # Search defconfig files
-
-    # Search root defconfig files
-    defconfigs = glob.glob(os.path.join(directory, '*-defconfig'))
-    for defconfig in defconfigs:
-        name = os.path.basename(defconfig).replace('-defconfig', '')
-        name = os.path.join(prefix, name)
-        if category != CAT_ROOT:
-            name = os.path.join(category, name)
-        store_defconfig_db(category, name, defconfig)
-
-    # Search subdir defconfig files
-    defconfigs = glob.glob(os.path.join(directory, '*', '*-defconfig'))
-    for defconfig in defconfigs:
-        category = os.path.basename(os.path.dirname(defconfig))
-        name = os.path.basename(defconfig).replace('-defconfig', '')
-        name = os.path.join(prefix, name)
-        if category != CAT_KERNEL:
-            name = os.path.join(category, name)
-        store_defconfig_db(category, name, defconfig)
-
-def get_all_defconfigs(configdir):
-    # Pickup SDK configurations
-
-    get_defconfigs(configdir)
-
-    # Pickup user application configurations
-
-    if 'SPRESENSE_HOME' in os.environ:
-        myapp_root = os.environ['SPRESENSE_HOME']
-        if os.path.isdir(myapp_root):
-            for app_config in glob.glob(os.path.join(myapp_root, '*', 'configs')):
-                appname = os.path.basename(os.path.dirname(app_config))
-                get_defconfigs(app_config, category=CAT_MYAPP, prefix=appname)
-
-def get_defconfig_src(defconfig, kernel):
-    if kernel:
-        key = CAT_KERNEL
-    else:
-        path = defconfig.split('/')
-
-        if len(path) == 1:
-            # root configuration
-            key = CAT_ROOT
+    def __init__(self, path):
+        self.path = os.path.realpath(path)
+        fn = os.path.basename(path)
+        dp = os.path.dirname(path)
+        m = re.match(r'(?P<name>.*)-defconfig$', fn)
+        if m:
+            # Old style defconfigs (configs/*/*-defconfig)
+            self.name = m.group("name")
+            self.category = os.path.basename(dp)
         else:
-            # Subset configuration
-            key = path[0]
+            # Parent directory name as a defconfig name, and it's parent
+            # treated as category. category name may 'configs' when nuttx configs
+            # and user commands.
 
-    if key not in configs or defconfig not in configs[key]:
-        return None
+            self.name = os.path.basename(dp)
+            pp = os.path.dirname(dp)
+            self.category = os.path.basename(pp)
 
-    return configs[key][defconfig]
+    def get_configname(self):
+        if self.category == None or self.category == "configs":
+            return self.name
+        return "%s/%s" % (self.category, self.name)
+
+    def __repr__(self):
+        return "%s(name: %s, path: %s)" % (self.__class__.__name__,
+                                           self.get_configname(), self.path)
+
+class Defconfigs:
+
+    def __init__(self, topdir, output=None, platform=None):
+        self.defconfigs = []        # Store Defconfig objects
+        self.category = ['configs'] # no category is set as 'configs'
+        self.topdir = topdir        # Path to nuttx
+        self.applies = []           # defconfigs list would be applied
+        self.enables = []           # Enable options tweak list
+        self.disables = []          # Disable options tweak list
+
+        if output:
+            self.dotconfig = output
+        else:
+            self.dotconfig = os.path.join(topdir, '.config')
+
+        if platform:
+            self.platform = platfrom
+        else:
+            self.platform = os.uname()[0] # Same as uname -s
+
+    def __add_category(self, category):
+        if category in self.category:
+            return
+        self.category += [category]
+
+    def __get_old_styles(self, path):
+        for f in glob.glob(os.path.join(path, "**/*-defconfig"), recursive=True):
+            c = Defconfig(f)
+            logging.debug(c)
+            self.defconfigs += [c]
+            self.__add_category(c.category)
+
+    def __get_defconfig(self, path):
+        files = glob.glob(os.path.join(path, "**/defconfig"), recursive=True)
+        for f in files:
+            c = Defconfig(f)
+            logging.debug(c)
+            self.defconfigs += [c]
+            self.__add_category(c.category)
+
+    def add_config_dirs(self, *args):
+        '''
+        Append directories to managed defconfigs list.
+        Supplied directory expects path to "configs" directory name.
+        '''
+        for arg in args:
+            self.__get_defconfig(arg)
+            self.__get_old_styles(arg)
+
+    def get_fullpath(self, name):
+        for c in self.defconfigs:
+            if name == c.get_configname():
+                return c.path
+        raise RuntimeError('Config "%s" not found' % name)
+
+    def get_configs_by_category(self, category):
+        if category == None:
+            category = NO_CATEGORY
+
+        l = []
+        for c in self.defconfigs:
+            if c.category == category:
+                l += [c.get_configname()]
+        return l
+
+    def append(self, defconfig):
+        for c in defconfig:
+            if c.startswith('-'):
+                self.disables += [c[1:]] # Kill prefix
+            elif c.startswith('+'):
+                self.enables += [c[1:]]  # Kill prefix
+            else:
+                self.applies += [c]
+
+    def __tweak_platform(self, opts):
+        # We need tweak options related to host environment.
+        # This process is needed by NuttX build system.
+        # See nuttx/tools/configure.sh.
+
+        platform = self.platform
+
+        if re.match(r'Darwin.*', platform):
+            opts.add('CONFIG_HOST_MACOS=y\n')
+        elif re.match(r'CYGWIN_.*', platform):
+            opts.add('CONFIG_HOST_WINDOWS=y\n')
+            opts.add('CONFIG_TOOLCHAIN_WINDOWS=y\n')
+            opts.add('CONFIG_WINDOWS_CYGWIN=y\n')
+        elif re.match(r'MSYS_.*', platform):
+            opts.add('CONFIG_HOST_WINDOWS=y\n')
+            opts.add('CONFIG_TOOLCHAIN_WINDOWS=y\n')
+            opts.add('CONFIG_WINDOWS_MSYS=y\n')
+        elif re.match(r'MINGW.*', platform):
+            raise RuntimeError("MinGW currently not supported.")
+        else:
+            opts.add('CONFIG_HOST_LINUX=y\n')
+        
+    def apply(self, dest=None):
+        if dest is None:
+            dest = self.dotconfig
+
+        logging.debug("Output config file at %s" % dest)
+
+        # Use builtin set object for gathering options from multiple
+        # defconfig files without duplication.
+
+        opts = set()
+
+        for c in self.applies:
+            with open(self.get_fullpath(c), 'r') as f:
+                for line in f:
+                    opts.add(line)
+
+        for o in self.enables:
+            opts.discard('# CONFIG_%s is not set\n' % o)
+            opts.add('CONFIG_%s=y\n' % o)
+        for o in self.disables:
+            opts.discard('CONFIG_%s=y\n' % o)
+            opts.add('# CONFIG_%s is not set\n' % o)
+
+        self.__tweak_platform(opts)
+        opts.add('CONFIG_APPS_DIR="%s"\n' % APPSDIR)
+
+        with open(dest, "w") as f:
+            for o in opts:
+                logging.debug(o)
+                f.write(o)
 
 def install(src, dest, mode=0o644):
     logging.debug(src)
@@ -143,130 +219,25 @@ def install(src, dest, mode=0o644):
     os.chmod(dest, mode)
     return
 
-def append(srcfile, destfile):
-    # Read contents of destfile first
+def do_olddefconfig():
+    proc = 'make olddefconfig'
 
-    with open(destfile, 'r') as dest:
-        buf = dest.read()
-
-    with open(srcfile, 'r') as src:
-        with open(destfile, 'a') as dest:
-            for line in src:
-                # Append option if not exists
-
-                if line not in buf:
-                    logging.debug('write option: %s', line)
-                    dest.write(line)
-
-def enable_config(opt, config):
-    os.system("kconfig-tweak --file %s --enable %s" % (config, opt))
-
-def disable_config(opt, config):
-    os.system("kconfig-tweak --file %s --disable %s" % (config, opt))
-
-def tweak_platform(config):
-    # Check kconfig-frontend installation
-
-    ret = os.system("which kconfig-tweak > /dev/null")
-
-    # If kconfig-frontend is missing, exit.
-
+    if logging.getLogger().getEffectiveLevel() > logging.INFO:
+        proc += ' 2>&1 >/dev/null'
+    ret = os.system(proc)
     if ret != 0:
-        print("Error: kconfig-frontend is missing. Please setup your environment.")
-        sys.exit(4)
+        print('Post process failed. %d' % ret)
+        print('Try \'make distclean\' first.' )
+    return ret
 
-    # Same as uname -s
-
-    platform = os.uname()[0]
-
-    # Ignore linux/mac because it will not be affected on ARM arch
-
-    if re.match(r'CYGWIN_.*', platform):
-        enable_config('HOST_WINDOWS', config)
-        enable_config('TOOLCHAIN_WINDOWS', config)
-        enable_config('WINDOWS_CYGWIN', config)
-    elif re.match(r'MSYS_.*', platform):
-        enable_config('HOST_WINDOWS', config)
-        enable_config('TOOLCHAIN_WINDOWS', config)
-        enable_config('WINDOWS_MSYS', config)
-    elif re.match(r'MINGW.*', platform):
-        print('Error: MinGW is not supported.')
-        sys.exit(4)
-
-def apply_defconfig(defconfigs, topdir, sdkdir, kernel):
-    # Convert config names to "*-defconfig" and check it already exists
-
-    for c in defconfigs:
-        src = get_defconfig_src(c, kernel)
-        if src == None:
-            print('Error: config "%s" not found' % c, file=sys.stderr)
-            sys.exit(3)
-
+def prepare_config(topdir):
     # Copy Make.defs file first, because SDK Makefile depends on Make.defs in
     # kernel, but there is nothing if kernel not configured.
 
-    srcmakedefs = os.path.join(sdkdir, 'bsp', 'scripts', 'Make.defs.nuttx')
+    srcmakedefs = os.path.join(topdir, 'boards', 'arm', 'cxd56xx', 'spresense', 'scripts', 'Make.defs')
     destmakedefs = os.path.join(topdir, 'Make.defs')
     if not os.path.exists(destmakedefs):
         install(srcmakedefs, destmakedefs)
-
-    if kernel:
-        src = get_defconfig_src(defconfigs[0], kernel)
-        dest = os.path.join(topdir, '.config')
-        install(src, dest)
-        tweak_platform(dest)
-        postproc = 'make olddefconfigkernel'
-    else:
-        dest = os.path.join(sdkdir, '.config')
-
-        # Create new empty .config file, existed file content will be discarded
-
-        f = open(dest, 'w')
-        f.close()
-
-        for c in defconfigs:
-            src = get_defconfig_src(c, kernel)
-            append(src, dest)
-        postproc = 'make olddefconfig'
-
-    if logging.getLogger().getEffectiveLevel() > logging.INFO:
-        postproc += ' 2>&1 >/dev/null'
-    ret = os.system(postproc)
-    if ret != 0:
-        print('Post process failed. %d' % ret)
-        if kernel:
-            print('Try \'make distcleankernel\' first.' )
-        else:
-            print('Try \'make clean\' first.' )
-    return ret
-
-def apply_spices(spices, configfile):
-    with open(configfile, 'r') as src:
-        buf = src.read()
-
-    ENABLER = r'CONFIG_%s=y'
-    DISABLER = r'# CONFIG_%s is not set'
-
-    for spice in spices:
-        flag, spice = spice[0], spice[1:]
-        if flag == '+':
-            repl = ENABLER % spice
-        else:
-            repl = DISABLER % spice
-
-        r = re.compile(r'.*CONFIG_%s[= ].*' % spice, re.M)
-        m = r.search(buf)
-        if m:
-            buf = r.sub(repl, buf)
-        else:
-            buf += repl
-
-    with open(configfile, 'w') as dest:
-        dest.write(buf)
-
-def do_kconfig_conf(mode, sdkdir):
-    ret = os.system('make %s' % mode)
-    return ret
 
 if __name__ == "__main__":
 
@@ -276,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument('configname', metavar='<config name>', type=str, nargs='*',
                         help='configuration name')
     parser.add_argument('-k', '--kernel', action='store_true',
-                        help='kernel config')
+                        help='deprecated')
     parser.add_argument('-l', '--list', action='store_true',
                         help='list default configurations.\nshow kernel defconfigs with --kernel.')
     parser.add_argument('-m', '--menuconfig', action='store_true',
@@ -298,6 +269,9 @@ if __name__ == "__main__":
         loglevel = logging.DEBUG
     logging.basicConfig(level=loglevel)
 
+    if opts.kernel:
+        logging.warning("-k option is deprecated. Ignored.")
+
     menumode = None
     if opts.menuconfig: menumode = MODE_MENUCONFIG
     if opts.qconfig:    menumode = MODE_QCONFIG
@@ -307,87 +281,40 @@ if __name__ == "__main__":
 
     sdkdir = os.getcwd()
     topdir = os.path.abspath(os.path.join(sdkdir, '..', 'nuttx'))
-    configdir = os.path.join(sdkdir, 'configs')
+    configdir = os.path.join(topdir, 'boards', 'arm', 'cxd56xx', 'spresense', 'configs')
+
+    defconfigs = Defconfigs(topdir)
 
     # If -d options has been specified, then replace base config directory to
     # specified ones.
 
     if opts.dir:
-        d = opts.dir[0]
-        configdir = d
-
-        # Set 'default-defconfig' to configname list when it is not specified.
-        # Only for base directory change option.
-
-        if len(opts.configname) == 0:
-            opts.configname = ['default']
-
-    # pick-up defconfig files from SDK and user application
-
-    get_all_defconfigs(configdir)
-
-    if opts.kernel:
-        if CAT_KERNEL not in configs:
-            print('Kernel configuration not found.', file=sys.stderr)
-            sys.exit(3)
-
+        defconfigs.add_config_dirs(opts.dir[0])
     else:
-        if len(configs.keys()) == 0:
-            print('Configuration not found.', file=sys.stderr)
-            sys.exit(2)
+        defconfigs.add_config_dirs(configdir, 'configs')
+        if SPRESENSE_HOME in os.environ:
+            defconfigs.add_config_dirs(os.environ[SPRESENSE_HOME])
 
     if opts.list:
         print('Available configurations:')
-        if opts.kernel:
-            if CAT_KERNEL in configs:
-                for defconfig in sorted(configs[CAT_KERNEL]):
-                    print('\t%s' % defconfig)
-        else:
-            for subdir in DEF_CATEGORY:
-                if subdir in configs:
-                    for defconfig in sorted(configs[subdir]):
-                        print('\t%s' % defconfig)
-
+        for cat in (None, 'feature', 'device', 'examples'):
+            configs = defconfigs.get_configs_by_category(cat)
+            for c in configs:
+                print("\t%s" % c)
         sys.exit(0)
 
-    defconfigs = []
-    spices = []
+    prepare_config(topdir)
+
     if len(opts.configname) > 0:
-        for c in opts.configname:
-            if c.startswith('-') or c.startswith('+'):
-                logging.info("    spice: %s", c)
-                spices.append(c)
-            else:
-                logging.info("defconfig: %s", c)
-                defconfigs.append(c)
+        defconfigs.append(opts.configname)
+        defconfigs.apply()
 
-    if len(defconfigs) > 0:
-        ret = apply_defconfig(defconfigs, topdir, sdkdir, opts.kernel)
-        if ret != 0:
-            sys.exit(ret)
-
-        if not opts.kernel:
-            # Check loader version
-            eula_handler = eula.EULAhander()
-            eula_handler.check()
-
-    if len(spices) > 0:
-        if opts.kernel:
-            d = topdir
-            target = 'olddefconfigkernel'
-        else:
-            d = sdkdir
-            target = 'olddefconfig'
-
-        apply_spices(spices, "%s/.config" % d)
-        ret = os.system('make %s 2>&1 >/dev/null' % target)
+        ret = do_olddefconfig()
         if ret != 0:
             sys.exit(ret)
 
     if menumode:
-        if opts.kernel:
-            menumode += 'kernel'
-        do_kconfig_conf(menumode, sdkdir)
+        os.system('make %s' % menumode)
 
     # This tool needs mode option or config name
 
