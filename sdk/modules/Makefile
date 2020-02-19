@@ -35,5 +35,8 @@
 
 include $(SDKDIR)/modules/Make.defs
 
+depend:
+# TODO: implement here
+
 preconfig:
 	$(Q) $(MKKCONFIG)
