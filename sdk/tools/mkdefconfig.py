@@ -75,6 +75,8 @@ if __name__ == '__main__':
                         help='save kernel configuration')
     parser.add_argument('-d', '--dir', type=str, nargs=1,
                         help='change configs directory')
+    parser.add_argument('-y', action='store_true',
+                        help='overwrite existing defconfig')
     parser.add_argument('--all', action='store_true',
                         help='Save SDK and kernel configuration with same name')
     parser.add_argument('--verbose', '-v', action='count',
@@ -113,9 +115,10 @@ if __name__ == '__main__':
             print("configuration couldn't saved.")
             sys.exit(1)
         else:
-            yes = confirm(configname + ' is already exists, overwrite? ')
-            if not yes:
-                sys.exit(0)
+            if not opts.y:
+                yes = confirm(configname + ' is already exists, overwrite? ')
+                if not yes:
+                    sys.exit(0)
 
     # Create defconfig file by savedefconfig, this target moves defconfig
     # from nuttx/ to sdk/.
