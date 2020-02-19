@@ -183,6 +183,8 @@ distclean: clean subdir_distclean clean_context ext_distclean
 
 endif
 
+install:
+
 # config targets
 
 config oldconfig olddefconfig menuconfig nconfig qconfig gconfig:
