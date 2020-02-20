@@ -36,6 +36,8 @@
 
 -include $(TOPDIR)/.config
 
+DELIM ?= $(strip /)
+
 # Platforms are: Linux, Darwin, MSYS, CYGWIN
 
 PLATFORM := $(firstword $(subst _, ,$(shell uname -s 2>/dev/null)))
@@ -55,20 +57,9 @@ endif
 
 # mkspk for create spk packaging file
 
-ifeq ($(PLATFORM),Darwin)
-  # macOS
-  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)macos$(DELIM)mkspk
-else ifeq ($(PLATFORM),Linux)
-  # Linux
-  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)linux$(DELIM)mkspk
-else
-  # Cygwin/MSYS2
-  MKSPK = $(SDKDIR)$(DELIM)tools$(DELIM)windows$(DELIM)mkspk.exe
-endif
-
 # include path setting in external sub directories which contains 'LibIncludes.mk' file.
 
--include $(SDKDIR)/LibInclude.mk
+-include $(SDKDIR)/tools/LibInclude.mk
 
 DEPCONFIG = $(TOPDIR)/.config
 
@@ -99,4 +90,49 @@ ifneq ($(CONFIG_ASMP_MEMSIZE),)
 else
   LDFLAGS += --defsym __stack=_vectors+$(CONFIG_RAM_SIZE)
 endif
+endif
+
+# Tools
+
+ifeq ($(DIRLINK),)
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  DIRLINK   = $(TOPDIR)$(DELIM)tools$(DELIM)link.bat
+  DIRUNLINK = $(TOPDIR)$(DELIM)tools$(DELIM)unlink.bat
+else ifeq ($(CONFIG_WINDOWS_MSYS),y)
+  DIRLINK   = $(TOPDIR)$(DELIM)tools$(DELIM)copydir.sh
+  DIRUNLINK = $(TOPDIR)$(DELIM)tools$(DELIM)unlink.sh
+else
+  DIRUNLINK = $(TOPDIR)$(DELIM)tools$(DELIM)unlink.sh
+ifeq ($(WINTOOL),y)
+  DIRLINK   = $(TOPDIR)$(DELIM)tools$(DELIM)copydir.sh
+else
+  DIRLINK   = $(TOPDIR)$(DELIM)tools$(DELIM)link.sh
+endif
+endif
+endif
+
+ifeq ($(INCDIR),)
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  INCDIR = $(TOPDIR)$(DELIM)tools$(DELIM)incdir.bat
+else
+  INCDIR = $(TOPDIR)$(DELIM)tools$(DELIM)incdir.sh
+endif
+endif
+
+ifeq ($(DEFINE),)
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  DEFINE = $(TOPDIR)$(DELIM)tools$(DELIM)define.bat
+else
+  DEFINE = $(TOPDIR)$(DELIM)tools$(DELIM)define.sh
+endif
+endif
+
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+  MKKCONFIG = $(SDKDIR)$(DELIM)apps$(DELIM)tools$(DELIM)mkkconfig.bat
+else
+  MKKCONFIG = $(SDKDIR)$(DELIM)apps$(DELIM)tools$(DELIM)mkkconfig.sh
+endif
+
+ifeq ($(WINTOOL),y)
+  INCDIROPT = -w
 endif

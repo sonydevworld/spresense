@@ -35,8 +35,44 @@
 
 include $(SDKDIR)/modules/Make.defs
 
-depend:
-# TODO: implement here
+MODULEDIRS := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Make.defs))
+CLEANDIRS  := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Makefile))
+
+define SDIR_template
+$(1)_$(2):
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
+
+endef
+
+# CONFIGURED_APPS is the application directories that should be built in
+#   the current configuration.
+
+CONFIGURED_APPS :=
+
+define Add_Module
+  include $(1)Make.defs
+endef
+
+$(foreach SDIR, $(MODULEDIRS), $(eval $(call Add_Module,$(SDIR))))
+
+$(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
+$(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))
+$(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),depend)))
+$(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
+$(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
+
+all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
+
+context: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_context)
+
+depend: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_depend)
+
+clean: $(foreach SDIR,$(CLEANDIRS),$(SDIR)_clean)
+
+distclean: $(foreach SDIR,$(CLEANDIRS),$(SDIR)_distclean)
+	$(call DELFILE, Kconfig)
+
+install:
 
 preconfig:
 	$(Q) $(MKKCONFIG)

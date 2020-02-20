@@ -55,18 +55,6 @@ define REGISTER
 endef
 endif
 
-# Tools
-
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  MKKCONFIG = $(SDKDIR)\apps\tools\mkkconfig.bat
-else
-  MKKCONFIG = $(SDKDIR)/apps/tools/mkkconfig.sh
-endif
-
-ifeq ($(WINTOOL),y)
-  INCDIROPT = -w
-endif
-
 # Standard include path
 
 CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)system$(DELIM)include"}

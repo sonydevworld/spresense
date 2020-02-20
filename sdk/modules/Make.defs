@@ -35,37 +35,7 @@
 
 include $(SDKDIR)/Make.defs
 
-# Builtin Registration
-
-BUILTIN_REGISTRY = $(SDKDIR)$(DELIM)system$(DELIM)builtin$(DELIM)registry
-
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-define REGISTER
-	$(Q) echo Register: $1
-	$(Q) echo { "$1", $2, $3, $4 }, > "$(BUILTIN_REGISTRY)$(DELIM)$4.bdat"
-	$(Q) echo int $4(int argc, char *argv[]); > "$(BUILTIN_REGISTRY)$(DELIM)$4.pdat"
-	$(Q) touch "$(BUILTIN_REGISTRY)$(DELIM).updated"
-endef
-else
-define REGISTER
-	$(Q) echo "Register: $1"
-	$(Q) echo "{ \"$1\", $2, $3, $4 }," > "$(BUILTIN_REGISTRY)$(DELIM)$4.bdat"
-	$(Q) echo "int $4(int argc, char *argv[]);" > "$(BUILTIN_REGISTRY)$(DELIM)$4.pdat"
-	$(Q) touch "$(BUILTIN_REGISTRY)$(DELIM).updated"
-endef
-endif
-
-# Tools
-
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  MKKCONFIG = $(SDKDIR)\apps\tools\mkkconfig.bat
-else
-  MKKCONFIG = $(SDKDIR)/apps/tools/mkkconfig.sh
-endif
-
-ifeq ($(WINTOOL),y)
-  INCDIROPT = -w
-endif
+CXXEXT ?= .cpp
 
 # Standard include path
 

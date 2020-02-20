@@ -62,9 +62,9 @@ ifeq ($(WINTOOL),y)
   CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
   CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)/include}"
 else
-  CXXFLAGS += -Idsp_driver/include
+  CXXFLAGS += -Idsp_driver$(DELIM)include
   CXXFLAGS += -I$(AUDIODIR)
-  CXXFLAGS += -I$(AUDIODIR)/include
+  CXXFLAGS += -I$(AUDIODIR)$(DELIM)include
 endif
 
 CXXFLAGS += -D_POSIX
