@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/Makefile
+# modules/asmp/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,43 +33,6 @@
 #
 ############################################################################
 
--include $(SDKDIR)/modules/Make.defs
-
-MODNAME = asmp
-
-VPATH   = supervisor
-SUBDIRS =
-DEPPATH = --dep-path supervisor
-
-CSRCS  = asmp_init.c
-CSRCS += mptask.c mptask_sighandler.c mptask_exec.c mptask_destroy.c
-CSRCS += mptask_map.c
-CSRCS += mptask_secure.c
-CSRCS += mpmq.c
-CSRCS += mpshm.c
-CSRCS += mpmutex.c
-
-ifeq ($(CONFIG_CXD56_SUBCORE),)
-include rawelf/Make.defs
-include mm_tile/Make.defs
+ifeq ($(CONFIG_ASMP),y)
+CONFIGURED_APPS += asmp
 endif
-
-ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
-
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
-ifneq ($(CONFIG_ARCH_FAMILY),)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
-endif
-
-include $(SDKDIR)/modules/Module.mk
-
-clean_worker:
-	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" clean
-
-distclean_worker:
-	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" distclean
-
-clean:: clean_worker
-
-distclean:: clean distclean_worker
