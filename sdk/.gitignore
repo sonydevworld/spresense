@@ -31,3 +31,4 @@ Make.dep
 .*.tmp
 .context
 /Kconfig
+.built
