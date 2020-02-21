@@ -33,6 +33,7 @@
 #
 ############################################################################
 
+include $(SDKDIR)/Make.defs
 include $(SDKDIR)/modules/Make.defs
 
 MODULEDIRS := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Make.defs))
