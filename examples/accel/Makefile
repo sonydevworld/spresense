@@ -33,24 +33,17 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(TOPDIR)/Make.defs
 
-# sensor built-in application info
+# Accelerometer sensor built-in application info
 
-CONFIG_EXAMPLES_ACCEL_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_ACCEL_STACKSIZE ?= 2048
-
-APPNAME = accel
-PRIORITY = $(CONFIG_EXAMPLES_ACCEL_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_ACCEL_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_ACCEL_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_ACCEL_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_ACCEL)
 
-# sensor Example
+# Accelerometor Sensor Example
 
-ASRCS =
 MAINSRC = accel_main.c
-
-CONFIG_EXAMPLES_ACCEL_PROGNAME ?= accel$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_ACCEL_PROGNAME)
 
 include $(APPDIR)/Application.mk

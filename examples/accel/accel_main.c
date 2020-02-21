@@ -48,7 +48,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -225,15 +225,12 @@ static void sensing_main(int fd)
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+
 /****************************************************************************
  * sensor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int accel_main(int argc, char *argv[])
-#endif
 {
   int fd;
 

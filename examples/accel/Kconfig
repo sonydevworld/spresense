@@ -14,7 +14,6 @@ if EXAMPLES_ACCEL
 config EXAMPLES_ACCEL_PROGNAME
 	string "Program name"
 	default "accel"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
