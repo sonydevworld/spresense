@@ -35,11 +35,8 @@
 #
 ############################################################################
 
-APPDIR = $(shell pwd)
-TOPDIR ?= $(APPDIR)/import
-
--include $(SDKDIR)/bsp/scripts/Make.defs.apps
--include $(APPDIR)/Make.defs
+-include $(TOPDIR)/.config
+include $(APPDIR)/Make.defs
 
 # Application Directories
 
@@ -47,7 +44,7 @@ TOPDIR ?= $(APPDIR)/import
 # CLEANDIRS is the list of all top-level directories containing Makefiles.
 #   It is used only for cleaning.
 
-BUILDIRS   := $(dir $(filter-out import/Make.defs,$(wildcard */Make.defs)))
+BUILDIRS   := $(dir $(wildcard */Make.defs))
 CLEANDIRS  := $(dir $(wildcard */Makefile))
 
 # CONFIGURED_APPS is the application directories that should be built in
@@ -71,18 +68,17 @@ BIN_DIR = $(APPDIR)$(DELIM)bin
 
 # Build targets
 
-all: $(BIN)
+all: .built
 .PHONY: import install dirlinks context context_serialize context_rest .depdirs preconfig depend clean distclean
-.PRECIOUS: $(BIN)
 
 define MAKE_template
-	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" BIN_DIR="$(BIN_DIR)"
+	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
 
 endef
 
 define SDIR_template
 $(1)_$(2):
-	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" BIN_DIR="$(BIN_DIR)"
+	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
 
 endef
 
@@ -93,16 +89,8 @@ $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),depend))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
-$(BIN): $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
-	$(Q) $(AR) $(BIN)
-	$(Q) for dir in $(CONFIGURED_APPS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" BIN_DIR="$(BIN_DIR)" install; \
-	done
-
-.install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
-
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+.built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
+	@ touch $@
 
 install: $(BIN_DIR) .install
 
@@ -112,7 +100,6 @@ import:
 	$(Q) $(MAKE) .import TOPDIR="$(APPDIR)$(DELIM)import"
 
 dirlinks:
-	$(Q) $(MAKE) -C platform dirlinks TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
 
 context: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_context)
 
@@ -124,7 +111,7 @@ preconfig: Kconfig
 
 .depdirs: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_depend)
 
-.depend: Makefile .depdirs
+.depend: context Makefile .depdirs
 	$(Q) touch $@
 
 depend: .depend

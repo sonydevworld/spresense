@@ -35,6 +35,4 @@
 
 MENUDESC = "Examples"
 
-BIN = libexamples$(LIBEXT)
-
-include $(SDKDIR)/Makefile.ext
+include $(SDKDIR)/tools/Sdk.mk

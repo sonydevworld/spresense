@@ -35,6 +35,4 @@
 
 MENUDESC = "Externals"
 
-BIN = libexternals$(LIBEXT)
-
-include $(SDKDIR)/Makefile.ext
+include $(SDKDIR)/tools/Sdk.mk
