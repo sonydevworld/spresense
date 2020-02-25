@@ -33,15 +33,9 @@
 #
 ############################################################################
 
-# Do not change
-
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
 
-# C_SRCS
-ASRCS =
 CSRCS =  jaricom.c  jcomapi.c
 CSRCS += jdapimin.c jdapistd.c jdarith.c jdatasrc.c jdcoefct.c jdcolor.c
 CSRCS += jddctmgr.c jdhuff.c jdinput.c jdmainct.c jdmarker.c jdmaster.c
@@ -50,57 +44,4 @@ CSRCS += jidctflt.c jidctfst.c jidctint.c jquant1.c
 CSRCS += jquant2.c jutils.c jmemmgr.c
 CSRCS += jmemname.c
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libjpeg.a
-
-DEPPATH = --dep-path .
-
-# Common build
-
-VPATH =
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(OBJS)
-	$(call ARCHIVE, $@, $(OBJS))
-
-# Create dependencies
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
+include $(APPDIR)/Application.mk

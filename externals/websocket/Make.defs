@@ -1,7 +1,7 @@
 ############################################################################
-# externals/awsiot/LibTarget.mk
+# websocket/Make.defs
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,15 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXTERNALS_AWSIOT),y)
-EXTLIBS += lib$(DELIM)libawsiot$(LIBEXT)
-AWSIOTDIRS += $(EXTERNAL_DIR)$(DELIM)awsiot
+ifeq ($(CONFIG_EXTERNALS_WEBSOCKET),y)
+CONFIGURED_APPS += websocket
 endif
-SDKCLEANDIRS += $(AWSIOTDIRS)
-
-$(AWSIOTDIRS)$(DELIM)libawsiot$(LIBEXT): context
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(notdir $@)
-
-lib$(DELIM)libawsiot$(LIBEXT): $(AWSIOTDIRS)$(DELIM)libawsiot$(LIBEXT)
-	$(Q) install $< $@
-

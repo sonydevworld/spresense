@@ -35,77 +35,22 @@
 
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
+
 CXXEXT ?= .cpp
 
-# C_SRCS
-ASRCS =
-CSRCS  = src/conv.c
-CSRCS += src/cwt.c
-CSRCS += src/cwtmath.c
-CSRCS += src/hsfft.c
-CSRCS += src/real.c
-CSRCS += src/wavefilt.c
-CSRCS += src/wavefunc.c
-CSRCS += src/wavelib.c
-CSRCS += src/wtmath.c
+CSRCS  = conv.c
+CSRCS += cwt.c
+CSRCS += cwtmath.c
+CSRCS += hsfft.c
+CSRCS += real.c
+CSRCS += wavefilt.c
+CSRCS += wavefunc.c
+CSRCS += wavelib.c
+CSRCS += wtmath.c
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
+CFLAGS += -Iheader
 
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
+VPATH = src
+ROOTDEPPATH = --dep-path src
 
-BIN = libwavelib.a
-
-DEPPATH = --dep-path .
-
-INCLUDES := -I header
-CFLAGS += $(INCLUDES)
-
-# Common build
-
-VPATH =
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(OBJS)
-	$(call ARCHIVE, $@, $(OBJS))
-
-# Create dependencies
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
-
-
+include $(APPDIR)/Application.mk

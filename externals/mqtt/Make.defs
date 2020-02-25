@@ -1,7 +1,7 @@
 ############################################################################
-# externals/mqtt/LibTarget.mk
+# mqtt/Make.defs
 #
-#   Copyright 2019 Sony Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,16 +34,5 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_MQTT),y)
-EXTLIBS += lib$(DELIM)libmqtt$(LIBEXT)
-MQTTDIRS += $(EXTERNAL_DIR)$(DELIM)mqtt
+CONFIGURED_APPS += mqtt
 endif
-SDKCLEANDIRS += $(MQTTDIRS)
-
-# Below 2 rules are mandatory, replace all of 'video' to your library name or directory.
-
-$(MQTTDIRS)$(DELIM)libmqtt$(LIBEXT): context
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(notdir $@)
-
-lib$(DELIM)libmqtt$(LIBEXT): $(MQTTDIRS)$(DELIM)libmqtt$(LIBEXT)
-	$(Q) install $< $@
-

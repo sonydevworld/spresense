@@ -1,7 +1,7 @@
 ############################################################################
-# externals/libjpeg/LibTarget.mk
+# awsiot/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,17 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXTERNALS_LIBJPEG),y)
-EXTLIBS += lib$(DELIM)libjpeg$(LIBEXT)
-LIBJPEGDIRS += $(EXTERNAL_DIR)$(DELIM)libjpeg
+ifeq ($(CONFIG_EXTERNALS_AWSIOT),y)
+CONFIGURED_APPS += awsiot
 endif
-SDKCLEANDIRS += $(LIBJPEGDIRS)
-
-# Below 2 rules are mandatory, replace all of 'video' to your library name or directory.
-
-$(LIBJPEGDIRS)$(DELIM)libjpeg$(LIBEXT): context
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(notdir $@)
-
-lib$(DELIM)libjpeg$(LIBEXT): $(LIBJPEGDIRS)$(DELIM)libjpeg$(LIBEXT)
-	$(Q) install $< $@
-

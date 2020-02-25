@@ -1,7 +1,7 @@
 ############################################################################
-# externals/websocket/LibTarget.mk
+# wavelib/Make.defs
 #
-#   Copyright 2019 Sony Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,17 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXTERNALS_WEBSOCKET),y)
-EXTLIBS += lib$(DELIM)libwebsocket$(LIBEXT)
-WEBSOCKETDIRS += $(EXTERNAL_DIR)$(DELIM)websocket
+ifeq ($(CONFIG_EXTERNALS_WAVELIB),y)
+CONFIGURED_APPS += wavelib
 endif
-SDKCLEANDIRS += $(WEBSOCKETDIRS)
-
-# Below 2 rules are mandatory, replace all of 'video' to your library name or directory.
-
-$(WEBSOCKETDIRS)$(DELIM)libwebsocket$(LIBEXT): context
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(notdir $@)
-
-lib$(DELIM)libwebsocket$(LIBEXT): $(WEBSOCKETDIRS)$(DELIM)libwebsocket$(LIBEXT)
-	$(Q) install $< $@
-
