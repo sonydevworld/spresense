@@ -67,7 +67,7 @@ endif
 endif
 
 define MAKE_template
-	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)"
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
 
 endef
 
@@ -117,6 +117,7 @@ TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
 SDKCLEANDIRS = $(EXTSUBDIRS)
 
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),all)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),preconfig)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),context)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),depend)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
@@ -134,40 +135,36 @@ PHONY += dirlinks
 $(TOPDIR)/tools/cxd56:
 	$(Q) mkdir -p $@
 
-$(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT): $(TOPDIR)/tools/cxd56
 ifeq ($(CONFIG_HOST_LINUX),y)
-	$(Q) cp $(SDKDIR)/tools/linux/mkspk $<
+  MKSPK_SRC = $(SDKDIR)/tools/linux/mkspk
 endif
 ifeq ($(CONFIG_HOST_MACOS),y)
-	$(Q) cp $(SDKDIR)/tools/macos/mkspk $<
+  MKSPK_SRC = $(SDKDIR)/tools/macos/mkspk
 endif
 ifeq ($(CONFIG_HOST_WINDOWS),y)
-	$(Q) cp $(SDKDIR)/tools/windows/mkspk$(HOSTEXEEXT) $<
+  MKSPK_SRC = $(SDKDIR)/tools/windows/mkspk$(HOSTEXEEXT)
 endif
+MKSPK = $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT)
+$(MKSPK): $(TOPDIR)/tools/cxd56
+	$(call COPYFILE,$(MKSPK_SRC),$@)
 
-context: dirlinks $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT) $(foreach SDIR,$(SDKSUBDIRS),$(SDIR)_context)
-#	$(Q) for dir in $(CONTEXTDIRS) ; do \
-#		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" context; \
-#	done
+context: dirlinks $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT) $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
 PHONY += context
 
 clean_context:
 PHONY += clean_context
 
-depend: context $(foreach SDIR,$(SDKSUBDIRS),$(SDIR)_depend)
-#	$(Q) for dir in $(SDKDEPDIRS); do \
-#		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" EXTRADEFINES=$(KDEFINE) depend; \
-#	done
+depend: context $(foreach SDIR,$(TARGETDIRS),$(SDIR)_depend)
 PHONY += depend
 
 #
 # Build rules
 #
 
-.built: $(foreach SDIR,$(SDKSUBDIRS),$(SDIR)_all)
+.built: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_all)
 	@ touch $@
 
-subdir_clean: $(foreach SDIR,$(SDKSUBDIRS),$(SDIR)_clean)
+subdir_clean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_clean)
 	$(Q) for dir in $(SDKCLEANDIRS); do \
 		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" clean; \
 		find $$dir -name "Make.dep" -delete; \
@@ -195,10 +192,7 @@ clean: subdir_clean depend_clean ext_clean
 	$(call DELFILE, .built)
 PHONY += clean
 
-subdir_distclean: $(foreach SDIR,$(SDKSUBDIRS),$(SDIR)_distclean)
-#	$(Q) for dir in $(SDKCLEANDIRS); do \
-#		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" distclean; \
-#	done
+subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
 PHONY += subdir_distclean
 
 distclean: clean subdir_distclean clean_context ext_distclean
@@ -219,11 +213,8 @@ savedefconfig:
 	$(Q) mv $(TOPDIR)/defconfig .
 PHONY += savedefconfig
 
-preconfig: ext_preconfig
-	$(Q) for dir in $(SDKSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" preconfig; \
-	done
-	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(SDKSUBDIRS) $(EXTSUBDIRS)
+preconfig: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_preconfig)
+	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(TARGETDIRS)
 
 ext_preconfig:
 ifneq ($(EXTSUBDIRS),)
