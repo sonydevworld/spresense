@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <nuttx/arch.h>
 #include <sys/ioctl.h>
@@ -55,7 +55,7 @@
 #include <nuttx/sensors/bmp280.h>
 
 #ifdef CONFIG_CXD56_SCU
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 #endif
 
 /****************************************************************************

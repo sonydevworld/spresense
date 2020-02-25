@@ -12,6 +12,21 @@ config EXAMPLES_ASMP
 
 if EXAMPLES_ASMP
 
+config EXAMPLES_ASMP_PROGNAME
+	string "Program name"
+	default "asmp"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ASMP_PRIORITY
+	int "asmp task priority"
+	default 100
+
+config EXAMPLES_ASMP_STACKSIZE
+	int "asmp stack size"
+	default 2048
+
 config EXAMPLES_ASMP_WORKER_STACKSIZE
     int "Example worker stack size"
     default 1024

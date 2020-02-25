@@ -33,7 +33,8 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # lte_lwm2m built-in application info
 

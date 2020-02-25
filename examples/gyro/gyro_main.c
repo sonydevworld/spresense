@@ -36,7 +36,7 @@
 /****************************************************************************
  * Included Files
  ****************************************************************************/
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -52,7 +52,7 @@
 #include <nuttx/sensors/bmi160.h>
 
 #ifdef CONFIG_CXD56_SCU
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 #endif
 
 /****************************************************************************

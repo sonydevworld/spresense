@@ -33,114 +33,27 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # FFT Example
 
-APPNAME = fft
-PRIORITY = SCHED_PRIORITY_DEFAULT
+PROGNAME  = $(CONFIG_FFT_TEST_PROGNAME)
+PRIORITY  = SCHED_PRIORITY_DEFAULT
 STACKSIZE = 4096
+MODULE    = $(CONFIG_FFT_TEST)
 
-ASRCS =
 CSRCS += dsp_rpc.c
 MAINSRC = fft_main.c
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-MAINOBJ = $(MAINSRC:.c=$(OBJEXT))
+include $(APPDIR)/Application.mk
 
-SRCS = $(ASRCS) $(CSRCS) $(MAINSRC)
-OBJS = $(AOBJS) $(COBJS)
-
-ifneq ($(CONFIG_BUILD_KERNEL),y)
-  OBJS += $(MAINOBJ)
-endif
-
-ifeq ($(CONFIG_WINDOWS_NATIVE),y)
-  BIN = ..\libexamples$(LIBEXT)
-else
-ifeq ($(WINTOOL),y)
-  BIN = ..\\libexamples$(LIBEXT)
-else
-  BIN = ../libexamples$(LIBEXT)
-endif
-endif
-
-ifeq ($(WINTOOL),y)
-  INSTALL_DIR = "${shell cygpath -w $(BIN_DIR)}"
-else
-  INSTALL_DIR = $(BIN_DIR)
-endif
-
-CONFIG_FFT_TEST_PROGNAME ?= fft$(EXEEXT)
-PROGNAME = $(CONFIG_FFT_TEST_PROGNAME)
-
-ROOTDEPPATH  = --dep-path .
-
-all: .built
-.PHONY: .built really_build clean_dsp clean depend distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS) $(MAINOBJ): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-# This is a little messy.  The build is broken into two pieces:  (1) the
-# dsp/ subdir build that auto-generates several files, and (2) the real
-# build.  This is done because we need a fresh build context after auto-
-# generating the source files.
-
-really_build: $(OBJS)
-	$(call ARCHIVE, $(BIN), $(OBJS))
-	@touch .built
-
-.built:
+build_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-	@$(MAKE) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" really_build
 
-ifeq ($(CONFIG_BUILD_KERNEL),y)
-$(BIN_DIR)$(DELIM)$(PROGNAME): $(OBJS) $(MAINOBJ)
-	@echo "LD: $(PROGNAME)"
-	$(Q) $(LD) $(LDELFFLAGS) $(LDLIBPATH) -o $(INSTALL_DIR)$(DELIM)$(PROGNAME) $(ARCHCRT0OBJ) $(MAINOBJ) $(LDLIBS)
-	$(Q) $(NM) -u  $(INSTALL_DIR)$(DELIM)$(PROGNAME)
-
-install: $(BIN_DIR)$(DELIM)$(PROGNAME)
-
-else
-install:
-	$(call ARCHIVE, $(BIN), $(OBJS))
-
-endif
-
-ifeq ($(CONFIG_NSH_BUILTIN_APPS),y)
-$(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat: $(DEPCONFIG) Makefile
-	$(call REGISTER,$(APPNAME),$(PRIORITY),$(STACKSIZE),$(APPNAME)_main)
-
-context: $(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat
-else
-context:
-endif
-
-.depend:
-	@$(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	@touch $@
-
-depend: .depend
+.built: build_dsp
 
 clean_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
-clean: clean_dsp
-	$(call DELFILE, .built)
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
+clean:: clean_dsp

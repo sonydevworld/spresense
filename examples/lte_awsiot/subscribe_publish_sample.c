@@ -37,7 +37,7 @@
 #include "aws_iot_version.h"
 #include "aws_iot_mqtt_client_interface.h"
 
-#include "sdk/config.h"
+#include "nuttx/config.h"
 
 #include "awsiot_lte_connection.h"
 

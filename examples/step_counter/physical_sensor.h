@@ -40,8 +40,6 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-
 #include <fcntl.h>
 #include <queue.h>
 #include <errno.h>

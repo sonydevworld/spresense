@@ -34,88 +34,18 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # ELF Example
 
-APPNAME = prime
-PRIORITY = SCHED_PRIORITY_DEFAULT
+PROGNAME  = prime
+PRIORITY  = SCHED_PRIORITY_DEFAULT
 STACKSIZE = 4096
+MODULE    = $(CONFIG_EXAMPLES_PRIME)
 
-ASRCS =
-CSRCS =
 MAINSRC = prime_main.c
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-MAINOBJ = $(MAINSRC:.c=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS) $(MAINSRC)
-OBJS = $(AOBJS) $(COBJS)
-
-ifneq ($(CONFIG_BUILD_KERNEL),y)
-  OBJS += $(MAINOBJ)
-endif
-
-ifeq ($(WINTOOL),y)
-  BIN = "${shell cygpath -w $(APPDIR)$(DELIM)libexamples$(LIBEXT)}"
-  INSTALL_DIR = "${shell cygpath -w $(BIN_DIR)}"
-else
-  BIN = $(APPDIR)$(DELIM)libexamples$(LIBEXT)
-  INSTALL_DIR = $(BIN_DIR)
-endif
-
-CONFIG_PRIME_PROGNAME ?= prime$(EXEEXT)
-PROGNAME = $(CONFIG_PRIME_PROGNAME)
-
-ROOTDEPPATH = --dep-path . --dep-path worker
-VPATH = worker
-
-# Build targets
-
-all: .built
-.PHONY: .built really_build clean_worker clean depend distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS) $(MAINOBJ): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-really_build: $(OBJS)
-	@touch .built
-
-.built:
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-	@$(MAKE) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" really_build
-
-ifeq ($(CONFIG_BUILD_KERNEL),y)
-$(BIN_DIR)$(DELIM)$(PROGNAME): $(OBJS) $(MAINOBJ)
-	@echo "LD: $(PROGNAME)"
-	$(Q) $(LD) $(LDELFFLAGS) $(LDLIBPATH) -o $(INSTALL_DIR)$(DELIM)$(PROGNAME) $(ARCHCRT0OBJ) $(MAINOBJ) $(LDLIBS)
-	$(Q) $(NM) -u  $(INSTALL_DIR)$(DELIM)$(PROGNAME)
-
-install: $(BIN_DIR)$(DELIM)$(PROGNAME)
-
-else
-install:
-	$(call ARCHIVE, $(BIN), $(OBJS))
-
-endif
-
-ifeq ($(CONFIG_NSH_BUILTIN_APPS),y)
-$(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat: $(DEPCONFIG) Makefile
-	$(call REGISTER,$(APPNAME),$(PRIORITY),$(STACKSIZE),$(APPNAME)_main)
-
-context: $(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat
-else
-context:
-endif
-
-# Generate dummy romfs.h for avoid error on depend process
 
 worker/romfs.h:
 	@echo > $@
@@ -125,19 +55,7 @@ worker/romfs.h:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
 	@touch $@
 
-depend: .depend
-
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
-clean: clean_worker
-	$(call DELFILE, .built)
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
+clean:: clean_worker

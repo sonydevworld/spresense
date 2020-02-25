@@ -33,7 +33,8 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # FW Update built-in application info
 

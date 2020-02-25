@@ -109,9 +109,9 @@ define ExtSubDirectory_template
 	include $(1)/LibTarget.mk
 endef
 
-EXTSUBDIRS = $(dir $(wildcard ../*/LibTarget.mk)) $(SPRESENSE_HOME)
+EXTSUBDIRS = $(dir $(wildcard ../*/.sdksubdir)) $(SPRESENSE_HOME)
 
-$(foreach SDIR, $(EXTSUBDIRS), $(eval $(call ExtSubDirectory_template,$(SDIR))))
+#$(foreach SDIR, $(EXTSUBDIRS), $(eval $(call ExtSubDirectory_template,$(SDIR))))
 
 TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
 SDKCLEANDIRS = $(EXTSUBDIRS)

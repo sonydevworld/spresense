@@ -33,7 +33,7 @@
  *
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <sys/ioctl.h>
 #include <sys/time.h>

@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <nuttx/compiler.h>
 
 #include <sys/types.h>
@@ -264,11 +264,7 @@ static int run_worker(const char *filename)
  * Name: asmp_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int asmp_main(int argc, char *argv[])
-#endif
 {
 #ifdef CONFIG_FS_ROMFS
   int ret;

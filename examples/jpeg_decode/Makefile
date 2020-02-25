@@ -33,7 +33,8 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # jpeg_decode built-in application info
 

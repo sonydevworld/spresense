@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -51,7 +51,7 @@
 
 #include <nuttx/arch.h>
 #include <nuttx/board.h>
-#include <nuttx/fs/mkfatfs.h>
+//#include <nuttx/fs/mkfatfs.h>
 #include "video/video.h"
 
 #include <sys/ioctl.h>

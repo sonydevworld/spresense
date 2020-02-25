@@ -42,7 +42,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h> /* For Spresense Kconfig */
+#include <nuttx/config.h> /* For Spresense Kconfig */
 
 #include <stdio.h>
 #include <string.h>

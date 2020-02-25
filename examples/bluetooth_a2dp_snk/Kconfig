@@ -11,18 +11,18 @@ config EXAMPLES_BLUETOOTH_A2DP_SNK
 
 if EXAMPLES_BLUETOOTH_A2DP_SNK
 
-config EXAMPLES_BT_A2DP_SNK_PROGNAME
+config EXAMPLES_BLUETOOTH_A2DP_SNK_PROGNAME
 	string "Program name"
 	default "bt_a2dp_snk"
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
-config EXAMPLES_BT_A2DP_SNK_PRIORITY
+config EXAMPLES_BLUETOOTH_A2DP_SNK_PRIORITY
 	int "Task priority"
 	default 100
 
-config EXAMPLES_BT_A2DP_SNK_STACKSIZE
+config EXAMPLES_BLUETOOTH_A2DP_SNK_STACKSIZE
 	int "Stack size"
 	default 2048
 
