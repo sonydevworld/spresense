@@ -183,11 +183,7 @@ static bool app_beep(bool en = false, int16_t vol = 255, uint16_t freq = 0)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_beep_main(int argc, char *argv[])
-#endif
 {
   /* Define beep scale and pronunciation time */
 

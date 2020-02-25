@@ -367,11 +367,7 @@ void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
  * BLE_GATT_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int ble_central_main(int argc, char *argv[])
-#endif
 {
   int ret = 0;
 

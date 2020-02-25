@@ -428,11 +428,7 @@ static void fin_output_to_file(void)
  * Assume that the source file name is passed in.
  */
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int jpeg_decode_main(int argc, char *argv[])
-#endif
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).

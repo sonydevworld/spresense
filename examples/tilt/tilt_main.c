@@ -352,11 +352,7 @@ static int sensing_main(int fd)
  * sensor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int tilt_main(int argc, char *argv[])
-#endif
 {
   int fd;
 

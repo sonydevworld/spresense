@@ -34,19 +34,14 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # Bt_Spp built-in application info
 
-APPNAME = bt_spp
-PRIORITY = 100
-STACKSIZE = 2560
+PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_SPP_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_SPP_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_SPP_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_SPP)
 
-ASRCS =
-CSRCS =
 MAINSRC = bluetooth_spp_main.c
-
-CONFIG_EXAMPLES_BLUETOOTH_SPP_PROGNAME ?= bt_spp$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_BLUETOOTH_SPP_PROGNAME)
 
 include $(APPDIR)/Application.mk

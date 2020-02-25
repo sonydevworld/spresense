@@ -347,11 +347,7 @@ static void sensor_manager_api_response(unsigned int code,
  * sensor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-extern "C" int step_counter_main(int argc, char *argv[])
-#endif
 {
   int ret;
 

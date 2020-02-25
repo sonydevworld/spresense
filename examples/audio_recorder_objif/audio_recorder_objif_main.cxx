@@ -1088,11 +1088,7 @@ static void app_disp_codec_params(void)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_recorder_objif_main(int argc, char *argv[])
-#endif
 {
   /* Command line argument analysis */
 

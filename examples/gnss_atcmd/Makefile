@@ -34,32 +34,17 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # GNSS(simple) built-in application info
 
-CONFIG_EXAMPLES_GNSS_ATCMD_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_GNSS_ATCMD_STACKSIZE ?= 2048
-
-APPNAME = gnss_atcmd
-PRIORITY = $(CONFIG_EXAMPLES_GNSS_ATCMD_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_GNSS_ATCMD_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_GNSS_ATCMD_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_GNSS_ATCMD_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_GNSS_ATCMD)
 
 # GNSS_ATCMD Example
 
-ASRCS =
-CSRCS = gnss_usbserial.c gnss_atcmd_parser.c
+CSRCS   = gnss_usbserial.c gnss_atcmd_parser.c
 MAINSRC = gnss_atcmd_main.c
-
-CONFIG_EXAMPLES_GNSS_PROGNAME ?= gnss_atcmd$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_GNSS_ATCMD_PROGNAME)
-
-ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(SDKDIR)/modules/include}"
-  CXXFLAGS += -I "${shell cygpath -w $(SDKDIR)/modules/include}"
-else
-  CFLAGS += -I$(SDKDIR)/modules/include
-  CXXFLAGS += -I$(SDKDIR)/modules/include
-endif
 
 include $(APPDIR)/Application.mk

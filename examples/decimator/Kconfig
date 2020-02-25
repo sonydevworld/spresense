@@ -15,7 +15,6 @@ if EXAMPLES_DECIMATOR
 config EXAMPLES_DECIMATOR_PROGNAME
 	string "Program name"
 	default "decimator"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

@@ -34,21 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-
-# LCD Read/Write Test
-
-ASRCS =
-CSRCS =
-MAINSRC = lcdrw_main.c
-
-CONFIG_XYZ_PROGNAME ?= lcdrw$(EXEEXT)
-PROGNAME = $(CONFIG_XYZ_PROGNAME)
 
 # LCD R/W built-in application info
 
-APPNAME = lcdrw
-PRIORITY = SCHED_PRIORITY_DEFAULT
+PROGNAME  = lcdrw
+PRIORITY  = SCHED_PRIORITY_DEFAULT
 STACKSIZE = 2048
+MODULE    = $(EXAMPLES_LCDRW)
+
+# LCD Read/Write Test
+
+MAINSRC = lcdrw_main.c
 
 include $(APPDIR)/Application.mk

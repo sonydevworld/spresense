@@ -34,23 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_GYRO_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_GYRO_STACKSIZE ?= 2048
-
-APPNAME = gyro
-PRIORITY = $(CONFIG_EXAMPLES_GYRO_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_GYRO_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_GYRO_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_GYRO_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_GYRO)
 
 # sensor Example
 
-ASRCS =
 MAINSRC = gyro_main.c
-
-CONFIG_EXAMPLES_GYRO_PROGNAME ?= gyro$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_GYRO_PROGNAME)
 
 include $(APPDIR)/Application.mk

@@ -805,7 +805,7 @@ void print_usage(void)
     fprintf(stdout, "\r\n");
 }
 
-int lte_lwm2m_main(int argc, char *argv[])
+int main(int argc, char FAR *argv[])
 {
     client_data_t data;
     int result;

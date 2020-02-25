@@ -14,7 +14,6 @@ if EXAMPLES_LTE_AWSIOT
 config EXAMPLES_LTE_AWSIOT_PROGNAME
 	string "Program name"
 	default "lte_awsiot"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
@@ -32,8 +31,8 @@ config EXAMPLES_LTE_AWSIOT_STACKSIZE_IN_USING_MBEDTLS
 	default 10240
 
 config EXAMPLES_LTE_AWSIOT_CERT
-        string "AWS IoT cert folder"
-        default "/mnt/sd0/CERTS"
+	string "AWS IoT cert folder"
+	default "/mnt/sd0/CERTS"
 
 config EXAMPLES_LTE_AWSIOT_APN_NAME
 	string "Access Point Name"

@@ -296,11 +296,7 @@ static int sensing_main(FAR struct deci_s *d0, FAR struct deci_s *d1)
  * decimator_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int decimator_main(int argc, char *argv[])
-#endif
 {
   struct deci_s *d0, *d1;
   int fd;

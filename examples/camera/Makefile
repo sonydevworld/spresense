@@ -34,28 +34,20 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # camera built-in application info
 
-CONFIG_EXAMPLES_CAMERA_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_CAMERA_STACKSIZE ?= 2048
-
-APPNAME = camera
-PRIORITY = $(CONFIG_EXAMPLES_CAMERA_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_CAMERA_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_CAMERA_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_CAMERA_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_CAMERA)
 
 # camera Example
 
-ASRCS =
-CSRCS =
 MAINSRC = camera_main.c
 
 ifeq ($(CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD),y)
 CSRCS += camera_bkgd.c
 endif
-
-CONFIG_EXAMPLES_CAMERA_PROGNAME ?= camera$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_CAMERA_PROGNAME)
 
 include $(APPDIR)/Application.mk

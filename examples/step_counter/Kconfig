@@ -14,7 +14,6 @@ if EXAMPLES_SENSOR_STEP_COUNTER
 config EXAMPLES_STEP_COUNTER_PROGNAME
 	string "Program name"
 	default "step_counter"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

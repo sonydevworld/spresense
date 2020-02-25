@@ -581,11 +581,7 @@ void app_working_process(uint32_t play_time)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_sound_effector_main(int argc, char *argv[])
-#endif
 {
   printf("Start sound effector example\n");
 

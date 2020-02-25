@@ -687,11 +687,7 @@ _err:
  * gnss_atcmd_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_atcmd_main(int argc, char *argv[])
-#endif
 {
   pthread_attr_t           tattr;
   struct sched_param       param;

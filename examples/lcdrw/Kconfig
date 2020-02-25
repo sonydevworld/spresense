@@ -6,7 +6,7 @@
 config EXAMPLES_LCDRW
 	bool "LCD read/write example"
 	default n
-#	depends on NX && NX_LCDDRIVER
+	depends on NX && NX_LCDDRIVER
 	---help---
 		Enable the LCD read/write example
 

@@ -13,7 +13,6 @@ if EXAMPLES_GNSS_PVTLOG
 config EXAMPLES_GNSS_PVTLOG_PROGNAME
 	string "Program name"
 	default "gnss_pvtlog"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

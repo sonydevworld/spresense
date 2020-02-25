@@ -34,23 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_MAG_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_MAG_STACKSIZE ?= 2048
-
-APPNAME = mag
-PRIORITY = $(CONFIG_EXAMPLES_MAG_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_MAG_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_MAG_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_MAG_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_MAG)
 
 # sensor Example
 
-ASRCS =
 MAINSRC = mag_main.c
-
-CONFIG_EXAMPLES_MAG_PROGNAME ?= mag$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_MAG_PROGNAME)
 
 include $(APPDIR)/Application.mk

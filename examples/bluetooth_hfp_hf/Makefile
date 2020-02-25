@@ -34,19 +34,15 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # Bt_Hfp_Hf built-in application info
 
 APPNAME = bt_hfp_hf
-PRIORITY = 100
-STACKSIZE = 2048
+PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PROGNAME)
 
-ASRCS =
-CSRCS =
 MAINSRC = bluetooth_hfp_hf_main.c
-
-CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PROGNAME ?= bt_hfp_hf$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PROGNAME)
 
 include $(APPDIR)/Application.mk

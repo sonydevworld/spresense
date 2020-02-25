@@ -34,20 +34,15 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_PROXIMITY_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_PROXIMITY_STACKSIZE ?= 2048
-
-APPNAME = proximity
-PRIORITY = $(CONFIG_EXAMPLES_PROXIMITY_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_PROXIMITY_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_PROXIMITY_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_PROXIMITY_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_PROXIMITY)
 
 # sensor Example
-
-ASRCS =
 
 # REVISIT: Choose representative one
 
@@ -74,8 +69,5 @@ else
 MAINSRC = proximity_main_rpr0521rs_scu.c
 endif
 endif
-
-CONFIG_EXAMPLES_PROXIMITY_PROGNAME ?= proximity$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_PROXIMITY_PROGNAME)
 
 include $(APPDIR)/Application.mk

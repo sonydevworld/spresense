@@ -33,19 +33,14 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
 
 # Audio application info
 
-CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_STACKSIZE ?= 2048
-
-APPNAME   = audio_dual_players
+PROGNAME  = $(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_PROGNAME)
 PRIORITY  = $(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS)
 
 # Audio Example
 
@@ -53,21 +48,14 @@ MAINSRC = audio_dual_players_main.cxx
 
 # Audio Example paths
 
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
+#AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio Example flags
 
-ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
-else
-CXXFLAGS += -I $(AUDIODIR)
-endif
-
+# XXX: Do NOT add module directory, please use modules/include.
+#CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
-
-CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_PROGNAME ?= audio_dual_players$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_PROGNAME)
 
 include $(APPDIR)/Application.mk

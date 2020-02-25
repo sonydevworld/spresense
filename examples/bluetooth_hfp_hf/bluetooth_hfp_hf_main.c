@@ -522,11 +522,7 @@ static void main_loop(void)
  * bt_spp_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int bt_hfp_hf_main(int argc, char *argv[])
-#endif
 {
   int ret = 0;
 

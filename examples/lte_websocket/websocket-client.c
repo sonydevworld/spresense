@@ -83,8 +83,8 @@ void run_websocket_org_echo_test(cwebsocket_client *websocket) {
 	cwebsocket_client_read_data(&websocket_client);
 }
 
-int lte_websocket_main(int argc, char **argv) {
-
+int main(int argc, char FAR **argv)
+{
 	print_program_header();
 	if(argc != 2) print_program_usage(argv[0]);
 

@@ -34,28 +34,20 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # jpeg_decode built-in application info
 
-CONFIG_EXAMPLES_JPEG_DECODE_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_JPEG_DECODE_STACKSIZE ?= 3072
-
-APPNAME = jpeg_decode
-PRIORITY = $(CONFIG_EXAMPLES_JPEG_DECODE_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_JPEG_DECODE_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_JPEG_DECODE_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_JPEG_DECODE_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_JPEG_DECODE)
 
 # jpeg_decode Example
 
-ASRCS =
-CSRCS =
 MAINSRC = jpeg_decode_main.c
 
 ifeq ($(CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD),y)
 CSRCS += jpeg_decode_nx_bkgd.c
 endif
-
-CONFIG_EXAMPLES_JPEG_DECODE_PROGNAME ?= jpeg_decode$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_JPEG_DECODE_PROGNAME)
 
 include $(APPDIR)/Application.mk

@@ -14,7 +14,6 @@ if EXAMPLES_CAMERA
 config EXAMPLES_CAMERA_PROGNAME
 	string "Program name"
 	default "camera"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

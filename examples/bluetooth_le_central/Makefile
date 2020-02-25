@@ -34,19 +34,14 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # Ble_Central built-in application info
 
-APPNAME = ble_central
-PRIORITY = 100
-STACKSIZE = 2048
+PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_CENTRAL_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_CENTRAL_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_CENTRAL_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_CENTRAL)
 
-ASRCS =
-CSRCS =
 MAINSRC = bluetooth_le_central_main.c
-
-CONFIG_EXAMPLES_BLUETOOTH_CENTRAL_PROGNAME ?= ble_central$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_BLUETOOTH_CENTRAL_PROGNAME)
 
 include $(APPDIR)/Application.mk

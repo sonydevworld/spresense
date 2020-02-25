@@ -131,7 +131,8 @@ static void parseInputArgsForConnectParams(int argc, char **argv) {
 
 }
 
-int lte_awsiot_main(int argc, char **argv) {
+int main(int argc, char FAR **argv)
+{
 	bool infinitePublishFlag = true;
 
 	char rootCA[PATH_MAX + 1];

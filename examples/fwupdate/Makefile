@@ -34,20 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # FW Update built-in application info
 
-CONFIG_EXAMPLES_FWUPDATE_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_FWUPDATE_STACKSIZE ?= 2048
-
-APPNAME = fwupdate
-PRIORITY = $(CONFIG_EXAMPLES_FWUPDATE_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_FWUPDATE_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_FWUPDATE_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_FWUPDATE_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_FWUPDATE)
 
 # FW Update Example
 
-ASRCS =
 CSRCS += fwupdate_file.c
 CSRCS += fwupdate_package.c
 
@@ -60,8 +56,5 @@ CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(TOPDIR)$(DELIM)..$(DELIM)a
 endif
 
 MAINSRC = fwupdate_main.c
-
-CONFIG_EXAMPLES_FWUPDATE_PROGNAME ?= fwupdate$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_FWUPDATE_PROGNAME)
 
 include $(APPDIR)/Application.mk

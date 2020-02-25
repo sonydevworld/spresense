@@ -34,24 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # GNSS(simple) built-in application info
 
-CONFIG_EXAMPLES_GNSS_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_GNSS_STACKSIZE ?= 2048
-
-APPNAME = gnss
-PRIORITY = $(CONFIG_EXAMPLES_GNSS_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_GNSS_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_GNSS_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_GNSS_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_GNSS)
 
 # GNSS(simple) Example
 
-ASRCS =
-CSRCS =
 MAINSRC = gnss_main.c
-
-CONFIG_EXAMPLES_GNSS_PROGNAME ?= gnss$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_GNSS_PROGNAME)
 
 include $(APPDIR)/Application.mk

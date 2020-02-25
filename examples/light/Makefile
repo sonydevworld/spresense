@@ -34,20 +34,15 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_LIGHT_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_LIGHT_STACKSIZE ?= 2048
-
-APPNAME = light
-PRIORITY = $(CONFIG_EXAMPLES_LIGHT_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_LIGHT_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_LIGHT_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_LIGHT_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_LIGHT)
 
 # sensor Example
-
-ASRCS =
 
 # REVISIT: Choose representative one
 
@@ -66,8 +61,5 @@ endif
 ifeq ($(CONFIG_RPR0521RS),y)
 MAINSRC = light_main_rpr0521rs.c
 endif
-
-CONFIG_EXAMPLES_LIGHT_PROGNAME ?= light$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_LIGHT_PROGNAME)
 
 include $(APPDIR)/Application.mk

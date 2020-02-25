@@ -33,19 +33,14 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
 
 # Audio application info
 
-CONFIG_EXAMPLES_AUDIO_PLAYER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_AUDIO_PLAYER_STACKSIZE ?= 2048
-
-APPNAME   = audio_player
+PROGNAME  = $(CONFIG_EXAMPLES_AUDIO_PLAYER_PROGNAME)
 PRIORITY  = $(CONFIG_EXAMPLES_AUDIO_PLAYER_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_AUDIO_PLAYER_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_AUDIO_PLAYER)
 
 # Audio Example
 
@@ -57,24 +52,14 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio Example flags
 
-ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
 ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC),y)
-CXXFLAGS += -I "${shell cygpath -w worker/userproc/include}"
-endif
-else
-CXXFLAGS += -I $(AUDIODIR)
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_USEPOSTPROC),y)
-CXXFLAGS += -I worker/userproc/include
-endif
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker$(DELIM)userproc$(DELIM)include"}
 endif
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
-
-CONFIG_EXAMPLES_AUDIO_PLAYER_PROGNAME ?= audio_player$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_AUDIO_PLAYER_PROGNAME)
 
 include $(APPDIR)/Application.mk
 

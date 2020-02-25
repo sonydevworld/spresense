@@ -34,19 +34,14 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # Bt_A2dp_Snk built-in application info
 
-APPNAME = bt_a2dp_snk
-PRIORITY = 100
-STACKSIZE = 2048
+PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK)
 
-ASRCS =
-CSRCS =
 MAINSRC = bluetooth_a2dp_snk_main.c
-
-CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PROGNAME ?= bt_a2dp_snk$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PROGNAME)
 
 include $(APPDIR)/Application.mk

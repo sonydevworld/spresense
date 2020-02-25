@@ -193,7 +193,7 @@ void messageArrived(MessageData* md)
 }
 
 
-int lte_mqtt_main(int argc, char** argv)
+int main(int argc, char** argv)
 {
 	int rc = 0;
 	unsigned char buf[100];

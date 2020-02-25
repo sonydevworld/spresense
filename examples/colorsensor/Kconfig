@@ -15,7 +15,6 @@ if EXAMPLES_COLORSENSOR
 config EXAMPLES_COLORSENSOR_PROGNAME
 	string "Program name"
 	default "colorsensor"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

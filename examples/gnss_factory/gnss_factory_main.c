@@ -81,11 +81,7 @@
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_factory_main(int argc, char *argv[])
-#endif
 {
   int      fd;
   int      ret;

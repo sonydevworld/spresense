@@ -722,11 +722,7 @@ static void app_restart_cb(uint32_t reason)
  *   Recommended is synchronous API.
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int lte_http_get_main(int argc, char *argv[])
-#endif
 {
   int ret       = 0;
   int result    = LTE_RESULT_OK;

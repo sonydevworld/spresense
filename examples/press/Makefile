@@ -34,20 +34,15 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_PRESS_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_PRESS_STACKSIZE ?= 2048
-
-APPNAME = press
-PRIORITY = $(CONFIG_EXAMPLES_PRESS_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_PRESS_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_PRESS_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_PRESS_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_PRESS)
 
 # sensor Example
-
-ASRCS =
 
 ifeq ($(CONFIG_BMP280),y)
 ifeq ($(CONFIG_CXD56_SCU),y)
@@ -60,8 +55,5 @@ endif
 ifeq ($(CONFIG_BM1383GLV),y)
 MAINSRC = press_main_bm1383glv.c
 endif
-
-CONFIG_EXAMPLES_PRESS_PROGNAME ?= press$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_PRESS_PROGNAME)
 
 include $(APPDIR)/Application.mk

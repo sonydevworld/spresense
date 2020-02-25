@@ -393,11 +393,7 @@ static bool app_finalize_libraries(void)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_through_main(int argc, char *argv[])
-#endif
 {
   printf("Start AudioThrough example\n");
 

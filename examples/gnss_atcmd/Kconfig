@@ -16,7 +16,6 @@ if EXAMPLES_GNSS_ATCMD
 config EXAMPLES_GNSS_ATCMD_PROGNAME
 	string "Program name"
 	default "gnss_atcmd"
-	#depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

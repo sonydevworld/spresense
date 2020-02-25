@@ -81,11 +81,7 @@ static void show_usage(FAR const char *progname)
  * fwupdate_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int fwupdate_main(int argc, char *argv[])
-#endif
 {
   int ret = 0;
   int opt = 0;

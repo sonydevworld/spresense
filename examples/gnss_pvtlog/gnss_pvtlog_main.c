@@ -727,11 +727,7 @@ int gnss_pvtlog_delete(int argc, char *argv[])
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_pvtlog_main(int argc, char *argv[])
-#endif
 {
   int ret = OK;
   char *argmode = "w";  /* Default:write */

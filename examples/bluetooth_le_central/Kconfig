@@ -14,9 +14,16 @@ if EXAMPLES_BLUETOOTH_LE_CENTRAL
 config EXAMPLES_BLUETOOTH_LE_CENTRAL_PROGNAME
 	string "Program name"
 	default "ble_central"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
+
+config EXAMPLES_BLUETOOTH_LE_CENTRAL_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_BLUETOOTH_LE_CENTRAL_STACKSIZE
+	int "Stack size"
+	default 2048
 
 endif

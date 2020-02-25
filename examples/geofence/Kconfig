@@ -14,7 +14,6 @@ if EXAMPLES_GEOFENCE
 config EXAMPLES_GEOFENCE_PROGNAME
 	string "Program name"
 	default "geofence"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

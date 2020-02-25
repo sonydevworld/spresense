@@ -85,11 +85,7 @@
  * sensor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int press_main(int argc, char *argv[])
-#endif
 {
   uint32_t press;
   int fd;

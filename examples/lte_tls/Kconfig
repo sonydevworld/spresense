@@ -15,7 +15,6 @@ if EXAMPLES_LTE_TLS
 config EXAMPLES_LTE_TLS_PROGNAME
 	string "Program name"
 	default "lte_tls"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

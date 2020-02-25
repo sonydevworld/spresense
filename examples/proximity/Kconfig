@@ -15,7 +15,6 @@ if EXAMPLES_PROXIMITY
 config EXAMPLES_PROXIMITY_PROGNAME
 	string "Program name"
 	default "proximity"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

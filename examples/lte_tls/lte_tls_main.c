@@ -201,11 +201,7 @@ static void print_http_status_code(const unsigned char *buffer)
  * lte_tls_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int lte_tls_main(int argc, char *argv[])
-#endif
 {
   int ret;
   bool https;

@@ -34,23 +34,16 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_TILT_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_TILT_STACKSIZE ?= 2048
-
-APPNAME = tilt
-PRIORITY = $(CONFIG_EXAMPLES_TILT_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_TILT_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_TILT_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_TILT_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_TILT_PROGNAME)
 
 # sensor Example
 
-ASRCS =
 MAINSRC = tilt_main.c
-
-CONFIG_EXAMPLES_TILT_PROGNAME ?= tilt$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_TILT_PROGNAME)
 
 include $(APPDIR)/Application.mk

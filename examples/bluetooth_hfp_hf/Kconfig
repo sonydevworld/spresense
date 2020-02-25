@@ -14,9 +14,16 @@ if EXAMPLES_BLUETOOTH_HFP_HF
 config EXAMPLES_BT_HFP_HF_PROGNAME
 	string "Program name"
 	default "bt_hfp_hf"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
+
+config EXAMPLES_BT_HFP_HF_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_BT_HFP_HF_STACKSIZE
+	int "Stack size"
+	default 2048
 
 endif

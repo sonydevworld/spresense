@@ -32,27 +32,18 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
 
 # dnnrt_lenet built-in application info
 
-CONFIG_EXAMPLES_DNNRT_LENET_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_DNNRT_LENET_STACKSIZE ?= 2048
-
-APPNAME = dnnrt_lenet
-PRIORITY = $(CONFIG_EXAMPLES_DNNRT_LENET_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_DNNRT_LENET_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_DNNRT_LENET_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_DNNRT_LENET_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_DNNRT_LENET)
 
 # dnnrt_lenet
 
-ASRCS =
-CSRCS =
-MAINSRC = dnnrt_lenet_main.c loader_nnb.c pnm_util.c
-
-CONFIG_EXAMPLES_DNNRT_LENET_PROGNAME ?= dnnrt_lenet$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_DNNRT_LENET_PROGNAME)
+MAINSRC = dnnrt_lenet_main.c
+CSRCS   = loader_nnb.c pnm_util.c
 
 include $(APPDIR)/Application.mk

@@ -34,24 +34,17 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 # lte_tls built-in application info
 
-CONFIG_EXAMPLES_LTE_TLS_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_LTE_TLS_STACKSIZE ?= 5120
-
-APPNAME = lte_tls
-PRIORITY = $(CONFIG_EXAMPLES_LTE_TLS_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_LTE_TLS_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_LTE_TLS_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_LTE_TLS_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_LTE_TLS)
 
 # lte_tls Example
 
-ASRCS =
 CSRCS =   lte_connection.c
 MAINSRC = lte_tls_main.c
-
-CONFIG_EXAMPLES_LTE_TLS_PROGNAME ?= lte_tls$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_LTE_TLS_PROGNAME)
 
 include $(APPDIR)/Application.mk

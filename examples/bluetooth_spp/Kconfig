@@ -14,9 +14,16 @@ if EXAMPLES_BLUETOOTH_SPP
 config EXAMPLES_BLUETOOTH_SPP_PROGNAME
 	string "Program name"
 	default "bt_spp"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
+
+config EXAMPLES_BLUETOOTH_SPP_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_BLUETOOTH_SPP_STACKSIZE
+	int "Stack size"
+	default 2560
 
 endif
