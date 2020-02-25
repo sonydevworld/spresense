@@ -56,22 +56,11 @@ OBJS = $(AOBJS) $(COBJS)
 BIN = libasmpw$(LIBEXT)
 
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
-BSPSRCDIR = $(SDKDIR)$(DELIM)bsp$(DELIM)src
 
-ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)chip}"
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)common}"
-  CFLAGS += -I "${shell cygpath -w $(BSPSRCDIR)}"
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
 ifneq ($(CONFIG_ARCH_FAMILY),)
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)}"
-endif
-else
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)chip
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)common
-  CFLAGS += -I$(BSPSRCDIR)
-ifneq ($(CONFIG_ARCH_FAMILY),)
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
-endif
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
 endif
 
 all: $(BIN)

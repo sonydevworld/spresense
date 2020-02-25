@@ -64,9 +64,9 @@ endif
 DEPCONFIG = $(TOPDIR)/.config
 
 ifeq ($(WINTOOL),y)
-  LDRAWELFFLAGS += -T "${shell cygpath -w $(SDKDIR)/bsp/scripts/asmp-elf.ld}"
+  LDRAWELFFLAGS += -T "${shell cygpath -w $(SDKDIR)/tools/asmp-elf.ld}"
 else
-  LDRAWELFFLAGS += -T $(SDKDIR)/bsp/scripts/asmp-elf.ld
+  LDRAWELFFLAGS += -T $(SDKDIR)/tools/asmp-elf.ld
 endif
 LDRAWELFFLAGS += -u __vectors
 LDRAWELFFLAGS += -zmax-page-size=256

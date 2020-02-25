@@ -49,7 +49,7 @@
 #include "up_arch.h"
 #include "chip.h"
 
-#include "chip/cxd56_sph.h"
+#include "hardware/cxd56_sph.h"
 
 #include "asmp.h"
 #include "common.h"
