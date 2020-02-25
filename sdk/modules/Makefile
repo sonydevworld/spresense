@@ -56,13 +56,13 @@ endef
 
 $(foreach SDIR, $(MODULEDIRS), $(eval $(call Add_Module,$(SDIR))))
 
+all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
+
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),depend)))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
-
-all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
 
 context: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_context)
 
@@ -75,5 +75,7 @@ distclean: $(foreach SDIR,$(CLEANDIRS),$(SDIR)_distclean)
 
 install:
 
-preconfig:
+preconfig: Kconfig
+
+Kconfig:
 	$(Q) $(MKKCONFIG)
