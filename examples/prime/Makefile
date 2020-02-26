@@ -46,14 +46,12 @@ MODULE    = $(CONFIG_EXAMPLES_PRIME)
 
 MAINSRC = prime_main.c
 
+include $(APPDIR)/Application.mk
 
 worker/romfs.h:
 	@echo > $@
 
 .depend: worker/romfs.h
-	@$(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
-	@touch $@
 
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
