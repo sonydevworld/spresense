@@ -78,4 +78,4 @@ install:
 preconfig: Kconfig
 
 Kconfig:
-	$(Q) $(MKKCONFIG)
+	$(Q) $(MKKCONFIG) -m "System tools"
