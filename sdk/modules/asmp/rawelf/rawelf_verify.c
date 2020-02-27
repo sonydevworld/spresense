@@ -39,7 +39,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <string.h>
 #include <debug.h>
@@ -72,7 +72,7 @@ static const char g_rawelfmagic[EI_MAGIC_SIZE] =
  *   for the current, configured architecture.  Every architecture that uses
  *   the ELF loader must provide this function.
  *
- *   This function is hard copy from libs/libc/machine/arm/arm/arch_elf.c.
+ *   This function is hard copy from libs/libc/machine/arm/armv7-m/arch_elf.c.
  *   We can't enable ELF option, it makes examples to be loadable.
  *
  * Input Parameters:
@@ -110,14 +110,6 @@ static bool checkarch(FAR const Elf32_Ehdr *ehdr)
 #endif
     {
       berr("ERROR: Wrong endian-ness: e_ident[EI_DATA]=%02x\n", ehdr->e_ident[EI_DATA]);
-      return false;
-    }
-
-  /* Make sure the entry point address is properly aligned */
-
-  if ((ehdr->e_entry & 3) != 0)
-    {
-      berr("ERROR: Entry point is not properly aligned: %08x\n", ehdr->e_entry);
       return false;
     }
 
