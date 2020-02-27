@@ -33,97 +33,30 @@
 #
 ############################################################################
 
-# Do not change
+-include $(SDKDIR)/modules/Make.defs
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
+MODNAME = bluetooth
 
-ifeq ($(WINTOOL),y)
-INCDIROPT = -w
-endif
-
-# bluetooth support
-BTDIR = $(PWD)/bluetooth
-
-# INCLUDES
-ifeq ($(WINTOOL),y)
-INCLUDES := -I"${shell cygpath -w $(APPDIR)/include}"
-else
-INCLUDES := -I$(APPDIR)/include
-endif # ($(WINTOOL),y)
-
-# CFLAGS
-CFLAGS += $(INCLUDES)
-
-# C_SRCS
-BT_C_SRCS_APP  =  bluetooth_common.c
+CSRCS  =  bluetooth_common.c
 ifeq ($(CONFIG_BLUETOOTH_A2DP),y)
-BT_C_SRCS_APP +=  bluetooth_a2dp.c
+CSRCS +=  bluetooth_a2dp.c
 endif
 ifeq ($(CONFIG_BLUETOOTH_AVRCP),y)
-BT_C_SRCS_APP +=  bluetooth_avrcp.c
+CSRCS +=  bluetooth_avrcp.c
 endif
 ifeq ($(CONFIG_BLUETOOTH_HFP),y)
-BT_C_SRCS_APP +=  bluetooth_hfp.c
+CSRCS +=  bluetooth_hfp.c
 endif
 ifeq ($(CONFIG_BLUETOOTH_SPP),y)
-BT_C_SRCS_APP +=  bluetooth_spp.c
+CSRCS +=  bluetooth_spp.c
 endif
 ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
-BT_C_SRCS_APP +=  bluetooth_le_gatt.c
+CSRCS +=  bluetooth_le_gatt.c
 endif
-BT_C_SRCS_APP +=  bluetooth_hal_init.c
+CSRCS +=  bluetooth_hal_init.c
 
-ASRCS =
-CSRCS = $(BT_C_SRCS_APP)
+ifeq ($(CONFIG_BCM20706),y)
+include hal/bcm20706/Make.defs
+endif
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libbluetooth.a
-
-DEPPATH = --dep-path . --dep-path $(BT_IF) --dep-path $(BT_MGR)
-
-# Common build
-
-VPATH = $(BT_IF) $(BT_MGR)
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS) $(MAINOBJ): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(OBJS)
-	$(call ARCHIVE, $@, $(OBJS))
-
-install:
-
-context:
-
-# Create dependencies
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-clean:
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
+include $(SDKDIR)/modules/Module.mk

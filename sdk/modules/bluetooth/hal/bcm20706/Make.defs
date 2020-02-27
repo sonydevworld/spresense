@@ -1,7 +1,7 @@
 ############################################################################
-# modules/bluetooth/LibTargets.mk
+# bluetooth/hal/bcm20706/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,30 +32,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-#
-# This Makefile included from Makefile in the top of SDK directory.
-# SDK build system uses below variables to control build.
-#
-# SDKLIBS      - Library files to be linked.
-# SDKMODDIRS   - Module directories.
-# SDKCLEANDIRS - Clean directories. It must be added whenever configured or not.
-# CONTEXTDIRS  - Directories for target in context build stage. This variable can be omitted.
-#                If you want to do prepare for build, add it and write context target in the Makefile.
-# 
 
-ifeq ($(CONFIG_BLUETOOTH),y)
-SDKLIBS += lib$(DELIM)libbluetooth$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)bluetooth
-#CONTEXTDIRS += modules$(DELIM)bluetooth
+ifeq ($(CONFIG_BCM20706_LE),y)
+CSRCS +=  bcm20706_ble_common.c
+ifeq ($(CONFIG_BCM20706_LE_GATT),y)
+CSRCS +=  bcm20706_ble_gap.c
+CSRCS +=  bcm20706_ble_gatt.c
 endif
-SDKCLEANDIRS += modules$(DELIM)bluetooth
+endif
+ifeq ($(CONFIG_BCM20706_A2DP),y)
+CSRCS +=  bcm20706_bt_a2dp.c
+endif
+ifeq ($(CONFIG_BCM20706_AVRCP),y)
+CSRCS +=  bcm20706_bt_avrcp.c
+endif
+CSRCS +=  bcm20706_bt_common.c
+ifeq ($(CONFIG_BCM20706_HFP),y)
+CSRCS +=  bcm20706_bt_hfp.c
+endif
+ifeq ($(CONFIG_BCM20706_SPP),y)
+CSRCS +=  bcm20706_bt_spp.c
+endif
 
-# Below 2 rules are mandatory, replace all of 'bluetooth' to your library name or directory.
+CSRCS +=  bt_freq_lock.c
+CSRCS +=  bt_hci_manager.c
+CSRCS +=  bt_recv_task.c
+CSRCS +=  bt_uart_manager.c
+CSRCS +=  bt_storage_manager.c
 
-modules$(DELIM)bluetooth$(DELIM)libbluetooth$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)bluetooth TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libbluetooth$(LIBEXT)
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)modules$(DELIM)bluetooth$(DELIM)hal$(DELIM)bcm20706$(DELIM)include"}
 
-lib$(DELIM)libbluetooth$(LIBEXT): modules$(DELIM)bluetooth$(DELIM)libbluetooth$(LIBEXT)
-	$(Q) install $< $@
-
-include $(wildcard modules/bluetooth/hal/*/LibTargets.mk)
+DEPPATH += --dep-path hal/bcm20706 --dep-path hal/bcm20706/manager
+VPATH   += hal/bcm20706 hal/bcm20706/manager
