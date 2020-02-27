@@ -850,7 +850,7 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
 {
   int32_t         ret;
   int32_t         l_errno;
-  int32_t         prio;
+  unsigned int    prio;
   struct timespec abs_time;
   struct timespec curr_time;
   mqd_t           mqd;
