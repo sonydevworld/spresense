@@ -33,10 +33,9 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
+-include $(SDKDIR)/modules/Make.defs
+
+MODNAME = audio
 
 # Include sub directory source files
 
@@ -49,57 +48,13 @@ include playlist/Make.defs
 include stream_parser/Make.defs
 include container_format_lib/Make.defs
 
-BIN = libsdkaudio$(LIBEXT)
-
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(CXXSRCS)
-LIB_OBJS = $(CXXOBJS)
-
 AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-ifeq ($(WINTOOL),y)
-  CXXFLAGS += -I "${shell cygpath -w dsp_driver/include}"
-  CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
-  CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)/include}"
-else
-  CXXFLAGS += -Idsp_driver$(DELIM)include
-  CXXFLAGS += -I$(AUDIODIR)
-  CXXFLAGS += -I$(AUDIODIR)$(DELIM)include
-endif
+
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)dsp_driver$(DELIM)include"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)include"}
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
 
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILEXX, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
+include $(SDKDIR)/modules/Module.mk
