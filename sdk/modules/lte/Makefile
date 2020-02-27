@@ -33,12 +33,12 @@
 #
 ############################################################################
 
-# Do not change
+-include $(SDKDIR)/modules/Make.defs
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 DELIM ?= $(strip /)
 CXXEXT ?= .cpp
+
+MODNAME = lte
 
 # Add sub directory if exists
 
@@ -52,15 +52,6 @@ CXXSRCS =
 # Include sub directory source files
 
 include $(wildcard */Make.defs)
-
-BIN = liblte$(LIBEXT)
-
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
-LIB_OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
 
 # Here is a example of adding include paths.
 # Note that include path addtion will be affected to build time.
@@ -104,44 +95,5 @@ ifeq ($(CONFIG_NET),y)
 endif
 endif
 
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(ASRCS) $(CSRCS) >Make.dep
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >>Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
+include $(SDKDIR)/modules/Module.mk
 

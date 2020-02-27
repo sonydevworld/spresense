@@ -47,7 +47,6 @@
 #include "hal_altmdm_spi.h"
 #include "apicmdgw.h"
 #include "altcom_callbacks.h"
-#include "stubsock.h"
 
 #include "apicmdhdlr_enterpin.h"
 #include "apicmdhdlr_errind.h"
@@ -597,10 +596,6 @@ static CODE int32_t lte_buildmain(FAR void *arg)
       goto errout_with_apicmdgw;
     }
 
-#ifdef CONFIG_NET
-  stubsock_initialize();
-#endif
-
   return 0;
 
 errout_with_apicmdgw:
@@ -640,10 +635,6 @@ errout:
 static CODE int32_t lte_destroy(void)
 {
   int32_t ret;
-
-#ifdef CONFIG_NET
-  stubsock_finalize();
-#endif
 
   ret = altcomcallbacks_fin();
   if (ret < 0)

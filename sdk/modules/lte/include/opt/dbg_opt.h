@@ -48,6 +48,13 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+// TODO To be enabled logging macro
+#define logdebug(x...)
+#define loginfo(x...)
+#define lognotice(x...)
+#define logwarn(x...)
+#define logerr(x...)
+
 #define DBGIF_LEVEL_ERR    0x01
 #define DBGIF_LEVEL_WARN   0x02
 #define DBGIF_LEVEL_NOTICE 0x04
