@@ -1,7 +1,7 @@
 ############################################################################
-# modules/fwuputils/LibTargets.mk
+# modules/fwuputils/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,14 +34,5 @@
 ############################################################################
 
 ifeq ($(CONFIG_FWUPUTILS),y)
-SDKLIBS += lib$(DELIM)libfwuputils$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)fwuputils
-#CONTEXTDIRS += modules$(DELIM)fwuputils
+CONFIGURED_APPS += fwuputils
 endif
-SDKCLEANDIRS += modules$(DELIM)fwuputils
-
-modules$(DELIM)fwuputils$(DELIM)libfwuputils$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)fwuputils TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libfwuputils$(LIBEXT)
-
-lib$(DELIM)libfwuputils$(LIBEXT): modules$(DELIM)fwuputils$(DELIM)libfwuputils$(LIBEXT)
-	$(Q) install $< $@
