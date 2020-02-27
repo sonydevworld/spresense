@@ -1,7 +1,7 @@
 ############################################################################
-# modules/memutils/message/LibTargets.mk
+# modules/memutils/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,18 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-# Message library
 
 ifeq ($(CONFIG_MEMUTILS),y)
-ifeq ($(CONFIG_MEMUTILS_MESSAGE),y)
-SDKLIBS += lib$(DELIM)libmessage$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)memutils$(DELIM)message
+CONFIGURED_APPS += memutils
 endif
-endif
-SDKCLEANDIRS += modules$(DELIM)memutils$(DELIM)message
-
-modules$(DELIM)memutils$(DELIM)message$(DELIM)libmessage$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)memutils$(DELIM)message TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libmessage$(LIBEXT)
-
-lib$(DELIM)libmessage$(LIBEXT): modules$(DELIM)memutils$(DELIM)message$(DELIM)libmessage$(LIBEXT)
-	$(Q) install $< $@

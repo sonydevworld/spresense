@@ -1,7 +1,7 @@
 ############################################################################
-# modules/memutils/simple_fifo/Makefile
+# modules/audio/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,68 +33,12 @@
 #
 ############################################################################
 
-# Do not change
+-include $(SDKDIR)/modules/Make.defs
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
+MODNAME = memutils
 
-DEPPATH += --dep-path src
+include memory_manager/Make.defs
+include simple_fifo/Make.defs
+include message/Make.defs
 
-# Add sub directory if exists
-
-VPATH = src
-
-CSRCS += CMN_SimpleFifo.c
-
-# Include sub directory source files
-
-
-BIN = libsimplefifo$(LIBEXT)
-
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-SRCS = $(CSRCS)
-LIB_OBJS = $(COBJS)
-
-# Here is a example of adding include paths.
-# Note that include path addtion will be affected to build time.
-# Don't add unnecessary include paths for module.
-#
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(CXXOBJS): %$(OBJEXT): %$.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(CSRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
+include $(SDKDIR)/modules/Module.mk

@@ -1,7 +1,7 @@
 ############################################################################
-# modules/memutils/simple_fifo/LibTargets.mk
+# modules/memutils/memory_manager/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,18 +32,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-# Simple fifo library
 
-ifeq ($(CONFIG_MEMUTILS),y)
-ifeq ($(CONFIG_MEMUTILS_SIMPLE_FIFO),y)
-SDKLIBS += lib$(DELIM)libsimplefifo$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)memutils$(DELIM)simple_fifo
-endif
-endif
-SDKCLEANDIRS += modules$(DELIM)memutils$(DELIM)simple_fifo
+CXXSRCS = allocSeg.cpp createDynamicPool.cpp createPool.cpp createStaticPools.cpp
+CXXSRCS += destroyDynamicPool.cpp destroyPool.cpp destroyStaticPools.cpp
+CXXSRCS += fence.cpp freeSeg.cpp getSegAddr.cpp getSegSize.cpp getUsedSegs.cpp
+CXXSRCS += incSegRefCnt.cpp initFirst.cpp initPerCpu.cpp ScopedLock.cpp
 
-modules$(DELIM)memutils$(DELIM)simple_fifo$(DELIM)libsimplefifo$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)memutils$(DELIM)simple_fifo TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libsimplefifo$(LIBEXT)
+CXXFLAGS += -D_POSIX
 
-lib$(DELIM)libsimplefifo$(LIBEXT): modules$(DELIM)memutils$(DELIM)simple_fifo$(DELIM)libsimplefifo$(LIBEXT)
-	$(Q) install $< $@
+DEPPATH += --dep-path meory_manager/src
+VPATH   += memory_manager/src
