@@ -1,7 +1,7 @@
 ############################################################################
-# sdk/modules/imageproc/LibTargets.mk
+# modules/imageproc/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,26 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-#
-# This Makefile included from Makefile in the top of SDK directory.
-# SDK build system uses below variables to control build.
-#
-# SDKLIBS      - Library files to be linked.
-# SDKMODDIRS   - Module directories.
-# SDKCLEANDIRS - Clean directories. It must be added whenever configured or not.
-# CONTEXTDIRS  - Directories for target in context build stage. This variable can be omitted.
-#                If you want to do prepare for build, add it and write context target in the Makefile.
-# 
 
 ifeq ($(CONFIG_IMAGEPROC),y)
-SDKLIBS += lib$(DELIM)libimageproc$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)imageproc
+CONFIGURED_APPS += imageproc
 endif
-SDKCLEANDIRS += modules$(DELIM)imageproc
-
-modules$(DELIM)imageproc$(DELIM)libimageproc$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)imageproc TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libimageproc$(LIBEXT)
-
-lib$(DELIM)libimageproc$(LIBEXT): modules$(DELIM)imageproc$(DELIM)libimageproc$(LIBEXT)
-	$(Q) install $< $@
-
