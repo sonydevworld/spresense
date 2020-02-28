@@ -230,14 +230,13 @@ def do_olddefconfig():
         print('Try \'make distclean\' first.' )
     return ret
 
-def prepare_config(topdir):
+def prepare_config(topdir, sdkdir):
     # Copy Make.defs file first, because SDK Makefile depends on Make.defs in
     # kernel, but there is nothing if kernel not configured.
 
-    srcmakedefs = os.path.join(topdir, 'boards', 'arm', 'cxd56xx', 'spresense', 'scripts', 'Make.defs')
+    srcmakedefs = os.path.join(sdkdir, 'tools', 'scripts', 'Make.defs')
     destmakedefs = os.path.join(topdir, 'Make.defs')
-    if not os.path.exists(destmakedefs):
-        install(srcmakedefs, destmakedefs)
+    install(srcmakedefs, destmakedefs)
 
 if __name__ == "__main__":
 
@@ -303,7 +302,7 @@ if __name__ == "__main__":
                 print("\t%s" % c)
         sys.exit(0)
 
-    prepare_config(topdir)
+    prepare_config(topdir, sdkdir)
 
     if len(opts.configname) > 0:
         defconfigs.append(opts.configname)
