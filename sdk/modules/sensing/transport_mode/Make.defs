@@ -1,5 +1,5 @@
 ############################################################################
-# modules/sensing/barometer/LibTargets.mk
+# modules/sensing/transport_mode/Make.defs
 #
 #   Copyright 2018 Sony Semiconductor Solutions Corporation
 #
@@ -33,15 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_SENSING_BAROMETER),y)
-SDKLIBS += lib$(DELIM)libbarometer$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)sensing$(DELIM)barometer
-#CONTEXTDIRS += modules$(DELIM)sensing$(DELIM)barometer
+ifeq ($(CONFIG_SENSING_TRAM),y)
+CONFIGURED_APPS += sensing/transport_mode
 endif
-SDKCLEANDIRS += modules$(DELIM)sensing$(DELIM)barometer
-
-modules$(DELIM)sensing$(DELIM)barometer$(DELIM)libbarometer$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)sensing$(DELIM)barometer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libbarometer$(LIBEXT)
-
-lib$(DELIM)libbarometer$(LIBEXT): modules$(DELIM)sensing$(DELIM)barometer$(DELIM)libbarometer$(LIBEXT)
-	$(Q) install $< $@

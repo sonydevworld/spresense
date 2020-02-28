@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/LibTargets.mk
+# modules/sensing/step_counter/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,6 +32,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-# Find and include sensing library rules
 
-include $(wildcard modules/sensing/*/LibTargets.mk)
+ifeq ($(CONFIG_SENSING_STEPCOUNTER),y)
+CONFIGURED_APPS += sensing/step_counter
+endif

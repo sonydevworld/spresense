@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <arch/chip/pm.h>
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 
 #include "sensing/logical_sensor/transport_mode.h"
 #include "sensing/logical_sensor/transport_mode_command.h"

@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/tap/LibTargets.mk
+# modules/sensing/tap/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,14 +34,5 @@
 ############################################################################
 
 ifeq ($(CONFIG_TAP),y)
-SDKLIBS += lib$(DELIM)libtap$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)sensing$(DELIM)tap
-#CONTEXTDIRS += modules$(DELIM)sensing$(DELIM)tap
+CONFIGURED_APPS += sensing/tap
 endif
-SDKCLEANDIRS += modules$(DELIM)sensing$(DELIM)tap
-
-modules$(DELIM)sensing$(DELIM)tap$(DELIM)libtap$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)sensing$(DELIM)tap TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libtap$(LIBEXT)
-
-lib$(DELIM)libtap$(LIBEXT): modules$(DELIM)sensing$(DELIM)tap$(DELIM)libtap$(LIBEXT)
-	$(Q) install $< $@

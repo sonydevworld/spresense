@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/step_counter/LibTargets.mk
+# modules/sensing/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,14 +33,4 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_SENSING_STEPCOUNTER),y)
-SDKLIBS += lib$(DELIM)libstepcounter$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)sensing$(DELIM)step_counter
-endif
-SDKCLEANDIRS += modules$(DELIM)sensing$(DELIM)step_counter
-
-modules$(DELIM)sensing$(DELIM)step_counter$(DELIM)libstepcounter$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)sensing$(DELIM)step_counter TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libstepcounter$(LIBEXT)
-
-lib$(DELIM)libstepcounter$(LIBEXT): modules$(DELIM)sensing$(DELIM)step_counter$(DELIM)libstepcounter$(LIBEXT)
-	$(Q) install $< $@
+include $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)sensing$(DELIM)*$(DELIM)Make.defs)

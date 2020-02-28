@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/manager/LibTargets.mk
+# modules/sensing/manager/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,14 +34,5 @@
 ############################################################################
 
 ifeq ($(CONFIG_SENSING_MANAGER),y)
-SDKLIBS += lib$(DELIM)libsensingmgr$(LIBEXT)
-SDKMODDIRS += modules$(DELIM)sensing$(DELIM)manager
-#CONTEXTDIRS += modules$(DELIM)sensing$(DELIM)manager
+CONFIGURED_APPS += sensing/manager
 endif
-SDKCLEANDIRS += modules$(DELIM)sensing$(DELIM)manager
-
-modules$(DELIM)sensing$(DELIM)manager$(DELIM)libsensingmgr$(LIBEXT): context
-	$(Q) $(MAKE) -C modules$(DELIM)sensing$(DELIM)manager TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libsensingmgr$(LIBEXT)
-
-lib$(DELIM)libsensingmgr$(LIBEXT): modules$(DELIM)sensing$(DELIM)manager$(DELIM)libsensingmgr$(LIBEXT)
-	$(Q) install $< $@
