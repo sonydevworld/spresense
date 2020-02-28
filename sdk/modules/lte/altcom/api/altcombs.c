@@ -679,7 +679,7 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
 
       lte_edrx->enable = LTE_ENABLE;
       lte_edrx->act_type = edrx_acttype_table[cmd_edrx->acttype];
-      if (LTE_EDRX_ACTTYPE_WBS1 == cmd_edrx->acttype)
+      if (APICMD_EDRX_ACTTYPE_WBS1 == cmd_edrx->acttype)
         {
           lte_edrx->edrx_cycle = edrx_cycle_wbs1_table[cmd_edrx->edrx_cycle];
           lte_edrx->ptw_val = edrx_ptw_wbs1_table[cmd_edrx->ptw_val];
