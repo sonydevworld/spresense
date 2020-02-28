@@ -157,4 +157,5 @@ HOSTINCLUDES = -I.
 HOSTCFLAGS = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
 HOSTLDFLAGS =
 
+include $(TOPDIR)/../sdk/Library.mk
 -include $(TOPDIR)/../externals/Library.mk
