@@ -36,7 +36,7 @@
 #ifndef __MODULES_AUDIO_DMA_CONTROLLER_AUDIO_DMA_BUFFER_H
 #define __MODULES_AUDIO_DMA_CONTROLLER_AUDIO_DMA_BUFFER_H
 
-#include <arch/chip/cxd56_audio.h>
+#include <arch/chip/audio.h>
 
 #define AS_DMA_I2SO_CH 2
 

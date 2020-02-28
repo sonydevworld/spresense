@@ -39,7 +39,6 @@
 
 #include <stdlib.h>
 #include <nuttx/arch.h>
-#include <arch/chip/cxd56_audio.h>
 #include "memutils/common_utils/common_assert.h"
 #include "synthesizer_obj.h"
 #include "components/oscillator/oscillator_component.h"

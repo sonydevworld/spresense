@@ -37,7 +37,6 @@
 #define CAPTURE_COMPONENT_H
 
 #include <nuttx/arch.h>
-#include <arch/chip/cxd56_audio.h>
 
 #include "wien2_common_defs.h"
 #include "wien2_internal_packet.h"

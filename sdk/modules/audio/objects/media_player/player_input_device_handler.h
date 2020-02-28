@@ -40,7 +40,6 @@
  * Included Files
  ****************************************************************************/
 
-#include <arch/chip/cxd56_audio.h>
 #include "audio/audio_high_level_api.h"
 #include "memutils/common_utils/common_assert.h"
 #include "objects/stream_parser/input_data_mng_obj.h"

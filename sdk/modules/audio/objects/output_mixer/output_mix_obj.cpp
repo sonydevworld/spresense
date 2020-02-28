@@ -40,7 +40,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <nuttx/arch.h>
-#include <arch/chip/cxd56_audio.h>
 #include "output_mix_obj.h"
 #include "debug/dbg_log.h"
 

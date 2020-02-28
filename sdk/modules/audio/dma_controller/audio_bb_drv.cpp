@@ -40,8 +40,6 @@
 #include "audio_bb_drv.h"
 #include "audio_dma_drv.h"
 
-#include <arch/chip/cxd56_audio.h>
-
 #include <debug.h>
 
 /****************************************************************************

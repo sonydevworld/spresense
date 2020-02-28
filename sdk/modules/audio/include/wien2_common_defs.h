@@ -40,6 +40,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <arch/chip/audio.h>
 #include "memutils/common_utils/common_types.h"
 
 #define __WIEN2_BEGIN_NAMESPACE  namespace Wien2 {

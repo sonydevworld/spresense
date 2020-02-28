@@ -34,7 +34,6 @@
  ****************************************************************************/
 
 #include "renderer_component.h"
-#include <arch/chip/cxd56_audio.h>
 
 #include "dma_controller/audio_dma_drv.h"
 

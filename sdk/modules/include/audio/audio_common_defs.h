@@ -36,6 +36,8 @@
 #ifndef __MODULES_INCLUDE_AUDIO_AUDIO_COMMON_DEFS_H
 #define __MODULES_INCLUDE_AUDIO_AUDIO_COMMON_DEFS_H
 
+#include <arch/chip/audio.h>
+
 /**
  * @defgroup audioutils Audio Utility
  * @{

@@ -36,7 +36,6 @@
 #include "memutils/common_utils/common_types.h"
 #include "audio_manager.h"
 #include "memutils/os_utils/chateau_osal.h"
-#include <arch/chip/cxd56_audio.h>
 #include "debug/dbg_log.h"
 
 #define DBG_MODULE DBG_MODULE_AS

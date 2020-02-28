@@ -36,7 +36,7 @@
 #ifndef LEVEL_CTRL_H
 #define LEVEL_CTRL_H
 
-#include <arch/chip/cxd56_audio.h>
+#include "wien2_common_defs.h"
 
 /*--------------------------------------------------------------------*/
 

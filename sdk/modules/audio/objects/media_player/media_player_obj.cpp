@@ -43,7 +43,6 @@
 #include <nuttx/kmalloc.h>
 #include <string.h>
 #include <stdlib.h>
-#include <arch/chip/cxd56_audio.h>
 #include "memutils/os_utils/os_wrapper.h"
 #include "memutils/common_utils/common_assert.h"
 #include "media_player_obj.h"

@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <nuttx/arch.h>
 #include <stdlib.h>
-#include <arch/chip/cxd56_audio.h>
 #include "memutils/common_utils/common_assert.h"
 #include "media_recorder_obj.h"
 #include "dsp_driver/include/dsp_drv.h"

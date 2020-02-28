@@ -37,7 +37,6 @@
  * Included Files
  ****************************************************************************/
 
-#include <arch/chip/cxd56_audio.h>
 #include "output_mix_sink_device.h"
 #include "debug/dbg_log.h"
 

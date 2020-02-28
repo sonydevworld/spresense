@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <nuttx/arch.h>
 #include <stdlib.h>
-#include <arch/chip/cxd56_audio.h>
 #include "front_end_obj.h"
 #include "debug/dbg_log.h"
 
