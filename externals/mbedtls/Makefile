@@ -36,6 +36,8 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
+BIN = libmbedtls$(LIBEXT)
+
 CSRCS =  aes.c aesni.c arc4.c asn1parse.c asn1write.c
 CSRCS += base64.c bignum.c blowfish.c
 CSRCS += camellia.c ccm.c certs.c cipher.c cipher_wrap.c ctr_drbg.c

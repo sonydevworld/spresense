@@ -33,14 +33,10 @@
 #
 ###########################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-# CMSIS NN
-
-CMSIS_NN = libcmsis_nn$(LIBEXT)
-BIN = $(CMSIS_NN)
+BIN = libcmsis_nn$(LIBEXT)
 
 CMSIS_ROOT = ../CMSIS_5/CMSIS
 
@@ -51,48 +47,5 @@ DEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
 
 CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.c)))
 ASRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.S)))
-CXXSRCS :=
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
-LIB_OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
-
-all: $(BIN)
-.PHONY: context depend preconfig clean distclean clean_context
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(ASRCS) $(CSRCS) >Make.dep
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >>Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-context:
-
-clean_context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean clean_context
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
+include $(APPDIR)/Application.mk

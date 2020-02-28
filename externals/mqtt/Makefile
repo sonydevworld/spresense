@@ -36,6 +36,8 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
+BIN = libmqtt$(LIBEXT)
+
 ROOTDEPPATH += --dep-path paho.mqtt.embedded-c$(DELIM)MQTTPacket$(DELIM)src
 ROOTDEPPATH += --dep-path paho.mqtt.embedded-c$(DELIM)MQTTClient-C$(DELIM)src
 ROOTDEPPATH += --dep-path paho.mqtt.embedded-c$(DELIM)MQTTClient-C$(DELIM)src$(DELIM)nuttx

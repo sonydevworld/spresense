@@ -33,14 +33,10 @@
 #
 ###########################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-# CMSIS DSP
-
-CMSIS_DSP = libarm_cortexM4lf_math$(LIBEXT)
-BIN = $(CMSIS_DSP)
+BIN = libarm_cortexM4lf_math$(LIBEXT)
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP_ARM_MATH_MATRIX_CHECK),y)
 CFLAGS += -DARM_MATH_MATRIX_CHECK
@@ -60,48 +56,5 @@ DEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
 
 CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.c)))
 ASRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.S)))
-CXXSRCS :=
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
-LIB_OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
-
-all: $(BIN)
-.PHONY: context depend preconfig clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(ASRCS) $(CSRCS) >Make.dep
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >>Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-context:
-
-clean_context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean clean_context
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
+include $(APPDIR)/Application.mk

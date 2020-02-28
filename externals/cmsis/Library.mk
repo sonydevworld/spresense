@@ -1,5 +1,5 @@
 ############################################################################
-# externals/Library.mk
+# externals/cmsis/Library.mk
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
@@ -32,19 +32,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-#
-# This file is for adding external libraries to linkage.
-#
-# Each library can be added by Library.mk in its own directory.
-# Library.mk should be like this:
-#
-# ifeq ($(CONFIG_XXX),y)
-#   EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)xxx"
-#   EXTRA_LIBS     += -lxxx
-# endif
-#
 
-SDKDIR := $(TOPDIR)$(DELIM)..$(DELIM)sdk
-EXTLIBDIR := $(TOPDIR)$(DELIM)..$(DELIM)externals
+ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP),y)
+  EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)cmsis$(DELIM)dsp"
+  EXTRA_LIBS     += -larm_cortexM4lf_math
+endif
 
-include $(wildcard $(EXTLIBDIR)$(DELIM)*$(DELIM)Library.mk)
+ifeq ($(CONFIG_EXTERNALS_CMSIS_NN),y)
+  EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)cmsis$(DELIM)nn"
+  EXTRA_LIBS     += -lcmsis_nn
+endif

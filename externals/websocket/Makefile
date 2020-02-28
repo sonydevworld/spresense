@@ -36,6 +36,8 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
+BIN = libwebsocket$(LIBEXT)
+
 DEPPATH += --dep-path cwebsocket$(DELIM)src$(DELIM)cwebsocket
 VPATH += :cwebsocket$(DELIM)src$(DELIM)cwebsocket
 

@@ -33,22 +33,20 @@
 #
 ############################################################################
 
-# Do not change
-
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
+
+BIN = libawsiot$(LIBEXT)
 
 AWSCOREDIR = aws-iot-device-sdk-embedded-C
 AWSPLATDIR = $(AWSCOREDIR)$(DELIM)platform$(DELIM)linux
 
-ROOTDEPPATH += --dep-path .
 ROOTDEPPATH += --dep-path $(AWSCOREDIR)$(DELIM)src
 ROOTDEPPATH += --dep-path $(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
 ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)common
 ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)mbedtls
 ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)pthread
 
-VPATH += :.
 VPATH += :$(AWSCOREDIR)$(DELIM)src
 VPATH += :$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
 VPATH += :$(AWSPLATDIR)$(DELIM)common

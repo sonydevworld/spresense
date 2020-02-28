@@ -36,7 +36,7 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-CXXEXT ?= .cpp
+BIN = libwavelib$(LIBEXT)
 
 CSRCS  = conv.c
 CSRCS += cwt.c

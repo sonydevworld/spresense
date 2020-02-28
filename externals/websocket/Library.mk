@@ -1,5 +1,5 @@
 ############################################################################
-# externals/Library.mk
+# externals/websocket/Library.mk
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
@@ -32,19 +32,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 ############################################################################
-#
-# This file is for adding external libraries to linkage.
-#
-# Each library can be added by Library.mk in its own directory.
-# Library.mk should be like this:
-#
-# ifeq ($(CONFIG_XXX),y)
-#   EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)xxx"
-#   EXTRA_LIBS     += -lxxx
-# endif
-#
 
-SDKDIR := $(TOPDIR)$(DELIM)..$(DELIM)sdk
-EXTLIBDIR := $(TOPDIR)$(DELIM)..$(DELIM)externals
-
-include $(wildcard $(EXTLIBDIR)$(DELIM)*$(DELIM)Library.mk)
+ifeq ($(CONFIG_EXTERNALS_WEBSOCKET),y)
+  EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)websocket"
+  EXTRA_LIBS     += -lwebsocket
+endif

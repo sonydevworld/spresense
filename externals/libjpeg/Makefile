@@ -36,6 +36,8 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
+BIN = libjpeg$(LIBEXT)
+
 CSRCS =  jaricom.c  jcomapi.c
 CSRCS += jdapimin.c jdapistd.c jdarith.c jdatasrc.c jdcoefct.c jdcolor.c
 CSRCS += jddctmgr.c jdhuff.c jdinput.c jdmainct.c jdmarker.c jdmaster.c
