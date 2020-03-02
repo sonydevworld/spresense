@@ -51,6 +51,7 @@
 
 #include <arch/board/board.h>
 
+#include "clock/clock.h"
 #include "up_arch.h"
 #include "cxd56_rtc.h"
 
@@ -316,9 +317,9 @@ static void cxd56_rtc_initialize(int argc, uint32_t arg)
       clock_systimespec(&ts);
     }
 
-  /* Synchronize the system time to the RTC time */
+  /* Synchronize the base time to the RTC time */
 
-  clock_synchronize();
+  up_rtc_gettime(&g_basetime);
 
   if (g_rtc_save->offset == 0)
     {
