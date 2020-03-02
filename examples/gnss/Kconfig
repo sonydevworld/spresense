@@ -6,7 +6,7 @@
 config EXAMPLES_GNSS
 	bool "GNSS positioning example"
 	default n
-  depends on CXD56_GNSS
+	depends on CXD56_GNSS
 	---help---
 		Enable the Simple GNSS positioning example
 
