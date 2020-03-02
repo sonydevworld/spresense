@@ -342,7 +342,7 @@ static int writefile(uint32_t file_count)
   /* Make file name */
 
   snprintf(filename, FILE_NAME_LEN, "%s%d.dat", 
-           CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+           CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
   /* Open file */
 
@@ -590,7 +590,7 @@ int gnss_pvtlog_read(int argc, char *argv[])
       /* Make file name */
 
       snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
-               CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+               CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Open file */
 
@@ -689,7 +689,7 @@ int gnss_pvtlog_delete(int argc, char *argv[])
       /* Make file name */
 
       snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
-               CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+               CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Delete file */
 

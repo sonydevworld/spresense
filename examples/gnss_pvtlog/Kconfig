@@ -17,15 +17,15 @@ config EXAMPLES_GNSS_PVTLOG_PROGNAME
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
 
-config EXAMPLES_PVTLOG_PRIORITY
+config EXAMPLES_GNSS_PVTLOG_PRIORITY
 	int "PVTLOG task priority"
 	default 100
 
-config EXAMPLES_PVTLOG_STACKSIZE
+config EXAMPLES_GNSS_PVTLOG_STACKSIZE
 	int "PVTLOG stack size"
 	default 2048
 
-config EXAMPLES_PVTLOG_FILEPATH
+config EXAMPLES_GNSS_PVTLOG_FILEPATH
 	string "path to save the log file"
 	default "/mnt/spif/PVTLOG"
 	---help---
