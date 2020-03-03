@@ -12,6 +12,21 @@ config EXAMPLES_FFT
 
 if EXAMPLES_FFT
 
+config EXAMPLES_FFT_PROGNAME
+	string "Program name"
+	default "fft"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_FFT_PRIORITY
+	int "fft task priority"
+	default 100
+
+config EXAMPLES_FFT_STACKSIZE
+	int "fft stack size"
+	default 4096
+
 choice
 	prompt "FFT Input Data"
 	default EXAMPLES_FFT_REAL_DATA

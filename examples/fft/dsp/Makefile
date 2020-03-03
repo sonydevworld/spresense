@@ -35,7 +35,6 @@
 
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
 
 BIN = DSPFFT
 all: depend $(BIN)
@@ -62,10 +61,10 @@ CSRCS = dsp_main.c
 CFLAGS += -O3
 ifeq ($(WINTOOL),y)
 CFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/asmp/worker)"
-CFLAGS += -I"$(shell cygpath -w $(APPDIR)/fft)"
+CFLAGS += -I"$(shell cygpath -w ..)"
 else
 CFLAGS += -I$(SDKDIR)/modules/asmp/worker
-CFLAGS += -I$(APPDIR)/fft
+CFLAGS += -I..
 endif
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
