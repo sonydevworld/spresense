@@ -32,73 +32,45 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+-include $(SDKDIR)/modules/Make.defs
 
-DELIM ?= $(strip /)
+RUNTIMEDIR := $(SDKDIR)/../externals/nnablart/nnabla-c-runtime
 
-RUNTIMEDIR := $(SDKDIR)/../externals/nnabla-c-runtime
+MODNAME = dnnrt
 
-CSRCS =
+CSRCS :=
 
 ifeq ($(CONFIG_DNN_RT_MP),y)
-include src-mp/Make.defs
+CSRCS += runtime_client.c
+CSRCS += mp_manager.c
+
+VPATH += src-mp/runtime
+ROOTDEPPATH = --dep-path src-mp/runtime
 else
-include src/Make.defs
+CSRCS +=  runtime_nnabla.c
+CSRCS +=  shared_chunk.c
+CSRCS +=  affine.c
+CSRCS +=  convolution.c
+
+CFLAGS += -Isrc
+
+VPATH = src/functions src/runtime
+ROOTDEPPATH = --dep-path src/functions --dep-path src/runtime
 endif
+
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/functions}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/runtime}
 
 CFLAGS += -std=c99
 
 # Don't follow the -O. option in CFLAGS
 CFLAGS := $(patsubst -O%,-O3,$(CFLAGS))
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libdnnrt$(LIBEXT)
-
-all: $(BIN)
-
-.PHONY: all context depend clean distclean preconfig
-
-$(OBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(OBJS)
-	$(call DELFILE, $@)
-	$(call ARCHIVE, $@, $(OBJS))
+include $(SDKDIR)/modules/Module.mk
 
 $(SDKDIR)/modules/include/dnnrt/nnablart/network.h: $(RUNTIMEDIR)/include/nnablart/network.h
-	$(Q) install -m 0644 -C $< $@
+	$(call COPYFILE,$<,$@)
 
-.context: $(SDKDIR)/modules/include/dnnrt/nnablart/network.h
-	$(Q) touch $@
+context:: $(SDKDIR)/modules/include/dnnrt/nnablart/network.h
 
-context: .context
-
-# Create dependencies
-
-.depend: $(SDKDIR)/.config Makefile $(SRCS)
-	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) > Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-	$(call DELFILE, $(SDKDIR)/modules/include/dnnrt/nnablart/network.h)
-
--include Make.dep
-preconfig:
-
-#endif
