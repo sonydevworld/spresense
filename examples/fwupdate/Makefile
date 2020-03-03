@@ -50,10 +50,6 @@ CSRCS += fwupdate_package.c
 
 ifeq ($(CONFIG_EXAMPLES_FWUPDATE_USBCDC_ZMODEM),y)
 CSRCS += fwupdate_usbcdc_zmodem.c
-
-# REVISIT: tentative
-
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(TOPDIR)$(DELIM)..$(DELIM)apps$(DELIM)include"}
 endif
 
 MAINSRC = fwupdate_main.c

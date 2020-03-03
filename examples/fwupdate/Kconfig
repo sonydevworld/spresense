@@ -35,10 +35,15 @@ config EXAMPLES_FWUPDATE_DOWNLOAD_WORK_SIZE
 		partial download which is allocated from heap memory.
 		Adjust according to the free memory capacity.
 
+config EXAMPLES_FWUPDATE_USBCDC_ZMODEM
+	bool "FW update via USB CDC/ACM Zmodem"
+	default y
+	depends on SYSTEM_ZMODEM
+
+if EXAMPLES_FWUPDATE_USBCDC_ZMODEM
+
 config EXAMPLES_FWUPDATE_DOWNLOAD_DIR
 	string "FW update work download directory"
-#	default SYSTEM_ZMODEM_MOUNTPOINT if SYSTEM_ZMODEM
-#	default "/mnt/spif" if !SYSTEM_ZMODEM
 	default "/mnt/spif"
 	---help---
 		This is the temporal download directory. If zmodem is enabled,
@@ -49,9 +54,10 @@ config EXAMPLES_FWUPDATE_USBCDC_DEVNAME
 	string "FW update USB CDC/ACM device"
 	default "/dev/ttyACM0"
 
-config EXAMPLES_FWUPDATE_USBCDC_ZMODEM
-	bool "FW update via USB CDC/ACM Zmodem"
-	default y
-#	depends on CDCACM && SYSTEM_ZMODEM
+config EXAMPLES_FWUPDATE_USBCDC_DEVMINOR
+	int "FW update USB CDC/ACM Minor Device Number"
+	default 0
+
+endif
 
 endif

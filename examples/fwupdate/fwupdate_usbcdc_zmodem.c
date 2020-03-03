@@ -114,7 +114,7 @@ static int receive_zmodem(void)
 
   /* And begin reception of files */
 
-  ret = zmr_receive(handle);
+  ret = zmr_receive(handle, CONFIG_EXAMPLES_FWUPDATE_DOWNLOAD_DIR);
   if (ret < 0)
     {
       fprintf(stderr, "ERROR: File reception failed: %d\n", ret);
@@ -141,7 +141,7 @@ static int usb_cdcacm_setup(void)
 
   ctrl.usbdev   = BOARDIOC_USBDEV_CDCACM;
   ctrl.action   = BOARDIOC_USBDEV_CONNECT;
-  ctrl.instance = CONFIG_SYSTEM_CDCACM_DEVMINOR;
+  ctrl.instance = CONFIG_EXAMPLES_FWUPDATE_USBCDC_DEVMINOR;
   ctrl.handle   = &handle;
 
   ret = boardctl(BOARDIOC_USBDEV_CONTROL, (uintptr_t)&ctrl);
