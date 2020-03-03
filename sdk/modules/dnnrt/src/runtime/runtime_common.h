@@ -35,9 +35,9 @@
 #ifndef RUNTIME_COMMON_H
 #  define RUNTIME_COMMON_H
 
-#  include <sdk/config.h>
+#  include <nuttx/config.h>
 #  include <errno.h>
-#  include <sdk/debug.h>
+#  include <debug.h>
 #  include <nnablart/functions.h>
 #  include <nnablart/runtime.h>
 
@@ -46,8 +46,8 @@ extern "C"
 {
 #  endif
 
-#  define dnn_info(x...) loginfo(x)
-#  define dnn_err(x...) logerr(x)
+#  define dnn_info(x...) _info(x)
+#  define dnn_err(x...) _err(x)
 
 #  define DNN_CHECK_NULL_RET(b, r)                                          \
   do {                                                                      \
