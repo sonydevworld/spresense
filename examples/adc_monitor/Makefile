@@ -1,7 +1,7 @@
 ############################################################################
-# adc/Makefile
+# adc_monitor/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,21 +36,15 @@
 -include $(TOPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-# sensor built-in application info
+# ADC_MONITOR example
 
-CONFIG_EXAMPLES_ADC_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_ADC_STACKSIZE ?= 2048
+MAINSRC = adc_monitor_main.c
 
-APPNAME = adc
-PRIORITY = $(CONFIG_EXAMPLES_ADC_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_ADC_STACKSIZE)
+# application info
 
-# sensor Example
-
-ASRCS =
-MAINSRC = adc_main.c
-
-CONFIG_EXAMPLES_ADC_PROGNAME ?= adc$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_ADC_PROGNAME)
+PROGNAME  = $(CONFIG_EXAMPLES_ADC_MONITOR_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_ADC_MONITOR_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_ADC_MONITOR_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_ADC_MONITOR)
 
 include $(APPDIR)/Application.mk

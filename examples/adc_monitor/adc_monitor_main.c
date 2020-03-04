@@ -1,7 +1,7 @@
 /****************************************************************************
- * adc/adc_main.c
+ * adc_monitor/adc_monitor_main.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,24 +53,24 @@
 #include <debug.h>
 
 #ifdef CONFIG_CXD56_ADC
-#include <arch/chip/cxd56_scu.h>
-#include <arch/chip/cxd56_adc.h>
+#include <arch/chip/scu.h>
+#include <arch/chip/adc.h>
 #endif
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#ifndef CONFIG_EXAMPLES_ADC_DEVPATH
-#  define CONFIG_EXAMPLES_ADC_DEVPATH "/dev/lpadc0"
+#ifndef CONFIG_EXAMPLES_ADC_MONITOR_DEVPATH
+#  define CONFIG_EXAMPLES_ADC_MONITOR_DEVPATH "/dev/lpadc0"
 #endif
 
-#ifndef CONFIG_EXAMPLES_ADC_READCOUNT
-#  define CONFIG_EXAMPLES_ADC_READCOUNT 0
+#ifndef CONFIG_EXAMPLES_ADC_MONITOR_READCOUNT
+#  define CONFIG_EXAMPLES_ADC_MONITOR_READCOUNT 0
 #endif
 
-#ifndef CONFIG_EXAMPLES_ADC_BUFSIZE
-#  define CONFIG_EXAMPLES_ADC_BUFSIZE 0
+#ifndef CONFIG_EXAMPLES_ADC_MONITOR_BUFSIZE
+#  define CONFIG_EXAMPLES_ADC_MONITOR_BUFSIZE 0
 #endif
 
 /****************************************************************************
@@ -86,18 +86,10 @@ struct adc_state_s
 };
 
 /****************************************************************************
- * Private Function Prototypes
- ****************************************************************************/
-
-/****************************************************************************
  * Private Data
  ****************************************************************************/
 
 static struct adc_state_s g_adcstate;
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
 
 /****************************************************************************
  * Private Functions
@@ -128,14 +120,14 @@ static void adc_devpath(FAR struct adc_state_s *adc,
 
 static void adc_help(FAR struct adc_state_s *adc)
 {
-  printf("Usage: adc [OPTIONS]\n");
-  printf("\nArguments are \"sticky\".  For example, once the ADC device is\n");
+  printf("Usage: adc_monitor [OPTIONS]\n");
+  printf("\nArguments are \"sticky\". For example, once the ADC device is\n");
   printf("specified, that device will be re-used until it is changed.\n");
   printf("\n\"sticky\" OPTIONS include:\n");
-  printf("  [-p devpath] selects the ADC device.  "
-         "/dev/lpadc0, 1, 2, 3, /dev/hpadc0, 1  Current: %s\n",
+  printf("  [-p devpath] selects the ADC device.\n"
+         "   /dev/lpadc{0,1,2,3}, /dev/hpadc{0,1} Current: %s\n",
          adc->devpath ? adc->devpath : "NONE");
-  printf("  [-n count] set the number of reads.  "
+  printf("  [-n count] set the number of reads."
          "Current: %d\n", adc->count);
   printf("  [-h] shows this message and exits\n");
 }
@@ -233,14 +225,10 @@ static void parse_args(FAR struct adc_state_s *adc, int argc,
  ****************************************************************************/
 
 /****************************************************************************
- * Name: adc_main
+ * Name: adc_monitor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int adc_main(int argc, char *argv[])
-#endif
 {
   int ret;
   int errval = 0;
@@ -255,13 +243,13 @@ int adc_main(int argc, char *argv[])
     {
       /* Set the default values */
 
-      adc_devpath(&g_adcstate, CONFIG_EXAMPLES_ADC_DEVPATH);
-      g_adcstate.count = CONFIG_EXAMPLES_ADC_READCOUNT;
+      adc_devpath(&g_adcstate, CONFIG_EXAMPLES_ADC_MONITOR_DEVPATH);
+      g_adcstate.count = CONFIG_EXAMPLES_ADC_MONITOR_READCOUNT;
       if (g_adcstate.count == 0)
         {
           g_adcstate.count = 10;
         }
-      g_adcstate.bufsize = CONFIG_EXAMPLES_ADC_BUFSIZE;
+      g_adcstate.bufsize = CONFIG_EXAMPLES_ADC_MONITOR_BUFSIZE;
       if (g_adcstate.bufsize == 0)
         {
           g_adcstate.bufsize = 16;
@@ -283,7 +271,8 @@ int adc_main(int argc, char *argv[])
       goto errout;
     }
 
-  printf("ADC example - Name:%s bufsize:%d\n", g_adcstate.devpath, g_adcstate.bufsize);
+  printf("ADC monitor example - Name:%s bufsize:%d\n",
+         g_adcstate.devpath, g_adcstate.bufsize);
 
   fd = open(g_adcstate.devpath, O_RDONLY);
   if (fd < 0)
@@ -340,7 +329,7 @@ int adc_main(int argc, char *argv[])
           if (nbytes & 1)
             {
               printf("read size=%ld is not a multiple of sample size=%d\n",
-                      (long)nbytes, sizeof(uint16_t));
+                     (long)nbytes, sizeof(uint16_t));
             }
           else
             {
@@ -394,7 +383,7 @@ int adc_main(int argc, char *argv[])
       buftop = NULL;
     }
 
-  printf("ADC example end\n");
+  printf("ADC monitor example end\n");
 
   return OK;
 
@@ -404,7 +393,7 @@ errout_with_dev:
   close(fd);
 
 errout:
-  printf("ADC Example terminating!\n");
+  printf("ADC monitor example terminating!\n");
   if (buftop)
     {
       free(buftop);
