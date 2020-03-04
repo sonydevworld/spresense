@@ -166,7 +166,6 @@ PHONY += depend
 
 subdir_clean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_clean)
 	$(Q) for dir in $(SDKCLEANDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" clean; \
 		find $$dir -name "Make.dep" -delete; \
 		find $$dir -name ".depend" -delete; \
 	done
@@ -184,7 +183,7 @@ clean:
 distclean:
 	$(Q) $(MAKE) -C $(TOPDIR) distclean
 else
-clean: subdir_clean depend_clean ext_clean
+clean: subdir_clean depend_clean
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, $(SPK))
 	$(call DELFILE, System.map)
@@ -195,7 +194,7 @@ PHONY += clean
 subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
 PHONY += subdir_distclean
 
-distclean: clean subdir_distclean clean_context ext_distclean
+distclean: clean subdir_distclean clean_context
 
 endif
 
@@ -215,28 +214,6 @@ PHONY += savedefconfig
 
 preconfig: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_preconfig)
 	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(TARGETDIRS)
-
-ext_preconfig:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" preconfig; \
-	done
-endif
-
-ext_clean:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" clean; \
-	done
-endif
-
-ext_distclean:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" distclean; \
-	done
-endif
-PHONY += ext_preconfig ext_clean ext_distclean
 
 help:
 	@echo  ''
