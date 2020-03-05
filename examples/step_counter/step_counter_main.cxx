@@ -347,7 +347,7 @@ static void sensor_manager_api_response(unsigned int code,
  * sensor_main
  ****************************************************************************/
 
-int main(int argc, FAR char *argv[])
+extern "C" int main(int argc, FAR char *argv[])
 {
   int ret;
 
