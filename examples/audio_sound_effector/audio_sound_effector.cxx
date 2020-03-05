@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <asmp/mpshm.h>
 #include <arch/board/board.h>
-#include <arch/chip/cxd56_audio.h>
 #include "audio/audio_high_level_api.h"
 #include "audio/audio_frontend_api.h"
 #include "audio/audio_outputmix_api.h"
