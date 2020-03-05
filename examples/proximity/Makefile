@@ -45,17 +45,15 @@ MODULE    = $(CONFIG_EXAMPLES_PROXIMITY)
 
 # sensor Example
 
-# REVISIT: Choose representative one
-
-ifeq ($(CONFIG_APDS9930),y)
-ifeq ($(CONFIG_APDS9930_PROXIMITY_INTERRUPT),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_SCU),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_apds9930_int.c
 else
 MAINSRC = proximity_main_apds9930_scu.c
 endif
 endif
 
-ifeq ($(CONFIG_LT1PA01),y)
+ifeq ($(CONFIG_SENSORS_LT1PA01_SCU),y)
 ifeq ($(CONFIG_LT1PA01_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_lt1pa01_int.c
 else
@@ -63,7 +61,7 @@ MAINSRC = proximity_main_lt1pa01_scu.c
 endif
 endif
 
-ifeq ($(CONFIG_RPR0521RS),y)
+ifeq ($(CONFIG_SENSORS_RPR0521RS_SCU),y)
 ifeq ($(CONFIG_RPR0521RS_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_rpr0521rs_int.c
 else
