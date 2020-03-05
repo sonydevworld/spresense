@@ -57,7 +57,6 @@
 #include "include/msgq_pool.h"
 #include "include/pool_layout.h"
 #include "include/fixed_fence.h"
-#include <arch/chip/cxd56_audio.h>
 #include "audio/audio_message_types.h"
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
 #include <audio/utilities/playlist.h>
