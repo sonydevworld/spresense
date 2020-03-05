@@ -45,15 +45,15 @@ MODULE    = $(CONFIG_EXAMPLES_PRESS)
 
 # sensor Example
 
-ifeq ($(CONFIG_BMP280),y)
-ifeq ($(CONFIG_CXD56_SCU),y)
-MAINSRC = press_main.c
-else
+ifeq ($(CONFIG_SENSORS_BMP280),y)
 MAINSRC = press_main_bmp280.c
 endif
+
+ifeq ($(CONFIG_SENSORS_BMP280_SCU),y)
+MAINSRC = press_main.c
 endif
 
-ifeq ($(CONFIG_BM1383GLV),y)
+ifeq ($(CONFIG_SENSORS_BM1383GLV_SCU),y)
 MAINSRC = press_main_bm1383glv.c
 endif
 

@@ -6,7 +6,7 @@
 config EXAMPLES_PRESS
 	bool "Pressure sensor example"
 	default n
-    depends on BMP280 || BM1383GLV
+	depends on SENSORS_BMP280 || SENSORS_BMP280_SCU || SENSORS_BM1383GLV_SCU
 	---help---
 		Enable the sensor via SCU example
 
@@ -28,31 +28,31 @@ config EXAMPLES_PRESS_STACKSIZE
 	default 2048
 
 config EXAMPLES_PRESS_DEVNAME
-    string "Pressure sensor device name"
-    default "/dev/press0"
+	string "Pressure sensor device name"
+	default "/dev/press0"
 
 config EXAMPLES_PRESS_SIGNO
-    int "Pressure sensor signal"
-    default 14
+	int "Pressure sensor signal"
+	default 14
 
 config EXAMPLES_TEMP_DEVNAME
-    string "Temperature sensor device name"
-    default "/dev/temp0"
-    depends on BMP280
+	string "Temperature sensor device name"
+	default "/dev/temp0"
+	depends on BMP280
 
 config EXAMPLES_TEMP_SIGNO
-    int "Temperature sensor signal"
-    default 15
-    depends on BMP280
+	int "Temperature sensor signal"
+	default 15
+	depends on BMP280
 
 config EXAMPLES_PRESS_NTIMES
-    int "Number of sensing times"
-    default 10
-    depends on BMP280
+	int "Number of sensing times"
+	default 10
+	depends on BMP280
 
 config EXAMPLES_PRESS_INTERVAL
-    int "Period of time to each sensing (ms)"
-    default 100
-    depends on BMP280
+	int "Period of time to each sensing (ms)"
+	default 100
+	depends on BMP280
 
 endif
