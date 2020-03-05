@@ -65,8 +65,6 @@
 #include "userproc_command.h"
 #endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
-#include <arch/chip/cxd56_audio.h>
-
 /* Section number of memory layout to use */
 
 #define AUDIO_SECTION   SECTION_NO0
