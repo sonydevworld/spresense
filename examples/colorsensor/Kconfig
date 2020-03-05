@@ -6,7 +6,7 @@
 config EXAMPLES_COLORSENSOR
 	bool "Color sensor example"
 	default n
-    depends on BH1745NUC
+	depends on SENSORS_BH1745NUC_SCU
 	---help---
 		Enable the sensor via SCU example
 
@@ -28,11 +28,11 @@ config EXAMPLES_COLORSENSOR_STACKSIZE
 	default 2048
 
 config EXAMPLES_COLORSENSOR_DEVNAME
-    string "Color sensor device name"
-    default "/dev/color0"
+	string "Color sensor device name"
+	default "/dev/color0"
 
 config EXAMPLES_COLORSENSOR_SIGNO
-    int "Color sensor signal"
-    default 14
+	int "Color sensor signal"
+	default 14
 
 endif
