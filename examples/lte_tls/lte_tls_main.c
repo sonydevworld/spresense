@@ -67,7 +67,10 @@
 #define APP_HTTP_STATUS_CODE_OFFSET 9
 #define APP_HTTP_STATUS_CODE_LEN    3
 
+#define APP_SCHEME                 "https"
+#define APP_SCHEME_LEN              6 /* length of "https" + \0 */
 #define APP_PORT_LEN                5 
+#define APP_HTTPS_WELLKNOWN_PORT    443
 #define APP_HOSTNAME_LEN            128
 #define APP_FILENAME_LEN            128
 #define APP_TLS_CERT_FILENAME_LEN   128
@@ -204,12 +207,12 @@ static void print_http_status_code(const unsigned char *buffer)
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  bool https;
   FAR static const char *pers = "mbedtls";
   FAR DIR *dirp = NULL;  /* Directory for TLS certification files */
   FAR struct dirent *cert_info = NULL;
   char *url    = APP_POST_URL;
-  uint16_t  port_int;
+  struct url_s parsed_url;
+  char scheme[APP_SCHEME_LEN]  = {0};
   char port_char[APP_PORT_LEN] = {0};
   unsigned char *buf_ptr;
   size_t        request_len;
@@ -237,11 +240,19 @@ int main(int argc, FAR char *argv[])
 
   /* 1. Parse input URL */
 
-  netlib_parsehttpsurl(&https, url,
-                       &port_int,
-                       g_hostname, APP_HOSTNAME_LEN,
-                       g_filename, APP_FILENAME_LEN);
-  if (!https)
+  memset(&parsed_url, 0, sizeof(parsed_url));
+  parsed_url.scheme    = scheme;
+  parsed_url.schemelen = APP_SCHEME_LEN;
+  parsed_url.host      = g_hostname;
+  parsed_url.hostlen   = APP_HOSTNAME_LEN;
+  parsed_url.path      = g_filename;
+  parsed_url.pathlen   = APP_FILENAME_LEN;
+
+  netlib_parseurl(url, &parsed_url);
+
+  /* Check if url start from "https://" */
+
+  if (strncmp(scheme, APP_SCHEME, APP_SCHEME_LEN) != 0)
     {
       /* Because this example want to use mbed TLS,
        * support only "https://" format URL.
@@ -251,11 +262,20 @@ int main(int argc, FAR char *argv[])
       return ERROR;
     }
 
+  if (parsed_url.port == 0)
+    {
+      /* parsed_url.port = 0 means that port number is abbreviated.
+       * In such a case, use well-known port for HTTPS.
+       */
+
+      parsed_url.port = APP_HTTPS_WELLKNOWN_PORT;
+    }
+
   /* Because mbedTLS need the port number with character string format
    *  in mbedtls_net_connect() API, transform int -> char.
    */
  
-  snprintf(port_char, APP_PORT_LEN, "%d", port_int);
+  snprintf(port_char, APP_PORT_LEN, "%d", parsed_url.port);
 
   /* 2. Connect to LTE network.
    *    Please refer to lte_connection.c.
