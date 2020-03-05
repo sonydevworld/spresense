@@ -48,10 +48,16 @@ MAINSRC = prime_main.c
 
 include $(APPDIR)/Application.mk
 
-worker/romfs.h:
-	@echo > $@
-
+ifeq ($(CONFIG_FS_ROMFS),y)
 .depend: worker/romfs.h
+worker/romfs.h:
+	@echo >$@
+endif
+
+build_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(OBJS): build_worker
 
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean

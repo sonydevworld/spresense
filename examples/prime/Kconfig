@@ -5,7 +5,7 @@
 
 config EXAMPLES_PRIME
 	bool "Multicore prime number calculator"
-    depends on ASMP
+	depends on ASMP
 	default n
 	---help---
 		Enable the ELF loader example
@@ -13,7 +13,7 @@ config EXAMPLES_PRIME
 if EXAMPLES_PRIME
 
 config EXAMPLES_PRIME_WORKER_STACKSIZE
-    int "Example worker stack size"
-    default 1024
+	int "Example worker stack size"
+	default 1024
 
 endif
