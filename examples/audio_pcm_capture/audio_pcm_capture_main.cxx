@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <strings.h>
 #include <asmp/mpshm.h>
-#include <arch/chip/cxd56_audio.h>
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
