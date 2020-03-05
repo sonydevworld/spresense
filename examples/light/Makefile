@@ -45,21 +45,19 @@ MODULE    = $(CONFIG_EXAMPLES_LIGHT)
 
 # sensor Example
 
-# REVISIT: Choose representative one
-
-ifeq ($(CONFIG_APDS9930),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_SCU),y)
 MAINSRC = light_main_apds9930.c
 endif
 
-ifeq ($(CONFIG_LT1PA01),y)
+ifeq ($(CONFIG_SENSORS_LT1PA01_SCU),y)
 MAINSRC = light_main_lt1pa01.c
 endif
 
-ifeq ($(CONFIG_BH1721FVC),y)
+ifeq ($(CONFIG_SENSORS_BH1721FVC_SCU),y)
 MAINSRC = light_main_bh1721fvc.c
 endif
 
-ifeq ($(CONFIG_RPR0521RS),y)
+ifeq ($(CONFIG_SENSORS_RPR0521RS_SCU),y)
 MAINSRC = light_main_rpr0521rs.c
 endif
 
