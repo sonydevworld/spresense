@@ -5,7 +5,6 @@
 # You can then do "make savedefconfig" to generate a new defconfig file that includes your
 # modifications.
 #
-# CONFIG_CXD56_I2C0_SCUSEQ is not set
 # CONFIG_NET_IPv4 is not set
 # CONFIG_NXFONTS_PACKEDMSFIRST is not set
 # CONFIG_SPI_CALLBACK is not set
@@ -42,7 +41,7 @@ CONFIG_CDCACM_VENDORSTR="SONY"
 CONFIG_CLOCK_MONOTONIC=y
 CONFIG_CXD56_BINARY=y
 CONFIG_CXD56_I2C0=y
-CONFIG_CXD56_I2C_DRIVER=y
+CONFIG_CXD56_I2C=y
 CONFIG_CXD56_PWM=y
 CONFIG_CXD56_SPI5=y
 CONFIG_CXD56_SPI=y
