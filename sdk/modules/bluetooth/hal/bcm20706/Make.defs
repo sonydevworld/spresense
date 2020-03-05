@@ -53,6 +53,7 @@ endif
 ifeq ($(CONFIG_BCM20706_SPP),y)
 CSRCS +=  bcm20706_bt_spp.c
 endif
+CSRCS +=  bcm20706_hal.c
 
 CSRCS +=  bt_freq_lock.c
 CSRCS +=  bt_hci_manager.c
