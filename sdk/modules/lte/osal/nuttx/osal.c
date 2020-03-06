@@ -37,8 +37,11 @@
  * Included Files
  ****************************************************************************/
 
+#include <sdk/config.h>
+
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,9 +59,26 @@
 #define MQ_NAME_PREFIX   "osal"
 #define MQ_CMODE (S_IWOTH | S_IROTH | S_IWGRP | S_IRGRP | S_IWUSR | S_IRUSR)
 #define MQ_PRIO          0
-#define TASK_PRIO_LOW    90
-#define TASK_PRIO_NORMAL 100
-#define TASK_PRIO_HIGH   110
+/* There is a relationship that the priority of the receiving task must be
+ * higher than the priority of the SPI transfer task. */
+
+#if defined(CONFIG_LTE_CALLBACK_TASK_PRIORITY) && \
+    defined(CONFIG_MODEM_ALTMDM_XFER_TASK_PRIORITY)
+#  define TASK_PRIO_LOW    50
+#  define TASK_PRIO_NORMAL (CONFIG_LTE_CALLBACK_TASK_PRIORITY)
+#  define TASK_PRIO_HIGH   (CONFIG_MODEM_ALTMDM_XFER_TASK_PRIORITY + 10)
+#  if ((TASK_PRIO_LOW > TASK_PRIO_NORMAL) || \
+       (TASK_PRIO_HIGH < TASK_PRIO_NORMAL))
+#    error CONFIG_LTE_CALLBACK_TASK_PRIORITY is out of range
+#  endif
+#  if (TASK_PRIO_HIGH > SCHED_PRIORITY_MAX)
+#    error CONFIG_MODEM_ALTMDM_XFER_TASK_PRIORITY is too high (<245)
+#  endif
+#else
+#  define TASK_PRIO_LOW    50
+#  define TASK_PRIO_NORMAL 100
+#  define TASK_PRIO_HIGH   180
+#endif
 #define TASK_PRIO_MIN    (SYS_TASK_PRIO_LOW)
 #define TASK_PRIO_MAX    (SYS_TASK_PRIO_HIGH)
 #define NUM_OF_TASK_PRIO 3

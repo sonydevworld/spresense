@@ -46,6 +46,11 @@ config LTE_DEBUG_DEBUG
 
 endif
 
+config LTE_CALLBACK_TASK_PRIORITY
+	int "callback task priority"
+	default 100
+	range 1 255
+
 if MODEM
 
 config MODEM_DEVICE_PATH
