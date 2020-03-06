@@ -65,8 +65,6 @@
 #include "userproc_command.h"
 #endif /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
 
-#include <arch/chip/cxd56_audio.h>
-
 using namespace MemMgrLite;
 
 /****************************************************************************

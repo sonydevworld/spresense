@@ -73,7 +73,7 @@ build_worker:
 
 .built: build_worker
 
-clean: clean_worker clean_local
+clean:: clean_worker clean_local
 
 clean_local:
 	$(call DELFILE, .worker_preprocess)
