@@ -48,7 +48,7 @@ MODULE    = $(CONFIG_EXAMPLES_JPEG_DECODE)
 MAINSRC = jpeg_decode_main.c
 
 ifeq ($(CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD),y)
-CSRCS += jpeg_decode_nx_bkgd.c
+CSRCS += jpeg_decode_nx_bkgd.c jpeg_decode_nx_listener.c
 endif
 
 include $(APPDIR)/Application.mk

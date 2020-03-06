@@ -71,8 +71,8 @@
  */
 
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
+#include <sys/boardctl.h>
 #include <nuttx/board.h>
-#include <nuttx/lcd/lcd.h>
 #include <nuttx/nx/nx.h>
 #include <nuttx/nx/nxglib.h>
 
@@ -144,11 +144,11 @@ struct nximage_data_s g_jpeg_decode_nximage =
 {
   NULL,          /* hnx */
   NULL,          /* hbkgd */
+  false,         /* connected */
   0,             /* xres */
   0,             /* yres */
   false,         /* havpos */
   { 0 },         /* sem */
-  0              /* exit code */
 };
 #endif
 
@@ -175,42 +175,48 @@ struct nximage_data_s g_jpeg_decode_nximage =
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
 static inline int nximage_initialize(void)
 {
-  FAR NX_DRIVERTYPE *dev;
   nxgl_mxpixel_t color;
+  pthread_t thread;
   int ret;
 
-  /* Initialize the LCD device */
+  /* Start the NX server kernel thread */
 
-  printf("nximage_initialize: Initializing LCD\n");
-  ret = board_lcd_initialize();
+  ret = boardctl(BOARDIOC_NX_START, 0);
   if (ret < 0)
     {
-      printf("nximage_initialize: board_lcd_initialize failed: %d\n", -ret);
+      printf("nximage_initialize: Failed to start the NX server: %d\n", errno);
       return ERROR;
     }
 
-  /* Get the device instance */
+  /* Connect to the server */
 
-  dev = board_lcd_getdev(CONFIG_EXAMPLES_JPEG_DECODE_LCD_DEVNO);
-  if (!dev)
-    {
-      printf("nximage_initialize: board_lcd_getdev failed, devno=%d\n",
-             CONFIG_EXAMPLES_JPEG_DECODE_LCD_DEVNO);
-      return ERROR;
-    }
-
-  /* Turn the LCD on at 75% power */
-
-  (void)dev->setpower(dev, ((3*CONFIG_LCD_MAXPOWER + 3)/4));
-
-  /* Then open NX */
-
-  printf("nximage_initialize: Open NX\n");
-  g_jpeg_decode_nximage.hnx = nx_open(dev);
+  g_jpeg_decode_nximage.hnx = nx_connect();
   if (!g_jpeg_decode_nximage.hnx)
     {
       printf("nximage_initialize: nx_open failed: %d\n", errno);
       return ERROR;
+    }
+
+  /* Start a separate thread to listen for server events.
+     For simplicity, use defaul thread attribute.
+   */
+
+  ret = pthread_create(&thread, NULL, nximage_listener, NULL);
+  if (ret != 0)
+    {
+       printf("nximage_initialize: pthread_create failed: %d\n", ret);
+       return ERROR;
+    }
+
+  /* Don't return until we are connected to the server */
+
+  while (!g_jpeg_decode_nximage.connected)
+    {
+      /* Wait for the listener thread to wake us up when we really
+       * are connected.
+       */
+
+      (void)sem_wait(&g_jpeg_decode_nximage.sem);
     }
 
   /* Set background color to black */
@@ -222,7 +228,7 @@ static inline int nximage_initialize(void)
   if (ret < 0)
     {
       printf("nximage_initialize: nx_requestbkgd failed: %d\n", errno);
-      nx_close(g_jpeg_decode_nximage.hnx);
+      nx_disconnect(g_jpeg_decode_nximage.hnx);
       return ERROR;
     }
 
@@ -349,6 +355,9 @@ static void fin_output_to_lcd(void)
 #  ifdef CONFIG_IMAGEPROC
   imageproc_finalize();
 #  endif
+  (void)nx_releasebkgd(g_jpeg_decode_nximage.hbkgd);
+  nx_disconnect(g_jpeg_decode_nximage.hnx);
+
   return;
 }
 #else /* !CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD */
