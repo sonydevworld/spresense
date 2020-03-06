@@ -48,7 +48,7 @@ MODULE    = $(CONFIG_EXAMPLES_CAMERA)
 MAINSRC = camera_main.c
 
 ifeq ($(CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD),y)
-CSRCS += camera_bkgd.c
+CSRCS += camera_bkgd.c camera_nximage_listener.c
 endif
 
 include $(APPDIR)/Application.mk

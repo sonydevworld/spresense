@@ -1,9 +1,8 @@
 /****************************************************************************
- * camera/nximage.h
+ * examples/nxterm/nximage_listener.c
  *
- *   Copyright (C) 2011, 2015 Gregory Nutt. All rights reserved.
+ *   Copyright (C) 2017 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,69 +33,62 @@
  *
  ****************************************************************************/
 
-#ifndef __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H
-#define __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <semaphore.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <nuttx/nx/nx.h>
-#include <nuttx/nx/nxglib.h>
+
+#include "nximage.h"
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Public Types
+ * Name: nximage_listener
  ****************************************************************************/
 
-struct nximage_data_s
+FAR void *nximage_listener(FAR void *arg)
 {
-  /* The NX handles */
+  int ret;
 
-  NXHANDLE hnx;
-  NXHANDLE hbkgd;
-  bool     connected;
+  /* Process events forever */
 
-  /* The screen resolution */
+  for (;;)
+    {
+      /* Handle the next event.  If we were configured blocking, then
+       * we will stay right here until the next event is received.  Since
+       * we have dedicated a while thread to servicing events, it would
+       * be most natural to also select CONFIG_NX_BLOCKING -- if not, the
+       * following would be a tight infinite loop (unless we added addition
+       * logic with nx_eventnotify and sigwait to pace it).
+       */
 
-  nxgl_coord_t xres;
-  nxgl_coord_t yres;
+      ret = nx_eventhandler(g_nximage.hnx);
+      if (ret < 0)
+        {
+          /* An error occurred... assume that we have lost connection with
+           * the server.
+           */
 
-  volatile bool havepos;
-  sem_t sem;
-};
+          printf("nximage_listener: Lost server connection: %d\n", errno);
+          exit(EXIT_FAILURE);
+        }
 
-/****************************************************************************
- * Public Data
- ****************************************************************************/
+      /* If we received a message, we must be connected */
 
-/* NXIMAGE state data */
-
-extern struct nximage_data_s g_nximage;
-
-/* NX callback vtables */
-
-extern const struct nx_callback_s g_nximagecb;
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-/* NX event listener */
-
-FAR void *nximage_listener(FAR void *arg);
-
-/* Background window interfaces */
-
-void nximage_image(NXWINDOW hwnd, FAR const void *image);
-
-#endif /* __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H */
+      if (!g_nximage.connected)
+        {
+          g_nximage.connected = true;
+          sem_post(&g_nximage.sem);
+          printf("nximage_listener: Connected\n");
+        }
+    }
+}
