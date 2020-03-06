@@ -45,7 +45,7 @@ CSRCS += runtime_client.c
 CSRCS += mp_manager.c
 
 VPATH += src-mp/runtime
-ROOTDEPPATH = --dep-path src-mp/runtime
+DEPPATH = --dep-path src-mp/runtime
 else
 CSRCS +=  runtime_nnabla.c
 CSRCS +=  shared_chunk.c
@@ -55,7 +55,7 @@ CSRCS +=  convolution.c
 CFLAGS += -Isrc
 
 VPATH = src/functions src/runtime
-ROOTDEPPATH = --dep-path src/functions --dep-path src/runtime
+DEPPATH = --dep-path src/functions --dep-path src/runtime
 endif
 
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}

@@ -46,7 +46,7 @@ CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
 SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
 OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
 
-ROOTDEPPATH += --dep-path .
+DEPPATH += --dep-path .
 VPATH += :.
 
 BIN ?= $(APPDIR)$(DELIM)libapps$(LIBEXT)
@@ -81,9 +81,9 @@ context::
 
 .depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 ifeq ($(filter %$(CXXEXT),$(SRCS)),)
-	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
+	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
 else
-	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CXX)" -- $(CXXFLAGS) -- $(SRCS) >Make.dep
+	$(Q) $(MKDEP) $(DEPPATH) "$(CXX)" -- $(CXXFLAGS) -- $(SRCS) >Make.dep
 endif
 	$(Q) touch $@
 
