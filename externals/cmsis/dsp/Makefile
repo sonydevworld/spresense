@@ -52,7 +52,7 @@ CMSIS_ROOT = ../CMSIS_5/CMSIS
 SUBDIRS := $(dir $(wildcard $(CMSIS_ROOT)/DSP/Source/*/))
 
 VPATH   := $(SUBDIRS)
-DEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
+ROOTDEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
 
 CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.c)))
 ASRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.S)))

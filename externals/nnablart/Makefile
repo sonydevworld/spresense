@@ -59,68 +59,68 @@ CFLAGS += -std=c99
 CFLAGS := $(patsubst -O%,-O3,$(CFLAGS))
 
 CSRCS    =   accessor.c list.c shape.c
-DEPPATH  = --dep-path $(SRCDIR)/functions/utilities
+ROOTDEPPATH  = --dep-path $(SRCDIR)/functions/utilities
 VPATH    = $(SRCDIR)/functions/utilities
 
 CSRCS   += sigmoid.c relu.c tanh.c softmax.c selu.c elu.c prelu.c leakyrelu.c
 CSRCS   += crelu.c celu.c swish.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/activation
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/activation
 VPATH   += $(SRCDIR)/functions/implements/activation
 
 CSRCS   += abs.c batch_matmul.c exp.c identity.c log.c round.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/math
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/math
 VPATH   += $(SRCDIR)/functions/implements/math
 
 CSRCS   += binary_tanh.c binary_sigmoid.c binary_connect_affine.c binary_weight_affine.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/quantization
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/quantization
 VPATH   += $(SRCDIR)/functions/implements/quantization
 
 CSRCS   += add_scalar.c arithmetic.c arithmetic_generic.c div2.c mul2.c mul_scalar.c
 CSRCS   += pow2.c pow_scalar.c r_div_scalar.c r_pow_scalar.c r_sub_scalar.c
 CSRCS   += sub2.c add2.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/arithmetic
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/arithmetic
 VPATH   += $(SRCDIR)/functions/implements/arithmetic
 
 CSRCS   += maximum_scalar.c minimum_scalar.c maximum2.c minimum2.c sign.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/logical
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/logical
 VPATH   += $(SRCDIR)/functions/implements/logical
 
 CSRCS   += matrix_diag.c matrix_diag_part.c reshape.c concatenate.c split.c stack.c
 CSRCS   += shift.c slice.c flip.c transpose.c pad.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/array
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/array
 VPATH   += $(SRCDIR)/functions/implements/array
 
 CSRCS   += pooling.c max_pooling.c sum_pooling.c average_pooling.c unpooling.c deconvolution.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network
 VPATH   += $(SRCDIR)/functions/implements/neural_network
 
 CSRCS   += affine.c affine_generic.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/affine
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/affine
 VPATH   += $(SRCDIR)/functions/implements/neural_network/affine
 
 CSRCS   += convolution.c convolution_generic.c convolution_float.c convolution_common.c
 CSRCS   += binary_connect_convolution.c binary_weight_convolution.c depthwise_convolution.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/convolution
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/convolution
 VPATH   += $(SRCDIR)/functions/implements/neural_network/convolution
 
 CSRCS   += batch_normalization.c mean_subtraction.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/normalization
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/normalization
 VPATH   += $(SRCDIR)/functions/implements/normalization
 
 CSRCS   += dropout.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/stochasticity
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/stochasticity
 VPATH   += $(SRCDIR)/functions/implements/stochasticity
 
 CSRCS   += sum.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements/reduction
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/reduction
 VPATH   += $(SRCDIR)/functions/implements/reduction
 
 CSRCS   += unimplemented.c
-DEPPATH += --dep-path $(SRCDIR)/functions/implements
+ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements
 VPATH   += $(SRCDIR)/functions/implements
 
 CSRCS += function_context.c runtime.c runtime_internal.c
-DEPPATH += --dep-path $(SRCDIR)/runtime
+ROOTDEPPATH += --dep-path $(SRCDIR)/runtime
 VPATH   += $(SRCDIR)/runtime
 
 include $(APPDIR)/Application.mk

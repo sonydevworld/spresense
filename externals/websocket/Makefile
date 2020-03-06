@@ -38,7 +38,7 @@
 
 BIN = libwebsocket$(LIBEXT)
 
-DEPPATH += --dep-path cwebsocket$(DELIM)src$(DELIM)cwebsocket
+ROOTDEPPATH += --dep-path cwebsocket$(DELIM)src$(DELIM)cwebsocket
 VPATH += :cwebsocket$(DELIM)src$(DELIM)cwebsocket
 
 CFLAGS += -DENABLE_SSL
