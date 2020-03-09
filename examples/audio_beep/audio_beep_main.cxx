@@ -39,7 +39,7 @@
 
 #include <stdio.h>
 #include <arch/board/board.h>
-#include <arch/chip/cxd56_audio.h>
+#include <arch/chip/audio.h>
 
 /****************************************************************************
  * Pre-processor Definitions
