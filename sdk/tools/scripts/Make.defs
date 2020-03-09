@@ -41,20 +41,22 @@ include ${TOPDIR}/arch/arm/src/armv7-m/Toolchain.defs
 
 LDSCRIPT = ramconfig.ld
 
+SDKDIR := $(TOPDIR)/../sdk
+
 ifeq ($(WINTOOL),y)
   # Windows-native toolchains
   DIRLINK = $(TOPDIR)/tools/copydir.sh
   DIRUNLINK = $(TOPDIR)/tools/unlink.sh
   MKDEP = $(TOPDIR)/tools/mkwindeps.sh
-  ARCHINCLUDES = -I. -isystem "${shell cygpath -w $(TOPDIR)/include}"
-  ARCHXXINCLUDES = -I. -isystem "${shell cygpath -w $(TOPDIR)/include}" -isystem "${shell cygpath -w $(TOPDIR)/include/cxx}"
+  ARCHINCLUDES = -I. -isystem "${shell cygpath -w $(TOPDIR)/include}" -isystem "${shell cygpath -w $(SDKDIR)/include}"
+  ARCHXXINCLUDES = -I. -isystem "${shell cygpath -w $(TOPDIR)/include}" -isystem "${shell cygpath -w $(TOPDIR)/include/cxx}" -isystem "${shell cygpath -w $(SDKDIR)/include}
   ARCHSCRIPT = -T "${shell cygpath -w $(TOPDIR)/boards/$(CONFIG_ARCH)/$(CONFIG_ARCH_CHIP)/$(CONFIG_ARCH_BOARD)/scripts/$(LDSCRIPT)}"
   HOSTEXEEXT = .exe
 else
   # Linux/Cygwin-native toolchain
   MKDEP = $(TOPDIR)/tools/mkdeps$(HOSTEXEEXT)
-  ARCHINCLUDES = -I. -isystem $(TOPDIR)/include
-  ARCHXXINCLUDES = -I. -isystem $(TOPDIR)/include -isystem $(TOPDIR)/include/cxx
+  ARCHINCLUDES = -I. -isystem $(TOPDIR)/include -isystem $(SDKDIR)/include
+  ARCHXXINCLUDES = -I. -isystem $(TOPDIR)/include -isystem $(TOPDIR)/include/cxx -isystem $(SDKDIR)/include
   ARCHSCRIPT = -T$(TOPDIR)/boards/$(CONFIG_ARCH)/$(CONFIG_ARCH_CHIP)/$(CONFIG_ARCH_BOARD)/scripts/$(LDSCRIPT)
   HOSTEXEEXT =
 endif
@@ -157,5 +159,9 @@ HOSTINCLUDES = -I.
 HOSTCFLAGS = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
 HOSTLDFLAGS =
 
-include $(TOPDIR)/../sdk/Library.mk
+include $(SDKDIR)/Library.mk
 -include $(TOPDIR)/../externals/Library.mk
+
+ifneq ($(CONFIG_LIBM),y)
+  EXTRA_LIBS += "${shell $(CC) $(CFLAGS) -print-file-name=libm.a}"
+endif
