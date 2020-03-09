@@ -45,12 +45,10 @@ CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SRCDIR)/functions}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SRCDIR)/runtime}
 
-# Runtime patch for missing fminf, fmaxf math functions
+# Runtime patch for missing fminf, fmaxf math functions in NuttX libm.
 
 ifeq ($(CONFIG_LIBM),y)
-ifneq ($(CONFIG_LIBM_NEWLIB),y)
 CFLAGS += -include fminf_fmaxf.h
-endif
 endif
 CFLAGS += -std=c99
 
