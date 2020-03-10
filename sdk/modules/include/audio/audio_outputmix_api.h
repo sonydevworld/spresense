@@ -167,6 +167,23 @@ enum AsOutputMixDoneCmdType
   OutputMixDoneCmdTypeNum
 };
 
+/**< Output sound period adjustment direction */
+
+typedef enum
+{
+  /*! \brief Adjust to the + direction */
+
+  OutputMixAdvance = -1,
+
+  /*! \brief No adjust */
+
+  OutputMixNoAdjust = 0,
+
+  /*! \brief Adjust to the - direction */
+
+  OutputMixDelay = 1,
+} AsClkRecoveryDirection;
+
 /** Message queue ID parameter of activate function */
 
 typedef struct

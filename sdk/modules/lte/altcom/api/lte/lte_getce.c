@@ -319,6 +319,10 @@ int32_t lte_get_ce_sync(lte_ce_setting_t *settings)
 
 int32_t lte_get_ce(get_ce_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getce_impl(NULL, callback);
 }
 

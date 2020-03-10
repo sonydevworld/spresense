@@ -431,6 +431,10 @@ int32_t lte_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn)
 
 int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_activatepdn_impl(apn, NULL, callback);
 }
 

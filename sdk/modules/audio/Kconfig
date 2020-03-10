@@ -25,6 +25,7 @@ config AUDIOUTILS_PLAYER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
 	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_OUTPUTMIXER
 	select AUDIOUTILS_DECODER
 	select AUDIOUTILS_POSTPROC
 	select AUDIOUTILS_RENDERER
@@ -137,19 +138,23 @@ config AUDIOUTILS_SRC
 		Enable Sampling Rate Converter filter
 endif
 
-if AUDIOUTILS_RECORDER || AUDIOUTILS_VOICE_CALL || AUDIOUTILS_SOUND_RECOGNIZER
 config AUDIOUTILS_MFE
 	bool "Mic Front End"
 	default n
 	---help---
 		Enable Mic Front End Filter
 
+config AUDIOUTILS_OUTPUTMIXER
+	bool "Output Mixer"
+	default n
+	---help---
+		Enable Output Mixer
+
 config AUDIOUTILS_MPP
 	bool "Media Player Post"
 	default n
 	---help---
 		Enable Media Player Post Filter
-endif
 
 if AUDIOUTILS_RECORDER || AUDIOUTILS_VOICE_CALL || AUDIOUTILS_SOUND_RECOGNIZER
 config AUDIOUTILS_CAPTURE_CH_NUM
@@ -209,7 +214,10 @@ config AUDIOUTILS_UNUSE_ORIGINAL_OPUS_FORMAT
 		Enable Unuse Original Opus Format
 
 config AUDIOUTILS_DSP_DRIVER
-	bool
+	bool "DSP driver"
+	default n
+	---help---
+		Enable DSP driver
 
 config AUDIOUTILS_SOUND_EFFECTOR
 	bool

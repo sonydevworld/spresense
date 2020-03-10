@@ -432,6 +432,10 @@ int32_t lte_get_siminfo_sync(uint32_t option, lte_siminfo_t *siminfo)
 
 int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getsiminfo_impl(option, NULL, callback);
 }
 

@@ -292,6 +292,10 @@ errout:
 
 int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getcurrentedrx_impl(NULL, callback);
 }
 
@@ -333,6 +337,10 @@ int32_t lte_get_current_edrx_sync(lte_edrx_setting_t *settings)
 
 int32_t lte_get_current_edrx(get_current_edrx_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getcurrentedrx_impl(NULL, callback);
 }
 

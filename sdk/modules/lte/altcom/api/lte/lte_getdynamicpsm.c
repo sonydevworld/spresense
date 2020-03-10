@@ -287,6 +287,10 @@ errout:
 
 int32_t lte_get_dynamic_psm_param(get_dynamic_psm_param_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getcurrentpsm_impl(NULL, callback);
 }
 
@@ -328,6 +332,10 @@ int32_t lte_get_current_psm_sync(lte_psm_setting_t *settings)
 
 int32_t lte_get_current_psm(get_current_psm_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getcurrentpsm_impl(NULL, callback);
 }
 

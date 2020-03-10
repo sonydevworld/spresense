@@ -350,6 +350,10 @@ int32_t lte_data_allow_sync(uint8_t session_id, uint8_t allow,
 int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
                        uint8_t roaming_allow, data_allow_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_dataallow_impl(session_id, allow, roaming_allow, callback);
 }
 

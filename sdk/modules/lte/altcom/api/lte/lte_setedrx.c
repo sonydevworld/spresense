@@ -178,6 +178,15 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
   uint16_t                            reslen     = 0;
   int                                 sync       = (callback == NULL);
 
+  const uint8_t edrx_act_type_table[] =
+    {
+      APICMD_EDRX_ACTTYPE_WBS1,
+      APICMD_EDRX_ACTTYPE_NBS1,
+      APICMD_EDRX_ACTTYPE_ECGSMIOT,
+      APICMD_EDRX_ACTTYPE_GSM,
+      APICMD_EDRX_ACTTYPE_IU,
+    };
+
   /* Check input parameter */
 
   if (!settings)
@@ -188,7 +197,8 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
 
   if (settings->enable)
     {
-      if (settings->act_type != LTE_EDRX_ACTTYPE_WBS1)
+      if (LTE_EDRX_ACTTYPE_WBS1 > settings->act_type ||
+          LTE_EDRX_ACTTYPE_IU < settings->act_type)
         {
           DBGIF_LOG1_ERROR("Invalid argument. act_type:%d\n", settings->act_type);
           return -EINVAL;
@@ -244,7 +254,7 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
       goto errout;
     }
 
-  reqbuff->acttype    = APICMD_SETEDRX_ACTTYPE_WBS1;
+  reqbuff->acttype    = edrx_act_type_table[settings->act_type];
   reqbuff->enable     = settings->enable;
   reqbuff->edrx_cycle = settings->edrx_cycle;
   reqbuff->ptw_val    = settings->ptw_val;
@@ -321,6 +331,10 @@ int32_t lte_set_edrx_sync(lte_edrx_setting_t *settings)
 int32_t lte_set_edrx(lte_edrx_setting_t *settings,
                      set_edrx_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_setedrx_impl(settings, callback);
 }
 

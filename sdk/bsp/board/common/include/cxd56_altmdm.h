@@ -41,38 +41,6 @@
  ****************************************************************************/
 
 #include <sdk/config.h>
-#include <sys/boardctl.h>
-#include <stdbool.h>
-#include <nuttx/irq.h>
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-/* Altair modem gpio definitions *******************************************/
-
-#if defined(CONFIG_MODEM_ALTMDM) && defined(CONFIG_CXD56_GPIO_IRQ)
-
-/* definitions of gpio pin number */
-
-#  define ALTMDM_GPIO_MODEM_WAKEUP            (0)
-#  define ALTMDM_GPIO_MASTER_REQ              (1)
-#  define ALTMDM_GPIO_SLAVE_REQ               (2)
-
-/* definitions of gpio interrupt polarity */
-
-#  define ALTMDM_GPIOINT_LEVEL_HIGH           (0)
-#  define ALTMDM_GPIOINT_LEVEL_LOW            (1)
-#  define ALTMDM_GPIOINT_EDGE_RISE            (2)
-#  define ALTMDM_GPIOINT_EDGE_FALL            (3)
-#  define ALTMDM_GPIOINT_EDGE_BOTH            (4)
-
-/* definitions of gpio interrupt noise filter */
-
-#  define ALTMDM_GPIOINT_NOISE_FILTER_ENABLE  (0)
-#  define ALTMDM_GPIOINT_NOISE_FILTER_DISABLE (1)
-
-#endif
 
 /****************************************************************************
  * Public Types
@@ -97,7 +65,7 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
-#if defined(CONFIG_MODEM_ALTMDM) && defined(CONFIG_CXD56_GPIO_IRQ)
+#if defined(CONFIG_MODEM_ALTMDM)
 
 /****************************************************************************
  * Name: board_altmdm_initialize
@@ -120,16 +88,6 @@ int board_altmdm_initialize(FAR const char *devpath);
 int board_altmdm_uninitialize(void);
 
 /****************************************************************************
- * Name: board_altmdm_power_control
- *
- * Description:
- *   Power on/off the Altair modem device on the board.
- *
- ****************************************************************************/
-
-void board_altmdm_power_control(bool en);
-
-/****************************************************************************
  * Name: board_altmdm_poweron
  *
  * Description:
@@ -148,47 +106,6 @@ void board_altmdm_poweron(void);
  ****************************************************************************/
 
 void board_altmdm_poweroff(void);
-
-/****************************************************************************
- * Name: board_altmdm_gpio_write
- *
- * Description:
- *   Write GPIO pin.
- *
- ****************************************************************************/
-
-void board_altmdm_gpio_write(uint32_t pin, bool value);
-
-/****************************************************************************
- * Name: board_altmdm_gpio_read
- *
- * Description:
- *   Read GPIO pin.
- *
- ****************************************************************************/
-
-bool board_altmdm_gpio_read(uint32_t pin);
-
-/****************************************************************************
- * Name: board_altmdm_gpio_irq
- *
- * Description:
- *   Register GPIO irq.
- *
- ****************************************************************************/
-
-void board_altmdm_gpio_irq(uint32_t pin, uint32_t polarity,
-                           uint32_t noise_filter, xcpt_t irqhandler);
-
-/****************************************************************************
- * Name: board_altmdm_gpio_int_control
- *
- * Description:
- *   Enable or disable GPIO interrupt.
- *
- ****************************************************************************/
-
-void board_altmdm_gpio_int_control(uint32_t pin, bool en);
 
 #endif
 

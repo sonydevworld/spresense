@@ -42,7 +42,7 @@
 
 /* Access technology is not using eDRX */
 
-#define APICMD_EDRX_ACTTYPE_NOTUSE   (0)
+#define APICMD_EDRX_ACTTYPE_NOTUSE   (0) /* eDRX is not running */
 #define APICMD_EDRX_ACTTYPE_ECGSMIOT (1) /* EC-GSM-IoT (A/Gb mode) */
 #define APICMD_EDRX_ACTTYPE_GSM      (2) /* GSM (A/Gb mode) */
 #define APICMD_EDRX_ACTTYPE_IU       (3) /* UTRAN (Iu mode) */

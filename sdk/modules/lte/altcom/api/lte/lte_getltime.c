@@ -316,6 +316,10 @@ int32_t lte_get_localtime_sync(lte_localtime_t *localtime)
 
 int32_t lte_get_localtime(get_localtime_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getlocaltime_impl(NULL, callback);
 }
 

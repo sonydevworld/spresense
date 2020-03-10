@@ -36,6 +36,11 @@
 ifeq ($(CONFIG_FWUPUTILS_CLIENTS),y)
 
 CSRCS += fwup_client.c
+ifeq ($(WINTOOL),y)
+CFLAGS += -I "${shell cygpath -w $(SDKDIR)$(DELIM)bsp$(DELIM)src}"
+else
+CFLAGS += -I$(SDKDIR)$(DELIM)bsp$(DELIM)src
+endif
 VPATH += clients
 DEPPATH += --dep-path clients
 

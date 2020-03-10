@@ -58,6 +58,7 @@ struct altmdm_dev_s
   struct altmdm_spi_dev_s  spidev;
   struct altmdm_sys_lock_s lock;
   int                      poweron;
+  FAR const struct altmdm_lower_s *lower;
 };
 
 /****************************************************************************

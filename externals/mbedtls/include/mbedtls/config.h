@@ -2701,6 +2701,9 @@
 #include YOTTA_CFG_MBEDTLS_TARGET_CONFIG_FILE
 #endif
 
+/* This is spresense specific porting file */
+#include "mbedtls/spresense_porting.h"
+
 /*
  * Allow user to override any previous default.
  *

@@ -186,7 +186,14 @@ static int uninit_d2h_gpio(FAR struct altmdm_dev_s *priv)
 
 static int set_mreq_gpio(FAR struct altmdm_dev_s *priv, bool value)
 {
-  board_altmdm_gpio_write(GPIO_MASTER_REQUEST, value);
+  if (priv && priv->lower)
+    {
+      priv->lower->master_request(value);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   return 0;
 }
@@ -202,7 +209,14 @@ static int set_mreq_gpio(FAR struct altmdm_dev_s *priv, bool value)
 
 static int set_h2d_gpio(FAR struct altmdm_dev_s *priv, bool value)
 {
-  board_altmdm_gpio_write(GPIO_MODEM_WAKEUP, value);
+  if (priv && priv->lower)
+    {
+      priv->lower->wakeup(value);
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   return 0;
 }
@@ -217,7 +231,14 @@ static int set_h2d_gpio(FAR struct altmdm_dev_s *priv, bool value)
 
 static int get_d2h_gpio(FAR struct altmdm_dev_s *priv, FAR bool *value)
 {
-  *value = board_altmdm_gpio_read(GPIO_SLAVE_REQUEST);
+  if (priv && priv->lower && value)
+    {
+      *value = priv->lower->sready();
+    }
+  else
+    {
+      m_err("ERR:%04d pointer is NULL\n", __LINE__);
+    }
 
   return 0;
 }
@@ -1166,7 +1187,14 @@ static int pm_task(int argc, FAR char *argv[])
             {
               /* Modem power on. */
 
-              board_altmdm_power_control(true);
+              if (priv->lower)
+                {
+                  priv->lower->poweron();
+                }
+              else
+                {
+                  m_err("ERR:%04d pointer is NULL\n", __LINE__);
+                }
 
               send_modem_poweron_done(priv);
             }
@@ -1175,7 +1203,14 @@ static int pm_task(int argc, FAR char *argv[])
             {
               /* Modem power off. */
 
-              board_altmdm_power_control(false);
+              if (priv->lower)
+                {
+                  priv->lower->poweroff();
+                }
+              else
+                {
+                  m_err("ERR:%04d pointer is NULL\n", __LINE__);
+                }
 
               sleep_modem_itself(priv);
 

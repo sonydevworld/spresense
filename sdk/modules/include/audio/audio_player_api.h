@@ -246,23 +246,6 @@ typedef enum
   AS_STOPPLAYER_FORCIBLY = 0xFF
 } AsStopPlayerStopMode;
 
-/**< Output sound period adjustment direction */
-
-typedef enum
-{
-  /*! \brief Adjust to the + direction */
-
-  OutputMixAdvance = -1,
-
-  /*! \brief No adjust */
-
-  OutputMixNoAdjust = 0,
-
-  /*! \brief Adjust to the - direction */
-
-  OutputMixDelay = 1,
-} AsClkRecoveryDirection;
-
 /**< Decodec PCM data send path  */
 
 typedef enum

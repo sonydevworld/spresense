@@ -307,6 +307,10 @@ int32_t lte_get_phoneno_sync(int8_t *phoneno)
 
 int32_t lte_get_phoneno(get_phoneno_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getphoneno_impl(NULL, callback);
 }
 

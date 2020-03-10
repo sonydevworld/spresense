@@ -493,7 +493,13 @@
 
 #define LTE_CELLINFO_MNC_DIGIT_MAX LTE_MNC_DIGIT_MAX
 
-#define LTE_EDRX_ACTTYPE_WBS1 (0) /**< E-UTRAN (WB-S1 mode) */
+#define LTE_EDRX_ACTTYPE_WBS1     (0) /**< E-UTRAN (WB-S1 mode)   */
+#define LTE_EDRX_ACTTYPE_NBS1     (1) /**< E-UTRAN (NB-S1 mode)   */
+#define LTE_EDRX_ACTTYPE_ECGSMIOT (2) /**< EC-GSM-IoT (A/Gb mode) */
+#define LTE_EDRX_ACTTYPE_GSM      (3) /**< GSM (A/Gb mode)        */
+#define LTE_EDRX_ACTTYPE_IU       (4) /**< UTRAN (Iu mode)        */
+#define LTE_EDRX_ACTTYPE_NOTUSE   (5) /**< eDRX is not running    */
+
 #define LTE_EDRX_CYC_512      (0) /**< eDRX cycle:    5.12 sec */
 #define LTE_EDRX_CYC_1024     (1) /**< eDRX cycle:   10.24 sec */
 #define LTE_EDRX_CYC_2048     (2) /**< eDRX cycle:   20.48 sec */
@@ -856,7 +862,12 @@ typedef struct lte_cellinfo
 typedef struct lte_edrx_setting
 {
   /** eDRX act type. Definition is as below.
-   *  - @ref LTE_EDRX_ACTTYPE_WBS1 */
+   *  - @ref LTE_EDRX_ACTTYPE_WBS1
+   *  - @ref LTE_EDRX_ACTTYPE_NBS1
+   *  - @ref LTE_EDRX_ACTTYPE_ECGSMIOT
+   *  - @ref LTE_EDRX_ACTTYPE_GSM
+   *  - @ref LTE_EDRX_ACTTYPE_IU
+   *  - @ref LTE_EDRX_ACTTYPE_NOTUSE */
 
   uint8_t  act_type;
 
@@ -866,7 +877,10 @@ typedef struct lte_edrx_setting
 
   bool     enable;
 
-  /** eDRX cycle. Definition is as below.
+  /** eDRX cycle.
+   *  This variable is not vaild when LTE_EDRX_ACTTYPE_NOTUSE
+   *  is set to act_type.
+   *  Definitions are below:
    *  - @ref LTE_EDRX_CYC_512
    *  - @ref LTE_EDRX_CYC_1024
    *  - @ref LTE_EDRX_CYC_2048
@@ -884,7 +898,10 @@ typedef struct lte_edrx_setting
 
   uint32_t edrx_cycle;
 
-  /** Paging time window. Definition is as below.
+  /** Paging time window.
+   *  This variable is not vaild when LTE_EDRX_ACTTYPE_NOTUSE
+   *  is set to act_type.
+   *  Definitions are below:
    *  - @ref LTE_EDRX_PTW_128
    *  - @ref LTE_EDRX_PTW_256
    *  - @ref LTE_EDRX_PTW_384
@@ -1845,7 +1862,7 @@ typedef void (*get_siminfo_cb_t)(uint32_t result, lte_siminfo_t *siminfo);
  * - @ref LTE_RESULT_OK
  * - @ref LTE_RESULT_ERROR
  *
- * @param[in] param : eDRX dynamic parameter. See @ref lte_edrx_setting_t
+ * @param[in] param : eDRX dynamic parameter. See @ref lte_edrx_setting_t.
  */
 
 typedef void (*get_dynamic_edrx_param_cb_t)(uint32_t result,

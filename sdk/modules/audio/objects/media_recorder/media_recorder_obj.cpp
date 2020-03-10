@@ -954,7 +954,7 @@ void MediaRecorderObjectTask::illegalFilterDone(MsgPacket *msg)
           if (checkExternalCmd())
             {
               AsRecorderEvent ext_evt = getExternalCmd();
-              reply(ext_evt, msg->getType(), AS_ECODE_OK);
+              reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
               m_state = RecorderStateReady;
             }
@@ -967,7 +967,7 @@ void MediaRecorderObjectTask::illegalFilterDone(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
           m_state = RecorderStateReady;
         }
@@ -1012,7 +1012,7 @@ void MediaRecorderObjectTask::filterDoneOnActive(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsRecorderEvent ext_evt = getExternalCmd();
-                  reply(ext_evt, msg->getType(), AS_ECODE_OK);
+                  reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
                   m_state = RecorderStateReady;
                 }
@@ -1095,7 +1095,7 @@ void MediaRecorderObjectTask::filterDoneOnStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
         }
 
       m_state = RecorderStateReady;
@@ -1165,7 +1165,7 @@ void MediaRecorderObjectTask::filterDoneOnErrorStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
           m_state = RecorderStateReady;
         }
@@ -1206,7 +1206,7 @@ void MediaRecorderObjectTask::illegalEncDone(MsgPacket *msg)
           if (checkExternalCmd())
             {
               AsRecorderEvent ext_evt = getExternalCmd();
-              reply(ext_evt, msg->getType(), AS_ECODE_OK);
+              reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
               m_state = RecorderStateReady;
             }
@@ -1219,7 +1219,7 @@ void MediaRecorderObjectTask::illegalEncDone(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
           m_state = RecorderStateReady;
         }
@@ -1257,7 +1257,7 @@ void MediaRecorderObjectTask::encDoneOnActive(MsgPacket *msg)
               if (checkExternalCmd())
                 {
                   AsRecorderEvent ext_evt = getExternalCmd();
-                  reply(ext_evt, msg->getType(), AS_ECODE_OK);
+                  reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
                   m_state = RecorderStateReady;
                 }
@@ -1341,7 +1341,7 @@ void MediaRecorderObjectTask::encDoneOnStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
         }
     }
   else
@@ -1402,7 +1402,7 @@ void MediaRecorderObjectTask::encDoneOnErrorStop(MsgPacket *msg)
       if (checkExternalCmd())
         {
           AsRecorderEvent ext_evt = getExternalCmd();
-          reply(ext_evt, msg->getType(), AS_ECODE_OK);
+          reply(ext_evt, MSG_AUD_MRC_CMD_STOP, AS_ECODE_OK);
 
           m_state = RecorderStateReady;
         }

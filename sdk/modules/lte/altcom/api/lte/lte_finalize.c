@@ -45,7 +45,6 @@
 #include "ltebuilder.h"
 #include "director.h"
 #include "dbg_if.h"
-#include "altcom_callbacks.h"
 #include "altcom_status.h"
 
 /****************************************************************************
@@ -88,13 +87,6 @@ int32_t lte_finalize(void)
     }
   else
     {
-      ret = altcomcallbacks_fin();
-      if (ret < 0)
-        {
-          DBGIF_LOG1_ERROR("callbacks_uninitialize() error. %d", ret);
-          return ret;
-        }
-
       altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
       ret = 0;
     }

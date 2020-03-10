@@ -315,6 +315,10 @@ int32_t lte_get_pinset_sync(lte_getpin_t *pinset)
 
 int32_t lte_get_pinset(get_pinset_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getpinset_impl(NULL, callback);
 }
 

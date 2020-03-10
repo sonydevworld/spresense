@@ -44,8 +44,8 @@
 #include "memutils/message/Message.h"
 #include "memutils/s_stl/queue.h"
 #include "memutils/memory_manager/MemHandle.h"
-#include "audio/audio_high_level_api.h"
 #include "audio/audio_message_types.h"
+#include "audio/audio_frontend_api.h"
 #include "audio_state.h"
 
 #include "components/capture/capture_component.h"
@@ -129,7 +129,7 @@ private:
   AsMicFrontendPreProcType m_preproc_type;
   char m_dsp_path[AS_PREPROCESS_FILE_PATH_LEN];
   int8_t  m_channel_num;
-  AudioPcmBitWidth m_pcm_bit_width;
+  uint8_t m_pcm_bit_width;
   uint32_t m_samples_per_frame;
   int8_t  m_cap_bytes;
   int32_t m_max_output_size;

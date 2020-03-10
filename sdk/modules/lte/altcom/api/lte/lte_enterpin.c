@@ -345,6 +345,10 @@ int32_t lte_enter_pin_sync(int8_t *pincode, int8_t *new_pincode,
 int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
                       enter_pin_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_enterpin_impl(pincode, new_pincode, NULL, NULL, callback);
 }
 

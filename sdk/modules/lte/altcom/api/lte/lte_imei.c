@@ -293,6 +293,10 @@ int32_t lte_get_imei_sync(int8_t *imei)
 
 int32_t lte_get_imei(get_imei_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getimei_impl(NULL, callback);
 }
 

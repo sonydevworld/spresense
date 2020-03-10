@@ -1,0 +1,27 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_SOUND_EFFECTOR
+	bool "Audio sound effector example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio sound effector with object level i/f example
+
+if EXAMPLES_AUDIO_SOUND_EFFECTOR
+
+config EXAMPLES_AUDIO_SOUND_EFFECTOR_PROGNAME
+	string "Program name"
+	default "audio_sound_effector"
+
+config EXAMPLES_AUDIO_SOUND_EFFECTOR_PRIORITY
+	int "Sound effector task priority"
+	default 150
+
+config EXAMPLES_AUDIO_SOUND_EFFECTOR_STACKSIZE
+	int "Sound effector stack size"
+	default 2048
+
+endif

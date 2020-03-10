@@ -52,7 +52,7 @@ CSRCS += cxd56_bcm20706.c
 endif
 
 ifeq ($(CONFIG_MODEM_ALTMDM),y)
-CSRCS += cxd56_altmdm.c
+CSRCS += cxd56_altmdm_power.c
 endif
 
 ifeq ($(CONFIG_CXD56_AUDIO), y)

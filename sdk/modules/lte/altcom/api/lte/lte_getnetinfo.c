@@ -396,6 +396,10 @@ int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info)
 
 int32_t lte_get_netinfo(get_netinfo_cb_t callback)
 {
+  if (!callback) {
+    DBGIF_LOG_ERROR("Input argument is NULL.\n");
+    return -EINVAL;
+  }
   return lte_getnetinfo_impl(0, NULL, callback);
 }
 
