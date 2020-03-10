@@ -17742,5 +17742,6 @@ zkit-arm-1769_8h_source.html
 zm_8h_source.html
 zmodem_8h_source.html
 zoneinfo_8h_source.html
+firmware/*/*.spk
 firmware/*/*.espk
 firmware/*/stored_version.json
