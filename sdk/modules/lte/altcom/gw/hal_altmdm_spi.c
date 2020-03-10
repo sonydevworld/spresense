@@ -47,10 +47,7 @@
 #include <nuttx/modem/altmdm.h>
 #include <nuttx/arch.h>
 #include <nuttx/sched.h>
-// TODO Modify according to the manner of NuttX
-//#include <arch/board/common/cxd56_altmdm.h>
-extern int board_altmdm_initialize(FAR const char *devpath);
-extern int board_altmdm_uninitialize(void);
+#include <arch/board/cxd56_altmdm.h>
 
 #include "dbg_if.h"
 #include "buffpoolwrapper.h"
