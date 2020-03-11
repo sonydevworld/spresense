@@ -14,6 +14,38 @@ config LTE_USE_BUFFPOOL
 
 endif
 
+config LTE_DEBUG_FEATURES
+	bool "Enable LTE Debug Features"
+	default n
+
+if LTE_DEBUG_FEATURES
+
+config LTE_DEBUG_ERROR
+	bool "Enable Error Output"
+	default n
+
+config LTE_DEBUG_WARN
+	bool "Enable Warnings Output"
+	default n
+	depends on LTE_DEBUG_ERROR
+
+config LTE_DEBUG_NOTICE
+	bool "Enable Notice Output"
+	default n
+	depends on LTE_DEBUG_WARN
+
+config LTE_DEBUG_INFO
+	bool "Enable Informational Debug Output"
+	default n
+	depends on LTE_DEBUG_NOTICE
+
+config LTE_DEBUG_DEBUG
+	bool "Enable Debug Output"
+	default n
+	depends on LTE_DEBUG_INFO
+
+endif
+
 if MODEM
 
 config MODEM_DEVICE_PATH

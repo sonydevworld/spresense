@@ -40,57 +40,61 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
 #include <sys/types.h>
-#include <sdk/debug.h>
+#include <stdarg.h>
+#include <syslog.h>
 #include <assert.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-// TODO To be enabled logging macro
-#define logdebug(x...)
-#define loginfo(x...)
-#define lognotice(x...)
-#define logwarn(x...)
-#define logerr(x...)
+#define DBGIF_LV_ERR       LOG_ERR
+#define DBGIF_LV_WARN      LOG_WARNING
+#define DBGIF_LV_NORM      LOG_NOTICE
+#define DBGIF_LV_INF       LOG_INFO
+#define DBGIF_LV_DBG       LOG_DEBUG
 
-#define DBGIF_LEVEL_ERR    0x01
-#define DBGIF_LEVEL_WARN   0x02
-#define DBGIF_LEVEL_NOTICE 0x04
-#define DBGIF_LEVEL_INFO   0x08
-#define DBGIF_LEVEL_DEBUG  0x10
-#define DBFIF_LEVEL_MASK   0x1F
+static inline const char* dbgif_syslog_prefix(int level)
+{
+  char *prefix = "[XXX]";
 
-#define DBGIF_LV_ERR       DBGIF_LEVEL_ERR
-#define DBGIF_LV_WARN      DBGIF_LEVEL_WARN
-#define DBGIF_LV_NORM      DBGIF_LEVEL_NOTICE
-#define DBGIF_LV_INF       DBGIF_LEVEL_INFO
-#define DBGIF_LV_DBG       DBGIF_LEVEL_DEBUG
+  switch (level)
+    {
+      case LOG_ERR:
+        prefix = "[ERR]";
+        break;
+      case LOG_WARNING:
+        prefix = "[WRN]";
+        break;
+      case LOG_NOTICE:
+        prefix = "[NMR]";
+        break;
+      case LOG_INFO:
+        prefix = "[INF]";
+        break;
+      case LOG_DEBUG:
+        prefix = "[DBG]";
+        break;
+      default:
+        break;
+    }
 
-#define DBGIF_LOG(lv, fmt, prm1, prm2, prm3) \
-  do { \
-    if (((lv) & DBFIF_LEVEL_MASK) >= DBGIF_LEVEL_DEBUG) \
-      { \
-        logdebug("[DBG] "fmt, prm1, prm2, prm3); \
-      } \
-    else if (((lv) & DBFIF_LEVEL_MASK) >= DBGIF_LEVEL_INFO) \
-      { \
-        loginfo("[INF] "fmt, prm1, prm2, prm3); \
-      } \
-    else if (((lv) & DBFIF_LEVEL_MASK) >= DBGIF_LEVEL_NOTICE) \
-      { \
-        lognotice("[NRM] "fmt, prm1, prm2, prm3); \
-      } \
-    else if (((lv) & DBFIF_LEVEL_MASK) >= DBGIF_LEVEL_WARN) \
-      { \
-        logwarn("[WRN] "fmt, prm1, prm2, prm3); \
-      } \
-    else if (((lv) & DBFIF_LEVEL_MASK) >= DBGIF_LEVEL_ERR) \
-      { \
-        logerr("[ERR] "fmt, prm1, prm2, prm3); \
-      } \
-  } while(0)
+  return prefix;
+}
+
+static inline void dbgif_syslog(int level, FAR const IPTR char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  vsyslog(level, fmt, ap);
+  va_end(ap);
+}
+#define DBGIF_EXTRA_FMT "%s %s:%d "
+#define DBGIF_EXTRA_ARG(lv) ,dbgif_syslog_prefix(lv), __FUNCTION__, __LINE__
+#define DBGIF_LOG(lv, fmt, ...) dbgif_syslog(lv, DBGIF_EXTRA_FMT fmt DBGIF_EXTRA_ARG(lv), ##__VA_ARGS__)
 
 #ifdef NDEBUG
 #  define DBGIF_ASSERT(asrt, msg) do { \
