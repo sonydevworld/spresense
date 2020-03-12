@@ -60,7 +60,9 @@ kconfigs = glob.glob('../*/Kconfig')
 
 # Add kconfigs from user application
 if 'SPRESENSE_HOME' in os.environ:
-    kconfigs = kconfigs + glob.glob(os.path.join(os.environ['SPRESENSE_HOME'], "Kconfig"))
+    myapp_root = os.environ['SPRESENSE_HOME']
+    if os.path.isdir(myapp_root):
+        kconfigs = kconfigs + glob.glob(os.path.join(myapp_root, "Kconfig"))
 
 for c in kconfigs:
     dn = os.path.dirname(c).split('/')[-1]

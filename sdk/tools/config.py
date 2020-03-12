@@ -111,9 +111,10 @@ def get_all_defconfigs(configdir):
 
     if 'SPRESENSE_HOME' in os.environ:
         myapp_root = os.environ['SPRESENSE_HOME']
-        for app_config in glob.glob(os.path.join(myapp_root, '*', 'configs')):
-            appname = os.path.basename(os.path.dirname(app_config))
-            get_defconfigs(app_config, category=CAT_MYAPP, prefix=appname)
+        if os.path.isdir(myapp_root):
+            for app_config in glob.glob(os.path.join(myapp_root, '*', 'configs')):
+                appname = os.path.basename(os.path.dirname(app_config))
+                get_defconfigs(app_config, category=CAT_MYAPP, prefix=appname)
 
 def get_defconfig_src(defconfig, kernel):
     if kernel:
