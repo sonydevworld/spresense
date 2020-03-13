@@ -69,7 +69,7 @@ static inline const char* dbgif_syslog_prefix(int level)
         prefix = "[WRN]";
         break;
       case LOG_NOTICE:
-        prefix = "[NMR]";
+        prefix = "[NTC]";
         break;
       case LOG_INFO:
         prefix = "[INF]";
