@@ -42,12 +42,12 @@ if [ "X${TOPDIR}" = "X" ]; then
 fi
 
 APP_VERSION="0.0.0"
-SDK_VERSION="SDK1.5.1"
+SDK_VERSION="SDK2.0.0"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
 
-NUTTX_VERSION="7.22"
+NUTTX_VERSION="8.2"
 
 # Get short hash for specified tag
 GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
