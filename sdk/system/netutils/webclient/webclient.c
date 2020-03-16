@@ -485,7 +485,7 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
   struct timeval tv;
   bool redirected;
   bool https;
-  char *dest,post_size[8];
+  char *dest,*p_buffer,post_size[8];
   int sockfd;
   int len,post_len;
   int ret;
@@ -636,16 +636,18 @@ static int wget_base(FAR const char *url, FAR char *buffer, int buflen,
         }
 
       len = dest - buffer;
+      p_buffer = buffer;
 
       do
         {
-          ret = https ? tls_socket_write(sockfd, buffer, len)
-                      : send(sockfd, buffer, len, 0);
+          ret = https ? tls_socket_write(sockfd, p_buffer, len)
+                      : send(sockfd, p_buffer, len, 0);
           if (ret < 0)
             {
               nerr("ERROR: send failed: %d\n", errno);
               goto errout;
             }
+          p_buffer += ret;
           len = len - ret;
         }
       while (len != 0);
