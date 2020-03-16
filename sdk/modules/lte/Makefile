@@ -60,9 +60,9 @@ include $(wildcard */Make.defs)
 LTESRCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte
 LTEINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)include
 LTEALTCOMINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)lte$(DELIM)altcom$(DELIM)include
+LTEALTCOMAPIINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)include$(DELIM)lte
 
 ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)net}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)opt}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)osal}"
   CFLAGS += -I "${shell cygpath -w $(LTEINCDIR)$(DELIM)util}"
@@ -74,11 +74,12 @@ ifeq ($(WINTOOL),y)
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)evtdisp}"
   CFLAGS += -I "${shell cygpath -w $(LTEALTCOMINCDIR)$(DELIM)gw}"
   CFLAGS += -I "${shell cygpath -w $(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include}"
+  CFLAGS += -I "${shell cygpath -w $(LTEALTCOMAPIINCDIR)$(DELIM)altcom}"
+  CFLAGS += -I "${shell cygpath -w $(LTEALTCOMAPIINCDIR)$(DELIM)altcom$(DELIM)net}"
 ifeq ($(CONFIG_NET),y)
     CFLAGS += -I "${shell cygpath -w $(TOPDIR)$(DELIM)net}"
 endif
 else
-  CFLAGS += -I$(LTEINCDIR)$(DELIM)net
   CFLAGS += -I$(LTEINCDIR)$(DELIM)opt
   CFLAGS += -I$(LTEINCDIR)$(DELIM)osal
   CFLAGS += -I$(LTEINCDIR)$(DELIM)util
@@ -90,6 +91,8 @@ else
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)evtdisp
   CFLAGS += -I$(LTEALTCOMINCDIR)$(DELIM)gw
   CFLAGS += -I$(LTESRCDIR)$(DELIM)net$(DELIM)stubsock$(DELIM)include
+  CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom
+  CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom$(DELIM)net
 ifeq ($(CONFIG_NET),y)
     CFLAGS += -I$(TOPDIR)$(DELIM)net
 endif

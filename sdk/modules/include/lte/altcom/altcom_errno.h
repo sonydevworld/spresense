@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/include/net/altcom_errno.h
+ * modules/include/lte/altcom/altcom_errno.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_INCLUDE_NET_ALTCOM_ERRNO_H
-#define __MODULES_LTE_INCLUDE_NET_ALTCOM_ERRNO_H
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_ERRNO_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_ERRNO_H
 
 /****************************************************************************
  * Included Files
@@ -211,4 +211,4 @@ int32_t altcom_errno(void);
 }
 #endif
 
-#endif /* __MODULES_LTE_INCLUDE_NET_ALTCOM_ERRNO_H */
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_ERRNO_H */

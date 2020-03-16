@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/include/net/altcom_socket.h
+ * modules/include/lte/altcom/net/altcom_socket.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_INCLUDE_NET_ALTCOM_SOCKET_H
-#define __MODULES_LTE_INCLUDE_NET_ALTCOM_SOCKET_H
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_SOCKET_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_SOCKET_H
 
 /****************************************************************************
  * Included Files
@@ -326,4 +326,4 @@ int altcom_write(int sockfd, const void *buf, size_t len);
 }
 #endif
 
-#endif /* __MODULES_LTE_INCLUDE_NET_ALTCOM_SOCKET_H */
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_SOCKET_H */

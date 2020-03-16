@@ -53,6 +53,8 @@
 #include "altcombs.h"
 #include "altcom_callbacks.h"
 
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -275,6 +277,63 @@ int32_t lte_power_on(void)
 }
 
 /****************************************************************************
+ * Name: altcom_power_on
+ *
+ * Description:
+ *   Power on modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_power_on(void)
+{
+  int32_t ret;
+  int32_t state = altcom_get_status();
+
+  /* Check lte status */
+
+  switch (state)
+    {
+      case ALTCOM_STATUS_INITIALIZED:
+        if (!g_halif)
+          {
+            ret = -EFAULT;
+            break;
+          }
+
+        /* Power on the modem */
+
+        ret = g_halif->poweron_modem(g_halif, restart_callback);
+        if (ret == 0)
+          {
+            altcom_set_status(ALTCOM_STATUS_POWERON_ONGOING);
+            lte_set_report_reason(LTE_RESTART_USER_INITIATED);
+          }
+
+        break;
+      case ALTCOM_STATUS_POWERON_ONGOING:
+      case ALTCOM_STATUS_RESET_ONGOING:
+        ret = -EINPROGRESS;
+        break;
+      case ALTCOM_STATUS_POWER_ON:
+        ret = -EALREADY;
+        break;
+      case ALTCOM_STATUS_UNINITIALIZED:
+      default:
+        ret = -EOPNOTSUPP;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: lte_power_off
  *
  * Description:
@@ -290,6 +349,64 @@ int32_t lte_power_on(void)
  ****************************************************************************/
 
 int32_t lte_power_off(void)
+{
+  int32_t ret;
+  int32_t state = altcom_get_status();
+
+  /* Check lte status */
+
+  switch (state)
+    {
+      case ALTCOM_STATUS_INITIALIZED:
+        ret = -EALREADY;
+        break;
+      case ALTCOM_STATUS_POWERON_ONGOING:
+      case ALTCOM_STATUS_RESET_ONGOING:
+      case ALTCOM_STATUS_POWER_ON:
+        if (!g_halif)
+          {
+            ret = -EFAULT;
+            break;
+          }
+
+        /* Power off the modem */
+
+        ret = g_halif->poweroff_modem(g_halif);
+        if (ret == 0)
+          {
+            altcom_set_status(ALTCOM_STATUS_INITIALIZED);
+
+            /* Abort send apicmd for Release waiting sync API responce. */
+
+            apicmdgw_sendabort();
+          }
+
+        break;
+      case ALTCOM_STATUS_UNINITIALIZED:
+      default:
+        ret = -EOPNOTSUPP;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcom_power_off
+ *
+ * Description:
+ *   Power off modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_power_off(void)
 {
   int32_t ret;
   int32_t state = altcom_get_status();

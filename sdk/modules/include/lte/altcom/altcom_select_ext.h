@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_finalize.c
+ * modules/include/lte/altcom/altcom_select_ext.h
  *
  *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
@@ -33,109 +33,71 @@
  *
  ****************************************************************************/
 
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_SELECT_EXT_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_SELECT_EXT_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <stdint.h>
-#include <errno.h>
-
-#include "lte/lte_api.h"
-#include "apiutil.h"
-#include "ltebuilder.h"
-#include "director.h"
-#include "dbg_if.h"
-#include "altcom_status.h"
-
-#include "lte/altcom/altcom_api.h"
+#include "altcom_select.h"
 
 /****************************************************************************
- * Public Functions
+ * Pre-processor Definitions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: lte_finalize
- *
- * Description:
- *   Finalize the LTE library resouces.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
- *
+ * Public Types
  ****************************************************************************/
 
-int32_t lte_finalize(void)
+typedef void (*altcom_select_async_cb_t)(int32_t ret_code, int32_t err_code,
+                                         int32_t id,
+                                         altcom_fd_set *readset,
+                                         altcom_fd_set *writeset,
+                                         altcom_fd_set *exceptset,
+                                         void *priv);
+
+
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
 {
-  int32_t ret;
-  int32_t status;
-
-  status = altcom_get_status();
-  if (status == ALTCOM_STATUS_UNINITIALIZED)
-    {
-      return -EALREADY;
-    }
-  /* Power off the modem if need */
-
-  lte_power_off();
-
-  ret = director_destruct(&g_ltebuilder);
-  if (ret < 0)
-    {
-      DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
-    }
-  else
-    {
-      altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
-      ret = 0;
-    }
-
-  return ret;
-}
+#else
+#define EXTERN extern
+#endif
 
 /****************************************************************************
- * Name: altcom_finalize
- *
- * Description:
- *   Finalize the LTE library resouces.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
- *
+ * Public Function Prototypes
  ****************************************************************************/
 
-int32_t altcom_finalize(void)
-{
-  int32_t ret;
-  int32_t status;
+/****************************************************************************
+ * Name: altcom_select_async
+ ****************************************************************************/
 
-  status = altcom_get_status();
-  if (status == ALTCOM_STATUS_UNINITIALIZED)
-    {
-      return -EALREADY;
-    }
+int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
+                        altcom_fd_set *writeset, altcom_fd_set *exceptset,
+                        altcom_select_async_cb_t callback, void* priv);
 
-  /* Power off the modem if need */
+/****************************************************************************
+ * Name: altcom_select_async_exec_callback
+ ****************************************************************************/
 
-  lte_power_off();
+int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
+                                      int32_t err_code,
+                                      altcom_fd_set *readset,
+                                      altcom_fd_set *writeset,
+                                      altcom_fd_set *exceptset);
 
-  ret = director_destruct(&g_ltebuilder);
-  if (ret < 0)
-    {
-      DBGIF_LOG1_ERROR("director_destruct() error. %d\n", ret);
-    }
-  else
-    {
-      altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
-      ret = 0;
-    }
+/****************************************************************************
+ * Name: altcom_select_async_cancel
+ ****************************************************************************/
 
-  return ret;
+int altcom_select_async_cancel(int id);
+
+#undef EXTERN
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_SELECT_EXT_H */

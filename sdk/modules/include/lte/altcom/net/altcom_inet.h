@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/include/net/altcom_inet.h
+ * modules/include/lte/altcom/net/altcom_inet.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_INCLUDE_NET_ALTCOM_INET_H
-#define __MODULES_LTE_INCLUDE_NET_ALTCOM_INET_H
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_INET_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_INET_H
 
 /****************************************************************************
  * Included Files
@@ -149,4 +149,4 @@ int altcom_inet_aton(const char *cp, struct altcom_in_addr *inp);
 }
 #endif
 
-#endif /* __MODULES_LTE_INCLUDE_NET_ALTCOM_INET_H */
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_INET_H */

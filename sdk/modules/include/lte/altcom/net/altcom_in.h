@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/include/net/altcom_select.h
+ * modules/include/lte/altcom/net/altcom_in.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,48 +33,54 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_INCLUDE_NET_ALTCOM_SELECT_H
-#define __MODULES_LTE_INCLUDE_NET_ALTCOM_SELECT_H
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_IN_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_IN_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <stdint.h>
-#include <string.h>
 #include "altcom_socket.h"
+#include "altcom_inet.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define ALTCOM_FD_SETSIZE       ALTCOM_NSOCKET
-
-#define ALTCOM_FDSETSAFESET(s, code) \
-  do { \
-    if (((s) < ALTCOM_FD_SETSIZE) && ((int)(s) >= 0)) \
-      { \
-        code; \
-      } \
-  } while(0)
-#define ALTCOM_FDSETSAFEGET(s, code) \
-  (((s) < ALTCOM_FD_SETSIZE) && ((int)(s) >= 0) ? (code) : 0)
-
-#define ALTCOM_FD_SET(s, set)   ALTCOM_FDSETSAFESET(s, (set)->fd_bits[(s)/8] |=  (1 << ((s) & 7)))
-#define ALTCOM_FD_CLR(s, set)   ALTCOM_FDSETSAFESET(s, (set)->fd_bits[(s)/8] &= ~(1 << ((s) & 7)))
-#define ALTCOM_FD_ISSET(s, set) ALTCOM_FDSETSAFEGET(s, (set)->fd_bits[(s)/8] &   (1 << ((s) & 7)))
-#define ALTCOM_FD_ZERO(set)     memset((void*)(set), 0, sizeof(*(set)))
+#define ALTCOM_INADDR_ANY            ((altcom_in_addr_t)0x00000000)
+#define ALTCOM_INADDR_NONE           ((altcom_in_addr_t)0xffffffff)
+#define ALTCOM_IN6ADDR_ANY_INIT      {{{0,0,0,0}}}
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
 
-struct altcom_fd_set_s
+struct altcom_sockaddr_in
 {
-  unsigned char fd_bits[(ALTCOM_FD_SETSIZE+7)/8];
+  uint8_t                sin_len;
+  altcom_sa_family_t     sin_family;
+  altcom_in_port_t       sin_port;
+  struct altcom_in_addr  sin_addr;
+#define ALTCOM_SIN_ZERO_LEN 8
+  char                   sin_zero[ALTCOM_SIN_ZERO_LEN];
 };
 
-typedef struct altcom_fd_set_s altcom_fd_set;
+struct altcom_sockaddr_in6
+{
+  uint8_t                sin6_len;
+  altcom_sa_family_t     sin6_family;
+  altcom_in_port_t       sin6_port;
+  uint32_t               sin6_flowinfo;
+  struct altcom_in6_addr sin6_addr;
+  uint32_t               sin6_scope_id;
+};
+
+struct altcom_ip_mreq
+{
+  struct altcom_in_addr imr_multiaddr;
+  struct altcom_in_addr imr_interface;
+};
 
 #ifdef __cplusplus
 #define EXTERN extern "C"
@@ -88,17 +94,10 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
-/****************************************************************************
- * Name: altcom_select
- ****************************************************************************/
-
-int altcom_select(int maxfdp1, altcom_fd_set *readset,
-                  altcom_fd_set *writeset, altcom_fd_set *exceptset,
-                  struct altcom_timeval *timeout);
 
 #undef EXTERN
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __MODULES_LTE_INCLUDE_NET_ALTCOM_SELECT_H */
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_NET_ALTCOM_IN_H */

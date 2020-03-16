@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/include/net/altcom_in.h
+ * modules/include/lte/altcom/altcom_api.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,71 +33,28 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_INCLUDE_NET_ALTCOM_IN_H
-#define __MODULES_LTE_INCLUDE_NET_ALTCOM_IN_H
+#ifndef __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_API_H
+#define __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_API_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <stdint.h>
-#include "altcom_socket.h"
-#include "altcom_inet.h"
+#include "lte/lte_api.h"
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Public function prototypes
  ****************************************************************************/
 
-#define ALTCOM_INADDR_ANY            ((altcom_in_addr_t)0x00000000)
-#define ALTCOM_INADDR_NONE           ((altcom_in_addr_t)0xffffffff)
-#define ALTCOM_IN6ADDR_ANY_INIT      {{{0,0,0,0}}}
-
-/****************************************************************************
- * Public Types
- ****************************************************************************/
-
-struct altcom_sockaddr_in
-{
-  uint8_t                sin_len;
-  altcom_sa_family_t     sin_family;
-  altcom_in_port_t       sin_port;
-  struct altcom_in_addr  sin_addr;
-#define ALTCOM_SIN_ZERO_LEN 8
-  char                   sin_zero[ALTCOM_SIN_ZERO_LEN];
-};
-
-struct altcom_sockaddr_in6
-{
-  uint8_t                sin6_len;
-  altcom_sa_family_t     sin6_family;
-  altcom_in_port_t       sin6_port;
-  uint32_t               sin6_flowinfo;
-  struct altcom_in6_addr sin6_addr;
-  uint32_t               sin6_scope_id;
-};
-
-struct altcom_ip_mreq
-{
-  struct altcom_in_addr imr_multiaddr;
-  struct altcom_in_addr imr_interface;
-};
-
-#ifdef __cplusplus
-#define EXTERN extern "C"
-extern "C"
-{
-#else
-#define EXTERN extern
-#endif
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
+int32_t altcom_initialize(void);
+int32_t altcom_finalize(void);
+int32_t altcom_set_report_restart(restart_report_cb_t restart_callback);
+int32_t altcom_power_on(void);
+int32_t altcom_power_off(void);
+int32_t altcom_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn);
+int32_t altcom_deactivate_pdn_sync(uint8_t session_id);
+int32_t altcom_radio_on_sync(void);
+int32_t altcom_radio_off_sync(void);
 
 
-#undef EXTERN
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __MODULES_LTE_INCLUDE_NET_ALTCOM_IN_H */
+#endif /* __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_API_H */

@@ -50,6 +50,8 @@
 #include "apicmd_radiooff.h"
 #include "lte_radio_off.h"
 
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -247,6 +249,26 @@ errout:
  ****************************************************************************/
 
 int32_t lte_radio_off_sync(void)
+{
+  return altcom_radio_off_sync();
+}
+
+/****************************************************************************
+ * Name: altcom_radio_off_sync
+ *
+ * Description:
+ *   Exit LTE network searches with the radio off.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t altcom_radio_off_sync(void)
 {
   return lte_radiooff_impl(NULL);
 }

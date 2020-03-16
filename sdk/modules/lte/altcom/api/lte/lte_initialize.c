@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_initialize.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,6 +48,8 @@
 #include "altcombs.h"
 #include "altcom_status.h"
 
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Public Data
  ****************************************************************************/
@@ -75,6 +77,45 @@ sys_mutex_t g_lte_apicallback_mtx;
  ****************************************************************************/
 
 int32_t lte_initialize(void)
+{
+  int32_t ret;
+  int32_t status;
+
+  status = altcom_get_status();
+  if (status != ALTCOM_STATUS_UNINITIALIZED)
+    {
+      return -EALREADY;
+    }
+
+  ret = director_construct(&g_ltebuilder, NULL);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("director_construct() error. %d", ret);
+    }
+  else
+    {
+      altcom_set_status(ALTCOM_STATUS_INITIALIZED);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+* Name: altcom_initialize
+*
+* Description:
+*   Initialize the LTE library resouces.
+*
+* Input Parameters:
+*   None
+*
+* Returned Value:
+*   On success, 0 is returned.
+*   On failure, negative value is returned.
+*
+****************************************************************************/
+
+int32_t altcom_initialize(void)
 {
   int32_t ret;
   int32_t status;

@@ -48,6 +48,8 @@
 #include "altcom_callbacks.h"
 #include "lte_report_restart.h"
 
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -98,7 +100,6 @@ int32_t lte_set_report_restart(restart_report_cb_t restart_callback)
     {
       altcomcallbacks_unreg_cb(APICMDID_REPORT_RESTART);
     }
-
   return 0;
 }
 
@@ -155,5 +156,44 @@ int32_t lte_do_restartcallback()
     }
 
   callback(g_lte_set_represtart_reason);
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcom_set_report_restart
+ *
+ * Description:
+ *   Registration Modem restart notification callback.
+ *
+ * Input Parameters:
+ *   restart_callback Callback function to notify that modem restart.
+ *                    Stop report restart at set null this parameter.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_set_report_restart(restart_report_cb_t restart_callback)
+{
+
+  /* Check Lte library status */
+
+  if (ALTCOM_STATUS_UNINITIALIZED == altcom_get_status())
+    {
+      return -EOPNOTSUPP;
+    }
+
+  /* Regist or Unregist report callback */
+
+  if (restart_callback)
+    {
+      altcomcallbacks_reg_cb(restart_callback, APICMDID_REPORT_RESTART);
+    }
+  else
+    {
+      altcomcallbacks_unreg_cb(APICMDID_REPORT_RESTART);
+    }
   return 0;
 }
