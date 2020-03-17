@@ -92,7 +92,7 @@ $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 .built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
 	@ touch $@
 
-install: $(BIN_DIR) .install
+install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
 
 .import: $(BIN) install
 

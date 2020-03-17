@@ -117,6 +117,7 @@ TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
 SDKCLEANDIRS = $(EXTSUBDIRS)
 
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),all)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),install)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),preconfig)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),context)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),depend)))
@@ -198,7 +199,7 @@ distclean: clean subdir_distclean clean_context
 
 endif
 
-install:
+install: $(foreach SDIR, $(TARGETDIRS), $(SDIR)_install)
 
 # Bypass config targets
 
