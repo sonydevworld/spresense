@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_LWM2M
-	bool "LwM2M using LTE example"
+	tristate "LwM2M using LTE example"
 	default n
 	---help---
 		Enable the LwM2M using LTE example

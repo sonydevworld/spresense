@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF),)
 CONFIGURED_APPS += audio_recorder_objif
 endif

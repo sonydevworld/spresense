@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_PROXIMITY),y)
+ifneq ($(CONFIG_EXAMPLES_PROXIMITY),)
 CONFIGURED_APPS += proximity
 endif

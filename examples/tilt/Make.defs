@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_TILT),y)
+ifneq ($(CONFIG_EXAMPLES_TILT),)
 CONFIGURED_APPS += tilt
 endif

@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_MQTT
-	bool "MQTT using LTE example"
+	tristate "MQTT using LTE example"
 	default n
 	---help---
 		Enable the MQTT using LTE example

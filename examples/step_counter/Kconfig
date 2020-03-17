@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_SENSOR_STEP_COUNTER
-	bool "Step counter sensor example"
+	tristate "Step counter sensor example"
 	default n
 	---help---
 		Enable the step_counter sensor example

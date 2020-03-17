@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_FWUPDATE
-	bool "FW Update example"
+	tristate "FW Update example"
 	default n
 	depends on FWUPUTILS_CLIENTS
 	---help---

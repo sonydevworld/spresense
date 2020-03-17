@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_BEEP
-	bool "Audio beep example"
+	tristate "Audio beep example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

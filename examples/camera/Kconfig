@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_CAMERA
-	bool "Camera example"
+	tristate "Camera example"
 	default n
 	---help---
 		Enable the camera example

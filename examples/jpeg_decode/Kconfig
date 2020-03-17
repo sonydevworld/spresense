@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_JPEG_DECODE
-	bool "JPEG decode example"
+	tristate "JPEG decode example"
 	default n
 	---help---
 		Enable the JPEG decode example

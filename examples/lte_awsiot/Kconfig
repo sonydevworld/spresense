@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_AWSIOT
-	bool "AWS IoT using LTE example"
+	tristate "AWS IoT using LTE example"
 	default n
 	---help---
 		Enable the AWS IoT using LTE example

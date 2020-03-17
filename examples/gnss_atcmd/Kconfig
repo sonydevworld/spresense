@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_GNSS_ATCMD
-	bool "GNSS CXD5603 @command emulator example"
+	tristate "GNSS CXD5603 @command emulator example"
 	default n
 	select LIBC_FLOATINGPOINT
 	depends on CXD56_GNSS

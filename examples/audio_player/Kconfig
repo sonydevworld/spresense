@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_PLAYER
-	bool "Audio player example"
+	tristate "Audio player example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

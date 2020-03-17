@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_HTTP_GET
-	bool "HTTP GET method using LTE example"
+	tristate "HTTP GET method using LTE example"
 	default n
 	---help---
 		Enable the HTTP GET method using LTE example

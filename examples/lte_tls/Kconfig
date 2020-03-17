@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_TLS
-	bool "TLS data communication over LTE network example"
+	tristate "TLS data communication over LTE network example"
 	default n
 	---help---
 		Enable the tls data communication over LTE network example.

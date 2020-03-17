@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_LTE_HTTP_GET),y)
+ifneq ($(CONFIG_EXAMPLES_LTE_HTTP_GET),)
 CONFIGURED_APPS += lte_http_get
 endif

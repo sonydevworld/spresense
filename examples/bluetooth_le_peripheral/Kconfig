@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_BLUETOOTH_LE_PERIPHERAL
-	bool "Bluetooth low energy GATT peripheral example"
+	tristate "Bluetooth low energy GATT peripheral example"
 	default n
 	---help---
 		Enable the bluetooth LE peripheral example

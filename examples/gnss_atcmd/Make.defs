@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GNSS_ATCMD),y)
+ifneq ($(CONFIG_EXAMPLES_GNSS_ATCMD),)
 CONFIGURED_APPS += gnss_atcmd
 endif

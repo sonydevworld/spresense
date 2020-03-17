@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GYRO),y)
+ifneq ($(CONFIG_EXAMPLES_GYRO),)
 CONFIGURED_APPS += gyro
 endif

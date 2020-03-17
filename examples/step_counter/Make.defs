@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_SENSOR_STEP_COUNTER),y)
+ifneq ($(CONFIG_EXAMPLES_SENSOR_STEP_COUNTER),)
 CONFIGURED_APPS += step_counter
 endif

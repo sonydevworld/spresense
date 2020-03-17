@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_ADC_MONITOR),y)
+ifneq ($(CONFIG_EXAMPLES_ADC_MONITOR),)
 CONFIGURED_APPS += adc_monitor
 endif

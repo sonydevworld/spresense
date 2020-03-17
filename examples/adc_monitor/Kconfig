@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_ADC_MONITOR
-	bool "ADC monitor example"
+	tristate "ADC monitor example"
 	default n
 	depends on CXD56_ADC
 	---help---

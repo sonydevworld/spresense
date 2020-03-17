@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_PRIME),y)
+ifneq ($(CONFIG_EXAMPLES_PRIME),)
 CONFIGURED_APPS += prime
 endif

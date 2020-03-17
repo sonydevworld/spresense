@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_COLORSENSOR
-	bool "Color sensor example"
+	tristate "Color sensor example"
 	default n
 	depends on SENSORS_BH1745NUC_SCU
 	---help---

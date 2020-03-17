@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_BEEP),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_BEEP),)
 CONFIGURED_APPS += audio_beep
 endif

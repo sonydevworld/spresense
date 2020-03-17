@@ -4,8 +4,8 @@
 #
 
 config EXAMPLES_DNNRT_LENET
-	bool "dnnrt example of LeNet-5"
-    depends on DNN_RT
+	tristate "dnnrt example of LeNet-5"
+	depends on DNN_RT
 	default n
 	---help---
 		classify MNIST digits by LeNet-5

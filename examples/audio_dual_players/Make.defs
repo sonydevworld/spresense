@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS),)
 CONFIGURED_APPS += audio_dual_players
 endif

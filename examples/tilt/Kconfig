@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_TILT
-	bool "Tilt detection example"
+	tristate "Tilt detection example"
 	default n
 	---help---
 		Enable the sensor via SCU Mathfunc example

@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_PROXIMITY
-	bool "Proximity sensor example"
+	tristate "Proximity sensor example"
 	default n
 	depends on SENSORS_APDS9930_SCU || SENSORS_LT1PA01_SCU || SENSORS_RPR0521RS_SCU
 	---help---

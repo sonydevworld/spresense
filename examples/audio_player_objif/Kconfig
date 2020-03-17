@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_PLAYER_OBJIF
-	bool "Audio player (use object if)example"
+	tristate "Audio player (use object if)example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

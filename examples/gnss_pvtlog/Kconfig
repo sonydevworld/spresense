@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_GNSS_PVTLOG
-	bool "GNSS PVTLOG example"
+	tristate "GNSS PVTLOG example"
 	default n
 	depends on CXD56_GNSS
 

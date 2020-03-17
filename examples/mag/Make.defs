@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_MAG),y)
+ifneq ($(CONFIG_EXAMPLES_MAG),)
 CONFIGURED_APPS += mag
 endif

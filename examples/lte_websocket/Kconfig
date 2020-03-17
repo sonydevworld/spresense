@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_WEBSOCKET
-	bool "WebSocket using LTE example"
+	tristate "WebSocket using LTE example"
 	default n
 	---help---
 		Enable the WebSocket using LTE example

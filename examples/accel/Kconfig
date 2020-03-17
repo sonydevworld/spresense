@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_ACCEL
-	bool "Accelerometer sensor example"
+	tristate "Accelerometer sensor example"
 	default n
 	---help---
 		Enable the sensor via SCU example

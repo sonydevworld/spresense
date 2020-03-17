@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_FFT
-	bool "FFT Example"
+	tristate "FFT Example"
 	default n
 	depends on ASMP && EXTERNALS_CMSIS_DSP
 	---help---

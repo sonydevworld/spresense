@@ -32,6 +32,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK),y)
+ifneq ($(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK),)
 CONFIGURED_APPS += bluetooth_a2dp_snk
 endif

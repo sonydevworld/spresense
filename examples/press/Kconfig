@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_PRESS
-	bool "Pressure sensor example"
+	tristate "Pressure sensor example"
 	default n
 	depends on SENSORS_BMP280 || SENSORS_BMP280_SCU || SENSORS_BM1383GLV_SCU
 	---help---

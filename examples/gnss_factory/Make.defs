@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GNSS_FACTORY),y)
+ifneq ($(CONFIG_EXAMPLES_GNSS_FACTORY),)
 CONFIGURED_APPS += gnss_factory
 endif

@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_MAG
-	bool "Magnetometer sensor example"
+	tristate "Magnetometer sensor example"
 	default n
 	---help---
 		Enable the sensor via SCU example

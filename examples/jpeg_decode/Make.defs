@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_JPEG_DECODE),y)
+ifneq ($(CONFIG_EXAMPLES_JPEG_DECODE),)
 CONFIGURED_APPS += jpeg_decode
 endif

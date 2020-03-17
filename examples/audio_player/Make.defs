@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_PLAYER),)
 CONFIGURED_APPS += audio_player
 endif

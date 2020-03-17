@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_PCM_CAPTURE_OBJIF),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_PCM_CAPTURE_OBJIF),)
 CONFIGURED_APPS += audio_pcm_capture_objif
 endif
