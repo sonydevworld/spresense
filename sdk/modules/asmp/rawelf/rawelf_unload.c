@@ -99,7 +99,12 @@ int rawelf_unload(struct rawelf_loadinfo_s *loadinfo)
   loadinfo->textsize  = 0;
   loadinfo->datasize  = 0;
 
-   /* Release memory used to hold static constructors and destructors */
+  /*
+   * XXX: Disable this logic because static constructors and destructors
+   * are not supported yet in ASMP loader.
+   */
+#if 0
+  /* Release memory used to hold static constructors and destructors */
 
 #ifdef CONFIG_BINFMT_CONSTRUCTORS
   if (loadinfo->ctoralloc != 0)
@@ -119,6 +124,7 @@ int rawelf_unload(struct rawelf_loadinfo_s *loadinfo)
 
    loadinfo->dtors   = NULL;
    loadinfo->ndtors  = 0;
+#endif
 #endif
 
   return OK;
