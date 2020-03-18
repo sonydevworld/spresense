@@ -94,7 +94,7 @@ KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 # If not, 'make' called directly from user, then bypass to NuttX build.
 
 all:
-ifneq ("$(origin TOPDIR)","command line")
+ifeq ($(MAKELEVEL),0)
 	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) .
 else
 all: .built
@@ -115,7 +115,7 @@ $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),depend)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
-ifneq ("$(origin TOPDIR)","command line")
+ifeq ($(MAKELEVEL),0)
 export:
 	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.zip .
 PHONY += export
@@ -168,7 +168,7 @@ depend_clean:
 	$(Q)find $(SDKDIR) -name ".depend" -delete
 PHONY += depend_clean
 
-ifneq ("$(origin TOPDIR)", "command line")
+ifeq ($(MAKELEVEL),0)
 clean:
 	$(Q) $(MAKE) -C $(TOPDIR) clean
 
