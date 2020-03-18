@@ -101,17 +101,8 @@ all: .built
 endif
 
 SDKSUBDIRS = modules system
-EXTLIBS :=
-
-# Include library build recipes
-
-define ExtSubDirectory_template
-	include $(1)/LibTarget.mk
-endef
 
 EXTSUBDIRS = $(dir $(wildcard ../*/.sdksubdir)) $(SPRESENSE_HOME)
-
-#$(foreach SDIR, $(EXTSUBDIRS), $(eval $(call ExtSubDirectory_template,$(SDIR))))
 
 TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
 SDKCLEANDIRS = $(EXTSUBDIRS)
@@ -124,11 +115,11 @@ $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),depend)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
 $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
-# TBD: remain export target
-$(EXPORTLIBS):
-
-export: $(BIN)
-	$(Q) MAKE=$(MAKE) $(MKEXPORT) $(MKEXPORT_ARGS) -l "$(EXPORTLIBS) $(SDKLIBS) $(EXTLIBS)"
+ifneq ("$(origin TOPDIR)","command line")
+export:
+	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.zip .
+PHONY += export
+endif
 
 dirlinks:
 PHONY += dirlinks
