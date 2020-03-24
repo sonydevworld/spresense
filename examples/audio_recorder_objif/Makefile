@@ -75,7 +75,7 @@ clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 	$(call DELFILE, .worker)
 
-clean: clean_worker
+clean:: clean_worker
 
 endif
 
