@@ -44,7 +44,7 @@ LIB_DIR = "lib"
 endif
 
 LDLIBPATH += -L $(LIB_DIR)
-LDLIBPATH += -L "$(SDKDIR)/lib"
+LDLIBPATH += -L $(TOPDIR)/staging
 
 LDLIBS += -lasmpw -lc
 
