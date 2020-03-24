@@ -242,9 +242,20 @@
 #define APICMDID_TLS_RSA_FREE                   (0x0251)
 #define APICMDID_TLS_RSA_GEN_KEY                (0x0252)
 
+/* SMS API commands */
+
+#define APICMDID_SMS_INIT                       (0x0500)
+#define APICMDID_SMS_FIN                        (0x0501)
+#define APICMDID_SMS_SEND                       (0x0502)
+#define APICMDID_SMS_REPORT_RECV                (0x0503)
+#define APICMDID_SMS_DELETE                     (0x0504)
+#define APICMDID_SMS_GET_STGEINFO               (0x0505)
+#define APICMDID_SMS_GET_LIST                   (0x0506)
+#define APICMDID_SMS_READ                       (0x0507)
+
 #define APICMDID_ERRIND                 (0xFFFF)
 
-#define APICMDID_MAX                    APICMDID_TLS_RSA_GEN_KEY
+#define APICMDID_MAX                    APICMDID_SMS_READ
 
 /* In the case of a response, set 15th bit of the command ID. */
 
