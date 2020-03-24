@@ -105,7 +105,9 @@ context: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_context)
 
 Kconfig:
 	$(foreach SDIR, $(BUILDIRS), $(call MAKE_template,$(SDIR),preconfig))
+ifneq ($(MENUDESC),)
 	$(Q) $(MKKCONFIG) -m $(MENUDESC)
+endif
 
 preconfig: Kconfig
 
