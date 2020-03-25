@@ -33,6 +33,8 @@
 #
 ############################################################################
 
+ifeq ($(CONFIG_MEMUTILS_MEMORY_MANAGER),y)
+
 CXXSRCS = allocSeg.cpp createDynamicPool.cpp createPool.cpp createStaticPools.cpp
 CXXSRCS += destroyDynamicPool.cpp destroyPool.cpp destroyStaticPools.cpp
 CXXSRCS += fence.cpp freeSeg.cpp getSegAddr.cpp getSegSize.cpp getUsedSegs.cpp
@@ -40,5 +42,7 @@ CXXSRCS += incSegRefCnt.cpp initFirst.cpp initPerCpu.cpp ScopedLock.cpp
 
 CXXFLAGS += -D_POSIX
 
-DEPPATH += --dep-path meory_manager/src
+DEPPATH += --dep-path memory_manager/src
 VPATH   += memory_manager/src
+
+endif
