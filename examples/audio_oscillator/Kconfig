@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AUDIO_OSCILLATOR
+	tristate "Audio oscillator example"
+	default n
+	depends on CXD56_AUDIO
+	---help---
+		Enable the audio recorder example
+
+if EXAMPLES_AUDIO_OSCILLATOR
+
+config EXAMPLES_AUDIO_OSCILLATOR_PROGNAME
+	string "Program name"
+	default "audio_oscillator"
+
+config EXAMPLES_AUDIO_OSCILLATOR_PRIORITY
+	int "Audio oscillator task priority"
+	default 100
+
+config EXAMPLES_AUDIO_OSCILLATOR_STACKSIZE
+	int "Audio oscillator stack size"
+	default 2048
+
+config EXAMPLES_AUDIO_OSCILLATOR_USEPOSTPROC
+    bool "Use Posstprocess"
+    default n
+
+endif
