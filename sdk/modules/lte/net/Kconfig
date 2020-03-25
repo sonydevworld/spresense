@@ -9,6 +9,16 @@ menuconfig LTE_NET
 		Enable or disable network features.
 
 if LTE_NET
+
+config LTE_DAEMON_DEBUG_ERR
+	bool "Enable LTE daemon Error Output"
+	default n
+
+config LTE_DAEMON_DEBUG_MSG
+	bool "Enable LTE daemon Debug Output"
+	default n
+	depends on LTE_DAEMON_DEBUG_ERR
+
 source "$APPSDIR/../modules/lte/net/inet/Kconfig"
 source "$APPSDIR/../modules/lte/net/netdb/Kconfig"
 endif

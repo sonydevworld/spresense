@@ -49,6 +49,9 @@
 
 #include "lte/altcom/altcom_api.h"
 
+
+#include "lte/lte_daemon.h"
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -71,27 +74,8 @@
 int32_t lte_finalize(void)
 {
   int32_t ret;
-  int32_t status;
 
-  status = altcom_get_status();
-  if (status == ALTCOM_STATUS_UNINITIALIZED)
-    {
-      return -EALREADY;
-    }
-  /* Power off the modem if need */
-
-  lte_power_off();
-
-  ret = director_destruct(&g_ltebuilder);
-  if (ret < 0)
-    {
-      DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
-    }
-  else
-    {
-      altcom_set_status(ALTCOM_STATUS_UNINITIALIZED);
-      ret = 0;
-    }
+  ret = lte_daemon_fin();
 
   return ret;
 }

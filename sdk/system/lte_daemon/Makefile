@@ -1,7 +1,7 @@
 ############################################################################
-# modules/lte/net/Make.defs
+# system/lte_daemon/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,9 +33,19 @@
 #
 ############################################################################
 
-# Include sub directory source files
+include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
-include net/netdb/Make.defs
-include net/inet/Make.defs
-include net/daemon/Make.defs
+LTEALTCOMAPIINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)include$(DELIM)lte
 
+CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom
+CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom$(DELIM)net
+
+MAINSRC = lte_daemon.c
+
+PROGNAME  = lte_daemon
+PRIORITY  = SCHED_PRIORITY_DEFAULT
+STACKSIZE = 2048
+MODULE    = $(CONFIG_LTE_DAEMON)
+
+include $(APPDIR)/Application.mk

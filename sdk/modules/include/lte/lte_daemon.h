@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_initialize.c
+ * modules/include/lte/lte_daemon.h
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,94 +33,24 @@
  *
  ****************************************************************************/
 
+#ifndef __MODULES_INCLUDE_LTE_LTE_DAEMON_H
+#define __MODULES_INCLUDE_LTE_LTE_DAEMON_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <stdint.h>
-#include <errno.h>
-
 #include "lte/lte_api.h"
-#include "apiutil.h"
-#include "ltebuilder.h"
-#include "director.h"
-#include "dbg_if.h"
-#include "altcombs.h"
-#include "altcom_status.h"
-
-#include "lte/lte_daemon.h"
-#include "lte/altcom/altcom_api.h"
 
 /****************************************************************************
- * Public Data
+ * Public function prototypes
  ****************************************************************************/
 
-bool        g_lte_initialized = false;
-sys_mutex_t g_lte_apicallback_mtx;
+ /* daemon API */
 
-/****************************************************************************
- * Public Functions
- ****************************************************************************/
+int32_t lte_daemon_init(lte_apn_setting_t *apn);
+int32_t lte_daemon_power_on(void);
+int32_t lte_daemon_set_cb(restart_report_cb_t restart_callback);
+int32_t lte_daemon_fin(void);
 
-/****************************************************************************
- * Name: lte_initialize
- *
- * Description:
- *   Initialize the LTE library resouces.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   On success, 0 is returned.
- *   On failure, negative value is returned.
- *
- ****************************************************************************/
-
-int32_t lte_initialize(void)
-{
-  int32_t ret;
-
-  ret = lte_daemon_init(NULL);
-
-  return ret;
-}
-
-/****************************************************************************
-* Name: altcom_initialize
-*
-* Description:
-*   Initialize the LTE library resouces.
-*
-* Input Parameters:
-*   None
-*
-* Returned Value:
-*   On success, 0 is returned.
-*   On failure, negative value is returned.
-*
-****************************************************************************/
-
-int32_t altcom_initialize(void)
-{
-  int32_t ret;
-  int32_t status;
-
-  status = altcom_get_status();
-  if (status != ALTCOM_STATUS_UNINITIALIZED)
-    {
-      return -EALREADY;
-    }
-
-  ret = director_construct(&g_ltebuilder, NULL);
-  if (ret < 0)
-    {
-      DBGIF_LOG1_ERROR("director_construct() error. %d", ret);
-    }
-  else
-    {
-      altcom_set_status(ALTCOM_STATUS_INITIALIZED);
-    }
-
-  return ret;
-}
+#endif /* __MODULES_INCLUDE_LTE_LTE_DAEMON_H */

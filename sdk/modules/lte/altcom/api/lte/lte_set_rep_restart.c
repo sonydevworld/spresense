@@ -48,6 +48,7 @@
 #include "altcom_callbacks.h"
 #include "lte_report_restart.h"
 
+#include "lte/lte_daemon.h"
 #include "lte/altcom/altcom_api.h"
 
 /****************************************************************************
@@ -82,25 +83,11 @@ static int32_t g_lte_set_represtart_reason = LTE_RESTART_USER_INITIATED;
 
 int32_t lte_set_report_restart(restart_report_cb_t restart_callback)
 {
+  int32_t ret;
 
-  /* Check Lte library status */
+  ret = lte_daemon_set_cb(restart_callback);
 
-  if (ALTCOM_STATUS_UNINITIALIZED == altcom_get_status())
-    {
-      return -EOPNOTSUPP;
-    }
-
-  /* Regist or Unregist report callback */
-
-  if (restart_callback)
-    {
-      altcomcallbacks_reg_cb(restart_callback, APICMDID_REPORT_RESTART);
-    }
-  else
-    {
-      altcomcallbacks_unreg_cb(APICMDID_REPORT_RESTART);
-    }
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
