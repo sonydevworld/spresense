@@ -129,6 +129,8 @@ typedef enum
   /*! \brief Waveform */
 
   AsSynthesizerSinWave = 0,
+  AsSynthesizerRectWave, /* 1 */
+  AsSynthesizerSawWave,  /* 2 */
 
   AsSynthesizerWaveModeNum
 
