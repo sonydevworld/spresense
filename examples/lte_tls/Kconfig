@@ -67,7 +67,7 @@ config EXAMPLES_LTE_TLS_APN_USERNAME
 	string "Username used for authentication(same as lte_http_get example)"
 	default ""
 
-config EXAMPLES_LTE_TLS_PASSWD
+config EXAMPLES_LTE_TLS_APN_PASSWD
 	string "Password used for authentication(same as lte_http_get example)"
 	default ""
 
