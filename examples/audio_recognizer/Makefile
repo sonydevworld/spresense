@@ -56,7 +56,7 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
 CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_recognizer$(DELIM)userproc$(DELIM)include"}
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_userproc$(DELIM)userproc$(DELIM)include"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_preprocess$(DELIM)userproc$(DELIM)include"}
 endif
 
 CXXFLAGS += -D_POSIX
@@ -65,10 +65,10 @@ CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
 
 include $(APPDIR)/Application.mk
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-
 build_worker:
+ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 	@$(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+endif
 	@$(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
 .built: build_worker
@@ -76,11 +76,14 @@ build_worker:
 clean:: clean_worker clean_local
 
 clean_local:
+ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 	$(call DELFILE, .worker_preprocess)
+endif
 	$(call DELFILE, .worker_recognizer)
 
 clean_worker:
+ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 	@$(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+endif
 	@$(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
-endif
