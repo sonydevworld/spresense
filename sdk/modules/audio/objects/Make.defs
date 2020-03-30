@@ -35,7 +35,7 @@
 
 ifeq ($(CONFIG_SDK_AUDIO),y)
 
-CXXSRCS += audio_object_common.cpp
+CXXSRCS += audio_object_common.cpp attention.cpp
 VPATH   += objects
 DEPPATH += --dep-path objects
 
