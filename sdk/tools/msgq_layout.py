@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 ############################################################################
-# modules/memutils/message/tool/msgq_layout.py
+# tools/msgq_layout.py
 #
 #   Copyright 2019 Sony Semiconductor Solutions Corporation
 #

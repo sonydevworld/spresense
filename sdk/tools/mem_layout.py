@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ############################################################################
-# modules/memutils/memory_manager/tool/mem_layout.py
+# tools/mem_layout.py
 #
 #   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
