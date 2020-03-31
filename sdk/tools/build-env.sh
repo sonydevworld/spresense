@@ -43,7 +43,7 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 ############################################################################
 
 # Name: spr-create-approot
-# Note: Create application root didectory that will contain user applications.
+# Note: Create application root directory that will contain user applications.
 # Usage: $ spr-create-approot <application home directory>
 function spr-create-approot() {
 	if [ "$#" != 1 ]; then
@@ -62,7 +62,7 @@ function spr-create-approot() {
 			if [ "${input}" == "Y" ]; then
 				echo "Creating application directory into ${SPRESENSE_HOME}"
 				cd ${SPRESENSE_SDK}/sdk
-				${SCRIPT_DIR}/mkappsdir.py -f -s ${SPRESENSE_HOME} "User application"
+				${SCRIPT_DIR}/mkappsdir.py -f ${SPRESENSE_HOME} "User application"
 				cd - &> /dev/null
 			else
 				echo "Create application home directory canceled."
@@ -70,7 +70,7 @@ function spr-create-approot() {
 		else
 			echo "Creating application directory into ${SPRESENSE_HOME}"
 			cd ${SPRESENSE_SDK}/sdk
-			${SCRIPT_DIR}/mkappsdir.py -s ${SPRESENSE_HOME} "User application"
+			${SCRIPT_DIR}/mkappsdir.py ${SPRESENSE_HOME} "User application"
 			cd - &> /dev/null
 		fi
 		# Save current variable
@@ -82,7 +82,7 @@ function spr-create-approot() {
 }
 
 # Name: spr-set-approot
-# Note: Select application root didectory.
+# Note: Select application root directory.
 # Usage: $ spr-set-approot <application home directory>
 function spr-set-approot() {
 	if [ "$#" != 1 ]; then
@@ -94,7 +94,7 @@ function spr-set-approot() {
 			_SPRESENSE_HOME="$(cd ${1}; pwd)"
 		fi
 		if [ -d ${_SPRESENSE_HOME} ]; then
-			if [ -f ${_SPRESENSE_HOME}/Application.mk ]; then
+			if [ -f ${_SPRESENSE_HOME}/.sdksubdir ]; then
 				SPRESENSE_HOME=${_SPRESENSE_HOME}
 
 				# Save current variable
@@ -116,7 +116,7 @@ function spr-set-approot() {
 }
 
 # Name: spr-create-app
-# Note: Create user application into application root didectory.
+# Note: Create user application into application root directory.
 # Usage: $ spr-create-app <application name>
 function spr-create-app() {
 	if [ "$#" != 1 ]; then
@@ -128,13 +128,13 @@ function spr-create-app() {
 	else
 		cd ${SPRESENSE_SDK}/sdk
 		rm -f ${SPRESENSE_HOME}/Kconfig
-		./tools/mkcmd.py -c -d ${SPRESENSE_HOME} ${1}
+		./tools/mkcmd.py -d ${SPRESENSE_HOME} ${1}
 		cd - &> /dev/null
 	fi
 }
 
 # Name: spr-config
-# Note: Create user application into application root didectory.
+# Note: Create user application into application root directory.
 # Usage: $ spr-config <configuration name>...
 function spr-config() {
 	cd ${SPRESENSE_SDK}/sdk
@@ -225,7 +225,7 @@ elif [ ! -d ${SPRESENSE_HOME} ]; then
     echo "         $ spr-create-approot ${SPRESENSE_HOME}"
 fi
 
-if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/Application.mk" ]; then
+if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
     echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
     echo "         Please run next command for create makefiles."
     echo "         $ spr-create-approot ${SPRESENSE_HOME}"
