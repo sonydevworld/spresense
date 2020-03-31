@@ -173,7 +173,7 @@ clean:
 	$(Q) $(MAKE) -C $(TOPDIR) clean
 
 distclean:
-	$(Q) $(MAKE) -C $(TOPDIR) distclean
+	$(Q) $(MAKE) -C $(TOPDIR) distclean CONFIG_APPS_DIR="$(SDKDIR)/apps"
 else
 clean: subdir_clean depend_clean
 	$(call DELFILE, $(BIN))
