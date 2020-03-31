@@ -34,7 +34,7 @@
 #
 ############################################################################
 
-include $(TOPDIR)/Make.defs
+-include $(TOPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # ASMP Example

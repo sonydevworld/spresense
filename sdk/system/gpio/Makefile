@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-include $(TOPDIR)/Make.defs
+-include $(TOPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 ifeq ($(CONFIG_SYSTEM_GPIO_STATUS),y)

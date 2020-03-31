@@ -32,7 +32,7 @@
 #
 ############################################################################
 
-include $(TOPDIR)/Make.defs
+-include $(TOPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # dnnrt_lenet built-in application info
