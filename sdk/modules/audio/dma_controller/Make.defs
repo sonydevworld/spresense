@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_MANAGER),y)
+ifeq ($(CONFIG_SDK_AUDIO),y)
 
 CXXSRCS += audio_bb_drv.cpp audio_dma_buffer.cpp
 CXXSRCS += audio_dma_drv.cpp audio_dma_drv_api.cpp

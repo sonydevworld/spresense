@@ -20,7 +20,6 @@ source "$APPSDIR/../modules/audio/manager/Kconfig"
 config AUDIOUTILS_PLAYER
 	bool "Audio Player"
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -70,7 +69,6 @@ config AUDIOUTILS_RECORDER
 	default n
 	select AUDIOUTILS_SRC
 	select AUDIOUTILS_MFE
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -86,7 +84,6 @@ config AUDIOUTILS_DIAG
 	bool "Audio Diag"
 	depends on CXD56_I2S0
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -100,7 +97,6 @@ config AUDIOUTILS_VOICE_CALL
 	default n
 	select AUDIOUTILS_MFE
 	select AUDIOUTILS_MPP
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -116,7 +112,6 @@ config AUDIOUTILS_VOICE_CALL
 config AUDIOUTILS_SOUND_RECOGNIZER
 	bool "Sound Recognizer"
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -131,8 +126,6 @@ config AUDIOUTILS_SOUND_RECOGNIZER
 config AUDIOUTILS_SYNTHESIZER
 	bool "Audio Synthesizer"
 	default n
-	select AUDIOUTILS_PLAYER
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL

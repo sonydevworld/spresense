@@ -107,6 +107,7 @@ void _Attention(uint8_t module_id,
 
   snprintf(static_cast<char*>(info.error_filename), ATTENTION_FILE_NAME_LEN, "%s", file_name);
 
+#ifdef CONFIG_AUDIOUTILS_MANAGER
   MsgQueId msgq_aud_mgr = AS_GetSelfDtq();
 
   if (AS_IsValidDtq(msgq_aud_mgr))
@@ -119,6 +120,7 @@ void _Attention(uint8_t module_id,
       F_ASSERT(er == ERR_OK);
     }
   else
+#endif
     {
       if (s_attcb_table[module_id].att_cb != NULL)
         {
