@@ -34,14 +34,7 @@ config AUDIOUTILS_FILTER
 	default n
 	select AUDIOUTILS_CUSTOMPROC
 	---help---
-		Enable Filtering Feature
-
-config AUDIOUTILS_POSTPROC
-	bool "Post Filter"
-	default n
-	select AUDIOUTILS_CUSTOMPROC
-	---help---
-		Enable Post Filtering Feature
+		Enable (Pre/Post) Filtering Feature
 
 config AUDIOUTILS_RECOGNITION
 	bool "Recognition"
