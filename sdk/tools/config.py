@@ -157,6 +157,20 @@ class Defconfigs:
             else:
                 self.applies += [c]
 
+    def __is_hostenv(self, string):
+        if re.match(r'[# ]*CONFIG_HOST_LINUX', string): return True
+        if re.match(r'[# ]*CONFIG_HOST_WINDOWS', string): return True
+        if re.match(r'[# ]*CONFIG_HOST_MACOS', string): return True
+        if re.match(r'[# ]*CONFIG_HOST_OTHER', string): return True
+        if re.match(r'[# ]*CONFIG_WINDOWS_NATIVE', string): return True
+        if re.match(r'[# ]*CONFIG_WINDOWS_CYGWIN', string): return True
+        if re.match(r'[# ]*CONFIG_WINDOWS_MSYS', string): return True
+        if re.match(r'[# ]*CONFIG_WINDOWS_UBUNTU', string): return True
+        if re.match(r'[# ]*CONFIG_WINDOWS_OTHER', string): return True
+        if re.match(r'[# ]*CONFIG_SIM_X8664_MICROSOFT', string): return True
+        if re.match(r'[# ]*CONFIG_SIM_X8664_SYSTEMV', string): return True
+        return False
+
     def __tweak_platform(self, opts):
         # We need tweak options related to host environment.
         # This process is needed by NuttX build system.
@@ -193,6 +207,9 @@ class Defconfigs:
         for c in self.applies:
             with open(self.get_fullpath(c), 'r') as f:
                 for line in f:
+                    # Skip if the option is related to build environment
+                    if self.__is_hostenv(line):
+                        continue
                     opts.add(line)
 
         for o in self.enables:
