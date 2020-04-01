@@ -45,7 +45,6 @@ MODULE    = $(CONFIG_EXAMPLES_LTE_AZUREIOT)
 
 # lte_azureiot Example
 
-ASRCS   =
 CSRCS   = azureiot_if.c generate_sas.c mbedtls_if.c lte_connection.c
 MAINSRC = lte_azureiot_main.c
 
