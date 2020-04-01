@@ -32,3 +32,4 @@ Make.dep
 .context
 /Kconfig
 .built
+sdk-export.tar.gz
