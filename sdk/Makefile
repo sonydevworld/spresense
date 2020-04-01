@@ -93,9 +93,12 @@ KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 # If TOPDIR's origin is command line, 'make' called from NuttX build system.
 # If not, 'make' called directly from user, then bypass to NuttX build.
 
-all:
 ifeq ($(MAKELEVEL),0)
+all: $(TOPDIR)/.version
 	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) .
+
+$(TOPDIR)/.version:
+	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
 else
 all: .built
 endif
