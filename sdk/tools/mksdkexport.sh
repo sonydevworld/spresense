@@ -82,10 +82,10 @@ TMP_DIR=`mktemp -d`
 unzip -d ${TMP_DIR} ${NUTTX_EXPORT} > /dev/null
 
 # Change exported file structure
-# ── sdk-export
-#    ├── nuttx   : Exported NuttX
-#    ├── sdk     : SDK extended files
-#    └── LICENSE : Spresense SDK license file
+# -- sdk-export
+#    |-- nuttx   : Exported NuttX
+#    |-- sdk     : SDK extended files
+#    |-- LICENSE : Spresense SDK license file
 
 mkdir -p ${TMP_DIR}/${SDK_EXP_ROOT}
 
