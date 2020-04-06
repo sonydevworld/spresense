@@ -96,6 +96,9 @@ mv ${TMP_DIR}/nuttx-export* ${TMP_DIR}/${SDK_EXP_NUTTX}
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/modules
 cp -a ${SDK_DIR}/modules/include ${TMP_DIR}/${SDK_EXP_SDK}/modules/
 
+# Remove .gitignore files
+find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
+
 # Copy license file
 cp -a ${SDK_DIR}/../LICENSE ${TMP_DIR}/${SDK_EXP_ROOT}/
 
