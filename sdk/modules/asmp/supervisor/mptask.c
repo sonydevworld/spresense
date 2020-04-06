@@ -161,7 +161,7 @@ int mptask_init(mptask_t *task, const char *filename)
 
   /* Set all of CPUs to permitted */
 
-  for (i = 1; i < NMPCPUS; i++)
+  for (i = ACPU; i < NMPCPUS; i++)
     {
       CPU_SET(i, &task->attr.affinity);
     }
@@ -280,7 +280,7 @@ int mptask_cpu_count(cpu_set_t *set)
   int count;
   int i;
 
-  for (i = 1, count = 0; i < NMPCPUS; i++)
+  for (i = ACPU, count = 0; i < NMPCPUS; i++)
     {
       if (CPU_ISSET(i, set))
         {
@@ -303,7 +303,7 @@ static int assign_cpus(mptask_t *task, int ncpus)
     }
 
   CPU_AND(&can, &g_freecpus, &task->attr.affinity);
-  for (cpu = 1; cpu < NMPCPUS && ncpus; cpu++)
+  for (cpu = ACPU; cpu < NMPCPUS && ncpus; cpu++)
     {
       if (CPU_ISSET(cpu, &can))
         {
@@ -325,7 +325,7 @@ static int find_firstcpu(mptask_t *task)
 {
   int cpu;
 
-  for (cpu = 1; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {
