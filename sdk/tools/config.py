@@ -315,6 +315,7 @@ if __name__ == "__main__":
         print('Available configurations:')
         for cat in (None, 'feature', 'device', 'examples'):
             configs = defconfigs.get_configs_by_category(cat)
+            configs.sort()
             for c in configs:
                 print("\t%s" % c)
         sys.exit(0)
