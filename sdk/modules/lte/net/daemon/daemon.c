@@ -918,6 +918,51 @@ static void convstorage_local(FAR const struct altcom_sockaddr_storage *from,
 }
 
 /****************************************************************************
+ * Name: convflags_local
+ ****************************************************************************/
+
+static int convflags_local(int from_flags, int *to_flags)
+{
+  int ret = 0;
+  switch (from_flags)
+    {
+      case MSG_PEEK:
+        to_flags = ALTCOM_MSG_PEEK;
+        break;
+      case MSG_WAITALL:
+        to_flags = ALTCOM_MSG_WAITALL;
+        break;
+      case MSG_OOB:
+        to_flags = ALTCOM_MSG_OOB;
+        break;
+      case MSG_DONTWAIT:
+        to_flags = ALTCOM_MSG_DONTWAIT;
+        break;
+      case MSG_MORE:
+        to_flags = ALTCOM_MSG_MORE;
+        break;
+
+      case MSG_DONTROUTE:
+      case MSG_CTRUNC:
+      case MSG_PROXY:
+      case MSG_TRUNC:
+      case MSG_EOR:
+      case MSG_FIN:
+      case MSG_SYN:
+      case MSG_CONFIRM:
+      case MSG_RST:
+      case MSG_ERRQUEUE:
+      case MSG_NOSIGNAL:
+        ret = -ENOPROTOOPT;
+        break;
+
+      default:
+        break;
+    }
+  return ret;
+}
+
+/****************************************************************************
  * Name: set_select_socket
  ****************************************************************************/
 
@@ -1372,6 +1417,7 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   int                                  ret        = 0;
   int                                  sendto_len = 0;
   altcom_socklen_t                     addr_len   = 0;
+  int                                  flags      = 0;
 
   DEBUGASSERT(priv);
   DEBUGASSERT(req);
@@ -1458,7 +1504,14 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       goto send_resp;
     }
 
-  ret = altcom_sendto(usock->usockid, sendbuf, req->buflen, 0,
+  ret = convflags_local(req->flags, &flags);
+  if (0 > ret)
+    {
+      daemon_error_printf("convert nuttx to altcom failed = %d\n", ret);
+      goto send_resp;
+    }
+
+  ret = altcom_sendto(usock->usockid, sendbuf, req->buflen, flags,
                       pto, addr_len);
   if (0 > ret)
     {
@@ -1518,6 +1571,7 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   uint8_t                               *buf           = NULL;
   altcom_socklen_t                      altcom_fromlen = 0;
   socklen_t                             output_fromlen = 0;
+  int                                   flags          = 0;
 
   DEBUGASSERT(priv);
   DEBUGASSERT(req);
@@ -1567,8 +1621,15 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
         }
     }
 
+  ret = convflags_local(req->flags, &flags);
+  if (0 > ret)
+    {
+      daemon_error_printf("convert nuttx to altcom failed = %d\n", ret);
+      goto send_resp;
+    }
+
   ret = altcom_recvfrom(usock->usockid, buf, req->max_buflen,
-                        0,
+                        flags,
                         (FAR struct altcom_sockaddr *)&storage,
                         &altcom_fromlen);
   if (0 > ret)
