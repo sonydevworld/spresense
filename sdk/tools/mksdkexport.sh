@@ -96,6 +96,10 @@ mv ${TMP_DIR}/nuttx-export* ${TMP_DIR}/${SDK_EXP_NUTTX}
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/modules
 cp -a ${SDK_DIR}/modules/include ${TMP_DIR}/${SDK_EXP_SDK}/modules/
 
+# Copy SDK apps header files
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/apps
+cp -a ${SDK_DIR}/apps/include ${TMP_DIR}/${SDK_EXP_SDK}/apps/
+
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
 
