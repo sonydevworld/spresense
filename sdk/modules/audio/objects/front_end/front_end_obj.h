@@ -143,6 +143,7 @@ private:
 
   typedef void (MicFrontEndObject::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_MFE_MSG_NUM][MicFrontendStateNum];
+  static MsgProc MsgParamTbl[AUD_MFE_PRM_NUM][MicFrontendStateNum];
   static MsgProc RsltProcTbl[AUD_MFE_RST_MSG_NUM][MicFrontendStateNum];
 
   s_std::Queue<AsMicFrontendEvent, 1> m_external_cmd_que;
@@ -165,6 +166,8 @@ private:
   void stopOnActive(MsgPacket *);
   void stopOnErrorStop(MsgPacket *);
   void stopOnWait(MsgPacket *);
+  void set(MsgPacket *msg);
+
   void initPreproc(MsgPacket *msg);
   void setPreproc(MsgPacket *msg);
   void setMicGain(MsgPacket *);

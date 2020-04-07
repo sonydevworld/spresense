@@ -372,17 +372,6 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::illegal         /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_MRC_CMD_ENCODE. */
-
-  {                                           /* Recorder status: */
-    &MediaRecorderObjectTask::illegalReqEnc,  /*   Inactive.      */
-    &MediaRecorderObjectTask::illegalReqEnc,  /*   Ready.         */
-    &MediaRecorderObjectTask::reqEncOnActive, /*   Active.        */
-    &MediaRecorderObjectTask::illegalReqEnc,  /*   Stopping.      */
-    &MediaRecorderObjectTask::illegalReqEnc,  /*   ErrorStopping. */
-    &MediaRecorderObjectTask::illegalReqEnc   /*   WaitStop.      */
-  },
-
   /* Message Type: MSG_AUD_MRC_CMD_FLUSH. */
 
   {                                           /* Recorder status: */
@@ -392,6 +381,17 @@ MediaRecorderObjectTask::MsgProc
     &MediaRecorderObjectTask::flushOnStop,    /*   Stopping.      */
     &MediaRecorderObjectTask::flushOnErrorStop,/*   ErrorStopping. */
     &MediaRecorderObjectTask::flushOnWait     /*   WaitStop.      */
+  },
+
+  /* Message Type: MSG_AUD_MRC_CMD_ENCODE. */
+
+  {                                           /* Recorder status: */
+    &MediaRecorderObjectTask::illegalReqEnc,  /*   Inactive.      */
+    &MediaRecorderObjectTask::illegalReqEnc,  /*   Ready.         */
+    &MediaRecorderObjectTask::reqEncOnActive, /*   Active.        */
+    &MediaRecorderObjectTask::illegalReqEnc,  /*   Stopping.      */
+    &MediaRecorderObjectTask::illegalReqEnc,  /*   ErrorStopping. */
+    &MediaRecorderObjectTask::illegalReqEnc   /*   WaitStop.      */
   },
 };
 

@@ -1715,22 +1715,21 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
       que->reset();
 
       /* Init pthread attributes object. */
-    
+
       pthread_attr_t attr;
-    
       pthread_attr_init(&attr);
 
       /* Set pthread scheduling parameter. */
-    
+
       struct sched_param sch_param;
-    
+
       sch_param.sched_priority = 150;
       attr.stacksize           = 1024 * 3;
-    
+
       pthread_attr_setschedparam(&attr, &sch_param);
 
       /* Create thread. */
-    
+
       int ret = pthread_create(&s_ply_pid,
                                &attr,
                                (pthread_startroutine_t)AS_PlayerObjEntry,
@@ -1755,22 +1754,21 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
       que->reset();
 
       /* Init pthread attributes object. */
-    
+
       pthread_attr_t attr;
-    
       pthread_attr_init(&attr);
 
       /* Set pthread scheduling parameter. */
-    
+
       struct sched_param sch_param;
-    
+
       sch_param.sched_priority = 150;
       attr.stacksize           = 1024 * 3;
-    
+
       pthread_attr_setschedparam(&attr, &sch_param);
 
       /* Create thread. */
- 
+
       int ret = pthread_create(&s_sub_ply_pid,
                                &attr,
                                (pthread_startroutine_t)AS_SubPlayerObjEntry,
@@ -1784,7 +1782,6 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
 
   return true;
 }
-
 
 /*
  * The following tree functions are Old functions for compatibility.
@@ -2093,7 +2090,7 @@ bool AS_DeletePlayer(AsPlayerId id)
           MEDIA_PLAYERS_ERR(id, AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
           return false;
         }
-    
+
       pthread_cancel(s_sub_ply_pid);
       pthread_join(s_sub_ply_pid, NULL);
 

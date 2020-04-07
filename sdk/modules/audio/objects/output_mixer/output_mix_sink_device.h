@@ -99,17 +99,17 @@ struct OutputMixObjParam
 class OutputMixToHPI2S
 {
 public:
-  OutputMixToHPI2S(MsgQueId self_dtq,
-                   MsgQueId dsp_dtq,
+  OutputMixToHPI2S(MsgQueId self_msgq_id,
+                   MsgQueId dsp_msgq_id,
                    MemMgrLite::PoolId cmd_pool,
                    MemMgrLite::PoolId pcm_pool)
-    : m_self_dtq(self_dtq)
-    , m_apu_dtq(dsp_dtq)
+    : m_self_msgq_id(self_msgq_id)
+    , m_apu_msgq_id(dsp_msgq_id)
     , m_apu_pool_id(cmd_pool)
     , m_pcm_pool_id(pcm_pool)
     , m_state(AS_MODULE_ID_OUTPUT_MIX_OBJ, "", Booted)
     , m_p_postfliter_instance(NULL)
-    , m_usercstm_instance(cmd_pool, dsp_dtq)
+    , m_usercstm_instance(cmd_pool, dsp_msgq_id)
     , m_thruproc_instance()
     , m_postproc_type(AsPostprocTypeInvalid)
     , m_callback(NULL)
@@ -122,7 +122,7 @@ public:
   ~OutputMixToHPI2S()
   {}
 
-    MsgQueId m_self_dtq, m_requester_dtq, m_apu_dtq;
+    MsgQueId m_self_msgq_id, m_requester_msgq_id, m_apu_msgq_id;
     MemMgrLite::PoolId m_apu_pool_id;
     MemMgrLite::PoolId m_pcm_pool_id;
     int m_self_handle;
@@ -149,6 +149,7 @@ private:
 
   typedef void (OutputMixToHPI2S::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_MIX_MSG_NUM][StateNum];
+  static MsgProc MsgRsltTbl[AUD_MIX_RST_MSG_NUM][StateNum];
 
   typedef s_std::Queue<AsPcmDataParam, 10> RenderDataQueue;
   RenderDataQueue m_render_data_queue;
@@ -170,7 +171,7 @@ private:
   uint32_t m_max_pcm_buff_size;
   uint32_t m_apucmd_pcm_buff_size;
 
-  void reply(MsgQueId requester_dtq,
+  void reply(MsgQueId requester_msgq_id,
              MsgType msg_type,
              AsOutputMixDoneParam *done_param);
 

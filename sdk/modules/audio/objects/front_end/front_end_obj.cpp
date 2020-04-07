@@ -214,7 +214,24 @@ MicFrontEndObject::MsgProc
   },
 
   /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_SETPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
 
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::set,             /*   Ready.         */
+    &MicFrontEndObject::set,             /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
+  },
+};
+
+/*--------------------------------------------------------------------------*/
+MicFrontEndObject::MsgProc
+  MicFrontEndObject::MsgParamTbl[AUD_MFE_PRM_NUM][MicFrontendStateNum] =
+{
+  /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
   {                                   /* MicFrontend status: */
     &MicFrontEndObject::illegal,         /*   Inactive.      */
     &MicFrontEndObject::initPreproc,     /*   Ready.         */
@@ -235,7 +252,7 @@ MicFrontEndObject::MsgProc
     &MicFrontEndObject::illegal          /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
+  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN */
 
   {                                   /* MicFrontend status: */
     &MicFrontEndObject::illegal,         /*   Inactive.      */
@@ -304,6 +321,16 @@ void MicFrontEndObject::parse(MsgPacket *msg)
 
       (this->*MsgProcTbl[event][m_state.get()])(msg);
     }
+}
+
+/*--------------------------------------------------------------------------*/
+void MicFrontEndObject::set(MsgPacket *msg)
+{
+  uint32_t event;
+  event = MSG_GET_PARAM(msg->getType());
+  F_ASSERT((event < AUD_MFE_PRM_NUM));
+
+  (this->*MsgParamTbl[event][m_state.get()])(msg);
 }
 
 /*--------------------------------------------------------------------------*/

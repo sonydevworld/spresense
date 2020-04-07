@@ -66,16 +66,32 @@
 #define MSG_CAT_AUD_MNG           (MSG_SET_CATEGORY(0x0))
 #define MSG_CAT_AUD_ISR           (MSG_SET_CATEGORY(0x1))
 #define MSG_CAT_AUD_PLY           (MSG_SET_CATEGORY(0x2))
-#define MSG_CAT_AUD_BB            (MSG_SET_CATEGORY(0x3))
+#define MSG_CAT_AUD_SEF           (MSG_SET_CATEGORY(0x3))
 #define MSG_CAT_AUD_RCG           (MSG_SET_CATEGORY(0x4))
 #define MSG_CAT_AUD_MRC           (MSG_SET_CATEGORY(0x5))
 #define MSG_CAT_AUD_SNK           (MSG_SET_CATEGORY(0x6))
 #define MSG_CAT_AUD_MIX           (MSG_SET_CATEGORY(0x7))
 #define MSG_CAT_AUD_MIX_SEF       (MSG_SET_CATEGORY(0x8))
-#define MSG_CAT_AUD_SEF           (MSG_SET_CATEGORY(0x9))
-#define MSG_CAT_AUD_CAP           (MSG_SET_CATEGORY(0xA))
-#define MSG_CAT_AUD_MFE           (MSG_SET_CATEGORY(0xB))
-#define MSG_CAT_AUD_SYN           (MSG_SET_CATEGORY(0xC))
+#define MSG_CAT_AUD_CAP           (MSG_SET_CATEGORY(0x9))
+#define MSG_CAT_AUD_MFE           (MSG_SET_CATEGORY(0xA))
+#define MSG_CAT_AUD_SYN           (MSG_SET_CATEGORY(0xB))
+#define MSG_CAT_AUD_BB            (MSG_SET_CATEGORY(0xC))
+
+/************************************************************************
+ *
+ * Object Base Sub Type
+ *
+ ************************************************************************
+ */
+
+#define MSG_OBJ_SUBTYPE_ACT      (0x00)
+#define MSG_OBJ_SUBTYPE_DEACT    (0x01)
+#define MSG_OBJ_SUBTYPE_INIT     (0x02)
+#define MSG_OBJ_SUBTYPE_START    (0x03)
+#define MSG_OBJ_SUBTYPE_STOP     (0x04)
+#define MSG_OBJ_SUBTYPE_EXEC     (0x05)
+#define MSG_OBJ_SUBTYPE_SET      (0x06)
+#define MSG_OBJ_SUBTYPE_NUM      (MSG_OBJ_SUBTYPE_SET + 1)
 
 /************************************************************************
  *
@@ -83,7 +99,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |  MSG_CAT_MNG  | MSG_SUB_TYPE                  |
+ *  |REQ|USER_AUDIO |  MSG_CAT_MNG  | MSG_SUB_TYPE      | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -132,7 +148,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_ISR| MSG_SUB_TYPE                  |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_ISR| MSG_SUB_TYPE      | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -153,7 +169,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_PLY|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_PLY|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -184,7 +200,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_BB |   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_BB |   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -210,7 +226,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_RCG|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_RCG|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -218,24 +234,24 @@
 #define MSG_AUD_RCG_REQ           (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_RCG)
 #define MSG_AUD_RCG_RES           (MSG_TYPE_AUD_RES | MSG_CAT_AUD_RCG)
 
-#define MSG_AUD_RCG_ACT           (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_RCG_DEACT         (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_RCG_INIT          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_RCG_START         (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_RCG_EXEC          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_RCG_STOP          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x05))
-#define MSG_AUD_RCG_INITRCGPROC   (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x06))
-#define MSG_AUD_RCG_SETRCGPROC    (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(0x07))
+#define MSG_AUD_RCG_ACT           (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_ACT))
+#define MSG_AUD_RCG_DEACT         (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_DEACT))
+#define MSG_AUD_RCG_INIT          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_INIT))
+#define MSG_AUD_RCG_START         (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_START))
+#define MSG_AUD_RCG_STOP          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_STOP))
+#define MSG_AUD_RCG_EXEC          (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_EXEC))
+#define MSG_AUD_RCG_INITRCGPROC   (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_SET) | 0x00)
+#define MSG_AUD_RCG_SETRCGPROC    (MSG_AUD_RCG_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_SET) | 0x01)
 
-#define LAST_AUD_RCG_REQ_MSG      (MSG_AUD_RCG_SETRCGPROC + 1)
-#define AUD_RCG_REQ_MSG_NUM       (LAST_AUD_RCG_REQ_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_RCG_REQ_MSG      (MSG_AUD_RCG_SETRCGPROC)
+#define AUD_RCG_REQ_MSG_NUM       (MSG_GET_SUBTYPE(LAST_AUD_RCG_REQ_MSG) + 1)
 
 #define MSG_AUD_RCG_RCG_CMPLT     (MSG_AUD_RCG_RES | MSG_SET_SUBTYPE(0x00))
 #define MSG_AUD_RCG_FIND_TRIGGER  (MSG_AUD_RCG_RES | MSG_SET_SUBTYPE(0x01))
 #define MSG_AUD_RCG_FIND_COMMAND  (MSG_AUD_RCG_RES | MSG_SET_SUBTYPE(0x02))
 
-#define LAST_AUDRCG_RES_MSG       (MSG_AUD_RCG_RCG_CMPLT + 1)
-#define AUD_RCG_RES_MSG_NUM       (LAST_AUDRCG_RES_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUDRCG_RES_MSG       (MSG_AUD_RCG_RCG_CMPLT)
+#define AUD_RCG_RES_MSG_NUM       (MSG_GET_SUBTYPE(LAST_AUDRCG_RES_MSG) + 1)
 
 /************************************************************************
  *
@@ -243,7 +259,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_MRC|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MRC|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -251,21 +267,21 @@
 #define MSG_AUD_MRC_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MRC)
 #define MSG_AUD_MRC_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MRC)
 
-#define MSG_AUD_MRC_CMD_ACTIVATE    (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_MRC_CMD_DEACTIVATE  (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_MRC_CMD_INIT        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_MRC_CMD_START       (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_MRC_CMD_ENCODE      (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_MRC_CMD_STOP        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_MRC_CMD_ACTIVATE    (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_ACT))
+#define MSG_AUD_MRC_CMD_DEACTIVATE  (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_DEACT))
+#define MSG_AUD_MRC_CMD_INIT        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_INIT))
+#define MSG_AUD_MRC_CMD_START       (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_START))
+#define MSG_AUD_MRC_CMD_STOP        (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_STOP))
+#define MSG_AUD_MRC_CMD_ENCODE      (MSG_AUD_MRC_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_EXEC))
 
-#define LAST_AUD_MRC_MSG    (MSG_AUD_MRC_CMD_STOP + 1)
-#define AUD_MRC_MSG_NUM     (LAST_AUD_MRC_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MRC_MSG    (MSG_AUD_MRC_CMD_ENCODE)
+#define AUD_MRC_MSG_NUM     (MSG_GET_SUBTYPE(LAST_AUD_MRC_MSG) + 1)
 
 #define MSG_AUD_MRC_RST_FILTER      (MSG_AUD_MRC_RES | MSG_SET_SUBTYPE(0x00))
 #define MSG_AUD_MRC_RST_ENC         (MSG_AUD_MRC_RES | MSG_SET_SUBTYPE(0x01))
 
-#define LAST_AUD_MRC_RST_MSG    (MSG_AUD_MRC_RST_ENC + 1)
-#define AUD_MRC_RST_MSG_NUM     (LAST_AUD_MRC_RST_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MRC_RST_MSG    (MSG_AUD_MRC_RST_ENC)
+#define AUD_MRC_RST_MSG_NUM     (MSG_GET_SUBTYPE(LAST_AUD_MRC_RST_MSG) + 1)
 
 /************************************************************************
  *
@@ -273,7 +289,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_SNK|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_SNK|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -296,7 +312,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_MIX|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MIX|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -304,21 +320,23 @@
 #define MSG_AUD_MIX_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MIX)
 #define MSG_AUD_MIX_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MIX)
 
-#define MSG_AUD_MIX_CMD_ACT         (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_MIX_CMD_INIT        (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_MIX_CMD_DATA        (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_MIX_CMD_DEACT       (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_MIX_CMD_PSTFLT_DONE (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_MIX_CMD_RENDER_DONE (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x05))
-#define MSG_AUD_MIX_CMD_CLKRECOVERY (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x06))
-#define MSG_AUD_MIX_CMD_INITMPP     (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x07))
-#define MSG_AUD_MIX_CMD_SETMPP      (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x08))
+#define MSG_AUD_MIX_CMD_ACT         (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_ACT))
+#define MSG_AUD_MIX_CMD_DEACT       (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_DEACT))
+#define MSG_AUD_MIX_CMD_INIT        (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_INIT))
+#define MSG_AUD_MIX_CMD_DATA        (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x03))
+#define MSG_AUD_MIX_CMD_CLKRECOVERY (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x04))
+#define MSG_AUD_MIX_CMD_INITMPP     (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x05))
+#define MSG_AUD_MIX_CMD_SETMPP      (MSG_AUD_MIX_REQ | MSG_SET_SUBTYPE(0x06))
 
-#define LAST_AUD_MIX_MSG   (MSG_AUD_MIX_CMD_SETMPP + 1)
-#define AUD_MIX_MSG_NUM    (LAST_AUD_MIX_MSG & MSG_TYPE_SUBTYPE)
 
-#define MSG_AUD_MIX_RST    (MSG_AUD_MIX_RES | MSG_SET_SUBTYPE(0x00))
+#define LAST_AUD_MIX_MSG             MSG_AUD_MIX_CMD_SETMPP
+#define AUD_MIX_MSG_NUM    (MSG_GET_SUBTYPE(LAST_AUD_MIX_MSG) + 1)
 
+#define MSG_AUD_MIX_RST_PSTFLT_DONE (MSG_AUD_MIX_RES | MSG_SET_SUBTYPE(0x00))
+#define MSG_AUD_MIX_RST_RENDER_DONE (MSG_AUD_MIX_RES | MSG_SET_SUBTYPE(0x01))
+
+#define LAST_AUD_MIX_RST_MSG    (MSG_AUD_MIX_RST_RENDER_DONE)
+#define AUD_MIX_RST_MSG_NUM     (MSG_GET_SUBTYPE(LAST_AUD_MIX_RST_MSG) + 1)
 
 /************************************************************************
  *
@@ -326,7 +344,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_SEF| MSG_SUB_TYPE                  |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_SEF| MSG_SUB_TYPE      | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -356,7 +374,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_CAP|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_CAP|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -383,7 +401,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_MFE|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_MFE|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************
@@ -391,24 +409,31 @@
 #define MSG_AUD_MFE_REQ    (MSG_TYPE_AUD_REQ | MSG_CAT_AUD_MFE)
 #define MSG_AUD_MFE_RES    (MSG_TYPE_AUD_RES | MSG_CAT_AUD_MFE)
 
-#define MSG_AUD_MFE_CMD_ACT          (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x00))
-#define MSG_AUD_MFE_CMD_DEACT        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x01))
-#define MSG_AUD_MFE_CMD_INIT         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x02))
-#define MSG_AUD_MFE_CMD_START        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x03))
-#define MSG_AUD_MFE_CMD_STOP         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x04))
-#define MSG_AUD_MFE_CMD_INITPREPROC  (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x05))
-#define MSG_AUD_MFE_CMD_SETPREPROC   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x06))
-#define MSG_AUD_MFE_CMD_SETMICGAIN   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(0x07))
+#define MSG_AUD_MFE_PRM_INITPREPROC  (0x00)
+#define MSG_AUD_MFE_PRM_SETPREPROC   (0x01)
+#define MSG_AUD_MFE_PRM_SETMICGAIN   (0x02)
 
-#define LAST_AUD_MFE_MSG    (MSG_AUD_MFE_CMD_SETMICGAIN + 1)
-#define AUD_MFE_MSG_NUM     (LAST_AUD_MFE_MSG & MSG_TYPE_SUBTYPE)
+#define MSG_AUD_MFE_CMD_ACT          (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_ACT))
+#define MSG_AUD_MFE_CMD_DEACT        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_DEACT))
+#define MSG_AUD_MFE_CMD_INIT         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_INIT))
+#define MSG_AUD_MFE_CMD_START        (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_START))
+#define MSG_AUD_MFE_CMD_STOP         (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_STOP))
+#define MSG_AUD_MFE_CMD_INITPREPROC  (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_SET) | MSG_AUD_MFE_PRM_INITPREPROC)
+#define MSG_AUD_MFE_CMD_SETPREPROC   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_SET) | MSG_AUD_MFE_PRM_SETPREPROC)
+#define MSG_AUD_MFE_CMD_SETMICGAIN   (MSG_AUD_MFE_REQ | MSG_SET_SUBTYPE(MSG_OBJ_SUBTYPE_SET) | MSG_AUD_MFE_PRM_SETMICGAIN)
+
+#define LAST_AUD_MFE_MSG    (MSG_AUD_MFE_CMD_SETMICGAIN)
+#define AUD_MFE_MSG_NUM     (MSG_GET_SUBTYPE(LAST_AUD_MFE_MSG) + 1)
+
+#define LAST_AUD_MFE_PRM    (MSG_AUD_MFE_PRM_SETMICGAIN)
+#define AUD_MFE_PRM_NUM     (MSG_GET_PARAM(LAST_AUD_MFE_PRM) + 1)
 
 #define MSG_AUD_MFE_RST_CAPTURE_DONE (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x00))
 #define MSG_AUD_MFE_RST_CAPTURE_ERR  (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x01))
 #define MSG_AUD_MFE_RST_PREPROC      (MSG_AUD_MFE_RES | MSG_SET_SUBTYPE(0x02))
 
-#define LAST_AUD_MFE_RST_MSG    (MSG_AUD_MFE_RST_PREPROC + 1)
-#define AUD_MFE_RST_MSG_NUM     (LAST_AUD_MFE_RST_MSG & MSG_TYPE_SUBTYPE)
+#define LAST_AUD_MFE_RST_MSG    (MSG_AUD_MFE_RST_PREPROC)
+#define AUD_MFE_RST_MSG_NUM     (MSG_GET_SUBTYPE(LAST_AUD_MFE_RST_MSG) + 1)
 
 /************************************************************************
  *
@@ -416,7 +441,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ|USER_AUDIO |MSG_CAT_AUD_SYN|   MSG_SUB_TYPE                |
+ *  |REQ|USER_AUDIO |MSG_CAT_AUD_SYN|   MSG_SUB_TYPE    | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  ************************************************************************

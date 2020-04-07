@@ -96,7 +96,7 @@ public:
     m_p_output_device_handler(NULL),
     m_filter_instance(NULL)
   {
-    /* Create instance of components when MediaRecorderObj is created. 
+    /* Create instance of components when MediaRecorderObj is created.
      * Don't new and delete while MediaRecorderObj is active to avoid
      * heap memory area leak.
      */
