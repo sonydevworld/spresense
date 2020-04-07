@@ -873,12 +873,7 @@ bool Playlist::readLine(FAR char *line, uint32_t line_size)
                     sizeof(this->m_line_buffer),
                     this->m_track_db_fp);
 
-  /* EOF indicator will be on when file read and read size is 0.
-   * So, check EOF after fread().
-   */
-
-  int ret = feof(this->m_track_db_fp);
-  if (ret != 0)
+  if (0 == read_size)
     {
       return false;
     }
