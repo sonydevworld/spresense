@@ -100,6 +100,10 @@ cp -a ${SDK_DIR}/modules/include ${TMP_DIR}/${SDK_EXP_SDK}/modules/
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/apps
 cp -a ${SDK_DIR}/apps/include ${TMP_DIR}/${SDK_EXP_SDK}/apps/
 
+# Copy SDK system header files
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/system
+cp -a ${SDK_DIR}/system/include ${TMP_DIR}/${SDK_EXP_SDK}/system/
+
 # Copy External header files
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include
 
