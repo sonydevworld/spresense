@@ -100,6 +100,14 @@ cp -a ${SDK_DIR}/modules/include ${TMP_DIR}/${SDK_EXP_SDK}/modules/
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/apps
 cp -a ${SDK_DIR}/apps/include ${TMP_DIR}/${SDK_EXP_SDK}/apps/
 
+# Copy External header files
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include
+
+# CMSIS header files
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
 
