@@ -923,43 +923,38 @@ static void convstorage_local(FAR const struct altcom_sockaddr_storage *from,
 
 static int convflags_local(int from_flags, int *to_flags)
 {
-  int ret = 0;
-  switch (from_flags)
+
+  if (from_flags & (MSG_DONTROUTE | MSG_CTRUNC | MSG_PROXY | MSG_TRUNC |
+                    MSG_EOR | MSG_FIN | MSG_SYN | MSG_CONFIRM |
+                    MSG_RST | MSG_ERRQUEUE | MSG_NOSIGNAL) )
     {
-      case MSG_PEEK:
-        to_flags = ALTCOM_MSG_PEEK;
-        break;
-      case MSG_WAITALL:
-        to_flags = ALTCOM_MSG_WAITALL;
-        break;
-      case MSG_OOB:
-        to_flags = ALTCOM_MSG_OOB;
-        break;
-      case MSG_DONTWAIT:
-        to_flags = ALTCOM_MSG_DONTWAIT;
-        break;
-      case MSG_MORE:
-        to_flags = ALTCOM_MSG_MORE;
-        break;
-
-      case MSG_DONTROUTE:
-      case MSG_CTRUNC:
-      case MSG_PROXY:
-      case MSG_TRUNC:
-      case MSG_EOR:
-      case MSG_FIN:
-      case MSG_SYN:
-      case MSG_CONFIRM:
-      case MSG_RST:
-      case MSG_ERRQUEUE:
-      case MSG_NOSIGNAL:
-        ret = -ENOPROTOOPT;
-        break;
-
-      default:
-        break;
+      return -ENOPROTOOPT;
     }
-  return ret;
+
+  *to_flags = 0;
+
+  if (from_flags & MSG_PEEK)
+    {
+      *to_flags |= ALTCOM_MSG_PEEK;
+    }
+  if (from_flags & MSG_WAITALL)
+    {
+      *to_flags |= ALTCOM_MSG_WAITALL;
+    }
+  if (from_flags & MSG_OOB)
+    {
+      *to_flags |= ALTCOM_MSG_OOB;
+    }
+  if (from_flags & MSG_DONTWAIT)
+    {
+      *to_flags |= ALTCOM_MSG_DONTWAIT;
+    }
+  if (from_flags & MSG_MORE)
+    {
+      *to_flags |= ALTCOM_MSG_MORE;
+    }
+
+  return 0;
 }
 
 /****************************************************************************
