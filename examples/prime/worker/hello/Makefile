@@ -63,6 +63,8 @@ endif
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
 
+OBJEXT ?= .o
+
 all: $(BIN)
 
 $(COBJS): %$(OBJEXT): %.c
