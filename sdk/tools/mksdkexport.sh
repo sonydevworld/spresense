@@ -108,6 +108,9 @@ cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* ${TMP_DIR}/${SD
 cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
 cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
 
+# MBEDTLS header files
+cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
 
