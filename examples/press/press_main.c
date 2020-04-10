@@ -193,7 +193,8 @@ static void dump_data(void *pressdata, void *tempdata, int nrsamples)
   struct bmp280_meas_s *t = tempdata;
   int up;
   int ut;
-  int compensated;
+  int compensated_p;
+  int compensated_t;
   int i;
 
   for (i = 0; i < nrsamples; i++, p++, t++)
@@ -203,10 +204,11 @@ static void dump_data(void *pressdata, void *tempdata, int nrsamples)
 
       /* Compensate pressure values with temperature */
 
-      bmp280_compensate_T_int32(ut, &g_temp_adj);
-      compensated = bmp280_compensate_P_int32(up, &g_press_adj);
+      compensated_t = bmp280_compensate_T_int32(ut, &g_temp_adj);
+      compensated_p = bmp280_compensate_P_int32(up, &g_press_adj);
 
-      printf("[%3d] %6d (uncomp : %6d)\n", i, compensated, up);
+      printf("[%3d] p=%6d (uncomp:%6d) t=%d (uncomp:%d) \n",
+             i, compensated_p, up, compensated_t, ut);
     }
 }
 
