@@ -1,0 +1,24 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_MBEDTLS_WEBCLIENT
+	bool "mbedTLS webclient support"
+	default n
+	depends on NET_TCP && (EXTERNALS_MBEDTLS || LTE_NET_MBEDTLS)
+	select NETUTILS_WEBCLIENT
+	---help---
+		Enable support mbedTLS webclient
+
+if EXTERNALS_MBEDTLS_WEBCLIENT
+
+config EXTERNALS_MBEDTLS_WEBCLIENT_TIMEOUT
+	int "Request and receive timeouts"
+	default 10
+
+config EXTERNALS_MBEDTLS_WEBCLIENT_CERTS_PATH
+	string "Directory path for TLS certification files"
+	default "/mnt/spif/CERTS"
+
+endif
