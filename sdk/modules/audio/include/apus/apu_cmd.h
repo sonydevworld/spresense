@@ -52,10 +52,6 @@ __APU_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Invalid cpu id. */
-
-#define APU_INVALID_CPU_ID 0xFF
-
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -63,108 +59,6 @@ __APU_BEGIN_NAMESPACE
 #if defined(__CC_ARM)
 #pragma anon_unions
 #endif
-
-/**
- * Result of Apu command
- */
-
-enum exec_result_e
-{
-  ApuExecOK,
-  ApuExecError,
-  ApuWarning
-
-};
-typedef enum exec_result_e ExecResult;
-
-/**
- * Error source 
- */
-
-enum apu_internal_err_src_e
-{
-  FromDrv = 0,  /**< Driver error */
-  FromLib       /**< Library error */
-};
-typedef enum apu_internal_err_src_e ApuInternalErrorSource;
-
-/* Apu Internal Error Code. */
-
-#define APU_SUCCESS                 0x00  /**< OK */
-#define APU_STATE_ERROR             0x01  /**< State violation */
-#define APU_DUMPINIT_ERROR          0x10  /**< Initialization error of dump function */
-#define APU_CODECTYPE_ERROR         0x11  /**< Codec type value error */
-#define APU_STATICAREAINSUFFICIENT  0x12  /**< Library static area insufficient */
-#define APU_CHANNELFORMAT_ERROR     0x13  /**< Channel format value  error */
-#define APU_SAMPLINGRATE_ERROR      0x14  /**< Sampling rate value error */
-#define APU_BITRATE_ERROR           0x15  /**< Bit rate value error */
-#define APU_BYTELEN_ERROR           0x16  /**< Byte length value error */
-#define APU_COMPLEXITY_ERROR        0x17  /**< Complexity value error */
-#define APU_CONTEXTID_ERROR         0x18  /**< Parameter Context Id Error */
-#define APU_PROCESSMODE_ERROR       0x19  /**< Parameter Process Mode Error */
-#define APU_EVENTTYPE_ERROR         0x1A  /**< Parameter Event Type Error */
-#define APU_BUFFERADDR_ERROR        0x1B  /**< Parameter Buffer Address Error */
-#define APU_BUFFERSIZE_ERROR        0x1C  /**< Parameter Buffer Size Error */
-#define APU_LIBVERSION_ERROR        0x1D  /**< Library Version Error */
-#define APU_INIT_ERROR              0x20  /**< Library initialization error */
-#define APU_DECODE_ERROR            0x30  /**< Decoder library error */
-#define APU_ENCODE_ERROR            0x40  /**< Encoder library error */
-#define APU_SRC_ERROR               0x50  /**< Sampling rate converter library error */
-#define APU_MFE_ERROR               0x60  /**< Mic front end library error */
-#define APU_VAD_ERROR               0x70  /**< VAD library error */
-#define APU_WUWSR_ERROR             0x80  /**< WUWSR library error */
-#define APU_QUEUEFULL_ERROR         0x90  /**< Queue is full */
-#define APU_QUEUEEMPTY_ERROR        0x91  /**< Queue is empty */
-#define APU_QUEUEPOP_ERROR          0x92  /**< Queue pop error */
-#define APU_QUEUEPUSH_ERROR         0x93  /**< Queue push error */
-#define APU_RESORCEBUSY_ERROR       0x94  /**< Resorce busy error */
-#define APU_CPUFIFOSEND_ERROR       0x95  /**< CPU fifo send error */
-
-typedef unsigned char ApuInternalErrorCode;
-
-/*! PCM format */
-enum audio_pcm_format_type_e
-{
-  AudPcmFormatInt16 = 0,  /**< 16bit PCM */
-  AudPcmFormatInt24,      /**< 24bit PCM */
-  AudPcmFormatInt32,      /**< 32bit PCM */
-  AudPcmFormatFloat32     /**< 32bit PCM (float type) */
-};
-typedef enum audio_pcm_format_type_e AudioPcmFormatType;
-
-/* SRC channel mode(24bit only) */
-enum AudioSRCChMode {
-	AudSRCChModeAll = 0,  /**< All channel mode */
-	AudSRCChModeEven,     /**< Even channel only mode */
-	AudSRCChModeOdd       /**< Odd channel only mode */
-};
-
-/* xLOUD mode */
-enum audio_xloud_mode_e
-{
-  AudXloudModeNormal = 0,  /**< Normal mode */
-  AudXloudModeCinema,      /**< Cinema mode */
-  AudXloudModeDisable      /**< Disable, Path through */
-};
-typedef enum audio_xloud_mode_e AudioXloudMode;
-
-/* EAX mode */
-enum audio_eax_mode_e
-{
-  AudEaxModeNormal = 0,  /**< Nomarl mode */
-  AudEaxModeCall,        /**< Call mode */
-  AudEaxModeDisable      /**< Disable, xLOUD not effective */
-};
-typedef enum audio_eax_mode_e AudioEaxMode;
-
-/* xLOUD set type */
-enum audio_xloud_set_type_e
-{
-  AudXloudSetCommon = 0,  /**< Common */
-  AudXloudSetIndividual,  /**< Individual */
-  AudXloudSetTypeNum
-};
-typedef enum audio_xloud_set_type_e AudioXloudSetType;
 
 /****************************************************************************/
 /**
@@ -237,7 +131,7 @@ typedef struct apu_result_s ApuResult;
 struct apu_pcm_param_s
 {
 public:
-  AudioPcmBitWidth   bit_length;        /**< Bit length of output data */
+  AudioPcmFormat     bit_length;        /**< Bit length of output data */
   AudioChannelFormat channel_format;    /**< Channel format of output data */
   uint32_t           sampling_rate;     /**< Sampling rate of output data */
   AudioChannelConfig channel_config;    /**< Channel config of output data */
@@ -311,8 +205,9 @@ public:
 
 enum SetOscCmdType
 {
-  OscTypeFrequency = 0x00000001,
-  OscTypeEnvelope  = 0x00000002,
+  OscTypeFrequency = 1, /* 0000 0001 */
+  OscTypeEnvelope  = 2, /* 0000 0010 */
+  OscTypeWave      = 4, /* 0000 0100 */
 };
 
 struct SetOscCmdEnv
@@ -342,10 +237,10 @@ struct ApuInitOscCmd
 struct ApuExecOscCmd
 {
 public:
+  uint8_t      channel_no;       /**< Channel number of data */
   BufferHeader buffer;           /**< Output buffer information */
                                  /**<  (including at least buffer address */
                                  /**<  or pointer and buffer size) */
-  uint8_t      channel_no;       /**< Channel number of data */
 };
 
 /**
@@ -366,7 +261,7 @@ struct ApuSetOscCmd
 {
 public:
   uint8_t       channel_no;      /**< Channel number of data */
-  uint32_t      type;            /**< Type of parameter to set */
+  uint8_t       type;            /**< Type of parameter to set */
   SetOscCmdFreq frequency;       /**< frequency of genarated wave */
   SetOscCmdEnv  env;             /**< envelope of data */
   DebugDumpInfo debug_dump_info; /**< Debug dump information */
@@ -414,16 +309,16 @@ struct ApuInitXLOUDParam
 public:
   uint32_t            input_sampling_rate;     /**< Sampling rate of input data */
   AudioXloudMode      mode;                    /**< xLOUD mode */
-  AudioPcmFormatType  in_pcm_bit_len;          /**< Bit length of input data */
-  AudioPcmFormatType  out_pcm_bit_len;         /**< Bit length of input data */
+  AudioPcmFormat      in_pcm_bit_len;          /**< Bit length of input data */
+  AudioPcmFormat      out_pcm_bit_len;         /**< Bit length of input data */
   FAR uint8_t         *p_coef_image;           /**< Pointer of optimization coefficient table */
   uint32_t            coef_size;               /**< Size of optimization coefficient table */
   uint32_t            eax_input_sampling_rate; /**< EAX sampling rate of intput data */
   uint8_t             eax_mic_channel_num;     /**< EAX mic channel number of input data */
   uint32_t            eax_sample;              /**< EAX Sample number of input data */
   AudioEaxMode        eax_mode;                /**< EAX mode */
-  AudioPcmFormatType  eax_in_pcm_bit_len;      /**< EAX bit length of input data */
-  AudioPcmFormatType  eax_out_pcm_bit_len;     /**< EAX bit length of input data */
+  AudioPcmFormat      eax_in_pcm_bit_len;      /**< EAX bit length of input data */
+  AudioPcmFormat      eax_out_pcm_bit_len;     /**< EAX bit length of input data */
   bool                eax_enable_external_analysis; /**< EAX setting flag to use external library */
   FAR uint8_t        *p_eax_coef_image;       /**< EAX pointer of optimization coefficient table */
   uint32_t            eax_coef_size;          /**< EAX size of optimization coefficient table */
@@ -654,7 +549,7 @@ struct ApuInitPostFilterCmd
 {
 public:
   uint32_t         ch_num;    /**< Number of channel */
-  AudioPcmBitWidth bit_width; /**< Bit width per sample */
+  AudioPcmFormat   bit_width; /**< Bit width per sample */
   uint32_t         sample;    /**< Number of samples */
 #if !defined(__CC_ARM)
 };
@@ -739,7 +634,7 @@ public:
   uint32_t            input_sampling_rate;   /**< Sampling rate of input data */
   uint32_t            output_sampling_rate;  /**< Sampling rate of output data */
   AudioChannelConfig  channel_config;        /**< Channel config */
-  AudioPcmBitWidth    bit_length;            /**< Bit length */
+  AudioPcmFormat      bit_length;            /**< Bit length */
   union
   {
     ApuInitSBCEncParam  init_sbc_enc_param;  /**< SBC parameter information */

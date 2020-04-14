@@ -95,7 +95,7 @@ private:
     , m_state(AS_MODULE_ID_MIC_FRONTEND_OBJ, "", MicFrontendStateInactive)
     , m_preproc_type(AsMicFrontendPreProcInvalid)
     , m_channel_num(2)
-    , m_pcm_bit_width(AudPcm16Bit)
+    , m_pcm_bit_width(AudPcmFormatInt16)
     , m_samples_per_frame(768)
     , m_cap_bytes(2)  /* This value depends on the value of
                        * m_pcm_bit_width.

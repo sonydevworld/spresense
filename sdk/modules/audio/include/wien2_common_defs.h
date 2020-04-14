@@ -66,14 +66,18 @@ __WIEN2_BEGIN_NAMESPACE
  * Public Types
  ****************************************************************************/
 
-enum AudioPcmBitWidth
+/***   PCM format(Bit length)   ***/
+enum audio_pcm_format_type_e
 {
-  AudPcm24Bit = 0,
-  AudPcm20Bit,
-  AudPcm18Bit,
-  AudPcm16Bit,
-  AudPcm32Bit
+  AudPcmFormatInt16 = 0,  /**< 16bit PCM */
+  AudPcmFormatInt18,      /**< 18bit PCM */
+  AudPcmFormatInt20,      /**< 20bit PCM */
+  AudPcmFormatInt24,      /**< 24bit PCM */
+  AudPcmFormatInt32,      /**< 32bit PCM */
+  AudPcmFormatFloat32     /**< 32bit PCM (float type) */
 };
+typedef enum audio_pcm_format_type_e AudioPcmFormat;
+
 
 enum AudioChannelFormat
 {

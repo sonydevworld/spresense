@@ -597,8 +597,8 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
   m_channel_num   = cmd.init_param.channel_number;
   m_pcm_bit_width =
     ((cmd.init_param.bit_length == AS_BITLENGTH_16)
-      ? AudPcm16Bit : (cmd.init_param.bit_length == AS_BITLENGTH_24)
-                        ? AudPcm24Bit : AudPcm32Bit);
+      ? AudPcmFormatInt16 : (cmd.init_param.bit_length == AS_BITLENGTH_24)
+                        ? AudPcmFormatInt24 : AudPcmFormatInt32);
   m_bit_rate      = cmd.init_param.bitrate;
   m_complexity    = cmd.init_param.computational_complexity;
   AudioCodec cmd_codec_type = InvalidCodecType;
@@ -706,7 +706,7 @@ uint32_t MediaRecorderObjectTask::initEnc(AsInitRecorderParam *param)
         }
       else
         {
-          if (m_pcm_bit_width == AudPcm24Bit)
+          if (m_pcm_bit_width == AudPcmFormatInt24)
             {
               init_param.fixparam.in_bitlength  = AS_BITLENGTH_32;
               init_param.fixparam.out_bitlength = AS_BITLENGTH_24;

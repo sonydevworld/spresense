@@ -57,7 +57,7 @@ struct InitEncParam
   AudioCodec       codec_type;
   uint32_t         input_sampling_rate;
   uint32_t         output_sampling_rate;
-  AudioPcmBitWidth bit_width;
+  AudioPcmFormat   bit_width;
   uint8_t          channel_num;
   uint8_t          complexity;
   uint32_t         bit_rate;

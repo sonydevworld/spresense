@@ -204,10 +204,10 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam *param, uint32_t* dsp_inf)
     param->mode;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.in_pcm_bit_len =
-    static_cast<Apu::AudioPcmFormatType>((param->in_bytelength) << 3);
+    static_cast<AudioPcmFormat>((param->in_bytelength) << 3);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.out_pcm_bit_len =
-    static_cast<Apu::AudioPcmFormatType>((param->out_bytelength) << 3);
+    static_cast<AudioPcmFormat>((param->out_bytelength) << 3);
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.p_coef_image =
     reinterpret_cast<uint8_t*>(param->p_xloud_coef_image);
@@ -230,10 +230,10 @@ uint32_t MPPComponent::init_apu(InitXLOUDParam *param, uint32_t* dsp_inf)
     false;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_in_pcm_bit_len =
-    Apu::AudPcmFormatInt16;
+    AudPcmFormatInt16;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.eax_out_pcm_bit_len =
-    Apu::AudPcmFormatInt16;
+    AudPcmFormatInt16;
 
   p_apu_cmd->init_filter_cmd.init_xloud_param.p_eax_coef_image =
     reinterpret_cast<uint8_t*>(param->p_eax_coef_image);

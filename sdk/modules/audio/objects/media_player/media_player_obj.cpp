@@ -1386,7 +1386,7 @@ uint32_t PlayerObj::startPlay(uint32_t* dsp_inf)
   init_dec_comp_param.p_requester         = static_cast<void*>(this);
   init_dec_comp_param.bit_width =
     ((m_input_device_handler->getBitLen() == AS_BITLENGTH_16) ?
-     AudPcm16Bit : AudPcm24Bit);
+     AudPcmFormatInt16 : AudPcmFormatInt24);
   init_dec_comp_param.work_buffer.p_buffer = reinterpret_cast<unsigned long*>
       (allocSrcWorkBuf(m_max_src_work_buff_size));
   init_dec_comp_param.work_buffer.size     = m_max_src_work_buff_size;

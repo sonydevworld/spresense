@@ -67,7 +67,7 @@ struct InitDecCompParam
   AudioCodec       codec_type;
   uint32_t         input_sampling_rate;
   AudioChannelNum  channel_num;
-  AudioPcmBitWidth bit_width;
+  AudioPcmFormat   bit_width;
   uint32_t         frame_sample_num;
   DecCompCallback  callback;
   void             *p_requester;
