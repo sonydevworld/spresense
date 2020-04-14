@@ -159,6 +159,12 @@ do
 	cd - > /dev/null
 done
 
+# Remove debugging symbols
+for lib in ${TMP_DIR}/${SDK_EXP_NUTTX}/libs/lib*
+do
+	${STRIP} -g "${lib}"
+done
+
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
 
