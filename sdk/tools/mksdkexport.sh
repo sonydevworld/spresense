@@ -108,12 +108,14 @@ cp -a ${SDK_DIR}/system/include ${TMP_DIR}/${SDK_EXP_SDK}/system/
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include
 
 # CMSIS header files
-cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
-cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
-cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/cmsis
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/Core/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/cmsis/
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/cmsis/
+cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/cmsis/
 
 # MBEDTLS header files
-cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls
+cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/mbedtls/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls/
 
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
