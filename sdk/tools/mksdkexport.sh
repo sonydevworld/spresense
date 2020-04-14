@@ -117,6 +117,48 @@ cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls
 cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/mbedtls/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls/
 
+# Add external library objects into libapps.a
+CROSSDEV=arm-none-eabi-
+ARTMPDIR=`mktemp -d`
+AR=${CROSSDEV}ar
+STRIP=${CROSSDEV}strip
+
+LIBLIST=(\
+	${SDK_DIR}/../externals/cmsis/dsp/libarm_cortexM4lf_math.a\
+	${SDK_DIR}/../externals/cmsis/nn/libcmsis_nn.a\
+)
+
+for lib in ${LIBLIST[@]}
+do
+	if [ ! -f "${lib}" ]; then
+		continue
+	fi
+
+	# Get some shorter names for the library
+	libname=`basename ${lib} .a`
+	shortname=`echo ${libname} | sed -e "s/^lib//g"`
+
+	# Copy the application library unmodified
+	echo "Merging archive: `basename ${lib} .a`"
+
+	# Create a temporary directory and extract all of the objects there
+	# Hmmm.. this probably won't work if the archiver is not 'ar'
+	cd "${ARTMPDIR}"
+	${AR} x "${lib}"
+
+	# Rename each object file (to avoid collision when they are combined)
+	# and add the file to libnuttx
+	for file in `${AR} t ${lib} | sed -e "s/[\r\n]\+//g"`; do
+		mv "${file}" "${shortname}-${file}"
+		${AR} rcs "${TMP_DIR}/${SDK_EXP_NUTTX}/libs/libapps.a" "${shortname}-${file}"
+	done
+
+	# Remove all of extracted object files
+	rm -f *.o
+
+	cd - > /dev/null
+done
+
 # Remove .gitignore files
 find ${TMP_DIR}/${SDK_EXP_ROOT} -name .gitignore -delete
 
