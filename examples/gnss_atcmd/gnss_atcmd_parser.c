@@ -989,25 +989,6 @@ static int command_guse(FAR struct gnss_atcmd_info *info,
   return ret;
 }
 
-static int command_gsuc(FAR struct gnss_atcmd_info *info,
-                        FAR struct atcmd_entry *cmdentry, FAR char *argv[],
-                        int argc)
-{
-  int     ret = -EINVAL;
-  struct cxd56_gnss_usecase_param_s oparam;
-
-  oparam.bitmap = strtoul(argv[1], NULL, 0);
-  oparam.mode = atoi(argv[2]);
-
-  ret = ioctl(info->gnssfd, CXD56_GNSS_IOCTL_SET_USECASE_BITMAP,
-              (unsigned long)&oparam);
-  if (ret < 0)
-    {
-      ret = -errno;
-    }
-  return ret;
-}
-
 static int command_gguc(FAR struct gnss_atcmd_info *info,
                         FAR struct atcmd_entry *cmdentry, FAR char *argv[],
                         int argc)
@@ -1117,7 +1098,6 @@ static struct atcmd_entry atcmd_entry_table[] = {
   {command_qems, "QEMS", 0},
   {command_nop,  "AQCK", 1},
   {command_guse, "GUSE", 1},
-  {command_gsuc, "GSUC", 2},
   {command_gguc, "GGUC", 0},
   {command_gpps, "GPPS", 1},
   {command_nop,  "LEMG", 0},
