@@ -92,6 +92,10 @@ mkdir -p ${TMP_DIR}/${SDK_EXP_ROOT}
 # Move exported nuttx
 mv ${TMP_DIR}/nuttx-export* ${TMP_DIR}/${SDK_EXP_NUTTX}
 
+# Copy SDK include header files
+mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}
+cp -a ${SDK_DIR}/include ${TMP_DIR}/${SDK_EXP_SDK}/
+
 # Copy SDK modules header files
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/modules
 cp -a ${SDK_DIR}/modules/include ${TMP_DIR}/${SDK_EXP_SDK}/modules/
