@@ -886,6 +886,8 @@ int main(int argc, FAR char *argv[])
     }
 #endif
 
+  wget_initialize();
+
   /* Retrieve the file with the specified URL. */
 
   wget(url, g_app_iobuffer, APP_IOBUFFER_LEN, app_wget_cb, NULL);
