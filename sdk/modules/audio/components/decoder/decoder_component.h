@@ -43,7 +43,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
-#include "components/common/component_common.h"
+#include "components/component_base.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -139,7 +139,7 @@ bool AS_decode_deactivate(void *p_instance);
 } /* extern "C" */
 
 
-class DecoderComponent : public ComponentCommon<Apu::InternalResult>
+class DecoderComponent : public ComponentBase
 {
 public:
   DecoderComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid)

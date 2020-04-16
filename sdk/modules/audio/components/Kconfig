@@ -64,10 +64,6 @@ config AUDIOUTILS_CUSTOMPROC
 	---help---
 		Enable Insert silence data
 
-config AUDIOUTILS_COMPONENT_COMMON
-	bool
-	default y if AUDIOUTILS_DECODER || AUDIOUTILS_FILTER || AUDIOUTILS_POSTPROC
-
 config AUDIOUTILS_DSP_DEBUG_DUMP
 	bool "dsp debug dump"
 	default n

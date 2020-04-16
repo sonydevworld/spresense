@@ -44,7 +44,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
-#include "components/common/component_common.h"
+#include "components/component_base.h"
 
 using namespace MemMgrLite;
 
@@ -104,7 +104,7 @@ bool AS_encode_recv_done(void);
 
 } /* extern "C" */
 
-class EncoderComponent : public ComponentCommon<Apu::InternalResult>
+class EncoderComponent : public ComponentBase
 {
 public:
   EncoderComponent(MsgQueId apu_dtq,PoolId apu_pool_id)

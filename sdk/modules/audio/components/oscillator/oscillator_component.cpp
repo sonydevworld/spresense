@@ -201,7 +201,7 @@ uint32_t OscillatorComponent::init(const InitOscParam& param, uint32_t *dsp_inf)
   /* Wait init completion and receive reply information */
 
   Apu::InternalResult internal_result;
-  uint32_t rst = dsp_init_check(m_apu_dtq, &internal_result);
+  uint32_t rst = dsp_init_check<Apu::InternalResult>(m_apu_dtq, &internal_result);
   *dsp_inf = internal_result.value;
 
   /* Free message que */
@@ -303,7 +303,7 @@ bool OscillatorComponent::recv(void *p_response)
 
         /* Notify init completion to myself */
 
-        dsp_init_complete(m_apu_dtq,
+        dsp_init_complete<Apu::InternalResult>(m_apu_dtq,
                           packet->result.exec_result,
                          &packet->result.internal_result[0]);
         return true;

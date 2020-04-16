@@ -51,7 +51,6 @@
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
 
-#include "components/common/component_base.h"
 #include "components/encoder/encoder_component.h"
 #include "components/customproc/thruproc_component.h"
 #include "components/filter/src_filter_component.h"

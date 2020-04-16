@@ -36,79 +36,36 @@
 #ifndef _CUSTOMPROC_BASE_H_
 #define _CUSTOMPROC_BASE_H_
 
-#include <audio/dsp_framework/customproc_command_base.h>
 #include "audio/audio_common_defs.h"
+#include "audio/audio_message_types.h"
+
 #include "memutils/os_utils/chateau_osal.h"
-#include "memutils/memory_manager/MemHandle.h"
+#include "memutils/common_utils/common_assert.h"
+#include "memutils/message/Message.h"
 
-enum ComponentEventType
-{
-  ComponentInit = 0,
-  ComponentExec,
-  ComponentFlush,
-  ComponentSet,
-};
+#include "apus/dsp_audio_version.h"
+#include "wien2_internal_packet.h"
 
-struct ComponentCbParam
-{
-  ComponentEventType event_type;
-  bool               result;
-};
+__WIEN2_BEGIN_NAMESPACE
 
 typedef bool (*ComponentCallback)(ComponentCbParam*, void*);
 
-struct FixedInitParam
+#ifdef CONFIG_AUDIOUTILS_DSP_DEBUG_DUMP
+#define AUDIOUTILS_DSP_DEBUG_DUMP_SIZE  (1948)
+#define LOG_ENTRY_NAME                  (8)
+
+struct DebugLogInfo
 {
-  uint32_t samples;
-  uint32_t in_fs;
-  uint32_t out_fs;
-  uint16_t in_bitlength;
-  uint16_t out_bitlength;
-  uint8_t  ch_num;
+  char name[LOG_ENTRY_NAME];
+  void *addr;
 };
+#endif
 
-struct CustomProcPacket
+template<typename T>
+struct DspResult
 {
-  uint8_t  *addr;
-  uint32_t size;
-};
-
-struct InitComponentParam
-{
-  uint8_t          cmd_type;
-  bool             is_userdraw;
-
-  union
-  {
-    FixedInitParam   fixparam;
-    CustomProcPacket packet;
-  };
-};
-typedef InitComponentParam SetComponentParam;
-
-struct ExecComponentParam
-{
-  AsPcmDataParam        input;
-  MemMgrLite::MemHandle output_mh;
-};
-
-struct FlushComponentParam
-{
-  CustomProcPacket      packet;
-  MemMgrLite::MemHandle output_mh;
-};
-
-struct ComponentCmpltParam
-{
-  bool                 result;
-  AsPcmDataParam       output;
-};
-
-struct ComponentInformParam
-{
-  bool              result;
-  uint32_t          inform_req;
-  AsRecognitionInfo inform_data;
+  uint32_t exec_result;
+  T        internal_result;
 };
 
 class ComponentBase
@@ -117,24 +74,69 @@ public:
   ComponentBase() {}
   virtual ~ComponentBase() {}
 
-  virtual uint32_t init(const InitComponentParam& param) = 0;
-  virtual bool exec(const ExecComponentParam& param) = 0;
-  virtual bool flush(const FlushComponentParam& param) = 0;
-  virtual bool set(const SetComponentParam& param) = 0;
-  virtual bool recv_done(ComponentCmpltParam *cmplt) = 0;
-  virtual bool recv_done(ComponentInformParam *info) = 0;
-  virtual bool recv_done(void) = 0;
+  virtual uint32_t init(const InitComponentParam& param) {F_ASSERT(0);}
+  virtual bool exec(const ExecComponentParam& param) {F_ASSERT(0);}
+  virtual bool flush(const FlushComponentParam& param) {F_ASSERT(0);}
+  virtual bool set(const SetComponentParam& param) {F_ASSERT(0);}
+  virtual bool recv_done(ComponentCmpltParam *cmplt) {F_ASSERT(0);}
+  virtual bool recv_done(ComponentInformParam *info) {F_ASSERT(0);}
+  virtual bool recv_done(void) {F_ASSERT(0);}
   virtual uint32_t activate(ComponentCallback callback,
                             const char *image_name,
                             void *p_requester,
-                            uint32_t *dsp_inf) = 0;
-  virtual bool deactivate() = 0;
+                            uint32_t *dsp_inf) {F_ASSERT(0);}
+  virtual bool deactivate() {F_ASSERT(0);}
+
+  bool dsp_boot_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
 
 protected:
+
+  template<typename T>
+  uint32_t dsp_init_check(MsgQueId dsp_dtq, T *internal)
+  {
+    err_t        err_code;
+    MsgQueBlock  *que;
+    MsgPacket    *msg;
+
+    err_code = MsgLib::referMsgQueBlock(dsp_dtq, &que);
+    F_ASSERT(err_code == ERR_OK);
+
+    err_code = que->recv(TIME_FOREVER, &msg);
+    F_ASSERT(err_code == ERR_OK);
+    F_ASSERT(msg->getType() == MSG_ISR_APU0);
+
+    DspResult<T> dsp_result = msg->moveParam< DspResult<T> >();
+    err_code = que->pop();
+    F_ASSERT(err_code == ERR_OK);
+
+    *internal = dsp_result.internal_result;
+
+    return dsp_result.exec_result;
+  }
+
+  template<typename T>
+  void dsp_init_complete(MsgQueId dsp_dtq, uint32_t result, T *internal)
+  {
+    DspResult<T> dsp_result;
+
+    dsp_result.exec_result     = result;
+    dsp_result.internal_result = *internal;
+
+    err_t er = MsgLib::send< DspResult<T> >(dsp_dtq,
+                                            MsgPriNormal,
+                                            MSG_ISR_APU0,
+                                            0,
+                                            dsp_result);
+    F_ASSERT(er == ERR_OK);
+  }
+
   ComponentCallback m_callback;
 
   void *m_p_requester;
+
 };
+
+__WIEN2_END_NAMESPACE
 
 #endif /* _CUSTOMPROC_BASE_H_ */
 

@@ -376,7 +376,7 @@ uint32_t DecoderComponent::init_apu(const InitDecCompParam& param,
   /* Wait init completion and receive reply information */
 
   Apu::InternalResult internal_result;
-  uint32_t rst = dsp_init_check(m_apu_mid, &internal_result);
+  uint32_t rst = dsp_init_check<Apu::InternalResult>(m_apu_mid, &internal_result);
   *dsp_inf = internal_result.value;
 
   return rst;
@@ -516,7 +516,7 @@ bool DecoderComponent::recv_apu(void *p_response)
       /* Notify init completion to myself */
 
       Apu::InternalResult internal_result = packet->result.internal_result[0];
-      dsp_init_complete(m_apu_mid, packet->result.exec_result, &internal_result);
+      dsp_init_complete<Apu::InternalResult>(m_apu_mid, packet->result.exec_result, &internal_result);
 
       return true;
     }

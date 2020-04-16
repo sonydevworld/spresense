@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audio/components/customproc/thruproc_component.h
+ * modules/audio/components/common/component_base.cpp
  *
  *   Copyright 2018 Sony Semiconductor Solutions Corporation
  *
@@ -33,46 +33,37 @@
  *
  ****************************************************************************/
 
-#ifndef _THRUPROC_COMPONENT_H_
-#define _THRUPROC_COMPONENT_H_
+#include "component_base.h"
 
-#include "audio/dsp_framework/customproc_command_base.h"
-#include "audio/audio_high_level_api.h"
-#include "memutils/s_stl/queue.h"
-#include "components/component_base.h"
+#define DBG_MODULE DBG_MODULE_AS
 
-__USING_WIEN2
+__WIEN2_BEGIN_NAMESPACE
 
-class ThruProcComponent : public ComponentBase
+/*--------------------------------------------------------------------*/
+bool ComponentBase::dsp_boot_check(MsgQueId dsp_dtq,
+                                   uint32_t *dsp_inf)
 {
-public:
-  ThruProcComponent() {}
-  ~ThruProcComponent() {}
+  err_t        err_code;
+  MsgQueBlock  *que;
+  MsgPacket    *msg;
 
-  virtual uint32_t init(const InitComponentParam& param);
-  virtual bool exec(const ExecComponentParam& param);
-  virtual bool flush(const FlushComponentParam& param);
-  virtual bool set(const SetComponentParam& param);
-  virtual bool recv_done(ComponentCmpltParam *cmplt);
-  virtual bool recv_done(ComponentInformParam *info);
-  virtual bool recv_done(void);
-  virtual uint32_t activate(ComponentCallback callback,
-                            const char *image_name,
-                            void *p_requester,
-                            uint32_t *dsp_inf);
-  virtual bool deactivate();
+  err_code = MsgLib::referMsgQueBlock(dsp_dtq, &que);
+  F_ASSERT(err_code == ERR_OK);
 
-private:
-  #define REQ_QUEUE_SIZE 7 
+  err_code = que->recv(TIME_FOREVER, &msg);
+  F_ASSERT(err_code == ERR_OK);
+  F_ASSERT(msg->getType() == MSG_ISR_APU0);
 
-  struct ApuReqData
-  {
-    AsPcmDataParam       pcm;
-  };
+  uint32_t dsp_version = msg->moveParam<uint32_t>();
+  err_code = que->pop();
+  F_ASSERT(err_code == ERR_OK);
 
-  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
-  ReqQue m_req_que;
-};
+  /* Reply DSP version */
 
-#endif /* _THRUPROC_COMPONENT_H_ */
+  *dsp_inf = dsp_version;
+
+  return true;
+}
+
+__WIEN2_END_NAMESPACE
 

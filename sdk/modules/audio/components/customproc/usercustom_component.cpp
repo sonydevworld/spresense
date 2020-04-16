@@ -130,7 +130,7 @@ uint32_t UserCustomComponent::init(const InitComponentParam& param)
 
   /* Wait for init completion, and check result */
 
-  if (CustomprocCommand::ExecOk != dsp_init_check(m_apu_mid, &dsp_inf))
+  if (CustomprocCommand::ExecOk != dsp_init_check<uint32_t>(m_apu_mid, &dsp_inf))
     {
       return AS_ECODE_DSP_SET_ERROR;
     }
@@ -267,7 +267,7 @@ bool UserCustomComponent::recv_apu(void *p_response)
   if (CustomprocCommand::Init == packet->header.cmd_type)
     {
       uint32_t dmy = 0;
-      dsp_init_complete(m_apu_mid, packet->result.result_code, &dmy);
+      dsp_init_complete<uint32_t>(m_apu_mid, packet->result.result_code, &dmy);
       return true;
     }
 

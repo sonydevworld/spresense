@@ -40,7 +40,7 @@
 #include "wien2_common_defs.h"
 #include "debug/dbg_log.h"
 #include "memutils/s_stl/queue.h"
-#include "components/common/component_base.h"
+#include "components/component_base.h"
 
 __WIEN2_BEGIN_NAMESPACE
 using namespace MemMgrLite;

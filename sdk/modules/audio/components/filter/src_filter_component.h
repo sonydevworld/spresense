@@ -43,8 +43,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 #include "dsp_driver/include/dsp_drv.h"
-#include "components/common/component_common.h"
-#include "components/common/component_base.h"
+#include "components/component_base.h"
 #include "debug/dbg_log.h"
 
 __WIEN2_BEGIN_NAMESPACE
@@ -59,8 +58,7 @@ using namespace MemMgrLite;
 /* Class definitions                                                  */
 /*--------------------------------------------------------------------*/
 
-class SRCComponent : public ComponentBase,
-                     public ComponentCommon<Apu::InternalResult>
+class SRCComponent : public ComponentBase
 {
 private:
 

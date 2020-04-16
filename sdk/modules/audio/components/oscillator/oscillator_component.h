@@ -44,7 +44,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
-#include "components/common/component_common.h"
+#include "components/component_base.h"
 
 using namespace MemMgrLite;
 
@@ -80,7 +80,7 @@ struct InitOscParam : Apu::ApuInitOscCmd
   void            *instance;
 };
 
-class OscillatorComponent : public ComponentCommon<Apu::InternalResult>
+class OscillatorComponent : public ComponentBase
 {
 public:
   OscillatorComponent(MsgQueId apu_dtq, PoolId apu_pool_id)
