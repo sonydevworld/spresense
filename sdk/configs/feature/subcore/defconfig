@@ -5,6 +5,7 @@
 # You can then do "make savedefconfig" to generate a new defconfig file that includes your
 # modifications.
 #
+# CONFIG_ARCH_LEDS is not set
 # CONFIG_CXD56_I2C0_SCUSEQ is not set
 # CONFIG_CXD56_UDMAC is not set
 # CONFIG_DEV_NULL is not set
@@ -42,10 +43,8 @@ CONFIG_I2C=y
 CONFIG_LCD=y
 CONFIG_LCD_NOGETRUN=y
 CONFIG_LIBC_FLOATINGPOINT=y
-CONFIG_MAX_TASKS=8
 CONFIG_MAX_WDOGPARMS=2
 CONFIG_NAME_MAX=64
-CONFIG_NFILE_DESCRIPTORS=8
 CONFIG_NFILE_STREAMS=8
 CONFIG_NSH_ARCHINIT=y
 CONFIG_NSH_BUILTIN_APPS=y
