@@ -745,21 +745,14 @@ static ssize_t sslwebclient_close(int fd)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: mbedtlswebclient_registertransport
+ * Name: wget_ssl_register
  *
  * Description:
- *   Register the SSL/TLS interface in the webclient transport interface
- *   and change it from the default. This interface supports SSL/TLS.
- *
- * Input Parameters
- *   None
- *
- * Returned Value:
- *   None
+ *   Implementation of wget_ssl_register() by mbedTLS
  *
  ****************************************************************************/
 
-void mbedtlswebclient_registertransport(void)
+void wget_ssl_register(void)
 {
   struct wget_transport_s transport;
 
