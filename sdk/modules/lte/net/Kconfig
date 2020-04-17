@@ -10,6 +10,12 @@ menuconfig LTE_NET
 
 if LTE_NET
 
+config LTE_DAEMON_SYNC_TIME
+	bool "Enable synchronization with network time"
+	default y
+	---help---
+	Automatically synchronizes with the network time when network attached.
+
 config LTE_DAEMON_DEBUG_ERR
 	bool "Enable LTE daemon Error Output"
 	default n

@@ -63,6 +63,10 @@
 #include <nuttx/arch.h>
 #include <nuttx/sched.h>
 
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+#  include <sys/time.h>
+#endif
+
 #include "lte/lte_api.h"
 #include "lte/lte_daemon.h"
 
@@ -1120,6 +1124,54 @@ static int setup_event(struct daemon_s *priv)
 
   return ret;
 }
+
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+
+/****************************************************************************
+ * Name: localtime_callback
+ ****************************************************************************/
+
+static void localtime_callback(FAR lte_localtime_t *localtime)
+{
+  int            ret;
+  struct tm      calTime;
+  struct timeval current_time = {0};
+
+  /* lte_localtime_t -> struct tm */
+
+  memset(&calTime, 0, sizeof(struct tm));
+  calTime.tm_year = localtime->year + 100; /* 1900 + 100 + year(0-99) */
+  calTime.tm_mon  = localtime->mon - 1;    /* mon(1-12) - 1 */
+  calTime.tm_mday = localtime->mday;
+  calTime.tm_hour = localtime->hour;
+  calTime.tm_min  = localtime->min;
+  calTime.tm_sec  = localtime->sec;
+
+  /* struct tm -> struct time_t */
+
+  current_time.tv_sec = mktime(&calTime);
+  if (current_time.tv_sec < 0)
+    {
+      daemon_error_printf("mktime falied\n");
+      return;
+    }
+
+  /* Set time */
+
+  ret = settimeofday(&current_time, NULL);
+  if (ret < 0)
+    {
+      daemon_error_printf("settimeofday falied: %d\n", errno);
+      return;
+    }
+
+  daemon_debug_printf("set localtime: %4d/%02d/%02d,%02d:%02d:%02d\n",
+                      localtime->year + 1900 + 100, localtime->mon,
+                      localtime->mday, localtime->hour, localtime->min,
+                      localtime->sec);
+}
+
+#endif
 
 /****************************************************************************
  * Name: socket_request
@@ -2389,6 +2441,10 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
     {
       if (if_req.ifr_flags & IFF_UP)
         {
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+          altcom_set_report_localtime(localtime_callback);
+#endif
+
           ret = altcom_activate_pdn_sync(&priv->apn, &pdn_info);
           if (0 > ret)
             {
@@ -2422,6 +2478,10 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
         }
       if (if_req.ifr_flags & IFF_DOWN)
         {
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+          altcom_set_report_localtime(NULL);
+#endif
+
           ret = altcom_deactivate_pdn_sync(priv->session_id);
           if (0 > ret)
             {

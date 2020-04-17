@@ -49,6 +49,7 @@
 int32_t altcom_initialize(void);
 int32_t altcom_finalize(void);
 int32_t altcom_set_report_restart(restart_report_cb_t restart_callback);
+int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback);
 int32_t altcom_power_on(void);
 int32_t altcom_power_off(void);
 int32_t altcom_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn);
