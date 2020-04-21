@@ -69,10 +69,10 @@ __WIEN2_BEGIN_NAMESPACE
 /***   PCM format(Bit length)   ***/
 enum audio_pcm_format_type_e
 {
-  AudPcmFormatInt16 = 0,  /**< 16bit PCM */
-  AudPcmFormatInt18,      /**< 18bit PCM */
+  AudPcmFormatInt24 = 0,  /**< 24bit PCM */
   AudPcmFormatInt20,      /**< 20bit PCM */
-  AudPcmFormatInt24,      /**< 24bit PCM */
+  AudPcmFormatInt18,      /**< 18bit PCM */	
+  AudPcmFormatInt16,      /**< 16bit PCM */
   AudPcmFormatInt32,      /**< 32bit PCM */
   AudPcmFormatFloat32     /**< 32bit PCM (float type) */
 };
