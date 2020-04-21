@@ -52,38 +52,12 @@ SPRESENSE_HOME = 'SPRESENSE_HOME'
 NO_CATEGORY = 'configs'
 
 # Path to apps directory from nuttx
-APPSDIR = '../sdk/apps'
+APPSDIR = '"../sdk/apps"'
 
-class Defconfig:
+is_not_set = re.compile(r'^# (?P<symbol>.*) is not set')
+is_config = re.compile(r'(?P<symbol>.*)=(?P<value>.*)')
 
-    def __init__(self, path):
-        self.path = os.path.realpath(path)
-        fn = os.path.basename(path)
-        dp = os.path.dirname(path)
-        m = re.match(r'(?P<name>.*)-defconfig$', fn)
-        if m:
-            # Old style defconfigs (configs/*/*-defconfig)
-            self.name = m.group("name")
-            self.category = os.path.basename(dp)
-        else:
-            # Parent directory name as a defconfig name, and it's parent
-            # treated as category. category name may 'configs' when nuttx configs
-            # and user commands.
-
-            self.name = os.path.basename(dp)
-            pp = os.path.dirname(dp)
-            self.category = os.path.basename(pp)
-
-    def get_configname(self):
-        if self.category == None or self.category == "configs":
-            return self.name
-        return "%s/%s" % (self.category, self.name)
-
-    def __repr__(self):
-        return "%s(name: %s, path: %s)" % (self.__class__.__name__,
-                                           self.get_configname(), self.path)
-
-class Defconfigs:
+class DefconfigManager:
 
     def __init__(self, topdir, output=None, platform=None):
         self.defconfigs = []        # Store Defconfig objects
@@ -92,16 +66,12 @@ class Defconfigs:
         self.applies = []           # defconfigs list would be applied
         self.enables = []           # Enable options tweak list
         self.disables = []          # Disable options tweak list
+        self.base = None
 
         if output:
             self.dotconfig = output
         else:
             self.dotconfig = os.path.join(topdir, '.config')
-
-        if platform:
-            self.platform = platfrom
-        else:
-            self.platform = os.uname()[0] # Same as uname -s
 
     def __add_category(self, category):
         if category in self.category:
@@ -110,7 +80,7 @@ class Defconfigs:
 
     def __get_old_styles(self, path):
         for f in glob.glob(os.path.join(path, "**/*-defconfig"), recursive=True):
-            c = Defconfig(f)
+            c = DefconfigManager.DefconfigPath(f)
             logging.debug(c)
             self.defconfigs += [c]
             self.__add_category(c.category)
@@ -118,7 +88,7 @@ class Defconfigs:
     def __get_defconfig(self, path):
         files = glob.glob(os.path.join(path, "**/defconfig"), recursive=True)
         for f in files:
-            c = Defconfig(f)
+            c = DefconfigManager.DefconfigPath(f)
             logging.debug(c)
             self.defconfigs += [c]
             self.__add_category(c.category)
@@ -148,14 +118,43 @@ class Defconfigs:
                 l += [c.get_configname()]
         return l
 
-    def append(self, defconfig):
-        for c in defconfig:
-            if c.startswith('-'):
-                self.disables += [c[1:]] # Kill prefix
-            elif c.startswith('+'):
-                self.enables += [c[1:]]  # Kill prefix
+    class DefconfigPath:
+
+        def __init__(self, path):
+            self.path = os.path.realpath(path)
+            fn = os.path.basename(path)
+            dp = os.path.dirname(path)
+            m = re.match(r'(?P<name>.*)-defconfig$', fn)
+            if m:
+                # Old style defconfigs (configs/*/*-defconfig)
+                self.name = m.group("name")
+                self.category = os.path.basename(dp)
             else:
-                self.applies += [c]
+                # Parent directory name as a defconfig name, and it's parent
+                # treated as category. category name may 'configs' when nuttx configs
+                # and user commands.
+
+                self.name = os.path.basename(dp)
+                pp = os.path.dirname(dp)
+                self.category = os.path.basename(pp)
+
+        def get_configname(self):
+            if self.category == None or self.category == "configs":
+                return self.name
+            return "%s/%s" % (self.category, self.name)
+
+        def __repr__(self):
+            return "%s(name: %s, path: %s)" % (self.__class__.__name__,
+                                               self.get_configname(), self.path)
+
+class Defconfig:
+
+    def __init__(self, name, manager):
+        if name is None:
+            name = 'default'
+        self.path = manager.get_fullpath(name)
+        self.man = manager
+        self.load()
 
     def __is_hostenv(self, string):
         if re.match(r'[# ]*CONFIG_HOST_LINUX', string): return True
@@ -171,66 +170,111 @@ class Defconfigs:
         if re.match(r'[# ]*CONFIG_SIM_X8664_SYSTEMV', string): return True
         return False
 
-    def __tweak_platform(self, opts):
+    def load(self):
+        self.opts = {}
+        with open(self.path, 'r') as f:
+            for line in f:
+                if self.__is_hostenv(line):
+                    continue
+
+                m = is_not_set.match(line)
+                if m:
+                    sym = m.group('symbol').replace('CONFIG_', '', 1)
+                    self.opts[sym] = 'n'
+                else:
+                    m = is_config.match(line)
+                    if m:
+                        sym = m.group('symbol').replace('CONFIG_', '', 1)
+                        self.opts[sym] = m.group('value')
+                    else:
+                        logging.debug('[IGNORE]: %s' % line.strip())
+
+    def tweak_platform(self, platform=None):
         # We need tweak options related to host environment.
         # This process is needed by NuttX build system.
         # See nuttx/tools/configure.sh.
 
-        platform = self.platform
+        if platform is None:
+            platform = os.uname()[0] # Same as uname -s
 
         if re.match(r'Darwin.*', platform):
-            opts.add('CONFIG_HOST_MACOS=y\n')
+            self.opts['HOST_MACOS'] = 'y'
         elif re.match(r'CYGWIN_.*', platform):
-            opts.add('CONFIG_HOST_WINDOWS=y\n')
-            opts.add('CONFIG_TOOLCHAIN_WINDOWS=y\n')
-            opts.add('CONFIG_WINDOWS_CYGWIN=y\n')
+            self.opts['HOST_WINDOWS'] = 'y'
+            self.opts['TOOLCHAIN_WINDOWS'] = 'y'
+            self.opts['WINDOWS_CYGWIN'] = 'y'
         elif re.match(r'MSYS_.*', platform):
-            opts.add('CONFIG_HOST_WINDOWS=y\n')
-            opts.add('CONFIG_TOOLCHAIN_WINDOWS=y\n')
-            opts.add('CONFIG_WINDOWS_MSYS=y\n')
+            self.opts['HOST_WINDOWS'] = 'y'
+            self.opts['TOOLCHAIN_WINDOWS'] = 'y'
+            self.opts['WINDOWS_MSYS'] = 'y'
         elif re.match(r'MINGW.*', platform):
             raise RuntimeError("MinGW currently not supported.")
         else:
-            opts.add('CONFIG_HOST_LINUX=y\n')
-        
-    def apply(self, dest=None):
-        if dest is None:
-            dest = self.dotconfig
+            self.opts['HOST_LINUX'] = 'y'
 
-        logging.debug("Output config file at %s" % dest)
-
-        # Use builtin set object for gathering options from multiple
-        # defconfig files without duplication.
-
-        opts = set()
-
-        for c in self.applies:
-            with open(self.get_fullpath(c), 'r') as f:
+    def apply(self, opt):
+        if opt.startswith('-') or opt.startswith('+'):
+            # Apply single option tweak from command line
+            self.__apply_config(opt)
+        else:
+            path = self.man.get_fullpath(opt)
+            logging.debug("Apply defconfig %s" % path)
+            with open(path, 'r') as f:
                 for line in f:
-                    # Skip if the option is related to build environment
-                    if self.__is_hostenv(line):
-                        continue
-                    opts.add(line)
+                    self.__apply_config(line.rstrip())
 
-        for o in self.enables:
-            opts.discard('# CONFIG_%s is not set\n' % o)
-            opts.add('CONFIG_%s=y\n' % o)
-        for o in self.disables:
-            opts.discard('CONFIG_%s=y\n' % o)
-            opts.add('# CONFIG_%s is not set\n' % o)
+    def __apply_config(self, config):
+        val = ''
+        if '=' in config:
+            sym, val = config[1:].split('=')
+        else:
+            sym = config
 
-        self.__tweak_platform(opts)
-        opts.add('CONFIG_APPS_DIR="%s"\n' % APPSDIR)
+        if config.startswith('+'):
+            logging.debug("Add CONFIG_%s" % sym)
+            if val == '':
+                val = 'y'
+            if sym in self.opts:
+                logging.info("Overwrite CONFIG_%s to %s" % (sym, val))
+            self.opts[sym] = val
+        elif config.startswith('-'):
+            logging.debug("Remove CONFIG_%s" % sym)
+            if sym not in self.opts:
+                logging.debug("CONFIG_%s is already removed." % sym)
+                return
+            if self.opts[sym] != val:
+                logging.info("CONFIG_%s value mismatch '%s' != '%s'", sym, self.opts[sym], val)
+            del self.opts[sym]
+        elif config.startswith(' '):
+            old, new = val.split('->')
+            logging.debug("Change CONFIG_%s %s -> %s" % (sym, old, new))
+            if sym not in self.opts:
+                raise RuntimeError("Fatal: Applying defconfig not proceed")
+            if self.opts[sym] != old:
+                logging.info("Overwrite CONFIG_%s %s -> %s" % (sym, self.opts[sym], new))
+            self.opts[sym] = new
+        else:
+            logging.debug('Unsupported config pattern "%s"' % config)
 
-        with open(dest, "w") as f:
-            for o in opts:
-                logging.debug(o)
-                f.write(o)
+    def saveas(self, path):
+        if 'HOST_WINDOWS' not in self.opts and 'HOST_LINUX' not in self.opts and 'HOST_MACOS' not in self.opts:
+            self.tweak_platform()
+        self.opts['APPS_DIR'] = APPSDIR
+
+        with open(path, 'w') as f:
+            for sym, val in self.opts.items():
+                if val == 'n':
+                    print('# CONFIG_%s is not set' % sym, file=f)
+                else:
+                    print('CONFIG_%s=%s' % (sym, val), file=f)
+            
+    def __repr__(self):
+        return '%s (%s)' % (self.__class__.__name__, self.path)
 
 def install(src, dest, mode=0o644):
     logging.debug(src)
     logging.debug(dest)
-    logging.debug(mode)
+    logging.debug('mode: %o' % mode)
 
     shutil.copy(src, dest)
     os.chmod(dest, mode)
@@ -299,22 +343,22 @@ if __name__ == "__main__":
     topdir = os.path.abspath(os.path.join(sdkdir, '..', 'nuttx'))
     configdir = os.path.join(topdir, 'boards', 'arm', 'cxd56xx', 'spresense', 'configs')
 
-    defconfigs = Defconfigs(topdir)
+    manager = DefconfigManager(topdir)
 
     # If -d options has been specified, then replace base config directory to
     # specified ones.
 
     if opts.dir:
-        defconfigs.add_config_dirs(opts.dir[0])
+        manager.add_config_dirs(opts.dir[0])
     else:
-        defconfigs.add_config_dirs(configdir, 'configs')
+        manager.add_config_dirs(configdir, 'configs')
         if SPRESENSE_HOME in os.environ:
-            defconfigs.add_config_dirs(os.environ[SPRESENSE_HOME])
+            manager.add_config_dirs(os.environ[SPRESENSE_HOME])
 
     if opts.list:
         print('Available configurations:')
         for cat in (None, 'feature', 'device', 'examples'):
-            configs = defconfigs.get_configs_by_category(cat)
+            configs = manager.get_configs_by_category(cat)
             configs.sort()
             for c in configs:
                 print("\t%s" % c)
@@ -323,8 +367,22 @@ if __name__ == "__main__":
     prepare_config(topdir, sdkdir)
 
     if len(opts.configname) > 0:
-        defconfigs.append(opts.configname)
-        defconfigs.apply()
+        clist = []
+        base = None
+        for c in opts.configname:
+            if '/' not in c and not c.startswith('+') and not c.startswith('-'):
+                if base is not None:
+                    print("Error: %s can't be specify with %s\n" % (c, base), file=sys.stderr)
+                    sys.exit(1)
+                base = c
+            else:
+                clist.append(c)
+
+        dest = Defconfig(base, manager)
+        for c in clist:
+            dest.apply(c)
+
+        dest.saveas(os.path.join(topdir, '.config'))
 
         ret = do_olddefconfig()
         if ret != 0:
