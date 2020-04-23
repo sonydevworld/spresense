@@ -103,6 +103,7 @@ function spr-set-approot() {
 				echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
 				echo "         Please run next command for create makefiles."
 				echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+				unset SPRESENSE_HOME
 			fi
 		else
 			echo "Warning: ${_SPRESENSE_HOME} does not exist."
@@ -229,6 +230,7 @@ if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
     echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
     echo "         Please run next command for create makefiles."
     echo "         $ spr-create-approot ${SPRESENSE_HOME}"
+    unset SPRESENSE_HOME
 fi
 
 # Set repository root to SPRESENSE_SDK
