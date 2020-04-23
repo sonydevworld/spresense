@@ -100,9 +100,15 @@ function spr-set-approot() {
 				# Save current variable
 				_save_spresense_environment
 			else
-				echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
-				echo "         Please run next command for create makefiles."
-				echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+				if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
+					echo "Warning: Your environment(${SPRESENSE_HOME}) is created for Spresense SDK1.x version."
+					echo "         Please create a new project directory with next command."
+					echo "         $ spr-create-approot <new place>"
+				else
+					echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
+					echo "         Please run next command to create makefiles."
+					echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+				fi
 				unset SPRESENSE_HOME
 			fi
 		else
@@ -227,9 +233,15 @@ elif [ ! -d ${SPRESENSE_HOME} ]; then
 fi
 
 if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
-    echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
-    echo "         Please run next command for create makefiles."
-    echo "         $ spr-create-approot ${SPRESENSE_HOME}"
+    if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
+        echo "Warning: Your environment(${SPRESENSE_HOME}) is created for Spresense SDK1.x version."
+        echo "         Please create a new project directory with next command."
+        echo "         $ spr-create-approot <new place>"
+    else
+        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
+        echo "         Please run next command to create makefiles."
+        echo "         $ spr-create-approot ${SPRESENSE_HOME}"
+    fi
     unset SPRESENSE_HOME
 fi
 
