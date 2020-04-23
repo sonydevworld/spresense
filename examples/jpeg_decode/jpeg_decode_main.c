@@ -306,17 +306,12 @@ static void yuv2rgb(void *buf, uint32_t size)
 static int init_output_to_lcd(void)
 {
   int ret = OK;
-  static bool is_lcd_initialized = false;
 
-  if (!is_lcd_initialized)
+  ret = nximage_initialize();
+  if (ret < 0)
     {
-      ret = nximage_initialize();
-      if (ret < 0)
-        {
-          printf("camera_main: Failed to get NX handle: %d\n", errno);
-          return ERROR;
-        }
-      is_lcd_initialized = true;
+      printf("camera_main: Failed to get NX handle: %d\n", errno);
+      return ERROR;
     }
 #  ifdef CONFIG_IMAGEPROC
   imageproc_initialize();
