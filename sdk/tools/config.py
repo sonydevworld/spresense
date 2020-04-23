@@ -320,6 +320,8 @@ if __name__ == "__main__":
                         help='change configs directory')
     parser.add_argument('-v', '--verbose', action='count',
                         help='verbose messages')
+    parser.add_argument('--desc', metavar='config', type=str, nargs='*',
+                        help='describe configuration detail')
     opts = parser.parse_args()
 
     loglevel = logging.WARNING
@@ -354,6 +356,25 @@ if __name__ == "__main__":
         manager.add_config_dirs(configdir, 'configs')
         if SPRESENSE_HOME in os.environ:
             manager.add_config_dirs(os.environ[SPRESENSE_HOME])
+
+    if len(opts.desc) > 0:
+        for c in opts.desc:
+            path = manager.get_fullpath(c)
+            readme = re.sub(r'defconfig$', 'README.txt', path)
+            if os.path.exists(readme):
+                print('Description:')
+                print()
+                with open(readme, 'r') as f:
+                    print(f.read())
+
+            print('Differences:')
+            with open(path, 'r') as f:
+                for line in f:
+                    if re.match(r'^#', line) and not re.match(r'#.*not set', line):
+                        continue
+                    print(line.strip())
+
+        sys.exit(0)
 
     if opts.list:
         print('Available configurations:')
