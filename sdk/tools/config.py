@@ -357,7 +357,7 @@ if __name__ == "__main__":
         if SPRESENSE_HOME in os.environ:
             manager.add_config_dirs(os.environ[SPRESENSE_HOME])
 
-    if len(opts.desc) > 0:
+    if opts.desc and len(opts.desc) > 0:
         for c in opts.desc:
             path = manager.get_fullpath(c)
             readme = re.sub(r'defconfig$', 'README.txt', path)
