@@ -55,7 +55,7 @@ NO_CATEGORY = 'configs'
 APPSDIR = '"../sdk/apps"'
 
 is_not_set = re.compile(r'^# (?P<symbol>.*) is not set')
-is_config = re.compile(r'(?P<symbol>.*)=(?P<value>.*)')
+is_config = re.compile(r'(?P<symbol>^CONFIG_.*)=(?P<value>.*)')
 
 class DefconfigManager:
 
@@ -177,7 +177,7 @@ class Defconfig:
                 if self.__is_hostenv(line):
                     continue
 
-                m = is_not_set.match(line)
+                m = is_not_set.match(line.strip())
                 if m:
                     sym = m.group('symbol').replace('CONFIG_', '', 1)
                     self.opts[sym] = 'n'
