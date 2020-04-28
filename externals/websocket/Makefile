@@ -46,6 +46,5 @@ CFLAGS += -DENABLE_SSL
 CSRCS += client.c
 CSRCS += common.c
 CSRCS += utf8.c
-CSRCS += scanw.c
 
 include $(APPDIR)/Application.mk
