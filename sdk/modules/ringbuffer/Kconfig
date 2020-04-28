@@ -1,0 +1,14 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "Ring Buffer"
+
+config RINGBUFFER
+	bool "Ring Buffer Support"
+	default n
+	---help---
+		Enables support for the Ring Buffer library.
+
+endmenu # Ring Buffer
