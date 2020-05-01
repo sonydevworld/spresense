@@ -23,34 +23,34 @@
  *  THE SOFTWARE.
  */
 
-#include "echo_client.h"
+#include "chat_client.h"
 
-void cwebsocket_subprotocol_echo_client_onopen(void *websocket) {
+void cwebsocket_subprotocol_chat_client_onopen(void *websocket) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	printf("cwebsocket_subprotocol_echo_client_onopen: fd=%i\n", client->fd);
+	printf("cwebsocket_subprotocol_chat_client_onopen: fd=%i\n", client->fd);
 }
 
-void cwebsocket_subprotocol_echo_client_onmessage(void *websocket, cwebsocket_message *message) {
+void cwebsocket_subprotocol_chat_client_onmessage(void *websocket, cwebsocket_message *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	printf("cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%lld, payload=%s\n",
+	printf("cwebsocket_subprotocol_chat_client_onmessage: fd=%i, opcode=%#04x, payload_len=%lld, payload=%s\n",
 		client->fd, message->opcode, message->payload_len, message->payload);
 }
 
-void cwebsocket_subprotocol_echo_client_onclose(void *websocket, int code, const char *reason) {
+void cwebsocket_subprotocol_chat_client_onclose(void *websocket, int code, const char *reason) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	printf("cwebsocket_subprotocol_echo_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, code, reason);
+	printf("cwebsocket_subprotocol_chat_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, code, reason);
 }
 
-void cwebsocket_subprotocol_echo_client_onerror(void *websocket, const char *message) {
+void cwebsocket_subprotocol_chat_client_onerror(void *websocket, const char *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	printf("cwebsocket_subprotocol_echo_client_onerror: fd=%i, message=%s\n", client->fd, message);
+	printf("cwebsocket_subprotocol_chat_client_onerror: fd=%i, message=%s\n", client->fd, message);
 }
 
-void cwebsocket_subprotocol_echo_client_new(cwebsocket_subprotocol *protocol) {
+void cwebsocket_subprotocol_chat_client_new(cwebsocket_subprotocol *protocol) {
 	memset(protocol, 0, sizeof(cwebsocket_subprotocol));
-	protocol->name = "echo";
-	protocol->onopen = &cwebsocket_subprotocol_echo_client_onopen;
-	protocol->onmessage = &cwebsocket_subprotocol_echo_client_onmessage;
-	protocol->onclose = &cwebsocket_subprotocol_echo_client_onclose;
-	protocol->onerror = &cwebsocket_subprotocol_echo_client_onerror;
+	protocol->name = "chat";
+	protocol->onopen = &cwebsocket_subprotocol_chat_client_onopen;
+	protocol->onmessage = &cwebsocket_subprotocol_chat_client_onmessage;
+	protocol->onclose = &cwebsocket_subprotocol_chat_client_onclose;
+	protocol->onerror = &cwebsocket_subprotocol_chat_client_onerror;
 }

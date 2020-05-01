@@ -23,8 +23,8 @@
  *  THE SOFTWARE.
  */
 
-#ifndef WEBSOCKET_ECHO_CLIENT_H_
-#define WEBSOCKET_ECHO_CLIENT_H_
+#ifndef WEBSOCKET_CHAT_CLIENT_H_
+#define WEBSOCKET_CHAT_CLIENT_H_
 
 #include "common.h"
 #include "client.h"
@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-void cwebsocket_subprotocol_echo_client_new(cwebsocket_subprotocol *protocol);
+void cwebsocket_subprotocol_chat_client_new(cwebsocket_subprotocol *protocol);
 
 #ifdef __cplusplus
 }

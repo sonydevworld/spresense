@@ -53,7 +53,7 @@ CFLAGS += -DENABLE_SSL
 
 # lte_websocket Example
 
-CSRCS += echo_client.c
+CSRCS += echo_client.c chat_client.c
 CSRCS += websocket_lte_connection.c
 MAINSRC = websocket-client.c
 

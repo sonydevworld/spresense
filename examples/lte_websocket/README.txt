@@ -20,5 +20,5 @@ examples/lte_websocket
   Execute under nsh:
 
   Type 'lte_websocket <url>' on nsh like this.
-  nsh> lte_websocket ws://echo.websocket.org
+  nsh> lte_websocket echo WebSocket Works!
 
