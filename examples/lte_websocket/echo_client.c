@@ -29,20 +29,20 @@ void cwebsocket_subprotocol_echo_client_onopen(void *websocket) {
 	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onopen: fd=%i\n", client->fd);
 }
 
-void cwebsocket_subprotocol_echo_client_onmessage(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onmessage(void *websocket, cwebsocket_message *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%ld, payload=%s\n",
-			client->fd, client->message.opcode, client->message.payload_len, client->message.payload);
+	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%lld, payload=%s\n",
+			client->fd, message->opcode, message->payload_len, message->payload);
 }
 
-void cwebsocket_subprotocol_echo_client_onclose(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onclose(void *websocket, int code, const char *reason) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, client->code, client->message.payload);
+	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, code, reason);
 }
 
-void cwebsocket_subprotocol_echo_client_onerror(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onerror(void *websocket, const char *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onerror: fd=%i, message=%s\n", client->fd, client->message.payload);
+	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onerror: fd=%i, message=%s\n", client->fd, message);
 }
 
 cwebsocket_subprotocol* cwebsocket_subprotocol_echo_client_new(void) {

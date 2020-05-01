@@ -92,7 +92,6 @@ typedef struct _cwebsocket {
 	pthread_mutex_t lock;
 	pthread_mutex_t write_lock;
 #endif
-	cwebsocket_app_message message;
 	int code;
 	size_t subprotocol_len;
 	cwebsocket_subprotocol *subprotocol;
@@ -101,7 +100,7 @@ typedef struct _cwebsocket {
 
 typedef struct {
 	cwebsocket_client *socket;
-	cwebsocket_dsp_message *message;
+	cwebsocket_message *message;
 } cwebsocket_client_thread_args;
 
 // "public"
@@ -224,7 +223,7 @@ int cwebsocket_client_read(cwebsocket_client *websocket, void *buf, int len);
 int cwebsocket_client_write(cwebsocket_client *websocket, void *buf, int len);
  	
 void cwebsocket_client_onopen(cwebsocket_client *websocket);
-void cwebsocket_client_onmessage(cwebsocket_client *websocket, cwebsocket_dsp_message *message);
+void cwebsocket_client_onmessage(cwebsocket_client *websocket, cwebsocket_message *message);
 void cwebsocket_client_onclose(cwebsocket_client *websocket, int code, const char *message);
 void cwebsocket_client_onerror(cwebsocket_client *websocket, const char *error);
 

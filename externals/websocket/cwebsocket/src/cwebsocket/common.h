@@ -109,8 +109,6 @@
 extern "C" {
 #endif
 
-#define MAX_CHUNK_SIZE 256
-	
 typedef int ssize_t;
 
 typedef enum {
@@ -137,29 +135,19 @@ typedef struct {
 	uint32_t opcode;
 	uint64_t payload_len;
 	char *payload;
-} cwebsocket_dsp_message;
-
-typedef struct {
-	uint32_t opcode;
-	uint64_t payload_len;
-	uint64_t chunk_len;
-	uint64_t chunk_pos;
-	char payload[MAX_CHUNK_SIZE + 1];
-} cwebsocket_app_message;
+} cwebsocket_message;
 
 typedef struct {
 	char *name;
 	void (*onopen)(void *arg);
-	void (*onmessage)(void *arg);
-	void (*onclose)(void *arg);
-	void (*onerror)(void *arg);
+	void (*onmessage)(void *arg, cwebsocket_message *message);
+	void (*onclose)(void *arg, int code, const char *message);
+	void (*onerror)(void *arg, const char *error);
 } cwebsocket_subprotocol;
 
 char* cwebsocket_create_key_challenge_response(const char *seckey);
 char* cwebsocket_base64_encode(const unsigned char *input, int length);
 void cwebsocket_print_frame(cwebsocket_frame *frame);
-
-void ws_thread_new( const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority);
 
 #ifdef __cplusplus
 }

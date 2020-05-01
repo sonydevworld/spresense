@@ -843,14 +843,14 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		if(websocket->subprotocol != NULL && websocket->subprotocol->onmessage != NULL) {
 
 #ifdef ENABLE_THREADS
-			cwebsocket_dsp_message *message = malloc(sizeof(cwebsocket_dsp_message));
+			cwebsocket_message *message = malloc(sizeof(cwebsocket_message));
 			if(message == NULL) {
 				WS_DEBUG("client_read_data: text message out of memory");
 				cwebsocket_client_close(websocket, 1009, "out of memory");
 				free(payload);
 				return -1;
 			}
-			memset(message, 0, sizeof(cwebsocket_dsp_message));
+			memset(message, 0, sizeof(cwebsocket_message));
 			message->opcode = frame.opcode;
 			message->payload_len = payload_length;
 			message->payload = payload;
@@ -880,7 +880,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 //		    free(args);
 		    return bytes_read;
 #else
-			cwebsocket_dsp_message message = {0};
+			cwebsocket_message message = {0};
 			message.opcode = frame.opcode;
 			message.payload_len = payload_length;
 			message.payload = payload;
@@ -911,7 +911,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		if(websocket->subprotocol->onmessage != NULL) {
 
 #ifdef ENABLE_THREADS
-			cwebsocket_dsp_message *message = malloc(sizeof(cwebsocket_dsp_message));
+			cwebsocket_message *message = malloc(sizeof(cwebsocket_message));
 			if(message == NULL) {
 				WS_DEBUG("client_read_data: binary message out of memory");
 				cwebsocket_client_close(websocket, 1009, "out of memory");
@@ -945,7 +945,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 //			free(args);
 			return bytes_read;
 #else
-			cwebsocket_dsp_message message;
+			cwebsocket_message message;
 			message.opcode = frame.opcode;
 			message.payload_len = payload_length;
 			message.payload = payload;
@@ -1226,41 +1226,20 @@ void cwebsocket_client_onopen(cwebsocket_client *websocket) {
 	}
 }
 
-void cwebsocket_client_onmessage(cwebsocket_client *websocket, cwebsocket_dsp_message *message) {
+void cwebsocket_client_onmessage(cwebsocket_client *websocket, cwebsocket_message *message) {
 	if(websocket->subprotocol != NULL && websocket->subprotocol->onmessage != NULL) {
-		uint64_t len;
-		websocket->message.opcode = message->opcode;
-
-		for (len = 0; len < message->payload_len; len += MAX_CHUNK_SIZE){
-			if (len + MAX_CHUNK_SIZE > message->payload_len){
-				websocket->message.chunk_len = (message->payload_len - len);
-				memcpy(websocket->message.payload, &message->payload[len], (message->payload_len - len));
-				websocket->message.payload[(message->payload_len - len)] = '\0';
-			} else {
-				websocket->message.chunk_len = MAX_CHUNK_SIZE;
-				memcpy(websocket->message.payload, &message->payload[len], MAX_CHUNK_SIZE);
-				websocket->message.payload[MAX_CHUNK_SIZE] = '\0';
-			}
-			websocket->message.chunk_pos = len;
-			websocket->message.payload_len = message->payload_len;
-			websocket->subprotocol->onmessage(websocket);
-		}
+		websocket->subprotocol->onmessage(websocket, message);
 	}
 }
 
 void cwebsocket_client_onclose(cwebsocket_client *websocket, int code, const char *message) {
 	if(websocket->subprotocol != NULL && websocket->subprotocol->onclose != NULL) {
-		strncpy(websocket->message.payload, message, MAX_CHUNK_SIZE);
-		websocket->code = code;
-		websocket->message.payload_len = strlen(message);
-		websocket->subprotocol->onclose(websocket);
+		websocket->subprotocol->onclose(websocket, code, message);
 	}
 }
 
 void cwebsocket_client_onerror(cwebsocket_client *websocket, const char *error) {
 	if(websocket->subprotocol != NULL && websocket->subprotocol->onerror != NULL) {
-		strncpy(websocket->message.payload, error, MAX_CHUNK_SIZE);
-		websocket->message.payload_len = strlen(error);
-		websocket->subprotocol->onerror(websocket);
+		websocket->subprotocol->onerror(websocket, error);
 	}
 }
