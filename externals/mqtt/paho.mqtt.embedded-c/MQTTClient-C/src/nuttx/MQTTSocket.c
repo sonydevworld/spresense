@@ -59,7 +59,7 @@ int MutexLock(Mutex* mutex)
 
 int MutexUnlock(Mutex* mutex)
 {
-	return sem_destroy((sem_t *)&(mutex->sem));
+	return sem_post((sem_t *)&(mutex->sem));
 }
 
 void TimerCountdownMS(Timer* timer, unsigned int timeout_ms)
