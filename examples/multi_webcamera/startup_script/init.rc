@@ -1,0 +1,30 @@
+# On this script, you can set up the wifi setting
+# and start multiwebcam application.
+
+# WiFi setting.
+#   If you want to use Access Point mode,
+#   you can add a command as below:
+#   gs2200m -a 1 <your ssid> <password as 10 digits>
+#
+#   ex. gs2200m -a 1 spresense_net 0123456789 &
+#
+#  If you want to use this Station mode and to connect
+#  existing Access Point, you can add a command on
+#  this script as below:
+#  gs2200m <target SSID> <password of the SSID>
+#
+#  ex. gw2200m hogehoge_ap pass_word_ap &
+#
+# note: the '&' of the last character is needed because
+#       the gs2200m is a application for the wifi
+#       network, and you need to execute one more task.
+
+# on this example, use access point mode.
+gs2200m -a 1 spresense_net 0123456789 &
+
+# then you need to wait to finish the network setting.
+sleep 1
+
+# Then start 'multiwebcam'
+multiwebcam &
+
