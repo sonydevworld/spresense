@@ -24,20 +24,13 @@ extern int getaddrinfo(const char *nodename, const char *servname,
                 const struct addrinfo *hints, struct addrinfo **res);
 extern void freeaddrinfo(struct addrinfo *res);
 
-int ThreadStart(const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority)
+int ThreadStart(Thread* thread, void (*fn)(void*), void* arg)
 {
-	pthread_attr_t attr;
-	pthread_t      thread;
 	int rc = 0;
 
-	pthread_attr_init(&attr);
-
-	attr.priority = iPriority;
-	attr.stacksize = iStackSize;
-
-	if( (rc=pthread_create( &thread, &attr, (pthread_startroutine_t)pxThread, pvArg )) == 0 )
+	if( (rc=pthread_create( &thread->thid, NULL, (pthread_startroutine_t)fn, arg )) == 0 )
 	{
-		pthread_detach(thread);
+		pthread_detach(thread->thid);
 		return 0;
 	}
 	else
