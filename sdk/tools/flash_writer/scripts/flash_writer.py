@@ -352,14 +352,20 @@ class FlashWriter:
 
 	def cancel_autoboot(self) :
 		boot_msg = ''
+		retry = 0
 		self.serial.reboot()  # Target reboot before send 'r'
 		while boot_msg == '' :
+			if retry > 10:
+				# If retry 10 times, reset spresense board
+				self.serial.reboot()
+				retry = 0
 			rx = self.serial.readline().strip()
 			self.serial.write(b"r")  # Send "r" key to avoid auto boot
 			for msg in ROM_MSG :
 				if msg in rx :
 					boot_msg = msg
 					break
+			retry = retry + 1
 		while True :
 			rx = self.serial.readline().decode(errors="replace").strip()
 			if "updater" in rx :
