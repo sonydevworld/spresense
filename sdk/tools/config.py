@@ -339,6 +339,11 @@ if __name__ == "__main__":
     if opts.qconfig:    menumode = MODE_QCONFIG
     if opts.gconfig:    menumode = MODE_GCONFIG
 
+    # Check python3 version
+    if sys.version_info.minor < 5:
+        print("Installed python3 is too old. Please update python3 to 3.5.0 or later.")
+        sys.exit(1)
+
     # Setup paths
 
     sdkdir = os.getcwd()
