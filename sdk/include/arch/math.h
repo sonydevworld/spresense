@@ -40,4 +40,16 @@
 
 #include_next <math.h>
 
+#ifndef M_PI_F
+#define M_PI_F  ((float)M_PI)
+#endif
+
+#ifndef M_PI_2_F
+#define M_PI_2_F  ((float)M_PI_2)
+#endif
+
+#ifndef M_PI_4_F
+#define M_PI_4_F  ((float)M_PI_4)
+#endif
+
 #endif
