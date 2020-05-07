@@ -361,9 +361,9 @@ if __name__ == "__main__":
         for c in opts.desc:
             path = manager.get_fullpath(c)
             readme = re.sub(r'defconfig$', 'README.txt', path)
+            print('=== %s ===' % c)
             if os.path.exists(readme):
                 print('Description:')
-                print()
                 with open(readme, 'r') as f:
                     print(f.read())
 
@@ -373,7 +373,7 @@ if __name__ == "__main__":
                     if re.match(r'^#', line) and not re.match(r'#.*not set', line):
                         continue
                     print(line.strip())
-
+            print()
         sys.exit(0)
 
     if opts.list:
