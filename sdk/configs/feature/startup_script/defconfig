@@ -1,0 +1,3 @@
++NSH_CUSTOMROMFS=y
++NSH_CUSTOMROMFS_HEADER="../../system/startup_script/nsh_romfsimg.h"
++SYSTEM_STARTUP_SCRIPT=y

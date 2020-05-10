@@ -1,0 +1,9 @@
+set INIT_RC "/mnt/spif/init.rc"
+
+if [ -e ${INIT_RC} ]
+then
+  echo "Run ${INIT_RC}."
+  sh ${INIT_RC} &
+else
+  echo "No ${INIT_RC}."
+fi
