@@ -60,12 +60,12 @@ is_config = re.compile(r'(?P<symbol>^CONFIG_.*)=(?P<value>.*)')
 class DefconfigManager:
 
     def __init__(self, topdir, output=None, platform=None):
-        self.defconfigs = []        # Store Defconfig objects
-        self.category = ['configs'] # no category is set as 'configs'
-        self.topdir = topdir        # Path to nuttx
-        self.applies = []           # defconfigs list would be applied
-        self.enables = []           # Enable options tweak list
-        self.disables = []          # Disable options tweak list
+        self.defconfigs = []          # Store Defconfig objects
+        self.category = [NO_CATEGORY] # no category is set as 'configs'
+        self.topdir = topdir          # Path to nuttx
+        self.applies = []             # defconfigs list would be applied
+        self.enables = []             # Enable options tweak list
+        self.disables = []            # Disable options tweak list
         self.base = None
 
         if output:
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     parser.add_argument('configname', metavar='<config name>', type=str, nargs='*',
                         help='configuration name')
     parser.add_argument('-k', '--kernel', action='store_true',
-                        help='deprecated')
+                        help='DEPRECATED')
     parser.add_argument('-l', '--list', action='store_true',
                         help='list default configurations.\nshow kernel defconfigs with --kernel.')
     parser.add_argument('-m', '--menuconfig', action='store_true',
@@ -320,8 +320,8 @@ if __name__ == "__main__":
                         help='change configs directory')
     parser.add_argument('-v', '--verbose', action='count',
                         help='verbose messages')
-    parser.add_argument('--desc', metavar='config', type=str, nargs='*',
-                        help='describe configuration detail')
+    parser.add_argument('-i', '--info', metavar='config', type=str, nargs='*',
+                        help='show configuration information')
     opts = parser.parse_args()
 
     loglevel = logging.WARNING
@@ -348,7 +348,6 @@ if __name__ == "__main__":
 
     sdkdir = os.getcwd()
     topdir = os.path.abspath(os.path.join(sdkdir, '..', 'nuttx'))
-    configdir = os.path.join(topdir, 'boards', 'arm', 'cxd56xx', 'spresense', 'configs')
 
     manager = DefconfigManager(topdir)
 
@@ -358,21 +357,21 @@ if __name__ == "__main__":
     if opts.dir:
         manager.add_config_dirs(opts.dir[0])
     else:
-        manager.add_config_dirs(configdir, 'configs')
-        if SPRESENSE_HOME in os.environ:
+        manager.add_config_dirs('configs')
+        if SPRESENSE_HOME in os.environ and os.environ[SPRESENSE_HOME] != '':
             manager.add_config_dirs(os.environ[SPRESENSE_HOME])
 
-    if opts.desc and len(opts.desc) > 0:
-        for c in opts.desc:
+    if opts.info and len(opts.info) > 0:
+        for c in opts.info:
             path = manager.get_fullpath(c)
             readme = re.sub(r'defconfig$', 'README.txt', path)
             print('=== %s ===' % c)
             if os.path.exists(readme):
-                print('Description:')
+                print('[Description]')
                 with open(readme, 'r') as f:
                     print(f.read())
 
-            print('Differences:')
+            print('[Differences]')
             with open(path, 'r') as f:
                 for line in f:
                     if re.match(r'^#', line) and not re.match(r'#.*not set', line):
