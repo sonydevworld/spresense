@@ -1,1 +1,4 @@
-This configuration contains required options to jpeg_decode example.
+This configuration contains required options to use jpeg_decode example.
+
+[Source path]
+examples/jpeg_decode

@@ -1,1 +1,4 @@
-This configuration contains required options to audio_recorder_objif example.
+This configuration contains required options to use audio_recorder_objif example.
+
+[Source path]
+examples/audio_recorder_objif

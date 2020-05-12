@@ -1,1 +1,4 @@
-This configuration contains required options to geofence example.
+This configuration contains required options to use geofence example.
+
+[Source path]
+examples/geofence

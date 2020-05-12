@@ -1,1 +1,4 @@
-This configuration contains required options to lte_lwm2m example.
+This configuration contains required options to use lte_lwm2m example.
+
+[Source path]
+examples/lte_lwm2m

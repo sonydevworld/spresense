@@ -1,1 +1,4 @@
-This configuration contains required options to pwm example.
+This configuration contains required options to use pwm example.
+
+[Source path]
+examples/pwm

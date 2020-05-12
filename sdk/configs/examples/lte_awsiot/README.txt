@@ -1,1 +1,4 @@
-This configuration contains required options to lte_awsiot example.
+This configuration contains required options to use lte_awsiot example.
+
+[Source path]
+examples/lte_awsiot

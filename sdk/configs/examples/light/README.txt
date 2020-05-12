@@ -1,1 +1,4 @@
-This configuration contains required options to light example.
+This configuration contains required options to use light example.
+
+[Source path]
+examples/light

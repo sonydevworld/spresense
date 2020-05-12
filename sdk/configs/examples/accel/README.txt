@@ -1,1 +1,4 @@
-This configuration contains required options to accel example.
+This configuration contains required options to use accel example.
+
+[Source path]
+examples/accel
