@@ -277,7 +277,7 @@ class SerialDev:
 			try:
 				self.serial = serial.Serial(port, baudrate=115200,
 					parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
-					bytesize=serial.EIGHTBITS, timeout=0.1)
+					bytesize=serial.EIGHTBITS, timeout=0.03)
 			except Exception as e:
 				print("Cannot open port : " + port)
 				sys.exit(e.args[0])
