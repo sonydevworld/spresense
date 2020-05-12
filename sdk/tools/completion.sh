@@ -52,7 +52,7 @@ function _spresense_config_completion() {
 		COMPREPLY=($(compgen -d -- "${cur}" | sed 's#$#/#g'))
 	else
 		compopt +o nospace
-		if [ "${cur:0:1}" == "-" -a "${cur}" != "--desc" ]; then
+		if [ "${cur:0:1}" == "-" -a "${cur}" != "--info" -a "${cur}" != "-i" ]; then
 			# For option prediction
 			SOPT=`${COMP_WORDS[0]} -h | grep -oE "\--[a-zA-Z]+"`
 			LOPT=`${COMP_WORDS[0]} -h | grep -oE "^[ ]+-[a-zA-Z]{1}"  | tr -d " "`
