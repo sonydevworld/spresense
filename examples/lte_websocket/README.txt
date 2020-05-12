@@ -19,6 +19,37 @@ examples/lte_websocket
 
   Execute under nsh:
 
-  Type 'lte_websocket <url>' on nsh like this.
+  Type 'lte_websocket <subprotocol> <messages>' on nsh like this.
   nsh> lte_websocket echo WebSocket Works!
+
+  Examples:
+
+  To test WebSocket echo subprotocol, type on nsh like this.
+    nsh> lte_websocket echo WebSocket Works! 
+       uri         : ws://echo.websocket.org:80/ 
+       subprotocol : echo
+       messages    : WebScoket Works!
+ 
+  To test Secure WebSocket echo subprotocol, type on nsh like this.
+    nsh> lte_websocket echo-ssl WebSocket Works! 
+       uri         : wss://echo.websocket.org:443/
+       subprotocol : echo
+       messages    : WebScoket Works!
+ 
+  To test WebSocket chat subprotocol, type on nsh like this.
+    nsh> lte_websocket chat WebSocket Works! 
+       uri         : ws://ruby-websockets-chat.herokuapp.com:80/
+       subprotocol : chat
+       handle      : WebScoket
+       messages    : Works!
+ 
+  To test Secure WebSocket chat subprotocol, type on nsh like this.
+    nsh> lte_websocket chat-ssl WebSocket Works! 
+       uri         : wss://ruby-websockets-chat.herokuapp.com:443/
+       subprotocol : chat
+       handle      : WebScoket
+       messages    : Works!
+ 
+  Appropriate uri of each subprotocol is set automatically.
+  When use Secure WebSocket (wss), need to put root CA files in place.
 
