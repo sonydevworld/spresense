@@ -521,20 +521,30 @@ static bool app_set_ready(void)
   return true;
 }
 
-static bool app_init_mic_gain(void)
+static bool app_init_mic_gain(int16_t gain)
 {
-  cxd56_audio_mic_gain_t  mic_gain;
+  AsMicFrontendMicGainParam micgain_param;
 
-  mic_gain.gain[0] = 0;
-  mic_gain.gain[1] = 0;
-  mic_gain.gain[2] = 0;
-  mic_gain.gain[3] = 0;
-  mic_gain.gain[4] = 0;
-  mic_gain.gain[5] = 0;
-  mic_gain.gain[6] = 0;
-  mic_gain.gain[7] = 0;
+  for (int i = 0; i < AS_MIC_CHANNEL_MAX; i++)
+    {
+      micgain_param.mic_gain[i] = gain;
+    }
 
-  return (cxd56_audio_set_micgain(&mic_gain) == CXD56_AUDIO_ECODE_OK);
+  bool result = AS_SetMicGainMicFrontend(&micgain_param);
+
+  if (!result)
+    {
+      printf("Error: AS_SetMicGainMediaRecorder() failure!\n");
+      return false;
+    }
+
+  if (!app_receive_object_reply(MSG_AUD_MFE_CMD_SETMICGAIN))
+    {
+      printf("Error Result: AS_SetMicGainMediaRecorder()\n");
+      return false;
+    }
+
+  return true;
 }
 
 static bool app_set_recorder(void)
@@ -1146,14 +1156,6 @@ extern "C" int main(int argc, FAR char *argv[])
       goto errout_init_simple_fifo;
     }
 
-  /* Set the initial gain of the microphone to be used. */
-
-  if (!app_init_mic_gain())
-    {
-      printf("Error: app_init_mic_gain() failure.\n");
-      goto errout_init_simple_fifo;
-    }
-
   /* Set audio clock mode. */
 
   if (!app_set_clkmode())
@@ -1176,6 +1178,14 @@ extern "C" int main(int argc, FAR char *argv[])
     {
       printf("Error: app_init_recorder() failure.\n");
       goto errout_init_recorder;
+    }
+
+ /* Set the initial gain of the microphone to be used. */
+
+  if (!app_init_mic_gain(180)) /* set +18db @all mic */
+    {
+      printf("Error: app_init_mic_gain() failure.\n");
+      goto errout_init_simple_fifo;
     }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF_USEPREPROC
