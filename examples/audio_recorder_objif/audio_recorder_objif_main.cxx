@@ -571,6 +571,7 @@ static bool app_set_recorder(void)
     act_param.param.input_device_handler  = 0x00;
     act_param.param.output_device         = AS_SETRECDR_STS_OUTPUTDEVICE_RAM;
     act_param.param.output_device_handler = &s_recorder_info.fifo.output_device;
+    act_param.cb                          = NULL;
 
     AS_ActivateMediaRecorder(&act_param);
 
