@@ -213,6 +213,16 @@ MicFrontEndObject::MsgProc
     &MicFrontEndObject::stopOnWait       /*   WaitStop.      */
   },
 
+  /* Align for MSG_OBJ_SUBTYPE_EXEC */
+
+  {                             
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::illegal,         /*   Ready.         */
+    &MicFrontEndObject::illegal,         /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
+  },
   /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
   /* Message Type: MSG_AUD_MFE_CMD_SETPREPROC */
   /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
