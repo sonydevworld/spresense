@@ -46,12 +46,14 @@ WORKER_LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 LDLIBPATH += -L $(WORKER_DIR)
 LDLIBS += -lasmpw
 
+CMSISDIR = $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)cmsis
+CMSIS_DSP_DIR = $(CMSISDIR)$(DELIM)dsp
+
 # Setup to build and linking CMSIS DSP library
 
-include $(SDKDIR)/../externals/LibTarget.mk
-include $(SDKDIR)/../externals/cmsis/LibIncludes.mk
+include $(CMSISDIR)/LibIncludes.mk
 
-CMSIS_DSP_LIB = $(CMSIS_DSP_DIR)$(DELIM)$(CMSIS_DSP)
+CMSIS_DSP_LIB = $(CMSIS_DSP_DIR)$(DELIM)libarm_cortexM4lf_math$(LIBEXT)
 LDLIBPATH += -L $(CMSIS_DSP_DIR)
 LDLIBS += -larm_cortexM4lf_math
 
@@ -107,6 +109,9 @@ libdepend:
 
 $(WORKER_LIB): libdepend
 	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" libasmpw$(LIBEXT)
+
+$(CMSIS_DSP_LIB):
+	$(Q) $(MAKE) -C $(CMSIS_DSP_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)"
 
 context:
 
