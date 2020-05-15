@@ -45,6 +45,7 @@
 #include "buffpoolwrapper.h"
 #include "apiutil.h"
 #include "apicmd_repcellinfo.h"
+#include "apicmd_cellinfo.h"
 #include "evthdlbs.h"
 #include "apicmdhdlrbs.h"
 #include "altcom_callbacks.h"
@@ -97,37 +98,6 @@ static int32_t repcellinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 }
 
 /****************************************************************************
- * Name: check_arrydigitnum
- *
- * Description:
- *   Evaluate the validity of each digit of arrayed numerical value.
- *
- * Input Parameters:
- *  number    Array type number.
- *  digit     @number digit.
- *
- * Returned Value:
- *   Returns true if everything is valid. Otherwise it returns false.
- *
- ****************************************************************************/
-
-static bool check_arrydigitnum(FAR uint8_t number[], uint8_t digit)
-{
-  uint8_t cnt;
-
-  for (cnt = 0; cnt < digit; cnt++)
-    {
-      if (number[cnt] < APICMD_SET_REPCELLINFO_DIGIT_NUM_MIN ||
-        APICMD_SET_REPCELLINFO_DIGIT_NUM_MAX < number[cnt])
-        {
-          return false;
-        }
-    }
-
-  return true;
-}
-
-/****************************************************************************
  * Name: repcellinfo_job
  *
  * Description:
@@ -143,9 +113,9 @@ static bool check_arrydigitnum(FAR uint8_t number[], uint8_t digit)
 
 static void repcellinfo_job(FAR void *arg)
 {
-  FAR struct apicmd_cmddat_repcellinfo_s *data;
-  lte_cellinfo_t                         *repdat = NULL;
-  cellinfo_report_cb_t                    callback;
+  FAR struct apicmd_cmddat_cellinfo_s *data;
+  lte_cellinfo_t                      *repdat = NULL;
+  cellinfo_report_cb_t                 callback;
 
   callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
   if (!callback)
@@ -154,7 +124,7 @@ static void repcellinfo_job(FAR void *arg)
     }
   else
     {
-      data = (FAR struct apicmd_cmddat_repcellinfo_s *)arg;
+      data = (FAR struct apicmd_cmddat_cellinfo_s *)arg;
 
       repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
       if (!repdat)
@@ -163,48 +133,7 @@ static void repcellinfo_job(FAR void *arg)
         }
       else
         {
-          repdat->valid = LTE_VALID == data->enability ?
-                          LTE_VALID : LTE_INVALID;
-          if (repdat->valid)
-            {
-              repdat->phycell_id = ntohl(data->cell_id);
-              repdat->earfcn     = ntohl(data->earfcn);
-              memcpy(repdat->mcc, data->mcc,
-                     APICMD_SET_REPCELLINFO_MCC_DIGIT);
-              repdat->mnc_digit  = data->mnc_digit;
-              memcpy(repdat->mnc, data->mnc, data->mnc_digit);
-
-              if (repdat->phycell_id < APICMD_SET_REPCELLINFO_CELLID_MIN ||
-                APICMD_SET_REPCELLINFO_CELLID_MAX < repdat->phycell_id)
-                {
-                  DBGIF_LOG1_ERROR("repdat->phycell_id error:%d\n", repdat->phycell_id);
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (repdat->earfcn < APICMD_SET_REPCELLINFO_EARFCN_MIN ||
-                APICMD_SET_REPCELLINFO_EARFCN_MAX < repdat->earfcn)
-                {
-                  DBGIF_LOG1_ERROR("repdat->earfcn error:%d\n", repdat->earfcn);
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (!check_arrydigitnum(repdat->mcc,
-                APICMD_SET_REPCELLINFO_MCC_DIGIT))
-                {
-                  DBGIF_LOG_ERROR("repdat->mcc error\n");
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (
-                repdat->mnc_digit < APICMD_SET_REPCELLINFO_MNC_DIGIT_MIN ||
-                APICMD_SET_REPCELLINFO_MNC_DIGIT_MAX < repdat->mnc_digit)
-                {
-                  DBGIF_LOG1_ERROR("repdat->mnc_digit error:%d\n", repdat->mnc_digit);
-                  repdat->valid = LTE_INVALID;
-                }
-              else if (!check_arrydigitnum(repdat->mnc, repdat->mnc_digit))
-                {
-                  DBGIF_LOG_ERROR("repdat->mnc error\n");
-                  repdat->valid = LTE_INVALID;
-                }
-            }
+          altcombs_set_cellinfo(data, repdat);
 
           callback(repdat);
           (void)BUFFPOOL_FREE((FAR void *)repdat);

@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/include/api/lte/apicmd_repcellinfo.h
+ * modules/lte/altcom/include/api/lte/apicmd_cellinfo.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,21 +33,27 @@
  *
  ****************************************************************************/
 
-#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPCELLINFO_H
-#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPCELLINFO_H
+#ifndef __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_CELLINFO_H
+#define __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_CELLINFO_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
+#include "lte/lte_api.h"
 #include "apicmd.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SET_REPCELLINFO_INTERVAL_MIN  (1)
-#define APICMD_SET_REPCELLINFO_INTERVAL_MAX  (4233600)
+#define APICMD_CELLINFO_CELLID_MIN    (0)
+#define APICMD_CELLINFO_CELLID_MAX    (503)
+#define APICMD_CELLINFO_EARFCN_MIN    (0)
+#define APICMD_CELLINFO_EARFCN_MAX    (262143)
+#define APICMD_CELLINFO_DIGIT_NUM_MIN (0)
+#define APICMD_CELLINFO_DIGIT_NUM_MAX (9)
+#define APICMD_CELLINFO_MNC_DIGIT_MIN (2)
 
 /****************************************************************************
  * Public Types
@@ -55,15 +61,14 @@
 
 /* This structure discribes the data structure of the API command */
 
-begin_packed_struct struct apicmd_cmddat_setrepcellinfo_s
+begin_packed_struct struct apicmd_cmddat_cellinfo_s
 {
-  uint8_t enability;
-  uint32_t interval;
+  uint8_t  enability;
+  uint32_t cell_id;
+  uint32_t earfcn;
+  uint8_t  mcc[LTE_MCC_DIGIT];
+  uint8_t  mnc_digit;
+  uint8_t  mnc[LTE_MNC_DIGIT_MAX];
 } end_packed_struct;
 
-begin_packed_struct struct apicmd_cmddat_setrepcellinfo_res_s
-{
-  uint8_t result;
-} end_packed_struct;
-
-#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPCELLINFO_H */
+#endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_CELLINFO_H */
