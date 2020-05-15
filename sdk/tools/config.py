@@ -157,17 +157,17 @@ class Defconfig:
         self.load()
 
     def __is_hostenv(self, string):
-        if re.match(r'[# ]*CONFIG_HOST_LINUX', string): return True
-        if re.match(r'[# ]*CONFIG_HOST_WINDOWS', string): return True
-        if re.match(r'[# ]*CONFIG_HOST_MACOS', string): return True
-        if re.match(r'[# ]*CONFIG_HOST_OTHER', string): return True
-        if re.match(r'[# ]*CONFIG_WINDOWS_NATIVE', string): return True
-        if re.match(r'[# ]*CONFIG_WINDOWS_CYGWIN', string): return True
-        if re.match(r'[# ]*CONFIG_WINDOWS_MSYS', string): return True
-        if re.match(r'[# ]*CONFIG_WINDOWS_UBUNTU', string): return True
-        if re.match(r'[# ]*CONFIG_WINDOWS_OTHER', string): return True
-        if re.match(r'[# ]*CONFIG_SIM_X8664_MICROSOFT', string): return True
-        if re.match(r'[# ]*CONFIG_SIM_X8664_SYSTEMV', string): return True
+        if re.match(r'[# ]*(CONFIG_|)HOST_LINUX', string): return True
+        if re.match(r'[# ]*(CONFIG_|)HOST_WINDOWS', string): return True
+        if re.match(r'[# ]*(CONFIG_|)HOST_MACOS', string): return True
+        if re.match(r'[# ]*(CONFIG_|)HOST_OTHER', string): return True
+        if re.match(r'[# ]*(CONFIG_|)WINDOWS_NATIVE', string): return True
+        if re.match(r'[# ]*(CONFIG_|)WINDOWS_CYGWIN', string): return True
+        if re.match(r'[# ]*(CONFIG_|)WINDOWS_MSYS', string): return True
+        if re.match(r'[# ]*(CONFIG_|)WINDOWS_UBUNTU', string): return True
+        if re.match(r'[# ]*(CONFIG_|)WINDOWS_OTHER', string): return True
+        if re.match(r'[# ]*(CONFIG_|)SIM_X8664_MICROSOFT', string): return True
+        if re.match(r'[# ]*(CONFIG_|)SIM_X8664_SYSTEMV', string): return True
         return False
 
     def load(self):
@@ -228,7 +228,11 @@ class Defconfig:
         if '=' in config:
             sym, val = config[1:].split('=')
         else:
-            sym = config
+            sym = config[1:]
+
+        if self.__is_hostenv(sym):
+            logging.debug('Ignore host environment option %s' % sym)
+            return
 
         if config.startswith('+'):
             logging.debug("Add CONFIG_%s" % sym)
