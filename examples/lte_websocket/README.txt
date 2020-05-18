@@ -22,34 +22,74 @@ examples/lte_websocket
   Type 'lte_websocket <subprotocol> <messages>' on nsh like this.
   nsh> lte_websocket echo WebSocket Works!
 
-  Examples:
-
-  To test WebSocket echo subprotocol, type on nsh like this.
-    nsh> lte_websocket echo WebSocket Works! 
-       uri         : ws://echo.websocket.org:80/ 
-       subprotocol : echo
-       messages    : WebScoket Works!
- 
-  To test Secure WebSocket echo subprotocol, type on nsh like this.
-    nsh> lte_websocket echo-ssl WebSocket Works! 
-       uri         : wss://echo.websocket.org:443/
-       subprotocol : echo
-       messages    : WebScoket Works!
- 
-  To test WebSocket chat subprotocol, type on nsh like this.
-    nsh> lte_websocket chat WebSocket Works! 
-       uri         : ws://ruby-websockets-chat.herokuapp.com:80/
-       subprotocol : chat
-       handle      : WebScoket
-       messages    : Works!
- 
-  To test Secure WebSocket chat subprotocol, type on nsh like this.
-    nsh> lte_websocket chat-ssl WebSocket Works! 
-       uri         : wss://ruby-websockets-chat.herokuapp.com:443/
-       subprotocol : chat
-       handle      : WebScoket
-       messages    : Works!
- 
   Appropriate uri of each subprotocol is set automatically.
   When use Secure WebSocket (wss), need to put root CA files in place.
 
+
+  Examples:
+
+  [Echo subprotocol]
+
+  To test WebSocket echo subprotocol, type on nsh like this.
+    nsh> lte_websocket echo WebSocket Works! 
+
+  If successful, output following message with some debug messages.
+    "exiting cwebsocket : SUCCESS"  
+  If fail, output following message with some debug messages.
+    "exiting cwebsocket : FAILURE"  
+
+  This test uses the following parameters.
+    uri         : ws://echo.websocket.org:80/ 
+    subprotocol : echo
+    messages    : WebScoket Works!
+
+
+  [Echo subprotocol (secure)]
+
+  To test Secure WebSocket echo subprotocol, type on nsh like this.
+    nsh> lte_websocket echo-ssl WebSocket Works! 
+
+  If successful, output following message with some debug messages.
+    "exiting cwebsocket : SUCCESS"  
+  If fail, output following message with some debug messages.
+    "exiting cwebsocket : FAILURE"  
+
+  This test uses the following parameters.
+    uri         : wss://echo.websocket.org:443/
+    subprotocol : echo
+    messages    : WebScoket Works!
+ 
+
+  [Chat subprotocol]
+
+  To test WebSocket chat subprotocol, type on nsh like this.
+    nsh> lte_websocket chat WebSocket Works! 
+
+  If successful, output following message with some debug messages.
+    "exiting cwebsocket : SUCCESS"  
+  If fail, output following message with some debug messages.
+    "exiting cwebsocket : FAILURE"  
+
+  This test uses the following parameters.
+    uri         : ws://ruby-websockets-chat.herokuapp.com:80/
+    subprotocol : chat
+    handle      : WebScoket
+    messages    : Works!
+ 
+
+  [Chat subprotocol (secure)]
+
+  To test Secure WebSocket chat subprotocol, type on nsh like this.
+    nsh> lte_websocket chat-ssl WebSocket Works! 
+
+  If successful, output following message with some debug messages.
+    "exiting cwebsocket : SUCCESS"  
+  If fail, output following message with some debug messages.
+    "exiting cwebsocket : FAILURE"  
+
+  This test uses the following parameters.
+    uri         : wss://ruby-websockets-chat.herokuapp.com:443/
+    subprotocol : chat
+    handle      : WebScoket
+    messages    : Works!
+ 
