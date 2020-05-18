@@ -1,0 +1,2 @@
+-PIPES=y
++NET_LOCAL=y
