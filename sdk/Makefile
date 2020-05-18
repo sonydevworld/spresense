@@ -95,7 +95,7 @@ KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 
 ifeq ($(MAKELEVEL),0)
 all: $(TOPDIR)/.version
-	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) .
+	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
 
 $(TOPDIR)/.version:
 	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
