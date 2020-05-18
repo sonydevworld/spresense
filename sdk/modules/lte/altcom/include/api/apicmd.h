@@ -114,6 +114,7 @@
 #define APICMDID_GET_DYNAMICPSM         (0x0036)
 #define APICMDID_GET_QUALITY            (0x0037)
 #define APICMDID_ACTIVATE_PDN_CANCEL    (0x0038)
+#define APICMDID_GET_CELLINFO           (0x0039)
 /* SOCKET API commands */
 
 #define APICMDID_SOCK_ACCEPT            (0x0080)

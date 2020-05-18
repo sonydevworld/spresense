@@ -70,6 +70,7 @@ CSRCS += lte_getdynamicedrx.c
 CSRCS += lte_getdynamicpsm.c
 CSRCS += lte_getquality.c
 CSRCS += lte_activate_pdn_cancel.c
+CSRCS += lte_getcellinfo.c
 # Add the src directory to the build
 
 DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)lte

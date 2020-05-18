@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_api.h
  *
- *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -183,6 +183,7 @@
  * | @ref lte_get_current_edrx_sync    | @ref lte_get_current_edrx       |
  * | @ref lte_get_current_psm_sync     | @ref lte_get_current_psm        |
  * | @ref lte_get_quality_sync         | @ref lte_get_quality            |
+ * | @ref lte_get_cellinfo_sync        |                                 |
  *
  * @{
  * @file  lte_api.h
@@ -3060,6 +3061,18 @@ int32_t lte_get_quality_sync(lte_quality_t *quality);
  */
 
 int32_t lte_get_quality(get_quality_cb_t callback);
+
+/**
+ * Get LTE network cell information.
+ *
+ * @param [out] cellinfo: LTE network cell information.
+ *                        See @ref lte_cellinfo_t
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo);
 
 /** @} */
 
