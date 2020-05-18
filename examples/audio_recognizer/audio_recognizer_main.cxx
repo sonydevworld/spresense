@@ -490,7 +490,7 @@ static bool app_init_libraries(void)
       return false;
     }
 
-  err = Manager::initPerCpu(mml_data_area, NUM_MEM_POOLS);
+  err = Manager::initPerCpu(mml_data_area, static_pools, pool_num, layout_no);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. 0x%x\n", err);
