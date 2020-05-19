@@ -1616,6 +1616,7 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   struct sockaddr_storage               from;
   int                                   ret            = 0;
   uint8_t                               *buf           = NULL;
+  uint8_t                               dummy_buf      = 0;
   altcom_socklen_t                      altcom_fromlen = 0;
   socklen_t                             output_fromlen = 0;
   int                                   flags          = 0;
@@ -1675,8 +1676,9 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       goto send_resp;
     }
 
-  ret = altcom_recvfrom(usock->usockid, buf, req->max_buflen,
-                        flags,
+  ret = altcom_recvfrom(usock->usockid,
+                        (buf != NULL) ? buf : (FAR void *)&dummy_buf,
+                        req->max_buflen, flags,
                         (FAR struct altcom_sockaddr *)&storage,
                         &altcom_fromlen);
   if (0 > ret)
@@ -1711,7 +1713,7 @@ send_resp:
     {
       resp.valuelen_nontrunc = 0;
       resp.valuelen = 0;
-      if (0 == ret)
+      if ((0 == ret) && (req->max_buflen != 0))
         {
           usock_send_event(fd, priv, usock,
           USRSOCK_EVENT_REMOTE_CLOSED);
