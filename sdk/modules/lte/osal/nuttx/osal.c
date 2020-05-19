@@ -60,7 +60,8 @@
 #define MQ_CMODE (S_IWOTH | S_IROTH | S_IWGRP | S_IRGRP | S_IWUSR | S_IRUSR)
 #define MQ_PRIO          0
 /* There is a relationship that the priority of the receiving task must be
- * higher than the priority of the SPI transfer task. */
+ * higher than the priority of the SPI transfer task.
+ */
 
 #if defined(CONFIG_LTE_CALLBACK_TASK_PRIORITY) && \
     defined(CONFIG_MODEM_ALTMDM_XFER_TASK_PRIORITY)
@@ -699,7 +700,8 @@ int32_t sys_create_mqueue(FAR sys_mq_t *mq, FAR const sys_cremq_s *params)
     }
 
   /* Close message queue here, because other sys_xxx_mqueue() may be called
-   * by different task context. */
+   * by different task context.
+   */
 
   mq_close(mqd);
 
@@ -769,7 +771,8 @@ int32_t sys_send_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
   mqd_t           mqd;
 
   /* Need to mq_open() and close() each time this function called.
-   * Because task context which called this function may be different. */
+   * Because task context which called this function may be different.
+   */
 
   mqd = mq_open((char *)mq->name, O_WRONLY);
 
@@ -876,7 +879,8 @@ int32_t sys_recv_mqueue(FAR sys_mq_t *mq, FAR int8_t *message, size_t len,
   mqd_t           mqd;
 
   /* Need to mq_open() and close() each time this function called.
-   * Because task context which called this function may be different. */
+   * Because task context which called this function may be different.
+   */
 
   mqd = mq_open((char *)mq->name, O_RDONLY);
 
