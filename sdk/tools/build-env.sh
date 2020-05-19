@@ -261,7 +261,7 @@ _save_spresense_environment
 if [ "${BASH_VERSINFO[0]}" -ge "4" ]; then
 	source ${SCRIPT_DIR}/completion.sh
 else
-	echo "Info: Your system cannot use Spresense SDK completion."
-	echo "      If you want to use Spresense SDK completion,"
-	echo "      please update bash version 4 or later."
+	echo "Info: Please update the version to 4.0 or later"
+	echo "      The spresense tools completion can not work well"
+	echo "      because of old bash version."
 fi
