@@ -220,6 +220,12 @@ int uconv_utf8_to_ucs2(int src_size, uint8_t *src,
       i++;
       dst_idx++;
     }
+  if (i != src_size)
+    {
+      UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", dst_idx);
+      return -ENOBUFS;
+    }
+
   return dst_idx;
 }
 
@@ -323,5 +329,11 @@ int uconv_ucs2_to_utf8(int src_size, uint16_t *src,
           return -EIO;
         }
     }
+  if (i != src_size)
+    {
+      UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", dst_idx);
+      return -ENOBUFS;
+    }
+
   return dst_idx;
 }
