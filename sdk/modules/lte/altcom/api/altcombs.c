@@ -887,49 +887,55 @@ void altcombs_set_cellinfo(
           FAR struct apicmd_cmddat_cellinfo_s *cmd_cellinfo,
           FAR lte_cellinfo_t *api_cellinfo)
 {
-  api_cellinfo->valid = LTE_VALID == cmd_cellinfo->enability ?
-                        LTE_VALID : LTE_INVALID;
-  if (api_cellinfo->valid)
+  if (cmd_cellinfo->enability == LTE_VALID)
     {
-      api_cellinfo->phycell_id = ntohl(cmd_cellinfo->cell_id);
-      api_cellinfo->earfcn     = ntohl(cmd_cellinfo->earfcn);
-      memcpy(api_cellinfo->mcc, cmd_cellinfo->mcc, LTE_MCC_DIGIT);
-      api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
-      memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc, cmd_cellinfo->mnc_digit);
-
-      if (api_cellinfo->phycell_id < APICMD_CELLINFO_CELLID_MIN ||
-        APICMD_CELLINFO_CELLID_MAX < api_cellinfo->phycell_id)
+      if (ntohl(cmd_cellinfo->cell_id) < APICMD_CELLINFO_CELLID_MIN ||
+          ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
         {
-          DBGIF_LOG1_ERROR("api_cellinfo->phycell_id error:%d\n",
-                           api_cellinfo->phycell_id);
+          DBGIF_LOG1_ERROR("cmd_cellinfo->cell_id error:%d\n",
+                           ntohl(cmd_cellinfo->cell_id));
           api_cellinfo->valid = LTE_INVALID;
         }
-      else if (api_cellinfo->earfcn < APICMD_CELLINFO_EARFCN_MIN ||
-        APICMD_CELLINFO_EARFCN_MAX < api_cellinfo->earfcn)
+      else if (ntohl(cmd_cellinfo->earfcn) < APICMD_CELLINFO_EARFCN_MIN ||
+               ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
         {
-          DBGIF_LOG1_ERROR("api_cellinfo->earfcn error:%d\n",
-                           api_cellinfo->earfcn);
+          DBGIF_LOG1_ERROR("cmd_cellinfo->earfcn error:%d\n",
+                           ntohl(cmd_cellinfo->earfcn));
           api_cellinfo->valid = LTE_INVALID;
         }
-      else if (!altcombs_check_arrydigitnum(api_cellinfo->mcc, LTE_MCC_DIGIT))
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mcc, LTE_MCC_DIGIT))
         {
-          DBGIF_LOG_ERROR("api_cellinfo->mcc error\n");
+          DBGIF_LOG_ERROR("cmd_cellinfo->mcc error\n");
           api_cellinfo->valid = LTE_INVALID;
         }
       else if (
-        api_cellinfo->mnc_digit < APICMD_CELLINFO_MNC_DIGIT_MIN ||
-        LTE_MNC_DIGIT_MAX < api_cellinfo->mnc_digit)
+        cmd_cellinfo->mnc_digit < APICMD_CELLINFO_MNC_DIGIT_MIN ||
+        cmd_cellinfo->mnc_digit > LTE_MNC_DIGIT_MAX)
         {
-          DBGIF_LOG1_ERROR("api_cellinfo->mnc_digit error:%d\n",
-                           api_cellinfo->mnc_digit);
+          DBGIF_LOG1_ERROR("cmd_cellinfo->mnc_digit error:%d\n",
+                           cmd_cellinfo->mnc_digit);
           api_cellinfo->valid = LTE_INVALID;
         }
-      else if (!altcombs_check_arrydigitnum(api_cellinfo->mnc,
-               api_cellinfo->mnc_digit))
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mnc,
+               cmd_cellinfo->mnc_digit))
         {
-          DBGIF_LOG_ERROR("api_cellinfo->mnc error\n");
+          DBGIF_LOG_ERROR("cmd_cellinfo->mnc error\n");
           api_cellinfo->valid = LTE_INVALID;
         }
+      else
+        {
+          api_cellinfo->valid = LTE_VALID;
+          api_cellinfo->phycell_id = ntohl(cmd_cellinfo->cell_id);
+          api_cellinfo->earfcn     = ntohl(cmd_cellinfo->earfcn);
+          memcpy(api_cellinfo->mcc, cmd_cellinfo->mcc, LTE_MCC_DIGIT);
+          api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
+          memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc, 
+                 cmd_cellinfo->mnc_digit);
+        }
+    }
+  else
+    {
+      api_cellinfo->valid = LTE_INVALID;
     }
 }
 
