@@ -161,13 +161,13 @@ if __name__ == '__main__':
     parser.add_argument('configname', metavar='<config name>', type=str, nargs=1,
                         help='configuration name')
     parser.add_argument('-k', dest='kernel', action='store_true',
-                        help='save kernel configuration')
+                        help='DEPRECATED')
     parser.add_argument('-d', '--dir', type=str, nargs=1,
                         help='change configs directory')
     parser.add_argument('-y', action='store_true',
                         help='overwrite existing defconfig')
     parser.add_argument('--all', action='store_true',
-                        help='Save SDK and kernel configuration with same name')
+                        help='DEPRECATED')
     parser.add_argument('--verbose', '-v', action='count',
                         help='verbose messages')
 
