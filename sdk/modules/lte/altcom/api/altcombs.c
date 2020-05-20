@@ -887,7 +887,7 @@ void altcombs_set_cellinfo(
           FAR struct apicmd_cmddat_cellinfo_s *cmd_cellinfo,
           FAR lte_cellinfo_t *api_cellinfo)
 {
-  if (cmd_cellinfo->enability == LTE_VALID)
+  if (cmd_cellinfo->valid == LTE_VALID)
     {
       if (ntohl(cmd_cellinfo->cell_id) < APICMD_CELLINFO_CELLID_MIN ||
           ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )

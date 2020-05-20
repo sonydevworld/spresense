@@ -63,7 +63,7 @@
 
 begin_packed_struct struct apicmd_cmddat_cellinfo_s
 {
-  uint8_t  enability;
+  uint8_t  valid;
   uint32_t cell_id;
   uint32_t earfcn;
   uint8_t  mcc[LTE_MCC_DIGIT];
