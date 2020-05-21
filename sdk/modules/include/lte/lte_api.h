@@ -3065,6 +3065,8 @@ int32_t lte_get_quality(get_quality_cb_t callback);
 /**
  * Get LTE network cell information.
  *
+ * @attention This function is not supported yet.
+ *
  * @param [out] cellinfo: LTE network cell information.
  *                        See @ref lte_cellinfo_t
  *
