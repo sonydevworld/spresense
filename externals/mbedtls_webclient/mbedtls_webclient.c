@@ -350,6 +350,7 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
   int ret;
   char port_char[SSLWEBCLIENT_PORT_SIZE] = {0};
   char *buf;
+  bool verify_ca = false;
 
   sslwebclient_sslsockinit(ssl);
 
@@ -361,30 +362,37 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
       return ret;
     }
 
+  ret = mbedtls_ssl_config_defaults(&ssl->conf, MBEDTLS_SSL_IS_CLIENT,
+                                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                                    MBEDTLS_SSL_PRESET_DEFAULT);
+  if (ret != 0)
+    {
+      nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
+      return ret;
+    }
+
   /* Setup CA certificates. */
 
-  if (ssl->ca_certs_file || ssl->ca_certs_dir)
+  if (ssl->ca_certs_file)
     {
       mbedtls_x509_crt_init(&ssl->ca_cert);
-
-      if (ssl->ca_certs_file)
+      mbedtls_x509_crt_parse_file(&ssl->ca_cert,
+                                  ssl->ca_certs_file);
+      verify_ca = true;
+    }
+  else if (ssl->ca_certs_dir)
+    {
+      dirp = opendir(ssl->ca_certs_dir);
+      if (dirp != NULL)
         {
-          mbedtls_x509_crt_parse_file(&ssl->ca_cert,
-                                      ssl->ca_certs_file);
-        }
-      else
-        {
-          dirp = opendir(ssl->ca_certs_dir);
-          if (dirp != NULL)
-            {
-              cert_dirent = readdir(dirp);
-            }
-
+          cert_dirent = readdir(dirp);
           if (cert_dirent != NULL)
             {
               certs_filename = (FAR char *)malloc(PATH_MAX);
               if (certs_filename)
                 {
+                  mbedtls_x509_crt_init(&ssl->ca_cert);
+
                   do
                     {
                       memset(certs_filename, 0, PATH_MAX);
@@ -392,22 +400,36 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
                       snprintf(certs_filename, PATH_MAX,
                                "%s/%s",
                                ssl->ca_certs_dir, cert_dirent->d_name);
-                      mbedtls_x509_crt_parse_file(&ssl->ca_cert,
-                                                  certs_filename);
+                      if (0 == mbedtls_x509_crt_parse_file(&ssl->ca_cert,
+                                                  certs_filename))
+                        {
+                          verify_ca = true;
+                        }
                     }
                   while ((cert_dirent = readdir(dirp)) != NULL);
 
                   free(certs_filename);
                 }
             }
-
-          if (dirp != NULL)
-            {
-              closedir(dirp);
-            }
+          closedir(dirp);
         }
+    }
+
+  if (verify_ca)
+    {
+      /* Peer must present a valid certificate,
+       * handshake is aborted if verification failed.
+       */
+
       mbedtls_ssl_conf_ca_chain(&ssl->conf, &ssl->ca_cert, NULL);
       mbedtls_ssl_conf_authmode(&ssl->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+    }
+  else
+    {
+      /* Peer certificate is not checked */
+
+      nwarn("peer certificate is not checked\n");
+      mbedtls_ssl_conf_authmode(&ssl->conf, MBEDTLS_SSL_VERIFY_NONE);
     }
 
   /* Setup client certificates. */
@@ -423,15 +445,6 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
                                NULL);
       mbedtls_ssl_conf_own_cert(&ssl->conf, &ssl->cli_cert,
                                 &ssl->cli_key);
-    }
-
-  ret = mbedtls_ssl_config_defaults(&ssl->conf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM,
-                                    MBEDTLS_SSL_PRESET_DEFAULT);
-  if (ret != 0)
-    {
-      nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
-      return ret;
     }
 
   mbedtls_ssl_conf_rng(&ssl->conf, mbedtls_ctr_drbg_random,
