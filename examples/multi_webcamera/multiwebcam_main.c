@@ -65,9 +65,11 @@
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  int rsock, wsock;
+  int rsock;
+  int wsock;
   struct sockaddr_in client;
-  pthread_t cam_thd, jpeg_thd;
+  pthread_t cam_thd;
+  pthread_t jpeg_thd;
 
   int v_fd;
   struct v_buffer *vbuffs;
@@ -82,8 +84,8 @@ int main(int argc, FAR char *argv[])
     }
 
   ret = multiwebcam_prepare_camera_buf(v_fd, V4L2_BUF_TYPE_STILL_CAPTURE,
-                                             V4L2_BUF_MODE_RING, 2 /* buffer num */,
-                                             &vbuffs);
+                                       V4L2_BUF_MODE_RING, 2 /* buffer num */,
+                                       &vbuffs);
   if (ret < 0)
     {
       printf("ERROR: prepare_camera_buf failed: %d\n", ret);
@@ -95,8 +97,8 @@ int main(int argc, FAR char *argv[])
   /* Set Auto Whiltebalance */
 
   ret = multiwebcam_set_ext_ctrls(v_fd, V4L2_CTRL_CLASS_CAMERA,
-                           V4L2_CID_AUTO_N_PRESET_WHITE_BALANCE,
-                           V4L2_WHITE_BALANCE_FLUORESCENT);
+                                  V4L2_CID_AUTO_N_PRESET_WHITE_BALANCE,
+                                  V4L2_WHITE_BALANCE_FLUORESCENT);
 
   /* make socket */
 
@@ -105,7 +107,8 @@ int main(int argc, FAR char *argv[])
   /* Start Camera loop */
 
   cam_thd = multiwebcam_start_camerathread(v_fd);
- 
+  (void)cam_thd;
+
   while(1)
     {
 
