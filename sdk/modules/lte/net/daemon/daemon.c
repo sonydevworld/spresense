@@ -1730,26 +1730,25 @@ send_resp:
   if (0 > ret)
     {
       daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-      return ret;
     }
-
-  if (0 < resp.valuelen)
+  else
     {
-      ret = _write_to_usock(fd, &from, resp.valuelen);
-      if (0 > ret)
+      if (resp.valuelen > 0)
         {
-          daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
+          ret = _write_to_usock(fd, &from, resp.valuelen);
+          if (0 > ret)
+            {
+              daemon_error_printf("_write_to_usock() ret = %d\n", ret);
+            }
         }
-    }
 
-  if (0 < resp.reqack.result)
-    {
-      ret = _write_to_usock(fd, buf, resp.reqack.result);
-      if (0 > ret)
+      if (resp.reqack.result > 0)
         {
-          daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
+          ret = _write_to_usock(fd, buf, resp.reqack.result);
+          if (0 > ret)
+            {
+              daemon_error_printf("_write_to_usock() ret = %d\n", ret);
+            }
         }
     }
 
