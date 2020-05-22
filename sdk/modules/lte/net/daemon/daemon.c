@@ -91,6 +91,10 @@
 #define DAEMONAPI_REQUEST_POWER_OFF 129
 #define DAEMONAPI_REQUEST_FIN       130
 
+#ifndef CONFIG_LTE_DAEMON_TASK_PRIORITY
+#  define CONFIG_LTE_DAEMON_TASK_PRIORITY (110)
+#endif
+
 #ifndef MIN
 #  define MIN(a,b)  (((a) < (b)) ? (a) : (b))
 #endif
@@ -2895,7 +2899,8 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
         }
 
       g_daemonisrunnning = true;
-      g_daemon->pid = task_create("lte_daemon", 100, 4096, lte_daemon, NULL);
+      g_daemon->pid = task_create("lte_daemon", CONFIG_LTE_DAEMON_TASK_PRIORITY,
+                                  4096, lte_daemon, NULL);
       if (0 > g_daemon->pid)
         {
           local_errno = errno;

@@ -10,6 +10,11 @@ menuconfig LTE_NET
 
 if LTE_NET
 
+config LTE_DAEMON_TASK_PRIORITY
+	int "LTE deamon task priority"
+	default 110
+	range 1 255
+
 config LTE_DAEMON_SYNC_TIME
 	bool "Enable synchronization with network time"
 	default y
