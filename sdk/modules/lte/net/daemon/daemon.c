@@ -2191,7 +2191,7 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   FAR struct usock_s                       *usock = NULL;
   struct     usrsock_message_datareq_ack_s resp;
   struct     setsockopt_param              param;
-  int32_t                                  value;
+  FAR void                                 *value = NULL;
   altcom_socklen_t                         valuelen;
   int                                      ret    = 0;
 
@@ -2218,24 +2218,35 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       goto send_resp;
     }
 
-  if (0 < req->max_valuelen)
+  ret = conv_getsockopt_param(req->level, req->option, &param);
+  if (ret < 0)
     {
-      ret = conv_getsockopt_param(req->level, req->option, &param);
-      if (0 <= ret)
+      daemon_error_printf("invalid argment request.\n");
+      goto send_resp;
+    }
+
+  if (req->max_valuelen > 0)
+    {
+      value = malloc(req->max_valuelen);
+      valuelen = req->max_valuelen;
+      if (!value)
         {
-          valuelen = sizeof(value);
-          ret = altcom_getsockopt(usock->usockid,
-                                  param.level,
-                                  param.option,
-                                  (FAR void*)&value, &valuelen);
-          daemon_debug_printf("altcom_getsockopt() ret = %d\n", ret);
-          if (0 > ret)
-            {
-              ret = altcom_errno();
-              ret = -ret;
-              daemon_debug_printf("altcom_getsockopt() failed = %d\n", ret);
-              goto send_resp;
-            }
+          ret = -ENOBUFS;
+          daemon_error_printf("buffer allocate failed.\n");
+          goto send_resp;
+        }
+
+      ret = altcom_getsockopt(usock->usockid,
+                              param.level,
+                              param.option,
+                              value, &valuelen);
+      daemon_debug_printf("altcom_getsockopt() ret = %d\n", ret);
+      if (ret < 0)
+        {
+          ret = altcom_errno();
+          ret = -ret;
+          daemon_debug_printf("altcom_getsockopt() failed = %d\n", ret);
+          goto send_resp;
         }
     }
   else
@@ -2253,7 +2264,7 @@ send_resp:
   resp.reqack.result = ret;
   resp.reqack.xid = req->head.xid;
 
-  if (0 <= ret)
+  if (ret >= 0)
     {
       resp.valuelen = MIN(req->max_valuelen, (socklen_t)valuelen);
       resp.valuelen_nontrunc = (socklen_t)valuelen;
@@ -2265,20 +2276,24 @@ send_resp:
     }
 
   ret = _write_to_usock(fd, &resp, sizeof(resp));
-  if (0 > ret)
+  if (ret < 0)
     {
       daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-      return ret;
     }
 
-  if (0 < resp.valuelen)
+  if (resp.valuelen > 0 && ret >= 0)
     {
-      ret = _write_to_usock(fd, &value, resp.valuelen);
+      ret = _write_to_usock(fd, value, resp.valuelen);
       if (0 > ret)
         {
           daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
         }
+    }
+
+  if (value)
+    {
+      free(value);
+      value = NULL;
     }
 
   daemon_debug_printf("%s: end \n", __func__);
