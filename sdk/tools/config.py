@@ -307,7 +307,7 @@ if __name__ == "__main__":
 
     import argparse
 
-    parser = argparse.ArgumentParser(description='Configration tool')
+    parser = argparse.ArgumentParser(description='Configuration tool')
     parser.add_argument('configname', metavar='<config name>', type=str, nargs='*',
                         help='configuration name')
     parser.add_argument('-k', '--kernel', action='store_true',
