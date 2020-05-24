@@ -1,5 +1,5 @@
 ############################################################################
-# externals/mbedtls_webclient/Make.defs
+# externals/sslutils/Make.defs
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifneq ($(CONFIG_EXTERNALS_MBEDTLS_WEBCLIENT),)
-CONFIGURED_APPS += mbedtls_webclient
+ifneq ($(EXTERNALS_SSLUTILS),)
+CONFIGURED_APPS += sslutils
 endif

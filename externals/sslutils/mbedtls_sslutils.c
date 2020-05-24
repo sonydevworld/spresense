@@ -1,5 +1,5 @@
 /****************************************************************************
- * externals/mbedtls_webclient/mbedtls_webclient.c
+ * externals/sslutils/mbedtls_webclient.c
  *
  *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
@@ -50,7 +50,7 @@
 #include <string.h>
 #include <dirent.h>
 
-#include "netutils/webclient.h"
+#include <netutils/ssl_connection.h>
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
@@ -63,14 +63,14 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define SSLWEBCLIENT_PORT_SIZE 8
-#define SSLWEBCLIENT_BUFF_LEN  128
+#define SSLUTIL_PORT_STRSIZE 8
+#define SSLUTIL_CERTVERIFY_STAT_BUFFLEN  128
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
 
-struct sslwebclient_ssl_ctx_s
+struct sslutil_ssl_ctx_s
 {
   mbedtls_ssl_context ssl;
   mbedtls_ssl_config conf;
@@ -86,65 +86,65 @@ struct sslwebclient_ssl_ctx_s
   const char *private_key_file;
 };
 
-struct sslwebclient_sock_s
+struct sslutil_sock_s
 {
   sq_entry_t node;
   int ndx;
   int sockfd;
   int use_ssl;
-  FAR struct sslwebclient_ssl_ctx_s *ssl;
+  FAR struct sslutil_ssl_ctx_s *ssl;
 };
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static sq_queue_t g_sslwebclient_sockqueue = {};
-static int g_sslwebclient_sockndx = 0;
+static sq_queue_t g_sslutil_sockqueue = {};
+static int g_sslutil_sockndx = 0;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: sslwebclient_socknew
+ * Name: sslutil_socknew
  ****************************************************************************/
 
-static FAR struct sslwebclient_sock_s *sslwebclient_socknew(int use_ssl)
+static FAR struct sslutil_sock_s *sslutil_socknew(int use_ssl)
 {
-  FAR struct sslwebclient_sock_s *sock;
+  FAR struct sslutil_sock_s *sock;
 
-  sock = (FAR struct sslwebclient_sock_s *)
-           calloc(1, sizeof(struct sslwebclient_sock_s));
+  sock = (FAR struct sslutil_sock_s *)
+           calloc(1, sizeof(struct sslutil_sock_s));
   if (sock)
     {
-      sock->ndx = g_sslwebclient_sockndx++ & 0x7fffffff;
+      sock->ndx = g_sslutil_sockndx++ & 0x7fffffff;
       sock->sockfd = -1;
       sock->use_ssl = use_ssl;
       if (use_ssl)
         {
-          sock->ssl = (FAR struct sslwebclient_ssl_ctx_s *)
-                        calloc(1, sizeof(struct sslwebclient_ssl_ctx_s));
+          sock->ssl = (FAR struct sslutil_ssl_ctx_s *)
+                        calloc(1, sizeof(struct sslutil_ssl_ctx_s));
           sock->ssl->ca_certs_dir =
-            CONFIG_EXTERNALS_MBEDTLS_WEBCLIENT_CERTS_PATH;
+            CONFIG_EXTERNALS_MBEDTLS_DEFAULT_CERTS_PATH;
         }
-      sq_addlast(&sock->node, &g_sslwebclient_sockqueue);
+      sq_addlast(&sock->node, &g_sslutil_sockqueue);
     }
 
   return sock;
 }
 
 /****************************************************************************
- * Name: sslwebclient_sockfree
+ * Name: sslutil_sockfree
  ****************************************************************************/
 
-static int sslwebclient_sockfree(FAR struct sslwebclient_sock_s *sock)
+static int sslutil_sockfree(FAR struct sslutil_sock_s *sock)
 {
   if (!sock)
     {
       return -EINVAL;
     }
-  sq_rem(&sock->node, &g_sslwebclient_sockqueue);
+  sq_rem(&sock->node, &g_sslutil_sockqueue);
   if (sock->ssl)
     {
       free(sock->ssl);
@@ -155,14 +155,14 @@ static int sslwebclient_sockfree(FAR struct sslwebclient_sock_s *sock)
 }
 
 /****************************************************************************
- * Name: sslwebclient_sockget
+ * Name: sslutil_sockget
  ****************************************************************************/
 
-static FAR struct sslwebclient_sock_s *sslwebclient_sockget(int ndx)
+static FAR struct sslutil_sock_s *sslutil_sockget(int ndx)
 {
-  FAR struct sslwebclient_sock_s *sock = NULL;
+  FAR struct sslutil_sock_s *sock = NULL;
 
-  sock = (FAR struct sslwebclient_sock_s *)sq_peek(&g_sslwebclient_sockqueue);
+  sock = (FAR struct sslutil_sock_s *)sq_peek(&g_sslutil_sockqueue);
 
   while (sock != NULL)
     {
@@ -170,22 +170,22 @@ static FAR struct sslwebclient_sock_s *sslwebclient_sockget(int ndx)
         {
           break;
         }
-      sock = (FAR struct sslwebclient_sock_s *)sq_next(&sock->node);
+      sock = (FAR struct sslutil_sock_s *)sq_next(&sock->node);
     }
 
   return sock;
 }
 
 /****************************************************************************
- * Name: sslwebclient_doconnect
+ * Name: sslutil_doconnect
  ****************************************************************************/
 
-static int sslwebclient_doconnect(FAR struct sslwebclient_sock_s *sock,
+static int sslutil_doconnect(FAR struct sslutil_sock_s *sock,
                                   FAR const char *host, uint16_t port)
 {
   struct addrinfo hints;
   struct addrinfo *ainfo = NULL;
-  char port_char[SSLWEBCLIENT_PORT_SIZE] = {0};
+  char port_char[SSLUTIL_PORT_STRSIZE] = {0};
   int ret;
   struct timeval tv;
 
@@ -193,7 +193,7 @@ static int sslwebclient_doconnect(FAR struct sslwebclient_sock_s *sock,
   hints.ai_family   = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  snprintf(port_char, SSLWEBCLIENT_PORT_SIZE, "%d", port);
+  snprintf(port_char, SSLUTIL_PORT_STRSIZE, "%d", port);
 
   ret = getaddrinfo(host, port_char, &hints, &ainfo);
   if (ret != 0)
@@ -217,7 +217,7 @@ static int sslwebclient_doconnect(FAR struct sslwebclient_sock_s *sock,
 
   /* Set send and receive timeout values */
 
-  tv.tv_sec  = CONFIG_EXTERNALS_MBEDTLS_WEBCLIENT_TIMEOUT;
+  tv.tv_sec  = CONFIG_EXTERNALS_MBEDTLS_DEFAULT_TIMEOUT;
   tv.tv_usec = 0;
 
   setsockopt(sock->sockfd, SOL_SOCKET, SO_RCVTIMEO, (FAR const void *)&tv,
@@ -245,10 +245,10 @@ static int sslwebclient_doconnect(FAR struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_dosend
+ * Name: sslutil_dosend
  ****************************************************************************/
 
-static int sslwebclient_dosend(FAR struct sslwebclient_sock_s *sock,
+static int sslutil_dosend(FAR struct sslutil_sock_s *sock,
                                FAR const void *buf, size_t len, int flags)
 {
   int ret;
@@ -264,10 +264,10 @@ static int sslwebclient_dosend(FAR struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_dorecv
+ * Name: sslutil_dorecv
  ****************************************************************************/
 
-static int sslwebclient_dorecv(FAR struct sslwebclient_sock_s *sock,
+static int sslutil_dorecv(FAR struct sslutil_sock_s *sock,
                                FAR void *buf, size_t len, int flags)
 {
   int ret;
@@ -283,10 +283,10 @@ static int sslwebclient_dorecv(FAR struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_doclose
+ * Name: sslutil_doclose
  ****************************************************************************/
 
-static int sslwebclient_doclose(FAR struct sslwebclient_sock_s *sock)
+static int sslutil_doclose(FAR struct sslutil_sock_s *sock)
 {
   int ret;
 
@@ -301,10 +301,10 @@ static int sslwebclient_doclose(FAR struct sslwebclient_sock_s *sock)
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslsockinit
+ * Name: sslutil_sslsockinit
  ****************************************************************************/
 
-static int sslwebclient_sslsockinit(struct sslwebclient_ssl_ctx_s *ssl)
+static int sslutil_sslsockinit(struct sslutil_ssl_ctx_s *ssl)
 {
   /* Initialize mbedTLS stuff */
 
@@ -318,10 +318,10 @@ static int sslwebclient_sslsockinit(struct sslwebclient_ssl_ctx_s *ssl)
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslsockfin
+ * Name: sslutil_sslsockfin
  ****************************************************************************/
 
-static int sslwebclient_sslsockfin(struct sslwebclient_ssl_ctx_s *ssl)
+static int sslutil_sslsockfin(struct sslutil_ssl_ctx_s *ssl)
 {
   /* Free mbedTLS stuff */
 
@@ -336,23 +336,23 @@ static int sslwebclient_sslsockfin(struct sslwebclient_ssl_ctx_s *ssl)
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslconnect
+ * Name: sslutil_sslconnect
  ****************************************************************************/
 
-static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
+static int sslutil_sslconnect(struct sslutil_sock_s *sock,
                                    FAR const char *host, uint16_t port)
 {
-  FAR struct sslwebclient_ssl_ctx_s *ssl = sock->ssl;
+  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
   FAR static const char *pers = "tls_test";
   FAR char *certs_filename;
   FAR DIR *dirp = NULL;  /* Pointer to directory for certification files */
   FAR struct dirent *cert_dirent = NULL;
   int ret;
-  char port_char[SSLWEBCLIENT_PORT_SIZE] = {0};
+  char port_char[SSLUTIL_PORT_STRSIZE] = {0};
   char *buf;
   bool verify_ca = false;
 
-  sslwebclient_sslsockinit(ssl);
+  sslutil_sslsockinit(ssl);
 
   ret = mbedtls_ctr_drbg_seed(&ssl->ctr_drbg, mbedtls_entropy_func,
                               &ssl->entropy, (const unsigned char *)pers,
@@ -450,7 +450,7 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
   mbedtls_ssl_conf_rng(&ssl->conf, mbedtls_ctr_drbg_random,
                        &ssl->ctr_drbg);
   mbedtls_ssl_conf_read_timeout(&ssl->conf,
-    CONFIG_EXTERNALS_MBEDTLS_WEBCLIENT_TIMEOUT * 1000);
+    CONFIG_EXTERNALS_MBEDTLS_DEFAULT_TIMEOUT * 1000);
   mbedtls_ssl_setup(&ssl->ssl, &ssl->conf);
   ret = mbedtls_ssl_set_hostname(&ssl->ssl, host);
   if (ret != 0)
@@ -459,7 +459,7 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
       return ret;
     }
 
-  snprintf(port_char, SSLWEBCLIENT_PORT_SIZE, "%d", port);
+  snprintf(port_char, SSLUTIL_PORT_STRSIZE, "%d", port);
 
   /* Start the connection.
    * mbedtls_net_connect execute address resolution, socket create,
@@ -493,13 +493,13 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
   ret = mbedtls_ssl_get_verify_result(&ssl->ssl);
   if (ret != 0)
     {
-      buf = calloc(1, SSLWEBCLIENT_BUFF_LEN);
+      buf = calloc(1, SSLUTIL_CERTVERIFY_STAT_BUFFLEN);
       if (!buf)
         {
           nerr("failed to allocate memory\n");
           return -ENOMEM;
         }
-      mbedtls_x509_crt_verify_info(buf, SSLWEBCLIENT_BUFF_LEN, " ", ret);
+      mbedtls_x509_crt_verify_info(buf, SSLUTIL_CERTVERIFY_STAT_BUFFLEN, " ", ret);
       nerr("Failed to verify peer certificates: %s\n", buf);
       free(buf);
       return -1;
@@ -520,13 +520,13 @@ static int sslwebclient_sslconnect(struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslsend
+ * Name: sslutil_sslsend
  ****************************************************************************/
 
-static int sslwebclient_sslsend(struct sslwebclient_sock_s *sock,
+static int sslutil_sslsend(struct sslutil_sock_s *sock,
                                 FAR const void *buf, size_t len, int flags)
 {
-  FAR struct sslwebclient_ssl_ctx_s *ssl = sock->ssl;
+  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
   int ret;
 
   while ((ret = mbedtls_ssl_write(&ssl->ssl, buf, len)) <= 0)
@@ -543,13 +543,13 @@ static int sslwebclient_sslsend(struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslrecv
+ * Name: sslutil_sslrecv
  ****************************************************************************/
 
-static int sslwebclient_sslrecv(struct sslwebclient_sock_s *sock,
+static int sslutil_sslrecv(struct sslutil_sock_s *sock,
                                 FAR void *buf, size_t len, int flags)
 {
-  FAR struct sslwebclient_ssl_ctx_s *ssl = sock->ssl;
+  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
   int ret;
 
   while ((ret = mbedtls_ssl_read(&ssl->ssl, buf, len)) <= 0)
@@ -570,29 +570,29 @@ static int sslwebclient_sslrecv(struct sslwebclient_sock_s *sock,
 }
 
 /****************************************************************************
- * Name: sslwebclient_sslclose
+ * Name: sslutil_sslclose
  ****************************************************************************/
 
-static int sslwebclient_sslclose(struct sslwebclient_sock_s *sock)
+static int sslutil_sslclose(struct sslutil_sock_s *sock)
 {
-  FAR struct sslwebclient_ssl_ctx_s *ssl = sock->ssl;
+  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
 
-  sslwebclient_sslsockfin(ssl);
+  sslutil_sslsockfin(ssl);
 
   return 0;
 }
 
 /****************************************************************************
- * Name: sslwebclient_connect
+ * Name: sslutil_connect
  ****************************************************************************/
 
-static int sslwebclient_connect(int use_ssl, FAR const char *host,
+static int sslutil_connect(int use_ssl, FAR const char *host,
                                 uint16_t port)
 {
-  FAR struct sslwebclient_sock_s *sock;
+  FAR struct sslutil_sock_s *sock;
   int ret;
 
-  sock = sslwebclient_socknew(use_ssl);
+  sock = sslutil_socknew(use_ssl);
   if (!sock)
     {
       return -ENFILE;
@@ -602,30 +602,30 @@ static int sslwebclient_connect(int use_ssl, FAR const char *host,
     {
       /* Perform SSL/TLS connect */
 
-      ret = sslwebclient_sslconnect(sock, host, port);
+      ret = sslutil_sslconnect(sock, host, port);
       if (ret < 0)
         {
-          nerr("sslwebclient_sslconnect() error : %d\n", ret);
-          sslwebclient_sockfree(sock);
+          nerr("sslutil_sslconnect() error : %d\n", ret);
+          sslutil_sockfree(sock);
         }
     }
   else
     {
       /* Perform connect */
 
-      ret = sslwebclient_doconnect(sock, host, port);
+      ret = sslutil_doconnect(sock, host, port);
       if (ret < 0)
         {
-          nerr("sslwebclient_doconnect() error : %d\n", ret);
-          sslwebclient_sockfree(sock);
+          nerr("sslutil_doconnect() error : %d\n", ret);
+          sslutil_sockfree(sock);
         }
     }
 
   if (ret >= 0)
     {
-      /* If successful, the index is returned so that the sslwebclient_sock_s
+      /* If successful, the index is returned so that the sslutil_sock_s
        * context can be obtained when subsequent called
-       * such as sslwebclient_send and sslwebclient_recv. */
+       * such as sslutil_send and sslutil_recv. */
 
       ret = sock->ndx;
     }
@@ -634,16 +634,16 @@ static int sslwebclient_connect(int use_ssl, FAR const char *host,
 }
 
 /****************************************************************************
- * Name: sslwebclient_send
+ * Name: sslutil_send
  ****************************************************************************/
 
-static ssize_t sslwebclient_send(int fd, FAR const void *buf, size_t len,
+static ssize_t sslutil_send(int fd, FAR const void *buf, size_t len,
                                  int flags)
 {
-  FAR struct sslwebclient_sock_s *sock;
+  FAR struct sslutil_sock_s *sock;
   ssize_t ret;
 
-  sock = sslwebclient_sockget(fd);
+  sock = sslutil_sockget(fd);
   if (!sock)
     {
       return -EBADF;
@@ -653,20 +653,20 @@ static ssize_t sslwebclient_send(int fd, FAR const void *buf, size_t len,
     {
       /* Perform SSL/TLS send */
 
-      ret = sslwebclient_sslsend(sock, buf, len, flags);
+      ret = sslutil_sslsend(sock, buf, len, flags);
       if (ret < 0)
         {
-          nerr("sslwebclient_sslsend() error : %d\n", ret);
+          nerr("sslutil_sslsend() error : %d\n", ret);
         }
     }
   else
     {
       /* Perform send */
 
-      ret = sslwebclient_dosend(sock, buf, len, flags);
+      ret = sslutil_dosend(sock, buf, len, flags);
       if (ret < 0)
         {
-          nerr("sslwebclient_dosend() error : %d\n", ret);
+          nerr("sslutil_dosend() error : %d\n", ret);
         }
     }
 
@@ -674,15 +674,15 @@ static ssize_t sslwebclient_send(int fd, FAR const void *buf, size_t len,
 }
 
 /****************************************************************************
- * Name: sslwebclient_recv
+ * Name: sslutil_recv
  ****************************************************************************/
 
-static ssize_t sslwebclient_recv(int fd, FAR void *buf, size_t len, int flags)
+static ssize_t sslutil_recv(int fd, FAR void *buf, size_t len, int flags)
 {
-  FAR struct sslwebclient_sock_s *sock;
+  FAR struct sslutil_sock_s *sock;
   ssize_t ret;
 
-  sock = sslwebclient_sockget(fd);
+  sock = sslutil_sockget(fd);
   if (!sock)
     {
       return -EBADF;
@@ -692,20 +692,20 @@ static ssize_t sslwebclient_recv(int fd, FAR void *buf, size_t len, int flags)
     {
       /* Perform SSL/TLS recv */
 
-      ret = sslwebclient_sslrecv(sock, buf, len, flags);
+      ret = sslutil_sslrecv(sock, buf, len, flags);
       if (ret < 0)
         {
-          nerr("sslwebclient_sslrecv() error : %d\n", ret);
+          nerr("sslutil_sslrecv() error : %d\n", ret);
         }
     }
   else
     {
       /* Perform recv */
 
-      ret = sslwebclient_dorecv(sock, buf, len, flags);
+      ret = sslutil_dorecv(sock, buf, len, flags);
       if (ret < 0)
         {
-          nerr("sslwebclient_dorecv() error : %d\n", ret);
+          nerr("sslutil_dorecv() error : %d\n", ret);
         }
     }
 
@@ -713,15 +713,15 @@ static ssize_t sslwebclient_recv(int fd, FAR void *buf, size_t len, int flags)
 }
 
 /****************************************************************************
- * Name: sslwebclient_close
+ * Name: sslutil_close
  ****************************************************************************/
 
-static ssize_t sslwebclient_close(int fd)
+static ssize_t sslutil_close(int fd)
 {
-  FAR struct sslwebclient_sock_s *sock;
+  FAR struct sslutil_sock_s *sock;
   int ret;
 
-  sock = sslwebclient_sockget(fd);
+  sock = sslutil_sockget(fd);
   if (!sock)
     {
       return -EBADF;
@@ -731,24 +731,24 @@ static ssize_t sslwebclient_close(int fd)
     {
       /* Perform SSL/TLS close */
 
-      ret = sslwebclient_sslclose(sock);
+      ret = sslutil_sslclose(sock);
       if (ret < 0)
         {
-          nerr("sslwebclient_sslclose() error : %d\n", ret);
+          nerr("sslutil_sslclose() error : %d\n", ret);
         }
     }
   else
     {
       /* Perform close */
 
-      ret = sslwebclient_doclose(sock);
+      ret = sslutil_doclose(sock);
       if (ret < 0)
         {
-          nerr("sslwebclient_doclose() error : %d\n", ret);
+          nerr("sslutil_doclose() error : %d\n", ret);
         }
     }
 
-  sslwebclient_sockfree(sock);
+  sslutil_sockfree(sock);
 
   return ret;
 }
@@ -758,20 +758,17 @@ static ssize_t sslwebclient_close(int fd)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: wget_ssl_register
+ * Name: get_sslsock_connection_methods
  *
  * Description:
- *   Implementation of wget_ssl_register() by mbedTLS
+ *   Implementation of get_sslsock_connection_methods() by mbedTLS
  *
  ****************************************************************************/
 
-void wget_ssl_register(void)
+void get_sslsocket_methods(struct sock_methods_s *methods)
 {
-  struct wget_transport_s transport;
-
-  transport.connect = sslwebclient_connect;
-  transport.send = sslwebclient_send;
-  transport.recv = sslwebclient_recv;
-  transport.close = sslwebclient_close;
-  wget_register_transport(&transport);
+  methods->connect = sslutil_connect;
+  methods->send = sslutil_send;
+  methods->recv = sslutil_recv;
+  methods->close = sslutil_close;
 }

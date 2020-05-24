@@ -1,5 +1,5 @@
 ############################################################################
-# externals/mbedtls_webclient/Makefile
+# externals/sslutils/Library.mk
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
@@ -33,11 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-
-BIN = libmbedtls_webclient$(LIBEXT)
-
-CSRCS = mbedtls_webclient.c
-
-include $(APPDIR)/Application.mk
+ifeq ($(EXTERNALS_SSLUTILS),y)
+  EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)sslutils"
+  EXTRA_LIBS     += -lsslutils
+endif
