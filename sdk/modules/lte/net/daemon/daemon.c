@@ -1805,21 +1805,23 @@ static int bind_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
         {
           addr_len = sizeof(struct altcom_sockaddr_in);
         }
-      else if (req->addrlen == sizeof(struct sockaddr_in))
+      else if (req->addrlen == sizeof(struct sockaddr_in6))
         {
           addr_len = sizeof(struct altcom_sockaddr_in6);
         }
       else
         {
           ret = -EINVAL;
-          daemon_error_printf("invalid argment request addrlen .\n");
+          daemon_error_printf("invalid argment request addrlen = %d.\n",
+                              req->addrlen);
           goto send_resp;
         }
     }
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen .\n");
+      daemon_error_printf("invalid argment request addrlen = %d.\n",
+                          req->addrlen);
       goto send_resp;
     }
 
