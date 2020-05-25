@@ -889,15 +889,13 @@ void altcombs_set_cellinfo(
 {
   if (cmd_cellinfo->valid == LTE_VALID)
     {
-      if (ntohl(cmd_cellinfo->cell_id) < APICMD_CELLINFO_CELLID_MIN ||
-          ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
+      if (ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
         {
           DBGIF_LOG1_ERROR("cmd_cellinfo->cell_id error:%d\n",
                            ntohl(cmd_cellinfo->cell_id));
           api_cellinfo->valid = LTE_INVALID;
         }
-      else if (ntohl(cmd_cellinfo->earfcn) < APICMD_CELLINFO_EARFCN_MIN ||
-               ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
+      else if (ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
         {
           DBGIF_LOG1_ERROR("cmd_cellinfo->earfcn error:%d\n",
                            ntohl(cmd_cellinfo->earfcn));
