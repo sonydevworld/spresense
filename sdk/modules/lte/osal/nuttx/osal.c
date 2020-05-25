@@ -133,25 +133,28 @@ static int task_entry(int argc, FAR char *argv[])
 
   addr = (struct task_info_s *)strtol(argv[1], &endptr, 16);
 
-  if ((errno == ERANGE) && ((int)addr == LONG_MAX))
+  if (errno != ERANGE)
+    {
+      if ((*endptr != '\0'))
+        {
+          DBGIF_LOG_ERROR("No digits were found\n");
+          return -EINVAL;
+        }
+      else if (addr == NULL)
+        {
+          DBGIF_LOG_ERROR("value is null\n");
+          return -EINVAL;
+        }
+    }
+  else if ((long)addr == LONG_MAX)
     {
       DBGIF_LOG_ERROR("strtol overflow\n");
       return -ERANGE;
     }
-  if (((errno == ERANGE) && ((int)addr == LONG_MIN)))
+  else if ((long)addr == LONG_MIN)
     {
       DBGIF_LOG_ERROR("strtol underflow\n");
       return -ERANGE;
-    }
-  if ((endptr == argv[1]))
-    {
-      DBGIF_LOG_ERROR("No digits were found\n");
-      return -EINVAL;
-    }
-  if ((!addr))
-    {
-      DBGIF_LOG_ERROR("value is null\n");
-      return -EINVAL;
     }
 
   /* Save it to a local variables before free it */
