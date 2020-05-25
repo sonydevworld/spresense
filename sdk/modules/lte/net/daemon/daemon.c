@@ -2309,11 +2309,10 @@ static int getsockname_request(int fd, struct daemon_s *priv,
                                 FAR void *hdrbuf)
 {
   FAR struct usrsock_request_getsockname_s *req           = hdrbuf;
-  FAR struct sockaddr_storage              addr;
+  FAR struct sockaddr_in6                  addr;
   FAR struct usock_s                       *usock;
   struct     usrsock_message_datareq_ack_s resp;
   struct     altcom_sockaddr_storage       storage;
-  struct     sockaddr_in6                  tmpaddr;
   altcom_socklen_t                         altcom_addrlen = 0;
   socklen_t                                output_addrlen = 0;
   int                                      ret            = 0;
@@ -2352,7 +2351,7 @@ static int getsockname_request(int fd, struct daemon_s *priv,
     }
 
   memset(&storage, 0, sizeof(struct altcom_sockaddr_storage));
-  memset(&tmpaddr, 0, sizeof(struct sockaddr_in6));
+  memset(&addr, 0, sizeof(struct sockaddr_in6));
 
   ret = altcom_getsockname(usock->usockid,
                             (FAR struct altcom_sockaddr*)&storage,
@@ -2365,8 +2364,7 @@ static int getsockname_request(int fd, struct daemon_s *priv,
       goto send_resp;
     }
 
-  convstorage_local(&storage, (FAR struct sockaddr*)&tmpaddr);
-  memcpy(&addr, &tmpaddr, output_addrlen);
+  convstorage_local(&storage, (FAR struct sockaddr*)&addr);
 
 send_resp:
   /* Send response. */
