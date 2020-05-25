@@ -1053,6 +1053,9 @@ extern "C" int main(int argc, FAR char *argv[])
 {
   printf("Start AudioRecorder example\n");
 
+  /* Set audio sampling rates. */
+  sampling_rate_e sampling_rate = SAMPLING_RATE_48K;
+
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
 
   if (!app_init_libraries())
@@ -1074,7 +1077,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_open_file_dir())
     {
       printf("Error: app_open_file_dir() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
   
    /* On and after this point, AudioSubSystem must be active.
@@ -1086,7 +1089,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_power_on())
     {
       printf("Error: app_power_on() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize simple fifo. */
@@ -1102,17 +1105,15 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_init_mic_gain())
     {
       printf("Error: app_init_mic_gain() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Set audio clock mode. */
 
-  sampling_rate_e sampling_rate = SAMPLING_RATE_48K;
-
   if (!app_set_clkmode((sampling_rate == SAMPLING_RATE_192K) ? AS_CLKMODE_HIRES : AS_CLKMODE_NORMAL))
     {
       printf("Error: app_set_clkmode() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Set recorder operation mode. */
@@ -1120,7 +1121,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_set_recorder_status())
     {
       printf("Error: app_set_recorder_status() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize recorder. */
@@ -1131,7 +1132,7 @@ extern "C" int main(int argc, FAR char *argv[])
                          BITWIDTH_16BIT))
     {
       printf("Error: app_init_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize MicFrontend. */
@@ -1145,20 +1146,20 @@ extern "C" int main(int argc, FAR char *argv[])
                             "/mnt/sd0/BIN/PREPROC"))
     {
       printf("Error: app_init_micfrontend() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
   if (!app_init_preproc_dsp())
     {
       printf("Error: app_init_preproc_dsp() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   if (!app_set_preproc_dsp())
     {
       printf("Error: app_set_preproc_dsp() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 #endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
@@ -1167,7 +1168,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_start_recorder())
     {
       printf("Error: app_start_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Running... */
@@ -1181,7 +1182,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_stop_recorder())
     {
       printf("Error: app_stop_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Close directory of recording file. */
@@ -1189,7 +1190,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_close_file_dir())
     {
       printf("Error: app_close_contents_dir() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Return the state of AudioSubSystem before voice_call operation. */
@@ -1197,7 +1198,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_set_ready())
     {
       printf("Error: app_set_ready() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Change AudioSubsystem to PowerOff state. */
@@ -1205,7 +1206,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_power_off())
     {
       printf("Error: app_power_off() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Deactivate the features used by AudioSubSystem. */
@@ -1219,8 +1220,26 @@ extern "C" int main(int argc, FAR char *argv[])
       printf("Error: finalize_libraries() failure.\n");
       return 1;
     }
-
   printf("Exit AudioRecorder example\n");
 
   return 0;
+
+
+ErrorReturn:
+
+  /* Deactivate the features used by AudioSubSystem. */
+
+  app_deact_audio_sub_system();
+
+  /* finalize the shared memory and memory utility used by AudioSubSystem. */
+
+  if (!app_finalize_libraries())
+    {
+      printf("Error: finalize_libraries() failure.\n");
+      return 1;
+    }
+  printf("Exit AudioRecorder example\n");
+
+  return 1;
+
 }
