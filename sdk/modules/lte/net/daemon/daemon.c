@@ -520,14 +520,14 @@ static int usrsock_request(int fd, FAR struct daemon_s *priv)
   int                                 ret = 0;
 
   com_hdr = (FAR void *)hdrbuf;
-  rlen = read(fd, com_hdr, sizeof(*com_hdr));
+  rlen = read(fd, com_hdr, sizeof(struct usrsock_request_common_s));
 
   if (rlen < 0)
     {
       return -errno;
     }
 
-  if (rlen != sizeof(*com_hdr))
+  if (rlen != sizeof(struct usrsock_request_common_s))
     {
       return -EMSGSIZE;
     }
@@ -1024,7 +1024,7 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
 {
   FAR struct daemon_s                  *info;
   struct     usrsock_message_req_ack_s resp;
-  int32_t                              result;
+  int32_t                              result = 0;
   int32_t                              val_len;
   int                                  ret  = 0;
   int                                  i;
@@ -1154,11 +1154,6 @@ static void localtime_callback(FAR lte_localtime_t *localtime)
   /* struct tm -> struct time_t */
 
   current_time.tv_sec = mktime(&calTime);
-  if (current_time.tv_sec < 0)
-    {
-      daemon_error_printf("mktime falied\n");
-      return;
-    }
 
   /* Set time */
 
@@ -2465,14 +2460,22 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
         break;
     }
 
-  ret = read(fd, (FAR void *)&if_req, req->arglen);
-  if (0 > ret || ret < req->arglen)
+  if (sizeof(struct ifreq) < req->arglen)
     {
       ret = -EFAULT;
       daemon_error_printf("read ifreq failed.\n");
       getreq = true;
     }
-
+  else
+    {
+      ret = read(fd, (FAR void *)&if_req, req->arglen);
+      if (0 > ret || ret < req->arglen)
+        {
+          ret = -EFAULT;
+          daemon_error_printf("read ifreq failed.\n");
+          getreq = true;
+        }
+    }
 
   if (false == getreq)
     {
@@ -2571,11 +2574,14 @@ send_resp:
           return ret;
         }
 
-      ret = _write_to_usock(fd, (FAR void*)&if_req, resp_data.valuelen);
-      if (0 > ret)
+      if (0 <= resp_data.reqack.result)
         {
-          daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
+          ret = _write_to_usock(fd, (FAR void*)&if_req, resp_data.valuelen);
+          if (0 > ret)
+            {
+              daemon_error_printf("_write_to_usock() ret = %d\n", ret);
+              return ret;
+            }
         }
     }
 
@@ -2598,7 +2604,7 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
     } usock_msg;
   FAR struct usock_s *usock = NULL;
 
-  ret = read(src_fd, &usock_msg.head, sizeof(usock_msg.head));
+  ret = read(src_fd, &usock_msg.head, sizeof(struct usrsock_message_common_s));
   if (0 > ret)
     {
       return -errno;
@@ -2607,7 +2613,8 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
   if (usock_msg.head.msgid == USRSOCK_MESSAGE_SOCKET_EVENT)
     {
       ret = read(src_fd, &usock_msg.event.usockid,
-                 sizeof(usock_msg.event) - sizeof(usock_msg.event.head));
+                 sizeof(struct usrsock_message_socket_event_s)
+                 - sizeof(struct usrsock_message_common_s));
       if (0 > ret)
         {
           return -errno;
@@ -2638,14 +2645,15 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
   else if (usock_msg.head.msgid == USRSOCK_MESSAGE_RESPONSE_ACK)
     {
       ret = read(src_fd, &usock_msg.req_ack.xid,
-                  sizeof(usock_msg.req_ack) - sizeof(usock_msg.req_ack.head));
+                  sizeof(struct usrsock_message_req_ack_s)
+                  - sizeof(struct usrsock_message_common_s));
       if (0 > ret)
         {
           return -errno;
         }
 
       ret = _write_to_usock(dst_fd, &usock_msg.req_ack,
-                            sizeof(usock_msg.req_ack));
+                            sizeof(struct usrsock_message_req_ack_s));
       if (0 > ret)
         {
           daemon_error_printf("_write_to_usock() ret = %d\n", ret);
