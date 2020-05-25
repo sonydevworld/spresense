@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "mbedtls/ssl.h"
 
 /****************************************************************************
@@ -65,6 +66,7 @@ int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, size_t *l
 {
   FILE *fd;
   long size;
+  fpos_t end_pos = 0;
 
   /* Check file size */
 
@@ -74,12 +76,20 @@ int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, size_t *l
     }
 
   fseek(fd, 0, SEEK_END);
-  if ((size = ftell(fd)) == -1)
+  if (0 != fgetpos(fd, &end_pos))
     {
       fclose(fd);
       return(MBEDTLS_ERR_PK_FILE_IO_ERROR);
     }
   fseek(fd, 0, SEEK_SET);
+
+  size = (long)end_pos;
+
+  if (size < 0)
+    {
+      fclose(fd);
+      return(MBEDTLS_ERR_PK_FILE_IO_ERROR);
+    }
 
   /* Malloc buffer */
 
