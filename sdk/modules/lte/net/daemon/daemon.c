@@ -129,7 +129,7 @@ enum sock_state_e
 
 struct usock_s
 {
-  int               index;
+  int16_t           index;
   int               usockid;
   enum sock_state_e state;
   int16_t           domain;
@@ -1940,7 +1940,7 @@ static int accept_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   struct     sockaddr_storage              tmpaddr;
   int                                      ret            = 0;
   int                                      val            = 0;
-  int16_t                                  newsockfd;
+  int16_t                                  newsockfd      = -1;
   altcom_socklen_t                         addrlen;
   socklen_t                                output_addrlen = 0;
 
@@ -2038,7 +2038,7 @@ send_resp:
   resp.reqack.xid = req->head.xid;
   resp.reqack.result  = (0 > ret) ? ret : 2;
 
-  if (0 > ret)
+  if (ret < 0)
     {
       resp.valuelen = 0;
       resp.valuelen_nontrunc = 0;
@@ -2063,14 +2063,17 @@ send_resp:
       return ret;
     }
 
-  if (0 < resp.valuelen)
+  if (resp.valuelen > 0)
     {
       ret = _write_to_usock(fd, &tmpaddr, resp.valuelen);
       if (0 > ret)
         {
           daemon_error_printf("_write_to_usock() ret = %d\n", ret);
         }
+    }
 
+  if (newsockfd >= 0)
+    {
       ret = _write_to_usock(fd, &new_usock->index, sizeof(new_usock->index));
       if (0 > ret)
         {
@@ -2593,6 +2596,7 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
       struct usrsock_message_socket_event_s event;
       struct usrsock_message_req_ack_s req_ack;
     } usock_msg;
+  FAR struct usock_s *usock = NULL;
 
   ret = read(src_fd, &usock_msg.head, sizeof(usock_msg.head));
   if (0 > ret)
@@ -2609,18 +2613,27 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
           return -errno;
         }
 
-      ret = _write_to_usock(dst_fd, &usock_msg.event,
-                            sizeof(usock_msg.event));
-      if (0 > ret)
-        {
-          daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
-        }
+      usock = daemon_socket_get(priv, usock_msg.event.usockid);
+      DEBUGASSERT(usock);
 
-      daemon_print_sendevt("usock_msg.event.usockid = %d\n",
-                            usock_msg.event.usockid );
-      daemon_print_sendevt("usock_msg.event.events = %d\n",
-                            usock_msg.event.events );
+      if (usock->state != CLOSED)
+        {
+          ret = _write_to_usock(dst_fd, &usock_msg.event,
+                                sizeof(usock_msg.event));
+          if (0 > ret)
+            {
+              daemon_error_printf("_write_to_usock() ret = %d\n", ret);
+              return ret;
+            }
+          daemon_print_sendevt("usock_msg.event.usockid = %d\n",
+                                usock_msg.event.usockid );
+          daemon_print_sendevt("usock_msg.event.events = %d\n",
+                                usock_msg.event.events );
+        }
+      else
+        {
+          daemon_debug_printf("Not send because it is an event for closed fd\n");
+        }
     }
   else if (usock_msg.head.msgid == USRSOCK_MESSAGE_RESPONSE_ACK)
     {
