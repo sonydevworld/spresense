@@ -250,7 +250,13 @@ static void fwup_mgr_task(void)
 
   for (;;)
     {
-      mq_receive(mgr->mqd, (char*)&msg, sizeof(msg), NULL);
+      ret = mq_receive(mgr->mqd, (char*)&msg, sizeof(msg), NULL);
+
+      if (ret != sizeof(msg))
+        {
+          continue;
+        }
+
       switch (msg.cmd)
         {
         case FWUP_INIT:
@@ -280,7 +286,7 @@ static void fwup_mgr_task(void)
         default:
           break;
         }
-      ret = ret;
+
     }
 }
 
