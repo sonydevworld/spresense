@@ -202,7 +202,7 @@ install: $(foreach SDIR, $(TARGETDIRS), $(SDIR)_install)
 
 # Bypass config targets
 
-config oldconfig olddefconfig menuconfig nconfig qconfig gconfig:
+config oldconfig olddefconfig menuconfig nconfig qconfig gconfig: $(TOPDIR)/.version
 	$(Q) $(MAKE) -C $(TOPDIR) $@
 
 PHONY += config oldconfig olddefconfig menuconfig nconfig qconfig gconfig
