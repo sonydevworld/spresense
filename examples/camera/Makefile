@@ -1,7 +1,7 @@
 ############################################################################
 # camera/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -45,10 +45,11 @@ MODULE    = $(CONFIG_EXAMPLES_CAMERA)
 
 # camera Example
 
+CSRCS += camera_fileutil.c
 MAINSRC = camera_main.c
 
 ifeq ($(CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD),y)
-CSRCS += camera_bkgd.c camera_nximage_listener.c
+CSRCS += camera_bkgd.c
 endif
 
 include $(APPDIR)/Application.mk

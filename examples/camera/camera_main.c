@@ -1,7 +1,7 @@
 /****************************************************************************
  * camera/camera_main.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,71 +42,57 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <errno.h>
-#include <debug.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/ioctl.h>
 #include <time.h>
-#include <semaphore.h>
 
-#include <nuttx/arch.h>
-#include <nuttx/board.h>
 #include <nuttx/video/video.h>
 
-#include <sys/ioctl.h>
-#include <sys/boardctl.h>
-#include <sys/mount.h>
-
-#include <arch/chip/pm.h>
-#include <arch/board/board.h>
-#include <arch/chip/cisif.h>
+#include "camera_fileutil.h"
 
 #ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
 #include <nuttx/nx/nx.h>
 #include <nuttx/nx/nxglib.h>
-#include "nximage.h"
-
-#  ifdef CONFIG_IMAGEPROC
-#    include <imageproc/imageproc.h>
-#  endif
+#include "camera_bkgd.h"
 #endif
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-/* Display of vsync timing */
-/* #define CAMERA_MAIN_CISIF_INTRTRACE */
 
-/* Note: Buffer size must be multiple of 32. */
-
-#define IMAGE_JPG_SIZE     (512*1024)  /* 512kB */
+#define IMAGE_JPG_SIZE     (512*1024)  /* 512kB for FullHD Jpeg file. */
 #define IMAGE_YUV_SIZE     (320*240*2) /* QVGA YUV422 */
 
 #define VIDEO_BUFNUM       (3)
 #define STILL_BUFNUM       (1)
 
-#define DEFAULT_REPEAT_NUM (10)
+#define MAX_CAPTURE_NUM     (100)
+#define DEFAULT_CAPTURE_NUM (10)
 
-#define IMAGE_FILENAME_LEN (32)
+#define START_CAPTURE_TIME  (5000)   /* mili-seconds */
+#define KEEP_VIDEO_TIME     (10000)  /* mili-seconds */
 
-#ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
-#define itou8(v) ((v) < 0 ? 0 : ((v) > 255 ? 255 : (v)))
-#endif /* CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD */
+#define RESET_INITIAL_TIME(t) gettimeofday(&(t), NULL)
+#define UPDATE_DIFF_TIME(d, then, now) \
+    { \
+      gettimeofday(&(now), NULL); \
+      (d) = ((((now).tv_sec - (then).tv_sec) * 1000) \
+                   + (((now).tv_usec - (then).tv_usec) / 1000)); \
+    }
+
+#define APP_STATE_BEFORE_CAPTURE  (0)
+#define APP_STATE_UNDER_CAPTURE   (1)
+#define APP_STATE_AFTER_CAPTURE   (2)
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
-struct uyvy_s
-{
-  uint8_t u0;
-  uint8_t y0;
-  uint8_t v0;
-  uint8_t y1;
-};
 
 struct v_buffer {
-  uint32_t             *start;
-  uint32_t             length;
+  uint32_t *start;
+  uint32_t length;
 };
 typedef struct v_buffer v_buffer_t;
 
@@ -114,32 +100,23 @@ typedef struct v_buffer v_buffer_t;
  * Private Function Prototypes
  ****************************************************************************/
 
-static int  write_file(uint8_t *data, size_t len, uint32_t format);
+static int camera_prepare(int fd, enum v4l2_buf_type type,
+                          uint32_t buf_mode, uint32_t pixformat,
+                          uint16_t hsize, uint16_t vsize,
+                          struct v_buffer **vbuf,
+                          uint8_t buffernum, int buffersize);
+static void free_buffer(struct v_buffer  *buffers, uint8_t bufnum);
+static int parse_arguments(int argc, char *argv[],
+                           int *capture_num, enum v4l2_buf_type *type);
+static int get_camimage(int fd, struct v4l2_buffer *v4l2_buf,
+    enum v4l2_buf_type buf_type);
+static int release_camimage(int fd, struct v4l2_buffer *v4l2_buf);
+static int start_stillcapture(int v_fd, enum v4l2_buf_type capture_type);
+static int stop_stillcapture(int v_fd, enum v4l2_buf_type capture_type);
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
-
-static struct v_buffer  *buffers_video;
-static struct v_buffer  *buffers_still;
-static unsigned int     n_buffers;
-
-static uint8_t    camera_main_file_count = 0;
-static char       camera_main_filename[IMAGE_FILENAME_LEN];
-static const char *save_dir;
-
-#ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
-struct nximage_data_s g_nximage =
-{
-  NULL,          /* hnx */
-  NULL,          /* hbkgd */
-  false,         /* connected */
-  0,             /* xres */
-  0,             /* yres */
-  false,         /* havpos */
-  { 0 },         /* sem */
-};
-#endif
 
 /****************************************************************************
  * Public Data
@@ -148,191 +125,26 @@ struct nximage_data_s g_nximage =
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-#ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
-static inline int nximage_initialize(void)
-{
-  nxgl_mxpixel_t color;
-  pthread_t thread;
-  int ret;
 
-  /* Start the NX server kernel thread */
+/****************************************************************************
+ * Name: camera_prepare()
+ *
+ * Description:
+ *   Allocate frame buffer for camera and Queue the allocated buffer
+ *   into video driver.
+ ****************************************************************************/
 
-  ret = boardctl(BOARDIOC_NX_START, 0);
-  if (ret < 0)
-    {
-      printf("nximage_initialize: Failed to start the NX server: %d\n", errno);
-      return ERROR;
-    }
-
-  /* Connect to the server */
-
-  g_nximage.hnx = nx_connect();
-  if (!g_nximage.hnx)
-    {
-      printf("nximage_initialize: nx_connect failed: %d\n", errno);
-      return ERROR;
-    }
-
-  /* Start a separate thread to listen for server events.
-     For simplicity, use defaul thread attribute.
-   */
-
-  ret = pthread_create(&thread, NULL, nximage_listener, NULL);
-  if (ret != 0)
-    {
-       printf("nximage_initialize: pthread_create failed: %d\n", ret);
-       return ERROR;
-    }
-
-  /* Don't return until we are connected to the server */
-
-  while (!g_nximage.connected)
-    {
-      /* Wait for the listener thread to wake us up when we really
-       * are connected.
-       */
-
-      (void)sem_wait(&g_nximage.sem);
-    }
-
-  /* Set background color to black */
-
-  color = 0;
-  nx_setbgcolor(g_nximage.hnx, &color);
-  ret = nx_requestbkgd(g_nximage.hnx, &g_nximagecb, NULL);
-  if (ret < 0)
-    {
-      printf("nximage_initialize: nx_requestbkgd failed: %d\n", errno);
-      nx_disconnect(g_nximage.hnx);
-      return ERROR;
-    }
-
-  while (!g_nximage.havepos)
-    {
-      (void) sem_wait(&g_nximage.sem);
-    }
-  printf("nximage_initialize: Screen resolution (%d,%d)\n",
-         g_nximage.xres, g_nximage.yres);
-
-  return 0;
-}
-
-#  ifndef CONFIG_IMAGEPROC
-static inline void ycbcr2rgb(uint8_t y,  uint8_t cb, uint8_t cr,
-                             uint8_t *r, uint8_t *g, uint8_t *b)
-{
-  int _r;
-  int _g;
-  int _b;
-  _r = (128 * (y-16) +                  202 * (cr-128) + 64) / 128;
-  _g = (128 * (y-16) -  24 * (cb-128) -  60 * (cr-128) + 64) / 128;
-  _b = (128 * (y-16) + 238 * (cb-128)                  + 64) / 128;
-  *r = itou8(_r);
-  *g = itou8(_g);
-  *b = itou8(_b);
-}
-
-static inline uint16_t ycbcrtorgb565(uint8_t y, uint8_t cb, uint8_t cr)
-{
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
-
-  ycbcr2rgb(y, cb, cr, &r, &g, &b);
-  r = (r >> 3) & 0x1f;
-  g = (g >> 2) & 0x3f;
-  b = (b >> 3) & 0x1f;
-  return (uint16_t)(((uint16_t)r << 11) | ((uint16_t)g << 5) | (uint16_t)b);
-}
-
-/* Color conversion to show on display devices. */
-
-static void yuv2rgb(void *buf, uint32_t size)
-{
-  struct uyvy_s *ptr;
-  struct uyvy_s uyvy;
-  uint16_t *dest;
-  uint32_t i;
-
-  ptr = buf;
-  dest = buf;
-  for (i = 0; i < size / 4; i++)
-    {
-      /* Save packed YCbCr elements due to it will be replaced with
-       * converted color data.
-       */
-
-      uyvy = *ptr++;
-
-      /* Convert color format to packed RGB565 */
-
-      *dest++ = ycbcrtorgb565(uyvy.y0, uyvy.u0, uyvy.v0);
-      *dest++ = ycbcrtorgb565(uyvy.y1, uyvy.u0, uyvy.v0);
-    }
-}
-#  endif /* !CONFIG_IMAGEPROC */
-#endif /* CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD */
-
-static int  write_file(uint8_t *data, size_t len, uint32_t format)
-{
-  FILE *fp;
-
-  camera_main_file_count++;
-  if(camera_main_file_count >= 1000)
-    {
-      camera_main_file_count = 1;
-    }
-
-  memset(camera_main_filename, 0, sizeof(camera_main_filename));
-
-  if (format == V4L2_PIX_FMT_JPEG)
-    {
-      snprintf(camera_main_filename,
-               IMAGE_FILENAME_LEN,
-               "%s/VIDEO%03d.JPG",
-               save_dir, camera_main_file_count);
-    }
-  else
-    {
-      snprintf(camera_main_filename,
-               IMAGE_FILENAME_LEN,
-               "%s/VIDEO%03d.YUV",
-               save_dir, camera_main_file_count);
-    }
-
-  printf("FILENAME:%s\n", camera_main_filename);
-
-  fp = fopen(camera_main_filename, "wb");
-  if (NULL == fp)
-    {
-      printf("fopen error : %d\n", errno);
-      return -1;
-    }
-
-  if (len != fwrite(data, 1, len, fp))
-    {
-      printf("fwrite error : %d\n", errno);
-    }
-
-  fclose(fp);
-  return 0;
-}
-
-static int camera_prepare(int                fd,
-                          enum v4l2_buf_type type,
-                          uint32_t           buf_mode,
-                          uint32_t           pixformat,
-                          uint16_t           hsize,
-                          uint16_t           vsize,
-                          uint8_t            buffernum)
+static int camera_prepare(int fd, enum v4l2_buf_type type,
+                          uint32_t buf_mode, uint32_t pixformat,
+                          uint16_t hsize, uint16_t vsize,
+                          struct v_buffer **vbuf,
+                          uint8_t buffernum, int buffersize)
 {
   int ret;
   int cnt;
-  uint32_t fsize;
   struct v4l2_format         fmt = {0};
   struct v4l2_requestbuffers req = {0};
   struct v4l2_buffer         buf = {0};
-  struct v_buffer  *buffers;
 
   /* VIDIOC_REQBUFS initiate user pointer I/O */
 
@@ -363,63 +175,59 @@ static int camera_prepare(int                fd,
       return ret;
     }
 
-  /* VIDIOC_QBUF enqueue buffer */
+  /* Prepare video memory to store images */
 
-  if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+  *vbuf = malloc(sizeof(v_buffer_t) * buffernum);
+
+  if (!(*vbuf))
     {
-      buffers_video = malloc(sizeof(v_buffer_t) * buffernum);
-      buffers = buffers_video;
-    }
-  else
-    {
-      buffers_still = malloc(sizeof(v_buffer_t) * buffernum);
-      buffers = buffers_still;
+      printf("Out of memory for array of v_buffer_t[%d]\n", buffernum);
+      return ERROR;
     }
 
-  if (!buffers)
+  for (cnt = 0; cnt < buffernum; cnt++)
     {
-      printf("Out of memory\n");
-      return ret;
-    }
-
-  if (pixformat == V4L2_PIX_FMT_UYVY)
-    {
-      fsize = IMAGE_YUV_SIZE;
-    }
-  else
-    {
-      fsize = IMAGE_JPG_SIZE;
-    }
-
-  for (n_buffers = 0; n_buffers < buffernum; ++n_buffers)
-    {
-      buffers[n_buffers].length = fsize;
+      (*vbuf)[cnt].length = buffersize;
 
       /* Note: VIDIOC_QBUF set buffer pointer. */
       /*       Buffer pointer must be 32bytes aligned. */
 
-      buffers[n_buffers].start  = memalign(32, fsize);
-      if (!buffers[n_buffers].start)
+      (*vbuf)[cnt].start  = memalign(32, buffersize);
+      if (!(*vbuf)[cnt].start)
         {
-          printf("Out of memory\n");
-          return ret;
+          printf("Out of memory for image buffer of %d/%d\n", cnt, buffernum);
+
+          /* Release allocated memory. */
+
+          while (cnt)
+            {
+              cnt--;
+              free((*vbuf)[cnt].start);
+            }
+          free(*vbuf);
+          *vbuf = NULL;
+          return ERROR;
         }
     }
 
-  for (cnt = 0; cnt < n_buffers; cnt++)
+  /* VIDIOC_QBUF enqueue buffer */
+
+  for (cnt = 0; cnt < buffernum; cnt++)
     {
       memset(&buf, 0, sizeof(v4l2_buffer_t));
       buf.type = type;
       buf.memory = V4L2_MEMORY_USERPTR;
       buf.index = cnt;
-      buf.m.userptr = (unsigned long)buffers[cnt].start;
-      buf.length = buffers[cnt].length;
+      buf.m.userptr = (unsigned long)(*vbuf)[cnt].start;
+      buf.length = (*vbuf)[cnt].length;
 
       ret = ioctl(fd, VIDIOC_QBUF, (unsigned long)&buf);
       if (ret)
         {
           printf("Fail QBUF %d\n", errno);
-          return ret;;
+          free_buffer(*vbuf, buffernum);
+          *vbuf = NULL;
+          return ERROR;
         }
     }
 
@@ -429,11 +237,20 @@ static int camera_prepare(int                fd,
   if (ret < 0)
     {
       printf("Failed to VIDIOC_STREAMON: errno = %d\n", errno);
+      free_buffer(*vbuf, buffernum);
+      *vbuf = NULL;
       return ret;
     }
 
   return OK;
 }
+
+/****************************************************************************
+ * Name: free_buffer()
+ *
+ * Description:
+ *   All free allocated memory of v_buffer.
+ ****************************************************************************/
 
 static void free_buffer(struct v_buffer  *buffers, uint8_t bufnum)
 {
@@ -453,193 +270,444 @@ static void free_buffer(struct v_buffer  *buffers, uint8_t bufnum)
 }
 
 /****************************************************************************
+ * Name: parse_argument()
+ *
+ * Description:
+ *   Parse and decode commandline arguments.
+ ****************************************************************************/
+
+static int parse_arguments(int argc, char *argv[],
+                           int *capture_num, enum v4l2_buf_type *type)
+{
+  if (argc==1)
+    {
+      *capture_num = DEFAULT_CAPTURE_NUM;
+      *type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    }
+  else if (argc==2)
+    {
+      if (strncmp(argv[1], "-jpg", 5)==0)
+        {
+          *capture_num = DEFAULT_CAPTURE_NUM;
+          *type = V4L2_BUF_TYPE_STILL_CAPTURE;
+        }
+      else
+        {
+          *capture_num = atoi(argv[1]);
+          if ((*capture_num<0) || (*capture_num>MAX_CAPTURE_NUM))
+            {
+              printf("Invalid capture num(%d). must be >=0 and <=%d\n",
+                    *capture_num, MAX_CAPTURE_NUM);
+              return ERROR;
+            }
+          *type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        }
+    }
+  else if (argc==3)
+    {
+      if (strncmp(argv[1], "-jpg", 5)==0)
+        {
+          *capture_num = atoi(argv[2]);
+          if ((*capture_num<0) || (*capture_num>MAX_CAPTURE_NUM))
+            {
+              printf("Invalid capture num(%d). must be >=0 and <=%d\n",
+                    *capture_num, MAX_CAPTURE_NUM);
+              return ERROR;
+            }
+          *type = V4L2_BUF_TYPE_STILL_CAPTURE;
+        }
+      else
+        {
+          printf("Invalid argument 1 : %s\n", argv[1]);
+          return ERROR;
+        }
+    }
+  else
+    {
+      printf("Too many arguments\n");
+      return ERROR;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: get_camimage()
+ *
+ * Description:
+ *   DQBUF camera frame buffer from video driver with taken picture data.
+ ****************************************************************************/
+
+static int get_camimage(int fd, struct v4l2_buffer *v4l2_buf,
+    enum v4l2_buf_type buf_type)
+{
+  int ret;
+
+  /* VIDIOC_DQBUF acquires captured data. */
+
+  memset(v4l2_buf, 0, sizeof(v4l2_buffer_t));
+  v4l2_buf->type = buf_type;
+  v4l2_buf->memory = V4L2_MEMORY_USERPTR;
+
+  ret = ioctl(fd, VIDIOC_DQBUF, (unsigned long)v4l2_buf);
+  if (ret)
+    {
+      printf("Fail DQBUF %d\n", errno);
+      return ERROR;
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: release_camimage()
+ *
+ * Description:
+ *   Re-QBUF to set used frame buffer into video driver.
+ ****************************************************************************/
+
+static int release_camimage(int fd, struct v4l2_buffer *v4l2_buf)
+{
+  int ret;
+
+  /* VIDIOC_QBUF sets buffer pointer into video driver again. */
+
+  ret = ioctl(fd, VIDIOC_QBUF, (unsigned long)v4l2_buf);
+  if (ret)
+    {
+      printf("Fail QBUF %d\n", errno);
+      return ERROR;
+    }
+  return OK;
+}
+
+/****************************************************************************
+ * Name: start_stillcapture()
+ *
+ * Description:
+ *   Start STILL capture stream by TAKEPICT_START if buf_type is STILL_CAPTURE.
+ ****************************************************************************/
+
+static int start_stillcapture(int v_fd, enum v4l2_buf_type capture_type)
+{
+  int ret;
+
+  if (capture_type==V4L2_BUF_TYPE_STILL_CAPTURE)
+    {
+      ret = ioctl(v_fd, VIDIOC_TAKEPICT_START, 0);
+      if (ret < 0)
+        {
+          printf("Failed to start taking picture\n");
+          return ERROR;
+        }
+    }
+  return OK;
+}
+
+/****************************************************************************
+ * Name: stop_stillcapture()
+ *
+ * Description:
+ *   Stop STILL capture stream by TAKEPICT_STOP if buf_type is STILL_CAPTURE.
+ ****************************************************************************/
+
+static int stop_stillcapture(int v_fd, enum v4l2_buf_type capture_type)
+{
+  int ret;
+
+  if (capture_type==V4L2_BUF_TYPE_STILL_CAPTURE)
+    {
+      ret = ioctl(v_fd, VIDIOC_TAKEPICT_STOP, false);
+      if (ret < 0)
+        {
+          printf("Failed to stop taking picture\n");
+          return ERROR;
+        }
+    }
+  return OK;
+}
+
+/****************************************************************************
  * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: main()
+ *
+ * Description:
+ *   main routine of this example.
  ****************************************************************************/
 
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  int exitcode = ERROR;
   int v_fd;
-  struct stat stat_buf;
-  uint32_t loop;
-  uint32_t buf_type;
-  uint32_t format;
-  struct v4l2_buffer         buf;
+  int capture_num=DEFAULT_CAPTURE_NUM;
+  enum v4l2_buf_type capture_type=V4L2_BUF_TYPE_STILL_CAPTURE;
+  struct v4l2_buffer v4l2_buf;
+  const char *save_dir;
+  int is_eternal;
+  int app_state;
+  int expire_time;
 
-  /* select capture mode */
+  struct timeval now, then;
+  int tdiff;
+
+  struct v_buffer *buffers_video = NULL;
+  struct v_buffer *buffers_still = NULL;
+
+  /* =====  Parse and Check arguments  ===== */
+
+  ret = parse_arguments(argc, argv, &capture_num, &capture_type);
+  if (ret!=OK)
+    {
+      printf("usage: %s ([-jpg]) ([capture num])\n", argv[0]);
+      return ERROR;
+    }
+
+  /* =====  Initialization Code  ===== */
+
+  /* Initialize NX graphics subsystem to use LCD */
 
 #ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
   ret = nximage_initialize();
-  if (ret < 0)
+  if (ret<0)
     {
       printf("camera_main: Failed to get NX handle: %d\n", errno);
       return ERROR;
     }
-#  ifdef CONFIG_IMAGEPROC
-  imageproc_initialize();
-#  endif
-#endif /* CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD */
+#endif
 
-  /* In SD card is available, use SD card.
-   * Otherwise, use SPI flash.
-   */
+  /* Select storage to save image files */
 
-  ret = stat("/mnt/sd0", &stat_buf);
-  if (ret < 0)
-    {
-      save_dir = "/mnt/spif";
-    }
-  else
-    {
-      save_dir = "/mnt/sd0";
-    }
+  save_dir = futil_initialize();
 
-  if (argc>=2 && strncmp(argv[1], "cap", 4)==0)
-    {
-      buf_type = V4L2_BUF_TYPE_STILL_CAPTURE;
-      format   = V4L2_PIX_FMT_JPEG;
-    }
-  else
-    {
-      buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-      format   = V4L2_PIX_FMT_UYVY;
-    }
-
-  if (argc==3)
-    {
-      loop = atoi(argv[2]);
-    }
-  else
-    {
-      loop = DEFAULT_REPEAT_NUM;
-    }
+  /* Initialize voide driver to create a device file */
 
   ret = video_initialize("/dev/video");
   if (ret != 0)
     {
       printf("ERROR: Failed to initialize video: errno = %d\n", errno);
-      goto errout_with_nx;
+      goto exit_without_cleaning_videodriver;
     }
+
+  /* Open the device file. */
 
   v_fd = open("/dev/video", 0);
   if (v_fd < 0)
     {
       printf("ERROR: Failed to open video.errno = %d\n", errno);
-      goto errout_with_video_init;
+      ret = ERROR;
+      goto exit_without_cleaning_buffer;
     }
 
-  /* Prepare VIDEO_CAPTURE */
+  /* Prepare for STILL_CAPTURE stream.
+   *
+   * The video buffer mode is V4L2_BUF_MODE_FIFO mode.
+   * In this FIFO mode, if all VIDIOC_QBUFed frame buffers are captured image
+   * and no additional frame buffers are VIDIOC_QBUFed, the capture stops and
+   * waits for new VIDIOC_QBUFed frame buffer.
+   * And when new VIDIOC_QBUF is executed, the capturing is resumed.
+   *
+   * Allocate freame buffers for QVGA YUV422 size (320x240x2=150KB).
+   * Number of frame buffers is defined as VIDEO_BUFNUM(3).
+   * And all allocated memorys are VIDIOC_QBUFed.
+   */
 
-  ret = camera_prepare(v_fd,
-                       V4L2_BUF_TYPE_VIDEO_CAPTURE,
-                       V4L2_BUF_MODE_RING,
-                       V4L2_PIX_FMT_UYVY,
-                       VIDEO_HSIZE_QVGA,
-                       VIDEO_VSIZE_QVGA,
-                       VIDEO_BUFNUM);
-  if (ret < 0)
+  ret = camera_prepare(v_fd, V4L2_BUF_TYPE_STILL_CAPTURE,
+                       V4L2_BUF_MODE_FIFO, V4L2_PIX_FMT_JPEG,
+                       VIDEO_HSIZE_FULLHD, VIDEO_VSIZE_FULLHD,
+                       &buffers_still, STILL_BUFNUM, IMAGE_JPG_SIZE);
+  if (ret != OK)
     {
-      goto errout_with_buffer;
+      goto exit_this_app;
     }
 
-  /* Prepare STILL_CAPTURE */
+  /* Prepare for VIDEO_CAPTURE stream.
+   *
+   * The video buffer mode is V4L2_BUF_MODE_RING mode.
+   * In this RING mode, if all VIDIOC_QBUFed frame buffers are captured image
+   * and no additional frame buffers are VIDIOC_QBUFed, the capture continues as
+   * the oldest image in the V4L2_BUF_QBUFed frame buffer is reused in order
+   * from the captured frame buffer and a new camera image is recaptured.
+   *
+   * Allocate freame buffers for QVGA YUV422 size (320x240x2=150KB).
+   * Number of frame buffers is defined as VIDEO_BUFNUM(3).
+   * And all allocated memorys are VIDIOC_QBUFed.
+   */
 
-  ret = camera_prepare(v_fd,
-                       V4L2_BUF_TYPE_STILL_CAPTURE,
-                       V4L2_BUF_MODE_FIFO,
-                       V4L2_PIX_FMT_JPEG,
-                       VIDEO_HSIZE_FULLHD,
-                       VIDEO_VSIZE_FULLHD,
-                       STILL_BUFNUM);
-  if (ret < 0)
+  ret = camera_prepare(v_fd, V4L2_BUF_TYPE_VIDEO_CAPTURE,
+                       V4L2_BUF_MODE_RING, V4L2_PIX_FMT_UYVY,
+                       VIDEO_HSIZE_QVGA, VIDEO_VSIZE_QVGA,
+                       &buffers_video, VIDEO_BUFNUM, IMAGE_YUV_SIZE);
+  if (ret != OK)
     {
-      goto errout_with_buffer;
+      goto exit_this_app;
     }
 
-  if (buf_type == V4L2_BUF_TYPE_STILL_CAPTURE)
-    {
-      sleep(1); /* Wait for completion of auto whitebalance adjustment */
 
-      ret = ioctl(v_fd, VIDIOC_TAKEPICT_START, 0);
-      if (ret < 0)
+  /*
+   * This application has 3 states.
+   *
+   * APP_STATE_BEFORE_CAPTURE:
+   *    This state waits 5000 mili-seconds (definded START_CAPTURE_TIME)
+   *    with displaying preview (VIDEO_CAPTURE stream image) on LCD.
+   *    After 5000 ms, state will be changed to APP_STATE_UNDER_CAPTURE.
+   *
+   * APP_STATE_UNDER_CAPTURE:
+   *    This state will start taking picture and store the image into files.
+   *    Number of taking pictures is set capture_num valiable.
+   *    It can be changed by command line argument.
+   *    After finishing taking pictures, the state will be changed to
+   *    APP_STATE_AFTER_CAPTURE.
+   *
+   * APP_STATE_AFTER_CAPTURE:
+   *    This state waits 10000 mili-seconds (definded KEEP_VIDEO_TIME)
+   *    with displaying preview (VIDEO_CAPTURE stream image) on LCD.
+   *    After 10000 ms, this application will be finished.
+   *
+   * Notice:
+   *    If capture_num is set '0', state will stay APP_STATE_BEFORE_CAPTURE.
+   */
+
+  app_state = APP_STATE_BEFORE_CAPTURE;
+
+  /* Show this application behavior. */
+
+  if (capture_num==0)
+    {
+      is_eternal = 1;
+      printf("Start video this mode is eternal. (Non stop, non save files.)\n");
+#ifndef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
+      printf("This mode should be run with LCD display\n");
+#endif
+    }
+  else
+    {
+      is_eternal = 0;
+      expire_time = START_CAPTURE_TIME;
+      printf("Take %d pictures as %s file in %s after %d mili-seconds.\n", capture_num,
+              (capture_type==V4L2_BUF_TYPE_STILL_CAPTURE) ? "JPEG" : "YUV", save_dir, START_CAPTURE_TIME);
+      printf(" After finishing taking pictures, this app will be finished after %d mili-seconds.\n",
+              KEEP_VIDEO_TIME);
+    }
+
+  RESET_INITIAL_TIME(then);
+
+  /* =====  Main Loop  ===== */
+
+  while (1)
+    {
+      switch(app_state)
         {
-          printf("Failed to start taking picture\n");
-        }
-    }
 
-  while (loop-- > 0)
-    {
-      /* Note: VIDIOC_DQBUF acquire capture data. */
+          /* BEFORE_CAPTURE and AFTER_CAPTURE is waiting for expireing the time.
+           * In the meantime, Captureing VIDEO image to show pre-view on LCD.
+           */
 
-      memset(&buf, 0, sizeof(v4l2_buffer_t));
-      buf.type = buf_type;
-      buf.memory = V4L2_MEMORY_USERPTR;
-
-      ret = ioctl(v_fd, VIDIOC_DQBUF, (unsigned long)&buf);
-      if (ret)
-        {
-          printf("Fail DQBUF %d\n", errno);
-          goto errout_with_buffer;
-        }
-
-      write_file((uint8_t *)buf.m.userptr, (size_t)buf.bytesused, format);
+          case APP_STATE_BEFORE_CAPTURE:
+          case APP_STATE_AFTER_CAPTURE:
+            ret = get_camimage(v_fd, &v4l2_buf, V4L2_BUF_TYPE_VIDEO_CAPTURE);
+            if (ret!=OK)
+              {
+                goto exit_this_app;
+              }
 
 #ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
-      if (format == V4L2_PIX_FMT_UYVY)
-        {
-          /* Convert YUV color format to RGB565 */
+          nximage_draw((void *)v4l2_buf.m.userptr,
+              VIDEO_HSIZE_QVGA, VIDEO_VSIZE_QVGA);
+#endif
 
-#  ifdef CONFIG_IMAGEPROC
-          imageproc_convert_yuv2rgb((void *)buf.m.userptr,
-                       VIDEO_HSIZE_QVGA,
-                       VIDEO_VSIZE_QVGA);
-#  else
-          yuv2rgb((void *)buf.m.userptr, buf.bytesused);
-#  endif
-          nximage_image(g_nximage.hbkgd, (void *)buf.m.userptr);
-        }
-#endif /* CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD */
+            ret = release_camimage(v_fd, &v4l2_buf);
+            if (ret!=OK)
+              {
+                goto exit_this_app;
+              }
 
-      /* Note: VIDIOC_QBUF reset released buffer pointer. */
+            if (!is_eternal)
+              {
+                UPDATE_DIFF_TIME(tdiff, then, now);
+                if (expire_time<=tdiff)
+                  {
+                    printf("Expier time is pasted. GoTo next state.\n");
+                    if (app_state==APP_STATE_BEFORE_CAPTURE)
+                      {
+                        app_state = APP_STATE_UNDER_CAPTURE;
+                      }
+                    else
+                      {
+                        ret = OK;
+                        goto exit_this_app;
+                      }
+                  }
+              }
+            break; /* Finish APP_STATE_BEFORE_CAPTURE or APP_STATE_AFTER_CAPTURE */
 
-      ret = ioctl(v_fd, VIDIOC_QBUF, (unsigned long)&buf);
-      if (ret)
-        {
-          printf("Fail QBUF %d\n", errno);
-          goto errout_with_buffer;
-        }
+          /* UNDER_CAPTURE is taking pictures until number of capture_num value.
+           * This state stays until finishing all pictures.
+           */
+
+          case APP_STATE_UNDER_CAPTURE:
+            printf("Start captureing...\n");
+            ret = start_stillcapture(v_fd, capture_type);
+            if (ret!=OK)
+              {
+                goto exit_this_app;
+              }
+            while(capture_num)
+              {
+                ret = get_camimage(v_fd, &v4l2_buf, capture_type);
+                if (ret!=OK)
+                  {
+                    goto exit_this_app;
+                  }
+
+                futil_writeimage((uint8_t *)v4l2_buf.m.userptr, (size_t)v4l2_buf.bytesused,
+                    (capture_type==V4L2_BUF_TYPE_VIDEO_CAPTURE)?"YUV":"JPG");
+
+                ret = release_camimage(v_fd, &v4l2_buf);
+                if (ret!=OK)
+                  {
+                    goto exit_this_app;
+                  }
+                capture_num--;
+              }
+            ret = stop_stillcapture(v_fd, capture_type);
+            if (ret!=OK)
+              {
+                goto exit_this_app;
+              }
+            app_state = APP_STATE_AFTER_CAPTURE;
+            expire_time = KEEP_VIDEO_TIME;
+            RESET_INITIAL_TIME(then);
+            printf("Finished captureing...\n");
+            break; /* Finish APP_STATE_UNDER_CAPTURE */
+
+          default:
+            printf("Unknown error is occured.. state=%d\n", app_state);
+            goto exit_this_app;
+            break;
+        } /* switch(app_state) */
     }
 
-  if (buf_type == V4L2_BUF_TYPE_STILL_CAPTURE)
-    {
-      ret = ioctl(v_fd, VIDIOC_TAKEPICT_STOP, false);
-      if (ret < 0)
-        {
-          printf("Failed to start taking picture\n");
-        }
-    }
+exit_this_app:
 
+  /* Close video device file makes dequqe all buffers */
 
-  exitcode = OK;
-
-errout_with_buffer:
   close(v_fd);
 
   free_buffer(buffers_video, VIDEO_BUFNUM);
   free_buffer(buffers_still, STILL_BUFNUM);
 
-errout_with_video_init:
+exit_without_cleaning_buffer:
 
   video_uninitialize();
 
-errout_with_nx:
-#ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
-#  ifdef CONFIG_IMAGEPROC
-  imageproc_finalize();
-#  endif
-  nx_disconnect(g_nximage.hnx);
-#endif /* CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD */
+exit_without_cleaning_videodriver:
 
-  return exitcode;
+#ifdef CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD
+  nximage_finalize();
+#endif
+
+  return ret;
 }

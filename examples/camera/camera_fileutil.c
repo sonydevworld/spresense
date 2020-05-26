@@ -1,9 +1,7 @@
 /****************************************************************************
- * camera/nximage.h
+ * camera/camera_fileutil.c
  *
- *   Copyright (C) 2011, 2015 Gregory Nutt. All rights reserved.
- *   Author: Gregory Nutt <gnutt@nuttx.org>
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,9 +13,10 @@
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
- * 3. Neither the name NuttX nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+ *    the names of its contributors may be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -34,69 +33,105 @@
  *
  ****************************************************************************/
 
-#ifndef __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H
-#define __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <semaphore.h>
-
-#include <nuttx/nx/nx.h>
-#include <nuttx/nx/nxglib.h>
+#include "camera_fileutil.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define IMAGE_FILENAME_LEN (32)
+
 /****************************************************************************
- * Public Types
+ * Private Data
  ****************************************************************************/
 
-struct nximage_data_s
+static const char *save_dir;
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: futil_initialize()
+ *
+ * Description:
+ *   Choose strage to write a file.
+ ****************************************************************************/
+
+const char *futil_initialize(void)
 {
-  /* The NX handles */
+  int ret;
+  struct stat stat_buf;
 
-  NXHANDLE hnx;
-  NXHANDLE hbkgd;
-  bool     connected;
+  /* In SD card is available, use SD card.
+   * Otherwise, use SPI flash.
+   */
 
-  /* The screen resolution */
+  ret = stat("/mnt/sd0", &stat_buf);
+  if (ret < 0)
+    {
+      save_dir = "/mnt/spif";
+    }
+  else
+    {
+      save_dir = "/mnt/sd0";
+    }
 
-  nxgl_coord_t xres;
-  nxgl_coord_t yres;
-
-  volatile bool havepos;
-  sem_t sem;
-};
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-/* NXIMAGE state data */
-
-extern struct nximage_data_s g_nximage;
-
-/* NX callback vtables */
-
-extern const struct nx_callback_s g_nximagecb;
+  return save_dir;
+}
 
 /****************************************************************************
- * Public Function Prototypes
+ * Name: futil_writeimage()
+ *
+ * Description:
+ *   Write a image file to selected storage.
  ****************************************************************************/
 
-/* NX event listener */
+int futil_writeimage(uint8_t *data, size_t len, const char *fsuffix)
+{
+  static char s_fname[IMAGE_FILENAME_LEN];
+  static int s_framecount = 0;
 
-FAR void *nximage_listener(FAR void *arg);
+  FILE *fp;
 
-/* Background window interfaces */
+  s_framecount++;
+  if(s_framecount >= 1000)
+    {
+      s_framecount = 1;
+    }
 
-void nximage_image(NXWINDOW hwnd, FAR const void *image);
+  memset(s_fname, 0, sizeof(s_fname));
 
-#endif /* __APPS_EXAMPLES_NXIMAGE_NXIMAGE_H */
+  snprintf(s_fname,
+           IMAGE_FILENAME_LEN,
+           "%s/VIDEO%03d.%s",
+           save_dir, s_framecount, fsuffix);
+
+  printf("FILENAME:%s\n", s_fname);
+
+  fp = fopen(s_fname, "wb");
+  if (NULL == fp)
+    {
+      printf("fopen error : %d\n", errno);
+      return -1;
+    }
+
+  if (len != fwrite(data, 1, len, fp))
+    {
+      printf("fwrite error : %d\n", errno);
+    }
+
+  fclose(fp);
+  return 0;
+}
+
