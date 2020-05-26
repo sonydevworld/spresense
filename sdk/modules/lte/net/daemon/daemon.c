@@ -1461,7 +1461,6 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   uint8_t                              *sendbuf   = NULL;
   ssize_t                              rlen;
   int                                  ret        = 0;
-  int                                  sendto_len = 0;
   altcom_socklen_t                     addr_len   = 0;
   int                                  flags      = 0;
 
@@ -1567,21 +1566,13 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       goto send_resp;
     }
   daemon_debug_printf("altcom_sendto() ret = %d\n", ret);
-  sendto_len = ret;
   usock->flags &= ~USRSOCK_EVENT_SENDTO_READY;
-
-  ret = setup_event(priv);
-  if (0 > ret)
-    {
-      ret = altcom_errno();
-      ret = -ret;
-      goto send_resp;
-    }
+  setup_event(priv);
 
 send_resp:
   /* Send ACK response. */
   memset(&resp, 0, sizeof(resp));
-  resp.result = sendto_len;
+  resp.result = ret;
   daemon_debug_printf("%s resp.result = %d\n", __func__, ret);
 
   if (sendbuf)
