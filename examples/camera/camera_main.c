@@ -509,8 +509,8 @@ int main(int argc, FAR char *argv[])
    * waits for new VIDIOC_QBUFed frame buffer.
    * And when new VIDIOC_QBUF is executed, the capturing is resumed.
    *
-   * Allocate freame buffers for QVGA YUV422 size (320x240x2=150KB).
-   * Number of frame buffers is defined as VIDEO_BUFNUM(3).
+   * Allocate freame buffers for FullHD JPEG size (512KB).
+   * Number of frame buffers is defined as STILL_BUFNUM(1).
    * And all allocated memorys are VIDIOC_QBUFed.
    */
 
