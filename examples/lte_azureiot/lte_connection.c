@@ -278,7 +278,7 @@ static int app_wait_lte_callback(int *result)
   if (ret < 0)
     {
       errcode = errno;
-      ERRF("mq_send() failed: %d\n", errcode);
+      ERRF("mq_receive() failed: %d\n", errcode);
       mq_close(mqd);
       return -1;
     }
@@ -364,7 +364,7 @@ static int app_wait_lte_callback_with_parameter(int *result, void *param)
   if (ret < 0)
     {
       errcode = errno;
-      ERRF("mq_send() failed: %d\n", errcode);
+      ERRF("mq_receive() failed: %d\n", errcode);
       mq_close(mqd);
       return -1;
     }
@@ -575,6 +575,7 @@ int app_lte_connect_to_lte(void)
   int                     ret;
   int                     result = LTE_RESULT_OK;
   struct lte_apn_setting  apnsetting;
+  lte_errinfo_t           info = {0};
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.
@@ -589,9 +590,9 @@ int app_lte_connect_to_lte(void)
   /* Initialize the LTE library */
 
   ret = lte_initialize();
-  if (ret < 0)
+  if ((ret < 0) && (ret != -EALREADY))
     {
-      ERRF("Failed to initialize LTE library :%d\n", ret);
+      printf("Failed to initialize LTE library :%d\n", ret);
       goto errout_with_fin;
     }
 
@@ -604,113 +605,110 @@ int app_lte_connect_to_lte(void)
   ret = lte_set_report_restart(app_restart_cb);
   if (ret < 0)
     {
-      ERRF("Failed to set report restart :%d\n", ret);
+      printf("Failed to set report restart :%d\n", ret);
       goto errout_with_fin;
     }
 
   /* Power on the LTE modem */
 
-  printf("lte_power_on\n");
-
   ret = lte_power_on();
-  if (ret < 0)
+  if (ret >= 0)
     {
-      ERRF("Failed to power on the modem :%d\n", ret);
-      goto errout_with_lte_fin;
+
+      /* Wait until the modem startup normally and notification
+       * comes from the callback(app_restart_cb)
+       * registered by lte_set_report_restart.
+       */
+
+      ret = app_wait_lte_callback(&result);
+      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+        {
+          goto errout_with_lte_fin;
+        }
     }
-
-  /* Wait until the modem startup normally and notification
-   * comes from the callback(app_restart_cb)
-   * registered by lte_set_report_restart.
-   */
-
-  ret = app_wait_lte_callback(&result);
-  if (ret < 0)
+  else if (ret == -EALREADY)
     {
-      goto errout_with_lte_fin;
+      printf("Already poweron\n");
     }
-
-  /* Radio on and start to search for network */
-
-  printf("lte_radio_on\n");
-
-  ret = lte_radio_on(app_radio_on_cb);
-  if (ret < 0)
+  else
     {
-      ERRF("Failed to set radio on :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
-
-  /* Wait until the radio on is completed and notification
-   * comes from the callback(app_radio_on_cb)
-   * registered by lte_radio_on.
-   */
-
-  ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
-    {
-      goto errout_with_lte_fin;
-    }
-
-  /* Set the APN to be connected.
-   * Check the APN settings of the carrier according to the your environment.
-   * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
-   * This means APN type for data traffic.
-   */
-
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
-
-  /* Depending on the APN, authentication may not be necessary.
-   * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
-   * and set user_name, password to NULL.
-   */
-
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
-
-  /* Attach to the LTE network and connect to the data PDN */
-
-  printf("lte_activate_pdn\n");
-
-  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
-  if (ret < 0)
-    {
-      ERRF("Failed to activate PDN :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
-
-  /* Wait until the connect completed and notification
-   * comes from the callback(app_activate_pdn_cb)
-   * registered by lte_activate_pdn.
-   */
-
-  ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
-    {
+      printf("Failed to power on the modem :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
   /* Enable to receive events of local time change */
 
-  printf("lte_set_report_localtime\n");
-
   ret = lte_set_report_localtime(app_localtime_report_cb);
   if (ret < 0)
     {
-      ERRF("Failed to set report local time :%d\n", ret);
+      printf("Failed to set report local time :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the set_report_localtime is completed */
+  /* Radio on and start to search for network */
 
-  LOGF("Wait until the set_report_localtime is completed\n");
-
-  ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+  ret = lte_radio_on(app_radio_on_cb);
+  if (ret >= 0)
     {
+
+      /* Wait until the radio on is completed and notification
+       * comes from the callback(app_radio_on_cb)
+       * registered by lte_radio_on.
+       */
+
+      ret = app_wait_lte_callback(&result);
+      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+        {
+          lte_get_errinfo(&info);
+          if(!((info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
+               && (info.err_no == -EALREADY)))
+            {
+              printf("Failed to set radio on :%d\n", ret);
+              app_show_errinfo();
+              goto errout_with_lte_fin;
+            }
+        }
+    }
+  else
+    {
+      printf("Failed to set radio on :%d\n", ret);
+      goto errout_with_lte_fin;
+    }
+
+  /* Attach to the LTE network and connect to the data PDN */
+
+  apnsetting.apn       = (int8_t*)APP_APN_NAME;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
+  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+  if (ret >= 0)
+    {
+
+      /* Wait until the connect completed and notification
+       * comes from the callback(app_activate_pdn_cb)
+       * registered by lte_activate_pdn.
+       */
+
+      ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
+      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+        {
+          lte_get_errinfo(&info);
+          if(!((info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
+               && (info.err_no == -EALREADY)))
+            {
+              printf("Failed to activate PDN :%d\n", ret);
+              app_show_errinfo();
+              goto errout_with_lte_fin;
+            }
+        }
+    }
+  else
+    {
+      printf("Failed to activate PDN :%d\n", ret);
       goto errout_with_lte_fin;
     }
 

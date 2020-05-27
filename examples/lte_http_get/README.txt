@@ -14,7 +14,6 @@ examples/lte_http_get
 * Build kernel and SDK
 ******************************************************************************
 
-  $ make buildkernel KERNCONF=release
   $ ./tools/config.py examples/lte_http_get
 
     The web client also support HTTPS.
@@ -30,22 +29,26 @@ examples/lte_http_get
     Asynchronous LTE API can be used by selecting a configuration as follows:
 
     $ tools/config.py -m
-      Example
-        [*] HTTP GET method using LTE example
-          API call type Selection --->
-            (X) Use Asynchronous API
+      Application Configuration
+        Spresense SDK
+          Example
+            [*] HTTP GET method using LTE example
+              API call type Selection --->
+                (X) Use Asynchronous API
 
     <Setting APN>
     Set the APN of the carrier according to the your environment.
 
     $ tools/config.py -m
-      Example
-        [*] HTTP GET method using LTE example
-          Access Point Name
-          IP type Selection
-          Authentication type Selection
-          Username used for authentication
-          Password used for authentication
+      Application Configuration
+        Spresense SDK
+          Example
+            [*] HTTP GET method using LTE example
+              Access Point Name
+              IP type Selection
+              Authentication type Selection
+              Username used for authentication
+              Password used for authentication
 
   $ make
 

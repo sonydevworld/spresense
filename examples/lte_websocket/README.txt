@@ -10,8 +10,6 @@ examples/lte_websocket
 
   Build kernel and SDK:
 
-  $ make buildkernel KERNCONF=release
-
   This application can be used by lte_websocket default config.
 
   $ ./tools/config.py examples/lte_websocket

@@ -24,10 +24,6 @@ HZAww1PN3suNBkailQU1UeEllNB3j0=
 
 ##### Build kernel and SDK:
 
-```
-$ make buildkernel KERNCONF=release
-```
-
 This application can be used by lte_azureiot default config.
 
 ```

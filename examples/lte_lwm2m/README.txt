@@ -10,8 +10,6 @@ examples/lte_lwm2m
 
   Build kernel and SDK:
 
-  $ make buildkernel KERNCONF=release
-
   This application can be used by lte_lwm2m default config.
 
   $ ./tools/config.py examples/lte_lwm2m
