@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(EXTERNALS_SSLUTILS),y)
+ifeq ($(CONFIG_EXTERNALS_SSLUTILS),y)
   EXTRA_LIBPATHS += -L "$(EXTLIBDIR)$(DELIM)sslutils"
   EXTRA_LIBS     += -lsslutils
 endif

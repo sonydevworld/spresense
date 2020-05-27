@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifneq ($(EXTERNALS_SSLUTILS),)
+ifneq ($(CONFIG_EXTERNALS_SSLUTILS),)
 CONFIGURED_APPS += sslutils
 endif
