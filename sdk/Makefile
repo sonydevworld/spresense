@@ -94,11 +94,9 @@ KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 # If not, 'make' called directly from user, then bypass to NuttX build.
 
 ifeq ($(MAKELEVEL),0)
-all: $(TOPDIR)/.version
-	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
-
-$(TOPDIR)/.version:
+all:
 	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
+	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
 else
 all: .built
 endif
@@ -202,7 +200,7 @@ install: $(foreach SDIR, $(TARGETDIRS), $(SDIR)_install)
 
 # Bypass config targets
 
-config oldconfig olddefconfig menuconfig nconfig qconfig gconfig: $(TOPDIR)/.version
+config oldconfig olddefconfig menuconfig nconfig qconfig gconfig:
 	$(Q) $(MAKE) -C $(TOPDIR) $@
 
 PHONY += config oldconfig olddefconfig menuconfig nconfig qconfig gconfig
