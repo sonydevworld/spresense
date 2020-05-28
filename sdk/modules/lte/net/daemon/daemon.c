@@ -435,7 +435,7 @@ static void daemon_socket_delete(FAR struct daemon_s *priv,
  * Name: daemon_socket_send_abort
  ****************************************************************************/
 
-static int daemon_socket_send_abort(FAR struct daemon_s *priv)
+static int daemon_socket_send_abort(FAR struct daemon_s *priv, int fd)
 {
   int                                   i;
   int                                   ret    = 0;
@@ -444,8 +444,6 @@ static int daemon_socket_send_abort(FAR struct daemon_s *priv)
 
   event.head.msgid = USRSOCK_MESSAGE_SOCKET_EVENT;
   event.head.flags = USRSOCK_MESSAGE_FLAG_EVENT;
-
-  memset(usock, 0, sizeof(struct usock_s));
 
   for (i = 0; i < SOCKET_COUNT; i++)
     {
@@ -461,14 +459,13 @@ static int daemon_socket_send_abort(FAR struct daemon_s *priv)
       event.events = USRSOCK_EVENT_ABORT;
       daemon_print_sendevt("USRSOCK_EVENT_ABORT, usockid %d\n",
                             event.usockid);
-      ret = _write_to_usock(priv->event_outfd, &event, sizeof(event));
+      ret = _write_to_usock(fd, &event, sizeof(event));
       if (0 > ret)
         {
           daemon_error_printf("_write_to_usock() ret = %d\n", ret);
-          return ret;
         }
     }
-  priv->selectid = -1;
+
   return ret;
 }
 
@@ -1123,7 +1120,7 @@ static int setup_event(struct daemon_s *priv)
 
   if (priv->selectid != -1)
     {
-      altcom_select_async_cancel(priv->selectid);
+      altcom_select_async_cancel(priv->selectid, true);
       priv->selectid = -1;
     }
 
@@ -1517,10 +1514,6 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
         }
       memset(&storage, 0, sizeof(struct altcom_sockaddr_storage));
       convsockaddr_remote((struct sockaddr *)&to, &storage);
-      daemon_debug_printf("%s: addr: %s : %d\n",
-                          __func__,
-                          storage.s2_data1,
-                          ntohs((uint32_t)storage.s2_data2) );
 
       pto = (FAR struct altcom_sockaddr*)&storage;
     }
@@ -2716,12 +2709,16 @@ static void daemon_restart_cb(uint32_t reason)
 
   if (reason == LTE_RESTART_MODEM_INITIATED)
     {
-      ret = daemon_socket_send_abort(g_daemon);
+      ret = daemon_socket_send_abort(g_daemon, g_daemon->event_outfd);
       if (0 > ret)
         {
           daemon_error_printf("daemon_socket_send_abort() ret = %d\n", ret);
         }
-      g_daemon->selectid = -1;
+      if (g_daemon->selectid != -1)
+        {
+          altcom_select_async_cancel(g_daemon->selectid, false);
+          g_daemon->selectid = -1;
+        }
       g_daemon->net_dev.d_flags = IFF_DOWN;
 #ifdef CONFIG_NET_IPv4
       memset(&g_daemon->net_dev.d_ipaddr, 0,
@@ -2831,7 +2828,12 @@ static int main_loop(FAR struct daemon_s *priv)
         }
     }
 
-  daemon_socket_send_abort(priv);
+  daemon_socket_send_abort(priv, fd[0]);
+  if (priv->selectid != -1)
+    {
+      altcom_select_async_cancel(priv->selectid, true);
+      priv->selectid = -1;
+    }
   altcom_finalize();
 
   close(fd[1]);

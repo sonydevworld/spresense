@@ -307,13 +307,16 @@ int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
  * Name: altcom_select_async_cancel
  ****************************************************************************/
 
-int altcom_select_async_cancel(int id)
+int altcom_select_async_cancel(int id, bool req)
 {
-  int32_t ret;
+  int32_t ret = 0;
 
   teardown_callback(id);
 
-  ret = altcom_select_cancel_request_send(id);
+  if (req)
+    {
+      ret = altcom_select_cancel_request_send(id);
+    }
 
   return ret;
 }
