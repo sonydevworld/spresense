@@ -182,6 +182,8 @@ static bool CreateSynthesizer(AsSynthesizerMsgQueId_t msgq_id, AsSynthesizerPool
       return false;
     }
 
+  pthread_setname_np(pid, "synthesizer");
+
   SynthesizerObject::set_pid(pid);
 
   return true;

@@ -596,6 +596,8 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
       return AS_ERR_CODE_TASK_CREATE;
     }
 
+  pthread_setname_np(s_amng_pid, "audio_manager");
+
   return AS_ERR_CODE_OK;
 }
 
@@ -653,6 +655,8 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
     }
+
+  pthread_setname_np(s_amng_pid, "audio_manager");
 
   return AS_ERR_CODE_OK;
 }

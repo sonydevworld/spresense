@@ -1822,6 +1822,8 @@ static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_
       return false;
     }
 
+  pthread_setname_np(s_mfe_pid, "front_end");
+
   return true;
 }
 

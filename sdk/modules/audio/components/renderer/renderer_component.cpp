@@ -288,6 +288,8 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
       return false;
     }
 
+  pthread_setname_np(s_render_pid[0], "renderer0");
+
   /* dev1 setting */
 
   if (dev1_self_dtq != 0xFF || dev1_self_sync_dtq != 0xFF)
@@ -328,6 +330,8 @@ bool AS_CreateRenderer(FAR AsCreateRendererParam_t *param)
           RENDERER_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
         }
+
+      pthread_setname_np(s_render_pid[1], "renderer1");
 #else
       RENDERER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;

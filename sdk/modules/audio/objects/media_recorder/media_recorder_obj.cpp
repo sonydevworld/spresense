@@ -1962,6 +1962,8 @@ static bool CreateMediaRecorder(AsRecorderMsgQueId_t msgq_id, AsRecorderPoolId_t
       return false;
     }
 
+  pthread_setname_np(s_rcd_pid, "media_recorder");
+
   return true;
 }
 

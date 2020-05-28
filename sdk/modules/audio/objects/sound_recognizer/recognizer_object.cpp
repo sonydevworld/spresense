@@ -851,6 +851,8 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
       return false;
     }
 
+  pthread_setname_np(s_recognizer_pid, "recognizer");
+
   return true;
 }
 

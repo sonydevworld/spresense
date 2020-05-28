@@ -352,6 +352,8 @@ static bool CreateOutputMixer(AsOutputMixMsgQueId_t msgq_id, AsOutputMixPoolId_t
       return false;
     }
 
+  pthread_setname_np(s_omix_pid, "out_mixer");
+
   return true;
 }
 

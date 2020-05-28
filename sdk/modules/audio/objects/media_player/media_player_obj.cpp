@@ -1739,6 +1739,9 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
           MEDIA_PLAYERS_ERR(id, AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
         }
+
+      pthread_setname_np(s_ply_pid, "media_player0");
+
     }
   else
     {
@@ -1778,6 +1781,9 @@ static bool CreatePlayerMulti(AsPlayerId id, AsPlayerMsgQueId_t msgq_id, AsPlaye
           MEDIA_PLAYERS_ERR(id, AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
         }
+
+      pthread_setname_np(s_sub_ply_pid, "media_player1");
+
     }
 
   return true;
