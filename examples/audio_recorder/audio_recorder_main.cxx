@@ -371,7 +371,7 @@ static void app_write_output_file(uint32_t size)
     }
 
   ret = fwrite(s_recorder_info.fifo.write_buf, 1, size, s_recorder_info.file.fd);
-  if (ret < 0) {
+  if (ret <= 0) {
     printf("ERROR: Cannot write recorded data to output file.\n");
     app_close_output_file();
     return;
