@@ -1972,13 +1972,14 @@ static int accept_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   newsockfd = altcom_accept(usock->usockid,
                             (FAR struct altcom_sockaddr*)&storage,
                             &addrlen);
-  new_usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
-  setup_event(priv);
+  usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
+  
   if (0 > newsockfd)
     {
       ret = altcom_errno();
       ret = -ret;
       daemon_error_printf("altcom_accept() failed = %d\n", ret);
+      setup_event(priv);
       goto send_resp;
     }
   daemon_debug_printf("altcom_accept(): newsockfd = %d\n", newsockfd);
@@ -1989,6 +1990,8 @@ static int accept_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   new_usock->state = CONNECTED;
   new_usock->domain = usock->domain;
   new_usock->xid = req->head.xid;
+
+  setup_event(priv);
 
   val = altcom_fcntl(new_usock->usockid, ALTCOM_GETFL, 0);
   if (0 > val)
