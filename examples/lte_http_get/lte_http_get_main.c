@@ -707,6 +707,52 @@ static void app_restart_cb(uint32_t reason)
     }
 }
 
+
+/****************************************************************************
+ * Name: app_get_sessionid
+ *
+ * Description:
+ *   Gets network information and returns the session ID if connected.
+ ****************************************************************************/
+
+static int app_get_sessionid(void)
+{
+  int           ret     = 0;
+  lte_netinfo_t netinfo = {0};
+
+  netinfo.pdn_stat = (lte_pdn_t *)malloc(sizeof(lte_pdn_t)
+                                         * LTE_SESSION_ID_MAX);
+  if (!netinfo.pdn_stat)
+    {
+      printf("Failed to acllocate pdn status buffer.\n");
+      return -ENOMEM;
+    }
+
+  ret = lte_get_netinfo_sync(LTE_SESSION_ID_MAX, &netinfo);
+  if (ret < 0)
+    {
+      printf("Failed to get network information :%d\n", ret);
+      if (ret == -EPROTO)
+        {
+          app_show_errinfo();
+        }
+      free(netinfo.pdn_stat);
+      return -1;
+    }
+
+  if (0 != netinfo.pdn_num)
+    {
+      ret = netinfo.pdn_stat[0].session_id;
+    }
+  else
+    {
+      ret = -1;
+    }
+
+  free(netinfo.pdn_stat);
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -730,10 +776,10 @@ int main(int argc, FAR char *argv[])
   lte_apn_setting_t apnsetting = {0};
   lte_errinfo_t     info       = {0};
 
+  uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
+
 #ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
   lte_pdn_t pdn = {0};
-#else
-  uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
 #endif
 
   /* This application is a sample that connect to the LTE network,
@@ -866,76 +912,81 @@ int main(int argc, FAR char *argv[])
 
 #endif
 
-  /* Set the APN to be connected.
-   * Check the APN settings of the carrier according to the your environment.
-   * Note that need to set apn_type to LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
-   * This means APN type for data traffic.
-   */
+  /* Get the session ID. If successful, it means already attached. */
 
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
+  ret = app_get_sessionid();
+  if (ret >= 0)
+    {
+      printf("Already actibate PDN.\n");
+      data_pdn_sid = ret;
+    }
+  else
+    {
 
-  /* Depending on the APN, authentication may not be necessary.
-   * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
-   * and set user_name, password to NULL.
-   */
+      /* Set the APN to be connected.
+       * Check the APN settings of the carrier according to
+       * the your environment.
+       * Note that need to set apn_type to
+       * LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA.
+       * This means APN type for data traffic.
+       */
 
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+      apnsetting.ip_type   = APP_APN_IPTYPE;
 
-  /* Attach to the LTE network and connect to the data PDN */
+      /* Depending on the APN, authentication may not be necessary.
+       * In this case, set auth_type to LTE_APN_AUTHTYPE_NONE,
+       * and set user_name, password to NULL.
+       */
+
+      apnsetting.auth_type = APP_APN_AUTHTYPE;
+      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+      /* Attach to the LTE network and connect to the data PDN */
 
 #ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
-  ret = lte_activate_pdn_sync(&apnsetting, &pdn);
-  if (ret < 0)
-    {
-      if (ret == -EPROTO)
+      ret = lte_activate_pdn_sync(&apnsetting, &pdn);
+      if (ret < 0)
         {
-          lte_get_errinfo(&info);
-          if(info.err_no != -EALREADY)
+          printf("Failed to activate PDN :%d\n", ret);
+          if (ret == -EPROTO)
+            {
+              app_show_errinfo();
+            }
+          goto errout_with_lte_fin;
+        }
+      app_show_pdn(&pdn);
+      data_pdn_sid = pdn.session_id;
+#else
+      ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+      if (ret >= 0)
+        {
+
+          /* Wait until the connect completed and notification
+           * comes from the callback(app_activate_pdn_cb)
+           * registered by lte_activate_pdn.
+           */
+
+          ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
+          if ((ret < 0) || (result == LTE_RESULT_ERROR))
             {
               printf("Failed to activate PDN :%d\n", ret);
+              if (result == LTE_RESULT_ERROR)
+                {
+                  app_show_errinfo();
+                }
               goto errout_with_lte_fin;
             }
         }
-      else
+    else
         {
           printf("Failed to activate PDN :%d\n", ret);
           goto errout_with_lte_fin;
         }
-    }
-  app_show_pdn(&pdn);
-#else
-  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
-  if (ret >= 0)
-    {
-
-      /* Wait until the connect completed and notification
-       * comes from the callback(app_activate_pdn_cb)
-       * registered by lte_activate_pdn.
-       */
-
-      ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
-      if ((ret < 0) || (result == LTE_RESULT_ERROR))
-        {
-          lte_get_errinfo(&info);
-          if(!((info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
-            && (info.err_no == -EALREADY)))
-            {
-              printf("Failed to activate PDN :%d\n", ret);
-              app_show_errinfo();
-              goto errout_with_lte_fin;
-            }
-        }
-    }
-  else
-    {
-      printf("Failed to activate PDN :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
 #endif
+    }
 
   wget_initialize();
 
@@ -946,7 +997,7 @@ int main(int argc, FAR char *argv[])
   /* Disconnect from the data PDN and Detach from the LTE network */
 
 #ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
-  ret = lte_deactivate_pdn_sync(pdn.session_id);
+  ret = lte_deactivate_pdn_sync(data_pdn_sid);
 #else
   ret = lte_deactivate_pdn(data_pdn_sid, app_deactivate_pdn_cb);
 #endif

@@ -563,6 +563,51 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
 }
 
 /****************************************************************************
+ * Name: app_get_sessionid
+ *
+ * Description:
+ *   Gets network information and returns the session ID if connected.
+ ****************************************************************************/
+
+static int app_get_sessionid(void)
+{
+  int           ret     = 0;
+  lte_netinfo_t netinfo = {0};
+
+  netinfo.pdn_stat = (lte_pdn_t *)malloc(sizeof(lte_pdn_t)
+                                         * LTE_SESSION_ID_MAX);
+  if (!netinfo.pdn_stat)
+    {
+      printf("Failed to acllocate pdn status buffer.\n");
+      return -ENOMEM;
+    }
+
+  ret = lte_get_netinfo_sync(LTE_SESSION_ID_MAX, &netinfo);
+  if (ret < 0)
+    {
+      printf("Failed to get network information :%d\n", ret);
+      if (ret == -EPROTO)
+        {
+          app_show_errinfo();
+        }
+      free(netinfo.pdn_stat);
+      return -1;
+    }
+
+  if (0 != netinfo.pdn_num)
+    {
+      ret = netinfo.pdn_stat[0].session_id;
+    }
+  else
+    {
+      ret = -1;
+    }
+
+  free(netinfo.pdn_stat);
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -675,41 +720,51 @@ int app_lte_connect_to_lte(void)
       goto errout_with_lte_fin;
     }
 
-  /* Attach to the LTE network and connect to the data PDN */
+  /* Get the session ID. If successful, it means already attached. */
 
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
-
-  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+  ret = app_get_sessionid();
   if (ret >= 0)
     {
-
-      /* Wait until the connect completed and notification
-       * comes from the callback(app_activate_pdn_cb)
-       * registered by lte_activate_pdn.
-       */
-
-      ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
-      if ((ret < 0) || (result == LTE_RESULT_ERROR))
-        {
-          lte_get_errinfo(&info);
-          if(!((info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
-               && (info.err_no == -EALREADY)))
-            {
-              printf("Failed to activate PDN :%d\n", ret);
-              app_show_errinfo();
-              goto errout_with_lte_fin;
-            }
-        }
+      printf("Already actibate PDN.\n");
+      data_pdn_sid = ret;
     }
   else
     {
-      printf("Failed to activate PDN :%d\n", ret);
-      goto errout_with_lte_fin;
+
+      /* Attach to the LTE network and connect to the data PDN */
+
+      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.ip_type   = APP_APN_IPTYPE;
+      apnsetting.auth_type = APP_APN_AUTHTYPE;
+      apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+      ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+      if (ret >= 0)
+        {
+
+          /* Wait until the connect completed and notification
+           * comes from the callback(app_activate_pdn_cb)
+           * registered by lte_activate_pdn.
+           */
+
+          ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
+          if ((ret < 0) || (result == LTE_RESULT_ERROR))
+            {
+              printf("Failed to activate PDN :%d\n", ret);
+              if (result == LTE_RESULT_ERROR)
+                {
+                  app_show_errinfo();
+                }
+              goto errout_with_lte_fin;
+            }
+        }
+      else
+        {
+          printf("Failed to activate PDN :%d\n", ret);
+          goto errout_with_lte_fin;
+        }
     }
 
   return 0;
