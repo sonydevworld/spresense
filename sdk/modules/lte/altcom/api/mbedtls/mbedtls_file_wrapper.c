@@ -65,7 +65,7 @@
 int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, size_t *len)
 {
   FILE *fd;
-  long size;
+  size_t size;
   fpos_t end_pos = 0;
 
   /* Check file size */
@@ -83,13 +83,13 @@ int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, size_t *l
     }
   fseek(fd, 0, SEEK_SET);
 
-  size = (long)end_pos;
-
-  if (size < 0)
+  if (end_pos <= 0)
     {
       fclose(fd);
       return(MBEDTLS_ERR_PK_FILE_IO_ERROR);
     }
+
+  size = end_pos;
 
   /* Malloc buffer */
 
