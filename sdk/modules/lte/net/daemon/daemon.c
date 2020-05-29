@@ -476,7 +476,7 @@ static int daemon_socket_send_abort(FAR struct daemon_s *priv, int fd)
 static FAR struct usock_s *daemon_socket_get(FAR struct daemon_s *priv,
                                               int sockid)
 {
-  if (sockid > SOCKET_COUNT)
+  if (sockid >= SOCKET_COUNT)
     {
       return NULL;
     }
@@ -532,8 +532,13 @@ static int usrsock_request(int fd, FAR struct daemon_s *priv)
       return -EMSGSIZE;
     }
 
-  if (com_hdr->reqid >= USRSOCK_REQUEST__MAX ||
-      !handlers[com_hdr->reqid].fn)
+  if ((com_hdr->reqid < 0) || (com_hdr->reqid >= USRSOCK_REQUEST__MAX))
+    {
+      ASSERT(false);
+      return -EIO;
+    }
+
+  if (!handlers[com_hdr->reqid].fn)
     {
       ASSERT(false);
       return -EIO;
@@ -2584,7 +2589,9 @@ send_resp:
 
 static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
 {
-  int ret = 0;
+  int  ret      = 0;
+  void *tmp_ptr = NULL;
+
   union usock_msg_u
     {
       struct usrsock_message_common_s head;
@@ -2601,7 +2608,9 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
 
   if (usock_msg.head.msgid == USRSOCK_MESSAGE_SOCKET_EVENT)
     {
-      ret = read(src_fd, &usock_msg.event.usockid,
+      tmp_ptr = (void *)&usock_msg.event.usockid;
+
+      ret = read(src_fd, tmp_ptr,
                  sizeof(struct usrsock_message_socket_event_s)
                  - sizeof(struct usrsock_message_common_s));
       if (0 > ret)
@@ -2615,7 +2624,7 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
       if (usock->state != CLOSED)
         {
           ret = _write_to_usock(dst_fd, &usock_msg.event,
-                                sizeof(usock_msg.event));
+                                sizeof(struct usrsock_message_socket_event_s));
           if (0 > ret)
             {
               daemon_error_printf("_write_to_usock() ret = %d\n", ret);
@@ -2633,7 +2642,10 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
     }
   else if (usock_msg.head.msgid == USRSOCK_MESSAGE_RESPONSE_ACK)
     {
-      ret = read(src_fd, &usock_msg.req_ack.xid,
+
+      tmp_ptr = (void *)&usock_msg.req_ack.xid;
+
+      ret = read(src_fd, tmp_ptr,
                   sizeof(struct usrsock_message_req_ack_s)
                   - sizeof(struct usrsock_message_common_s));
       if (0 > ret)
