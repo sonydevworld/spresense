@@ -130,6 +130,7 @@ STRIP=${CROSSDEV}strip
 LIBLIST=(\
 	${SDK_DIR}/../externals/cmsis/dsp/libarm_cortexM4lf_math.a\
 	${SDK_DIR}/../externals/cmsis/nn/libcmsis_nn.a\
+	${SDK_DIR}/../externals/sslutils/libsslutils.a\
 	${SDK_DIR}/modules/sensing/gnss/cxd56nmea/libcxd56nmea.a\
 )
 
