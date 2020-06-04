@@ -353,33 +353,33 @@ int main(int argc, FAR char *argv[])
 
   /* 5. Setup mbedTLS stuff */
 
-  if (mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
-                            (const unsigned char *) pers, strlen(pers)) != 0)
+  if ((ret = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
+                            (const unsigned char *) pers, strlen(pers))) != 0)
     {
-      printf("mbedtls_ctr_drbg_seed() fail\n");
+      printf("mbedtls_ctr_drbg_seed() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
-  if (mbedtls_ssl_config_defaults(&g_conf,
+  if ((ret = mbedtls_ssl_config_defaults(&g_conf,
                                   MBEDTLS_SSL_IS_CLIENT,
                                   MBEDTLS_SSL_TRANSPORT_STREAM,
-                                  MBEDTLS_SSL_PRESET_DEFAULT) != 0)
+                                  MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
     {
-      printf("mbedtls_ssl_config_defaults() fail\n");
+      printf("mbedtls_ssl_config_defaults() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
   mbedtls_ssl_conf_rng(&g_conf, mbedtls_ctr_drbg_random, &g_ctr_drbg);
 
-  if (mbedtls_ssl_setup(&g_ssl, &g_conf) != 0)
+  if ((ret = mbedtls_ssl_setup(&g_ssl, &g_conf)) != 0)
     {
-      printf("mbedtls_ssl_setup() fail\n");
+      printf("mbedtls_ssl_setup() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
-  if (mbedtls_ssl_set_hostname(&g_ssl, g_hostname) != 0)
+  if ((ret = mbedtls_ssl_set_hostname(&g_ssl, g_hostname)) != 0)
     {
-      printf("mbedtls_ssl_set_hostname() fail\n");
+      printf("mbedtls_ssl_set_hostname() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
@@ -388,12 +388,12 @@ int main(int argc, FAR char *argv[])
    *    and connect.
    */
 
-  if (mbedtls_net_connect(&g_server_fd,
+  if ((ret = mbedtls_net_connect(&g_server_fd,
                           g_hostname,
                           port_char,    /* The type is not integer, but string. */
-                          MBEDTLS_NET_PROTO_TCP) != 0)
+                          MBEDTLS_NET_PROTO_TCP)) != 0)
     {
-      printf("mbedtls_net_connect() fail\n");
+      printf("mbedtls_net_connect() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
@@ -405,9 +405,9 @@ int main(int argc, FAR char *argv[])
 
   /* 7. Do SSL handshake */
 
-  if (mbedtls_ssl_handshake(&g_ssl) != 0)
+  if ((ret = mbedtls_ssl_handshake(&g_ssl)) != 0)
     {
-      printf("mbedtls_ssl_handshake() fail\n");
+      printf("mbedtls_ssl_handshake() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
