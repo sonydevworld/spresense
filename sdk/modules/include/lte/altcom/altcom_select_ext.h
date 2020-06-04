@@ -93,7 +93,7 @@ int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
  * Name: altcom_select_async_cancel
  ****************************************************************************/
 
-int altcom_select_async_cancel(int id, bool req);
+int altcom_select_async_cancel(int id, bool is_send);
 
 #undef EXTERN
 #ifdef __cplusplus

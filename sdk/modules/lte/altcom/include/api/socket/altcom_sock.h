@@ -79,20 +79,6 @@ void altcom_sockaddr_to_sockstorage(const struct altcom_sockaddr *addr,
                                     struct altcom_sockaddr_storage *storage);
 
 /****************************************************************************
- * Name: altcom_select_request_asyncsend
- ****************************************************************************/
-
-int altcom_select_request_asyncsend(int maxfdp1, altcom_fd_set *readset,
-                                    altcom_fd_set *writeset,
-                                    altcom_fd_set *exceptset);
-
-/****************************************************************************
- * Name: altcom_select_cancel_request_send
- ****************************************************************************/
-
-int altcom_select_cancel_request_send(int id);
-
-/****************************************************************************
  * Name: altcom_select_nonblock
  ****************************************************************************/
 
