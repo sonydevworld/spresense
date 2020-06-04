@@ -978,11 +978,11 @@ static void set_select_socket(struct daemon_s* priv)
 {
   altcom_fd_set local_readset;
   altcom_fd_set local_writeset;
-  altcom_fd_set local_execset;
+  altcom_fd_set *preadset = NULL;
+  altcom_fd_set *pwriteset = NULL;
 
   ALTCOM_FD_ZERO(&local_readset);
   ALTCOM_FD_ZERO(&local_writeset);
-  ALTCOM_FD_ZERO(&local_execset);
   int i     = 0;
   int maxfd = -1;
 
@@ -992,16 +992,22 @@ static void set_select_socket(struct daemon_s* priv)
         {
           continue;
         }
+      if ((priv->sockets[i].flags & USRSOCK_EVENT_RECVFROM_AVAIL) &&
+          (priv->sockets[i].flags & USRSOCK_EVENT_SENDTO_READY))
+        {
+          continue;
+        }
+
       if ( !(priv->sockets[i].flags & USRSOCK_EVENT_RECVFROM_AVAIL) )
         {
           ALTCOM_FD_SET(priv->sockets[i].usockid, &local_readset);
+          preadset = &local_readset;
         }
       if ( !(priv->sockets[i].flags & USRSOCK_EVENT_SENDTO_READY) )
         {
           ALTCOM_FD_SET(priv->sockets[i].usockid, &local_writeset);
+          pwriteset = &local_writeset;
         }
-
-      ALTCOM_FD_SET(priv->sockets[i].usockid, &local_execset);
 
       if (maxfd < priv->sockets[i].usockid)
         {
@@ -1012,7 +1018,7 @@ static void set_select_socket(struct daemon_s* priv)
   if (maxfd != -1)
     {
       priv->selectid = altcom_select_async(maxfd + 1,
-                        &local_readset, &local_writeset, &local_execset,
+                        preadset, pwriteset, NULL,
                         select_async_callback, (void *)priv);
     }
 }
