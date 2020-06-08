@@ -4,8 +4,8 @@ examples/multi_webcamera
   This sample code is an example application for using Spresense Camera Board and IDY iS110B Wi-Fi Add-on board.
   This application code has some essential programing contents.
 
-  - How to use Spresense Camer.
-  - How to use pthread on Nutt.
+  - How to use Spresense Camera.
+  - How to use pthread on NuttX.
   - How to synchronize and handshaking a data between multi threads.
   - How to use socket interface.
   - What is Motion JPEG over HTTP.
@@ -127,7 +127,7 @@ examples/multi_webcamera
                 inet addr:192.168.11.1 DRaddr:192.168.11.1 Mask:255.255.255.0
         nsh> multiwebcam &
 
-      On other devices, attache the AP network.
+      On other devices, attach the AP network.
 
         nsh> gs2200m spresense_net 0123456789 &
         nsh> sleep 5

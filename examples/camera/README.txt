@@ -47,7 +47,7 @@ examples/camera
     Below example is a case of ubuntu CLI command to flash.
     In below example, USB connection with Spresense main board is /dev/ttyUSB0.
 
-    $ ./tools/flash.sh -c /dev/ttyUSB0 
+    $ ./tools/flash.sh -c /dev/ttyUSB0 nuttx.spk
     >>> Install files ...
     install -b 115200
     Install nuttx.spk
