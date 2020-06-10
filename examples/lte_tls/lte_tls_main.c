@@ -315,6 +315,8 @@ int main(int argc, FAR char *argv[])
     {
       /* In no certification files case, get certification data from memory */
 
+      printf("No certificate files found. Use default certificate.\n");
+
       if (mbedtls_x509_crt_parse_der
             (&g_ca,
              GeoTrustGlobalCA_certificate,
@@ -332,12 +334,10 @@ int main(int argc, FAR char *argv[])
                    "%s/%s",
                    CONFIG_EXAMPLES_LTE_TLS_CERTS_PATH,
                    cert_info->d_name);
-          if (mbedtls_x509_crt_parse_file(&g_ca, g_tls_cert_filename) != 0)
+          if (mbedtls_x509_crt_parse_file(&g_ca, g_tls_cert_filename) == 0)
             {
-              printf("mbedtls_x509_crt_parse_file() fail: %s\n",
+              printf("mbedtls_x509_crt_parse_file() succeed: %s\n",
                      g_tls_cert_filename);
-
-              /* Even if error case, not break. Read next file. */
             }
         }
       while ((cert_info = readdir(dirp)) != NULL);
