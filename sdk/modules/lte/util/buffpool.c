@@ -344,7 +344,7 @@ static bool buffpool_getbuffer(
 
           *buffaddr = buffinfo->buffaddr;
           memset(*buffaddr, 0, blkinfo->size);
-          DBGIF_LOG2_DEBUG("Successful get buffer. size:%u(%u)\n", blkinfo->size, size);
+          DBGIF_LOG3_DEBUG("Successful get buffer. size:%u(%u) addr:%p\n", blkinfo->size, size, *buffaddr);
         }
 
       BUFFPOOL_UNLOCK(table->buffmtx);

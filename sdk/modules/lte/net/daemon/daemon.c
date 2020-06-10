@@ -100,9 +100,9 @@
 #endif
 
 #ifdef CONFIG_LTE_DAEMON_DEBUG_MSG
-#  define daemon_debug_printf(v, ...) printf("[DBG] "v, ##__VA_ARGS__)
-#  define daemon_print_recvevt(v, ...) printf("[EVT recv] "v, ##__VA_ARGS__)
-#  define daemon_print_sendevt(v, ...) printf("[EVT send] "v, ##__VA_ARGS__)
+#  define daemon_debug_printf(v, ...) daemon_syslog(LOG_DEBUG, "[DBG] "v, ##__VA_ARGS__)
+#  define daemon_print_recvevt(v, ...) daemon_syslog(LOG_DEBUG, "[EVT recv] "v, ##__VA_ARGS__)
+#  define daemon_print_sendevt(v, ...) daemon_syslog(LOG_DEBUG, "[EVT send] "v, ##__VA_ARGS__)
 #else
 #  define daemon_debug_printf(v, ...)
 #  define daemon_print_recvevt(v, ...)
@@ -110,7 +110,7 @@
 #endif
 
 #ifdef CONFIG_LTE_DAEMON_DEBUG_ERR
-#  define daemon_error_printf(v, ...) printf("[ERR] %d "v, __LINE__, ##__VA_ARGS__)
+#  define daemon_error_printf(v, ...) daemon_syslog(LOG_ERR, "[ERR] %d "v, __LINE__, ##__VA_ARGS__)
 #else
 #  define daemon_error_printf(v, ...)
 #endif
@@ -288,6 +288,19 @@ static int      g_altcomresult;
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: daemon_syslog
+ ****************************************************************************/
+
+static inline void daemon_syslog(int level, FAR const IPTR char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  vsyslog(level, fmt, ap);
+  va_end(ap);
+}
 
 /****************************************************************************
  * Name: _write_to_usock
