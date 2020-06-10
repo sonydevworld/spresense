@@ -157,7 +157,21 @@ RecognizerObject::MsgProc
   },
 
   /* Message Type: MSG_AUD_RCG_INITRCGPROC */
+  /* Message Type: MSG_AUD_RCG_SETRCGPROC */
 
+  {                                  /* Recognizer status: */
+    &RecognizerObject::illegal,      /*   Booted.          */
+    &RecognizerObject::set,          /*   Ready.           */
+    &RecognizerObject::set,          /*   Active.          */
+    &RecognizerObject::illegal,      /*   Stopping.        */
+  },
+};
+
+/*--------------------------------------------------------------------------*/
+RecognizerObject::MsgProc
+  RecognizerObject::MsgParamTbl[AUD_RCG_PRM_NUM][StateNum] =
+{
+  /* Message Type: MSG_AUD_RCG_INITRCGPROC */
   {                                  /* Recognizer status: */
     &RecognizerObject::illegal,      /*   Booted.          */
     &RecognizerObject::initRcgproc,  /*   Ready.           */
@@ -167,12 +181,12 @@ RecognizerObject::MsgProc
 
   /* Message Type: MSG_AUD_RCG_SETRCGPROC */
 
-  {                                  /* Recognizer status: */
+  {                                  /* MicFrontend status: */
     &RecognizerObject::illegal,      /*   Booted.          */
     &RecognizerObject::setRcgproc,   /*   Ready.           */
     &RecognizerObject::setRcgproc,   /*   Active.          */
     &RecognizerObject::illegal,      /*   Stopping.        */
-  },
+  }
 };
 
 /*--------------------------------------------------------------------------*/
@@ -723,6 +737,17 @@ void RecognizerObject::parse(MsgPacket *msg)
       (this->*MsgProcTbl[event][m_state.get()])(msg);
     }
 }
+
+/*--------------------------------------------------------------------------*/
+void RecognizerObject::set(MsgPacket *msg)
+{
+  uint32_t event;
+  event = MSG_GET_PARAM(msg->getType());
+  F_ASSERT((event < AUD_RCG_PRM_NUM));
+
+  (this->*MsgParamTbl[event][m_state.get()])(msg);
+}
+
 
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::reply(AsRecognizerEvent event, uint32_t command_id, uint32_t result)
