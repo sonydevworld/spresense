@@ -917,7 +917,7 @@ int main(int argc, FAR char *argv[])
   ret = app_get_sessionid();
   if (ret >= 0)
     {
-      printf("Already actibate PDN.\n");
+      printf("Already activated PDN.\n");
       data_pdn_sid = ret;
     }
   else

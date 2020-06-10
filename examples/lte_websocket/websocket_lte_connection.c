@@ -697,7 +697,7 @@ int app_websocket_connect_to_lte(void)
   ret = app_get_sessionid();
   if (ret >= 0)
     {
-      printf("Already actibate PDN.\n");
+      printf("Already activated PDN.\n");
       data_pdn_sid = ret;
     }
   else
