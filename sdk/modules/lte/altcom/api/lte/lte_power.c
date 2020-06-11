@@ -207,7 +207,7 @@ int32_t lte_power_on(void)
   int32_t ret;
 
   ret = altcom_power_on();
-  if (0 > ret)
+  if (ret < 0 && ret != -EALREADY)
     {
       DBGIF_LOG1_ERROR("lte_power_on() error. %d\n", ret);
     }
@@ -291,9 +291,9 @@ int32_t lte_power_off(void)
   int32_t ret;
 
   ret = altcom_power_off();
-  if (0 > ret)
+  if (ret < 0 && ret != -EALREADY)
     {
-      DBGIF_LOG1_ERROR("lte_power_off() error. %d", ret);
+      DBGIF_LOG1_ERROR("lte_power_off() error. %d\n", ret);
     }
 
   return ret;
