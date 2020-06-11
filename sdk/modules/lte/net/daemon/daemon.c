@@ -85,6 +85,7 @@
 #define SOCKET_COUNT ALTCOM_NSOCKET
 
 #define EVENT_PIPE "/tmp/lte_event_pipe"
+#define EVENT_PIPE2 "/tmp/lte_event_pipe2"
 #define APIREQ_PIPE "/tmp/lte_api_req_pipe"
 
 #define DAEMONAPI_REQUEST_POWER_ON  128
@@ -114,6 +115,8 @@
 #else
 #  define daemon_error_printf(v, ...)
 #endif
+
+#define SELECT_ASYNC_RETRY_MAX      1
 
 /****************************************************************************
  * Private Data Types
@@ -202,7 +205,6 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
                                   FAR altcom_fd_set *writeset,
                                   FAR altcom_fd_set *exceptset,
                                   FAR void* priv);
-static void set_select_socket(struct daemon_s* priv);
 
 /****************************************************************************
  * Private Data
@@ -987,7 +989,7 @@ static int convflags_local(int from_flags, int *to_flags)
  * Name: set_select_socket
  ****************************************************************************/
 
-static void set_select_socket(struct daemon_s* priv)
+static int set_select_socket(struct daemon_s* priv)
 {
   altcom_fd_set local_readset;
   altcom_fd_set local_writeset;
@@ -998,6 +1000,7 @@ static void set_select_socket(struct daemon_s* priv)
   ALTCOM_FD_ZERO(&local_writeset);
   int i     = 0;
   int maxfd = -1;
+  int ret = 0;
 
   for (i = 0; i < SOCKET_COUNT; i++)
     {
@@ -1030,10 +1033,21 @@ static void set_select_socket(struct daemon_s* priv)
 
   if (maxfd != -1)
     {
-      priv->selectid = altcom_select_async(maxfd + 1,
-                        preadset, pwriteset, NULL,
-                        select_async_callback, (void *)priv);
+      ret = altcom_select_async(maxfd + 1, preadset, pwriteset, NULL,
+                                select_async_callback, (void *)priv);
+      if (ret == -1)
+        {
+          daemon_error_printf("altcom_select_async() fail:%d\n",
+                              altcom_errno());
+        }
+      else
+        {
+          priv->selectid = ret;
+          daemon_debug_printf("altcom_select_async() succeed: %d\n", ret);
+        }
     }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -1047,10 +1061,6 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
                                   FAR void* priv)
 {
   FAR struct daemon_s                  *info;
-  struct     usrsock_message_req_ack_s resp;
-  int32_t                              result = 0;
-  int32_t                              val_len;
-  int                                  ret  = 0;
   int                                  i;
   int                                  wlen = 0;
 
@@ -1093,45 +1103,9 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
                                       USRSOCK_EVENT_SENDTO_READY);
               daemon_print_sendevt("USRSOCK_EVENT_SENDTO_READY\n");
               info->sockets[i].flags |= USRSOCK_EVENT_SENDTO_READY;
-              if (CONNECTING == info->sockets[i].state)
-                {
-                  val_len = sizeof(result);
-                  ret = altcom_getsockopt(info->sockets[i].usockid,
-                                          ALTCOM_SOL_SOCKET,
-                                          ALTCOM_SO_ERROR,
-                                          (FAR void*)&result,
-                                          (altcom_socklen_t*)&val_len);
-                  daemon_debug_printf("altcom_getsockopt() ret = %d\n", ret);
-                  if (0 > ret)
-                    {
-                      ret = altcom_errno();
-                      ret = -ret;
-                      daemon_debug_printf("altcom_getsockopt() failed = %d\n",
-                                          ret);
-                    }
-                  else if (0 == result)
-                    {
-                      info->sockets[i].state = CONNECTED;
-                    }
-                  else
-                    {
-                      info->sockets[i].state = OPENED;
-                    }
-                  memset(&resp, 0, sizeof(resp));
-                  resp.result = result;
-                  ret = _send_ack_common(info->event_outfd,
-                                          info->sockets[i].xid, &resp);
-                  if (0 > ret)
-                    {
-                      daemon_error_printf("_send_ack_common() ret = %d\n",
-                                          ret);
-                    }
-                }
             }
         }
     }
-
-  set_select_socket(info);
 }
 
 /****************************************************************************
@@ -1148,7 +1122,7 @@ static int setup_event(struct daemon_s *priv)
       priv->selectid = -1;
     }
 
-  set_select_socket(priv);
+  ret = set_select_socket(priv);
 
   return ret;
 }
@@ -1266,14 +1240,6 @@ static int socket_request(int fd, FAR struct daemon_s *priv,
     }
   daemon_debug_printf("altcom_fcntl() ret = %d\n", ret);
 
-  ret = setup_event(priv);
-  if (0 > ret)
-    {
-      ret = altcom_errno();
-      ret = -ret;
-      goto send_resp;
-    }
-
 send_resp:
   /* Send ACK response */
   memset(&resp, 0, sizeof(resp));
@@ -1343,8 +1309,6 @@ static int close_request(int fd, FAR struct daemon_s *priv,
       goto send_resp;
     }
   daemon_debug_printf("altcom_close() ret = %d\n", ret);
-
-  setup_event(priv);
 
 send_resp:
   /* Send ACK response */
@@ -1579,7 +1543,6 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   ret = altcom_sendto(usock->usockid, sendbuf, req->buflen, flags,
                       pto, addr_len);
   usock->flags &= ~USRSOCK_EVENT_SENDTO_READY;
-  setup_event(priv);
   if (0 > ret)
     {
       ret = altcom_errno();
@@ -1692,7 +1655,6 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
                         (FAR struct altcom_sockaddr *)&storage,
                         &altcom_fromlen);
   usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
-  setup_event(priv);
   if (0 > ret)
     {
       ret = altcom_errno();
@@ -2003,7 +1965,6 @@ static int accept_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       ret = altcom_errno();
       ret = -ret;
       daemon_error_printf("altcom_accept() failed = %d\n", ret);
-      setup_event(priv);
       goto send_resp;
     }
   daemon_debug_printf("altcom_accept(): newsockfd = %d\n", newsockfd);
@@ -2014,8 +1975,6 @@ static int accept_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   new_usock->state = CONNECTED;
   new_usock->domain = usock->domain;
   new_usock->xid = req->head.xid;
-
-  setup_event(priv);
 
   val = altcom_fcntl(new_usock->usockid, ALTCOM_GETFL, 0);
   if (0 > val)
@@ -2618,6 +2577,10 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
       struct usrsock_message_req_ack_s req_ack;
     } usock_msg;
   FAR struct usock_s *usock = NULL;
+  struct usrsock_message_req_ack_s resp;
+  int32_t val_len;
+  int32_t result = 0;
+
 
   ret = read(src_fd, &usock_msg.head, sizeof(struct usrsock_message_common_s));
   if (0 > ret)
@@ -2639,6 +2602,36 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
 
       usock = daemon_socket_get(priv, usock_msg.event.usockid);
       DEBUGASSERT(usock);
+
+      if ((usock->state == CONNECTING) &&
+          (usock_msg.event.events == USRSOCK_EVENT_SENDTO_READY))
+        {
+          val_len = sizeof(result);
+          ret = altcom_getsockopt(usock->usockid, ALTCOM_SOL_SOCKET,
+                                  ALTCOM_SO_ERROR, (FAR void*)&result,
+                                  (altcom_socklen_t*)&val_len);
+          if (ret < 0)
+            {
+              ret = altcom_errno();
+              ret = -ret;
+              daemon_debug_printf("altcom_getsockopt() failed = %d\n", ret);
+            }
+          else if (result == 0)
+            {
+              usock->state = CONNECTED;
+            }
+          else
+            {
+              usock->state = OPENED;
+            }
+          memset(&resp, 0, sizeof(resp));
+          resp.result = result;
+          ret = _send_ack_common(dst_fd, usock->xid,&resp);
+          if (ret < 0)
+            {
+              daemon_error_printf("_send_ack_common() ret = %d\n", ret);
+            }
+        }
 
       if (usock->state != CLOSED)
         {
@@ -2783,9 +2776,13 @@ static void daemon_restart_cb(uint32_t reason)
 
 static int main_loop(FAR struct daemon_s *priv)
 {
-  struct pollfd fds[3];
-  int  fd[3];
-  int  ret;
+  struct pollfd fds[4];
+  int fd[4];
+  int i;
+  int ret;
+  int retry = SELECT_ASYNC_RETRY_MAX;
+  int retry_fd;
+  char buf[1];
 
   ret = netdev_register(&priv->net_dev, NET_LL_ETHERNET);
   if (0 > ret)
@@ -2811,7 +2808,6 @@ static int main_loop(FAR struct daemon_s *priv)
   daemon_debug_printf("open event pipe event_infd: %d\n",
                       fd[1]);
 
-
   fd[2] = g_daemon->apireq_infd;
 
   ret = altcom_initialize();
@@ -2819,6 +2815,17 @@ static int main_loop(FAR struct daemon_s *priv)
 
   close(priv->event_outfd);
   close(priv->apireq_outfd);
+
+  /* Open fifo for retry event */
+
+  ret = mkfifo(EVENT_PIPE2, 0666);
+  ASSERT(ret >= 0);
+
+  retry_fd = open(EVENT_PIPE2, O_WRONLY);
+  ASSERT(retry_fd >= 0);
+
+  fd[3] = open(EVENT_PIPE2, O_RDONLY);
+  ASSERT(fd[3] >= 0);
 
   ret = altcom_set_report_restart(daemon_restart_cb);
   ASSERT(ret >= 0);
@@ -2838,6 +2845,8 @@ static int main_loop(FAR struct daemon_s *priv)
       fds[1].events = POLLIN;
       fds[2].fd     = fd[2];
       fds[2].events = POLLIN;
+      fds[3].fd     = fd[3];
+      fds[3].events = POLLIN;
 
       ret = poll(fds, sizeof(fds)/sizeof(fds[0]), -1);
       if (0 > ret)
@@ -2860,6 +2869,44 @@ static int main_loop(FAR struct daemon_s *priv)
         {
           ret = daemon_api_request(fd[2], priv);
         }
+
+      if (fds[3].revents & POLLIN)
+        {
+          /* retry event */
+
+          read(fd[3], buf, sizeof(buf));
+        }
+
+      /* If this function succeeds, following asynchronous events
+       * are notified.
+       * USRSOCK_EVENT_SENDTO_READY, USRSOCK_EVENT_RECVFROM_AVAIL
+       */
+
+      ret = setup_event(priv);
+      if (ret < 0)
+        {
+          if (retry <= 0)
+            {
+              /* If retry is over, events are not notified.
+               * Attempt recovery by sending
+               * USRSOCK_EVENT_ABORT to the opened socket.
+               */
+
+              daemon_socket_send_abort(priv, fd[0]);
+              retry = SELECT_ASYNC_RETRY_MAX;
+            }
+          else
+            {
+              /* Peform retry */
+
+              write(retry_fd, buf, sizeof(buf));
+              retry--;
+            }
+        }
+      else
+        {
+          retry = SELECT_ASYNC_RETRY_MAX;
+        }
     }
 
   daemon_socket_send_abort(priv, fd[0]);
@@ -2870,11 +2917,14 @@ static int main_loop(FAR struct daemon_s *priv)
     }
   altcom_finalize();
 
-  close(fd[1]);
-  close(fd[0]);
-
+  for (i = 0; i < sizeof(fds)/sizeof(fds[0]); i++)
+    {
+      close(fd[i]);
+    }
   close(priv->apireq_infd);
+  close(retry_fd);
 
+  remove(EVENT_PIPE2);
   sem_destroy(&priv->sync_sem);
   netdev_unregister(&priv->net_dev);
 
