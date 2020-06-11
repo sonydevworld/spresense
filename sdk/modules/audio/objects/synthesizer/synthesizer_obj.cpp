@@ -238,6 +238,18 @@ SynthesizerObject::MsgProc SynthesizerObject::MsgProcTbl[AUD_SYN_MSG_NUM][Synths
     &SynthesizerObject::illegalEvt           /*   WaitStop          */
   },
 
+  /* Message type: MSG_AUD_SYN_CMD_DEACT. */
+
+  {                                          /* Synthesizer status: */
+    &SynthesizerObject::illegalEvt,          /*   Booted            */
+    &SynthesizerObject::deactivate,          /*   Ready             */
+    &SynthesizerObject::illegalEvt,          /*   PreActive         */
+    &SynthesizerObject::illegalEvt,          /*   Active            */
+    &SynthesizerObject::illegalEvt,          /*   Stopping          */
+    &SynthesizerObject::illegalEvt,          /*   ErrorStopping     */
+    &SynthesizerObject::illegalEvt           /*   WaitStop          */
+  },
+
   /* Message type: MSG_AUD_SYN_CMD_INIT. */
 
   {                                          /* Synthesizer status: */
@@ -274,17 +286,18 @@ SynthesizerObject::MsgProc SynthesizerObject::MsgProcTbl[AUD_SYN_MSG_NUM][Synths
     &SynthesizerObject::stopOnWait           /*   WaitStop          */
   },
 
-  /* Message type: MSG_AUD_SYN_CMD_DEACT. */
+  /* Align for MSG_OBJ_SUBTYPE_EXEC */
 
   {                                          /* Synthesizer status: */
-    &SynthesizerObject::illegalEvt,          /*   Booted            */
-    &SynthesizerObject::deactivate,          /*   Ready             */
-    &SynthesizerObject::illegalEvt,          /*   PreActive         */
-    &SynthesizerObject::illegalEvt,          /*   Active            */
-    &SynthesizerObject::illegalEvt,          /*   Stopping          */
-    &SynthesizerObject::illegalEvt,          /*   ErrorStopping     */
-    &SynthesizerObject::illegalEvt           /*   WaitStop          */
+    &SynthesizerObject::illegalEvt,             /*   Booted.           */
+    &SynthesizerObject::illegalEvt,             /*   Ready.            */
+    &SynthesizerObject::illegalEvt,             /*   Active.           */
+    &SynthesizerObject::illegalEvt,             /*   PreActive.        */
+    &SynthesizerObject::illegalEvt,             /*   Stopping.         */
+    &SynthesizerObject::illegalEvt,             /*   ErrorStopping.    */
+    &SynthesizerObject::illegalEvt              /*   WaitStop.         */
   },
+
 
   /* Message type: MSG_AUD_SYN_CMD_SET */
   {                                          /* Synthesizer status: */
