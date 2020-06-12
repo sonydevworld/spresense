@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_AUDIOUTILS_POSTPROC),y)
+ifeq ($(CONFIG_AUDIOUTILS_CUSTOMPROC),y)
 
 CXXSRCS += usercustom_component.cpp thruproc_component.cpp
 VPATH   += components/customproc

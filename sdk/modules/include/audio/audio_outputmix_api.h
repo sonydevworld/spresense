@@ -65,6 +65,10 @@
 
 #define AS_FEATURE_OUTPUTMIX_ENABLE
 
+/*! \brief InitOutputMixer command (#AUDCMD_INIT_OUTPUTMIXER) packet length */
+
+#define  LENGTH_INIT_OUTPUTMIXER     4
+
 /*! \brief InitMPP command (#AUDCMD_INITMPP) packet length */
 
 #define  LENGTH_INITMPP             5
@@ -76,6 +80,10 @@
 /*! \brief SetMPP command (#AUDCMD_SETMPPPARAM) packet length */
 
 #define  LENGTH_SUB_SETMPP_XLOUD    4
+
+/*! \brief Length of Recognizer dsp file name and path */
+
+#define AS_POSTPROC_FILE_PATH_LEN (AS_AUDIO_DSP_PATH_LEN)
 
 #define PF_COMMAND_PACKET_SIZE_MAX (32)
 
@@ -148,6 +156,10 @@ enum AsOutputMixDoneCmdType
 
   OutputMixActDone = 0,
 
+  /*! \brief Init done */
+
+  OutputMixInitDone,
+
   /*! \brief Deactivation done */
 
   OutputMixDeactDone,
@@ -183,6 +195,21 @@ typedef enum
 
   OutputMixDelay = 1,
 } AsClkRecoveryDirection;
+
+/**< Postproc type */
+
+enum AsPostprocType
+{
+  /*! brief Post Process through */
+
+  AsPostprocTypeThrough = 0,
+
+  /*! brief Post Process user customized */
+
+  AsPostprocTypeUserCustom,
+
+  AsPostprocTypeInvalid = 0xff,
+};
 
 /** Message queue ID parameter of activate function */
 
@@ -284,6 +311,10 @@ struct AsOutputMixDoneParam
   /*! result, true means OK */
 
   bool result;
+
+  /*! error code */
+
+  uint32_t ecode;
 };
 
 typedef void (*OutputMixerCallback)(MsgQueId requester_dtq, MsgType msgtype, AsOutputMixDoneParam *param);
@@ -321,6 +352,20 @@ typedef struct
   OutputMixerErrorCallback error_cb;
 
 } AsActivateOutputMixer;
+
+/** Init function parameter */
+
+typedef struct
+{
+  /*! \brief [in] Set postproc type. Use AsPostprocType enum type */
+
+  uint8_t postproc_type;
+
+  /*! \brief [in] Set dsp file name and path */
+
+  char dsp_path[AS_POSTPROC_FILE_PATH_LEN];
+
+} AsInitOutputMixer;
 
 /** Deactivate function parameter */
 
@@ -391,6 +436,7 @@ typedef struct
   union
   {
     AsActivateOutputMixer   act_param;
+    AsInitOutputMixer       init_param;
     AsDeactivateOutputMixer deact_param;
     AsFrameTermFineControl  fterm_param;
     AsInitPostProc          initpp_param;
@@ -447,6 +493,17 @@ bool AS_CreateOutputMixer(FAR AsCreateOutputMixParams_t *param);
  */
 
 bool AS_ActivateOutputMixer(uint8_t handle, FAR AsActivateOutputMixer *actparam);
+
+/**
+ * @brief Init audio output mixer
+ *
+ * @param[in] initparam: Initialization parameters
+ *
+ * @retval     true  : success
+ * @retval     false : failure
+ */
+
+bool AS_InitOutputMixer(uint8_t handle, FAR AsInitOutputMixer *initparam);
 
 /**
  * @brief Send audio data via outputmixer

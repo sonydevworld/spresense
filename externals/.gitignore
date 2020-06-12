@@ -3,5 +3,5 @@
 .built
 .context
 Make.dep
-/*.a
+*.a
 *.o

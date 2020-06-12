@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GEOFENCE),y)
+ifneq ($(CONFIG_EXAMPLES_GEOFENCE),)
 CONFIGURED_APPS += geofence
 endif

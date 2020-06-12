@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_RECORDER
-	bool "Audio recorder example"
+	tristate "Audio recorder example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_FFT),y)
+ifneq ($(CONFIG_EXAMPLES_FFT),)
 CONFIGURED_APPS += fft
 endif

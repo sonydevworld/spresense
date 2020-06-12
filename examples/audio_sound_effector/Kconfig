@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_SOUND_EFFECTOR
-	bool "Audio sound effector example"
+	tristate "Audio sound effector example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

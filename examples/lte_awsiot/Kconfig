@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_LTE_AWSIOT
-	bool "AWS IoT using LTE example"
+	tristate "AWS IoT using LTE example"
 	default n
 	---help---
 		Enable the AWS IoT using LTE example
@@ -14,7 +14,6 @@ if EXAMPLES_LTE_AWSIOT
 config EXAMPLES_LTE_AWSIOT_PROGNAME
 	string "Program name"
 	default "lte_awsiot"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
@@ -31,25 +30,9 @@ config EXAMPLES_LTE_AWSIOT_STACKSIZE_IN_USING_MBEDTLS
 	int "lte_awsiot stack size in using mbedTLS"
 	default 10240
 
-config EXAMPLES_LTE_AWSIOT_IOT_DEBUG
-	bool "enables IOT_DEBUG output"
-	default n
-
-config EXAMPLES_LTE_AWSIOT_IOT_ERROR
-	bool "enables IOT_ERROR output"
-	default n
-
-config EXAMPLES_LTE_AWSIOT_HOST
-        string "AWS IoT server host name"
-        default "examples.iot.ap-northeast-1.amazonaws.com"
-
-config EXAMPLES_LTE_AWSIOT_PORT
-        int "AWS IoT server port number"
-        default 8883
-
 config EXAMPLES_LTE_AWSIOT_CERT
-        string "AWS IoT cert folder"
-        default "/mnt/sd0/CERTS"
+	string "AWS IoT cert folder"
+	default "/mnt/sd0/CERTS"
 
 config EXAMPLES_LTE_AWSIOT_APN_NAME
 	string "Access Point Name"

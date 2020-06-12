@@ -37,11 +37,10 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <strings.h>
 #include <asmp/mpshm.h>
-#include <arch/chip/cxd56_audio.h>
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
@@ -704,11 +703,7 @@ static void app_disp_codec_params(void)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_pcm_capture_objif_main(int argc, char *argv[])
-#endif
 {
   /* Command line argument analysis */
 

@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,8 +64,6 @@
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
 #include "userproc_command.h"
 #endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
-
-#include <arch/chip/cxd56_audio.h>
 
 /* Section number of memory layout to use */
 
@@ -373,7 +371,7 @@ static void app_write_output_file(uint32_t size)
     }
 
   ret = fwrite(s_recorder_info.fifo.write_buf, 1, size, s_recorder_info.file.fd);
-  if (ret < 0) {
+  if (ret <= 0) {
     printf("ERROR: Cannot write recorded data to output file.\n");
     app_close_output_file();
     return;
@@ -1051,13 +1049,12 @@ void app_recorde_process(uint32_t rec_time)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_recorder_main(int argc, char *argv[])
-#endif
 {
   printf("Start AudioRecorder example\n");
+
+  /* Set audio sampling rates. */
+  sampling_rate_e sampling_rate = SAMPLING_RATE_48K;
 
   /* First, initialize the shared memory and memory utility used by AudioSubSystem. */
 
@@ -1080,7 +1077,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_open_file_dir())
     {
       printf("Error: app_open_file_dir() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
   
    /* On and after this point, AudioSubSystem must be active.
@@ -1092,7 +1089,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_power_on())
     {
       printf("Error: app_power_on() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize simple fifo. */
@@ -1108,17 +1105,15 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_init_mic_gain())
     {
       printf("Error: app_init_mic_gain() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Set audio clock mode. */
 
-  sampling_rate_e sampling_rate = SAMPLING_RATE_48K;
-
   if (!app_set_clkmode((sampling_rate == SAMPLING_RATE_192K) ? AS_CLKMODE_HIRES : AS_CLKMODE_NORMAL))
     {
       printf("Error: app_set_clkmode() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Set recorder operation mode. */
@@ -1126,7 +1121,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_set_recorder_status())
     {
       printf("Error: app_set_recorder_status() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize recorder. */
@@ -1137,7 +1132,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
                          BITWIDTH_16BIT))
     {
       printf("Error: app_init_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Initialize MicFrontend. */
@@ -1151,20 +1146,20 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
                             "/mnt/sd0/BIN/PREPROC"))
     {
       printf("Error: app_init_micfrontend() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC
   if (!app_init_preproc_dsp())
     {
       printf("Error: app_init_preproc_dsp() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   if (!app_set_preproc_dsp())
     {
       printf("Error: app_set_preproc_dsp() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 #endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
 
@@ -1173,7 +1168,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_start_recorder())
     {
       printf("Error: app_start_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Running... */
@@ -1187,7 +1182,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_stop_recorder())
     {
       printf("Error: app_stop_recorder() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Close directory of recording file. */
@@ -1195,7 +1190,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_close_file_dir())
     {
       printf("Error: app_close_contents_dir() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Return the state of AudioSubSystem before voice_call operation. */
@@ -1203,7 +1198,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_set_ready())
     {
       printf("Error: app_set_ready() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Change AudioSubsystem to PowerOff state. */
@@ -1211,7 +1206,7 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
   if (!app_power_off())
     {
       printf("Error: app_power_off() failure.\n");
-      return 1;
+      goto ErrorReturn;
     }
 
   /* Deactivate the features used by AudioSubSystem. */
@@ -1225,8 +1220,26 @@ extern "C" int audio_recorder_main(int argc, char *argv[])
       printf("Error: finalize_libraries() failure.\n");
       return 1;
     }
-
   printf("Exit AudioRecorder example\n");
 
   return 0;
+
+
+ErrorReturn:
+
+  /* Deactivate the features used by AudioSubSystem. */
+
+  app_deact_audio_sub_system();
+
+  /* finalize the shared memory and memory utility used by AudioSubSystem. */
+
+  if (!app_finalize_libraries())
+    {
+      printf("Error: finalize_libraries() failure.\n");
+      return 1;
+    }
+  printf("Exit AudioRecorder example\n");
+
+  return 1;
+
 }

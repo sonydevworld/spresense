@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GNSS),y)
+ifneq ($(CONFIG_EXAMPLES_GNSS),)
 CONFIGURED_APPS += gnss
 endif

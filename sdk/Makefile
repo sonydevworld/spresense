@@ -34,31 +34,27 @@
 #
 ############################################################################
 
+-include $(TOPDIR)/Make.defs
+-include Make.defs
+
+TOPDIR ?= ../nuttx
+DELIM ?= $(strip /)
+
 # XXX: Sorry, this make file only for Linux/Cygwin
-
-# Path to NuttX kernel source tree, it must be relative path.
-
-NUTTXDIR ?= ../nuttx
 
 # Setup for Windows vs Linux/Cygwin/OSX environments
 
+ifeq ($(WINTOOL),)
 ifeq ("$(shell uname -o 2>/dev/null)","Cygwin")
     WINTOOL = y
+endif
 endif
 
 ifeq ($(WINTOOL),y)
   SDKDIR := $(shell pwd | cygpath -m -f - | sed -e 's/ /\\ /g')
-  TOPDIR := $(shell pwd | cygpath -m -f - | sed -e 's/ /\\ /g')/$(NUTTXDIR)
 else
   SDKDIR := $(shell pwd | sed -e 's/ /\\ /g')
-  TOPDIR := $(shell pwd | sed -e 's/ /\\ /g')/$(NUTTXDIR)
 endif
-
--include $(TOPDIR)/.config
--include $(SDKDIR)/.config
-include $(TOPDIR)/tools/Config.mk
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
 
 ifeq ($(V),1)
 export Q :=
@@ -70,29 +66,16 @@ export Q := @
 endif
 endif
 
-BOARD_DIR = $(SDKDIR)$(DELIM)bsp$(DELIM)board$(DELIM)$(CONFIG_BOARD_NAME)
-BOARD_COMMON_DIR = $(SDKDIR)$(DELIM)bsp$(DELIM)board$(DELIM)common
+define MAKE_template
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
 
-# Dummy. It needs libapps.a to be a member of EXPORTLIBS.
+endef
 
-APPDIR := ../apps
+define SDIR_template
+$(1)_$(2):
+	+$(Q) $(MAKE) -C $(1) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
 
-ifeq ($(CONFIG_BUILD_PROTECTED),y)
-include $(TOPDIR)/ProtectedLibs.mk
-else
-ifeq ($(CONFIG_BUILD_KERNEL),y)
-include $(TOPDIR)/KernelLibs.mk
-else
-include $(TOPDIR)/FlatLibs.mk
-endif
-endif
-
-# Default tools
-
-ifeq ($(DIRLINK),)
-DIRLINK = $(TOPDIR)/tools/link.sh
-DIRUNLINK = $(TOPDIR)/tools/unlink.sh
-endif
+endef
 
 # Export tool definitions
 
@@ -101,170 +84,86 @@ MKEXPORT_ARGS = -w$(WINTOOL) -t "$(TOPDIR)" -s "$(SDKDIR)"
 
 PHONY :=
 
-LDSTARTGROUP ?= --start-group
-LDENDGROUP ?= --end-group
-
 NUTTXNAME = nuttx
 BIN       = $(NUTTXNAME)$(EXEEXT)
 SPK       = $(NUTTXNAME).spk
 
 KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 
-# Process architecture and board-specific directories
+# If TOPDIR's origin is command line, 'make' called from NuttX build system.
+# If not, 'make' called directly from user, then bypass to NuttX build.
 
-ARCH_DIR = arch/$(CONFIG_ARCH)
-ARCH_SRC = $(ARCH_DIR)/src
-ARCH_INC = $(ARCH_DIR)/include
-
-all: $(BIN)
-
-# buildkernel
-#
-# Separated build target for NuttX kernel libraries. If KERNCONF specified by
-# option, then reconfigure and build them all.
-# After install them, we need to replace nsh builtin list to ours, so
-# remove builtin_list.o from libapps.a if exists.
-# If nsh disabled at NuttX configuration, then our builtin_list will be removed
-# automatically.
-
-buildkernel:
-	$(Q) TOPDIR=$(TOPDIR) $(SDKDIR)/tools/mkversion.sh
-ifneq ($(KERNCONF),)
-	$(Q) $(SDKDIR)/tools/config.py --kernel $(KERNCONF)
-endif
-	$(Q) $(MAKE) $(MAKEOPTS) -C $(TOPDIR) pass2deps
-PHONY += buildkernel
-
-# installkernel
-#
-# installkernel target copies NuttX kernel libraries. And remove specific object files from
-# copied archives. It is replacement for use SDK specific code.
-# Additionally, remove links to board directory for avoid conflict the same name header
-# inclusion.
-
-installkernel:
-	$(Q) install $(sort $(patsubst %,$(TOPDIR)/%,$(EXPORTLIBS))) lib
-	$(Q) if [ -f lib/libarch.a ]; then \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_allocateheap.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_serial.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_uart.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_timerisr.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_idle.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a cxd56_start.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a up_udelay.o; \
-		$(ARCROSSDEV)ar d lib/libarch.a up_mdelay.o; \
-	fi
-PHONY += installkernel
-
-SDKMODDIRS =
-CONTEXTDIRS =
-EXTLIBS =
-EXTSUBDIRS =
-
-# Include library build recipes
-
-include LibTargets.mk
-
-SDKDEPDIRS = $(SDKMODDIRS) $(EXTSUBDIRS)
-SDKCLEANDIRS += $(EXTSUBDIRS) lib
-CONTEXTDIRS += $(EXTSUBDIRS)
-
-ifeq ($(WINTOOL),y)
-  LIBPATHS += -L"${shell cygpath -w "$(SDKDIR)/lib"}"
+ifeq ($(MAKELEVEL),0)
+all:
+	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
+	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
 else
-  LIBPATHS += -L"$(SDKDIR)/lib"
+all: .built
 endif
 
-LINKLIBS = $(patsubst lib/%,%,$(SDKLIBS) $(EXTLIBS) $(NUTTXLIBS))
-LDLIBS = $(patsubst %.a,%,$(patsubst lib%,-l%,$(LINKLIBS)))
+SDKSUBDIRS = modules system
 
-$(BIN): depend sdklibs
-	$(Q) $(MAKE) -C bsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" LINKLIBS="$(LINKLIBS)" EXTRADEFINES=$(KDEFINE) $(BIN)
-	@echo "SPK: $(BIN).spk"
-	$(Q) if [ -x $(MKSPK) ]; then \
-		$(MKSPK) -c 2 $(BIN) nuttx $(BIN).spk >/dev/null ; \
-	else \
-		echo mkspk tool not found. ; \
-	fi
+EXTSUBDIRS = $(dir $(wildcard ../*/.sdksubdir)) $(SPRESENSE_HOME)
 
-sdklibs: $(EXPORTLIBS) $(SDKLIBS) $(EXTLIBS)
+TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
+SDKCLEANDIRS = $(EXTSUBDIRS)
 
-$(EXPORTLIBS): installkernel
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),all)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),install)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),preconfig)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),context)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),depend)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
+$(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
-export: $(BIN)
-	$(Q) MAKE=$(MAKE) $(MKEXPORT) $(MKEXPORT_ARGS) -l "$(EXPORTLIBS) $(SDKLIBS) $(EXTLIBS)"
+ifeq ($(MAKELEVEL),0)
+MKSDKEXPORT = $(SDKDIR)/tools/mksdkexport.sh
+export:
+	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.zip nuttx-export.zip
+exportsdk: export
+	$(Q) $(MKSDKEXPORT) -i nuttx-export.zip -o sdk-export.tar.gz
+	$(Q) rm -rf nuttx-export.zip
+PHONY += export
+PHONY += exportsdk
+endif
 
-bsp/include/arch/board: .config
-	@echo "LN: bsp/include/arch/board to $(BOARD_DIR)/include"
-	$(Q) $(DIRLINK) $(BOARD_DIR)/include $@
-
-bsp/include/arch/board/common: bsp/include/arch/board .config
-	@echo "LN: bsp/include/arch/board/common to $(BOARD_COMMON_DIR)/include"
-	$(Q) $(DIRLINK) $(BOARD_COMMON_DIR)/include $@
-
-dirlinks: bsp/include/arch/board bsp/include/arch/board/common
+dirlinks:
 PHONY += dirlinks
 
-context: check_context bsp/include/sdk/config.h dirlinks
-	$(Q) $(DIRUNLINK) $(TOPDIR)/include/arch/board
-	$(Q) $(DIRUNLINK) $(TOPDIR)/$(ARCH_SRC)/board
-	$(Q) for dir in $(CONTEXTDIRS) ; do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" context; \
-	done
+$(TOPDIR)/tools/cxd56:
+	$(Q) mkdir -p $@
+
+ifeq ($(CONFIG_HOST_LINUX),y)
+  MKSPK_SRC = $(SDKDIR)/tools/linux/mkspk
+endif
+ifeq ($(CONFIG_HOST_MACOS),y)
+  MKSPK_SRC = $(SDKDIR)/tools/macos/mkspk
+endif
+ifeq ($(CONFIG_HOST_WINDOWS),y)
+  MKSPK_SRC = $(SDKDIR)/tools/windows/mkspk$(HOSTEXEEXT)
+endif
+MKSPK = $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT)
+$(MKSPK): $(TOPDIR)/tools/cxd56
+	$(call COPYFILE,$(MKSPK_SRC),$@)
+
+context: dirlinks $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT) $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
 PHONY += context
 
-# check_context
-#
-# This target checks if NuttX has been configured.  NuttX is configured using
-# the script tools/configure.sh.  That script will install certain files in
-# the top-level NuttX build directory.  This target verifies that those
-# configuration files have been installed and that NuttX is ready to be built.
-
-check_context:
-	$(Q) if [ ! -e $(TOPDIR)/.config -o ! -e $(TOPDIR)/Make.defs ]; then \
-		echo "" ; echo "Nuttx has not been configured:" ; \
-		echo "  tools/config.py -k <target>" ; echo "" ; \
-		exit 1 ; \
-	fi
-	$(Q) if [ ! -e $(SDKDIR)/.config ]; then \
-		echo "" ; echo "SDK has not been configured:" ; \
-		echo "  tools/config.py <target>" ; echo "" ; \
-		exit 1 ; \
-	fi
-	$(Q) if [ ! -e $(TOPDIR)/include/nuttx/config.h ]; then \
-		echo ""; echo "NuttX has not been built:" ; \
-		echo "  make buildkernel" ; echo "" ; \
-		exit 1; \
-	fi
-
 clean_context:
-	$(call DELFILE, bsp/include/sdk/config.h)
-	$(Q) $(DIRUNLINK) bsp/include/arch/board/common
-	$(Q) $(DIRUNLINK) bsp/include/arch/board
-
 PHONY += clean_context
 
-depend: context
-	$(Q) for dir in $(SDKDEPDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" EXTRADEFINES=$(KDEFINE) depend; \
-	done
+depend: context $(foreach SDIR,$(TARGETDIRS),$(SDIR)_depend)
 PHONY += depend
 
-# clean_kernel
 #
+# Build rules
 #
 
-cleankernel:
-	$(Q) $(MAKE) -C $(TOPDIR) clean
-PHONY += cleankernel
+.built: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_all)
+	@ touch $@
 
-distcleankernel: distclean
-	$(Q) $(MAKE) -C $(TOPDIR) distclean
-PHONY += distcleankernel
-
-subdir_clean:
+subdir_clean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_clean)
 	$(Q) for dir in $(SDKCLEANDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" clean; \
 		find $$dir -name "Make.dep" -delete; \
 		find $$dir -name ".depend" -delete; \
 	done
@@ -275,114 +174,61 @@ depend_clean:
 	$(Q)find $(SDKDIR) -name ".depend" -delete
 PHONY += depend_clean
 
+ifeq ($(MAKELEVEL),0)
+clean:
+	$(Q) $(MAKE) -C $(TOPDIR) clean
+
+distclean:
+	$(Q) $(MAKE) -C $(TOPDIR) distclean CONFIG_APPS_DIR="$(SDKDIR)/apps"
+else
 clean: subdir_clean depend_clean
-	$(call DELFILE, .kconfig.tmp)
-	$(call DELFILE, bsp/include/sdk/config.h)
-	$(call DELFILE, bsp/include/sdk/version.h)
-	$(call DELFILE, $(SDKLIBS))
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, $(SPK))
 	$(call DELFILE, System.map)
 	$(call DELFILE, nuttx.map)
+	$(call DELFILE, .built)
 PHONY += clean
 
-subdir_distclean:
-	$(Q) for dir in $(SDKCLEANDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" distclean; \
-	done
+subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
 PHONY += subdir_distclean
 
 distclean: clean subdir_distclean clean_context
-	$(call DELFILE, .config)
-	$(call DELFILE, .config.old)
 
-bsp/include/sdk/config.h: $(SDKDIR)/.config tools/mkconfig.py
-	$(Q) tools/mkconfig.py > $@
+endif
 
-bsp/include/sdk/version.h: $(SDKDIR)/.version
-# TBD
+install: $(foreach SDIR, $(TARGETDIRS), $(SDIR)_install)
 
-# For NuttX configuration
+# Bypass config targets
 
-configkernel oldconfigkernel olddefconfigkernel menuconfigkernel qconfigkernel gconfigkernel:
-	$(Q) $(MAKE) -C $(TOPDIR) $(patsubst %kernel,%,$@)
-PHONY += configkernel oldconfigkernel olddefconfigkernel menuconfigkernel qconfigkernel gconfigkernel
+config oldconfig olddefconfig menuconfig nconfig qconfig gconfig:
+	$(Q) $(MAKE) -C $(TOPDIR) $@
 
-# config targets
-#
-#
+PHONY += config oldconfig olddefconfig menuconfig nconfig qconfig gconfig
 
-config: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-conf $<
-PHONY += config
-
-oldconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-conf --oldconfig $<
-PHONY += oldconfig
-
-olddefconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-conf --olddefconfig $<
-PHONY += olddefconfig
-
-menuconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-mconf $<
-PHONY += menuconfig
-
-qconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-qconf $<
-PHONY += qconfig
-
-gconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-gconf $<
-PHONY += gconfig
-
-savedefconfig: .kconfig.tmp clean_context
-	$(Q) SDKDIR=$(SDKDIR) kconfig-conf --savedefconfig defconfig $<
+savedefconfig:
+	$(Q) $(MAKE) -C $(TOPDIR) $@
+	$(Q) mv $(TOPDIR)/defconfig .
 PHONY += savedefconfig
 
-.kconfig.tmp: preconfig ext_preconfig
-	$(Q) tools/gentmpkconfig.py $@
-
-preconfig:
-	$(Q) $(MAKE) -C system TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" preconfig
-
-ext_preconfig:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" preconfig; \
-	done
-endif
-
-ext_clean:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" clean; \
-	done
-endif
-
-ext_distclean:
-ifneq ($(EXTSUBDIRS),)
-	$(Q) for dir in $(EXTSUBDIRS); do \
-		$(MAKE) -C $$dir TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" distclean; \
-	done
-endif
-PHONY += ext_preconfig ext_clean ext_distclean
+preconfig: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_preconfig)
+	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(TARGETDIRS)
 
 help:
 	@echo  ''
 	@echo  'SDK targets:'
 	@echo  '  (all)           - Build sdk (if buildkernel is done in advance)'
-	@echo  '  clean           - Remove most generated sdk files but keep the sdk config'
-	@echo  '  distclean       - Remove all generated sdk files + sdk config'
-	@echo  ''
-	@echo  'Kernel targets:'
-	@echo  '  buildkernel     - Build kernel'
-	@echo  '  cleankernel     - Remove most generated kernel files but keep the kernel config'
-	@echo  '  distcleankernel - Remove all generated kernel files + kernel config'
+	@echo  '  clean           - Remove most generated files but keep the sdk config'
+	@echo  '  distclean       - Remove all generated files + sdk config'
 	@echo  ''
 	@echo  'Configuration targets:'
-	@echo  '  xxxconfig       - Update the sdk config'
-	@echo  '  xxxconfigkernel - Update the kernel config'
+	@echo  '  config'
+	@echo  '  oldconfig'
+	@echo  '  olddefconfig'
+	@echo  '  menuconfig'
+	@echo  '  nconfig'
+	@echo  '  qconfig'
+	@echo  '  gconfig'
+	@echo  '  savedefconfig'
 	@echo  ''
 	@echo  '    There are various configuration targets, but instead of these targets,'
 	@echo  '    Execute configuration by using "./tools/config.py" tool.'

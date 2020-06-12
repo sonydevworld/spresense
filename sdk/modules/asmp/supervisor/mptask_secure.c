@@ -200,7 +200,7 @@ int mptask_init_secure(mptask_t *task, const char *filename)
 
   /* Set all of CPUs to permitted */
 
-  for (i = 1; i < NMPCPUS; i++)
+  for (i = ACPU; i < NMPCPUS; i++)
     {
       CPU_SET(i, &task->attr.affinity);
     }
@@ -269,7 +269,7 @@ static int mptask_exec_unified(mptask_t *task, int ncpus)
 
   firstcpu = 0;
 
-  for (cpu = 1, i = 0; cpu < NMPCPUS && i < ub->nr_offs; cpu++)
+  for (cpu = ACPU, i = 0; cpu < NMPCPUS && i < ub->nr_offs; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {
@@ -310,7 +310,7 @@ static int mptask_exec_clone(mptask_t *task, int ncpus)
   binary_info_t *bi;
   int ret;
 
-  for (cpu = 1, bi = task->bin; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU, bi = task->bin; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {
@@ -337,7 +337,7 @@ static int mptask_exec_clone(mptask_t *task, int ncpus)
 
   /* Map loaded memories. This logic must be after loaded. */
 
-  for (cpu = 1, bi = task->bin; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU, bi = task->bin; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {

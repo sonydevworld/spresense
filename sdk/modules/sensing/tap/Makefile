@@ -33,62 +33,14 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
+include $(SDKDIR)/modules/Make.defs
 
 CXXSRCS = tap.cpp
 ifeq ($(CONFIG_TAP_MANAGER),y)
 CXXSRCS += tap_manager.cpp
 endif
 
-BIN = libtap$(LIBEXT)
-
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(CXXSRCS)
-LIB_OBJS = $(CXXOBJS)
-
 SENSINGDIR = $(SDKDIR)$(DELIM)modules$(DELIM)sensing
-ifeq ($(WINTOOL),y)
-  CXXFLAGS += -I "$(shell cygpath -w $(SDKDIR)/bsp/include)"
-  CXXFLAGS += -I "$(shell cygpath -w $(SDKDIR)/modules/include)"
-  CXXFLAGS += -I "${shell cygpath -w $(SENSINGDIR)$(DELIM)include}"
-else
-  CXXFLAGS += -I $(SDKDIR)/bsp/include
-  CXXFLAGS += -I $(SDKDIR)/modules/include
-  CXXFLAGS += -I$(SENSINGDIR)$(DELIM)include
-endif
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SENSINGDIR)$(DELIM)include"}
 
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILEXX, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >>Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-
+include $(SDKDIR)/modules/Module.mk

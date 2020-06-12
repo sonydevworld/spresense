@@ -33,4 +33,12 @@
 #
 ############################################################################
 
+ifeq ($(CONFIG_SDK_AUDIO),y)
+
+CXXSRCS += component_base.cpp
+VPATH   += components
+DEPPATH += --dep-path components
+
+endif
+
 include $(wildcard components/*/Make.defs)

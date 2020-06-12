@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_SOUND_EFFECTOR),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_SOUND_EFFECTOR),)
 CONFIGURED_APPS += audio_sound_effector
 endif

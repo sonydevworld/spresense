@@ -43,7 +43,7 @@
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
-#include "components/common/component_common.h"
+#include "components/component_base.h"
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -67,7 +67,7 @@ struct InitDecCompParam
   AudioCodec       codec_type;
   uint32_t         input_sampling_rate;
   AudioChannelNum  channel_num;
-  AudioPcmBitWidth bit_width;
+  AudioPcmFormat   bit_width;
   uint32_t         frame_sample_num;
   DecCompCallback  callback;
   void             *p_requester;
@@ -139,7 +139,7 @@ bool AS_decode_deactivate(void *p_instance);
 } /* extern "C" */
 
 
-class DecoderComponent : public ComponentCommon<Apu::InternalResult>
+class DecoderComponent : public ComponentBase
 {
 public:
   DecoderComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid)

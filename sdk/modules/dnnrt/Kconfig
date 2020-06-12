@@ -7,6 +7,7 @@ menu "DNN runtime library"
 config DNN_RT
 	bool "DNN runtime library"
 	depends on EXTERNALS_CMSIS_NN
+	select EXTERNALS_NNABLART
 	default n
 	---help---
 		Enable or disable deep neural network library.

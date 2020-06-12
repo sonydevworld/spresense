@@ -15,26 +15,25 @@ if SDK_AUDIO
 
 menu "Audio Utilities"
 
-source "$SDKDIR/modules/audio/manager/Kconfig"
+source "$APPSDIR/../modules/audio/manager/Kconfig"
 
 config AUDIOUTILS_PLAYER
 	bool "Audio Player"
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
 	select MEMUTILS_SIMPLE_FIFO
 	select AUDIOUTILS_OUTPUTMIXER
 	select AUDIOUTILS_DECODER
-	select AUDIOUTILS_POSTPROC
+	select AUDIOUTILS_FILTER
 	select AUDIOUTILS_RENDERER
 	select AUDIOUTILS_DSP_DRIVER
 	---help---
 		Support Player Feature
 
 if AUDIOUTILS_PLAYER
-source "$SDKDIR/modules/audio/playlist/Kconfig"
+source "$APPSDIR/../modules/audio/playlist/Kconfig"
 
 menu "Audio Player Supported Formats"
 config AUDIOUTILS_PLAYER_CODEC_PCM
@@ -70,14 +69,12 @@ config AUDIOUTILS_RECORDER
 	default n
 	select AUDIOUTILS_SRC
 	select AUDIOUTILS_MFE
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
 	select MEMUTILS_SIMPLE_FIFO
 	select AUDIOUTILS_ENCODER
 	select AUDIOUTILS_FILTER
-	select AUDIOUTILS_POSTPROC
 	select AUDIOUTILS_CAPTURE
 	select AUDIOUTILS_DSP_DRIVER
 	---help---
@@ -87,7 +84,6 @@ config AUDIOUTILS_DIAG
 	bool "Audio Diag"
 	depends on CXD56_I2S0
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -101,7 +97,6 @@ config AUDIOUTILS_VOICE_CALL
 	default n
 	select AUDIOUTILS_MFE
 	select AUDIOUTILS_MPP
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -117,7 +112,6 @@ config AUDIOUTILS_VOICE_CALL
 config AUDIOUTILS_SOUND_RECOGNIZER
 	bool "Sound Recognizer"
 	default n
-	select AUDIOUTILS_MANAGER
 	select MEMUTILS_MEMORY_MANAGER
 	select MEMUTILS_MESSAGE
 	select MEMUTILS_S_STL
@@ -128,6 +122,19 @@ config AUDIOUTILS_SOUND_RECOGNIZER
 	select AUDIOUTILS_DSP_DRIVER
 	---help---
 		Support Voice Command Feature
+
+config AUDIOUTILS_SYNTHESIZER
+	bool "Audio Synthesizer"
+	default n
+	select MEMUTILS_MEMORY_MANAGER
+	select MEMUTILS_MESSAGE
+	select MEMUTILS_S_STL
+	select MEMUTILS_SIMPLE_FIFO
+	select AUDIOUTILS_FILTER
+	select AUDIOUTILS_RENDERER
+	select AUDIOUTILS_DSP_DRIVER
+	---help---
+		Support Synthesizer Feature
 
 if AUDIOUTILS_RECORDER
 
@@ -203,7 +210,7 @@ config AUDIOUTILS_ATTENTIONLOG_DISABLE
 		Disable attention log to print in console. default is [n].
 
 menu "Audio component menu"
-source "$SDKDIR/modules/audio/components/Kconfig"
+source "$APPSDIR/../modules/audio/components/Kconfig"
 endmenu
 
 config AUDIOUTILS_UNUSE_ORIGINAL_OPUS_FORMAT

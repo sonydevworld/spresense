@@ -50,6 +50,13 @@ __WIEN2_BEGIN_NAMESPACE
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+enum ComponentEventType
+{
+  ComponentInit = 0,
+  ComponentExec,
+  ComponentFlush,
+  ComponentSet,
+};
 
 /****************************************************************************
  * Public Types
@@ -86,6 +93,71 @@ struct AudioMngCmdCmpltResult
     sub_result(arg_sub_result)
   {}
 };
+
+
+
+struct ComponentCbParam
+{
+  ComponentEventType event_type;
+  bool               result;
+};
+
+typedef bool (*ComponentCallback)(ComponentCbParam*, void*);
+
+struct FixedInitParam
+{
+  uint32_t samples;
+  uint32_t in_fs;
+  uint32_t out_fs;
+  uint16_t in_bitlength;
+  uint16_t out_bitlength;
+  uint8_t  ch_num;
+};
+
+struct CustomProcPacket
+{
+  uint8_t  *addr;
+  uint32_t size;
+};
+
+struct InitComponentParam
+{
+  uint8_t          cmd_type;
+  bool             is_userdraw;
+
+  union
+  {
+    FixedInitParam   fixparam;
+    CustomProcPacket packet;
+  };
+};
+typedef InitComponentParam SetComponentParam;
+
+struct ExecComponentParam
+{
+  AsPcmDataParam        input;
+  MemMgrLite::MemHandle output_mh;
+};
+
+struct FlushComponentParam
+{
+  CustomProcPacket      packet;
+  MemMgrLite::MemHandle output_mh;
+};
+
+struct ComponentCmpltParam
+{
+  bool                 result;
+  AsPcmDataParam       output;
+};
+
+struct ComponentInformParam
+{
+  bool              result;
+  uint32_t          inform_req;
+  AsRecognitionInfo inform_data;
+};
+
 
 /****************************************************************************
  * Public Data

@@ -76,7 +76,7 @@ config BLUETOOTH_LE_GATT
 		This option enabling LE GATT feature.
 endif
 
-source "modules/bluetooth/hal/Kconfig"
+source "$APPSDIR/../modules/bluetooth/hal/Kconfig"
 endif
 endmenu
 

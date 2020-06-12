@@ -33,19 +33,15 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # Audio application info
 
-CONFIG_EXAMPLES_AUDIO_RECOGNIZER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_AUDIO_RECOGNIZER_STACKSIZE ?= 2048
-
-APPNAME   = audio_recognizer
+PROGNAME  = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_PROGNAME)
 PRIORITY  = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER)
 
 # Audio Example
 
@@ -57,114 +53,37 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio Example flags
 
-ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(AUDIODIR)}"
-CXXFLAGS += -I "${shell cygpath -w worker_recognizer/userproc/include}"
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_recognizer$(DELIM)userproc$(DELIM)include"}
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-CXXFLAGS += -I "${shell cygpath -w worker_preprocess/userproc/include}"
-endif
-else
-CXXFLAGS += -I $(AUDIODIR)
-CXXFLAGS += -I worker_recognizer/userproc/include
-ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-CXXFLAGS += -I worker_preprocess/userproc/include
-endif
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_preprocess$(DELIM)userproc$(DELIM)include"}
 endif
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
 
-CONFIG_EXAMPLES_AUDIO_RECOGNIZER_PROGNAME ?= audio_recognizer$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_PROGNAME)
+include $(APPDIR)/Application.mk
 
-# Instead of including "Applicaion.mk", write "make rules" here.
-# (Cannot use "Application.mk" because targe "clean" will duplicate and be ignored.)
-
-CXXEXT ?= .cxx
-
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-MAINOBJ = $(MAINSRC:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(CXXSRCS) $(MAINSRC)
-OBJS = $(CXXOBJS)
-
-ifneq ($(CONFIG_BUILD_KERNEL),y)
-  OBJS += $(MAINOBJ)
-endif
-
-ifeq ($(WINTOOL),y)
-  BIN = "${shell cygpath -w $(APPDIR)$(DELIM)libexamples$(LIBEXT)}"
-  INSTALL_DIR = "${shell cygpath -w $(BIN_DIR)}"
-else
-  BIN = $(APPDIR)$(DELIM)libexamples$(LIBEXT)
-  INSTALL_DIR = $(BIN_DIR)
-endif
-
-ROOTDEPPATH = --dep-path .
-
-all: .built
-.PHONY: .built worker_build clean
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILEXX, $<, $@)
-
-$(MAINOBJ): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILEXX, $<, $@)
-
-worker_build:
+build_worker:
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-	$(Q) $(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+	@$(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 endif
-	$(Q) $(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+	@$(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: $(OBJS) worker_build
+.built: build_worker
 
-ifeq ($(CONFIG_BUILD_KERNEL),y)
-$(BIN_DIR)$(DELIM)$(PROGNAME): $(OBJS) $(MAINOBJ)
-	@echo "LD: $(PROGNAME)"
-	$(Q) $(LD) $(LDELFFLAGS) $(LDLIBPATH) -o $(INSTALL_DIR)$(DELIM)$(PROGNAME) $(ARCHCRT0OBJ) $(MAINOBJ) $(LDLIBS)
-	$(Q) $(NM) -u $(INSTALL_DIR)$(DELIM)$(PROGNAME)
+clean:: clean_worker clean_local
 
-install: $(BIN_DIR)$(DELIM)$(PROGNAME)
-else
-install: $(OBJS)
-	$(call ARCHIVE, $(BIN), $(OBJS))
-endif
-
-ifeq ($(CONFIG_NSH_BUILTIN_APPS),y)
-$(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat: $(DEPCONFIG) Makefile
-	$(call REGISTER,$(APPNAME),$(PRIORITY),$(STACKSIZE),$(APPNAME)_main)
-
-context: $(BUILTIN_REGISTRY)$(DELIM)$(APPNAME)_main.bdat
-else
-context:
-endif
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(ROOTDEPPATH) "$(CXX)" -- $(CXXFLAGS) -- $(SRCS) >Make.dep
+clean_local:
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-	$(Q) $(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
+	$(call DELFILE, .worker_preprocess)
 endif
-	$(Q) $(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
-	$(Q) touch $@
-
-depend: .depend
+	$(call DELFILE, .worker_recognizer)
 
 clean_worker:
+ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 	@$(MAKE) -C worker_preprocess TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+endif
 	@$(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
-
-clean: clean_worker
-	$(call DELFILE, .worker_preprocess)
-	$(call DELFILE, .worker_recognizer)
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-.PHONY: preconfig
-preconfig:
 

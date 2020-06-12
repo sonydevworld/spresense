@@ -40,7 +40,6 @@
 #include <stdio.h>
 #include <asmp/mpshm.h>
 #include <arch/board/board.h>
-#include <arch/chip/cxd56_audio.h>
 #include "audio/audio_high_level_api.h"
 #include "audio/audio_frontend_api.h"
 #include "audio/audio_outputmix_api.h"
@@ -581,11 +580,7 @@ void app_working_process(uint32_t play_time)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_sound_effector_main(int argc, char *argv[])
-#endif
 {
   printf("Start sound effector example\n");
 

@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -53,7 +53,7 @@
 #include <nuttx/sensors/bh1721fvc.h>
 
 #ifdef CONFIG_CXD56_SCU
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 #endif
 
 /****************************************************************************
@@ -219,11 +219,7 @@ static int sensing_main(int fd)
  * sensor_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int light_main(int argc, char *argv[])
-#endif
 {
   int fd;
 

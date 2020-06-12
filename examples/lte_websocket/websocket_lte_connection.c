@@ -1,7 +1,7 @@
 /****************************************************************************
  * lte_websocket/websocket_lte_connection.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <mqueue.h>
@@ -258,7 +258,7 @@ static int app_wait_lte_callback(int *result)
   if (ret < 0)
     {
       errcode = errno;
-      printf("mq_send() failed: %d\n", errcode);
+      printf("mq_receive() failed: %d\n", errcode);
       mq_close(mqd);
       return -1;
     }
@@ -344,7 +344,7 @@ static int app_wait_lte_callback_with_parameter(int *result, void *param)
   if (ret < 0)
     {
       errcode = errno;
-      printf("mq_send() failed: %d\n", errcode);
+      printf("mq_receive() failed: %d\n", errcode);
       mq_close(mqd);
       return -1;
     }
@@ -535,6 +535,51 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
 }
 
 /****************************************************************************
+ * Name: app_get_sessionid
+ *
+ * Description:
+ *   Gets network information and returns the session ID if connected.
+ ****************************************************************************/
+
+static int app_get_sessionid(void)
+{
+  int           ret     = 0;
+  lte_netinfo_t netinfo = {0};
+
+  netinfo.pdn_stat = (lte_pdn_t *)malloc(sizeof(lte_pdn_t)
+                                         * LTE_SESSION_ID_MAX);
+  if (!netinfo.pdn_stat)
+    {
+      printf("Failed to acllocate pdn status buffer.\n");
+      return -ENOMEM;
+    }
+
+  ret = lte_get_netinfo_sync(LTE_SESSION_ID_MAX, &netinfo);
+  if (ret < 0)
+    {
+      printf("Failed to get network information :%d\n", ret);
+      if (ret == -EPROTO)
+        {
+          app_show_errinfo();
+        }
+      free(netinfo.pdn_stat);
+      return -1;
+    }
+
+  if (0 != netinfo.pdn_num)
+    {
+      ret = netinfo.pdn_stat[0].session_id;
+    }
+  else
+    {
+      ret = -1;
+    }
+
+  free(netinfo.pdn_stat);
+  return ret;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -547,9 +592,11 @@ int app_websocket_connect_to_lte(void)
   int                     ret;
   int                     result = LTE_RESULT_OK;
   struct lte_apn_setting  apnsetting;
+  lte_errinfo_t           info = {0};
 
   /* Create a message queue. It is used to receive result from the
-   * asynchronous API callback.*/
+   * asynchronous API callback.
+   */
 
   ret = app_mq_create(APP_MQUEUE_NAME);
   if (ret < 0)
@@ -560,7 +607,7 @@ int app_websocket_connect_to_lte(void)
   /* Initialize the LTE library */
 
   ret = lte_initialize();
-  if (ret < 0)
+  if ((ret < 0) && (ret != -EALREADY))
     {
       printf("Failed to initialize LTE library :%d\n", ret);
       goto errout_with_fin;
@@ -582,19 +629,27 @@ int app_websocket_connect_to_lte(void)
   /* Power on the LTE modem */
 
   ret = lte_power_on();
-  if (ret < 0)
+  if (ret >= 0)
+    {
+
+      /* Wait until the modem startup normally and notification
+       * comes from the callback(app_restart_cb)
+       * registered by lte_set_report_restart.
+       */
+
+      ret = app_wait_lte_callback(&result);
+      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+        {
+          goto errout_with_lte_fin;
+        }
+    }
+  else if (ret == -EALREADY)
+    {
+      printf("Already poweron\n");
+    }
+  else
     {
       printf("Failed to power on the modem :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
-
-  /* Wait until the modem startup normally and notification
-   * comes from the callback(app_restart_cb)
-   * registered by lte_set_report_restart. */
-
-  ret = app_wait_lte_callback(&result);
-  if (ret < 0)
-    {
       goto errout_with_lte_fin;
     }
 
@@ -610,46 +665,78 @@ int app_websocket_connect_to_lte(void)
   /* Radio on and start to search for network */
 
   ret = lte_radio_on(app_radio_on_cb);
-  if (ret < 0)
+  if (ret >= 0)
+    {
+
+      /* Wait until the radio on is completed and notification
+       * comes from the callback(app_radio_on_cb)
+       * registered by lte_radio_on.
+       */
+
+      ret = app_wait_lte_callback(&result);
+      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+        {
+          lte_get_errinfo(&info);
+          if(!((info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
+               && (info.err_no == -EALREADY)))
+            {
+              printf("Failed to set radio on :%d\n", ret);
+              app_show_errinfo();
+              goto errout_with_lte_fin;
+            }
+        }
+    }
+  else
     {
       printf("Failed to set radio on :%d\n", ret);
       goto errout_with_lte_fin;
     }
 
-  /* Wait until the radio on is completed and notification
-   * comes from the callback(app_radio_on_cb)
-   * registered by lte_radio_on. */
+  /* Get the session ID. If successful, it means already attached. */
 
-  ret = app_wait_lte_callback(&result);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
+  ret = app_get_sessionid();
+  if (ret >= 0)
     {
-      goto errout_with_lte_fin;
+      printf("Already activated PDN.\n");
+      data_pdn_sid = ret;
     }
-
-  /* Attach to the LTE network and connect to the data PDN */
-
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
-  apnsetting.ip_type   = APP_APN_IPTYPE;
-  apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
-
-  ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
-  if (ret < 0)
+  else
     {
-      printf("Failed to activate PDN :%d\n", ret);
-      goto errout_with_lte_fin;
-    }
 
-  /* Wait until the connect completed and notification
-   * comes from the callback(app_activate_pdn_cb)
-   * registered by lte_activate_pdn. */
+      /* Attach to the LTE network and connect to the data PDN */
 
-  ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
-  if ((ret < 0) || (result == LTE_RESULT_ERROR))
-    {
-      goto errout_with_lte_fin;
+      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.ip_type   = APP_APN_IPTYPE;
+      apnsetting.auth_type = APP_APN_AUTHTYPE;
+      apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
+      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+
+      ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
+      if (ret >= 0)
+        {
+
+          /* Wait until the connect completed and notification
+           * comes from the callback(app_activate_pdn_cb)
+           * registered by lte_activate_pdn.
+           */
+
+          ret = app_wait_lte_callback_with_parameter(&result, &data_pdn_sid);
+          if ((ret < 0) || (result == LTE_RESULT_ERROR))
+            {
+              printf("Failed to activate PDN :%d\n", ret);
+              if (result == LTE_RESULT_ERROR)
+                {
+                  app_show_errinfo();
+                }
+              goto errout_with_lte_fin;
+            }
+        }
+      else
+        {
+          printf("Failed to activate PDN :%d\n", ret);
+          goto errout_with_lte_fin;
+        }
     }
 
   return 0;

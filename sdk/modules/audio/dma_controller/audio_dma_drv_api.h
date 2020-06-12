@@ -36,7 +36,7 @@
 #ifndef __MODULES_AUDIO_DMA_CONTROLLER_BCA_DRV_H
 #define __MODULES_AUDIO_DMA_CONTROLLER_BCA_DRV_H
 
-#include <arch/chip/cxd56_audio.h>
+#include <arch/chip/audio.h>
 
 #ifdef __cplusplus
 extern "C" {

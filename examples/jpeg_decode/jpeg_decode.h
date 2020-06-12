@@ -41,7 +41,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -67,6 +67,7 @@ struct nximage_data_s
 
   NXHANDLE hnx;
   NXHANDLE hbkgd;
+  bool     connected;
 
   /* The screen resolution */
 
@@ -75,7 +76,6 @@ struct nximage_data_s
 
   volatile bool havepos;
   sem_t sem;
-  volatile int code;
 };
 
 /****************************************************************************
@@ -93,6 +93,10 @@ extern const struct nx_callback_s g_jpeg_decode_nximagecb;
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
+
+/* NX event listener */
+
+FAR void *nximage_listener(FAR void *arg);
 
 /* Background window interfaces */
 

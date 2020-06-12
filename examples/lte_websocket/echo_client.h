@@ -2,6 +2,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2014 Jeremy Hahn
+ *  Copyright 2020 Sony Corporation
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +23,8 @@
  *  THE SOFTWARE.
  */
 
-#ifndef SYSLOG_SUBPROTOCOL_H_
-#define SYSLOG_SUBPROTOCOL_H_
+#ifndef WEBSOCKET_ECHO_CLIENT_H_
+#define WEBSOCKET_ECHO_CLIENT_H_
 
 #include "common.h"
 #include "client.h"
@@ -32,7 +33,7 @@
 extern "C" {
 #endif
 
-cwebsocket_subprotocol* cwebsocket_subprotocol_echo_client_new(void);
+void cwebsocket_subprotocol_echo_client_new(cwebsocket_subprotocol *protocol);
 
 #ifdef __cplusplus
 }

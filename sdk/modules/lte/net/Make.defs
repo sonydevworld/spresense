@@ -35,7 +35,7 @@
 
 # Include sub directory source files
 
-include net/stubsock/Make.defs
 include net/netdb/Make.defs
 include net/inet/Make.defs
+include net/daemon/Make.defs
 

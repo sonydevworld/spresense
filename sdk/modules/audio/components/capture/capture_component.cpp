@@ -398,6 +398,8 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
       return false;
     }
 
+  pthread_setname_np(s_capture_pid[0], "capture0");
+
   /* dev1 setting */
 
   if (dev1_self_dtq != 0xFF || dev1_self_sync_dtq != 0xFF)
@@ -438,6 +440,8 @@ bool AS_CreateCapture(FAR AsCreateCaptureParam_t *param)
           CAPTURE_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
           return false;
         }
+
+      pthread_setname_np(s_capture_pid[1], "capture1");
 #else
       CAPTURE_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;

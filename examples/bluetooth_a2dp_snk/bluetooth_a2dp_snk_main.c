@@ -475,11 +475,7 @@ static void main_loop(void)
  * bt_a2dp_snk_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int bt_a2dp_snk_main(int argc, char *argv[])
-#endif
 {
   int ret = 0;
 

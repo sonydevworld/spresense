@@ -34,7 +34,6 @@
  ****************************************************************************/
 
 #include <sys/types.h>
-#include <arch/chip/cxd56_audio.h>
 
 #include "audio_bb_drv.h"
 #include "audio_dma_drv_api.h"

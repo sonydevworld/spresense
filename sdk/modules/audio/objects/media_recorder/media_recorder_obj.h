@@ -51,7 +51,6 @@
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
 
-#include "components/common/component_base.h"
 #include "components/encoder/encoder_component.h"
 #include "components/customproc/thruproc_component.h"
 #include "components/filter/src_filter_component.h"
@@ -89,14 +88,14 @@ public:
     m_pool_id(pool_id),
     m_state(AS_MODULE_ID_MEDIA_RECORDER_OBJ, "", RecorderStateInactive),
     m_channel_num(2),
-    m_pcm_bit_width(AudPcm16Bit),
+    m_pcm_bit_width(AudPcmFormatInt16),
     m_sampling_rate(48000),
     m_codec_type(InvalidCodecType),
     m_output_device(AS_SETRECDR_STS_OUTPUTDEVICE_RAM),
     m_p_output_device_handler(NULL),
     m_filter_instance(NULL)
   {
-    /* Create instance of components when MediaRecorderObj is created. 
+    /* Create instance of components when MediaRecorderObj is created.
      * Don't new and delete while MediaRecorderObj is active to avoid
      * heap memory area leak.
      */
@@ -129,8 +128,8 @@ private:
   AsRecorderPoolId_t   m_pool_id;
 
   AudioState<RecorderState_e> m_state;
-  int8_t  m_channel_num;
-  AudioPcmBitWidth m_pcm_bit_width;
+  int8_t m_channel_num;
+  AudioPcmFormat m_pcm_bit_width;
   int32_t m_sampling_rate;
   int32_t m_max_output_pcm_size;
   AudioCodec m_codec_type;

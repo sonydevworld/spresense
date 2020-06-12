@@ -34,32 +34,26 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_PROXIMITY_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_PROXIMITY_STACKSIZE ?= 2048
-
-APPNAME = proximity
-PRIORITY = $(CONFIG_EXAMPLES_PROXIMITY_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_PROXIMITY_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_PROXIMITY_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_PROXIMITY_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_PROXIMITY)
 
 # sensor Example
 
-ASRCS =
-
-# REVISIT: Choose representative one
-
-ifeq ($(CONFIG_APDS9930),y)
-ifeq ($(CONFIG_APDS9930_PROXIMITY_INTERRUPT),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_SCU),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_apds9930_int.c
 else
 MAINSRC = proximity_main_apds9930_scu.c
 endif
 endif
 
-ifeq ($(CONFIG_LT1PA01),y)
+ifeq ($(CONFIG_SENSORS_LT1PA01_SCU),y)
 ifeq ($(CONFIG_LT1PA01_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_lt1pa01_int.c
 else
@@ -67,15 +61,12 @@ MAINSRC = proximity_main_lt1pa01_scu.c
 endif
 endif
 
-ifeq ($(CONFIG_RPR0521RS),y)
+ifeq ($(CONFIG_SENSORS_RPR0521RS_SCU),y)
 ifeq ($(CONFIG_RPR0521RS_PROXIMITY_INTERRUPT),y)
 MAINSRC = proximity_main_rpr0521rs_int.c
 else
 MAINSRC = proximity_main_rpr0521rs_scu.c
 endif
 endif
-
-CONFIG_EXAMPLES_PROXIMITY_PROGNAME ?= proximity$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_PROXIMITY_PROGNAME)
 
 include $(APPDIR)/Application.mk

@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,8 +64,6 @@
 #ifdef CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC
 #include "userproc_command.h"
 #endif /* CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC */
-
-#include <arch/chip/cxd56_audio.h>
 
 using namespace MemMgrLite;
 
@@ -492,7 +490,7 @@ static bool app_init_libraries(void)
       return false;
     }
 
-  err = Manager::initPerCpu(mml_data_area, NUM_MEM_POOLS);
+  err = Manager::initPerCpu(mml_data_area, static_pools, pool_num, layout_no);
   if (err != ERR_OK)
     {
       printf("Error: Manager::initPerCpu() failure. 0x%x\n", err);
@@ -570,11 +568,7 @@ void app_recognizer_process(uint32_t rec_time)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_recognizer_main(int argc, char *argv[])
-#endif
 {
   printf("Start AudioRecognizer example\n");
 

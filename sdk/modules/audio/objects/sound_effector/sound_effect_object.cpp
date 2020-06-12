@@ -1413,7 +1413,7 @@ uint32_t SoundEffectObject::initMfe(const AudioCommand& cmd)
 
   cap_comp_param.init_param.capture_ch_num    = m_mic_in_ch_num;
   /* TODO: Fixed valuse */
-  cap_comp_param.init_param.capture_bit_width = AudPcm16Bit;
+  cap_comp_param.init_param.capture_bit_width = AudPcmFormatInt16;
   cap_comp_param.init_param.callback          = capture_done_callback;
   cap_comp_param.handle                       = m_capture_from_mic_hdlr;
 
@@ -1428,7 +1428,7 @@ uint32_t SoundEffectObject::initMfe(const AudioCommand& cmd)
    */
   cap_comp_param.init_param.capture_ch_num    = m_i2s_in_ch_num;
   /* TODO: Fixed value */
-  cap_comp_param.init_param.capture_bit_width = AudPcm16Bit;
+  cap_comp_param.init_param.capture_bit_width = AudPcmFormatInt16;
   cap_comp_param.init_param.callback          = capture_done_callback;
   cap_comp_param.handle                       = m_capture_from_i2s_hdlr;
 

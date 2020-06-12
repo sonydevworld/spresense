@@ -138,15 +138,6 @@ RecognizerObject::MsgProc
     &RecognizerObject::illegal,      /*   Stopping.        */
   },
 
-  /* Message Type: MSG_AUD_RCG_EXEC */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegalexec,  /*   Booted.          */
-    &RecognizerObject::illegalexec,  /*   Ready.           */
-    &RecognizerObject::exec,         /*   Active.          */
-    &RecognizerObject::illegalexec,  /*   Stopping.        */
-  },
-
   /* Message Type: MSG_AUD_RCG_STOP */
 
   {                                  /* Recognizer status: */
@@ -154,6 +145,15 @@ RecognizerObject::MsgProc
     &RecognizerObject::illegal,      /*   Ready.           */
     &RecognizerObject::stop,         /*   Active.          */
     &RecognizerObject::illegal,      /*   Stopping.        */
+  },
+
+  /* Message Type: MSG_AUD_RCG_EXEC */
+
+  {                                  /* Recognizer status: */
+    &RecognizerObject::illegalexec,  /*   Booted.          */
+    &RecognizerObject::illegalexec,  /*   Ready.           */
+    &RecognizerObject::exec,         /*   Active.          */
+    &RecognizerObject::illegalexec,  /*   Stopping.        */
   },
 
   /* Message Type: MSG_AUD_RCG_INITRCGPROC */
@@ -850,6 +850,8 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
+
+  pthread_setname_np(s_recognizer_pid, "recognizer");
 
   return true;
 }

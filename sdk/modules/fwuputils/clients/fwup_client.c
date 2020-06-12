@@ -49,7 +49,7 @@
 #include <mqueue.h>
 #include <fcntl.h>
 
-#include "chip/cxd5602_backupmem.h"
+#include "hardware/cxd5602_backupmem.h"
 
 #include "fwuputils/fwup_manager.h"
 #include "fwuputils/fwup_client.h"

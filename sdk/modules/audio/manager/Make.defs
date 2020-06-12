@@ -35,7 +35,7 @@
 
 ifeq ($(CONFIG_AUDIOUTILS_MANAGER),y)
 
-CXXSRCS += audio_manager.cpp attention.cpp
+CXXSRCS += audio_manager.cpp
 VPATH   += manager
 DEPPATH += --dep-path manager
 

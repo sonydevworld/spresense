@@ -48,6 +48,9 @@
 #include "altcom_callbacks.h"
 #include "lte_report_restart.h"
 
+#include "lte/lte_daemon.h"
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -80,26 +83,11 @@ static int32_t g_lte_set_represtart_reason = LTE_RESTART_USER_INITIATED;
 
 int32_t lte_set_report_restart(restart_report_cb_t restart_callback)
 {
+  int32_t ret;
 
-  /* Check Lte library status */
+  ret = lte_daemon_set_cb(restart_callback);
 
-  if (ALTCOM_STATUS_UNINITIALIZED == altcom_get_status())
-    {
-      return -EOPNOTSUPP;
-    }
-
-  /* Regist or Unregist report callback */
-
-  if (restart_callback)
-    {
-      altcomcallbacks_reg_cb(restart_callback, APICMDID_REPORT_RESTART);
-    }
-  else
-    {
-      altcomcallbacks_unreg_cb(APICMDID_REPORT_RESTART);
-    }
-
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
@@ -155,5 +143,44 @@ int32_t lte_do_restartcallback()
     }
 
   callback(g_lte_set_represtart_reason);
+  return 0;
+}
+
+/****************************************************************************
+ * Name: altcom_set_report_restart
+ *
+ * Description:
+ *   Registration Modem restart notification callback.
+ *
+ * Input Parameters:
+ *   restart_callback Callback function to notify that modem restart.
+ *                    Stop report restart at set null this parameter.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_set_report_restart(restart_report_cb_t restart_callback)
+{
+
+  /* Check Lte library status */
+
+  if (ALTCOM_STATUS_UNINITIALIZED == altcom_get_status())
+    {
+      return -EOPNOTSUPP;
+    }
+
+  /* Regist or Unregist report callback */
+
+  if (restart_callback)
+    {
+      altcomcallbacks_reg_cb(restart_callback, APICMDID_REPORT_RESTART);
+    }
+  else
+    {
+      altcomcallbacks_unreg_cb(APICMDID_REPORT_RESTART);
+    }
   return 0;
 }

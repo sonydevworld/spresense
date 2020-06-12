@@ -32,6 +32,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF),y)
+ifneq ($(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF),)
 CONFIGURED_APPS += bluetooth_hfp_hf
 endif

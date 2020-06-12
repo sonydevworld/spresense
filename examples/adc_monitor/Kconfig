@@ -1,0 +1,50 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ADC_MONITOR
+	tristate "ADC monitor example"
+	default n
+	depends on CXD56_ADC
+	---help---
+		Enable the ADC_MONITOR example
+
+if EXAMPLES_ADC_MONITOR
+
+config EXAMPLES_ADC_MONITOR_PROGNAME
+	string "Program name"
+	default "adc_monitor"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ADC_MONITOR_PRIORITY
+	int "ADC_MONITOR example task priority"
+	default 100
+
+config EXAMPLES_ADC_MONITOR_STACKSIZE
+	int "ADC_MONITOR example stack size"
+	default 2048
+
+config EXAMPLES_ADC_MONITOR_DEVPATH
+	string "ADC device path"
+	default "/dev/lpadc0"
+	---help---
+		The default path to the ADC device. Default: /dev/lpadc0
+
+config EXAMPLES_ADC_MONITOR_READCOUNT
+	int "Number of reads"
+	default 10
+	---help---
+		Number of data reads.
+
+config EXAMPLES_ADC_MONITOR_BUFSIZE
+	int "Buffer size"
+	default 16
+	---help---
+		Buffer size of ADC_MONITOR example.
+		The maximum size that can be read with one read is minimum value
+		between this size and the scu fifo size.
+
+endif

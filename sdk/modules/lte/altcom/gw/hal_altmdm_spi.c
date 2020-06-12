@@ -47,7 +47,7 @@
 #include <nuttx/modem/altmdm.h>
 #include <nuttx/arch.h>
 #include <nuttx/sched.h>
-#include <arch/board/common/cxd56_altmdm.h>
+#include <arch/board/cxd56_altmdm.h>
 
 #include "dbg_if.h"
 #include "buffpoolwrapper.h"

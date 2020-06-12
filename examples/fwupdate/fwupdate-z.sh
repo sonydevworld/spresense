@@ -5,8 +5,8 @@ if [ `uname -o` = "Cygwin" ]; then
 fi
 
 SCRDIR=`dirname $0`
-TOPDIR=${SCRDIR}/../../../nuttx
-APPDIR=${SCRDIR}/../..
+TOPDIR=${SCRDIR}/../../nuttx
+APPDIR=${SCRDIR}/../../sdk/apps
 
 . ${TOPDIR}/.config
 
@@ -19,7 +19,7 @@ usage () {
   echo "  After \"fwupdate -z\" on the Target Board, run this script."
   echo "Examples:"
   echo "  $0 -d /dev/ttySx nuttx.spk"
-  echo "  $0 -d /dev/ttySx nuttx.spk ../proprietary/${CONFIG_ARCH_BOARD}/bin/loader.spk"
+  echo "  $0 -d /dev/ttySx nuttx.spk ../firmware/spresense/bin/{loader,gnssfw}.espk"
   exit 1
 }
 

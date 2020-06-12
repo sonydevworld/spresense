@@ -76,6 +76,12 @@
 #  include "audio/audio_renderer_api.h"
 #  include "audio/audio_capture_api.h"
 #endif
+#ifdef CONFIG_AUDIOUTILS_SYNTHESIZER
+#  include "audio/audio_player_api.h"
+#  include "audio/audio_synthesizer_api.h"
+#  include "audio/audio_outputmix_api.h"
+#  include "audio/audio_renderer_api.h"
+#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -472,6 +478,10 @@
 /*! \brief Audio SW object cannot available Error */
 
 #define AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR      0x3E
+
+/*! \brief Oscillator Library Initialize Error */
+
+#define AS_ECODE_OSCILLATOR_LIB_INITIALIZE_ERROR 0x3F
 
 /** @} */
 
@@ -907,6 +917,22 @@ typedef struct
 
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
 
+/* Init OutputMixer Command (#AUDCMD_INIT_OUTPUTMIXER) */
+
+typedef struct
+{
+  uint8_t  player_id;
+
+  /*! \brief [in] Set postproc type. Use AsPostprocType enum type */
+
+  uint8_t postproc_type;
+
+  /*! \brief [in] Set dsp file name and path */
+
+  char dsp_path[AS_POSTPROC_FILE_PATH_LEN];
+
+} AsInitMixerParam;
+
 /** Request Clock Recovery Command (#AUDCMD_CLKRECOVERY) parameter */
 
 typedef struct
@@ -1111,6 +1137,12 @@ typedef struct
 
 #endif
 #ifdef AS_FEATURE_OUTPUTMIX_ENABLE
+    /*! \brief [in] for Init OutputMixer 
+     * (header.command_code==#AUDCMD_INIT_OUTPUTMIXER)
+     */
+
+    AsInitMixerParam init_mixer_param;
+
     /*! \brief [in] for Adjust sound period
      * (header.command_code==#AUDCMD_CLKRECOVERY)
      */
@@ -1441,79 +1473,7 @@ typedef enum
   AS_STATUS_CHANGED_STS_NUM
 } AsStatusChangedSts;
 
-/** Audio Module ID */
 
-/** @defgroup module_id_code Module ID */
-/** @{ */
-
-typedef enum
-{
-  /*! \brief Audio Manager Module ID */
-
-  AS_MODULE_ID_AUDIO_MANAGER = 0,
-
-  /*! \brief Audio Baseband Driver Module ID */
-  AS_MODULE_ID_AUDIO_DRIVER,
-
-  /*! \brief FrontEnd Object ID */
-
-  AS_MODULE_ID_MIC_FRONTEND_OBJ,
-
-  /*! \brief Input Data Manager Object ID */
-
-  AS_MODULE_ID_INPUT_DATA_MNG_OBJ,
-
-  /*! \brief Media Recorder Object ID */
-
-  AS_MODULE_ID_MEDIA_RECORDER_OBJ,
-
-  /*! \brief Output Mix Object ID */
-
-  AS_MODULE_ID_OUTPUT_MIX_OBJ,
-
-  /*! \brief Player Object ID */
-
-  AS_MODULE_ID_PLAYER_OBJ,
-
-  /*! \brief Recognition Object ID */
-
-  AS_MODULE_ID_RECOGNITION_OBJ,
-
-  /*! \brief Sound Effect Object ID */
-
-  AS_MODULE_ID_SOUND_EFFECT_OBJ,
-
-  /*! \brief Capture Component ID */
-
-  AS_MODULE_ID_CAPTURE_CMP,
-
-  /*! \brief Decoder Component ID */
-
-  AS_MODULE_ID_DECODER_CMP,
-
-  /*! \brief Encoder Component ID */
-
-  AS_MODULE_ID_ENCODER_CMP,
-
-  /*! \brief Filter Component ID */
-
-  AS_MODULE_ID_FILTER_CMP,
-
-  /*! \brief Recognition Component ID */
-
-  AS_MODULE_ID_RECOGNITION_CMP,
-
-  /*! \brief Renderer Component ID */
-
-  AS_MODULE_ID_RENDERER_CMP,
-
-  /*! \brief Postfilter Component ID */
-
-  AS_MODULE_ID_POSTPROC_CMP,
-  AS_MODULE_ID_NUM,
-} AsModuleId;
-
-/** @} */
 
 /** Audio Manager error code */
 

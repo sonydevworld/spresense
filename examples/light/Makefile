@@ -34,40 +34,31 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # sensor built-in application info
 
-CONFIG_EXAMPLES_LIGHT_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_LIGHT_STACKSIZE ?= 2048
-
-APPNAME = light
-PRIORITY = $(CONFIG_EXAMPLES_LIGHT_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_LIGHT_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_LIGHT_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_LIGHT_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_LIGHT)
 
 # sensor Example
 
-ASRCS =
-
-# REVISIT: Choose representative one
-
-ifeq ($(CONFIG_APDS9930),y)
+ifeq ($(CONFIG_SENSORS_APDS9930_SCU),y)
 MAINSRC = light_main_apds9930.c
 endif
 
-ifeq ($(CONFIG_LT1PA01),y)
+ifeq ($(CONFIG_SENSORS_LT1PA01_SCU),y)
 MAINSRC = light_main_lt1pa01.c
 endif
 
-ifeq ($(CONFIG_BH1721FVC),y)
+ifeq ($(CONFIG_SENSORS_BH1721FVC_SCU),y)
 MAINSRC = light_main_bh1721fvc.c
 endif
 
-ifeq ($(CONFIG_RPR0521RS),y)
+ifeq ($(CONFIG_SENSORS_RPR0521RS_SCU),y)
 MAINSRC = light_main_rpr0521rs.c
 endif
-
-CONFIG_EXAMPLES_LIGHT_PROGNAME ?= light$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_LIGHT_PROGNAME)
 
 include $(APPDIR)/Application.mk

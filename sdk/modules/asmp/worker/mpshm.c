@@ -230,7 +230,7 @@ void *mpshm_attach(mpshm_t *shm, int shmflg)
       return NULL;
     }
 
-  flags = enter_critical_section();
+  flags = up_irq_save();
 
   tag = mpshm_findfreetag(shm->size);
   if (tag < 0)
@@ -243,7 +243,7 @@ void *mpshm_attach(mpshm_t *shm, int shmflg)
       shm->tag = tag;
     }
 
-  leave_critical_section(flags);
+  up_irq_restore(flags);
 
   return va;
 }
@@ -261,9 +261,9 @@ int mpshm_detach(mpshm_t *shm)
       return -EINVAL;
     }
 
-  flags = enter_critical_section();
+  flags = up_irq_save();
   _mpshm_unmap(shm->tag, shm->size);
-  leave_critical_section(flags);
+  up_irq_restore(flags);
 
   return OK;
 }

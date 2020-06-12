@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -81,11 +81,7 @@
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_factory_main(int argc, char *argv[])
-#endif
 {
   int      fd;
   int      ret;

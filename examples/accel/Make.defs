@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_ACCEL),y)
+ifneq ($(CONFIG_EXAMPLES_ACCEL),)
 CONFIGURED_APPS += accel
 endif

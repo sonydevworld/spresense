@@ -13,8 +13,8 @@ config LTE
 
 if LTE
 
-source "modules/lte/altcom/Kconfig"
-source "modules/lte/net/Kconfig"
+source "$APPSDIR/../modules/lte/altcom/Kconfig"
+source "$APPSDIR/../modules/lte/net/Kconfig"
 endif
 
 endmenu # LTE

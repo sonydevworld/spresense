@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_LTE_AWSIOT),y)
+ifneq ($(CONFIG_EXAMPLES_LTE_AWSIOT),)
 CONFIGURED_APPS += lte_awsiot
 endif

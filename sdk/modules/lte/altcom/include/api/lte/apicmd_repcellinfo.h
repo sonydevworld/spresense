@@ -46,23 +46,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APICMD_SET_REPCELLINFO_DISABLE       (0)
-#define APICMD_SET_REPCELLINFO_ENABLE        (1)
 #define APICMD_SET_REPCELLINFO_INTERVAL_MIN  (1)
 #define APICMD_SET_REPCELLINFO_INTERVAL_MAX  (4233600)
-
-#define APICMD_SET_REPCELLINFO_RES_OK        (0)
-#define APICMD_SET_REPCELLINFO_RES_ERR       (1)
-
-#define APICMD_SET_REPCELLINFO_CELLID_MIN    (0)
-#define APICMD_SET_REPCELLINFO_CELLID_MAX    (503)
-#define APICMD_SET_REPCELLINFO_EARFCN_MIN    (0)
-#define APICMD_SET_REPCELLINFO_EARFCN_MAX    (262143)
-#define APICMD_SET_REPCELLINFO_DIGIT_NUM_MIN (0)
-#define APICMD_SET_REPCELLINFO_DIGIT_NUM_MAX (9)
-#define APICMD_SET_REPCELLINFO_MCC_DIGIT     (3)
-#define APICMD_SET_REPCELLINFO_MNC_DIGIT_MIN (2)
-#define APICMD_SET_REPCELLINFO_MNC_DIGIT_MAX (3)
 
 /****************************************************************************
  * Public Types
@@ -79,16 +64,6 @@ begin_packed_struct struct apicmd_cmddat_setrepcellinfo_s
 begin_packed_struct struct apicmd_cmddat_setrepcellinfo_res_s
 {
   uint8_t result;
-} end_packed_struct;
-
-begin_packed_struct struct apicmd_cmddat_repcellinfo_s
-{
-  uint8_t  enability;
-  uint32_t cell_id;
-  uint32_t earfcn;
-  uint8_t  mcc[APICMD_SET_REPCELLINFO_MCC_DIGIT];
-  uint8_t  mnc_digit;
-  uint8_t  mnc[APICMD_SET_REPCELLINFO_MNC_DIGIT_MAX];
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPCELLINFO_H */

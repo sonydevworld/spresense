@@ -42,7 +42,7 @@
  *
  *   D15 D14 D13 D12 D11 D10 D9  D8  D7  D6  D5  D4  D3  D2  D1  D0
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- *  |REQ| MSG_USER  | MSG_CATEGORY  | MSG_SUB_TYPE                  |
+ *  |REQ| MSG_USER  | MSG_CATEGORY  | MSG_SUB_TYPE      | MSG_PARAM |
  *  +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  *
  *    D15: MSG_TYPE_REQUEST
@@ -62,7 +62,10 @@
  *         0-15: (reserved)  defined by each user
  *
  *    D7-D0: MSG_SUB_TYPE
- *         0-255: (reserved)  defined by each category
+ *         0-32: (reserved)  defined by each category
+ *
+ *    D7-D0: MSG_PARAM
+ *         0-7: (reserved)  defined by each sub type
  *
  ***********************************************************************
  */
@@ -74,7 +77,6 @@ typedef unsigned short MSG_TYPE;
  *
  ************************************************************************
  */
- 
 #define MSG_TYPE_REQUEST_FIELD_SIZE    (0x1)
 #define MSG_TYPE_REQUEST_FIELD_OFFSET  (15)
 
@@ -110,15 +112,27 @@ typedef unsigned short MSG_TYPE;
 
 /************************************************************************
  *
- *  sub type
+ *  Sub type
  *
  ************************************************************************
  */
 
-#define MSG_TYPE_SUBTYPE_FIELD_SIZE     (0xff)
-#define MSG_TYPE_SUBTYPE_FIELD_OFFSET   (0)
+#define MSG_TYPE_SUBTYPE_FIELD_SIZE     (0x1f)
+#define MSG_TYPE_SUBTYPE_FIELD_OFFSET   (3)
 
 #define MSG_TYPE_SUBTYPE  (MSG_TYPE_SUBTYPE_FIELD_SIZE << MSG_TYPE_SUBTYPE_FIELD_OFFSET)
+
+/************************************************************************
+ *
+ *  Parame Type
+ *
+ ************************************************************************
+ */
+
+#define MSG_TYPE_PARAM_FIELD_SIZE     (0x7)
+#define MSG_TYPE_PARAM_FIELD_OFFSET   (0)
+
+#define MSG_TYPE_PARAM  (MSG_TYPE_PARAM_FIELD_SIZE << MSG_TYPE_PARAM_FIELD_OFFSET)
 
 /************************************************************************
  *
@@ -128,10 +142,12 @@ typedef unsigned short MSG_TYPE;
  */
 #define MSG_SET_CATEGORY(x)  (((x) & MSG_TYPE_CATEGORY_FIELD_SIZE) << MSG_TYPE_CATEGORY_FIELD_OFFSET)
 #define MSG_SET_SUBTYPE(x)   (((x) & MSG_TYPE_SUBTYPE_FIELD_SIZE ) << MSG_TYPE_SUBTYPE_FIELD_OFFSET)
- 
+#define MSG_SET_PARAM(x)     (((x) & MSG_TYPE_PARAM_FIELD_SIZE )   << MSG_TYPE_PARAM_FIELD_OFFSET)
+
 #define MSG_GET_USER(x)      (MSG_TYPE_USER     & (MSG_TYPE)x)
 #define MSG_GET_CATEGORY(x)  (MSG_TYPE_CATEGORY & (MSG_TYPE)x)
-#define MSG_GET_SUBTYPE(x)   (MSG_TYPE_SUBTYPE  & (MSG_TYPE)x)
+#define MSG_GET_SUBTYPE(x)   ((MSG_TYPE_SUBTYPE & (MSG_TYPE)x) >> MSG_TYPE_SUBTYPE_FIELD_OFFSET)
+#define MSG_GET_PARAM(x)     ((MSG_TYPE_PARAM   & (MSG_TYPE)x) >> MSG_TYPE_PARAM_FIELD_OFFSET)
 #define MSG_IS_REQUEST(x)    (MSG_TYPE_REQUEST  & (MSG_TYPE)x)
 
 #endif /* __APPS_MEMUTILS_MESSAGE_INCLUDE_MESSAGE_TYPE_H */

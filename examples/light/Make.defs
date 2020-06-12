@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_LIGHT),y)
+ifneq ($(CONFIG_EXAMPLES_LIGHT),)
 CONFIGURED_APPS += light
 endif

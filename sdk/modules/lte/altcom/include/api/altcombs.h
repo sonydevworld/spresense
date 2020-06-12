@@ -49,6 +49,7 @@
 #include "apicmd_edrx.h"
 #include "apicmd_psm.h"
 #include "apicmd_quality.h"
+#include "apicmd_cellinfo.h"
 
 /****************************************************************************
  * Public Types
@@ -357,6 +358,25 @@ int32_t altcombs_set_psm(FAR struct apicmd_cmddat_psm_set_s *cmd_set,
 
 int32_t altcombs_set_quality(FAR lte_quality_t *data,
           FAR struct apicmd_cmddat_quality_s *cmd_quality);
+
+/****************************************************************************
+ * Name: altcombs_set_cellinfo
+ *
+ * Description:
+ *   Set lte_cellinfo_t.
+ *
+ * Input Parameters:
+ *   cmd_cellinfo  Pointer of api command cellinfo struct.
+ *   api_cellinfo  Pointer of lte_cellinfo_t.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+void altcombs_set_cellinfo(FAR struct apicmd_cmddat_cellinfo_s *cmd_cellinfo,
+                           FAR lte_cellinfo_t *api_cellinfo);
 
 /****************************************************************************
  * Name: altcombs_setup_apicallback

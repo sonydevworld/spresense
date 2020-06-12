@@ -53,6 +53,8 @@
 #include "altcombs.h"
 #include "altcom_callbacks.h"
 
+#include "lte/altcom/altcom_api.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -68,34 +70,6 @@ static FAR struct hal_if_s *g_halif = NULL;
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-
-/****************************************************************************
- * Name: poweron_status_chg_cb
- *
- * Description:
- *   Notification status change in processing Power on.
- *
- * Input Parameters:
- *  new_stat    Current status.
- *  old_stat    Preview status.
- *
- * Returned Value:
- *   None.
- *
- ****************************************************************************/
-
-static int32_t poweron_status_chg_cb(int32_t new_stat, int32_t old_stat)
-{
-  if (new_stat <= ALTCOM_STATUS_INITIALIZED)
-    {
-      DBGIF_LOG2_INFO("poweron_status_chg_cb(%d -> %d)\n", old_stat, new_stat);
-      altcomcallbacks_unreg_cb(APICMDID_POWER_ON);
-
-      return ALTCOM_STATUS_REG_CLR;
-    }
-
-  return ALTCOM_STATUS_REG_KEEP;
-}
 
 /****************************************************************************
  * Name: restart_callback_job
@@ -115,6 +89,10 @@ static void restart_callback_job(FAR void *arg)
 {
   int32_t      ret;
   FAR uint8_t *cmdbuff;
+
+  /* Abort send apicmd for Release waiting sync API responce. */
+
+  apicmdgw_sendabort();
 
   /* Allocate API command buffer to send */
 
@@ -169,10 +147,6 @@ static void restart_callback(uint32_t state)
       lte_set_report_reason(LTE_RESTART_MODEM_INITIATED);
     }
 
-  /* Abort send apicmd for Release waiting sync API responce. */
-
-  apicmdgw_sendabort();
-
   /* Call the API callback function in the context of worker thread */
 
   ret = altcom_runjob(WRKRID_RESTART_CALLBACK_THREAD,
@@ -207,10 +181,6 @@ static void poweron_job(FAR void *arg)
    * Therefore, the receive buffer needs to be released here. */
 
   altcom_free_cmd((FAR uint8_t *)arg);
-
-  /* Unregistration status change callback. */
-
-  altcomstatus_unreg_statchgcb(poweron_status_chg_cb);
 }
 
 /****************************************************************************
@@ -233,6 +203,33 @@ static void poweron_job(FAR void *arg)
  ****************************************************************************/
 
 int32_t lte_power_on(void)
+{
+  int32_t ret;
+
+  ret = altcom_power_on();
+  if (ret < 0 && ret != -EALREADY)
+    {
+      DBGIF_LOG1_ERROR("lte_power_on() error. %d\n", ret);
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcom_power_on
+ *
+ * Description:
+ *   Power on modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_power_on(void)
 {
   int32_t ret;
   int32_t state = altcom_get_status();
@@ -290,6 +287,34 @@ int32_t lte_power_on(void)
  ****************************************************************************/
 
 int32_t lte_power_off(void)
+{
+  int32_t ret;
+
+  ret = altcom_power_off();
+  if (ret < 0 && ret != -EALREADY)
+    {
+      DBGIF_LOG1_ERROR("lte_power_off() error. %d\n", ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcom_power_off
+ *
+ * Description:
+ *   Power off modem.
+ *
+ * Input Parameters:
+ *   viod
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_power_off(void)
 {
   int32_t ret;
   int32_t state = altcom_get_status();

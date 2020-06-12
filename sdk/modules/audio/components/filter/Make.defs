@@ -35,7 +35,7 @@
 
 ifeq ($(CONFIG_AUDIOUTILS_FILTER),y)
 
-CXXSRCS += filter_api.cpp mfe_filter_component.cpp
+CXXSRCS += mfe_filter_component.cpp
 CXXSRCS += mpp_filter_component.cpp src_filter_component.cpp
 CXXSRCS += packing_component.cpp
 VPATH   += components/filter

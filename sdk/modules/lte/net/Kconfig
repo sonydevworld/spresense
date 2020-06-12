@@ -9,6 +9,27 @@ menuconfig LTE_NET
 		Enable or disable network features.
 
 if LTE_NET
-source "modules/lte/net/inet/Kconfig"
-source "modules/lte/net/netdb/Kconfig"
+
+config LTE_DAEMON_TASK_PRIORITY
+	int "LTE deamon task priority"
+	default 110
+	range 1 255
+
+config LTE_DAEMON_SYNC_TIME
+	bool "Enable synchronization with network time"
+	default y
+	---help---
+	Automatically synchronizes with the network time when network attached.
+
+config LTE_DAEMON_DEBUG_ERR
+	bool "Enable LTE daemon Error Output"
+	default n
+
+config LTE_DAEMON_DEBUG_MSG
+	bool "Enable LTE daemon Debug Output"
+	default n
+	depends on LTE_DAEMON_DEBUG_ERR
+
+source "$APPSDIR/../modules/lte/net/inet/Kconfig"
+source "$APPSDIR/../modules/lte/net/netdb/Kconfig"
 endif

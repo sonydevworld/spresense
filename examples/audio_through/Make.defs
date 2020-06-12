@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_THROUGH),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_THROUGH),)
 CONFIGURED_APPS += audio_through
 endif

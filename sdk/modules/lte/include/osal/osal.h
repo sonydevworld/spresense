@@ -581,7 +581,7 @@ int32_t sys_clear_evflag(FAR sys_evflag_t *flag, sys_evflag_ptn_t clrptn);
  ****************************************************************************/
 
 int32_t sys_start_timer(FAR sys_timer_t *timer,
-                        int32_t period_ms, bool autoreload,
+                        uint32_t period_ms, bool autoreload,
                         CODE sys_timer_cb_t callback);
 
 /****************************************************************************

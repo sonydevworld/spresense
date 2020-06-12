@@ -33,19 +33,15 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-include $(APPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # Sensing application info
 
-CONFIG_EXAMPLES_STEP_COUNTER_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_STEP_COUNTER_STACKSIZE ?= 2048
-
-APPNAME   = step_counter
+PROGNAME  = $(CONFIG_EXAMPLES_STEP_COUNTER_PROGNAME)
 PRIORITY  = $(CONFIG_EXAMPLES_STEP_COUNTER_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_STEP_COUNTER_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_STEP_COUNTER)
 
 # Sensor Example
 
@@ -58,17 +54,10 @@ SENSINGDIR = $(SDKDIR)$(DELIM)modules$(DELIM)sensing
 
 # Sensing Example flags
 
-ifeq ($(WINTOOL),y)
-CXXFLAGS += -I "${shell cygpath -w $(SENSINGDIR)}"
-else
-CXXFLAGS += -I $(SENSINGDIR)
-endif
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SENSINGDIR)"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)modules$(DELIM)include"}
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
-
-
-CONFIG_EXAMPLES_STEP_COUNTER_PROGNAME ?= step_counter$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_STEP_COUNTER_PROGNAME)
 
 include $(APPDIR)/Application.mk

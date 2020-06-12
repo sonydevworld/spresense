@@ -97,7 +97,7 @@ static void mptask_clock_disable(mptask_t *task)
 {
   int cpu;
 
-  for (cpu = 1; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {
@@ -112,7 +112,7 @@ static void mptask_unmap_unified(mptask_t *task)
   int cpu;
   int i;
 
-  for (cpu = 1, i = 0; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU, i = 0; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {
@@ -126,7 +126,7 @@ static void mptask_unmap_all(mptask_t *task)
 {
   int cpu;
 
-  for (cpu = 1; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {

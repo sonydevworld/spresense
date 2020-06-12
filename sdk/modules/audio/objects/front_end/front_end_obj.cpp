@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <nuttx/arch.h>
 #include <stdlib.h>
-#include <arch/chip/cxd56_audio.h>
 #include "front_end_obj.h"
 #include "debug/dbg_log.h"
 
@@ -214,8 +213,35 @@ MicFrontEndObject::MsgProc
     &MicFrontEndObject::stopOnWait       /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
+  /* Align for MSG_OBJ_SUBTYPE_EXEC */
 
+  {                             
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::illegal,         /*   Ready.         */
+    &MicFrontEndObject::illegal,         /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
+  },
+  /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_SETPREPROC */
+  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
+
+  {                                   /* MicFrontend status: */
+    &MicFrontEndObject::illegal,         /*   Inactive.      */
+    &MicFrontEndObject::set,             /*   Ready.         */
+    &MicFrontEndObject::set,             /*   Active.        */
+    &MicFrontEndObject::illegal,         /*   Stopping.      */
+    &MicFrontEndObject::illegal,         /*   ErrorStopping. */
+    &MicFrontEndObject::illegal          /*   WaitStop.      */
+  },
+};
+
+/*--------------------------------------------------------------------------*/
+MicFrontEndObject::MsgProc
+  MicFrontEndObject::MsgParamTbl[AUD_MFE_PRM_NUM][MicFrontendStateNum] =
+{
+  /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
   {                                   /* MicFrontend status: */
     &MicFrontEndObject::illegal,         /*   Inactive.      */
     &MicFrontEndObject::initPreproc,     /*   Ready.         */
@@ -236,7 +262,7 @@ MicFrontEndObject::MsgProc
     &MicFrontEndObject::illegal          /*   WaitStop.      */
   },
 
-  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
+  /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN */
 
   {                                   /* MicFrontend status: */
     &MicFrontEndObject::illegal,         /*   Inactive.      */
@@ -305,6 +331,16 @@ void MicFrontEndObject::parse(MsgPacket *msg)
 
       (this->*MsgProcTbl[event][m_state.get()])(msg);
     }
+}
+
+/*--------------------------------------------------------------------------*/
+void MicFrontEndObject::set(MsgPacket *msg)
+{
+  uint32_t event;
+  event = MSG_GET_PARAM(msg->getType());
+  F_ASSERT((event < AUD_MFE_PRM_NUM));
+
+  (this->*MsgParamTbl[event][m_state.get()])(msg);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1785,6 +1821,8 @@ static bool CreateFrontend(AsMicFrontendMsgQueId_t msgq_id, AsMicFrontendPoolId_
       MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
+
+  pthread_setname_np(s_mfe_pid, "front_end");
 
   return true;
 }

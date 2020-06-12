@@ -15,8 +15,6 @@ examples/lte_mqtt
 
   Build kernel and SDK:
 
-  $ make buildkernel KERNCONF=release
-
   This application can be used by lte_mqtt default config.
 
   $ ./tools/config.py examples/lte_mqtt

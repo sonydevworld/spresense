@@ -76,6 +76,10 @@
 #define DSP_MEASURE_VERSION   0x010202    /* 01.02.02 */
 #define DSP_VADWUW_VERSION    0x010203    /* 01.02.03 */
 
+/* Oscillator Version. */
+
+#define DSP_OSC_VERSION       0x000001    /* 00.00.01 */
+
 /* Version and cpu-id Mask. */
 
 #define DSP_VERSION_MASK      0x00FFFFFF  /* 24bits [23-0]  */

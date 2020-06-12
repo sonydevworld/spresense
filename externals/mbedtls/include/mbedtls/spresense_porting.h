@@ -45,7 +45,7 @@
    * HV lock before handshake and switch to high clock mode (HV mode).
    */
 
-#define PM_CPU_FREQLOCK_INSTANCE() struct pm_cpu_freqlock_s hv_lock;
+#define PM_CPU_FREQLOCK_INSTANCE() static struct pm_cpu_freqlock_s hv_lock;
 
 #define PM_CPU_FREQLOCK_ACQUIRE(mode) \
   do \

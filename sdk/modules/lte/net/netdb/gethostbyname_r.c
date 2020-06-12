@@ -58,12 +58,45 @@
 #include "altcom_socket.h"
 #include "altcom_netdb.h"
 #include "altcom_errno.h"
-#include "stubsock.h"
 #include "dbg_if.h"
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: convherrno_local()
+ ****************************************************************************/
+
+static int convherrno_local(int herr)
+{
+  int ret;
+
+  switch(herr)
+    {
+      case ALTCOM_HOST_NOT_FOUND:
+        ret = HOST_NOT_FOUND;
+        break;
+
+      case ALTCOM_NO_DATA:
+        ret = NO_DATA;
+        break;
+
+      case ALTCOM_NO_RECOVERY:
+        ret = NO_RECOVERY;
+        break;
+
+      case ALTCOM_TRY_AGAIN:
+        ret = TRY_AGAIN;
+        break;
+
+      default:
+        ret = herr;
+        break;
+    }
+
+  return ret;
+}
 
 /****************************************************************************
  * Name: gethostbyname_r
@@ -81,7 +114,7 @@ int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
     {
       if (h_errnop)
         {
-          *h_errnop = stubsock_convherrno_local(*h_errnop);
+          *h_errnop = convherrno_local(*h_errnop);
         }
     }
 

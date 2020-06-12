@@ -45,13 +45,9 @@ context:
 
 depend:
 
-clean:
-	$(call DELFILE, .built)
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
+clean distclean:
+	$(Q) $(MAKE) -C dsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" $@
+	$(Q) $(MAKE) -C nn TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" $@
 
 preconfig:
 

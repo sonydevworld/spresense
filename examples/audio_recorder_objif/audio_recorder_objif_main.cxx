@@ -37,14 +37,12 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <dirent.h>
 #include <strings.h>
 #include <asmp/mpshm.h>
 #include <sys/stat.h>
-#include <arch/chip/cxd56_audio.h>
-
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/message/Message.h"
@@ -353,7 +351,7 @@ static void app_write_output_file(uint32_t size)
     }
 
   ret = fwrite(s_recorder_info.fifo.write_buf, 1, size, s_recorder_info.file.fd);
-  if (ret < 0) {
+  if (ret <= 0) {
     printf("ERROR: Cannot write recorded data to output file.\n");
     app_close_output_file();
     return;
@@ -523,20 +521,30 @@ static bool app_set_ready(void)
   return true;
 }
 
-static bool app_init_mic_gain(void)
+static bool app_init_mic_gain(int16_t gain)
 {
-  cxd56_audio_mic_gain_t  mic_gain;
+  AsMicFrontendMicGainParam micgain_param;
 
-  mic_gain.gain[0] = 0;
-  mic_gain.gain[1] = 0;
-  mic_gain.gain[2] = 0;
-  mic_gain.gain[3] = 0;
-  mic_gain.gain[4] = 0;
-  mic_gain.gain[5] = 0;
-  mic_gain.gain[6] = 0;
-  mic_gain.gain[7] = 0;
+  for (int i = 0; i < AS_MIC_CHANNEL_MAX; i++)
+    {
+      micgain_param.mic_gain[i] = gain;
+    }
 
-  return (cxd56_audio_set_micgain(&mic_gain) == CXD56_AUDIO_ECODE_OK);
+  bool result = AS_SetMicGainMicFrontend(&micgain_param);
+
+  if (!result)
+    {
+      printf("Error: AS_SetMicGainMediaRecorder() failure!\n");
+      return false;
+    }
+
+  if (!app_receive_object_reply(MSG_AUD_MFE_CMD_SETMICGAIN))
+    {
+      printf("Error Result: AS_SetMicGainMediaRecorder()\n");
+      return false;
+    }
+
+  return true;
 }
 
 static bool app_set_recorder(void)
@@ -573,6 +581,7 @@ static bool app_set_recorder(void)
     act_param.param.input_device_handler  = 0x00;
     act_param.param.output_device         = AS_SETRECDR_STS_OUTPUTDEVICE_RAM;
     act_param.param.output_device_handler = &s_recorder_info.fifo.output_device;
+    act_param.cb                          = NULL;
 
     AS_ActivateMediaRecorder(&act_param);
 
@@ -1088,11 +1097,7 @@ static void app_disp_codec_params(void)
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_recorder_objif_main(int argc, char *argv[])
-#endif
 {
   /* Command line argument analysis */
 
@@ -1151,14 +1156,6 @@ extern "C" int audio_recorder_objif_main(int argc, char *argv[])
       goto errout_init_simple_fifo;
     }
 
-  /* Set the initial gain of the microphone to be used. */
-
-  if (!app_init_mic_gain())
-    {
-      printf("Error: app_init_mic_gain() failure.\n");
-      goto errout_init_simple_fifo;
-    }
-
   /* Set audio clock mode. */
 
   if (!app_set_clkmode())
@@ -1181,6 +1178,14 @@ extern "C" int audio_recorder_objif_main(int argc, char *argv[])
     {
       printf("Error: app_init_recorder() failure.\n");
       goto errout_init_recorder;
+    }
+
+ /* Set the initial gain of the microphone to be used. */
+
+  if (!app_init_mic_gain(180)) /* set +18db @all mic */
+    {
+      printf("Error: app_init_mic_gain() failure.\n");
+      goto errout_init_simple_fifo;
     }
 
 #ifdef CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF_USEPREPROC

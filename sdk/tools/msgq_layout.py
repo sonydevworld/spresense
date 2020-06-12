@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 ############################################################################
-# modules/memutils/message/tool/msgq_layout.py
+# tools/msgq_layout.py
 #
 #   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
@@ -37,6 +38,7 @@ import sys
 import os
 import re
 import traceback
+import datetime
 
 # constants
 
@@ -102,7 +104,7 @@ template = "\
 /****************************************************************************\n\
  * {0}\n\
  *\n\
- *   Copyright 2019 Sony Semiconductor Solutions Corporation\n\
+ *   Copyright {1} Sony Semiconductor Solutions Corporation\n\
  *\n\
  * Redistribution and use in source and binary forms, with or without\n\
  * modification, are permitted provided that the following conditions\n\
@@ -140,7 +142,7 @@ template = "\
 
 def output_header_comment(out, title):
     out.write("/* This file is generated automatically. */\n")
-    out.write(template.format(os.path.basename(title)))
+    out.write(template.format(os.path.basename(title), datetime.date.today().year))
 
 #
 # Include guard prevention macro creation

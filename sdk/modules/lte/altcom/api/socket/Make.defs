@@ -66,7 +66,6 @@ CSRCS += altcom_gethostbyname_r.c
 # select feature
 
 CSRCS += altcom_select.c
-CSRCS += altcom_select_async.c
 
 # inet feature
 

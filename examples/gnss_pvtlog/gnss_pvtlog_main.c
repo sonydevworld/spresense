@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -342,7 +342,7 @@ static int writefile(uint32_t file_count)
   /* Make file name */
 
   snprintf(filename, FILE_NAME_LEN, "%s%d.dat", 
-           CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+           CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
   /* Open file */
 
@@ -590,7 +590,7 @@ int gnss_pvtlog_read(int argc, char *argv[])
       /* Make file name */
 
       snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
-               CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+               CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Open file */
 
@@ -689,7 +689,7 @@ int gnss_pvtlog_delete(int argc, char *argv[])
       /* Make file name */
 
       snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
-               CONFIG_EXAMPLES_PVTLOG_FILEPATH, file_count);
+               CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Delete file */
 
@@ -727,11 +727,7 @@ int gnss_pvtlog_delete(int argc, char *argv[])
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_pvtlog_main(int argc, char *argv[])
-#endif
 {
   int ret = OK;
   char *argmode = "w";  /* Default:write */

@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_FWUPDATE),y)
+ifneq ($(CONFIG_EXAMPLES_FWUPDATE),)
 CONFIGURED_APPS += fwupdate
 endif

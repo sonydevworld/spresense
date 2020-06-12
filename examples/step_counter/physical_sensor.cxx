@@ -37,13 +37,13 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 
 #include "physical_sensor.h"
 

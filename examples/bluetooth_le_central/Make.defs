@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_BLUETOOTH_LE_CENTRAL),y)
+ifneq ($(CONFIG_EXAMPLES_BLUETOOTH_LE_CENTRAL),)
 CONFIGURED_APPS += bluetooth_le_central
 endif

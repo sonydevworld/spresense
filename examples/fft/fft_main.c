@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -318,11 +318,7 @@ static int fft_stream_test(void)
  * Name: fft_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int fft_main(int argc, char *argv[])
-#endif
 {
   int ret;
 

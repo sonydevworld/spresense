@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_PCM_CAPTURE
-	bool "Audio pcm_capture example"
+	tristate "Audio pcm_capture example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

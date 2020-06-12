@@ -33,9 +33,9 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
+-include $(SDKDIR)/modules/Make.defs
+
+MODNAME = asmp
 
 VPATH   = supervisor
 SUBDIRS =
@@ -54,57 +54,15 @@ include rawelf/Make.defs
 include mm_tile/Make.defs
 endif
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-LIB_OBJS = $(AOBJS) $(COBJS)
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libasmp$(LIBEXT)
-
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
-BSPSRCDIR = $(SDKDIR)$(DELIM)bsp$(DELIM)src
 
-ifeq ($(WINTOOL),y)
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)chip}"
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)common}"
-  CFLAGS += -I "${shell cygpath -w $(BSPSRCDIR)}"
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
 ifneq ($(CONFIG_ARCH_FAMILY),)
-  CFLAGS += -I "${shell cygpath -w $(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)}"
-endif
-else
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)chip
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)common
-  CFLAGS += -I$(BSPSRCDIR)
-ifneq ($(CONFIG_ARCH_FAMILY),)
-  CFLAGS += -I$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
-endif
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
 endif
 
-all: $(BIN)
-.PHONY: context depend clean distclean clean_worker
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context: .context
+include $(SDKDIR)/modules/Module.mk
 
 clean_worker:
 	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" clean
@@ -112,14 +70,6 @@ clean_worker:
 distclean_worker:
 	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" distclean
 
-clean: clean_worker
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
+clean:: clean_worker
 
-distclean: clean distclean_worker
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-
+distclean:: clean distclean_worker

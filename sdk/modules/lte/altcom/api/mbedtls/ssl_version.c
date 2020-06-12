@@ -87,8 +87,7 @@ static const char* ssl_tls_ver_tbl[]
   DTLS_V_1_0,
   DTLS_V_1_2,
   TLS_UNKNOWN,
-  DTLS_UNKNOWN,
-  NULL
+  DTLS_UNKNOWN
 };
 
 /****************************************************************************
@@ -98,8 +97,9 @@ static const char* ssl_tls_ver_tbl[]
 static const char *get_ssl_tls_version(const int8_t *ver_name)
 {
   int i = 0;
+  int size = sizeof(ssl_tls_ver_tbl) / sizeof(ssl_tls_ver_tbl[0]);
 
-  for (i = 0; ssl_tls_ver_tbl[i] != NULL; i++)
+  for (i = 0; i < size; i++)
     {
       if (strcmp((const char*) ver_name, ssl_tls_ver_tbl[i]) == 0)
         {

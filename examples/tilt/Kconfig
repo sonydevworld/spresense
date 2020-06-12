@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_TILT
-	bool "Tilt detection example"
+	tristate "Tilt detection example"
 	default n
 	---help---
 		Enable the sensor via SCU Mathfunc example
@@ -14,7 +14,6 @@ if EXAMPLES_TILT
 config EXAMPLES_TILT_PROGNAME
 	string "Program name"
 	default "tilt"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

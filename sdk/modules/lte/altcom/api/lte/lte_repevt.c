@@ -472,7 +472,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
 }
 
 /****************************************************************************
- * Name: lte_set_report_localtime
+ * Name: altcom_set_report_localtime
  *
  * Description:
  *   Change the report setting of the local time.
@@ -488,7 +488,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
  *
  ****************************************************************************/
 
-int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
+int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
 {
   int32_t                                 ret        = 0;
   FAR struct apicmd_cmddat_setrepevt_s    *cmdbuff   = NULL;
@@ -613,6 +613,28 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
   g_lte_setrepltime_isproc = false;
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: lte_set_report_localtime
+ *
+ * Description:
+ *   Change the report setting of the local time.
+ *   The default report setting is disable.
+ *
+ * Input Parameters:
+ *   localtime_callback Callback function to notify that local time.
+ *                      If NULL is set, the report setting is disabled.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
+{
+  return altcom_set_report_localtime(localtime_callback);
 }
 
 /****************************************************************************

@@ -270,7 +270,7 @@ uint32_t SRCComponent::init(const InitComponentParam& param)
   /* Wait init completion and receive reply information */
 
   Apu::InternalResult internal_result;
-  uint32_t rst = dsp_init_check(m_apu_dtq, &internal_result);
+  uint32_t rst = dsp_init_check<Apu::InternalResult>(m_apu_dtq, &internal_result);
 
   return rst;
 }
@@ -438,7 +438,7 @@ bool SRCComponent::recv_apu(DspDrvComPrm_t *p_param)
       /* Notify init completion to myself */
 
       Apu::InternalResult internal_result = packet->result.internal_result[0];
-      dsp_init_complete(m_apu_dtq, packet->result.exec_result, &internal_result);
+      dsp_init_complete<Apu::InternalResult>(m_apu_dtq, packet->result.exec_result, &internal_result);
       return true;
     }
 
@@ -535,6 +535,7 @@ void SRCComponent::send_apu(Apu::Wien2ApuCmd *p_cmd)
       return;
     }
 }
+
 
 __WIEN2_END_NAMESPACE
 

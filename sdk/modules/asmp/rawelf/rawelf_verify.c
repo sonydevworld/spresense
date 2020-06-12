@@ -39,7 +39,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <string.h>
 #include <debug.h>
@@ -63,6 +63,59 @@ static const char g_rawelfmagic[EI_MAGIC_SIZE] =
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: checkarch (originally: up_checkarch)
+ *
+ * Description:
+ *   Given the ELF header in 'hdr', verify that the ELF file is appropriate
+ *   for the current, configured architecture.  Every architecture that uses
+ *   the ELF loader must provide this function.
+ *
+ *   This function is hard copy from libs/libc/machine/arm/armv7-m/arch_elf.c.
+ *   We can't enable ELF option, it makes examples to be loadable.
+ *
+ * Input Parameters:
+ *   hdr - The ELF header read from the ELF file.
+ *
+ * Returned Value:
+ *   True if the architecture supports this ELF file.
+ *
+ ****************************************************************************/
+
+static bool checkarch(FAR const Elf32_Ehdr *ehdr)
+{
+  /* Make sure it's an ARM executable */
+
+  if (ehdr->e_machine != EM_ARM)
+    {
+      berr("ERROR: Not for ARM: e_machine=%04x\n", ehdr->e_machine);
+      return false;
+    }
+
+  /* Make sure that 32-bit objects are supported */
+
+  if (ehdr->e_ident[EI_CLASS] != ELFCLASS32)
+    {
+      berr("ERROR: Need 32-bit objects: e_ident[EI_CLASS]=%02x\n", ehdr->e_ident[EI_CLASS]);
+      return false;
+    }
+
+  /* Verify endian-ness */
+
+#ifdef CONFIG_ENDIAN_BIG
+  if (ehdr->e_ident[EI_DATA] != ELFDATA2MSB)
+#else
+  if (ehdr->e_ident[EI_DATA] != ELFDATA2LSB)
+#endif
+    {
+      berr("ERROR: Wrong endian-ness: e_ident[EI_DATA]=%02x\n", ehdr->e_ident[EI_DATA]);
+      return false;
+    }
+
+  /* TODO:  Check ABI here. */
+  return true;
+}
 
 /****************************************************************************
  * Public Functions
@@ -112,7 +165,7 @@ int rawelf_verifyheader(FAR const Elf32_Ehdr *ehdr)
 
   /* Verify that this file works with the currently configured architecture */
 
-  if (!up_checkarch(ehdr))
+  if (!checkarch(ehdr))
     {
       berr("Not a supported architecture\n");
       return -ENOEXEC;

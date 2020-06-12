@@ -36,9 +36,12 @@
 #ifndef _THRUPROC_COMPONENT_H_
 #define _THRUPROC_COMPONENT_H_
 
+#include "audio/dsp_framework/customproc_command_base.h"
 #include "audio/audio_high_level_api.h"
 #include "memutils/s_stl/queue.h"
-#include "components/common/component_base.h"
+#include "components/component_base.h"
+
+__USING_WIEN2
 
 class ThruProcComponent : public ComponentBase
 {

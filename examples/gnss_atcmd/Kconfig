@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_GNSS_ATCMD
-	bool "GNSS CXD5603 @command emulator example"
+	tristate "GNSS CXD5603 @command emulator example"
 	default n
 	select LIBC_FLOATINGPOINT
 	depends on CXD56_GNSS
@@ -16,7 +16,6 @@ if EXAMPLES_GNSS_ATCMD
 config EXAMPLES_GNSS_ATCMD_PROGNAME
 	string "Program name"
 	default "gnss_atcmd"
-	#depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
@@ -44,6 +43,10 @@ endchoice
 
 config EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
 	bool "Example supports QZ DC report output"
+	default y
+
+config EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+	bool "Example supports GAL SAR/RLM output"
 	default y
 
 config EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM

@@ -1,0 +1,69 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_MULTIWEBCAM
+	tristate "Multi Web Camera"
+	default n
+	---help---
+		Enable the Multi Web Camera Example
+
+if EXAMPLES_MULTIWEBCAM
+
+config EXAMPLES_MULTIWEBCAM_USE_HTTPMJPEG
+	bool "Http MJPEG is used"
+	default n
+	---help---
+		Select the protocol of sending camera images.
+		If this is set y, the protocol is Motion Jpeg over HTTP.
+		If not, the protocol is a simple original protocol.
+
+choice
+	prompt "Multi Web Camera Image size"
+	default EXAMPLES_MULTIWEBCAM_IMAGESIZE_VGA
+
+config EXAMPLES_MULTIWEBCAM_IMAGESIZE_QQVGA
+	bool "Quarter Quarter VGA (160 x 120)"
+	---help---
+		Use Quarter Quarter VGA (160 x 120)
+
+config EXAMPLES_MULTIWEBCAM_IMAGESIZE_QVGA
+	bool "Quarter VGA (320 x 240)"
+	---help---
+		Use Quarter VGA (320 x 240)
+
+config EXAMPLES_MULTIWEBCAM_IMAGESIZE_VGA
+	bool "VGA (640 x 480)"
+	---help---
+		Use VGA (640 x 480)
+
+config EXAMPLES_MULTIWEBCAM_IMAGESIZE_HD
+	bool "HD (1280 x 720)"
+	---help---
+		Use HD Image (1280 x 720)
+
+endchoice
+
+config EXAMPLES_MULTIWEBCAM_PROGNAME
+	string "Program name"
+	default "multiwebcam"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config EXAMPLES_MULTIWEBCAM_PRIORITY
+	int "multiwebcam task priority"
+	default 100
+
+config EXAMPLES_MULTIWEBCAM_STACKSIZE
+	int "multiwebcam stack size"
+	default 2048
+
+config EXAMPLES_MULTIWEBCAM_PERF
+	bool "Enable printing performance"
+	default n
+	---help---
+		Enable displaying performance information of multiwebcam.
+
+endif

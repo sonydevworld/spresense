@@ -36,7 +36,6 @@
 #include "memutils/common_utils/common_types.h"
 #include "audio_manager.h"
 #include "memutils/os_utils/chateau_osal.h"
-#include <arch/chip/cxd56_audio.h>
 #include "debug/dbg_log.h"
 
 #define DBG_MODULE DBG_MODULE_AS
@@ -80,6 +79,7 @@ static void proc_outputmixer_reply(AsOutputMixerHandle handle,
   uint8_t cmd_code[] =
   {
     AUDCMD_SETPLAYERSTATUS,
+    AUDCMD_INIT_OUTPUTMIXER,
     AUDCMD_SETREADYSTATUS,
     AUDCMD_CLKRECOVERY,
     AUDCMD_INITMPP,
@@ -88,7 +88,7 @@ static void proc_outputmixer_reply(AsOutputMixerHandle handle,
 
   AudioMngCmdCmpltResult cmplt(0,
                                0,
-                               AS_ECODE_OK,
+                               done_param->ecode,
                                AS_MODULE_ID_OUTPUT_MIX_OBJ,
                                0,
                                handle);
@@ -454,6 +454,7 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         msg_type = MSG_AUD_MGR_CMD_PLAYER;
         break;
 
+      case AUDCMD_INIT_OUTPUTMIXER:
       case AUDCMD_CLKRECOVERY:
       case AUDCMD_INITMPP:
       case AUDCMD_SETMPPPARAM:
@@ -595,6 +596,8 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, AudioAttentionCb att_cb)
       return AS_ERR_CODE_TASK_CREATE;
     }
 
+  pthread_setname_np(s_amng_pid, "audio_manager");
+
   return AS_ERR_CODE_OK;
 }
 
@@ -652,6 +655,8 @@ int AS_CreateAudioManager(AudioSubSystemIDs ids, obs_AudioAttentionCb obs_att_cb
       _err("ERROR AS_CreateAudioManager failed\n");
       return AS_ERR_CODE_TASK_CREATE;
     }
+
+  pthread_setname_np(s_amng_pid, "audio_manager");
 
   return AS_ERR_CODE_OK;
 }
@@ -1695,6 +1700,23 @@ void AudioManager::outputmixer(AudioCommand &cmd)
 
   switch (cmd.header.command_code)
     {
+      case AUDCMD_INIT_OUTPUTMIXER:
+        check = packetCheck(LENGTH_INIT_OUTPUTMIXER, AUDCMD_INIT_OUTPUTMIXER, cmd);
+        if (!check)
+          {
+            return;
+          }
+
+        omix_cmd.handle =
+          (cmd.init_mixer_param.player_id == AS_PLAYER_ID_0) ?
+            OutputMixer0 : OutputMixer1;
+        omix_cmd.init_param.postproc_type = cmd.init_mixer_param.postproc_type;
+        memcpy(omix_cmd.init_param.dsp_path,
+               cmd.init_mixer_param.dsp_path,
+               sizeof(omix_cmd.init_param.dsp_path));
+        msg_type = MSG_AUD_MIX_CMD_INIT;
+        break;
+
       case AUDCMD_CLKRECOVERY:
         check = packetCheck(LENGTH_CLK_RECOVERY, AUDCMD_CLKRECOVERY, cmd);
         if (!check)
@@ -3055,6 +3077,10 @@ void AudioManager::cmpltOnPlayer(const AudioMngCmdCmpltResult &cmd)
       case AUDCMD_STOPPLAYER:
         result_code = AUDRLT_STOPCMPLT;
         m_SubState = AS_MNG_SUB_STATUS_PLAYREADY;
+        break;
+
+      case AUDCMD_INIT_OUTPUTMIXER:
+        result_code = AUDRLT_INIT_OUTPUTMIXER_CMPLT;
         break;
 
       case AUDCMD_CLKRECOVERY:

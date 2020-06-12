@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_finalize.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,6 +47,11 @@
 #include "dbg_if.h"
 #include "altcom_status.h"
 
+#include "lte/altcom/altcom_api.h"
+
+
+#include "lte/lte_daemon.h"
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -69,6 +74,30 @@
 int32_t lte_finalize(void)
 {
   int32_t ret;
+
+  ret = lte_daemon_fin();
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcom_finalize
+ *
+ * Description:
+ *   Finalize the LTE library resouces.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcom_finalize(void)
+{
+  int32_t ret;
   int32_t status;
 
   status = altcom_get_status();
@@ -76,6 +105,7 @@ int32_t lte_finalize(void)
     {
       return -EALREADY;
     }
+
   /* Power off the modem if need */
 
   lte_power_off();
@@ -83,7 +113,7 @@ int32_t lte_finalize(void)
   ret = director_destruct(&g_ltebuilder);
   if (ret < 0)
     {
-      DBGIF_LOG1_ERROR("director_destruct() error. %d \n", ret);
+      DBGIF_LOG1_ERROR("director_destruct() error. %d\n", ret);
     }
   else
     {

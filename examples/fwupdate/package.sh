@@ -6,12 +6,12 @@ usage () {
   echo "Usage:"
   echo "  ${0} [FILE]..."
   echo "Options:"
-  echo "    [FILE] : /path/to/spk or sbl file"
+  echo "    [FILE] : /path/to/spk file"
   echo "Description:"
   echo "  Output a package file named as \"$OUTPUT\""
   echo "Examples:"
-  echo "  ../sony_apps/examples/fwupdate/package.sh nuttx.spk"
-  echo "  ../sony_apps/examples/fwupdate/package.sh nuttx.spk ../proprietary/corvo/bin/loader.spk"
+  echo "  ../examples/fwupdate/package.sh nuttx.spk"
+  echo "  ../examples/fwupdate/package.sh nuttx.spk ../firmware/spresense/bin/{loader,gnssfw}.espk"
   exit 1
 }
 

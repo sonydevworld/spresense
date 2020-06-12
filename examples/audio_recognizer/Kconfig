@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_RECOGNIZER
-	bool "Audio recognizer example"
+	tristate "Audio recognizer example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

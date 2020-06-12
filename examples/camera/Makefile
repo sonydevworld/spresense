@@ -1,7 +1,7 @@
 ############################################################################
 # camera/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,28 +34,22 @@
 ############################################################################
 
 -include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 # camera built-in application info
 
-CONFIG_EXAMPLES_CAMERA_PRIORITY ?= SCHED_PRIORITY_DEFAULT
-CONFIG_EXAMPLES_CAMERA_STACKSIZE ?= 2048
-
-APPNAME = camera
-PRIORITY = $(CONFIG_EXAMPLES_CAMERA_PRIORITY)
+PROGNAME  = $(CONFIG_EXAMPLES_CAMERA_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_CAMERA_PRIORITY)
 STACKSIZE = $(CONFIG_EXAMPLES_CAMERA_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_CAMERA)
 
 # camera Example
 
-ASRCS =
-CSRCS =
+CSRCS += camera_fileutil.c
 MAINSRC = camera_main.c
 
 ifeq ($(CONFIG_EXAMPLES_CAMERA_OUTPUT_LCD),y)
 CSRCS += camera_bkgd.c
 endif
-
-CONFIG_EXAMPLES_CAMERA_PROGNAME ?= camera$(EXEEXT)
-PROGNAME = $(CONFIG_EXAMPLES_CAMERA_PROGNAME)
 
 include $(APPDIR)/Application.mk

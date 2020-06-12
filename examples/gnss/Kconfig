@@ -4,9 +4,9 @@
 #
 
 config EXAMPLES_GNSS
-	bool "GNSS positioning example"
+	tristate "GNSS positioning example"
 	default n
-  depends on CXD56_GNSS
+	depends on CXD56_GNSS
 	---help---
 		Enable the Simple GNSS positioning example
 
@@ -15,7 +15,6 @@ if EXAMPLES_GNSS
 config EXAMPLES_GNSS_PROGNAME
 	string "Program name"
 	default "gnss"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.

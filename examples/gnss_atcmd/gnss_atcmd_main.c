@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +68,7 @@
 #define GNSS_SIG_TERM             18
 #define GNSS_SIG_SPECTRUM         19
 #define GNSS_SIG_DCREPORT         20
+#define GNSS_SIG_SARRLM           21
 #define CMD_RBUF_SIZE             128
 #define READ_FD                   cmdfds[GNSS_ATCMD_READ_FD]
 #define WRITE_FD                  cmdfds[GNSS_ATCMD_WRITE_FD]
@@ -81,7 +82,8 @@
 #endif
 
 #if defined(CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM) || \
-    defined(CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT)
+    defined(CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT) || \
+    defined(CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM)
 #define USE_ATCMD_SUB_THREAD
 #endif
 
@@ -146,6 +148,9 @@ static NMEA_SPECTRUM_DATA     spectrumdat;
 #ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
 static struct cxd56_gnss_dcreport_data_s dcreport;
 #endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT */
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+static struct cxd56_gnss_gal_sarrlm_s sarrlm;
+#endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM */
 
 /****************************************************************************
  * Private Functions
@@ -244,6 +249,36 @@ _err1:
 
 #endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT */
 
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+
+static int print_sarrlm(int fd)
+{
+  int    ret;
+
+  ret = lseek(fd, CXD56_GNSS_READ_OFFSET_SARRLM, SEEK_SET);
+  if (ret < 0)
+    {
+      ret = errno;
+      printf("lseek error %d\n", ret);
+      goto _err1;
+    }
+
+  ret = read(fd, &sarrlm, sizeof(sarrlm));
+  if (ret < 0)
+    {
+      ret = errno;
+      printf("read error %d\n", ret);
+      goto _err1;
+    }
+
+  NMEA_GalSarRlm_Output(&sarrlm);
+
+_err1:
+  return ret;
+}
+
+#endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM */
+
 /* output NMEA */
 
 FAR static char *reqbuf(uint16_t size)
@@ -312,7 +347,7 @@ static int signal2own(int signo, void *data)
 
 static FAR void atcmd_emulator(FAR void *arg)
 {
-  int            fd;
+  int            fd = -1;
   int            ret;
   int            remain;
   struct pollfd  fds[GNSS_POLL_FD_NUM];
@@ -332,7 +367,7 @@ static FAR void atcmd_emulator(FAR void *arg)
     {
       printf("open error:%d,%d\n", fd, errno);
       ret = -ENODEV;
-      goto _err0;
+      goto _err;
     }
 
   /* Init NMEA library */
@@ -351,7 +386,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   if (ret < 0)
     {
       printf("usb open error. %d\n", ret);
-      goto _err1;
+      goto _err;
     }
 #else
 # if defined(CONFIG_EXAMPLES_GNSS_ATCMD_STDINOUT)
@@ -369,7 +404,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   if (cmdfds[GNSS_ATCMD_WRITE_FD] < 0 || cmdfds[GNSS_ATCMD_READ_FD] < 0)
     {
       printf("%s open error. %d\n", TTYS_NAME, ret);
-      goto _err1;
+      goto _err;
     }
 
   /* tty: setup parameters */
@@ -432,7 +467,7 @@ static FAR void atcmd_emulator(FAR void *arg)
       if (ret < 0)
         {
           printf("unexpected wait syncsem error%d\n", ret);
-          goto _err1;
+          goto _err;
         }
 #endif /* ifdef USE_ATCMD_SUB_THREAD */
 
@@ -493,17 +528,7 @@ static FAR void atcmd_emulator(FAR void *arg)
   close(cmdfds[GNSS_ATCMD_WRITE_FD]);
 #endif
 
-_err1:
-
-  /* close GPS device */
-
-  ret = close(fd);
-  if (ret < 0)
-    {
-      printf("device close error\n");
-    }
-
-_err0:
+_err:
 #ifdef USE_ATCMD_SUB_THREAD
 
   /* Send signal to sub pthread and force exit it */
@@ -512,6 +537,17 @@ _err0:
   pthread_join(atcmd_sub_tid, NULL);
   sem_destroy(&syncsem);
 #endif /* ifdef USE_ATCMD_SUB_THREAD */
+
+  /* close GPS device */
+
+  if (fd >= 0)
+    {
+      ret = close(fd);
+      if (ret < 0)
+        {
+          printf("device close error\n");
+        }
+    }
 
   printf("Stop GNSS_ATCMD!!\n");
 
@@ -571,6 +607,20 @@ static FAR void subthread_handler(FAR void *arg)
 
 #endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT */
 
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+
+  ret =
+    set_signal(atcmd_info.gnssfd, GNSS_SIG_SARRLM, CXD56_GNSS_SIG_SARRLM, 1);
+  if (ret < 0)
+    {
+      printf("GNSS SAR/RLM signal set error\n");
+      goto _err;
+    }
+
+  sigaddset(&mask, GNSS_SIG_SARRLM);
+
+#endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM */
+
   sem_post(&syncsem);
 
   do
@@ -606,13 +656,27 @@ static FAR void subthread_handler(FAR void *arg)
         }
 #endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT */
 
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+      if (signo == GNSS_SIG_SARRLM)
+        {
+          print_sarrlm(atcmd_info.gnssfd);
+        }
+#endif /* ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM */
+
       sem_post(&syncsem);
     }
   while (1);
 
 _exit:
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM
   set_signal(atcmd_info.gnssfd, GNSS_SIG_SPECTRUM, CXD56_GNSS_SIG_SPECTRUM, 0);
+#endif
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
   set_signal(atcmd_info.gnssfd, GNSS_SIG_DCREPORT, CXD56_GNSS_SIG_DCREPORT, 0);
+#endif
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
+  set_signal(atcmd_info.gnssfd, GNSS_SIG_SARRLM, CXD56_GNSS_SIG_SARRLM, 0);
+#endif
 _err:
   printf("GNSS exit subthread handler\n");
 }
@@ -623,11 +687,7 @@ _err:
  * gnss_atcmd_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int gnss_atcmd_main(int argc, char *argv[])
-#endif
 {
   pthread_attr_t           tattr;
   struct sched_param       param;

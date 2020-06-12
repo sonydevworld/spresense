@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_GNSS_PVTLOG),y)
+ifneq ($(CONFIG_EXAMPLES_GNSS_PVTLOG),)
 CONFIGURED_APPS += gnss_pvtlog
 endif

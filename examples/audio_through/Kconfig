@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_AUDIO_THROUGH
-	bool "Audio through example"
+	tristate "Audio through example"
 	default n
 	depends on CXD56_AUDIO
 	---help---

@@ -52,7 +52,7 @@ SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 FIRMWARE_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", "..", "firmware"))
 
 # SDK .config file path
-CONFIG_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", ".config"))
+CONFIG_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", "..", "nuttx", ".config"))
 
 # Json file name for describe required version
 VERSION_JSON = "version.json"
@@ -97,7 +97,7 @@ class EULAhander:
 	# Description: Get board name from SDK build configuration
 	# Return     : Board name
 	def getBoardName(self):
-		return self.loadConfiguration()["CONFIG_BOARD_NAME"]
+		return self.loadConfiguration()["CONFIG_ARCH_BOARD"]
 
 	# Name       : loadVersion
 	# Description: Load required version and download URL from version.json

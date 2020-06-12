@@ -961,11 +961,7 @@ static int player_thread(int argc, FAR char *argv[])
  * Public Functions
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 extern "C" int main(int argc, FAR char *argv[])
-#else
-extern "C" int audio_dual_players_main(int argc, char *argv[])
-#endif
 {
   int   clk_mode = -1;
   int   tsk0     = -1;

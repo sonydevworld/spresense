@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_CAMERA),y)
+ifneq ($(CONFIG_EXAMPLES_CAMERA),)
 CONFIGURED_APPS += camera
 endif

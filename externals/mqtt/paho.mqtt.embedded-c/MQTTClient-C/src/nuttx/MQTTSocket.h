@@ -93,10 +93,10 @@ int MutexUnlock(Mutex*);
 
 typedef struct Thread
 {
-	char         dummy;
+	pthread_t thid;
 } Thread;
 
-int ThreadStart(const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority);
+int ThreadStart(Thread* thread, void (*fn)(void*), void* arg);
 int MQTTSocket_read(MQTTSocket*, unsigned char*, int, int);
 int MQTTSocket_write(MQTTSocket*, unsigned char*, int, int);
 

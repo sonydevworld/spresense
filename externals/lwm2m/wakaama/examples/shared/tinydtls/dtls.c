@@ -27,6 +27,7 @@
 #include <assert.h>
 #endif
 #ifndef WITH_CONTIKI
+#include <nuttx/config.h>
 #include <stdlib.h>
 #include "global.h"
 #endif /* WITH_CONTIKI */
@@ -3911,8 +3912,10 @@ dtls_new_context(void *app_data) {
   dtls_context_t *c;
   dtls_tick_t now;
 #ifndef WITH_CONTIKI
+#ifdef CONFIG_DEV_URANDOM
   FILE *urandom = fopen("/dev/urandom", "r");
   unsigned char buf[sizeof(unsigned long)];
+#endif
 #endif /* WITH_CONTIKI */
 
   dtls_ticks(&now);
@@ -3920,6 +3923,7 @@ dtls_new_context(void *app_data) {
   /* FIXME: need something better to init PRNG here */
   dtls_prng_init(now);
 #else /* WITH_CONTIKI */
+#ifdef CONFIG_DEV_URANDOM
   if (!urandom) {
     dtls_emerg("cannot initialize PRNG\n");
     return NULL;
@@ -3932,6 +3936,9 @@ dtls_new_context(void *app_data) {
 
   fclose(urandom);
   dtls_prng_init((unsigned long)*buf);
+#else
+  dtls_prng_init((unsigned long)now);
+#endif
 #endif /* WITH_CONTIKI */
 
   c = malloc_context();

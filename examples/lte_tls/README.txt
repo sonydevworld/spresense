@@ -12,8 +12,6 @@ examples/lte_tls
 
   Build kernel and SDK:
 
-  $ make buildkernel KERNCONF=release
-
   This application can be used by lte_tls default config.
 
   $ ./tools/config.py examples/lte_tls

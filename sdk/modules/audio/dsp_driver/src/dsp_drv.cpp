@@ -131,6 +131,7 @@ int DspDrv::init(FAR const char  *pfilename,
 {
   int   ret;
   int   errout_ret;
+  char  *dsp;
   pthread_attr_t attr;
   struct sched_param sch_param;
 
@@ -211,6 +212,16 @@ int DspDrv::init(FAR const char  *pfilename,
       errout_ret = DSPDRV_INIT_PTHREAD_FAIL;
       (void)pthread_attr_destroy(&attr);
       goto dsp_drv_errout_with_mpmq_destory;
+    }
+
+  dsp = strrchr(pfilename, '/');
+  if (dsp)
+    {
+      pthread_setname_np(m_thread_id, dsp + 1);
+    }
+  else
+    {
+      pthread_setname_np(m_thread_id, pfilename);
     }
 
   (void)pthread_attr_destroy(&attr);

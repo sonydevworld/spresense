@@ -1,0 +1,25 @@
+
+config EXAMPLES_SETJMP
+	tristate "Example to use setjmp/longjmp"
+	default n
+	---help---
+		Enable the setjmp app
+
+if EXAMPLES_SETJMP
+
+config EXAMPLES_SETJMP_PROGNAME
+	string "Program name"
+	default "setjmp"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_SETJMP_PRIORITY
+	int "setjmp task priority"
+	default 100
+
+config EXAMPLES_SETJMP_STACKSIZE
+	int "setjmp stack size"
+	default 2048
+
+endif

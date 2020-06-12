@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
@@ -67,7 +67,10 @@
 #define APP_HTTP_STATUS_CODE_OFFSET 9
 #define APP_HTTP_STATUS_CODE_LEN    3
 
+#define APP_SCHEME                 "https"
+#define APP_SCHEME_LEN              6 /* length of "https" + \0 */
 #define APP_PORT_LEN                5 
+#define APP_HTTPS_WELLKNOWN_PORT    443
 #define APP_HOSTNAME_LEN            128
 #define APP_FILENAME_LEN            128
 #define APP_TLS_CERT_FILENAME_LEN   128
@@ -201,19 +204,15 @@ static void print_http_status_code(const unsigned char *buffer)
  * lte_tls_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int lte_tls_main(int argc, char *argv[])
-#endif
 {
   int ret;
-  bool https;
   FAR static const char *pers = "mbedtls";
   FAR DIR *dirp = NULL;  /* Directory for TLS certification files */
   FAR struct dirent *cert_info = NULL;
   char *url    = APP_POST_URL;
-  uint16_t  port_int;
+  struct url_s parsed_url;
+  char scheme[APP_SCHEME_LEN]  = {0};
   char port_char[APP_PORT_LEN] = {0};
   unsigned char *buf_ptr;
   size_t        request_len;
@@ -241,11 +240,19 @@ int lte_tls_main(int argc, char *argv[])
 
   /* 1. Parse input URL */
 
-  netlib_parsehttpsurl(&https, url,
-                       &port_int,
-                       g_hostname, APP_HOSTNAME_LEN,
-                       g_filename, APP_FILENAME_LEN);
-  if (!https)
+  memset(&parsed_url, 0, sizeof(parsed_url));
+  parsed_url.scheme    = scheme;
+  parsed_url.schemelen = APP_SCHEME_LEN;
+  parsed_url.host      = g_hostname;
+  parsed_url.hostlen   = APP_HOSTNAME_LEN;
+  parsed_url.path      = g_filename;
+  parsed_url.pathlen   = APP_FILENAME_LEN;
+
+  netlib_parseurl(url, &parsed_url);
+
+  /* Check if url start from "https://" */
+
+  if (strncmp(scheme, APP_SCHEME, APP_SCHEME_LEN) != 0)
     {
       /* Because this example want to use mbed TLS,
        * support only "https://" format URL.
@@ -255,11 +262,20 @@ int lte_tls_main(int argc, char *argv[])
       return ERROR;
     }
 
+  if (parsed_url.port == 0)
+    {
+      /* parsed_url.port = 0 means that port number is abbreviated.
+       * In such a case, use well-known port for HTTPS.
+       */
+
+      parsed_url.port = APP_HTTPS_WELLKNOWN_PORT;
+    }
+
   /* Because mbedTLS need the port number with character string format
    *  in mbedtls_net_connect() API, transform int -> char.
    */
  
-  snprintf(port_char, APP_PORT_LEN, "%d", port_int);
+  snprintf(port_char, APP_PORT_LEN, "%d", parsed_url.port);
 
   /* 2. Connect to LTE network.
    *    Please refer to lte_connection.c.
@@ -299,6 +315,8 @@ int lte_tls_main(int argc, char *argv[])
     {
       /* In no certification files case, get certification data from memory */
 
+      printf("No certificate files found. Use default certificate.\n");
+
       if (mbedtls_x509_crt_parse_der
             (&g_ca,
              GeoTrustGlobalCA_certificate,
@@ -316,12 +334,10 @@ int lte_tls_main(int argc, char *argv[])
                    "%s/%s",
                    CONFIG_EXAMPLES_LTE_TLS_CERTS_PATH,
                    cert_info->d_name);
-          if (mbedtls_x509_crt_parse_file(&g_ca, g_tls_cert_filename) != 0)
+          if (mbedtls_x509_crt_parse_file(&g_ca, g_tls_cert_filename) == 0)
             {
-              printf("mbedtls_x509_crt_parse_file() fail: %s\n",
+              printf("mbedtls_x509_crt_parse_file() succeed: %s\n",
                      g_tls_cert_filename);
-
-              /* Even if error case, not break. Read next file. */
             }
         }
       while ((cert_info = readdir(dirp)) != NULL);
@@ -337,33 +353,33 @@ int lte_tls_main(int argc, char *argv[])
 
   /* 5. Setup mbedTLS stuff */
 
-  if (mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
-                            (const unsigned char *) pers, strlen(pers)) != 0)
+  if ((ret = mbedtls_ctr_drbg_seed(&g_ctr_drbg, mbedtls_entropy_func, &g_entropy,
+                            (const unsigned char *) pers, strlen(pers))) != 0)
     {
-      printf("mbedtls_ctr_drbg_seed() fail\n");
+      printf("mbedtls_ctr_drbg_seed() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
-  if (mbedtls_ssl_config_defaults(&g_conf,
+  if ((ret = mbedtls_ssl_config_defaults(&g_conf,
                                   MBEDTLS_SSL_IS_CLIENT,
                                   MBEDTLS_SSL_TRANSPORT_STREAM,
-                                  MBEDTLS_SSL_PRESET_DEFAULT) != 0)
+                                  MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
     {
-      printf("mbedtls_ssl_config_defaults() fail\n");
+      printf("mbedtls_ssl_config_defaults() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
   mbedtls_ssl_conf_rng(&g_conf, mbedtls_ctr_drbg_random, &g_ctr_drbg);
 
-  if (mbedtls_ssl_setup(&g_ssl, &g_conf) != 0)
+  if ((ret = mbedtls_ssl_setup(&g_ssl, &g_conf)) != 0)
     {
-      printf("mbedtls_ssl_setup() fail\n");
+      printf("mbedtls_ssl_setup() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
-  if (mbedtls_ssl_set_hostname(&g_ssl, g_hostname) != 0)
+  if ((ret = mbedtls_ssl_set_hostname(&g_ssl, g_hostname)) != 0)
     {
-      printf("mbedtls_ssl_set_hostname() fail\n");
+      printf("mbedtls_ssl_set_hostname() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
@@ -372,12 +388,12 @@ int lte_tls_main(int argc, char *argv[])
    *    and connect.
    */
 
-  if (mbedtls_net_connect(&g_server_fd,
+  if ((ret = mbedtls_net_connect(&g_server_fd,
                           g_hostname,
                           port_char,    /* The type is not integer, but string. */
-                          MBEDTLS_NET_PROTO_TCP) != 0)
+                          MBEDTLS_NET_PROTO_TCP)) != 0)
     {
-      printf("mbedtls_net_connect() fail\n");
+      printf("mbedtls_net_connect() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 
@@ -389,9 +405,9 @@ int lte_tls_main(int argc, char *argv[])
 
   /* 7. Do SSL handshake */
 
-  if (mbedtls_ssl_handshake(&g_ssl) != 0)
+  if ((ret = mbedtls_ssl_handshake(&g_ssl)) != 0)
     {
-      printf("mbedtls_ssl_handshake() fail\n");
+      printf("mbedtls_ssl_handshake() fail ret = -0x%X\n", -ret);
       goto exit;
     }
 

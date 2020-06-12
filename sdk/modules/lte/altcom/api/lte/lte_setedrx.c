@@ -197,22 +197,19 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
 
   if (settings->enable)
     {
-      if (LTE_EDRX_ACTTYPE_WBS1 > settings->act_type ||
-          LTE_EDRX_ACTTYPE_IU < settings->act_type)
+      if (LTE_EDRX_ACTTYPE_IU < settings->act_type)
         {
           DBGIF_LOG1_ERROR("Invalid argument. act_type:%d\n", settings->act_type);
           return -EINVAL;
         }
 
-      if (settings->edrx_cycle < SETEDRX_CYC_MIN ||
-        SETEDRX_CYC_MAX < settings->edrx_cycle)
+      if (SETEDRX_CYC_MAX < settings->edrx_cycle)
         {
           DBGIF_LOG1_ERROR("Invalid argument. edrx_cycle:%d\n", settings->edrx_cycle);
           return -EINVAL;
         }
 
-      if (settings->ptw_val < SETEDRX_PTW_MIN || 
-        SETEDRX_PTW_MAX < settings->ptw_val)
+      if (SETEDRX_PTW_MAX < settings->ptw_val)
         {
           DBGIF_LOG1_ERROR("Invalid argument. ptw_val:%d\n", settings->ptw_val);
           return -EINVAL;

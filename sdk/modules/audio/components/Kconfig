@@ -32,18 +32,14 @@ config AUDIOUTILS_ENCODER
 config AUDIOUTILS_FILTER
 	bool "Filter"
 	default n
+	select AUDIOUTILS_CUSTOMPROC
 	---help---
-		Enable Filtering Feature
-
-config AUDIOUTILS_POSTPROC
-	bool "Post Filter"
-	default n
-	---help---
-		Enable Post Filtering Feature
+		Enable (Pre/Post) Filtering Feature
 
 config AUDIOUTILS_RECOGNITION
 	bool "Recognition"
 	default n
+	select AUDIOUTILS_CUSTOMPROC
 	---help---
 		Enable Recognition Feature
 
@@ -62,9 +58,11 @@ config AUDIOUTILS_RENDERER_UNDERFLOW
 
 endif
 
-config AUDIOUTILS_COMPONENT_COMMON
-	bool
-	default y if AUDIOUTILS_DECODER || AUDIOUTILS_FILTER || AUDIOUTILS_POSTPROC
+config AUDIOUTILS_CUSTOMPROC
+	bool "User custom signal processing on DSP"
+	default n
+	---help---
+		Enable Insert silence data
 
 config AUDIOUTILS_DSP_DEBUG_DUMP
 	bool "dsp debug dump"

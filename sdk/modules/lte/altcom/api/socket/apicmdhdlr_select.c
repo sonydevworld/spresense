@@ -92,7 +92,7 @@ static void select_job(FAR void *arg)
                                           preadset, pwriteset, pexceptset);
   if (ret < 0)
     {
-      DBGIF_LOG1_DEBUG("altcom_select_async_exec_callback() failed: %d\n", ret);
+      DBGIF_LOG2_DEBUG("altcom_select_async_exec_callback() failed: %d, %d\n", ret, select_id);
     }
 
 

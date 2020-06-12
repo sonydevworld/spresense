@@ -37,7 +37,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -199,11 +199,7 @@ _err:
  *
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int geofence_main(int argc, char *argv[])
-#endif
 {
   int   ret;
   int   i;

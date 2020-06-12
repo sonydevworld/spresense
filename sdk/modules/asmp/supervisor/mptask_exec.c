@@ -151,7 +151,7 @@ int mptask_exec(mptask_t *task)
         }
     }
 
-  for (cpu = 1; cpu < NMPCPUS; cpu++)
+  for (cpu = ACPU; cpu < NMPCPUS; cpu++)
     {
       if (CPU_ISSET(cpu, &task->cpuids))
         {

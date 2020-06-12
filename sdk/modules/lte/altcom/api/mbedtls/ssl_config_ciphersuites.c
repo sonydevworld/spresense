@@ -77,7 +77,6 @@ static int32_t config_ciphersuites_request(FAR struct config_ciphersuites_req_s 
 {
   int32_t                                    ret;
   uint16_t                                   reslen = 0;
-  int                                        *p;
   int                                        cnt;
   FAR struct apicmd_config_ciphersuites_s    *cmd = NULL;
   FAR struct apicmd_config_ciphersuitesres_s *res = NULL;
@@ -97,11 +96,15 @@ static int32_t config_ciphersuites_request(FAR struct config_ciphersuites_req_s 
   cmd->conf = htonl(req->id);
   memset(cmd->ciphersuites, 0, sizeof(int32_t)*APICMD_CONFIG_CIPHERSUITES_COUNT);
 
-  p = req->ciphersuites;
   cnt = 0;
-  while ((*p != 0) && (cnt < APICMD_CONFIG_CIPHERSUITES_COUNT))
+  for (cnt = 0; cnt < APICMD_CONFIG_CIPHERSUITES_COUNT; cnt++)
     {
-      cmd->ciphersuites[cnt++] = htonl(*p++);
+      if (req->ciphersuites[cnt] == 0)
+        {
+          break;
+        }
+
+      cmd->ciphersuites[cnt] = htonl(req->ciphersuites[cnt]);
     }
 
   DBGIF_LOG1_DEBUG("[config_ciphersuites]config id: %d\n", req->id);

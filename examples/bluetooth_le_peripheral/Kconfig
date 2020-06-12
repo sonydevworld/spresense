@@ -4,7 +4,7 @@
 #
 
 config EXAMPLES_BLUETOOTH_LE_PERIPHERAL
-	bool "Bluetooth low energy GATT peripheral example"
+	tristate "Bluetooth low energy GATT peripheral example"
 	default n
 	---help---
 		Enable the bluetooth LE peripheral example
@@ -14,9 +14,16 @@ if EXAMPLES_BLUETOOTH_LE_PERIPHERAL
 config EXAMPLES_BLUETOOTH_LE_PERIPHERAL_PROGNAME
 	string "Program name"
 	default "ble_peripheral"
-	depends on BUILD_KERNEL
 	---help---
 		This is the name of the program that will be use when the NSH ELF
 		program is installed.
+
+config EXAMPLES_BLUETOOTH_LE_PERIPHERAL_SNK_PRIORITY
+	int "Task priority"
+	default 100
+
+config EXAMPLES_BLUETOOTH_LE_PERIPHERAL_STACKSIZE
+	int "Stack size"
+	default 2560
 
 endif

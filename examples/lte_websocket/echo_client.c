@@ -2,6 +2,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2014 Jeremy Hahn
+ *  Copyright 2020 Sony Corporation
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,32 +27,30 @@
 
 void cwebsocket_subprotocol_echo_client_onopen(void *websocket) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onopen: fd=%i\n", client->fd);
+	printf("cwebsocket_subprotocol_echo_client_onopen: fd=%i\n", client->fd);
 }
 
-void cwebsocket_subprotocol_echo_client_onmessage(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onmessage(void *websocket, cwebsocket_message *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%ld, payload=%s\n",
-			client->fd, client->message.opcode, client->message.payload_len, client->message.payload);
+	printf("cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%lld, payload=%s\n",
+		client->fd, message->opcode, message->payload_len, message->payload);
 }
 
-void cwebsocket_subprotocol_echo_client_onclose(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onclose(void *websocket, int code, const char *reason) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, client->code, client->message.payload);
+	printf("cwebsocket_subprotocol_echo_client_onclose: fd=%i, code=%i, reason=%s\n", client->fd, code, reason);
 }
 
-void cwebsocket_subprotocol_echo_client_onerror(void *websocket) {
+void cwebsocket_subprotocol_echo_client_onerror(void *websocket, const char *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	syslog(LOG_DEBUG, "cwebsocket_subprotocol_echo_client_onerror: fd=%i, message=%s\n", client->fd, client->message.payload);
+	printf("cwebsocket_subprotocol_echo_client_onerror: fd=%i, message=%s\n", client->fd, message);
 }
 
-cwebsocket_subprotocol* cwebsocket_subprotocol_echo_client_new(void) {
-	cwebsocket_subprotocol *protocol = malloc(sizeof(cwebsocket_subprotocol));
+void cwebsocket_subprotocol_echo_client_new(cwebsocket_subprotocol *protocol) {
 	memset(protocol, 0, sizeof(cwebsocket_subprotocol));
-	protocol->name = "echo.cwebsocket\0";
+	protocol->name = "echo";
 	protocol->onopen = &cwebsocket_subprotocol_echo_client_onopen;
 	protocol->onmessage = &cwebsocket_subprotocol_echo_client_onmessage;
 	protocol->onclose = &cwebsocket_subprotocol_echo_client_onclose;
 	protocol->onerror = &cwebsocket_subprotocol_echo_client_onerror;
-	return protocol;
 }

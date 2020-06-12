@@ -141,6 +141,37 @@ static int32_t altcombs_free_cbblock(FAR struct altcombs_cb_block *cb_block)
 }
 
 /****************************************************************************
+ * Name: check_arrydigitnum
+ *
+ * Description:
+ *   Evaluate the validity of each digit of arrayed numerical value.
+ *
+ * Input Parameters:
+ *  number    Array type number.
+ *  digit     @number digit.
+ *
+ * Returned Value:
+ *   Returns true if everything is valid. Otherwise it returns false.
+ *
+ ****************************************************************************/
+
+static bool altcombs_check_arrydigitnum(FAR uint8_t number[], uint8_t digit)
+{
+  uint8_t cnt;
+
+  for (cnt = 0; cnt < digit; cnt++)
+    {
+      if (number[cnt] < APICMD_CELLINFO_DIGIT_NUM_MIN ||
+        APICMD_CELLINFO_DIGIT_NUM_MAX < number[cnt])
+        {
+          return false;
+        }
+    }
+
+  return true;
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -834,6 +865,76 @@ int32_t altcombs_set_quality(FAR lte_quality_t *data,
         }
     }
   return 0;
+}
+
+/****************************************************************************
+ * Name: altcombs_set_cellinfo
+ *
+ * Description:
+ *   Set lte_cellinfo_t.
+ *
+ * Input Parameters:
+ *   cmd_cellinfo  Pointer of api command cellinfo struct.
+ *   api_cellinfo  Pointer of lte_cellinfo_t.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+void altcombs_set_cellinfo(
+          FAR struct apicmd_cmddat_cellinfo_s *cmd_cellinfo,
+          FAR lte_cellinfo_t *api_cellinfo)
+{
+  if (cmd_cellinfo->valid == LTE_VALID)
+    {
+      if (ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->cell_id error:%d\n",
+                           ntohl(cmd_cellinfo->cell_id));
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->earfcn error:%d\n",
+                           ntohl(cmd_cellinfo->earfcn));
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mcc, LTE_MCC_DIGIT))
+        {
+          DBGIF_LOG_ERROR("cmd_cellinfo->mcc error\n");
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (
+        cmd_cellinfo->mnc_digit < APICMD_CELLINFO_MNC_DIGIT_MIN ||
+        cmd_cellinfo->mnc_digit > LTE_MNC_DIGIT_MAX)
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->mnc_digit error:%d\n",
+                           cmd_cellinfo->mnc_digit);
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mnc,
+               cmd_cellinfo->mnc_digit))
+        {
+          DBGIF_LOG_ERROR("cmd_cellinfo->mnc error\n");
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else
+        {
+          api_cellinfo->valid = LTE_VALID;
+          api_cellinfo->phycell_id = ntohl(cmd_cellinfo->cell_id);
+          api_cellinfo->earfcn     = ntohl(cmd_cellinfo->earfcn);
+          memcpy(api_cellinfo->mcc, cmd_cellinfo->mcc, LTE_MCC_DIGIT);
+          api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
+          memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc, 
+                 cmd_cellinfo->mnc_digit);
+        }
+    }
+  else
+    {
+      api_cellinfo->valid = LTE_INVALID;
+    }
 }
 
 /****************************************************************************

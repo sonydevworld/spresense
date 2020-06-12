@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ############################################################################
-# modules/memutils/memory_manager/tool/mem_layout.py
+# tools/mem_layout.py
 #
 #   Copyright 2019 Sony Semiconductor Solutions Corporation
 #
@@ -39,6 +39,7 @@ import re
 import sys
 import argparse
 import getopt
+import datetime
 
 #
 # Editable parameters
@@ -797,7 +798,7 @@ template = "\
 /****************************************************************************\n\
  * {0}\n\
  *\n\
- *   Copyright 2019 Sony Semiconductor Solutions Corporation\n\
+ *   Copyright {1} Sony Semiconductor Solutions Corporation\n\
  *\n\
  * Redistribution and use in source and binary forms, with or without\n\
  * modification, are permitted provided that the following conditions\n\
@@ -839,7 +840,7 @@ class HeaderFile:
         self.guard_name = os.path.basename(filename.upper().replace(".", "_")) + "_INCLUDED"
         self.add_def    = add_def
         self.io         = io
-        self.io.write(template.format(filename))
+        self.io.write(template.format(filename, datetime.date.today().year))
         self.io.write("#ifndef {0}\n".format(self.guard_name))
         self.io.write("#define {0}\n\n".format(self.guard_name))
         if self.add_def:
@@ -850,7 +851,7 @@ class HeaderFile:
         self.guard_name = os.path.basename(filename.upper().replace(".", "_")) + "_INCLUDED"
         self.add_def    = True
         self.io         = io
-        self.io.write(template.format(filename))
+        self.io.write(template.format(filename, datetime.date.today().year))
         self.io.write("#ifndef {0}\n".format(self.guard_name))
         self.io.write("#define {0}\n\n".format(self.guard_name))
         self.io.write("#include \"memutils/memory_manager/MemMgrTypes.h\"\n")

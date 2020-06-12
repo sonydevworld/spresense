@@ -40,6 +40,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <string.h>
 #include "buffpool.h"
 
 /****************************************************************************
@@ -69,8 +70,14 @@ FAR static inline void * buffpoolwrapper_alloc(uint32_t reqsize)
   return buffpool_alloc(g_buffpoolwrapper_obj, reqsize);
 
 #else
+  FAR void *ptr;
 
-  return SYS_MALLOC(reqsize);
+  ptr = SYS_MALLOC(reqsize);
+  if (ptr)
+    {
+      memset(ptr, 0, reqsize);
+    }
+  return ptr;
 
 #endif
 

@@ -35,7 +35,6 @@
 
 #include <nuttx/kmalloc.h>
 #include <debug.h>
-#include <arch/chip/cxd56_audio.h>
 
 #include "memutils/os_utils/chateau_osal.h"
 #include "audio/audio_high_level_api.h"

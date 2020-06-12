@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_COLORSENSOR),y)
+ifneq ($(CONFIG_EXAMPLES_COLORSENSOR),)
 CONFIGURED_APPS += colorsensor
 endif

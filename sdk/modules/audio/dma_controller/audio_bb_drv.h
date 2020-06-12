@@ -36,8 +36,6 @@
 #ifndef __MODULES_AUDIO_DMA_CONTROLLER_AUDIO_BB_DRV_H
 #define __MODULES_AUDIO_DMA_CONTROLLER_AUDIO_BB_DRV_H
 
-#include <arch/chip/cxd56_audio.h>
-
 #include "dma_controller/audio_dma_drv_api.h"
 
 #ifdef __cplusplus

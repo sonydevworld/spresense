@@ -66,21 +66,3 @@ char* cwebsocket_create_key_challenge_response(const char *seckey) {
 	return cwebsocket_base64_encode((const unsigned char *)sha1_bytes, sizeof(sha1_bytes));
 }
 
-#if 0
-void
-ws_thread_new( const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority )
-{
-	pthread_attr_t attr;
-	pthread_t      thread;
-
-	pthread_attr_init(&attr);
-
-	attr.priority = iPriority;
-	attr.stacksize = iStackSize;
-
-	if( pthread_create( &thread, &attr, (pthread_startroutine_t)pxThread, pvArg ) == 0 )
-	{
-		pthread_detach(thread);
-	}
-}
-#endif

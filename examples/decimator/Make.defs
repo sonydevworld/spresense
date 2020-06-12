@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_DECIMATOR),y)
+ifneq ($(CONFIG_EXAMPLES_DECIMATOR),)
 CONFIGURED_APPS += decimator
 endif

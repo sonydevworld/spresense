@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER),y)
+ifneq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER),)
 CONFIGURED_APPS += audio_recognizer
 endif

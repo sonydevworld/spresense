@@ -40,6 +40,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <arch/chip/audio.h>
 #include "memutils/common_utils/common_types.h"
 
 #define __WIEN2_BEGIN_NAMESPACE  namespace Wien2 {
@@ -65,14 +66,18 @@ __WIEN2_BEGIN_NAMESPACE
  * Public Types
  ****************************************************************************/
 
-enum AudioPcmBitWidth
+/***   PCM format(Bit length)   ***/
+enum audio_pcm_format_type_e
 {
-  AudPcm24Bit = 0,
-  AudPcm20Bit,
-  AudPcm18Bit,
-  AudPcm16Bit,
-  AudPcm32Bit
+  AudPcmFormatInt24 = 0,  /**< 24bit PCM */
+  AudPcmFormatInt20,      /**< 20bit PCM */
+  AudPcmFormatInt18,      /**< 18bit PCM */	
+  AudPcmFormatInt16,      /**< 16bit PCM */
+  AudPcmFormatInt32,      /**< 32bit PCM */
+  AudPcmFormatFloat32     /**< 32bit PCM (float type) */
 };
+typedef enum audio_pcm_format_type_e AudioPcmFormat;
+
 
 enum AudioChannelFormat
 {
@@ -150,6 +155,14 @@ enum AudioCodec
   AudCodecWMA,
   AudCodecNoCodec,
   AudCodecNum
+};
+
+enum WaveMode
+{
+  InvalidWave = 0xffffffff,
+  SinWave = 0,
+  RectangularWave,
+  WaveModeNum
 };
 
 struct BufferHeader

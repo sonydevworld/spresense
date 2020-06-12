@@ -364,6 +364,7 @@ static void apicmdgw_parse_hdr_options(FAR uint8_t *hdr,
 void apicmdgw_errind(FAR struct apicmd_cmdhdr_s *evthdr)
 {
   FAR struct apicmd_cmddat_errind_s *errind = NULL;
+  int32_t ret;
 
   errind = (FAR struct apicmd_cmddat_errind_s *)
               apicmdgw_cmd_allocbuff(APICMDID_ERRIND,
@@ -377,8 +378,12 @@ void apicmdgw_errind(FAR struct apicmd_cmdhdr_s *evthdr)
   errind->dtlen   = htons(evthdr->dtlen);
   errind->chksum  = htons(evthdr->chksum);
 
-  DBGIF_ASSERT(0 <= APICMDGW_SEND_ONLY((uint8_t *)errind),
-    "APICMDGW_SEND()\n");
+  ret = APICMDGW_SEND_ONLY((uint8_t *)errind);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("APICMDGW_SEND_ONLY() failed:%d\n", ret);
+    }
+
   DBGIF_ASSERT(0 == apicmdgw_freebuff((uint8_t *)errind),
     "apicmdgw_freebuff()\n");
 }

@@ -273,11 +273,7 @@ static void bt_spp_exit(void)
  * bt_spp_main
  ****************************************************************************/
 
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int bt_spp_main(int argc, char *argv[])
-#endif
 {
   int ret = 0;
   int len = 0;

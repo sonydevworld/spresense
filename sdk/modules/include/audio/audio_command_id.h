@@ -126,13 +126,17 @@
 
 #define  AUDCMD_SET_PREPROCESS_DSP  (AUDCMD_CATEGORY_EFFECTOR | 0x03)
 
+/*! \brief Command Code: Init OutputMiixer */
+
+#define  AUDCMD_INIT_OUTPUTMIXER (AUDCMD_CATEGORY_EFFECTOR | 0x04)
+
 /*! \brief Command Code: InitMPP */
 
-#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x04)
+#define  AUDCMD_INITMPP       (AUDCMD_CATEGORY_EFFECTOR | 0x05)
 
 /*! \brief Command Code: SetMPPParam */
 
-#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x05)
+#define  AUDCMD_SETMPPPARAM   (AUDCMD_CATEGORY_EFFECTOR | 0x06)
 
 /** @} */
 
@@ -150,6 +154,10 @@
 /*! \brief Result Code: SetPreProcessDSPCmplt */
 
 #define  AUDRLT_SET_PREPROCESS_DSP_CMPLT   AUDCMD_SET_PREPROCESS_DSP
+
+/*! \brief Result Code: InitOutputMixerCmplt */
+
+#define  AUDRLT_INIT_OUTPUTMIXER_CMPLT  AUDCMD_INIT_OUTPUTMIXER
 
 /*! \brief Result Code: InitMPPCmplt */
 

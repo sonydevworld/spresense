@@ -1,0 +1,15 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_STARTUP_SCRIPT
+	bool "Spresense Startup Script"
+	default n
+	select NSH_ROMFSETC
+	select NSH_CUSTOMROMFS
+	---help---
+		Enable startup script. If this is enabled, /mnt/spif/init.rc will
+		be executed as standalone task at first when the system is booting up.
+		And if the init.rc does not exist, start NuttShell as usual.
+

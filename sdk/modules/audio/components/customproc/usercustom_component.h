@@ -36,11 +36,11 @@
 #ifndef _USERCUSTOM_COMPONENT_H_
 #define _USERCUSTOM_COMPONENT_H_
 
+#include "audio/dsp_framework/customproc_command_base.h"
 #include "memutils/s_stl/queue.h"
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
-#include "components/common/component_common.h"
-#include "components/common/component_base.h"
+#include "components/component_base.h"
 
 extern "C" {
 
@@ -48,8 +48,9 @@ bool AS_postproc_recv_apu(void *p_param, void *p_instance);
 
 } /* extern "C" */
 
-class UserCustomComponent : public ComponentBase,
-                          public Wien2::ComponentCommon<uint32_t>
+__USING_WIEN2
+
+class UserCustomComponent : public ComponentBase
 {
 public:
   UserCustomComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid):

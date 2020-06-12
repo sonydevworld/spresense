@@ -1,0 +1,25 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_SSLUTILS
+	bool "mbedTLS connection utility support"
+	default y if EXTERNALS_MBEDTLS || LTE_NET_MBEDTLS
+	depends on NET_TCP && (EXTERNALS_MBEDTLS || LTE_NET_MBEDTLS)
+	---help---
+		Enable support mbedTLS connection utility. Some examples are using
+		this utility for connection TLS socket.
+
+if EXTERNALS_SSLUTILS
+
+config EXTERNALS_MBEDTLS_DEFAULT_TIMEOUT
+	int "Request and receive timeouts for SSL/TLS connection"
+	default 10
+
+config EXTERNALS_MBEDTLS_DEFAULT_CERTS_PATH
+	string "Directory path for TLS certification files"
+	default "/mnt/spif/CERTS"
+
+endif
+

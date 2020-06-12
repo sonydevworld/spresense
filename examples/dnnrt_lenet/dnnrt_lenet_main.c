@@ -137,11 +137,7 @@ static void parse_args(int argc, char *argv[], my_setting_t * setting)
 /****************************************************************************
  * dnnrt_lenet_main
  ****************************************************************************/
-#ifdef CONFIG_BUILD_KERNEL
 int main(int argc, FAR char *argv[])
-#else
-int dnnrt_lenet_main(int argc, char *argv[])
-#endif
 {
   int ret;
   unsigned char i;

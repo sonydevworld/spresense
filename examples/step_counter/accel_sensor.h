@@ -40,8 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <arch/chip/cxd56_scu.h>
+#include <arch/chip/scu.h>
 
 #include "physical_sensor.h"
 
