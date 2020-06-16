@@ -50,6 +50,8 @@
 #include "audio/audio_message_types.h"
 #include "audio_state.h"
 
+#include "../object_base.h"
+
 //#include "components/recognition/voice_recognition_command_component.h"
 #include "components/customproc/usercustom_component.h"
 
@@ -77,7 +79,38 @@ public:
     bool                result;
   } RecognitionDoneCmd;
 
-  static void create(MsgQueId, MsgQueId);
+  static void create(AsObjectParams_t*);
+  static void destory() { get_instance()->m_is_created = false; }
+
+  static RecognizerObject *get_adr(void)
+  {
+    static RecognizerObject s_inst;
+    return &s_inst;
+  }
+
+  static RecognizerObject *get_instance(void)
+  {
+    RecognizerObject* s_inst = get_adr();
+    if(s_inst->m_is_created){
+      return s_inst;
+    }
+    return 0;
+  }
+
+  static pthread_t get_pid(void)
+  {
+    return get_instance()->m_pid;
+  }
+
+  static void set_pid(pthread_t id)
+  {
+    get_instance()->m_pid = id;
+  }
+
+  static pthread_t get_self(void)
+  {
+    return get_instance()->m_msgq_id.self;
+  }
 
 private:
   enum RecognizerState_e
@@ -96,15 +129,24 @@ private:
   static MsgProc MsgParamTbl[AUD_RCG_PRM_NUM][StateNum];
   static MsgProc RsltProcTbl[AUD_RCG_RES_MSG_NUM][StateNum];
 
-  RecognizerObject(MsgQueId msg_id, MsgQueId manager_msg_id) :
-    m_p_rcgproc_instance(NULL),
-    m_self_msgq_id(msg_id),
-    m_parent_msgq_id(manager_msg_id),
-    m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted),
-    m_callback(NULL),
-    m_recognizer_type(AsRecognizerTypeInvalid),
-    m_notify_path(AsNotifyPathCallback)
-  { 
+  RecognizerObject(void)
+    : m_is_created(false)
+    , m_pid(INVALID_PROCESS_ID)
+    , m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted)
+    , m_callback(NULL)
+    , m_recognizer_type(AsRecognizerTypeInvalid)
+    , m_notify_path(AsNotifyPathCallback) {}
+
+  RecognizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+    : m_is_created(true)
+    , m_msgq_id(msgq_id)
+    , m_pool_id(pool_id)
+    , m_pid(INVALID_PROCESS_ID)
+    , m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted)
+    , m_callback(NULL)
+    , m_recognizer_type(AsRecognizerTypeInvalid)
+    , m_notify_path(AsNotifyPathCallback)
+  {
     memset(m_dsp_path, 0, sizeof(m_dsp_path));
   }
 
@@ -135,8 +177,11 @@ private:
 
   ComponentBase *m_p_rcgproc_instance;
 
-  MsgQueId m_self_msgq_id;    /* Message ID of myself. */
-  MsgQueId m_parent_msgq_id;
+  bool               m_is_created;
+  AsObjectMsgQueId_t m_msgq_id;
+  AsObjectPoolId_t   m_pool_id;
+  pthread_t          m_pid;
+
   AudioState<RecognizerState_e> m_state;
   RecognizerCallback m_callback;
   AsRecognizerType m_recognizer_type;
