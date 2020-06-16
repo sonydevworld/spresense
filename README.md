@@ -20,6 +20,7 @@ $ git submodule foreach git checkout master
 ├── examples  - Spresense SDK examples
 ├── nuttx     - NuttX original kernel source + CXD5602 port.
 └── sdk       - Spresense SDK source and PC tools.
+ └─ apps      - NuttX original tools and sample applications.
 ```
 
 # Using docker
@@ -71,7 +72,6 @@ $ tools/config.py examples/hello
 ```
 Build the example image:
 ``` bash
-$ make buildkernel
 $ make
 ```
 
