@@ -65,10 +65,6 @@ Go to the folder where you cloned the {SDK_FULL}, and enter the `sdk` folder nam
 ``` bash
 $ cd spresense/sdk
 ```
-Set up the nuttx kernel configuration
-``` bash
-$ tools/config.py --kernel release
-```
 Set up the SDK configuration
 ``` bash
 $ tools/config.py examples/hello
