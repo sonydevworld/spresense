@@ -57,6 +57,14 @@
 #include "chip.h"
 
 /****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+/* __stack is the end of RAM address, it would be set by linker. */
+
+extern char __stack[];
+
+/****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
@@ -68,8 +76,8 @@
 #define MPSHM_BLOCK_TILE       (1 << MPSHM_BLOCK_TILE_SHIFT)
 #define ALIGNUP(v, a)          (((v) + ((a)-1)) & ~((a)-1))
 
-#define MM_TILE_BASE (CONFIG_RAM_START + (CONFIG_RAM_SIZE - CONFIG_ASMP_MEMSIZE))
-#define MM_TILE_SIZE CONFIG_ASMP_MEMSIZE
+#define MM_TILE_BASE ((uint32_t)&__stack)
+#define MM_TILE_SIZE (CONFIG_RAM_START + CONFIG_RAM_SIZE - MM_TILE_BASE)
 
 #ifdef CONFIG_ASMP_SMALL_BLOCK
 #  define MPSHM_TILE_ALIGN    MPSHM_BLOCK_SIZE_SHIFT
@@ -235,6 +243,11 @@ int mpshm_init(mpshm_t *shm, key_t key, size_t size)
   if (!shm && !key && !size)
     {
       return -EINVAL;
+    }
+
+  if (MM_TILE_SIZE <= 0)
+    {
+      return -ENOMEM;
     }
 
   memset(shm, 0, sizeof(mpshm_t));
@@ -517,11 +530,17 @@ void mpshm_initialize(void)
 {
   int ret;
 
-  ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, MPSHM_TILE_ALIGN);
-  if (ret < 0)
-    {
-      mperr("Tile memory initialization failure.\n");
-    }
+  /* MM_TILE_BASE must be aligned at 128Kbyte */
+
+  ASSERT((MM_TILE_BASE & 0x1ffff) == 0);
+
+  if (MM_TILE_SIZE > 0) {
+    ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, MPSHM_TILE_ALIGN);
+    if (ret < 0)
+      {
+        mperr("Tile memory initialization failure.\n");
+      }
+  }
 
   /* Clear virtual address mapping except first 64KB block.
    * Because first virtual address is necessary for wake up from hot sleep.
