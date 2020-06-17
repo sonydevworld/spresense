@@ -117,6 +117,7 @@ protected:
   {
     Booted = 0,
     Ready,
+    PreActive,
     Active,
     Stopping,
     ErrorStopping,
@@ -134,16 +135,14 @@ protected:
   MsgProc m_event_tbl[MSG_OBJ_SUBTYPE_NUM][StateNum];
 
   /* Constructor */
-
-  ObjectBase(uint32_t module_id, AsObjectMsgQueId_t msg_id, AsObjectPoolId_t pool_id)
-    : m_state(module_id , "", Booted)
-    , m_msgq_id(msg_id)
-    , m_pool_id(pool_id)
+  ObjectBase()
+    : m_state(0 , "", Booted)
   {
     /* Event table */
 
     m_event_tbl[MSG_OBJ_SUBTYPE_ACT][Booted]          = &ObjectBase::activateOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_ACT][Ready]           = &ObjectBase::activateOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_ACT][PreActive]       = &ObjectBase::activateOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_ACT][Active]          = &ObjectBase::activateOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_ACT][Stopping]        = &ObjectBase::activateOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_ACT][ErrorStopping]   = &ObjectBase::activateOnErrorStopping;
@@ -151,6 +150,7 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][Booted]        = &ObjectBase::deactivateOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][Ready]         = &ObjectBase::deactivateOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][PreActive]     = &ObjectBase::deactivateOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][Active]        = &ObjectBase::deactivateOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][Stopping]      = &ObjectBase::deactivateOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_DEACT][ErrorStopping] = &ObjectBase::deactivateOnErrorStopping;
@@ -158,6 +158,7 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_INIT][Booted]         = &ObjectBase::initOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_INIT][Ready]          = &ObjectBase::initOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_INIT][PreActive]      = &ObjectBase::initOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_INIT][Active]         = &ObjectBase::initOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_INIT][Stopping]       = &ObjectBase::initOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_INIT][ErrorStopping]  = &ObjectBase::initOnErrorStopping;
@@ -165,6 +166,7 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_START][Booted]        = &ObjectBase::startOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_START][Ready]         = &ObjectBase::startOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_START][PreActive]     = &ObjectBase::startOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_START][Active]        = &ObjectBase::startOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_START][Stopping]      = &ObjectBase::startOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_START][ErrorStopping] = &ObjectBase::startOnErrorStopping;
@@ -172,6 +174,7 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][Booted]         = &ObjectBase::execOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][Ready]          = &ObjectBase::execOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][PreActive]      = &ObjectBase::execOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][Active]         = &ObjectBase::execOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][Stopping]       = &ObjectBase::execOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_EXEC][ErrorStopping]  = &ObjectBase::execOnErrorStopping;
@@ -179,6 +182,7 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_STOP][Booted]         = &ObjectBase::stopOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_STOP][Ready]          = &ObjectBase::stopOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_STOP][PreActive]      = &ObjectBase::stopOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_STOP][Active]         = &ObjectBase::stopOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_STOP][Stopping]       = &ObjectBase::stopOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_STOP][ErrorStopping]  = &ObjectBase::stopOnErrorStopping;
@@ -186,11 +190,19 @@ protected:
 
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][Booted]          = &ObjectBase::setOnBooted;
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][Ready]           = &ObjectBase::setOnReady;
+    m_event_tbl[MSG_OBJ_SUBTYPE_SET][PreActive]       = &ObjectBase::setOnPreActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][Active]          = &ObjectBase::setOnActive;
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][Stopping]        = &ObjectBase::setOnStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][ErrorStopping]   = &ObjectBase::setOnErrorStopping;
     m_event_tbl[MSG_OBJ_SUBTYPE_SET][WaitStop]        = &ObjectBase::setOnWaitStop;
 
+  }
+
+  ObjectBase(uint32_t module_id, AsObjectMsgQueId_t msg_id, AsObjectPoolId_t pool_id)
+    : m_state(module_id , "", Booted)
+    , m_msgq_id(msg_id)
+    , m_pool_id(pool_id)
+  {
   }
 
   /* Destructor */
@@ -209,6 +221,7 @@ protected:
 
   virtual void activateOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void activateOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void activateOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void activateOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void activateOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void activateOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -216,6 +229,7 @@ protected:
 
   virtual void deactivateOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void deactivateOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void deactivateOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void deactivateOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void deactivateOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void deactivateOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -223,6 +237,7 @@ protected:
 
   virtual void initOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void initOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void initOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void initOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void initOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void initOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -230,6 +245,7 @@ protected:
 
   virtual void startOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void startOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void startOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void startOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void startOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void startOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -237,6 +253,7 @@ protected:
 
   virtual void execOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void execOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void execOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void execOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void execOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void execOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -244,6 +261,7 @@ protected:
 
   virtual void stopOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void stopOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void stopOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void stopOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void stopOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void stopOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -251,6 +269,7 @@ protected:
 
   virtual void setOnBooted(MsgPacket *msg) { illegal(msg); }
   virtual void setOnReady(MsgPacket *msg) { illegal(msg); }
+  virtual void setOnPreActive(MsgPacket *msg) { illegal(msg); }
   virtual void setOnActive(MsgPacket *msg) { illegal(msg); }
   virtual void setOnStopping(MsgPacket *msg) { illegal(msg); }
   virtual void setOnErrorStopping(MsgPacket *msg) { illegal(msg); }
@@ -261,6 +280,7 @@ protected:
    */
 
   virtual void parseResult(MsgPacket *msg) = 0;
+
 };
 
 /****************************************************************************
