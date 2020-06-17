@@ -4131,7 +4131,7 @@ void AudioManager::setSpDrvMode(AudioCommand &cmd)
     {
       sendErrRespResult(cmd.header.sub_code,
                         AS_MODULE_ID_AUDIO_DRIVER,
-                        AS_ECODE_SET_SPDRVMODE_ERROR);
+                        AS_ECODE_COMMAND_PARAM_SETSPDRVMODE);
     }
 }
 

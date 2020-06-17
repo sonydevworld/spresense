@@ -467,10 +467,6 @@
 
 #define AS_ECODE_COMMAND_PARAM_SETSPDRVMODE      0x3B
 
-/*! \brief Set Speaker Driver Mode Error */
-
-#define AS_ECODE_SET_SPDRVMODE_ERROR             0x3C
-
 /*! \brief Set Mic Map Error */
 
 #define AS_ECODE_SET_MICMAP_ERROR                0x3D
