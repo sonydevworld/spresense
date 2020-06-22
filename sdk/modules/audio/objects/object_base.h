@@ -128,8 +128,10 @@ protected:
 
   AudioState<ObjectState> m_state;
 
+  bool               m_is_created;
   AsObjectMsgQueId_t m_msgq_id;
   AsObjectPoolId_t   m_pool_id;
+  pthread_t          m_pid;
 
   typedef void (ObjectBase::*MsgProc)(MsgPacket *);
   MsgProc m_event_tbl[MSG_OBJ_SUBTYPE_NUM][StateNum];
@@ -137,6 +139,7 @@ protected:
   /* Constructor */
   ObjectBase()
     : m_state(0 , "", Booted)
+    , m_is_created(false)
   {
     /* Event table */
 
@@ -200,8 +203,10 @@ protected:
 
   ObjectBase(uint32_t module_id, AsObjectMsgQueId_t msg_id, AsObjectPoolId_t pool_id)
     : m_state(module_id , "", Booted)
+    , m_is_created(true)
     , m_msgq_id(msg_id)
     , m_pool_id(pool_id)
+    , m_pid(INVALID_PROCESS_ID)
   {
   }
 
