@@ -70,9 +70,10 @@ __USING_WIEN2
  * Public Types
  ****************************************************************************/
 
-class RecognizerObject
+class RecognizerObject:ObjectBase
 {
 public:
+
   typedef struct
   {
     ComponentEventType event_type;
@@ -113,36 +114,21 @@ public:
   }
 
 private:
-  enum RecognizerState_e
-  {
-    StateBooted = 0,
-    StateReady,
-    StateActive,
-    StateStopping,
-    StateNum
-  };
 
   typedef void (RecognizerObject::*ctl_func)(void);
 
   typedef void (RecognizerObject::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_RCG_REQ_MSG_NUM][StateNum];
   static MsgProc MsgParamTbl[AUD_RCG_PRM_NUM][StateNum];
   static MsgProc RsltProcTbl[AUD_RCG_RES_MSG_NUM][StateNum];
 
   RecognizerObject(void)
-    : m_is_created(false)
-    , m_pid(INVALID_PROCESS_ID)
-    , m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted)
+    : ObjectBase()
     , m_callback(NULL)
     , m_recognizer_type(AsRecognizerTypeInvalid)
     , m_notify_path(AsNotifyPathCallback) {}
 
   RecognizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
-    : m_is_created(true)
-    , m_msgq_id(msgq_id)
-    , m_pool_id(pool_id)
-    , m_pid(INVALID_PROCESS_ID)
-    , m_state(AS_MODULE_ID_RECOGNITION_OBJ, "", StateBooted)
+    : ObjectBase(AS_MODULE_ID_RECOGNITION_OBJ, msgq_id,pool_id)
     , m_callback(NULL)
     , m_recognizer_type(AsRecognizerTypeInvalid)
     , m_notify_path(AsNotifyPathCallback)
@@ -150,17 +136,26 @@ private:
     memset(m_dsp_path, 0, sizeof(m_dsp_path));
   }
 
-  void run();
-  void parse(MsgPacket *msg);
+  void parseResult(MsgPacket *msg);
+
   void illegal(MsgPacket *msg);
-  void init(MsgPacket *msg);
-  void exec(MsgPacket *msg);
-  void illegalexec(MsgPacket *msg);
-  void activate(MsgPacket *msg);
-  void deactivate(MsgPacket *msg);
-  void start(MsgPacket *msg);
-  void stop(MsgPacket *msg);
+  void ignore(MsgPacket *msg);
+
+  void activateOnBooted(MsgPacket *msg);
+  void deactivateOnReady(MsgPacket *msg);
+  void initOnReady(MsgPacket *msg);
+  void startOnReady(MsgPacket *msg);
+  void stopOnActive(MsgPacket *msg);
+  void execOnActive(MsgPacket *msg);
+  void setOnReady(MsgPacket *msg) { set(msg); }
+  void setOnActive(MsgPacket *msg) { set(msg); }
+  void setOnErrorStoppping(MsgPacket *msg) { set(msg); }
   void set(MsgPacket *msg);
+
+  void execOnReady(MsgPacket *msg) { ignore(msg); }
+  void execOnStopping(MsgPacket *msg) { ignore(msg); }
+  void execOnErrorStopping(MsgPacket *msg) { ignore(msg); }
+
   void initRcgproc(MsgPacket *msg);
   void setRcgproc(MsgPacket *msg);
 
@@ -177,12 +172,6 @@ private:
 
   ComponentBase *m_p_rcgproc_instance;
 
-  bool               m_is_created;
-  AsObjectMsgQueId_t m_msgq_id;
-  AsObjectPoolId_t   m_pool_id;
-  pthread_t          m_pid;
-
-  AudioState<RecognizerState_e> m_state;
   RecognizerCallback m_callback;
   AsRecognizerType m_recognizer_type;
   char m_dsp_path[AS_RECOGNIZER_FILE_PATH_LEN];
