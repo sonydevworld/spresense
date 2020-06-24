@@ -146,6 +146,7 @@ struct daemon_s
   int                  selectid;
   int                  event_outfd;
   int                  session_id;
+  int                  poweron_result;
   sem_t                sync_sem;
   int                  pid;
   lte_apn_setting_t    apn;
@@ -283,7 +284,6 @@ static const struct usrsock_req_handler_s
 
 struct daemon_s *g_daemon             = NULL;
 static bool     g_daemonisrunnning    = false;
-static int      g_altcomresult;
 
 /****************************************************************************
  * Private Functions
@@ -2699,8 +2699,12 @@ static int daemon_api_request(int read_fd, struct daemon_s* priv)
   switch (daemon_api_cmd)
     {
       case DAEMONAPI_REQUEST_POWER_ON:
-        ret = altcom_power_on();
-        g_altcomresult = ret;
+        priv->poweron_result = altcom_power_on();
+        if (priv->poweron_result < 0)
+          {
+            sem_post(&g_daemon->sync_sem);
+          }
+
         break;
       case DAEMONAPI_REQUEST_POWER_OFF:
         ret = altcom_power_off();
@@ -3072,8 +3076,9 @@ int32_t lte_daemon_power_on(void)
       /* Wait for the request to complete. */
 
       sem_wait(&g_daemon->sync_sem);
-      ret = g_altcomresult;
       close(apireq_fd);
+
+      ret = g_daemon->poweron_result;
 
       daemon_debug_printf("lte_daemon_power_on() = %d\n", ret);
     }
