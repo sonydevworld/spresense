@@ -117,6 +117,7 @@
 #endif
 
 #define SELECT_ASYNC_RETRY_MAX      1
+#define DAEMON_TASK_STACKSIZE       4096
 
 /****************************************************************************
  * Private Data Types
@@ -144,9 +145,6 @@ struct daemon_s
 {
   int                  selectid;
   int                  event_outfd;
-  int                  event_infd;
-  int                  apireq_outfd;
-  int                  apireq_infd;
   int                  session_id;
   sem_t                sync_sem;
   int                  pid;
@@ -2808,13 +2806,13 @@ static int main_loop(FAR struct daemon_s *priv)
   daemon_debug_printf("open event pipe event_infd: %d\n",
                       fd[1]);
 
-  fd[2] = g_daemon->apireq_infd;
+  fd[2] = open(APIREQ_PIPE, O_RDONLY);
+  ASSERT(fd[2] >= 0);
 
   ret = altcom_initialize();
   ASSERT(ret >= 0);
 
   close(priv->event_outfd);
-  close(priv->apireq_outfd);
 
   /* Open fifo for retry event */
 
@@ -2921,11 +2919,10 @@ static int main_loop(FAR struct daemon_s *priv)
     {
       close(fd[i]);
     }
-  close(priv->apireq_infd);
   close(retry_fd);
 
+  remove(EVENT_PIPE);
   remove(EVENT_PIPE2);
-  sem_destroy(&priv->sync_sem);
   netdev_unregister(&priv->net_dev);
 
   daemon_debug_printf("daemon finished.\n");
@@ -2957,9 +2954,9 @@ int lte_daemon(int argc, FAR char *argv[])
 int32_t lte_daemon_init(lte_apn_setting_t *apn)
 {
   int ret;
-  int local_errno;
+  int apireq_fd;
 
-  if (false == g_daemonisrunnning)
+  if (!g_daemonisrunnning)
     {
       g_daemon = calloc(sizeof(struct daemon_s), 1);
       if (!g_daemon)
@@ -2975,76 +2972,62 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
           memcpy(&g_daemon->apn, apn, sizeof(lte_apn_setting_t));
         }
 
+      /* Create a pipe to communicate with the daemon */
+
       ret = mkfifo(APIREQ_PIPE, 0666);
-      if (0 > ret)
+      if (ret < 0)
         {
-          local_errno = errno;
+          ret = -errno;
           free(g_daemon);
           g_daemon = NULL;
-          daemon_error_printf("mkfifo failed = %d\n", errno);
-          return -local_errno;
+
+          daemon_error_printf("mkfifo(%s) failed = %d\n", APIREQ_PIPE, -ret);
+          return ret;
         }
 
-      g_daemon->apireq_outfd = open(APIREQ_PIPE, (O_WRONLY | O_CREAT));
-      if (0 > g_daemon->apireq_outfd)
+      /* Open a pipe to communicate with the daemon */
+
+      apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+      if (apireq_fd < 0)
         {
-          local_errno = errno;
+          ret = -errno;
           remove(APIREQ_PIPE);
           free(g_daemon);
           g_daemon = NULL;
-          daemon_error_printf("pipe open failed = %d\n", errno);
-          return -local_errno;
-        }
 
-      g_daemon->apireq_infd = open(APIREQ_PIPE, (O_RDONLY | O_CREAT));
-      if (0 > g_daemon->apireq_infd)
-        {
-          local_errno = errno;
-          close(g_daemon->apireq_outfd);
-          remove(APIREQ_PIPE);
-          free(g_daemon);
-          g_daemon = NULL;
-          daemon_error_printf("pipe open failed = %d\n", errno);
-          return -local_errno;
+          daemon_error_printf("pipe open failed = %d\n", -ret);
+          return ret;
         }
-      daemon_debug_printf("open apireq pipe apireq_outfd: %d\n",
-                          g_daemon->apireq_outfd);
-      daemon_debug_printf("open apireq pipe apireq_infd: %d\n",
-                          g_daemon->apireq_infd);
-
 
       ret = sem_init(&g_daemon->sync_sem, 0, 0);
-      if (0 > ret)
-        {
-          local_errno = errno;
-          close(g_daemon->apireq_outfd);
-          close(g_daemon->apireq_infd);
-          remove(APIREQ_PIPE);
-          free(g_daemon);
-          g_daemon = NULL;
-          daemon_error_printf("semaphore init fail %d\n", errno);
-          return -local_errno;
-        }
+      ASSERT(ret >= 0);
 
       g_daemonisrunnning = true;
-      g_daemon->pid = task_create("lte_daemon", CONFIG_LTE_DAEMON_TASK_PRIORITY,
-                                  4096, lte_daemon, NULL);
-      if (0 > g_daemon->pid)
+      g_daemon->pid = task_create("lte_daemon",
+                                  CONFIG_LTE_DAEMON_TASK_PRIORITY,
+                                  DAEMON_TASK_STACKSIZE, lte_daemon, NULL);
+      if (g_daemon->pid < 0)
         {
-          local_errno = errno;
-          close(g_daemon->apireq_outfd);
-          close(g_daemon->apireq_infd);
+          ret = -errno;
+          close(apireq_fd);
           remove(APIREQ_PIPE);
           g_daemonisrunnning = false;
           sem_destroy(&g_daemon->sync_sem);
           free(g_daemon);
           g_daemon = NULL;
-          return -local_errno;
+
+          daemon_error_printf("lte_daemon create task failed = %d\n", -ret);
+          return ret;
         }
+
+      /* Wait for the daemon task to run */
+
       sem_wait(&g_daemon->sync_sem);
+      close(apireq_fd);
     }
   else
     {
+      daemon_error_printf("lte_daemon is running\n");
       return -EALREADY;
     }
 
@@ -3058,25 +3041,46 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
 int32_t lte_daemon_power_on(void)
 {
   int ret;
+  int apireq_fd;
   int daemon_cmd_id = DAEMONAPI_REQUEST_POWER_ON;
 
   if (g_daemonisrunnning)
     {
-      ret = write(g_daemon->apireq_outfd, &daemon_cmd_id,
-                  sizeof(daemon_cmd_id));
-      if (0 > ret)
+      /* Open a pipe to communicate with the daemon */
+
+      apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+      if (apireq_fd < 0)
         {
-          daemon_error_printf("%s write failed: %d\n", __func__, errno);
-          return -errno;
+          ret = -errno;
+
+          daemon_error_printf("pipe open failed = %d\n", -ret);
+          return ret;
         }
+
+      /* Write request to poweron */
+
+      ret = write(apireq_fd, &daemon_cmd_id, sizeof(daemon_cmd_id));
+      if (ret < 0)
+        {
+          ret = -errno;
+          close(apireq_fd);
+
+          daemon_error_printf("write() failed: %d\n", -ret);
+          return ret;
+        }
+
+      /* Wait for the request to complete. */
+
       sem_wait(&g_daemon->sync_sem);
       ret = g_altcomresult;
-      daemon_debug_printf("lte_daemon_power_on() =  %d\n", ret);
+      close(apireq_fd);
+
+      daemon_debug_printf("lte_daemon_power_on() = %d\n", ret);
     }
   else
     {
       daemon_error_printf("lte_daemon is not running\n");
-      ret = -EOPNOTSUPP;
+      return -ENETDOWN;
     }
 
   return ret;
@@ -3095,13 +3099,14 @@ int32_t lte_daemon_set_cb(restart_report_cb_t restart_callback)
       return -EINVAL;
     }
 
-  if (g_daemon == NULL)
-    {
-      return -EOPNOTSUPP;
-    }
-  else if (g_daemon->pid != -1)
+  if (g_daemonisrunnning)
     {
       g_daemon->user_restart_cb = restart_callback;
+    }
+  else
+    {
+      daemon_error_printf("lte_daemon is not running\n");
+      return -ENETDOWN;
     }
 
   return 0;
@@ -3115,33 +3120,54 @@ int32_t lte_daemon_fin(void)
 {
   int ret;
   int rc;
+  int apireq_fd;
+  int daemon_cmd_id = DAEMONAPI_REQUEST_FIN;
 
   if (g_daemonisrunnning)
     {
-      g_daemonisrunnning = false;
-      ret = socket(AF_INET, SOCK_STREAM, 0);
-      if (ret >= 0)
+      /* Open a pipe to communicate with the daemon */
+
+      apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+      if (apireq_fd < 0)
         {
-          close(ret);
+          ret = -errno;
+
+          daemon_error_printf("open(%s) failed: %d\n", APIREQ_PIPE, -ret);
+          return ret;
         }
+
+      /* Write request to terminate the daemon */
+
+      ret = write(apireq_fd, &daemon_cmd_id, sizeof(daemon_cmd_id));
+      if (ret < 0)
+        {
+          ret = -errno;
+          close(apireq_fd);
+
+          daemon_error_printf("write() failed: %d\n", -ret);
+          return ret;
+        }
+
+      /* Wait for the daemon task to terminate */
 
       ret = waitpid(g_daemon->pid, &rc, 0);
       if (0 > ret)
         {
-          if (errno != ECHILD)
-            {
-              daemon_error_printf("%s waitpid failed: %d\n", __func__,
-                                  -errno);
-              return -errno;
-            }
-          ret = 0;
-        }
-      close(g_daemon->apireq_infd);
-      close(g_daemon->apireq_outfd);
+          ret = -errno;
 
-      remove(EVENT_PIPE);
+          if (ret != -ECHILD)
+            {
+              close(apireq_fd);
+
+              daemon_error_printf("waitpid failed: %d\n", -ret);
+              return ret;
+            }
+        }
+
+      close(apireq_fd);
       remove(APIREQ_PIPE);
       g_daemon->pid = -1;
+      sem_destroy(&g_daemon->sync_sem);
 
       if (g_daemon)
         {
@@ -3152,8 +3178,8 @@ int32_t lte_daemon_fin(void)
     }
   else
     {
-      ret = -EALREADY;
-      daemon_error_printf("lte_daemon_fin() failed =  %d\n", ret);
+      daemon_error_printf("lte_daemon is running\n");
+      return -EALREADY;
     }
 
   return ret;
