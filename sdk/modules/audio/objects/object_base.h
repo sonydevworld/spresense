@@ -45,6 +45,7 @@
 #include "memutils/message/Message.h"
 #include "memutils/memory_manager/MemHandle.h"
 #include "memutils/s_stl/queue.h"
+#include "audio/audio_object_common_api.h"
 #include "audio/audio_message_types.h"
 #include "audio_state.h"
 
