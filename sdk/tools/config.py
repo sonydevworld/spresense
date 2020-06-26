@@ -42,6 +42,8 @@ import glob
 import shutil
 import re
 
+import eula
+
 MODE_MENUCONFIG = "menuconfig"
 MODE_QCONFIG = "qconfig"
 MODE_GCONFIG = "gconfig"
@@ -412,6 +414,9 @@ if __name__ == "__main__":
             dest.apply(c)
 
         dest.saveas(os.path.join(topdir, '.config'))
+
+        # Check loader version
+        eula.EULAhander().check()
 
         ret = do_olddefconfig()
         if ret != 0:
