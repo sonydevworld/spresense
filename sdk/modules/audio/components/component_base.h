@@ -46,6 +46,7 @@
 #include "apus/dsp_audio_version.h"
 #include "wien2_internal_packet.h"
 
+using namespace MemMgrLite;
 __WIEN2_BEGIN_NAMESPACE
 
 typedef bool (*ComponentCallback)(ComponentCbParam*, void*);
@@ -72,6 +73,13 @@ class ComponentBase
 {
 public:
   ComponentBase() {}
+
+  ComponentBase(PoolId pool_id, MsgQueId msgq_id):
+    m_pool_id(pool_id),
+    m_msgq_id(msgq_id)
+  {}
+
+
   virtual ~ComponentBase() {}
 
   virtual uint32_t init(const InitComponentParam& param) {F_ASSERT(0);}
@@ -89,7 +97,12 @@ public:
 
   bool dsp_boot_check(MsgQueId dsp_dtq, uint32_t *dsp_inf);
 
+  MsgQueId get_msgq_id(void) { return m_msgq_id; };
+
 protected:
+
+  PoolId   m_pool_id;
+  MsgQueId m_msgq_id;
 
   template<typename T>
   uint32_t dsp_init_check(MsgQueId dsp_dtq, T *internal)
