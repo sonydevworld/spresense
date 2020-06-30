@@ -42,7 +42,7 @@ import glob
 import shutil
 import re
 
-import eula
+import bootloader
 
 MODE_MENUCONFIG = "menuconfig"
 MODE_QCONFIG = "qconfig"
@@ -415,9 +415,6 @@ if __name__ == "__main__":
 
         dest.saveas(os.path.join(topdir, '.config'))
 
-        # Check loader version
-        eula.EULAhander().check()
-
         ret = do_olddefconfig()
         if ret != 0:
             sys.exit(ret)
@@ -430,3 +427,7 @@ if __name__ == "__main__":
     if menumode == None and len(opts.configname) == 0:
         parser.print_usage()
         sys.exit(9)
+
+    # Since every developer use this script, to notice a necessity of bootloader update,
+    # check the saved bootloader version and if necessary, show warning message.
+    bootloader.BootloaderVersion().checkBootloaderVersion()
