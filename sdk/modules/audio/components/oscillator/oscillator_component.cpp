@@ -45,7 +45,9 @@
 #include "apus/dsp_audio_version.h"
 #include "wien2_internal_packet.h"
 
-#define DBG_MODULE DBG_MODULE_AS
+#include "apus/apu_cmd.h"
+
+#define OSCILLATOR_CMP_DBG printf
 
 __WIEN2_BEGIN_NAMESPACE
 
@@ -62,7 +64,7 @@ void osc_dsp_done_callback(void *p_response, void *p_instance)
       case Apu::CommonMode:
         if (p_param->event_type == Apu::BootEvent)
           {
-            err_t er = MsgLib::send<uint32_t>(p_inst->get_apu_mid(),
+            err_t er = MsgLib::send<uint32_t>(p_inst->get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_ISR_APU0,
                                               0,
@@ -88,8 +90,8 @@ void osc_dsp_done_callback(void *p_response, void *p_instance)
 /* ------------------------------------------------------------------------ *
  * Class Methods                                                            *
  * ------------------------------------------------------------------------ */
-uint32_t OscillatorComponent::activate(MsgQueId    apu_dtq,
-                                       PoolId      apu_pool_id,
+uint32_t OscillatorComponent::activate(MsgQueId    msgq_id,
+                                       PoolId      pool_id,
                                        const char *path,
                                        uint32_t   *dsp_inf)
 {
@@ -97,8 +99,8 @@ uint32_t OscillatorComponent::activate(MsgQueId    apu_dtq,
 
   /* Setting id */
 
-  m_apu_dtq     = apu_dtq;
-  m_apu_pool_id = apu_pool_id;
+  m_msgq_id = msgq_id;
+  m_req_que.set_pool_id(pool_id);
 
   /* Load DSP binary */
 
@@ -117,7 +119,7 @@ uint32_t OscillatorComponent::activate(MsgQueId    apu_dtq,
 
   /* wait for DSP boot up... */
 
-  dsp_boot_check(m_apu_dtq, dsp_inf);
+  dsp_boot_check(m_msgq_id, dsp_inf);
 
   /* DSP version check */
 
@@ -177,16 +179,11 @@ uint32_t OscillatorComponent::init(const InitOscParam& param, uint32_t *dsp_inf)
   m_callback = param.callback;
   m_instance = param.instance;
 
-  Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
 
+  Apu::Wien2ApuCmd* p_apu_cmd = m_req_que.alloc();
   if (p_apu_cmd == NULL)
     {
-      return AS_ECODE_OSCILLATOR_LIB_INITIALIZE_ERROR;
-    }
-
-  if (m_apu_dtq == 0)
-    {
-      return AS_ECODE_OBJECT_NOT_AVAILABLE_ERROR;
+      return false;
     }
 
   memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
@@ -201,12 +198,14 @@ uint32_t OscillatorComponent::init(const InitOscParam& param, uint32_t *dsp_inf)
   /* Wait init completion and receive reply information */
 
   Apu::InternalResult internal_result;
-  uint32_t rst = dsp_init_check<Apu::InternalResult>(m_apu_dtq, &internal_result);
+  uint32_t rst = dsp_init_check<Apu::InternalResult>(m_msgq_id, &internal_result);
   *dsp_inf = internal_result.value;
 
   /* Free message que */
-
-  done();
+  if (!m_req_que.free())
+    {
+      OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
+    }
 
   return rst;
 }
@@ -222,8 +221,7 @@ bool OscillatorComponent::exec(const ExecOscParam& param)
        return false;
     }
 
-  Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
-
+  Apu::Wien2ApuCmd* p_apu_cmd = m_req_que.alloc();
   if (p_apu_cmd == NULL)
     {
       return false;
@@ -244,8 +242,7 @@ bool OscillatorComponent::set(const SetOscParam& param)
 {
   /* You should check date */
 
-  Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
-
+  Apu::Wien2ApuCmd* p_apu_cmd = m_req_que.alloc();
   if (p_apu_cmd == NULL)
     {
       return false;
@@ -269,9 +266,7 @@ bool OscillatorComponent::flush()
    */
 
   /* Flush */
-
-  Apu::Wien2ApuCmd* p_apu_cmd = static_cast<Apu::Wien2ApuCmd*>(getApuCmdBuf());
-
+  Apu::Wien2ApuCmd* p_apu_cmd = m_req_que.alloc();
   if (p_apu_cmd == NULL)
     {
       return false;
@@ -303,7 +298,7 @@ bool OscillatorComponent::recv(void *p_response)
 
         /* Notify init completion to myself */
 
-        dsp_init_complete<Apu::InternalResult>(m_apu_dtq,
+        dsp_init_complete<Apu::InternalResult>(m_msgq_id,
                           packet->result.exec_result,
                          &packet->result.internal_result[0]);
         return true;
@@ -324,46 +319,12 @@ bool OscillatorComponent::recv(void *p_response)
   comple.result     = packet->result.exec_result;
 
   /* Free message que */
-
-  done();
-
-  return m_callback(&comple, m_instance);
-}
-
-/* ------------------------------------------------------------------------ */
-bool OscillatorComponent::done(void)
-{
-  if (!m_apu_cmd_mh_que.pop())
+  if (!m_req_que.free())
     {
       OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
-      return false;
-    }
-  return true;
-}
-
-/* ------------------------------------------------------------------------ */
-void *OscillatorComponent::getApuCmdBuf()
-{
-  if (m_apu_pool_id == NullPoolId)
-    {
-      return NULL;
     }
 
-  MemMgrLite::MemHandle mh;
-
-  if (mh.allocSeg(m_apu_pool_id, sizeof(Apu::Wien2ApuCmd)) != ERR_OK)
-    {
-      OSCILLATOR_CMP_WARN(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-      return NULL;
-    }
-
-  if (!m_apu_cmd_mh_que.push(mh))
-    {
-      OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-      return NULL;
-    }
-
-  return mh.getPa();
+  return m_callback(&comple, m_instance);
 }
 
 /* ------------------------------------------------------------------------ */

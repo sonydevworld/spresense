@@ -45,6 +45,7 @@
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
 #include "components/component_base.h"
+#include "dsp_req_que.h"
 
 using namespace MemMgrLite;
 
@@ -83,13 +84,12 @@ struct InitOscParam : Apu::ApuInitOscCmd
 class OscillatorComponent : public ComponentBase
 {
 public:
-  OscillatorComponent(MsgQueId apu_dtq, PoolId apu_pool_id)
-  {
-    m_callback    = NULL;
-    m_apu_dtq     = apu_dtq;
-    m_apu_pool_id = apu_pool_id;
-    m_dsp_handler = NULL;
-  }
+  OscillatorComponent(PoolId pool_id, MsgQueId msgq_id):
+    ComponentBase(pool_id,msgq_id),
+    m_callback(NULL),
+    m_dsp_handler(NULL)
+  {}
+
   ~OscillatorComponent() {}
 
   uint32_t activate(MsgQueId apu_dtq, PoolId apu_pool_id, const char *path, uint32_t *dsp_inf);
@@ -101,19 +101,17 @@ public:
   bool     send_apu(Apu::Wien2ApuCmd*);
   bool     recv(void *p_param);
   bool     done(void);
-  MsgQueId get_apu_mid(void) { return m_apu_dtq; };
 
 private:
-  typedef s_std::Queue<MemMgrLite::MemHandle, APU_COMMAND_QUEUE_SIZE> ApuCmdMhQue;
 
-  ApuCmdMhQue     m_apu_cmd_mh_que;
-  MsgQueId        m_apu_dtq;
-  PoolId          m_apu_pool_id;
+  #define REQ_QUEUE_SIZE 7
+
+  DspReqQue<Apu::Wien2ApuCmd, REQ_QUEUE_SIZE> m_req_que;
+
   OscCompCallback m_callback;
   void           *m_instance;
   void           *m_dsp_handler;
 
-  void           *getApuCmdBuf();
 };
 
 __WIEN2_END_NAMESPACE

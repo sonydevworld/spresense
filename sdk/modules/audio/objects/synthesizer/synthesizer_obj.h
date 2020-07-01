@@ -132,13 +132,13 @@ private:
     : ObjectBase()
     , m_bit_length(AS_BITLENGTH_16)
     , m_stock_event(AsSynthesizerEventNum)
-    , m_oscillator(0, NullPoolId) {}
+    , m_oscillator(NullPoolId, 0) {}
 
   SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
     : ObjectBase(AS_MODULE_ID_SYNTHESIZER_OBJ, msgq_id,pool_id)
     , m_bit_length(AS_BITLENGTH_16)
     , m_stock_event(AsSynthesizerEventNum)
-    , m_oscillator(0, pool_id.cmp)
+    , m_oscillator(pool_id.cmp, 0)
   {
     memset(m_dsp_path, 0, AS_AUDIO_DSP_PATH_LEN);
   }

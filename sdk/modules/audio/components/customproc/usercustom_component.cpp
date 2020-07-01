@@ -320,7 +320,12 @@ bool UserCustomComponent::recv_done(ComponentCmpltParam *cmplt)
 
   cmplt->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
-  return m_req_que.free();
+  if (!m_req_que.free())
+    {
+      CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
+      return false;
+    }
+  return true;
 }
 
 /*--------------------------------------------------------------------*/
@@ -338,7 +343,12 @@ bool UserCustomComponent::recv_done(ComponentInformParam *info)
 
   info->result = (packet->result.result_code == CustomprocCommand::ExecOk) ? true : false;
 
-  return m_req_que.free();
+  if (!m_req_que.free())
+    {
+      CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
+      return false;
+    }
+  return true;
 }
 
 /*--------------------------------------------------------------------*/
