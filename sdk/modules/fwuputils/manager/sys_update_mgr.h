@@ -70,7 +70,7 @@ typedef void * UM_Handle;
 /**
  * Initialize Update Manager
  *
- * @param[in] need_recovery: true to need recovery from check point. see UM_CheckPoint().
+ * @param[in] need_recovery: true to need recovery from check point. see fw_um_checkpoint().
  *
  * @return 0 on success, otherwise error
  * @retval -ENOMEM: memory allocation failure
@@ -83,7 +83,7 @@ typedef void * UM_Handle;
  * @par Reentrant
  *      No
  */
-int UM_Init(bool need_recovery);
+int fw_um_init(bool need_recovery);
 
 /**
  * Create update manager object for scheduling firmware will be update.
@@ -101,7 +101,7 @@ int UM_Init(bool need_recovery);
  * @par Reentrant
  *      Yes
  */
-UM_Handle UM_Open(const char *keyfile, uint32_t filesize, uint32_t type);
+UM_Handle fw_um_open(const char *keyfile, uint32_t filesize, uint32_t type);
 
 /**
  * Commit firmware data.
@@ -123,7 +123,7 @@ UM_Handle UM_Open(const char *keyfile, uint32_t filesize, uint32_t type);
  * @par Reentrant
  *      Yes
  */
-int UM_Commit(UM_Handle handle, const void *data, uint32_t size);
+int fw_um_commit(UM_Handle handle, const void *data, uint32_t size);
 
 /**
  * Close and delete update manager object.
@@ -146,13 +146,13 @@ int UM_Commit(UM_Handle handle, const void *data, uint32_t size);
  * @par Reentrant
  *      Yes
  */
-int UM_Close(UM_Handle handle);
+int fw_um_close(UM_Handle handle);
 
 /**
  * Create recovery check point.
  *
  * User can use this feature to stop downloading (also shutdown).
- * Pass true to need_recovery on UM_Init() to restart downloading,
+ * Pass true to need_recovery on fw_um_init() to restart downloading,
  * all of closed objects are scheduled again until this check point.
  *
  * Check point is always overwritten.
@@ -167,7 +167,7 @@ int UM_Close(UM_Handle handle);
  * @par Reentrant
  *      Yes
  */
-int UM_CheckPoint(void);
+int fw_um_checkpoint(void);
 
 /**
  * Reboot and into update sequence.
@@ -178,7 +178,7 @@ int UM_CheckPoint(void);
  * @attention This API force reboot immediately. User make sure to ready to
  * shutting down. All of updating firmwares are must be closed.
  */
-int UM_DoUpdateSequence(void);
+int fw_um_doupdatesequence(void);
 
 /**
  * Abort update manager
@@ -188,7 +188,7 @@ int UM_DoUpdateSequence(void);
  * User can be use this API to pause/resume or restart download sequence without
  * heap dirty.
  */
-void UM_Abort(void);
+void fw_um_abort(void);
 
 /** @} */
 
