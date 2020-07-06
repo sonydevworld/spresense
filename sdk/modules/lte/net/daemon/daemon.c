@@ -148,7 +148,6 @@ struct daemon_s
   int                  session_id;
   int                  poweron_result;
   sem_t                sync_sem;
-  int                  pid;
   lte_apn_setting_t    apn;
   struct usock_s       sockets[SOCKET_COUNT];
   struct net_driver_s  net_dev;
@@ -2929,6 +2928,7 @@ static int main_loop(FAR struct daemon_s *priv)
   remove(EVENT_PIPE2);
   netdev_unregister(&priv->net_dev);
 
+  sem_post(&g_daemon->sync_sem);
   daemon_debug_printf("daemon finished.\n");
 
   return ret;
@@ -2958,6 +2958,7 @@ int lte_daemon(int argc, FAR char *argv[])
 int32_t lte_daemon_init(lte_apn_setting_t *apn)
 {
   int ret;
+  int pid;
   int apireq_fd;
 
   if (!g_daemonisrunnning)
@@ -2968,8 +2969,8 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
           daemon_error_printf("daemon allocate failed.\n");
           return -ENOBUFS;
         }
+
       g_daemon->selectid = -1;
-      g_daemon->pid = -1;
 
       if (apn)
         {
@@ -3007,10 +3008,9 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
       ASSERT(ret >= 0);
 
       g_daemonisrunnning = true;
-      g_daemon->pid = task_create("lte_daemon",
-                                  CONFIG_LTE_DAEMON_TASK_PRIORITY,
-                                  DAEMON_TASK_STACKSIZE, lte_daemon, NULL);
-      if (g_daemon->pid < 0)
+      pid = task_create("lte_daemon", CONFIG_LTE_DAEMON_TASK_PRIORITY,
+                        DAEMON_TASK_STACKSIZE, lte_daemon, NULL);
+      if (pid < 0)
         {
           ret = -errno;
           close(apireq_fd);
@@ -3124,7 +3124,6 @@ int32_t lte_daemon_set_cb(restart_report_cb_t restart_callback)
 int32_t lte_daemon_fin(void)
 {
   int ret;
-  int rc;
   int apireq_fd;
   int daemon_cmd_id = DAEMONAPI_REQUEST_FIN;
 
@@ -3155,23 +3154,10 @@ int32_t lte_daemon_fin(void)
 
       /* Wait for the daemon task to terminate */
 
-      ret = waitpid(g_daemon->pid, &rc, 0);
-      if (0 > ret)
-        {
-          ret = -errno;
-
-          if (ret != -ECHILD)
-            {
-              close(apireq_fd);
-
-              daemon_error_printf("waitpid failed: %d\n", -ret);
-              return ret;
-            }
-        }
+      sem_wait(&g_daemon->sync_sem);
 
       close(apireq_fd);
       remove(APIREQ_PIPE);
-      g_daemon->pid = -1;
       sem_destroy(&g_daemon->sync_sem);
 
       if (g_daemon)
