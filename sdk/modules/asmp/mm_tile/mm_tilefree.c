@@ -133,6 +133,13 @@ void tile_free(FAR void *memory, size_t size)
   FAR struct tile_s *priv = g_tileinfo;
   size_t             tsize;
 
+  if (!priv)
+    {
+      /* If the tile heap structure is none, do nothing */
+
+      return;
+    }
+
   tile_common_free(priv, memory, size);
 
   /* Power off free tiles */

@@ -79,7 +79,12 @@ static FAR void *tile_common_alloc(FAR struct tile_s *priv, size_t size,
   unsigned int ntiles;
   unsigned int step;
 
-  DEBUGASSERT(priv);
+  if (!priv)
+    {
+      /* If the tile heap structure is none, memory cannot be allocated */
+
+      return NULL;
+    }
 
   if (size == 0)
     {

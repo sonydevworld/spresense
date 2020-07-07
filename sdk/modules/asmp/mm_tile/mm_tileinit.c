@@ -94,12 +94,18 @@ tile_common_initialize(FAR void *heapstart, size_t heapsize, uint8_t log2tile)
    * than or equal to the alignment size.
    */
 
-  DEBUGASSERT(heapstart && heapsize > 0 &&
+  DEBUGASSERT(heapstart && heapsize >= 0 &&
               log2tile > 0 && log2tile < 32);
 
   if (log2tile != 16 && log2tile != 17)
     {
       terr("Tile allocator supported block size is 64KB or 128KB .\n");
+      return NULL;
+    }
+
+  if (heapsize == 0)
+    {
+      terr("Tile heap area is empty.\n");
       return NULL;
     }
 
