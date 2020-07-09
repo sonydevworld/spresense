@@ -358,7 +358,7 @@ void RecognizerObject::stopOnActive(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.output, VAD_IN_DATA_SIZE))
+  if (ERR_OK != flush.output.allocSeg(m_pool_id.output, VAD_IN_DATA_SIZE))
     {
       reply(AsRecognizerEventStop, msg->getType(), AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
@@ -394,8 +394,8 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
   InitComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = initparam.packet_addr;
-  param.packet.size = initparam.packet_size;
+  param.custom.addr = initparam.packet_addr;
+  param.custom.size = initparam.packet_size;
 
   /* Init recognition proc (Copy packet to MH internally, and wait return from DSP) */
 
@@ -427,8 +427,8 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
   SetComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = setparam.packet_addr;
-  param.packet.size = setparam.packet_size;
+  param.custom.addr = setparam.packet_addr;
+  param.custom.size = setparam.packet_size;
 
   /* Set recognition proc (Copy packet to MH internally.) */
 
@@ -456,7 +456,7 @@ void RecognizerObject::execOnActive(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != exec.output_mh.allocSeg(m_pool_id.output, exec.input.size))
+  if (ERR_OK != exec.output.allocSeg(m_pool_id.output, exec.input.size))
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return;

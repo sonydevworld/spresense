@@ -44,7 +44,7 @@
 #include "memutils/message/Message.h"
 
 #include "apus/dsp_audio_version.h"
-#include "wien2_internal_packet.h"
+#include "audio_component_api.h"
 
 using namespace MemMgrLite;
 __WIEN2_BEGIN_NAMESPACE

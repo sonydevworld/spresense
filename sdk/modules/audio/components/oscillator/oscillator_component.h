@@ -53,34 +53,6 @@ __WIEN2_BEGIN_NAMESPACE
 
 typedef uint32_t OscllicatorComponentHandler;
 
-struct ExecOscParam : Apu::ApuExecOscCmd
-{
-};
-
-struct SetOscParam : Apu::ApuSetOscCmd
-{
-};
-
-struct OscCmpltParam
-{
-  uint32_t event_type;
-  bool     result;
-
-  union
-  {
-    ExecOscParam exec_osc_param;
-    SetOscParam  set_osc_param;
-  };
-};
-
-typedef bool (*OscCompCallback)(OscCmpltParam*, void*);
-
-struct InitOscParam : Apu::ApuInitOscCmd
-{
-  OscCompCallback  callback;
-  void            *instance;
-};
-
 class OscillatorComponent : public ComponentBase
 {
 public:

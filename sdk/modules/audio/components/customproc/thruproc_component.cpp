@@ -68,7 +68,7 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
 {
   AsPcmDataParam fls = { 0 };
 
-  fls.mh       = param.output_mh;
+  fls.mh       = param.output;
   fls.is_valid = true;
 
   if (m_req_que.alloc(fls) == NULL)
