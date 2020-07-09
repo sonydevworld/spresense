@@ -147,6 +147,7 @@ struct daemon_s
   int                  event_outfd;
   int                  session_id;
   int                  poweron_result;
+  bool                 poweron_inprogress;
   sem_t                sync_sem;
   lte_apn_setting_t    apn;
   struct usock_s       sockets[SOCKET_COUNT];
@@ -2701,7 +2702,16 @@ static int daemon_api_request(int read_fd, struct daemon_s* priv)
         priv->poweron_result = altcom_power_on();
         if (priv->poweron_result < 0)
           {
-            sem_post(&g_daemon->sync_sem);
+            priv->poweron_inprogress = false;
+            sem_post(&priv->sync_sem);
+          }
+        else
+          {
+            /* Here, the inprogress flag is set on and the semaphore is
+             * posted when the DAEMON API_REQUEST_RESTART event is received.
+             */
+
+            priv->poweron_inprogress = true;
           }
 
         break;
@@ -2758,8 +2768,13 @@ static void daemon_restart_cb(uint32_t reason)
 #endif
     }
 
-  if (reason == LTE_RESTART_USER_INITIATED)
+  /* Post the semaphore here.
+   * Only when inprogress flag is on at DAEMONAPI_REQUEST_POWER_ON.
+   */
+
+  if (g_daemon->poweron_inprogress)
     {
+      g_daemon->poweron_inprogress = false;
       sem_post(&g_daemon->sync_sem);
     }
 
