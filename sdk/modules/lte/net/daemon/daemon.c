@@ -88,9 +88,11 @@
 #define EVENT_PIPE2 "/tmp/lte_event_pipe2"
 #define APIREQ_PIPE "/tmp/lte_api_req_pipe"
 
-#define DAEMONAPI_REQUEST_POWER_ON  128
-#define DAEMONAPI_REQUEST_POWER_OFF 129
-#define DAEMONAPI_REQUEST_FIN       130
+#define DAEMONAPI_REQUEST_INIT      1
+#define DAEMONAPI_REQUEST_FIN       2
+#define DAEMONAPI_REQUEST_POWER_ON  3
+#define DAEMONAPI_REQUEST_POWER_OFF 4
+#define DAEMONAPI_REQUEST_RESTART   5
 
 #ifndef CONFIG_LTE_DAEMON_TASK_PRIORITY
 #  define CONFIG_LTE_DAEMON_TASK_PRIORITY (110)
@@ -166,6 +168,17 @@ struct setsockopt_param
 {
   int16_t level;
   int16_t option;
+};
+
+struct daemon_req_common_s
+{
+  int reqid;
+};
+
+struct daemon_req_restart_s
+{
+  struct daemon_req_common_s head;
+  uint32_t reason;
 };
 
 /****************************************************************************
@@ -2683,21 +2696,39 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
  * Name: daemon_api_request
  ****************************************************************************/
 
-static int daemon_api_request(int read_fd, struct daemon_s* priv)
+static int daemon_api_request(int read_fd, int usock_fd,
+                              FAR struct daemon_s *priv)
 {
   int ret = 0;
-  int daemon_api_cmd;
+  struct daemon_req_common_s req;
+  struct daemon_req_restart_s restart;
+  size_t rsize;
 
-  ret = read(read_fd, &daemon_api_cmd, sizeof(daemon_api_cmd));
-  if (0 > ret || ret != sizeof(daemon_api_cmd))
+  ret = read(read_fd, &req, sizeof(req));
+  if (ret < 0)
     {
-      return -errno;
+      ret = -errno;
+      daemon_error_printf("read() failed: %d\n", errno);
+
+      return ret;
+    }
+  else if (ret != sizeof(req))
+    {
+      daemon_error_printf("unexpected read size: %d, expect size: %d\n",
+                          ret, sizeof(req));
+      ret = -ENOSPC;
+
+      return ret;
     }
 
-  daemon_print_recvevt("receive daemonapi_request %d\n", daemon_api_cmd);
+  daemon_print_recvevt("receive daemon request: %d\n", req.reqid);
 
-  switch (daemon_api_cmd)
+  switch (req.reqid)
     {
+      case DAEMONAPI_REQUEST_INIT:
+        sem_post(&priv->sync_sem);
+        break;
+
       case DAEMONAPI_REQUEST_POWER_ON:
         priv->poweron_result = altcom_power_on();
         if (priv->poweron_result < 0)
@@ -2715,21 +2746,81 @@ static int daemon_api_request(int read_fd, struct daemon_s* priv)
           }
 
         break;
+
       case DAEMONAPI_REQUEST_POWER_OFF:
         ret = altcom_power_off();
         break;
+
       case DAEMONAPI_REQUEST_FIN:
         g_daemonisrunnning = false;
         break;
+
+      case DAEMONAPI_REQUEST_RESTART:
+        rsize = sizeof(restart) - sizeof(struct daemon_req_common_s);
+
+        /* Read restart request */
+
+      ret = read(read_fd, &restart.reason, rsize);
+      if (ret < 0)
+        {
+          ret = -errno;
+          daemon_error_printf("read() failed: %d\n", errno);
+
+          return ret;
+        }
+      else if (ret != rsize)
+        {
+          daemon_error_printf("unexpected read size: %d, expect size: %d\n",
+                              ret, rsize);
+          ret = -ENOSPC;
+
+          return ret;
+        }
+
+        ret = daemon_socket_send_abort(priv, usock_fd);
+        if (ret < 0)
+          {
+            daemon_error_printf("daemon_socket_send_abort() failed: %d\n",
+                                ret);
+          }
+
+        if (priv->selectid != -1)
+          {
+            altcom_select_async_cancel(priv->selectid, false);
+            priv->selectid = -1;
+          }
+
+        priv->net_dev.d_flags = IFF_DOWN;
+#ifdef CONFIG_NET_IPv4
+        memset(&priv->net_dev.d_ipaddr, 0,
+               sizeof(priv->net_dev.d_ipaddr));
+#endif
+#ifdef CONFIG_NET_IPv6
+        memset(&priv->net_dev.d_ipv6addr, 0,
+               sizeof(priv->net_dev.d_ipv6addr));
+#endif
+
+        /* Post the semaphore here.
+         * Only when inprogress flag is on at DAEMONAPI_REQUEST_POWER_ON.
+         */
+
+        if (priv->poweron_inprogress)
+          {
+            priv->poweron_inprogress = false;
+            sem_post(&priv->sync_sem);
+          }
+
+        if (priv->user_restart_cb != NULL)
+          {
+            priv->user_restart_cb(restart.reason);
+          }
+
+        break;
+
       default:
-        daemon_error_printf("no match daemon_api_cmd\n");
+        daemon_error_printf("unexpected daemon request: %d\n", req.reqid);
         ret = -ENOTSUP;
         break;
-    }
-
-  if (0 > ret)
-    {
-      return -errno;
     }
 
   return ret;
@@ -2742,46 +2833,32 @@ static int daemon_api_request(int read_fd, struct daemon_s* priv)
 static void daemon_restart_cb(uint32_t reason)
 {
   int ret;
+  int apireq_fd;
+  struct daemon_req_restart_s req;
 
   daemon_debug_printf("daemon_restart_cb called reason by %d\n", reason);
 
-  if (reason == LTE_RESTART_MODEM_INITIATED)
+  apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+  if (apireq_fd < 0)
     {
-      ret = daemon_socket_send_abort(g_daemon, g_daemon->event_outfd);
-      if (0 > ret)
-        {
-          daemon_error_printf("daemon_socket_send_abort() ret = %d\n", ret);
-        }
-      if (g_daemon->selectid != -1)
-        {
-          altcom_select_async_cancel(g_daemon->selectid, false);
-          g_daemon->selectid = -1;
-        }
-      g_daemon->net_dev.d_flags = IFF_DOWN;
-#ifdef CONFIG_NET_IPv4
-      memset(&g_daemon->net_dev.d_ipaddr, 0,
-              sizeof(g_daemon->net_dev.d_ipaddr));
-#endif
-#ifdef CONFIG_NET_IPv6
-      memset(&g_daemon->net_dev.d_ipv6addr, 0,
-              sizeof(g_daemon->net_dev.d_ipv6addr));
-#endif
+      daemon_error_printf("open(%s) failed = %d\n", APIREQ_PIPE, errno);
+
+      return;
     }
 
-  /* Post the semaphore here.
-   * Only when inprogress flag is on at DAEMONAPI_REQUEST_POWER_ON.
-   */
+  /* Write event to restart */
 
-  if (g_daemon->poweron_inprogress)
+  memset(&req, 0, sizeof(req));
+  req.head.reqid = DAEMONAPI_REQUEST_RESTART;
+  req.reason = reason;
+
+  ret = write(apireq_fd, &req, sizeof(req));
+  if (ret < 0)
     {
-      g_daemon->poweron_inprogress = false;
-      sem_post(&g_daemon->sync_sem);
+      daemon_error_printf("write() failed: %d\n", errno);
     }
 
-  if (g_daemon->user_restart_cb != NULL)
-    {
-      g_daemon->user_restart_cb(reason);
-    }
+  close(apireq_fd);
 
   return;
 }
@@ -2846,8 +2923,6 @@ static int main_loop(FAR struct daemon_s *priv)
   ret = altcom_set_report_restart(daemon_restart_cb);
   ASSERT(ret >= 0);
 
-  sem_post(&priv->sync_sem);
-
   daemon_debug_printf("LTE daemon is starting !\n");
   while (g_daemonisrunnning)
     {
@@ -2883,7 +2958,7 @@ static int main_loop(FAR struct daemon_s *priv)
 
       if (fds[2].revents & POLLIN)
         {
-          ret = daemon_api_request(fd[2], priv);
+          ret = daemon_api_request(fd[2], fd[0], priv);
         }
 
       if (fds[3].revents & POLLIN)
@@ -2975,6 +3050,7 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
   int ret;
   int pid;
   int apireq_fd;
+  struct daemon_req_common_s req;
 
   if (!g_daemonisrunnning)
     {
@@ -3039,6 +3115,26 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
           return ret;
         }
 
+      /* Write request to initialize */
+
+      req.reqid = DAEMONAPI_REQUEST_INIT;
+
+      ret = write(apireq_fd, &req, sizeof(req));
+      if (ret < 0)
+        {
+          ret = -errno;
+          close(apireq_fd);
+          remove(APIREQ_PIPE);
+          g_daemonisrunnning = false;
+          sem_destroy(&g_daemon->sync_sem);
+          free(g_daemon);
+          g_daemon = NULL;
+          task_delete(pid);
+
+          daemon_error_printf("write() failed: %d\n", -ret);
+          return ret;
+        }
+
       /* Wait for the daemon task to run */
 
       sem_wait(&g_daemon->sync_sem);
@@ -3061,7 +3157,7 @@ int32_t lte_daemon_power_on(void)
 {
   int ret;
   int apireq_fd;
-  int daemon_cmd_id = DAEMONAPI_REQUEST_POWER_ON;
+  struct daemon_req_common_s req;
 
   if (g_daemonisrunnning)
     {
@@ -3078,7 +3174,9 @@ int32_t lte_daemon_power_on(void)
 
       /* Write request to poweron */
 
-      ret = write(apireq_fd, &daemon_cmd_id, sizeof(daemon_cmd_id));
+      req.reqid = DAEMONAPI_REQUEST_POWER_ON;
+
+      ret = write(apireq_fd, &req, sizeof(req));
       if (ret < 0)
         {
           ret = -errno;
@@ -3140,7 +3238,7 @@ int32_t lte_daemon_fin(void)
 {
   int ret;
   int apireq_fd;
-  int daemon_cmd_id = DAEMONAPI_REQUEST_FIN;
+  struct daemon_req_common_s req;
 
   if (g_daemonisrunnning)
     {
@@ -3157,7 +3255,9 @@ int32_t lte_daemon_fin(void)
 
       /* Write request to terminate the daemon */
 
-      ret = write(apireq_fd, &daemon_cmd_id, sizeof(daemon_cmd_id));
+      req.reqid = DAEMONAPI_REQUEST_FIN;
+
+      ret = write(apireq_fd, &req, sizeof(req));
       if (ret < 0)
         {
           ret = -errno;
