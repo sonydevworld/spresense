@@ -2469,14 +2469,13 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
 #endif
 
           ret = altcom_activate_pdn_sync(&priv->apn, &pdn_info);
-          if (0 > ret)
+          if (ret < 0)
             {
-              ret = altcom_errno();
-              ret = -ret;
               daemon_error_printf("lte_activate_pdn_sync() failed = %d\n",
                                   ret);
               goto send_resp;
             }
+
           priv->net_dev.d_flags = IFF_UP;
           priv->session_id = pdn_info.session_id;
           for (i = 0; i < pdn_info.ipaddr_num; i++)
