@@ -147,7 +147,6 @@ struct daemon_s
 {
   int                  selectid;
   int                  event_outfd;
-  int                  session_id;
   int                  poweron_result;
   bool                 poweron_inprogress;
   sem_t                sync_sem;
@@ -2468,16 +2467,32 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
           altcom_set_report_localtime(localtime_callback);
 #endif
 
+          ret = altcom_radio_on_sync();
+          if (ret < 0)
+            {
+              daemon_error_printf("altcom_radio_on_sync() failed = %d\n",
+                                  ret);
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+              altcom_set_report_localtime(NULL);
+#endif
+              goto send_resp;
+            }
+
           ret = altcom_activate_pdn_sync(&priv->apn, &pdn_info);
           if (ret < 0)
             {
               daemon_error_printf("lte_activate_pdn_sync() failed = %d\n",
                                   ret);
+
+              altcom_radio_off_sync();
+
+#ifdef CONFIG_LTE_DAEMON_SYNC_TIME
+              altcom_set_report_localtime(NULL);
+#endif
               goto send_resp;
             }
 
           priv->net_dev.d_flags = IFF_UP;
-          priv->session_id = pdn_info.session_id;
           for (i = 0; i < pdn_info.ipaddr_num; i++)
             {
 #ifdef CONFIG_NET_IPv4
@@ -2498,20 +2513,21 @@ static int ioctl_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
 #endif
             }
         }
+
       if (if_req.ifr_flags & IFF_DOWN)
         {
 #ifdef CONFIG_LTE_DAEMON_SYNC_TIME
           altcom_set_report_localtime(NULL);
 #endif
 
-          ret = altcom_deactivate_pdn_sync(priv->session_id);
-          if (0 > ret)
+          ret = altcom_radio_off_sync();
+          if (ret < 0)
             {
-              daemon_error_printf("lte_deactivate_pdn_sync() failed = %d\n",
+              daemon_error_printf("altcom_radio_off_sync() failed = %d\n",
                                   ret);
             }
+
           priv->net_dev.d_flags = IFF_DOWN;
-          priv->session_id = -1;
 #ifdef CONFIG_NET_IPv4
           memset(&priv->net_dev.d_ipaddr, 0,
                   sizeof(priv->net_dev.d_ipaddr));

@@ -176,13 +176,6 @@ int main(int argc, FAR char *argv[])
           printf("daemon_power_on() error. %d\n", ret);
           goto err_out;
         }
-
-      ret = altcom_radio_on_sync();
-      if (0 > ret)
-        {
-          printf("altcom_radio_on_sync() error. %d\n", ret);
-          goto err_out;
-        }
     }
 
     if (0 == strncmp(cmd, "stop", strlen(cmd)))
