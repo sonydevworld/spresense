@@ -54,9 +54,6 @@ class DspReqQue
 
 public:
 
-/*  DspReqQue(PoolId pool_id):
-    m_pool_id(pool_id) {}*/
-
   T* alloc(AsPcmDataParam input, MemHandle output)
   {
     DspReqData req;
@@ -128,19 +125,26 @@ private:
 
   T* pushqueue(DspReqData req)
   {
-    if (req.cmd.allocSeg(m_pool_id, sizeof(T)) != ERR_OK)
+    if(m_pool_id != NullPoolId)
       {
-        CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-        return NULL;
-      }
-
-    if (!m_req_que.push(req))
-      {
-        CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-        return NULL;
-      }
-
-  	return static_cast<T *>(req.cmd.getPa());
+        if (req.cmd.allocSeg(m_pool_id, sizeof(T)) != ERR_OK)
+          {
+            CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
+            return NULL;
+          }
+        if (!m_req_que.push(req))
+          {
+            CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+            return NULL;
+          }
+        return static_cast<T *>(req.cmd.getPa());
+    } else {
+      if (!m_req_que.push(req))
+        {
+          CUSTOM_CMP_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
+        }
+      return NULL;
+    }
   }
 
 };
