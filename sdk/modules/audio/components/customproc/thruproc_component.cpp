@@ -47,10 +47,11 @@ uint32_t ThruProcComponent::init(const InitComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::exec(const ExecComponentParam& param)
 {
-  m_req_que.alloc(param.input);
+  m_req_que.alloc(param.input, param.input.mh);
 
   ComponentCbParam cbpram;
   cbpram.event_type = ComponentExec;
+  cbpram.result     = true;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -69,6 +70,7 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
 
   ComponentCbParam cbpram;
   cbpram.event_type = ComponentFlush;
+  cbpram.result     = true;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -78,12 +80,10 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::set(const SetComponentParam& param)
 {
-  if (m_req_que.alloc() == NULL)
-    {
-      return false;
-    }
+  m_req_que.alloc();
 
   ComponentCbParam cbpram;
+  cbpram.result     = true;
   cbpram.event_type = ComponentSet;
 
   m_callback(&cbpram, m_p_requester);
