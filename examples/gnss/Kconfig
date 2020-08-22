@@ -32,10 +32,10 @@ choice
 	default EXAMPLES_GNSS_USE_POLL
 
 config EXAMPLES_GNSS_USE_POLL
-	bool "Polling notifycation"
+	bool "Polling notification"
 
 config EXAMPLES_GNSS_USE_SIGNAL
-	bool "Signal notifycation"
+	bool "Signal notification"
 
 endchoice # Event notification
 
