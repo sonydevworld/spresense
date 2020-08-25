@@ -187,6 +187,7 @@ clean: subdir_clean depend_clean
 	$(call DELFILE, System.map)
 	$(call DELFILE, nuttx.map)
 	$(call DELFILE, .built)
+	$(call DELFILE, Kconfig)
 PHONY += clean
 
 subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
