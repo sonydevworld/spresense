@@ -201,7 +201,7 @@ static int run_worker(const char *filename)
   if (ret < 0)
     {
       err("mptask_exec() failure. %d\n", ret);
-      return ret;
+      goto finish;
     }
 
   /* Send command to worker */
@@ -210,7 +210,7 @@ static int run_worker(const char *filename)
   if (ret < 0)
     {
       err("mpmq_send() failure. %d\n", ret);
-      return ret;
+      goto finish;
     }
 
   /* Wait for worker message */
@@ -219,7 +219,7 @@ static int run_worker(const char *filename)
   if (ret < 0)
     {
       err("mpmq_recieve() failure. %d\n", ret);
-      return ret;
+      goto finish;
     }
   message("Worker response: ID = %d, data = %08x\n",
           ret, msgdata);
@@ -241,11 +241,12 @@ static int run_worker(const char *filename)
   if (ret < 0)
     {
       err("mptask_destroy() failure. %d\n", ret);
-      return ret;
+      goto finish;
     }
 
   message("Worker exit status = %d\n", wret);
 
+finish:
   /* Finalize all of MP objects */
 
   mpshm_detach(&shm);
@@ -253,7 +254,7 @@ static int run_worker(const char *filename)
   mpmutex_destroy(&mutex);
   mpmq_destroy(&mq);
 
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
