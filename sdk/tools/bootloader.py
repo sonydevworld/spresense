@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ############################################################################
-# tools/eula.py
+# tools/bootloader.py
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018,2020 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,9 +35,9 @@
 #
 ############################################################################
 
-# eula.py:
+# bootloader.py:
 # This tool is for checking and update firmware binaries that needed to take EULA.
-# Usage: eula.py [-h] [-c] [-i spresense-binaries.zip]
+# Usage: bootloader.py [-h] [-c] [-i spresense-binaries.zip]
 
 import argparse
 import json
@@ -49,10 +49,7 @@ import zipfile
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Firmware(loader.espk, gnssfw.espk) path
-FIRMWARE_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", "..", "firmware"))
-
-# SDK .config file path
-CONFIG_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", "..", "nuttx", ".config"))
+FIRMWARE_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, "..", "..", "firmware", "spresense"))
 
 # Json file name for describe required version
 VERSION_JSON = "version.json"
@@ -61,93 +58,65 @@ VERSION_JSON = "version.json"
 STORED_VERSION_JSON = "stored_version.json"
 
 
-# Name       : EULAhander
-# Description: For check and extract EULA binaries
-class EULAhander:
+# Name       : BootloaderVersion
+# Description: For bootloader check version and extract archive
+class BootloaderVersion:
 
 	# Name       : __init__
 	# Description: Initialize
 	def __init__(self):
-		self.firmware_path = os.path.join(FIRMWARE_PATH, self.getBoardName())
-		self.download_url = ""
-		self.loader_version = ""
-		self.loadVersion()
+		pass
 
-	# Name       : loadConfiguration
-	# Description: Load SDK build configuration to dictionary
-	# Return     : Configuratin dictonary
-	def loadConfiguration(self):
-		ret = {}
+	# Get version json file from file path
+	def getVersionJson(self, filename):
+		version_file = open(filename)
+		version_json = json.load(version_file)
+		version_file.close()
+		return version_json
 
-		# File open
-		file = open(CONFIG_PATH)
-		read = file.read()
-		file.close()
-		lines = read.split("\n")
-		for line in lines:
-			# Put configuration to dictionary
-			if "=" in line:
-				splt = line.split("=")
-				left = splt[0]
-				right = re.sub("\"", "", splt[1])
-				ret[left] = right
+	# Get bootloader download URL from version.json path
+	def getDownloadURL(self, filename):
+		if os.path.isfile(filename):
+			return self.getVersionJson(filename)["DownloadURL"];
+		else:
+			return None
+
+	# Get bootloader version from json file path
+	def getLoaderVersion(self, filename):
+		if os.path.isfile(filename):
+			return self.getVersionJson(filename)["LoaderVersion"];
+		else:
+			return None
+
+	# Check update necessity
+	def isNeedToUpdate(self):
+		ret = False
+		requre_version = self.getLoaderVersion(os.path.join(FIRMWARE_PATH, VERSION_JSON))
+		current_version = self.getLoaderVersion(os.path.join(FIRMWARE_PATH, STORED_VERSION_JSON))
+
+		if requre_version != None:
+			if requre_version != current_version:
+				ret = True
 		return ret
-
-	# Name       : getBoardName
-	# Description: Get board name from SDK build configuration
-	# Return     : Board name
-	def getBoardName(self):
-		return self.loadConfiguration()["CONFIG_ARCH_BOARD"]
-
-	# Name       : loadVersion
-	# Description: Load required version and download URL from version.json
-	def loadVersion(self):
-		version_file_name = os.path.join(self.firmware_path, VERSION_JSON)
-		if os.path.isfile(version_file_name):
-			version_file = open(version_file_name)
-			version_json = json.load(version_file)
-			version_file.close()
-			version = version_json["LoaderVersion"]
-			self.loader_version = version
-			self.download_url = version_json["DownloadURL"]
-
-	def getDownloadURL(self):
-		return self.download_url
-
-	def getLoaderVersion(self):
-		return self.loader_version
 
 	# Name       : check
 	# Description: Check version for update and print warning.
-	def check(self):
-		is_need_to_update = False
-		current_file_name = os.path.join(self.firmware_path, STORED_VERSION_JSON)
-
-		if self.loader_version != "":
-			if os.path.isfile(current_file_name):
-				current_file = open(current_file_name)
-				current_json = json.load(current_file)
-				current_file.close()
-				current_version = current_json["LoaderVersion"]
-				if self.loader_version != current_version:
-					is_need_to_update = True
-			else:
-				is_need_to_update = True
-
-		if is_need_to_update:
-			version = self.getLoaderVersion()
-			url = self.getDownloadURL()
+	def checkBootloaderVersion(self):
+		if self.isNeedToUpdate():
+			version = self.getLoaderVersion(os.path.join(FIRMWARE_PATH, VERSION_JSON))
+			url = self.getDownloadURL(os.path.join(FIRMWARE_PATH, VERSION_JSON))
 			print("WARNING: New loader %s is required, please download and install." % version)
 			print("         Download URL   : %s" % url)
 			print("         Install command:")
 			print("                          1. Extract loader archive into host PC.")
 			print("                             ./tools/flash.sh -e <download zip file>")
 			print("                          2. Flash loader into Board.")
-			print("                             ./tools/flash.sh -l %s -c <port>" % self.firmware_path)
+			print("                             ./tools/flash.sh -l %s -c <port>" % FIRMWARE_PATH)
 
 	# Name       : update
 	# Description: Update EULA binaries from zip archive
-	def update(self, file_path):
+	def updateBootloaderBinary(self, file_path):
+		requre_version = self.getLoaderVersion(os.path.join(FIRMWARE_PATH, VERSION_JSON))
 		# Check file is zip archive or not
 		if file_path.endswith(".zip"):
 			# Open zip archive
@@ -159,12 +128,12 @@ class EULAhander:
 				update_line = binzip.read(STORED_VERSION_JSON).decode('utf-8')
 				update_json = json.loads(update_line)
 				update_version = update_json["LoaderVersion"]
-				if update_version == self.loader_version:
+				if update_version == requre_version:
 					# If same with target version, do u	pdate
-					binzip.extractall(self.firmware_path)
+					binzip.extractall(FIRMWARE_PATH)
 					print("Update succeed.")
 				else:
-					print("Error: Please use correct loader version (Selected: %s, Required: %s)." % (update_version, self.loader_version))
+					print("Error: Please use correct loader version (Selected: %s, Required: %s)." % (update_version, requre_version))
 			else:
 				print("ERROR: Please select correct zip file")
 		else:
@@ -177,11 +146,11 @@ if __name__ == "__main__":
 	parser.add_argument('-i', '--input', metavar='spresense-binaries.zip', type=str, help='Loader update zip file')
 	args = parser.parse_args()
 
-	eula_handler = EULAhander()
+	bootloader_version = BootloaderVersion()
 
 	if args.check:
 		# for '-c'
-		eula_handler.check()
+		bootloader_version.checkBootloaderVersion()
 	else:
 		# for '-i'
-		eula_handler.update(args.input)	
+		bootloader_version.updateBootloaderBinary(args.input)	

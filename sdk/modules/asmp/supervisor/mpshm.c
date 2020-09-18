@@ -534,13 +534,11 @@ void mpshm_initialize(void)
 
   ASSERT((MM_TILE_BASE & 0x1ffff) == 0);
 
-  if (MM_TILE_SIZE > 0) {
-    ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, MPSHM_TILE_ALIGN);
-    if (ret < 0)
-      {
-        mperr("Tile memory initialization failure.\n");
-      }
-  }
+  ret = tile_initialize((void *)MM_TILE_BASE, MM_TILE_SIZE, MPSHM_TILE_ALIGN);
+  if (ret < 0)
+    {
+      mperr("Tile memory initialization failure.\n");
+    }
 
   /* Clear virtual address mapping except first 64KB block.
    * Because first virtual address is necessary for wake up from hot sleep.

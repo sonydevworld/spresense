@@ -103,12 +103,12 @@ done
 shift $(($OPTIND - 1))
 
 if [ "${UPDATE_ZIP}" != "" ]; then
-	${SCRIPT_DIR}/eula.py -i ${UPDATE_ZIP}
+	${SCRIPT_DIR}/bootloader.py -i ${UPDATE_ZIP}
 	exit
 fi
 
 # Check loader version
-${SCRIPT_DIR}/eula.py -c
+${SCRIPT_DIR}/bootloader.py -c
 
 if [ "${FLASH_MODE}" == "SPK" ]; then
 	# Pickup spk and espk files
