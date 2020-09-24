@@ -3368,19 +3368,9 @@ int32_t lte_daemon_power_on(void)
 
 int32_t lte_daemon_set_cb(restart_report_cb_t restart_callback)
 {
-  if (restart_callback == NULL)
-    {
-      return -EINVAL;
-    }
-
   if (g_daemonisrunnning)
     {
       g_daemon->user_restart_cb = restart_callback;
-    }
-  else
-    {
-      daemon_error_printf("lte_daemon is not running\n");
-      return -ENETDOWN;
     }
 
   return 0;

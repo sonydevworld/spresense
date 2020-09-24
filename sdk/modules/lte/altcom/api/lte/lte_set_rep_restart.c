@@ -85,6 +85,13 @@ int32_t lte_set_report_restart(restart_report_cb_t restart_callback)
 {
   int32_t ret;
 
+  /* Check LTE library status */
+
+  if (ALTCOM_STATUS_UNINITIALIZED == altcom_get_status())
+    {
+      return -EOPNOTSUPP;
+    }
+
   ret = lte_daemon_set_cb(restart_callback);
 
   return ret;
