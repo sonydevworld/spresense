@@ -65,10 +65,10 @@
  * Name: lte_getsiminfo_checkparam
  *
  * Description:
- *   Get SIM infomation check input param.
+ *   Get SIM information check input param.
  *
  * Input Parameters:
- *   opt Getting SIM infomation select bits.
+ *   opt Getting SIM information select bits.
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -99,7 +99,7 @@ static int32_t lte_getsiminfo_checkparam(uint32_t opt)
  * Name: getsiminfo_status_chg_cb
  *
  * Description:
- *   Notification status change in processing get sim infomation.
+ *   Notification status change in processing get SIM information.
  *
  * Input Parameters:
  *  new_stat    Current status.
@@ -210,7 +210,7 @@ static void getsiminfo_parse_response(
  * Name: get_siminfo_job
  *
  * Description:
- *   This function is an API callback for get SIM infomation.
+ *   This function is an API callback for get SIM information.
  *
  * Input Parameters:
  *  arg    Pointer to received event.
@@ -443,7 +443,7 @@ int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
  * Name: apicmdhdlr_getsiminfo
  *
  * Description:
- *   This function is an API command handler for get SIM infomation result.
+ *   This function is an API command handler for get SIM information result.
  *
  * Input Parameters:
  *  evt    Pointer to received event.

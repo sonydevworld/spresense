@@ -128,7 +128,7 @@ static int32_t activatepdn_check_apn(lte_apn_setting_t *apn)
     {
       if (apn->auth_type != LTE_APN_AUTHTYPE_NONE)
         {
-          DBGIF_LOG_ERROR("authentication infomation is invalid.\n");
+          DBGIF_LOG_ERROR("authentication information is invalid.\n");
           return -EINVAL;
         }
     }
@@ -214,7 +214,7 @@ static void activatepdn_job(FAR void *arg)
 
       if (result == LTE_RESULT_OK)
         {
-          /* Fill pdn infomation */
+          /* Fill pdn information */
 
           pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
           if (pdn)

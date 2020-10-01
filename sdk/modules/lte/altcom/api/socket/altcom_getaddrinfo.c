@@ -273,7 +273,7 @@ int altcom_getaddrinfo(const char *nodename, const char *servname,
   int32_t                  result;
   struct getaddrinfo_req_s req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

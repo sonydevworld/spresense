@@ -157,7 +157,7 @@ int altcom_shutdown(int sockfd, int how)
   FAR struct altcom_socket_s *fsock;
   struct shutdown_req_s      req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

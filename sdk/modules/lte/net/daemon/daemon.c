@@ -1168,7 +1168,7 @@ static void localtime_callback(FAR lte_localtime_t *localtime)
   ret = settimeofday(&current_time, NULL);
   if (ret < 0)
     {
-      daemon_error_printf("settimeofday falied: %d\n", errno);
+      daemon_error_printf("settimeofday failed: %d\n", errno);
       return;
     }
 
@@ -1387,7 +1387,7 @@ static int connect_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen .\n");
+      daemon_error_printf("invalid argument request addrlen .\n");
       goto send_resp;
     }
 
@@ -1499,7 +1499,7 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       else
         {
           ret = -EINVAL;
-          daemon_error_printf("invalid argment request addrlen.\n");
+          daemon_error_printf("invalid argument request addrlen.\n");
           goto send_resp;
         }
 
@@ -1539,7 +1539,7 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen.\n");
+      daemon_error_printf("invalid argument request addrlen.\n");
       goto send_resp;
     }
 
@@ -1789,7 +1789,7 @@ static int bind_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       else
         {
           ret = -EINVAL;
-          daemon_error_printf("invalid argment request addrlen = %d.\n",
+          daemon_error_printf("invalid argument request addrlen = %d.\n",
                               req->addrlen);
           goto send_resp;
         }
@@ -1797,7 +1797,7 @@ static int bind_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen = %d.\n",
+      daemon_error_printf("invalid argument request addrlen = %d.\n",
                           req->addrlen);
       goto send_resp;
     }
@@ -2135,7 +2135,7 @@ static int setsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request valuelen.\n");
+      daemon_error_printf("invalid argument request valuelen.\n");
       goto send_resp;
     }
 
@@ -2202,7 +2202,7 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   ret = conv_getsockopt_param(req->level, req->option, &param);
   if (ret < 0)
     {
-      daemon_error_printf("invalid argment request.\n");
+      daemon_error_printf("invalid argument request.\n");
       goto send_resp;
     }
 
@@ -2233,7 +2233,7 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request max_valuelen.\n");
+      daemon_error_printf("invalid argument request max_valuelen.\n");
       goto send_resp;
     }
 
@@ -3003,7 +3003,7 @@ static int main_loop(FAR struct daemon_s *priv)
             }
           else
             {
-              /* Peform retry */
+              /* Perform retry */
 
               write(retry_fd, buf, sizeof(buf));
               retry--;

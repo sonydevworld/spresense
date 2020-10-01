@@ -215,7 +215,7 @@ int altcom_recvfrom(int sockfd, void *buf, size_t len, int flags,
   struct recvfrom_req_s      req;
   FAR struct altcom_timeval  *recvtimeo;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

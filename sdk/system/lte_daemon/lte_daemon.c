@@ -134,7 +134,7 @@ int main(int argc, FAR char *argv[])
             break;
           case 'h':
             printf("lte_daemon usage: lte_daemon\n");
-            printf("[-a <apn_name> -t <apn_type> -i <ip_type> -v <auth_type> -u <usr_name> -p <passward>]\n");
+            printf("[-a <apn_name> -t <apn_type> -i <ip_type> -v <auth_type> -u <usr_name> -p <password>]\n");
             printf("[start/stop]\n");
             printf("** Non-Required option **\n");
             printf("** Set Defaults if not specified **\n");
@@ -143,7 +143,7 @@ int main(int argc, FAR char *argv[])
             printf("** -i :  Set ip type **\n");
             printf("** -v :  Set auth type **\n");
             printf("** -u :  Set user name **\n");
-            printf("** -p :  Set passward **\n");
+            printf("** -p :  Set password **\n");
             printf("------\n");
             printf("** Required option **\n");
             printf("** start : start lte_daemon **\n");

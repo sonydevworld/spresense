@@ -66,7 +66,7 @@ sys_mutex_t g_lte_apicallback_mtx;
  * Name: lte_initialize
  *
  * Description:
- *   Initialize the LTE library resouces.
+ *   Initialize the LTE library resources.
  *
  * Input Parameters:
  *   None
@@ -90,7 +90,7 @@ int32_t lte_initialize(void)
 * Name: altcom_initialize
 *
 * Description:
-*   Initialize the LTE library resouces.
+*   Initialize the LTE library resources.
 *
 * Input Parameters:
 *   None

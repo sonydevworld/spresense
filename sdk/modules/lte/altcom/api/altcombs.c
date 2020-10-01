@@ -261,7 +261,7 @@ int32_t altcombs_remove_cbblock(FAR struct altcombs_cb_block **head,
     {
       if (curr_block->cb == block->cb)
         {
-          /* Check begining of the list */
+          /* Check beginning of the list */
 
           if (curr_block->prev)
             {
@@ -405,7 +405,7 @@ int32_t altcombs_remove_removal_cbblock(FAR struct altcombs_cb_block **head)
     {
       if (curr_block->removal)
         {
-          /* Check begining of the list */
+          /* Check beginning of the list */
 
           if (curr_block->prev)
             {
@@ -559,7 +559,7 @@ int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
  * Name: altcombs_check_edrx
  *
  * Description:
- *   Check api comand eDRX param.
+ *   Check api command eDRX param.
  *
  * Input Parameters:
  *   set    Pointer of api command eDRX struct.
@@ -692,7 +692,7 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
       if (APICMD_EDRX_ACTTYPE_NOTUSE != cmd_edrx->acttype &&
           APICMD_EDRX_ACTTYPE_WBS1 != cmd_edrx->acttype)
         {
-          DBGIF_LOG_ERROR("cmd_edrx erorr\n");
+          DBGIF_LOG_ERROR("cmd_edrx error\n");
           return -EINVAL;
         }
 
@@ -703,7 +703,7 @@ int32_t altcombs_set_edrx(struct apicmd_edrxset_s *cmd_edrx,
               ALTCOMBS_EDRX_PTW_WBS1_MIN > cmd_edrx->ptw_val ||
               ALTCOMBS_EDRX_PTW_WBS1_MAX < cmd_edrx->ptw_val)
             {
-              DBGIF_LOG_ERROR("cmd_edrx erorr\n");
+              DBGIF_LOG_ERROR("cmd_edrx error\n");
               return -EINVAL;
             }
         }

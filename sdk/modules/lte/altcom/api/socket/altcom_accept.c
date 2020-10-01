@@ -195,7 +195,7 @@ int altcom_accept(int sockfd, struct altcom_sockaddr *addr,
   struct accept_req_s         req;
   FAR struct altcom_timeval  *recvtimeo;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

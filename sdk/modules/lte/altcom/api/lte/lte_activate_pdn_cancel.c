@@ -131,7 +131,7 @@ int32_t lte_activate_pdn_cancel(void)
       return ret;
     }
 
-  /* Check this process runnning. */
+  /* Check this process running. */
 
   if (g_lte_actpdncancel_isproc)
     {

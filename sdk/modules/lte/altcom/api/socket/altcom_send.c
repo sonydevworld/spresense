@@ -167,7 +167,7 @@ int altcom_send(int sockfd, const void *buf, size_t len, int flags)
   struct send_req_s           req;
   FAR struct altcom_timeval   *sendtimeo;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
