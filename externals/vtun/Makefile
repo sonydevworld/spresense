@@ -36,9 +36,6 @@
 -include $(TOPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
-CSRCS =
-MAINSRC =
-
 # vtun built-in application info
 
 PROGNAME  = $(CONFIG_EXTERNALS_VTUN_PROGNAME)
@@ -73,6 +70,7 @@ $(VTUN_DIR):
 	$(Q) mkdir -p $(VTUN_DIR)
 	$(Q) $(WGET) -O $(VTUN_DL_NAME) $(VTUN_URL)
 	$(Q) cd $(VTUN_DIR); $(TAR) $(TAROPT) ..$(DELIM)$(VTUN_DL_NAME) --strip=1
+	$(Q) cp -a $(VTUN_DIR)/config.h.in $(VTUN_DIR)/config.h
 	$(Q) files="$(VTUN_PATCHFILES)"; \
 	     cd $(VTUN_DIR); \
 	     for ff in $$files; do echo patch $$ff; patch -p0 < ..$(DELIM)$(VTUN_PATCH)$(DELIM)$$ff; done;
@@ -86,6 +84,38 @@ $(VTUN_DIR)/cfg_file.tab.c: $(VTUN_DIR)/cfg_file.tab.h
 
 $(VTUN_DIR)/cfg_file.tab.h: $(VTUN_DIR)
 	$(Q) cd $(VTUN_DIR); $(YACC) $(YACCFLAGS) -b cfg_file cfg_file.y
+
+ASRCS =
+CSRCS += compat_nuttx.c
+CSRCS += nuttx/tun_dev.c
+CSRCS += $(VTUN_DIR)/cfg_file.tab.c
+CSRCS += $(VTUN_DIR)/cfg_file.lex.c
+CSRCS += $(VTUN_DIR)/server.c
+CSRCS += $(VTUN_DIR)/client.c
+CSRCS += $(VTUN_DIR)/lib.c
+CSRCS += $(VTUN_DIR)/llist.c
+CSRCS += $(VTUN_DIR)/auth.c
+CSRCS += $(VTUN_DIR)/tunnel.c
+CSRCS += $(VTUN_DIR)/lock.c
+CSRCS += $(VTUN_DIR)/netlib.c
+CSRCS += $(VTUN_DIR)/generic/pty_dev.c
+CSRCS += $(VTUN_DIR)/generic/pipe_dev.c
+CSRCS += $(VTUN_DIR)/generic/tcp_proto.c
+CSRCS += $(VTUN_DIR)/generic/udp_proto.c
+CSRCS += $(VTUN_DIR)/linkfd.c
+CSRCS += $(VTUN_DIR)/lfd_shaper.c
+CSRCS += $(VTUN_DIR)/lfd_zlib.c
+CSRCS += $(VTUN_DIR)/lfd_lzo.c
+CSRCS += $(VTUN_DIR)/lfd_encrypt.c
+CSRCS += $(VTUN_DIR)/lfd_legacy_encrypt.c
+MAINSRC = $(VTUN_DIR)/main.c
+
+CFLAGS += -I$(VTUN_DIR)
+CFLAGS += -DVTUN_CONFIG_FILE=\"$(CFG_FILE)\"
+CFLAGS += -DVTUN_PID_FILE=\"$(PID_FILE)\"
+CFLAGS += -DVTUN_STAT_DIR=\"$(STAT_DIR)\"
+CFLAGS += -DVTUN_LOCK_DIR=\"$(LOCK_DIR)\"
+CFLAGS += -DVTUN_NUTTX
 
 context:: $(VTUN_DIR) $(VTUN_DIR)/cfg_file.lex.c $(VTUN_DIR)/cfg_file.tab.c $(VTUN_DIR)/cfg_file.tab.h
 
