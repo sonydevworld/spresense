@@ -3,10 +3,17 @@
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/blowfish.h>
 #include <syslog.h>
+#include <sys/uio.h>
+#include <string.h>
+#include <stdio.h>
 
+#include "vtun.h"
 #include "lib.h"
+#include "linkfd.h"
 
 #include "compat_nuttx.h"
+
+static int session_established = 0;
 
 void openlog(const char *ident, int option, int facility)
 {}
@@ -28,6 +35,7 @@ int getpriority(int which, id_t who)
 
 int setpriority(int which, id_t who, int prio)
 {
+  session_established = (prio == LINKFD_PRIO) ? 1 : 0;
   return 0;
 }
 
@@ -247,20 +255,6 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding)
    return 1;
 }
 
-#if 0
-int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, const unsigned char *in, int inl)
-{
-  int ret;
-
-  ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t*) outl);
-  if (ret != 0)
-    {
-      vtun_syslog(LOG_ERR,"mbedtls_cipher_update() returned -0x%04X L:%d", -ret, __LINE__);
-    }
-}
-#endif
-
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, const unsigned char *in, int inl)
 {
@@ -459,3 +453,42 @@ pid_t setsid(void)
 {
   return (pid_t)-1;
 }
+
+ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt)
+{
+  static char buf[sizeof(short) + VTUN_FRAME_SIZE + VTUN_FRAME_OVERHEAD];
+
+  ssize_t buf_len = 0;
+  size_t recv_len;
+  size_t offset = 0;
+  int i;
+
+  recv_len = read(fd, buf, sizeof(buf));
+  if (recv_len < 0)
+    {
+      // read error.
+      return recv_len;
+    }
+
+  for (i = 0; i < iovcnt; i++)
+    {
+      if (offset + iov[i].iov_len <= recv_len)
+        {
+          memcpy(iov[i].iov_base, &buf[offset], iov[i].iov_len);
+        }
+      else
+        {
+          memcpy(iov[i].iov_base, &buf[offset], recv_len - offset);
+          break;
+        }
+      offset += iov[i].iov_len;
+    }
+
+  return recv_len;
+}
+
+int vtun_session_established(void)
+{
+  return session_established;
+}
+

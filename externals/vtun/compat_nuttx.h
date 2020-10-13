@@ -65,4 +65,7 @@ int setpriority(int which, id_t who, int prio);
 
 pid_t setsid(void);
 
+ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt);
+#define readv(fd, iov, iovcnt) vtun_udp_readv(fd, iov, iovcnt)
+
 #endif /* _VTUN_COMPAT_SPRESENSE_H */

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 #include <nuttx/net/tun.h>
-#include <netutils/netlib.h>
+#include <net/if.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -92,6 +92,93 @@ static void dump_pcap(uint8_t* buf, size_t len)
 #endif
 
 /****************************************************************************
+ * Name: vtun_set_ipv4addr
+ ****************************************************************************/
+static int vtun_set_ipv4addr(const char *ifname, const struct in_addr *addr)
+{
+  int ret = -1;
+
+  if (ifname && addr)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (sockfd >= 0)
+        {
+          struct sockaddr_in *inaddr;
+          struct ifreq req;
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
+          inaddr->sin_family = AF_INET;
+          inaddr->sin_port   = 0;
+          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
+
+          ret = ioctl(sockfd, SIOCSIFADDR, (unsigned long)&req);
+          close(sockfd);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: vtun_set_ipv4netmask
+ ****************************************************************************/
+static int vtun_set_ipv4netmask(const char *ifname,
+                                const struct in_addr *addr)
+{
+  int ret = -1;
+
+  if (ifname && addr)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (sockfd >= 0)
+        {
+          struct sockaddr_in *inaddr;
+          struct ifreq req;
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
+          inaddr->sin_family = AF_INET;
+          inaddr->sin_port   = 0;
+          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
+
+          ret = ioctl(sockfd, SIOCSIFNETMASK, (unsigned long)&req);
+          close(sockfd);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: vtun_ifup
+ ****************************************************************************/
+static int vtun_ifup(const char *ifname)
+{
+  int ret = -1;
+  if (ifname)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (sockfd >= 0)
+        {
+          struct ifreq req;
+          memset (&req, 0, sizeof(struct ifreq));
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          req.ifr_flags |= IFF_UP;
+
+          ret = ioctl(sockfd, SIOCSIFFLAGS, (unsigned long)&req);
+          close(sockfd);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: tun_configure
  ****************************************************************************/
 static int tun_configure(struct tun_priv_s *tun)
@@ -145,10 +232,10 @@ static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
   else
     {
       addr = (struct in_addr*) buf;
-      ret = netlib_set_ipv4addr(tun->devname, addr);
+      ret = vtun_set_ipv4addr(tun->devname, addr);
       if (ret < 0)
         {
-          vtun_syslog(LOG_ERR, "ERROR: netlib_set_ipv4addr() failed", ret);
+          vtun_syslog(LOG_ERR, "ERROR: vtun_set_ipv4addr() failed", ret);
         }
     }
 
@@ -160,14 +247,14 @@ static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
   else
     {
       addr = (struct in_addr*) buf;
-      ret = netlib_set_ipv4netmask(tun->devname, addr);
+      ret = vtun_set_ipv4netmask(tun->devname, addr);
       if (ret < 0)
         {
           vtun_syslog(LOG_ERR, "ERROR: netlib_set_ipv4netmask() failed", ret);
         }
     }
 
-  netlib_ifup(tun->devname);
+  vtun_ifup(tun->devname);
   return 0;
 }
 
