@@ -10,6 +10,9 @@
 
 #include "vtun.h"
 #include "lib.h"
+#include "compat_nuttx.h"
+
+#define OUTER_IF_NAME "eth0"
 
 #define MAX_DEVNAME 8
 
@@ -42,7 +45,7 @@ typedef struct pcaprec_hdr_s {
 struct tun_priv_s g_tun_dev;
 
 #ifdef ENABLE_DUMP_PCAP
-static void dump_pcap_init()
+static void dump_pcap_init(int istun)
 {
   FILE* fp = NULL;
   pcap_hdr_t hdr;
@@ -60,7 +63,7 @@ static void dump_pcap_init()
   hdr.version_major = 2;
   hdr.version_minor = 4;
   hdr.snaplen = 65535;
-  hdr.network = 228; // DLT_IPV4
+  hdr.network = (istun != 0) ? 228 : 1; // 228: DLT_IPV4, 1: DLT_EN10MB
 
   fwrite(&hdr, sizeof(hdr), 1, fp);
 
@@ -153,6 +156,61 @@ static int vtun_set_ipv4netmask(const char *ifname,
 }
 
 /****************************************************************************
+ * Name: vtun_getmacaddr
+ ****************************************************************************/
+static int vtun_getmacaddr(const char *ifname, uint8_t *macaddr)
+{
+  int ret = -1;
+  if (ifname && macaddr)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+      if (sockfd >= 0)
+        {
+          struct ifreq req;
+          memset (&req, 0, sizeof(struct ifreq));
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          ret = ioctl(sockfd, SIOCGIFHWADDR, (unsigned long)&req);
+          if (!ret)
+            {
+              memcpy(macaddr, &req.ifr_hwaddr.sa_data, IFHWADDRLEN);
+            }
+
+          close(sockfd);
+        }
+    }
+  return ret;
+}
+
+/****************************************************************************
+ * Name: vtun_setmacaddr
+ ****************************************************************************/
+static int vtun_setmacaddr(const char *ifname, const uint8_t *macaddr)
+{
+  int ret = -1;
+
+  if (ifname && macaddr)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (sockfd >= 0)
+        {
+          struct ifreq req;
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          req.ifr_hwaddr.sa_family = AF_INET;
+          memcpy(&req.ifr_hwaddr.sa_data, macaddr, IFHWADDRLEN);
+
+          ret = ioctl(sockfd, SIOCSIFHWADDR, (unsigned long)&req);
+          close(sockfd);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: vtun_ifup
  ****************************************************************************/
 static int vtun_ifup(const char *ifname)
@@ -181,7 +239,7 @@ static int vtun_ifup(const char *ifname)
 /****************************************************************************
  * Name: tun_configure
  ****************************************************************************/
-static int tun_configure(struct tun_priv_s *tun)
+static int tun_configure(struct tun_priv_s *tun, int istun)
 {
   struct ifreq ifr;
   int errcode;
@@ -196,7 +254,7 @@ static int tun_configure(struct tun_priv_s *tun)
     }
 
   memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = IFF_TUN;
+  ifr.ifr_flags = (istun != 0) ? IFF_TUN : IFF_TAP;
 
   ret = ioctl(tun->fd, TUNSETIFF, (unsigned long)&ifr);
   if (ret < 0)
@@ -218,7 +276,7 @@ static int tun_configure(struct tun_priv_s *tun)
  ****************************************************************************/
 
 static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
-                       char *netmask)
+                       char *netmask, int istun)
 {
   int ret;
   struct in_addr *addr;
@@ -250,7 +308,27 @@ static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
       ret = vtun_set_ipv4netmask(tun->devname, addr);
       if (ret < 0)
         {
-          vtun_syslog(LOG_ERR, "ERROR: netlib_set_ipv4netmask() failed", ret);
+          vtun_syslog(LOG_ERR, "ERROR: vtun_set_ipv4netmask() failed", ret);
+        }
+    }
+
+  if (!istun)
+    {
+      uint8_t mac[IFHWADDRLEN];
+
+      ret = vtun_getmacaddr(OUTER_IF_NAME, mac);
+      if (ret < 0)
+        {
+          vtun_syslog(LOG_ERR, "ERROR: vtun_getmacaddr() failed", ret);
+          RAND_bytes(mac, sizeof(mac));
+        }
+      mac[0] = mac[0] & 0xFE;
+      mac[0] = mac[0] ^ 0x02;
+
+      ret = vtun_setmacaddr(tun->devname, mac);
+      if (ret < 0)
+        {
+          vtun_syslog(LOG_ERR, "ERROR: vtun_setmacaddr() failed", ret);
         }
     }
 
@@ -262,7 +340,7 @@ static int tun_open_common(char *dev, int istun)
 {
   int ret;
 
-  ret = tun_configure(&g_tun_dev);
+  ret = tun_configure(&g_tun_dev, istun);
   if (ret < 0)
     {
       vtun_syslog(LOG_ERR, "ERROR: Failed to create tun: %d", ret);
@@ -270,7 +348,7 @@ static int tun_open_common(char *dev, int istun)
     }
 
   ret = tun_netconf(&g_tun_dev, CONFIG_EXAMPLES_VTUN_TUN_IP_ADDR,
-                    CONFIG_EXAMPLES_VTUN_TUN_NETMASK);
+                    CONFIG_EXAMPLES_VTUN_TUN_NETMASK, istun);
   if (ret < 0)
     {
       vtun_syslog(LOG_ERR, "ERROR: tun_netconf for tun failed: %d", ret);
@@ -279,21 +357,21 @@ static int tun_open_common(char *dev, int istun)
     }
 
 #ifdef ENABLE_DUMP_PCAP
-  dump_pcap_init();
+  dump_pcap_init(istun);
 #endif
 
   return g_tun_dev.fd;
 }
 
 int tun_open(char *dev) { return tun_open_common(dev, 1); }
-int tap_open(char *dev) { return -1; }
+int tap_open(char *dev) { return tun_open_common(dev, 0); }
 
 int tun_close(int fd, char *dev) { return close(fd); }
 int tap_close(int fd, char *dev) { return -1; }
 
 /* Read/write frames from TUN device */
 int tun_write(int fd, char *buf, int len) { return write(fd, buf, len); }
-int tap_write(int fd, char *buf, int len) { return -1; }
+int tap_write(int fd, char *buf, int len) { return write(fd, buf, len); }
 
 int tun_read(int fd, char *buf, int len) {
   int ret = 0;
@@ -308,4 +386,17 @@ int tun_read(int fd, char *buf, int len) {
 
   return ret;
 }
-int tap_read(int fd, char *buf, int len) { return -1; }
+int tap_read(int fd, char *buf, int len) {
+  int ret = 0;
+  ret = read(fd, buf, len);
+
+#ifdef ENABLE_DUMP_PCAP
+  if (0 < ret)
+    {
+      dump_pcap(buf, ret);
+    }
+#endif
+
+  return ret;
+}
+
