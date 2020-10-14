@@ -4,8 +4,10 @@
 #include <mbedtls/blowfish.h>
 #include <syslog.h>
 #include <sys/uio.h>
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "vtun.h"
 #include "lib.h"
@@ -58,9 +60,45 @@ unsigned char *MD5(char *msg, size_t msg_len, unsigned char* out)
   return out;
 }
 
+static int vtun_entropy(void *rng_state, unsigned char *output, size_t len)
+{
+  struct timespec ts;
+  static const size_t NSEC_LEN = sizeof(ts.tv_nsec);
+  size_t offset = 0;
+  int ret;
+
+  if (output == NULL)
+    {
+      return -1;
+    }
+
+  while (offset < len)
+    {
+      ret = clock_gettime(CLOCK_REALTIME, &ts);
+      if (ret != 0)
+        {
+          vtun_syslog(LOG_ERR,"clock_gettime() error: %d", errno);
+          return -1;
+        }
+
+      if (NSEC_LEN + offset <= len)
+        {
+          memcpy(&output[offset], &ts.tv_nsec, NSEC_LEN);
+          offset += NSEC_LEN;
+        }
+      else
+        {
+          memcpy(&output[offset], &ts.tv_nsec, len - offset);
+          offset += len - offset;
+        }
+    }
+  return 0;
+}
+
 void RAND_bytes(char *buf, size_t buf_len)
 {
   mbedtls_ctr_drbg_context ctx;
+  int ret;
 
   if (buf == NULL)
     {
@@ -68,6 +106,11 @@ void RAND_bytes(char *buf, size_t buf_len)
     }
 
   mbedtls_ctr_drbg_init(&ctx);
+  mbedtls_ctr_drbg_seed(&ctx, vtun_entropy, NULL, NULL, 0);
+  if (ret != 0)
+    {
+      vtun_syslog(LOG_ERR,"mbedtls_ctr_drbg_seed() returned -0x%04X", -ret);
+    }
   mbedtls_ctr_drbg_random(&ctx, buf, buf_len);
   mbedtls_ctr_drbg_free(&ctx);
 }
