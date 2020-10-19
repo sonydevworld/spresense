@@ -1,5 +1,5 @@
 ############################################################################
-# system/vtun/Makefile
+# externals/vtun/Makefile
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -109,6 +109,11 @@ CSRCS += $(VTUN_DIR)/lfd_lzo.c
 CSRCS += $(VTUN_DIR)/lfd_encrypt.c
 CSRCS += $(VTUN_DIR)/lfd_legacy_encrypt.c
 MAINSRC = $(VTUN_DIR)/main.c
+
+CFG_FILE=/mnt/spif/vtund.conf
+PID_FILE=/mnt/spif/vtun.pid
+STAT_DIR=/mnt/spif
+LOCK_DIR=/mnt/spif
 
 CFLAGS += -I$(VTUN_DIR)
 CFLAGS += -DVTUN_CONFIG_FILE=\"$(CFG_FILE)\"
