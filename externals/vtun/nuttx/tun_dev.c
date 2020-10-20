@@ -156,6 +156,66 @@ static int vtun_set_ipv4netmask(const char *ifname,
 }
 
 /****************************************************************************
+ * Name: vtun_set_dripv4addr
+ ****************************************************************************/
+static int vtun_set_dripv4addr(const char *ifname,
+                               const struct in_addr *addr)
+{
+  int ret = -1;
+
+#ifdef CONFIG_NET_ROUTE
+  struct sockaddr_in target;
+  struct sockaddr_in netmask;
+  struct sockaddr_in router;
+
+  memset(&target, 0, sizeof(target));
+  target.sin_family  = AF_INET;
+
+  memset(&netmask, 0, sizeof(netmask));
+  netmask.sin_family  = AF_INET;
+
+  router.sin_addr    = *addr;
+  router.sin_family  = AF_INET;
+#endif
+
+  if (ifname && addr)
+    {
+      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      if (sockfd >= 0)
+        {
+          struct sockaddr_in *inaddr;
+          struct ifreq req;
+
+          strncpy(req.ifr_name, ifname, IFNAMSIZ);
+
+          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
+          inaddr->sin_family = AF_INET;
+          inaddr->sin_port   = 0;
+          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
+
+          ret = ioctl(sockfd, SIOCSIFDSTADDR, (unsigned long)&req);
+
+#ifdef CONFIG_NET_ROUTE
+          if (0 == ret)
+            {
+              (void)delroute(sockfd,
+                             (struct sockaddr_storage *)&target,
+                             (struct sockaddr_storage *)&netmask);
+              ret = addroute(sockfd,
+                             (struct sockaddr_storage *)&target,
+                             (struct sockaddr_storage *)&netmask,
+                             (struct sockaddr_storage *)&router);
+            }
+#endif
+
+          close(sockfd);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: vtun_getmacaddr
  ****************************************************************************/
 static int vtun_getmacaddr(const char *ifname, uint8_t *macaddr)
@@ -276,7 +336,7 @@ static int tun_configure(struct tun_priv_s *tun, int istun)
  ****************************************************************************/
 
 static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
-                       char *netmask, int istun)
+                       char *netmask, char *gw, int istun)
 {
   int ret;
   struct in_addr *addr;
@@ -309,6 +369,21 @@ static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
       if (ret < 0)
         {
           vtun_syslog(LOG_ERR, "ERROR: vtun_set_ipv4netmask() failed", ret);
+        }
+    }
+
+  ret = inet_pton(AF_INET, gw, buf);
+  if (ret != 1)
+    {
+      vtun_syslog(LOG_ERR, "inet_pton error: %s", gw);
+    }
+  else
+    {
+      addr = (struct in_addr*) buf;
+      ret = vtun_set_dripv4addr(tun->devname, addr);
+      if (ret < 0)
+        {
+          vtun_syslog(LOG_ERR, "ERROR: vtun_set_dripv4addr() failed", ret);
         }
     }
 
@@ -347,8 +422,11 @@ static int tun_open_common(char *dev, int istun)
       return -1;
     }
 
-  ret = tun_netconf(&g_tun_dev, CONFIG_EXAMPLES_VTUN_TUN_IP_ADDR,
-                    CONFIG_EXAMPLES_VTUN_TUN_NETMASK, istun);
+  ret = tun_netconf(&g_tun_dev,
+                    CONFIG_EXAMPLES_VTUN_TUN_IP_ADDR,
+                    CONFIG_EXAMPLES_VTUN_TUN_NETMASK,
+                    CONFIG_EXAMPLES_VTUN_TUN_DEFAULT_GW_ADDR,
+                    istun);
   if (ret < 0)
     {
       vtun_syslog(LOG_ERR, "ERROR: tun_netconf for tun failed: %d", ret);
