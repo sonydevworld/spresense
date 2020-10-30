@@ -441,40 +441,53 @@ static int tun_open_common(char *dev, int istun)
   return g_tun_dev.fd;
 }
 
+static int tun_write_common(int fd, char *buf, int len)
+{
+  int ret = 0;
+
+#ifdef ENABLE_DUMP_PCAP
+  if (0 < len)
+    {
+      dump_pcap(buf, len);
+    }
+#endif
+
+  ret = write(fd, buf, len);
+  if (ret < 0)
+    {
+      vtun_syslog(LOG_DEBUG, "%s error(%d)", __FUNCTION__, errno);
+    }
+
+  return 0;
+}
+
+static int tun_read_common(int fd, char *buf, int len)
+{
+  int ret = 0;
+
+  ret = read(fd, buf, len);
+
+#ifdef ENABLE_DUMP_PCAP
+  if (0 < ret)
+    {
+      dump_pcap(buf, ret);
+    }
+#endif
+
+  return ret;
+}
+
+
 int tun_open(char *dev) { return tun_open_common(dev, 1); }
 int tap_open(char *dev) { return tun_open_common(dev, 0); }
 
 int tun_close(int fd, char *dev) { return close(fd); }
-int tap_close(int fd, char *dev) { return -1; }
+int tap_close(int fd, char *dev) { return close(fd); }
 
 /* Read/write frames from TUN device */
-int tun_write(int fd, char *buf, int len) { return write(fd, buf, len); }
-int tap_write(int fd, char *buf, int len) { return write(fd, buf, len); }
+int tun_write(int fd, char *buf, int len) { return tun_write_common(fd, buf, len); }
+int tap_write(int fd, char *buf, int len) { return tun_write_common(fd, buf, len); }
 
-int tun_read(int fd, char *buf, int len) {
-  int ret = 0;
-  ret = read(fd, buf, len);
-
-#ifdef ENABLE_DUMP_PCAP
-  if (0 < ret)
-    {
-      dump_pcap(buf, ret);
-    }
-#endif
-
-  return ret;
-}
-int tap_read(int fd, char *buf, int len) {
-  int ret = 0;
-  ret = read(fd, buf, len);
-
-#ifdef ENABLE_DUMP_PCAP
-  if (0 < ret)
-    {
-      dump_pcap(buf, ret);
-    }
-#endif
-
-  return ret;
-}
+int tun_read(int fd, char *buf, int len) { return tun_read_common(fd, buf, len); }
+int tap_read(int fd, char *buf, int len) { return tun_read_common(fd, buf, len); }
 
