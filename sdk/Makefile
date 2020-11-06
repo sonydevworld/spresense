@@ -214,6 +214,10 @@ PHONY += savedefconfig
 preconfig: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_preconfig)
 	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(TARGETDIRS)
 
+archive:
+
+register:
+
 help:
 	@echo  ''
 	@echo  'SDK targets:'
