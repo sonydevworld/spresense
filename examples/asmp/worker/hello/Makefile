@@ -34,7 +34,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 ifeq ($(WINTOOL),y)
