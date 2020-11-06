@@ -236,6 +236,7 @@ static int sslutil_doconnect(FAR struct sslutil_sock_s *sock,
 
       nerr("ERROR: connect failed: %d\n", errno);
       freeaddrinfo(ainfo);
+      close(sock->sockfd);
       return ret;
     }
 
