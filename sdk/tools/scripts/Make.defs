@@ -1,5 +1,5 @@
 ############################################################################
-# boards/arm/cxd56xx/spresense/scripts/Make.defs
+# tools/scripts/Make.defs
 #
 #   Copyright (C) 2014 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
@@ -42,9 +42,17 @@ include $(TOPDIR)/arch/arm/src/armv7-m/Toolchain.defs
 
 LDSCRIPT = ramconfig.ld
 
+SDKDIR := $(TOPDIR)/../sdk
+
 ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
+  # TODO: ARCHINCLUDES/ARCHXXINCLUDES need to move as nuttx change
+  ARCHINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/include}"
+  ARCHXXINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/include}
   ARCHSCRIPT = -T "${shell cygpath -w $(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)}"
 else
+  # TODO: ARCHINCLUDES/ARCHXXINCLUDES need to move as nuttx change
+  ARCHINCLUDES += -isystem $(SDKDIR)/include
+  ARCHXXINCLUDES += -isystem $(SDKDIR)/include
   ARCHSCRIPT = -T$(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)
 endif
 
@@ -125,3 +133,9 @@ endif
 HOSTCC = gcc
 HOSTCFLAGS = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
 
+include $(SDKDIR)/Library.mk
+-include $(TOPDIR)/../externals/Library.mk
+
+ifneq ($(CONFIG_LIBM),y)
+  EXTRA_LIBS += "${shell $(CC) $(CFLAGS) -print-file-name=libm.a}"
+endif
