@@ -38,6 +38,13 @@
 export APPDIR = $(CURDIR)
 include $(APPDIR)/Make.defs
 
+BUILDIRS   := $(dir $(wildcard */Make.defs))
+CLEANDIRS  := $(dir $(wildcard */Makefile))
+
+CONFIGURED_APPS =
+
+$(foreach BDIR, $(BUILDIRS), $(eval $(call Add_Application,$(BDIR))))
+
 # Symbol table for loadable apps.
 
 SYMTABSRC = symtab_apps.c
@@ -48,9 +55,7 @@ SYMTABOBJ = $(SYMTABSRC:.c=$(OBJEXT))
 # We first remove libapps.a before letting the other rules add objects to it
 # so that we ensure libapps.a does not contain objects from prior build
 
-all:
-	$(RM) $(BIN)
-	$(MAKE) $(BIN)
+all: .built
   
 .PHONY: import install dirlinks export .depdirs preconfig depend clean distclean
 .PHONY: context clean_context context_all register register_all
@@ -95,10 +100,11 @@ else
 
 ifeq ($(CONFIG_BUILD_LOADABLE),)
 
-$(BIN): $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
+.built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
 	$(Q) for app in ${CONFIGURED_APPS}; do \
 		$(MAKE) -C "$${app}" archive ; \
 	done
+	$(Q) touch $@
 
 else
 
@@ -154,7 +160,6 @@ import: $(IMPORT_TOOLS)
 endif # CONFIG_BUILD_KERNEL
 
 dirlinks:
-	$(Q) $(MAKE) -C platform dirlinks
 
 context_all: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_context)
 register_all: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_register)
@@ -165,7 +170,9 @@ context:
 
 Kconfig:
 	$(foreach SDIR, $(CONFIGDIRS), $(call MAKE_template,$(SDIR),preconfig))
-	$(Q) $(MKKCONFIG)
+ifneq ($(MENUDESC),)
+	$(Q) $(MKKCONFIG) -m $(MENUDESC)
+endif
 
 preconfig: Kconfig
 
