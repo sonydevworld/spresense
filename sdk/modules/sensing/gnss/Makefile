@@ -35,7 +35,7 @@
 
 # Do not change
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 DELIM ?= $(strip /)
 CXXEXT ?= .cpp
