@@ -50,7 +50,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define VIDEO_DEV_PATH  "/dev/video0"
+#define VIDEO_DEV_PATH  "/dev/video"
 
 #ifdef CONFIG_EXAMPLES_MULTIWEBCAM_USE_HTTPMJPEG
 #  define MULTIWEBCAM_PORT_NO  (80)
@@ -73,8 +73,6 @@ int main(int argc, FAR char *argv[])
 
   int v_fd;
   struct v_buffer *vbuffs;
-
-  video_initialize(VIDEO_DEV_PATH);
 
   v_fd = open(VIDEO_DEV_PATH, 0);
   if (v_fd < 0)
