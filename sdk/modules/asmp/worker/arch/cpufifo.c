@@ -37,7 +37,7 @@
 
 #include <asmp/types.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 
 #include "arch/cpufifo.h"
