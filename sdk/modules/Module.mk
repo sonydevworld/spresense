@@ -37,16 +37,30 @@
 
 DELIM ?= $(strip /)
 
+# The GNU make CURDIR will always be a POSIX-like path with forward slashes
+# as path segment separators.  If we know that this is a native build, then
+# we need to fix up the path so the DELIM will match the actual delimiter.
+
+ifeq ($(CONFIG_WINDOWS_NATIVE),y)
+CWD = $(strip ${shell echo %CD% | cut -d: -f2})
+else
+CWD = $(CURDIR)
+endif
+
+SUFFIX = $(subst $(DELIM),.,$(CWD))
+
 # Object files
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
+AOBJS = $(ASRCS:.S=$(SUFFIX)$(OBJEXT))
+COBJS = $(CSRCS:.c=$(SUFFIX)$(OBJEXT))
+CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(SUFFIX)$(OBJEXT))
 
 SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
 OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
 
 DEPPATH += --dep-path .
+DEPPATH += --obj-path .
+DEPPATH += --obj-suffix $(SUFFIX)$(OBJEXT)
 VPATH += :.
 
 BIN ?= $(APPDIR)$(DELIM)libapps$(LIBEXT)
@@ -56,13 +70,13 @@ BIN ?= $(APPDIR)$(DELIM)libapps$(LIBEXT)
 all:: .built
 .PHONY: clean preconfig depend distclean
 
-$(AOBJS): %$(OBJEXT): %.S
+$(AOBJS): %$(SUFFIX)$(OBJEXT): %.S
 	$(call ASSEMBLE, $<, $@)
 
-$(COBJS): %$(OBJEXT): %.c
+$(COBJS): %$(SUFFIX)$(OBJEXT): %.c
 	$(call COMPILE, $<, $@)
 
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
+$(CXXOBJS): %$(SUFFIX)$(OBJEXT): %$(CXXEXT)
 	$(call COMPILEXX, $<, $@)
 
 .built: $(OBJS)
