@@ -522,6 +522,8 @@
 #define LTE_EDRX_CYC_65536   (11) /**< eDRX cycle:  655.36 sec */
 #define LTE_EDRX_CYC_131072  (12) /**< eDRX cycle: 1310.72 sec */
 #define LTE_EDRX_CYC_262144  (13) /**< eDRX cycle: 2621.44 sec */
+#define LTE_EDRX_CYC_524288  (14) /**< eDRX cycle: 5242.88 sec */
+#define LTE_EDRX_CYC_1048576 (15) /**< eDRX cycle: 10485.76 sec */
 #define LTE_EDRX_PTW_128      (0) /**< Paging time window:  1.28 sec */
 #define LTE_EDRX_PTW_256      (1) /**< Paging time window:  2.56 sec */
 #define LTE_EDRX_PTW_384      (2) /**< Paging time window:  3.84 sec */
@@ -538,6 +540,14 @@
 #define LTE_EDRX_PTW_1792    (13) /**< Paging time window: 17.92 sec */
 #define LTE_EDRX_PTW_1920    (14) /**< Paging time window: 19.20 sec */
 #define LTE_EDRX_PTW_2048    (15) /**< Paging time window: 20.48 sec */
+#define LTE_EDRX_PTW_2304    (16) /**< Paging time window: 23.04 sec */
+#define LTE_EDRX_PTW_2560    (17) /**< Paging time window: 25.60 sec */
+#define LTE_EDRX_PTW_2816    (18) /**< Paging time window: 28.16 sec */
+#define LTE_EDRX_PTW_3072    (19) /**< Paging time window: 30.72 sec */
+#define LTE_EDRX_PTW_3328    (20) /**< Paging time window: 33.28 sec */
+#define LTE_EDRX_PTW_3584    (21) /**< Paging time window: 35.84 sec */
+#define LTE_EDRX_PTW_3840    (22) /**< Paging time window: 38.40 sec */
+#define LTE_EDRX_PTW_4096    (23) /**< Paging time window: 40.96 sec */
 
 /** Unit of request active time(T3324): 2 sec */
 
