@@ -67,9 +67,9 @@ $(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
 
 .built: $(OBJS)
 ifeq ($(WINTOOL),y)
-	$(call ARCHIVE, "${shell cygpath -w $(BIN)}", $(OBJS))
+	$(call ARCHIVE_ADD, "${shell cygpath -w $(BIN)}", $(OBJS))
 else
-	$(call ARCHIVE, $(BIN), $(OBJS))
+	$(call ARCHIVE_ADD, $(BIN), $(OBJS))
 endif
 	$(Q) touch $@
 
