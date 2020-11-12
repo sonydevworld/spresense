@@ -332,13 +332,9 @@ static int signal2own(int signo, void *data)
 {
   int ret;
 
-#ifdef CONFIG_CAN_PASS_STRUCTS
   union sigval value;
   value.sival_ptr = data;
   ret = sigqueue(getpid(), signo, value);
-#else
-  ret = sigqueue(getpid(), signo, data);
-#endif
 
   return ret;
 }
