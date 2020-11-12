@@ -482,6 +482,15 @@ int main(int argc, FAR char *argv[])
 
   save_dir = futil_initialize();
 
+  /* Initialize voide driver to create a device file */
+
+  ret = video_initialize("/dev/video");
+  if (ret != 0)
+    {
+      printf("ERROR: Failed to initialize video: errno = %d\n", errno);
+      goto exit_without_cleaning_videodriver;
+    }
+
   /* Open the device file. */
 
   v_fd = open("/dev/video", 0);
