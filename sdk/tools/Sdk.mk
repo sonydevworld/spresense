@@ -40,6 +40,7 @@ include $(APPDIR)/Make.defs
 
 BUILDIRS   := $(dir $(wildcard */Make.defs))
 CLEANDIRS  := $(dir $(wildcard */Makefile))
+CONFIGDIRS := $(filter-out $(dir $(wildcard */Kconfig)),$(BUILDIRS))
 
 CONFIGURED_APPS =
 
