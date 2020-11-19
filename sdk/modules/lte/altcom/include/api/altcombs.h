@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/altcombs.h
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -508,5 +508,21 @@ int32_t lte_getedrx_impl(uint8_t type, lte_edrx_setting_t *settings,
 
 int32_t lte_getpsm_impl(uint8_t type, lte_psm_setting_t *settings,
                         get_psm_cb_t callback);
+
+/****************************************************************************
+ * Name: altcombs_get_ratinfo
+ *
+ * Description:
+ *   Get RAT information.
+ *
+ * Input Parameters:
+ *   ratres RAT information
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+int32_t altcombs_get_ratinfo(lte_ratinfo_t *ratres);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */

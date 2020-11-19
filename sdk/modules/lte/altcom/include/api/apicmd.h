@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/apicmd.h
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -174,7 +174,8 @@
 #define APICMDID_SETREP_NETINFO_V4      (0x031A)
 #define APICMDID_REPORT_NETINFO_V4      (0x031B)
 #define APICMDID_ERRINFO_V4             (0xFFFD)
-
+#define APICMDID_GET_RAT                (0x00A0)
+#define APICMDID_SET_RAT                (0x00A1)
 
 /* SOCKET API commands */
 

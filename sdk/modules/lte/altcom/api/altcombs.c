@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/altcombs.c
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,6 +47,9 @@
 #include "altcombs.h"
 #include "altcom_callbacks.h"
 #include "altcom_status.h"
+#include "apiutil.h"
+
+#include "apicmd_rat.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -61,6 +64,10 @@
 #define ALTCOMBS_PSM_UNIT_T3412_MIN       (LTE_PSM_T3412_UNIT_2SEC)
 #define ALTCOMBS_PSM_UNIT_T3412_MAX       (LTE_PSM_T3412_UNIT_320HOUR)
 #define ALTCOMBS_BASE_HEX                 16
+
+#define LTE_GETRAT_DATA_LEN (0)
+#define LTE_GETRAT_RES_DATA_LEN ( \
+ sizeof(struct apicmd_cmddat_getratres_s))
 
 /****************************************************************************
  * Private Data
@@ -1198,3 +1205,71 @@ void altcombs_teardown_apicallback(int32_t id, altcom_stat_chg_cb_t stat_cb)
   altcomstatus_unreg_statchgcb(stat_cb);
 }
 
+/****************************************************************************
+ * Name: altcombs_get_ratinfo
+ *
+ * Description:
+ *   Get RAT information.
+ *
+ * Input Parameters:
+ *   ratres RAT information
+ *
+ * Returned Value:
+ *   If the process succeeds, it returns 0.
+ *   Otherwise negative value is returned.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_get_ratinfo(lte_ratinfo_t *ratres)
+{
+  int32_t                               ret;
+  uint16_t                              reslen = 0;
+  FAR void                             *cmd;
+  FAR struct apicmd_cmddat_getratres_s  res = {0};
+
+  /* Check ALTCOM protocol version */
+
+  if (apicmdgw_get_protocolversion() != APICMD_VER_V4)
+    {
+      return -ENOTSUP;
+    }
+
+  cmd = (FAR uint8_t *)
+        apicmdgw_cmd_allocbuff(APICMDID_GET_RAT,
+                               LTE_GETRAT_DATA_LEN);
+  if (!cmd)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      return -ENOMEM;
+    }
+
+  /* Send command */
+
+  ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)&res,
+                      LTE_GETRAT_RES_DATA_LEN, &reslen,
+                      SYS_TIMEO_FEVR);
+
+  if (0 > ret)
+    {
+      DBGIF_LOG1_ERROR("Failed to apicmdgw_send [%d].\n", ret);
+    }
+  else
+    {
+      ret = ntohl(res.result);
+
+      if (0 > ret)
+        {
+          DBGIF_LOG1_ERROR("Modem returned an error [%d].\n", ret);
+        }
+      else
+        {
+          ratres->rat               = res.rat;
+          ratres->multi_rat_support = (bool)res.rat_mode;
+          ratres->source            = res.source;
+        }
+    }
+
+  altcom_free_cmd((FAR uint8_t *)cmd);
+  return ret;
+
+}

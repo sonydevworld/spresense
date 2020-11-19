@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_api.h
  *
- *   Copyright 2018, 2019, 2020, 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,10 @@
  *      Communication technology that attempts to resend data and eventually 
  *      restores the original data even if the data is corrupted 
  *      due to weak electric field communication.
+ *
+ *  - RAT : Radio Access Technology
+ *
+ *      Physical connection method for a radio based communication network.
  *
  * - LTE API system
  *  - Network connection API
@@ -184,6 +188,9 @@
  * | @ref lte_get_current_psm_sync     | @ref lte_get_current_psm        |
  * | @ref lte_get_quality_sync         | @ref lte_get_quality            |
  * | @ref lte_get_cellinfo_sync        |                                 |
+ * | @ref lte_get_rat_sync             |                                 |
+ * | @ref lte_set_rat_sync             |                                 |
+ * | @ref lte_get_ratinfo_sync         |                                 |
  *
  * @{
  * @file  lte_api.h
@@ -714,6 +721,24 @@
 #define LTE_CELLINFO_OPT_NEIGHBOR    (1 << 7)
 
 #define LTE_NEIGHBOR_CELL_MAX (32) /**< Maximum number of neighbor cells */
+
+#define LTE_RAT_CATM  (2)     /**< RAT type: Cat-M */
+#define LTE_RAT_NBIOT (3)     /**< RAT type: NB-IoT */
+
+#define LTE_RAT_MODE_SINGLE   (0) /**< Modem only supports single RAT  */
+#define LTE_RAT_MODE_MULTIPLE (1) /**< Modem supports multiple RAT */
+
+/** RAT has not changed since the last modem boot. */
+
+#define LTE_RAT_SOURCE_DEFAULT (0)
+
+/** The current RAT was determined by host. */
+
+#define LTE_RAT_SOURCE_HOST    (1)
+
+/** The current RAT was determined by LWM2M. */
+
+#define LTE_RAT_SOURCE_LWM2M   (2)
 
 /****************************************************************************
  * Public Types
@@ -1544,6 +1569,43 @@ typedef struct lte_siminfo
 
   uint8_t  gid2[LTE_SIMINFO_GID_LEN];
 } lte_siminfo_t;
+
+/**
+ * @struct lte_ratinfo
+ *
+ * Definition of parameters for RAT information.
+ *
+ * @typedef lte_ratinfo_t
+ * See @ref lte_ratinfo
+ */
+
+typedef struct lte_ratinfo
+{
+
+  /** RAT type. Definition is as below.
+   *  - @ref LTE_RAT_CATM
+   *  - @ref LTE_RAT_NBIOT
+   */
+
+  uint8_t rat; 
+
+  /** Flag that indicates whether the modem supports multiple RATs.
+   * Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE
+   */
+
+  bool multi_rat_support;
+
+  /** Source that determined the current RAT.
+   * Definition is as below.
+   *  - @ref LTE_RAT_SOURCE_DEFAULT
+   *  - @ref LTE_RAT_SOURCE_HOST
+   *  - @ref LTE_RAT_SOURCE_LWM2M
+   */
+
+  uint8_t source;
+} lte_ratinfo_t;
 
 /** Definition of callback function.
  *
@@ -3234,6 +3296,48 @@ int32_t lte_get_quality(get_quality_cb_t callback);
  */
 
 int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo);
+
+/**
+ * @brief Get RAT type
+ *
+ * @return On success, RAT type shown below is returned.
+ *         - @ref LTE_RAT_CATM
+ *         - @ref LTE_RAT_NBIOT
+ * On failure, negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_rat_sync(void);
+
+/**
+ * @brief Set RAT setting
+ *
+ * @param [in] rat: RAT type. Definition is as below.
+ *                  - @ref LTE_RAT_CATM
+ *                  - @ref LTE_RAT_NBIOT
+ * @param [in] persistent: Flag to keep RAT settings
+ *                         after power off the modem.
+ *                         Definition is as below.
+ *                  - @ref LTE_ENABLE
+ *                  - @ref LTE_DISABLE
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_rat_sync(uint8_t rat, bool persistent);
+
+/**
+ * @brief Get RAT information
+ *
+ * @param [out] info: Pointer to the structure that
+ *                    stores RAT information
+ *                    See @ref lte_ratinfo_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_ratinfo_sync(lte_ratinfo_t *info);
 
 /** @} */
 
