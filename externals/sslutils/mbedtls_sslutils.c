@@ -50,7 +50,10 @@
 #include <string.h>
 #include <dirent.h>
 
+/* TODO: Need to implement new TLS solution */
+#if 0
 #include <netutils/ssl_connection.h>
+#endif
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
@@ -766,8 +769,11 @@ static ssize_t sslutil_close(int fd)
 
 void get_sslsocket_methods(struct sock_methods_s *methods)
 {
+/* TODO: Need to implement new TLS solution */
+#if 0
   methods->connect = sslutil_connect;
   methods->send = sslutil_send;
   methods->recv = sslutil_recv;
   methods->close = sslutil_close;
+#endif
 }
