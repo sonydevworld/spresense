@@ -85,7 +85,6 @@ ifeq ($(WINTOOL),y)
 else
 	$(call ARCHIVE_ADD, $(BIN), $(OBJS))
 endif
-	$(Q) touch $@
 
 install::
 
