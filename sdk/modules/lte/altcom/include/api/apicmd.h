@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/apicmd.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,9 +52,14 @@
 
 /* Definition of version field */
 
-#define APICMD_VER                      (0x01)
+#define APICMD_VER_UNKNOWN              (0x00)
+#define APICMD_VER_V1                   (0x01)
+#define APICMD_VER_V4                   (0x04)
+#define APICMD_VER                      APICMD_VER_V1
 
 /* Definitions of command id field */
+
+#define APICMDID_UNKNOWN                (0x0000)
 
 /* LTE API commands */
 
@@ -115,6 +120,62 @@
 #define APICMDID_GET_QUALITY            (0x0037)
 #define APICMDID_ACTIVATE_PDN_CANCEL    (0x0038)
 #define APICMDID_GET_CELLINFO           (0x0039)
+
+#define APICMDID_GENERAL_CMDID_MIN APICMDID_POWER_ON
+#define APICMDID_GENERAL_CMDID_MAX APICMDID_GET_CELLINFO
+
+/* LTE API commands (protocol version 4) */
+
+#define APICMDID_ATTACH_NET_V4          (0x0001)
+#define APICMDID_DETACH_NET_V4          (0x0002)
+#define APICMDID_GET_NETSTAT_V4         (0x0003)
+#define APICMDID_DATAON_V4              (0x0004)
+#define APICMDID_DATAOFF_V4             (0x0005)
+#define APICMDID_GET_DATASTAT_V4        (0x0006)
+#define APICMDID_GET_DATACONFIG_V4      (0x0007)
+#define APICMDID_SET_DATACONFIG_V4      (0x0008)
+#define APICMDID_SET_APN_V4             (0x000A)
+#define APICMDID_GET_VERSION_V4         (0x000B)
+#define APICMDID_GET_PHONENO_V4         (0x000C)
+#define APICMDID_GET_IMSI_V4            (0x000D)
+#define APICMDID_GET_IMEI_V4            (0x000E)
+#define APICMDID_GET_PINSET_V4          (0x000F)
+#define APICMDID_SET_PIN_LOCK_V4        (0x0010)
+#define APICMDID_SET_PIN_CODE_V4        (0x0011)
+#define APICMDID_ENTER_PIN_V4           (0x0012)
+#define APICMDID_GET_LTIME_V4           (0x0013)
+#define APICMDID_GET_OPERATOR_V4        (0x0014)
+#define APICMDID_GET_SLPMODESET_V4      (0x0015)
+#define APICMDID_SET_SLPMODESET_V4      (0x0016)
+#define APICMDID_SET_REP_NETSTAT_V4     (0x0017)
+#define APICMDID_SET_REP_EVT_V4         (0x0018)
+#define APICMDID_SET_REP_QUALITY_V4     (0x0019)
+#define APICMDID_SET_REP_CELLINFO_V4    (0x001A)
+#define APICMDID_REPORT_NETSTAT_V4      (0x001B)
+#define APICMDID_REPORT_EVT_V4          (0x001C)
+#define APICMDID_REPORT_QUALITY_V4      (0x001D)
+#define APICMDID_REPORT_CELLINFO_V4     (0x001E)
+#define APICMDID_GET_EDRX_V4            (0x001F)
+#define APICMDID_SET_EDRX_V4            (0x0020)
+#define APICMDID_GET_PSM_V4             (0x0021)
+#define APICMDID_SET_PSM_V4             (0x0022)
+#define APICMDID_GET_CELLINFO_V4        (0x0024)
+#define APICMDID_GET_QUALITY_V4         (0x0025)
+#define APICMDID_GET_SIMINFO_V4         (0x0310)
+#define APICMDID_POWER_ON_V4            (0x0311)
+#define APICMDID_RADIO_ON_V4            (0x0312)
+#define APICMDID_RADIO_OFF_V4           (0x0313)
+#define APICMDID_ACTIVATE_PDN_V4        (0x0314)
+#define APICMDID_ACTIVATE_PDN_CANCEL_V4 (0x0315)
+#define APICMDID_DEACTIVATE_PDN_V4      (0x0316)
+#define APICMDID_DATA_ALLOW_V4          (0x0317)
+#define APICMDID_GET_NETINFO_V4         (0x0318)
+#define APICMDID_GET_IMS_CAP_V4         (0x0319)
+#define APICMDID_SETREP_NETINFO_V4      (0x031A)
+#define APICMDID_REPORT_NETINFO_V4      (0x031B)
+#define APICMDID_ERRINFO_V4             (0xFFFD)
+
+
 /* SOCKET API commands */
 
 #define APICMDID_SOCK_ACCEPT            (0x0080)
@@ -136,6 +197,9 @@
 #define APICMDID_SOCK_SHUTDOWN          (0x0090)
 #define APICMDID_SOCK_SOCKET            (0x0091)
 #define APICMDID_SOCK_SETSOCKOPT        (0x0092)
+
+#define APICMDID_SOCK_MIN APICMDID_SOCK_ACCEPT
+#define APICMDID_SOCK_MAX APICMDID_SOCK_SETSOCKOPT
 
 /* MBEDTLS API commands */
 
@@ -243,6 +307,36 @@
 #define APICMDID_TLS_RSA_FREE                   (0x0251)
 #define APICMDID_TLS_RSA_GEN_KEY                (0x0252)
 
+#define APICMDID_TLS_SSL_MIN      APICMDID_TLS_SSL_INIT
+#define APICMDID_TLS_SSL_MAX      APICMDID_TLS_SSL_BYTES_AVAIL
+#define APICMDID_TLS_CONFIG_MIN   APICMDID_TLS_CONFIG_INIT
+#define APICMDID_TLS_CONFIG_MAX   APICMDID_TLS_CONFIG_CIPHERSUITES
+#define APICMDID_TLS_SESSION_MIN  APICMDID_TLS_SESSION_INIT
+#define APICMDID_TLS_SESSION_MAX  APICMDID_TLS_SESSION_SET
+#define APICMDID_TLS_X509_CRT_MIN APICMDID_TLS_X509_CRT_INIT
+#define APICMDID_TLS_X509_CRT_MAX APICMDID_TLS_X509_CRT_VERIFY_INFO
+#define APICMDID_TLS_PK_MIN       APICMDID_TLS_PK_INIT
+#define APICMDID_TLS_PK_MAX       APICMDID_TLS_PK_RSA
+#define APICMDID_TLS_CTR_DRBG_MIN APICMDID_TLS_CTR_DRBG_INIT
+#define APICMDID_TLS_CTR_DRBG_MAX APICMDID_TLS_CTR_DRBG_SEED
+#define APICMDID_TLS_ENTROPY_MIN  APICMDID_TLS_ENTROPY_INIT
+#define APICMDID_TLS_ENTROPY_MAX  APICMDID_TLS_ENTROPY_FREE
+#define APICMDID_TLS_CIPHER_MIN   APICMDID_TLS_MD_INFO_FROM_TYPE
+#define APICMDID_TLS_CIPHER_MAX   APICMDID_TLS_SHA1
+
+/* MBEDTLS API commands (protocol version 4) */
+
+#define APICMDID_TLS_SSL_CMD                    (0x0140)
+#define APICMDID_TLS_CONFIG_CMD                 (0x0160)
+#define APICMDID_TLS_CONFIG_VERIFY_CALLBACK_V4  (0x0161)
+#define APICMDID_TLS_SESSION_CMD                (0x0170)
+#define APICMDID_TLS_X509_CRT_CMD               (0x0180)
+#define APICMDID_TLS_X509_CRT_INFO_V4           (0x0181)
+#define APICMDID_TLS_PK_CMD                     (0x0190)
+#define APICMDID_TLS_CTR_DRBG_CMD               (0x01A0)
+#define APICMDID_TLS_ENTROPY_CMD                (0x01B0)
+#define APICMDID_TLS_CIPHER_CMD                 (0x01C0)
+
 /* SMS API commands */
 
 #define APICMDID_SMS_INIT                       (0x0500)
@@ -263,6 +357,7 @@
 #define APICMDID_CONVERT_RES(cmdid)     (cmdid | 0x8000)
 
 #define APICMD_PAYLOAD_SIZE_MAX         (4112)
+#define APICMD_PAYLOAD_SIZE_MAX_V4      (3092)
 
 /* API command header options field */
 
@@ -278,7 +373,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- * API command Header Format
+ * API command Header Format (Protocol version 1)
  * bits    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
  *         ----------------------------------------------
  *         |            magic number (Higher)           |
@@ -312,7 +407,7 @@ begin_packed_struct struct apicmd_cmdhdr_s
 } end_packed_struct;
 
 /****************************************************************************
- * API command Footer Format
+ * API command Footer Format (Protocol version 1)
  * bits    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
  *         ----------------------------------------------
  *         |                  reserve                   |
@@ -325,6 +420,40 @@ begin_packed_struct struct apicmd_cmdftr_s
 {
   uint16_t reserve;
   uint16_t chksum;
+} end_packed_struct;
+
+/****************************************************************************
+ * API command Header Format (Protocol version 4)
+ * bits    0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+ *         ----------------------------------------------
+ *         |            magic number (Higher)           |
+ *         ----------------------------------------------
+ *         |            magic number (Lower)            |
+ *         ----------------------------------------------
+ *         |       version       |      sequence id     |
+ *         ----------------------------------------------
+ *         |                 command id                 |
+ *         ----------------------------------------------
+ *         |               transaction id               |
+ *         ----------------------------------------------
+ *         |                 data length                |
+ *         ----------------------------------------------
+ *         |              check sum(header part)        |
+ *         ----------------------------------------------
+ *         |              check sum(data part)          |
+ *         ----------------------------------------------
+ ****************************************************************************/
+
+begin_packed_struct struct apicmd_cmdhdr_v4_s
+{
+  uint32_t magic;
+  uint8_t  ver;
+  uint8_t  seqid;
+  uint16_t cmdid;
+  uint16_t transid;
+  uint16_t dtlen;
+  uint16_t chksum;
+  uint16_t dtchksum;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_APICMD_H */
