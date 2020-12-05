@@ -49,6 +49,7 @@
 #include <errno.h>
 #include <semaphore.h>
 
+#include <arch/chip/chip.h>
 #include <arch/chip/pm.h>
 #include <mm/tile.h>
 
@@ -77,7 +78,8 @@ extern char __stack[];
 #define ALIGNUP(v, a)          (((v) + ((a)-1)) & ~((a)-1))
 
 #define MM_TILE_BASE ((uint32_t)&__stack)
-#define MM_TILE_SIZE (CONFIG_RAM_START + CONFIG_RAM_SIZE - MM_TILE_BASE)
+#define MM_TILE_SIZE \
+  (CONFIG_RAM_START + CONFIG_RAM_SIZE - CXD56_PHYSADDR(MM_TILE_BASE))
 
 #ifdef CONFIG_ASMP_SMALL_BLOCK
 #  define MPSHM_TILE_ALIGN    MPSHM_BLOCK_SIZE_SHIFT
