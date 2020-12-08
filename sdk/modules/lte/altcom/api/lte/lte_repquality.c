@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_repquality.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -175,6 +175,7 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
   uint16_t                                      resbufflen = RES_DATA_LEN;
   FAR struct apicmd_cmddat_setrepquality_s     *reqbuff    = NULL;
   uint16_t                                      reslen     = 0;
+  uint16_t                                      cmdid = 0;
 
   /* Check input parameter */
 
@@ -195,6 +196,12 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_REP_QUALITY);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
   /* Setup API callback */
 
   if (quality_callback)
@@ -211,7 +218,7 @@ int32_t lte_set_report_quality(quality_report_cb_t quality_callback,
    /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setrepquality_s *)
-             apicmdgw_cmd_allocbuff(APICMDID_SET_REP_QUALITY, REQ_DATA_LEN);
+             apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -275,5 +282,6 @@ errout:
 
 enum evthdlrc_e apicmdhdlr_repquality(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_QUALITY, repquality_job);
+  return apicmdhdlrbs_do_runjob(evt,
+    apicmdgw_get_cmdid(APICMDID_REPORT_QUALITY), repquality_job);
 }

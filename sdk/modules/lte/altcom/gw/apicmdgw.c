@@ -1744,7 +1744,7 @@ uint16_t apicmdgw_get_cmdid(uint16_t cmdid)
         }
     }
 
-  DBGIF_LOG2_INFO("get command id:0x%04x from 0x%04x\n", ret, cmdid);
+  DBGIF_LOG2_DEBUG("get command id:0x%04x from 0x%04x\n", ret, cmdid);
 
   return ret;
 }

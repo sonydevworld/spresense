@@ -76,4 +76,10 @@ begin_packed_struct struct apicmd_cmddat_rep_netinfo_s
   struct apicmd_netinfo_s netinfo;
 } end_packed_struct;
 
+begin_packed_struct struct apicmd_cmddat_rep_netinfo_v4_s
+{
+  struct apicmd_netinfo_v4_s netinfo;
+} end_packed_struct;
+
+
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_REPNETINFO_H */

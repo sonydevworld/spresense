@@ -115,10 +115,10 @@ static int32_t repnetinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void repnetinfo_job(FAR void *arg)
 {
   uint8_t                                i;
-  FAR struct apicmd_cmddat_rep_netinfo_s *data;
   netinfo_report_cb_t                    callback;
   lte_netinfo_t                          netinfo;
   int32_t                                ret = 0;
+  int                                    protocolver = 0;
 
   netinfo.pdn_stat = NULL;
   callback = altcomcallbacks_get_cb(APICMDID_SETREP_NETINFO);
@@ -130,36 +130,81 @@ static void repnetinfo_job(FAR void *arg)
     }
   else
     {
-      data = (FAR struct apicmd_cmddat_rep_netinfo_s *)arg;
-
-      /* Fill network information */
-
-      netinfo.nw_stat = data->netinfo.nw_stat;
-      netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
-      netinfo.nw_err.reject_cause.category =
-        data->netinfo.err_info.reject_cause.category;
-      netinfo.nw_err.reject_cause.value =
-        data->netinfo.err_info.reject_cause.value;
-      netinfo.pdn_num = data->netinfo.pdn_count;
-      if (0 < data->netinfo.pdn_count)
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
         {
-          netinfo.pdn_stat = (FAR lte_pdn_t *)
-            BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
-          if (!netinfo.pdn_stat)
+          /* Fill network information */
+
+          FAR struct apicmd_cmddat_rep_netinfo_s *data =
+            (FAR struct apicmd_cmddat_rep_netinfo_s *)arg;
+
+          netinfo.nw_stat = data->netinfo.nw_stat;
+          netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
+          netinfo.nw_err.reject_cause.category = data->netinfo.
+            err_info.reject_cause.category;
+          netinfo.nw_err.reject_cause.value = data->netinfo.
+            err_info.reject_cause.value;
+          netinfo.pdn_num = data->netinfo.pdn_count;
+          if (0 < data->netinfo.pdn_count)
             {
-              DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-              ret = -1;
-            }
-          else
-            {
-              for (i = 0; i < data->netinfo.pdn_count; i++)
+              netinfo.pdn_stat = (FAR lte_pdn_t *)
+                BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
+              if (!netinfo.pdn_stat)
                 {
-                  ret = altcombs_set_pdninfo(&data->netinfo.pdn[i],
-                                             &netinfo.pdn_stat[i]);
-                  if (0 > ret)
+                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+                  ret = -1;
+                }
+              else
+                {
+                  for (i = 0; i < data->netinfo.pdn_count; i++)
                     {
-                      DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
-                      break;
+                      ret = altcombs_set_pdninfo(&data->netinfo.pdn[i],
+                        &netinfo.pdn_stat[i]);
+                      if (0 > ret)
+                        {
+                          DBGIF_LOG1_ERROR("altcombs_set_pdninfo() error:%d",
+                            ret);
+                          break;
+                        }
+                    }
+                }
+            }
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          /* Fill network information */
+
+          FAR struct apicmd_cmddat_rep_netinfo_v4_s *data =
+            (FAR struct apicmd_cmddat_rep_netinfo_v4_s *)arg;
+
+          netinfo.nw_stat = data->netinfo.nw_stat;
+           netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
+          netinfo.nw_err.reject_cause.category = data->netinfo.
+            err_info.reject_cause.category;
+          netinfo.nw_err.reject_cause.value = data->netinfo.
+            err_info.reject_cause.value;
+          netinfo.pdn_num = data->netinfo.pdn_count;
+          if (0 < data->netinfo.pdn_count)
+            {
+              netinfo.pdn_stat = (FAR lte_pdn_t *)
+                BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
+              if (!netinfo.pdn_stat)
+                {
+                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+                  ret = -1;
+                }
+              else
+                {
+                  for (i = 0; i < data->netinfo.pdn_count; i++)
+                    {
+                      ret = altcombs_set_pdninfo_v4(&data->netinfo.pdn[i],
+                        &netinfo.pdn_stat[i]);
+                      if (0 > ret)
+                        {
+                          DBGIF_LOG1_ERROR("altcombs_set_pdninfo() error:%d",
+                            ret);
+                          break;
+                        }
                     }
                 }
             }
@@ -214,6 +259,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
   uint16_t                                   reslen     = 0;
   bool                                       reset_flag = false;
   netinfo_report_cb_t                        callback;
+  uint16_t                                   cmdid = 0;
 
   /* Check LTE library status */
 
@@ -221,6 +267,12 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_SETREP_NETINFO);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   /* Check this process running. */
@@ -256,7 +308,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
    * Allocate API command buffer to send */
 
   cmdbuff = (FAR struct apicmd_cmddat_set_repnetinfo_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_SETREP_NETINFO, SETREP_NETINFO_DATA_LEN);
+    apicmdgw_cmd_allocbuff(cmdid, SETREP_NETINFO_DATA_LEN);
   if (!cmdbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -338,5 +390,6 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
 
 enum evthdlrc_e apicmdhdlr_repnetinfo(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_NETINFO, repnetinfo_job);
+  return apicmdhdlrbs_do_runjob(evt,
+    apicmdgw_get_cmdid(APICMDID_REPORT_NETINFO), repnetinfo_job);
 }

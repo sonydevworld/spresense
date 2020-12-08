@@ -73,4 +73,12 @@ begin_packed_struct struct apicmd_netinfo_s
   struct apicmd_pdnset_s pdn[APICMD_NETINFO_PDNCOUNT_MAX];
 } end_packed_struct;
 
+begin_packed_struct struct apicmd_netinfo_v4_s
+{
+  uint8_t nw_stat;
+  uint8_t pdn_count;
+  struct apicmd_netinfo_nwerrinfo_s err_info;
+  struct apicmd_pdnset_v4_s pdn[APICMD_NETINFO_PDNCOUNT_MAX];
+} end_packed_struct;
+
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_NETINFO_H */

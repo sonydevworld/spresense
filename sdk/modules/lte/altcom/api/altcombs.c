@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/altcombs.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -556,6 +556,51 @@ int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
 }
 
 /****************************************************************************
+ * Name: altcombs_set_pdninfo_v4
+ *
+ * Description:
+ *   Set lte_pdn_t param.
+ *
+ * Input Parameters:
+ *   cmd_pdn    Pointer of api command pdn struct.
+ *   lte_pdn    Pointer of lte_pdn_t.
+ *
+ * Returned Value:
+ *   When convert success is returned 0.
+ *   When convert failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_pdninfo_v4(FAR struct apicmd_pdnset_v4_s *cmd_pdn,
+  FAR lte_pdn_t *lte_pdn)
+{
+  int32_t i;
+
+  if (!cmd_pdn || !lte_pdn)
+    {
+      return -EINVAL;
+    }
+
+  lte_pdn->session_id = cmd_pdn->session_id;
+  lte_pdn->active = cmd_pdn->activate;
+  lte_pdn->apn_type = htonl(cmd_pdn->apntype);
+  lte_pdn->ipaddr_num = cmd_pdn->ipaddr_num;
+  for (i = 0; i < lte_pdn->ipaddr_num; i++)
+    {
+      lte_pdn->address[i].ip_type = cmd_pdn->ip_address[i].iptype;
+      strncpy((FAR char *)lte_pdn->address[i].address,
+              (FAR char *)cmd_pdn->ip_address[i].address,
+              LTE_IPADDR_MAX_LEN - 1);
+    }
+
+  lte_pdn->ims_register = cmd_pdn->imsregister;
+  lte_pdn->data_allow = cmd_pdn->dataallow;
+  lte_pdn->data_roaming_allow = cmd_pdn->dararoamingallow;
+
+  return 0;
+}
+
+/****************************************************************************
  * Name: altcombs_check_edrx
  *
  * Description:
@@ -928,6 +973,81 @@ void altcombs_set_cellinfo(
           memcpy(api_cellinfo->mcc, cmd_cellinfo->mcc, LTE_MCC_DIGIT);
           api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
           memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc, 
+                 cmd_cellinfo->mnc_digit);
+        }
+    }
+  else
+    {
+      api_cellinfo->valid = LTE_INVALID;
+    }
+}
+
+/****************************************************************************
+ * Name: altcombs_set_cellinfo_v4
+ *
+ * Description:
+ *   Set lte_cellinfo_t.
+ *
+ * Input Parameters:
+ *   cmd_cellinfo  Pointer of api command cellinfo struct.
+ *   api_cellinfo  Pointer of lte_cellinfo_t.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+void altcombs_set_cellinfo_v4(
+          FAR struct apicmd_cmddat_cellinfo_v4_s *cmd_cellinfo,
+          FAR lte_cellinfo_t *api_cellinfo)
+{
+  if (cmd_cellinfo->enability != LTE_INVALID)
+    {
+      if (ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->cell_id error:%d\n",
+                           ntohl(cmd_cellinfo->cell_id));
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->earfcn error:%d\n",
+                           ntohl(cmd_cellinfo->earfcn));
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mcc, LTE_MCC_DIGIT))
+        {
+          DBGIF_LOG_ERROR("cmd_cellinfo->mcc error\n");
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (
+        cmd_cellinfo->mnc_digit < APICMD_CELLINFO_MNC_DIGIT_MIN ||
+        cmd_cellinfo->mnc_digit > LTE_MNC_DIGIT_MAX)
+        {
+          DBGIF_LOG1_ERROR("cmd_cellinfo->mnc_digit error:%d\n",
+                           cmd_cellinfo->mnc_digit);
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mnc,
+               cmd_cellinfo->mnc_digit))
+        {
+          DBGIF_LOG_ERROR("cmd_cellinfo->mnc error\n");
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else if (strlen((const char *)cmd_cellinfo->cgid) > APICMD_CELLINFO_GCID_MAX )
+        {
+          DBGIF_LOG_ERROR("cmd_cellinfo->cgid error\n");
+          api_cellinfo->valid = LTE_INVALID;
+        }
+      else
+        {
+          api_cellinfo->valid = LTE_VALID;
+          api_cellinfo->phycell_id = ntohl(cmd_cellinfo->cell_id);
+          api_cellinfo->earfcn     = ntohl(cmd_cellinfo->earfcn);
+          memcpy(api_cellinfo->mcc, cmd_cellinfo->mcc, LTE_MCC_DIGIT);
+          api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
+          memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc,
                  cmd_cellinfo->mnc_digit);
         }
     }

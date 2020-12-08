@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getsiminfo.c
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -287,6 +287,7 @@ static int32_t lte_getsiminfo_impl(uint32_t option, lte_siminfo_t *siminfo,
   uint16_t                                   resbufflen = RES_DATA_LEN;
   uint16_t                                   reslen     = 0;
   int                                        sync       = (callback == NULL);
+  uint16_t                                   cmdid = 0;
 
   /* Check input parameter */
 
@@ -309,6 +310,12 @@ static int32_t lte_getsiminfo_impl(uint32_t option, lte_siminfo_t *siminfo,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_SIMINFO);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -338,7 +345,7 @@ static int32_t lte_getsiminfo_impl(uint32_t option, lte_siminfo_t *siminfo,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_getsiminfo_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_GET_SIMINFO, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -460,5 +467,6 @@ int32_t lte_get_siminfo(uint32_t option, get_siminfo_cb_t callback)
 enum evthdlrc_e apicmdhdlr_getsiminfo(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_GET_SIMINFO), get_siminfo_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_SIMINFO)),
+    get_siminfo_job);
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getquality.c
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,17 @@
 
 #define REQ_DATA_LEN (0)
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getqualityres_s))
+#define RES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_getqualityres_v4_s))
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+union getqualityres_u
+{
+  struct apicmd_cmddat_getqualityres_s res;
+  struct apicmd_cmddat_getqualityres_v4_s res_v4;
+};
 
 /****************************************************************************
  * Private Data
@@ -110,21 +121,32 @@ static int32_t getquality_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void getquality_job(FAR void *arg)
 {
   int32_t                                  ret;
-  int32_t                                  result = LTE_RESULT_ERROR;
-  FAR struct apicmd_cmddat_getqualityres_s *data;
   lte_quality_t                            getquality;
   get_quality_cb_t                         callback;
-
-  data = (FAR struct apicmd_cmddat_getqualityres_s *)arg;
+  int                                      protocolver = 0;
 
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_QUALITY,
       (void *)&callback);
 
   if ((ret == 0) && (callback))
     {
-      result = (int32_t)data->result;
-      altcombs_set_quality(&getquality, &data->quality);
-      callback(result, &getquality);
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_getqualityres_s *data =
+            (FAR struct apicmd_cmddat_getqualityres_s *)arg;
+
+          altcombs_set_quality(&getquality, &data->quality);
+          callback((int32_t)data->result, &getquality);
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getqualityres_v4_s *data =
+            (FAR struct apicmd_cmddat_getqualityres_v4_s *)arg;
+
+          altcombs_set_quality(&getquality, &data->quality);
+          callback(LTE_RESULT_OK, &getquality);
+        }
     }
   else
     {
@@ -167,10 +189,12 @@ static int32_t lte_getquality_impl(lte_quality_t *quality,
   int32_t                               ret;
   FAR uint8_t                          *reqbuff    = NULL;
   FAR uint8_t                          *presbuff   = NULL;
-  struct apicmd_cmddat_getqualityres_s  resbuff;
-  uint16_t                              resbufflen = RES_DATA_LEN;
+  union getqualityres_u                 resbuff;
+  uint16_t                              resbufflen = 0;
   uint16_t                              reslen     = 0;
   int                                   sync       = (callback == NULL);
+  uint16_t                              cmdid = 0;
+  int                                   protocolver = 0;
 
   /* Check input parameter */
 
@@ -186,6 +210,26 @@ static int32_t lte_getquality_impl(lte_quality_t *quality,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_QUALITY);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      resbufflen = RES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      resbufflen = RES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -206,7 +250,7 @@ static int32_t lte_getquality_impl(lte_quality_t *quality,
 
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_QUALITY,
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid,
                                                   REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -230,12 +274,29 @@ static int32_t lte_getquality_impl(lte_quality_t *quality,
 
   if (sync)
     {
-      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
-      if (0 == ret)
+      if (protocolver == APICMD_VER_V1)
         {
+          FAR struct apicmd_cmddat_getqualityres_s *res =
+            (FAR struct apicmd_cmddat_getqualityres_s *)presbuff;
+
+          ret = (LTE_RESULT_OK == res->result) ? 0 : -EPROTO;
+          if (0 == ret)
+            {
+              /* Parse quality information */
+
+              altcombs_set_quality(quality, &res->quality);
+            }
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getqualityres_v4_s *res =
+            (FAR struct apicmd_cmddat_getqualityres_v4_s *)presbuff;
+
+          ret = 0;
+
           /* Parse quality information */
 
-          altcombs_set_quality(quality, &resbuff.quality);
+          altcombs_set_quality(quality, &res->quality);
         }
     }
 
@@ -319,6 +380,7 @@ int32_t lte_get_quality(get_quality_cb_t callback)
 
 enum evthdlrc_e apicmdhdlr_getquality(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_GET_QUALITY),
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_QUALITY)),
     getquality_job);
 }

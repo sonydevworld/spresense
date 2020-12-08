@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/lte/apicmd_getquality.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,5 +55,9 @@ begin_packed_struct struct apicmd_cmddat_getqualityres_s
   struct apicmd_cmddat_quality_s quality;
 } end_packed_struct;
 
+begin_packed_struct struct apicmd_cmddat_getqualityres_v4_s
+{
+  struct apicmd_cmddat_quality_s quality;
+} end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_GETQUALITY_H */

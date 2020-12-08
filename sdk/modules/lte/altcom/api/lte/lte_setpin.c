@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_setpin.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -259,6 +259,7 @@ static int32_t lte_setpinenable_impl(bool enable,
   uint16_t                               reslen     = 0;
   int                                    sync       = (callback == NULL);
   uint8_t                                pinlen     = 0;
+  uint16_t                               cmdid = 0;
 
   /* Check input parameter */
 
@@ -288,6 +289,12 @@ static int32_t lte_setpinenable_impl(bool enable,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_PIN_LOCK);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
   if (sync)
     {
       presbuff = (FAR uint8_t *)&resbuff;
@@ -307,7 +314,7 @@ static int32_t lte_setpinenable_impl(bool enable,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setpinlock_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_LOCK,
+              apicmdgw_cmd_allocbuff(cmdid,
                                      PIN_LOCK_REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -393,6 +400,7 @@ static int32_t lte_changepin_impl(int8_t target_pin, int8_t *pincode,
   uint16_t                               reslen     = 0;
   int                                    sync       = (callback == NULL);
   uint8_t                                pinlen     = 0;
+  uint16_t                               cmdid = 0;
 
   /* Return error if argument is NULL */
 
@@ -433,6 +441,12 @@ static int32_t lte_changepin_impl(int8_t target_pin, int8_t *pincode,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_PIN_CODE);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
   if (sync)
     {
       presbuff = (FAR uint8_t *)&resbuff;
@@ -452,7 +466,7 @@ static int32_t lte_changepin_impl(int8_t target_pin, int8_t *pincode,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setpincode_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_SET_PIN_CODE,
+              apicmdgw_cmd_allocbuff(cmdid,
                                      PIN_CODE_REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -652,11 +666,13 @@ enum evthdlrc_e apicmdhdlr_setpin(FAR uint8_t *evt, uint32_t evlen)
   enum evthdlrc_e ret;
 
   ret = apicmdhdlrbs_do_runjob(
-    evt, APICMDID_CONVERT_RES(APICMDID_SET_PIN_LOCK), setpin_lock_job);
+    evt, APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_SET_PIN_LOCK)),
+    setpin_lock_job);
   if (EVTHDLRC_UNSUPPORTEDEVENT == ret)
     {
       ret = apicmdhdlrbs_do_runjob(
-        evt, APICMDID_CONVERT_RES(APICMDID_SET_PIN_CODE), setpin_code_job);
+        evt, APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_SET_PIN_CODE)),
+        setpin_code_job);
     }
 
   return ret;

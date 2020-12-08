@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getdynamicedrx.c
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -186,6 +186,8 @@ static int32_t lte_getcurrentedrx_impl(lte_edrx_setting_t *settings,
   uint16_t                                  resbufflen = RES_DATA_LEN;
   uint16_t                                  reslen     = 0;
   int                                       sync       = (callback == NULL);
+  uint16_t                                  cmdid = 0;
+  int                                       protocolver = 0;
 
   /* Check input parameter */
 
@@ -201,6 +203,19 @@ static int32_t lte_getcurrentedrx_impl(lte_edrx_setting_t *settings,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_DYNAMICEDRX);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V4)
+    {
+      return lte_getedrx_impl(ALTCOM_GETEDRX_TYPE_NEGOTIATED,
+        settings, callback);
     }
 
   if (sync)
@@ -221,7 +236,7 @@ static int32_t lte_getcurrentedrx_impl(lte_edrx_setting_t *settings,
 
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_DYNAMICEDRX,
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid,
                                                   REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -296,6 +311,7 @@ int32_t lte_get_dynamic_edrx_param(get_dynamic_edrx_param_cb_t callback)
     DBGIF_LOG_ERROR("Input argument is NULL.\n");
     return -EINVAL;
   }
+
   return lte_getcurrentedrx_impl(NULL, callback);
 }
 
@@ -341,6 +357,7 @@ int32_t lte_get_current_edrx(get_current_edrx_cb_t callback)
     DBGIF_LOG_ERROR("Input argument is NULL.\n");
     return -EINVAL;
   }
+
   return lte_getcurrentedrx_impl(NULL, callback);
 }
 
@@ -366,5 +383,6 @@ int32_t lte_get_current_edrx(get_current_edrx_cb_t callback)
 enum evthdlrc_e apicmdhdlr_getdynamicedrx(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_GET_DYNAMICEDRX), get_dynamicedrx_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_DYNAMICEDRX)),
+    get_dynamicedrx_job);
 }

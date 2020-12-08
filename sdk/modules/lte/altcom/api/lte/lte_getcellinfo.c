@@ -51,7 +51,7 @@
  ****************************************************************************/
 
 #define REQ_DATA_LEN (0)
-#define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getcellinfores_s))
+#define RES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_getcellinfores_v4_s))
 
 /****************************************************************************
  * Private Data
@@ -84,9 +84,11 @@ int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo)
 {
   int32_t                                ret;
   FAR uint8_t                           *reqbuff    = NULL;
-  struct apicmd_cmddat_getcellinfores_s  resbuff;
-  uint16_t                               resbufflen = RES_DATA_LEN;
+  FAR uint8_t                           *presbuff   = NULL;
+  uint16_t                               resbufflen = 0;
   uint16_t                               reslen     = 0;
+  uint16_t                               cmdid = 0;
+  int                                    protocolver = 0;
 
   /* Check input parameter */
 
@@ -104,9 +106,38 @@ int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo)
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_CELLINFO);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      return -EOPNOTSUPP;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      resbufflen = RES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
+    }
+
+  /* Allocate API command buffer to receive */
+
+  presbuff = altcom_alloc_resbuff(resbufflen);
+  if (!presbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      return -ENOMEM;
+    }
+
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_CELLINFO,
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid,
                                                   REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -117,7 +148,7 @@ int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo)
 
   /* Send API command to modem */
 
-  ret = apicmdgw_send(reqbuff, (FAR uint8_t *)&resbuff,
+  ret = apicmdgw_send(reqbuff, presbuff,
                       resbufflen, &reslen, SYS_TIMEO_FEVR);
   altcom_free_cmd(reqbuff);
 
@@ -126,14 +157,15 @@ int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo)
       goto errout;
     }
 
-  ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
-  if (0 == ret)
-    {
-      /* Parse LTE network cell information */
+  /* Parse LTE network cell information */
 
-      altcombs_set_cellinfo(&resbuff.cellinfo, cellinfo);
-    }
+  altcombs_set_cellinfo_v4(
+    &((struct apicmd_cmddat_getcellinfores_v4_s *)presbuff)->cellinfo,
+    cellinfo);
+
+  ret = 0;
 
 errout:
+  BUFFPOOL_FREE(presbuff);
   return ret;
 }

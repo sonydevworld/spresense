@@ -216,6 +216,7 @@ static int32_t lte_dataallow_impl(uint8_t session_id, uint8_t allow,
   uint16_t                                 resbufflen = RES_DATA_LEN;
   uint16_t                                 reslen     = 0;
   int                                      sync       = (callback == NULL);
+  uint16_t                                 cmdid = 0;
 
   /* Check input parameter */
 
@@ -231,6 +232,12 @@ static int32_t lte_dataallow_impl(uint8_t session_id, uint8_t allow,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_DATA_ALLOW);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -252,7 +259,7 @@ static int32_t lte_dataallow_impl(uint8_t session_id, uint8_t allow,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_dataallow_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_DATA_ALLOW, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -378,5 +385,6 @@ int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
 enum evthdlrc_e apicmdhdlr_dataallow(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_DATA_ALLOW), dataallow_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_DATA_ALLOW)),
+    dataallow_job);
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/lte/apicmd_pdn.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,6 +52,8 @@
 #define APICMD_PDN_IPCOUNT_MAX            (2)
 #define APICMD_PDN_IPADDR_MAXLEN          (40)
 
+#define APICMD_PDN_DNSCOUNT_MAX           (4)
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -73,6 +75,22 @@ begin_packed_struct struct apicmd_pdnset_s
   uint8_t imsregister;
   uint8_t dataallow;
   uint8_t dararoamingallow;
+} end_packed_struct;
+
+begin_packed_struct struct apicmd_pdnset_v4_s
+{
+  uint8_t session_id;
+  uint8_t activate;
+  uint32_t apntype;
+  uint8_t ipaddr_num;
+  struct apicmd_ipaddr_s
+    ip_address[APICMD_PDN_IPCOUNT_MAX];
+  uint8_t imsregister;
+  uint8_t dataallow;
+  uint8_t dararoamingallow;
+  uint8_t dnsaddr_num;
+  struct apicmd_ipaddr_s
+    dns_address[APICMD_PDN_DNSCOUNT_MAX];
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_PDN_H */

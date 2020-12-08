@@ -53,7 +53,19 @@
 #define APICMD_CELLINFO_EARFCN_MAX    (262143)
 #define APICMD_CELLINFO_DIGIT_NUM_MIN (0)
 #define APICMD_CELLINFO_DIGIT_NUM_MAX (9)
-#define APICMD_CELLINFO_MNC_DIGIT_MIN (2)
+#define APICMD_CELLINFO_MCC_DIGIT             (3)
+#define APICMD_CELLINFO_MNC_DIGIT_MIN         (2)
+#define APICMD_CELLINFO_MNC_DIGIT_MAX         (3)
+#define APICMD_CELLINFO_GCID_MAX              (16)
+#define APICMD_CELLINFO_TIMEDIFF_INDEX_MAX    (4095)
+#define APICMD_CELLINFO_TA_MAX                (1282)
+#define APICMD_CELLINFO_SFN_MAX               (0x03FF)
+#define APICMD_CELLINFO_NEIGHBOR_CELL_NUM_MAX (32)
+#define APICMD_CELLINFO_VALID_TIMEDIFFIDX     (1 << 1)
+#define APICMD_CELLINFO_VALID_TA              (1 << 2)
+#define APICMD_CELLINFO_VALID_SFN             (1 << 3)
+#define APICMD_CELLINFO_VALID_RSRP            (1 << 4)
+#define APICMD_CELLINFO_VALID_RSRQ            (1 << 5)
 
 /****************************************************************************
  * Public Types
@@ -69,6 +81,77 @@ begin_packed_struct struct apicmd_cmddat_cellinfo_s
   uint8_t  mcc[LTE_MCC_DIGIT];
   uint8_t  mnc_digit;
   uint8_t  mnc[LTE_MNC_DIGIT_MAX];
+} end_packed_struct;
+
+begin_packed_struct struct apicmd_cmddat_neighbor_cell_s
+{
+  uint8_t  valid;
+  uint32_t cell_id;
+  uint32_t earfcn;
+
+  /* When setting "sfn",
+   * APICMD_CELLINFO_VALID_SFN flag has been added to "valid".
+   */
+
+  uint16_t sfn;
+
+  /* When setting "rsrp",
+   * APICMD_CELLINFO_VALID_RSRP flag has been added to "valid".
+   */
+
+  int16_t  rsrp;
+
+  /* When setting "rsrq",
+   * APICMD_CELLINFO_VALID_RSRQ flag has been added to "valid".
+   */
+
+  int16_t  rsrq;
+} end_packed_struct;
+
+begin_packed_struct struct apicmd_cmddat_cellinfo_v4_s
+{
+  uint8_t enability;
+  uint32_t cell_id;
+  uint32_t earfcn;
+  uint8_t mcc[APICMD_CELLINFO_MCC_DIGIT];
+  uint8_t mnc_digit;
+  uint8_t mnc[APICMD_CELLINFO_MNC_DIGIT_MAX];
+  uint8_t cgid[APICMD_CELLINFO_GCID_MAX + 1];
+  uint16_t tac;
+
+  /* When setting "time_diffidx",
+   * APICMD_CELLINFO_VALID_TIMEDIFFIDX flag has been added to "valid".
+   */
+
+  uint16_t time_diffidx;
+
+  /* When setting "ta",
+   * APICMD_CELLINFO_VALID_TA flag has been added to "valid".
+   */
+
+  uint16_t ta;
+
+  /* When setting "sfn",
+   * APICMD_CELLINFO_VALID_SFN flag has been added to "valid".
+   */
+
+  uint16_t sfn;
+
+  /* When setting "rsrp",
+   * APICMD_CELLINFO_VALID_RSRP flag has been added to "valid".
+   */
+
+  int16_t rsrp;
+
+  /* When setting "rsrq",
+   * APICMD_CELLINFO_VALID_RSRQ flag has been added to "valid".
+   */
+
+  int16_t rsrq;
+
+  uint8_t neighbor_num;
+  struct apicmd_cmddat_neighbor_cell_s
+           neighbor_cell[APICMD_CELLINFO_NEIGHBOR_CELL_NUM_MAX];
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_CELLINFO_H */

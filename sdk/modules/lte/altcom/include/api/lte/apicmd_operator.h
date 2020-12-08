@@ -47,6 +47,7 @@
  ****************************************************************************/
 
 #define APICMD_OPERATOR_LEN     17
+#define APICMD_OPERATOR_LEN_V4  33
 
 /****************************************************************************
  * Public Types
@@ -64,6 +65,12 @@ begin_packed_struct struct apicmd_cmddat_getoperatorres_s
 {
   uint8_t result;
   uint8_t oper[APICMD_OPERATOR_LEN];
+} end_packed_struct;
+
+begin_packed_struct struct apicmd_cmddat_getoperatorres_v4_s
+{
+  uint8_t result;
+  uint8_t oper[APICMD_OPERATOR_LEN_V4];
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_OPERATOR_H */

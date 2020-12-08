@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_activate_pdn_cancel.c
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -120,6 +120,7 @@ int32_t lte_activate_pdn_cancel(void)
   struct apicmd_cmddat_activatepdn_cancel_res_s  resbuff;
   uint16_t                                       resbufflen = 0;
   uint16_t                                       reslen     = 0;
+  uint16_t                                       cmdid = 0;
 
   resbufflen = ACTPDN_CANCEL_RES_DATA_LEN;
 
@@ -129,6 +130,12 @@ int32_t lte_activate_pdn_cancel(void)
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_ACTIVATE_PDN_CANCEL);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   /* Check this process running. */
@@ -152,7 +159,7 @@ int32_t lte_activate_pdn_cancel(void)
    * Allocate API command buffer to send
    */
 
-  cmdbuff = apicmdgw_cmd_allocbuff(APICMDID_ACTIVATE_PDN_CANCEL,
+  cmdbuff = apicmdgw_cmd_allocbuff(cmdid,
                                    ACTPDN_CANCEL_DATA_LEN);
   if (!cmdbuff)
     {

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_activate_pdn.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,6 +60,7 @@
 
 #define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_activatepdn_s))
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_activatepdnres_s))
+#define RES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_activatepdnres_v4_s))
 
 /****************************************************************************
  * Private Functions
@@ -192,12 +193,11 @@ static int32_t activatepdn_status_chg_cb(int32_t new_stat, int32_t old_stat)
 static void activatepdn_job(FAR void *arg)
 {
   int32_t                                   ret;
-  FAR struct apicmd_cmddat_activatepdnres_s *data;
   activate_pdn_cb_t                         callback;
   uint32_t                                  result;
   FAR lte_pdn_t                             *pdn = NULL;
+  int                                       protocolver = 0;
 
-  data = (FAR struct apicmd_cmddat_activatepdnres_s *)arg;
   ret = altcomcallbacks_get_unreg_cb(APICMDID_ACTIVATE_PDN,
     (FAR void **)&callback);
 
@@ -207,32 +207,71 @@ static void activatepdn_job(FAR void *arg)
     }
   else
     {
-      result =
-        data->result == LTE_RESULT_OK ? LTE_RESULT_OK :
-        data->result == LTE_RESULT_ERROR ? LTE_RESULT_ERROR :
-        LTE_RESULT_CANCEL;
-
-      if (result == LTE_RESULT_OK)
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
         {
-          /* Fill pdn information */
+          FAR struct apicmd_cmddat_activatepdnres_s *data =
+            (FAR struct apicmd_cmddat_activatepdnres_s *)arg;
 
-          pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
-          if (pdn)
+          result = data->result == LTE_RESULT_OK ? LTE_RESULT_OK :
+                   data->result == LTE_RESULT_ERROR ? LTE_RESULT_ERROR :
+                   LTE_RESULT_CANCEL;
+
+          if (result == LTE_RESULT_OK)
             {
-              ret = altcombs_set_pdninfo(&data->pdnset, pdn);
-              if (0 > ret)
+              /* Fill pdn information */
+
+              pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
+              if (pdn)
                 {
-                  DBGIF_LOG1_ERROR("altcombs_conv_cmdpdn_to_ltepdn() error:%d", ret);
-                  result = LTE_RESULT_ERROR;
+                  ret = altcombs_set_pdninfo(&data->pdnset, pdn);
+                  if (0 > ret)
+                    {
+                      DBGIF_LOG1_ERROR("altcombs_set_pdninfo() error:%d",
+                        ret);
+                      result = LTE_RESULT_ERROR;
+                    }
+                }
+              else
+                {
+                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
                 }
             }
-          else
-            {
-              DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
-            }
-        }
 
-      callback(result, pdn);
+          callback(result, pdn);
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_activatepdnres_v4_s *data =
+            (FAR struct apicmd_cmddat_activatepdnres_v4_s *)arg;
+
+          result = data->result == LTE_RESULT_OK ? LTE_RESULT_OK :
+                   data->result == LTE_RESULT_ERROR ? LTE_RESULT_ERROR :
+                   LTE_RESULT_CANCEL;
+
+          if (result == LTE_RESULT_OK)
+            {
+              /* Fill pdn information */
+
+              pdn = (FAR lte_pdn_t *)BUFFPOOL_ALLOC(sizeof(lte_pdn_t));
+              if (pdn)
+                {
+                  ret = altcombs_set_pdninfo_v4(&data->pdnset, pdn);
+                  if (0 > ret)
+                    {
+                      DBGIF_LOG1_ERROR("altcombs_set_pdninfo_v4() error:%d",
+                        ret);
+                      result = LTE_RESULT_ERROR;
+                    }
+                }
+              else
+                {
+                  DBGIF_LOG_ERROR("Unexpected!! memory allocation failed.\n");
+                }
+            }
+
+          callback(result, pdn);
+        }
     }
 
   /* In order to reduce the number of copies of the receive buffer,
@@ -275,10 +314,12 @@ static int32_t lte_activatepdn_impl(lte_apn_setting_t *apn, lte_pdn_t *pdn,
 {
   int32_t                                    ret;
   FAR struct apicmd_cmddat_activatepdn_s    *reqbuff    = NULL;
-  FAR struct apicmd_cmddat_activatepdnres_s *presbuff   = NULL;
-  uint16_t                                   resbufflen = RES_DATA_LEN;
+  FAR uint8_t                               *presbuff   = NULL;
+  uint16_t                                   resbufflen = 0;
   uint16_t                                   reslen     = 0;
   int                                        sync       = (callback == NULL);
+  uint16_t                                   cmdid = 0;
+  int                                        protocolver = 0;
 
   /* Check input parameter */
 
@@ -302,12 +343,31 @@ static int32_t lte_activatepdn_impl(lte_apn_setting_t *apn, lte_pdn_t *pdn,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_ACTIVATE_PDN);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      resbufflen = RES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      resbufflen = RES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
+    }
+
   if (sync)
     {
       /* Allocate API command buffer to receive */
 
-      presbuff = (FAR struct apicmd_cmddat_activatepdnres_s *)
-                   altcom_alloc_resbuff(resbufflen);
+      presbuff = altcom_alloc_resbuff(resbufflen);
       if (!presbuff)
         {
           DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -329,7 +389,7 @@ static int32_t lte_activatepdn_impl(lte_apn_setting_t *apn, lte_pdn_t *pdn,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_activatepdn_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_ACTIVATE_PDN, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -361,17 +421,39 @@ static int32_t lte_activatepdn_impl(lte_apn_setting_t *apn, lte_pdn_t *pdn,
 
   if (sync)
     {
-      if (LTE_RESULT_OK == presbuff->result)
+      if (protocolver == APICMD_VER_V1)
         {
-          /* Parse PDN information */
+          FAR struct apicmd_cmddat_activatepdnres_s *res =
+            (FAR struct apicmd_cmddat_activatepdnres_s *)presbuff;
 
-          altcombs_set_pdninfo(&presbuff->pdnset, pdn);
+          if (LTE_RESULT_OK == res->result)
+            {
+              /* Parse PDN information */
+
+              altcombs_set_pdninfo(&res->pdnset, pdn);
+            }
+          else
+            {
+              ret = (LTE_RESULT_CANCEL == res->result) ? -ECANCELED : -EPROTO;
+            }
         }
-      else
+      else if (protocolver == APICMD_VER_V4)
         {
-          ret = (LTE_RESULT_CANCEL == presbuff->result) ? -ECANCELED :
-                                                          -EPROTO;
+          FAR struct apicmd_cmddat_activatepdnres_v4_s *res =
+            (FAR struct apicmd_cmddat_activatepdnres_v4_s *)presbuff;
+
+          if (LTE_RESULT_OK == res->result)
+            {
+              /* Parse PDN information */
+
+              altcombs_set_pdninfo_v4(&res->pdnset, pdn);
+            }
+          else
+            {
+              ret = (LTE_RESULT_CANCEL == res->result) ? -ECANCELED : -EPROTO;
+            }
         }
+
       BUFFPOOL_FREE(presbuff);
     }
 
@@ -482,5 +564,6 @@ int32_t lte_activate_pdn(lte_apn_setting_t *apn, activate_pdn_cb_t callback)
 enum evthdlrc_e apicmdhdlr_activatepdn(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_ACTIVATE_PDN), activatepdn_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_ACTIVATE_PDN)),
+    activatepdn_job);
 }
