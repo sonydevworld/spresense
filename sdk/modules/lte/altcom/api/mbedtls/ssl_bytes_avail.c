@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_bytes_avail.c
  *
  *   Copyright 2019 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_ssl_bytes_avail.h"
+#include "apicmd_ssl.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -50,6 +52,9 @@
 
 #define SSL_BYTES_AVAIL_REQ_DATALEN (sizeof(struct apicmd_ssl_bytes_avail_s))
 #define SSL_BYTES_AVAIL_RES_DATALEN (sizeof(struct apicmd_ssl_bytes_availres_s))
+#define SSL_BYTES_AVAIL_REQ_DATALEN_V4 (APICMD_TLS_SSL_CMD_DATA_SIZE)
+#define SSL_BYTES_AVAIL_RES_DATALEN_V4 (APICMD_TLS_SSL_CMDRES_DATA_SIZE + \
+                                       sizeof(struct apicmd_ssl_bytes_availres_v4_s))
 
 /****************************************************************************
  * Private Types
@@ -70,32 +75,62 @@ struct ssl_bytes_avail_req_s
 
 static size_t ssl_bytes_avail_request(FAR struct ssl_bytes_avail_req_s *req)
 {
-  int32_t                                ret;
-  uint32_t                               avail_bytes = 0;
-  uint16_t                               reslen = 0;
-  FAR struct apicmd_ssl_bytes_avail_s    *cmd = NULL;
-  FAR struct apicmd_ssl_bytes_availres_s *res = NULL;
+  int32_t  ret;
+  uint32_t avail_bytes = 0;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = SSL_BYTES_AVAIL_REQ_DATALEN;
+      resbuffsize = SSL_BYTES_AVAIL_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = SSL_BYTES_AVAIL_REQ_DATALEN_V4;
+      resbuffsize = SSL_BYTES_AVAIL_RES_DATALEN_V4;
+    }
+  else
+    {
+      return 0;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_SSL_BYTES_AVAIL, 
-    SSL_BYTES_AVAIL_REQ_DATALEN,
-    (FAR void **)&res, SSL_BYTES_AVAIL_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_SSL_BYTES_AVAIL),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return 0;
     }
 
   /* Fill the data */
 
-  cmd->ssl = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_ssl_bytes_avail_s *)cmd)->ssl = htonl(req->id);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_sslcmd_s *)cmd)->ssl = htonl(req->id);
+      ((FAR struct apicmd_sslcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_SSL_BYTES_AVAIL);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_bytes_avail]id: %d\n", req->id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      SSL_BYTES_AVAIL_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -104,13 +139,30 @@ static size_t ssl_bytes_avail_request(FAR struct ssl_bytes_avail_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != SSL_BYTES_AVAIL_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  avail_bytes = ntohl(res->avail_bytes);
+  if (protocolver == APICMD_VER_V1)
+    {
+      avail_bytes = ntohl(
+        ((FAR struct apicmd_ssl_bytes_availres_s *)res)->avail_bytes);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      if (ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id) !=
+        APISUBCMDID_TLS_SSL_BYTES_AVAIL)
+        {
+          DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+            ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id));
+          goto errout_with_cmdfree;
+        }
+
+      avail_bytes = ntohl(
+        ((FAR struct apicmd_sslcmdres_s *)res)->u.bytes_availres.avail_bytes);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_bytes_avail res]avail_bytes: %d\n", avail_bytes);
 

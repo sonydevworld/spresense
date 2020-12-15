@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/pk_check_pair.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_pk_check_pair.h"
+#include "apicmd_pk.h"
 #include "apiutil.h"
 #include "mbedtls/x509_crt.h"
 
@@ -51,6 +53,9 @@
 
 #define PK_CHECK_PAIR_REQ_DATALEN (sizeof(struct apicmd_pk_check_pair_s))
 #define PK_CHECK_PAIR_RES_DATALEN (sizeof(struct apicmd_pk_check_pairres_s))
+#define PK_CHECK_PAIR_REQ_DATALEN_V4 (APICMD_TLS_PK_CMD_DATA_SIZE + \
+                                     sizeof(struct apicmd_pk_check_pair_v4_s))
+#define PK_CHECK_PAIR_RES_DATALEN_V4 (APICMD_TLS_PK_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -72,33 +77,65 @@ struct pk_check_pair_req_s
 
 static int32_t pk_check_pair_request(FAR struct pk_check_pair_req_s *req)
 {
-  int32_t                              ret;
-  uint16_t                             reslen = 0;
-  FAR struct apicmd_pk_check_pair_s    *cmd = NULL;
-  FAR struct apicmd_pk_check_pairres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = PK_CHECK_PAIR_REQ_DATALEN;
+      resbuffsize = PK_CHECK_PAIR_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = PK_CHECK_PAIR_REQ_DATALEN_V4;
+      resbuffsize = PK_CHECK_PAIR_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_PK_CHECK_PAIR,
-    PK_CHECK_PAIR_REQ_DATALEN,
-    (FAR void **)&res, PK_CHECK_PAIR_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_PK_CHECK_PAIR),
+    reqbuffsize, (FAR void **)&res, reqbuffsize))
     {
       return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->pub = htonl(req->pub);
-  cmd->prv = htonl(req->prv);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_pk_check_pair_s *)cmd)->pub = htonl(req->pub);
+      ((FAR struct apicmd_pk_check_pair_s *)cmd)->prv = htonl(req->prv);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_pkcmd_s *)cmd)->ctx = htonl(req->pub);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_PK_CHECK_PAIR);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->u.check_pair.prv = htonl(req->prv);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_check_pair]pub id: %d\n", req->pub);
   DBGIF_LOG1_DEBUG("[pk_check_pair]prv id: %d\n", req->prv);
 
+
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      PK_CHECK_PAIR_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -107,13 +144,20 @@ static int32_t pk_check_pair_request(FAR struct pk_check_pair_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != PK_CHECK_PAIR_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_pk_check_pairres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_pkcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_check_pair res]ret: %d\n", ret);
 

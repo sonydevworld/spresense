@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_read.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_ssl_read.h"
+#include "apicmd_ssl.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -51,6 +53,10 @@
 
 #define SSL_READ_REQ_DATALEN (sizeof(struct apicmd_ssl_read_s))
 #define SSL_READ_RES_DATALEN (sizeof(struct apicmd_ssl_readres_s))
+#define SSL_READ_REQ_DATALEN_V4 (APICMD_TLS_SSL_CMD_DATA_SIZE + \
+                                sizeof(struct apicmd_ssl_read_v4_s))
+#define SSL_READ_RES_DATALEN_V4 (APICMD_TLS_SSL_CMDRES_DATA_SIZE + \
+                                sizeof(struct apicmd_ssl_readres_v4_s))
 
 #define SSL_READ_SUCCESS 0
 #define SSL_READ_FAILURE -1
@@ -77,28 +83,63 @@ struct ssl_read_req_s
 static int32_t ssl_read_request(FAR struct ssl_read_req_s *req,
                                 unsigned char *buf)
 {
-  int32_t                         ret;
-  size_t                          req_buf_len = 0;
-  uint16_t                        reslen = 0;
-  FAR struct apicmd_ssl_read_s    *cmd = NULL;
-  FAR struct apicmd_ssl_readres_s *res = NULL;
+  int32_t  ret;
+  size_t   req_buf_len = 0;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = SSL_READ_REQ_DATALEN;
+      resbuffsize = SSL_READ_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = SSL_READ_REQ_DATALEN_V4;
+      resbuffsize = SSL_READ_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_SSL_READ, SSL_READ_REQ_DATALEN,
-    (FAR void **)&res, SSL_READ_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_SSL_READ), reqbuffsize,
+    (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->ssl = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_ssl_read_s *)cmd)->ssl = htonl(req->id);
 
-  req_buf_len = (req->len <= APICMD_SSL_READ_BUF_LEN)
-    ? req->len : APICMD_SSL_READ_BUF_LEN;
-  cmd->len = htonl(req_buf_len);
+      req_buf_len = (req->len <= APICMD_SSL_READ_BUF_LEN)
+        ? req->len : APICMD_SSL_READ_BUF_LEN;
+      ((FAR struct apicmd_ssl_read_s *)cmd)->len = htonl(req_buf_len);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_sslcmd_s *)cmd)->ssl = htonl(req->id);
+      ((FAR struct apicmd_sslcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_SSL_READ);
+
+      req_buf_len = (req->len <= APICMD_SSL_READ_BUF_LEN)
+        ? req->len : APICMD_SSL_READ_BUF_LEN;
+      ((FAR struct apicmd_sslcmd_s *)cmd)->u.read.len = htonl(req_buf_len);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_read]ctx id: %d\n", req->id);
   DBGIF_LOG1_DEBUG("[ssl_read]read len: %d\n", req_buf_len);
@@ -106,7 +147,7 @@ static int32_t ssl_read_request(FAR struct ssl_read_req_s *req,
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      SSL_READ_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -115,25 +156,54 @@ static int32_t ssl_read_request(FAR struct ssl_read_req_s *req,
       goto errout_with_cmdfree;
     }
 
-  if (reslen != SSL_READ_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
-  if (ret <= 0)
+  if (protocolver == APICMD_VER_V1)
     {
-      /* Nothing to do */
+      ret = ntohl(((FAR struct apicmd_ssl_readres_s *)res)->ret_code);
+      if (ret <= 0)
+        {
+          /* Nothing to do */
+        }
+      else if ((0 < ret) && (ret <= req_buf_len))
+        {
+          memcpy(buf, ((FAR struct apicmd_ssl_readres_s *)res)->buf, ret);
+        }
+      else
+        {
+          DBGIF_LOG1_ERROR("Unexpected buffer length: %d\n", ret);
+          goto errout_with_cmdfree;
+        }
     }
-  else if ((0 < ret) && (ret <= req_buf_len))
+  else if (protocolver == APICMD_VER_V4)
     {
-      memcpy(buf, res->buf, ret);
-    }
-  else
-    {
-      DBGIF_LOG1_ERROR("Unexpected buffer length: %d\n", ret);
-      goto errout_with_cmdfree;
+      if (ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id) !=
+        APISUBCMDID_TLS_SSL_READ)
+        {
+          DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+            ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id));
+          goto errout_with_cmdfree;
+        }
+
+      ret = ntohl(((FAR struct apicmd_sslcmdres_s *)res)->ret_code);
+      if (ret <= 0)
+        {
+          /* Nothing to do */
+        }
+      else if ((0 < ret) && (ret <= req_buf_len))
+        {
+          memcpy(buf, ((FAR struct apicmd_sslcmdres_s *)res)->u.readres.buf,
+            ret);
+        }
+      else
+        {
+          DBGIF_LOG1_ERROR("Unexpected buffer length: %d\n", ret);
+          goto errout_with_cmdfree;
+        }
     }
 
   DBGIF_LOG1_DEBUG("[ssl_read res]ret: %d\n", ret);

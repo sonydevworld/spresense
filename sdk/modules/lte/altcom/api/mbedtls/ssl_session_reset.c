@@ -1,7 +1,6 @@
 /****************************************************************************
- * modules/lte/altcom/api/mbedtls/x509write_crt_serial.c
+ * modules/lte/altcom/api/mbedtls/ssl_session_reset.c
  *
- *   Copyright 2018 Sony Corporation
  *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,30 +37,30 @@
  * Included Files
  ****************************************************************************/
 
-#include <string.h>
 #include "dbg_if.h"
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
-#include "apicmd_x509write_crt_serial.h"
+#include "apicmd_session.h"
 #include "apiutil.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/x509_crt.h"
+#include "mbedtls/ssl.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define X509WRITE_CRT_SERIAL_REQ_DATALEN (sizeof(struct apicmd_x509write_crt_serial_s))
-#define X509WRITE_CRT_SERIAL_RES_DATALEN (sizeof(struct apicmd_x509write_crt_serialres_s))
+#define SES_RESET_REQ_DATALEN_V4 (APICMD_TLS_SESSION_CMD_DATA_SIZE)
+#define SES_RESET_RES_DATALEN_V4 (APICMD_TLS_SESSION_CMDRES_DATA_SIZE)
+
+#define SES_RESET_SUCCESS 0
+#define SES_RESET_FAILURE -1
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
 
-struct x509write_crt_serial_req_s
+struct ses_reset_req_s
 {
-  uint32_t  id;
-  uint32_t  serial;
+  uint32_t ssl_id;
 };
 
 /****************************************************************************
@@ -72,42 +71,40 @@ struct x509write_crt_serial_req_s
  * Private Functions
  ****************************************************************************/
 
-static int32_t x509write_crt_serial_request(FAR struct x509write_crt_serial_req_s *req)
+static int32_t ssl_session_reset_request(FAR struct ses_reset_req_s *req)
 {
-  int32_t                                     ret;
-  uint16_t                                    reslen = 0;
-  FAR struct apicmd_x509write_crt_serial_s    *cmd = NULL;
-  FAR struct apicmd_x509write_crt_serialres_s *res = NULL;
+  int32_t                             ret;
+  uint16_t                            reslen = 0;
+  FAR struct apicmd_sessioncmd_s      *cmd = NULL;
+  FAR struct apicmd_sessioncmdres_s   *res = NULL;
 
   /* Check ALTCOM protocol version */
 
-  if (apicmdgw_get_protocolversion() != APICMD_VER_V1)
+  if (apicmdgw_get_protocolversion() != APICMD_VER_V4)
     {
-      return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+      return MBEDTLS_ERR_SSL_HW_ACCEL_FAILED;
     }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_X509WRITE_CRT_SERIAL,
-    X509WRITE_CRT_SERIAL_REQ_DATALEN,
-    (FAR void **)&res, X509WRITE_CRT_SERIAL_RES_DATALEN))
+    (FAR void **)&cmd, APICMDID_TLS_SESSION_CMD, SES_RESET_REQ_DATALEN_V4,
+    (FAR void **)&res, SES_RESET_RES_DATALEN_V4))
     {
-      return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+      return MBEDTLS_ERR_SSL_ALLOC_FAILED;
     }
 
   /* Fill the data */
 
-  cmd->ctx = htonl(req->id);
-  cmd->serial = htonl(req->serial);
+  cmd->ssl = htonl(req->ssl_id);
+  cmd->subcmd_id = htonl(APISUBCMDID_TLS_SESSION_RESET);
 
-  DBGIF_LOG1_DEBUG("[x509write_crt_serial]ctx id: %d\n", req->id);
-  DBGIF_LOG1_DEBUG("[x509write_crt_serial]serial id: %d\n", req->serial);
+  DBGIF_LOG1_DEBUG("[session_reset]ssl id: %d\n", req->ssl_id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      X509WRITE_CRT_SERIAL_RES_DATALEN, &reslen,
+                      SES_RESET_RES_DATALEN_V4, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -116,7 +113,7 @@ static int32_t x509write_crt_serial_request(FAR struct x509write_crt_serial_req_
       goto errout_with_cmdfree;
     }
 
-  if (reslen != X509WRITE_CRT_SERIAL_RES_DATALEN)
+  if (reslen != SES_RESET_RES_DATALEN_V4)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
@@ -124,7 +121,7 @@ static int32_t x509write_crt_serial_request(FAR struct x509write_crt_serial_req_
 
   ret = ntohl(res->ret_code);
 
-  DBGIF_LOG1_DEBUG("[x509write_crt_serial res]ret: %d\n", ret);
+  DBGIF_LOG1_DEBUG("[session_reset res]ret: %d\n", ret);
 
   altcom_mbedtls_free_cmdandresbuff(cmd, res);
 
@@ -132,7 +129,7 @@ static int32_t x509write_crt_serial_request(FAR struct x509write_crt_serial_req_
 
 errout_with_cmdfree:
   altcom_mbedtls_free_cmdandresbuff(cmd, res);
-  return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+  return MBEDTLS_ERR_SSL_HW_ACCEL_FAILED;
 }
 
 
@@ -141,23 +138,21 @@ errout_with_cmdfree:
  * Public Functions
  ****************************************************************************/
 
-int mbedtls_x509write_crt_set_serial(mbedtls_x509write_cert *ctx,
-                                     const mbedtls_mpi *serial)
+int mbedtls_ssl_session_reset(mbedtls_ssl_context *ssl)
 {
-  int32_t                           result;
-  struct x509write_crt_serial_req_s req;
+  int32_t              result;
+  struct ses_reset_req_s req;
 
   if (!altcom_isinit())
     {
       DBGIF_LOG_ERROR("Not intialized\n");
       altcom_seterrno(ALTCOM_ENETDOWN);
-      return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+      return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
     }
 
-  req.id = ctx->id;
-  req.serial = serial->id;
+  req.ssl_id = ssl->id;
 
-  result = x509write_crt_serial_request(&req);
+  result = ssl_session_reset_request(&req);
 
   return result;
 }

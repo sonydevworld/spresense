@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_close_notify.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_ssl_close_notify.h"
+#include "apicmd_ssl.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -50,6 +52,8 @@
 
 #define SSL_CLOSE_NOTIFY_REQ_DATALEN (sizeof(struct apicmd_ssl_close_notify_s))
 #define SSL_CLOSE_NOTIFY_RES_DATALEN (sizeof(struct apicmd_ssl_close_notifyres_s))
+#define SSL_CLOSE_NOTIFY_REQ_DATALEN_V4 (APICMD_TLS_SSL_CMD_DATA_SIZE)
+#define SSL_CLOSE_NOTIFY_RES_DATALEN_V4 (APICMD_TLS_SSL_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -70,31 +74,61 @@ struct ssl_close_notify_req_s
 
 static int32_t ssl_close_notify_request(FAR struct ssl_close_notify_req_s *req)
 {
-  int32_t                                 ret;
-  uint16_t                                reslen = 0;
-  FAR struct apicmd_ssl_close_notify_s    *cmd = NULL;
-  FAR struct apicmd_ssl_close_notifyres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = SSL_CLOSE_NOTIFY_REQ_DATALEN;
+      resbuffsize = SSL_CLOSE_NOTIFY_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = SSL_CLOSE_NOTIFY_REQ_DATALEN_V4;
+      resbuffsize = SSL_CLOSE_NOTIFY_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_SSL_CLOSE_NOTIFY,
-    SSL_CLOSE_NOTIFY_REQ_DATALEN,
-    (FAR void **)&res, SSL_CLOSE_NOTIFY_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_SSL_CLOSE_NOTIFY),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->ssl = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_ssl_close_notify_s *)cmd)->ssl = htonl(req->id);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_sslcmd_s *)cmd)->ssl = htonl(req->id);
+      ((FAR struct apicmd_sslcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_SSL_CLOSE_NOTIFY);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_close_notify]id: %d\n", req->id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      SSL_CLOSE_NOTIFY_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -103,13 +137,27 @@ static int32_t ssl_close_notify_request(FAR struct ssl_close_notify_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != SSL_CLOSE_NOTIFY_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_ssl_close_notifyres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      if (ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id) !=
+          APISUBCMDID_TLS_SSL_CLOSE_NOTIFY)
+        {
+          DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+            ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id));
+          goto errout_with_cmdfree;
+        }
+      ret = ntohl(((FAR struct apicmd_sslcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_close_notify res]ret: %d\n", ret);
 
