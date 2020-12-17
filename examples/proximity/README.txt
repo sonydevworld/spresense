@@ -35,7 +35,7 @@ examples/proximity
 
   Example Configuration:
 
-    CONFIG_EXAMPLES_PROXIMITY - Enable magnetometer sensor example
+    CONFIG_EXAMPLES_PROXIMITY - Enable proximity sensor example
     CONFIG_EXAMPLES_PROXIMITY_PROGNAME - Program name.
     CONFIG_EXAMPLES_PROXIMITY_PRIORITY - Example priority. Default: 100
     CONFIG_EXAMPLES_PROXIMITY_STACKSIZE - Example stack size. Default: 2048
