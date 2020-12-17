@@ -103,6 +103,7 @@ static void show_usage(FAR const char *progname)
   printf(" -l: Show power status of the target\n");
   printf(" -e <target>: Enable power to the target\n");
   printf(" -d <target>: Disable power to the target\n");
+  printf(" -z <target>: Set GPO to HiZ to the target\n");
   printf(" -r <addr>: Single read from <addr>\n");
   printf(" -w <addr> -v <value>: Single write <value> to <addr>\n");
   printf(" -h: Show this message\n");
@@ -125,7 +126,7 @@ int pmic_main(int argc, char *argv[])
   int ret;
   int i;
   int opt;
-  bool en;
+  int en;
   int id;
   uint8_t addr = 0;
   uint8_t value = 0;
@@ -135,7 +136,7 @@ int pmic_main(int argc, char *argv[])
   int txval = 0;
 
   optind = -1;
-  while ((opt = getopt(argc, argv, "le:d:r:w:v:h")) != -1)
+  while ((opt = getopt(argc, argv, "le:d:z:r:w:v:h")) != -1)
     {
       switch (opt)
         {
@@ -143,17 +144,22 @@ int pmic_main(int argc, char *argv[])
             list = 1;
             break;
           case 'e':
-            en = true;
+            en = 1;
             goto skip;
           case 'd':
-            en = false;
+            en = 0;
+            goto skip;
+          case 'z':
+            en = -1;
           skip:
             list = 1;
             id = getid(optarg);
             if (id)
               {
-                printf("%s: %s\n", (en) ? "Enable ": "Disable", optarg);
-                board_power_control(id, en);
+                printf("%s: %s\n",
+                       (en > 0) ? "Enable" : (en == 0) ? "Disable" : "HiZ",
+                       optarg);
+                board_power_control_tristate(id, en);
               }
             else
               {
@@ -229,8 +235,9 @@ int pmic_main(int argc, char *argv[])
       printf("%16s : %s\n", "-----------", "------");
       for (i = 0; i < sizeof(g_list) / sizeof(g_list[0]); i++)
         {
-          en = board_power_monitor(g_list[i].target);
-          printf("%16s : %s\n", g_list[i].str, (en) ? "on" : "off");
+          en = board_power_monitor_tristate(g_list[i].target);
+          printf("%16s : %s\n", g_list[i].str,
+                 (en > 0) ? "on" : (en == 0) ? "off" : "hiz");
         }
     }
   return 0;

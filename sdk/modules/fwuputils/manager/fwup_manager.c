@@ -91,7 +91,7 @@ static int fwup_init(void)
 {
   int ret = 0;
 
-  ret = UM_Init(false);
+  ret = fw_um_init(false);
 
   return ret;
 }
@@ -142,7 +142,7 @@ static int fwup_open(enum fw_type_e fwtype, uint32_t fwsize)
       return ret;
     }
 
-  mgr->handle = UM_Open(keyfile, fwsize, type);
+  mgr->handle = fw_um_open(keyfile, fwsize, type);
   mgr->remain = fwsize;
 
   return ret;
@@ -153,7 +153,7 @@ static int fwup_write(void *data, uint32_t size)
   int ret = 0;
   struct fwup_mgr_s *mgr = get_manager();
 
-  ret = UM_Commit(mgr->handle, data, size);
+  ret = fw_um_commit(mgr->handle, data, size);
 
   mgr->remain -= size;
 
@@ -165,7 +165,7 @@ static int fwup_close(void)
   int ret = 0;
   struct fwup_mgr_s *mgr = get_manager();
 
-  ret = UM_Close(mgr->handle);
+  ret = fw_um_close(mgr->handle);
   mgr->remain = 0;
 
   return ret;
@@ -211,7 +211,7 @@ static int fwup_update(void)
 {
   int ret = 0;
 
-  ret = UM_DoUpdateSequence();
+  ret = fw_um_doupdatesequence();
 
   return ret;
 }
@@ -220,7 +220,7 @@ static int fwup_suspend(void)
 {
   int ret = 0;
 
-  ret = UM_CheckPoint();
+  ret = fw_um_checkpoint();
 
   return ret;
 }
@@ -229,14 +229,14 @@ static int fwup_resume(void)
 {
   int ret = 0;
 
-  ret = UM_Init(true);
+  ret = fw_um_init(true);
 
   return ret;
 }
 
 static int fwup_abort(void)
 {
-  //UM_Abort();
+  //fw_um_abort();
   return 0;
 }
 
