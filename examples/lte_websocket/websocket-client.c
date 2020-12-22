@@ -35,7 +35,7 @@
 
 #define WEBSOCKET_CHAT_SERVER         "ws://ruby-websockets-chat.herokuapp.com:80/"
 #define WEBSOCKET_CHAT_SERVER_SSL     "wss://ruby-websockets-chat.herokuapp.com:443/"
-#define WEBSOCKET_CHAT_SERVER_ROOTCA  "/mnt/sd0/DigiCertHighAssuaranceEVRootCA.crt"
+#define WEBSOCKET_CHAT_SERVER_ROOTCA  "/mnt/sd0/DigiCertHighAssuranceEVRootCA.crt"
 
 #define BUFFER_SIZE  255
 
