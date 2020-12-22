@@ -38,8 +38,8 @@ system/lte_daemon
   $ make
 
   NSH prompt can setting APN.
-    type exmaple for...
-    nsh> lte_daemon -a apn -t 202 -i 0 -v 2 -u user -p passward start
+    type example for...
+    nsh> lte_daemon -a apn -t 202 -i 0 -v 2 -u user -p password start
 
   After that, if ifup command is issued,
   it connects to the lte network with the set your APN.

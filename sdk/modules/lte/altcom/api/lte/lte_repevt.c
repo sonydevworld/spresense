@@ -352,7 +352,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
   bool                                    reset_flag = false;
   simstat_report_cb_t                     callback;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -360,7 +360,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
       return ret;
     }
 
-  /* Check this process runnning. */
+  /* Check this process running. */
 
   if (g_lte_setrepsimstat_isproc)
     {
@@ -498,7 +498,7 @@ int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
   bool                                    reset_flag = false;
   localtime_report_cb_t                   callback;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -506,7 +506,7 @@ int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
       return ret;
     }
 
-  /* Check this process runnning. */
+  /* Check this process running. */
 
   if (g_lte_setrepltime_isproc)
     {

@@ -84,7 +84,7 @@ int altcom_setsockopt(int sockfd, int level, int option, const void *value,
   FAR struct apicmd_setsockopt_s    *cmd = NULL;
   FAR struct apicmd_setsockoptres_s *res = NULL;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

@@ -497,7 +497,7 @@ int altcom_select_nonblock(int maxfdp1, altcom_fd_set *readset,
   int32_t             result;
   struct select_req_s req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -536,7 +536,7 @@ int altcom_select_block(int maxfdp1, altcom_fd_set *readset,
   int32_t             result;
   struct select_req_s req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

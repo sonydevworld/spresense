@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_setrep_netinfo.c
+ * modules/lte/altcom/api/lte/lte_set_rep_netinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -132,7 +132,7 @@ static void repnetinfo_job(FAR void *arg)
     {
       data = (FAR struct apicmd_cmddat_rep_netinfo_s *)arg;
 
-      /* Fill network infomation */
+      /* Fill network information */
 
       netinfo.nw_stat = data->netinfo.nw_stat;
       netinfo.nw_err.err_type = data->netinfo.err_info.err_type;
@@ -215,7 +215,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
   bool                                       reset_flag = false;
   netinfo_report_cb_t                        callback;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
@@ -223,7 +223,7 @@ int32_t lte_set_report_netinfo(netinfo_report_cb_t netinfo_callback)
       return ret;
     }
 
-  /* Check this process runnning. */
+  /* Check this process running. */
 
   if (g_lte_setrepnetinfo_isproc)
     {

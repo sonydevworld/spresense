@@ -166,7 +166,7 @@ int altcom_bind(int sockfd, const struct altcom_sockaddr *addr,
   FAR struct altcom_socket_s *fsock;
   struct bind_req_s          req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

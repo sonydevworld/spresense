@@ -114,7 +114,7 @@
  *    - Blocks the task that called the API until 
  *      processing is completed on the modem.
  *
- *    - If the retrun value is -EPROTO, you can get the error code 
+ *    - If the return value is -EPROTO, you can get the error code
  *      with lte_get_errinfo.
  *
  *    - If the argument attribute is out, the argument must be allocated 
@@ -586,7 +586,7 @@
 
 #define LTE_PSM_TIMEVAL_MIN        (0)
 
-/** The maxmum timer value used by PSM related timers */
+/** The maximum timer value used by PSM related timers */
 
 #define LTE_PSM_TIMEVAL_MAX        (31)
 
@@ -614,11 +614,11 @@
 #define LTE_DATA_DISALLOW        (0) /**< Data communication: Not allow */
 #define LTE_DATA_ALLOW           (1) /**< Data communication: Allow */
 
-/** Modem restert cause: User initiated */
+/** Modem restart cause: User initiated */
 
 #define LTE_RESTART_USER_INITIATED  (0)
 
-/** Modem restert cause: Modem initiated */
+/** Modem restart cause: Modem initiated */
 
 #define LTE_RESTART_MODEM_INITIATED (1)
 
@@ -1154,7 +1154,7 @@ typedef struct lte_reject_cause
   uint8_t category;
 
   /**
-   * Value of LTE newtwork reject cause.
+   * Value of LTE network reject cause.
    * Definition is See 3GPP TS 24.008 13.7.0
    */
 
@@ -1182,8 +1182,8 @@ typedef struct lte_nw_err_info
   uint8_t            err_type;
 
   /**
-   * LTE network attach request reject cause. It can be referneced when
-   *  - @ref LTE_NETERR_REJECT is ser in err_type field
+   * LTE network attach request reject cause. It can be referenced when
+   *  - @ref LTE_NETERR_REJECT is see in err_type field
    *  See @ref lte_reject_cause_t
    */
 
@@ -1217,7 +1217,7 @@ typedef struct lte_netinfo
   uint8_t           nw_stat;
 
   /**
-   * LTE network error information. It can be referneced when
+   * LTE network error information. It can be referenced when
    *  - @ref LTE_NETSTAT_REG_DENIED is set in nw_stat field.
    *  See @ref lte_nw_err_info_t
    */
@@ -1319,68 +1319,68 @@ typedef struct lte_siminfo
 
   uint32_t option;
 
-  /** Mobile Country Code (000-999). It can be referneced when
+  /** Mobile Country Code (000-999). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mcc[LTE_MCC_DIGIT];
 
-  /** Digit number of Mobile Network Code(2-3). It can be referneced when
+  /** Digit number of Mobile Network Code(2-3). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mnc_digit;
 
-  /** Mobile Network Code (00-999). It can be referneced when
+  /** Mobile Network Code (00-999). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mnc[LTE_MNC_DIGIT_MAX];
 
-  /** Length of Service provider name. It can be referneced when
+  /** Length of Service provider name. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
 
   uint8_t  spn_len;
 
-  /** Service provider name. It can be referneced when
+  /** Service provider name. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
 
   uint8_t  spn[LTE_SIMINFO_SPN_LEN];
 
-  /** Length of ICCID. It can be referneced when
+  /** Length of ICCID. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
 
   uint8_t  iccid_len;
 
-  /** ICCID. It can be referneced when
+  /** ICCID. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.
    *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
 
   uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
 
-  /** Length of IMSI. It can be referneced when
+  /** Length of IMSI. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
 
   uint8_t  imsi_len;
 
-  /** International Mobile Subscriber Identity. It can be referneced when
+  /** International Mobile Subscriber Identity. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
 
   uint8_t  imsi[LTE_SIMINFO_IMSI_LEN];
 
-  /** Length of GID1. It can be referneced when
+  /** Length of GID1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
 
   uint8_t  gid1_len;
 
-  /** Group Identifier Level 1. It can be referneced when
+  /** Group Identifier Level 1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
 
   uint8_t  gid1[LTE_SIMINFO_GID_LEN];
 
-  /** Length of GID2. It can be referneced when
+  /** Length of GID2. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
 
   uint8_t  gid2_len;
 
-  /** Group Identifier Level 1. It can be referneced when
+  /** Group Identifier Level 1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
 
   uint8_t  gid2[LTE_SIMINFO_GID_LEN];

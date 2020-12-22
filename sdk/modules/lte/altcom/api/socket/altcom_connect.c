@@ -184,7 +184,7 @@ int altcom_connect(int sockfd, const struct altcom_sockaddr *addr,
   struct altcom_fd_set_s     writeset;
   struct connect_req_s       req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

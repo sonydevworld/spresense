@@ -78,7 +78,7 @@ static FAR struct hal_if_s *g_halif = NULL;
  *   This function is an API callback for power.
  *
  * Input Parameters:
- *  arg    Pointer to input argment.
+ *  arg    Pointer to input argument.
  *
  * Returned Value:
  *   None.
@@ -90,7 +90,7 @@ static void restart_callback_job(FAR void *arg)
   int32_t      ret;
   FAR uint8_t *cmdbuff;
 
-  /* Abort send apicmd for Release waiting sync API responce. */
+  /* Abort send apicmd for Release waiting sync API response. */
 
   apicmdgw_sendabort();
 
@@ -122,7 +122,7 @@ static void restart_callback_job(FAR void *arg)
  *   This function is an restart callback.
  *
  * Input Parameters:
- *  arg    Pointer to input argment.
+ *  arg    Pointer to input argument.
  *
  * Returned Value:
  *   None.
@@ -194,7 +194,7 @@ static void poweron_job(FAR void *arg)
  *   Power on modem.
  *
  * Input Parameters:
- *   viod
+ *   void
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -221,7 +221,7 @@ int32_t lte_power_on(void)
  *   Power on modem.
  *
  * Input Parameters:
- *   viod
+ *   void
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -278,7 +278,7 @@ int32_t altcom_power_on(void)
  *   Power off modem.
  *
  * Input Parameters:
- *   viod
+ *   void
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -306,7 +306,7 @@ int32_t lte_power_off(void)
  *   Power off modem.
  *
  * Input Parameters:
- *   viod
+ *   void
  *
  * Returned Value:
  *   On success, 0 is returned.
@@ -342,7 +342,7 @@ int32_t altcom_power_off(void)
           {
             altcom_set_status(ALTCOM_STATUS_INITIALIZED);
 
-            /* Abort send apicmd for Release waiting sync API responce. */
+            /* Abort send apicmd for Release waiting sync API response. */
 
             apicmdgw_sendabort();
           }

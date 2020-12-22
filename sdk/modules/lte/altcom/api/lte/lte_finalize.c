@@ -60,7 +60,7 @@
  * Name: lte_finalize
  *
  * Description:
- *   Finalize the LTE library resouces.
+ *   Finalize the LTE library resources.
  *
  * Input Parameters:
  *   None
@@ -84,7 +84,7 @@ int32_t lte_finalize(void)
  * Name: altcom_finalize
  *
  * Description:
- *   Finalize the LTE library resouces.
+ *   Finalize the LTE library resources.
  *
  * Input Parameters:
  *   None
