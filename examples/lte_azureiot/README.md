@@ -70,13 +70,13 @@ nsh> lte_azureiot recv
 ##### Send 'Hello.' To Azure Iot Hub
 
 ```
-nsh> lte_azureiot sendmsg Hello.
+nsh> lte_azureiot send "Hello."
 ```
 
 ##### Receive "My name is Azure." Message from Azure Iot Hub
 
 ```
-nsh> lte_azureiot recvmsg
+nsh> lte_azureiot recv
 My name is Azure.
 ```
 
