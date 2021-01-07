@@ -39,6 +39,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "lte/lte_api.h"
 #include "dbg_if.h"
@@ -59,6 +60,7 @@
 #define ALTCOMBS_PSM_UNIT_T3324_MAX       (LTE_PSM_T3324_UNIT_6MIN)
 #define ALTCOMBS_PSM_UNIT_T3412_MIN       (LTE_PSM_T3412_UNIT_2SEC)
 #define ALTCOMBS_PSM_UNIT_T3412_MAX       (LTE_PSM_T3412_UNIT_320HOUR)
+#define ALTCOMBS_BASE_HEX                 16
 
 /****************************************************************************
  * Private Data
@@ -980,6 +982,8 @@ void altcombs_set_cellinfo(
     {
       api_cellinfo->valid = LTE_INVALID;
     }
+
+  api_cellinfo->option = 0;
 }
 
 /****************************************************************************
@@ -1002,24 +1006,26 @@ void altcombs_set_cellinfo_v4(
           FAR struct apicmd_cmddat_cellinfo_v4_s *cmd_cellinfo,
           FAR lte_cellinfo_t *api_cellinfo)
 {
+  int i;
+
+  api_cellinfo->valid = LTE_INVALID;
+  api_cellinfo->option = 0;
+
   if (cmd_cellinfo->enability != LTE_INVALID)
     {
       if (ntohl(cmd_cellinfo->cell_id) > APICMD_CELLINFO_CELLID_MAX )
         {
           DBGIF_LOG1_ERROR("cmd_cellinfo->cell_id error:%d\n",
                            ntohl(cmd_cellinfo->cell_id));
-          api_cellinfo->valid = LTE_INVALID;
         }
       else if (ntohl(cmd_cellinfo->earfcn) > APICMD_CELLINFO_EARFCN_MAX )
         {
           DBGIF_LOG1_ERROR("cmd_cellinfo->earfcn error:%d\n",
                            ntohl(cmd_cellinfo->earfcn));
-          api_cellinfo->valid = LTE_INVALID;
         }
       else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mcc, LTE_MCC_DIGIT))
         {
           DBGIF_LOG_ERROR("cmd_cellinfo->mcc error\n");
-          api_cellinfo->valid = LTE_INVALID;
         }
       else if (
         cmd_cellinfo->mnc_digit < APICMD_CELLINFO_MNC_DIGIT_MIN ||
@@ -1027,18 +1033,16 @@ void altcombs_set_cellinfo_v4(
         {
           DBGIF_LOG1_ERROR("cmd_cellinfo->mnc_digit error:%d\n",
                            cmd_cellinfo->mnc_digit);
-          api_cellinfo->valid = LTE_INVALID;
         }
       else if (!altcombs_check_arrydigitnum(cmd_cellinfo->mnc,
                cmd_cellinfo->mnc_digit))
         {
           DBGIF_LOG_ERROR("cmd_cellinfo->mnc error\n");
-          api_cellinfo->valid = LTE_INVALID;
         }
-      else if (strlen((const char *)cmd_cellinfo->cgid) > APICMD_CELLINFO_GCID_MAX )
+      else if (strlen((const char *)cmd_cellinfo->cgid) >
+               APICMD_CELLINFO_GCID_MAX )
         {
           DBGIF_LOG_ERROR("cmd_cellinfo->cgid error\n");
-          api_cellinfo->valid = LTE_INVALID;
         }
       else
         {
@@ -1049,11 +1053,82 @@ void altcombs_set_cellinfo_v4(
           api_cellinfo->mnc_digit  = cmd_cellinfo->mnc_digit;
           memcpy(api_cellinfo->mnc, cmd_cellinfo->mnc,
                  cmd_cellinfo->mnc_digit);
+
+          api_cellinfo->option |= LTE_CELLINFO_OPT_GCID;
+          api_cellinfo->gcid = strtoul((FAR const char *)cmd_cellinfo->cgid,
+                                       NULL, ALTCOMBS_BASE_HEX);
+
+          api_cellinfo->option |= LTE_CELLINFO_OPT_AREACODE;
+          api_cellinfo->area_code = ntohs(cmd_cellinfo->tac);
+
+          if (cmd_cellinfo->enability & APICMD_CELLINFO_VALID_SFN)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_SFN;
+              api_cellinfo->sfn = ntohs(cmd_cellinfo->sfn);
+            }
+
+          if (cmd_cellinfo->enability & APICMD_CELLINFO_VALID_RSRP)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_RSRP;
+              api_cellinfo->rsrp = ntohs(cmd_cellinfo->rsrp);
+            }
+
+          if (cmd_cellinfo->enability & APICMD_CELLINFO_VALID_RSRQ)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_RSRQ;
+              api_cellinfo->rsrq = ntohs(cmd_cellinfo->rsrq);
+            }
+
+          if (cmd_cellinfo->enability & APICMD_CELLINFO_VALID_TIMEDIFFIDX)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_TIMEDIFFIDX;
+              api_cellinfo->time_diffidx = ntohs(cmd_cellinfo->time_diffidx);
+            }
+
+          if (cmd_cellinfo->enability & APICMD_CELLINFO_VALID_TA)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_TA;
+              api_cellinfo->ta = ntohs(cmd_cellinfo->ta);
+            }
+
+          if (api_cellinfo->nr_neighbor > cmd_cellinfo->neighbor_num)
+            {
+              api_cellinfo->nr_neighbor = cmd_cellinfo->neighbor_num;
+            }
+
+          for (i = 0; i < api_cellinfo->nr_neighbor; i++)
+            {
+              api_cellinfo->option |= LTE_CELLINFO_OPT_NEIGHBOR;
+              api_cellinfo->neighbors[i].option = 0;
+              api_cellinfo->neighbors[i].phycell_id =
+                ntohl(cmd_cellinfo->neighbor_cell[i].cell_id);
+              api_cellinfo->neighbors[i].earfcn =
+                ntohl(cmd_cellinfo->neighbor_cell[i].earfcn);
+              if (cmd_cellinfo->neighbor_cell[i].valid &
+                  APICMD_CELLINFO_VALID_SFN)
+                {
+                  api_cellinfo->neighbors[i].option |= LTE_CELLINFO_OPT_SFN;
+                  api_cellinfo->neighbors[i].sfn =
+                    ntohs(cmd_cellinfo->neighbor_cell[i].sfn);
+                }
+
+              if (cmd_cellinfo->neighbor_cell[i].valid &
+                  APICMD_CELLINFO_VALID_RSRP)
+                {
+                  api_cellinfo->neighbors[i].option |= LTE_CELLINFO_OPT_RSRP;
+                  api_cellinfo->neighbors[i].rsrp =
+                    ntohs(cmd_cellinfo->neighbor_cell[i].rsrp);
+                }
+
+              if (cmd_cellinfo->neighbor_cell[i].valid &
+                  APICMD_CELLINFO_VALID_RSRQ)
+                {
+                  api_cellinfo->neighbors[i].option |= LTE_CELLINFO_OPT_RSRQ;
+                  api_cellinfo->neighbors[i].rsrq =
+                    ntohs(cmd_cellinfo->neighbor_cell[i].rsrq);
+                }
+            }
         }
-    }
-  else
-    {
-      api_cellinfo->valid = LTE_INVALID;
     }
 }
 

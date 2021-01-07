@@ -61,8 +61,14 @@
 #define CELLINFO_PERIOD_MAX (4233600)
 
 /****************************************************************************
- * Private Data
+ * Private Type
  ****************************************************************************/
+
+struct cellinfo_helper_s
+{
+  lte_cellinfo_t info;
+  lte_neighbor_cell_t neighbors[LTE_NEIGHBOR_CELL_MAX];
+};
 
 /****************************************************************************
  * Private Functions
@@ -124,25 +130,44 @@ static void repcellinfo_job(FAR void *arg)
     }
   else
     {
-      repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
-      if (!repdat)
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
         {
-          DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
-        }
-      else
-        {
-          protocolver = apicmdgw_get_protocolversion();
-          if (protocolver == APICMD_VER_V1)
+          repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
+          if (!repdat)
             {
+              DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+            }
+          else
+            {
+              repdat->nr_neighbor = 0;
+              repdat->neighbors = NULL;
+
               altcombs_set_cellinfo(
                 (FAR struct apicmd_cmddat_cellinfo_s *)arg, repdat);
             }
-          else if (protocolver == APICMD_VER_V1)
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(
+            sizeof(struct cellinfo_helper_s));
+          if (!repdat)
             {
+              DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+            }
+          else
+            {
+              repdat->nr_neighbor = LTE_NEIGHBOR_CELL_MAX;
+              repdat->neighbors =
+                ((FAR struct cellinfo_helper_s *)repdat)->neighbors;
+
               altcombs_set_cellinfo_v4(
                 (FAR struct apicmd_cmddat_cellinfo_v4_s *)arg, repdat);
             }
+        }
 
+      if (repdat)
+        {
           callback(repdat);
           (void)BUFFPOOL_FREE((FAR void *)repdat);
         }
