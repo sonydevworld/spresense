@@ -290,6 +290,8 @@ class XmodemWriter:
 				if ConfigArgs.XMODEM_BAUD:
 					self.serial.setBaudrate(115200)
 			self.wait_for_prompt()
+		print("\nTransfer completed.")
+		self.serial.reboot()
 
 def main():
 	try:
