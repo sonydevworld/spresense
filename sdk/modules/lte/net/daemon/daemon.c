@@ -3348,7 +3348,7 @@ int32_t lte_daemon_fin(void)
     }
   else
     {
-      daemon_error_printf("lte_daemon is running\n");
+      daemon_error_printf("lte_daemon is not running\n");
       return -EALREADY;
     }
 
