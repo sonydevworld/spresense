@@ -1,3 +1,21 @@
+/*  
+    VTun - Virtual Tunnel over TCP/IP network.
+
+    Copyright 2021 Sony Corporation
+
+    VTun has been derived from VPPP package by Maxim Krasnyansky. 
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ */
+
 #ifndef _VTUN_COMPAT_SPRESENSE_H
 #define _VTUN_COMPAT_SPRESENSE_H
 
