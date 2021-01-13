@@ -224,7 +224,7 @@ private:
   void setThroughStatus(AudioCommand &cmd);
   void setThroughPath(AudioCommand &cmd);
   void getstatus(AudioCommand &cmd);
-  void setSpDrvMode(AudioCommand &cmd);
+  void initSpDrvMode(AudioCommand &cmd);
 
   void illegalCmplt(const AudioMngCmdCmpltResult &cmd);
   void cmpltOnReady(const AudioMngCmdCmpltResult &cmd);

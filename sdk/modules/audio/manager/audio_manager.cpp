@@ -442,8 +442,8 @@ int AS_SendAudioCommand(FAR AudioCommand *packet)
         msg_type = MSG_AUD_MGR_CMD_SETRENDERINGCLK;
         break;
 
-       case AUDCMD_SETSPDRVMODE:
-        msg_type = MSG_AUD_MGR_SETSPDRVMODE;
+       case AUDCMD_INITSPDRVMODE:
+        msg_type = MSG_AUD_MGR_CMD_INITSPDRVMODE;
         break;
 
 #ifdef AS_FEATURE_PLAYER_ENABLE
@@ -1334,10 +1334,10 @@ AudioManager::MsgProc
     &AudioManager::illegal             /*   Through state.         */
   },
 
-  /* SetSpDrvMode command. */
+  /* InitSpDrvMode command. */
 
   {                                    /* AudioManager all status: */
-    &AudioManager::setSpDrvMode,       /*   Ready state.           */
+    &AudioManager::initSpDrvMode,       /*   Ready state.           */
     &AudioManager::illegal,            /*   PlayerReady state.     */
     &AudioManager::illegal,            /*   PlayerActive state.    */
     &AudioManager::illegal,            /*   PlayerPause state.     */
@@ -1348,7 +1348,7 @@ AudioManager::MsgProc
     &AudioManager::illegal,            /*   BasebandReady state.   */
     &AudioManager::illegal,            /*   BasebandActive state.  */
     &AudioManager::illegal,            /*   WaitCommandWord state. */
-    &AudioManager::setSpDrvMode,       /*   PowerOff state.        */
+    &AudioManager::initSpDrvMode,       /*   PowerOff state.        */
     &AudioManager::illegal             /*   Through state.         */
   }
 };
@@ -4083,13 +4083,13 @@ void AudioManager::setThroughPath(AudioCommand &cmd)
 }
 
 /*--------------------------------------------------------------------------*/
-void AudioManager::setSpDrvMode(AudioCommand &cmd)
+void AudioManager::initSpDrvMode(AudioCommand &cmd)
 {
   CXD56_AUDIO_ECODE error_code = CXD56_AUDIO_ECODE_OK;
   cxd56_audio_sp_drv_t sp_driver;
 
   bool check =
-    packetCheck(LENGTH_SETSPDRVMODE, AUDCMD_SETSPDRVMODE, cmd);
+    packetCheck(LENGTH_INITSPDRVMODE, AUDCMD_INITSPDRVMODE, cmd);
   if (!check)
     {
       return;
@@ -4117,7 +4117,7 @@ void AudioManager::setSpDrvMode(AudioCommand &cmd)
         {
           sendErrRespResult(cmd.header.sub_code,
                             AS_MODULE_ID_AUDIO_DRIVER,
-                            AS_ECODE_COMMAND_PARAM_SETSPDRVMODE);
+                            AS_ECODE_COMMAND_PARAM_INITSPDRVMODE);
         }
         return;
     }
@@ -4125,13 +4125,13 @@ void AudioManager::setSpDrvMode(AudioCommand &cmd)
   error_code = cxd56_audio_set_spdriver(sp_driver);
   if (error_code == CXD56_AUDIO_ECODE_OK)
     {
-      sendResult(AUDRLT_SETSPDRVMODECMPLT, cmd.header.sub_code);
+      sendResult(AUDRLT_INITSPDRVMODECMPLT, cmd.header.sub_code);
     }
   else
     {
       sendErrRespResult(cmd.header.sub_code,
                         AS_MODULE_ID_AUDIO_DRIVER,
-                        AS_ECODE_SET_SPDRVMODE_ERROR);
+                        AS_ECODE_COMMAND_PARAM_INITSPDRVMODE);
     }
 }
 
