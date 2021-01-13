@@ -49,6 +49,8 @@
 #include "components/oscillator/oscillator_component.h"
 #include "audio_state.h"
 
+#include "../object_base.h"
+
 __WIEN2_BEGIN_NAMESPACE
 
 /****************************************************************************
@@ -87,14 +89,22 @@ typedef union
 class SynthesizerObject
 {
 public:
-  static SynthesizerObject *create(AsSynthesizerMsgQueId_t msgq_id,
-                                   AsSynthesizerPoolId_t   pool_id);
+  static void create(AsObjectParams_t*);
+  static void destory() { get_instance()->m_is_created = false; }
+
+  static SynthesizerObject *get_adr(void)
+  {
+    static SynthesizerObject  s_inst;
+    return &s_inst;
+  }
 
   static SynthesizerObject *get_instance(void)
   {
-    static SynthesizerObject  sng_ogj;
-
-    return &sng_ogj;
+    SynthesizerObject* s_inst = get_adr();
+    if(s_inst->m_is_created){
+      return s_inst;
+    }
+    return 0;
   }
 
   static pthread_t get_pid(void)
@@ -111,7 +121,7 @@ public:
 
   err_t send(MsgType type, const SynthesizerCommand& param)
   {
-    return MsgLib::send<SynthesizerCommand>(m_msgq_id.synthesizer,
+    return MsgLib::send<SynthesizerCommand>(m_msgq_id.self,
                                             MsgPriNormal,
                                             type,
                                             NULL,
@@ -119,12 +129,24 @@ public:
   }
 
 private:
+
   SynthesizerObject(void)
-    : m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
+    : m_is_created(false)
+    , m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
     , m_bit_length(AS_BITLENGTH_16)
     , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
-    , m_oscillator(0, NullPoolId)
+    , m_oscillator(0, NullPoolId) {}
+
+    SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+    : m_is_created(true)
+    , m_msgq_id(msgq_id)
+    , m_pool_id(pool_id)
+    , m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
+    , m_bit_length(AS_BITLENGTH_16)
+    , m_pid(INVALID_PROCESS_ID)
+    , m_stock_event(AsSynthesizerEventNum)
+    , m_oscillator(0, pool_id.cmp)
   {
     memset(m_dsp_path, 0, AS_AUDIO_DSP_PATH_LEN);
   }
@@ -141,8 +163,9 @@ private:
     SynthsizerStateNum
   };
 
-  AsSynthesizerMsgQueId_t        m_msgq_id;
-  AsSynthesizerPoolId_t          m_pool_id;
+  bool                           m_is_created;
+  AsObjectMsgQueId_t             m_msgq_id;
+  AsObjectPoolId_t               m_pool_id;
   AudioState<SynthesizerState_e> m_state;
   OscllicatorComponentHandler    m_osc_hdlr;
   SynthesizerCallback            m_callback;
