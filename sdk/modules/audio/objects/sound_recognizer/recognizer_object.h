@@ -93,6 +93,7 @@ private:
 
   typedef void (RecognizerObject::*MsgProc)(MsgPacket *);
   static MsgProc MsgProcTbl[AUD_RCG_REQ_MSG_NUM][StateNum];
+  static MsgProc MsgParamTbl[AUD_RCG_PRM_NUM][StateNum];
   static MsgProc RsltProcTbl[AUD_RCG_RES_MSG_NUM][StateNum];
 
   RecognizerObject(MsgQueId msg_id, MsgQueId manager_msg_id) :
@@ -117,6 +118,7 @@ private:
   void deactivate(MsgPacket *msg);
   void start(MsgPacket *msg);
   void stop(MsgPacket *msg);
+  void set(MsgPacket *msg);
   void initRcgproc(MsgPacket *msg);
   void setRcgproc(MsgPacket *msg);
 
