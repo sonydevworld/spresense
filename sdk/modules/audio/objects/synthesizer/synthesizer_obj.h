@@ -86,7 +86,7 @@ typedef union
  * Public Types
  ****************************************************************************/
 
-class SynthesizerObject
+class SynthesizerObject:ObjectBase
 {
 public:
   static void create(AsObjectParams_t*);
@@ -117,8 +117,6 @@ public:
     get_instance()->m_pid = id;
   }
 
-  void run(void);
-
   err_t send(MsgType type, const SynthesizerCommand& param)
   {
     return MsgLib::send<SynthesizerCommand>(m_msgq_id.self,
@@ -131,18 +129,16 @@ public:
 private:
 
   SynthesizerObject(void)
-    : m_is_created(false)
-    , m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
+    : ObjectBase()
+    , m_is_created(false)
     , m_bit_length(AS_BITLENGTH_16)
     , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
     , m_oscillator(0, NullPoolId) {}
 
     SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
-    : m_is_created(true)
-    , m_msgq_id(msgq_id)
-    , m_pool_id(pool_id)
-    , m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
+    : ObjectBase(AS_MODULE_ID_SYNTHESIZER_OBJ, msgq_id,pool_id)
+    , m_is_created(true)
     , m_bit_length(AS_BITLENGTH_16)
     , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
@@ -151,22 +147,8 @@ private:
     memset(m_dsp_path, 0, AS_AUDIO_DSP_PATH_LEN);
   }
 
-  enum SynthesizerState_e
-  {
-    SynthsizerStateBooted = 0,
-    SynthsizerStateReady,
-    SynthsizerStatePreActive,
-    SynthsizerStateActive,
-    SynthsizerStateStopping,
-    SynthsizerStateErrorStopping,
-    SynthsizerStateWaitStop,
-    SynthsizerStateNum
-  };
 
   bool                           m_is_created;
-  AsObjectMsgQueId_t             m_msgq_id;
-  AsObjectPoolId_t               m_pool_id;
-  AudioState<SynthesizerState_e> m_state;
   OscllicatorComponentHandler    m_osc_hdlr;
   SynthesizerCallback            m_callback;
   void                          *m_param;
@@ -182,27 +164,31 @@ private:
 
   typedef void (SynthesizerObject::*MsgProc)(MsgPacket*);
 
-  static  MsgProc MsgProcTbl[AUD_SYN_MSG_NUM][SynthsizerStateNum];
-  static  MsgProc MsgResultTbl[AUD_SYN_RST_MSG_NUM][SynthsizerStateNum];
+  static  MsgProc MsgResultTbl[AUD_SYN_RST_MSG_NUM][StateNum];
 
   void reply(AsSynthesizerEvent evtype,
              MsgType            msg_type,
              uint32_t           result);
 
-  void parse(MsgPacket *);
+  void parseResult(MsgPacket *);
 
-  void illegalEvt(MsgPacket *);
-  void activate(MsgPacket *);
-  void deactivate(MsgPacket *);
-
-  void init(MsgPacket *);
-  void execOnReady(MsgPacket *);
-  void stopOnExec(MsgPacket *);
+  void illegal(MsgPacket *);
+	
+  void activateOnBooted(MsgPacket *);
+  void deactivateOnReady(MsgPacket *);
+  void initOnReady(MsgPacket *);
+  void startOnReady(MsgPacket *);
+  void stopOnActive(MsgPacket *);
+  void stopOnErrorStopping(MsgPacket *);
   void stopOnWait(MsgPacket *);
+  void setOnReady(MsgPacket *msg) { set(msg); }
+  void setOnPreActive(MsgPacket *msg) { set(msg); }
+  void setOnActive(MsgPacket *msg) { set(msg); }
+  void setOnErrorStopping(MsgPacket *msg) { cmpDoneOnSet(msg); }
+
   void set(MsgPacket *);
 
   void illegalCompDone(MsgPacket *);
-  void stopOnErrorStop(MsgPacket *);
   void cmpDoneOnErrorStop(MsgPacket *);
 
   void nextReqOnExec(MsgPacket *msg);
