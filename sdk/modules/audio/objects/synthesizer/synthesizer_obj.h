@@ -130,17 +130,13 @@ private:
 
   SynthesizerObject(void)
     : ObjectBase()
-    , m_is_created(false)
     , m_bit_length(AS_BITLENGTH_16)
-    , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
     , m_oscillator(0, NullPoolId) {}
 
-    SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+  SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
     : ObjectBase(AS_MODULE_ID_SYNTHESIZER_OBJ, msgq_id,pool_id)
-    , m_is_created(true)
     , m_bit_length(AS_BITLENGTH_16)
-    , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
     , m_oscillator(0, pool_id.cmp)
   {
@@ -148,7 +144,6 @@ private:
   }
 
 
-  bool                           m_is_created;
   OscllicatorComponentHandler    m_osc_hdlr;
   SynthesizerCallback            m_callback;
   void                          *m_param;
@@ -157,7 +152,6 @@ private:
   uint32_t                       m_sample_size;
   uint32_t                       m_pcm_buff_size;
   char                           m_dsp_path[AS_AUDIO_DSP_PATH_LEN];
-  pthread_t                      m_pid;
   AsSynthesizerEvent             m_stock_event;
   AsSynthesizerDataPath          m_data_path;
   AsSynthesizerDataDest          m_dest;

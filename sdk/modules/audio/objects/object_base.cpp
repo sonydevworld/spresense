@@ -85,3 +85,82 @@ void ObjectBase::parse(MsgPacket *msg)
     }
 }
 
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+/*--------------------------------------------------------------------------*/
+template <typename T>
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           T *reply)
+{
+  return AS_ReceiveObjectReply(msgq_id, TIME_FOREVER, reply);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           AudioObjReply *reply)
+{
+  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, reply);
+}
+
+/*--------------------------------------------------------------------------*/
+template <typename T>
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           uint32_t ms,
+                           T *reply)
+{
+  err_t           err_code;
+  FAR MsgQueBlock *que;
+  FAR MsgPacket   *msg;
+
+  if (reply == NULL)
+    {
+      return false;
+    }
+
+  /* Get an instance of the specified message ID. */
+
+  err_code = MsgLib::referMsgQueBlock(msgq_id, &que);
+  if (err_code != ERR_OK)
+    {
+      return false;
+    }
+
+  /* Waiting to receive a message. */
+
+  err_code = que->recv(ms, &msg);
+  if (err_code != ERR_OK)
+    {
+      return false;
+    }
+
+  if (msg->getType() != MSG_AUD_MGR_RST)
+    {
+      return false;
+    }
+
+  /* Store reply information. */
+
+  *reply = msg->moveParam<T>();
+
+  /* Delete received data. */
+
+  err_code = que->pop();
+  if (err_code != ERR_OK)
+    {
+      return false;
+    }
+
+  return true;
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_ReceiveObjectReply(MsgQueId msgq_id,
+                           uint32_t ms,
+                           AudioObjReply *reply)
+{
+  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, ms, reply);
+}
+
+
+
