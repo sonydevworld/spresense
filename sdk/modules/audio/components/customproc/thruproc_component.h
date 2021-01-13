@@ -40,6 +40,7 @@
 #include "audio/audio_high_level_api.h"
 #include "memutils/s_stl/queue.h"
 #include "components/component_base.h"
+#include "dsp_req_que.h"
 
 __USING_WIEN2
 
@@ -63,15 +64,11 @@ public:
   virtual bool deactivate();
 
 private:
+
   #define REQ_QUEUE_SIZE 7 
 
-  struct ApuReqData
-  {
-    AsPcmDataParam       pcm;
-  };
+  DspReqQue<CustomprocCommand::CmdBase, REQ_QUEUE_SIZE> m_req_que;
 
-  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ReqQue;
-  ReqQue m_req_que;
 };
 
 #endif /* _THRUPROC_COMPONENT_H_ */

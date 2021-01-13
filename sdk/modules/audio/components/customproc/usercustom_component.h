@@ -41,6 +41,7 @@
 #include "memutils/message/Message.h"
 #include "debug/dbg_log.h"
 #include "components/component_base.h"
+#include "dsp_req_que.h"
 
 extern "C" {
 
@@ -48,15 +49,16 @@ bool AS_postproc_recv_apu(void *p_param, void *p_instance);
 
 } /* extern "C" */
 
+using namespace MemMgrLite;
 __USING_WIEN2
 
 class UserCustomComponent : public ComponentBase
 {
 public:
-  UserCustomComponent(MemMgrLite::PoolId apu_pool_id,MsgQueId apu_mid):
-      m_apu_pool_id(apu_pool_id)
-    , m_apu_mid(apu_mid)
-  {}
+  UserCustomComponent(PoolId pool_id, MsgQueId msgq_id):
+      ComponentBase(pool_id, msgq_id)
+  { m_req_que.set_pool_id(pool_id); }
+
   ~UserCustomComponent() {}
 
   virtual uint32_t init(const InitComponentParam& param);
@@ -65,90 +67,25 @@ public:
   virtual bool set(const SetComponentParam& param);
   virtual bool recv_done(ComponentCmpltParam *cmplt);
   virtual bool recv_done(ComponentInformParam *info);
-  virtual bool recv_done(void) { return freeApuCmdBuf(); }
+  virtual bool recv_done(void) { return m_req_que.free(); }
   virtual uint32_t activate(ComponentCallback callback,
                             const char *image_name,
                             void *p_requester,
                             uint32_t *dsp_inf);
   virtual bool deactivate();
 
-  bool recv_apu(void *p_param);
-  MsgQueId get_apu_mid(void) { return m_apu_mid; };
+  bool recv_dsp(void *p_param);
 
   void *m_dsp_handler;
 
 private:
-  MemMgrLite::PoolId m_apu_pool_id;
-
-  MsgQueId m_apu_mid;
 
   #define REQ_QUEUE_SIZE 7
+  
+  DspReqQue<CustomprocCommand::CmdBase, REQ_QUEUE_SIZE> m_req_que;
 
-  struct ApuReqData
-  {
-    MemMgrLite::MemHandle cmd_mh;
-    AsPcmDataParam        input;
-    MemMgrLite::MemHandle output_mh;
-  };
+  void send(void *);
 
-  typedef s_std::Queue<ApuReqData, REQ_QUEUE_SIZE> ApuReqMhQue;
-  ApuReqMhQue m_apu_req_mh_que;
-
-  void send(void*);
-
-  void* allocApuBufs(AsPcmDataParam input, MemMgrLite::MemHandle output)
-  {
-    ApuReqData req;
-
-    req.input     = input;
-    req.output_mh = output;
-
-    return pushqueue(req);
-  }
-
-  void* allocApuBufs(MemMgrLite::MemHandle output)
-  {
-    ApuReqData req;
-
-    req.output_mh = output;
-
-    return pushqueue(req);
-  }
-
-  void* allocApuBufs(void)
-  {
-    ApuReqData req;
-
-    return pushqueue(req);
-  }
-
-  void* pushqueue(ApuReqData reqdata)
-  {
-    if (reqdata.cmd_mh.allocSeg(m_apu_pool_id, sizeof(CustomprocCommand::CmdBase)) != ERR_OK)
-      {
-        DECODER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
-        return NULL;
-      }
-
-    if (!m_apu_req_mh_que.push(reqdata))
-      {
-        DECODER_ERR(AS_ATTENTION_SUB_CODE_QUEUE_PUSH_ERROR);
-        return NULL;
-      }
-
-    return reqdata.cmd_mh.getPa();
-  }
-
-  bool freeApuCmdBuf()
-  {
-    if (!m_apu_req_mh_que.pop())
-      {
-        DECODER_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_FREE_ERROR);
-        return false;
-      }
-
-    return true;
-  }
 };
 
 #endif /* _USERCUSTOM_COMPONENT_H_ */

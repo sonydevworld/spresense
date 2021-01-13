@@ -443,6 +443,23 @@
                                         fmt, \
                                         ##__VA_ARGS__)
 
+#define CUSTOM_CMP_ERR(code)          DBG_LOGF_ERROR( \
+                                        AS_MODULE_ID_CUSTOM_CMP, \
+                                        0, \
+                                        code)
+#define CUSTOM_CMP_WARN(code)         DBG_LOGF_WARN( \
+                                        AS_MODULE_ID_CUSTOM_CMP, \
+                                        0, \
+                                        code)
+#define CUSTOM_CMP_INF(code)          DBG_LOGF_DEBUG( \
+                                        AS_MODULE_ID_CUSTOM_CMP, \
+                                        0, \
+                                        code)
+#define CUSTOM_CMP_DBG(fmt, ...)      AUDIO_LOG_EVENT( \
+                                        AS_MODULE_ID_CUSTOM_CMP, \
+                                        fmt, \
+                                        ##__VA_ARGS__)
+
 #define DMAC_REG_ATTCB(att_cb) ATTENTION_CB_REGISTER(AS_MODULE_ID_AUDIO_DRIVER, att_cb)
 #define DMAC_UNREG_ATTCB() ATTENTION_CB_UNREGISTER(AS_MODULE_ID_AUDIO_DRIVER)
 #define DMAC_FATAL(code)   DBG_LOGF_FATAL(AS_MODULE_ID_AUDIO_DRIVER, 0, code)
