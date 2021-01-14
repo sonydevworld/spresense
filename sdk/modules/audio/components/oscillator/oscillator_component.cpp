@@ -47,8 +47,6 @@
 
 #include "apus/apu_cmd.h"
 
-#define OSCILLATOR_CMP_DBG printf
-
 __WIEN2_BEGIN_NAMESPACE
 
 /* ------------------------------------------------------------------------ */

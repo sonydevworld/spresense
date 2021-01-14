@@ -223,6 +223,7 @@ MicFrontEndObject::MsgProc
     &MicFrontEndObject::illegal,         /*   ErrorStopping. */
     &MicFrontEndObject::illegal          /*   WaitStop.      */
   },
+
   /* Message Type: MSG_AUD_MFE_CMD_INITPREPROC */
   /* Message Type: MSG_AUD_MFE_CMD_SETPREPROC */
   /* Message Type: MSG_AUD_MFE_CMD_SET_MICGAIN. */
@@ -561,14 +562,14 @@ void MicFrontEndObject::init(MsgPacket *msg)
     {
       InitComponentParam init_src_param;
 
-      init_src_param.fixparam.samples       = cmd.init_param.samples_per_frame;
-      init_src_param.fixparam.in_fs         =
+      init_src_param.common.samples       = cmd.init_param.samples_per_frame;
+      init_src_param.common.in_fs         =
         (cxd56_audio_get_clkmode() == CXD56_AUDIO_CLKMODE_HIRES)
           ? AS_SAMPLINGRATE_192000 : AS_SAMPLINGRATE_48000;
-      init_src_param.fixparam.out_fs        = cmd.init_param.out_fs;
-      init_src_param.fixparam.in_bitlength  = cmd.init_param.bit_length;
-      init_src_param.fixparam.out_bitlength = cmd.init_param.bit_length;
-      init_src_param.fixparam.ch_num        = cmd.init_param.channel_number;
+      init_src_param.common.out_fs        = cmd.init_param.out_fs;
+      init_src_param.common.in_bitlength  = cmd.init_param.bit_length;
+      init_src_param.common.out_bitlength = cmd.init_param.bit_length;
+      init_src_param.common.ch_num        = cmd.init_param.channel_number;
 
       m_p_preproc_instance->init(init_src_param);
       m_p_preproc_instance->recv_done();
@@ -787,8 +788,8 @@ void MicFrontEndObject::initPreproc(MsgPacket *msg)
 
   InitComponentParam param;
 
-  param.packet.addr = initparam.packet_addr;
-  param.packet.size = initparam.packet_size;
+  param.custom.addr = initparam.packet_addr;
+  param.custom.size = initparam.packet_size;
 
   /* Init Preproc (Copy packet to MH internally, and wait return from DSP) */
 
@@ -820,8 +821,8 @@ void MicFrontEndObject::setPreproc(MsgPacket *msg)
 
   SetComponentParam param;
 
-  param.packet.addr = setparam.packet_addr;
-  param.packet.size = setparam.packet_size;
+  param.custom.addr = setparam.packet_addr;
+  param.custom.size = setparam.packet_size;
 
   /* Set Preproc (Copy packet to MH internally) */
 
@@ -1552,12 +1553,12 @@ bool MicFrontEndObject::execPreProc(MemMgrLite::MemHandle inmh, uint32_t sample)
            * If null pool id is set, use same area as input.
            */
 
-          exec.output_mh = exec.input.mh;
+          exec.output = exec.input.mh;
         }
       else
         {
-          if (ERR_OK != exec.output_mh.allocSeg(m_pool_id.output,
-                                                m_max_output_size))
+          if (ERR_OK != exec.output.allocSeg(m_pool_id.output,
+                                             m_max_output_size))
             {
               MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;
@@ -1600,8 +1601,8 @@ bool MicFrontEndObject::flushPreProc(void)
            * If null pool id is set, allocate on input area.
            */
 
-          if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.input,
-                                                 m_max_capture_size))
+          if (ERR_OK != flush.output.allocSeg(m_pool_id.input,
+                                              m_max_capture_size))
             {
               MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;
@@ -1609,8 +1610,8 @@ bool MicFrontEndObject::flushPreProc(void)
         }
       else
         {
-          if (ERR_OK != flush.output_mh.allocSeg(m_pool_id.output,
-                                                 m_max_capture_size))
+          if (ERR_OK != flush.output.allocSeg(m_pool_id.output,
+                                              m_max_capture_size))
             {
               MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
               return false;

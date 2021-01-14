@@ -65,10 +65,10 @@ bool PackingComponent::deactivate(void)
 uint32_t PackingComponent::init(const InitComponentParam& param)
 {
   FILTER_DBG("INIT BITCNV: in bytewidth %d, out bytewidth %d\n",
-             param.fixparam.in_bitlength, param.fixparam.out_bitlength);
+             param.common.in_bitlength, param.common.out_bitlength);
 
-  m_in_bitwidth  = param.fixparam.in_bitlength;
-  m_out_bitwidth = param.fixparam.out_bitlength;
+  m_in_bitwidth  = param.common.in_bitlength;
+  m_out_bitwidth = param.common.out_bitlength;
 
   /* Hold dummy. */
 
@@ -111,7 +111,7 @@ bool PackingComponent::exec(const ExecComponentParam& param)
   /* Filter data area check */
 
   if ((param.input.mh.getPa() == NULL)
-   || (param.output_mh.getPa() == NULL))
+   || (param.output.getPa() == NULL))
     {
       FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
@@ -136,11 +136,11 @@ bool PackingComponent::exec(const ExecComponentParam& param)
 
   /* Excec convert */
 
-  if (outsize <= param.output_mh.getSize())
+  if (outsize <= param.output.getSize())
     {
       (this->*convfunc)(param.input.size / (m_in_bitwidth / 8),
                         reinterpret_cast<int8_t *>(param.input.mh.getPa()),
-                        reinterpret_cast<int8_t *>(param.output_mh.getPa()));
+                        reinterpret_cast<int8_t *>(param.output.getPa()));
       result = true;
     }
  
@@ -148,7 +148,7 @@ bool PackingComponent::exec(const ExecComponentParam& param)
 
   AsPcmDataParam output = param.input;
 
-  output.mh       = param.output_mh;
+  output.mh       = param.output;
   output.size     = outsize;
   output.is_valid = result;
 
@@ -174,7 +174,7 @@ bool PackingComponent::flush(const FlushComponentParam& param)
 
   AsPcmDataParam output;
 
-  output.mh       = param.output_mh;
+  output.mh       = param.output;
   output.size     = 0;
   output.is_valid = true;
 
