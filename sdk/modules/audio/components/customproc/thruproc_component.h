@@ -47,7 +47,7 @@ __USING_WIEN2
 class ThruProcComponent : public ComponentBase
 {
 public:
-  ThruProcComponent() {}
+  ThruProcComponent() { m_req_que.set_pool_id(NullPoolId); }
   ~ThruProcComponent() {}
 
   virtual uint32_t init(const InitComponentParam& param);

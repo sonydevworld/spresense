@@ -40,20 +40,14 @@
   --------------------------------------------------------------------*/
 uint32_t ThruProcComponent::init(const InitComponentParam& param)
 {
-  if (m_req_que.alloc() == NULL)
-    {
-      return AS_ECODE_CHECK_MEMORY_POOL_ERROR;
-    }
+  m_req_que.alloc();
   return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::exec(const ExecComponentParam& param)
 {
-  if (m_req_que.alloc(param.input) == NULL)
-    {
-      return false;
-    }
+  m_req_que.alloc(param.input);
 
   ComponentCbParam cbpram;
   cbpram.event_type = ComponentExec;
@@ -71,10 +65,7 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
   fls.mh       = param.output;
   fls.is_valid = true;
 
-  if (m_req_que.alloc(fls) == NULL)
-    {
-      return false;
-    }
+  m_req_que.alloc(fls);
 
   ComponentCbParam cbpram;
   cbpram.event_type = ComponentFlush;
