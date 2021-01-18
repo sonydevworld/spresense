@@ -1310,6 +1310,14 @@ static int close_request(int fd, FAR struct daemon_s *priv,
       goto send_resp;
     }
 
+  /* Cancel select() before closing the socket.
+   * If close the fd which is performing select(),
+   * select() may terminate abnormally.
+   */
+
+  altcom_select_async_cancel(priv->selectid, true);
+  priv->selectid = -1;
+
   ret = altcom_close(usock->usockid);
   daemon_socket_delete(priv, usock);
   if (0 > ret)
