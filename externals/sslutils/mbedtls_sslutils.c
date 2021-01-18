@@ -236,6 +236,7 @@ static int sslutil_doconnect(FAR struct sslutil_sock_s *sock,
 
       nerr("ERROR: connect failed: %d\n", errno);
       freeaddrinfo(ainfo);
+      close(sock->sockfd);
       return ret;
     }
 
@@ -359,6 +360,7 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
                               strlen(pers));
   if (ret != 0)
     {
+      sslutil_sslsockfin(ssl);
       return ret;
     }
 
@@ -368,6 +370,7 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
   if (ret != 0)
     {
       nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
+      sslutil_sslsockfin(ssl);
       return ret;
     }
 
@@ -456,6 +459,7 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
   if (ret != 0)
     {
       nerr("mbedtls_ssl_set_hostname() error : -0x%x\n", -ret);
+      sslutil_sslsockfin(ssl);
       return ret;
     }
 
@@ -470,6 +474,7 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
   if (ret != 0)
     {
       nerr("mbedtls_net_connect() error : -0x%x\n", -ret);
+      sslutil_sslsockfin(ssl);
       return ret;
     }
 
@@ -486,6 +491,7 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
           (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
         {
           nerr("mbedtls_ssl_handshake() error : -0x%x\n", -ret);
+          sslutil_sslsockfin(ssl);
           return ret;
         }
     }
@@ -497,11 +503,13 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
       if (!buf)
         {
           nerr("failed to allocate memory\n");
+          sslutil_sslsockfin(ssl);
           return -ENOMEM;
         }
       mbedtls_x509_crt_verify_info(buf, SSLUTIL_CERTVERIFY_STAT_BUFFLEN, " ", ret);
       nerr("Failed to verify peer certificates: %s\n", buf);
       free(buf);
+      sslutil_sslsockfin(ssl);
       return -1;
     }
 
