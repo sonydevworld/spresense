@@ -125,10 +125,11 @@ static int get_addrfamily_by_registeredaddr(void)
           if (netinfo->pdn_stat[i].ipaddr_num == 2)
             {
               /* It means that IPv4 and IPv6 addresses are registered.
-               * Give priority to the IPv4.
+               * Set AF_UNSPEC because it must try to resolve
+               * both IP addresses.
                */
 
-              ret = ALTCOM_AF_INET;
+              ret = ALTCOM_AF_UNSPEC;
             }
           else if (netinfo->pdn_stat[i].ipaddr_num == 1)
             {
