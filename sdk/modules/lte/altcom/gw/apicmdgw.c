@@ -553,26 +553,26 @@ void apicmdgw_errind(FAR struct apicmd_cmdhdr_s *evthdr)
  *
  ****************************************************************************/
 
-void apicmdgw_errhandle(FAR struct apicmd_cmdhdr_s *evthdr)
+static void apicmdgw_errhandle(FAR struct apicmd_cmdhdr_s *evthdr, int32_t err)
 {
-  DBGIF_LOG_ERROR("dispatch error\n");
-  DBGIF_LOG1_ERROR("version:0x%x\n", evthdr->ver);
-  DBGIF_LOG1_ERROR("sequence ID:0x%x\n", evthdr->seqid);
-  DBGIF_LOG1_ERROR("command ID:0x%x\n", ntohs(evthdr->cmdid));
-  DBGIF_LOG1_ERROR("transaction ID:0x%x\n", ntohs(evthdr->transid));
-  DBGIF_LOG1_ERROR("data length:0x%x\n", ntohs(evthdr->dtlen));
+  DBGIF_LOG1_WARNING("dispatch error:%d\n", err);
+  DBGIF_LOG1_WARNING("version:0x%x\n", evthdr->ver);
+  DBGIF_LOG1_WARNING("sequence ID:0x%x\n", evthdr->seqid);
+  DBGIF_LOG1_WARNING("command ID:0x%x\n", ntohs(evthdr->cmdid));
+  DBGIF_LOG1_WARNING("transaction ID:0x%x\n", ntohs(evthdr->transid));
+  DBGIF_LOG1_WARNING("data length:0x%x\n", ntohs(evthdr->dtlen));
 
   if (APICMDGW_GET_PROTOCOLVER(evthdr) == APICMD_VER_V4)
     {
-      DBGIF_LOG1_ERROR("header check sum:0x%x\n",
+      DBGIF_LOG1_WARNING("header check sum:0x%x\n",
         ntohs(((struct apicmd_cmdhdr_v4_s *)evthdr)->chksum));
-      DBGIF_LOG1_ERROR("data check sum:0x%x\n",
+      DBGIF_LOG1_WARNING("data check sum:0x%x\n",
         ntohs(((struct apicmd_cmdhdr_v4_s *)evthdr)->dtchksum));
     }
   else
     {
-      DBGIF_LOG1_ERROR("options:0x%x\n", ntohs(evthdr->options));
-      DBGIF_LOG1_ERROR("check sum:0x%x\n", ntohs(evthdr->chksum));
+      DBGIF_LOG1_WARNING("options:0x%x\n", ntohs(evthdr->options));
+      DBGIF_LOG1_WARNING("check sum:0x%x\n", ntohs(evthdr->chksum));
     }
 }
 
@@ -987,9 +987,8 @@ static void apicmdgw_recvtask(void *arg)
                               if (0 > ret)
                                 {
                                   apicmdgw_errhandle(
-                                    (FAR struct apicmd_cmdhdr_s *)evtbuff);
+                                    (FAR struct apicmd_cmdhdr_s *)evtbuff, ret);
                                   g_hal_if->freebuff(g_hal_if, evtbuff);
-                                  DBGIF_LOG1_ERROR("dispatch() [errno=%d]\n",ret);
                                 }
                             }
                         }
