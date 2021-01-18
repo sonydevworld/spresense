@@ -7,7 +7,9 @@ This application uses an LTE network connection to perform the following Azure I
 
 ##### prepare:
 
-File defined by 'AZURE_IOT_RESOURCE_FILE' in "lte_azureiot_main.c"
+###### AZURE_IOT_RESOURCE_FILE
+
+File defined by 'AZURE_IOT_RESOURCE_FILE' in "lte_azureiot_main.c".
 
 ("/mnt/sd0/azureiot/resources.txt" by default)
 
@@ -15,12 +17,36 @@ Please refer to the URL below and describe "IoT Hub Name", "Device ID", and "Pri
 
 https://docs.microsoft.com/en-US/azure/iot-hub/iot-hub-create-through-portal
 
-###### Description example:
+```
+<IoT Hub Name>
+<Device ID>
+<Primary Key>
+```
+
+####### Description example:
+
+This is an example, the contents of resource.txt when "IoT Hub Name" is "iot-hub-contoso-one", "Device ID" is "myDeviceId", and "Primary Key" is "HZAww1PN3suNBkailQU1UeEllNB3j0=" are described.
+
 ```
 iot-hub-contoso-one
 myDeviceId
 HZAww1PN3suNBkailQU1UeEllNB3j0=
 ```
+
+###### AZURE_IOT_CERT_FILE_NAME
+
+File defined by 'AZURE_IOT_CERT_FILE_NAME' in "lte_azureiot_main.c".
+
+("/mnt/sd0/CERTS/portal-azure-com.pem" by default)
+
+Please download certification file as "portal-azure-com.pem" from Microsoft Azure Portal.
+(This step is just for firefox web browser.)
+
+1. Open the "https://portal.azure.com" in the Firefox
+
+2. Open the certification details (Baltimore CyberTrust Root)
+
+3. Download the certification file (portal-azure-com.pem)
 
 ##### Build kernel and SDK:
 
