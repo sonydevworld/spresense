@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/x509_crt_info.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,8 +82,15 @@ static int32_t x509_crt_info_request(FAR struct x509_crt_info_req_s *req,
   uint32_t                             buflen = 0;
   FAR struct apicmd_x509_crt_info_s    *cmd = NULL;
   FAR struct apicmd_x509_crt_infores_s *res = NULL;
+  uint16_t                             cmdid = 0;
 
   if (buf == NULL)
+    {
+      return X509_CRT_INFO_FAILURE;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_TLS_X509_CRT_INFO);
+  if (cmdid == APICMDID_UNKNOWN)
     {
       return X509_CRT_INFO_FAILURE;
     }
@@ -90,7 +98,7 @@ static int32_t x509_crt_info_request(FAR struct x509_crt_info_req_s *req,
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_X509_CRT_INFO,
+    (FAR void **)&cmd, cmdid,
     X509_CRT_INFO_REQ_DATALEN,
     (FAR void **)&res, X509_CRT_INFO_RES_DATALEN))
     {

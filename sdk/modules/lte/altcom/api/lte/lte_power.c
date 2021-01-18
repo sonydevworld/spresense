@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_power.c
  *
- *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,6 +89,8 @@ static void restart_callback_job(FAR void *arg)
 {
   int32_t      ret;
   FAR uint8_t *cmdbuff;
+
+  apicmdgw_set_protocolversion(APICMD_VER_UNKNOWN);
 
   /* Abort send apicmd for Release waiting sync API response. */
 
@@ -378,7 +380,7 @@ int32_t altcom_power_off(void)
 enum evthdlrc_e apicmdhdlr_power(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_POWER_ON), poweron_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_POWER_ON)), poweron_job);
 }
 
 /****************************************************************************

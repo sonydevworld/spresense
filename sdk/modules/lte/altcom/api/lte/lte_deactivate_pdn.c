@@ -171,6 +171,7 @@ static int32_t lte_deactivatepdn_impl(uint8_t session_id,
   uint16_t                                  resbufflen = RES_DATA_LEN;
   uint16_t                                  reslen     = 0;
   int                                       sync       = (callback == NULL);
+  uint16_t                                  cmdid = 0;
 
   /* Check input parameter */
 
@@ -187,6 +188,12 @@ static int32_t lte_deactivatepdn_impl(uint8_t session_id,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_DEACTIVATE_PDN);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -208,7 +215,7 @@ static int32_t lte_deactivatepdn_impl(uint8_t session_id,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_deactivatepdn_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_DEACTIVATE_PDN, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -338,5 +345,6 @@ int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback)
 enum evthdlrc_e apicmdhdlr_deactivatepdn(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_DEACTIVATE_PDN), deactivatepdn_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_DEACTIVATE_PDN)),
+    deactivatepdn_job);
 }

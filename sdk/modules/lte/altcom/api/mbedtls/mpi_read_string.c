@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/mpi_read_string.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +79,13 @@ static int32_t mpi_read_string_request(FAR struct mpi_read_string_req_s *req)
   uint32_t                               buflen = 0;
   FAR struct apicmd_mpi_read_string_s    *cmd = NULL;
   FAR struct apicmd_mpi_read_stringres_s *res = NULL;
+
+  /* Check ALTCOM protocol version */
+
+  if (apicmdgw_get_protocolversion() != APICMD_VER_V1)
+    {
+      return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 

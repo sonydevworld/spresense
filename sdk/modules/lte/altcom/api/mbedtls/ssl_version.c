@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_version.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_ssl_version.h"
+#include "apicmd_ssl.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -51,6 +53,9 @@
 
 #define SSL_VERSION_REQ_DATALEN (sizeof(struct apicmd_ssl_version_s))
 #define SSL_VERSION_RES_DATALEN (sizeof(struct apicmd_ssl_versionres_s))
+#define SSL_VERSION_REQ_DATALEN_V4 (APICMD_TLS_SSL_CMD_DATA_SIZE)
+#define SSL_VERSION_RES_DATALEN_V4 (APICMD_TLS_SSL_CMDRES_DATA_SIZE + \
+                                   sizeof(struct apicmd_ssl_versionres_v4_s))
 
 #define SSL_VERSION_SUCCESS 0
 #define SSL_VERSION_FAILURE -1
@@ -113,30 +118,61 @@ static const char *get_ssl_tls_version(const int8_t *ver_name)
 static int32_t ssl_version_request(FAR struct ssl_version_req_s *req,
                                    const char** res_version)
 {
-  int32_t                            ret;
-  uint16_t                           reslen = 0;
-  FAR struct apicmd_ssl_version_s    *cmd = NULL;
-  FAR struct apicmd_ssl_versionres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = SSL_VERSION_REQ_DATALEN;
+      resbuffsize = SSL_VERSION_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = SSL_VERSION_REQ_DATALEN_V4;
+      resbuffsize = SSL_VERSION_RES_DATALEN_V4;
+    }
+  else
+    {
+      return SSL_VERSION_FAILURE;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_SSL_VERSION, SSL_VERSION_REQ_DATALEN,
-    (FAR void **)&res, SSL_VERSION_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_SSL_VERSION),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return SSL_VERSION_FAILURE;
     }
 
   /* Fill the data */
 
-  cmd->ssl = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_ssl_version_s *)cmd)->ssl = htonl(req->id);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_sslcmd_s *)cmd)->ssl = htonl(req->id);
+      ((FAR struct apicmd_sslcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_SSL_VERSION);
+    }
 
   DBGIF_LOG1_DEBUG("[ssl_version]ctx id: %d\n", req->id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      SSL_VERSION_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -145,19 +181,47 @@ static int32_t ssl_version_request(FAR struct ssl_version_req_s *req,
       goto errout_with_cmdfree;
     }
 
-  if (reslen != SSL_VERSION_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_ssl_versionres_s *)res)->ret_code);
 
-  DBGIF_LOG1_DEBUG("[ssl_version res]ret: %d\n", ret);
-  DBGIF_LOG1_DEBUG("[ssl_version res]version: %s\n", res->version);
+      DBGIF_LOG1_DEBUG("[ssl_version res]ret: %d\n", ret);
+      DBGIF_LOG1_DEBUG("[ssl_version res]version: %s\n",
+        ((FAR struct apicmd_ssl_versionres_s *)res)->version);
 
-  res->version[APICMD_SSL_VERSION_LEN-1] = '\0';
-  *res_version = get_ssl_tls_version(res->version);
+      ((FAR struct apicmd_ssl_versionres_s *)res)->version
+        [APICMD_SSL_VERSION_LEN-1] = '\0';
+      *res_version =
+        get_ssl_tls_version(((FAR struct apicmd_ssl_versionres_s *)
+          res)->version);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      if (ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id) !=
+        APISUBCMDID_TLS_SSL_VERSION)
+        {
+          DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+            ntohl(((FAR struct apicmd_sslcmdres_s *)res)->subcmd_id));
+          goto errout_with_cmdfree;
+        }
+      ret = ntohl(((FAR struct apicmd_sslcmdres_s *)res)->ret_code);
+
+      DBGIF_LOG1_DEBUG("[ssl_version res]ret: %d\n", ret);
+      DBGIF_LOG1_DEBUG("[ssl_version res]version: %s\n",
+        ((FAR struct apicmd_sslcmdres_s *)res)->u.versionres.version);
+
+      ((FAR struct apicmd_sslcmdres_s *)res)->u.versionres.version
+        [APICMD_SSL_VERSION_LEN-1] = '\0';
+      *res_version =
+        get_ssl_tls_version(((FAR struct apicmd_sslcmdres_s *)
+          res)->u.versionres.version);
+    }
 
   altcom_mbedtls_free_cmdandresbuff(cmd, res);
 

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/altcombs.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,6 +50,15 @@
 #include "apicmd_psm.h"
 #include "apicmd_quality.h"
 #include "apicmd_cellinfo.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define ALTCOM_GETEDRX_TYPE_UE         0
+#define ALTCOM_GETEDRX_TYPE_NEGOTIATED 1
+#define ALTCOM_GETPSM_TYPE_UE          0
+#define ALTCOM_GETPSM_TYPE_NEGOTIATED  1
 
 /****************************************************************************
  * Public Types
@@ -269,6 +278,25 @@ int32_t altcombs_set_pdninfo(struct apicmd_pdnset_s *cmd_pdn,
   lte_pdn_t *lte_pdn);
 
 /****************************************************************************
+ * Name: altcombs_set_pdninfo_v4
+ *
+ * Description:
+ *   Set lte_pdn_t param.
+ *
+ * Input Parameters:
+ *   cmd_pdn    Pointer of api command pdn struct.
+ *   lte_pdn    Pointer of lte_pdn_t.
+ *
+ * Returned Value:
+ *   When convert success is returned 0.
+ *   When convert failed return negative value.
+ *
+ ****************************************************************************/
+
+int32_t altcombs_set_pdninfo_v4(FAR struct apicmd_pdnset_v4_s *cmd_pdn,
+  FAR lte_pdn_t *lte_pdn);
+
+/****************************************************************************
  * Name: altcombs_check_edrx
  *
  * Description:
@@ -379,6 +407,26 @@ void altcombs_set_cellinfo(FAR struct apicmd_cmddat_cellinfo_s *cmd_cellinfo,
                            FAR lte_cellinfo_t *api_cellinfo);
 
 /****************************************************************************
+ * Name: altcombs_set_cellinfo_v4
+ *
+ * Description:
+ *   Set lte_cellinfo_t.
+ *
+ * Input Parameters:
+ *   cmd_cellinfo  Pointer of api command cellinfo struct.
+ *   api_cellinfo  Pointer of lte_cellinfo_t.
+ *
+ * Returned Value:
+ *   When check success is returned 0.
+ *   When check failed return negative value.
+ *
+ ****************************************************************************/
+
+void altcombs_set_cellinfo_v4(
+  FAR struct apicmd_cmddat_cellinfo_v4_s *cmd_cellinfo,
+  FAR lte_cellinfo_t *api_cellinfo);
+
+/****************************************************************************
  * Name: altcombs_setup_apicallback
  *
  * Description:
@@ -414,5 +462,51 @@ int32_t altcombs_setup_apicallback(int32_t id, FAR void *api_cb,
  ****************************************************************************/
 
 void altcombs_teardown_apicallback(int32_t id, altcom_stat_chg_cb_t stat_cb);
+
+/****************************************************************************
+ * Name: lte_getedrx_impl
+ *
+ * Description:
+ *   Get eDRX settings.
+ *
+ * Input Parameters:
+ *   type     Type to get eDRX value.
+ *   settings eDRX settings.
+ *   callback Callback function to notify when getting eDRX settings are
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_getedrx_impl(uint8_t type, lte_edrx_setting_t *settings,
+                         get_edrx_cb_t callback);
+
+/****************************************************************************
+ * Name: lte_getpsm_impl
+ *
+ * Description:
+ *   Get PSM settings.
+ *
+ * Input Parameters:
+ *   type     Type to get PSM value.
+ *   settings PSM settings.
+ *   callback Callback function to notify when getting PSM settings are
+ *            completed.
+ *            If the callback is NULL, operates with synchronous API,
+ *            otherwise operates with asynchronous API.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t lte_getpsm_impl(uint8_t type, lte_psm_setting_t *settings,
+                        get_psm_cb_t callback);
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_ALTCOMBS_H */

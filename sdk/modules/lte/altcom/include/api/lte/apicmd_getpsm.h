@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/lte/apicmd_getpsm.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,6 +52,13 @@
  ****************************************************************************/
 
 /* This structure discribes the data structure of the API command */
+
+/* APICMDID_GET_PSM */
+
+begin_packed_struct struct apicmd_cmddat_getpsm_v4_s
+{
+  uint8_t type;
+} end_packed_struct;
 
 /* APICMDID_GET_PSM_RES */
 

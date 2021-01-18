@@ -95,6 +95,7 @@ struct hal_altmdm_spi_obj_s
  ****************************************************************************/
 
 static hal_restart_cb_t g_hal_restart_cb = NULL;
+static struct altmdm_pm_wakelock_s g_wakelock = {};
 
 /****************************************************************************
  * Private Functions
@@ -234,6 +235,8 @@ static int32_t hal_altmdm_spi_send(FAR struct hal_if_s *thiz,
       return -ENODEV;
     }
 
+  ioctl(fd, MODEM_IOC_PM_ACQUIREWAKELOCK, (unsigned long)&g_wakelock);
+
   while (0 < remsendlen)
     {
 
@@ -252,6 +255,8 @@ static int32_t hal_altmdm_spi_send(FAR struct hal_if_s *thiz,
         {
           ret = -errno;
           DBGIF_LOG1_ERROR("write() failed:%d\n", ret);
+          ioctl(fd, MODEM_IOC_PM_RELEASEWAKELOCK,
+                (unsigned long)&g_wakelock);
 
           close(fd);
           return ret;
@@ -265,6 +270,8 @@ static int32_t hal_altmdm_spi_send(FAR struct hal_if_s *thiz,
       remsendlen -= ret;
 
     }
+
+  ioctl(fd, MODEM_IOC_PM_RELEASEWAKELOCK, (unsigned long)&g_wakelock);
 
   close(fd);
 

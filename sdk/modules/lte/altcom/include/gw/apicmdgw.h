@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/gw/apicmdgw.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -227,5 +227,53 @@ int32_t apicmdgw_freebuff(FAR uint8_t *buff);
  ****************************************************************************/
 
 bool apicmdgw_cmdid_compare(FAR uint8_t *cmd, uint16_t cmdid);
+
+/****************************************************************************
+ * Name: apicmdgw_get_protocolversion
+ *
+ * Description:
+ *   Get current protocol version.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   Current protocol version.
+ *
+ ****************************************************************************/
+
+int apicmdgw_get_protocolversion(void);
+
+/****************************************************************************
+ * Name: apicmdgw_set_protocolversion
+ *
+ * Description:
+ *   Set current protocol version.
+ *
+ * Input Parameters:
+ *   protocolver   Current protocol version.
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void apicmdgw_set_protocolversion(uint8_t protocolver);
+
+/****************************************************************************
+ * Name: apicmdgw_get_cmdid
+ *
+ * Description:
+ *   Get command ID from command ID of protocol version 1.
+ *
+ * Input Parameters:
+ *   cmdid    command ID of protocol version 1.
+ *
+ * Returned Value:
+ *   Command ID of current protocol version.
+ *
+ ****************************************************************************/
+
+uint16_t apicmdgw_get_cmdid(uint16_t cmdid);
 
 #endif /* __MODULES_LTE_ALTCOM_GW_APICMDGW_H */

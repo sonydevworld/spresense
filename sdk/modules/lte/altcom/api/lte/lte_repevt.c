@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_repevt.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,13 +54,15 @@
  ****************************************************************************/
 
 #define REPEVT_DATA_LEN (sizeof(struct apicmd_cmddat_setrepevt_s))
+#define REPEVT_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_setrepevt_v4_s))
 #define REPSETRES_DATA_LEN (sizeof(struct apicmd_cmddat_setrepevtres_s))
+#define REPSETRES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_setrepevtres_v4_s))
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static uint8_t g_set_repevt = 0;
+static uint16_t g_set_repevt = 0;
 static bool g_lte_setrepsimstat_isproc = false;
 static bool g_lte_setrepltime_isproc = false;
 
@@ -286,32 +288,67 @@ static void repevt_simstate_report(
 
 static void repevt_job(FAR void *arg)
 {
-  FAR struct apicmd_cmddat_repevt_s *data;
+  int protocolver = 0;
 
-  data = (FAR struct apicmd_cmddat_repevt_s *)arg;
-
-  switch (data->type)
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
     {
-      case APICMD_REPORT_EVT_TYPE_LTIME:
+      FAR struct apicmd_cmddat_repevt_s *data =
+        (FAR struct apicmd_cmddat_repevt_s *)arg;
+
+      switch (data->type)
         {
-          repevt_ltime_report(&data->u.ltime);
+          case APICMD_REPORT_EVT_TYPE_LTIME:
+            {
+              repevt_ltime_report(&data->u.ltime);
+            }
+          break;
+          case APICMD_REPORT_EVT_TYPE_SIMD:
+            {
+              repevt_simd_report(&data->u.simd);
+            }
+          break;
+          case APICMD_REPORT_EVT_TYPE_SIMSTATE:
+            {
+              repevt_simstate_report(&data->u.simstate);
+            }
+          break;
+          default:
+            {
+              DBGIF_LOG1_ERROR("Unsupport event type. type:%d\n", data->type);
+            }
+          break;
         }
-      break;
-      case APICMD_REPORT_EVT_TYPE_SIMD:
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      FAR struct apicmd_cmddat_repevt_v4_s *data =
+        (FAR struct apicmd_cmddat_repevt_v4_s *)arg;
+
+      switch (ntohs(data->type))
         {
-          repevt_simd_report(&data->u.simd);
+          case APICMD_REPORT_EVT_TYPE_LTIME:
+            {
+              repevt_ltime_report(&data->u.ltime);
+            }
+          break;
+          case APICMD_REPORT_EVT_TYPE_SIMD:
+            {
+              repevt_simd_report(&data->u.simd);
+            }
+          break;
+          case APICMD_REPORT_EVT_TYPE_SIMSTATE:
+            {
+              repevt_simstate_report(&data->u.simstate);
+            }
+          break;
+          default:
+            {
+              DBGIF_LOG1_ERROR("Unsupport event type. type:%d\n",
+                ntohs(data->type));
+            }
+          break;
         }
-      break;
-      case APICMD_REPORT_EVT_TYPE_SIMSTATE:
-        {
-          repevt_simstate_report(&data->u.simstate);
-        }
-      break;
-      default:
-        {
-          DBGIF_LOG1_ERROR("Unsupport event type. type:%d\n", data->type);
-        }
-      break;
     }
 
   /* In order to reduce the number of copies of the receive buffer,
@@ -345,12 +382,16 @@ static void repevt_job(FAR void *arg)
 int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
 {
   int32_t                                 ret        = 0;
-  FAR struct apicmd_cmddat_setrepevt_s    *cmdbuff   = NULL;
-  FAR struct apicmd_cmddat_setrepevtres_s *resbuff   = NULL;
-  uint16_t                                resbufflen = REPSETRES_DATA_LEN;
+  FAR uint8_t                             *cmdbuff   = NULL;
+  FAR uint8_t                             *resbuff   = NULL;
+  uint16_t                                reqbufflen = 0;
+  uint16_t                                resbufflen = 0;
   uint16_t                                reslen     = 0;
   bool                                    reset_flag = false;
   simstat_report_cb_t                     callback;
+  uint16_t                                cmdid = 0;
+  int                                     protocolver = 0;
+  uint8_t                                 result = 0;
 
   /* Check LTE library status */
 
@@ -358,6 +399,28 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_REP_EVT);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbufflen = REPEVT_DATA_LEN;
+      resbufflen = REPSETRES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbufflen = REPEVT_DATA_LEN_V4;
+      resbufflen = REPSETRES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
     }
 
   /* Check this process running. */
@@ -391,8 +454,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
 
   /* Allocate API command buffer to send */
 
-  cmdbuff = (FAR struct apicmd_cmddat_setrepevt_s *)
-    apicmdgw_cmd_allocbuff(APICMDID_SET_REP_EVT, REPEVT_DATA_LEN);
+  cmdbuff = apicmdgw_cmd_allocbuff(cmdid, reqbufflen);
   if (!cmdbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -403,12 +465,11 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
     {
       /* Set event field */
 
-      resbuff = (FAR struct apicmd_cmddat_setrepevtres_s *)
-        BUFFPOOL_ALLOC(resbufflen);
+      resbuff = BUFFPOOL_ALLOC(resbufflen);
       if (!resbuff)
         {
           DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-          altcom_free_cmd((FAR uint8_t *)cmdbuff);
+          altcom_free_cmd(cmdbuff);
           g_lte_setrepsimstat_isproc = false;
           return -ENOMEM;
         }
@@ -417,24 +478,68 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
         {
           g_set_repevt |=
             (APICMD_SET_REP_EVT_SIMD | APICMD_SET_REP_EVT_SIMSTATE);
+
+          if (protocolver == APICMD_VER_V4)
+            {
+              FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+                (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
+
+              cmd->enability = APICMD_SET_REP_EVT_ENABLE;
+            }
         }
       else
         {
           g_set_repevt &=
             ~(APICMD_SET_REP_EVT_SIMD | APICMD_SET_REP_EVT_SIMSTATE);
+
+          if (protocolver == APICMD_VER_V4)
+            {
+              FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+                (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
+
+              cmd->enability = APICMD_SET_REP_EVT_DISABLE;
+            }
         }
 
-      cmdbuff->event = g_set_repevt;
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_setrepevt_s *cmd =
+            (FAR struct apicmd_cmddat_setrepevt_s *)cmdbuff;
+
+          cmd->event = g_set_repevt;
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+            (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
+
+          cmd->event = htons(g_set_repevt);
+        }
 
       /* Send API command to modem */
 
-      ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)resbuff,
+      ret = apicmdgw_send(cmdbuff, resbuff,
         resbufflen, &reslen, SYS_TIMEO_FEVR);
     }
 
   if (0 <= ret && resbufflen == reslen)
     {
-      if (APICMD_SET_REP_EVT_RES_OK == resbuff->result)
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_setrepevtres_s *res =
+            (FAR struct apicmd_cmddat_setrepevtres_s *)resbuff;
+
+          result = res->result;
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_setrepevtres_v4_s *res =
+            (FAR struct apicmd_cmddat_setrepevtres_v4_s *)resbuff;
+
+          result = res->result;
+        }
+
+      if (APICMD_SET_REP_EVT_RES_OK == result)
         {
           if (simstat_callback)
             {
@@ -464,7 +569,7 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
       ret = 0;
     }
 
-  altcom_free_cmd((FAR uint8_t *)cmdbuff);
+  altcom_free_cmd(cmdbuff);
   (void)BUFFPOOL_FREE(resbuff);
   g_lte_setrepsimstat_isproc = false;
 
@@ -491,12 +596,16 @@ int32_t lte_set_report_simstat(simstat_report_cb_t simstat_callback)
 int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
 {
   int32_t                                 ret        = 0;
-  FAR struct apicmd_cmddat_setrepevt_s    *cmdbuff   = NULL;
-  FAR struct apicmd_cmddat_setrepevtres_s *resbuff   = NULL;
-  uint16_t                                resbufflen = REPSETRES_DATA_LEN;
+  FAR uint8_t                             *cmdbuff   = NULL;
+  FAR uint8_t                             *resbuff   = NULL;
+  uint16_t                                reqbufflen = 0;
+  uint16_t                                resbufflen = 0;
   uint16_t                                reslen     = 0;
   bool                                    reset_flag = false;
   localtime_report_cb_t                   callback;
+  uint16_t                                cmdid = 0;
+  int                                     protocolver = 0;
+  uint8_t                                 result = 0;
 
   /* Check LTE library status */
 
@@ -504,6 +613,28 @@ int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_REP_EVT);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbufflen = REPEVT_DATA_LEN;
+      resbufflen = REPSETRES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbufflen = REPEVT_DATA_LEN_V4;
+      resbufflen = REPSETRES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
     }
 
   /* Check this process running. */
@@ -535,50 +666,91 @@ int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
         }
     }
 
-    /* Allocate API command buffer to send */
+  /* Allocate API command buffer to send */
 
-    cmdbuff = (FAR struct apicmd_cmddat_setrepevt_s *)
-      apicmdgw_cmd_allocbuff(APICMDID_SET_REP_EVT, REPEVT_DATA_LEN);
-    if (!cmdbuff)
-      {
-        DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-        g_lte_setrepltime_isproc = false;
-        return -ENOSPC;
-      }
-    else
-      {
-        resbuff = (FAR struct apicmd_cmddat_setrepevtres_s *)
-          BUFFPOOL_ALLOC(resbufflen);
-        if (!resbuff)
-          {
-            DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
-            altcom_free_cmd((FAR uint8_t *)cmdbuff);
-            g_lte_setrepltime_isproc = false;
-            return -ENOSPC;
-          }
-        
-        /* Set event field */
+  cmdbuff = apicmdgw_cmd_allocbuff(cmdid, reqbufflen);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+      g_lte_setrepltime_isproc = false;
+      return -ENOSPC;
+    }
+  else
+    {
+      resbuff = BUFFPOOL_ALLOC(resbufflen);
+      if (!resbuff)
+        {
+          DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+          altcom_free_cmd(cmdbuff);
+          g_lte_setrepltime_isproc = false;
+          return -ENOSPC;
+        }
 
-        if (localtime_callback)
-          {
-            g_set_repevt |= APICMD_SET_REP_EVT_LTIME;
-          }
-        else
-          {
-            g_set_repevt &= ~APICMD_SET_REP_EVT_LTIME;
-          }
+      /* Set event field */
 
-        cmdbuff->event = g_set_repevt;
+      if (localtime_callback)
+        {
+          g_set_repevt |= APICMD_SET_REP_EVT_LTIME;
+          if (protocolver == APICMD_VER_V4)
+            {
+              FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+                (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
 
-        /* Send API command to modem */
+              cmd->enability = APICMD_SET_REP_EVT_ENABLE;
+            }
+        }
+      else
+        {
+          g_set_repevt &= ~APICMD_SET_REP_EVT_LTIME;
 
-        ret = apicmdgw_send((FAR uint8_t *)cmdbuff, (FAR uint8_t *)resbuff,
-          resbufflen, &reslen, SYS_TIMEO_FEVR);
-      }
+          if (protocolver == APICMD_VER_V4)
+            {
+              FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+                (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
+
+              cmd->enability = APICMD_SET_REP_EVT_DISABLE;
+            }
+        }
+
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_setrepevt_s *cmd =
+            (FAR struct apicmd_cmddat_setrepevt_s *)cmdbuff;
+
+          cmd->event = g_set_repevt;
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_setrepevt_v4_s *cmd =
+            (FAR struct apicmd_cmddat_setrepevt_v4_s *)cmdbuff;
+
+          cmd->event = htons(g_set_repevt);
+        }
+
+      /* Send API command to modem */
+
+      ret = apicmdgw_send(cmdbuff, resbuff,
+        resbufflen, &reslen, SYS_TIMEO_FEVR);
+    }
 
   if (0 <= ret && resbufflen == reslen)
     {
-      if (APICMD_SET_REP_EVT_RES_OK == resbuff->result)
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_setrepevtres_s *res =
+            (FAR struct apicmd_cmddat_setrepevtres_s *)resbuff;
+
+          result = res->result;
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_setrepevtres_v4_s *res =
+            (FAR struct apicmd_cmddat_setrepevtres_v4_s *)resbuff;
+
+          result = res->result;
+        }
+
+      if (APICMD_SET_REP_EVT_RES_OK == result)
         {
           if (localtime_callback)
             {
@@ -608,7 +780,7 @@ int32_t altcom_set_report_localtime(localtime_report_cb_t localtime_callback)
       ret = 0;
     }
 
-  altcom_free_cmd((FAR uint8_t *)cmdbuff);
+  altcom_free_cmd(cmdbuff);
   (void)BUFFPOOL_FREE(resbuff);
   g_lte_setrepltime_isproc = false;
 
@@ -657,5 +829,6 @@ int32_t lte_set_report_localtime(localtime_report_cb_t localtime_callback)
 
 enum evthdlrc_e apicmdhdlr_repevt(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_REPORT_EVT, repevt_job);
+  return apicmdhdlrbs_do_runjob(evt, apicmdgw_get_cmdid(APICMDID_REPORT_EVT),
+    repevt_job);
 }

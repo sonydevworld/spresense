@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/pk_parse_key.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_pk_parse_key.h"
+#include "apicmd_pk.h"
 #include "apiutil.h"
 #include "mbedtls/x509_crt.h"
 
@@ -51,6 +53,9 @@
 
 #define PK_PARSE_KEY_REQ_DATALEN (sizeof(struct apicmd_pk_parse_key_s))
 #define PK_PARSE_KEY_RES_DATALEN (sizeof(struct apicmd_pk_parse_keyres_s))
+#define PK_PARSE_KEY_REQ_DATALEN_V4 (APICMD_TLS_PK_CMD_DATA_SIZE + \
+                                    sizeof(struct apicmd_pk_parse_key_v4_s))
+#define PK_PARSE_KEY_RES_DATALEN_V4 (APICMD_TLS_PK_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -75,64 +80,133 @@ struct pk_parse_key_req_s
 
 static int32_t pk_parse_key_request(FAR struct pk_parse_key_req_s *req)
 {
-  int32_t                             ret;
-  uint16_t                            reslen = 0;
-  uint32_t                            buflen = 0;
-  FAR struct apicmd_pk_parse_key_s    *cmd = NULL;
-  FAR struct apicmd_pk_parse_keyres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  uint32_t buflen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = PK_PARSE_KEY_REQ_DATALEN;
+      resbuffsize = PK_PARSE_KEY_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = PK_PARSE_KEY_REQ_DATALEN_V4;
+      resbuffsize = PK_PARSE_KEY_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_PK_PARSE_KEY,
-    PK_PARSE_KEY_REQ_DATALEN,
-    (FAR void **)&res, PK_PARSE_KEY_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_PK_PARSE_KEY),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->ctx = htonl(req->id);
-  if (req->keylen <= APICMD_PK_PARSE_KEY_KEY_LEN)
+  if (protocolver == APICMD_VER_V1)
     {
-      buflen = req->keylen;
-    }
-  else
-    {
-      goto errout_with_cmdfree;
-    }
-  memset(cmd->key, '\0', APICMD_PK_PARSE_KEY_KEY_LEN);
-  if (req->key != NULL)
-    {
-      memcpy(cmd->key, req->key, buflen);
-    }
-  cmd->keylen = htonl(buflen);
+      ((FAR struct apicmd_pk_parse_key_s *)cmd)->ctx = htonl(req->id);
 
-  if (req->pwdlen <= APICMD_PK_PARSE_KEY_PWD_LEN)
-    {
-      buflen = req->pwdlen;
+      if (req->keylen <= APICMD_PK_PARSE_KEY_KEY_LEN)
+        {
+          buflen = req->keylen;
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      memset(((FAR struct apicmd_pk_parse_key_s *)cmd)->key, '\0',
+        APICMD_PK_PARSE_KEY_KEY_LEN);
+      if (req->key != NULL)
+        {
+          memcpy(((FAR struct apicmd_pk_parse_key_s *)cmd)->key, req->key,
+            buflen);
+        }
+      ((FAR struct apicmd_pk_parse_key_s *)cmd)->keylen = htonl(buflen);
+
+      if (req->pwdlen <= APICMD_PK_PARSE_KEY_PWD_LEN)
+        {
+          buflen = req->pwdlen;
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      memset(((FAR struct apicmd_pk_parse_key_s *)cmd)->pwd, '\0',
+        APICMD_PK_PARSE_KEY_PWD_LEN);
+      if (req->pwd != NULL)
+        {
+          memcpy(((FAR struct apicmd_pk_parse_key_s *)cmd)->pwd, req->pwd,
+            buflen);
+        }
+      ((FAR struct apicmd_pk_parse_key_s *)cmd)->pwdlen = htonl(buflen);
     }
-  else
+  else if (protocolver == APICMD_VER_V4)
     {
-      goto errout_with_cmdfree;
+      ((FAR struct apicmd_pkcmd_s *)cmd)->ctx = htonl(req->id);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_PK_PARSE_KEY);
+      if (req->keylen <= APICMD_PK_PARSE_KEY_KEY_LEN)
+        {
+          buflen = req->keylen;
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      memset(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.key, '\0',
+        APICMD_PK_PARSE_KEY_KEY_LEN);
+      if (req->key != NULL)
+        {
+          memcpy(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.key, req->key,
+            buflen);
+        }
+      ((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.keylen = htonl(buflen);
+
+      if (req->pwdlen <= APICMD_PK_PARSE_KEY_PWD_LEN)
+        {
+          buflen = req->pwdlen;
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      memset(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.pwd, '\0',
+        APICMD_PK_PARSE_KEY_PWD_LEN);
+      if (req->pwd != NULL)
+        {
+          memcpy(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.pwd, req->pwd,
+            buflen);
+        }
+      ((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_key.pwdlen = htonl(buflen);
     }
-  memset(cmd->pwd, '\0', APICMD_PK_PARSE_KEY_PWD_LEN);
-  if (req->pwd != NULL)
-    {
-      memcpy(cmd->pwd, req->pwd, buflen);
-    }
-  cmd->pwdlen = htonl(buflen);
 
   DBGIF_LOG1_DEBUG("[pk_parse_key]ctx id: %d\n", req->id);
-  DBGIF_LOG1_DEBUG("[pk_parse_key]keylen: %d\n", cmd->keylen);
-  DBGIF_LOG1_DEBUG("[pk_parse_key]pwd: %s\n", cmd->pwd);
-  DBGIF_LOG1_DEBUG("[pk_parse_key]pwdlen: %d\n", cmd->pwdlen);
+  DBGIF_LOG1_DEBUG("[pk_parse_key]key: %s\n", req->key);
+  DBGIF_LOG1_DEBUG("[pk_parse_key]keylen: %d\n", req->keylen);
+  DBGIF_LOG1_DEBUG("[pk_parse_key]pwd: %s\n", req->pwd);
+  DBGIF_LOG1_DEBUG("[pk_parse_key]pwdlen: %d\n", req->pwdlen);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      PK_PARSE_KEY_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -141,13 +215,20 @@ static int32_t pk_parse_key_request(FAR struct pk_parse_key_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != PK_PARSE_KEY_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_pk_parse_keyres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_pkcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_parse_key res]ret: %d\n", ret);
 

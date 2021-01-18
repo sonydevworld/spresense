@@ -154,7 +154,7 @@ int32_t lte_get_errinfo(lte_errinfo_t *info)
 
 enum evthdlrc_e apicmdhdlr_errinfo(FAR uint8_t *evt, uint32_t evlen)
 {
-  if (apicmdgw_cmdid_compare(evt, APICMDID_ERRINFO))
+  if (apicmdgw_cmdid_compare(evt, apicmdgw_get_cmdid(APICMDID_ERRINFO)))
     {
       errinfo_job(evt);
       return EVTHDLRC_STARTHANDLE;

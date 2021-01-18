@@ -1,7 +1,7 @@
  /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getnetinfo.c
  *
- *   Copyright 2018, 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,6 +59,7 @@
 
 #define REQ_DATA_LEN (0)
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getnetinfores_s))
+#define RES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_getnetinfores_v4_s))
 
 /****************************************************************************
  * Private Functions
@@ -135,6 +136,45 @@ static void getnetinfo_parse_response(
 }
 
 /****************************************************************************
+ * Name: getnetinfo_parse_response_v4
+ *
+ * Description:
+ *   Parse network information from response buffer.
+ *
+ * Input Parameters:
+ *  resp     Pointer to response buffer.
+ *  netinfo  Pointer to store network information.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void getnetinfo_parse_response_v4(
+  FAR struct apicmd_cmddat_getnetinfores_v4_s *resp,
+  FAR lte_netinfo_t *netinfo)
+{
+  uint8_t i;
+
+  netinfo->nw_stat         = resp->netinfo.nw_stat;
+  netinfo->nw_err.err_type = resp->netinfo.err_info.err_type;
+  netinfo->nw_err.reject_cause.category =
+    resp->netinfo.err_info.reject_cause.category;
+  netinfo->nw_err.reject_cause.value =
+    resp->netinfo.err_info.reject_cause.value;
+  netinfo->pdn_num = resp->netinfo.pdn_count;
+
+  if ((0 < resp->netinfo.pdn_count) && (netinfo->pdn_stat))
+    {
+      for (i = 0; i < resp->netinfo.pdn_count; i++)
+        {
+          altcombs_set_pdninfo_v4(&resp->netinfo.pdn[i],
+                                  &netinfo->pdn_stat[i]);
+        }
+    }
+}
+
+/****************************************************************************
  * Name: getnetinfo_job
  *
  * Description:
@@ -151,10 +191,10 @@ static void getnetinfo_parse_response(
 static void getnetinfo_job(FAR void *arg)
 {
   int32_t                                  ret;
-  FAR struct apicmd_cmddat_getnetinfores_s *data;
   get_netinfo_cb_t                         callback;
   uint32_t                                 result = LTE_RESULT_ERROR;
   FAR lte_netinfo_t                        netinfo;
+  int                                      protocolver = 0;
 
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_NETINFO,
     (FAR void **)&callback);
@@ -166,24 +206,53 @@ static void getnetinfo_job(FAR void *arg)
     }
   else
     {
-      data = (FAR struct apicmd_cmddat_getnetinfores_s *)arg;
-
-      if (data->result == LTE_RESULT_OK)
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
         {
-          if (0 < data->netinfo.pdn_count)
-            {
-              netinfo.pdn_stat = (FAR lte_pdn_t *)
-                BUFFPOOL_ALLOC(sizeof(lte_pdn_t) * data->netinfo.pdn_count);
-              if (!netinfo.pdn_stat)
-                {
-                  DBGIF_LOG_ERROR("memory allocation failed.\n");
-                }
-            }
-          getnetinfo_parse_response(data, &netinfo);
-          result = LTE_RESULT_OK;
-        }
+          FAR struct apicmd_cmddat_getnetinfores_s *data =
+            (FAR struct apicmd_cmddat_getnetinfores_s *)arg;
 
-      callback(result, &netinfo);
+          if (data->result == LTE_RESULT_OK)
+            {
+              if (0 < data->netinfo.pdn_count)
+                {
+                  netinfo.pdn_stat = (FAR lte_pdn_t *)
+                    BUFFPOOL_ALLOC(sizeof(lte_pdn_t) *
+                      data->netinfo.pdn_count);
+                  if (!netinfo.pdn_stat)
+                    {
+                      DBGIF_LOG_ERROR("memory allocation failed.\n");
+                    }
+                }
+              getnetinfo_parse_response(data, &netinfo);
+              result = LTE_RESULT_OK;
+            }
+
+          callback(result, &netinfo);
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getnetinfores_v4_s *data =
+            (FAR struct apicmd_cmddat_getnetinfores_v4_s *)arg;
+
+          if (data->result == LTE_RESULT_OK)
+            {
+              if (0 < data->netinfo.pdn_count)
+                {
+                  netinfo.pdn_stat = (FAR lte_pdn_t *)
+                    BUFFPOOL_ALLOC(sizeof(lte_pdn_t) *
+                      data->netinfo.pdn_count);
+                  if (!netinfo.pdn_stat)
+                    {
+                      DBGIF_LOG_ERROR("memory allocation failed.\n");
+                    }
+                }
+              getnetinfo_parse_response_v4(data, &netinfo);
+              result = LTE_RESULT_OK;
+            }
+
+          callback(result, &netinfo);
+        }
     }
 
   /* In order to reduce the number of copies of the receive buffer,
@@ -229,11 +298,13 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
 {
   int32_t                                   ret;
   FAR uint8_t                              *reqbuff    = NULL;
-  FAR struct apicmd_cmddat_getnetinfores_s *presbuff   = NULL;
-  uint16_t                                  resbufflen = RES_DATA_LEN;
+  FAR uint8_t                              *presbuff   = NULL;
+  uint16_t                                  resbufflen = 0;
   uint16_t                                  reslen     = 0;
   int                                       sync       = (callback == NULL);
   lte_errinfo_t                             errinfo    = {0};
+  uint16_t                                  cmdid = 0;
+  int                                       protocolver = 0;
 
   /* Check input parameter */
 
@@ -257,6 +328,26 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_NETINFO);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      resbufflen = RES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      resbufflen = RES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
+    }
+
   if (sync)
     {
       if (LTE_SESSION_ID_MIN > pdn_num || LTE_SESSION_ID_MAX < pdn_num)
@@ -266,8 +357,7 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
 
       /* Allocate API command buffer to receive */
 
-      presbuff = (FAR struct apicmd_cmddat_getnetinfores_s *)
-                   altcom_alloc_resbuff(resbufflen);
+      presbuff = altcom_alloc_resbuff(resbufflen);
       if (!presbuff)
         {
           DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -289,7 +379,7 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
 
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_NETINFO,
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid,
                                                   REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -300,7 +390,7 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
 
   /* Send API command to modem */
 
-  ret = apicmdgw_send(reqbuff, (FAR uint8_t *)presbuff,
+  ret = apicmdgw_send(reqbuff, presbuff,
                       resbufflen, &reslen, SYS_TIMEO_FEVR);
   altcom_free_cmd(reqbuff);
 
@@ -313,27 +403,61 @@ static int32_t lte_getnetinfo_impl(uint8_t pdn_num,
 
   if (sync)
     {
-      ret = (LTE_RESULT_OK == presbuff->result) ? 0 : -EPROTO;
-      if (0 == ret)
+      if (protocolver == APICMD_VER_V1)
         {
-          if (pdn_num < presbuff->netinfo.pdn_count)
-          {
-            ret = -EPROTO;
-            errinfo.err_indicator = LTE_ERR_INDICATOR_ERRNO |
-                                    LTE_ERR_INDICATOR_ERRSTR;
-            errinfo.err_no = -EINVAL;
-            snprintf((char *)errinfo.err_string,
-                     LTE_ERROR_STRING_MAX_LEN - 1,
-                     LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW,
-                     presbuff->netinfo.pdn_count);
-            altcombs_set_errinfo(&errinfo);
-            goto errout;
-          }
+          FAR struct apicmd_cmddat_getnetinfores_s *res =
+            (FAR struct apicmd_cmddat_getnetinfores_s *)presbuff;
 
-          /* Parse network information */
+          ret = (LTE_RESULT_OK == res->result) ? 0 : -EPROTO;
+          if (0 == ret)
+            {
+              if (pdn_num < res->netinfo.pdn_count)
+                {
+                  ret = -EPROTO;
+                  errinfo.err_indicator = LTE_ERR_INDICATOR_ERRNO |
+                                          LTE_ERR_INDICATOR_ERRSTR;
+                  errinfo.err_no = -EINVAL;
+                  snprintf((char *)errinfo.err_string,
+                           LTE_ERROR_STRING_MAX_LEN - 1,
+                           LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW,
+                           res->netinfo.pdn_count);
+                  altcombs_set_errinfo(&errinfo);
+                  goto errout;
+                }
 
-          getnetinfo_parse_response(presbuff, info);
+              /* Parse network information */
+
+              getnetinfo_parse_response(res, info);
+            }
         }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getnetinfores_v4_s *res =
+            (FAR struct apicmd_cmddat_getnetinfores_v4_s *)presbuff;
+
+          ret = (LTE_RESULT_OK == res->result) ? 0 : -EPROTO;
+          if (0 == ret)
+            {
+              if (pdn_num < res->netinfo.pdn_count)
+                {
+                  ret = -EPROTO;
+                  errinfo.err_indicator = LTE_ERR_INDICATOR_ERRNO |
+                                          LTE_ERR_INDICATOR_ERRSTR;
+                  errinfo.err_no = -EINVAL;
+                  snprintf((char *)errinfo.err_string,
+                           LTE_ERROR_STRING_MAX_LEN - 1,
+                           LTE_ERR_FORMAT_PDN_BUFFER_OVERFLOW,
+                           res->netinfo.pdn_count);
+                  altcombs_set_errinfo(&errinfo);
+                  goto errout;
+                }
+
+              /* Parse network information */
+
+              getnetinfo_parse_response_v4(res, info);
+            }
+        }
+
       BUFFPOOL_FREE(presbuff);
     }
 
@@ -424,5 +548,6 @@ int32_t lte_get_netinfo(get_netinfo_cb_t callback)
 enum evthdlrc_e apicmdhdlr_getnetinfo(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_GET_NETINFO), getnetinfo_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_NETINFO)),
+    getnetinfo_job);
 }

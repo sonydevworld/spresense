@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/md_get_size.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_md_get_size.h"
+#include "apicmd_cipher.h"
 #include "apiutil.h"
 #include "mbedtls/md.h"
 #include "mbedtls/md_internal.h"
@@ -51,6 +53,9 @@
 
 #define MD_GET_SIZE_REQ_DATALEN (sizeof(struct apicmd_md_get_size_s))
 #define MD_GET_SIZE_RES_DATALEN (sizeof(struct apicmd_md_get_sizeres_s))
+#define MD_GET_SIZE_REQ_DATALEN_V4 (APICMD_TLS_CIPHER_CMD_DATA_SIZE)
+#define MD_GET_SIZE_RES_DATALEN_V4 (APICMD_TLS_CIPHER_CMDRES_DATA_SIZE + \
+                                   sizeof(struct apicmd_md_get_sizeres_v4_s))
 
 #define MD_GET_SIZE_SUCCESS 0
 #define MD_GET_SIZE_FAILURE -1
@@ -75,30 +80,61 @@ struct md_get_size_req_s
 static int32_t md_get_size_request(FAR struct md_get_size_req_s *req,
                                    uint8_t *md_size)
 {
-  int32_t                            ret;
-  uint16_t                           reslen = 0;
-  FAR struct apicmd_md_get_size_s    *cmd = NULL;
-  FAR struct apicmd_md_get_sizeres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = MD_GET_SIZE_REQ_DATALEN;
+      resbuffsize = MD_GET_SIZE_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = MD_GET_SIZE_REQ_DATALEN_V4;
+      resbuffsize = MD_GET_SIZE_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MD_GET_SIZE_FAILURE;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_MD_GET_SIZE, MD_GET_SIZE_REQ_DATALEN,
-    (FAR void **)&res, MD_GET_SIZE_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_MD_GET_SIZE),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MD_GET_SIZE_FAILURE;
     }
 
   /* Fill the data */
 
-  cmd->md_info = htonl(req->id);
+ if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_md_get_size_s *)cmd)->md_info = htonl(req->id);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_ciphercmd_s *)cmd)->md_info = htonl(req->id);
+      ((FAR struct apicmd_ciphercmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_MD_GET_SIZE);
+    }
 
   DBGIF_LOG1_DEBUG("[md_get_size]md_info id: %d\n", req->id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      MD_GET_SIZE_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -107,17 +143,41 @@ static int32_t md_get_size_request(FAR struct md_get_size_req_s *req,
       goto errout_with_cmdfree;
     }
 
-  if (reslen != MD_GET_SIZE_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
-  *md_size = res->md_size;
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_md_get_sizeres_s *)res)->ret_code);
 
-  DBGIF_LOG1_DEBUG("[md_get_size res]ret: %d\n", ret);
-  DBGIF_LOG1_DEBUG("[md_get_size res]md_size: %d\n", (int) res->md_size);
+      *md_size = ((FAR struct apicmd_md_get_sizeres_s *)res)->md_size;
+
+      DBGIF_LOG1_DEBUG("[md_get_size res]ret: %d\n", ret);
+      DBGIF_LOG1_DEBUG("[md_get_size res]md_size: %d\n",
+        (int) ((FAR struct apicmd_md_get_sizeres_s *)res)->md_size);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((struct apicmd_ciphercmdres_s *)res)->ret_code);
+
+      if (ntohl(((struct apicmd_ciphercmdres_s *)res)->subcmd_id) !=
+        APISUBCMDID_TLS_MD_GET_SIZE)
+        {
+          DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+            ntohl(((struct apicmd_ciphercmdres_s *)res)->subcmd_id));
+          goto errout_with_cmdfree;
+        }
+
+      *md_size =
+        ((struct apicmd_ciphercmdres_s *)res)->u.md_get_sizeres.md_size;
+
+      DBGIF_LOG1_DEBUG("[md_get_size res]ret: %d\n", ret);
+      DBGIF_LOG1_DEBUG("[md_get_size res]md_size: %d\n",
+        (int)((struct apicmd_ciphercmdres_s *)res)->u.md_get_sizeres.md_size);
+    }
 
   altcom_mbedtls_free_cmdandresbuff(cmd, res);
 

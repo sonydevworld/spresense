@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getedrx.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +58,7 @@
  ****************************************************************************/
 
 #define REQ_DATA_LEN (0)
+#define REQ_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_getedrx_v4_s))
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getedrxres_s))
 
 /****************************************************************************
@@ -163,12 +164,17 @@ static void getedrx_job(FAR void *arg)
 }
 
 /****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
  * Name: lte_getedrx_impl
  *
  * Description:
  *   Get eDRX settings.
  *
  * Input Parameters:
+ *   type     Type to get eDRX value.
  *   settings eDRX settings.
  *   callback Callback function to notify when getting eDRX settings are
  *            completed.
@@ -181,16 +187,19 @@ static void getedrx_job(FAR void *arg)
  *
  ****************************************************************************/
 
-static int32_t lte_getedrx_impl(lte_edrx_setting_t *settings,
-                                get_edrx_cb_t callback)
+int32_t lte_getedrx_impl(uint8_t type, lte_edrx_setting_t *settings,
+                         get_edrx_cb_t callback)
 {
   int32_t                            ret;
   FAR uint8_t                       *reqbuff    = NULL;
   FAR uint8_t                       *presbuff   = NULL;
   struct apicmd_cmddat_getedrxres_s  resbuff;
+  uint16_t                           reqbufflen = 0;
   uint16_t                           resbufflen = RES_DATA_LEN;
   uint16_t                           reslen     = 0;
   int                                sync       = (callback == NULL);
+  uint16_t                           cmdid = 0;
+  int                                protocolver = 0;
 
   /* Check input parameter */
 
@@ -206,6 +215,26 @@ static int32_t lte_getedrx_impl(lte_edrx_setting_t *settings,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_EDRX);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbufflen = REQ_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbufflen = REQ_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -226,13 +255,17 @@ static int32_t lte_getedrx_impl(lte_edrx_setting_t *settings,
 
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_EDRX,
-                                                  REQ_DATA_LEN);
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid, reqbufflen);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
       ret = -ENOMEM;
       goto errout;
+    }
+
+ if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_cmddat_getedrx_v4_s *)(reqbuff))->type = type;
     }
 
   /* Send API command to modem */
@@ -276,10 +309,6 @@ errout:
 }
 
 /****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/****************************************************************************
  * Name: lte_get_edrx_sync
  *
  * Description:
@@ -296,7 +325,7 @@ errout:
 
 int32_t lte_get_edrx_sync(lte_edrx_setting_t *settings)
 {
-  return lte_getedrx_impl(settings, NULL);
+  return lte_getedrx_impl(ALTCOM_GETEDRX_TYPE_UE, settings, NULL);
 }
 
 /****************************************************************************
@@ -321,7 +350,8 @@ int32_t lte_get_edrx(get_edrx_cb_t callback)
     DBGIF_LOG_ERROR("Input argument is NULL.\n");
     return -EINVAL;
   }
-  return lte_getedrx_impl(NULL, callback);
+
+  return lte_getedrx_impl(ALTCOM_GETEDRX_TYPE_UE, NULL, callback);
 }
 
 /****************************************************************************
@@ -344,6 +374,7 @@ int32_t lte_get_edrx(get_edrx_cb_t callback)
 
 enum evthdlrc_e apicmdhdlr_getedrx(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_GET_EDRX),
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_EDRX)),
     getedrx_job);
 }

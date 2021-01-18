@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/apicmdhdlr_config_verify_callback.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,9 +76,16 @@ static int32_t config_verify_callback_response(FAR struct config_verify_callback
   int32_t                                    ret = 0;
   uint16_t                                   reslen = 0;
   FAR struct apicmd_config_verify_callback_s *cmd = NULL;
+  uint16_t                                   cmdid = 0;
 
-  cmd = altcom_alloc_cmdbuff(APICMDID_TLS_CONFIG_VERIFY_CALLBACK,
-                              CONFIG_VERIFY_CALLBACK_REQ_DATALEN);
+  cmdid = apicmdgw_get_cmdid(APICMDID_TLS_CONFIG_VERIFY_CALLBACK);
+
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return CONFIG_VERIFY_CALLBACK_FAILURE;
+    }
+
+  cmd = altcom_alloc_cmdbuff(cmdid, CONFIG_VERIFY_CALLBACK_REQ_DATALEN);
   if (cmd == NULL)
     {
       altcom_free_cmd((FAR uint8_t *) cmd);
@@ -179,6 +187,8 @@ static void config_verify_callback_job(FAR void *arg)
 
 enum evthdlrc_e apicmdhdlr_config_verify_callback(FAR uint8_t *evt, uint32_t evlen)
 {
-    return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_TLS_CONFIG_VERIFY_CALLBACK),
-                                  config_verify_callback_job);
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(
+      APICMDID_TLS_CONFIG_VERIFY_CALLBACK)),
+    config_verify_callback_job);
 }

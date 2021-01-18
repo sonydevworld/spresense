@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/pk_write_key_der.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_pk_write_key_der.h"
+#include "apicmd_pk.h"
 #include "apiutil.h"
 #include "mbedtls/pk.h"
 
@@ -51,6 +53,10 @@
 
 #define PK_WRITE_KEY_DER_REQ_DATALEN (sizeof(struct apicmd_pk_write_key_der_s))
 #define PK_WRITE_KEY_DER_RES_DATALEN (sizeof(struct apicmd_pk_write_key_derres_s))
+#define PK_WRITE_KEY_DER_REQ_DATALEN_V4 (APICMD_TLS_PK_CMD_DATA_SIZE + \
+                                        sizeof(struct apicmd_pk_write_key_der_v4_s))
+#define PK_WRITE_KEY_DER_RES_DATALEN_V4 (APICMD_TLS_PK_CMDRES_DATA_SIZE + \
+                                        sizeof(struct apicmd_pk_write_key_derres_v4_s))
 
 /****************************************************************************
  * Private Types
@@ -73,35 +79,74 @@ struct pk_write_key_der_req_s
 static int32_t pk_write_key_der_request(FAR struct pk_write_key_der_req_s *req,
                                         unsigned char *buf)
 {
-  int32_t                                 ret;
-  size_t                                  req_buf_len = 0;
-  uint16_t                                reslen = 0;
-  FAR struct apicmd_pk_write_key_der_s    *cmd = NULL;
-  FAR struct apicmd_pk_write_key_derres_s *res = NULL;
+  int32_t  ret;
+  size_t   req_buf_len = 0;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = PK_WRITE_KEY_DER_REQ_DATALEN;
+      resbuffsize = PK_WRITE_KEY_DER_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = PK_WRITE_KEY_DER_REQ_DATALEN_V4;
+      resbuffsize = PK_WRITE_KEY_DER_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_PK_WRITE_KEY_DER, PK_WRITE_KEY_DER_REQ_DATALEN,
-    (FAR void **)&res, PK_WRITE_KEY_DER_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_PK_WRITE_KEY_DER),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->ctx = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_pk_write_key_der_s *)cmd)->ctx = htonl(req->id);
 
-  req_buf_len = (req->size <= APICMD_PK_WRITE_KEY_DER_BUF_LEN)
-    ? req->size : APICMD_PK_WRITE_KEY_DER_BUF_LEN;
-  cmd->size = htonl(req_buf_len);
+      req_buf_len = (req->size <= APICMD_PK_WRITE_KEY_DER_BUF_LEN)
+        ? req->size : APICMD_PK_WRITE_KEY_DER_BUF_LEN;
+
+      ((FAR struct apicmd_pk_write_key_der_s *)cmd)->size =
+        htonl(req_buf_len);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_pkcmd_s *)cmd)->ctx = htonl(req->id);
+
+      req_buf_len = (req->size <= APICMD_PK_WRITE_KEY_DER_BUF_LEN)
+        ? req->size : APICMD_PK_WRITE_KEY_DER_BUF_LEN;
+
+      ((FAR struct apicmd_pkcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_PK_WRITE_KEY_DER);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->u.write_key_der.size =
+        htonl(req_buf_len);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_write_key_der]config id: %d\n", req->id);
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      PK_WRITE_KEY_DER_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -110,20 +155,45 @@ static int32_t pk_write_key_der_request(FAR struct pk_write_key_der_req_s *req,
       goto errout_with_cmdfree;
     }
 
-  if (reslen != PK_WRITE_KEY_DER_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_pk_write_key_derres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_pkcmdres_s *)res)->ret_code);
+    }
+
   if (ret <= 0)
     {
       /* Nothing to do */
     }
   else if ((0 < ret) && (ret <= req_buf_len))
     {
-      memcpy(buf, res->buf, ret);
+      if (protocolver == APICMD_VER_V1)
+        {
+          memcpy(buf, ((FAR struct apicmd_pk_write_key_derres_s *)res)->buf,
+            ret);
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          if (ntohl(((FAR struct apicmd_pkcmdres_s *)res)->subcmd_id) !=
+            APISUBCMDID_TLS_PK_WRITE_KEY_DER)
+            {
+              DBGIF_LOG1_ERROR("Unexpected sub command id: %d\n",
+                ntohl(((FAR struct apicmd_pkcmdres_s *)res)->subcmd_id));
+              goto errout_with_cmdfree;
+            }
+
+          memcpy(buf, ((FAR struct apicmd_pkcmdres_s *)
+            res)->u.write_key_derres.buf, ret);
+        }
     }
   else
     {

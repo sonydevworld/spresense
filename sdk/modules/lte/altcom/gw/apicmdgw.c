@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/gw/apicmdgw.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,6 +44,8 @@
 #include "buffpoolwrapper.h"
 #include "apicmdgw.h"
 #include "apicmd_errind.h"
+#include "apiutil.h"
+#include "wrkrid.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -59,6 +61,7 @@
 
 #define APICMDGW_HDR_CHKSUM_LEN         (14)
 #define APICMDGW_FTR_CHKSUM_LEN         (2)
+#define APICMDGW_HDR_CHKSUM_LEN_V4      (12)
 
 #define APICMDGW_APICMDHDR_LEN          (sizeof(struct apicmd_cmdhdr_s))
 #define APICMDGW_APICMDFTR_LEN          (sizeof(struct apicmd_cmdftr_s))
@@ -83,6 +86,8 @@
 #define APICMDGW_GET_FTR_PTR(hdr_ptr) \
   (((FAR uint8_t *)(hdr_ptr) + APICMDGW_APICMDHDR_LEN \
     + APICMDGW_GET_DATA_LEN(hdr_ptr)))
+#define APICMDGW_GET_PROTOCOLVER(hdr_ptr) \
+  (((FAR struct apicmd_cmdhdr_s *)hdr_ptr)->ver)
 
 #define APICMDGW_GET_RESCMDID(cmdid) (cmdid | 0x01 << 15)
 
@@ -103,11 +108,6 @@ struct apicmdgw_blockinf_s
   FAR struct apicmdgw_blockinf_s  *next;
 };
 
-struct apicmd_hdr_opts_s
-{
-  bool datachksum_en;
-};
-
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -122,6 +122,68 @@ static sys_mutex_t                    g_delwaitcondmtx;
 static FAR struct hal_if_s            *g_hal_if       = NULL;
 static FAR struct evtdisp_s           *g_evtdisp      = NULL;
 static sys_cremtx_s                   g_mtxparam;
+static sys_mutex_t                    g_protocolmtx;
+static uint8_t                        g_protocolversion = APICMD_VER_UNKNOWN;
+static uint16_t                       g_general_cmdidv4table[] =
+{
+  APICMDID_POWER_ON_V4,            /* APICMDID_POWER_ON */
+  APICMDID_ATTACH_NET_V4,          /* APICMDID_ATTACH_NET */
+  APICMDID_DETACH_NET_V4,          /* APICMDID_DETACH_NET */
+  APICMDID_GET_NETSTAT_V4,         /* APICMDID_GET_NETSTAT */
+  APICMDID_DATAON_V4,              /* APICMDID_DATAON */
+  APICMDID_DATAOFF_V4,             /* APICMDID_DATAOFF */
+  APICMDID_GET_DATASTAT_V4,        /* APICMDID_GET_DATASTAT */
+  APICMDID_GET_DATACONFIG_V4,      /* APICMDID_GET_DATACONFIG */
+  APICMDID_SET_DATACONFIG_V4,      /* APICMDID_SET_DATACONFIG */
+  APICMDID_UNKNOWN,                /* APICMDID_GET_APNSET */
+  APICMDID_SET_APN_V4,             /* APICMDID_SET_APN */
+  APICMDID_GET_VERSION_V4,         /* APICMDID_GET_VERSION */
+  APICMDID_GET_PHONENO_V4,         /* APICMDID_GET_PHONENO */
+  APICMDID_GET_IMSI_V4,            /* APICMDID_GET_IMSI */
+  APICMDID_GET_IMEI_V4,            /* APICMDID_GET_IMEI */
+  APICMDID_GET_PINSET_V4,          /* APICMDID_GET_PINSET */
+  APICMDID_SET_PIN_LOCK_V4,        /* APICMDID_SET_PIN_LOCK */
+  APICMDID_SET_PIN_CODE_V4,        /* APICMDID_SET_PIN_CODE */
+  APICMDID_ENTER_PIN_V4,           /* APICMDID_ENTER_PIN */
+  APICMDID_GET_LTIME_V4,           /* APICMDID_GET_LTIME */
+  APICMDID_GET_OPERATOR_V4,        /* APICMDID_GET_OPERATOR */
+  APICMDID_GET_SLPMODESET_V4,      /* APICMDID_GET_SLPMODESET */
+  APICMDID_SET_SLPMODESET_V4,      /* APICMDID_SET_SLPMODESET */
+  APICMDID_SET_REP_NETSTAT_V4,     /* APICMDID_SET_REP_NETSTAT */
+  APICMDID_SET_REP_EVT_V4,         /* APICMDID_SET_REP_EVT */
+  APICMDID_SET_REP_QUALITY_V4,     /* APICMDID_SET_REP_QUALITY */
+  APICMDID_SET_REP_CELLINFO_V4,    /* APICMDID_SET_REP_CELLINFO */
+  APICMDID_REPORT_NETSTAT_V4,      /* APICMDID_REPORT_NETSTAT */
+  APICMDID_REPORT_EVT_V4,          /* APICMDID_REPORT_EVT */
+  APICMDID_REPORT_QUALITY_V4,      /* APICMDID_REPORT_QUALITY */
+  APICMDID_REPORT_CELLINFO_V4,     /* APICMDID_REPORT_CELLINFO */
+  APICMDID_GET_EDRX_V4,            /* APICMDID_GET_EDRX */
+  APICMDID_SET_EDRX_V4,            /* APICMDID_SET_EDRX */
+  APICMDID_GET_PSM_V4,             /* APICMDID_GET_PSM */
+  APICMDID_SET_PSM_V4,             /* APICMDID_SET_PSM */
+  APICMDID_UNKNOWN,                /* APICMDID_GET_CE */
+  APICMDID_UNKNOWN,                /* APICMDID_SET_CE */
+  APICMDID_RADIO_ON_V4,            /* APICMDID_RADIO_ON */
+  APICMDID_RADIO_OFF_V4,           /* APICMDID_RADIO_OFF */
+  APICMDID_ACTIVATE_PDN_V4,        /* APICMDID_ACTIVATE_PDN */
+  APICMDID_DEACTIVATE_PDN_V4,      /* APICMDID_DEACTIVATE_PDN */
+  APICMDID_DATA_ALLOW_V4,          /* APICMDID_DATA_ALLOW */
+  APICMDID_GET_NETINFO_V4,         /* APICMDID_GET_NETINFO */
+  APICMDID_GET_IMS_CAP_V4,         /* APICMDID_GET_IMS_CAP */
+  APICMDID_SETREP_NETINFO_V4,      /* APICMDID_SETREP_NETINFO */
+  APICMDID_REPORT_NETINFO_V4,      /* APICMDID_REPORT_NETINFO */
+  APICMDID_UNKNOWN,                /* APICMDID_REPORT_RESTART */
+  APICMDID_ERRINFO_V4,             /* APICMDID_ERRINFO */
+  APICMDID_UNKNOWN,                /* APICMDID_SET_REP_EVT_LTIME */
+  APICMDID_UNKNOWN,                /* APICMDID_SET_REP_EVT_SIMSTATE */
+  APICMDID_UNKNOWN,                /* APICMDID_POWER_OFF */
+  APICMDID_GET_SIMINFO_V4,         /* APICMDID_GET_SIMINFO */
+  APICMDID_GET_EDRX_V4,            /* APICMDID_GET_DYNAMICEDRX */
+  APICMDID_GET_PSM_V4,             /* APICMDID_GET_DYNAMICPSM */
+  APICMDID_GET_QUALITY_V4,         /* APICMDID_GET_QUALITY */
+  APICMDID_ACTIVATE_PDN_CANCEL_V4, /* APICMDID_ACTIVATE_PDN_CANCEL */
+  APICMDID_GET_CELLINFO_V4         /* APICMDID_GET_CELLINFO */
+};
 
 /****************************************************************************
  * Private Functions
@@ -192,6 +254,40 @@ static uint16_t apicmdgw_createchksum(FAR uint8_t *ptr, uint16_t len)
   return (uint16_t)ret;
 }
 
+
+/****************************************************************************
+ * Name: apicmdgw_createchksum_v4
+ *
+ * Description:
+ *   Create api command checksum for protocol version 4.
+ *
+ * Input Parameters:
+ *   ptr       Pointer to calculating checksum.
+ *
+ * Returned Value:
+ *   Returns checksum value.
+ *
+ ****************************************************************************/
+
+static uint16_t apicmdgw_createchksum_v4(FAR uint8_t *ptr, uint16_t len)
+{
+  uint32_t ret     = 0x00;
+  uint32_t calctmp = 0x00;
+  uint16_t i;
+
+  /* Data accumulating */
+
+  for (i = 0; i < len; i++)
+    {
+      calctmp += ptr[i];
+    }
+
+  ret = ~((calctmp & 0xFFFF) + (calctmp >> 16));
+  DBGIF_LOG1_DEBUG("create check sum. chksum = %04x.\n", (uint16_t)ret);
+
+  return (uint16_t)ret;
+}
+
 /****************************************************************************
  * Name: apicmdgw_createhdrchksum
  *
@@ -208,7 +304,14 @@ static uint16_t apicmdgw_createchksum(FAR uint8_t *ptr, uint16_t len)
 
 static uint16_t apicmdgw_createhdrchksum(FAR uint8_t *hdr)
 {
-  return apicmdgw_createchksum(hdr, APICMDGW_HDR_CHKSUM_LEN);
+  if (APICMDGW_GET_PROTOCOLVER(hdr) == APICMD_VER_V4)
+    {
+      return apicmdgw_createchksum_v4(hdr, APICMDGW_HDR_CHKSUM_LEN_V4);
+    }
+  else
+    {
+      return apicmdgw_createchksum(hdr, APICMDGW_HDR_CHKSUM_LEN);
+    }
 }
 
 /****************************************************************************
@@ -227,11 +330,16 @@ static uint16_t apicmdgw_createhdrchksum(FAR uint8_t *hdr)
 
 static uint16_t apicmdgw_createdtchksum(FAR uint8_t *hdr)
 {
-  FAR struct apicmd_cmdhdr_s *hdr_ptr = (FAR struct apicmd_cmdhdr_s *)hdr;
-  uint16_t                    len;
-
-  len = APICMDGW_GET_DATA_LEN(hdr_ptr) + APICMDGW_FTR_CHKSUM_LEN;
-  return apicmdgw_createchksum(APICMDGW_GET_DATA_PTR(hdr), len);
+  if (APICMDGW_GET_PROTOCOLVER(hdr) == APICMD_VER_V4)
+    {
+      return apicmdgw_createchksum_v4(APICMDGW_GET_DATA_PTR(hdr),
+        APICMDGW_GET_DATA_LEN(hdr));
+    }
+  else
+    {
+      return apicmdgw_createchksum(APICMDGW_GET_DATA_PTR(hdr),
+        APICMDGW_GET_DATA_LEN(hdr) + APICMDGW_FTR_CHKSUM_LEN);
+    }
 }
 
 /****************************************************************************
@@ -251,31 +359,61 @@ static uint16_t apicmdgw_createdtchksum(FAR uint8_t *hdr)
 
 static int32_t apicmdgw_checkheader(FAR uint8_t *evt)
 {
-  FAR struct apicmd_cmdhdr_s *hdr   = NULL;
   uint16_t                   chksum = 0;
 
-  hdr = (FAR struct apicmd_cmdhdr_s *)evt;
-  if (hdr->ver != APICMD_VER)
+  if ((APICMDGW_GET_PROTOCOLVER(evt) != APICMD_VER) &&
+      (APICMDGW_GET_PROTOCOLVER(evt) != APICMD_VER_V4))
     {
-      DBGIF_LOG2_ERROR("version mismatch [sender:0x%x, receiver:0x%x]\n",
-        hdr->ver, APICMD_VER);
+      DBGIF_LOG1_ERROR("version %d is not supported\n",
+        APICMDGW_GET_PROTOCOLVER(evt));
+
       return APICMDGW_HDR_ERR_VER;
     }
 
-  if (APICMD_PAYLOAD_SIZE_MAX < APICMDGW_GET_DATA_LEN(hdr))
+  if (APICMDGW_GET_PROTOCOLVER(evt) == APICMD_VER_V4)
     {
-      DBGIF_LOG1_ERROR("Data length error. [data len:%d]\n", APICMDGW_GET_DATA_LEN(hdr));
-      return APICMDGW_HDR_ERR_VER;
-    }
+      if (APICMD_PAYLOAD_SIZE_MAX_V4 < APICMDGW_GET_DATA_LEN(evt))
+        {
+          DBGIF_LOG1_ERROR("Data length error. [data len:%d]\n",
+            APICMDGW_GET_DATA_LEN(evt));
+          return APICMDGW_HDR_ERR_VER;
+        }
 
-  chksum = apicmdgw_createhdrchksum((FAR uint8_t *)hdr);
-  if (chksum != ntohs(hdr->chksum))
+      chksum = apicmdgw_createhdrchksum(evt);
+      if (chksum != ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->chksum))
+        {
+          DBGIF_LOG2_ERROR("header checksum error [header:0x%04x, calculation:0x%04x]\n",
+            ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->chksum), chksum);
+          return APICMDGW_HDR_ERR_CHKSUM;
+        }
+
+      DBGIF_LOG3_INFO("Receive header[protocol ver:0x%02x, cmd_id:0x%04x, data len:0x%04x]\n",
+        APICMDGW_GET_PROTOCOLVER(evt),
+        ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->cmdid),
+        ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->dtlen));
+    }
+  else
     {
-      DBGIF_LOG2_ERROR("header checksum error [header:0x%04x, calculation:0x%04x]\n", ntohs(hdr->chksum), chksum);
-      return APICMDGW_HDR_ERR_CHKSUM;
-    }
+      if (APICMD_PAYLOAD_SIZE_MAX < APICMDGW_GET_DATA_LEN(evt))
+        {
+          DBGIF_LOG1_ERROR("Data length error. [data len:%d]\n",
+            APICMDGW_GET_DATA_LEN(evt));
+          return APICMDGW_HDR_ERR_VER;
+        }
 
-  DBGIF_LOG2_INFO("Receive header[cmd_id:0x%04x, data len:0x%04x]\n",ntohs(hdr->cmdid), ntohs(hdr->dtlen));
+      chksum = apicmdgw_createhdrchksum(evt);
+      if (chksum != ntohs(((struct apicmd_cmdhdr_s *)evt)->chksum))
+        {
+          DBGIF_LOG2_ERROR("header checksum error [header:0x%04x, calculation:0x%04x]\n",
+            ntohs(((struct apicmd_cmdhdr_s *)evt)->chksum), chksum);
+          return APICMDGW_HDR_ERR_CHKSUM;
+        }
+
+      DBGIF_LOG3_INFO("Receive header[protocol ver:0x%02x, cmd_id:0x%04x, data len:0x%04x]\n",
+        APICMDGW_GET_PROTOCOLVER(evt),
+        ntohs(((struct apicmd_cmdhdr_s *)evt)->cmdid),
+        ntohs(((struct apicmd_cmdhdr_s *)evt)->dtlen));
+    }
 
   return 0;
 }
@@ -295,55 +433,38 @@ static int32_t apicmdgw_checkheader(FAR uint8_t *evt)
  *
  ****************************************************************************/
 
-static int32_t apicmdgw_checkdata(FAR uint8_t *evt,
-                                  FAR struct apicmd_hdr_opts_s *opts)
+static int32_t apicmdgw_checkdata(FAR uint8_t *evt)
 {
-  FAR struct apicmd_cmdhdr_s *hdr   = NULL;
   FAR struct apicmd_cmdftr_s *ftr   = NULL;
   uint16_t                   chksum = 0;
 
-  hdr = (FAR struct apicmd_cmdhdr_s *)evt;
-
-  if (opts->datachksum_en)
+  if (APICMDGW_GET_PROTOCOLVER(evt) == APICMD_VER_V4)
     {
-      chksum = apicmdgw_createdtchksum((FAR uint8_t *)hdr);
-
-      ftr = (FAR struct apicmd_cmdftr_s *)APICMDGW_GET_FTR_PTR(hdr);
-
-      if (chksum != ntohs(ftr->chksum))
+      chksum = apicmdgw_createdtchksum(evt);
+      if (chksum != ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->dtchksum))
         {
-          DBGIF_LOG2_ERROR("data checksum error [footer:0x%04x, calculation:0x%04x]\n", ntohs(ftr->chksum), chksum);
+          DBGIF_LOG2_ERROR("data checksum error [header:0x%04x, calculation:0x%04x]\n",
+            ntohs(((struct apicmd_cmdhdr_v4_s *)evt)->dtchksum), chksum);
           return APICMDGW_DATA_ERR_CHKSUM;
+        }
+    }
+  else
+    {
+      if (APICMD_OPT_DATA_CHKSUM_ENABLED(APICMDGW_GET_OPT(evt)))
+        {
+          chksum = apicmdgw_createdtchksum(evt);
+          ftr = (FAR struct apicmd_cmdftr_s *)APICMDGW_GET_FTR_PTR(evt);
+
+          if (chksum != ntohs(ftr->chksum))
+            {
+              DBGIF_LOG2_ERROR("data checksum error [footer:0x%04x, calculation:0x%04x]\n",
+                ntohs(ftr->chksum), chksum);
+              return APICMDGW_DATA_ERR_CHKSUM;
+            }
         }
     }
 
   return 0;
-}
-
-/****************************************************************************
- * Name: apicmdgw_parse_hdr_options
- *
- * Description:
- *   Perse options value from header field.
- *
- * Input Parameters:
- *   hdr   API command header pointer.
- *   opts  Pointer to a structure that summarizes the options.
- *
- * Returned Value:
- *   None
- *
- ****************************************************************************/
-
-static void apicmdgw_parse_hdr_options(FAR uint8_t *hdr,
-                                       FAR struct apicmd_hdr_opts_s *opts)
-{
-  opts->datachksum_en = false;
-
-  if (APICMD_OPT_DATA_CHKSUM_ENABLED(APICMDGW_GET_OPT(hdr)))
-    {
-      opts->datachksum_en = true;
-    }
 }
 
 /****************************************************************************
@@ -363,28 +484,57 @@ static void apicmdgw_parse_hdr_options(FAR uint8_t *hdr,
 
 void apicmdgw_errind(FAR struct apicmd_cmdhdr_s *evthdr)
 {
-  FAR struct apicmd_cmddat_errind_s *errind = NULL;
+  FAR uint8_t *errind = NULL;
   int32_t ret;
 
-  errind = (FAR struct apicmd_cmddat_errind_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_ERRIND,
-                sizeof(struct apicmd_cmddat_errind_s));
-  DBGIF_ASSERT(NULL != errind, "apicmdgw_cmd_allocbuff()\n");
+  if (APICMDGW_GET_PROTOCOLVER(evthdr) == APICMD_VER_V4)
+    {
+      errind = apicmdgw_cmd_allocbuff(APICMDID_ERRIND,
+                 sizeof(struct apicmd_cmddat_errind_v4_s));
+      DBGIF_ASSERT(NULL != errind, "apicmdgw_cmd_allocbuff()\n");
 
-  errind->ver     = evthdr->ver;
-  errind->seqid   = evthdr->seqid;
-  errind->cmdid   = htons(evthdr->cmdid);
-  errind->transid = htons(evthdr->transid);
-  errind->dtlen   = htons(evthdr->dtlen);
-  errind->chksum  = htons(evthdr->chksum);
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->ver =
+        ((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->ver;
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->seqid =
+        ((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->seqid;
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->cmdid =
+        htons(((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->cmdid);
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->transid =
+        htons(((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->transid);
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->dtlen =
+        htons(((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->dtlen);
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->chksum =
+        htons(((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->chksum);
+      ((FAR struct apicmd_cmddat_errind_v4_s *)errind)->dtchksum =
+        htons(((FAR struct apicmd_cmdhdr_v4_s *)evthdr)->dtchksum);
+    }
+  else
+    {
+      errind = apicmdgw_cmd_allocbuff(APICMDID_ERRIND,
+                 sizeof(struct apicmd_cmddat_errind_s));
+      DBGIF_ASSERT(NULL != errind, "apicmdgw_cmd_allocbuff()\n");
 
-  ret = APICMDGW_SEND_ONLY((uint8_t *)errind);
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->ver = evthdr->ver;
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->seqid = evthdr->seqid;
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->cmdid =
+        htons(evthdr->cmdid);
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->transid =
+        htons(evthdr->transid);
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->dtlen =
+        htons(evthdr->dtlen);
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->options =
+        htons(evthdr->options);
+      ((FAR struct apicmd_cmddat_errind_s *)errind)->chksum =
+        htons(evthdr->chksum);
+    }
+
+  ret = APICMDGW_SEND_ONLY(errind);
   if (ret < 0)
     {
       DBGIF_LOG1_ERROR("APICMDGW_SEND_ONLY() failed:%d\n", ret);
     }
 
-  DBGIF_ASSERT(0 == apicmdgw_freebuff((uint8_t *)errind),
+  DBGIF_ASSERT(0 == apicmdgw_freebuff(errind),
     "apicmdgw_freebuff()\n");
 }
 
@@ -411,8 +561,19 @@ void apicmdgw_errhandle(FAR struct apicmd_cmdhdr_s *evthdr)
   DBGIF_LOG1_ERROR("command ID:0x%x\n", ntohs(evthdr->cmdid));
   DBGIF_LOG1_ERROR("transaction ID:0x%x\n", ntohs(evthdr->transid));
   DBGIF_LOG1_ERROR("data length:0x%x\n", ntohs(evthdr->dtlen));
-  DBGIF_LOG1_ERROR("options:0x%x\n", ntohs(evthdr->options));
-  DBGIF_LOG1_ERROR("check sum:0x%x\n", ntohs(evthdr->chksum));
+
+  if (APICMDGW_GET_PROTOCOLVER(evthdr) == APICMD_VER_V4)
+    {
+      DBGIF_LOG1_ERROR("header check sum:0x%x\n",
+        ntohs(((struct apicmd_cmdhdr_v4_s *)evthdr)->chksum));
+      DBGIF_LOG1_ERROR("data check sum:0x%x\n",
+        ntohs(((struct apicmd_cmdhdr_v4_s *)evthdr)->dtchksum));
+    }
+  else
+    {
+      DBGIF_LOG1_ERROR("options:0x%x\n", ntohs(evthdr->options));
+      DBGIF_LOG1_ERROR("check sum:0x%x\n", ntohs(evthdr->chksum));
+    }
 }
 
 /****************************************************************************
@@ -591,6 +752,51 @@ static void apicmdgw_relcondwaitall(void)
 }
 
 /****************************************************************************
+ * Name: apicmdgw_poweronreq_job
+ *
+ * Description:
+ *   Send poweron request command.
+ *
+ * Input Parameters:
+ *  arg    Pointer to input argment.
+ *
+ * Returned Value:
+ *   None.
+ *
+ ****************************************************************************/
+
+static void apicmdgw_poweronreq_job(FAR void *arg)
+{
+  int32_t ret;
+  FAR uint8_t *cmdbuff;
+  uint16_t cmdid = apicmdgw_get_cmdid(APICMDID_POWER_ON);
+
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      /* It means that a reset packet has been received. */
+
+      return;
+    }
+
+  /* Allocate API command buffer to send */
+
+  cmdbuff = apicmdgw_cmd_allocbuff(cmdid, 0);
+  if (!cmdbuff)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
+    }
+  else
+    {
+      ret = apicmdgw_send(cmdbuff, NULL, 0, NULL, 0);
+      if (ret < 0)
+        {
+          DBGIF_LOG1_ERROR("Failed to send command:%d\n", ret);
+        }
+      apicmdgw_freebuff(cmdbuff);
+    }
+}
+
+/****************************************************************************
  * Name: apicmdgw_recvtask
  *
  * Description:
@@ -623,7 +829,7 @@ static void apicmdgw_recvtask(void *arg)
   uint16_t                       totallen  = 0;
   uint16_t                       i         = 0;
   uint16_t                       datalen   = 0;
-  struct apicmd_hdr_opts_s       opts      = {0};
+  FAR struct apicmd_cmddat_errind_v4_s *errind = NULL;
 
   #define APICMDGW_RECV_STATUS_INIT() \
     { \
@@ -712,10 +918,12 @@ static void apicmdgw_recvtask(void *arg)
                     {
                       if (0 == apicmdgw_checkheader(rcvbuff))
                         {
-                          apicmdgw_parse_hdr_options(rcvbuff, &opts);
-
                           datalen = APICMDGW_GET_DATA_LEN(rcvbuff);
-                          datalen += APICMDGW_APICMDFTR_LEN;
+                          if (APICMDGW_GET_PROTOCOLVER(rcvbuff) ==
+                                APICMD_VER)
+                            {
+                              datalen += APICMDGW_APICMDFTR_LEN;
+                            }
 
                           recvsts = APICMDGW_RECV_STATUS_DATA;
                           rcvptr = rcvbuff + APICMDGW_APICMDHDR_LEN;
@@ -741,9 +949,27 @@ static void apicmdgw_recvtask(void *arg)
                 {
                   if (totallen == APICMDGW_APICMDHDR_LEN + datalen)
                     {
-                      if (0 == apicmdgw_checkdata(rcvbuff, &opts))
+                      if (0 == apicmdgw_checkdata(rcvbuff))
                         {
-                          if (!apicmdgw_writetable(
+                          apicmdgw_set_protocolversion(
+                            APICMDGW_GET_PROTOCOLVER(rcvbuff));
+
+                          if ((APICMDGW_GET_PROTOCOLVER(rcvbuff) ==
+                                APICMD_VER_V4) &&
+                              (APICMDGW_GET_CMDID(rcvbuff) ==
+                                APICMDID_ERRIND))
+                            {
+                              errind =
+                                (FAR struct apicmd_cmddat_errind_v4_s *)
+                                  APICMDGW_GET_DATA_PTR(rcvbuff);
+                              if (errind->ver == APICMD_VER)
+                                {
+                                  altcom_runjob(
+                                    WRKRID_RESTART_CALLBACK_THREAD,
+                                    apicmdgw_poweronreq_job, NULL);
+                                }
+                            }
+                          else if (!apicmdgw_writetable(
                             APICMDGW_GET_CMDID(rcvbuff),
                             APICMDGW_GET_TRANSID(rcvbuff),
                             APICMDGW_GET_DATA_PTR(rcvbuff),
@@ -857,6 +1083,9 @@ int32_t apicmdgw_init(FAR struct apicmdgw_set_s *set)
   ret = sys_create_task(&g_rcvtask, &taskset);
   DBGIF_ASSERT(0 == ret, "sys_create_task().\n");
 
+  ret = sys_create_mutex(&g_protocolmtx, &g_mtxparam);
+  DBGIF_ASSERT(0 == ret, "sys_create_mutex().\n");
+
   g_isinit = true;
 
   return ret;
@@ -903,6 +1132,9 @@ int32_t apicmdgw_fin(void)
   apicmdgw_relcondwaitall();
 
   ret = sys_delete_mutex(&g_blkinfotbl_mtx);
+  DBGIF_ASSERT(0 == ret, "sys_delete_mutex().\n");
+
+  ret = sys_delete_mutex(&g_protocolmtx);
   DBGIF_ASSERT(0 == ret, "sys_delete_mutex().\n");
 
   g_hal_if       = NULL;
@@ -957,11 +1189,28 @@ int32_t apicmdgw_send(FAR uint8_t *cmd, FAR uint8_t *respbuff,
 
   hdr_ptr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
 
-  sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN
-              + APICMDGW_APICMDFTR_LEN;
+  if (APICMDGW_GET_PROTOCOLVER(hdr_ptr) == APICMD_VER_V4)
+    {
+      sendlen = ntohs(((struct apicmd_cmdhdr_v4_s *)hdr_ptr)->dtlen) +
+                  APICMDGW_APICMDHDR_LEN;
+      ((struct apicmd_cmdhdr_v4_s *)hdr_ptr)->dtchksum =
+        htons(apicmdgw_createdtchksum((FAR uint8_t *)hdr_ptr));
 
-  ftr_ptr = (FAR struct apicmd_cmdftr_s *)APICMDGW_GET_FTR_PTR(hdr_ptr);
-  ftr_ptr->chksum = htons(apicmdgw_createdtchksum((FAR uint8_t *)hdr_ptr));
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x sendlen:0x%04x\n",
+        APICMDGW_GET_PROTOCOLVER(hdr_ptr), APICMDGW_GET_CMDID(hdr_ptr),
+        sendlen);
+    }
+  else
+    {
+      sendlen = ntohs(hdr_ptr->dtlen) + APICMDGW_APICMDHDR_LEN
+                  + APICMDGW_APICMDFTR_LEN;
+      ftr_ptr = (FAR struct apicmd_cmdftr_s *)APICMDGW_GET_FTR_PTR(hdr_ptr);
+      ftr_ptr->chksum = htons(apicmdgw_createdtchksum((FAR uint8_t *)hdr_ptr));
+
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x sendlen:0x%04x\n",
+        APICMDGW_GET_PROTOCOLVER(hdr_ptr), APICMDGW_GET_CMDID(hdr_ptr),
+        sendlen);
+    }
 
   if (respbuff)
     {
@@ -1107,6 +1356,8 @@ int32_t apicmdgw_sendabort(void)
 FAR uint8_t *apicmdgw_cmd_allocbuff(uint16_t cmdid, uint16_t len)
 {
   FAR struct apicmd_cmdhdr_s *buff = NULL;
+  FAR struct apicmd_cmdhdr_v4_s *buff_v4 = NULL;
+  int protocolversion = 0;
 
   if (!g_isinit)
     {
@@ -1114,32 +1365,70 @@ FAR uint8_t *apicmdgw_cmd_allocbuff(uint16_t cmdid, uint16_t len)
       return NULL;
     }
 
-  if (APICMD_PAYLOAD_SIZE_MAX < len)
+  protocolversion = apicmdgw_get_protocolversion();
+  if (protocolversion == APICMD_VER_V4)
     {
-      DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
-      return NULL;
-    }
+      if (APICMD_PAYLOAD_SIZE_MAX_V4 < len)
+        {
+          DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
+          return NULL;
+        }
 
-  buff = (FAR struct apicmd_cmdhdr_s *)g_hal_if->allocbuff(
-    g_hal_if, len + APICMDGW_APICMDHDR_LEN + APICMDGW_APICMDFTR_LEN);
-  if (!buff)
+      buff_v4 = (FAR struct apicmd_cmdhdr_v4_s *)g_hal_if->allocbuff(
+        g_hal_if, len + APICMDGW_APICMDHDR_LEN);
+      if (!buff_v4)
+        {
+          DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
+          return NULL;
+        }
+
+      /* Make header. */
+
+      buff_v4->magic   = htonl(APICMD_MAGICNUMBER);
+      buff_v4->ver     = APICMD_VER_V4;
+      buff_v4->seqid   = APICMDGW_GET_SEQID;
+      buff_v4->cmdid   = htons(cmdid);
+      buff_v4->transid = htons(apicmdgw_createtransid());
+      buff_v4->dtlen   = htons(len);
+      buff_v4->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff_v4));
+
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x len:0x%04x\n",
+        protocolversion, cmdid, len);
+
+      return APICMDGW_GET_DATA_PTR(buff_v4);
+    }
+  else
     {
-      DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
-      return NULL;
+      if (APICMD_PAYLOAD_SIZE_MAX < len)
+        {
+          DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
+          return NULL;
+        }
+
+      buff = (FAR struct apicmd_cmdhdr_s *)g_hal_if->allocbuff(
+        g_hal_if, len + APICMDGW_APICMDHDR_LEN + APICMDGW_APICMDFTR_LEN);
+      if (!buff)
+        {
+          DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
+          return NULL;
+        }
+
+      /* Make header. */
+
+      buff->magic   = htonl(APICMD_MAGICNUMBER);
+      buff->ver     = APICMD_VER;
+      buff->seqid   = APICMDGW_GET_SEQID;
+      buff->cmdid   = htons(cmdid);
+      buff->transid = htons(apicmdgw_createtransid());
+      buff->dtlen   = htons(len);
+      buff->options = htons(APICMD_OPT_DATA_CHKSUM_ENABLE);
+      buff->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff));
+
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x len:0x%04x\n",
+        protocolversion, cmdid, len);
+
+      return APICMDGW_GET_DATA_PTR(buff);
     }
-
-  /* Make header. */
-
-  buff->magic   = htonl(APICMD_MAGICNUMBER);
-  buff->ver     = APICMD_VER;
-  buff->seqid   = APICMDGW_GET_SEQID;
-  buff->cmdid   = htons(cmdid);
-  buff->transid = htons(apicmdgw_createtransid());
-  buff->dtlen   = htons(len);
-  buff->options = htons(APICMD_OPT_DATA_CHKSUM_ENABLE);
-  buff->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff));
-
-  return APICMDGW_GET_DATA_PTR(buff);
 }
 
 /****************************************************************************
@@ -1162,8 +1451,10 @@ FAR uint8_t *apicmdgw_cmd_allocbuff(uint16_t cmdid, uint16_t len)
 
 FAR uint8_t *apicmdgw_reply_allocbuff(FAR const uint8_t *cmd, uint16_t len)
 {
-  FAR struct apicmd_cmdhdr_s *buff   = NULL;
-  FAR struct apicmd_cmdhdr_s *evthdr = NULL;
+  FAR struct apicmd_cmdhdr_s *buff       = NULL;
+  FAR struct apicmd_cmdhdr_v4_s *buff_v4 = NULL;
+  FAR struct apicmd_cmdhdr_s *evthdr     = NULL;
+  int protocolversion = 0;
 
   if (!g_isinit)
     {
@@ -1177,34 +1468,76 @@ FAR uint8_t *apicmdgw_reply_allocbuff(FAR const uint8_t *cmd, uint16_t len)
       return NULL;
     }
 
-  if (APICMD_PAYLOAD_SIZE_MAX < len)
+  protocolversion = apicmdgw_get_protocolversion();
+  if (protocolversion == APICMD_VER_V4)
     {
-      DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
-      return NULL;
-    }
+      if (APICMD_PAYLOAD_SIZE_MAX_V4 < len)
+        {
+          DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
+          return NULL;
+        }
 
-  buff = (FAR struct apicmd_cmdhdr_s *)g_hal_if->allocbuff(
-    g_hal_if, len + APICMDGW_APICMDHDR_LEN + APICMDGW_APICMDFTR_LEN);
-  if (!buff)
+      buff_v4 = (FAR struct apicmd_cmdhdr_v4_s *)g_hal_if->allocbuff(
+        g_hal_if, len + APICMDGW_APICMDHDR_LEN);
+      if (!buff)
+        {
+          DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
+          return NULL;
+        }
+
+      /* Make reply header. */
+
+      evthdr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
+      buff_v4->magic   = htonl(APICMD_MAGICNUMBER);
+      buff_v4->ver     = APICMD_VER_V4;
+      buff_v4->seqid   = APICMDGW_GET_SEQID;
+      buff_v4->cmdid   = htons(
+        APICMDGW_GET_RESCMDID(APICMDGW_GET_CMDID(evthdr)));
+      buff_v4->transid = evthdr->transid;
+      buff_v4->dtlen   = htons(len);
+      buff_v4->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff_v4));
+
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x len:0x%04x\n",
+        protocolversion, APICMDGW_GET_RESCMDID(APICMDGW_GET_CMDID(evthdr)),
+        len);
+
+      return APICMDGW_GET_DATA_PTR(buff_v4);
+    }
+  else
     {
-      DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
-      return NULL;
+      if (APICMD_PAYLOAD_SIZE_MAX < len)
+        {
+          DBGIF_LOG1_ERROR("Over max API command data size. len:%d\n", len);
+          return NULL;
+        }
+
+      buff = (FAR struct apicmd_cmdhdr_s *)g_hal_if->allocbuff(
+        g_hal_if, len + APICMDGW_APICMDHDR_LEN + APICMDGW_APICMDFTR_LEN);
+      if (!buff)
+        {
+          DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
+          return NULL;
+        }
+
+      /* Make reply header. */
+
+      evthdr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
+      buff->magic   = htonl(APICMD_MAGICNUMBER);
+      buff->ver     = APICMD_VER;
+      buff->seqid   = APICMDGW_GET_SEQID;
+      buff->cmdid   = htons(
+        APICMDGW_GET_RESCMDID(APICMDGW_GET_CMDID(evthdr)));
+      buff->transid = evthdr->transid;
+      buff->dtlen   = htons(len);
+      buff->options = htons(APICMD_OPT_DATA_CHKSUM_ENABLE);
+      buff->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff));
+
+      DBGIF_LOG3_INFO("protocol ver:0x%02x command id:0x%04x len:0x%04x\n",
+        protocolversion, APICMDGW_GET_RESCMDID(APICMDGW_GET_CMDID(evthdr)),
+        len);
+
+      return APICMDGW_GET_DATA_PTR(buff);
     }
-
-  /* Make reply header. */
-
-  evthdr = (FAR struct apicmd_cmdhdr_s *)APICMDGW_GET_HDR_PTR(cmd);
-  buff->magic   = htonl(APICMD_MAGICNUMBER);
-  buff->ver     = APICMD_VER;
-  buff->seqid   = APICMDGW_GET_SEQID;
-  buff->cmdid   = htons(
-    APICMDGW_GET_RESCMDID(APICMDGW_GET_CMDID(evthdr)));
-  buff->transid = evthdr->transid;
-  buff->dtlen   = htons(len);
-  buff->options = htons(APICMD_OPT_DATA_CHKSUM_ENABLE);
-  buff->chksum  = htons(apicmdgw_createhdrchksum((FAR uint8_t *)buff));
-
-  return APICMDGW_GET_DATA_PTR(buff);
 }
 
 /****************************************************************************
@@ -1272,4 +1605,146 @@ bool apicmdgw_cmdid_compare(FAR uint8_t *cmd, uint16_t cmdid)
     }
 
   return false;
+}
+
+/****************************************************************************
+ * Name: apicmdgw_get_protocolversion
+ *
+ * Description:
+ *   Get current protocol version.
+ *
+ * Input Parameters:
+ *   None
+ *
+ * Returned Value:
+ *   Current protocol version.
+ *
+ ****************************************************************************/
+
+int apicmdgw_get_protocolversion(void)
+{
+  return g_protocolversion;
+}
+
+/****************************************************************************
+ * Name: apicmdgw_set_protocolversion
+ *
+ * Description:
+ *   Set current protocol version.
+ *
+ * Input Parameters:
+ *   protocolver   Current protocol version.
+ *
+ * Returned Value:
+ *   None
+ *
+ ****************************************************************************/
+
+void apicmdgw_set_protocolversion(uint8_t protocolver)
+{
+  sys_lock_mutex(&g_protocolmtx);
+
+  g_protocolversion = protocolver;
+
+  sys_unlock_mutex(&g_protocolmtx);
+}
+
+/****************************************************************************
+ * Name: apicmdgw_get_cmdid
+ *
+ * Description:
+ *   Get command ID from command ID of protocol version 1.
+ *
+ * Input Parameters:
+ *   cmdid    command ID of protocol version 1.
+ *
+ * Returned Value:
+ *   Command ID of current protocol version.
+ *
+ ****************************************************************************/
+
+uint16_t apicmdgw_get_cmdid(uint16_t cmdid)
+{
+  int protocol = apicmdgw_get_protocolversion();
+  uint16_t ret = APICMDID_UNKNOWN;
+
+  if (protocol == APICMD_VER_V1)
+    {
+      ret = cmdid;
+    }
+  else if (protocol == APICMD_VER_V4)
+    {
+      if ((cmdid >= APICMDID_GENERAL_CMDID_MIN) &&
+          (cmdid <= APICMDID_GENERAL_CMDID_MAX))
+        {
+          ret = g_general_cmdidv4table[cmdid-1];
+        }
+      else if ((cmdid >= APICMDID_SOCK_MIN) &&
+               (cmdid <= APICMDID_SOCK_MAX))
+        {
+          ret = cmdid;
+        }
+      else if ((cmdid >= APICMDID_TLS_SSL_MIN) &&
+               (cmdid <= APICMDID_TLS_SSL_MAX))
+        {
+          ret = APICMDID_TLS_SSL_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_CONFIG_MIN) &&
+               (cmdid <= APICMDID_TLS_CONFIG_MAX))
+        {
+          if (cmdid == APICMDID_TLS_CONFIG_VERIFY_CALLBACK)
+            {
+              ret = APICMDID_TLS_CONFIG_VERIFY_CALLBACK_V4;
+            }
+          else
+            {
+              ret = APICMDID_TLS_CONFIG_CMD;
+            }
+        }
+      else if (cmdid == APICMDID_TLS_CONFIG_DEFAULTS)
+        {
+          ret = APICMDID_TLS_CONFIG_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_SESSION_MIN) &&
+               (cmdid <= APICMDID_TLS_SESSION_MAX))
+        {
+          ret = APICMDID_TLS_SESSION_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_X509_CRT_MIN) &&
+               (cmdid <= APICMDID_TLS_X509_CRT_MAX))
+        {
+          if (cmdid == APICMDID_TLS_X509_CRT_INFO)
+            {
+              ret = APICMDID_TLS_X509_CRT_INFO_V4;
+            }
+          else
+            {
+              ret = APICMDID_TLS_X509_CRT_CMD;
+            }
+        }
+      else if ((cmdid >= APICMDID_TLS_PK_MIN) &&
+               (cmdid <= APICMDID_TLS_PK_MAX))
+        {
+          ret = APICMDID_TLS_PK_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_CTR_DRBG_MIN) &&
+               (cmdid <= APICMDID_TLS_CTR_DRBG_MAX))
+        {
+          ret = APICMDID_TLS_CTR_DRBG_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_ENTROPY_MIN) &&
+               (cmdid <= APICMDID_TLS_ENTROPY_MAX))
+        {
+          ret = APICMDID_TLS_ENTROPY_CMD;
+        }
+      else if ((cmdid >= APICMDID_TLS_CIPHER_MIN) &&
+               (cmdid <= APICMDID_TLS_CIPHER_MAX))
+        {
+          ret = APICMDID_TLS_CIPHER_CMD;
+        }
+    }
+
+  DBGIF_LOG2_DEBUG("get command id:0x%04x from 0x%04x\n", ret, cmdid);
+
+  return ret;
 }
