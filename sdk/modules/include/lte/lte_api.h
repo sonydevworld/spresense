@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_api.h
  *
- *   Copyright 2018, 2019, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -681,6 +681,40 @@
 #define LTE_IMEI_LEN     (16)  /**< Maximum length of IMEI */
 #define LTE_OPERATOR_LEN (17)  /**< Maximum length of network operator */
 
+/** Indicates that the global cell ID can be referenced */
+
+#define LTE_CELLINFO_OPT_GCID        (1 << 0)
+
+/** Indicates that the tracking area code can be referenced */
+
+#define LTE_CELLINFO_OPT_AREACODE    (1 << 1)
+
+/** Indicates that the sub frame number can be referenced */
+
+#define LTE_CELLINFO_OPT_SFN         (1 << 2)
+
+/** Indicates that the RSRP can be referenced */
+
+#define LTE_CELLINFO_OPT_RSRP        (1 << 3)
+
+/** Indicates that the RSRQ can be referenced */
+
+#define LTE_CELLINFO_OPT_RSRQ        (1 << 4)
+
+/** Indicates that the time difference index can be referenced */
+
+#define LTE_CELLINFO_OPT_TIMEDIFFIDX (1 << 5)
+
+/** Indicates that the timing advance can be referenced */
+
+#define LTE_CELLINFO_OPT_TA          (1 << 6)
+
+/** Indicates that the neighbor cell can be referenced */
+
+#define LTE_CELLINFO_OPT_NEIGHBOR    (1 << 7)
+
+#define LTE_NEIGHBOR_CELL_MAX (32) /**< Maximum number of neighbor cells */
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -808,6 +842,54 @@ typedef struct lte_quality
 } lte_quality_t;
 
 /**
+ * @struct lte_neighbor_cell
+ *
+ * Definition of parameters for neighbor cell information.
+ * This is reported by cellinfo_report_cb_t
+ *
+ * @typedef lte_neighbor_cell_t
+ * See @ref lte_neighbor_cell
+ */
+
+typedef struct lte_neighbor_cell
+{
+  /** Indicates which parameters can be referenced.
+   *  Bit setting definition is as below.
+   *  - @ref LTE_CELLINFO_OPT_SFN
+   *  - @ref LTE_CELLINFO_OPT_RSRP
+   *  - @ref LTE_CELLINFO_OPT_RSRQ
+   */
+
+  uint8_t option;
+
+  /** Physical cell ID (1-503) */
+
+  uint32_t phycell_id;
+
+  /** EARFCN (1-262143) */
+
+  uint32_t earfcn;
+
+  /** Sub Frame Number (0-1023). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_SFN is set in option field.
+   */
+
+  uint16_t sfn;
+
+  /** RSRP in dBm (-140-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRP is set in option field.
+   */
+
+  int16_t rsrp;
+
+  /** RSRQ in dBm (-60-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRQ is set in option field.
+   */
+
+  int16_t rsrq;
+} lte_neighbor_cell_t;
+
+/**
  * @struct lte_cellinfo
  *
  * Definition of parameters for cell information.
@@ -825,15 +907,16 @@ typedef struct lte_cellinfo
    *
    *  Refer to the following parameters only when this flag
    *  is @ref LTE_VALID. This is because valid parameters can not be
-   *  acquired when RF function is OFF and so on */
+   *  acquired when RF function is OFF and so on
+   */
 
   bool     valid;
 
-  /** Physical cell ID (0-503) */
+  /** Physical cell ID (1-503) */
 
   uint32_t phycell_id;
 
-  /** EARFCN (0-262143) */
+  /** EARFCN (1-262143) */
 
   uint32_t earfcn;
 
@@ -848,6 +931,82 @@ typedef struct lte_cellinfo
   /** Mobile Network Code (00-999) */
 
   uint8_t  mnc[LTE_MNC_DIGIT_MAX];
+
+  /** Indicates which parameters can be referenced.
+   *  Bit setting definition is as below.
+   *  - @ref LTE_CELLINFO_OPT_GCID
+   *  - @ref LTE_CELLINFO_OPT_AREACODE
+   *  - @ref LTE_CELLINFO_OPT_SFN
+   *  - @ref LTE_CELLINFO_OPT_RSRP
+   *  - @ref LTE_CELLINFO_OPT_RSRQ
+   *  - @ref LTE_CELLINFO_OPT_TIMEDIFFIDX
+   *  - @ref LTE_CELLINFO_OPT_TA
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR
+   */
+
+  uint8_t option;
+
+  /** Global Cell ID. It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_GCID is set in option field.
+   */
+
+  uint32_t gcid;
+
+  /** Tracking Area Code (1-65535). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_AREACODE is set in option field.
+   */
+
+  uint16_t area_code;
+
+  /** Sub Frame Number (0-1023). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_SFN is set in option field.
+   */
+
+  uint16_t sfn;
+
+  /** RSRP in dBm (-140-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRP is set in option field.
+   */
+
+  int16_t rsrp;
+
+  /** RSRQ in dBm (-60-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRQ is set in option field.
+   */
+
+  int16_t rsrq;
+
+  /** Time difference index (0-4095). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_TIMEDIFFIDX is set in option field.
+   */
+
+  uint16_t time_diffidx;
+
+  /** Timing Advance (0-1282). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_TA is set in option field.
+   */
+
+  uint16_t ta;
+
+  /** Number of neighbor cells (0-32). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR is set in option field.
+   *
+   *  @attention When using lte_get_cellinfo_sync, need to specify the number
+   *             of neighbor cells to get. Then, prepare a memory area for
+   *             the specified number of neighbor cells and set it to
+   *             neighbors.
+   */
+
+  uint8_t nr_neighbor;
+
+  /** Pointer to neighbor cells. It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR is set in option field.
+   *
+   *  @attention When using the lte_get_cellinfo_sync, prepare a memory
+   *             area for the specified number of neighbor cells.
+   */
+
+  lte_neighbor_cell_t *neighbors;
 } lte_cellinfo_t;
 
 /**

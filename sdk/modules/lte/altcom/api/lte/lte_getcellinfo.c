@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getcellinfo.c
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -124,6 +124,16 @@ int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo)
   else
     {
       return -ENETDOWN;
+    }
+
+  if (cellinfo->nr_neighbor > LTE_NEIGHBOR_CELL_MAX)
+    {
+      return -EINVAL;
+    }
+
+  if ((cellinfo->nr_neighbor != 0) && (cellinfo->neighbors == NULL))
+    {
+      return -EINVAL;
     }
 
   /* Allocate API command buffer to receive */
