@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/gw/apicmdgw.c
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1478,7 +1478,7 @@ FAR uint8_t *apicmdgw_reply_allocbuff(FAR const uint8_t *cmd, uint16_t len)
 
       buff_v4 = (FAR struct apicmd_cmdhdr_v4_s *)g_hal_if->allocbuff(
         g_hal_if, len + APICMDGW_APICMDHDR_LEN);
-      if (!buff)
+      if (!buff_v4)
         {
           DBGIF_LOG_ERROR("hal_if->allocbuff failed.\n");
           return NULL;
