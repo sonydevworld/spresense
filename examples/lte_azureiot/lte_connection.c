@@ -556,10 +556,6 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
          localtime->hour, localtime->min, localtime->sec);
 
   app_lte_setlocaltime(localtime);
-
-  /* Notify the result to the lte_azureiot sample application task */
-
-  app_mq_notify_result(LTE_RESULT_OK);
 }
 
 /****************************************************************************
