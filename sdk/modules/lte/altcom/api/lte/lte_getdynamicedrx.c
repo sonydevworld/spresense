@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_getdynamicedrx.c
  *
- *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,23 +123,17 @@ static void get_dynamicedrx_job(FAR void *arg)
       memset(&edrx_set, 0, sizeof(lte_edrx_setting_t));
       if (LTE_RESULT_OK == data->result)
         {
-          ret = altcombs_check_edrx(&data->set);
+          /* Checks and converts the eDRX value of the API command response. */
+
+          ret = altcombs_convert_apicmd_edrx_value(&data->set, &edrx_set);
           if (0 > ret)
             {
-              DBGIF_LOG1_ERROR("Unexpected!! altcombs_check_edrx() failed. errno:%d\n", ret);
+              DBGIF_LOG1_ERROR("Unexpected!! altcombs_convert_api_edrx_value() failed. errno:%d\n", ret);
+              result = LTE_RESULT_ERROR;
             }
           else
             {
-              ret = altcombs_set_edrx(&data->set, &edrx_set);
-              if (0 > ret)
-                {
-                  DBGIF_LOG1_ERROR("Unexpected!! altcombs_set_edrx() failed. errno:%d\n", ret);
-                  result = LTE_RESULT_ERROR;
-                }
-              else
-                {
-                  result = LTE_RESULT_OK;
-                }
+              result = LTE_RESULT_OK;
             }
         }
 
@@ -263,12 +257,13 @@ static int32_t lte_getcurrentedrx_impl(lte_edrx_setting_t *settings,
       ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
       if (0 == ret)
         {
-          /* Parse eDRX settings */
 
-          ret = altcombs_set_edrx(&resbuff.set, settings);
+          /* Checks and converts the eDRX value of the API command response. */
+
+          ret = altcombs_convert_apicmd_edrx_value(&resbuff.set, settings);
           if (0 > ret)
             {
-              DBGIF_LOG1_ERROR("altcombs_set_edrx() failed: %d\n", ret);
+              DBGIF_LOG1_ERROR("altcombs_convert_apicmd_edrx_value() failed: %d\n", ret);
               ret = -EFAULT;
             }
         }

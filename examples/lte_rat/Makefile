@@ -1,7 +1,7 @@
 ############################################################################
-# modules/lte/altcom/api/lte/Make.defs
+# lte_rat/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,46 +33,18 @@
 #
 ############################################################################
 
-CSRCS += apicmdhdlr_errind.c
-CSRCS += lte_enterpin.c
-CSRCS += lte_finalize.c
-CSRCS += lte_getce.c
-CSRCS += lte_getedrx.c
-CSRCS += lte_getltime.c
-CSRCS += lte_getpinset.c
-CSRCS += lte_getpsm.c
-CSRCS += lte_imei.c
-CSRCS += lte_imsi.c
-CSRCS += lte_initialize.c
-CSRCS += lte_operator.c
-CSRCS += lte_phoneno.c
-CSRCS += lte_power.c
-CSRCS += lte_repcellinfo.c
-CSRCS += lte_repevt.c
-CSRCS += lte_repquality.c
-CSRCS += lte_setce.c
-CSRCS += lte_setedrx.c
-CSRCS += lte_setpin.c
-CSRCS += lte_setpsm.c
-CSRCS += lte_ver.c
-CSRCS += lte_radio_on.c
-CSRCS += lte_radio_off.c
-CSRCS += lte_getimscap.c
-CSRCS += lte_activate_pdn.c
-CSRCS += lte_deactivate_pdn.c
-CSRCS += lte_dataallow.c
-CSRCS += lte_getnetinfo.c
-CSRCS += lte_set_rep_netinfo.c
-CSRCS += lte_set_rep_restart.c
-CSRCS += lte_geterrinfo.c
-CSRCS += lte_getsiminfo.c
-CSRCS += lte_getdynamicedrx.c
-CSRCS += lte_getdynamicpsm.c
-CSRCS += lte_getquality.c
-CSRCS += lte_activate_pdn_cancel.c
-CSRCS += lte_getcellinfo.c
-CSRCS += lte_rat.c
-# Add the src directory to the build
+-include $(TOPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
-DEPPATH += --dep-path altcom$(DELIM)api$(DELIM)lte
-VPATH += :altcom$(DELIM)api$(DELIM)lte
+# lte_rat built-in application info
+
+PROGNAME = $(CONFIG_EXAMPLES_LTE_RAT_PROGNAME)
+PRIORITY = $(CONFIG_EXAMPLES_LTE_RAT_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_LTE_RAT_STACKSIZE)
+MODULE   = $(CONFIG_EXAMPLES_LTE_RAT)
+
+# lte_rat Example
+
+MAINSRC = lte_rat_main.c
+
+include $(APPDIR)/Application.mk
