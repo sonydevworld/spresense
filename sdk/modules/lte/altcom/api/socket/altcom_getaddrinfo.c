@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/socket/altcom_getaddrinfo.c
  *
- *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -175,6 +175,22 @@ static int32_t getaddrinfo_request(FAR struct getaddrinfo_req_s* req)
   int32_t                            ai_size;
   int32_t                            cname_len;
   bool                               alloc_fail = false;
+  int32_t                            ai_family = 0;
+
+  /* get_addrfamily_by_registeredaddr() uses the ALTCOM command,
+   * so the buffer pool is consumed internally.
+   * Calling this function before allocating memory from the buffer pool
+   * with altcom_sock_alloc_cmdandresbuff() reduces the temporary consumption
+   * of the buffer pool.
+   */
+
+  if (req->hints)
+    {
+      if (req->hints->ai_family == ALTCOM_AF_UNSPEC)
+        {
+          ai_family = htonl(get_addrfamily_by_registeredaddr());
+        }
+    }
 
   /* Allocate send and response command buffer */
 
@@ -213,7 +229,7 @@ static int32_t getaddrinfo_request(FAR struct getaddrinfo_req_s* req)
 
       if (req->hints->ai_family == ALTCOM_AF_UNSPEC)
         {
-          cmd->ai_family = htonl(get_addrfamily_by_registeredaddr());
+          cmd->ai_family = ai_family;
         }
 
       cmd->ai_socktype = htonl(req->hints->ai_socktype);
