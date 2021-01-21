@@ -74,13 +74,14 @@ static char topic_msg[256];
  ****************************************************************************/
 
 /****************************************************************************
- * Name: set_dummy_time()
+ * Name: set_system_time()
  *
  * Description:
  *   Set system time as date of arguments.
  ****************************************************************************/
 
-static void set_dummy_time(int year, int month, int day, int hour, int minute)
+static void set_system_time(uint16_t year, uint8_t month, uint8_t day,
+    uint8_t hour, uint8_t minute)
 {
   struct tm tm;
   struct timespec ts;
@@ -118,6 +119,8 @@ int main(int argc, FAR char *argv[])
   int sv_cnt;
   sigset_t mask;
   float lat, lng;
+  struct datetime_s dt;
+  int is_connected = 0;
 #else
   /* Parse arguments for simple test */
 
@@ -126,9 +129,6 @@ int main(int argc, FAR char *argv[])
       return -1;
     }
 #endif
-
-  printf("Set dummy time as 2021/1/1 10:00:00 for verifying date of cert file.\n");
-  set_dummy_time(2021, 1, 1, 10, 0);
 
   /* Initialize LEDs and turn on every LEDs. */
 
@@ -145,6 +145,30 @@ int main(int argc, FAR char *argv[])
       return -1;
     }
 
+#ifdef CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST
+  printf("Set dummy time as 2021/1/1 10:00:00 for verifying date of cert file.\n");
+  set_system_time(2021, 1, 1, 10, 0);
+
+  /* Connect to AWS Endpoint. */
+
+  printf("Connecting to AWS IoT\n");
+  if (connect_awsiot(&client, &app_config)>=0)
+    {
+
+      /* Execute TEST code */
+
+      test_execute(&client, app_config.client_id);
+
+      printf("Disconnect from awsiot.\n");
+      disconnect_awsiot(&client);
+    }
+  else
+    {
+      printf("Connection error...\n");
+    }
+
+#else /* CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST */
+
   /* Initialze GNSS driver */
 
   gnss_fd = init_gnss(&mask);
@@ -153,22 +177,6 @@ int main(int argc, FAR char *argv[])
       delete_config(&app_config);
       return -1;
     }
-
-  /* Connect to AWS Endpoint. */
-
-  printf("Connecting to AWS IoT\n");
-  if (connect_awsiot(&client, &app_config)<0)
-    {
-      fin_gnss(gnss_fd, &mask);
-      delete_config(&app_config);
-      return -1;
-    }
-
-#ifdef CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST
-  /* Execute TEST code */
-
-  test_execute(&client, app_config.client_id);
-#else
 
   /* Start GNSS measurement */
 
@@ -182,12 +190,41 @@ int main(int argc, FAR char *argv[])
 
       /* Get a result of GNSS measurement */
 
-      switch (get_position(gnss_fd, &mask, &sv_cnt, &lat, &lng))
+      switch (get_position(gnss_fd, &mask, &sv_cnt, &dt, &lat, &lng))
         {
           case GNSS_UTIL_STATE_FIXED:
             sprintf(topic_msg, LOCATION_TOPIC_FMT, lat, lng);
             printf("Location is fixed. %d satellites is captured.\n", sv_cnt);
             printf("    Publish data to %s topic as <<%s>>\n", LOCATION_TOPIC, topic_msg);
+
+            /* If the connection to AWS IoT server is not established. */
+
+            if (!is_connected)
+              {
+
+                /* Now we can connect to AWS IoT server
+                 * because the current date and time is fixed.
+                 * It is needed for verifying cart files.
+                 * So at first, the system time should be updated.
+                 */
+
+                printf("Set UTC time as %d/%d/%d %02d:%02d:00.\n",
+                        dt.date.year, dt.date.month, dt.date.day,
+                        dt.time.hour, dt.time.minute);
+                set_system_time(dt.date.year, dt.date.month, dt.date.day,
+                    dt.time.hour, dt.time.minute);
+
+                /* Connect to AWS Endpoint. */
+
+                printf("Connecting to AWS IoT\n");
+                if (connect_awsiot(&client, &app_config)<0)
+                  {
+                    printf("Failed to connect AWS IoT..\n");
+                    goto error_exit;
+                  }
+
+                is_connected = 1;
+              }
 
             /* LED control */
 
@@ -227,11 +264,16 @@ int main(int argc, FAR char *argv[])
             break;
         }
     }
-#endif
 
   printf("Disconnect from awsiot.\n");
   disconnect_awsiot(&client);
+
+error_exit:
+
   fin_gnss(gnss_fd, &mask);
+
+#endif /* CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST */
+
   delete_config(&app_config);
 
   set_leds(0x00);

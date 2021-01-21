@@ -169,6 +169,7 @@ int start_gnss(int fd)
  *   fd   [in] :  File descriptor of /dev/gps.
  *   mask [in] :  pointer of sigset_t which was set by init_gnss().
  *   scnt [out]:  Number of captured satellites.
+ *   dt   [out]:  Date and time from GNSS measurement.
  *   lat  [out]:  measured latitude. This value is valid when return value is positive.
  *   lng  [out]:  measured longitude. This value is valid when return value is positive.
  *
@@ -179,7 +180,8 @@ int start_gnss(int fd)
  *
  ****************************************************************************/
 
-int get_position(int fd, sigset_t *mask, int *scnt, float *lat, float *lng)
+int get_position(int fd, sigset_t *mask, int *scnt, struct datetime_s *dt,
+    float *lat, float *lng)
 {
   int ret;
   struct timespec tout;
@@ -201,6 +203,9 @@ int get_position(int fd, sigset_t *mask, int *scnt, float *lat, float *lng)
     }
 
   *scnt = (int)posdat.svcount;
+
+  dt->date = posdat.receiver.date;
+  dt->time = posdat.receiver.time;
 
   if (posdat.receiver.pos_fixmode != CXD56_GNSS_PVT_POSFIX_INVALID)
     {
