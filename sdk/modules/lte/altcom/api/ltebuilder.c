@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/ltebuilder.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,10 +123,19 @@ static struct buffpool_blockset_s g_blk_settings[] =
       32, 48
   },
   {
-     128,  4
+     128,  3
   },
   {
-     512,  6
+     512,  4
+  },
+  {
+     544,  1
+  },
+  {
+     688,  1
+  },
+  {
+    1344,  3
   },
   {
     2064,  1
