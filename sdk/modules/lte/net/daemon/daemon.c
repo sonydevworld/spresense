@@ -1092,11 +1092,11 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
           {
             if (ALTCOM_FD_ISSET(info->sockets[i].usockid, readset))
               {
+                info->sockets[i].flags |= USRSOCK_EVENT_RECVFROM_AVAIL;
                 wlen = usock_send_event(info->event_outfd, info,
                                         &info->sockets[i],
                                         USRSOCK_EVENT_RECVFROM_AVAIL);
                 daemon_print_sendevt("USRSOCK_EVENT_RECVFROM_AVAIL\n");
-                info->sockets[i].flags |= USRSOCK_EVENT_RECVFROM_AVAIL;
                 if (0 > wlen)
                   {
                     return;
@@ -1108,11 +1108,11 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
         {
           if (ALTCOM_FD_ISSET(info->sockets[i].usockid, writeset))
             {
+              info->sockets[i].flags |= USRSOCK_EVENT_SENDTO_READY;
               wlen = usock_send_event(info->event_outfd, info,
                                       &info->sockets[i],
                                       USRSOCK_EVENT_SENDTO_READY);
               daemon_print_sendevt("USRSOCK_EVENT_SENDTO_READY\n");
-              info->sockets[i].flags |= USRSOCK_EVENT_SENDTO_READY;
             }
         }
     }
