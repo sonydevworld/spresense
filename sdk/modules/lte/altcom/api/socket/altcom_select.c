@@ -88,6 +88,7 @@ struct select_asynccb_s
 
 static int32_t g_select_id = 0;
 static FAR struct select_asynccb_s *g_callbacklist_head = NULL;
+static sys_mutex_t g_mtx;
 
 /****************************************************************************
  * Private Functions
@@ -598,6 +599,41 @@ int altcom_select(int maxfdp1, altcom_fd_set *readset,
 }
 
 /****************************************************************************
+ * Name: altcom_select_async_init
+ ****************************************************************************/
+
+int altcom_select_async_init(void)
+{
+  int ret;
+  sys_cremtx_s mtx_param = {};
+
+  ret = sys_create_mutex(&g_mtx, &mtx_param);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("Failed to create mutex:%d.\n", ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: altcom_select_async_fin
+ ****************************************************************************/
+
+int altcom_select_async_fin(void)
+{
+  int ret;
+
+  ret = sys_delete_mutex(&g_mtx);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("Failed to delete mutex:%d.\n", ret);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: altcom_select_async
  ****************************************************************************/
 
@@ -623,6 +659,8 @@ int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
       return -1;
     }
 
+  sys_lock_mutex(&g_mtx);
+
   req.select_id = generate_selectid();
   req.maxfdp1   = maxfdp1;
   req.request   = APICMD_SELECT_REQUEST_BLOCK;
@@ -638,8 +676,11 @@ int altcom_select_async(int maxfdp1, altcom_fd_set *readset,
   if (ret == SELECT_REQ_FAILURE)
     {
       teardown_callback(req.select_id);
+      sys_unlock_mutex(&g_mtx);
       return -1;
     }
+
+  sys_unlock_mutex(&g_mtx);
 
   return ret;
 }
@@ -657,17 +698,30 @@ int altcom_select_async_exec_callback(int32_t id, int32_t ret_code,
 {
   int ret = -1;
   FAR struct select_asynccb_s *list;
+  altcom_select_async_cb_t callback;
+  FAR void* priv;
+
+  sys_lock_mutex(&g_mtx);
 
   list = search_callbacklist(id);
   if (list)
     {
-      /* execute callback */
-
-      list->callback(ret_code, err_code, id, readset, writeset, exceptset,
-                     list->priv);
+      callback = list->callback;
+      priv = list->priv;
 
       teardown_callback(id);
+
+      sys_unlock_mutex(&g_mtx);
+
+      /* execute callback */
+
+      callback(ret_code, err_code, id, readset, writeset, exceptset, priv);
+
       ret = 0;
+    }
+  else
+    {
+      sys_unlock_mutex(&g_mtx);
     }
 
   return ret;
@@ -681,34 +735,46 @@ int altcom_select_async_cancel(int id, bool is_send)
 {
   int ret = 0;
   struct select_req_s req;
+  FAR struct select_asynccb_s *list;
 
-  teardown_callback(id);
+  sys_lock_mutex(&g_mtx);
 
-  if (is_send)
+  list = search_callbacklist(id);
+  if (list)
     {
-      /* Check LTE library status */
+      teardown_callback(id);
 
-      ret = altcombs_check_poweron_status();
-      if (0 > ret)
+      sys_unlock_mutex(&g_mtx);
+
+      if (is_send)
         {
-          altcom_seterrno(-ret);
-          return -1;
+          /* Check LTE library status */
+
+          ret = altcombs_check_poweron_status();
+          if (0 > ret)
+            {
+              altcom_seterrno(-ret);
+              return -1;
+            }
+
+          req.select_id = id;
+          req.maxfdp1   = 0;
+          req.request   = APICMD_SELECT_REQUEST_BLOCKCANCEL;
+          req.readset   = NULL;
+          req.writeset  = NULL;
+          req.exceptset = NULL;
+          req.timeout   = SYS_TIMEO_FEVR; /* ignore when do select_request_async */
+
+          ret = select_request_async(&req);
+          if (ret == SELECT_REQ_FAILURE)
+            {
+              return -1;
+            }
         }
-
-      req.select_id = id;
-      req.maxfdp1   = 0;
-      req.request   = APICMD_SELECT_REQUEST_BLOCKCANCEL;
-      req.readset   = NULL;
-      req.writeset  = NULL;
-      req.exceptset = NULL;
-      req.timeout   = SYS_TIMEO_FEVR; /* ignore when do select_request_async */
-
-      ret = select_request_async(&req);
-
-      if (ret == SELECT_REQ_FAILURE)
-        {
-          return -1;
-        }
+    }
+  else
+    {
+      sys_unlock_mutex(&g_mtx);
     }
 
   return ret;
