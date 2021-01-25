@@ -1,0 +1,30 @@
+
+menu "MPCOMM"
+
+config MPCOMM
+	bool "MPCOMM"
+	select ASMP
+	---help---
+		A multi processor communication framework
+
+if MPCOMM
+
+config MPCOMM_DEBUG_FEATURE
+	bool "MPCOMM Framework debug feature"
+
+if MPCOMM_DEBUG_FEATURE
+
+config MPCOMM_DEBUG_ERROR
+	bool "MPCOMM Framework debug error"
+
+config MPCOMM_DEBUG_WARN
+	bool "MPCOMM Framework debug warn"
+
+config MPCOMM_DEBUG_INFO
+	bool "MPCOMM Framework debug info"
+
+endif # MPCOMM_DEBUG_FEATURE
+
+endif # MPCOMM
+
+endmenu
