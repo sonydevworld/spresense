@@ -1733,7 +1733,10 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
                         req->max_buflen, flags,
                         (FAR struct altcom_sockaddr *)&storage,
                         &altcom_fromlen);
-  usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
+  if (!(req->flags & MSG_PEEK))
+    {
+      usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
+    }
   if (0 > ret)
     {
       ret = altcom_errno();
