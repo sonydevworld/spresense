@@ -81,7 +81,7 @@ int32_t lte_initialize(void)
 {
   int32_t ret;
 
-  ret = lte_daemon_init(NULL);
+  ret = lte_daemon_init(NULL, LTE_DAEMON_RAT_KEEP);
 
   return ret;
 }

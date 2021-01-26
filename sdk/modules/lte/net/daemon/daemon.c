@@ -151,6 +151,7 @@ struct daemon_s
   bool                 poweron_inprogress;
   sem_t                sync_sem;
   lte_apn_setting_t    apn;
+  uint8_t              rat;
   struct usock_s       sockets[SOCKET_COUNT];
   struct net_driver_s  net_dev;
   void                 (*user_restart_cb)(uint32_t reason);
@@ -2830,6 +2831,44 @@ static int daemon_api_request(int read_fd, int usock_fd,
         if (priv->poweron_inprogress)
           {
             priv->poweron_inprogress = false;
+
+            /* Performs RAT settings when the -r option is specified. */
+
+            if (priv->rat != LTE_DAEMON_RAT_KEEP)
+              {
+                g_daemon->poweron_result = lte_set_rat_sync(priv->rat,
+                                                            LTE_ENABLE);
+                if (g_daemon->poweron_result < 0)
+                  {
+                    daemon_debug_printf("RAT:%d setting failed() :%d\n",
+                      priv->rat, g_daemon->poweron_result);
+
+                    if ((g_daemon->poweron_result == -ENOTSUP) &&
+                        (priv->rat == LTE_RAT_CATM))
+                      {
+                        /* Even if the modem does not support RAT switching,
+                         * it is considered that the switching was successful
+                         * in the case of CAT-M1.
+                         */
+
+                        g_daemon->poweron_result = 0;
+                      }
+                    else
+                      {
+                        /* The daemon rolls back because a RAT type that is not
+                         * supported by the modem is specified.
+                         */
+
+                        altcom_power_off();
+                      }
+                  }
+                else
+                  {
+                    daemon_debug_printf("RAT:%d setting succeeded\n",
+                      priv->rat);
+                  }
+              }
+
             sem_post(&priv->sync_sem);
           }
 
@@ -3068,7 +3107,7 @@ int lte_daemon(int argc, FAR char *argv[])
  * Name: lte_daemon_init
  ****************************************************************************/
 
-int32_t lte_daemon_init(lte_apn_setting_t *apn)
+int32_t lte_daemon_init(lte_apn_setting_t *apn, uint8_t rat)
 {
   int ret;
   int pid;
@@ -3090,6 +3129,8 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
         {
           memcpy(&g_daemon->apn, apn, sizeof(lte_apn_setting_t));
         }
+
+      g_daemon->rat = rat;
 
       /* Create a pipe to communicate with the daemon */
 
