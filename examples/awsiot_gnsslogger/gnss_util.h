@@ -37,15 +37,22 @@
 #define __EXAMPLES_AWSIOT_GNSSLOGGER_GNSS_UTIL_H__
 
 #include <signal.h>
+#include <arch/chip/gnss.h>
 
 #define GNSS_UTIL_STATE_FIXED (1)
 #define GNSS_UTIL_STATE_SVCAP (0)
 #define GNSS_UTIL_STATE_TOUT  (-1)
 #define GNSS_UTIL_STATE_ERROR (-2)
 
+struct datetime_s {
+  struct cxd56_gnss_date_s date;
+  struct cxd56_gnss_time_s time;
+};
+
 int init_gnss(sigset_t *mask);
 int start_gnss(int fd);
-int get_position(int fd, sigset_t *mask, int *scnt, float *lat, float *lng);
+int get_position(int fd, sigset_t *mask, int *scnt, struct datetime_s *dt,
+    float *lat, float *lng);
 void fin_gnss(int fd, sigset_t *mask);
 
 #endif

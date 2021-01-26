@@ -1,7 +1,8 @@
 examples/awsiot_gnsslogger
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  This sample code is an example application of GNSS logger with publishing location to AWS IoTCore.
+  This sample code is an example application of GNSS logger with publishing
+  location to AWS IoTCore.
 
   [Board environment]
 
@@ -12,14 +13,15 @@ examples/awsiot_gnsslogger
 
   [Overview of this application]
 
-    This application is a GNSS logger and measured location information is published to AWS IoT. 
-    The connectivity is not cared in this application. Therefore, network daemon like "lte_daemon" or
-    "gs2200m" is needed to set up before executing this application.
+    This application is a GNSS logger and measured location information is
+    published to AWS IoT. The connectivity is not cared in this application.
+    Therefore, network daemon like "lte_daemon" or "gs2200m" is needed to set up
+    before executing this application.
 
   [Save needed files into Spresense SPI-flash]
 
-    When you make a "Thing" on AWS IoT Core console, you can get a device certification file,
-    a device private key file and root CA of AWS.
+    When you make a "Thing" on AWS IoT Core console, you can get a device
+    certification file, a device private key file and root CA of AWS.
 
     These 3 files are needed to connect the AWS.
 
@@ -33,17 +35,19 @@ examples/awsiot_gnsslogger
       $ cd sdk
       $ ./tools/flash.sh -c /dev/ttyUSB0 -w [path to cert.pem] [path to privkey.pem] [path to rootCA.pem]
 
-    You also need to use the name of the thing that you decided when you created the "thing" as the
-    "Client ID" in your app.  Furthermore, you need to pass the Endpoint of the AWS connection to
-    the app.
+    You also need to use the name of the thing that you decided when you created
+    the "thing" as the "Client ID" in your app.  Furthermore, you need to pass
+    the Endpoint of the AWS connection to the app.
 
-    In order to specify these settings to the app, you need to write an ini file and save it on
-    SPI-Flash with the file name /mnt/spif/aws_iot.ini.
+    In order to specify these settings to the app, you need to write an ini
+    file and save it on SPI-Flash with the file name /mnt/spif/aws_iot.ini.
 
-    A sample of aws_iot.ini file is stored in examples/awsiot_gnsslogger/spif/aws_iot.ini.
+    A sample of aws_iot.ini file is stored in
+    examples/awsiot_gnsslogger/spif/aws_iot.ini.
     Please follow the comments inside and rewrite your settings accordingly.
 
-    After rewriting the aws_iot.ini file to suit your configuration, save the file on SPI-Flash.
+    After rewriting the aws_iot.ini file to suit your configuration, save the
+    file on SPI-Flash.
 
     $ cd sdk
     $ ./tools/flash.sh -c /dev/ttyUSB0 -w ../examples/awsiot_gnsslogger/spif/aws_iot.ini
@@ -51,7 +55,8 @@ examples/awsiot_gnsslogger
 
   [How to build]
 
-    Configure for this example by using default config. This config is using Wi-Fi board.
+    Configure for this example by using default config. This config is using
+    Wi-Fi board.
 
       $ cd sdk
       $ ./tools/config.py examples/wifi_awsiot_gnsslogger
@@ -82,14 +87,14 @@ examples/awsiot_gnsslogger
   [How to work]
 
       At first, connect to a Wi-Fi AP with internet connection.
-      For example, if there is a AP with "wifi_net" as SSID and "abcdefg" as the password,
-      type as below to connect the board to Wi-Fi.
+      For example, if there is a AP with "wifi_net" as SSID and "abcdefg" as
+      the password, type as below to connect the board to Wi-Fi.
 
         nsh> gs2200m wifi_net abcdefg &
 
       It takes a few seconds.
-      After successful of Wi-Fi connection, you can check your own IP address with the following
-      command.
+      After successful of Wi-Fi connection, you can check your own IP address 
+      with the following command.
 
         nsh> ifconfig
         eth0    Link encap:Ethernet HWaddr 3c:95:09:00:84:2a at UP
@@ -98,7 +103,6 @@ examples/awsiot_gnsslogger
       Then, execute this application.
 
         nsh> awsiot_gnsslogger
-        Set dummy time as 2021/1/1 10:00:00 for verifying date of cert file.
         == Configuration ==
             Host URL        = [host url which is set in ini file is shown]
             Host PORT       = 8883
@@ -109,7 +113,6 @@ examples/awsiot_gnsslogger
             MQTT CMD TO     = 20000 (ms)
             MQTT SSL TO     = 5000 (ms)
             MQTT KEEP ALIVE = 600 (sec)
-        Connecting to AWS IoT
         Time out signal wait.
         Location is NOT fixed. 0 satellites is captured.
         Location is NOT fixed. 3 satellites is captured.
@@ -119,10 +122,15 @@ examples/awsiot_gnsslogger
 
       To capture GNSS sattelites, take the device outside or by a window.
 
-      After fix the measured location, the location latitude and longitude is published on "data/device/gps" with below message.
+      After fix the measured location, the application will set UTC time and
+      date which is measured by GNSS as a system time on the board. Then it
+      connects to AWS IoT server.
+      And after established the connectionm the location latitude and longitude
+      is published as a topic on "data/device/gps" with below message.
 
         Location is fixed. 4 sattelites is captured.
             Publish data to data/device/gps topic as <<{ "device_loc": { "lat": xxx.xxxxx, "lng": xxx.xxxxxx } }>>
 
-      If you subscribe the topic "data/device/gps" in AWS IoTCore, you can see the published data.
+      If you subscribe the topic "data/device/gps" in AWS IoTCore, you can see
+      the published data.
 
