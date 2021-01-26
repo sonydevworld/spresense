@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_MPCOMM_PRIME
+	tristate "Prime number calculator using multiprocessor communication"
+	depends on MPCOMM
+	default n
+	---help---
+		Enable the ELF loader example
+
+if EXAMPLES_MPCOMM_PRIME
+
+config EXAMPLES_MPCOMM_PRIME_PROGNAME
+	string "Program name"
+	default "mpcomm_prime"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_MPCOMM_PRIME_PRIORITY
+	int "mpcomm_prime task priority"
+	default 100
+
+config EXAMPLES_MPCOMM_PRIME_STACKSIZE
+	int "mpcomm_prime stack size"
+	default 2048
+
+endif
