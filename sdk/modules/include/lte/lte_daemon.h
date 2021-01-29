@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_daemon.h
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,5 +54,6 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn, uint8_t rat);
 int32_t lte_daemon_power_on(void);
 int32_t lte_daemon_set_cb(restart_report_cb_t restart_callback);
 int32_t lte_daemon_fin(void);
+int32_t lte_daemon_stat(void);
 
 #endif /* __MODULES_INCLUDE_LTE_LTE_DAEMON_H */
