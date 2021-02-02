@@ -91,6 +91,17 @@
 #  define APP_APN_PASSWD   ""
 #endif
 
+#define LTE_DAEMON_ERR_FMT_NUM "%s: %s failed: %d\n"
+#define LTE_DAEMON_ERR_FMT_STR "%s: %s failed: %s\n"
+#define LTE_DAEMON_CMD_START "start"
+#define LTE_DAEMON_CMD_STOP "stop"
+#define LTE_DAEMON_CMD_RAT_CATM1 "M1"
+#define LTE_DAEMON_CMD_RAT_NB "NB"
+
+#define MATCH_STRING(str1, str2) ((strlen(str1) == strlen(str2)) && \
+                                  (strncmp(str1, str2, strlen(str2)) == 0))
+
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -101,6 +112,8 @@ int main(int argc, FAR char *argv[])
   int               opt         = 0;
   char              *cmd        = NULL;
   lte_apn_setting_t setting_apn = {};
+  char              *rat_str    = NULL;
+  uint8_t           rat         = LTE_DAEMON_RAT_KEEP;
 
   setting_apn.apn       = (int8_t*)APP_APN_NAME;
   setting_apn.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
@@ -110,7 +123,7 @@ int main(int argc, FAR char *argv[])
   setting_apn.password  = (int8_t*)APP_APN_PASSWD;
 
   optind = -1;
-  while ((opt = getopt(argc, argv, "a:t:i:v:u:p:h")) != -1)
+  while ((opt = getopt(argc, argv, "a:t:i:v:u:p:r:h")) != -1)
     {
       switch (opt)
         {
@@ -132,6 +145,22 @@ int main(int argc, FAR char *argv[])
           case 'p':
             setting_apn.password = (int8_t *)optarg;
             break;
+          case 'r':
+            rat_str = optarg;
+            if (MATCH_STRING(rat_str, LTE_DAEMON_CMD_RAT_CATM1))
+              {
+                rat = LTE_RAT_CATM;
+              }
+            else if (MATCH_STRING(rat_str, LTE_DAEMON_CMD_RAT_NB))
+              {
+                rat = LTE_RAT_NBIOT;
+              }
+            else
+              {
+                printf("Please set Radio Access Technology: M1 or NB\n");
+                return -1;
+              }
+            break;
           case 'h':
             printf("lte_daemon usage: lte_daemon\n");
             printf("[-a <apn_name> -t <apn_type> -i <ip_type> -v <auth_type> -u <usr_name> -p <password>]\n");
@@ -144,6 +173,7 @@ int main(int argc, FAR char *argv[])
             printf("** -v :  Set auth type **\n");
             printf("** -u :  Set user name **\n");
             printf("** -p :  Set password **\n");
+            printf("** -r :  Set Radio Access Technology: M1 or NB (CAT-M1/NB-IoT) **\n");
             printf("------\n");
             printf("** Required option **\n");
             printf("** start : start lte_daemon **\n");
@@ -156,37 +186,72 @@ int main(int argc, FAR char *argv[])
 
   if (optind >= argc || argv[1] == NULL)
     {
-      printf("lte_daemon: missing required argument(s)\n");
+      printf("%s: missing required argument(s)\n", argv[0]);
       return -1;
     }
   cmd = argv[optind++];
 
-  if (0 == strncmp(cmd, "start", strlen(cmd)))
+  if (MATCH_STRING(cmd, LTE_DAEMON_CMD_START))
     {
-      ret = lte_daemon_init(&setting_apn);
+      ret = lte_daemon_init(&setting_apn, rat);
       if (0 > ret)
         {
-          printf("lte_daemon_init() error. %d\n", ret);
+          if (ret == -EALREADY)
+            {
+              printf(LTE_DAEMON_ERR_FMT_STR, argv[0], LTE_DAEMON_CMD_START,
+                     "lte_daemon is running");
+            }
+          else
+            {
+              printf(LTE_DAEMON_ERR_FMT_NUM, argv[0], LTE_DAEMON_CMD_START,
+                     -ret);
+            }
+
           goto err_out;
         }
 
       ret = lte_daemon_power_on();
       if (0 > ret)
         {
-          printf("daemon_power_on() error. %d\n", ret);
+          if (ret == -ENOTSUP)
+            {
+              printf(LTE_DAEMON_ERR_FMT_STR, argv[0], LTE_DAEMON_CMD_START,
+                     "RAT changes are not supported in the FW version of the modem");
+            }
+          else
+            {
+              printf(LTE_DAEMON_ERR_FMT_NUM, argv[0], LTE_DAEMON_CMD_START,
+                     -ret);
+            }
+
+          lte_daemon_fin();
           goto err_out;
         }
     }
+  else if (MATCH_STRING(cmd, LTE_DAEMON_CMD_STOP))
+    {
+      ret = lte_daemon_fin();
+      if (0 > ret)
+        {
+          if (ret == -EALREADY)
+            {
+              printf(LTE_DAEMON_ERR_FMT_STR, argv[0], LTE_DAEMON_CMD_STOP,
+                     "lte_daemon is not running");
+            }
+          else
+            {
+              printf(LTE_DAEMON_ERR_FMT_NUM, argv[0], LTE_DAEMON_CMD_STOP,
+                     -ret);
+            }
 
-    if (0 == strncmp(cmd, "stop", strlen(cmd)))
-      {
-        ret = lte_daemon_fin();
-        if (0 > ret)
-          {
-            printf("lte_finalize() error. %d\n", ret);
-            goto err_out;
-          }
-      }
+          goto err_out;
+        }
+    }
+  else
+    {
+      printf("%s: invalid required argument(s)\n", argv[0]);
+      return -1;
+    }
 
   return 0;
 
