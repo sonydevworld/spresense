@@ -1,7 +1,7 @@
 /****************************************************************************
  * system/lte_daemon/lte_daemon.c
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,6 +95,7 @@
 #define LTE_DAEMON_ERR_FMT_STR "%s: %s failed: %s\n"
 #define LTE_DAEMON_CMD_START "start"
 #define LTE_DAEMON_CMD_STOP "stop"
+#define LTE_DAEMON_CMD_STAT "stat"
 #define LTE_DAEMON_CMD_RAT_CATM1 "M1"
 #define LTE_DAEMON_CMD_RAT_NB "NB"
 
@@ -246,6 +247,10 @@ int main(int argc, FAR char *argv[])
 
           goto err_out;
         }
+    }
+  else if (MATCH_STRING(cmd, LTE_DAEMON_CMD_STAT))
+    {
+      ret = lte_daemon_stat();
     }
   else
     {

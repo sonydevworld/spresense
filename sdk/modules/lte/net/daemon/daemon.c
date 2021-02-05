@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/net/daemon/daemon.c
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,6 +93,7 @@
 #define DAEMONAPI_REQUEST_POWER_ON  3
 #define DAEMONAPI_REQUEST_POWER_OFF 4
 #define DAEMONAPI_REQUEST_RESTART   5
+#define DAEMONAPI_REQUEST_STAT      6
 
 #ifndef CONFIG_LTE_DAEMON_TASK_PRIORITY
 #  define CONFIG_LTE_DAEMON_TASK_PRIORITY (110)
@@ -151,6 +152,9 @@ struct daemon_s
   bool                 poweron_inprogress;
   sem_t                sync_sem;
   lte_apn_setting_t    apn;
+  char                 apn_name[LTE_APN_LEN];
+  char                 user_name[LTE_APN_USER_NAME_LEN];
+  char                 pass[LTE_APN_PASSWD_LEN];
   uint8_t              rat;
   struct usock_s       sockets[SOCKET_COUNT];
   struct net_driver_s  net_dev;
@@ -313,6 +317,62 @@ static inline void daemon_syslog(int level, FAR const IPTR char *fmt, ...)
   va_start(ap, fmt);
   vsyslog(level, fmt, ap);
   va_end(ap);
+}
+
+/****************************************************************************
+ * Name: show_daemon_stat
+ ****************************************************************************/
+
+static void show_daemon_stat(FAR struct daemon_s *priv)
+{
+  int ret;
+
+  if (g_daemonisrunnning)
+    {
+      printf("Daemon stat: running\n");
+      printf("Connecting APN\n");
+      printf("  Name: %s\n", priv->apn.apn);
+      if (priv->apn.ip_type == LTE_APN_IPTYPE_IP)
+        {
+          printf("  IP type: IPv4\n");
+        }
+      else if (priv->apn.ip_type == LTE_APN_IPTYPE_IPV6)
+        {
+          printf("  IP type: IPv6\n");
+        }
+      else if (priv->apn.ip_type == LTE_APN_IPTYPE_IPV4V6)
+        {
+          printf("  IP type: IPv4 and IPv6\n");
+        }
+
+      if (priv->apn.auth_type == LTE_APN_AUTHTYPE_NONE)
+        {
+          printf("  Authentication: NONE\n");
+        }
+      else if (priv->apn.auth_type == LTE_APN_AUTHTYPE_PAP)
+        {
+          printf("  Authentication: PAP\n");
+        }
+      else if (priv->apn.auth_type == LTE_APN_AUTHTYPE_CHAP)
+        {
+          printf("  Authentication: CHAP\n");
+        }
+      printf("  Username: %s\n", priv->apn.user_name);
+      printf("  Password: %s\n", priv->apn.password);
+      ret = lte_get_rat_sync();
+      if (ret == LTE_RAT_NBIOT)
+        {
+          printf("RAT: NB-IoT\n");
+        }
+      else
+        {
+          printf("RAT: CAT-M1\n");
+        }
+    }
+  else
+    {
+      printf("Daemon stat: stopped\n");
+    }
 }
 
 /****************************************************************************
@@ -2779,6 +2839,11 @@ static int daemon_api_request(int read_fd, int usock_fd,
         g_daemonisrunnning = false;
         break;
 
+      case DAEMONAPI_REQUEST_STAT:
+        show_daemon_stat(priv);
+        sem_post(&priv->sync_sem);
+        break;
+
       case DAEMONAPI_REQUEST_RESTART:
         rsize = sizeof(restart) - sizeof(struct daemon_req_common_s);
 
@@ -3128,6 +3193,15 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn, uint8_t rat)
       if (apn)
         {
           memcpy(&g_daemon->apn, apn, sizeof(lte_apn_setting_t));
+          strncpy(g_daemon->apn_name, (FAR const char *)apn->apn,
+                  LTE_APN_LEN);
+          g_daemon->apn.apn = (int8_t *)g_daemon->apn_name;
+          strncpy(g_daemon->user_name, (FAR const char *)apn->user_name,
+                  LTE_APN_USER_NAME_LEN);
+          g_daemon->apn.user_name = (int8_t *)g_daemon->user_name;
+          strncpy(g_daemon->pass, (FAR const char *)apn->password,
+                  LTE_APN_PASSWD_LEN);
+          g_daemon->apn.password = (int8_t *)g_daemon->pass;
         }
 
       g_daemon->rat = rat;
@@ -3350,6 +3424,59 @@ int32_t lte_daemon_fin(void)
     {
       daemon_error_printf("lte_daemon is not running\n");
       return -EALREADY;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: lte_daemon_stat
+ ****************************************************************************/
+
+int32_t lte_daemon_stat(void)
+{
+  int ret;
+  int apireq_fd;
+  struct daemon_req_common_s req;
+
+  if (g_daemonisrunnning)
+    {
+      /* Open a pipe to communicate with the daemon */
+
+      apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+      if (apireq_fd < 0)
+        {
+          ret = -errno;
+
+          daemon_error_printf("open(%s) failed: %d\n", APIREQ_PIPE, -ret);
+          return ret;
+        }
+
+      /* Write request to getting status */
+
+      req.reqid = DAEMONAPI_REQUEST_STAT;
+
+      ret = write(apireq_fd, &req, sizeof(req));
+      if (ret < 0)
+        {
+          ret = -errno;
+          close(apireq_fd);
+
+          daemon_error_printf("write() failed: %d\n", -ret);
+          return ret;
+        }
+
+      /* Wait for the getting status completion */
+
+      sem_wait(&g_daemon->sync_sem);
+
+      close(apireq_fd);
+      ret = 0;
+    }
+  else
+    {
+      show_daemon_stat(NULL);
+      ret = 0;
     }
 
   return ret;
