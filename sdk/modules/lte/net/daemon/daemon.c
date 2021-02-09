@@ -2705,13 +2705,23 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
           (usock_msg.event.events == USRSOCK_EVENT_SENDTO_READY))
         {
           val_len = sizeof(result);
+
+          /* altcom_getsockopt() returns -1 on failure and 0 on success.
+           * On success, the result of connect() is stored
+           * in the "result" variable.
+           * A "reslut" of 0 means that the connect() was successful,
+           * and a positive value means the connect failed.
+           */
+
           ret = altcom_getsockopt(usock->usockid, ALTCOM_SOL_SOCKET,
                                   ALTCOM_SO_ERROR, (FAR void*)&result,
                                   (altcom_socklen_t*)&val_len);
           if (ret < 0)
             {
+              /* set resp.result to a negative value of errno. */
+
               ret = altcom_errno();
-              ret = -ret;
+              result = -ret;
               daemon_debug_printf("altcom_getsockopt() failed = %d\n", ret);
             }
           else if (result == 0)
@@ -2720,6 +2730,11 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
             }
           else
             {
+              /* connect failure case.
+               * set resp.result to a negative value of result.
+               */
+
+              result = -result;
               usock->state = OPENED;
             }
           memset(&resp, 0, sizeof(resp));
