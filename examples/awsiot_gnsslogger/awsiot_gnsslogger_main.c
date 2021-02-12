@@ -59,14 +59,15 @@
 
 #define INI_FILE_PATH "/mnt/spif/aws_iot.ini"
 
-#define LOCATION_TOPIC      "data/device/gps"
-#define LOCATION_TOPIC_FMT  "{ \"device_loc\": { \"lat\": %f, \"lng\": %f } }"
+#define LOCATION_TOPIC      "data/%s/gps"
+#define LOCATION_TOPIC_FMT  "{ \"timestamp\": %u, \"device_loc\": { \"lat\": %f, \"lng\": %f } }"
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
 static awsiot_app_config app_config;
+static char topic_name[64];
 static char topic_msg[256];
 
 /****************************************************************************
@@ -169,6 +170,10 @@ int main(int argc, FAR char *argv[])
 
 #else /* CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST */
 
+  /* Generate Topic name with Client ID */
+
+  snprintf(topic_name, sizeof(topic_name), LOCATION_TOPIC, app_config.client_id);
+
   /* Initialze GNSS driver */
 
   gnss_fd = init_gnss(&mask);
@@ -193,9 +198,6 @@ int main(int argc, FAR char *argv[])
       switch (get_position(gnss_fd, &mask, &sv_cnt, &dt, &lat, &lng))
         {
           case GNSS_UTIL_STATE_FIXED:
-            sprintf(topic_msg, LOCATION_TOPIC_FMT, lat, lng);
-            printf("Location is fixed. %d satellites is captured.\n", sv_cnt);
-            printf("    Publish data to %s topic as <<%s>>\n", LOCATION_TOPIC, topic_msg);
 
             /* If the connection to AWS IoT server is not established. */
 
@@ -226,6 +228,12 @@ int main(int argc, FAR char *argv[])
                 is_connected = 1;
               }
 
+            snprintf(topic_msg, sizeof(topic_msg), LOCATION_TOPIC_FMT,
+                time(NULL), lat, lng);
+            printf("Location is fixed. %d satellites is captured.\n", sv_cnt);
+            printf("    Publish data to %s topic as <<%s>>\n",
+               topic_name, topic_msg);
+
             /* LED control */
 
             if (sv_cnt > 7) sv_cnt = 7;
@@ -233,11 +241,11 @@ int main(int argc, FAR char *argv[])
 
             /* Publish this data */
 
-            publish_topic(&client, LOCATION_TOPIC, (uint8_t *)topic_msg, strlen(topic_msg));
+            publish_topic(&client, topic_name, (uint8_t *)topic_msg, strlen(topic_msg));
             break;
 
           case GNSS_UTIL_STATE_SVCAP:
-            printf("Location is NOT fixed. %d sattelites is captured.\n", sv_cnt);
+            printf("Location is NOT fixed. %d satellites is captured.\n", sv_cnt);
 
             /* LED control */
 
