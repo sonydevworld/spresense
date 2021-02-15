@@ -40,7 +40,7 @@
 #include "aws_iot_mqtt_client_interface.h"
 
 int test_parse_arg(int argc, char *argv[]);
-void test_execute(AWS_IoT_Client *client, const char *client_id);
+void test_execute(AWS_IoT_Client *client);
 #endif
 
 #endif

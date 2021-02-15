@@ -60,7 +60,7 @@
 #define INI_FILE_PATH "/mnt/spif/aws_iot.ini"
 
 #define LOCATION_TOPIC      "data/%s/gps"
-#define LOCATION_TOPIC_FMT  "{ \"timestamp\": %u, \"device_loc\": { \"lat\": %f, \"lng\": %f } }"
+#define LOCATION_TOPIC_FMT  "{ \"timestamp\": %u, \"device_loc\": { \"lat\": %f, \"lon\": %f } }"
 
 /****************************************************************************
  * Private Data
@@ -158,7 +158,7 @@ int main(int argc, FAR char *argv[])
 
       /* Execute TEST code */
 
-      test_execute(&client, app_config.client_id);
+      test_execute(&client);
 
       printf("Disconnect from awsiot.\n");
       disconnect_awsiot(&client);
