@@ -51,7 +51,7 @@
  ****************************************************************************/
 
 #define TEST_TOPIC "test/spresense/topic"
-#define TOPIC_DATA_FMT "{ \"device_loc\": { \"lat\": %f, \"lng\": %f } }"
+#define TOPIC_DATA_FMT "{ \"device_loc\": { \"lat\": %f, \"lon\": %f } }"
 
 #define MSG_BUF_LEN (256)
 
@@ -59,6 +59,7 @@
  * Private Data
  ****************************************************************************/
 
+static int is_publish_test = 1;
 static volatile int test_pubsub_cnt = 10;
 static char message_buffer[MSG_BUF_LEN];
 
@@ -116,7 +117,7 @@ static void test_subscribe_handler(  AWS_IoT_Client *pClient,
 
 static void test_print_help(void)
 {
-  printf("Usage: > " CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PROGNAME " ([cnt])\n");
+  printf("Usage: > " CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER_PROGNAME " (-sub) ([cnt])\n");
 }
 
 /****************************************************************************
@@ -191,7 +192,27 @@ int test_parse_arg(int argc, char *argv[])
     }
   else if (argc==2)
     {
-      test_pubsub_cnt = atoi(argv[1]);
+      if (strncmp(argv[1], "-sub", 4)==0)
+        {
+          is_publish_test = 0;
+        }
+      else
+        {
+          test_pubsub_cnt = atoi(argv[1]);
+        }
+    }
+  else if (argc==3)
+    {
+      if (strncmp(argv[1], "-sub", 4)==0)
+        {
+          is_publish_test = 0;
+        }
+      else
+        {
+          test_print_help();
+          return -1;
+        }
+      test_pubsub_cnt = atoi(argv[2]);
     }
   else
     {
@@ -214,9 +235,9 @@ int test_parse_arg(int argc, char *argv[])
  *   Start test execution.
  ****************************************************************************/
 
-void test_execute(AWS_IoT_Client *client, const char *client_id)
+void test_execute(AWS_IoT_Client *client)
 {
-  if (strcmp(client_id, "TestPublisher1")==0)
+  if (is_publish_test)
     {
       test_execute_publish(client);
     }
