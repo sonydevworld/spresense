@@ -2329,6 +2329,13 @@ int32_t lte_radio_off(radio_off_cb_t callback);
  * @param [out] info: The LTE network information.
  *                    See @ref lte_netinfo_t
  *
+ * @attention Immediately after successful PDN construction
+ *            using lte_activate_pdn_sync() or lte_activate_pdn(),
+ *            session information such as IP address
+ *            may not be acquired correctly.
+ *            If you want to use this API after successfully construction
+ *            the PDN, wait at least 1 second before executing it.
+ *            
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
@@ -2340,6 +2347,13 @@ int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info);
  *
  * @param [in] callback: Callback function to notify that
  *                       get network information completed.
+ *
+ * @attention Immediately after successful PDN construction
+ *            using lte_activate_pdn_sync() or lte_activate_pdn(),
+ *            session information such as IP address
+ *            may not be acquired correctly.
+ *            If you want to use this API after successfully construction
+ *            the PDN, wait at least 1 second before executing it.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
