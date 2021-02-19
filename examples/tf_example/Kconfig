@@ -1,0 +1,26 @@
+
+config EXAMPLES_TF_EXAMPLE
+	tristate "Tensorflow Example app"
+	default n
+	---help---
+		Enable the NuttX command line application for executing example of
+		Tensorflow lite micro.
+
+if EXAMPLES_TF_EXAMPLE
+
+config EXAMPLES_TF_EXAMPLE_PROGNAME
+	string "Program name"
+	default "tf_example"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_TF_EXAMPLE_PRIORITY
+	int "tf_example task priority"
+	default 100
+
+config EXAMPLES_TF_EXAMPLE_STACKSIZE
+	int "tf_example stack size"
+	default 32768
+
+endif
