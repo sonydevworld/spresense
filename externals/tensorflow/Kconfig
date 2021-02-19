@@ -1,0 +1,44 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_TENSORFLOW
+	bool "Tensorflow lite micro"
+	default n
+	---help---
+		Download Tensorflow lite micro from https://github.com/tensorflow/tensorflow,
+		and build it on Spresense SDK. The version to download is v2.4.0.
+		and it is licensed under the Apache License v2.0.
+		Please check License file in the repository for more details.
+
+if EXTERNALS_TENSORFLOW
+
+choice
+	prompt "Tensorflow lite micro example"
+	default EXTERNALS_TENSORFLOW_EXAMPLE_NONE
+
+config EXTERNALS_TENSORFLOW_EXAMPLE_NONE
+	bool "No example"
+
+config EXTERNALS_TENSORFLOW_EXAMPLE_HELLOWORLD
+	bool "Helloworld example"
+	---help---
+		Tensorflow lite micro's "Hello world" example.
+		Source code is in tensorflow/tensorflow/lite/micro/examples/hello_world.
+
+config EXTERNALS_TENSORFLOW_EXAMPLE_MICROSPEECH
+	bool "Micro speech example"
+	---help---
+		Tensorflow lite micro's "Micro speech" example.
+		Source code is in tensorflow/tensorflow/lite/micro/examples/micro_speech.
+
+config EXTERNALS_TENSORFLOW_EXAMPLE_PERSONDETECTION
+	bool "Person Detection example"
+	---help---
+		Tensorflow lite micro's "Person detection" example.
+		Source code is in tensorflow/tensorflow/lite/micro/examples/person_detection.
+
+endchoice
+
+endif # EXTERNALS_TENSORFLOW

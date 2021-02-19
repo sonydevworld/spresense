@@ -1,0 +1,17 @@
+diff --git a/tensorflow/lite/micro/tools/make/Makefile b/tensorflow/lite/micro/tools/make/Makefile
+index 73d7fedd48a..7589423aea4 100644
+--- a/tensorflow/lite/micro/tools/make/Makefile
++++ b/tensorflow/lite/micro/tools/make/Makefile
+@@ -13,9 +13,9 @@
+ # limitations under the License.
+ # ==============================================================================
+ 
+-ifneq (3.82,$(firstword $(sort $(MAKE_VERSION) 3.82)))
+-  $(error "Requires make version 3.82 or later (current is $(MAKE_VERSION))")
+-endif
++# ifneq (3.82,$(firstword $(sort $(MAKE_VERSION) 3.82)))
++#   $(error "Requires make version 3.82 or later (current is $(MAKE_VERSION))")
++# endif
+ 
+ # root directory of tensorflow
+ TENSORFLOW_ROOT :=
