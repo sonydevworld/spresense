@@ -1,5 +1,5 @@
 ############################################################################
-# mpcomm_prime/worker/helper/Makefile
+# mpcomm_prime/worker/mpcomm/Makefile
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -36,25 +36,23 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-WORKERDIR = $(TOPDIR)/../examples/mpcomm_prime/worker
+BIN = mpcomm
 
-BIN = helper
-
-CSRCS += helper_main.c
-
-VPATH += $(WORKERDIR)/common
+CSRCS += mpcomm_main.c
 CSRCS += prime.c
 
-CELFFLAGS += -I$(WORKERDIR)/common
-
 ASMPW_DIR = "../lib/asmpw"
-MPCOMMC_DIR = "../lib/mpcommh"
+MPCOMMW_DIR = "../lib/mpcommw"
 
+LDLIBPATH += -L $(TOPDIR)/staging
 LDLIBPATH += -L $(ASMPW_DIR)
-LDLIBPATH += -L $(MPCOMMC_DIR)
+LDLIBPATH += -L $(MPCOMMW_DIR)
 
-LDLIBS += -lmpcommh
+LDLIBS += -lc
+LDLIBS += -lmpcommw
 LDLIBS += -lasmpw
+
+LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -73,7 +71,7 @@ $(AOBJS): %$(OBJEXT): %.S
 
 $(BIN): $(COBJS) $(AOBJS)
 	@echo "LD: $<"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBM)
 	$(Q) $(STRIP) -d $(BIN)
 
 clean:

@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-WORKER_ELFS = controller/controller helper/helper
+WORKER_ELFS = mpcomm/mpcomm
 
 SUBDIRS = $(dir $(WORKER_ELFS))
 

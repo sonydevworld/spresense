@@ -48,7 +48,7 @@
 #include <asmp/mptask.h>
 #include <asmp/mpmq.h>
 
-#include <mpcomm/common.h>
+#include <mpcomm/mpcomm.h>
 
 /****************************************************************************
  * Public Types

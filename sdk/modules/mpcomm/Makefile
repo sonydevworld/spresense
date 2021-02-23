@@ -46,12 +46,10 @@ CSRCS = supervisor.c
 include $(SDKDIR)/modules/Module.mk
 
 clean_worker:
-	$(Q) $(MAKE) -C controller TOPDIR="$(TOPDIR)" clean
-	$(Q) $(MAKE) -C helper TOPDIR="$(TOPDIR)" clean
+	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" clean
 
 distclean_worker:
-	$(Q) $(MAKE) -C controller TOPDIR="$(TOPDIR)" distclean
-	$(Q) $(MAKE) -C helper TOPDIR="$(TOPDIR)" distclean
+	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" distclean
 
 clean:: clean_worker
 

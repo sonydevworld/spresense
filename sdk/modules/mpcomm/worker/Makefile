@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/Makefile
+# modules/mpcomm/worker/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@ VPATH   =
 SUBDIRS =
 DEPPATH = --dep-path .
 
-CSRCS = helper.c
+CSRCS = mpcomm.c
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -50,7 +50,7 @@ LIB_OBJS = $(AOBJS) $(COBJS)
 SRCS = $(ASRCS) $(CSRCS)
 OBJS = $(AOBJS) $(COBJS)
 
-BIN = libmpcommh$(LIBEXT)
+BIN = libmpcommw$(LIBEXT)
 
 CFLAGS += -I$(SDKDIR)/modules/asmp/worker
 
@@ -87,4 +87,3 @@ distclean: clean
 	$(call DELFILE, .depend)
 
 -include Make.dep
-

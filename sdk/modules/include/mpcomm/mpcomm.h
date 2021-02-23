@@ -1,5 +1,5 @@
 /****************************************************************************
- * mpcomm/controller/controller.c
+ * mpcomm/mpcomm.h
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -34,11 +34,11 @@
  ****************************************************************************/
 
 /**
- * @file controller.h
+ * @file mpcomm.h
  */
 
-#ifndef __MODULES_INCLUDE_MPCOMM_CONTROLLER_H
-#define __MODULES_INCLUDE_MPCOMM_CONTROLLER_H
+#ifndef __MODULES_INCLUDE_MPCOMM_MPCOMM_H
+#define __MODULES_INCLUDE_MPCOMM_MPCOMM_H
 
 /****************************************************************************
  * Included Files
@@ -47,15 +47,57 @@
 #include <asmp/types.h>
 #include <asmp/mpmq.h>
 
-#include <mpcomm/common.h>
-
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
+/** The helper and controller initialization message ID. */
+
+#define MPCOMM_MSG_ID_INIT 1
+
+/** The helper and controller deinitialization message ID. */
+
+#define MPCOMM_MSG_ID_DEINIT 2
+
+/** Message ID to send user data to controller and helper. */
+
+#define MPCOMM_MSG_ID_USER_FUNC 3
+
+/** Message ID confirming that the message has been processed. */
+
+#define MPCOMM_MSG_ID_DONE 4
+
+/** Message ID to request malloc() from supervisor. */
+
+#define MPCOMM_MSG_ID_MALLOC 5
+
+/** Message ID to request free() from supervisor. */
+
+#define MPCOMM_MSG_ID_FREE 6
+
+/** Message ID to send error number to supervisor. */
+
+#define MPCOMM_MSG_ID_ERROR 7
+
+/** Maximum number of helpers. */
+
+#define MPCOMM_MAX_HELPERS 4
+
+/** Maximum CPU ID. */
+
+#define MPCOMM_CPUID_MAX 8
+
+/** Controller mode. */
+
+#define MPCOMM_MODE_CONTROLLER 0
+
+/** Helper mode. */
+
+#define MPCOMM_MODE_HELPER 1
+
 /** Convert address from virtual to physical */
 
-#define MEM_V2P(addr) controller_memory_virt_to_phys(addr)
+#define MEM_V2P(addr) mpcomm_memory_virt_to_phys(addr)
 
 /****************************************************************************
  * Public Types
@@ -63,13 +105,13 @@
 
 /** Definition of callback function.
  *
- *  User-defined callback that is called by controller_main()
- *  after receiving data from the supervisor.
+ *  User-defined callback that is called by mpcomm_main()
+ *  after receiving data from the supervisor or controller.
  *
- * @param[in] data : User data received from the supervisor.
+ * @param[in] data : User data.
  */
 
-typedef void (*controller_user_func_t)(void *data);
+typedef void (*mpcomm_user_func_t)(void *data);
 
 /**
  * @struct helper_info
@@ -92,19 +134,28 @@ typedef struct helper_info
 } helper_info_t;
 
 /**
- * @struct controller_context
+ * @struct mpcomm_context
  *
- * Structure of information needed by a controller in the MPCOMM framework.
+ * Structure of information needed by a controller and helpers
+ * in the MPCOMM framework.
  *
- * @typedef controller_context_t
- * See @ref controller_context
+ * @typedef mpcomm_context_t
+ * See @ref mpcomm_context
  */
 
-typedef struct controller_context
+typedef struct mpcomm_context
 {
+  /** Worker mode. */
+
+  uint8_t mode;
+
   /** MP message queue to supervisor. See @ref mpmq_t */
 
   mpmq_t mq_2_supervisor;
+
+  /** MP message queue to controller. See @ref mpmq_t */
+
+  mpmq_t mq_2_controller;
 
   /** Information about helpers. See @ref helper_info_t */
 
@@ -132,34 +183,113 @@ typedef struct controller_context
 
   uint8_t helpers_num;
 
-  /** User-defined callback. See @ref controller_user_func_t */
+  /** User-defined callback for controller. See @ref mpcomm_user_func_t */
 
-  controller_user_func_t user_func;
+  mpcomm_user_func_t controller_user_func;
 
-  /** Controller load address. */
+  /** User-defined callback for helpers. See @ref mpcomm_user_func_t */
+
+  mpcomm_user_func_t helper_user_func;
+
+  /** Controller/Helper load address. */
 
   uintptr_t loadaddr;
 
   /** If 0, the helper should stay in the loop and if 1 it should quit. */
 
   uint8_t quit_loop;
-} controller_context_t;
+} mpcomm_context_t;
+
+/**
+ * @struct mpcomm_init_msg
+ *
+ * Structure for controller and helper initialization.
+ *
+ * @typedef mpcomm_init_msg_t
+ * See @ref mpcomm_init_msg
+ */
+
+typedef struct mpcomm_init_msg
+{
+  /** Worker mode. */
+
+  uint8_t mode;
+
+  /** Controller CPU ID. See @ref cpuid_t */
+
+  cpuid_t controller_cpuid;
+
+  /** Set of CPUs used as a helper. See @ref cpu_set_t */
+
+  cpu_set_t helpers_cpuset;
+
+  /** Controller/Helper load address. */
+
+  uintptr_t loadaddr;
+} mpcomm_init_msg_t;
+
+/**
+ * @struct mpcomm_malloc_msg
+ *
+ * Structure for malloc() request.
+ *
+ * @typedef mpcomm_malloc_msg_t
+ * See @ref mpcomm_malloc_msg
+ */
+
+typedef struct mpcomm_malloc_msg
+{
+  /** Core CPU ID that is requesting malloc. See @ref cpuid_t */
+
+  cpuid_t cpuid;
+
+  /** The address of the allocated memory received from the supervisor. */
+
+  void **ptr;
+
+  /** Requested size. */
+
+  size_t size;
+} mpcomm_malloc_msg_t;
+
+/**
+ * @struct mpcomm_free_msg
+ *
+ * Structure for free() request.
+ *
+ * @typedef mpcomm_free_msg_t
+ * See @ref mpcomm_free_msg
+ */
+
+typedef struct mpcomm_free_msg
+{
+  /** Core CPU ID that is requesting free. See @ref cpuid_t */
+
+  cpuid_t cpuid;
+
+  /** The address of the allocated memory to be freed by the supervisor. */
+
+  void *ptr;
+} mpcomm_free_msg_t;
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
 /**
- * Start the MPCOMM framework on the controller. The user can register
- * a callback that will handle the data received from the supervisor.
+ * Start the MPCOMM framework on the controller or the helper. The user can
+ * register a callbacks that will handle the data received from
+ * the supervisor and controller.
  *
- * @param [in] user_func: User-defined callback.
+ * @param [in] controller_user_func: User-defined callback for the contoller.
+ * @param [in] helper_user_func: User-defined callback for the helper.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
-int controller_main(controller_user_func_t user_func);
+int mpcomm_main(mpcomm_user_func_t controller_user_func,
+                mpcomm_user_func_t helper_user_func);
 
 /**
  * Send the user data to the helper for processing.
@@ -171,7 +301,7 @@ int controller_main(controller_user_func_t user_func);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_send_helper(uint8_t helper_index, void *data);
+int mpcomm_send_helper(uint8_t helper_index, void *data);
 
 /**
  * Wait until user data has been processed by helper.
@@ -182,7 +312,7 @@ int controller_send_helper(uint8_t helper_index, void *data);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_wait_helper_done(uint8_t helper_index);
+int mpcomm_wait_helper_done(uint8_t helper_index);
 
 /**
  * Wait until user data has been processed by all helpers.
@@ -191,7 +321,7 @@ int controller_wait_helper_done(uint8_t helper_index);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_wait_helpers_done(void);
+int mpcomm_wait_helpers_done(void);
 
 /**
  * Return number of helpers.
@@ -199,7 +329,7 @@ int controller_wait_helpers_done(void);
  * @return Number of helpers.
  */
 
-int controller_get_helpers_num(void);
+int mpcomm_get_helpers_num(void);
 
 /**
  * Convert address from virtual to physical.
@@ -209,7 +339,7 @@ int controller_get_helpers_num(void);
  * @return Physical address.
  */
 
-void *controller_memory_virt_to_phys(void *addr);
+void *mpcomm_memory_virt_to_phys(void *addr);
 
 /**
  * Send a request to the supervisor to call malloc() and
@@ -223,7 +353,7 @@ void *controller_memory_virt_to_phys(void *addr);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_send_malloc(void **ptr, size_t size);
+int mpcomm_send_malloc(void **ptr, size_t size);
 
 /**
  * Send a request to the supervisor to call free() on the ptr.
@@ -235,7 +365,7 @@ int controller_send_malloc(void **ptr, size_t size);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_send_free(void *ptr);
+int mpcomm_send_free(void *ptr);
 
 /**
  * Send the error number to the supervisor.
@@ -246,6 +376,6 @@ int controller_send_free(void *ptr);
  * negative value is returned according to <errno.h>.
  */
 
-int controller_send_error(int err);
+int mpcomm_send_error(int err);
 
-#endif /* __MODULES_INCLUDE_MPCOMM_CONTROLLER_H */
+#endif /* __MODULES_INCLUDE_MPCOMM_MPCOMM_H */

@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-WORKER_LIBS = asmpw mpcommc mpcommh
+WORKER_LIBS = asmpw mpcommw
 
 define DIR_template
 $(1)_$(2):

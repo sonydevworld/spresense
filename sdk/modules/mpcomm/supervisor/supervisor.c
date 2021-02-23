@@ -83,15 +83,11 @@ static supervisor_context_t *get_supervisor_context(void)
   return &supervisor_ctx;
 }
 
-static int init_core(worker_info_t *worker, const char *filepath,
-                     const char *filename)
+static int init_core(worker_info_t *worker, const char *filepath)
 {
   int ret;
-  char fullpath[128];
 
-  snprintf(fullpath, 128, "%s/%s", filepath, filename);
-
-  ret = mptask_init(&worker->mptask, fullpath);
+  ret = mptask_init(&worker->mptask, filepath);
   if (ret != 0)
     {
       mpcerr("mptask_init() failure. %d\n", ret);
@@ -182,20 +178,62 @@ static int supervisor_send_controller_done(void)
   return ret;
 }
 
-static int supervisor_malloc_msg(supervisor_malloc_msg_t *msg)
+static int supervisor_send_helper_done(uint8_t helper_idx)
 {
+  int ret;
+  supervisor_context_t *ctx = get_supervisor_context();
+
+  ret = mpmq_send(&ctx->helpers[helper_idx].mq, MPCOMM_MSG_ID_DONE, 2);
+
+  return ret;
+}
+
+static int supervisor_malloc_msg(mpcomm_malloc_msg_t *msg)
+{
+  int i;
+  supervisor_context_t *ctx = get_supervisor_context();
+
   *msg->ptr = malloc(msg->size);
 
-  supervisor_send_controller_done();
+  if (msg->cpuid == ctx->controller.cpuid)
+    {
+      supervisor_send_controller_done();
+    }
+  else
+    {
+      for (i = 0; i < ctx->helper_num; i++)
+        {
+          if (msg->cpuid == ctx->helpers[i].cpuid)
+            {
+              supervisor_send_helper_done(i);
+            }
+        }
+    }
 
   return 0;
 }
 
-static int supervisor_free_msg(supervisor_free_msg_t *msg)
+static int supervisor_free_msg(mpcomm_free_msg_t *msg)
 {
+  int i;
+  supervisor_context_t *ctx = get_supervisor_context();
+
   free(msg->ptr);
 
-  supervisor_send_controller_done();
+  if (msg->cpuid == ctx->controller.cpuid)
+    {
+      supervisor_send_controller_done();
+    }
+  else
+    {
+      for (i = 0; i < ctx->helper_num; i++)
+        {
+          if (msg->cpuid == ctx->helpers[i].cpuid)
+            {
+              supervisor_send_helper_done(i);
+            }
+        }
+    }
 
   return 0;
 }
@@ -219,10 +257,10 @@ static int supervisor_handle_msg(int id, void *data, uint8_t *quit_loop)
   switch (id)
     {
       case MPCOMM_MSG_ID_MALLOC:
-        ret = supervisor_malloc_msg((supervisor_malloc_msg_t *)data);
+        ret = supervisor_malloc_msg((mpcomm_malloc_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_FREE:
-        ret = supervisor_free_msg((supervisor_free_msg_t *)data);
+        ret = supervisor_free_msg((mpcomm_free_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_ERROR:
         ret = supervisor_error_msg((int)data);
@@ -262,7 +300,7 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
   int i;
   supervisor_context_t *ctx = get_supervisor_context();
 
-  ret = init_core(&ctx->controller, filepath, "controller");
+  ret = init_core(&ctx->controller, filepath);
   if (ret < 0)
     {
       mpcerr("init_core() failure. %d\n", ret);
@@ -271,7 +309,7 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
 
   for (i = 0; i < helper_num; i++)
     {
-      ret = init_core(&ctx->helpers[i], filepath, "helper");
+      ret = init_core(&ctx->helpers[i], filepath);
       if (ret < 0)
         {
           mpcerr("init_core() failure. %d\n", ret);
@@ -281,12 +319,13 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
       ctx->helpers_cpuset |= (1 << ctx->helpers[i].cpuid);
     }
 
-  controller_init_msg_t controller_init_msg;
-  controller_init_msg.helpers_cpuset = ctx->helpers_cpuset;
-  controller_init_msg.loadaddr = ctx->controller.mptask.loadaddr;
+  mpcomm_init_msg_t init_msg;
+  init_msg.mode = MPCOMM_MODE_CONTROLLER;
+  init_msg.helpers_cpuset = ctx->helpers_cpuset;
+  init_msg.loadaddr = ctx->controller.mptask.loadaddr;
 
   ret = mpmq_send(&ctx->controller.mq, MPCOMM_MSG_ID_INIT,
-                  (uint32_t)&controller_init_msg);
+                  (uint32_t)&init_msg);
   if (ret < 0)
     {
       mpcerr("mpmq_send() failure. %d\n", ret);
@@ -300,14 +339,14 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
       return ret;
     }
 
-  helper_init_msg_t helper_init_msg;
-  helper_init_msg.controller_cpuid = ctx->controller.cpuid;
+  init_msg.mode = MPCOMM_MODE_HELPER;
+  init_msg.controller_cpuid = ctx->controller.cpuid;
 
   for (i = 0; i < helper_num; i++)
     {
-      helper_init_msg.loadaddr = ctx->helpers[i].mptask.loadaddr;
+      init_msg.loadaddr = ctx->helpers[i].mptask.loadaddr;
       ret = mpmq_send(&ctx->helpers[i].mq, MPCOMM_MSG_ID_INIT,
-                      (uint32_t)&helper_init_msg);
+                      (uint32_t)&init_msg);
       if (ret < 0)
         {
           mpcerr("mpmq_send() failure. %d\n", ret);

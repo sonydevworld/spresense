@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/Makefile
+# mpcomm_prime/worker/lib/mpcommw/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,55 +36,23 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-VPATH   =
-SUBDIRS =
-DEPPATH = --dep-path .
+BIN = libmpcommw$(LIBEXT)
+WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)mpcomm$(DELIM)worker
+LIB = $(WORKER_DIR)$(DELIM)libmpcommw$(LIBEXT)
 
-CSRCS = controller.c
-
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-LIB_OBJS = $(AOBJS) $(COBJS)
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libmpcommc$(LIBEXT)
-
-CFLAGS += -I$(SDKDIR)/modules/asmp/worker
-
+.PHONY: depend clean distclean
 all: $(BIN)
-.PHONY: context depend clean distclean
 
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
+depend:
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend
 
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
+$(LIB): depend
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(BIN)
 
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context: .context
+$(BIN): $(LIB)
+	$(Q) install $< $@
 
 clean:
-	$(call DELFILE, $(BIN))
 	$(call CLEAN)
 
 distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-

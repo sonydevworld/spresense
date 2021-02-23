@@ -49,7 +49,7 @@
 
 #include <mpcomm/supervisor.h>
 
-#include "worker/common/prime.h"
+#include "worker/mpcomm/prime.h"
 
 #ifdef CONFIG_FS_ROMFS
 #include "worker/romfs.h"
@@ -115,7 +115,7 @@ static int romfs_init(void)
       ret = mount("/dev/ram0", MOUNTPT, "romfs", MS_RDONLY, NULL);
       if (ret < 0)
         {
-          printf("ERROR: mount(%s,%s,romfs) failed: %s\n",
+          printf("ERROR: mount(%s,%s,romfs) failed: %d\n",
                 "/dev/ram0", MOUNTPT, errno);
         }
     }
@@ -167,7 +167,7 @@ int main(int argc, FAR char *argv[])
       return ret;
     }
 
-  ret = supervisor_init(MOUNTPT, 4);
+  ret = supervisor_init(MOUNTPT"/mpcomm", 4);
   if (ret)
     {
       printf("supervisor_init failed due to %d\n", ret);
@@ -192,7 +192,7 @@ int main(int argc, FAR char *argv[])
       return ret;
     }
 
-  printf("Found %d primes\n", main_task.result);
+  printf("Found %ld primes\n", main_task.result);
 
   ret = supervisor_deinit();
   if (ret)
