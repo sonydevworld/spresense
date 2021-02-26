@@ -2,7 +2,7 @@
  * jdhuff.c
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Modified 2006-2016 by Guido Vollbeding.
+ * Modified 2006-2019 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -1451,7 +1451,8 @@ start_pass_huff_decoder (j_decompress_ptr cinfo)
       compptr = cinfo->cur_comp_info[ci];
       /* Precalculate which table to use for each block */
       entropy->dc_cur_tbls[blkn] = entropy->dc_derived_tbls[compptr->dc_tbl_no];
-      entropy->ac_cur_tbls[blkn] = entropy->ac_derived_tbls[compptr->ac_tbl_no];
+      entropy->ac_cur_tbls[blkn] =      /* AC needs no table when not present */
+        cinfo->lim_Se ? entropy->ac_derived_tbls[compptr->ac_tbl_no] : NULL;
       /* Decide whether we really care about the coefficient values */
       if (compptr->component_needed) {
 	ci = compptr->DCT_v_scaled_size;

@@ -229,6 +229,7 @@ static INLINE size_t Chateau_CountSemaphore(Chateau_sem_handle_t h) {
 #include <semaphore.h>
 #include <time.h>
 #include <nuttx/arch.h>
+#include <nuttx/semaphore.h>
 #include "memutils/os_utils/os_wrapper.h"
 #define Chateau_DelayTask(ms)  (usleep((ms)*1000))
 #define Chateau_EnableInterrupt(irq) up_enable_irq(irq)
@@ -272,19 +273,8 @@ typedef sem_t	Chateau_sem_handle_t;
 #define Chateau_SignalSemaphore(h)      F_ASSERT(sem_post(&h)		== 0)
 #define Chateau_SignalSemaphoreTask(h)  F_ASSERT(sem_post(&h)		== 0)
 #define Chateau_SignalSemaphoreIsr(h)   F_ASSERT(sem_post(&h)		== 0)
-#define Chateau_TimedWaitSemaphore(h, tm)        (sem_timedwait(&h, &tm)	== 0)
-#define Chateau_WaitSemaphore(h)        (sem_wait(&h)	== 0)
-//static INLINE bool Chateau_TimedWaitSemaphore(Chateau_sem_handle_t h,uint32_t ms) {
-//	if(ms != TIME_FOREVER){
-//		timespec t;
-//		t.tv_sec = ms / 1000;
-//		t.tv_nsec = ms % 1000;
-//		return(sem_timedwait(&h, &t) == 0);
-//	}
-//	else{
-//		return(sem_wait(&h) == 0);
-//	}
-//}
+#define Chateau_TimedWaitSemaphore(h, tm) (nxsem_timedwait_uninterruptible(&h, &tm) == 0)
+#define Chateau_WaitSemaphore(h)        (nxsem_wait_uninterruptible(&h) == 0)
 
 #elif defined(NO_OS)
 /* 取り敢えず仮実装 */

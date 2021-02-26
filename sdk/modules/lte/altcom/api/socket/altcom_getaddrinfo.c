@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/socket/altcom_getaddrinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "lte/lte_api.h"
 #include "dbg_if.h"
 #include "buffpoolwrapper.h"
 #include "altcom_netdb.h"
@@ -53,6 +54,7 @@
 
 #define GETADDRINFO_REQ_DATALEN (sizeof(struct apicmd_getaddrinfo_s))
 #define GETADDRINFO_RES_DATALEN (sizeof(struct apicmd_getaddrinfores_s))
+#define NPDNINFO 2
 
 /****************************************************************************
  * Private Types
@@ -66,9 +68,91 @@ struct getaddrinfo_req_s
   struct altcom_addrinfo       **res;
 };
 
+struct netinfo_helper
+{
+  lte_netinfo_t netinfo;
+  lte_pdn_t pdninfo[NPDNINFO];
+};
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: get_addrfamily_by_registeredaddr
+ ****************************************************************************/
+
+static int get_addrfamily_by_registeredaddr(void)
+{
+  int ret = ALTCOM_AF_UNSPEC;
+  FAR struct netinfo_helper *helper;
+  FAR lte_netinfo_t *netinfo;
+  int i;
+
+  helper = (FAR struct netinfo_helper *)
+             BUFFPOOL_ALLOC(sizeof(struct netinfo_helper));
+  if (!helper)
+    {
+      DBGIF_LOG_ERROR("Failed to allocate memory\n");
+      return ALTCOM_AF_UNSPEC;
+    }
+
+  helper->netinfo.pdn_stat = &helper->pdninfo[0];
+  netinfo = &helper->netinfo;
+
+  /* Get registered IP address */
+
+  ret = lte_get_netinfo_sync(NPDNINFO, netinfo);
+  if (ret < 0)
+    {
+      DBGIF_LOG1_ERROR("Failed to lte_get_netinfo_sync(): %d\n", ret);
+      BUFFPOOL_FREE(helper);
+      return ALTCOM_AF_UNSPEC;
+    }
+
+  ret = ALTCOM_AF_UNSPEC;
+
+  /* Search the data PDN */
+
+  for (i = 0; i < netinfo->pdn_num; i++)
+    {
+      /* Is this PDN the data PDN? */
+
+      if (netinfo->pdn_stat[i].apn_type & LTE_APN_TYPE_DEFAULT)
+        {
+          /* Yes.. */
+
+          if (netinfo->pdn_stat[i].ipaddr_num == 2)
+            {
+              /* It means that IPv4 and IPv6 addresses are registered.
+               * Set AF_UNSPEC because it must try to resolve
+               * both IP addresses.
+               */
+
+              ret = ALTCOM_AF_UNSPEC;
+            }
+          else if (netinfo->pdn_stat[i].ipaddr_num == 1)
+            {
+              if (netinfo->pdn_stat[i].address[0].ip_type == LTE_IPTYPE_V4)
+                {
+                  /* It means that IPv4 address is registered. */
+
+                  ret = ALTCOM_AF_INET;
+                }
+              else
+                {
+                  /* It means that IPv6 address is registered. */
+
+                  ret = ALTCOM_AF_INET6;
+                }
+            }
+        }
+    }
+
+  BUFFPOOL_FREE(helper);
+
+  return ret;
+}
 
 /****************************************************************************
  * Name: getaddrinfo_request
@@ -91,6 +175,22 @@ static int32_t getaddrinfo_request(FAR struct getaddrinfo_req_s* req)
   int32_t                            ai_size;
   int32_t                            cname_len;
   bool                               alloc_fail = false;
+  int32_t                            ai_family = 0;
+
+  /* get_addrfamily_by_registeredaddr() uses the ALTCOM command,
+   * so the buffer pool is consumed internally.
+   * Calling this function before allocating memory from the buffer pool
+   * with altcom_sock_alloc_cmdandresbuff() reduces the temporary consumption
+   * of the buffer pool.
+   */
+
+  if (req->hints)
+    {
+      if (req->hints->ai_family == ALTCOM_AF_UNSPEC)
+        {
+          ai_family = htonl(get_addrfamily_by_registeredaddr());
+        }
+    }
 
   /* Allocate send and response command buffer */
 
@@ -126,6 +226,12 @@ static int32_t getaddrinfo_request(FAR struct getaddrinfo_req_s* req)
       cmd->hints_flag  = htonl(APICMD_GETADDRINFO_HINTS_FLAG_ENABLE);
       cmd->ai_flags    = htonl(req->hints->ai_flags);
       cmd->ai_family   = htonl(req->hints->ai_family);
+
+      if (req->hints->ai_family == ALTCOM_AF_UNSPEC)
+        {
+          cmd->ai_family = ai_family;
+        }
+
       cmd->ai_socktype = htonl(req->hints->ai_socktype);
       cmd->ai_protocol = htonl(req->hints->ai_protocol);
     }
@@ -273,7 +379,7 @@ int altcom_getaddrinfo(const char *nodename, const char *servname,
   int32_t                  result;
   struct getaddrinfo_req_s req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

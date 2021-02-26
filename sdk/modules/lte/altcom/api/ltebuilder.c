@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/ltebuilder.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,6 +82,7 @@
 #include "lte_getdynamicpsm.h"
 #include "lte_geterrinfo.h"
 #include "apicmdhdlr_select.h"
+#include "altcom_select_ext.h"
 #ifdef CONFIG_LTE_NET_MBEDTLS
 #include "apicmdhdlr_config_verify_callback.h"
 #endif
@@ -122,10 +123,19 @@ static struct buffpool_blockset_s g_blk_settings[] =
       32, 48
   },
   {
-     128,  4
+     128,  3
   },
   {
-     512,  6
+     512,  4
+  },
+  {
+     544,  1
+  },
+  {
+     688,  1
+  },
+  {
+    1344,  3
   },
   {
     2064,  1
@@ -596,7 +606,16 @@ static CODE int32_t lte_buildmain(FAR void *arg)
       goto errout_with_apicmdgw;
     }
 
+  ret = altcom_select_async_init();
+  if (ret < 0)
+    {
+      goto errout_with_callbacks;
+    }
+
   return 0;
+
+errout_with_callbacks:
+  altcomcallbacks_fin();
 
 errout_with_apicmdgw:
   (void)apicmdgw_uninitialize();
@@ -635,6 +654,13 @@ errout:
 static CODE int32_t lte_destroy(void)
 {
   int32_t ret;
+
+
+  ret = altcom_select_async_fin();
+  if (ret < 0)
+    {
+      return ret;
+    }
 
   ret = altcomcallbacks_fin();
   if (ret < 0)

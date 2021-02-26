@@ -422,6 +422,10 @@ typedef enum
 
   AS_MODULE_ID_OSCILLATOR_CMP,
 
+  /*! \brief Custom Component ID */
+
+  AS_MODULE_ID_CUSTOM_CMP,
+
   AS_MODULE_ID_NUM,
 } AsModuleId;
 

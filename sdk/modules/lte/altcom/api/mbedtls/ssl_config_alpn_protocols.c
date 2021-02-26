@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_config_alpn_protocols.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_config_alpn_protocols.h"
+#include "apicmd_config.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -51,6 +53,9 @@
 
 #define CONFIG_ALPN_PROTOCOLS_REQ_DATALEN (sizeof(struct apicmd_config_alpn_protocols_s))
 #define CONFIG_ALPN_PROTOCOLS_RES_DATALEN (sizeof(struct apicmd_config_alpn_protocolsres_s))
+#define CONFIG_ALPN_PROTOCOLS_REQ_DATALEN_V4 (APICMD_TLS_CONFIG_CMD_DATA_SIZE + \
+                                             sizeof(struct apicmd_config_alpn_protocols_v4_s))
+#define CONFIG_ALPN_PROTOCOLS_RES_DATALEN_V4 (APICMD_TLS_CONFIG_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -72,61 +77,153 @@ struct config_alpn_protocols_req_s
 
 static int32_t config_alpn_protocols_request(FAR struct config_alpn_protocols_req_s *req)
 {
-  int32_t                                      ret;
-  uint16_t                                     reslen = 0;
-  char                                         **p;
-  FAR struct apicmd_config_alpn_protocols_s    *cmd = NULL;
-  FAR struct apicmd_config_alpn_protocolsres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  char     **p;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = CONFIG_ALPN_PROTOCOLS_REQ_DATALEN;
+      resbuffsize = CONFIG_ALPN_PROTOCOLS_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = CONFIG_ALPN_PROTOCOLS_REQ_DATALEN_V4;
+      resbuffsize = CONFIG_ALPN_PROTOCOLS_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_SSL_ALLOC_FAILED;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_CONFIG_ALPN_PROTOCOLS,
-    CONFIG_ALPN_PROTOCOLS_REQ_DATALEN,
-    (FAR void **)&res, CONFIG_ALPN_PROTOCOLS_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_CONFIG_ALPN_PROTOCOLS),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_SSL_ALLOC_FAILED;
     }
 
   /* Fill the data */
 
-  cmd->conf = htonl(req->id);
-  p = req->protos;
-  memset(cmd->protos1, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
-  if (*p != NULL)
+  if (protocolver == APICMD_VER_V1)
     {
-      strncpy((char*)cmd->protos1, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
-      p++;
-    }
-  memset(cmd->protos2, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
-  if (*p != NULL)
-    {
-      strncpy((char*)cmd->protos2, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
-      p++;
-    }
-  memset(cmd->protos3, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
-  if (*p != NULL)
-    {
-      strncpy((char*)cmd->protos3, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
-      p++;
-    }
-  memset(cmd->protos4, 0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
-  if (*p != NULL)
-    {
-      strncpy((char*)cmd->protos4, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
-      p++;
-    }
+      ((FAR struct apicmd_config_alpn_protocols_s *)cmd)->conf =
+        htonl(req->id);
+      p = req->protos;
 
-  DBGIF_LOG1_DEBUG("[config_alpn_protocols]config id: %d\n", req->id);
-  DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos1: %s\n", cmd->protos1);
-  DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos2: %s\n", cmd->protos2);
-  DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos3: %s\n", cmd->protos3);
-  DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos4: %s\n", cmd->protos4);
+      memset(((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos1, 0,
+        APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_config_alpn_protocols_s *)
+            cmd)->protos1, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos2, 0,
+        APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_config_alpn_protocols_s *)
+            cmd)->protos2, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos3, 0,
+        APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_config_alpn_protocols_s *)
+            cmd)->protos3, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos4, 0,
+        APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_config_alpn_protocols_s *)
+            cmd)->protos4, *p, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]config id: %d\n", req->id);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos1: %s\n",
+        ((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos1);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos2: %s\n",
+        ((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos2);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos3: %s\n",
+        ((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos3);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos4: %s\n",
+        ((FAR struct apicmd_config_alpn_protocols_s *)cmd)->protos4);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_configcmd_s *)cmd)->conf = htonl(req->id);
+      p = req->protos;
+
+      ((FAR struct apicmd_configcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_CONFIG_ALPN_PROTOCOLS);
+      memset(((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos1,
+        0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_configcmd_s *)
+            cmd)->u.alpn_protocols.protos1, *p,
+            APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos2,
+        0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_configcmd_s *)
+            cmd)->u.alpn_protocols.protos2, *p,
+            APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos3,
+        0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_configcmd_s *)
+            cmd)->u.alpn_protocols.protos3, *p,
+            APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+      memset(((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos4,
+        0, APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN);
+      if (*p != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_configcmd_s *)
+            cmd)->u.alpn_protocols.protos4, *p,
+            APICMD_CONFIG_ALPN_PROTOCOLS_PROTOS_LEN-1);
+          p++;
+        }
+
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]config id: %d\n", req->id);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos1: %s\n",
+        ((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos1);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos2: %s\n",
+        ((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos2);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos3: %s\n",
+        ((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos3);
+      DBGIF_LOG1_DEBUG("[config_alpn_protocols]protos4: %s\n",
+        ((FAR struct apicmd_configcmd_s *)cmd)->u.alpn_protocols.protos4);
+    }
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      CONFIG_ALPN_PROTOCOLS_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -135,13 +232,21 @@ static int32_t config_alpn_protocols_request(FAR struct config_alpn_protocols_re
       goto errout_with_cmdfree;
     }
 
-  if (reslen != CONFIG_ALPN_PROTOCOLS_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(
+        ((FAR struct apicmd_config_alpn_protocolsres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_configcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[config_alpn_protocols res]ret: %d\n", ret);
 

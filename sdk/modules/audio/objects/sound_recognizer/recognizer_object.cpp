@@ -63,15 +63,6 @@ using namespace MemMgrLite;
  * Private Data
  ****************************************************************************/
 
-static MsgQueId s_self_dtq;
-static MsgQueId s_manager_dtq;
-static MsgQueId s_dsp_msgq_id;
-static PoolId   s_out_pool_id;
-static PoolId   s_dsp_pool_id;
-static pthread_t s_recognizer_pid;
-
-static RecognizerObject *s_rcg_obj = NULL;
-
 /****************************************************************************
  * Public Data
  ****************************************************************************/
@@ -87,7 +78,7 @@ static bool recognition_done_callback(ComponentCbParam *cmplt, void* p_requester
   result_param.result     = cmplt->result;
 
   err_t er = MsgLib::send<RecognizerObject::RecognitionDoneCmd>
-                                                (s_self_dtq,
+                                                (RecognizerObject::get_self(),
                                                  MsgPriNormal,
                                                  MSG_AUD_RCG_RCG_CMPLT,
                                                  NULL,
@@ -100,79 +91,30 @@ static bool recognition_done_callback(ComponentCbParam *cmplt, void* p_requester
 
 /*--------------------------------------------------------------------------*/
 RecognizerObject::MsgProc
-  RecognizerObject::MsgProcTbl[AUD_RCG_REQ_MSG_NUM][StateNum] =
+  RecognizerObject::MsgParamTbl[AUD_RCG_PRM_NUM][StateNum] =
 {
-  /* Message Type: MSG_AUD_RCG_ACT */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::activate,     /*   Booted.          */
-    &RecognizerObject::illegal,      /*   Ready.           */
-    &RecognizerObject::illegal,      /*   Active.          */
-    &RecognizerObject::illegal,      /*   Stopping.        */
-  },
-
-  /* Message Type: MSG_AUD_RCG_DEACT */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegal,      /*   Booted.          */
-    &RecognizerObject::deactivate,   /*   Ready.           */
-    &RecognizerObject::illegal,      /*   Active.          */
-    &RecognizerObject::illegal,      /*   Stopping.        */
-  },
-
-  /* Message Type: MSG_AUD_RCG_INIT */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegal,      /*   Booted.          */
-    &RecognizerObject::init,         /*   Ready.           */
-    &RecognizerObject::illegal,      /*   Active.          */
-    &RecognizerObject::illegal,      /*   Stopping.        */
-  },
-
-  /* Message Type: MSG_AUD_RCG_START */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegal,      /*   Booted.          */
-    &RecognizerObject::start,        /*   Ready.           */
-    &RecognizerObject::illegal,      /*   Active.          */
-    &RecognizerObject::illegal,      /*   Stopping.        */
-  },
-
-  /* Message Type: MSG_AUD_RCG_STOP */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegal,      /*   Booted.          */
-    &RecognizerObject::illegal,      /*   Ready.           */
-    &RecognizerObject::stop,         /*   Active.          */
-    &RecognizerObject::illegal,      /*   Stopping.        */
-  },
-
-  /* Message Type: MSG_AUD_RCG_EXEC */
-
-  {                                  /* Recognizer status: */
-    &RecognizerObject::illegalexec,  /*   Booted.          */
-    &RecognizerObject::illegalexec,  /*   Ready.           */
-    &RecognizerObject::exec,         /*   Active.          */
-    &RecognizerObject::illegalexec,  /*   Stopping.        */
-  },
-
   /* Message Type: MSG_AUD_RCG_INITRCGPROC */
-
   {                                  /* Recognizer status: */
     &RecognizerObject::illegal,      /*   Booted.          */
     &RecognizerObject::initRcgproc,  /*   Ready.           */
+    &RecognizerObject::illegal,      /*   PreActive.       */
     &RecognizerObject::illegal,      /*   Active.          */
     &RecognizerObject::illegal,      /*   Stopping.        */
+    &RecognizerObject::illegal,      /*   ErrorStopping.   */
+    &RecognizerObject::illegal,      /*   WaitStop.        */
   },
 
   /* Message Type: MSG_AUD_RCG_SETRCGPROC */
 
-  {                                  /* Recognizer status: */
+  {                                  /* MicFrontend status: */
     &RecognizerObject::illegal,      /*   Booted.          */
     &RecognizerObject::setRcgproc,   /*   Ready.           */
+    &RecognizerObject::illegal,      /*   PreActive.       */
     &RecognizerObject::setRcgproc,   /*   Active.          */
     &RecognizerObject::illegal,      /*   Stopping.        */
-  },
+    &RecognizerObject::setRcgproc,   /*   ErrorStopping.   */
+    &RecognizerObject::illegal,      /*   WaitStop.        */
+  }
 };
 
 /*--------------------------------------------------------------------------*/
@@ -184,8 +126,11 @@ RecognizerObject::MsgProc
   {                                              /* Recognizer status: */
     &RecognizerObject::illegalRecognizeDone,     /*   Booted.          */
     &RecognizerObject::recognizeDoneOnReady,     /*   Ready.           */
+    &RecognizerObject::illegalRecognizeDone,     /*   PreActive.       */
     &RecognizerObject::recognizeDoneOnActive,    /*   Active.          */
     &RecognizerObject::recognizeDoneOnStopping,  /*   Stopping.        */
+    &RecognizerObject::illegalRecognizeDone,     /*   ErrorStopping.   */
+    &RecognizerObject::illegalRecognizeDone,     /*   WaitStop.        */
   },
 };
 
@@ -215,7 +160,7 @@ void RecognizerObject::illegal(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::activate(MsgPacket *msg)
+void RecognizerObject::activateOnBooted(MsgPacket *msg)
 {
   RECOGNIZER_OBJ_DBG("ACT:\n");
 
@@ -228,7 +173,7 @@ void RecognizerObject::activate(MsgPacket *msg)
 
   /* Set state */
 
-  m_state = StateReady;
+  m_state = Ready;
 
   /* Reply */
 
@@ -236,7 +181,7 @@ void RecognizerObject::activate(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::deactivate(MsgPacket *msg)
+void RecognizerObject::deactivateOnReady(MsgPacket *msg)
 {
   RECOGNIZER_OBJ_DBG("DEACT:\n");
 
@@ -254,13 +199,13 @@ void RecognizerObject::deactivate(MsgPacket *msg)
       return;
     }
 
-  m_state = StateBooted;
+  m_state = Booted;
 
   reply(AsRecognizerEventDeact, msg->getType(), ret);
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::init(MsgPacket *msg)
+void RecognizerObject::initOnReady(MsgPacket *msg)
 {
   RECOGNIZER_OBJ_DBG("INIT:\n");
 
@@ -310,8 +255,8 @@ uint32_t RecognizerObject::loadComponent(AsRecognizerType type, char *dsp_path)
   switch (type)
     {
       case AsRecognizerTypeUserCustom:
-         m_p_rcgproc_instance = new UserCustomComponent(s_dsp_pool_id,
-                                                        s_dsp_msgq_id);
+         m_p_rcgproc_instance = new UserCustomComponent(m_pool_id.cmp,
+                                                        m_msgq_id.cmp);
          break;
 
       default:
@@ -381,7 +326,7 @@ uint32_t RecognizerObject::unloadComponent(void)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::start(MsgPacket *msg)
+void RecognizerObject::startOnReady(MsgPacket *msg)
 {
   RECOGNIZER_OBJ_DBG("START:\n");
 
@@ -389,7 +334,7 @@ void RecognizerObject::start(MsgPacket *msg)
 
   /* Initialize vad control parameters. */
 
-  m_state = StateActive;
+  m_state = Active;
 
   /* Reply */
 
@@ -397,7 +342,7 @@ void RecognizerObject::start(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::stop(MsgPacket *msg)
+void RecognizerObject::stopOnActive(MsgPacket *msg)
 {
   RECOGNIZER_OBJ_DBG("STOP:\n");
 
@@ -413,7 +358,7 @@ void RecognizerObject::stop(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != flush.output_mh.allocSeg(s_out_pool_id, VAD_IN_DATA_SIZE))
+  if (ERR_OK != flush.output.allocSeg(m_pool_id.output, VAD_IN_DATA_SIZE))
     {
       reply(AsRecognizerEventStop, msg->getType(), AS_ECODE_CHECK_MEMORY_POOL_ERROR);
       return;
@@ -427,7 +372,7 @@ void RecognizerObject::stop(MsgPacket *msg)
       return;
     }
 
-  m_state = StateStopping;
+  m_state = Stopping;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -449,8 +394,8 @@ void RecognizerObject::initRcgproc(MsgPacket *msg)
   InitComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = initparam.packet_addr;
-  param.packet.size = initparam.packet_size;
+  param.custom.addr = initparam.packet_addr;
+  param.custom.size = initparam.packet_size;
 
   /* Init recognition proc (Copy packet to MH internally, and wait return from DSP) */
 
@@ -482,8 +427,8 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
   SetComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = setparam.packet_addr;
-  param.packet.size = setparam.packet_size;
+  param.custom.addr = setparam.packet_addr;
+  param.custom.size = setparam.packet_size;
 
   /* Set recognition proc (Copy packet to MH internally.) */
 
@@ -497,7 +442,7 @@ void RecognizerObject::setRcgproc(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::exec(MsgPacket *msg)
+void RecognizerObject::execOnActive(MsgPacket *msg)
 {
   ExecComponentParam exec;
 
@@ -511,7 +456,7 @@ void RecognizerObject::exec(MsgPacket *msg)
 
   /* Allocate output buffer */
 
-  if (ERR_OK != exec.output_mh.allocSeg(s_out_pool_id, exec.input.size))
+  if (ERR_OK != exec.output.allocSeg(m_pool_id.output, exec.input.size))
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
       return;
@@ -527,7 +472,7 @@ void RecognizerObject::exec(MsgPacket *msg)
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::illegalexec(MsgPacket *msg)
+void RecognizerObject::ignore(MsgPacket *msg)
 {
   /* Ignore, dispose PCM data. */
 
@@ -651,7 +596,7 @@ void RecognizerObject::recognizeDoneOnStopping(MsgPacket *msg)
         {
           m_p_rcgproc_instance->recv_done();
 
-          m_state = StateReady;
+          m_state = Ready;
           reply(AsRecognizerEventStop, MSG_AUD_RCG_STOP, AS_ECODE_OK);
         }
         break;
@@ -694,7 +639,7 @@ bool RecognizerObject::notify(AsRecognitionInfo info)
           err_t er = MsgLib::send<AsRecognitionInfo>(m_notify_dest.msg.msgqid,
                                                      MsgPriNormal,
                                                      m_notify_dest.msg.msgtype,
-                                                     m_self_msgq_id,
+                                                     m_msgq_id.self,
                                                      info);
           F_ASSERT(er == ERR_OK);
         }
@@ -702,27 +647,25 @@ bool RecognizerObject::notify(AsRecognitionInfo info)
 
   return true;
 }
+/*--------------------------------------------------------------------------*/
+void RecognizerObject::parseResult(MsgPacket *msg)
+{
+  uint32_t event = MSG_GET_SUBTYPE(msg->getType());
+  F_ASSERT((event < AUD_RCG_RES_MSG_NUM));
+
+  (this->*RsltProcTbl[event][m_state.get()])(msg);
+}
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::parse(MsgPacket *msg)
+void RecognizerObject::set(MsgPacket *msg)
 {
   uint32_t event;
+  event = MSG_GET_PARAM(msg->getType());
+  F_ASSERT((event < AUD_RCG_PRM_NUM));
 
-  if (MSG_IS_REQUEST(msg->getType()) == 0)
-    {
-      event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_RCG_RES_MSG_NUM));
-
-      (this->*RsltProcTbl[event][m_state.get()])(msg);
-    }
-  else
-    {
-      event = MSG_GET_SUBTYPE(msg->getType());
-      F_ASSERT((event < AUD_RCG_REQ_MSG_NUM));
-
-      (this->*MsgProcTbl[event][m_state.get()])(msg);
-    }
+  (this->*MsgParamTbl[event][m_state.get()])(msg);
 }
+
 
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::reply(AsRecognizerEvent event, uint32_t command_id, uint32_t result)
@@ -739,12 +682,12 @@ void RecognizerObject::reply(AsRecognizerEvent event, uint32_t command_id, uint3
     {
       m_callback(&result_param);
     }
-  else if (m_parent_msgq_id != MSG_QUE_NULL)
+  else if (m_msgq_id.from != MSG_QUE_NULL)
     {
-      err_t er = MsgLib::send<RecognizerResult>(m_parent_msgq_id,
+      err_t er = MsgLib::send<RecognizerResult>(m_msgq_id.from,
                                                 MsgPriNormal,
                                                 MSG_TYPE_AUD_RES,
-                                                m_self_msgq_id,
+                                                m_msgq_id.self,
                                                 result_param);
       if (ERR_OK != er)
         {
@@ -757,70 +700,26 @@ void RecognizerObject::reply(AsRecognizerEvent event, uint32_t command_id, uint3
     }
 }
 
-/*--------------------------------------------------------------------------*/
-void RecognizerObject::run()
-{
-  err_t        err_code;
-  MsgQueBlock *que;
-  MsgPacket   *msg;
-
-  err_code = MsgLib::referMsgQueBlock(m_self_msgq_id, &que);
-  F_ASSERT(err_code == ERR_OK);
-
-  while (1)
-    {
-      err_code = que->recv(TIME_FOREVER, &msg);
-      F_ASSERT(err_code == ERR_OK);
-
-      parse(msg);
-
-      err_code = que->pop();
-      F_ASSERT(err_code == ERR_OK);
-    }
-}
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 FAR void AS_RecognizerObjEntry(FAR void *arg)
 {
-  RecognizerObject::create(s_self_dtq, s_manager_dtq);
+  RecognizerObject::create((AsObjectParams_t *)arg);
 }
 
 /*--------------------------------------------------------------------------*/
-bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param)
-{
-  return AS_CreateRecognizer(param, NULL);
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb attcb)
+bool AS_CreateRecognizer(AsObjectParams_t params, AudioAttentionCb attcb)
 {
   /* Register attention callback */
 
   RECOGNIZER_OBJ_REG_ATTCB(attcb);
 
-  /* Parameter check */
-
-  if (param == NULL)
-    {
-      RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      return false;
-    }
-
-  /* Create */
-
-  s_self_dtq    = param->msgq_id.recognizer;
-  s_manager_dtq = param->msgq_id.mng;
-  s_dsp_msgq_id = param->msgq_id.dsp;
-  s_out_pool_id = param->pool_id.out;
-  s_dsp_pool_id = param->pool_id.dsp;
-
   /* Reset Message queue. */
 
   FAR MsgQueBlock *que;
-  err_t err_code = MsgLib::referMsgQueBlock(s_self_dtq, &que);
+  err_t err_code = MsgLib::referMsgQueBlock(params.msgq_id.self, &que);
   F_ASSERT(err_code == ERR_OK);
   que->reset();
 
@@ -834,6 +733,8 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
 
   struct sched_param sch_param;
 
+  pthread_t pid;
+
   sch_param.sched_priority = 150;
   attr.stacksize           = 2048;
 
@@ -841,43 +742,59 @@ bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param, AudioAttentionCb 
 
   /* Create thread. */
 
-  int ret = pthread_create(&s_recognizer_pid,
+  int ret = pthread_create(&pid,
                            &attr,
                            (pthread_startroutine_t)AS_RecognizerObjEntry,
-                           (pthread_addr_t)NULL);
+                           (pthread_addr_t) &params);
+
   if (ret < 0)
     {
       RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
 
-  pthread_setname_np(s_recognizer_pid, "recognizer");
+  pthread_setname_np(pid, "recognizer");
+
+  RecognizerObject::set_pid(pid);
 
   return true;
 }
 
 /*--------------------------------------------------------------------------*/
+bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *rcg_param, AudioAttentionCb attcb)
+{
+  AsObjectParams_t params;
+
+  params.msgq_id.self   = rcg_param->msgq_id.recognizer;
+  params.msgq_id.from   = rcg_param->msgq_id.mng;
+  params.msgq_id.cmp    = rcg_param->msgq_id.dsp;
+  params.pool_id.output = rcg_param->pool_id.out;
+  params.pool_id.cmp    = rcg_param->pool_id.dsp;
+
+  return AS_CreateRecognizer(params, attcb);
+}
+
+/*--------------------------------------------------------------------------*/
+bool AS_CreateRecognizer(FAR AsCreateRecognizerParam_t *param)
+{
+  return AS_CreateRecognizer(param, NULL);
+}
+
+/*--------------------------------------------------------------------------*/
 bool AS_DeleteRecognizer(void)
 {
-  if (s_rcg_obj == NULL)
+  pid_t pid = RecognizerObject::get_pid();
+  RecognizerObject::destory();
+
+  if (pid == INVALID_PROCESS_ID)
     {
-      RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_TASK_CREATE_ERROR);
       return false;
     }
 
-  if (s_recognizer_pid == INVALID_PROCESS_ID)
-    {
-      RECOGNIZER_OBJ_ERR(AS_ATTENTION_SUB_CODE_RESOURCE_ERROR);
-      return false;
-    }
+  pthread_cancel(pid);
+  pthread_join(pid, NULL);
 
-  pthread_cancel(s_recognizer_pid);
-  pthread_join(s_recognizer_pid, NULL);
-
-  s_recognizer_pid = INVALID_PROCESS_ID;
-
-  delete s_rcg_obj;
-  s_rcg_obj = NULL;
+  pid = INVALID_PROCESS_ID;
 
   /* Unregister attention callback */
 
@@ -889,18 +806,18 @@ bool AS_DeleteRecognizer(void)
 /*--------------------------------------------------------------------------*/
 bool AS_checkAvailabilityRecognizer(void)
 {
-  return (s_rcg_obj != NULL);
+	printf("check %d\n",RecognizerObject::get_instance());
+  return (RecognizerObject::get_instance() != NULL);
 }
 
 /*--------------------------------------------------------------------------*/
-void RecognizerObject::create(MsgQueId msgq_id,
-                              MsgQueId manager_msg_id)
+void RecognizerObject::create(AsObjectParams_t* params)
 {
-  if (s_rcg_obj == NULL)
+	printf("create %d\n",RecognizerObject::get_instance());
+  RecognizerObject* inst = new(RecognizerObject::get_adr()) RecognizerObject(params->msgq_id,params->pool_id);
+  if (inst != NULL)
     {
-      s_rcg_obj = new RecognizerObject(msgq_id,
-                                       manager_msg_id);
-      s_rcg_obj->run();
+      inst->run();
     }
   else
     {

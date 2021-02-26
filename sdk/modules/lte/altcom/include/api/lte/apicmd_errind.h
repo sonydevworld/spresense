@@ -59,4 +59,15 @@ begin_packed_struct struct apicmd_cmddat_errind_s
   uint16_t chksum;
 } end_packed_struct;
 
+begin_packed_struct struct apicmd_cmddat_errind_v4_s
+{
+  uint8_t  ver;
+  uint8_t  seqid;
+  uint16_t cmdid;
+  uint16_t transid;
+  uint16_t dtlen;
+  uint16_t chksum;
+  uint16_t dtchksum;
+} end_packed_struct;
+
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_ERRIND_H */

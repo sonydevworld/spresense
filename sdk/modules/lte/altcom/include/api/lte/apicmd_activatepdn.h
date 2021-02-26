@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/include/api/lte/apicmd_activatepdn.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,12 @@ begin_packed_struct struct apicmd_cmddat_activatepdnres_s
 {
   uint8_t result;
   struct apicmd_pdnset_s pdnset;
+} end_packed_struct;
+
+begin_packed_struct struct apicmd_cmddat_activatepdnres_v4_s
+{
+  uint8_t result;
+  struct apicmd_pdnset_v4_s pdnset;
 } end_packed_struct;
 
 #endif /* __MODULES_LTE_ALTCOM_INCLUDE_API_LTE_APICMD_ACTIVATEPDN_H */

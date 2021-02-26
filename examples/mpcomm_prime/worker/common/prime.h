@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/audio/objects/audio_object_common.cpp
+ * mpcomm_prime/worker/common/prime.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,92 +33,30 @@
  *
  ****************************************************************************/
 
+#ifndef __PRIME_H
+#define __PRIME_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include "memutils/message/Message.h"
-#include "audio/audio_object_common_api.h"
-#include "audio/audio_message_types.h"
-#include "wien2_internal_packet.h"
-#include "wien2_common_defs.h"
-
-__USING_WIEN2
+#include <stdint.h>
 
 /****************************************************************************
- * Public Functions
+ * Public Types
  ****************************************************************************/
 
-/*--------------------------------------------------------------------------*/
-template <typename T>
-bool AS_ReceiveObjectReply(MsgQueId msgq_id,
-                           T *reply)
+typedef struct prime_data
 {
-  return AS_ReceiveObjectReply(msgq_id, TIME_FOREVER, reply);
-}
+  uint32_t start;
+  uint32_t end;
+  uint32_t result;
+} prime_data_t;
 
-bool AS_ReceiveObjectReply(MsgQueId msgq_id,
-                           AudioObjReply *reply)
-{
-  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, reply);
-}
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
 
-/*--------------------------------------------------------------------------*/
-template <typename T>
-bool AS_ReceiveObjectReply(MsgQueId msgq_id,
-                           uint32_t ms,
-                           T *reply)
-{
-  err_t           err_code;
-  FAR MsgQueBlock *que;
-  FAR MsgPacket   *msg;
+uint32_t find_primes(uint32_t start, uint32_t end);
 
-  if (reply == NULL)
-    {
-      return false;
-    }
-
-  /* Get an instance of the specified message ID. */
-
-  err_code = MsgLib::referMsgQueBlock(msgq_id, &que);
-  if (err_code != ERR_OK)
-    {
-      return false;
-    }
-
-  /* Waiting to receive a message. */
-
-  err_code = que->recv(ms, &msg);
-  if (err_code != ERR_OK)
-    {
-      return false;
-    }
-
-  if (msg->getType() != MSG_AUD_MGR_RST)
-    {
-      return false;
-    }
-
-  /* Store reply information. */
-
-  *reply = msg->moveParam<T>();
-
-  /* Delete received data. */
-
-  err_code = que->pop();
-  if (err_code != ERR_OK)
-    {
-      return false;
-    }
-
-  return true;
-}
-
-/*--------------------------------------------------------------------------*/
-bool AS_ReceiveObjectReply(MsgQueId msgq_id,
-                           uint32_t ms,
-                           AudioObjReply *reply)
-{
-  return AS_ReceiveObjectReply<AudioObjReply>(msgq_id, ms, reply);
-}
-
+#endif /* __PRIME_H */

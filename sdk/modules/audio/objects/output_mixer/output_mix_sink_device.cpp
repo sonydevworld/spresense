@@ -599,7 +599,7 @@ void OutputMixToHPI2S::input_data_on_ready(MsgPacket* msg)
   ExecComponentParam exec;
 
   exec.input     = input;
-  exec.output_mh = input.mh;
+  exec.output    = input.mh;
 
   if (!m_p_postfliter_instance->exec(exec))
     {
@@ -631,7 +631,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
   ExecComponentParam exec;
 
   exec.input     = input;
-  exec.output_mh = input.mh;
+  exec.output    = input.mh;
 
   if (!m_p_postfliter_instance->exec(exec))
     {
@@ -644,7 +644,7 @@ void OutputMixToHPI2S::input_data_on_active(MsgPacket* msg)
     {
       FlushComponentParam flush_param;
 
-      if (ERR_OK != flush_param.output_mh.allocSeg(m_pcm_pool_id, m_max_pcm_buff_size))
+      if (ERR_OK != flush_param.output.allocSeg(m_pcm_pool_id, m_max_pcm_buff_size))
         {
           OUTPUT_MIX_ERR(AS_ATTENTION_SUB_CODE_MEMHANDLE_ALLOC_ERROR);
         }
@@ -930,8 +930,8 @@ void OutputMixToHPI2S::init_postproc(MsgPacket* msg)
   InitComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = cmd.initpp_param.addr;
-  param.packet.size = cmd.initpp_param.size;
+  param.custom.addr = cmd.initpp_param.addr;
+  param.custom.size = cmd.initpp_param.size;
 
   /* Init Postproc (Copy packet to MH internally, and wait return from DSP) */
 
@@ -963,8 +963,8 @@ void OutputMixToHPI2S::set_postproc(MsgPacket *msg)
   SetComponentParam param;
 
   param.is_userdraw = true;
-  param.packet.addr = cmd.setpp_param.addr;
-  param.packet.size = cmd.setpp_param.size;
+  param.custom.addr = cmd.setpp_param.addr;
+  param.custom.size = cmd.setpp_param.size;
 
   /* Set Postproc (Copy packet to MH internally) */
 

@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/x509_crt_parse.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_x509_crt_parse.h"
+#include "apicmd_x509_crt.h"
 #include "apiutil.h"
 #include "mbedtls/x509_crt.h"
 
@@ -51,6 +53,9 @@
 
 #define X509_CRT_PARSE_REQ_DATALEN (sizeof(struct apicmd_x509_crt_parse_s))
 #define X509_CRT_PARSE_RES_DATALEN (sizeof(struct apicmd_x509_crt_parseres_s))
+#define X509_CRT_PARSE_REQ_DATALEN_V4 (APICMD_TLS_X509_CRT_CMD_DATA_SIZE + \
+                                      sizeof(struct apicmd_x509_crt_parse_v4_s))
+#define X509_CRT_PARSE_RES_DATALEN_V4 (APICMD_TLS_X509_CRT_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -73,25 +78,56 @@ struct x509_crt_parse_req_s
 
 static int32_t x509_crt_parse_request(FAR struct x509_crt_parse_req_s *req)
 {
-  int32_t                               ret;
-  uint16_t                              reslen = 0;
-  uint32_t                              buflen = 0;
-  FAR struct apicmd_x509_crt_parse_s    *cmd = NULL;
-  FAR struct apicmd_x509_crt_parseres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  uint32_t buflen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = X509_CRT_PARSE_REQ_DATALEN;
+      resbuffsize = X509_CRT_PARSE_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = X509_CRT_PARSE_REQ_DATALEN_V4;
+      resbuffsize = X509_CRT_PARSE_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_X509_CRT_PARSE,
-    X509_CRT_PARSE_REQ_DATALEN,
-    (FAR void **)&res, X509_CRT_PARSE_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_X509_CRT_PARSE),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_X509_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->chain = htonl(req->id);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_x509_crt_parse_s *)cmd)->chain = htonl(req->id);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_x509_crtcmd_s *)cmd)->crt = htonl(req->id);
+      ((FAR struct apicmd_x509_crtcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_X509_CRT_PARSE);
+    }
+
   if (req->buflen <= APICMD_X509_CRT_PARSE_BUF_LEN)
     {
       buflen = req->buflen;
@@ -100,16 +136,38 @@ static int32_t x509_crt_parse_request(FAR struct x509_crt_parse_req_s *req)
     {
       goto errout_with_cmdfree;
     }
-  memset(cmd->buf, '\0', APICMD_X509_CRT_PARSE_BUF_LEN);
-  if (req->buf != NULL)
+
+  if (protocolver == APICMD_VER_V1)
     {
-      memcpy(cmd->buf, req->buf, buflen);
+      memset(((FAR struct apicmd_x509_crt_parse_s *)cmd)->buf, '\0',
+        APICMD_X509_CRT_PARSE_BUF_LEN);
+      if (req->buf != NULL)
+        {
+          memcpy(((FAR struct apicmd_x509_crt_parse_s *)cmd)->buf, req->buf,
+            buflen);
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      ((FAR struct apicmd_x509_crt_parse_s *)cmd)->buflen = htonl(buflen);
     }
-  else
+  else if (protocolver == APICMD_VER_V4)
     {
-      goto errout_with_cmdfree;
+      memset(((FAR struct apicmd_x509_crtcmd_s *)cmd)->u.parse.buf, '\0',
+        APICMD_X509_CRT_PARSE_BUF_LEN);
+      if (req->buf != NULL)
+        {
+          memcpy(((FAR struct apicmd_x509_crtcmd_s *)cmd)->u.parse.buf,
+            req->buf, buflen);
+        }
+      else
+        {
+          goto errout_with_cmdfree;
+        }
+      ((FAR struct apicmd_x509_crtcmd_s *)cmd)->u.parse.buflen =
+        htonl(buflen);
     }
-  cmd->buflen = htonl(buflen);
 
   DBGIF_LOG1_DEBUG("[x509_crt_parse]ctx id: %d\n", req->id);
   DBGIF_LOG1_DEBUG("[x509_crt_parse]buflen: %d\n", buflen);
@@ -117,7 +175,7 @@ static int32_t x509_crt_parse_request(FAR struct x509_crt_parse_req_s *req)
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      X509_CRT_PARSE_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -126,13 +184,20 @@ static int32_t x509_crt_parse_request(FAR struct x509_crt_parse_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != X509_CRT_PARSE_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_x509_crt_parseres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_x509_crtcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[x509_crt_parse res]ret: %d\n", ret);
 

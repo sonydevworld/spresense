@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_setce.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -172,6 +172,7 @@ static int32_t lte_setce_impl(lte_ce_setting_t *settings,
   uint16_t                          resbufflen = RES_DATA_LEN;
   uint16_t                          reslen     = 0;
   int                               sync       = (callback == NULL);
+  uint16_t                          cmdid = 0;
 
   /* Check input parameter */
 
@@ -187,6 +188,12 @@ static int32_t lte_setce_impl(lte_ce_setting_t *settings,
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_CE);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -208,7 +215,7 @@ static int32_t lte_setce_impl(lte_ce_setting_t *settings,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setce_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_SET_CE, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -318,6 +325,7 @@ int32_t lte_set_ce(lte_ce_setting_t *settings,
 
 enum evthdlrc_e apicmdhdlr_setce(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_SET_CE),
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_SET_CE)),
     setce_job);
 }

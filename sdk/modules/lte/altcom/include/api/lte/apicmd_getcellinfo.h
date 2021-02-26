@@ -49,10 +49,9 @@
 
 /* This structure discribes the data structure of the API command */
 
-begin_packed_struct struct apicmd_cmddat_getcellinfores_s
+begin_packed_struct struct apicmd_cmddat_getcellinfores_v4_s
 {
-  uint8_t result;
-  struct apicmd_cmddat_cellinfo_s cellinfo;
+  struct apicmd_cmddat_cellinfo_v4_s cellinfo;
 } end_packed_struct;
 
 

@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_config_defaults.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +42,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_config_defaults.h"
+#include "apicmd_config.h"
 #include "apiutil.h"
 #include "mbedtls/ssl.h"
 
@@ -50,6 +52,9 @@
 
 #define CONFIG_DEFAULTS_REQ_DATALEN (sizeof(struct apicmd_config_defaults_s))
 #define CONFIG_DEFAULTS_RES_DATALEN (sizeof(struct apicmd_config_defaultsres_s))
+#define CONFIG_DEFAULTS_REQ_DATALEN_V4 (APICMD_TLS_CONFIG_CMD_DATA_SIZE + \
+                                       sizeof(struct apicmd_config_defaults_v4_s))
+#define CONFIG_DEFAULTS_RES_DATALEN_V4 (APICMD_TLS_CONFIG_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -73,27 +78,66 @@ struct config_defaults_req_s
 
 static int32_t config_defaults_request(FAR struct config_defaults_req_s *req)
 {
-  int32_t                                ret;
-  uint16_t                               reslen = 0;
-  FAR struct apicmd_config_defaults_s    *cmd = NULL;
-  FAR struct apicmd_config_defaultsres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = CONFIG_DEFAULTS_REQ_DATALEN;
+      resbuffsize = CONFIG_DEFAULTS_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = CONFIG_DEFAULTS_REQ_DATALEN_V4;
+      resbuffsize = CONFIG_DEFAULTS_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_SSL_ALLOC_FAILED;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_CONFIG_DEFAULTS,
-    CONFIG_DEFAULTS_REQ_DATALEN,
-    (FAR void **)&res, CONFIG_DEFAULTS_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_CONFIG_DEFAULTS),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_SSL_ALLOC_FAILED;
     }
 
   /* Fill the data */
 
-  cmd->conf = htonl(req->id);
-  cmd->endpoint = (int32_t) htonl(req->endpoint);
-  cmd->transport = (int32_t) htonl(req->transport);
-  cmd->preset = (int32_t) htonl(req->preset);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_config_defaults_s *)cmd)->conf = htonl(req->id);
+      ((FAR struct apicmd_config_defaults_s *)cmd)->endpoint =
+        (int32_t) htonl(req->endpoint);
+      ((FAR struct apicmd_config_defaults_s *)cmd)->transport =
+        (int32_t) htonl(req->transport);
+      ((FAR struct apicmd_config_defaults_s *)cmd)->preset =
+        (int32_t) htonl(req->preset);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_configcmd_s *)cmd)->conf = htonl(req->id);
+      ((FAR struct apicmd_configcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_CONFIG_DEFAULTS);
+      ((FAR struct apicmd_configcmd_s *)cmd)->u.defaults.endpoint =
+        (int32_t) htonl(req->endpoint);
+      ((FAR struct apicmd_configcmd_s *)cmd)->u.defaults.transport =
+        (int32_t) htonl(req->transport);
+      ((FAR struct apicmd_configcmd_s *)cmd)->u.defaults.preset =
+        (int32_t) htonl(req->preset);
+    }
 
   DBGIF_LOG1_DEBUG("[config_defaults]config id: %d\n", req->id);
   DBGIF_LOG1_DEBUG("[config_defaults]endpoint: %d\n", req->endpoint);
@@ -103,7 +147,7 @@ static int32_t config_defaults_request(FAR struct config_defaults_req_s *req)
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      CONFIG_DEFAULTS_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -112,13 +156,20 @@ static int32_t config_defaults_request(FAR struct config_defaults_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != CONFIG_DEFAULTS_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_config_defaultsres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_configcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[config_defaults res]ret: %d\n", ret);
 

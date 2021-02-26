@@ -243,7 +243,7 @@ int32_t altcomcallbacks_unreg_cb(int32_t id)
  *   id    Target callback function id.
  *
  * Returned Value:
- *   Pointer of Callback function. When not registered callbacke return NULL.
+ *   Pointer of Callback function. When not registered callbacks return NULL.
  *
  ****************************************************************************/
 

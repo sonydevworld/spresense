@@ -40,25 +40,18 @@
   --------------------------------------------------------------------*/
 uint32_t ThruProcComponent::init(const InitComponentParam& param)
 {
-  ApuReqData req;
-
-  m_req_que.push(req);
-
+  m_req_que.alloc();
   return AS_ECODE_OK;
 }
 
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::exec(const ExecComponentParam& param)
 {
-  ApuReqData req;
-
-  req.pcm       = param.input;
-
-  m_req_que.push(req);
+  m_req_que.alloc(param.input, param.input.mh);
 
   ComponentCbParam cbpram;
-
   cbpram.event_type = ComponentExec;
+  cbpram.result     = true;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -70,18 +63,14 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
 {
   AsPcmDataParam fls = { 0 };
 
-  fls.mh       = param.output_mh;
+  fls.mh       = param.output;
   fls.is_valid = true;
 
-  ApuReqData req;
-
-  req.pcm       = fls;
-
-  m_req_que.push(req);
+  m_req_que.alloc(fls);
 
   ComponentCbParam cbpram;
-
   cbpram.event_type = ComponentFlush;
+  cbpram.result     = true;
 
   m_callback(&cbpram, m_p_requester);
 
@@ -91,12 +80,10 @@ bool ThruProcComponent::flush(const FlushComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::set(const SetComponentParam& param)
 {
-  ApuReqData req;
-
-  m_req_que.push(req);
+  m_req_que.alloc();
 
   ComponentCbParam cbpram;
-
+  cbpram.result     = true;
   cbpram.event_type = ComponentSet;
 
   m_callback(&cbpram, m_p_requester);
@@ -107,12 +94,10 @@ bool ThruProcComponent::set(const SetComponentParam& param)
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::recv_done(ComponentCmpltParam *cmplt)
 {
-  cmplt->output = m_req_que.top().pcm;
+  cmplt->output = m_req_que.top_input();
   cmplt->result = true;
 
-  m_req_que.pop();
-
-  return true;
+  return m_req_que.free();
 }
 
 /*--------------------------------------------------------------------*/
@@ -120,18 +105,13 @@ bool ThruProcComponent::recv_done(ComponentInformParam *info)
 {
   memset(info, 0, sizeof(ComponentInformParam));
 
-  m_req_que.pop();
-
-  return true;
+  return m_req_que.free();
 }
-
 
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::recv_done(void)
 {
-  m_req_que.pop();
-
-  return true;
+  return m_req_que.free();
 }
 
 /*--------------------------------------------------------------------*/

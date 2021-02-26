@@ -1,0 +1,31 @@
+
+config EXAMPLES_AWSIOT_GNSSLOGGER
+	tristate "GNSS logger to AWS IoT"
+	default n
+	---help---
+		Sample application of publishing GNSS location to AWS IoT
+
+if EXAMPLES_AWSIOT_GNSSLOGGER
+
+config EXAMPLES_AWSIOT_GNSSLOGGER_PROGNAME
+	string "Program name"
+	default "awsiot_gnsslogger"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AWSIOT_GNSSLOGGER_PRIORITY
+	int "awsiot_gnsslogger task priority"
+	default 100
+
+config EXAMPLES_AWSIOT_GNSSLOGGER_STACKSIZE
+	int "awsiot_gnsslogger stack size"
+	default 8192
+
+config EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST
+	bool "Test publish and subscribe to/from AWS IoT Core"
+	default n
+	---help---
+		Simple test of publish and subscribe to/from AWS IoT Core.
+
+endif

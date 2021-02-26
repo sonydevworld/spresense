@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_operator.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,17 @@
 
 #define REQ_DATA_LEN (0)
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_getoperatorres_s))
+#define RES_DATA_LEN_V4 (sizeof(struct apicmd_cmddat_getoperatorres_v4_s))
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+union getopres_u
+{
+  struct apicmd_cmddat_getoperatorres_s res;
+  struct apicmd_cmddat_getoperatorres_v4_s res_v4;
+};
 
 /****************************************************************************
  * Private Functions
@@ -109,23 +120,41 @@ static void getoperator_job(FAR void *arg)
 {
   int32_t                                   ret;
   int32_t                                   result;
-  FAR struct apicmd_cmddat_getoperatorres_s *data;
   get_operator_cb_t                         callback;
-
-  data = (FAR struct apicmd_cmddat_getoperatorres_s *)arg;
+  int                                       protocolver = 0;
 
   ret = altcomcallbacks_get_unreg_cb(APICMDID_GET_OPERATOR,
     (void **)&callback);
 
   if ((ret == 0) && (callback))
     {
-      result = (int32_t)data->result;
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
+        {
+          FAR struct apicmd_cmddat_getoperatorres_s *data =
+            (FAR struct apicmd_cmddat_getoperatorres_s *)arg;
 
-      /* Fixed to include "\0" at the end of output string. */
+          result = (int32_t)data->result;
 
-      data->oper[LTE_OPERATOR_LEN - 1] = '\0';
+          /* Fixed to include "\0" at the end of output string. */
 
-      callback(result, (FAR int8_t *)data->oper);
+          data->oper[LTE_OPERATOR_LEN - 1] = '\0';
+
+          callback(result, (FAR int8_t *)data->oper);
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getoperatorres_v4_s *data =
+            (FAR struct apicmd_cmddat_getoperatorres_v4_s *)arg;
+
+          result = (int32_t)data->result;
+
+          /* Fixed to include "\0" at the end of output string. */
+
+          data->oper[LTE_OPERATOR_LEN - 1] = '\0';
+
+          callback(result, (FAR int8_t *)data->oper);
+        }
     }
   else
     {
@@ -170,10 +199,12 @@ static int32_t lte_getoperator_impl(int8_t *oper, get_operator_cb_t callback)
   int32_t                                ret;
   FAR uint8_t                           *reqbuff    = NULL;
   FAR uint8_t                           *presbuff   = NULL;
-  struct apicmd_cmddat_getoperatorres_s  resbuff;
-  uint16_t                               resbufflen = RES_DATA_LEN;
+  union getopres_u                       resbuff;
+  uint16_t                               resbufflen = 0;
   uint16_t                               reslen     = 0;
   int                                    sync       = (callback == NULL);
+  uint16_t                               cmdid = 0;
+  int                                    protocolver = 0;
 
   /* Check input parameter */
 
@@ -189,6 +220,26 @@ static int32_t lte_getoperator_impl(int8_t *oper, get_operator_cb_t callback)
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_GET_OPERATOR);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+      resbufflen = RES_DATA_LEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      resbufflen = RES_DATA_LEN_V4;
+    }
+  else
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -209,7 +260,7 @@ static int32_t lte_getoperator_impl(int8_t *oper, get_operator_cb_t callback)
 
   /* Allocate API command buffer to send */
 
-  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(APICMDID_GET_OPERATOR,
+  reqbuff = (FAR uint8_t *)apicmdgw_cmd_allocbuff(cmdid,
                                                   REQ_DATA_LEN);
   if (!reqbuff)
     {
@@ -233,12 +284,31 @@ static int32_t lte_getoperator_impl(int8_t *oper, get_operator_cb_t callback)
 
   if (sync)
     {
-      ret = (LTE_RESULT_OK == resbuff.result) ? 0 : -EPROTO;
-      if (0 == ret)
+      if (protocolver == APICMD_VER_V1)
         {
-          strncpy((FAR char *)oper,(FAR const char *) &resbuff.oper,
-                  LTE_OPERATOR_LEN);
-          oper[LTE_OPERATOR_LEN - 1] = '\0';
+          FAR struct apicmd_cmddat_getoperatorres_s *res =
+            (FAR struct apicmd_cmddat_getoperatorres_s *)presbuff;
+
+          ret = (LTE_RESULT_OK == res->result) ? 0 : -EPROTO;
+          if (0 == ret)
+            {
+              strncpy((FAR char *)oper, (FAR const char *)&res->oper,
+                LTE_OPERATOR_LEN);
+              oper[LTE_OPERATOR_LEN - 1] = '\0';
+            }
+        }
+      else if (protocolver == APICMD_VER_V4)
+        {
+          FAR struct apicmd_cmddat_getoperatorres_v4_s *res =
+            (FAR struct apicmd_cmddat_getoperatorres_v4_s *)presbuff;
+
+          ret = (LTE_RESULT_OK == res->result) ? 0 : -EPROTO;
+          if (0 == ret)
+            {
+              strncpy((FAR char *)oper, (FAR const char *)&res->oper,
+                LTE_OPERATOR_LEN);
+              oper[LTE_OPERATOR_LEN - 1] = '\0';
+            }
         }
     }
 
@@ -327,5 +397,6 @@ int32_t lte_get_operator(get_operator_cb_t callback)
 enum evthdlrc_e apicmdhdlr_operator(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_GET_OPERATOR), getoperator_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_GET_OPERATOR)),
+    getoperator_job);
 }

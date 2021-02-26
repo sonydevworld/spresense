@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_repevt.c
+ * modules/lte/altcom/api/lte/lte_repcellinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,8 +61,14 @@
 #define CELLINFO_PERIOD_MAX (4233600)
 
 /****************************************************************************
- * Private Data
+ * Private Type
  ****************************************************************************/
+
+struct cellinfo_helper_s
+{
+  lte_cellinfo_t info;
+  lte_neighbor_cell_t neighbors[LTE_NEIGHBOR_CELL_MAX];
+};
 
 /****************************************************************************
  * Private Functions
@@ -113,9 +119,9 @@ static int32_t repcellinfo_status_chg_cb(int32_t new_stat, int32_t old_stat)
 
 static void repcellinfo_job(FAR void *arg)
 {
-  FAR struct apicmd_cmddat_cellinfo_s *data;
   lte_cellinfo_t                      *repdat = NULL;
   cellinfo_report_cb_t                 callback;
+  int                                  protocolver = 0;
 
   callback = altcomcallbacks_get_cb(APICMDID_SET_REP_CELLINFO);
   if (!callback)
@@ -124,17 +130,44 @@ static void repcellinfo_job(FAR void *arg)
     }
   else
     {
-      data = (FAR struct apicmd_cmddat_cellinfo_s *)arg;
-
-      repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
-      if (!repdat)
+      protocolver = apicmdgw_get_protocolversion();
+      if (protocolver == APICMD_VER_V1)
         {
-          DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+          repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(sizeof(lte_cellinfo_t));
+          if (!repdat)
+            {
+              DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+            }
+          else
+            {
+              repdat->nr_neighbor = 0;
+              repdat->neighbors = NULL;
+
+              altcombs_set_cellinfo(
+                (FAR struct apicmd_cmddat_cellinfo_s *)arg, repdat);
+            }
         }
-      else
+      else if (protocolver == APICMD_VER_V4)
         {
-          altcombs_set_cellinfo(data, repdat);
+          repdat = (lte_cellinfo_t *)BUFFPOOL_ALLOC(
+            sizeof(struct cellinfo_helper_s));
+          if (!repdat)
+            {
+              DBGIF_LOG_DEBUG("report data buffer alloc error.\n");
+            }
+          else
+            {
+              repdat->nr_neighbor = LTE_NEIGHBOR_CELL_MAX;
+              repdat->neighbors =
+                ((FAR struct cellinfo_helper_s *)repdat)->neighbors;
 
+              altcombs_set_cellinfo_v4(
+                (FAR struct apicmd_cmddat_cellinfo_v4_s *)arg, repdat);
+            }
+        }
+
+      if (repdat)
+        {
           callback(repdat);
           (void)BUFFPOOL_FREE((FAR void *)repdat);
         }
@@ -177,6 +210,7 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
   uint16_t                                      resbufflen = RES_DATA_LEN;
   FAR struct apicmd_cmddat_setrepcellinfo_s     *reqbuff    = NULL;
   uint16_t                                      reslen     = 0;
+  uint16_t                                      cmdid = 0;
 
   /* Check input parameter */
 
@@ -197,6 +231,12 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_REP_CELLINFO);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
   /* Setup API callback */
 
   if (cellinfo_callback)
@@ -213,7 +253,7 @@ int32_t lte_set_report_cellinfo(cellinfo_report_cb_t cellinfo_callback,
    /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setrepcellinfo_s *)
-             apicmdgw_cmd_allocbuff(APICMDID_SET_REP_CELLINFO, REQ_DATA_LEN);
+             apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -278,5 +318,5 @@ errout:
 enum evthdlrc_e apicmdhdlr_repcellinfo(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_REPORT_CELLINFO, repcellinfo_job);
+    apicmdgw_get_cmdid(APICMDID_REPORT_CELLINFO), repcellinfo_job);
 }

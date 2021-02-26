@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/lte/lte_api.h
  *
- *   Copyright 2018, 2019, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,6 +87,10 @@
  *      restores the original data even if the data is corrupted 
  *      due to weak electric field communication.
  *
+ *  - RAT : Radio Access Technology
+ *
+ *      Physical connection method for a radio based communication network.
+ *
  * - LTE API system
  *  - Network connection API
  *
@@ -114,7 +118,7 @@
  *    - Blocks the task that called the API until 
  *      processing is completed on the modem.
  *
- *    - If the retrun value is -EPROTO, you can get the error code 
+ *    - If the return value is -EPROTO, you can get the error code
  *      with lte_get_errinfo.
  *
  *    - If the argument attribute is out, the argument must be allocated 
@@ -184,6 +188,9 @@
  * | @ref lte_get_current_psm_sync     | @ref lte_get_current_psm        |
  * | @ref lte_get_quality_sync         | @ref lte_get_quality            |
  * | @ref lte_get_cellinfo_sync        |                                 |
+ * | @ref lte_get_rat_sync             |                                 |
+ * | @ref lte_set_rat_sync             |                                 |
+ * | @ref lte_get_ratinfo_sync         |                                 |
  *
  * @{
  * @file  lte_api.h
@@ -515,6 +522,8 @@
 #define LTE_EDRX_CYC_65536   (11) /**< eDRX cycle:  655.36 sec */
 #define LTE_EDRX_CYC_131072  (12) /**< eDRX cycle: 1310.72 sec */
 #define LTE_EDRX_CYC_262144  (13) /**< eDRX cycle: 2621.44 sec */
+#define LTE_EDRX_CYC_524288  (14) /**< eDRX cycle: 5242.88 sec */
+#define LTE_EDRX_CYC_1048576 (15) /**< eDRX cycle: 10485.76 sec */
 #define LTE_EDRX_PTW_128      (0) /**< Paging time window:  1.28 sec */
 #define LTE_EDRX_PTW_256      (1) /**< Paging time window:  2.56 sec */
 #define LTE_EDRX_PTW_384      (2) /**< Paging time window:  3.84 sec */
@@ -531,6 +540,14 @@
 #define LTE_EDRX_PTW_1792    (13) /**< Paging time window: 17.92 sec */
 #define LTE_EDRX_PTW_1920    (14) /**< Paging time window: 19.20 sec */
 #define LTE_EDRX_PTW_2048    (15) /**< Paging time window: 20.48 sec */
+#define LTE_EDRX_PTW_2304    (16) /**< Paging time window: 23.04 sec */
+#define LTE_EDRX_PTW_2560    (17) /**< Paging time window: 25.60 sec */
+#define LTE_EDRX_PTW_2816    (18) /**< Paging time window: 28.16 sec */
+#define LTE_EDRX_PTW_3072    (19) /**< Paging time window: 30.72 sec */
+#define LTE_EDRX_PTW_3328    (20) /**< Paging time window: 33.28 sec */
+#define LTE_EDRX_PTW_3584    (21) /**< Paging time window: 35.84 sec */
+#define LTE_EDRX_PTW_3840    (22) /**< Paging time window: 38.40 sec */
+#define LTE_EDRX_PTW_4096    (23) /**< Paging time window: 40.96 sec */
 
 /** Unit of request active time(T3324): 2 sec */
 
@@ -586,7 +603,7 @@
 
 #define LTE_PSM_TIMEVAL_MIN        (0)
 
-/** The maxmum timer value used by PSM related timers */
+/** The maximum timer value used by PSM related timers */
 
 #define LTE_PSM_TIMEVAL_MAX        (31)
 
@@ -614,11 +631,11 @@
 #define LTE_DATA_DISALLOW        (0) /**< Data communication: Not allow */
 #define LTE_DATA_ALLOW           (1) /**< Data communication: Allow */
 
-/** Modem restert cause: User initiated */
+/** Modem restart cause: User initiated */
 
 #define LTE_RESTART_USER_INITIATED  (0)
 
-/** Modem restert cause: Modem initiated */
+/** Modem restart cause: Modem initiated */
 
 #define LTE_RESTART_MODEM_INITIATED (1)
 
@@ -680,6 +697,58 @@
 #define LTE_PHONENO_LEN  (41)  /**< Maximum length of phone number */
 #define LTE_IMEI_LEN     (16)  /**< Maximum length of IMEI */
 #define LTE_OPERATOR_LEN (17)  /**< Maximum length of network operator */
+
+/** Indicates that the global cell ID can be referenced */
+
+#define LTE_CELLINFO_OPT_GCID        (1 << 0)
+
+/** Indicates that the tracking area code can be referenced */
+
+#define LTE_CELLINFO_OPT_AREACODE    (1 << 1)
+
+/** Indicates that the sub frame number can be referenced */
+
+#define LTE_CELLINFO_OPT_SFN         (1 << 2)
+
+/** Indicates that the RSRP can be referenced */
+
+#define LTE_CELLINFO_OPT_RSRP        (1 << 3)
+
+/** Indicates that the RSRQ can be referenced */
+
+#define LTE_CELLINFO_OPT_RSRQ        (1 << 4)
+
+/** Indicates that the time difference index can be referenced */
+
+#define LTE_CELLINFO_OPT_TIMEDIFFIDX (1 << 5)
+
+/** Indicates that the timing advance can be referenced */
+
+#define LTE_CELLINFO_OPT_TA          (1 << 6)
+
+/** Indicates that the neighbor cell can be referenced */
+
+#define LTE_CELLINFO_OPT_NEIGHBOR    (1 << 7)
+
+#define LTE_NEIGHBOR_CELL_MAX (32) /**< Maximum number of neighbor cells */
+
+#define LTE_RAT_CATM  (2)     /**< RAT type: Cat-M */
+#define LTE_RAT_NBIOT (3)     /**< RAT type: NB-IoT */
+
+#define LTE_RAT_MODE_SINGLE   (0) /**< Modem only supports single RAT  */
+#define LTE_RAT_MODE_MULTIPLE (1) /**< Modem supports multiple RAT */
+
+/** RAT has not changed since the last modem boot. */
+
+#define LTE_RAT_SOURCE_DEFAULT (0)
+
+/** The current RAT was determined by host. */
+
+#define LTE_RAT_SOURCE_HOST    (1)
+
+/** The current RAT was determined by LWM2M. */
+
+#define LTE_RAT_SOURCE_LWM2M   (2)
 
 /****************************************************************************
  * Public Types
@@ -808,6 +877,54 @@ typedef struct lte_quality
 } lte_quality_t;
 
 /**
+ * @struct lte_neighbor_cell
+ *
+ * Definition of parameters for neighbor cell information.
+ * This is reported by cellinfo_report_cb_t
+ *
+ * @typedef lte_neighbor_cell_t
+ * See @ref lte_neighbor_cell
+ */
+
+typedef struct lte_neighbor_cell
+{
+  /** Indicates which parameters can be referenced.
+   *  Bit setting definition is as below.
+   *  - @ref LTE_CELLINFO_OPT_SFN
+   *  - @ref LTE_CELLINFO_OPT_RSRP
+   *  - @ref LTE_CELLINFO_OPT_RSRQ
+   */
+
+  uint8_t option;
+
+  /** Physical cell ID (1-503) */
+
+  uint32_t phycell_id;
+
+  /** EARFCN (1-262143) */
+
+  uint32_t earfcn;
+
+  /** Sub Frame Number (0-1023). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_SFN is set in option field.
+   */
+
+  uint16_t sfn;
+
+  /** RSRP in dBm (-140-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRP is set in option field.
+   */
+
+  int16_t rsrp;
+
+  /** RSRQ in dBm (-60-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRQ is set in option field.
+   */
+
+  int16_t rsrq;
+} lte_neighbor_cell_t;
+
+/**
  * @struct lte_cellinfo
  *
  * Definition of parameters for cell information.
@@ -825,15 +942,16 @@ typedef struct lte_cellinfo
    *
    *  Refer to the following parameters only when this flag
    *  is @ref LTE_VALID. This is because valid parameters can not be
-   *  acquired when RF function is OFF and so on */
+   *  acquired when RF function is OFF and so on
+   */
 
   bool     valid;
 
-  /** Physical cell ID (0-503) */
+  /** Physical cell ID (1-503) */
 
   uint32_t phycell_id;
 
-  /** EARFCN (0-262143) */
+  /** EARFCN (1-262143) */
 
   uint32_t earfcn;
 
@@ -848,6 +966,82 @@ typedef struct lte_cellinfo
   /** Mobile Network Code (00-999) */
 
   uint8_t  mnc[LTE_MNC_DIGIT_MAX];
+
+  /** Indicates which parameters can be referenced.
+   *  Bit setting definition is as below.
+   *  - @ref LTE_CELLINFO_OPT_GCID
+   *  - @ref LTE_CELLINFO_OPT_AREACODE
+   *  - @ref LTE_CELLINFO_OPT_SFN
+   *  - @ref LTE_CELLINFO_OPT_RSRP
+   *  - @ref LTE_CELLINFO_OPT_RSRQ
+   *  - @ref LTE_CELLINFO_OPT_TIMEDIFFIDX
+   *  - @ref LTE_CELLINFO_OPT_TA
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR
+   */
+
+  uint8_t option;
+
+  /** Global Cell ID. It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_GCID is set in option field.
+   */
+
+  uint32_t gcid;
+
+  /** Tracking Area Code (1-65535). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_AREACODE is set in option field.
+   */
+
+  uint16_t area_code;
+
+  /** Sub Frame Number (0-1023). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_SFN is set in option field.
+   */
+
+  uint16_t sfn;
+
+  /** RSRP in dBm (-140-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRP is set in option field.
+   */
+
+  int16_t rsrp;
+
+  /** RSRQ in dBm (-60-0). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_RSRQ is set in option field.
+   */
+
+  int16_t rsrq;
+
+  /** Time difference index (0-4095). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_TIMEDIFFIDX is set in option field.
+   */
+
+  uint16_t time_diffidx;
+
+  /** Timing Advance (0-1282). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_TA is set in option field.
+   */
+
+  uint16_t ta;
+
+  /** Number of neighbor cells (0-32). It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR is set in option field.
+   *
+   *  @attention When using lte_get_cellinfo_sync, need to specify the number
+   *             of neighbor cells to get. Then, prepare a memory area for
+   *             the specified number of neighbor cells and set it to
+   *             neighbors.
+   */
+
+  uint8_t nr_neighbor;
+
+  /** Pointer to neighbor cells. It can be referenced when
+   *  - @ref LTE_CELLINFO_OPT_NEIGHBOR is set in option field.
+   *
+   *  @attention When using the lte_get_cellinfo_sync, prepare a memory
+   *             area for the specified number of neighbor cells.
+   */
+
+  lte_neighbor_cell_t *neighbors;
 } lte_cellinfo_t;
 
 /**
@@ -1154,7 +1348,7 @@ typedef struct lte_reject_cause
   uint8_t category;
 
   /**
-   * Value of LTE newtwork reject cause.
+   * Value of LTE network reject cause.
    * Definition is See 3GPP TS 24.008 13.7.0
    */
 
@@ -1182,8 +1376,8 @@ typedef struct lte_nw_err_info
   uint8_t            err_type;
 
   /**
-   * LTE network attach request reject cause. It can be referneced when
-   *  - @ref LTE_NETERR_REJECT is ser in err_type field
+   * LTE network attach request reject cause. It can be referenced when
+   *  - @ref LTE_NETERR_REJECT is see in err_type field
    *  See @ref lte_reject_cause_t
    */
 
@@ -1217,7 +1411,7 @@ typedef struct lte_netinfo
   uint8_t           nw_stat;
 
   /**
-   * LTE network error information. It can be referneced when
+   * LTE network error information. It can be referenced when
    *  - @ref LTE_NETSTAT_REG_DENIED is set in nw_stat field.
    *  See @ref lte_nw_err_info_t
    */
@@ -1319,72 +1513,109 @@ typedef struct lte_siminfo
 
   uint32_t option;
 
-  /** Mobile Country Code (000-999). It can be referneced when
+  /** Mobile Country Code (000-999). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mcc[LTE_MCC_DIGIT];
 
-  /** Digit number of Mobile Network Code(2-3). It can be referneced when
+  /** Digit number of Mobile Network Code(2-3). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mnc_digit;
 
-  /** Mobile Network Code (00-999). It can be referneced when
+  /** Mobile Network Code (00-999). It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_MCCMNC is set in option field. */
 
   uint8_t  mnc[LTE_MNC_DIGIT_MAX];
 
-  /** Length of Service provider name. It can be referneced when
+  /** Length of Service provider name. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
 
   uint8_t  spn_len;
 
-  /** Service provider name. It can be referneced when
+  /** Service provider name. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_SPN is set in option field. */
 
   uint8_t  spn[LTE_SIMINFO_SPN_LEN];
 
-  /** Length of ICCID. It can be referneced when
+  /** Length of ICCID. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field. */
 
   uint8_t  iccid_len;
 
-  /** ICCID. It can be referneced when
+  /** ICCID. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_ICCID is set in option field.
    *  If the ICCID is 19 digits, "F" is set to the 20th digit. */
 
   uint8_t  iccid[LTE_SIMINFO_ICCID_LEN];
 
-  /** Length of IMSI. It can be referneced when
+  /** Length of IMSI. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
 
   uint8_t  imsi_len;
 
-  /** International Mobile Subscriber Identity. It can be referneced when
+  /** International Mobile Subscriber Identity. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_IMSI is set in option field. */
 
   uint8_t  imsi[LTE_SIMINFO_IMSI_LEN];
 
-  /** Length of GID1. It can be referneced when
+  /** Length of GID1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
 
   uint8_t  gid1_len;
 
-  /** Group Identifier Level 1. It can be referneced when
+  /** Group Identifier Level 1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID1 is set in option field. */
 
   uint8_t  gid1[LTE_SIMINFO_GID_LEN];
 
-  /** Length of GID2. It can be referneced when
+  /** Length of GID2. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
 
   uint8_t  gid2_len;
 
-  /** Group Identifier Level 1. It can be referneced when
+  /** Group Identifier Level 1. It can be referenced when
    *  - @ref LTE_SIMINFO_GETOPT_GID2 is set in option field. */
 
   uint8_t  gid2[LTE_SIMINFO_GID_LEN];
 } lte_siminfo_t;
+
+/**
+ * @struct lte_ratinfo
+ *
+ * Definition of parameters for RAT information.
+ *
+ * @typedef lte_ratinfo_t
+ * See @ref lte_ratinfo
+ */
+
+typedef struct lte_ratinfo
+{
+
+  /** RAT type. Definition is as below.
+   *  - @ref LTE_RAT_CATM
+   *  - @ref LTE_RAT_NBIOT
+   */
+
+  uint8_t rat; 
+
+  /** Flag that indicates whether the modem supports multiple RATs.
+   * Definition is as below.
+   *  - @ref LTE_ENABLE
+   *  - @ref LTE_DISABLE
+   */
+
+  bool multi_rat_support;
+
+  /** Source that determined the current RAT.
+   * Definition is as below.
+   *  - @ref LTE_RAT_SOURCE_DEFAULT
+   *  - @ref LTE_RAT_SOURCE_HOST
+   *  - @ref LTE_RAT_SOURCE_LWM2M
+   */
+
+  uint8_t source;
+} lte_ratinfo_t;
 
 /** Definition of callback function.
  *
@@ -2098,6 +2329,13 @@ int32_t lte_radio_off(radio_off_cb_t callback);
  * @param [out] info: The LTE network information.
  *                    See @ref lte_netinfo_t
  *
+ * @attention Immediately after successful PDN construction
+ *            using lte_activate_pdn_sync() or lte_activate_pdn(),
+ *            session information such as IP address
+ *            may not be acquired correctly.
+ *            If you want to use this API after successfully construction
+ *            the PDN, wait at least 1 second before executing it.
+ *            
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
@@ -2109,6 +2347,13 @@ int32_t lte_get_netinfo_sync(uint8_t pdn_num, lte_netinfo_t *info);
  *
  * @param [in] callback: Callback function to notify that
  *                       get network information completed.
+ *
+ * @attention Immediately after successful PDN construction
+ *            using lte_activate_pdn_sync() or lte_activate_pdn(),
+ *            session information such as IP address
+ *            may not be acquired correctly.
+ *            If you want to use this API after successfully construction
+ *            the PDN, wait at least 1 second before executing it.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
@@ -3065,6 +3310,8 @@ int32_t lte_get_quality(get_quality_cb_t callback);
 /**
  * Get LTE network cell information.
  *
+ * @attention This function is not supported yet.
+ *
  * @param [out] cellinfo: LTE network cell information.
  *                        See @ref lte_cellinfo_t
  *
@@ -3073,6 +3320,48 @@ int32_t lte_get_quality(get_quality_cb_t callback);
  */
 
 int32_t lte_get_cellinfo_sync(lte_cellinfo_t *cellinfo);
+
+/**
+ * @brief Get RAT type
+ *
+ * @return On success, RAT type shown below is returned.
+ *         - @ref LTE_RAT_CATM
+ *         - @ref LTE_RAT_NBIOT
+ * On failure, negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_rat_sync(void);
+
+/**
+ * @brief Set RAT setting
+ *
+ * @param [in] rat: RAT type. Definition is as below.
+ *                  - @ref LTE_RAT_CATM
+ *                  - @ref LTE_RAT_NBIOT
+ * @param [in] persistent: Flag to keep RAT settings
+ *                         after power off the modem.
+ *                         Definition is as below.
+ *                  - @ref LTE_ENABLE
+ *                  - @ref LTE_DISABLE
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_set_rat_sync(uint8_t rat, bool persistent);
+
+/**
+ * @brief Get RAT information
+ *
+ * @param [out] info: Pointer to the structure that
+ *                    stores RAT information
+ *                    See @ref lte_ratinfo_t.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int32_t lte_get_ratinfo_sync(lte_ratinfo_t *info);
 
 /** @} */
 

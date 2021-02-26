@@ -337,6 +337,12 @@ case "`uname -s`" in
         ;;
 esac
 
+# 32bit linux is not supported
+if [ "${OS}" == "linux" -a "`uname -m`" != "x86_64" ]; then
+	echo Sorry, this platform is not supported.
+	exit 1
+fi
+
 # Switch SPRROOT by platform
 if [ "${OS}" == "win" ]; then
 	SPRROOT=/opt/${SPRBASENAME}

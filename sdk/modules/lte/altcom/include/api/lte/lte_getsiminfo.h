@@ -50,7 +50,7 @@
  * Name: apicmdhdlr_getsiminfo
  *
  * Description:
- *   This function is an API command handler for get SIM infomation result.
+ *   This function is an API command handler for get SIM information result.
  *
  * Input Parameters:
  *  evt    Pointer to received event.

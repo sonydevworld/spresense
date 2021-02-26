@@ -190,7 +190,7 @@ struct altcom_hostent *altcom_gethostbyname(const char *name)
   uint32_t                     namelen = 0;
   static struct altcom_hostent s_hostent;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

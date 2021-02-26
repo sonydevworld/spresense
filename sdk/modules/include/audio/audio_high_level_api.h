@@ -206,9 +206,10 @@
 
 #define LENGTH_SET_THROUGH_PATH     4
 
-/*! \brief SetSpDrvMode command ("AUDCMD_SETSPDRVMODE)packet length */
+/*! \brief InitSpDrvMode command ("AUDCMD_INITSPDRVMODE)packet length */
 
-#define LENGTH_SETSPDRVMODE         2
+#define LENGTH_INITSPDRVMODE         2
+#define LENGTH_SETSPDRVMODE          LENGTH_INITSPDRVMODE /* old command name */
 
 /** @} */
 
@@ -463,13 +464,10 @@
 
 #define AS_ECODE_SET_RENDERINGCLK_ERROR          0x3A
 
-/*! \brief Parameter SetSpDrvMode Error */
+/*! \brief Parameter InitSpDrvMode Error */
 
-#define AS_ECODE_COMMAND_PARAM_SETSPDRVMODE      0x3B
-
-/*! \brief Set Speaker Driver Mode Error */
-
-#define AS_ECODE_SET_SPDRVMODE_ERROR             0x3C
+#define AS_ECODE_COMMAND_PARAM_INITSPDRVMODE      0x3B
+#define AS_ECODE_COMMAND_PARAM_SETSPDRVMODE       AS_ECODE_COMMAND_PARAM_INITSPDRVMODE
 
 /*! \brief Set Mic Map Error */
 
@@ -788,7 +786,7 @@ typedef struct
   uint8_t  reserved3;
 } SetRenderingClkParam;
 
-/** SetSpDrvMode Command (#AUDCMD_SETSPDRVMODE) parameter */
+/** InitSpDrvMode Command (#AUDCMD_INIRSPDRVMODE) parameter */
 
 typedef struct
 {
@@ -801,7 +799,9 @@ typedef struct
   uint8_t  reserved1;
   uint8_t  reserved2;
   uint8_t  reserved3;
-} SetSpDrvModeParam;
+} InitSpDrvModeParam;
+
+#define SetSpDrvModeParam InitSpDrvModeParam  /* old command name */
 
 /** SetRenderingClk Command (#AUDCMD_SETRENDERINGCLK) parameter */
 
@@ -1312,11 +1312,12 @@ typedef struct
 
     SetRenderingClkParam set_renderingclk_param;
 
-    /*! \brief [in] for SetSpDrvMode
-     * (header.command_code==#AUDCMD_SETSPDRVMODE)
+    /*! \brief [in] for InitSpDrvMode
+     * (header.command_code==#AUDCMD_INITSPDRVMODE)
      */
 
-    SetSpDrvModeParam set_sp_drv_mode;
+    InitSpDrvModeParam init_sp_drv_mode;
+    SetSpDrvModeParam  set_sp_drv_mode;
   };
 
 #ifdef __cplusplus

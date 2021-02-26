@@ -156,7 +156,7 @@ int altcom_socket(int domain, int type, int protocol)
   FAR struct altcom_socket_s *fsock;
   struct socket_req_s        req;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)

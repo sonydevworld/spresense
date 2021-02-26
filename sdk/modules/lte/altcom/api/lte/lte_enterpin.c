@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_enterpin.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -180,6 +180,7 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
   uint16_t                             reslen     = 0;
   int                                  sync       = (callback == NULL);
   uint8_t                              pinlen     = 0;
+  uint16_t                             cmdid = 0;
 
   /* Check input parameter */
 
@@ -218,6 +219,12 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
       return ret;
     }
 
+  cmdid = apicmdgw_get_cmdid(APICMDID_ENTER_PIN);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
+    }
+
   if (sync)
     {
       presbuff = (FAR uint8_t *)&resbuff;
@@ -237,7 +244,7 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_enterpin_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_ENTER_PIN, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -373,5 +380,6 @@ int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
 enum evthdlrc_e apicmdhdlr_enterpin(FAR uint8_t *evt, uint32_t evlen)
 {
   return apicmdhdlrbs_do_runjob(evt,
-    APICMDID_CONVERT_RES(APICMDID_ENTER_PIN), enterpin_job);
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_ENTER_PIN)),
+    enterpin_job);
 }

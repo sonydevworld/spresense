@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/mpi_init.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +79,13 @@ static int32_t mpi_init_request(FAR struct mpi_init_req_s *req)
   uint16_t                        reslen = 0;
   FAR struct apicmd_mpi_init_s    *cmd = NULL;
   FAR struct apicmd_mpi_initres_s *res = NULL;
+
+  /* Check ALTCOM protocol version */
+
+  if (apicmdgw_get_protocolversion() != APICMD_VER_V1)
+    {
+      return MPI_INIT_FAILURE;
+    }
 
   /* Allocate send and response command buffer */
 

@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/lte/altcom/api/lte/lte_geterrno.c
+ * modules/lte/altcom/api/lte/lte_geterrinfo.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,7 +53,7 @@
  * Name: activatepdn_job
  *
  * Description:
- *   This function is notification the api error infomation.
+ *   This function is notification the api error information.
  *
  * Input Parameters:
  *  arg    Pointer to received event.
@@ -154,7 +154,7 @@ int32_t lte_get_errinfo(lte_errinfo_t *info)
 
 enum evthdlrc_e apicmdhdlr_errinfo(FAR uint8_t *evt, uint32_t evlen)
 {
-  if (apicmdgw_cmdid_compare(evt, APICMDID_ERRINFO))
+  if (apicmdgw_cmdid_compare(evt, apicmdgw_get_cmdid(APICMDID_ERRINFO)))
     {
       errinfo_job(evt);
       return EVTHDLRC_STARTHANDLE;

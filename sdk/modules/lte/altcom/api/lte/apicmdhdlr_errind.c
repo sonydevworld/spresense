@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/apicmdhdlr_errind.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,22 +65,43 @@
 
 static void errindication_job(FAR void *arg)
 {
-  FAR struct apicmd_cmddat_errind_s *data;
+  int protocolver = 0;
 
-  data = (FAR struct apicmd_cmddat_errind_s *)arg;
+  protocolver = apicmdgw_get_protocolversion();
+  if (protocolver == APICMD_VER_V1)
+    {
+       FAR struct apicmd_cmddat_errind_s *data =
+        (FAR struct apicmd_cmddat_errind_s *)arg;
 
-  DBGIF_LOG_ERROR("Receive err indication.\n");
-  DBGIF_LOG1_ERROR("version       :%02x\n", data->ver);
-  DBGIF_LOG1_ERROR("sequence id   :%02x\n", data->seqid);
-  DBGIF_LOG1_ERROR("command id    :%04x\n", ntohs(data->cmdid));
-  DBGIF_LOG1_ERROR("transaction id:%04x\n", ntohs(data->transid));
-  DBGIF_LOG1_ERROR("data length   :%04x\n", ntohs(data->dtlen));
+      DBGIF_LOG_ERROR("Receive err indication.\n");
+      DBGIF_LOG1_ERROR("version        :%02x\n", data->ver);
+      DBGIF_LOG1_ERROR("sequence id    :%02x\n", data->seqid);
+      DBGIF_LOG1_ERROR("command id     :%04x\n", ntohs(data->cmdid));
+      DBGIF_LOG1_ERROR("transaction id :%04x\n", ntohs(data->transid));
+      DBGIF_LOG1_ERROR("data length    :%04x\n", ntohs(data->dtlen));
+      DBGIF_LOG1_ERROR("option         :%04x\n", ntohs(data->options));
+      DBGIF_LOG1_ERROR("header checksum:%04x\n", ntohs(data->chksum));
+    }
+  else
+    {
+       FAR struct apicmd_cmddat_errind_v4_s *data =
+        (FAR struct apicmd_cmddat_errind_v4_s *)arg;
+
+      DBGIF_LOG_ERROR("Receive err indication.\n");
+      DBGIF_LOG1_ERROR("version        :%02x\n", data->ver);
+      DBGIF_LOG1_ERROR("sequence id    :%02x\n", data->seqid);
+      DBGIF_LOG1_ERROR("command id     :%04x\n", ntohs(data->cmdid));
+      DBGIF_LOG1_ERROR("transaction id :%04x\n", ntohs(data->transid));
+      DBGIF_LOG1_ERROR("data length    :%04x\n", ntohs(data->dtlen));
+      DBGIF_LOG1_ERROR("header checksum:%04x\n", ntohs(data->chksum));
+      DBGIF_LOG1_ERROR("data checksum  :%04x\n", ntohs(data->dtchksum));
+    }
 
   /* In order to reduce the number of copies of the receive buffer,
    * bring a pointer to the receive buffer to the worker thread.
    * Therefore, the receive buffer needs to be released here. */
 
-  altcom_free_cmd((FAR uint8_t *)data);
+  altcom_free_cmd((FAR uint8_t *)arg);
 }
 
 /****************************************************************************

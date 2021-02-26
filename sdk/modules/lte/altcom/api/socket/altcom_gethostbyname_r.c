@@ -257,7 +257,7 @@ int altcom_gethostbyname_r(const char *name, struct altcom_hostent *ret,
   int32_t namelen = 0;
   int32_t retval;
 
-  /* Check Lte library status */
+  /* Check LTE library status */
 
   status = altcombs_check_poweron_status();
   if (0 > status)

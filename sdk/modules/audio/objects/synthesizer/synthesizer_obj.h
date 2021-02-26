@@ -49,6 +49,8 @@
 #include "components/oscillator/oscillator_component.h"
 #include "audio_state.h"
 
+#include "../object_base.h"
+
 __WIEN2_BEGIN_NAMESPACE
 
 /****************************************************************************
@@ -84,17 +86,25 @@ typedef union
  * Public Types
  ****************************************************************************/
 
-class SynthesizerObject
+class SynthesizerObject:ObjectBase
 {
 public:
-  static SynthesizerObject *create(AsSynthesizerMsgQueId_t msgq_id,
-                                   AsSynthesizerPoolId_t   pool_id);
+  static void create(AsObjectParams_t*);
+  static void destory() { get_instance()->m_is_created = false; }
+
+  static SynthesizerObject *get_adr(void)
+  {
+    static SynthesizerObject  s_inst;
+    return &s_inst;
+  }
 
   static SynthesizerObject *get_instance(void)
   {
-    static SynthesizerObject  sng_ogj;
-
-    return &sng_ogj;
+    SynthesizerObject* s_inst = get_adr();
+    if(s_inst->m_is_created){
+      return s_inst;
+    }
+    return 0;
   }
 
   static pthread_t get_pid(void)
@@ -107,11 +117,9 @@ public:
     get_instance()->m_pid = id;
   }
 
-  void run(void);
-
   err_t send(MsgType type, const SynthesizerCommand& param)
   {
-    return MsgLib::send<SynthesizerCommand>(m_msgq_id.synthesizer,
+    return MsgLib::send<SynthesizerCommand>(m_msgq_id.self,
                                             MsgPriNormal,
                                             type,
                                             NULL,
@@ -119,31 +127,23 @@ public:
   }
 
 private:
+
   SynthesizerObject(void)
-    : m_state(AS_MODULE_ID_SYNTHESIZER_OBJ, "", SynthsizerStateBooted)
+    : ObjectBase()
     , m_bit_length(AS_BITLENGTH_16)
-    , m_pid(INVALID_PROCESS_ID)
     , m_stock_event(AsSynthesizerEventNum)
-    , m_oscillator(0, NullPoolId)
+    , m_oscillator(NullPoolId, 0) {}
+
+  SynthesizerObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+    : ObjectBase(AS_MODULE_ID_SYNTHESIZER_OBJ, msgq_id,pool_id)
+    , m_bit_length(AS_BITLENGTH_16)
+    , m_stock_event(AsSynthesizerEventNum)
+    , m_oscillator(pool_id.cmp, 0)
   {
     memset(m_dsp_path, 0, AS_AUDIO_DSP_PATH_LEN);
   }
 
-  enum SynthesizerState_e
-  {
-    SynthsizerStateBooted = 0,
-    SynthsizerStateReady,
-    SynthsizerStatePreActive,
-    SynthsizerStateActive,
-    SynthsizerStateStopping,
-    SynthsizerStateErrorStopping,
-    SynthsizerStateWaitStop,
-    SynthsizerStateNum
-  };
 
-  AsSynthesizerMsgQueId_t        m_msgq_id;
-  AsSynthesizerPoolId_t          m_pool_id;
-  AudioState<SynthesizerState_e> m_state;
   OscllicatorComponentHandler    m_osc_hdlr;
   SynthesizerCallback            m_callback;
   void                          *m_param;
@@ -152,34 +152,37 @@ private:
   uint32_t                       m_sample_size;
   uint32_t                       m_pcm_buff_size;
   char                           m_dsp_path[AS_AUDIO_DSP_PATH_LEN];
-  pthread_t                      m_pid;
   AsSynthesizerEvent             m_stock_event;
   AsSynthesizerDataPath          m_data_path;
   AsSynthesizerDataDest          m_dest;
 
   typedef void (SynthesizerObject::*MsgProc)(MsgPacket*);
 
-  static  MsgProc MsgProcTbl[AUD_SYN_MSG_NUM][SynthsizerStateNum];
-  static  MsgProc MsgResultTbl[AUD_SYN_RST_MSG_NUM][SynthsizerStateNum];
+  static  MsgProc MsgResultTbl[AUD_SYN_RST_MSG_NUM][StateNum];
 
   void reply(AsSynthesizerEvent evtype,
              MsgType            msg_type,
              uint32_t           result);
 
-  void parse(MsgPacket *);
+  void parseResult(MsgPacket *);
 
-  void illegalEvt(MsgPacket *);
-  void activate(MsgPacket *);
-  void deactivate(MsgPacket *);
-
-  void init(MsgPacket *);
-  void execOnReady(MsgPacket *);
-  void stopOnExec(MsgPacket *);
+  void illegal(MsgPacket *);
+	
+  void activateOnBooted(MsgPacket *);
+  void deactivateOnReady(MsgPacket *);
+  void initOnReady(MsgPacket *);
+  void startOnReady(MsgPacket *);
+  void stopOnActive(MsgPacket *);
+  void stopOnErrorStopping(MsgPacket *);
   void stopOnWait(MsgPacket *);
+  void setOnReady(MsgPacket *msg) { set(msg); }
+  void setOnPreActive(MsgPacket *msg) { set(msg); }
+  void setOnActive(MsgPacket *msg) { set(msg); }
+  void setOnErrorStopping(MsgPacket *msg) { cmpDoneOnSet(msg); }
+
   void set(MsgPacket *);
 
   void illegalCompDone(MsgPacket *);
-  void stopOnErrorStop(MsgPacket *);
   void cmpDoneOnErrorStop(MsgPacket *);
 
   void nextReqOnExec(MsgPacket *msg);

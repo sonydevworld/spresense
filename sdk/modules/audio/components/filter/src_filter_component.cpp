@@ -189,10 +189,10 @@ uint32_t SRCComponent::init(const InitComponentParam& param)
 
   FILTER_DBG("INIT SRC: sample num %d, fs <in %d/out %d>, "
              "byte len <in %d/out %d>, ch num %d\n",
-             param.fixparam.samples, param.fixparam.in_fs,
-             param.fixparam.out_fs,
-             param.fixparam.in_bitlength,
-             param.fixparam.out_bitlength, param.fixparam.ch_num);
+             param.common.samples, param.common.in_fs,
+             param.common.out_fs,
+             param.common.in_bitlength,
+             param.common.out_bitlength, param.common.ch_num);
 
   if (p_apu_cmd == NULL)
     {
@@ -204,16 +204,16 @@ uint32_t SRCComponent::init(const InitComponentParam& param)
   p_apu_cmd->header.event_type   = Apu::InitEvent;
 
   p_apu_cmd->init_filter_cmd.filter_type = Apu::SRC;
-  p_apu_cmd->init_filter_cmd.channel_num = param.fixparam.ch_num;
-  p_apu_cmd->init_filter_cmd.sample      = param.fixparam.samples;
+  p_apu_cmd->init_filter_cmd.channel_num = param.common.ch_num;
+  p_apu_cmd->init_filter_cmd.sample      = param.common.samples;
 
   /* cut_off, attenuation parameter is set to recommended value of SRC library */
 
   p_apu_cmd->init_filter_cmd.init_src_param.input_sampling_rate  =
-    param.fixparam.in_fs;
+    param.common.in_fs;
 
   p_apu_cmd->init_filter_cmd.init_src_param.output_sampling_rate =
-    param.fixparam.out_fs;
+    param.common.out_fs;
 
   p_apu_cmd->init_filter_cmd.init_src_param.cut_off =
     SRC_CUT_OFF;
@@ -222,10 +222,10 @@ uint32_t SRCComponent::init(const InitComponentParam& param)
     SRC_ATTENUATION;
 
   p_apu_cmd->init_filter_cmd.init_src_param.in_word_len =
-    param.fixparam.in_bitlength / 8 /* bit -> byte */;
+    param.common.in_bitlength / 8 /* bit -> byte */;
 
   p_apu_cmd->init_filter_cmd.init_src_param.out_word_len =
-    param.fixparam.out_bitlength / 8 /* bit -> byte */;
+    param.common.out_bitlength / 8 /* bit -> byte */;
 
   p_apu_cmd->init_filter_cmd.debug_dump_info.addr = NULL;
   p_apu_cmd->init_filter_cmd.debug_dump_info.size = 0;
@@ -314,7 +314,7 @@ bool SRCComponent::exec(const ExecComponentParam& param)
     }
 
   reqdata.input     = param.input;
-  reqdata.output_mh = param.output_mh;
+  reqdata.output_mh = param.output;
 
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(reqdata.cmd_mh.getPa());
@@ -328,7 +328,7 @@ bool SRCComponent::exec(const ExecComponentParam& param)
   /* Filter data area check */
 
   if ((param.input.mh.getPa() == NULL)
-   || (param.output_mh.getPa() == NULL))
+   || (param.output.getPa() == NULL))
     {
       FILTER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
       return false;
@@ -346,9 +346,9 @@ bool SRCComponent::exec(const ExecComponentParam& param)
   p_apu_cmd->exec_filter_cmd.input_buffer.p_buffer  =
     static_cast<unsigned long *>(param.input.mh.getPa());
   p_apu_cmd->exec_filter_cmd.output_buffer.size     =
-    param.output_mh.getSize();
+    param.output.getSize();
   p_apu_cmd->exec_filter_cmd.output_buffer.p_buffer =
-    static_cast<unsigned long *>(param.output_mh.getPa());
+    static_cast<unsigned long *>(param.output.getPa());
 
   send_apu(p_apu_cmd);
 
@@ -384,7 +384,7 @@ bool SRCComponent::flush(const FlushComponentParam& param)
       return false;
     }
 
-  reqdata.output_mh = param.output_mh;
+  reqdata.output_mh = param.output;
 
   Apu::Wien2ApuCmd* p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(reqdata.cmd_mh.getPa());
@@ -403,9 +403,9 @@ bool SRCComponent::flush(const FlushComponentParam& param)
 
   p_apu_cmd->flush_filter_cmd.filter_type = Apu::SRC;
   p_apu_cmd->flush_filter_cmd.flush_src_cmd.output_buffer.size =
-    param.output_mh.getSize();
+    param.output.getSize();
   p_apu_cmd->flush_filter_cmd.flush_src_cmd.output_buffer.p_buffer =
-    static_cast<unsigned long *>(param.output_mh.getPa());
+    static_cast<unsigned long *>(param.output.getPa());
 
   send_apu(p_apu_cmd);
 

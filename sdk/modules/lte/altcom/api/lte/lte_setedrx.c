@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/altcom/api/lte/lte_setedrx.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,10 +58,6 @@
 
 #define REQ_DATA_LEN (sizeof(struct apicmd_cmddat_setedrx_s))
 #define RES_DATA_LEN (sizeof(struct apicmd_cmddat_setedrxres_s))
-#define SETEDRX_CYC_MIN  LTE_EDRX_CYC_512
-#define SETEDRX_CYC_MAX  LTE_EDRX_CYC_262144
-#define SETEDRX_PTW_MIN  LTE_EDRX_PTW_128
-#define SETEDRX_PTW_MAX  LTE_EDRX_PTW_2048
 
 /****************************************************************************
  * Private Functions
@@ -177,15 +173,7 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
   uint16_t                            resbufflen = RES_DATA_LEN;
   uint16_t                            reslen     = 0;
   int                                 sync       = (callback == NULL);
-
-  const uint8_t edrx_act_type_table[] =
-    {
-      APICMD_EDRX_ACTTYPE_WBS1,
-      APICMD_EDRX_ACTTYPE_NBS1,
-      APICMD_EDRX_ACTTYPE_ECGSMIOT,
-      APICMD_EDRX_ACTTYPE_GSM,
-      APICMD_EDRX_ACTTYPE_IU,
-    };
+  uint16_t                            cmdid = 0;
 
   /* Check input parameter */
 
@@ -195,33 +183,18 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
       return -EINVAL;
     }
 
-  if (settings->enable)
-    {
-      if (LTE_EDRX_ACTTYPE_IU < settings->act_type)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. act_type:%d\n", settings->act_type);
-          return -EINVAL;
-        }
-
-      if (SETEDRX_CYC_MAX < settings->edrx_cycle)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. edrx_cycle:%d\n", settings->edrx_cycle);
-          return -EINVAL;
-        }
-
-      if (SETEDRX_PTW_MAX < settings->ptw_val)
-        {
-          DBGIF_LOG1_ERROR("Invalid argument. ptw_val:%d\n", settings->ptw_val);
-          return -EINVAL;
-        }
-    }
-
   /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
     {
       return ret;
+    }
+
+  cmdid = apicmdgw_get_cmdid(APICMDID_SET_EDRX);
+  if (cmdid == APICMDID_UNKNOWN)
+    {
+      return -ENETDOWN;
     }
 
   if (sync)
@@ -243,7 +216,7 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
   /* Allocate API command buffer to send */
 
   reqbuff = (FAR struct apicmd_cmddat_setedrx_s *)
-              apicmdgw_cmd_allocbuff(APICMDID_SET_EDRX, REQ_DATA_LEN);
+              apicmdgw_cmd_allocbuff(cmdid, REQ_DATA_LEN);
   if (!reqbuff)
     {
       DBGIF_LOG_ERROR("Failed to allocate command buffer.\n");
@@ -251,10 +224,14 @@ static int32_t lte_setedrx_impl(lte_edrx_setting_t *settings,
       goto errout;
     }
 
-  reqbuff->acttype    = edrx_act_type_table[settings->act_type];
-  reqbuff->enable     = settings->enable;
-  reqbuff->edrx_cycle = settings->edrx_cycle;
-  reqbuff->ptw_val    = settings->ptw_val;
+  /* Convert and set the eDRX value. */
+
+  ret = altcombs_convert_api_edrx_value(settings, reqbuff);
+  if (0 > ret)
+    {
+      DBGIF_LOG1_ERROR("altcombs_convert_api_edrx_value(): %d\n", ret);
+      goto errout;
+    }
 
   /* Send API command to modem */
 
@@ -355,6 +332,7 @@ int32_t lte_set_edrx(lte_edrx_setting_t *settings,
 
 enum evthdlrc_e apicmdhdlr_setedrx(FAR uint8_t *evt, uint32_t evlen)
 {
-  return apicmdhdlrbs_do_runjob(evt, APICMDID_CONVERT_RES(APICMDID_SET_EDRX),
+  return apicmdhdlrbs_do_runjob(evt,
+    APICMDID_CONVERT_RES(apicmdgw_get_cmdid(APICMDID_SET_EDRX)),
     setedrx_job);
 }

@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/pk_setup.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +43,7 @@
 #include "altcom_errno.h"
 #include "altcom_seterrno.h"
 #include "apicmd_pk_setup.h"
+#include "apicmd_pk.h"
 #include "apiutil.h"
 #include "mbedtls/pk.h"
 #include "mbedtls/pk_internal.h"
@@ -52,6 +54,9 @@
 
 #define PK_SETUP_REQ_DATALEN (sizeof(struct apicmd_pk_setup_s))
 #define PK_SETUP_RES_DATALEN (sizeof(struct apicmd_pk_setupres_s))
+#define PK_SETUP_REQ_DATALEN_V4 (APICMD_TLS_PK_CMD_DATA_SIZE + \
+                                sizeof(struct apicmd_pk_setup_v4_s))
+#define PK_SETUP_RES_DATALEN_V4 (APICMD_TLS_PK_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -73,25 +78,56 @@ struct pk_setup_req_s
 
 static int32_t pk_setup_request(FAR struct pk_setup_req_s *req)
 {
-  int32_t                         ret;
-  uint16_t                        reslen = 0;
-  FAR struct apicmd_pk_setup_s    *cmd = NULL;
-  FAR struct apicmd_pk_setupres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = PK_SETUP_REQ_DATALEN;
+      resbuffsize = PK_SETUP_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = PK_SETUP_REQ_DATALEN_V4;
+      resbuffsize = PK_SETUP_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_PK_SETUP,
-    PK_SETUP_REQ_DATALEN,
-    (FAR void **)&res, PK_SETUP_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_PK_SETUP),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
     }
 
   /* Fill the data */
 
-  cmd->ctx = htonl(req->ctx);
-  cmd->info = htonl(req->info);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ((FAR struct apicmd_pk_setup_s *)cmd)->ctx = htonl(req->ctx);
+      ((FAR struct apicmd_pk_setup_s *)cmd)->info = htonl(req->info);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ((FAR struct apicmd_pkcmd_s *)cmd)->ctx = htonl(req->ctx);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_PK_SETUP);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->u.setup.info = htonl(req->info);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_setup]ctx id: %d\n", req->ctx);
   DBGIF_LOG1_DEBUG("[pk_setup]info id: %d\n", req->info);
@@ -99,7 +135,7 @@ static int32_t pk_setup_request(FAR struct pk_setup_req_s *req)
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      PK_SETUP_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -108,13 +144,20 @@ static int32_t pk_setup_request(FAR struct pk_setup_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != PK_SETUP_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_pk_setupres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_pkcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_setup res]ret: %d\n", ret);
 

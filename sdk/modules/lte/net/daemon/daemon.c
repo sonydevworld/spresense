@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/lte/net/daemon/daemon.c
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,6 +93,7 @@
 #define DAEMONAPI_REQUEST_POWER_ON  3
 #define DAEMONAPI_REQUEST_POWER_OFF 4
 #define DAEMONAPI_REQUEST_RESTART   5
+#define DAEMONAPI_REQUEST_STAT      6
 
 #ifndef CONFIG_LTE_DAEMON_TASK_PRIORITY
 #  define CONFIG_LTE_DAEMON_TASK_PRIORITY (110)
@@ -151,6 +152,10 @@ struct daemon_s
   bool                 poweron_inprogress;
   sem_t                sync_sem;
   lte_apn_setting_t    apn;
+  char                 apn_name[LTE_APN_LEN];
+  char                 user_name[LTE_APN_USER_NAME_LEN];
+  char                 pass[LTE_APN_PASSWD_LEN];
+  uint8_t              rat;
   struct usock_s       sockets[SOCKET_COUNT];
   struct net_driver_s  net_dev;
   void                 (*user_restart_cb)(uint32_t reason);
@@ -312,6 +317,62 @@ static inline void daemon_syslog(int level, FAR const IPTR char *fmt, ...)
   va_start(ap, fmt);
   vsyslog(level, fmt, ap);
   va_end(ap);
+}
+
+/****************************************************************************
+ * Name: show_daemon_stat
+ ****************************************************************************/
+
+static void show_daemon_stat(FAR struct daemon_s *priv)
+{
+  int ret;
+
+  if (g_daemonisrunnning)
+    {
+      printf("Daemon stat: running\n");
+      printf("Connecting APN\n");
+      printf("  Name: %s\n", priv->apn.apn);
+      if (priv->apn.ip_type == LTE_APN_IPTYPE_IP)
+        {
+          printf("  IP type: IPv4\n");
+        }
+      else if (priv->apn.ip_type == LTE_APN_IPTYPE_IPV6)
+        {
+          printf("  IP type: IPv6\n");
+        }
+      else if (priv->apn.ip_type == LTE_APN_IPTYPE_IPV4V6)
+        {
+          printf("  IP type: IPv4 and IPv6\n");
+        }
+
+      if (priv->apn.auth_type == LTE_APN_AUTHTYPE_NONE)
+        {
+          printf("  Authentication: NONE\n");
+        }
+      else if (priv->apn.auth_type == LTE_APN_AUTHTYPE_PAP)
+        {
+          printf("  Authentication: PAP\n");
+        }
+      else if (priv->apn.auth_type == LTE_APN_AUTHTYPE_CHAP)
+        {
+          printf("  Authentication: CHAP\n");
+        }
+      printf("  Username: %s\n", priv->apn.user_name);
+      printf("  Password: %s\n", priv->apn.password);
+      ret = lte_get_rat_sync();
+      if (ret == LTE_RAT_NBIOT)
+        {
+          printf("RAT: NB-IoT\n");
+        }
+      else
+        {
+          printf("RAT: CAT-M1\n");
+        }
+    }
+  else
+    {
+      printf("Daemon stat: stopped\n");
+    }
 }
 
 /****************************************************************************
@@ -1092,11 +1153,11 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
           {
             if (ALTCOM_FD_ISSET(info->sockets[i].usockid, readset))
               {
+                info->sockets[i].flags |= USRSOCK_EVENT_RECVFROM_AVAIL;
                 wlen = usock_send_event(info->event_outfd, info,
                                         &info->sockets[i],
                                         USRSOCK_EVENT_RECVFROM_AVAIL);
                 daemon_print_sendevt("USRSOCK_EVENT_RECVFROM_AVAIL\n");
-                info->sockets[i].flags |= USRSOCK_EVENT_RECVFROM_AVAIL;
                 if (0 > wlen)
                   {
                     return;
@@ -1108,11 +1169,11 @@ static void select_async_callback(int32_t ret_code, int32_t err_code,
         {
           if (ALTCOM_FD_ISSET(info->sockets[i].usockid, writeset))
             {
+              info->sockets[i].flags |= USRSOCK_EVENT_SENDTO_READY;
               wlen = usock_send_event(info->event_outfd, info,
                                       &info->sockets[i],
                                       USRSOCK_EVENT_SENDTO_READY);
               daemon_print_sendevt("USRSOCK_EVENT_SENDTO_READY\n");
-              info->sockets[i].flags |= USRSOCK_EVENT_SENDTO_READY;
             }
         }
     }
@@ -1168,7 +1229,7 @@ static void localtime_callback(FAR lte_localtime_t *localtime)
   ret = settimeofday(&current_time, NULL);
   if (ret < 0)
     {
-      daemon_error_printf("settimeofday falied: %d\n", errno);
+      daemon_error_printf("settimeofday failed: %d\n", errno);
       return;
     }
 
@@ -1310,6 +1371,14 @@ static int close_request(int fd, FAR struct daemon_s *priv,
       goto send_resp;
     }
 
+  /* Cancel select() before closing the socket.
+   * If close the fd which is performing select(),
+   * select() may terminate abnormally.
+   */
+
+  altcom_select_async_cancel(priv->selectid, true);
+  priv->selectid = -1;
+
   ret = altcom_close(usock->usockid);
   daemon_socket_delete(priv, usock);
   if (0 > ret)
@@ -1387,7 +1456,7 @@ static int connect_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen .\n");
+      daemon_error_printf("invalid argument request addrlen .\n");
       goto send_resp;
     }
 
@@ -1499,7 +1568,7 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       else
         {
           ret = -EINVAL;
-          daemon_error_printf("invalid argment request addrlen.\n");
+          daemon_error_printf("invalid argument request addrlen.\n");
           goto send_resp;
         }
 
@@ -1539,7 +1608,7 @@ static int sendto_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen.\n");
+      daemon_error_printf("invalid argument request addrlen.\n");
       goto send_resp;
     }
 
@@ -1664,7 +1733,10 @@ static int recvfrom_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
                         req->max_buflen, flags,
                         (FAR struct altcom_sockaddr *)&storage,
                         &altcom_fromlen);
-  usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
+  if (!(req->flags & MSG_PEEK))
+    {
+      usock->flags &= ~USRSOCK_EVENT_RECVFROM_AVAIL;
+    }
   if (0 > ret)
     {
       ret = altcom_errno();
@@ -1789,7 +1861,7 @@ static int bind_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
       else
         {
           ret = -EINVAL;
-          daemon_error_printf("invalid argment request addrlen = %d.\n",
+          daemon_error_printf("invalid argument request addrlen = %d.\n",
                               req->addrlen);
           goto send_resp;
         }
@@ -1797,7 +1869,7 @@ static int bind_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request addrlen = %d.\n",
+      daemon_error_printf("invalid argument request addrlen = %d.\n",
                           req->addrlen);
       goto send_resp;
     }
@@ -2135,7 +2207,7 @@ static int setsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request valuelen.\n");
+      daemon_error_printf("invalid argument request valuelen.\n");
       goto send_resp;
     }
 
@@ -2202,7 +2274,7 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   ret = conv_getsockopt_param(req->level, req->option, &param);
   if (ret < 0)
     {
-      daemon_error_printf("invalid argment request.\n");
+      daemon_error_printf("invalid argument request.\n");
       goto send_resp;
     }
 
@@ -2233,7 +2305,7 @@ static int getsockopt_request(int fd, struct daemon_s *priv, FAR void *hdrbuf)
   else
     {
       ret = -EINVAL;
-      daemon_error_printf("invalid argment request max_valuelen.\n");
+      daemon_error_printf("invalid argument request max_valuelen.\n");
       goto send_resp;
     }
 
@@ -2633,13 +2705,23 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
           (usock_msg.event.events == USRSOCK_EVENT_SENDTO_READY))
         {
           val_len = sizeof(result);
+
+          /* altcom_getsockopt() returns -1 on failure and 0 on success.
+           * On success, the result of connect() is stored
+           * in the "result" variable.
+           * A "reslut" of 0 means that the connect() was successful,
+           * and a positive value means the connect failed.
+           */
+
           ret = altcom_getsockopt(usock->usockid, ALTCOM_SOL_SOCKET,
                                   ALTCOM_SO_ERROR, (FAR void*)&result,
                                   (altcom_socklen_t*)&val_len);
           if (ret < 0)
             {
+              /* set resp.result to a negative value of errno. */
+
               ret = altcom_errno();
-              ret = -ret;
+              result = -ret;
               daemon_debug_printf("altcom_getsockopt() failed = %d\n", ret);
             }
           else if (result == 0)
@@ -2648,6 +2730,11 @@ static int forwarding_usock(int dst_fd, int src_fd, struct daemon_s* priv)
             }
           else
             {
+              /* connect failure case.
+               * set resp.result to a negative value of result.
+               */
+
+              result = -result;
               usock->state = OPENED;
             }
           memset(&resp, 0, sizeof(resp));
@@ -2770,6 +2857,11 @@ static int daemon_api_request(int read_fd, int usock_fd,
         g_daemonisrunnning = false;
         break;
 
+      case DAEMONAPI_REQUEST_STAT:
+        show_daemon_stat(priv);
+        sem_post(&priv->sync_sem);
+        break;
+
       case DAEMONAPI_REQUEST_RESTART:
         rsize = sizeof(restart) - sizeof(struct daemon_req_common_s);
 
@@ -2822,6 +2914,44 @@ static int daemon_api_request(int read_fd, int usock_fd,
         if (priv->poweron_inprogress)
           {
             priv->poweron_inprogress = false;
+
+            /* Performs RAT settings when the -r option is specified. */
+
+            if (priv->rat != LTE_DAEMON_RAT_KEEP)
+              {
+                g_daemon->poweron_result = lte_set_rat_sync(priv->rat,
+                                                            LTE_ENABLE);
+                if (g_daemon->poweron_result < 0)
+                  {
+                    daemon_debug_printf("RAT:%d setting failed() :%d\n",
+                      priv->rat, g_daemon->poweron_result);
+
+                    if ((g_daemon->poweron_result == -ENOTSUP) &&
+                        (priv->rat == LTE_RAT_CATM))
+                      {
+                        /* Even if the modem does not support RAT switching,
+                         * it is considered that the switching was successful
+                         * in the case of CAT-M1.
+                         */
+
+                        g_daemon->poweron_result = 0;
+                      }
+                    else
+                      {
+                        /* The daemon rolls back because a RAT type that is not
+                         * supported by the modem is specified.
+                         */
+
+                        altcom_power_off();
+                      }
+                  }
+                else
+                  {
+                    daemon_debug_printf("RAT:%d setting succeeded\n",
+                      priv->rat);
+                  }
+              }
+
             sem_post(&priv->sync_sem);
           }
 
@@ -3003,7 +3133,7 @@ static int main_loop(FAR struct daemon_s *priv)
             }
           else
             {
-              /* Peform retry */
+              /* Perform retry */
 
               write(retry_fd, buf, sizeof(buf));
               retry--;
@@ -3060,7 +3190,7 @@ int lte_daemon(int argc, FAR char *argv[])
  * Name: lte_daemon_init
  ****************************************************************************/
 
-int32_t lte_daemon_init(lte_apn_setting_t *apn)
+int32_t lte_daemon_init(lte_apn_setting_t *apn, uint8_t rat)
 {
   int ret;
   int pid;
@@ -3081,7 +3211,18 @@ int32_t lte_daemon_init(lte_apn_setting_t *apn)
       if (apn)
         {
           memcpy(&g_daemon->apn, apn, sizeof(lte_apn_setting_t));
+          strncpy(g_daemon->apn_name, (FAR const char *)apn->apn,
+                  LTE_APN_LEN);
+          g_daemon->apn.apn = (int8_t *)g_daemon->apn_name;
+          strncpy(g_daemon->user_name, (FAR const char *)apn->user_name,
+                  LTE_APN_USER_NAME_LEN);
+          g_daemon->apn.user_name = (int8_t *)g_daemon->user_name;
+          strncpy(g_daemon->pass, (FAR const char *)apn->password,
+                  LTE_APN_PASSWD_LEN);
+          g_daemon->apn.password = (int8_t *)g_daemon->pass;
         }
+
+      g_daemon->rat = rat;
 
       /* Create a pipe to communicate with the daemon */
 
@@ -3299,8 +3440,61 @@ int32_t lte_daemon_fin(void)
     }
   else
     {
-      daemon_error_printf("lte_daemon is running\n");
+      daemon_error_printf("lte_daemon is not running\n");
       return -EALREADY;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: lte_daemon_stat
+ ****************************************************************************/
+
+int32_t lte_daemon_stat(void)
+{
+  int ret;
+  int apireq_fd;
+  struct daemon_req_common_s req;
+
+  if (g_daemonisrunnning)
+    {
+      /* Open a pipe to communicate with the daemon */
+
+      apireq_fd = open(APIREQ_PIPE, O_WRONLY);
+      if (apireq_fd < 0)
+        {
+          ret = -errno;
+
+          daemon_error_printf("open(%s) failed: %d\n", APIREQ_PIPE, -ret);
+          return ret;
+        }
+
+      /* Write request to getting status */
+
+      req.reqid = DAEMONAPI_REQUEST_STAT;
+
+      ret = write(apireq_fd, &req, sizeof(req));
+      if (ret < 0)
+        {
+          ret = -errno;
+          close(apireq_fd);
+
+          daemon_error_printf("write() failed: %d\n", -ret);
+          return ret;
+        }
+
+      /* Wait for the getting status completion */
+
+      sem_wait(&g_daemon->sync_sem);
+
+      close(apireq_fd);
+      ret = 0;
+    }
+  else
+    {
+      show_daemon_stat(NULL);
+      ret = 0;
     }
 
   return ret;

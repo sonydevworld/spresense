@@ -2,6 +2,7 @@
  * modules/lte/altcom/api/mbedtls/pk_parse_keyfile.c
  *
  *   Copyright 2018 Sony Corporation
+ *   Copyright 2020 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +44,7 @@
 #include "altcom_seterrno.h"
 #include "apicmd_pk_parse_key.h"
 #include "apicmd_pk_parse_keyfile.h"
+#include "apicmd_pk.h"
 #include "apiutil.h"
 #include "mbedtls_file_wrapper.h"
 #include "mbedtls/x509_crt.h"
@@ -53,6 +55,9 @@
 
 #define PK_PARSE_KEYFILE_REQ_DATALEN (sizeof(struct apicmd_pk_parse_keyfile_s))
 #define PK_PARSE_KEYFILE_RES_DATALEN (sizeof(struct apicmd_pk_parse_keyfileres_s))
+#define PK_PARSE_KEYFILE_REQ_DATALEN_V4 (APICMD_TLS_PK_CMD_DATA_SIZE + \
+                                        sizeof(struct apicmd_pk_parse_keyfile_v4_s))
+#define PK_PARSE_KEYFILE_RES_DATALEN_V4 (APICMD_TLS_PK_CMDRES_DATA_SIZE)
 
 /****************************************************************************
  * Private Types
@@ -75,44 +80,104 @@ struct pk_parse_keyfile_req_s
 
 static int32_t pk_parse_keyfile_request(FAR struct pk_parse_keyfile_req_s *req)
 {
-  int32_t                                 ret;
-  uint16_t                                reslen = 0;
-  FAR struct apicmd_pk_parse_keyfile_s    *cmd = NULL;
-  FAR struct apicmd_pk_parse_keyfileres_s *res = NULL;
+  int32_t  ret;
+  uint16_t reslen = 0;
+  FAR void *cmd = NULL;
+  FAR void *res = NULL;
+  int      protocolver = 0;
+  uint16_t reqbuffsize = 0;
+  uint16_t resbuffsize = 0;
+
+  /* Set parameter from protocol version */
+
+  protocolver = apicmdgw_get_protocolversion();
+
+  if (protocolver == APICMD_VER_V1)
+    {
+      reqbuffsize = PK_PARSE_KEYFILE_REQ_DATALEN;
+      resbuffsize = PK_PARSE_KEYFILE_RES_DATALEN;
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      reqbuffsize = PK_PARSE_KEYFILE_REQ_DATALEN_V4;
+      resbuffsize = PK_PARSE_KEYFILE_RES_DATALEN_V4;
+    }
+  else
+    {
+      return MBEDTLS_ERR_PK_FILE_IO_ERROR;
+    }
 
   /* Allocate send and response command buffer */
 
   if (!altcom_mbedtls_alloc_cmdandresbuff(
-    (FAR void **)&cmd, APICMDID_TLS_PK_PARSE_KEYFILE,
-    PK_PARSE_KEYFILE_REQ_DATALEN,
-    (FAR void **)&res, PK_PARSE_KEYFILE_RES_DATALEN))
+    (FAR void **)&cmd, apicmdgw_get_cmdid(APICMDID_TLS_PK_PARSE_KEYFILE),
+    reqbuffsize, (FAR void **)&res, resbuffsize))
     {
       return MBEDTLS_ERR_PK_FILE_IO_ERROR;
     }
 
   /* Fill the data */
 
-  cmd->ctx = htonl(req->id);
-  memset(cmd->path, '\0', APICMD_PK_PARSE_KEYFILE_PATH_LEN);
-  if (req->path != NULL)
+  if (protocolver == APICMD_VER_V1)
     {
-      strncpy((char*) cmd->path, req->path, APICMD_PK_PARSE_KEYFILE_PATH_LEN-1);
-    }
+      ((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->ctx = htonl(req->id);
 
-  memset(cmd->pwd, '\0', APICMD_PK_PARSE_KEYFILE_PWD_LEN);
-  if (req->pwd != NULL)
+      memset(((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->path, '\0',
+        APICMD_PK_PARSE_KEYFILE_PATH_LEN);
+      if (req->path != NULL)
+        {
+          strncpy((char*) ((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->path,
+            req->path, APICMD_PK_PARSE_KEYFILE_PATH_LEN-1);
+        }
+
+      memset(((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->pwd, '\0',
+        APICMD_PK_PARSE_KEYFILE_PWD_LEN);
+      if (req->pwd != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->pwd,
+            req->pwd, APICMD_PK_PARSE_KEYFILE_PWD_LEN-1);
+        }
+
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]ctx id: %d\n", req->id);
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]path: %s\n",
+        ((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->path);
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]pwd: %s\n",
+        ((FAR struct apicmd_pk_parse_keyfile_s *)cmd)->pwd);
+    }
+  else if (protocolver == APICMD_VER_V4)
     {
-      strncpy((char*) cmd->pwd, req->pwd, APICMD_PK_PARSE_KEYFILE_PWD_LEN-1);
-    }
+      ((FAR struct apicmd_pkcmd_s *)cmd)->ctx = htonl(req->id);
+      ((FAR struct apicmd_pkcmd_s *)cmd)->subcmd_id =
+        htonl(APISUBCMDID_TLS_PK_PARSE_KEYFILE);
+      memset(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_keyfile.path, '\0',
+        APICMD_PK_PARSE_KEYFILE_PATH_LEN);
+      if (req->path != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_pkcmd_s *)
+            cmd)->u.parse_keyfile.path, req->path,
+            APICMD_PK_PARSE_KEYFILE_PATH_LEN-1);
+        }
 
-  DBGIF_LOG1_DEBUG("[pk_parse_keyfile]ctx id: %d\n", req->id);
-  DBGIF_LOG1_DEBUG("[pk_parse_keyfile]path: %s\n", cmd->path);
-  DBGIF_LOG1_DEBUG("[pk_parse_keyfile]pwd: %s\n", cmd->pwd);
+      memset(((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_keyfile.pwd, '\0',
+        APICMD_PK_PARSE_KEYFILE_PWD_LEN);
+      if (req->pwd != NULL)
+        {
+          strncpy((char*)((FAR struct apicmd_pkcmd_s *)
+            cmd)->u.parse_keyfile.pwd, req->pwd,
+            APICMD_PK_PARSE_KEYFILE_PWD_LEN-1);
+        }
+
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]ctx id: %d\n", req->id);
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]path: %s\n",
+        ((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_keyfile.path);
+      DBGIF_LOG1_DEBUG("[pk_parse_keyfile]pwd: %s\n",
+        ((FAR struct apicmd_pkcmd_s *)cmd)->u.parse_keyfile.pwd);
+    }
 
   /* Send command and block until receive a response */
 
   ret = apicmdgw_send((FAR uint8_t *)cmd, (FAR uint8_t *)res,
-                      PK_PARSE_KEYFILE_RES_DATALEN, &reslen,
+                      resbuffsize, &reslen,
                       SYS_TIMEO_FEVR);
 
   if (ret < 0)
@@ -121,13 +186,20 @@ static int32_t pk_parse_keyfile_request(FAR struct pk_parse_keyfile_req_s *req)
       goto errout_with_cmdfree;
     }
 
-  if (reslen != PK_PARSE_KEYFILE_RES_DATALEN)
+  if (reslen != resbuffsize)
     {
       DBGIF_LOG1_ERROR("Unexpected response data length: %d\n", reslen);
       goto errout_with_cmdfree;
     }
 
-  ret = ntohl(res->ret_code);
+  if (protocolver == APICMD_VER_V1)
+    {
+      ret = ntohl(((FAR struct apicmd_pk_parse_keyfileres_s *)res)->ret_code);
+    }
+  else if (protocolver == APICMD_VER_V4)
+    {
+      ret = ntohl(((FAR struct apicmd_pkcmdres_s *)res)->ret_code);
+    }
 
   DBGIF_LOG1_DEBUG("[pk_parse_keyfile res]ret: %d\n", ret);
 
