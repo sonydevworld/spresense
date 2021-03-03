@@ -31,13 +31,21 @@ SDKDIR := $(TOPDIR)/../sdk
 
 ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
   # TODO: ARCHINCLUDES/ARCHXXINCLUDES need to move as nuttx change
-  ARCHINCLUDES += -I. -isystem "${shell cygpath -w $(SDKDIR)/include}"
-  ARCHXXINCLUDES += -I. -isystem "${shell cygpath -w $(SDKDIR)/include}
+  ARCHINCLUDES += -I.
+  ARCHINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/include}"
+  ARCHINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/modules/include}"
+  ARCHXXINCLUDES += -I.
+  ARCHXXINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/include}"
+  ARCHXXINCLUDES += -isystem "${shell cygpath -w $(SDKDIR)/modules/include}"
   ARCHSCRIPT = -T "${shell cygpath -w $(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)}"
 else
   # TODO: ARCHINCLUDES/ARCHXXINCLUDES need to move as nuttx change
-  ARCHINCLUDES += -I. -isystem $(SDKDIR)/include
-  ARCHXXINCLUDES += -I. -isystem $(SDKDIR)/include
+  ARCHINCLUDES += -I.
+  ARCHINCLUDES += -isystem $(SDKDIR)/include
+  ARCHINCLUDES += -isystem $(SDKDIR)/modules/include
+  ARCHXXINCLUDES += -I.
+  ARCHXXINCLUDES += -isystem $(SDKDIR)/include
+  ARCHXXINCLUDES += -isystem $(SDKDIR)/modules/include
   ARCHSCRIPT = -T$(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)
 endif
 
