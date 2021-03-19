@@ -314,6 +314,9 @@ static int sslutil_sslsockinit(struct sslutil_ssl_ctx_s *ssl)
   mbedtls_ssl_config_init(&ssl->conf);
   mbedtls_ctr_drbg_init(&ssl->ctr_drbg);
   mbedtls_entropy_init(&ssl->entropy);
+  mbedtls_x509_crt_init(&ssl->ca_cert);
+  mbedtls_x509_crt_init(&ssl->cli_cert);
+  mbedtls_pk_init(&ssl->cli_key);
 
   return 0;
 }
@@ -332,6 +335,9 @@ static int sslutil_sslsockfin(struct sslutil_ssl_ctx_s *ssl)
   mbedtls_ssl_config_free(&ssl->conf);
   mbedtls_ctr_drbg_free(&ssl->ctr_drbg);
   mbedtls_entropy_free(&ssl->entropy);
+  mbedtls_x509_crt_free(&ssl->ca_cert);
+  mbedtls_x509_crt_free(&ssl->cli_cert);
+  mbedtls_pk_free(&ssl->cli_key);
 
   return 0;
 }
@@ -378,7 +384,6 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
 
   if (ssl->ca_certs_file)
     {
-      mbedtls_x509_crt_init(&ssl->ca_cert);
       mbedtls_x509_crt_parse_file(&ssl->ca_cert,
                                   ssl->ca_certs_file);
       verify_ca = true;
@@ -394,8 +399,6 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
               certs_filename = (FAR char *)malloc(PATH_MAX);
               if (certs_filename)
                 {
-                  mbedtls_x509_crt_init(&ssl->ca_cert);
-
                   do
                     {
                       memset(certs_filename, 0, PATH_MAX);
@@ -439,8 +442,6 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
 
   if (ssl->cli_certs_file && ssl->private_key_file)
     {
-      mbedtls_x509_crt_init(&ssl->cli_cert);
-      mbedtls_pk_init(&ssl->cli_key);
 
       mbedtls_x509_crt_parse_file(&ssl->cli_cert,
                                   ssl->cli_certs_file);
@@ -511,17 +512,6 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
       free(buf);
       sslutil_sslsockfin(ssl);
       return -1;
-    }
-
-  if (ssl->ca_certs_file || ssl->ca_certs_dir)
-    {
-      mbedtls_x509_crt_free(&ssl->ca_cert);
-    }
-
-  if (ssl->cli_certs_file && ssl->private_key_file)
-    {
-      mbedtls_x509_crt_free(&ssl->cli_cert);
-      mbedtls_pk_free(&ssl->cli_key);
     }
 
   return 0;
