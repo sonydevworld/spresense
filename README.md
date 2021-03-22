@@ -29,7 +29,8 @@ $ source spresense_env.sh
 This script will create an alias `spresense` which should preceed the regular SDK build scripts and Make commands.
 examples
 ```
-SpresenseSDK: $ spresense make
+SpresenseSDK: $ spresense sh -c "cd /spresense/sdk && tools/config.py examples/hello"
+SpresenseSDK: $ spresense sh -c "make"
 ```
 
 # Spresense SDK build instructions
