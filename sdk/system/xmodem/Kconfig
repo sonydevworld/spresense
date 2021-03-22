@@ -8,6 +8,7 @@ config SYSTEM_XMODEM
 	default n
 	---help---
 		Enable support for XMODEM.
+
 if SYSTEM_XMODEM
 
 config DEBUG_XMODEM
@@ -19,4 +20,29 @@ config DEBUG_XMODEM
 		outputs debug information on stderr.  Obviously, enabling this
 		option will likely cause you all kinds of problems if you intend to
 		use /dev/console to transfer files!
+
+config SYSTEM_XMODEM_APP
+	bool "Xmodem transfer application"
+	default n
+	---help---
+		Enable the xmodem file transfer application for xmodem_writer
+
+if SYSTEM_XMODEM_APP
+
+config SYSTEM_XMODEM_APP_PROGNAME
+	string "Program name"
+	default "xmodem"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config SYSTEM_XMODEM_APP_PRIORITY
+	int "Xmodem task priority"
+	default 100
+
+config SYSTEM_XMODEM_APP_STACKSIZE
+	int "Xmodem stack size"
+	default 246272
+
+endif
 endif
