@@ -157,6 +157,7 @@ int main(int argc, FAR char *argv[])
 {
   int ret;
   my_setting_t setting = {0};
+  mpcomm_supervisor_context_t *ctx = NULL;
 
   parse_args(argc, argv, &setting);
 
@@ -167,10 +168,10 @@ int main(int argc, FAR char *argv[])
       return ret;
     }
 
-  ret = supervisor_init(MOUNTPT"/mpcomm", 4);
+  ret = mpcomm_supervisor_init(&ctx, MOUNTPT"/mpcomm", 4);
   if (ret)
     {
-      printf("supervisor_init failed due to %d\n", ret);
+      printf("mpcomm_supervisor_init failed due to %d\n", ret);
       return ret;
     }
 
@@ -178,26 +179,27 @@ int main(int argc, FAR char *argv[])
   main_task.start = setting.prime_min;
   main_task.end = setting.prime_max;
 
-  ret = supervisor_send_controller(&main_task);
+  ret = mpcomm_supervisor_send_controller(ctx, &main_task);
   if (ret)
     {
-      printf("supervisor_send_controller failed due to %d\n", ret);
+      printf("mpcomm_supervisor_send_controller failed due to %d\n", ret);
       return ret;
     }
 
-  ret = supervisor_wait_controller_done();
+  ret = mpcomm_supervisor_wait_controller_done(ctx);
   if (ret)
     {
-      printf("supervisor_wait_controller_done failed due to %d\n", ret);
+      printf("mpcomm_supervisor_wait_controller_done failed due to %d\n",
+             ret);
       return ret;
     }
 
   printf("Found %ld primes\n", main_task.result);
 
-  ret = supervisor_deinit();
+  ret = mpcomm_supervisor_deinit(ctx);
   if (ret)
     {
-      printf("supervisor_deinit failed due to %d\n", ret);
+      printf("mpcomm_supervisor_deinit failed due to %d\n", ret);
       return ret;
     }
 

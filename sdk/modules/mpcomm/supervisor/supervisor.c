@@ -43,6 +43,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
+
+#include <nuttx/kmalloc.h>
 
 #include <mpcomm/supervisor.h>
 
@@ -69,19 +72,8 @@
 #endif
 
 /****************************************************************************
- * Private Variables
- ****************************************************************************/
-
-static supervisor_context_t supervisor_ctx;
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
-
-static supervisor_context_t *get_supervisor_context(void)
-{
-  return &supervisor_ctx;
-}
 
 static int init_core(worker_info_t *worker, const char *filepath)
 {
@@ -152,11 +144,11 @@ static int deinit_core(worker_info_t *worker)
   return ret;
 }
 
-static int supervisor_wait_helper_done(uint8_t helper_idx)
+static int supervisor_wait_helper_done(mpcomm_supervisor_context_t *ctx,
+                                       uint8_t helper_idx)
 {
   int ret;
   uint32_t msgdata;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = mpmq_receive(&ctx->helpers[helper_idx].mq, &msgdata);
   if (ret < 0)
@@ -168,36 +160,35 @@ static int supervisor_wait_helper_done(uint8_t helper_idx)
   return 0;
 }
 
-static int supervisor_send_controller_done(void)
+static int supervisor_send_controller_done(mpcomm_supervisor_context_t *ctx)
 {
   int ret;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = mpmq_send(&ctx->controller.mq, MPCOMM_MSG_ID_DONE, 2);
 
   return ret;
 }
 
-static int supervisor_send_helper_done(uint8_t helper_idx)
+static int supervisor_send_helper_done(mpcomm_supervisor_context_t *ctx,
+                                       uint8_t helper_idx)
 {
   int ret;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = mpmq_send(&ctx->helpers[helper_idx].mq, MPCOMM_MSG_ID_DONE, 2);
 
   return ret;
 }
 
-static int supervisor_malloc_msg(mpcomm_malloc_msg_t *msg)
+static int supervisor_malloc_msg(mpcomm_supervisor_context_t *ctx,
+                                 mpcomm_malloc_msg_t *msg)
 {
   int i;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   *msg->ptr = malloc(msg->size);
 
   if (msg->cpuid == ctx->controller.cpuid)
     {
-      supervisor_send_controller_done();
+      supervisor_send_controller_done(ctx);
     }
   else
     {
@@ -205,7 +196,7 @@ static int supervisor_malloc_msg(mpcomm_malloc_msg_t *msg)
         {
           if (msg->cpuid == ctx->helpers[i].cpuid)
             {
-              supervisor_send_helper_done(i);
+              supervisor_send_helper_done(ctx, i);
             }
         }
     }
@@ -213,16 +204,16 @@ static int supervisor_malloc_msg(mpcomm_malloc_msg_t *msg)
   return 0;
 }
 
-static int supervisor_free_msg(mpcomm_free_msg_t *msg)
+static int supervisor_free_msg(mpcomm_supervisor_context_t *ctx,
+                               mpcomm_free_msg_t *msg)
 {
   int i;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   free(msg->ptr);
 
   if (msg->cpuid == ctx->controller.cpuid)
     {
-      supervisor_send_controller_done();
+      supervisor_send_controller_done(ctx);
     }
   else
     {
@@ -230,7 +221,7 @@ static int supervisor_free_msg(mpcomm_free_msg_t *msg)
         {
           if (msg->cpuid == ctx->helpers[i].cpuid)
             {
-              supervisor_send_helper_done(i);
+              supervisor_send_helper_done(ctx, i);
             }
         }
     }
@@ -238,67 +229,68 @@ static int supervisor_free_msg(mpcomm_free_msg_t *msg)
   return 0;
 }
 
-static int supervisor_error_msg(int ret)
+static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx, int ret)
 {
+  (void) ctx;
+
   mpcerr("supervisor_error_msg() mpcerr %d.\n", ret);
   return 0;
 }
 
-static int supervisor_unknown_msg(void)
+static int supervisor_unknown_msg(mpcomm_supervisor_context_t *ctx)
 {
+  (void) ctx;
+
   mpcerr("supervisor_handle_msg() unknown msg.\n");
   return 0;
 }
 
-static int supervisor_handle_msg(int id, void *data, uint8_t *quit_loop)
+static int supervisor_handle_msg(mpcomm_supervisor_context_t *ctx, int id,
+                                 void *data, uint8_t *quit_loop)
 {
   int ret = 0;
 
   switch (id)
     {
       case MPCOMM_MSG_ID_MALLOC:
-        ret = supervisor_malloc_msg((mpcomm_malloc_msg_t *)data);
+        ret = supervisor_malloc_msg(ctx, (mpcomm_malloc_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_FREE:
-        ret = supervisor_free_msg((mpcomm_free_msg_t *)data);
+        ret = supervisor_free_msg(ctx, (mpcomm_free_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_ERROR:
-        ret = supervisor_error_msg((int)data);
+        ret = supervisor_error_msg(ctx, (int)data);
         break;
       case MPCOMM_MSG_ID_DONE:
         *quit_loop = 1;
         break;
       default:
-        ret = supervisor_unknown_msg();
+        ret = supervisor_unknown_msg(ctx);
         break;
     }
 
   return ret;
 }
 
-static uint8_t supervisor_loop(void)
+static uint8_t supervisor_loop(mpcomm_supervisor_context_t *ctx)
 {
   int msgid;
   uint32_t msgdata;
   uint8_t quit_loop = 0;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   msgid = mpmq_receive(&ctx->controller.mq, &msgdata);
 
-  supervisor_handle_msg(msgid, (void *)msgdata, &quit_loop);
+  supervisor_handle_msg(ctx, msgid, (void *)msgdata, &quit_loop);
 
   return quit_loop;
 }
 
-/****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-int supervisor_init(const char *filepath, uint8_t helper_num)
+static int supervisor_init(mpcomm_supervisor_context_t *ctx,
+                           const char *filepath,
+                           uint8_t helper_num)
 {
   int ret;
   int i;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = init_core(&ctx->controller, filepath);
   if (ret < 0)
@@ -332,10 +324,10 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
       return ret;
     }
 
-  ret = supervisor_wait_controller_done();
+  ret = mpcomm_supervisor_wait_controller_done(ctx);
   if (ret < 0)
     {
-      mpcerr("supervisor_wait_controller_done() failure. %d\n", ret);
+      mpcerr("mpcomm_supervisor_wait_controller_done() failure. %d\n", ret);
       return ret;
     }
 
@@ -353,10 +345,10 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
           return ret;
         }
 
-      ret = supervisor_wait_helper_done(i);
+      ret = supervisor_wait_helper_done(ctx, i);
       if (ret < 0)
         {
-          mpcerr("supervisor_wait_controller_done() failure. %d\n", ret);
+          mpcerr("supervisor_wait_helper_done() failure. %d\n", ret);
           return ret;
         }
     }
@@ -366,11 +358,42 @@ int supervisor_init(const char *filepath, uint8_t helper_num)
   return ret;
 }
 
-int supervisor_deinit(void)
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+int mpcomm_supervisor_init(mpcomm_supervisor_context_t **ctx,
+                           const char *filepath,
+                           uint8_t helper_num)
+{
+  int ret;
+
+  mpcomm_supervisor_context_t *supervisor_context =
+    (mpcomm_supervisor_context_t *) kmm_malloc(
+      sizeof(mpcomm_supervisor_context_t));
+  if (!supervisor_context)
+    {
+      mpcerr("Failed to allocate context\n");
+      return -ENOMEM;
+    }
+
+  ret = supervisor_init(supervisor_context, filepath, helper_num);
+  if (ret < 0)
+    {
+      mpcerr("supervisor_init() failure. %d\n", ret);
+      kmm_free(supervisor_context);
+      return ret;
+    }
+
+  *ctx = supervisor_context;
+
+  return ret;
+}
+
+int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx)
 {
   int ret;
   int i;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = deinit_core(&ctx->controller);
   if (ret < 0)
@@ -389,13 +412,15 @@ int supervisor_deinit(void)
         }
     }
 
+  kmm_free(ctx);
+
   return ret;
 }
 
-int supervisor_send_controller(void *data)
+int mpcomm_supervisor_send_controller(mpcomm_supervisor_context_t *ctx,
+                                      void *data)
 {
   int ret;
-  supervisor_context_t *ctx = get_supervisor_context();
 
   ret = mpmq_send(&ctx->controller.mq, MPCOMM_MSG_ID_USER_FUNC,
                   (uint32_t)data);
@@ -408,11 +433,13 @@ int supervisor_send_controller(void *data)
   return ret;
 }
 
-int supervisor_wait_controller_done(void)
+int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx)
 {
+  (void) ctx;
+
   for (;;)
     {
-      if (supervisor_loop())
+      if (supervisor_loop(ctx))
         {
           break;
         }
