@@ -64,8 +64,8 @@
  * are required -- only the more obvious.
  */
 
-#if CONFIG_NFILE_DESCRIPTORS < 1
-#  error "You need to set the configuration file CONFIG_NFILE_DESCRIPTORS"
+#if CONFIG_NFILE_DESCRIPTORS_PER_BLOCK < 1
+#  error "You need to set the configuration file CONFIG_NFILE_DESCRIPTORS_PER_BLOCK"
 #endif
 
 #ifndef CONFIG_ASMP
