@@ -73,10 +73,8 @@ all: lib $(WORKER_ELF)
 
 # Build ASMP worker library
 
-libasmpw.a:
+lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-lib: libasmpw.a
 
 # Complile
 
