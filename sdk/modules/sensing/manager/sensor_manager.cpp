@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/sensing/manager/sensor_manager.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,8 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 #include <nuttx/arch.h>
 
 #include "sensor_manager.h"
@@ -50,12 +50,12 @@
 /* Manager debug feature. */
 
 #ifdef CONFIG_SENSING_MANAGER_DEBUG_ERROR
-#  define sensor_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#  define sensor_err(fmt, ...)   _err(fmt, ## __VA_ARGS__)
 #else
 #  define sensor_err(fmt, ...)
 #endif
 #ifdef CONFIG_SENSING_MANAGER_DEBUG_INFO
-#  define sensor_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define sensor_info(fmt, ...)  _info(fmt, ## __VA_ARGS__)
 #else
 #  define sensor_info(fmt, ...)
 #endif
