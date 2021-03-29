@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/asmp/supervisor/mptask.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,8 @@
  * Include Files
  ****************************************************************************/
 
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 
 #include <stdint.h>
 #include <errno.h>
@@ -83,17 +84,17 @@
 #define mptask_semgive(id) sem_post(id)
 
 #ifdef CONFIG_ASMP_DEBUG_ERROR
-#  define mperr(fmt, ...)  logerr(fmt, ## __VA_ARGS__)
+#  define mperr(fmt, ...)  _err(fmt, ## __VA_ARGS__)
 #else
 #  define mperr(fmt, ...)
 #endif
 #ifdef CONFIG_ASMP_DEBUG_WARN
-#  define mpwarn(fmt, ...)  logwarn(fmt, ## __VA_ARGS__)
+#  define mpwarn(fmt, ...)  _warn(fmt, ## __VA_ARGS__)
 #else
 #  define mpwarn(fmt, ...)
 #endif
 #ifdef CONFIG_ASMP_DEBUG_INFO
-#  define mpinfo(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define mpinfo(fmt, ...)  _info(fmt, ## __VA_ARGS__)
 #else
 #  define mpinfo(fmt, ...)
 #endif
