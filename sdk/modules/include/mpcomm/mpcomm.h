@@ -44,6 +44,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <stdbool.h>
+
 #include <asmp/types.h>
 #include <asmp/mpmq.h>
 
@@ -330,6 +332,14 @@ int mpcomm_wait_helpers_done(void);
  */
 
 int mpcomm_get_helpers_num(void);
+
+/**
+ * Return true if it is controller. Otherwise, return false.
+ *
+ * @return True, if it is controller.
+ */
+
+bool mpcomm_is_controller(void);
 
 /**
  * Convert address from virtual to physical.

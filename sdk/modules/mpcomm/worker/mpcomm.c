@@ -129,7 +129,7 @@ static int mpcomm_user_func_msg(void *data)
   int ret;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       ctx->controller_user_func(data);
 
@@ -257,7 +257,7 @@ int mpcomm_send_helper(uint8_t helper_index, void *data)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       ctx->helpers_doneset &= ~(1 << ctx->helpers[helper_index].cpuid);
 
@@ -274,7 +274,7 @@ int mpcomm_wait_helper_done(uint8_t helper_index)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       while (((ctx->helpers_doneset
             & (1 << ctx->helpers[helper_index].cpuid)) == 0)
@@ -297,7 +297,7 @@ int mpcomm_wait_helpers_done(void)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       while ((ctx->helpers_doneset != ctx->helpers_cpuset)
              && !ctx->quit_loop)
@@ -321,6 +321,13 @@ int mpcomm_get_helpers_num(void)
   return ctx->helpers_num;
 }
 
+bool mpcomm_is_controller(void)
+{
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  return ctx->mode == MPCOMM_MODE_CONTROLLER;
+}
+
 void *mpcomm_memory_virt_to_phys(void *addr)
 {
   mpcomm_context_t *ctx = get_mpcomm_context();
@@ -334,7 +341,7 @@ int mpcomm_send_malloc(void **ptr, size_t size)
   mpcomm_context_t *ctx = get_mpcomm_context();
   *ptr = NULL;
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       mpcomm_malloc_msg_t malloc_msg;
       malloc_msg.cpuid = asmp_getglobalcpuid();
@@ -357,7 +364,7 @@ int mpcomm_send_free(void *ptr)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       mpcomm_free_msg_t free_msg;
       free_msg.cpuid = asmp_getglobalcpuid();
@@ -379,7 +386,7 @@ int mpcomm_send_error(int err)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  if (ctx->mode == MPCOMM_MODE_CONTROLLER)
+  if (mpcomm_is_controller())
     {
       ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR, err);
     }
