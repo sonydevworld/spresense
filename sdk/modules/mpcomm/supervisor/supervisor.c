@@ -237,16 +237,16 @@ static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx, int ret)
   return 0;
 }
 
-static int supervisor_unknown_msg(mpcomm_supervisor_context_t *ctx)
+static int supervisor_unknown_msg(mpcomm_supervisor_context_t *ctx, int id)
 {
   (void) ctx;
 
-  mpcerr("supervisor_handle_msg() unknown msg.\n");
+  mpcerr("supervisor_unknown_msg() unknown msg %d.\n", id);
   return 0;
 }
 
-static int supervisor_handle_msg(mpcomm_supervisor_context_t *ctx, int id,
-                                 void *data, uint8_t *quit_loop)
+static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
+                                        int id, void *data)
 {
   int ret = 0;
 
@@ -262,27 +262,75 @@ static int supervisor_handle_msg(mpcomm_supervisor_context_t *ctx, int id,
         ret = supervisor_error_msg(ctx, (int)data);
         break;
       case MPCOMM_MSG_ID_DONE:
-        *quit_loop = 1;
+        sem_post(&ctx->sem_done);
         break;
       default:
-        ret = supervisor_unknown_msg(ctx);
+        ret = supervisor_unknown_msg(ctx, id);
         break;
     }
 
   return ret;
 }
 
-static uint8_t supervisor_loop(mpcomm_supervisor_context_t *ctx)
+static FAR void *controller_listener_entry(FAR void *arg)
 {
   int msgid;
   uint32_t msgdata;
-  uint8_t quit_loop = 0;
+  mpcomm_supervisor_context_t *ctx = (mpcomm_supervisor_context_t *)arg;
 
-  msgid = mpmq_receive(&ctx->controller.mq, &msgdata);
+  for (;;)
+    {
+      msgid = mpmq_receive(&ctx->controller.mq, &msgdata);
 
-  supervisor_handle_msg(ctx, msgid, (void *)msgdata, &quit_loop);
+      controller_listener_handle_msg(ctx, msgid, (void *)msgdata);
+    }
 
-  return quit_loop;
+  return NULL;
+}
+
+static int controller_listener_initialize(mpcomm_supervisor_context_t *ctx)
+{
+  int ret;
+  pthread_attr_t attr;
+  struct sched_param sch_param;
+
+  pthread_attr_init(&attr);
+  sch_param.sched_priority = 110;
+  attr.stacksize = 1024;
+  pthread_attr_setschedparam(&attr, &sch_param);
+
+  ret = pthread_create(&ctx->controller_listener_pid,
+                       &attr,
+                       (pthread_startroutine_t)controller_listener_entry,
+                       (pthread_addr_t)ctx);
+  if (ret < 0)
+    {
+      mpcerr("pthread_create() failure. %d\n", ret);
+      return ret;
+    }
+
+  return ret;
+}
+
+static int controller_listener_uninitialize(mpcomm_supervisor_context_t *ctx)
+{
+  int ret;
+
+  ret = pthread_cancel(ctx->controller_listener_pid);
+  if (ret < 0)
+    {
+      mpcerr("pthread_create() failure. %d\n", ret);
+      return ret;
+    }
+
+  ret = pthread_join(ctx->controller_listener_pid, NULL);
+  if (ret < 0)
+    {
+      mpcerr("pthread_create() failure. %d\n", ret);
+      return ret;
+    }
+
+  return ret;
 }
 
 static int supervisor_init(mpcomm_supervisor_context_t *ctx,
@@ -311,6 +359,20 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
       ctx->helpers_cpuset |= (1 << ctx->helpers[i].cpuid);
     }
 
+  ret = sem_init(&ctx->sem_done, 0, 0);
+  if (ret < 0)
+    {
+      mpcerr("sem_init() failure. %d\n", ret);
+      return ret;
+    }
+
+  ret = controller_listener_initialize(ctx);
+  if (ret < 0)
+    {
+      mpcerr("controller_listener_initialize() failure. %d\n", ret);
+      return ret;
+    }
+
   mpcomm_init_msg_t init_msg;
   init_msg.mode = MPCOMM_MODE_CONTROLLER;
   init_msg.helpers_cpuset = ctx->helpers_cpuset;
@@ -324,7 +386,7 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
       return ret;
     }
 
-  ret = mpcomm_supervisor_wait_controller_done(ctx);
+  ret = mpcomm_supervisor_wait_controller_done(ctx, NULL);
   if (ret < 0)
     {
       mpcerr("mpcomm_supervisor_wait_controller_done() failure. %d\n", ret);
@@ -412,6 +474,10 @@ int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx)
         }
     }
 
+  controller_listener_uninitialize(ctx);
+
+  sem_destroy(&ctx->sem_done);
+
   kmm_free(ctx);
 
   return ret;
@@ -433,17 +499,29 @@ int mpcomm_supervisor_send_controller(mpcomm_supervisor_context_t *ctx,
   return ret;
 }
 
-int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx)
+int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx,
+                                           const struct timespec *abstime)
 {
-  (void) ctx;
+  int ret;
 
-  for (;;)
+  if (abstime != NULL)
     {
-      if (supervisor_loop(ctx))
+      ret = sem_timedwait(&ctx->sem_done, abstime);
+      if (ret < 0)
         {
-          break;
+          mpcerr("sem_timedwait() failure: %d.\n", ret);
+          return ret;
+        }
+    }
+  else
+    {
+      ret = sem_wait(&ctx->sem_done);
+      if (ret < 0)
+        {
+          mpcerr("sem_wait() failure. %d\n", ret);
+          return ret;
         }
     }
 
-  return 0;
+  return ret;
 }

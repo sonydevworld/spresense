@@ -186,7 +186,7 @@ int main(int argc, FAR char *argv[])
       return ret;
     }
 
-  ret = mpcomm_supervisor_wait_controller_done(ctx);
+  ret = mpcomm_supervisor_wait_controller_done(ctx, NULL);
   if (ret)
     {
       printf("mpcomm_supervisor_wait_controller_done failed due to %d\n",

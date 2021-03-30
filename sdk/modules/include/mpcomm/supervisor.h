@@ -44,6 +44,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <pthread.h>
+
 #include <asmp/types.h>
 #include <asmp/mptask.h>
 #include <asmp/mpmq.h>
@@ -104,6 +106,14 @@ typedef struct supervisor_context
   /** Number of helpers used. */
 
   uint8_t helper_num;
+
+  /** Controller listener thread identifier. */
+
+  pthread_t controller_listener_pid;
+
+  /** Semaphore to wait for controller done messages. */
+
+  sem_t sem_done;
 } mpcomm_supervisor_context_t;
 
 /****************************************************************************
@@ -153,11 +163,14 @@ int mpcomm_supervisor_send_controller(mpcomm_supervisor_context_t *ctx,
  * Wait until user data has been processed by controller.
  *
  * @param [in] ctx: Context with information about MPCOMM workers.
+ * @param [in] abstime: The absolute time to wait until a timeout
+ *                      is declared.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
-int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx);
+int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx,
+                                           const struct timespec *abstime);
 
 #endif /* __MODULES_INCLUDE_MPCOMM_SUPERVISOR_H */
