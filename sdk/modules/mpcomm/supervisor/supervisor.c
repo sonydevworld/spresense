@@ -234,6 +234,18 @@ static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx,
   return 0;
 }
 
+static int supervisor_log_msg(mpcomm_supervisor_context_t *ctx,
+                              mpcomm_log_msg_t *msg)
+{
+  mpcinfo("supervisor_log_msg() CPU=%d log: %s\n", msg->cpuid,
+                                                   msg->log);
+  fflush(stdout);
+
+  supervisor_send_worker_done(ctx, msg->cpuid);
+
+  return 0;
+}
+
 static int supervisor_unknown_msg(mpcomm_supervisor_context_t *ctx, int id)
 {
   (void) ctx;
@@ -257,6 +269,9 @@ static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
         break;
       case MPCOMM_MSG_ID_ERROR:
         ret = supervisor_error_msg(ctx, (mpcomm_error_msg_t *)data);
+        break;
+      case MPCOMM_MSG_ID_LOG:
+        ret = supervisor_log_msg(ctx, (mpcomm_log_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_DONE:
         sem_post(&ctx->sem_done);

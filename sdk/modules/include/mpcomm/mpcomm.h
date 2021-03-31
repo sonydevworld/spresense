@@ -77,9 +77,13 @@
 
 #define MPCOMM_MSG_ID_FREE 6
 
-/** Message ID to send error number to supervisor. */
+/** Message ID to send error code to supervisor. */
 
 #define MPCOMM_MSG_ID_ERROR 7
+
+/** Message ID to send log message to supervisor. */
+
+#define MPCOMM_MSG_ID_LOG 8
 
 /** Maximum number of helpers. */
 
@@ -294,6 +298,26 @@ typedef struct mpcomm_error_msg
   int error;
 } mpcomm_error_msg_t;
 
+/**
+ * @struct mpcomm_log_msg
+ *
+ * Structure for error message.
+ *
+ * @typedef mpcomm_log_msg_t
+ * See @ref mpcomm_log_msg
+ */
+
+typedef struct mpcomm_log_msg
+{
+  /** Core CPU ID that is sending error code. See @ref cpuid_t */
+
+  cpuid_t cpuid;
+
+  /** Log to be printed. */
+
+  char *log;
+} mpcomm_log_msg_t;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -400,12 +424,23 @@ int mpcomm_send_free(void *ptr);
 /**
  * Send the error number to the supervisor.
  *
- * @param [in] err: Error number.
+ * @param [in] err: Error code.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
 int mpcomm_send_error(int err);
+
+/**
+ * Send the log for printing by supervisor.
+ *
+ * @param [in] log: Log to be printed.
+ *
+ * @return On success, 0 is returned. On failure,
+ * negative value is returned according to <errno.h>.
+ */
+
+int mpcomm_send_log(char *log);
 
 #endif /* __MODULES_INCLUDE_MPCOMM_MPCOMM_H */

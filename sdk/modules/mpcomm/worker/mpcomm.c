@@ -205,6 +205,20 @@ static int mpcomm_error_msg(mpcomm_error_msg_t *msg)
   return ret;
 }
 
+static int mpcomm_log_msg(mpcomm_log_msg_t *msg)
+{
+  int ret = 0;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_LOG,
+                      (uint32_t)msg);
+    }
+
+  return ret;
+}
+
 static int mpcomm_unknown_msg(void)
 {
   int ret;
@@ -241,6 +255,9 @@ static int mpcomm_handle_msg(int id, void *data)
         break;
       case MPCOMM_MSG_ID_ERROR:
         ret = mpcomm_error_msg((mpcomm_error_msg_t *)data);
+        break;
+      case MPCOMM_MSG_ID_LOG:
+        ret = mpcomm_log_msg((mpcomm_log_msg_t *)data);
         break;
       default:
         ret = mpcomm_unknown_msg();
@@ -462,6 +479,33 @@ int mpcomm_send_error(int err)
     {
       ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_ERROR,
                       (uint32_t)MEM_V2P(&error_msg));
+    }
+
+  mpcomm_wait_supervisor_done();
+
+  return ret;
+}
+
+int mpcomm_send_log(char *log)
+{
+  int ret = 0;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  mpcomm_log_msg_t log_msg;
+  log_msg.cpuid = asmp_getglobalcpuid();
+  log_msg.log = MEM_V2P(log);
+
+  ctx->supervisor_done = 0;
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_LOG,
+                      (uint32_t)MEM_V2P(&log_msg));
+    }
+  else
+    {
+      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_LOG,
+                      (uint32_t)MEM_V2P(&log_msg));
     }
 
   mpcomm_wait_supervisor_done();
