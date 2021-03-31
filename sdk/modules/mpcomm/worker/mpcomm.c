@@ -37,6 +37,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <errno.h>
+
 #include <asmp.h>
 
 #include <mpcomm/mpcomm.h>
@@ -161,13 +163,53 @@ static int mpcomm_done_msg(cpuid_t cpuid)
   return 0;
 }
 
+static int mpcomm_malloc_msg(mpcomm_malloc_msg_t *msg)
+{
+  int ret = 0;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_MALLOC,
+                      (uint32_t)msg);
+    }
+
+  return ret;
+}
+
+static int mpcomm_free_msg(mpcomm_free_msg_t *msg)
+{
+  int ret = 0;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_FREE,
+                      (uint32_t)msg);
+    }
+
+  return ret;
+}
+
+static int mpcomm_error_msg(mpcomm_error_msg_t *msg)
+{
+  int ret = 0;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR,
+                      (uint32_t)msg);
+    }
+
+  return ret;
+}
+
 static int mpcomm_unknown_msg(void)
 {
   int ret;
-  mpcomm_context_t *ctx = get_mpcomm_context();
 
-  ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR,
-                  asmp_getglobalcpuid());
+  ret = mpcomm_send_error(-EINVAL);
 
   return ret;
 }
@@ -190,6 +232,15 @@ static int mpcomm_handle_msg(int id, void *data)
         break;
       case MPCOMM_MSG_ID_DONE:
         ret = mpcomm_done_msg((cpuid_t)(uint32_t)data);
+        break;
+      case MPCOMM_MSG_ID_MALLOC:
+        ret = mpcomm_malloc_msg((mpcomm_malloc_msg_t *)data);
+        break;
+      case MPCOMM_MSG_ID_FREE:
+        ret = mpcomm_free_msg((mpcomm_free_msg_t *)data);
+        break;
+      case MPCOMM_MSG_ID_ERROR:
+        ret = mpcomm_error_msg((mpcomm_error_msg_t *)data);
         break;
       default:
         ret = mpcomm_unknown_msg();
@@ -341,20 +392,25 @@ int mpcomm_send_malloc(void **ptr, size_t size)
   mpcomm_context_t *ctx = get_mpcomm_context();
   *ptr = NULL;
 
+  mpcomm_malloc_msg_t malloc_msg;
+  malloc_msg.cpuid = asmp_getglobalcpuid();
+  malloc_msg.ptr = MEM_V2P(ptr);
+  malloc_msg.size = size;
+
+  ctx->supervisor_done = 0;
+
   if (mpcomm_is_controller())
     {
-      mpcomm_malloc_msg_t malloc_msg;
-      malloc_msg.cpuid = asmp_getglobalcpuid();
-      malloc_msg.ptr = ptr;
-      malloc_msg.size = size;
-
-      ctx->supervisor_done = 0;
-
       ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_MALLOC,
                       (uint32_t)MEM_V2P(&malloc_msg));
-
-      mpcomm_wait_supervisor_done();
     }
+  else
+    {
+      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_MALLOC,
+                      (uint32_t)MEM_V2P(&malloc_msg));
+    }
+
+  mpcomm_wait_supervisor_done();
 
   return ret;
 }
@@ -364,19 +420,24 @@ int mpcomm_send_free(void *ptr)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
+  mpcomm_free_msg_t free_msg;
+  free_msg.cpuid = asmp_getglobalcpuid();
+  free_msg.ptr = ptr;
+
+  ctx->supervisor_done = 0;
+
   if (mpcomm_is_controller())
     {
-      mpcomm_free_msg_t free_msg;
-      free_msg.cpuid = asmp_getglobalcpuid();
-      free_msg.ptr = ptr;
-
-      ctx->supervisor_done = 0;
-
       ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_FREE,
                       (uint32_t)MEM_V2P(&free_msg));
-
-      mpcomm_wait_supervisor_done();
     }
+  else
+    {
+      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_FREE,
+                      (uint32_t)MEM_V2P(&free_msg));
+    }
+
+  mpcomm_wait_supervisor_done();
 
   return ret;
 }
@@ -386,10 +447,24 @@ int mpcomm_send_error(int err)
   int ret = 0;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
+  mpcomm_error_msg_t error_msg;
+  error_msg.cpuid = asmp_getglobalcpuid();
+  error_msg.error = err;
+
+  ctx->supervisor_done = 0;
+
   if (mpcomm_is_controller())
     {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR, err);
+      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR,
+                      (uint32_t)MEM_V2P(&error_msg));
     }
+  else
+    {
+      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_ERROR,
+                      (uint32_t)MEM_V2P(&error_msg));
+    }
+
+  mpcomm_wait_supervisor_done();
 
   return ret;
 }

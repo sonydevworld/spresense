@@ -179,27 +179,36 @@ static int supervisor_send_helper_done(mpcomm_supervisor_context_t *ctx,
   return ret;
 }
 
-static int supervisor_malloc_msg(mpcomm_supervisor_context_t *ctx,
-                                 mpcomm_malloc_msg_t *msg)
+static int supervisor_send_worker_done(mpcomm_supervisor_context_t *ctx,
+                                       cpuid_t cpuid)
 {
+  int ret = 0;
   int i;
 
-  *msg->ptr = malloc(msg->size);
-
-  if (msg->cpuid == ctx->controller.cpuid)
+  if (cpuid == ctx->controller.cpuid)
     {
-      supervisor_send_controller_done(ctx);
+      ret = supervisor_send_controller_done(ctx);
     }
   else
     {
       for (i = 0; i < ctx->helper_num; i++)
         {
-          if (msg->cpuid == ctx->helpers[i].cpuid)
+          if (cpuid == ctx->helpers[i].cpuid)
             {
-              supervisor_send_helper_done(ctx, i);
+              ret = supervisor_send_helper_done(ctx, i);
             }
         }
     }
+
+  return ret;
+}
+
+static int supervisor_malloc_msg(mpcomm_supervisor_context_t *ctx,
+                                 mpcomm_malloc_msg_t *msg)
+{
+  *msg->ptr = malloc(msg->size);
+
+  supervisor_send_worker_done(ctx, msg->cpuid);
 
   return 0;
 }
@@ -207,33 +216,21 @@ static int supervisor_malloc_msg(mpcomm_supervisor_context_t *ctx,
 static int supervisor_free_msg(mpcomm_supervisor_context_t *ctx,
                                mpcomm_free_msg_t *msg)
 {
-  int i;
-
   free(msg->ptr);
 
-  if (msg->cpuid == ctx->controller.cpuid)
-    {
-      supervisor_send_controller_done(ctx);
-    }
-  else
-    {
-      for (i = 0; i < ctx->helper_num; i++)
-        {
-          if (msg->cpuid == ctx->helpers[i].cpuid)
-            {
-              supervisor_send_helper_done(ctx, i);
-            }
-        }
-    }
+  supervisor_send_worker_done(ctx, msg->cpuid);
 
   return 0;
 }
 
-static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx, int ret)
+static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx,
+                                mpcomm_error_msg_t *msg)
 {
-  (void) ctx;
+  mpcerr("supervisor_error_msg() CPU=%d error=%d.\n", msg->cpuid,
+                                                      msg->error);
 
-  mpcerr("supervisor_error_msg() mpcerr %d.\n", ret);
+  supervisor_send_worker_done(ctx, msg->cpuid);
+
   return 0;
 }
 
@@ -259,7 +256,7 @@ static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
         ret = supervisor_free_msg(ctx, (mpcomm_free_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_ERROR:
-        ret = supervisor_error_msg(ctx, (int)data);
+        ret = supervisor_error_msg(ctx, (mpcomm_error_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_DONE:
         sem_post(&ctx->sem_done);

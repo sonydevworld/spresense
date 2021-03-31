@@ -274,6 +274,26 @@ typedef struct mpcomm_free_msg
   void *ptr;
 } mpcomm_free_msg_t;
 
+/**
+ * @struct mpcomm_error_msg
+ *
+ * Structure for error message.
+ *
+ * @typedef mpcomm_error_msg_t
+ * See @ref mpcomm_error_msg
+ */
+
+typedef struct mpcomm_error_msg
+{
+  /** Core CPU ID that is sending error code. See @ref cpuid_t */
+
+  cpuid_t cpuid;
+
+  /** The error code. */
+
+  int error;
+} mpcomm_error_msg_t;
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
