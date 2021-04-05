@@ -1,7 +1,7 @@
 /****************************************************************************
  * audio_recorder/audio_recorder_objif_main.cxx
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -127,7 +127,6 @@ using namespace MemMgrLite;
 /* Length of recording file name */
 
 #define MAX_PATH_LENGTH 128
-#define MAX_EXT_LENGTH    8
 
 /* Recording file path. */
 
@@ -255,22 +254,21 @@ static bool app_open_output_file(void)
 
   struct tm        *cur_time;
   struct timespec   cur_sec;
-  char              ext[MAX_EXT_LENGTH];
+  const char       *ext;
 
-  clock_gettime(CLOCK_REALTIME, &cur_sec);
-  cur_time = gmtime(&cur_sec.tv_sec);
+  /* Decide file extension according to file format. */
 
   if (target_codec_type == AS_CODECTYPE_MP3)
     {
-      strcpy(ext, "mp3");
+      ext = "mp3";
     }
   else if (target_codec_type == AS_CODECTYPE_LPCM)
     {
-      strcpy(ext, "wav");
+      ext = "wav";
     }
   else if (target_codec_type == AS_CODECTYPE_OPUS)
     {
-      strcpy(ext, "raw");
+      ext = "raw";
     }
   else
     {
@@ -278,12 +276,17 @@ static bool app_open_output_file(void)
       return false;
     }
 
+  /* Use date time as recording file name. */
+
+  clock_gettime(CLOCK_REALTIME, &cur_sec);
+  cur_time = gmtime(&cur_sec.tv_sec);
+
   snprintf(fname,
            MAX_PATH_LENGTH,
            "%s/%04d%02d%02d_%02d%02d%02d.%s",
            RECFILE_ROOTPATH,
-           cur_time->tm_year,
-           cur_time->tm_mon,
+           cur_time->tm_year + 1900,
+           cur_time->tm_mon + 1,
            cur_time->tm_mday,
            cur_time->tm_hour,
            cur_time->tm_min,
