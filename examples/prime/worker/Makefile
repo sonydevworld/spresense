@@ -46,8 +46,8 @@ $(1)_$(2):
 	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
+.PHONY: lib depend clean
 all: romfs.h
-.PHONY: all clean depend lib
 
 # Create the romfs.img file from the populated romfs directory
 
