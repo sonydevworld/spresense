@@ -82,14 +82,14 @@ static int init_core(worker_info_t *worker, const char *filepath)
   ret = mptask_init(&worker->mptask, filepath);
   if (ret != 0)
     {
-      mpcerr("mptask_init() failure. %d\n", ret);
+      mpcerr("mptask_init() failure: %d.\n", ret);
       return ret;
     }
 
   ret = mptask_assign(&worker->mptask);
   if (ret != 0)
     {
-      mpcerr("mptask_assign() failure. %d\n", ret);
+      mpcerr("mptask_assign() failure: %d.\n", ret);
       return ret;
     }
 
@@ -98,25 +98,25 @@ static int init_core(worker_info_t *worker, const char *filepath)
   ret = mpmq_init(&worker->mq, MPCOMM_KEY_MQ, worker->cpuid);
   if (ret < 0)
     {
-      mpcerr("mpmq_init() failure. %d\n", ret);
+      mpcerr("mpmq_init() failure: %d.\n", ret);
       return ret;
     }
 
   ret = mptask_bindobj(&worker->mptask, &worker->mq);
   if (ret < 0)
     {
-      mpcerr("mptask_bindobj(mq) failure. %d\n", ret);
+      mpcerr("mptask_bindobj(mq) failure: %d.\n", ret);
       return ret;
     }
 
   ret = mptask_exec(&worker->mptask);
   if (ret < 0)
     {
-      mpcerr("mptask_exec() failure. %d\n", ret);
+      mpcerr("mptask_exec() failure: %d.\n", ret);
       return ret;
     }
 
-  return 0;
+  return ret;
 }
 
 static int deinit_core(worker_info_t *worker)
@@ -127,7 +127,7 @@ static int deinit_core(worker_info_t *worker)
   ret = mpmq_send(&worker->mq, MPCOMM_MSG_ID_DEINIT, 0);
   if (ret < 0)
     {
-      mpcerr("mpmq_send() failure. %d\n", ret);
+      mpcerr("mpmq_send() failure: %d.\n", ret);
       return ret;
     }
 
@@ -135,7 +135,7 @@ static int deinit_core(worker_info_t *worker)
   ret = mptask_destroy(&worker->mptask, false, &wret);
   if (ret < 0)
     {
-      mpcerr("mptask_destroy() failure. %d\n", ret);
+      mpcerr("mptask_destroy() failure: %d.\n", ret);
       return ret;
     }
 
@@ -153,7 +153,7 @@ static int supervisor_wait_helper_done(mpcomm_supervisor_context_t *ctx,
   ret = mpmq_receive(&ctx->helpers[helper_idx].mq, &msgdata);
   if (ret < 0)
     {
-      mpcerr("mpmq_recieve() failure. %d\n", ret);
+      mpcerr("mpmq_recieve() failure: %d.\n", ret);
       return ret;
     }
 
@@ -165,6 +165,11 @@ static int supervisor_send_controller_done(mpcomm_supervisor_context_t *ctx)
   int ret;
 
   ret = mpmq_send(&ctx->controller.mq, MPCOMM_MSG_ID_DONE, 2);
+  if (ret < 0)
+    {
+      mpcerr("mpmq_send() failure: %d.\n", ret);
+      return ret;
+    }
 
   return ret;
 }
@@ -175,6 +180,11 @@ static int supervisor_send_helper_done(mpcomm_supervisor_context_t *ctx,
   int ret;
 
   ret = mpmq_send(&ctx->helpers[helper_idx].mq, MPCOMM_MSG_ID_DONE, 2);
+  if (ret < 0)
+    {
+      mpcerr("mpmq_send() failure: %d.\n", ret);
+      return ret;
+    }
 
   return ret;
 }
@@ -188,6 +198,11 @@ static int supervisor_send_worker_done(mpcomm_supervisor_context_t *ctx,
   if (cpuid == ctx->controller.cpuid)
     {
       ret = supervisor_send_controller_done(ctx);
+      if (ret < 0)
+        {
+          mpcerr("supervisor_send_controller_done() failure: %d.\n", ret);
+          return ret;
+        }
     }
   else
     {
@@ -196,6 +211,12 @@ static int supervisor_send_worker_done(mpcomm_supervisor_context_t *ctx,
           if (cpuid == ctx->helpers[i].cpuid)
             {
               ret = supervisor_send_helper_done(ctx, i);
+              if (ret < 0)
+                {
+                  mpcerr("supervisor_send_helper_done() failure: %d.\n",
+                         ret);
+                  return ret;
+                }
             }
         }
     }
@@ -206,19 +227,41 @@ static int supervisor_send_worker_done(mpcomm_supervisor_context_t *ctx,
 static int supervisor_malloc_msg(mpcomm_supervisor_context_t *ctx,
                                  mpcomm_malloc_msg_t *msg)
 {
-  *msg->ptr = malloc(msg->size);
+  int ret;
+  void *ptr;
 
-  supervisor_send_worker_done(ctx, msg->cpuid);
+  ptr = malloc(msg->size);
+  if (!ptr)
+    {
+      mpcerr("malloc() failure.\n");
+      return -ENOMEM;
+    }
 
-  return 0;
+  *msg->ptr = ptr;
+
+  ret = supervisor_send_worker_done(ctx, msg->cpuid);
+  if (ret < 0)
+    {
+      mpcerr("supervisor_send_worker_done() failure: %d.\n", ret);
+      return ret;
+    }
+
+  return ret;
 }
 
 static int supervisor_free_msg(mpcomm_supervisor_context_t *ctx,
                                mpcomm_free_msg_t *msg)
 {
+  int ret;
+
   free(msg->ptr);
 
-  supervisor_send_worker_done(ctx, msg->cpuid);
+  ret = supervisor_send_worker_done(ctx, msg->cpuid);
+  if (ret < 0)
+    {
+      mpcerr("supervisor_send_worker_done() failure: %d.\n", ret);
+      return ret;
+    }
 
   return 0;
 }
@@ -226,10 +269,17 @@ static int supervisor_free_msg(mpcomm_supervisor_context_t *ctx,
 static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx,
                                 mpcomm_error_msg_t *msg)
 {
-  mpcerr("supervisor_error_msg() CPU=%d error=%d.\n", msg->cpuid,
-                                                      msg->error);
+  int ret;
 
-  supervisor_send_worker_done(ctx, msg->cpuid);
+  mpcerr("ERROR CPU: %d error: %d.\n", msg->cpuid, msg->error);
+  fflush(stdout);
+
+  ret = supervisor_send_worker_done(ctx, msg->cpuid);
+  if (ret < 0)
+    {
+      mpcerr("supervisor_send_worker_done() failure: %d.\n", ret);
+      return ret;
+    }
 
   return 0;
 }
@@ -237,11 +287,17 @@ static int supervisor_error_msg(mpcomm_supervisor_context_t *ctx,
 static int supervisor_log_msg(mpcomm_supervisor_context_t *ctx,
                               mpcomm_log_msg_t *msg)
 {
-  mpcinfo("supervisor_log_msg() CPU=%d log: %s\n", msg->cpuid,
-                                                   msg->log);
+  int ret;
+
+  mpcinfo("LOG CPU: %d log: %s\n", msg->cpuid, msg->log);
   fflush(stdout);
 
-  supervisor_send_worker_done(ctx, msg->cpuid);
+  ret = supervisor_send_worker_done(ctx, msg->cpuid);
+  if (ret < 0)
+    {
+      mpcerr("supervisor_send_worker_done() failure: %d.\n", ret);
+      return ret;
+    }
 
   return 0;
 }
@@ -250,12 +306,13 @@ static int supervisor_unknown_msg(mpcomm_supervisor_context_t *ctx, int id)
 {
   (void) ctx;
 
-  mpcerr("supervisor_unknown_msg() unknown msg %d.\n", id);
+  mpcerr("supervisor_unknown_msg() unknown msg: %d.\n", id);
+
   return 0;
 }
 
 static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
-                                        int id, void *data)
+                                          int id, void *data)
 {
   int ret = 0;
 
@@ -274,7 +331,7 @@ static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
         ret = supervisor_log_msg(ctx, (mpcomm_log_msg_t *)data);
         break;
       case MPCOMM_MSG_ID_DONE:
-        sem_post(&ctx->sem_done);
+        ret = sem_post(&ctx->sem_done);
         break;
       default:
         ret = supervisor_unknown_msg(ctx, id);
@@ -286,6 +343,7 @@ static int controller_listener_handle_msg(mpcomm_supervisor_context_t *ctx,
 
 static FAR void *controller_listener_entry(FAR void *arg)
 {
+  int ret;
   int msgid;
   uint32_t msgdata;
   mpcomm_supervisor_context_t *ctx = (mpcomm_supervisor_context_t *)arg;
@@ -294,7 +352,12 @@ static FAR void *controller_listener_entry(FAR void *arg)
     {
       msgid = mpmq_receive(&ctx->controller.mq, &msgdata);
 
-      controller_listener_handle_msg(ctx, msgid, (void *)msgdata);
+      ret = controller_listener_handle_msg(ctx, msgid, (void *)msgdata);
+      if (ret < 0)
+        {
+          mpcerr("controller_listener_handle_msg(%d) failure: %d.\n",
+                 msgid, ret);
+        }
     }
 
   return NULL;
@@ -317,7 +380,7 @@ static int controller_listener_initialize(mpcomm_supervisor_context_t *ctx)
                        (pthread_addr_t)ctx);
   if (ret < 0)
     {
-      mpcerr("pthread_create() failure. %d\n", ret);
+      mpcerr("pthread_create() failure: %d.\n", ret);
       return ret;
     }
 
@@ -331,14 +394,14 @@ static int controller_listener_uninitialize(mpcomm_supervisor_context_t *ctx)
   ret = pthread_cancel(ctx->controller_listener_pid);
   if (ret < 0)
     {
-      mpcerr("pthread_create() failure. %d\n", ret);
+      mpcerr("pthread_create() failure: %d.\n", ret);
       return ret;
     }
 
   ret = pthread_join(ctx->controller_listener_pid, NULL);
   if (ret < 0)
     {
-      mpcerr("pthread_create() failure. %d\n", ret);
+      mpcerr("pthread_create() failure: %d.\n", ret);
       return ret;
     }
 
@@ -355,16 +418,18 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
   ret = init_core(&ctx->controller, filepath);
   if (ret < 0)
     {
-      mpcerr("init_core() failure. %d\n", ret);
+      mpcerr("init_core() failure: %d.\n", ret);
       return ret;
     }
+
+  ctx->helpers_cpuset = 0;
 
   for (i = 0; i < helper_num; i++)
     {
       ret = init_core(&ctx->helpers[i], filepath);
       if (ret < 0)
         {
-          mpcerr("init_core() failure. %d\n", ret);
+          mpcerr("init_core() failure: %d.\n", ret);
           return ret;
         }
 
@@ -374,14 +439,14 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
   ret = sem_init(&ctx->sem_done, 0, 0);
   if (ret < 0)
     {
-      mpcerr("sem_init() failure. %d\n", ret);
+      mpcerr("sem_init() failure: %d.\n", ret);
       return ret;
     }
 
   ret = controller_listener_initialize(ctx);
   if (ret < 0)
     {
-      mpcerr("controller_listener_initialize() failure. %d\n", ret);
+      mpcerr("controller_listener_initialize() failure: %d.\n", ret);
       return ret;
     }
 
@@ -394,14 +459,14 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
                   (uint32_t)&init_msg);
   if (ret < 0)
     {
-      mpcerr("mpmq_send() failure. %d\n", ret);
+      mpcerr("mpmq_send() failure: %d.\n", ret);
       return ret;
     }
 
   ret = mpcomm_supervisor_wait_controller_done(ctx, NULL);
   if (ret < 0)
     {
-      mpcerr("mpcomm_supervisor_wait_controller_done() failure. %d\n", ret);
+      mpcerr("mpcomm_supervisor_wait_controller_done() failure: %d.\n", ret);
       return ret;
     }
 
@@ -415,14 +480,14 @@ static int supervisor_init(mpcomm_supervisor_context_t *ctx,
                       (uint32_t)&init_msg);
       if (ret < 0)
         {
-          mpcerr("mpmq_send() failure. %d\n", ret);
+          mpcerr("mpmq_send() failure: %d.\n", ret);
           return ret;
         }
 
       ret = supervisor_wait_helper_done(ctx, i);
       if (ret < 0)
         {
-          mpcerr("supervisor_wait_helper_done() failure. %d\n", ret);
+          mpcerr("supervisor_wait_helper_done() failure: %d.\n", ret);
           return ret;
         }
     }
@@ -447,14 +512,14 @@ int mpcomm_supervisor_init(mpcomm_supervisor_context_t **ctx,
       sizeof(mpcomm_supervisor_context_t));
   if (!supervisor_context)
     {
-      mpcerr("Failed to allocate context\n");
+      mpcerr("Failed to allocate context.\n");
       return -ENOMEM;
     }
 
   ret = supervisor_init(supervisor_context, filepath, helper_num);
   if (ret < 0)
     {
-      mpcerr("supervisor_init() failure. %d\n", ret);
+      mpcerr("supervisor_init() failure: %d.\n", ret);
       kmm_free(supervisor_context);
       return ret;
     }
@@ -472,23 +537,33 @@ int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx)
   ret = deinit_core(&ctx->controller);
   if (ret < 0)
     {
-      mpcerr("init_core() failure. %d\n", ret);
+      mpcerr("deinit_core() failure: %d.\n", ret);
       return ret;
     }
 
-  for (i = 0; i < MPCOMM_MAX_HELPERS; i++)
+  for (i = 0; i < ctx->helper_num; i++)
     {
       ret = deinit_core(&ctx->helpers[i]);
       if (ret < 0)
         {
-          mpcerr("init_core() failure. %d\n", ret);
+          mpcerr("deinit_core() failure: %d.\n", ret);
           return ret;
         }
     }
 
-  controller_listener_uninitialize(ctx);
+  ret = controller_listener_uninitialize(ctx);
+  if (ret < 0)
+    {
+      mpcerr("controller_listener_uninitialize() failure: %d.\n", ret);
+      return ret;
+    }
 
-  sem_destroy(&ctx->sem_done);
+  ret = sem_destroy(&ctx->sem_done);
+  if (ret < 0)
+    {
+      mpcerr("sem_destroy() failure: %d.\n", ret);
+      return ret;
+    }
 
   kmm_free(ctx);
 
@@ -504,7 +579,7 @@ int mpcomm_supervisor_send_controller(mpcomm_supervisor_context_t *ctx,
                   (uint32_t)data);
   if (ret < 0)
     {
-      mpcerr("mpmq_send() failure. %d\n", ret);
+      mpcerr("mpmq_send() failure: %d.\n", ret);
       return ret;
     }
 
@@ -530,7 +605,7 @@ int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx,
       ret = sem_wait(&ctx->sem_done);
       if (ret < 0)
         {
-          mpcerr("sem_wait() failure. %d\n", ret);
+          mpcerr("sem_wait() failure: %d.\n", ret);
           return ret;
         }
     }

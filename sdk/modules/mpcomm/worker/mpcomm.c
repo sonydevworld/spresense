@@ -163,62 +163,6 @@ static int mpcomm_done_msg(cpuid_t cpuid)
   return 0;
 }
 
-static int mpcomm_malloc_msg(mpcomm_malloc_msg_t *msg)
-{
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_MALLOC,
-                      (uint32_t)msg);
-    }
-
-  return ret;
-}
-
-static int mpcomm_free_msg(mpcomm_free_msg_t *msg)
-{
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_FREE,
-                      (uint32_t)msg);
-    }
-
-  return ret;
-}
-
-static int mpcomm_error_msg(mpcomm_error_msg_t *msg)
-{
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR,
-                      (uint32_t)msg);
-    }
-
-  return ret;
-}
-
-static int mpcomm_log_msg(mpcomm_log_msg_t *msg)
-{
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_LOG,
-                      (uint32_t)msg);
-    }
-
-  return ret;
-}
-
 static int mpcomm_unknown_msg(void)
 {
   int ret;
@@ -248,16 +192,17 @@ static int mpcomm_handle_msg(int id, void *data)
         ret = mpcomm_done_msg((cpuid_t)(uint32_t)data);
         break;
       case MPCOMM_MSG_ID_MALLOC:
-        ret = mpcomm_malloc_msg((mpcomm_malloc_msg_t *)data);
-        break;
       case MPCOMM_MSG_ID_FREE:
-        ret = mpcomm_free_msg((mpcomm_free_msg_t *)data);
-        break;
       case MPCOMM_MSG_ID_ERROR:
-        ret = mpcomm_error_msg((mpcomm_error_msg_t *)data);
-        break;
       case MPCOMM_MSG_ID_LOG:
-        ret = mpcomm_log_msg((mpcomm_log_msg_t *)data);
+        if (mpcomm_is_controller())
+          {
+            ret = mpmq_send(&ctx->mq_2_supervisor, id, (uint32_t)data);
+          }
+        else
+          {
+            ret = mpcomm_unknown_msg();
+          }
         break;
       default:
         ret = mpcomm_unknown_msg();
@@ -297,6 +242,29 @@ static int mpcomm_wait_supervisor_done(void)
   return 0;
 }
 
+static int mpcomm_send_msg(int8_t id, void *msg)
+{
+  int ret;
+  mpcomm_context_t *ctx = get_mpcomm_context();
+
+  ctx->supervisor_done = 0;
+
+  if (mpcomm_is_controller())
+    {
+      ret = mpmq_send(&ctx->mq_2_supervisor, id,
+                      (uint32_t)MEM_V2P(msg));
+    }
+  else
+    {
+      ret = mpmq_send(&ctx->mq_2_controller, id,
+                      (uint32_t)MEM_V2P(msg));
+    }
+
+  mpcomm_wait_supervisor_done();
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -322,7 +290,7 @@ int mpcomm_main(mpcomm_user_func_t controller_user_func,
 
 int mpcomm_send_helper(uint8_t helper_index, void *data)
 {
-  int ret = 0;
+  int ret;
   mpcomm_context_t *ctx = get_mpcomm_context();
 
   if (mpcomm_is_controller())
@@ -332,6 +300,10 @@ int mpcomm_send_helper(uint8_t helper_index, void *data)
       ret = mpmq_send(&ctx->helpers[helper_index].mq,
                       MPCOMM_MSG_ID_USER_FUNC,
                       (uint32_t)data);
+    }
+  else
+    {
+      ret = -EPERM;
     }
 
   return ret;
@@ -353,8 +325,12 @@ int mpcomm_wait_helper_done(uint8_t helper_index)
 
       if (ctx->quit_loop)
         {
-          ret = 1;
+          ret = -ECANCELED;
         }
+    }
+  else
+    {
+      ret = -EPERM;
     }
 
   return ret;
@@ -375,8 +351,12 @@ int mpcomm_wait_helpers_done(void)
 
       if (ctx->quit_loop)
         {
-          ret = 1;
+          ret = -ECANCELED;
         }
+    }
+  else
+    {
+      ret = -EPERM;
     }
 
   return ret;
@@ -405,8 +385,7 @@ void *mpcomm_memory_virt_to_phys(void *addr)
 
 int mpcomm_send_malloc(void **ptr, size_t size)
 {
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
+  int ret;
   *ptr = NULL;
 
   mpcomm_malloc_msg_t malloc_msg;
@@ -414,101 +393,46 @@ int mpcomm_send_malloc(void **ptr, size_t size)
   malloc_msg.ptr = MEM_V2P(ptr);
   malloc_msg.size = size;
 
-  ctx->supervisor_done = 0;
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_MALLOC,
-                      (uint32_t)MEM_V2P(&malloc_msg));
-    }
-  else
-    {
-      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_MALLOC,
-                      (uint32_t)MEM_V2P(&malloc_msg));
-    }
-
-  mpcomm_wait_supervisor_done();
+  ret = mpcomm_send_msg(MPCOMM_MSG_ID_MALLOC, (void *)&malloc_msg);
 
   return ret;
 }
 
 int mpcomm_send_free(void *ptr)
 {
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
+  int ret;
 
   mpcomm_free_msg_t free_msg;
   free_msg.cpuid = asmp_getglobalcpuid();
   free_msg.ptr = ptr;
 
-  ctx->supervisor_done = 0;
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_FREE,
-                      (uint32_t)MEM_V2P(&free_msg));
-    }
-  else
-    {
-      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_FREE,
-                      (uint32_t)MEM_V2P(&free_msg));
-    }
-
-  mpcomm_wait_supervisor_done();
+  ret = mpcomm_send_msg(MPCOMM_MSG_ID_FREE, (void *)&free_msg);
 
   return ret;
 }
 
 int mpcomm_send_error(int err)
 {
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
+  int ret;
 
   mpcomm_error_msg_t error_msg;
   error_msg.cpuid = asmp_getglobalcpuid();
   error_msg.error = err;
 
-  ctx->supervisor_done = 0;
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_ERROR,
-                      (uint32_t)MEM_V2P(&error_msg));
-    }
-  else
-    {
-      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_ERROR,
-                      (uint32_t)MEM_V2P(&error_msg));
-    }
-
-  mpcomm_wait_supervisor_done();
+  ret = mpcomm_send_msg(MPCOMM_MSG_ID_ERROR, (void *)&error_msg);
 
   return ret;
 }
 
 int mpcomm_send_log(char *log)
 {
-  int ret = 0;
-  mpcomm_context_t *ctx = get_mpcomm_context();
+  int ret;
 
   mpcomm_log_msg_t log_msg;
   log_msg.cpuid = asmp_getglobalcpuid();
   log_msg.log = MEM_V2P(log);
 
-  ctx->supervisor_done = 0;
-
-  if (mpcomm_is_controller())
-    {
-      ret = mpmq_send(&ctx->mq_2_supervisor, MPCOMM_MSG_ID_LOG,
-                      (uint32_t)MEM_V2P(&log_msg));
-    }
-  else
-    {
-      ret = mpmq_send(&ctx->mq_2_controller, MPCOMM_MSG_ID_LOG,
-                      (uint32_t)MEM_V2P(&log_msg));
-    }
-
-  mpcomm_wait_supervisor_done();
+  ret = mpcomm_send_msg(MPCOMM_MSG_ID_LOG, (void *)&log_msg);
 
   return ret;
 }
