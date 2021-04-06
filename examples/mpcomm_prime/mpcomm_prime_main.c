@@ -49,7 +49,7 @@
 
 #include <mpcomm/supervisor.h>
 
-#include "worker/mpcomm/prime.h"
+#include "worker/prime/prime.h"
 
 #ifdef CONFIG_FS_ROMFS
 #include "worker/romfs.h"
@@ -168,7 +168,7 @@ int main(int argc, FAR char *argv[])
       return ret;
     }
 
-  ret = mpcomm_supervisor_init(&ctx, MOUNTPT"/mpcomm", 4);
+  ret = mpcomm_supervisor_init(&ctx, MOUNTPT"/PRIME", 4);
   if (ret)
     {
       printf("mpcomm_supervisor_init failed due to %d\n", ret);

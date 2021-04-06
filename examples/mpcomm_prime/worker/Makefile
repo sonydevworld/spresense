@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-WORKER_ELFS = mpcomm/mpcomm
+WORKER_ELFS = prime/PRIME
 
 SUBDIRS = $(dir $(WORKER_ELFS))
 
@@ -42,7 +42,7 @@ $(1)_$(2):
 	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-.PHONY: all clean lib
+.PHONY: all lib clean
 all: romfs.h
 
 # Create the romfs.img file from the populated romfs directory

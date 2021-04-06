@@ -36,7 +36,7 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-BIN = mpcomm
+BIN = PRIME
 
 CSRCS += mpcomm_main.c
 CSRCS += prime.c
