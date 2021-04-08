@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-__copyright__ = ['Copyright (C) 2018 Sony Semiconductor Solutions Corp.']
+__copyright__ = ['Copyright (C) 2018, 2021 Sony Semiconductor Solutions Corp.']
 __license__ = 'LGPL v2.1'
 
 import time
@@ -57,7 +57,6 @@ class ConfigArgs:
 	XMODEM_BAUD = 0
 	NO_SET_BOOTABLE = False
 	PACKAGE_NAME = []
-	FILE_NAME = []
 	ERASE_NAME = []
 	PKGSYS_NAME = []
 	PKGAPP_NAME = []
@@ -70,7 +69,6 @@ class ConfigArgsLoader():
 	def __init__(self):
 		self.parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 		self.parser.add_argument("package_name", help="the name of the package to install", nargs='*')
-		self.parser.add_argument("-f", "--file", dest="file_name", help="save file", action='append')
 		self.parser.add_argument("-e", "--erase", dest="erase_name", help="erase file", action='append')
 
 		self.parser.add_argument("-S", "--sys", dest="pkgsys_name", help="the name of the system package to install", action='append')
@@ -117,7 +115,6 @@ class ConfigArgsLoader():
 		args = self.parser.parse_args()
 
 		ConfigArgs.PACKAGE_NAME = args.package_name
-		ConfigArgs.FILE_NAME = args.file_name
 		ConfigArgs.ERASE_NAME = args.erase_name
 		ConfigArgs.PKGSYS_NAME = args.pkgsys_name
 		ConfigArgs.PKGAPP_NAME = args.pkgapp_name
@@ -441,31 +438,6 @@ class FlashWriter:
 					self.serial.setBaudrate(115200)
 			self.wait_for_prompt()
 
-	def save_files(self, files) :
-		if ConfigArgs.XMODEM_BAUD:
-			command = "save_file -b " + ConfigArgs.XMODEM_BAUD + " -x "
-		else:
-			command = "save_file -x "
-		if os.name == 'nt':
-			modem = xmodem.XMODEM(self.serial.getc, self.serial.putc_win, 'xmodem1k')
-		else:
-			modem = xmodem.XMODEM(self.serial.getc, self.serial.putc, 'xmodem1k')
-		for file in files:
-			with open(file, "rb") as bin :
-				self.send(command + os.path.basename(file))
-				print("Save " + file)
-				self.wait(XMDM_MSG)
-				if ConfigArgs.XMODEM_BAUD:
-					self.serial.setBaudrate(ConfigArgs.XMODEM_BAUD)
-					self.serial.discard_inputs() # Clear input buffer to sync
-				self.serial.set_file_size(os.path.getsize(file))
-				modem.send(bin)
-				if ConfigArgs.XMODEM_BAUD:
-					self.serial.setBaudrate(115200)
-				self.wait_for_prompt()
-				self.send("chmod d+rw " + os.path.basename(file))
-				self.wait_for_prompt()
-
 	def delete_files(self, files) :
 		for file in files :
 			self.delete_binary(file)
@@ -529,11 +501,6 @@ def main():
 		writer.install_files(ConfigArgs.PKGAPP_NAME, "install")
 	if ConfigArgs.PKGUPD_NAME :
 		writer.install_files(ConfigArgs.PKGUPD_NAME, "install -k updater.key")
-
-	# Save files
-	if ConfigArgs.FILE_NAME :
-		print(">>> Save files ...")
-		writer.save_files(ConfigArgs.FILE_NAME)
 
 	# Set auto boot
 	if not ConfigArgs.NO_SET_BOOTABLE:
