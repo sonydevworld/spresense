@@ -41,10 +41,7 @@ MAX_DOT_COUNT = 70
 class ConfigArgs:
 	PROTOCOL_TYPE = PROTOCOL_SERIAL
 	SERIAL_PORT = "COM1"
-	SERVER_PORT = 4569
-	SERVER_IP = "localhost"
 	EOL = bytes([10])
-	WAIT_RESET = True
 	DTR_RESET = False
 	XMODEM_BAUD = 0
 	NO_SET_BOOTABLE = False
@@ -76,14 +73,6 @@ class ConfigArgsLoader():
 									action="store_true", default=None,
 									help="use the serial port for binary transmission, default options")
 
-		mutually_group2 = self.parser.add_mutually_exclusive_group()
-		mutually_group2.add_argument("-F", "--force-wait-reset", dest="wait_reset",
-									action="store_true", default=None,
-									help="force wait for pressing RESET button")
-		mutually_group2.add_argument("-N", "--no-wait-reset", dest="wait_reset",
-									action="store_false", default=None,
-									help="if possible, skip to wait for pressing RESET button")
-
 	def update_config(self):
 		args = self.parser.parse_args()
 
@@ -108,9 +97,6 @@ class ConfigArgsLoader():
 
 		if args.no_set_bootable is not None:
 			ConfigArgs.NO_SET_BOOTABLE = args.no_set_bootable
-
-		if args.wait_reset is not None:
-			ConfigArgs.WAIT_RESET = args.wait_reset
 
 class SerialDev:
 	def __init__(self):
@@ -313,7 +299,7 @@ def main():
 		do_wait_reset = False
 		bootrom_msg = writer.cancel_autoboot()
 
-	if ConfigArgs.WAIT_RESET == False and do_wait_reset == True:
+	if do_wait_reset == True:
 		rx = writer.recv()
 		time.sleep(1)
 		for i in range(3):
