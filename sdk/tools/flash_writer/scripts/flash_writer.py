@@ -52,7 +52,6 @@ class ConfigArgs:
 	SERVER_IP = "localhost"
 	EOL = bytes([10])
 	WAIT_RESET = True
-	AUTO_RESET = False
 	DTR_RESET = False
 	XMODEM_BAUD = 0
 	NO_SET_BOOTABLE = False
@@ -68,9 +67,6 @@ class ConfigArgsLoader():
 		self.parser.add_argument("package_name", help="the name of the package to install", nargs='*')
 		self.parser.add_argument("-e", "--erase", dest="erase_name", help="erase file", action='append')
 
-		self.parser.add_argument("-a", "--auto-reset", dest="auto_reset",
-									action="store_true", default=None,
-									help="try to auto reset develop board if possible")
 		self.parser.add_argument("-d", "--dtr-reset", dest="dtr_reset",
 									action="store_true", default=None,
 									help="try to auto reset develop board if possible")
@@ -158,9 +154,6 @@ class ConfigArgsLoader():
 
 		if args.xmodem_baud is not None:
 			ConfigArgs.XMODEM_BAUD = args.xmodem_baud
-
-		if args.auto_reset is not None:
-			ConfigArgs.AUTO_RESET = args.auto_reset
 
 		if args.dtr_reset is not None:
 			ConfigArgs.DTR_RESET = args.dtr_reset
@@ -447,11 +440,6 @@ def main():
 	writer = FlashWriter(ConfigArgs.PROTOCOL_TYPE)
 
 	do_wait_reset = True
-	if ConfigArgs.AUTO_RESET:
-		if subprocess.call("cd " + sys.path[0] + "; ./reset_board.sh", shell=True) == 0:
-			print("auto reset board sucess!!")
-			do_wait_reset = False
-			bootrom_msg = writer.cancel_autoboot()
 
 	if ConfigArgs.DTR_RESET:
 		do_wait_reset = False
