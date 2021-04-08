@@ -58,9 +58,6 @@ class ConfigArgs:
 	NO_SET_BOOTABLE = False
 	PACKAGE_NAME = []
 	ERASE_NAME = []
-	PKGSYS_NAME = []
-	PKGAPP_NAME = []
-	PKGUPD_NAME = []
 
 ROM_MSG = [b"Welcome to nash"]
 XMDM_MSG = "Waiting for XMODEM (CRC or 1K) transfer. Ctrl-X to cancel."
@@ -70,10 +67,6 @@ class ConfigArgsLoader():
 		self.parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
 		self.parser.add_argument("package_name", help="the name of the package to install", nargs='*')
 		self.parser.add_argument("-e", "--erase", dest="erase_name", help="erase file", action='append')
-
-		self.parser.add_argument("-S", "--sys", dest="pkgsys_name", help="the name of the system package to install", action='append')
-		self.parser.add_argument("-A", "--app", dest="pkgapp_name", help="the name of the application package to install", action='append')
-		self.parser.add_argument("-U", "--upd", dest="pkgupd_name", help="the name of the updater package to install", action='append')
 
 		self.parser.add_argument("-a", "--auto-reset", dest="auto_reset",
 									action="store_true", default=None,
@@ -116,9 +109,6 @@ class ConfigArgsLoader():
 
 		ConfigArgs.PACKAGE_NAME = args.package_name
 		ConfigArgs.ERASE_NAME = args.erase_name
-		ConfigArgs.PKGSYS_NAME = args.pkgsys_name
-		ConfigArgs.PKGAPP_NAME = args.pkgapp_name
-		ConfigArgs.PKGUPD_NAME = args.pkgupd_name
 
 		# Get serial port or telnet server ip etc
 		if args.serial_protocol == True:
@@ -491,16 +481,10 @@ def main():
 		writer.delete_files(ConfigArgs.ERASE_NAME)
 
 	# Install files
-	if ConfigArgs.PACKAGE_NAME or ConfigArgs.PKGSYS_NAME or ConfigArgs.PKGAPP_NAME or ConfigArgs.PKGUPD_NAME:
+	if ConfigArgs.PACKAGE_NAME:
 		print(">>> Install files ...")
 	if ConfigArgs.PACKAGE_NAME :
 		writer.install_files(ConfigArgs.PACKAGE_NAME, "install")
-	if ConfigArgs.PKGSYS_NAME :
-		writer.install_files(ConfigArgs.PKGSYS_NAME, "install")
-	if ConfigArgs.PKGAPP_NAME :
-		writer.install_files(ConfigArgs.PKGAPP_NAME, "install")
-	if ConfigArgs.PKGUPD_NAME :
-		writer.install_files(ConfigArgs.PKGUPD_NAME, "install -k updater.key")
 
 	# Set auto boot
 	if not ConfigArgs.NO_SET_BOOTABLE:
