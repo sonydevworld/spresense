@@ -10,7 +10,6 @@ import struct
 import glob
 import fnmatch
 import errno
-import telnetlib
 import argparse
 import shutil
 import subprocess
@@ -34,19 +33,13 @@ try:
 except:
 	import_serial_module = False
 
-# supported environment various
-# SPRITZER_PORT
-# SPRITZER_TELNETSRV_PORT
-# SPRITZER_TELNETSRV_IP
-
 PROTOCOL_SERIAL = 0
-PROTOCOL_TELNET = 1
 
 MAX_DOT_COUNT = 70
 
 # configure parameters and default value
 class ConfigArgs:
-	PROTOCOL_TYPE = None
+	PROTOCOL_TYPE = PROTOCOL_SERIAL
 	SERIAL_PORT = "COM1"
 	SERVER_PORT = 4569
 	SERVER_IP = "localhost"
@@ -75,19 +68,10 @@ class ConfigArgsLoader():
 									help="not to set bootable")
 
 		group = self.parser.add_argument_group()
-		group.add_argument("-i", "--server-ip", dest="server_ip",
-						   help="the ip address connected to the telnet server")
-		group.add_argument("-p", "--server-port", dest="server_port", type=int,
-						   help="the port connected to the telnet server")
-
-		group = self.parser.add_argument_group()
 		group.add_argument("-c", "--serial-port", dest="serial_port", help="the serial port")
 		group.add_argument("-b", "--xmodem-baudrate", dest="xmodem_baud", help="Use the faster baudrate in xmodem")
 
 		mutually_group = self.parser.add_mutually_exclusive_group()
-		mutually_group.add_argument("-t", "--telnet-protocol", dest="telnet_protocol",
-									action="store_true", default=None,
-									help="use the telnet protocol for binary transmission")
 		mutually_group.add_argument("-s", "--serial-protocol", dest="serial_protocol",
 									action="store_true", default=None,
 									help="use the serial port for binary transmission, default options")
@@ -106,19 +90,8 @@ class ConfigArgsLoader():
 		ConfigArgs.PACKAGE_NAME = args.package_name
 		ConfigArgs.ERASE_NAME = args.erase_name
 
-		# Get serial port or telnet server ip etc
 		if args.serial_protocol == True:
 			ConfigArgs.PROTOCOL_TYPE = PROTOCOL_SERIAL
-		elif args.telnet_protocol == True:
-			ConfigArgs.PROTOCOL_TYPE = PROTOCOL_TELNET
-
-		if ConfigArgs.PROTOCOL_TYPE == None:
-			proto = os.environ.get("SPRITZER_PROTOCOL")
-			if proto is not None:
-				if 's' in proto:
-					ConfigArgs.PROTOCOL_TYPE = PROTOCOL_SERIAL
-				elif 't' in proto:
-					ConfigArgs.PROTOCOL_TYPE = PROTOCOL_TELNET
 
 		if ConfigArgs.PROTOCOL_TYPE == None:
 			ConfigArgs.PROTOCOL_TYPE = PROTOCOL_SERIAL
@@ -126,31 +99,6 @@ class ConfigArgsLoader():
 		if ConfigArgs.PROTOCOL_TYPE == PROTOCOL_SERIAL:
 			if args.serial_port is not None:
 				ConfigArgs.SERIAL_PORT = args.serial_port
-			else:
-				# Get serial port from the environment
-				port = os.environ.get("SPRITZER_PORT")
-				if port is not None:
-					ConfigArgs.SERIAL_PORT = port
-				else:
-					print("SPRITZER_PORT is not set, Use " + ConfigArgs.SERIAL_PORT + ".")
-		else:
-			ConfigArgs.PROTOCOL_TYPE = PROTOCOL_TELNET
-			if args.server_port is not None:
-				ConfigArgs.SERVER_PORT = args.server_port
-			else:
-				port = os.environ.get("SPRITZER_TELNETSRV_PORT")
-				if port is not None:
-					ConfigArgs.SERVER_PORT = port
-				else:
-					print("SPRITZER_TELNETSRV_PORT is not set, Use " + str(ConfigArgs.SERVER_PORT) + ".")
-			if args.server_ip is not None:
-				ConfigArgs.SERVER_IP = args.server_ip
-			else:
-				ip = os.environ.get("SPRITZER_TELNETSRV_IP")
-				if ip is not None:
-					ConfigArgs.SERVER_IP = ip
-				else:
-					print("SPRITZER_TELNETSRV_IP is not set, Use " + ConfigArgs.SERVER_IP + ".")
 
 		if args.xmodem_baud is not None:
 			ConfigArgs.XMODEM_BAUD = args.xmodem_baud
@@ -163,84 +111,6 @@ class ConfigArgsLoader():
 
 		if args.wait_reset is not None:
 			ConfigArgs.WAIT_RESET = args.wait_reset
-
-class TelnetDev:
-	def __init__(self):
-		srv_ipaddr = ConfigArgs.SERVER_IP
-		srv_port = ConfigArgs.SERVER_PORT
-		self.recvbuf = b'';
-		try:
-			self.telnet = telnetlib.Telnet(host=srv_ipaddr, port=srv_port, timeout=10)
-			# There is a ack to be sent after connecting to the telnet server.
-			self.telnet.write(b"\xff")
-		except Exception as e:
-			print("Cannot connect to the server %s:%d" % (srv_ipaddr, srv_port))
-			sys.exit(e.args[0])
-
-	def readline(self, size=None):
-		res = b''
-		ch = b''
-		while ch != ConfigArgs.EOL:
-			ch = self.getc_raw(1, timeout=0.1)
-			if ch == b'':
-				return res
-			res += ch
-		return res
-
-	def getc_raw(self, size, timeout=1):
-		res = b''
-		tm = time.monotonic()
-		while size > 0:
-			while self.recvbuf == b'':
-				self.recvbuf = self.telnet.read_eager()
-				if self.recvbuf == b'':
-					if (time.monotonic() - tm) > timeout:
-						return res
-					time.sleep(0.1)
-			res += self.recvbuf[0:1]
-			self.recvbuf = self.recvbuf[1:]
-			size -= 1
-		return res
-
-	def write(self, buffer):
-		self.telnet.write(buffer)
-
-	def discard_inputs(self, timeout=1.0):
-		while True:
-			ch = self.getc_raw(1, timeout=timeout)
-			if ch == b'':
-				break
-
-	def getc(self, size, timeout=1):
-		c = self.getc_raw(size, timeout)
-		return c
-
-	def putc(self, buffer, timeout=1):
-		self.telnet.write(buffer)
-		self.show_progress(len(buffer))
-
-	def reboot(self):
-		# no-op
-		pass
-
-	def set_file_size(self, filesize):
-		self.bytes_transfered = 0
-		self.filesize = filesize
-		self.count = 0
-
-	def show_progress(self, sendsize):
-		if PRINT_RAW_COMMAND:
-			if self.count < MAX_DOT_COUNT:
-				self.bytes_transfered = self.bytes_transfered + sendsize
-				cur_count = int(self.bytes_transfered * MAX_DOT_COUNT / self.filesize)
-				if MAX_DOT_COUNT < cur_count:
-					cur_count = MAX_DOT_COUNT
-				for idx in range(cur_count - self.count):
-					print('#',end='')
-					sys.stdout.flush()
-				self.count = cur_count
-				if self.count == MAX_DOT_COUNT:
-					print("\n")
 
 class SerialDev:
 	def __init__(self):
@@ -325,9 +195,7 @@ class SerialDev:
 
 class FlashWriter:
 	def __init__(self, protocol_sel=PROTOCOL_SERIAL):
-		if protocol_sel == PROTOCOL_TELNET:
-			self.serial = TelnetDev()
-		else:
+		if protocol_sel == PROTOCOL_SERIAL:
 			self.serial = SerialDev()
 
 	def cancel_autoboot(self) :
