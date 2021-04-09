@@ -56,6 +56,7 @@ int32_t altcom_activate_pdn_sync(lte_apn_setting_t *apn, lte_pdn_t *pdn);
 int32_t altcom_deactivate_pdn_sync(uint8_t session_id);
 int32_t altcom_radio_on_sync(void);
 int32_t altcom_radio_off_sync(void);
+int32_t altcom_get_pinset_sync(lte_getpin_t *pinset);
 
 
 #endif /* __MODULES_INCLUDE_LTE_ALTCOM_ALTCOM_API_H */
