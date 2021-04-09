@@ -2775,12 +2775,10 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
  *                      Maximum number of digits is 8, end with '\0'.
  *                      (i.e. Max 9 byte)
  *
- * @param [in] new_pincode: If not used, set NULL.
- *                          If the PIN is SIM PUK or SIM PUK2,
- *                          the new_pincode is required.
- *                          Minimum number of digits is 4.
- *                          Maximum number of digits is 8,
- *                          end with '\0'. (i.e. Max 9 byte)
+ * @param [in] new_pincode: Always set NULL.
+ *                          This parameter is not currently used.
+ *                          If this parameter has a value in it,
+ *                          this API will error.
  *
  * @param [out] simstat: State after PIN enter.
  *                       As below value stored.
@@ -2806,8 +2804,13 @@ int32_t lte_change_pin(int8_t target_pin, int8_t *pincode,
  *                            If simstat is other than PIN, PUK, PIN2, PUK2,
  *                            set the number of PIN.
  *
+ * @note Running this API when the SIM state is
+ *       other than LTE_PINSTAT_SIM_PIN will return an error.
+ *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
+ *
+ * @deprecated This API will be removed in a future version
  */
 
 int32_t lte_enter_pin_sync(int8_t *pincode, int8_t *new_pincode,
@@ -2820,18 +2823,21 @@ int32_t lte_enter_pin_sync(int8_t *pincode, int8_t *new_pincode,
  *                      Maximum number of digits is 8, end with '\0'.
  *                      (i.e. Max 9 byte)
  *
- * @param [in] new_pincode: If not used, set NULL.
- *                          If the PIN is SIM PUK or SIM PUK2,
- *                          the new_pincode is required.
- *                          Minimum number of digits is 4.
- *                          Maximum number of digits is 8,
- *                          end with '\0'. (i.e. Max 9 byte)
+ * @param [in] new_pincode: Always set NULL.
+ *                          This parameter is not currently used.
+ *                          If this parameter has a value in it,
+ *                          this API will error.
  *
  * @param [in] callback: Callback function to notify that
  *                       PIN enter is completed.
  *
+ * @note Running this API when the SIM state is
+ *       other than LTE_PINSTAT_SIM_PIN will return an error.
+ *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
+ *
+ * @deprecated This API will be removed in a future version
  */
 
 int32_t lte_enter_pin(int8_t *pincode, int8_t *new_pincode,
