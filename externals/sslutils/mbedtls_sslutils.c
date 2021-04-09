@@ -480,7 +480,8 @@ static int sslutil_sslconnect(struct sslutil_sock_s *sock,
     }
 
   mbedtls_ssl_set_bio(&ssl->ssl, &ssl->server_fd,
-                      mbedtls_net_send, mbedtls_net_recv, NULL);
+                      mbedtls_net_send, mbedtls_net_recv,
+                      mbedtls_net_recv_timeout);
 
   ninfo("Performing the SSL/TLS handshake\n");
 
