@@ -63,10 +63,8 @@ romfs.h: romfs.img
 
 # Build prime worker library
 
-lib/libasmpw.a:
+lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-lib: lib/libasmpw.a
 
 # Build workers
 

@@ -81,12 +81,8 @@ all: lib $(WORKER_ELF)
 
 # Build ASMP worker library
 
-libasmpw.a:
+lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-lib: libasmpw.a $(CMSIS_DSP_DIR)/$(CMSIS_DSP)
-
-$(CMSIS_DSP_DIR)/$(CMSIS_DSP):
 	$(Q) $(MAKE) -C $(CMSIS_DSP_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
 # Complile
