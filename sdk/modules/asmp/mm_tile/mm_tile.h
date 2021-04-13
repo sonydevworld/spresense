@@ -3,7 +3,7 @@
  *
  *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
  *   Author: Gregory Nutt <gnutt@nuttx.org>
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,8 +41,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 
 #include <stdint.h>
 #include <semaphore.h>
@@ -55,8 +55,8 @@
 /* Debug */
 
 #ifdef CONFIG_MM_TILE_DEBUG
-#  define tinfo(fmt, ...) loginfo(fmt, ## __VA_ARGS__)
-#  define terr(fmt, ...)  logerr(fmt, ## __VA_ARGS__)
+#  define tinfo(fmt, ...) _info(fmt, ## __VA_ARGS__)
+#  define terr(fmt, ...)  _err(fmt, ## __VA_ARGS__)
 #else
 #  define tinfo(fmt, ...)
 #  define terr(fmt, ...)

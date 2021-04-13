@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/sensing/step_counter/step_counter.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,8 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 #include <sys/time.h>
 
 #include "sensing/logical_sensor/step_counter.h"
@@ -52,12 +52,12 @@
 /* Step counter debug feature. */
 
 #ifdef CONFIG_SENSING_STEPCOUNTER_DEBUG_ERROR
-#  define sc_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#  define sc_err(fmt, ...)   _err(fmt, ## __VA_ARGS__)
 #else
 #  define sc_err(fmt, ...)
 #endif
 #ifdef CONFIG_SENSING_STEPCOUNTER_DEBUG_INFO
-#  define sc_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define sc_info(fmt, ...)  _info(fmt, ## __VA_ARGS__)
 #else
 #  define sc_info(fmt, ...)
 #endif
