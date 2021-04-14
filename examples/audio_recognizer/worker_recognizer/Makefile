@@ -69,7 +69,8 @@ CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
 
 # Build
 
-all: libs $(WORKER_ELF)
+.PHONY: lib depend clean
+all: lib $(WORKER_ELF)
 
 # Build ASMP worker library
 
