@@ -236,10 +236,15 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
     {
       if (pinset.status == LTE_PINSTAT_SIM_PUK)
         {
-          DBGIF_LOG_ERROR("This SIM is PUK locked\n");
+          DBGIF_LOG1_ERROR("This SIM is PUK locked. lte_enter_pin%s() can't be used.\n",
+            (sync ? "_sync" : ""));
         }
-      DBGIF_LOG2_ERROR("PIN is already unlocked. Don't need to run lte_enter_pin%s(). status:%d\n",
-        (sync ? "_sync" : ""), pinset.status);
+      else
+        {
+          DBGIF_LOG2_ERROR("PIN is already unlocked. Don't need to run lte_enter_pin%s(). status:%d\n",
+            (sync ? "_sync" : ""), pinset.status);
+        }
+
       return -EPERM;
     }
 
