@@ -1,4 +1,4 @@
-/*  
+/*
     VTun - Virtual Tunnel over TCP/IP network.
 
     Copyright 2021 Sony Corporation
@@ -29,8 +29,6 @@
 #include "vtun.h"
 #include "lib.h"
 #include "compat_nuttx.h"
-
-#define OUTER_IF_NAME "eth0"
 
 #define MAX_DEVNAME 8
 
@@ -113,208 +111,6 @@ static void dump_pcap(uint8_t* buf, size_t len)
 #endif
 
 /****************************************************************************
- * Name: vtun_set_ipv4addr
- ****************************************************************************/
-static int vtun_set_ipv4addr(const char *ifname, const struct in_addr *addr)
-{
-  int ret = -1;
-
-  if (ifname && addr)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (sockfd >= 0)
-        {
-          struct sockaddr_in *inaddr;
-          struct ifreq req;
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
-          inaddr->sin_family = AF_INET;
-          inaddr->sin_port   = 0;
-          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
-
-          ret = ioctl(sockfd, SIOCSIFADDR, (unsigned long)&req);
-          close(sockfd);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: vtun_set_ipv4netmask
- ****************************************************************************/
-static int vtun_set_ipv4netmask(const char *ifname,
-                                const struct in_addr *addr)
-{
-  int ret = -1;
-
-  if (ifname && addr)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (sockfd >= 0)
-        {
-          struct sockaddr_in *inaddr;
-          struct ifreq req;
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
-          inaddr->sin_family = AF_INET;
-          inaddr->sin_port   = 0;
-          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
-
-          ret = ioctl(sockfd, SIOCSIFNETMASK, (unsigned long)&req);
-          close(sockfd);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: vtun_set_dripv4addr
- ****************************************************************************/
-static int vtun_set_dripv4addr(const char *ifname,
-                               const struct in_addr *addr)
-{
-  int ret = -1;
-
-#ifdef CONFIG_NET_ROUTE
-  struct sockaddr_in target;
-  struct sockaddr_in netmask;
-  struct sockaddr_in router;
-
-  memset(&target, 0, sizeof(target));
-  target.sin_family  = AF_INET;
-
-  memset(&netmask, 0, sizeof(netmask));
-  netmask.sin_family  = AF_INET;
-
-  router.sin_addr    = *addr;
-  router.sin_family  = AF_INET;
-#endif
-
-  if (ifname && addr)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (sockfd >= 0)
-        {
-          struct sockaddr_in *inaddr;
-          struct ifreq req;
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          inaddr             = (struct sockaddr_in *)&req.ifr_addr;
-          inaddr->sin_family = AF_INET;
-          inaddr->sin_port   = 0;
-          memcpy(&inaddr->sin_addr, addr, sizeof(struct in_addr));
-
-          ret = ioctl(sockfd, SIOCSIFDSTADDR, (unsigned long)&req);
-
-#ifdef CONFIG_NET_ROUTE
-          if (0 == ret)
-            {
-              (void)delroute(sockfd,
-                             (struct sockaddr_storage *)&target,
-                             (struct sockaddr_storage *)&netmask);
-              ret = addroute(sockfd,
-                             (struct sockaddr_storage *)&target,
-                             (struct sockaddr_storage *)&netmask,
-                             (struct sockaddr_storage *)&router);
-            }
-#endif
-
-          close(sockfd);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: vtun_getmacaddr
- ****************************************************************************/
-static int vtun_getmacaddr(const char *ifname, uint8_t *macaddr)
-{
-  int ret = -1;
-  if (ifname && macaddr)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-      if (sockfd >= 0)
-        {
-          struct ifreq req;
-          memset (&req, 0, sizeof(struct ifreq));
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          ret = ioctl(sockfd, SIOCGIFHWADDR, (unsigned long)&req);
-          if (!ret)
-            {
-              memcpy(macaddr, &req.ifr_hwaddr.sa_data, IFHWADDRLEN);
-            }
-
-          close(sockfd);
-        }
-    }
-  return ret;
-}
-
-/****************************************************************************
- * Name: vtun_setmacaddr
- ****************************************************************************/
-static int vtun_setmacaddr(const char *ifname, const uint8_t *macaddr)
-{
-  int ret = -1;
-
-  if (ifname && macaddr)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (sockfd >= 0)
-        {
-          struct ifreq req;
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          req.ifr_hwaddr.sa_family = AF_INET;
-          memcpy(&req.ifr_hwaddr.sa_data, macaddr, IFHWADDRLEN);
-
-          ret = ioctl(sockfd, SIOCSIFHWADDR, (unsigned long)&req);
-          close(sockfd);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: vtun_ifup
- ****************************************************************************/
-static int vtun_ifup(const char *ifname)
-{
-  int ret = -1;
-  if (ifname)
-    {
-      int sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-      if (sockfd >= 0)
-        {
-          struct ifreq req;
-          memset (&req, 0, sizeof(struct ifreq));
-
-          strncpy(req.ifr_name, ifname, IFNAMSIZ);
-
-          req.ifr_flags |= IFF_UP;
-
-          ret = ioctl(sockfd, SIOCSIFFLAGS, (unsigned long)&req);
-          close(sockfd);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
  * Name: tun_configure
  ****************************************************************************/
 static int tun_configure(struct tun_priv_s *tun, int istun)
@@ -349,86 +145,6 @@ static int tun_configure(struct tun_priv_s *tun, int istun)
   return 0;
 }
 
-/****************************************************************************
- * Name: tun_netconf
- ****************************************************************************/
-
-static int tun_netconf(struct tun_priv_s *tun, char *ipaddr,
-                       char *netmask, char *gw, int istun)
-{
-  int ret;
-  struct in_addr *addr;
-  char buf[INET_ADDRSTRLEN];
-
-  ret = inet_pton(AF_INET, ipaddr, buf);
-  if (ret != 1)
-    {
-      vtun_syslog(LOG_ERR, "inet_pton error: %s", ipaddr);
-    }
-  else
-    {
-      addr = (struct in_addr*) buf;
-      ret = vtun_set_ipv4addr(tun->devname, addr);
-      if (ret < 0)
-        {
-          vtun_syslog(LOG_ERR, "ERROR: vtun_set_ipv4addr() failed", ret);
-        }
-    }
-
-  ret = inet_pton(AF_INET, netmask, buf);
-  if (ret != 1)
-    {
-      vtun_syslog(LOG_ERR, "inet_pton error: %s", netmask);
-    }
-  else
-    {
-      addr = (struct in_addr*) buf;
-      ret = vtun_set_ipv4netmask(tun->devname, addr);
-      if (ret < 0)
-        {
-          vtun_syslog(LOG_ERR, "ERROR: vtun_set_ipv4netmask() failed", ret);
-        }
-    }
-
-  ret = inet_pton(AF_INET, gw, buf);
-  if (ret != 1)
-    {
-      vtun_syslog(LOG_ERR, "inet_pton error: %s", gw);
-    }
-  else
-    {
-      addr = (struct in_addr*) buf;
-      ret = vtun_set_dripv4addr(tun->devname, addr);
-      if (ret < 0)
-        {
-          vtun_syslog(LOG_ERR, "ERROR: vtun_set_dripv4addr() failed", ret);
-        }
-    }
-
-  if (!istun)
-    {
-      uint8_t mac[IFHWADDRLEN];
-
-      ret = vtun_getmacaddr(OUTER_IF_NAME, mac);
-      if (ret < 0)
-        {
-          vtun_syslog(LOG_ERR, "ERROR: vtun_getmacaddr() failed", ret);
-          RAND_bytes(mac, sizeof(mac));
-        }
-      mac[0] = mac[0] & 0xFE;
-      mac[0] = mac[0] ^ 0x02;
-
-      ret = vtun_setmacaddr(tun->devname, mac);
-      if (ret < 0)
-        {
-          vtun_syslog(LOG_ERR, "ERROR: vtun_setmacaddr() failed", ret);
-        }
-    }
-
-  vtun_ifup(tun->devname);
-  return 0;
-}
-
 static int tun_open_common(char *dev, int istun)
 {
   int ret;
@@ -437,18 +153,6 @@ static int tun_open_common(char *dev, int istun)
   if (ret < 0)
     {
       vtun_syslog(LOG_ERR, "ERROR: Failed to create tun: %d", ret);
-      return -1;
-    }
-
-  ret = tun_netconf(&g_tun_dev,
-                    CONFIG_EXAMPLES_VTUN_TUN_IP_ADDR,
-                    CONFIG_EXAMPLES_VTUN_TUN_NETMASK,
-                    CONFIG_EXAMPLES_VTUN_TUN_DEFAULT_GW_ADDR,
-                    istun);
-  if (ret < 0)
-    {
-      vtun_syslog(LOG_ERR, "ERROR: tun_netconf for tun failed: %d", ret);
-      close(g_tun_dev.fd);
       return -1;
     }
 
