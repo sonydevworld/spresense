@@ -57,11 +57,19 @@ VTUN_DIR := vtun_src
 VTUN_URL := "https://jaist.dl.sourceforge.net/project/vtun/vtun/$(VTUN_VER)/vtun-$(VTUN_VER).tar.gz"
 VTUN_DL_NAME := archive.tar.gz
 
+# Patch files
+
+VTUN_PATCH := patch
+VTUN_PATCHFILES = $(shell cd $(VTUN_PATCH); find -name "*.patch")
+
 $(VTUN_DIR):
 	$(Q) echo "Downloading: $(VTUN_URL)"
 	$(Q) mkdir -p $(VTUN_DIR)
 	$(Q) $(WGET) -O $(VTUN_DL_NAME) $(VTUN_URL)
 	$(Q) cd $(VTUN_DIR); $(TAR) $(TAROPT) ..$(DELIM)$(VTUN_DL_NAME) --strip=1
+	$(Q) files="$(VTUN_PATCHFILES)"; \
+	     cd $(VTUN_DIR); \
+	     for ff in $$files; do echo patch $$ff; patch -p0 < ..$(DELIM)$(VTUN_PATCH)$(DELIM)$$ff; done;
 
 context:: $(VTUN_DIR)
 

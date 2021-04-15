@@ -1,0 +1,35 @@
+--- server.c	2016-10-02 06:27:51.000000000 +0900
++++ server.c	2021-04-15 21:14:12.280682027 +0900
+@@ -84,7 +84,9 @@
+      if( (host=auth_server(sock)) ){	
+         sa.sa_handler=SIG_IGN;
+ 	sa.sa_flags=SA_NOCLDWAIT;;
++#ifndef VTUN_NUTTX
+         sigaction(SIGHUP,&sa,NULL);
++#endif
+ 
+ 	vtun_syslog(LOG_INFO,"Session %s[%s:%d] opened", host->host, ip, 
+ 					ntohs(cl_addr.sin_port) );
+@@ -150,7 +152,9 @@
+      sa.sa_flags = SA_NOCLDWAIT;
+      sa.sa_handler=sig_term;
+      sigaction(SIGTERM,&sa,NULL);
++#ifdef SIGINT
+      sigaction(SIGINT,&sa,NULL);
++#endif
+      server_term = 0;
+ 
+      set_title("waiting for connections on port %d", vtun.bind_addr.port);
+@@ -181,8 +185,12 @@
+ 
+      sa.sa_handler=SIG_IGN;
+      sa.sa_flags=SA_NOCLDWAIT;;
++#ifdef SIGINT
+      sigaction(SIGINT,&sa,NULL);
++#endif
++#ifndef VTUN_NUTTX
+      sigaction(SIGQUIT,&sa,NULL);
++#endif
+      sigaction(SIGCHLD,&sa,NULL);
+      sigaction(SIGPIPE,&sa,NULL);
+      sigaction(SIGUSR1,&sa,NULL);

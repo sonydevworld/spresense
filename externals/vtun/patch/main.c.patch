@@ -1,0 +1,17 @@
+--- main.c	2016-10-02 06:37:39.000000000 +0900
++++ main.c	2021-04-15 21:13:43.860685029 +0900
+@@ -107,12 +107,14 @@
+ 
+      while( (opt=getopt(argc,argv,OPTSTRING SERVOPT_STRING)) != EOF ){
+ 	switch(opt){
++#ifndef VTUN_NUTTX
+ 	    case 'm':
+ 	        if (mlockall(MCL_CURRENT | MCL_FUTURE) < 0) {
+ 		    perror("Unable to mlockall()");
+ 		    exit(-1);
+ 	        }
+ 		break;
++#endif
+ 	    case 'i':
+ 		vtun.svr_type = VTUN_INETD;
+ #ifdef HAVE_WORKING_FORK

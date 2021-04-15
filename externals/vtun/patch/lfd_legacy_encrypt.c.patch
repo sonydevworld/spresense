@@ -1,0 +1,17 @@
+--- lfd_legacy_encrypt.c	2016-10-02 06:27:51.000000000 +0900
++++ lfd_legacy_encrypt.c	2021-04-15 21:12:04.837695491 +0900
+@@ -50,9 +50,14 @@
+ #ifdef HAVE_SSL
+ 
+ #ifndef __APPLE_CC__
++
++#ifdef VTUN_NUTTX
++#include "compat.h"
++#else
+ /* OpenSSL includes */
+ #include <openssl/md5.h>
+ #include <openssl/blowfish.h>
++#endif
+ #else /* YAY - We're MAC OS */
+ #include <sys/md5.h>
+ #include <crypto/blowfish.h>

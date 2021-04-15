@@ -1,0 +1,38 @@
+--- lib.c	2016-10-02 06:46:01.000000000 +0900
++++ lib.c	2021-04-15 21:12:22.590693615 +0900
+@@ -44,7 +44,9 @@
+ #ifndef HAVE_SETPROC_TITLE
+ /* Functions to manipulate with program title */
+ 
++#ifndef VTUN_NUTTX
+ extern char **environ;
++#endif
+ static char	*title_start;	/* start of the proc title space */
+ static char	*title_end;     /* end of the proc title space */
+ static int	title_size;
+@@ -60,11 +62,13 @@
+ 
+ 	for (i = 0; envp[i]; i++);
+ 
++#ifndef VTUN_NUTTX
+ 	environ = (char **) malloc(sizeof (char *) * (i + 1));
+ 
+ 	for(i = 0; envp[i]; i++)
+ 	   environ[i] = strdup(envp[i]);
+ 	environ[i] = NULL;
++#endif
+ 
+ 	/*
+ 	 *  Save start and extent of argv for set_title.
+@@ -359,7 +363,11 @@
+     
+       va_start(ap, format);
+       vsnprintf(buf, sizeof(buf)-1, format, ap);
++#ifdef VTUN_NUTTX
++      syslog(priority, "%s\n", buf);
++#else
+       syslog(priority, "%s", buf);
++#endif
+       closelog();
+       va_end(ap);
+ 

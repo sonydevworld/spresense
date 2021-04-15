@@ -1,0 +1,55 @@
+--- linkfd.c	2016-10-02 06:27:51.000000000 +0900
++++ linkfd.c	2021-04-15 21:13:05.635689067 +0900
+@@ -176,12 +176,17 @@
+ }
+ 
+ /* Statistic dump and keep-alive monitor */
++#ifdef VTUN_NUTTX
++typedef int64_t _time_t;
++#else
++typedef time_t _time_t;
++#endif
+ static volatile sig_atomic_t ka_need_verify = 0;
+-static time_t stat_timer = 0, ka_timer = 0; 
++static _time_t stat_timer = 0, ka_timer = 0; 
+ 
+ static void sig_alarm(int sig)
+ {
+-     static time_t tm_old, tm = 0;
++     static _time_t tm_old, tm = 0;
+      static char stm[20];
+  
+      tm_old = tm;
+@@ -392,10 +397,16 @@
+ 
+      memset(&sa, 0, sizeof(sa));
+      sa.sa_handler=sig_term;
++#ifdef SIGTERM
+      sigaction(SIGTERM,&sa,&sa_oldterm);
++#endif
++#ifdef SIGINT
+      sigaction(SIGINT,&sa,&sa_oldint);
++#endif
+      sa.sa_handler=sig_hup;
++#ifndef VTUN_NUTTX
+      sigaction(SIGHUP,&sa,&sa_oldhup);
++#endif
+ 
+      /* Initialize keep-alive timer */
+      if( host->flags & (VTUN_STAT|VTUN_KEEP_ALIVE) ){
+@@ -434,9 +445,15 @@
+ 
+      lfd_free_mod();
+      
++#ifdef SIGTERM
+      sigaction(SIGTERM,&sa_oldterm,NULL);
++#endif
++#ifdef SIGINT
+      sigaction(SIGINT,&sa_oldint,NULL);
++#endif
++#ifndef VTUN_NUTTX
+      sigaction(SIGHUP,&sa_oldhup,NULL);
++#endif
+ 
+      setpriority(PRIO_PROCESS,0,old_prio);
+ 

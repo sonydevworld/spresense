@@ -1,0 +1,12 @@
+--- netlib.c	2016-10-02 06:46:01.000000000 +0900
++++ netlib.c	2021-04-15 21:14:00.671683253 +0900
+@@ -78,7 +78,8 @@
+ /* Connect with timeout */
+ int connect_t(int s, struct sockaddr *svr, time_t timeout) 
+ {
+-#if defined(VTUN_SOCKS) && VTUN_SOCKS == 2
++#if defined(VTUN_SOCKS) && VTUN_SOCKS == 2 \
++  || defined(VTUN_NUTTX)
+      /* Some SOCKS implementations don't support
+       * non blocking connect */
+      return connect(s,svr,sizeof(struct sockaddr));
