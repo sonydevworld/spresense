@@ -223,7 +223,7 @@ void mbedtls_sha1(const unsigned char *input, size_t ilen, unsigned char output[
 
   result = sha1_request(&req, output);
 
-  if (result != SHA1_FAILURE)
+  if (result != SHA1_SUCCESS)
     {
       DBGIF_LOG_ERROR("%s error.\n");
     }
