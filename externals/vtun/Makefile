@@ -46,4 +46,27 @@ PRIORITY  = $(CONFIG_EXTERNALS_VTUN_PRIORITY)
 STACKSIZE = $(CONFIG_EXTERNALS_VTUN_STACKSIZE)
 MODULE    = $(CONFIG_EXTERNALS_VTUN)
 
+# Set up build environment
+
+WGET   ?= wget
+TAR    ?= tar 
+TAROPT ?= xzf
+
+VTUN_VER := 3.0.4
+VTUN_DIR := vtun_src
+VTUN_URL := "https://jaist.dl.sourceforge.net/project/vtun/vtun/$(VTUN_VER)/vtun-$(VTUN_VER).tar.gz"
+VTUN_DL_NAME := archive.tar.gz
+
+$(VTUN_DIR):
+	$(Q) echo "Downloading: $(VTUN_URL)"
+	$(Q) mkdir -p $(VTUN_DIR)
+	$(Q) $(WGET) -O $(VTUN_DL_NAME) $(VTUN_URL)
+	$(Q) cd $(VTUN_DIR); $(TAR) $(TAROPT) ..$(DELIM)$(VTUN_DL_NAME) --strip=1
+
+context:: $(VTUN_DIR)
+
+distclean::
+	$(call DELFILE, $(VTUN_DL_NAME))
+	$(call DELDIR, $(VTUN_DIR))
+
 include $(APPDIR)/Application.mk
