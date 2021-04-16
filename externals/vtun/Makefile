@@ -52,6 +52,12 @@ WGET   ?= wget
 TAR    ?= tar 
 TAROPT ?= xzf
 
+LEX      := lex
+LEXFLAGS := -t
+
+YACC      := yacc
+YACCFLAGS := -d
+
 VTUN_VER := 3.0.4
 VTUN_DIR := vtun_src
 VTUN_URL := "https://jaist.dl.sourceforge.net/project/vtun/vtun/$(VTUN_VER)/vtun-$(VTUN_VER).tar.gz"
@@ -71,7 +77,17 @@ $(VTUN_DIR):
 	     cd $(VTUN_DIR); \
 	     for ff in $$files; do echo patch $$ff; patch -p0 < ..$(DELIM)$(VTUN_PATCH)$(DELIM)$$ff; done;
 
-context:: $(VTUN_DIR)
+# Config files
+
+$(VTUN_DIR)/cfg_file.lex.c: $(VTUN_DIR)
+	$(Q) cd $(VTUN_DIR); $(LEX) $(LEXFLAGS) cfg_file.l > $(notdir $@)
+
+$(VTUN_DIR)/cfg_file.tab.c: $(VTUN_DIR)/cfg_file.tab.h
+
+$(VTUN_DIR)/cfg_file.tab.h: $(VTUN_DIR)
+	$(Q) cd $(VTUN_DIR); $(YACC) $(YACCFLAGS) -b cfg_file cfg_file.y
+
+context:: $(VTUN_DIR) $(VTUN_DIR)/cfg_file.lex.c $(VTUN_DIR)/cfg_file.tab.c $(VTUN_DIR)/cfg_file.tab.h
 
 distclean::
 	$(call DELFILE, $(VTUN_DL_NAME))
