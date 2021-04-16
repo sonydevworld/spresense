@@ -1,20 +1,24 @@
-/*  
-    VTun - Virtual Tunnel over TCP/IP network.
+/****************************************************************************
+ *  VTun - Virtual Tunnel over TCP/IP network.
+ *
+ *  Copyright 2021 Sony Corporation
+ *
+ *  VTun has been derived from VPPP package by Maxim Krasnyansky.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ ****************************************************************************/
 
-    Copyright 2021 Sony Corporation
-
-    VTun has been derived from VPPP package by Maxim Krasnyansky. 
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
- */
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
 
 #include <sys/types.h>
 #include <mbedtls/md5.h>
@@ -33,13 +37,23 @@
 
 #include "compat_nuttx.h"
 
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
 static int session_established = 0;
 
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
 void openlog(const char *ident, int option, int facility)
-{}
+{
+}
 
 void closelog(void)
-{}
+{
+}
 
 #ifndef CONFIG_PSEUDOFS_SOFTLINKS
 int link(const char *path1, const char *path2)
@@ -59,7 +73,7 @@ int setpriority(int which, id_t who, int prio)
   return 0;
 }
 
-unsigned char *MD5(char *msg, size_t msg_len, unsigned char* out)
+unsigned char *MD5(char *msg, size_t msg_len, unsigned char *out)
 {
   static mbedtls_md5_context ctx;
   static unsigned char tmp[16];
@@ -71,7 +85,7 @@ unsigned char *MD5(char *msg, size_t msg_len, unsigned char* out)
 
   mbedtls_md5_init(&ctx);
   mbedtls_md5_starts(&ctx);
-  mbedtls_md5_update(&ctx, (const unsigned char*) msg, msg_len);
+  mbedtls_md5_update(&ctx, (const unsigned char *) msg, msg_len);
   mbedtls_md5_finish(&ctx, out);
   mbedtls_md5_free(&ctx);
 
@@ -95,7 +109,7 @@ static int vtun_entropy(void *rng_state, unsigned char *output, size_t len)
       ret = clock_gettime(CLOCK_REALTIME, &ts);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"clock_gettime() error: %d", errno);
+          vtun_syslog(LOG_ERR, "clock_gettime() error: %d", errno);
           return -1;
         }
 
@@ -110,6 +124,7 @@ static int vtun_entropy(void *rng_state, unsigned char *output, size_t len)
           offset += len - offset;
         }
     }
+
   return 0;
 }
 
@@ -127,9 +142,10 @@ void RAND_bytes(char *buf, size_t buf_len)
   ret = mbedtls_ctr_drbg_seed(&ctx, vtun_entropy, NULL, NULL, 0);
   if (ret != 0)
     {
-      vtun_syslog(LOG_ERR,"mbedtls_ctr_drbg_seed() returned -0x%04X", -ret);
+      vtun_syslog(LOG_ERR, "mbedtls_ctr_drbg_seed() returned -0x%04X", -ret);
     }
-  mbedtls_ctr_drbg_random(&ctx, (unsigned char*) buf, buf_len);
+
+  mbedtls_ctr_drbg_random(&ctx, (unsigned char *) buf, buf_len);
   mbedtls_ctr_drbg_free(&ctx);
 }
 
@@ -170,6 +186,7 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a)
 {
   mbedtls_cipher_init(a);
 }
+
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a)
 {
   mbedtls_cipher_free(a);
@@ -193,7 +210,8 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                                  mbedtls_cipher_info_from_type(*type));
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_setup() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_setup() returned -0x%04X", -ret);
           return 0;
         }
     }
@@ -206,7 +224,8 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                                   keybitlen, MBEDTLS_ENCRYPT);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_setkey() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_setkey() returned -0x%04X", -ret);
           return 0;
         }
     }
@@ -221,7 +240,8 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
           ret = mbedtls_cipher_set_iv(ctx, iv, ivlen);
           if (ret != 0)
             {
-              vtun_syslog(LOG_ERR,"mbedtls_cipher_set_iv() returned -0x%04X", -ret);
+              vtun_syslog(LOG_ERR,
+                          "mbedtls_cipher_set_iv() returned -0x%04X", -ret);
               return 0;
             }
         }
@@ -229,10 +249,10 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
       ret = mbedtls_cipher_reset(ctx);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_reset() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_reset() returned -0x%04X", -ret);
           return 0;
         }
-
     }
 
   return 1;
@@ -255,7 +275,8 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                                  mbedtls_cipher_info_from_type(*type));
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_setup() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_setup() returned -0x%04X", -ret);
           return 0;
         }
     }
@@ -268,7 +289,8 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                                   keybitlen, MBEDTLS_DECRYPT);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_setkey() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_setkey() returned -0x%04X", -ret);
           return 0;
         }
     }
@@ -283,7 +305,8 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
           ret = mbedtls_cipher_set_iv(ctx, iv, ivlen);
           if (ret != 0)
             {
-              vtun_syslog(LOG_ERR,"mbedtls_cipher_set_iv() returned -0x%04X", -ret);
+              vtun_syslog(LOG_ERR,
+                          "mbedtls_cipher_set_iv() returned -0x%04X", -ret);
               return 0;
             }
         }
@@ -291,7 +314,8 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
       ret = mbedtls_cipher_reset(ctx);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_reset() returned -0x%04X", -ret);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_reset() returned -0x%04X", -ret);
           return 0;
         }
     }
@@ -306,21 +330,27 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding)
   if (padding == 0)
     {
       ret = mbedtls_cipher_set_padding_mode(x, MBEDTLS_PADDING_NONE);
-      if (ret != 0) {
-        vtun_syslog(LOG_ERR,"mbedtls_cipher_set_padding_mode() returned -0x%04X", -ret);
-      }
+      if (ret != 0)
+        {
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_set_padding_mode() returned -0x%04X",
+                      -ret);
+        }
       else
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_set_padding_mode() succeeded");
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_set_padding_mode() succeeded");
         }
     }
-   return 1;
+
+  return 1;
 }
 
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
          int *outl, const unsigned char *in, int inl)
 {
-  //return 1 for success and 0 for failure.
+  /* return 1 for success and 0 for failure. */
+
   int ret;
   mbedtls_cipher_mode_t mode;
 
@@ -335,12 +365,16 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
       while (offset < inl)
         {
           size_t out_len = 0;
-          ret = mbedtls_cipher_update(ctx, in + offset, blocksize, out + offset, &out_len);
+          ret = mbedtls_cipher_update(ctx, in + offset, blocksize,
+                                      out + offset, &out_len);
           if (ret != 0)
             {
-              vtun_syslog(LOG_ERR,"mbedtls_cipher_update() returned -0x%04X L:%d", -ret, __LINE__);
+              vtun_syslog(LOG_ERR,
+                          "mbedtls_cipher_update() returned -0x%04X L:%d",
+                          -ret, __LINE__);
               return 0;
             }
+
           offset += blocksize;
         }
     }
@@ -348,29 +382,36 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     {
       size_t finlen = 0;
 
-      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t*) outl);
+      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t *) outl);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_update() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_update() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       ret = mbedtls_cipher_finish(ctx, out + *outl, &finlen);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_finish() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_finish() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       ret = mbedtls_cipher_reset(ctx);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR, "mbedtls_cipher_reset() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_reset() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       *outl += finlen;
     }
+
   return 1;
 }
 
@@ -391,11 +432,16 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
       while (offset < inl)
         {
           size_t out_len = 0;
-          ret = mbedtls_cipher_update(ctx, in + offset, blocksize, out + offset, &out_len);
-          if (ret != 0) {
-            vtun_syslog(LOG_ERR,"mbedtls_cipher_update() returned -0x%04X L:%d", -ret, __LINE__);
-            return 0;
-          }
+          ret = mbedtls_cipher_update(ctx, in + offset, blocksize,
+                                      out + offset, &out_len);
+          if (ret != 0)
+            {
+              vtun_syslog(LOG_ERR,
+                          "mbedtls_cipher_update() returned -0x%04X L:%d",
+                          -ret, __LINE__);
+              return 0;
+            }
+
           offset += blocksize;
         }
     }
@@ -403,29 +449,36 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     {
       size_t finlen = 0;
 
-      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t*) outl);
+      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t *) outl);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_update() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_update() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       ret = mbedtls_cipher_finish(ctx, out + *outl, &finlen);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_finish() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_finish() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       ret = mbedtls_cipher_reset(ctx);
       if (ret != 0)
         {
-          vtun_syslog(LOG_ERR,"mbedtls_cipher_reset() returned -0x%04X L:%d", -ret, __LINE__);
+          vtun_syslog(LOG_ERR,
+                      "mbedtls_cipher_reset() returned -0x%04X L:%d",
+                      -ret, __LINE__);
           return 0;
         }
 
       *outl += finlen;
     }
+
   return 1;
 }
 
@@ -454,9 +507,10 @@ const EVP_CIPHER *EVP_bf_ecb(void)
 
 const EVP_CIPHER *EVP_aes_256_ofb(void)
 {
-  //static const EVP_CIPHER cipher = MBEDTLS_CIPHER_AES_256_OFB;
+  /* static const EVP_CIPHER cipher = MBEDTLS_CIPHER_AES_256_OFB; */
+
   static const EVP_CIPHER cipher = MBEDTLS_CIPHER_NONE;
-  vtun_syslog(LOG_ERR,"AES-256-OFB is not supported.");
+  vtun_syslog(LOG_ERR, "AES-256-OFB is not supported.");
   return &cipher;
 }
 
@@ -474,9 +528,10 @@ const EVP_CIPHER *EVP_aes_256_cbc(void)
 
 const EVP_CIPHER *EVP_aes_128_ofb(void)
 {
-  //static const EVP_CIPHER cipher = MBEDTLS_CIPHER_AES_128_OFB;
+  /* static const EVP_CIPHER cipher = MBEDTLS_CIPHER_AES_128_OFB; */
+
   static const EVP_CIPHER cipher = MBEDTLS_CIPHER_NONE;
-  vtun_syslog(LOG_ERR,"AES-128-OFB is not supported.");
+  vtun_syslog(LOG_ERR, "AES-128-OFB is not supported.");
   return &cipher;
 }
 
@@ -495,7 +550,7 @@ const EVP_CIPHER *EVP_aes_128_cbc(void)
 const EVP_CIPHER *EVP_bf_ofb(void)
 {
   static const EVP_CIPHER cipher = MBEDTLS_CIPHER_NONE;
-  vtun_syslog(LOG_ERR,"Blowfish-256-OFB is not supported.");
+  vtun_syslog(LOG_ERR, "Blowfish-256-OFB is not supported.");
   return &cipher;
 }
 
@@ -527,7 +582,8 @@ ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt)
   recv_len = read(fd, buf, sizeof(buf));
   if (recv_len < 0)
     {
-      // read error.
+      /* read error. */
+
       return recv_len;
     }
 
@@ -542,6 +598,7 @@ ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt)
           memcpy(iov[i].iov_base, &buf[offset], recv_len - offset);
           break;
         }
+
       offset += iov[i].iov_len;
     }
 

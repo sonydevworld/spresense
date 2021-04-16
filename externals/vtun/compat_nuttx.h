@@ -1,28 +1,37 @@
-/*  
-    VTun - Virtual Tunnel over TCP/IP network.
+/****************************************************************************
+ *  VTun - Virtual Tunnel over TCP/IP network.
+ *
+ *  Copyright 2021 Sony Corporation
+ *
+ *  VTun has been derived from VPPP package by Maxim Krasnyansky.
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ ****************************************************************************/
 
-    Copyright 2021 Sony Corporation
+#ifndef __EXTERNALS_VTUN_COMPAT_NUTTX_H__
+#define __EXTERNALS_VTUN_COMPAT_NUTTX_H__
 
-    VTun has been derived from VPPP package by Maxim Krasnyansky. 
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
- */
-
-#ifndef _VTUN_COMPAT_SPRESENSE_H
-#define _VTUN_COMPAT_SPRESENSE_H
+/****************************************************************************
+ * Included Files
+ ****************************************************************************/
 
 #include <mbedtls/blowfish.h>
 #include <mbedtls/cipher.h>
 
-// openssl
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+/* openssl */
+
 #define BF_KEY mbedtls_blowfish_context
 #define BF_ENCRYPT 1
 #define BF_DECRYPT 0
@@ -30,7 +39,11 @@
 #define EVP_CIPHER mbedtls_cipher_type_t
 #define ENGINE void
 
-unsigned char *MD5(char *msg, size_t msg_len, unsigned char* out);
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+unsigned char *MD5(char *msg, size_t msg_len, unsigned char *out);
 void RAND_bytes(char *buf, size_t buf_len);
 void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
 void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
@@ -60,18 +73,19 @@ const EVP_CIPHER *EVP_bf_ofb(void);
 const EVP_CIPHER *EVP_bf_cfb(void);
 const EVP_CIPHER *EVP_bf_cbc(void);
 
-// syslog
-#define	LOG_PID		0x01	/* log the pid with each message */
-//#define	LOG_CONS	0x02	/* log on the console if errors in sending */
-//#define	LOG_ODELAY	0x04	/* delay open until first syslog() (default) */
-#define	LOG_NDELAY	0x08	/* don't delay open */
-//#define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
-#define	LOG_PERROR	0x20	/* log to stderr as well */
+/* syslog */
+
+/* log the pid with each message */
+#define	LOG_PID		0x01
+/* don't delay open */
+#define	LOG_NDELAY	0x08
+/* log to stderr as well */
+#define	LOG_PERROR	0x20
 
 void openlog(const char *ident, int option, int facility);
 void closelog(void);
 
-// signal
+/* signal */
 #define SIGHUP 1
 
 #ifndef CONFIG_PSEUDOFS_SOFTLINKS
@@ -86,4 +100,4 @@ pid_t setsid(void);
 ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt);
 #define readv(fd, iov, iovcnt) vtun_udp_readv(fd, iov, iovcnt)
 
-#endif /* _VTUN_COMPAT_SPRESENSE_H */
+#endif /* __EXTERNALS_VTUN_COMPAT_NUTTX_H__ */
