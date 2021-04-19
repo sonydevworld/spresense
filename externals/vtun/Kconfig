@@ -7,7 +7,10 @@ config EXTERNALS_VTUN
 	bool "VTUN Command"
 	default n
 	---help---
-		Enable support for the NSH 'vtun' command.
+		Download VTUN from https://jaist.dl.sourceforge.net/project/vtun,
+		and build it on Spresense SDK. The version to download is v3.0.4.
+		and it is licensed under the GNU General Public License version 2.0.
+		Please check License file in the sourceforge for more details.
 
 if EXTERNALS_VTUN
 
