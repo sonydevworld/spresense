@@ -10,5 +10,9 @@ Usage
    nsh> ifconfig tun0 <Local IP address such as 192.168.12.11>
    nsh> ifup tun0
 
+Limitation
+
+  This feature can be work for GS2200m wifi and WIZnet W5x00 ethernet board.
+
 [Source path]
 externals/vtun
