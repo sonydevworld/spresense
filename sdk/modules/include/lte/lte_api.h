@@ -2468,8 +2468,7 @@ int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback);
 /**
  * Allow or disallow to data communication for specified PDN.
  *
- * If the application performs data communication in the disallow state,
- * the modem discards the data.
+ * @attention This function is not supported.
  *
  * @param [in] session_id: The numeric value of the session ID.
  *                         Use the value obtained by the lte_activate_pdn.
@@ -2484,8 +2483,7 @@ int32_t lte_deactivate_pdn(uint8_t session_id, deactivate_pdn_cb_t callback);
  *  - @ref LTE_DATA_ALLOW
  *  - @ref LTE_DATA_DISALLOW
  *
- * @return On success, 0 is returned. On failure,
- * negative value is returned according to <errno.h>.
+ * @return -EOPNOTSUPP is returned.
  */
 
 int32_t lte_data_allow_sync(uint8_t session_id, uint8_t allow,
@@ -2494,8 +2492,7 @@ int32_t lte_data_allow_sync(uint8_t session_id, uint8_t allow,
 /**
  * Allow or disallow to data communication for specified PDN.
  *
- * If the application performs data communication in the disallow state,
- * the modem discards the data.
+ * @attention This function is not supported.
  *
  * @param [in] session_id: The numeric value of the session ID.
  *                         Use the value obtained by the lte_activate_pdn.
@@ -2513,8 +2510,7 @@ int32_t lte_data_allow_sync(uint8_t session_id, uint8_t allow,
  * @param [in] callback: Callback function to notify that
  *                       configuration has changed.
  *
- * @return On success, 0 is returned. On failure,
- * negative value is returned according to <errno.h>.
+ * @return -EOPNOTSUPP is returned.
  */
 
 int32_t lte_data_allow(uint8_t session_id, uint8_t allow,
