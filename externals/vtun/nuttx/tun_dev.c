@@ -57,8 +57,6 @@
 
 #define MAX_DEVNAME 8
 
-#define PCAP_PATH "/mnt/spif/dump.pcap"
-
 /****************************************************************************
  * Private Data Types
  ****************************************************************************/
@@ -97,56 +95,6 @@ struct tun_priv_s g_tun_dev;
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-
-#ifdef ENABLE_DUMP_PCAP
-static void dump_pcap_init(int istun)
-{
-  FILE *fp = NULL;
-  pcap_hdr_t hdr;
-
-  fp = fopen(PCAP_PATH, "wb");
-  if (fp == NULL)
-    {
-      vtun_syslog(LOG_ERR, "pcap fopen error");
-      return;
-    }
-
-  memset(&hdr, 0, sizeof(hdr));
-
-  hdr.magic_number = 0xa1b2c3d4;
-  hdr.version_major = 2;
-  hdr.version_minor = 4;
-  hdr.snaplen = 65535;
-  hdr.network = (istun != 0) ? 228 : 1; /* 228: DLT_IPV4, 1: DLT_EN10MB */
-
-  fwrite(&hdr, sizeof(hdr), 1, fp);
-
-  fclose(fp);
-}
-
-static void dump_pcap(uint8_t *buf, size_t len)
-{
-  struct pcaprec_hdr_s hdr;
-  FILE *fp = NULL;
-
-  memset(&hdr, 0, sizeof(hdr));
-
-  fp = fopen(PCAP_PATH, "ab");
-  if (fp == NULL)
-    {
-      vtun_syslog(LOG_ERR, "fopen error");
-      return;
-    }
-
-  hdr.incl_len = len;
-  hdr.orig_len = len;
-
-  fwrite(&hdr, sizeof(hdr), 1, fp);
-  fwrite(buf, len, 1, fp);
-  fflush(fp);
-  fclose(fp);
-}
-#endif
 
 /****************************************************************************
  * Name: tun_configure
@@ -195,23 +143,12 @@ static int tun_open_common(char *dev, int istun)
       return -1;
     }
 
-#ifdef ENABLE_DUMP_PCAP
-  dump_pcap_init(istun);
-#endif
-
   return g_tun_dev.fd;
 }
 
 static int tun_write_common(int fd, char *buf, int len)
 {
   int ret = 0;
-
-#ifdef ENABLE_DUMP_PCAP
-  if (0 < len)
-    {
-      dump_pcap(buf, len);
-    }
-#endif
 
   ret = write(fd, buf, len);
   if (ret < 0)
