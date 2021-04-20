@@ -29,4 +29,20 @@ config EXTERNALS_VTUN_STACKSIZE
 	int "vtun stack size"
 	default 8192
 
+config EXTERNALS_VTUN_CFG_FILE
+	string "vtun default config file"
+	default "/mnt/spif/vtund.conf"
+
+config EXTERNALS_VTUN_PID_FILE
+	string "vtun pid file"
+	default "/mnt/spif/vtun.pid"
+
+config EXTERNALS_VTUN_STAT_DIR
+	string "vtun stat file destination"
+	default "/mnt/spif"
+
+config EXTERNALS_VTUN_LOCK_DIR
+	string "vtun lock file destination"
+	default "/mnt/spif"
+
 endif
