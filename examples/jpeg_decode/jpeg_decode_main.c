@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/jpeg_decode/jpeg_decode_main.c
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,12 +59,7 @@
 
 #include "jpeglib.h"
 
-/*
- * In example.c by IJG, application use setjmp() and  longjmp().
- * Because NuttX OS do not support these functions, delete.
- */
-
-/* #include <setjmp.h> */
+#include <setjmp.h>
 
 /* For output to Spresense LCD.
  * imageproc has the color converter(YUV422 -> RGB565) function.
@@ -104,6 +99,37 @@
 /****************************************************************************
  * Private Types
  ****************************************************************************/
+
+/*
+ * ERROR HANDLING:
+ *
+ * The JPEG library's standard error handler (jerror.c) is divided into
+ * several "methods" which you can override individually.  This lets you
+ * adjust the behavior without duplicating a lot of code, which you might
+ * have to update with each future release.
+ *
+ * Our example here shows how to override the "error_exit" method so that
+ * control is returned to the library's caller when a fatal error occurs,
+ * rather than calling exit() as the standard error_exit method does.
+ *
+ * We use C's setjmp/longjmp facility to return control.  This means that the
+ * routine which calls the JPEG library must first execute a setjmp() call to
+ * establish the return point.  We want the replacement error_exit to do a
+ * longjmp().  But we need to make the setjmp buffer accessible to the
+ * error_exit routine.  To do this, we make a private extension of the
+ * standard JPEG error handler object.  (If we were using C++, we'd say we
+ * were making a subclass of the regular error handler.)
+ *
+ * Here's the extended error handler struct:
+ */
+
+struct my_error_mgr {
+  struct jpeg_error_mgr pub;    /* "public" fields */
+
+  jmp_buf setjmp_buffer;        /* for return to caller */
+};
+
+typedef struct my_error_mgr * my_error_ptr;
 
 /* For output to Spresense LCD */
 
@@ -171,6 +197,24 @@ struct nximage_data_s g_jpeg_decode_nximage =
  * because we don't need to remember to deallocate the buffer separately: it
  * will go away automatically when the JPEG object is cleaned up.
  */
+
+/*
+ * Here's the routine that will replace the standard error_exit method:
+ */
+
+METHODDEF(void)
+my_error_exit (j_common_ptr cinf)
+{
+  /* cinfo.err really points to a my_error_mgr struct, so coerce pointer */
+  my_error_ptr myerr = (my_error_ptr) cinf->err;
+
+  /* Always display the message. */
+  /* We could postpone this until after returning, if we chose. */
+  (cinf->err->output_message) ((struct jpeg_common_struct *)cinf);
+
+  /* Return control to the setjmp point */
+  longjmp(myerr->setjmp_buffer, 1);
+}
 
 #ifdef CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD
 static inline int nximage_initialize(void)
@@ -441,10 +485,13 @@ int main(int argc, FAR char *argv[])
   /* For reduction of stack size, globalize */
   /* struct jpeg_decompress_struct cinfo; */
 
-  /* Because Spresense do not support setjmp/longjmp,
-   *  use default error handling function for now.
+  /* We use our private extension JPEG error handler.
+   * Note that this struct must live as long as the main JPEG parameter
+   * struct, to avoid dangling-pointer problems.
    */
-  struct jpeg_error_mgr jerr;
+
+  struct my_error_mgr jerr;
+
   /* More stuff */
 
   JSAMPARRAY buffer;            /* Output row buffer */
@@ -480,17 +527,18 @@ int main(int argc, FAR char *argv[])
   /* Step 1: allocate and initialize JPEG decompression object */
 
   /* We set up the normal JPEG error routines. */
-  cinfo.err = jpeg_std_error(&jerr);
-  /* jerr.error_exit = my_error_exit; */
-  /* Because Spresense do not support setjmp, delete setjmp */
-  /* if (setjmp(jerr.setjmp_buffer)) { */
-    /* If we get here, the JPEG code has signaled an error.
-     * We need to clean up the JPEG object, close the input file, and return.
-     */
-    /* jpeg_destroy_decompress(&cinfo); */
-    /* fclose(infile); */
-    /* return 0;       */
-  /* } */
+  cinfo.err = jpeg_std_error(&jerr.pub);
+  jerr.pub.error_exit = my_error_exit;
+  /* Establish the setjmp return context for my_error_exit to use. */
+  if (setjmp(jerr.setjmp_buffer))
+    {
+      /* If we get here, the JPEG code has signaled an error.
+       * We need to clean up the JPEG object, close the input file, and return.
+       */
+      jpeg_destroy_decompress(&cinfo);
+      close(infile);
+      return 0;
+    }
   /* Now we can initialize the JPEG decompression object. */
 
   jpeg_create_decompress(&cinfo);
