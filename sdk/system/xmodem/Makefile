@@ -1,7 +1,7 @@
 ############################################################################
 # system/xmodem/Makefile
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2019,2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -39,5 +39,18 @@ include $(SDKDIR)/Make.defs
 # The XMODEM Library
 
 CSRCS = xmodem.c
+
+# The XMODEM Application
+
+ifeq ($(CONFIG_SYSTEM_XMODEM_APP),y)
+MAINSRC = xmodem_main.c
+
+# xmodem built-in application info
+
+PROGNAME  = $(CONFIG_SYSTEM_XMODEM_APP_PROGNAME)
+PRIORITY  = $(CONFIG_SYSTEM_XMODEM_APP_PRIORITY)
+STACKSIZE = $(CONFIG_SYSTEM_XMODEM_APP_STACKSIZE)
+MODULE    = $(CONFIG_SYSTEM_XMODEM)
+endif
 
 include $(APPDIR)/Application.mk
