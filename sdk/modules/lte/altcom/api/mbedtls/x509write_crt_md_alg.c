@@ -2,7 +2,7 @@
  * modules/lte/altcom/api/mbedtls/x509write_crt_md_alg.c
  *
  *   Copyright 2018 Sony Corporation
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -163,7 +163,7 @@ void mbedtls_x509write_crt_set_md_alg(mbedtls_x509write_cert *ctx,
 
   if (result != X509WRITE_CRT_MD_ALG_SUCCESS)
     {
-      DBGIF_LOG_ERROR("%s error.\n");
+      DBGIF_LOG1_ERROR("%s error.\n", __func__);
     }
 }
 

@@ -2,7 +2,7 @@
  * modules/lte/altcom/api/mbedtls/ssl_session_init.c
  *
  *   Copyright 2018 Sony Corporation
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -192,7 +192,7 @@ void mbedtls_ssl_session_init(mbedtls_ssl_session *session)
 
   if (result != SES_INIT_SUCCESS)
     {
-      DBGIF_LOG_ERROR("%s error.\n");
+      DBGIF_LOG1_ERROR("%s error.\n", __func__);
     }
 }
 

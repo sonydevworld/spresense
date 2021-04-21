@@ -2,7 +2,7 @@
  * modules/lte/altcom/api/mbedtls/sha1.c
  *
  *   Copyright 2018 Sony Corporation
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -223,9 +223,9 @@ void mbedtls_sha1(const unsigned char *input, size_t ilen, unsigned char output[
 
   result = sha1_request(&req, output);
 
-  if (result != SHA1_FAILURE)
+  if (result != SHA1_SUCCESS)
     {
-      DBGIF_LOG_ERROR("%s error.\n");
+      DBGIF_LOG1_ERROR("%s error.\n", __func__);
     }
 
   return;

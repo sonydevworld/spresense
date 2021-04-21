@@ -2,7 +2,7 @@
  * modules/lte/altcom/api/mbedtls/rsa_init.c
  *
  *   Copyright 2018 Sony Corporation
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -166,7 +166,7 @@ void mbedtls_rsa_init(mbedtls_rsa_context *ctx, int padding, int hash_id)
 
   if (result != RSA_INIT_SUCCESS)
     {
-      DBGIF_LOG_ERROR("%s error.\n");
+      DBGIF_LOG1_ERROR("%s error.\n", __func__);
     }
 }
 
