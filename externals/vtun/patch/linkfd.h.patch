@@ -1,0 +1,12 @@
+--- linkfd.h	2016-10-02 06:37:39.000000000 +0900
++++ linkfd.h	2021-04-21 12:51:19.671103093 +0900
+@@ -23,6 +23,9 @@
+ #ifndef _LINKFD_H
+ #define _LINKFD_H
+ 
++#include <stdlib.h>
++#include <string.h>
++
+ /* Priority of the process in the link_fd function */
+ /* Never set the priority to -19 without stating a good reason.
+  *#define LINKFD_PRIO -19

@@ -1,0 +1,14 @@
+--- tunnel.c	2016-10-02 06:27:51.000000000 +0900
++++ tunnel.c	2021-04-21 13:44:44.820764484 +0900
+@@ -70,7 +70,11 @@
+    
+ int tunnel(struct vtun_host *host)
+ {
++#ifdef HAVE_WORKING_FORK
+      int null_fd, pid, opt;
++#else
++     int opt;
++#endif
+      int fd[2]={-1, -1};
+      char dev[VTUN_DEV_LEN]="";
+      int interface_already_open = 0;

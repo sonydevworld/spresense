@@ -1,6 +1,18 @@
 --- lock.c	2016-10-02 06:27:51.000000000 +0900
 +++ lock.c	2021-04-15 21:13:28.873686613 +0900
-@@ -123,10 +123,12 @@
+@@ -38,6 +38,11 @@
+ #include "lib.h" 
+ #include "lock.h"
+ 
++#ifdef VTUN_NUTTX
++extern int link(FAR const char *path1, FAR const char *path2);
++extern int unlink(FAR const char *pathname);
++#endif
++
+ int create_lock(char * file)
+ {
+   char tmp_file[255], str[20];
+@@ -123,10 +128,12 @@
       switch( host->multi ){
  	case VTUN_MULTI_KILL:
             vtun_syslog(LOG_INFO, "Killing old connection (process %d)", pid);
@@ -13,7 +25,7 @@
             /* Give it a time(up to 5 secs) to terminate */
  	   for(i=0; i < 10 && !kill(pid, 0); i++ ){
                tm.tv_sec = 0; tm.tv_nsec = 500000000; 
-@@ -134,12 +136,14 @@
+@@ -134,12 +141,14 @@
  	   }
  
  	   /* Make sure it's dead */		 

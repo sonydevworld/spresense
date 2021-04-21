@@ -60,22 +60,22 @@
  * Public Function Prototypes
  ****************************************************************************/
 
-unsigned char *MD5(char *msg, size_t msg_len, unsigned char *out);
+unsigned char *MD5(char *msg, size_t msg_len, char *out);
 void RAND_bytes(char *buf, size_t buf_len);
 void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
-void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
+void BF_ecb_encrypt(char *in, char *out,
         BF_KEY *key, int enc);
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-        ENGINE *impl, unsigned char *key, unsigned char *iv);
+        ENGINE *impl, char *key, char *iv);
 int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-        ENGINE *impl, unsigned char *key, unsigned char *iv);
+        ENGINE *impl, char *key, char *iv);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
-int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, const unsigned char *in, int inl);
-int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, const unsigned char *in, int inl);
+int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, char *out,
+         int *outl, const char *in, int inl);
+int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, char *out,
+         int *outl, const char *in, int inl);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_128_ecb(void);

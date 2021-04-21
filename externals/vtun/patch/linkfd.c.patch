@@ -1,25 +1,41 @@
 --- linkfd.c	2016-10-02 06:27:51.000000000 +0900
 +++ linkfd.c	2021-04-15 21:13:05.635689067 +0900
-@@ -176,12 +176,17 @@
- }
+@@ -201,7 +201,7 @@
+ 	stat_timer = VTUN_STAT_IVAL;
+      }
  
- /* Statistic dump and keep-alive monitor */
-+#ifdef VTUN_NUTTX
-+typedef int64_t _time_t;
-+#else
-+typedef time_t _time_t;
-+#endif
- static volatile sig_atomic_t ka_need_verify = 0;
--static time_t stat_timer = 0, ka_timer = 0; 
-+static _time_t stat_timer = 0, ka_timer = 0; 
- 
- static void sig_alarm(int sig)
+-     if ( ka_timer*stat_timer ){
++     if ( ka_timer && stat_timer ){
+        alarm( (ka_timer < stat_timer) ? ka_timer : stat_timer );
+      } else {
+        alarm( (ka_timer) ? ka_timer : stat_timer );
+@@ -362,7 +362,11 @@
+ /* Link remote and local file descriptors */ 
+ int linkfd(struct vtun_host *host)
  {
--     static time_t tm_old, tm = 0;
-+     static _time_t tm_old, tm = 0;
-      static char stm[20];
-  
-      tm_old = tm;
++#ifdef VTUN_NUTTX
++     struct sigaction sa, sa_oldint;
++#else
+      struct sigaction sa, sa_oldterm, sa_oldint, sa_oldhup;
++#endif
+      int old_prio;
+ 
+      lfd_host = host;
+@@ -377,12 +381,13 @@
+      if(host->flags & VTUN_LZO)
+ 	lfd_add_mod(&lfd_lzo);
+ 
+-     if(host->flags & VTUN_ENCRYPT)
++     if(host->flags & VTUN_ENCRYPT) {
+        if(host->cipher == VTUN_LEGACY_ENCRYPT) {
+ 	 lfd_add_mod(&lfd_legacy_encrypt);
+        } else {
+ 	 lfd_add_mod(&lfd_encrypt);
+        }
++     }
+      
+      if(host->flags & VTUN_SHAPE)
+ 	lfd_add_mod(&lfd_shaper);
 @@ -392,10 +397,16 @@
  
       memset(&sa, 0, sizeof(sa));

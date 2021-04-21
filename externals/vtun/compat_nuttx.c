@@ -90,10 +90,10 @@ int setpriority(int which, id_t who, int prio)
   return 0;
 }
 
-unsigned char *MD5(char *msg, size_t msg_len, unsigned char *out)
+unsigned char *MD5(char *msg, size_t msg_len, char *out)
 {
   static mbedtls_md5_context ctx;
-  static unsigned char tmp[16];
+  static char tmp[16];
 
   if (out == NULL)
     {
@@ -103,10 +103,10 @@ unsigned char *MD5(char *msg, size_t msg_len, unsigned char *out)
   mbedtls_md5_init(&ctx);
   mbedtls_md5_starts(&ctx);
   mbedtls_md5_update(&ctx, (const unsigned char *) msg, msg_len);
-  mbedtls_md5_finish(&ctx, out);
+  mbedtls_md5_finish(&ctx, (unsigned char *) out);
   mbedtls_md5_free(&ctx);
 
-  return out;
+  return (unsigned char *) out;
 }
 
 static int vtun_entropy(void *rng_state, unsigned char *output, size_t len)
@@ -172,7 +172,7 @@ void BF_set_key(BF_KEY *key, int len, const unsigned char *data)
   mbedtls_blowfish_setkey(key, data, len * 8);
 }
 
-void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
+void BF_ecb_encrypt(char *in, char *out,
         BF_KEY *key, int enc)
 {
   int ret;
@@ -192,7 +192,9 @@ void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
       mode = MBEDTLS_BLOWFISH_DECRYPT;
     }
 
-  ret = mbedtls_blowfish_crypt_ecb(key, mode, in, out);
+  ret = mbedtls_blowfish_crypt_ecb(key, mode,
+                                   (unsigned char *) in,
+                                   (unsigned char *) out);
   if (ret != 0)
     {
       vtun_syslog(LOG_ERR, "mbedtls_blowfish_crypt_ecb failed.");
@@ -211,7 +213,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a)
 }
 
 int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-        ENGINE *impl, unsigned char *key, unsigned char *iv)
+        ENGINE *impl, char *key, char *iv)
 {
   int ret;
   size_t keybitlen;
@@ -237,7 +239,7 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     {
       keybitlen = mbedtls_cipher_get_key_bitlen(ctx);
 
-      ret = mbedtls_cipher_setkey(ctx, key,
+      ret = mbedtls_cipher_setkey(ctx, (unsigned char *) key,
                                   keybitlen, MBEDTLS_ENCRYPT);
       if (ret != 0)
         {
@@ -254,7 +256,7 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
       ivlen = mbedtls_cipher_get_iv_size(ctx);
       if (ivlen != 0)
         {
-          ret = mbedtls_cipher_set_iv(ctx, iv, ivlen);
+          ret = mbedtls_cipher_set_iv(ctx, (unsigned char *)iv, ivlen);
           if (ret != 0)
             {
               vtun_syslog(LOG_ERR,
@@ -276,7 +278,7 @@ int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 }
 
 int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-        ENGINE *impl, unsigned char *key, unsigned char *iv)
+        ENGINE *impl, char *key, char *iv)
 {
   int ret;
   size_t keybitlen;
@@ -302,7 +304,7 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     {
       keybitlen = mbedtls_cipher_get_key_bitlen(ctx);
 
-      ret = mbedtls_cipher_setkey(ctx, key,
+      ret = mbedtls_cipher_setkey(ctx, (unsigned char *) key,
                                   keybitlen, MBEDTLS_DECRYPT);
       if (ret != 0)
         {
@@ -319,7 +321,7 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
       ivlen = mbedtls_cipher_get_iv_size(ctx);
       if (ivlen != 0)
         {
-          ret = mbedtls_cipher_set_iv(ctx, iv, ivlen);
+          ret = mbedtls_cipher_set_iv(ctx, (unsigned char *) iv, ivlen);
           if (ret != 0)
             {
               vtun_syslog(LOG_ERR,
@@ -363,8 +365,8 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding)
   return 1;
 }
 
-int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, const unsigned char *in, int inl)
+int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, char *out,
+         int *outl, const char *in, int inl)
 {
   /* return 1 for success and 0 for failure. */
 
@@ -382,8 +384,11 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
       while (offset < inl)
         {
           size_t out_len = 0;
-          ret = mbedtls_cipher_update(ctx, in + offset, blocksize,
-                                      out + offset, &out_len);
+          ret = mbedtls_cipher_update(ctx,
+                                      (unsigned char *) (in + offset),
+                                      blocksize,
+                                      (unsigned char *) (out + offset),
+                                      &out_len);
           if (ret != 0)
             {
               vtun_syslog(LOG_ERR,
@@ -399,7 +404,9 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     {
       size_t finlen = 0;
 
-      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t *) outl);
+      ret = mbedtls_cipher_update(ctx, (unsigned char *) in,
+                                  inl, (unsigned char *) out,
+                                  (size_t *) outl);
       if (ret != 0)
         {
           vtun_syslog(LOG_ERR,
@@ -408,7 +415,9 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
           return 0;
         }
 
-      ret = mbedtls_cipher_finish(ctx, out + *outl, &finlen);
+      ret = mbedtls_cipher_finish(ctx,
+                                  (unsigned char *) (out + *outl),
+                                  &finlen);
       if (ret != 0)
         {
           vtun_syslog(LOG_ERR,
@@ -432,8 +441,8 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
   return 1;
 }
 
-int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, const unsigned char *in, int inl)
+int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, char *out,
+         int *outl, const char *in, int inl)
 {
   int ret;
   mbedtls_cipher_mode_t mode;
@@ -449,8 +458,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
       while (offset < inl)
         {
           size_t out_len = 0;
-          ret = mbedtls_cipher_update(ctx, in + offset, blocksize,
-                                      out + offset, &out_len);
+          ret = mbedtls_cipher_update(ctx,
+                                      (unsigned char *) (in + offset),
+                                      blocksize,
+                                      (unsigned char *) (out + offset),
+                                      &out_len);
           if (ret != 0)
             {
               vtun_syslog(LOG_ERR,
@@ -466,7 +478,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     {
       size_t finlen = 0;
 
-      ret = mbedtls_cipher_update(ctx, in, inl, out, (size_t *) outl);
+      ret = mbedtls_cipher_update(ctx,
+                                  (unsigned char *) in,
+                                  inl,
+                                  (unsigned char *) out,
+                                  (size_t *) outl);
       if (ret != 0)
         {
           vtun_syslog(LOG_ERR,
@@ -475,7 +491,9 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
           return 0;
         }
 
-      ret = mbedtls_cipher_finish(ctx, out + *outl, &finlen);
+      ret = mbedtls_cipher_finish(ctx,
+                                  (unsigned char *) (out + *outl),
+                                  &finlen);
       if (ret != 0)
         {
           vtun_syslog(LOG_ERR,

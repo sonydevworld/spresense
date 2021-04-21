@@ -1,6 +1,6 @@
 --- lfd_encrypt.c	2016-10-02 06:27:51.000000000 +0900
-+++ lfd_encrypt.c	2021-04-15 21:11:54.303696603 +0900
-@@ -51,11 +51,15 @@
++++ lfd_encrypt.c	2021-04-21 15:01:45.591276321 +0900
+@@ -51,11 +51,19 @@
  
  #ifdef HAVE_SSL
  
@@ -13,6 +13,35 @@
  #include <openssl/blowfish.h>
  #include <openssl/rand.h>
 +#endif
++
++#ifdef VTUN_NUTTX
++#include <arpa/inet.h>
++#endif
  
  /*
   * #define LFD_ENCRYPT_DEBUG
+@@ -64,7 +72,6 @@
+ #define ENC_BUF_SIZE VTUN_FRAME_SIZE + 128 
+ #define ENC_KEY_SIZE 16
+ 
+-static BF_KEY key;
+ static char * enc_buf;
+ static char * dec_buf;
+ 
+@@ -93,7 +100,6 @@
+ static int dec_init_first_time;
+ static unsigned long sequence_num;
+ static char * pkey;
+-static char * iv_buf;
+ 
+ static EVP_CIPHER_CTX ctx_enc;	/* encrypt */
+ static EVP_CIPHER_CTX ctx_dec;	/* decrypt */
+@@ -287,7 +293,7 @@
+    return 0;
+ }
+ 
+-static int free_encrypt()
++static int free_encrypt(void)
+ {
+    free_key(pkey); pkey = NULL;
+ 

@@ -1,5 +1,5 @@
 --- lfd_legacy_encrypt.c	2016-10-02 06:27:51.000000000 +0900
-+++ lfd_legacy_encrypt.c	2021-04-15 21:12:04.837695491 +0900
++++ lfd_legacy_encrypt.c	2021-04-21 15:02:40.471270523 +0900
 @@ -50,9 +50,14 @@
  #ifdef HAVE_SSL
  
@@ -15,3 +15,12 @@
  #else /* YAY - We're MAC OS */
  #include <sys/md5.h>
  #include <crypto/blowfish.h>
+@@ -77,7 +82,7 @@
+    return 0;
+ }
+ 
+-static int free_legacy_encrypt()
++static int free_legacy_encrypt(void)
+ {
+    lfd_free(enc_buf); enc_buf = NULL;
+    return 0;
