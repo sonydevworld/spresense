@@ -120,7 +120,7 @@ if [ "${FLASH_MODE}" == "SPK" ]; then
 		if [ "`echo ${arg} | grep "\.spk$"`" ]; then
 			SPK_FILES="${SPK_FILES} ${arg}"
 		elif [ "`echo ${arg} | grep "\.espk$"`" ]; then
-			ESPK_FILES="${ESPK_FILES} -S ${arg}"
+			ESPK_FILES="${ESPK_FILES} ${arg}"
 		fi
 	done
 
