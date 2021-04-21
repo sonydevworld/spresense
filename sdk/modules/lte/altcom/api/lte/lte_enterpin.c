@@ -198,24 +198,12 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
       return -EINVAL;
     }
 
-  pinlen = strlen((FAR char *)pincode);
-  if (pinlen < ENTERPIN_MIN_PIN_LEN || ENTERPIN_MAX_PIN_LEN < pinlen)
-    {
-      return -EINVAL;
-    }
-
-  if (new_pincode)
-    {
-      DBGIF_LOG1_ERROR("lte_enter_pin%s() doesn't support entering PUK code.\n",
-        (sync ? "_sync" : ""));
-      return -EINVAL;
-    }
-
   /* Check LTE library status */
 
   ret = altcombs_check_poweron_status();
   if (0 > ret)
     {
+      DBGIF_LOG1_ERROR("Modem is not powered on.%d\n", ret);
       return ret;
     }
 
@@ -224,6 +212,39 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
     {
       DBGIF_LOG1_ERROR("Failed to get pinset.%d\n", ret);
       return ret;
+    }
+
+  /* Input the current simstat and attemptsleft. */
+
+  if (simstat)
+    {
+      *simstat = pinset.status;
+    }
+
+  if (attemptsleft)
+    {
+      if (pinset.status == LTE_PINSTAT_SIM_PUK)
+        {
+          *attemptsleft = pinset.puk_attemptsleft;
+        }
+      else
+        {
+          *attemptsleft = pinset.pin_attemptsleft;
+        }
+    }
+
+  pinlen = strlen((FAR char *)pincode);
+  if (pinlen < ENTERPIN_MIN_PIN_LEN || ENTERPIN_MAX_PIN_LEN < pinlen)
+    {
+      DBGIF_LOG1_ERROR("Invalid PIN code length.length:%d\n", pinlen);
+      return -EINVAL;
+    }
+
+  if (new_pincode)
+    {
+      DBGIF_LOG1_ERROR("lte_enter_pin%s() doesn't support entering PUK code.\n",
+        (sync ? "_sync" : ""));
+      return -EINVAL;
     }
 
   if (pinset.enable == LTE_DISABLE)
@@ -236,10 +257,15 @@ static int32_t lte_enterpin_impl(int8_t *pincode, int8_t *new_pincode,
     {
       if (pinset.status == LTE_PINSTAT_SIM_PUK)
         {
-          DBGIF_LOG_ERROR("This SIM is PUK locked\n");
+          DBGIF_LOG1_ERROR("This SIM is PUK locked. lte_enter_pin%s() can't be used.\n",
+            (sync ? "_sync" : ""));
         }
-      DBGIF_LOG2_ERROR("PIN is already unlocked. Don't need to run lte_enter_pin%s(). status:%d\n",
-        (sync ? "_sync" : ""), pinset.status);
+      else
+        {
+          DBGIF_LOG2_ERROR("PIN is already unlocked. Don't need to run lte_enter_pin%s(). status:%d\n",
+            (sync ? "_sync" : ""), pinset.status);
+        }
+
       return -EPERM;
     }
 
