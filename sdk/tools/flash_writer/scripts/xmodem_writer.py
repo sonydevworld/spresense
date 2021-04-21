@@ -4,7 +4,7 @@
 #
 # TODO: This script will be merge in flash_writer.py
 #
-__copyright__ = ['Copyright (C) 2018, 2019 Sony Semiconductor Solutions Corp.']
+__copyright__ = ['Copyright (C) 2018, 2019, 2021 Sony Semiconductor Solutions Corp.']
 __license__ = 'LGPL v2.1'
 
 import time
@@ -35,7 +35,6 @@ VT100_ERACE_EOL = VT100_ESC + "[K"
 class ConfigArgs:
 	SERIAL_PORT = "COM1"
 	EOL = bytes([10])
-	WAIT_RESET = True
 	DTR_RESET = False
 	XMODEM_BAUD = 0
 	PACKAGE_NAME = []
@@ -55,14 +54,6 @@ class ConfigArgsLoader():
 		group.add_argument("-c", "--serial-port", dest="serial_port", help="the serial port")
 		group.add_argument("-b", "--xmodem-baudrate", dest="xmodem_baud", help="Use the faster baudrate in xmodem")
 
-		mutually_group2 = self.parser.add_mutually_exclusive_group()
-		mutually_group2.add_argument("-F", "--force-wait-reset", dest="wait_reset",
-									action="store_true", default=None,
-									help="force wait for pressing RESET button")
-		mutually_group2.add_argument("-N", "--no-wait-reset", dest="wait_reset",
-									action="store_false", default=None,
-									help="if possible, skip to wait for pressing RESET button")
-
 	def update_config(self):
 		args = self.parser.parse_args()
 
@@ -76,9 +67,6 @@ class ConfigArgsLoader():
 
 		if args.dtr_reset is not None:
 			ConfigArgs.DTR_RESET = args.dtr_reset
-
-		if args.wait_reset is not None:
-			ConfigArgs.WAIT_RESET = args.wait_reset
 
 class SerialDev:
 	def __init__(self):
@@ -309,7 +297,7 @@ def main():
 		do_wait_reset = False
 		bootrom_msg = writer.cancel_autoboot()
 
-	if ConfigArgs.WAIT_RESET == False and do_wait_reset == True:
+	if do_wait_reset == True:
 		rx = writer.recv()
 		time.sleep(1)
 		for i in range(3):
