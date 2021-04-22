@@ -46,8 +46,7 @@ MODULE    = $(CONFIG_EXTERNALS_VTUN)
 # Set up build environment
 
 WGET   ?= wget
-TAR    ?= tar 
-TAROPT ?= xzf
+UNZIP  ?= unzip
 
 LEX      := lex
 LEXFLAGS := -t
@@ -55,10 +54,10 @@ LEXFLAGS := -t
 YACC      := yacc
 YACCFLAGS := -d
 
-VTUN_VER := 3.0.4
-VTUN_DIR := vtun_src
-VTUN_URL := "https://jaist.dl.sourceforge.net/project/vtun/vtun/$(VTUN_VER)/vtun-$(VTUN_VER).tar.gz"
-VTUN_DL_NAME := archive.tar.gz
+VTUN_SH1 := e4c2c8d324fee9938d518374b094ab75d7eeb749
+VTUN_DIR := VTun-$(VTUN_SH1)
+VTUN_URL := "https://codeload.github.com/SPRESENSE/VTun/zip/$(VTUN_SH1)"
+VTUN_DL_NAME := archive.zip
 
 # Patch files
 
@@ -69,21 +68,7 @@ $(VTUN_DIR):
 	$(Q) echo "Downloading: $(VTUN_URL)"
 	$(Q) mkdir -p $(VTUN_DIR)
 	$(Q) $(WGET) -O $(VTUN_DL_NAME) $(VTUN_URL)
-	$(Q) cd $(VTUN_DIR); $(TAR) $(TAROPT) ..$(DELIM)$(VTUN_DL_NAME) --strip=1
-	$(Q) cp -a $(VTUN_DIR)/config.h.in $(VTUN_DIR)/config.h
-	$(Q) files="$(VTUN_PATCHFILES)"; \
-	     cd $(VTUN_DIR); \
-	     for ff in $$files; do echo patch $$ff; patch -p0 < ..$(DELIM)$(VTUN_PATCH)$(DELIM)$$ff; done;
-
-# Config files
-
-$(VTUN_DIR)/cfg_file.lex.c: $(VTUN_DIR)
-	$(Q) cd $(VTUN_DIR); $(LEX) $(LEXFLAGS) cfg_file.l > $(notdir $@)
-
-$(VTUN_DIR)/cfg_file.tab.c: $(VTUN_DIR)/cfg_file.tab.h
-
-$(VTUN_DIR)/cfg_file.tab.h: $(VTUN_DIR)
-	$(Q) cd $(VTUN_DIR); $(YACC) $(YACCFLAGS) -b cfg_file cfg_file.y
+	$(Q) $(UNZIP) $(VTUN_DL_NAME)
 
 ASRCS =
 CSRCS += compat_nuttx.c
@@ -117,7 +102,7 @@ CFLAGS += -DVTUN_STAT_DIR=\"$(CONFIG_EXTERNALS_VTUN_STAT_DIR)\"
 CFLAGS += -DVTUN_LOCK_DIR=\"$(CONFIG_EXTERNALS_VTUN_LOCK_DIR)\"
 CFLAGS += -DVTUN_NUTTX
 
-context:: $(VTUN_DIR) $(VTUN_DIR)/cfg_file.lex.c $(VTUN_DIR)/cfg_file.tab.c $(VTUN_DIR)/cfg_file.tab.h
+context:: $(VTUN_DIR)
 
 distclean::
 	$(call DELFILE, $(VTUN_DL_NAME))
