@@ -1,0 +1,13 @@
+--- generic/tcp_proto.c	2016-10-02 06:37:39.000000000 +0900
++++ generic/tcp_proto.c	2021-04-21 14:02:40.381650856 +0900
+@@ -51,6 +51,10 @@
+ #include <netinet/tcp.h>
+ #endif
+ 
++#ifdef VTUN_NUTTX
++#include <arpa/inet.h>
++#endif
++
+ #include "vtun.h"
+ #include "lib.h"
+ 

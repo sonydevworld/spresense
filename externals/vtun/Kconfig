@@ -1,0 +1,48 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_VTUN
+	bool "VTUN Command"
+	default n
+	---help---
+		Download VTUN from https://jaist.dl.sourceforge.net/project/vtun,
+		and build it on Spresense SDK. The version to download is v3.0.4.
+		and it is licensed under the GNU General Public License version 2.0.
+		Please check License file in the sourceforge for more details.
+
+if EXTERNALS_VTUN
+
+config EXTERNALS_VTUN_PROGNAME
+	string "Program name"
+	default "vtun"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXTERNALS_VTUN_PRIORITY
+	int "vtun task priority"
+	default 100
+
+config EXTERNALS_VTUN_STACKSIZE
+	int "vtun stack size"
+	default 8192
+
+config EXTERNALS_VTUN_CFG_FILE
+	string "vtun default config file"
+	default "/mnt/spif/vtund.conf"
+
+config EXTERNALS_VTUN_PID_FILE
+	string "vtun pid file"
+	default "/mnt/spif/vtun.pid"
+
+config EXTERNALS_VTUN_STAT_DIR
+	string "vtun stat file destination"
+	default "/mnt/spif"
+
+config EXTERNALS_VTUN_LOCK_DIR
+	string "vtun lock file destination"
+	default "/mnt/spif"
+
+endif

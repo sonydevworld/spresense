@@ -1,0 +1,46 @@
+--- netlib.c	2016-10-02 06:46:01.000000000 +0900
++++ netlib.c	2021-04-21 13:59:40.440669866 +0900
+@@ -78,7 +78,8 @@
+ /* Connect with timeout */
+ int connect_t(int s, struct sockaddr *svr, time_t timeout) 
+ {
+-#if defined(VTUN_SOCKS) && VTUN_SOCKS == 2
++#if defined(VTUN_SOCKS) && VTUN_SOCKS == 2 \
++  || defined(VTUN_NUTTX)
+      /* Some SOCKS implementations don't support
+       * non blocking connect */
+      return connect(s,svr,sizeof(struct sockaddr));
+@@ -127,7 +128,7 @@
+      strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)-1);
+      ifr.ifr_name[sizeof(ifr.ifr_name)-1]='\0';
+ 
+-     if( ioctl(s, SIOCGIFADDR, &ifr) < 0 ){
++     if( ioctl(s, SIOCGIFADDR, (unsigned long) &ifr) < 0 ){
+         close(s);
+         return -1;
+      }
+@@ -146,7 +147,12 @@
+ {
+      struct sockaddr_in saddr; 
+      short port;
++#ifdef VTUN_NUTTX
++     int s;
++     socklen_t opt;
++#else
+      int s,opt;
++#endif
+      extern int is_rmt_fd_connected;
+ 
+      if( (s=socket(AF_INET,SOCK_DGRAM,0))== -1 ){
+@@ -220,7 +226,11 @@
+ /* Set local address */
+ int local_addr(struct sockaddr_in *addr, struct vtun_host *host, int con)
+ {
++#ifdef VTUN_NUTTX
++     socklen_t opt;
++#else
+      int opt;
++#endif
+ 
+      if( con ){
+         /* Use address of the already connected socket. */

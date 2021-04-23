@@ -1,0 +1,20 @@
+--- generic/udp_proto.c	2016-10-02 06:37:39.000000000 +0900
++++ generic/udp_proto.c	2021-04-21 14:03:19.652646707 +0900
+@@ -53,9 +53,17 @@
+ #include <netinet/udp.h>
+ #endif
+ 
++#ifdef VTUN_NUTTX
++#include <arpa/inet.h>
++#endif
++
+ #include "vtun.h"
+ #include "lib.h"
+ 
++#ifdef VTUN_NUTTX
++#include "compat.h"
++#endif
++
+ extern int is_rmt_fd_connected; 
+ 
+ /* Functions to read/write UDP frames. */
