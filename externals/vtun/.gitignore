@@ -9,5 +9,5 @@
 /*.adb
 /*.lib
 /*.src
-archive.tar.gz
-vtun_src/
+archive.zip
+VTun-*/
