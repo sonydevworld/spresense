@@ -1,0 +1,14 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "TensorFlow Lite Micro runtime library"
+config TFLM_RT
+	bool "TensorFlow Lite Micro runtime library"
+	select EXTERNALS_TENSORFLOW
+	default n
+	---help---
+		Enable or disable TensorFlow Lite Micro runtime library.
+
+endmenu # TFLM_RT
