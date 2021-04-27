@@ -72,6 +72,20 @@ int main(int argc, FAR char *argv[])
 
   seconds = (time_t)atoi(argv[1]);
 
+  /* Turn off the 3.3V power supply on the Spresense main board */
+
+  board_power_control(POWER_LDO_EMMC, false);
+
+  /* Turn off the power of SPI-Flash */
+
+  board_flash_power_control(false);
+
+  /* Turn off the power of TCXO.
+   * NOTE: The CPU freqlock mechanism will not lock anything.
+   */
+
+  board_xtal_power_control(false);
+
   /* Clear all boot mask */
 
   up_pm_clr_bootmask((uint32_t)-1);
@@ -122,7 +136,7 @@ int main(int argc, FAR char *argv[])
       boardctl(BOARDIOC_POWEROFF, 1);
     }
 
-  /* Never achived because the power will be off as deep/cold sleep */
+  /* Never reached because the power will be off as deep/cold sleep */
 
   return 0;
 }
