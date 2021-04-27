@@ -4,7 +4,7 @@ config EXAMPLES_POWER_SLEEP
 	default n
 	---help---
 		Enable the power_sleep app. This application will sleep the CXD5602
-		into deep sleep or cold sleep..
+		into deep sleep or cold sleep.
 
 if EXAMPLES_POWER_SLEEP
 
@@ -21,6 +21,6 @@ config EXAMPLES_POWER_SLEEP_PRIORITY
 
 config EXAMPLES_POWER_SLEEP_STACKSIZE
 	int "power_sleep stack size"
-	default 2048
+	default 1024
 
 endif
