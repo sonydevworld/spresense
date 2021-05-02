@@ -799,6 +799,7 @@ bool AS_DeleteRecognizer(void)
   /* Unregister attention callback */
 
   RECOGNIZER_OBJ_UNREG_ATTCB();
+  usleep(10 * 1000); /* Wait for next creation */
 
   return true;
 }
