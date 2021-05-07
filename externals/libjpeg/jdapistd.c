@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * Modified 2002-2013 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -18,7 +19,6 @@
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
-//#include "jpegint.h"
 
 /* Forward declarations */
 LOCAL(boolean) output_pass_setup JPP((j_decompress_ptr cinfo));
@@ -99,6 +99,10 @@ output_pass_setup (j_decompress_ptr cinfo)
     /* First call: do pass setup */
     (*cinfo->master->prepare_for_output_pass) (cinfo);
     cinfo->output_scanline = 0;
+    /* Modified for Spresense by Sony Semiconductor Solutions.
+     * Add offset information to decode by mcu unit,
+     * and add initialization.
+     */
     cinfo->output_offset = 0;
     cinfo->global_state = DSTATE_PRESCAN;
   }
@@ -158,7 +162,7 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
 
   if (cinfo->global_state != DSTATE_SCANNING)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
-  if  (cinfo->output_scanline >= cinfo->output_height) {
+  if (cinfo->output_scanline >= cinfo->output_height) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;
   }
@@ -177,6 +181,9 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
   return row_ctr;
 }
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Add decode function by mcu unit.
+ */
 /*
  * Read one mcu of data from the JPEG decompressor.
  *

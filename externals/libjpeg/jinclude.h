@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1991-1994, Thomas G. Lane.
  * Modified 2017 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -45,6 +46,10 @@
 #endif
 
 #include <stdio.h>
+
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * <unistd.h> is used for read().
+ */
 #include <unistd.h>
 
 /*
@@ -90,6 +95,9 @@
  * to facilitate adaption by applications using an own FILE class.
  */
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Add read function for decode from file descriptor.
+ */
 #define JREAD read
 #define JFREAD(file,buf,sizeofbuf)  \
   ((size_t) fread((void *) (buf), (size_t) 1, (size_t) (sizeofbuf), (file)))

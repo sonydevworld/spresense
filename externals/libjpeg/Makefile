@@ -1,7 +1,7 @@
 ############################################################################
 # externals/libjpeg/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -45,5 +45,7 @@ CSRCS += jdmerge.c jdpostct.c jdsample.c jdtrans.c jerror.c
 CSRCS += jidctflt.c jidctfst.c jidctint.c jquant1.c
 CSRCS += jquant2.c jutils.c jmemmgr.c
 CSRCS += jmemname.c
+
+CFLAGS += -DTEMP_DIRECTORY=\"/mnt/spif\"
 
 include $(APPDIR)/Application.mk

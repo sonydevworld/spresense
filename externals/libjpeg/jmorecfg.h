@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 1997-2013 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -42,6 +43,11 @@
  * bytes of storage, whether actually used in an image or not.)
  */
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Spresense supports only CbYCrY format,
+ * So, components number is 3.
+ */
+/* #define MAX_COMPONENTS  10 *//* maximum number of image components */
 #define MAX_COMPONENTS  3	/* maximum number of image components */
 
 
