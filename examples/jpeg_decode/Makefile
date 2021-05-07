@@ -1,7 +1,7 @@
 ############################################################################
 # examples/jpeg_decode/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -46,9 +46,6 @@ MODULE    = $(CONFIG_EXAMPLES_JPEG_DECODE)
 # jpeg_decode Example
 
 MAINSRC = jpeg_decode_main.c
-
-ifeq ($(CONFIG_EXAMPLES_JPEG_DECODE_OUTPUT_LCD),y)
-CSRCS += jpeg_decode_nx_bkgd.c jpeg_decode_nx_listener.c
-endif
+CSRCS += example.c
 
 include $(APPDIR)/Application.mk
