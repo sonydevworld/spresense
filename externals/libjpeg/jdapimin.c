@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1994-1998, Thomas G. Lane.
  * Modified 2009-2013 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -246,6 +247,11 @@ jpeg_read_header (j_decompress_ptr cinfo, boolean require_image)
 {
   int retcode;
 
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add state which source has been already set,
+   * and fix conditional branch
+   */
+  /* if (cinfo->global_state != DSTATE_START && */
   if (cinfo->global_state != DSTATE_SETSRC &&
       cinfo->global_state != DSTATE_INHEADER)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
@@ -294,6 +300,11 @@ jpeg_consume_input (j_decompress_ptr cinfo)
 
   /* NB: every possible DSTATE value should be listed in this switch */
   switch (cinfo->global_state) {
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add state which source has been already set, 
+   * and fix conditional branch
+   */
+  /* case DSTATE_START: */
   case DSTATE_SETSRC:
     /* Start-of-datastream actions: reset appropriate modules */
     (*cinfo->inputctl->reset_input_controller) (cinfo);
@@ -338,7 +349,12 @@ GLOBAL(boolean)
 jpeg_input_complete (j_decompress_ptr cinfo)
 {
   /* Check for valid jpeg object */
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add state which source has been already set,
+   * and fix conditional branch
+   */
   if (cinfo->global_state < DSTATE_START ||
+      /* cinfo->global_state > DSTATE_STOPPING) */
       cinfo->global_state > DSTATE_SETSRC)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
   return cinfo->inputctl->eoi_reached;
@@ -375,6 +391,11 @@ jpeg_finish_decompress (j_decompress_ptr cinfo)
   if ((cinfo->global_state == DSTATE_SCANNING ||
        cinfo->global_state == DSTATE_RAW_OK) && ! cinfo->buffered_image) {
     /* Terminate final pass of non-buffered mode */
+    /* Modified for Spresense by Sony Semiconductor Solutions.
+     * Add offset information to decode by mcu unit,
+     * and add offset condition.
+     */
+    /* if (cinfo->output_scanline < cinfo->output_height) */
     if ((cinfo->output_scanline < cinfo->output_height) &&
         (cinfo->output_offset < cinfo->output_width * cinfo->output_height))
       ERREXIT(cinfo, JERR_TOO_LITTLE_DATA);

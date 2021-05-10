@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * Modified 2009-2015 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -16,6 +17,10 @@
  */
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Modify INPUT_BUF_SIZE configurable.
+ * <sdk/config.h> is used for configurable INPUT_BUF_SIZE.
+ */
 #include <sdk/config.h>
 #include "jinclude.h"
 #include "jpeglib.h"
@@ -28,6 +33,10 @@ typedef struct {
   struct jpeg_source_mgr pub;	/* public fields */
 
   FILE * infile;		/* source stream */
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add decode function which uses file descriptor,
+   * and, enable to save input file descriptor.
+   */ 
   int    infd;                  /* source file descriptor */
   JOCTET * buffer;		/* start of buffer */
   boolean start_of_file;	/* have we gotten any data yet? */
@@ -35,8 +44,13 @@ typedef struct {
 
 typedef my_source_mgr * my_src_ptr;
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Modify INPUT_BUF_SIZE configurable.
+ */
+/* #define INPUT_BUF_SIZE  4096 choose an efficiently fread'able size */
 #ifndef CONFIG_JPEGDEC_INPUT_BUF_SIZE
-#  define CONFIG_JPEGDEC_INPUT_BUF_SIZE  4096 /* choose an efficiently fread'able size */
+/* choose an efficiently fread'able size */
+#  define CONFIG_JPEGDEC_INPUT_BUF_SIZE  4096
 #endif
 
 /*
@@ -102,6 +116,10 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes;
 
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Modify INPUT_BUF_SIZE configurable.
+   */
+  /* nbytes = JFREAD(src->infile, src->buffer, INPUT_BUF_SIZE); */
   nbytes = JFREAD(src->infile, src->buffer, CONFIG_JPEGDEC_INPUT_BUF_SIZE);
 
   if (nbytes <= 0) {
@@ -121,6 +139,9 @@ fill_input_buffer (j_decompress_ptr cinfo)
   return TRUE;
 }
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Add decode function which uses file descriptor,
+ */
 METHODDEF(boolean)
 fill_fd_input_buffer (j_decompress_ptr cinfo)
 {
@@ -239,7 +260,9 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
 {
   my_src_ptr src;
 
-  /* Block execution in the middle of decode */
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Block execution in the middle of decode.
+   */
 
   if (cinfo->global_state != DSTATE_START)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
@@ -256,6 +279,13 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
                                   SIZEOF(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
+    /* Modified for Spresense by Sony Semiconductor Solutions.
+     * Modify INPUT_BUF_SIZE configurable.
+     */
+    /* src->buffer = (JOCTET *)
+     * (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+     *                             INPUT_BUF_SIZE * SIZEOF(JOCTET));
+     */
     src->buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
                                   CONFIG_JPEGDEC_INPUT_BUF_SIZE * SIZEOF(JOCTET));
@@ -271,10 +301,17 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
   src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
   src->pub.next_input_byte = NULL; /* until buffer loaded */
 
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add state which source has been already set.
+   */
+
   cinfo->global_state = DSTATE_SETSRC;
 }
 
 
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Add decode function which uses file descriptor.
+ */
 /*
  * Prepare for input from a file descriptor.
  * The caller must have already opened the descriptor, and is responsible
@@ -336,7 +373,9 @@ jpeg_mem_src (j_decompress_ptr cinfo,
   if (inbuffer == NULL || insize == 0)	/* Treat empty input as fatal error */
     ERREXIT(cinfo, JERR_INPUT_EMPTY);
 
-  /* Block execution in the middle of decode */
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Block execution in the middle of decode.
+   */
 
   if (cinfo->global_state != DSTATE_START)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
@@ -359,6 +398,10 @@ jpeg_mem_src (j_decompress_ptr cinfo,
   src->term_source = term_source;
   src->bytes_in_buffer = (size_t) insize;
   src->next_input_byte = (const JOCTET *) inbuffer;
+
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Add state which source has been already set.
+   */
 
   cinfo->global_state = DSTATE_SETSRC;
 }

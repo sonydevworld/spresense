@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1991-1998, Thomas G. Lane.
  * Modified 2002-2017 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -17,6 +18,11 @@
 
 #ifndef JPEGLIB_H
 #define JPEGLIB_H
+
+/*
+ * Modified for Spresense by Sony Semiconductor Solutions.
+ * Add doxygen comments.
+ */
 
 /**
  * @defgroup libjpeg JPEG Decoder API

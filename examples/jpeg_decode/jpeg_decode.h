@@ -41,69 +41,13 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <semaphore.h>
-
-#include <nuttx/nx/nx.h>
-#include <nuttx/nx/nxglib.h>
-
 #include <jpeglib.h>
 
-
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Functions
  ****************************************************************************/
 
-/****************************************************************************
- * Public Types
- ****************************************************************************/
-
-struct nximage_data_s
-{
-  /* The NX handles */
-
-  NXHANDLE hnx;
-  NXHANDLE hbkgd;
-  bool     connected;
-
-  /* The screen resolution */
-
-  nxgl_coord_t xres;
-  nxgl_coord_t yres;
-
-  volatile bool havepos;
-  sem_t sem;
-};
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-/* NXIMAGE state data */
-
-extern struct nximage_data_s g_jpeg_decode_nximage;
-
-/* NX callback vtables */
-
-extern const struct nx_callback_s g_jpeg_decode_nximagecb;
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-/* NX event listener */
-
-FAR void *nximage_listener(FAR void *arg);
-
-/* Background window interfaces */
-
-void nximage_image(NXWINDOW hwnd,
-                   FAR const JSAMPARRAY image,
-                   JDIMENSION position,
-                   JDIMENSION width,
-                   JDIMENSION height);
+void put_scanline_someplace(JSAMPLE *data, int len);
+int read_JPEG_file(char *filename);
 
 #endif /* __EXAMPLES_JPEG_DECODE_H */
