@@ -48,7 +48,7 @@ __WIEN2_BEGIN_NAMESPACE
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define LPCM_SAMPLE_HIGH   1024
+#define LPCM_SAMPLE_HIGH   512
 #define LPCM_SAMPLE_MID    640
 #define LPCM_SAMPLE_LOW    320
 
