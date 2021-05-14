@@ -48,7 +48,7 @@ LDLIBPATH += -L $(TOPDIR)/staging
 
 LDLIBS += -lasmpw -lc
 
-WORKER_ELF = RCGPROC 
+WORKER_ELF = RCGPROC
 
 VPATH = $(SDKDIR)/modules/audio/components/customproc/dsp_framework
 VPATH += userproc/src
@@ -69,14 +69,13 @@ CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
 
 # Build
 
-all: libs $(WORKER_ELF)
+.PHONY: lib depend clean
+all: lib $(WORKER_ELF)
 
 # Build ASMP worker library
 
-libasmpw.a:
+lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-libs: libasmpw.a
 
 # Complile
 

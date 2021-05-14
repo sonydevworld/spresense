@@ -46,8 +46,8 @@ $(1)_$(2):
 	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
+.PHONY: lib depend clean
 all: romfs.h
-.PHONY: all clean depend lib
 
 # Create the romfs.img file from the populated romfs directory
 
@@ -63,10 +63,8 @@ romfs.h: romfs.img
 
 # Build ASMP worker library
 
-lib/libasmpw.a:
+lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-lib: lib/libasmpw.a
 
 # Build workers
 

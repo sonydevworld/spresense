@@ -1,0 +1,26 @@
+
+config EXAMPLES_POWER_SLEEP
+	tristate "power_sleep app"
+	default n
+	---help---
+		Enable the power_sleep app. This application will sleep the CXD5602
+		into deep sleep or cold sleep.
+
+if EXAMPLES_POWER_SLEEP
+
+config EXAMPLES_POWER_SLEEP_PROGNAME
+	string "Program name"
+	default "power_sleep"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_POWER_SLEEP_PRIORITY
+	int "power_sleep task priority"
+	default 100
+
+config EXAMPLES_POWER_SLEEP_STACKSIZE
+	int "power_sleep stack size"
+	default 1024
+
+endif

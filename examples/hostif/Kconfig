@@ -1,0 +1,98 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_HOSTIF
+	tristate "Host Interface example"
+	default n
+	depends on CXD56_HOSTIF
+	---help---
+		Enable the Host Interface example application with I2C and SPI slave
+		communication. It supports to communicate with a host device which
+		has the I2C or SPI master function.
+
+if EXAMPLES_HOSTIF
+
+config EXAMPLES_HOSTIF_PROGNAME
+	string "Program name"
+	default "hostif"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_HOSTIF_PRIORITY
+	int "hostif task priority"
+	default 100
+
+config EXAMPLES_HOSTIF_STACKSIZE
+	int "hostif stack size"
+	default 2048
+
+choice
+	prompt "HostIF peripheral"
+	default EXAMPLES_HOSTIF_I2C
+
+config EXAMPLES_HOSTIF_I2C
+	bool "I2C"
+
+config EXAMPLES_HOSTIF_SPI
+	bool "SPI"
+
+endchoice
+
+config EXAMPLES_HOSTIF_HOST_I2C
+	bool "Test Host I2C example"
+	depends on EXAMPLES_HOSTIF && EXAMPLES_HOSTIF_I2C
+	default n
+	---help---
+		Enable the example application for the host to communicate with the
+		device which has the host interface of I2C.
+
+if EXAMPLES_HOSTIF_HOST_I2C
+
+config EXAMPLES_HOSTIF_HOST_I2C_PROGNAME
+	string "Program name"
+	default "host_i2c"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_HOSTIF_HOST_I2C_PRIORITY
+	int "host_i2c task priority"
+	default 100
+
+config EXAMPLES_HOSTIF_HOST_I2C_STACKSIZE
+	int "host_i2c stack size"
+	default 2048
+
+endif # EXAMPLES_HOSTIF_HOST_I2C
+
+config EXAMPLES_HOSTIF_HOST_SPI
+	bool "Test Host SPI example"
+	depends on EXAMPLES_HOSTIF && EXAMPLES_HOSTIF_SPI
+	default n
+	---help---
+		Enable the example application for the host to communicate with the
+		device which has the host interface of SPI.
+
+if EXAMPLES_HOSTIF_HOST_SPI
+
+config EXAMPLES_HOSTIF_HOST_SPI_PROGNAME
+	string "Program name"
+	default "host_spi"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_HOSTIF_HOST_SPI_PRIORITY
+	int "host_spi task priority"
+	default 100
+
+config EXAMPLES_HOSTIF_HOST_SPI_STACKSIZE
+	int "host_spi stack size"
+	default 2048
+
+endif # EXAMPLES_HOSTIF_HOST_SPI
+
+endif # EXAMPLES_HOSTIF

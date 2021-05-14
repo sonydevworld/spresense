@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/asmp/supervisor/mpshm.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,8 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 
 #include <mm/tile.h>
 #include <asmp/types.h>
@@ -92,17 +92,17 @@ extern char __stack[];
 #define ADR_CONV_VSIZE         0x100000
 
 #ifdef CONFIG_ASMP_DEBUG_ERROR
-#  define mperr(fmt, ...)  logerr(fmt, ## __VA_ARGS__)
+#  define mperr(fmt, ...)   _err(fmt, ## __VA_ARGS__)
 #else
 #  define mperr(fmt, ...)
 #endif
 #ifdef CONFIG_ASMP_DEBUG_WARN
-#  define mpwarn(fmt, ...)  logwarn(fmt, ## __VA_ARGS__)
+#  define mpwarn(fmt, ...)  _warn(fmt, ## __VA_ARGS__)
 #else
 #  define mpwarn(fmt, ...)
 #endif
 #ifdef CONFIG_ASMP_DEBUG_INFO
-#  define mpinfo(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define mpinfo(fmt, ...)  _info(fmt, ## __VA_ARGS__)
 #else
 #  define mpinfo(fmt, ...)
 #endif

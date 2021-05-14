@@ -48,6 +48,7 @@
 #include "apicmdhdlrbs.h"
 #include "altcom_callbacks.h"
 #include "altcombs.h"
+#include "lte/altcom/altcom_api.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -327,6 +328,26 @@ int32_t lte_get_pinset(get_pinset_cb_t callback)
     return -EINVAL;
   }
   return lte_getpinset_impl(NULL, callback);
+}
+
+/****************************************************************************
+ * Name: altcom_get_pinset_sync
+ *
+ * Description:
+ *   Get Personal Identification Number settings.
+ *
+ * Input Parameters:
+ *   pinset    PIN settings information.
+ *
+ * Returned Value:
+ *   On success, 0 is returned.
+ *   On failure, negative value is returned according to <errno.h>.
+ *
+ ****************************************************************************/
+
+int32_t altcom_get_pinset_sync(lte_getpin_t *pinset)
+{
+  return lte_getpinset_impl(pinset, NULL);
 }
 
 /****************************************************************************

@@ -40,8 +40,8 @@ $(1)_$(2):
 	$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-all: build
 .PHONY: all clean build
+all: build
 
 # Build each subdirectory
 

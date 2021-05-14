@@ -16,7 +16,7 @@ RUN mkdir -p $HOME/spresenseenv/usr
 RUN bash  ./install-tools.sh
 ENV PATH "$PATH:/$HOME/spresenseenv/usr/bin"
 RUN ldconfig
-RUN rm -v /*.tgz /*tar.bz2 /*.tgz.sha
+RUN rm -fv /*tar.bz2
 
 # Clean up APT when done.
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

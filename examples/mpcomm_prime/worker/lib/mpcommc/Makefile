@@ -40,8 +40,8 @@ BIN = libmpcommc$(LIBEXT)
 WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)mpcomm$(DELIM)controller
 LIB = $(WORKER_DIR)$(DELIM)libmpcommc$(LIBEXT)
 
-all: $(BIN)
 .PHONY: depend clean distclean
+all: $(BIN)
 
 depend:
 	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend

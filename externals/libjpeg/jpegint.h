@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 1997-2017 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -38,6 +39,9 @@ typedef enum {			/* Operating modes for buffer controllers */
 #define DSTATE_BUFPOST	208	/* looking for SOS/EOI in jpeg_finish_output */
 #define DSTATE_RDCOEFS	209	/* reading file in jpeg_read_coefficients */
 #define DSTATE_STOPPING	210	/* looking for EOI in jpeg_finish_decompress */
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * Add state which source has been already set.
+ */
 #define DSTATE_SETSRC   211     /* after stdio_src or mem_src */
 
 /* Declarations for compression modules */
@@ -403,7 +407,9 @@ EXTERN(void) jinit_color_deconverter JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_1pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_2pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_merged_upsampler JPP((j_decompress_ptr cinfo));
-/* MCU decode preparation routines */
+/* Modified for Spresense by Sony Semiconductor Solutions.
+ * MCU decode preparation routines
+ */
 EXTERN(void) jmcu_d_coef_controller JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_upsampler JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_color_deconverter JPP((j_decompress_ptr cinfo));

@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+#
+
+menu "Digital Filters"
+
+config DIGITAL_FILTER
+	bool "Digital Filter library"
+	default n
+
+if DIGITAL_FILTER
+
+config DIGITAL_FILTER_FIR
+	bool "FIR Digital Filter"
+	default y
+	---help---
+		Enable to use FIR digiral filters.
+		You need to enable ARM CMSIS DSP library because This filter is based on it.
+
+config DIGITAL_FILTER_DECIMATOR
+	bool "FIR Decimation Filter"
+	default y
+	---help---
+		Enable to use FIR Decimation filters.
+		You need to enable ARM CMSIS DSP library because This filter is based on it.
+
+endif
+
+endmenu

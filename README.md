@@ -6,13 +6,6 @@ Clone this repository and update submodules.
 $ git clone --recursive https://github.com/sonydevworld/spresense.git
 ```
 
-After repositories have been cloned, each submodule is in 'Detached HEAD' state.
-Master branch have to be checked out before you can start developing.
-
-```
-$ git submodule foreach git checkout master
-```
-
 # Submodules
 
 ```
@@ -36,6 +29,7 @@ $ source spresense_env.sh
 This script will create an alias `spresense` which should preceed the regular SDK build scripts and Make commands.
 examples
 ```
+SpresenseSDK: $ spresense tools/config.py examples/hello
 SpresenseSDK: $ spresense make
 ```
 

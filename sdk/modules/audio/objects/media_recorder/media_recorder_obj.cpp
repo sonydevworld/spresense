@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/audio/objects/media_recorder/media_recorder_obj.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,9 +87,6 @@ static bool filter_done_callback(ComponentCbParam *cmplt, void* p_requester)
     {
       case ComponentExec:
         {
-          MEDIA_RECORDER_VDBG("flt sz %d\n",
-                              cmplt->out_buffer.size);
-
           MediaRecorderObjectTask::FilterDoneCmd result_param;
 
           result_param.event_type = cmplt->event_type;
@@ -108,9 +105,6 @@ static bool filter_done_callback(ComponentCbParam *cmplt, void* p_requester)
 
       case ComponentFlush:
         {
-          MEDIA_RECORDER_VDBG("Flsflt sz %d\n",
-                              cmplt->out_buffer.size);
-
           MediaRecorderObjectTask::FilterDoneCmd result_param;
 
           result_param.event_type = cmplt->event_type;

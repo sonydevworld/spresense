@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/sensing/transport_mode/transport_mode.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,8 +37,8 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-#include <sdk/debug.h>
+#include <nuttx/config.h>
+#include <debug.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <arch/chip/pm.h>
@@ -56,12 +56,12 @@
 /* Tramsport mode debug feature. */
 
 #ifdef CONFIG_SENSING_TRAM_DEBUG_ERROR
-#  define tram_err(fmt, ...)   logerr(fmt, ## __VA_ARGS__)
+#  define tram_err(fmt, ...)   _err(fmt, ## __VA_ARGS__)
 #else
 #  define tram_err(fmt, ...)
 #endif
 #ifdef CONFIG_SENSING_TRAM_DEBUG_INFO
-#  define tram_info(fmt, ...)  loginfo(fmt, ## __VA_ARGS__)
+#  define tram_info(fmt, ...)  _info(fmt, ## __VA_ARGS__)
 #else
 #  define tram_info(fmt, ...)
 #endif

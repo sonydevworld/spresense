@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2011-2017 by Guido Vollbeding.
+ * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -34,7 +35,9 @@ typedef struct {
   /* Private state for RGB->Y conversion */
   INT32 * rgb_y_tab;		/* => table for RGB to Y conversion */
 
-  /* Size of output unit */
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Size of output unit
+   */
   JDIMENSION output_width;
 } my_color_deconverter;
 
@@ -440,14 +443,38 @@ null_convert (j_decompress_ptr cinfo,
 	      JSAMPIMAGE input_buf, JDIMENSION input_row,
 	      JSAMPARRAY output_buf, int num_rows)
 {
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Delete unnecessary variables by modifying output format
+   *  to CbYCrY format.
+   */
+  /* int ci; */
+  /* register int nc = cinfo->num_components; */
   register JSAMPROW outptr;
   register JSAMPROW inptr;
   register JDIMENSION col;
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Modify num_cols due to CbYCrY output.
+   */
+  /* JDIMENSION num_cols = cinfo->output_width; */
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
   JDIMENSION num_cols = cconvert->output_width;
   JSAMPLE indata_h, indata_l;
 
   while (--num_rows >= 0) {
+    /* Modified for Spresense by Sony Semiconductor Solutions.
+     * Modify output format to CbYCrY format.
+     */
+
+    /* for (ci = 0; ci < nc; ci++) {
+     *   inptr = input_buf[ci][input_row];
+     *   outptr = output_buf[0] + ci;
+     *   for (col = 0; col < num_cols; col++) {
+     *     *outptr = *inptr++;     * needn't bother with GETJSAMPLE() here *
+     *     outptr += nc;
+     *   }
+     * }
+     */
+
     /* Copy Y */
 
     inptr = input_buf[0][input_row];
@@ -607,6 +634,10 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
 				SIZEOF(my_color_deconverter));
   cinfo->cconvert = &cconvert->pub;
   cconvert->pub.start_pass = start_pass_dcolor;
+
+  /* Modified for Spresense by Sony Semiconductor Solutions.
+   * Spresense supports only CbYCrY.
+   */
 
   /* Currently, Spresense do not support YCbCr, YCCK, CMYK.
    * TODO: These are to be supported.
@@ -774,6 +805,7 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
 }
 
 /*
+ * Modified for Spresense by Sony Semiconductor Solutions.
  * MCU decode preparation routine for output colorspace conversion.
  */
 

@@ -1,7 +1,7 @@
 /****************************************************************************
  * audio_recorder/audio_recorder_main.cxx
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018-2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -261,66 +261,55 @@ static bool app_open_output_file(void)
 {
   static char fname[MAX_PATH_LENGTH];
 
-  struct tm *cur_time;
-  struct timespec cur_sec;
+  struct tm        *cur_time;
+  struct timespec   cur_sec;
+  const char       *ext;
 
-  clock_gettime(CLOCK_REALTIME, &cur_sec);
-  cur_time = gmtime(&cur_sec.tv_sec);
+  /* Decide file extension according to file format. */
 
   if ((s_recorder_info.file.codec_type == AS_CODECTYPE_MP3) &&
       (s_recorder_info.file.format_type == FORMAT_TYPE_RAW))
     {
-      snprintf(fname, MAX_PATH_LENGTH, "%s/%04d%02d%02d_%02d%02d%02d.mp3",
-        RECFILE_ROOTPATH,
-        cur_time->tm_year,
-        cur_time->tm_mon,
-        cur_time->tm_mday,
-        cur_time->tm_hour,
-        cur_time->tm_min,
-        cur_time->tm_sec);
+      ext = "mp3";
     }
   else if (s_recorder_info.file.codec_type == AS_CODECTYPE_LPCM)
     {
       if (s_recorder_info.file.format_type == FORMAT_TYPE_WAV)
         {
-          snprintf(fname, MAX_PATH_LENGTH, "%s/%04d%02d%02d_%02d%02d%02d.wav",
-            RECFILE_ROOTPATH,
-            cur_time->tm_year,
-            cur_time->tm_mon,
-            cur_time->tm_mday,
-            cur_time->tm_hour,
-            cur_time->tm_min,
-            cur_time->tm_sec);
+          ext = "wav";
         }
       else
         {
-          snprintf(fname, MAX_PATH_LENGTH, "%s/%04d%02d%02d_%02d%02d%02d.pcm",
-            RECFILE_ROOTPATH,
-            cur_time->tm_year,
-            cur_time->tm_mon,
-            cur_time->tm_mday,
-            cur_time->tm_hour,
-            cur_time->tm_min,
-            cur_time->tm_sec);
+          ext = "pcm";
         }
     }
   else if ((s_recorder_info.file.codec_type == AS_CODECTYPE_OPUS) &&
            (s_recorder_info.file.format_type == FORMAT_TYPE_RAW))
     {
-      snprintf(fname, MAX_PATH_LENGTH, "%s/%04d%02d%02d_%02d%02d%02d.raw",
-        RECFILE_ROOTPATH,
-        cur_time->tm_year,
-        cur_time->tm_mon,
-        cur_time->tm_mday,
-        cur_time->tm_hour,
-        cur_time->tm_min,
-        cur_time->tm_sec);
+      ext = "raw";
     }
   else
     {
       printf("Unsupported format\n");
       return false;
     }
+
+  /* Use date time as recording file name. */
+
+  clock_gettime(CLOCK_REALTIME, &cur_sec);
+  cur_time = gmtime(&cur_sec.tv_sec);
+
+  snprintf(fname,
+           MAX_PATH_LENGTH,
+           "%s/%04d%02d%02d_%02d%02d%02d.%s",
+           RECFILE_ROOTPATH,
+           cur_time->tm_year + 1900,
+           cur_time->tm_mon + 1,
+           cur_time->tm_mday,
+           cur_time->tm_hour,
+           cur_time->tm_min,
+           cur_time->tm_sec,
+           ext);
 
   s_recorder_info.file.fd = fopen(fname, "w");
   if (s_recorder_info.file.fd == 0)
@@ -334,17 +323,18 @@ static bool app_open_output_file(void)
   if (s_recorder_info.file.format_type == FORMAT_TYPE_WAV)
     {
       if (!app_init_wav_header())
-      {
-        printf("Error: app_init_wav_header() failure.\n");
-        return false;
-      }
+        {
+          printf("Error: app_init_wav_header() failure.\n");
+          return false;
+        }
 
       if (!app_write_wav_header())
-      {
-        printf("Error: app_write_wav_header() failure.\n");
-        return false;
-      }
-  }
+        {
+          printf("Error: app_write_wav_header() failure.\n");
+          return false;
+        }
+    }
+
   return true;
 }
 
