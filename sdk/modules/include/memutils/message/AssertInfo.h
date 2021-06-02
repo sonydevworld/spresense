@@ -128,7 +128,7 @@ public:
 		} else {
 			strcpy(m_filename, filename + n - sizeof(m_filename) + 1);
 		}
-		DBG_P("TaskID=%d, file=%s, line=%d, return addr=%08x\n", m_task_id, m_filename, m_line, m_ret_addr);
+		DBG_P("TaskID=%d, file=%s, line=%ld, return addr=%08lx\n", m_task_id, m_filename, m_line, m_ret_addr);
 		DMP_ASSERT_INFO_SEQ_LOG(*this);
 	}
 }; /* struct AssertLocationLog */
@@ -178,7 +178,7 @@ public:
 		} else {
 			m_body_size -= sizeof(m_kStk);
 		}
-		DBG_P("TaskID=%d, Cause=%08x, EPC=%08x, SR=%08x\n", m_task_id, m_cause, m_epc, m_sr);
+		DBG_P("TaskID=%d, Cause=%08lx, EPC=%08lx, SR=%08lx\n", m_task_id, m_cause, m_epc, m_sr);
 		DMP_ASSERT_INFO_SEQ_LOG(*this);
 	}
 }; /* struct AssertExceptionLog */
@@ -199,7 +199,7 @@ public:
 		for (size_t i = 0; i < COUNT_OF(m_data); i++) {
 			m_data[i] = addr[i];
 		}
-		DBG_P("BadAddr=%08x, Data=%08x, %08x, %08x, %08x\n", m_addr, m_data[0], m_data[1], m_data[2], m_data[3]);
+		DBG_P("BadAddr=%p, Data=%08lx, %08lx, %08lx, %08lx\n", m_addr, m_data[0], m_data[1], m_data[2], m_data[3]);
 		DMP_ASSERT_INFO_SEQ_LOG(*this);
 	}
 }; /* struct AssertFenceLog */
@@ -214,7 +214,7 @@ public:
 		AssertInfoBase(id, sizeof(*this))
 	{
 		m_param[0] = p0; m_param[1] = p1; m_param[2] = p2; m_param[3] = p3;
-		DBG_P("TaskID=%d, AssertID=%u, param=%08x, %08x, %08x, %08x\n", m_task_id, id, p0, p1, p2, p3);
+		DBG_P("TaskID=%d, AssertID=%u, param=%08lx, %08lx, %08lx, %08lx\n", m_task_id, id, p0, p1, p2, p3);
 		DMP_ASSERT_INFO_SEQ_LOG(*this);
 	}
 }; /* struct AssertParamLog */
