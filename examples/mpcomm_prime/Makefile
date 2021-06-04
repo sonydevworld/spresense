@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # mpcomm_prime built-in application info
