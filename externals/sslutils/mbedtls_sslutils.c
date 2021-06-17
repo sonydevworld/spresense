@@ -1,7 +1,7 @@
 /****************************************************************************
  * externals/sslutils/mbedtls_webclient.c
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020,2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,11 +50,6 @@
 #include <string.h>
 #include <dirent.h>
 
-/* TODO: Need to implement new TLS solution */
-#if 0
-#include <netutils/ssl_connection.h>
-#endif
-
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/entropy.h"
@@ -62,18 +57,47 @@
 #include "mbedtls/platform.h"
 #include "mbedtls/ssl.h"
 
+#include "sslutils/sslutil.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define SSLUTIL_PORT_STRSIZE 8
 #define SSLUTIL_CERTVERIFY_STAT_BUFFLEN  128
+
+/****************************************************************************
+ * Private Functions prototype
+ ****************************************************************************/
+static int sslutil_connect(FAR void *ctx,
+                           FAR const char *hostname, FAR const char *port,
+                           unsigned int timeout_second,
+                           FAR struct webclient_tls_connection **connp);
+static ssize_t sslutil_send(FAR void *ctx,
+                       FAR struct webclient_tls_connection *conn,
+                       FAR const void *buf, size_t len);
+static ssize_t sslutil_recv(FAR void *ctx,
+                       FAR struct webclient_tls_connection *conn,
+                       FAR void *buf, size_t len);
+static int sslutil_close(FAR void *ctx,
+                    FAR struct webclient_tls_connection *conn);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct webclient_tls_ops g_tls_ops = 
+{
+  .connect = sslutil_connect,
+  .send    = sslutil_send,
+  .recv    = sslutil_recv,
+  .close   = sslutil_close,
+};
 
 /****************************************************************************
  * Private Types
  ****************************************************************************/
 
-struct sslutil_ssl_ctx_s
+struct webclient_tls_connection
 {
   mbedtls_ssl_context ssl;
   mbedtls_ssl_config conf;
@@ -83,265 +107,225 @@ struct sslutil_ssl_ctx_s
   mbedtls_x509_crt ca_cert;
   mbedtls_x509_crt cli_cert;
   mbedtls_pk_context cli_key;
-  const char *ca_certs_dir;
-  const char *ca_certs_file;
-  const char *cli_certs_file;
-  const char *private_key_file;
 };
-
-struct sslutil_sock_s
-{
-  sq_entry_t node;
-  int ndx;
-  int sockfd;
-  int use_ssl;
-  FAR struct sslutil_ssl_ctx_s *ssl;
-};
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-static sq_queue_t g_sslutil_sockqueue = {};
-static int g_sslutil_sockndx = 0;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 /****************************************************************************
- * Name: sslutil_socknew
+ * Name: sslutil_delete_connection
  ****************************************************************************/
 
-static FAR struct sslutil_sock_s *sslutil_socknew(int use_ssl)
+static void sslutil_delete_connection(struct webclient_tls_connection *conn)
 {
-  FAR struct sslutil_sock_s *sock;
-
-  sock = (FAR struct sslutil_sock_s *)
-           calloc(1, sizeof(struct sslutil_sock_s));
-  if (sock)
+  if (conn != NULL)
     {
-      sock->ndx = g_sslutil_sockndx++ & 0x7fffffff;
-      sock->sockfd = -1;
-      sock->use_ssl = use_ssl;
-      if (use_ssl)
-        {
-          sock->ssl = (FAR struct sslutil_ssl_ctx_s *)
-                        calloc(1, sizeof(struct sslutil_ssl_ctx_s));
-          sock->ssl->ca_certs_dir =
-            CONFIG_EXTERNALS_MBEDTLS_DEFAULT_CERTS_PATH;
-        }
-      sq_addlast(&sock->node, &g_sslutil_sockqueue);
-    }
+      /* Free mbedTLS stuff */
 
-  return sock;
+      mbedtls_ssl_close_notify(&conn->ssl);
+      mbedtls_net_free(&conn->server_fd);
+      mbedtls_ssl_free(&conn->ssl);
+      mbedtls_ssl_config_free(&conn->conf);
+      mbedtls_ctr_drbg_free(&conn->ctr_drbg);
+      mbedtls_entropy_free(&conn->entropy);
+      mbedtls_x509_crt_free(&conn->ca_cert);
+      mbedtls_x509_crt_free(&conn->cli_cert);
+      mbedtls_pk_free(&conn->cli_key);
+
+      free(conn);
+    }
 }
 
 /****************************************************************************
- * Name: sslutil_sockfree
+ * Name: sslutil_create_connection
  ****************************************************************************/
 
-static int sslutil_sockfree(FAR struct sslutil_sock_s *sock)
+static struct webclient_tls_connection *sslutil_create_connection(
+    FAR struct sslutil_tls_context *tls_ctx)
 {
-  if (!sock)
-    {
-      return -EINVAL;
-    }
-  sq_rem(&sock->node, &g_sslutil_sockqueue);
-  if (sock->ssl)
-    {
-      free(sock->ssl);
-    }
-  free(sock);
+  struct webclient_tls_connection *conn;
+  int ret;
 
+  conn = (struct webclient_tls_connection *)
+    malloc(sizeof(struct webclient_tls_connection));
+
+  if (conn != NULL)
+    {
+      /* Initialize mbedTLS stuff */
+
+      mbedtls_ssl_init(&conn->ssl);
+      mbedtls_net_init(&conn->server_fd);
+      mbedtls_ssl_config_init(&conn->conf);
+      mbedtls_ctr_drbg_init(&conn->ctr_drbg);
+      mbedtls_entropy_init(&conn->entropy);
+      mbedtls_x509_crt_init(&conn->ca_cert);
+      mbedtls_x509_crt_init(&conn->cli_cert);
+      mbedtls_pk_init(&conn->cli_key);
+
+      ret = mbedtls_ctr_drbg_seed(&conn->ctr_drbg, mbedtls_entropy_func,
+          &conn->entropy, (const unsigned char *)tls_ctx->custom_id,
+          tls_ctx->custom_id ? strlen(tls_ctx->custom_id) : 0);
+      if (ret != 0)
+        {
+          nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
+          sslutil_delete_connection(conn);
+          return NULL;
+        }
+
+      ret = mbedtls_ssl_config_defaults(&conn->conf, MBEDTLS_SSL_IS_CLIENT,
+                                    MBEDTLS_SSL_TRANSPORT_STREAM,
+                                    MBEDTLS_SSL_PRESET_DEFAULT);
+      if (ret != 0)
+        {
+          nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
+          sslutil_delete_connection(conn);
+          return NULL;
+        }
+
+    }
+
+  return conn;
+}
+
+/****************************************************************************
+ * Name: setup_ca_cert
+ ****************************************************************************/
+
+static bool setup_ca_cert(FAR mbedtls_x509_crt *cert, FAR const char *file)
+{
+  bool ret = false;
+
+  if (file && cert && (mbedtls_x509_crt_parse_file(cert, file) == 0))
+    {
+      ret = true;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: setup_all_ca_cert
+ ****************************************************************************/
+
+static bool setup_all_ca_cert(FAR mbedtls_x509_crt *cert, FAR const char *dir_path)
+{
+  bool ret = false;
+  FAR DIR *dirp;
+  FAR struct dirent *dnet;
+  FAR char *fname;
+
+  if (!dir_path)
+    {
+      return ret;
+    }
+
+  dirp = opendir(dir_path);
+  if (dirp)
+    {
+      fname = (FAR char *)malloc(PATH_MAX);
+      if (fname)
+        {
+          while((dnet = readdir(dirp)) != NULL)
+            {
+              snprintf(fname, PATH_MAX, "%s/%s", dir_path, dnet->d_name);
+              ret |= setup_ca_cert(cert, fname);
+            }
+          free(fname);
+        }
+      closedir(dirp);
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: setup_ca_certs
+ ****************************************************************************/
+
+static int setup_ca_certs(FAR struct sslutil_tls_context *tls_ctx,
+    FAR struct webclient_tls_connection *conn)
+{
+  bool has_ca = false;
+
+  has_ca |= setup_ca_cert(&conn->ca_cert, tls_ctx->ca_file);
+  has_ca |= setup_all_ca_cert(&conn->ca_cert, tls_ctx->ca_dir);
+
+  if (has_ca)
+    {
+      /* Peer must present a valid certificate,
+       * handshake is aborted if verification failed.
+       */
+
+      mbedtls_ssl_conf_ca_chain(&conn->conf, &conn->ca_cert, NULL);
+      mbedtls_ssl_conf_authmode(&conn->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+    }
+  else
+    {
+      /* Peer certificate is not checked */
+
+      nwarn("peer certificate is not checked\n");
+      mbedtls_ssl_conf_authmode(&conn->conf, MBEDTLS_SSL_VERIFY_NONE);
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: setup_client_certs
+ ****************************************************************************/
+
+static int setup_client_certs(FAR struct sslutil_tls_context *tls_ctx,
+    FAR struct webclient_tls_connection *conn)
+{
+  if (tls_ctx->cli_file && tls_ctx->privkey)
+    {
+
+      mbedtls_x509_crt_parse_file(&conn->cli_cert, tls_ctx->cli_file);
+      mbedtls_pk_parse_keyfile(&conn->cli_key, tls_ctx->privkey, NULL);
+      mbedtls_ssl_conf_own_cert(&conn->conf, &conn->cli_cert,
+                                &conn->cli_key);
+    }
+
+  return OK;
+}
+
+/****************************************************************************
+ * Name: start_handshake
+ ****************************************************************************/
+
+static int start_handshake(FAR struct mbedtls_ssl_context *ssl_ctx)
+{
+  int ret;
+
+  while ((ret = mbedtls_ssl_handshake(ssl_ctx)) != 0)
+    {
+      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
+          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
+        {
+          nerr("mbedtls_ssl_handshake() error : -0x%x\n", -ret);
+          return -1;
+        }
+    }
   return 0;
 }
 
 /****************************************************************************
- * Name: sslutil_sockget
+ * Name: verify_handshake_result
  ****************************************************************************/
 
-static FAR struct sslutil_sock_s *sslutil_sockget(int ndx)
+static int verify_handshake_result(FAR struct mbedtls_ssl_context *ssl_ctx)
 {
-  FAR struct sslutil_sock_s *sock = NULL;
-
-  sock = (FAR struct sslutil_sock_s *)sq_peek(&g_sslutil_sockqueue);
-
-  while (sock != NULL)
-    {
-      if (ndx == sock->ndx)
-        {
-          break;
-        }
-      sock = (FAR struct sslutil_sock_s *)sq_next(&sock->node);
-    }
-
-  return sock;
-}
-
-/****************************************************************************
- * Name: sslutil_doconnect
- ****************************************************************************/
-
-static int sslutil_doconnect(FAR struct sslutil_sock_s *sock,
-                                  FAR const char *host, uint16_t port)
-{
-  struct addrinfo hints;
-  struct addrinfo *ainfo = NULL;
-  char port_char[SSLUTIL_PORT_STRSIZE] = {0};
   int ret;
-  struct timeval tv;
 
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family   = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-
-  snprintf(port_char, SSLUTIL_PORT_STRSIZE, "%d", port);
-
-  ret = getaddrinfo(host, port_char, &hints, &ainfo);
+  ret = mbedtls_ssl_get_verify_result(ssl_ctx);
   if (ret != 0)
     {
-      /* Could not resolve host (or malformed IP address) */
-
-      nerr("getaddrinfo() error : %d\n", ret);
-      return -EHOSTUNREACH;
+      char buf[SSLUTIL_CERTVERIFY_STAT_BUFFLEN];
+      mbedtls_x509_crt_verify_info(buf, SSLUTIL_CERTVERIFY_STAT_BUFFLEN, " ", ret);
+      nerr("Failed to verify peer certificates: %s\n", buf);
+      return -1;
     }
-
-  sock->sockfd = socket(ainfo->ai_family, ainfo->ai_socktype,
-                        ainfo->ai_protocol);
-  if (sock->sockfd < 0)
-    {
-      ret = -errno;
-
-      nerr("ERROR: socket failed: %d\n", errno);
-      freeaddrinfo(ainfo);
-      return ret;
-    }
-
-  /* Set send and receive timeout values */
-
-  tv.tv_sec  = CONFIG_EXTERNALS_MBEDTLS_DEFAULT_TIMEOUT;
-  tv.tv_usec = 0;
-
-  setsockopt(sock->sockfd, SOL_SOCKET, SO_RCVTIMEO, (FAR const void *)&tv,
-             sizeof(struct timeval));
-  setsockopt(sock->sockfd, SOL_SOCKET, SO_SNDTIMEO, (FAR const void *)&tv,
-             sizeof(struct timeval));
-
-  /* Connect to server.  First we have to set some fields in the
-   * 'server' address structure.  The system will assign me an arbitrary
-   * local port that is not in use. */
-
-  ret = connect(sock->sockfd, ainfo->ai_addr, ainfo->ai_addrlen);
-  if (ret < 0)
-    {
-      ret = -errno;
-
-      nerr("ERROR: connect failed: %d\n", errno);
-      freeaddrinfo(ainfo);
-      close(sock->sockfd);
-      return ret;
-    }
-
-  freeaddrinfo(ainfo);
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_dosend
- ****************************************************************************/
-
-static int sslutil_dosend(FAR struct sslutil_sock_s *sock,
-                               FAR const void *buf, size_t len, int flags)
-{
-  int ret;
-
-  ret = send(sock->sockfd, buf, len, flags);
-  if (ret < 0)
-    {
-      ret = -errno;
-      nerr("ERROR: send failed: %d\n", errno);
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_dorecv
- ****************************************************************************/
-
-static int sslutil_dorecv(FAR struct sslutil_sock_s *sock,
-                               FAR void *buf, size_t len, int flags)
-{
-  int ret;
-
-  ret = recv(sock->sockfd, buf, len, flags);
-  if (ret < 0)
-    {
-      ret = -errno;
-      nerr("ERROR: recv failed: %d\n", errno);
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_doclose
- ****************************************************************************/
-
-static int sslutil_doclose(FAR struct sslutil_sock_s *sock)
-{
-  int ret;
-
-  ret = close(sock->sockfd);
-  if (ret < 0)
-    {
-      ret = -errno;
-      nerr("ERROR: close failed: %d\n", errno);
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_sslsockinit
- ****************************************************************************/
-
-static int sslutil_sslsockinit(struct sslutil_ssl_ctx_s *ssl)
-{
-  /* Initialize mbedTLS stuff */
-
-  mbedtls_net_init(&ssl->server_fd);
-  mbedtls_ssl_init(&ssl->ssl);
-  mbedtls_ssl_config_init(&ssl->conf);
-  mbedtls_ctr_drbg_init(&ssl->ctr_drbg);
-  mbedtls_entropy_init(&ssl->entropy);
-  mbedtls_x509_crt_init(&ssl->ca_cert);
-  mbedtls_x509_crt_init(&ssl->cli_cert);
-  mbedtls_pk_init(&ssl->cli_key);
-
-  return 0;
-}
-
-/****************************************************************************
- * Name: sslutil_sslsockfin
- ****************************************************************************/
-
-static int sslutil_sslsockfin(struct sslutil_ssl_ctx_s *ssl)
-{
-  /* Free mbedTLS stuff */
-
-  mbedtls_ssl_close_notify(&ssl->ssl);
-  mbedtls_net_free(&ssl->server_fd);
-  mbedtls_ssl_free(&ssl->ssl);
-  mbedtls_ssl_config_free(&ssl->conf);
-  mbedtls_ctr_drbg_free(&ssl->ctr_drbg);
-  mbedtls_entropy_free(&ssl->entropy);
-  mbedtls_x509_crt_free(&ssl->ca_cert);
-  mbedtls_x509_crt_free(&ssl->cli_cert);
-  mbedtls_pk_free(&ssl->cli_key);
-
   return 0;
 }
 
@@ -349,410 +333,133 @@ static int sslutil_sslsockfin(struct sslutil_ssl_ctx_s *ssl)
  * Name: sslutil_sslconnect
  ****************************************************************************/
 
-static int sslutil_sslconnect(struct sslutil_sock_s *sock,
-                                   FAR const char *host, uint16_t port)
+static int sslutil_connect(FAR void *ctx,
+                           FAR const char *hostname, FAR const char *port,
+                           unsigned int timeout_second,
+                           FAR struct webclient_tls_connection **connp)
 {
-  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
-  FAR static const char *pers = "tls_test";
-  FAR char *certs_filename;
-  FAR DIR *dirp = NULL;  /* Pointer to directory for certification files */
-  FAR struct dirent *cert_dirent = NULL;
-  int ret;
-  char port_char[SSLUTIL_PORT_STRSIZE] = {0};
-  char *buf;
-  bool verify_ca = false;
+  int ret = 0;
+  FAR struct webclient_tls_connection *conn;
+  FAR struct sslutil_tls_context *tls_ctx
+    = (FAR struct sslutil_tls_context *)ctx;
 
-  sslutil_sslsockinit(ssl);
-
-  ret = mbedtls_ctr_drbg_seed(&ssl->ctr_drbg, mbedtls_entropy_func,
-                              &ssl->entropy, (const unsigned char *)pers,
-                              strlen(pers));
-  if (ret != 0)
+  conn = sslutil_create_connection(tls_ctx);
+  if (conn != NULL)
     {
-      sslutil_sslsockfin(ssl);
-      return ret;
-    }
+      /* Setup Root CA certificates. */
 
-  ret = mbedtls_ssl_config_defaults(&ssl->conf, MBEDTLS_SSL_IS_CLIENT,
-                                    MBEDTLS_SSL_TRANSPORT_STREAM,
-                                    MBEDTLS_SSL_PRESET_DEFAULT);
-  if (ret != 0)
-    {
-      nerr("mbedtls_ssl_config_defaults() error : -0x%x\n", -ret);
-      sslutil_sslsockfin(ssl);
-      return ret;
-    }
-
-  /* Setup CA certificates. */
-
-  if (ssl->ca_certs_file)
-    {
-      mbedtls_x509_crt_parse_file(&ssl->ca_cert,
-                                  ssl->ca_certs_file);
-      verify_ca = true;
-    }
-  else if (ssl->ca_certs_dir)
-    {
-      dirp = opendir(ssl->ca_certs_dir);
-      if (dirp != NULL)
+      ret = setup_ca_certs(tls_ctx, conn);
+      if (ret != 0)
         {
-          cert_dirent = readdir(dirp);
-          if (cert_dirent != NULL)
-            {
-              certs_filename = (FAR char *)malloc(PATH_MAX);
-              if (certs_filename)
-                {
-                  do
-                    {
-                      memset(certs_filename, 0, PATH_MAX);
-
-                      snprintf(certs_filename, PATH_MAX,
-                               "%s/%s",
-                               ssl->ca_certs_dir, cert_dirent->d_name);
-                      if (0 == mbedtls_x509_crt_parse_file(&ssl->ca_cert,
-                                                  certs_filename))
-                        {
-                          verify_ca = true;
-                        }
-                    }
-                  while ((cert_dirent = readdir(dirp)) != NULL);
-
-                  free(certs_filename);
-                }
-            }
-          closedir(dirp);
+          goto err_with_clean;
         }
-    }
 
-  if (verify_ca)
-    {
-      /* Peer must present a valid certificate,
-       * handshake is aborted if verification failed.
-       */
+      /* Setup client certificates. */
 
-      mbedtls_ssl_conf_ca_chain(&ssl->conf, &ssl->ca_cert, NULL);
-      mbedtls_ssl_conf_authmode(&ssl->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+      ret = setup_client_certs(tls_ctx, conn);
+      if (ret != 0)
+        {
+          goto err_with_clean;
+        }
+
+      /* Set rundom number generator */
+
+      mbedtls_ssl_conf_rng(&conn->conf, mbedtls_ctr_drbg_random,
+                           &conn->ctr_drbg);
+
+      /* Set timeout */
+
+      mbedtls_ssl_conf_read_timeout(&conn->conf, timeout_second * 1000);
+      mbedtls_ssl_setup(&conn->ssl, &conn->conf);
+
+      /* Set hostname */
+
+      ret = mbedtls_ssl_set_hostname(&conn->ssl, hostname);
+      if (ret != 0)
+        {
+          nerr("mbedtls_ssl_set_hostname() error : -0x%x\n", -ret);
+          goto err_with_clean;
+        }
+
+      /* Start the connection.
+       * mbedtls_net_connect execute address resolution, socket create,
+       * and connect. */
+
+      ret = mbedtls_net_connect(&conn->server_fd, hostname, port,
+                                MBEDTLS_NET_PROTO_TCP);
+      if (ret != 0)
+        {
+          nerr("mbedtls_net_connect() error : -0x%x\n", -ret);
+          goto err_with_clean;
+        }
+
+      /* Set transaction methods */
+
+      mbedtls_ssl_set_bio(&conn->ssl, &conn->server_fd,
+                          mbedtls_net_send, mbedtls_net_recv,
+                          mbedtls_net_recv_timeout);
+
+      ninfo("Performing the SSL/TLS handshake\n");
+
+      ret = start_handshake(&conn->ssl);
+      if (ret != 0)
+        {
+          goto err_with_clean;
+        }
+
+      ret = verify_handshake_result(&conn->ssl);
+      if (ret != 0)
+        {
+          goto err_with_clean;
+        }
+
+      *connp = conn;
     }
   else
     {
-      /* Peer certificate is not checked */
-
-      nwarn("peer certificate is not checked\n");
-      mbedtls_ssl_conf_authmode(&ssl->conf, MBEDTLS_SSL_VERIFY_NONE);
+      ret = -ENOMEM;
     }
 
-  /* Setup client certificates. */
+  return ret;
 
-  if (ssl->cli_certs_file && ssl->private_key_file)
-    {
+err_with_clean:
+  sslutil_delete_connection(conn);
 
-      mbedtls_x509_crt_parse_file(&ssl->cli_cert,
-                                  ssl->cli_certs_file);
-      mbedtls_pk_parse_keyfile(&ssl->cli_key, ssl->private_key_file,
-                               NULL);
-      mbedtls_ssl_conf_own_cert(&ssl->conf, &ssl->cli_cert,
-                                &ssl->cli_key);
-    }
-
-  mbedtls_ssl_conf_rng(&ssl->conf, mbedtls_ctr_drbg_random,
-                       &ssl->ctr_drbg);
-  mbedtls_ssl_conf_read_timeout(&ssl->conf,
-    CONFIG_EXTERNALS_MBEDTLS_DEFAULT_TIMEOUT * 1000);
-  mbedtls_ssl_setup(&ssl->ssl, &ssl->conf);
-  ret = mbedtls_ssl_set_hostname(&ssl->ssl, host);
-  if (ret != 0)
-    {
-      nerr("mbedtls_ssl_set_hostname() error : -0x%x\n", -ret);
-      sslutil_sslsockfin(ssl);
-      return ret;
-    }
-
-  snprintf(port_char, SSLUTIL_PORT_STRSIZE, "%d", port);
-
-  /* Start the connection.
-   * mbedtls_net_connect execute address resolution, socket create,
-   * and connect. */
-
-  ret = mbedtls_net_connect(&ssl->server_fd, host, port_char,
-                            MBEDTLS_NET_PROTO_TCP);
-  if (ret != 0)
-    {
-      nerr("mbedtls_net_connect() error : -0x%x\n", -ret);
-      sslutil_sslsockfin(ssl);
-      return ret;
-    }
-
-  mbedtls_ssl_set_bio(&ssl->ssl, &ssl->server_fd,
-                      mbedtls_net_send, mbedtls_net_recv,
-                      mbedtls_net_recv_timeout);
-
-  ninfo("Performing the SSL/TLS handshake\n");
-
-  /* Do SSL handshake */
-
-  while ((ret = mbedtls_ssl_handshake(&ssl->ssl)) != 0)
-    {
-      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
-          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
-        {
-          nerr("mbedtls_ssl_handshake() error : -0x%x\n", -ret);
-          sslutil_sslsockfin(ssl);
-          return ret;
-        }
-    }
-
-  ret = mbedtls_ssl_get_verify_result(&ssl->ssl);
-  if (ret != 0)
-    {
-      buf = calloc(1, SSLUTIL_CERTVERIFY_STAT_BUFFLEN);
-      if (!buf)
-        {
-          nerr("failed to allocate memory\n");
-          sslutil_sslsockfin(ssl);
-          return -ENOMEM;
-        }
-      mbedtls_x509_crt_verify_info(buf, SSLUTIL_CERTVERIFY_STAT_BUFFLEN, " ", ret);
-      nerr("Failed to verify peer certificates: %s\n", buf);
-      free(buf);
-      sslutil_sslsockfin(ssl);
-      return -1;
-    }
-
-  return 0;
+  return ret;
 }
 
 /****************************************************************************
  * Name: sslutil_sslsend
  ****************************************************************************/
 
-static int sslutil_sslsend(struct sslutil_sock_s *sock,
-                                FAR const void *buf, size_t len, int flags)
+static ssize_t sslutil_send(FAR void *ctx,
+                       FAR struct webclient_tls_connection *conn,
+                       FAR const void *buf, size_t len)
 {
-  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
-  int ret;
-
-  while ((ret = mbedtls_ssl_write(&ssl->ssl, buf, len)) <= 0)
-    {
-      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
-          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
-        {
-          nerr("mbedtls_ssl_write() error : -0x%x\n", -ret);
-          return ret;
-        }
-    }
-
-  return ret;
+  return mbedtls_ssl_write(&conn->ssl, buf, len);
 }
 
 /****************************************************************************
  * Name: sslutil_sslrecv
  ****************************************************************************/
 
-static int sslutil_sslrecv(struct sslutil_sock_s *sock,
-                                FAR void *buf, size_t len, int flags)
+static ssize_t sslutil_recv(FAR void *ctx,
+                       FAR struct webclient_tls_connection *conn,
+                       FAR void *buf, size_t len)
 {
-  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
-  int ret;
-
-  while ((ret = mbedtls_ssl_read(&ssl->ssl, buf, len)) <= 0)
-    {
-      if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
-        {
-          return 0;
-        }
-      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
-          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
-        {
-          nerr("mbedtls_ssl_read() error : -0x%x\n", -ret);
-          return ret;
-        }
-     }
-
-  return ret;
+  return mbedtls_ssl_read(&conn->ssl, buf, len);
 }
 
 /****************************************************************************
  * Name: sslutil_sslclose
  ****************************************************************************/
 
-static int sslutil_sslclose(struct sslutil_sock_s *sock)
+static int sslutil_close(FAR void *ctx,
+                    FAR struct webclient_tls_connection *conn)
 {
-  FAR struct sslutil_ssl_ctx_s *ssl = sock->ssl;
 
-  sslutil_sslsockfin(ssl);
-
+  sslutil_delete_connection(conn);
   return 0;
-}
-
-/****************************************************************************
- * Name: sslutil_connect
- ****************************************************************************/
-
-static int sslutil_connect(int use_ssl, FAR const char *host,
-                                uint16_t port)
-{
-  FAR struct sslutil_sock_s *sock;
-  int ret;
-
-  sock = sslutil_socknew(use_ssl);
-  if (!sock)
-    {
-      return -ENFILE;
-    }
-
-  if (use_ssl)
-    {
-      /* Perform SSL/TLS connect */
-
-      ret = sslutil_sslconnect(sock, host, port);
-      if (ret < 0)
-        {
-          nerr("sslutil_sslconnect() error : %d\n", ret);
-          sslutil_sockfree(sock);
-        }
-    }
-  else
-    {
-      /* Perform connect */
-
-      ret = sslutil_doconnect(sock, host, port);
-      if (ret < 0)
-        {
-          nerr("sslutil_doconnect() error : %d\n", ret);
-          sslutil_sockfree(sock);
-        }
-    }
-
-  if (ret >= 0)
-    {
-      /* If successful, the index is returned so that the sslutil_sock_s
-       * context can be obtained when subsequent called
-       * such as sslutil_send and sslutil_recv. */
-
-      ret = sock->ndx;
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_send
- ****************************************************************************/
-
-static ssize_t sslutil_send(int fd, FAR const void *buf, size_t len,
-                                 int flags)
-{
-  FAR struct sslutil_sock_s *sock;
-  ssize_t ret;
-
-  sock = sslutil_sockget(fd);
-  if (!sock)
-    {
-      return -EBADF;
-    }
-
-  if (sock->use_ssl)
-    {
-      /* Perform SSL/TLS send */
-
-      ret = sslutil_sslsend(sock, buf, len, flags);
-      if (ret < 0)
-        {
-          nerr("sslutil_sslsend() error : %d\n", ret);
-        }
-    }
-  else
-    {
-      /* Perform send */
-
-      ret = sslutil_dosend(sock, buf, len, flags);
-      if (ret < 0)
-        {
-          nerr("sslutil_dosend() error : %d\n", ret);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_recv
- ****************************************************************************/
-
-static ssize_t sslutil_recv(int fd, FAR void *buf, size_t len, int flags)
-{
-  FAR struct sslutil_sock_s *sock;
-  ssize_t ret;
-
-  sock = sslutil_sockget(fd);
-  if (!sock)
-    {
-      return -EBADF;
-    }
-
-  if (sock->use_ssl)
-    {
-      /* Perform SSL/TLS recv */
-
-      ret = sslutil_sslrecv(sock, buf, len, flags);
-      if (ret < 0)
-        {
-          nerr("sslutil_sslrecv() error : %d\n", ret);
-        }
-    }
-  else
-    {
-      /* Perform recv */
-
-      ret = sslutil_dorecv(sock, buf, len, flags);
-      if (ret < 0)
-        {
-          nerr("sslutil_dorecv() error : %d\n", ret);
-        }
-    }
-
-  return ret;
-}
-
-/****************************************************************************
- * Name: sslutil_close
- ****************************************************************************/
-
-static ssize_t sslutil_close(int fd)
-{
-  FAR struct sslutil_sock_s *sock;
-  int ret;
-
-  sock = sslutil_sockget(fd);
-  if (!sock)
-    {
-      return -EBADF;
-    }
-
-  if (sock->use_ssl)
-    {
-      /* Perform SSL/TLS close */
-
-      ret = sslutil_sslclose(sock);
-      if (ret < 0)
-        {
-          nerr("sslutil_sslclose() error : %d\n", ret);
-        }
-    }
-  else
-    {
-      /* Perform close */
-
-      ret = sslutil_doclose(sock);
-      if (ret < 0)
-        {
-          nerr("sslutil_doclose() error : %d\n", ret);
-        }
-    }
-
-  sslutil_sockfree(sock);
-
-  return ret;
 }
 
 /****************************************************************************
@@ -760,20 +467,14 @@ static ssize_t sslutil_close(int fd)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: get_sslsock_connection_methods
+ * Name: get_webclient_tlsops
  *
  * Description:
- *   Implementation of get_sslsock_connection_methods() by mbedTLS
+ *   Implementation of get_webclient_tlsops() by mbedTLS
  *
  ****************************************************************************/
 
-void get_sslsocket_methods(struct sock_methods_s *methods)
+struct webclient_tls_ops *sslutil_webclient_tlsops(void)
 {
-/* TODO: Need to implement new TLS solution */
-#if 0
-  methods->connect = sslutil_connect;
-  methods->send = sslutil_send;
-  methods->recv = sslutil_recv;
-  methods->close = sslutil_close;
-#endif
+  return &g_tls_ops;
 }

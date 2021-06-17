@@ -1,5 +1,5 @@
 ############################################################################
-# externals/sslutils/Makefile
+# externals/sslutils/LibIncludes.mk
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -33,11 +33,7 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-
-BIN = libsslutils$(LIBEXT)
-
-CSRCS = mbedtls_sslutils.c
-
-include $(APPDIR)/Application.mk
+ifeq ($(CONFIG_EXTERNALS_SSLUTILS),y)
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/sslutils/include"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/sslutils/include"}
+endif
