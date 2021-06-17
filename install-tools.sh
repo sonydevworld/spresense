@@ -316,10 +316,6 @@ do
     shift
 done
 
-if [ -n "$REINSTALL" ]; then
-    rm -rf ${SPRROOT}
-    rm -rf *.zip *.tar.* *.tgz
-fi
 
 case "`uname -s`" in
     Linux)
@@ -348,6 +344,13 @@ if [ "${OS}" == "win" ]; then
 	SPRROOT=/opt/${SPRBASENAME}
 else
 	SPRROOT=${HOME}/${SPRBASENAME}
+fi
+
+# Re-install
+
+if [ -n "$REINSTALL" ]; then
+    rm -rf ${SPRROOT}
+    rm -rf *.zip *.tar.* *.tgz
 fi
 
 # Setup base tools for current system
