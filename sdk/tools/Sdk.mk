@@ -99,35 +99,11 @@ else
 # In FLAT and protected modes, the modules have already been created.  A
 # symbol table is required.
 
-ifeq ($(CONFIG_BUILD_LOADABLE),)
-
 .built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
 	$(Q) for app in ${CONFIGURED_APPS}; do \
 		$(MAKE) -C "$${app}" archive ; \
 	done
 	$(Q) touch $@
-
-else
-
-$(SYMTABSRC): $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
-	$(Q) for app in ${CONFIGURED_APPS}; do \
-		$(MAKE) -C "$${app}" archive ; \
-	done
-	$(Q) $(MAKE) install
-	$(Q) $(APPDIR)$(DELIM)tools$(DELIM)mksymtab.sh $(BINDIR) >$@.tmp
-	$(Q) $(call TESTANDREPLACEFILE, $@.tmp, $@)
-
-$(SYMTABOBJ): %$(OBJEXT): %.c
-	$(call COMPILE, -fno-lto $<, $@)
-
-$(BIN): $(SYMTABOBJ)
-ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
-	$(call ARCHIVE_ADD, "${shell cygpath -w $(BIN)}", $^)
-else
-	$(call ARCHIVE_ADD, $(BIN), $^)
-endif
-
-endif # !CONFIG_BUILD_LOADABLE
 
 install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
 
