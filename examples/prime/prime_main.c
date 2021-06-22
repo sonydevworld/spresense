@@ -187,9 +187,9 @@ static uint32_t run_singlecore_prime(void) {
 
 	start = i * nrange;
 	n = nrange;
-	message("[%d] prime calc start % 6d length %d - ", i, start, n);
+	message("[%d] prime calc start % 6ld length %ld - ", i, start, n);
 	primes_found = find_primes(start, n + start);
-	printf("found %d primes\n", primes_found);
+	printf("found %ld primes\n", primes_found);
 	led_progress();
     }
     time2 = time_measure_end(&start_time);
@@ -300,7 +300,7 @@ static int run_multicore_prime(const char *filename) {
 	shared->prime[i].start = i * nrange;
 	shared->prime[i].n = nrange;
 
-	message("[%d] prime calc range start % 6d lenght %d\n", i,
+	message("[%d] prime calc range start % 6ld lenght %ld\n", i,
 		shared->prime[i].start, shared->prime[i].n);
 
 	/* This message will notify each instance of the worker that
@@ -346,7 +346,7 @@ static int run_multicore_prime(const char *filename) {
 	    }
 
 	    mpmutex_lock(&mutex);
-	    printf("[%d] found %d primes\n", i, shared->prime[i].primes_found);
+	    printf("[%d] found %ld primes\n", i, shared->prime[i].primes_found);
 	    mpmutex_unlock(&mutex);
 
 	    /* Lock mutex for synchronize with worker after it's started */
@@ -404,7 +404,7 @@ int mount_romfs(void) {
 
 	ret = mount("/dev/ram0", MOUNTPT, "romfs", MS_RDONLY, NULL);
 	if (ret < 0) {
-	    err("ERROR: mount(%s,%s,romfs) failed: %s\n", "/dev/ram0", MOUNTPT,
+	    err("ERROR: mount(%s,%s,romfs) failed: %d\n", "/dev/ram0", MOUNTPT,
 		errno);
 	}
     }
@@ -442,9 +442,9 @@ int main(int argc, FAR char *argv[])
     time1 = run_multicore_prime(fullpath);
     time2 = run_singlecore_prime();
     message(
-	"Multicore (%dCPUs) execution time \t%dms\nSinglecore execution time "
-	"\t\t%dms\nRatio "
-	"\t\t\t\t\t%d%%\n",
+	"Multicore (%dCPUs) execution time \t%ldms\nSinglecore execution time "
+	"\t\t%ldms\nRatio "
+	"\t\t\t\t\t%ld%%\n",
 	cores, time1, time2, (100 * time2) / time1);
     return ret;
 }
