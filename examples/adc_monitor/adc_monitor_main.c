@@ -360,7 +360,7 @@ int main(int argc, FAR char *argv[])
 
               if (count > 0)
                 {
-                  printf("Ave:%d Min:%d Max:%d Cnt:%d\n", sum / count, min, max, count);
+                  printf("Ave:%ld Min:%d Max:%d Cnt:%ld\n", sum / count, min, max, count);
                 }
             }
         }
