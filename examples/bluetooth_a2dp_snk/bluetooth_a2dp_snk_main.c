@@ -212,7 +212,7 @@ static void on_inquiry_result(BT_ADDR addr, char *name)
 static void on_inquiry_complete(void)
 {
   /* If receive inquiry complete event, this function will call. */
-  printf("%s [BT] Inquiry complete\n");
+  printf("%s [BT] Inquiry complete\n", __func__);
 }
 
 static void on_connect_status_changed(struct bt_acl_state_s *bt_acl_state,
@@ -318,7 +318,7 @@ static void on_track_change(BT_AVRC_TRACK_INFO *trackInfo)
 static void on_play_pos_changed(uint8_t *pdata, int len)
 {
   uint32_t pos = *pdata;
-  printf(" %s play position: %d\n", __func__, pos);
+  printf(" %s play position: %ld\n", __func__, pos);
 }
 
 static void on_app_setting_change(uint8_t *pdata, int len)
