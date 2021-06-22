@@ -307,7 +307,7 @@ int main(int argc, FAR char *argv[])
   fd = open(DEC0_DEVPATH, O_RDONLY);
   if (fd < 0)
     {
-      fprintf(stderr, "%s open failed.\n", DEC0_DEVPATH, errno);
+      fprintf(stderr, "%s open failed. %d\n", DEC0_DEVPATH, errno);
       return 0;
     }
   d0->fd = fd;
@@ -316,7 +316,7 @@ int main(int argc, FAR char *argv[])
   fd = open(DEC1_DEVPATH, O_RDONLY);
   if (fd < 0)
     {
-      fprintf(stderr, "%s open failed.\n", DEC1_DEVPATH, errno);
+      fprintf(stderr, "%s open failed. %d\n", DEC1_DEVPATH, errno);
       close(d0->fd);
       return 0;
     }
