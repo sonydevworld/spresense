@@ -113,7 +113,7 @@ int main(int argc, FAR char *argv[])
           break;
         }
 
-      printf("%d\n", press);
+      printf("%ld\n", press);
       fflush(stdout);
     }
 
