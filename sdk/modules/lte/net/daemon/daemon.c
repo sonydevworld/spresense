@@ -3029,9 +3029,6 @@ static int main_loop(FAR struct daemon_s *priv)
       return ret;
     }
 
-  fd[0] = open("/dev/usrsock", O_RDWR);
-  ASSERT(fd[0] >= 0);
-
   ret = mkfifo(EVENT_PIPE, 0666);
   ASSERT(ret >= 0);
 
@@ -3049,8 +3046,18 @@ static int main_loop(FAR struct daemon_s *priv)
   fd[2] = open(APIREQ_PIPE, O_RDONLY);
   ASSERT(fd[2] >= 0);
 
+  /* altcom_initialize() needs to call after EVENT_PIPE/APIREQ_PIPE open. */
+
   ret = altcom_initialize();
   ASSERT(ret >= 0);
+
+  /* The usrsock driver does not allow multiple-open from multiple tasks.
+   * Since some tasks are created in altcom_initialize(), the usrsock device
+   * must be opened after altcom_initialize().
+   */
+
+  fd[0] = open("/dev/usrsock", O_RDWR);
+  ASSERT(fd[0] >= 0);
 
   close(priv->event_outfd);
 
