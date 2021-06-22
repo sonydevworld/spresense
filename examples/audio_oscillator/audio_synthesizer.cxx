@@ -137,10 +137,10 @@ static bool receive_object_reply(int line_no)
   if (info.result != OK)
     {
       printf("RECEIVE_OBJECT_REPLY[%d] error!\n", line_no);
-      printf("  id        0x%x\n", info.id);
+      printf("  id        0x%lx\n", info.id);
       printf("  type      0x%x\n", info.type);
       printf("  module_id 0x%x\n", info.module_id);
-      printf("  result    0x%x\n", info.result);
+      printf("  result    0x%lx\n", info.result);
       return false;
     }
 

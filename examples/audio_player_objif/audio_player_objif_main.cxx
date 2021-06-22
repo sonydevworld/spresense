@@ -506,7 +506,7 @@ static bool app_refill_simple_fifo(int fd)
 
 static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n",
+  printf("Attention!! %s L%d ecode %d subcode %ld\n",
           attparam->error_filename,
           attparam->line_number,
           attparam->error_code,
@@ -593,14 +593,14 @@ static bool app_receive_object_reply(uint32_t id)
 
   if (reply_info.id != id)
     {
-      printf("app_receive_object_reply() error! id 0x%x(request id 0x%x)\n",
+      printf("app_receive_object_reply() error! id 0x%lx(request id 0x%lx)\n",
              reply_info.id, id);
       return false;
     }
 
   if (reply_info.result != AS_ECODE_OK)
     {
-      printf("app_receive_object_reply() error! result 0x%x\n",
+      printf("app_receive_object_reply() error! result 0x%lx\n",
              reply_info.result);
       return false;
     }

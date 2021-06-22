@@ -471,14 +471,14 @@ static bool app_receive_object_reply(uint32_t id = 0)
 
   if (id && reply_info.id != id)
     {
-      printf("app_receive_object_reply() error! id 0x%x(request id 0x%x)\n",
+      printf("app_receive_object_reply() error! id 0x%lx(request id 0x%lx)\n",
              reply_info.id, id);
       return false;
     }
 
   if (reply_info.result != OK)
     {
-      printf("app_receive_object_reply() error! result 0x%x\n",
+      printf("app_receive_object_reply() error! result 0x%lx\n",
              reply_info.result);
       return false;
     }
@@ -1215,7 +1215,7 @@ extern "C" int main(int argc, FAR char *argv[])
     {
       /* Running... */
 
-      printf("Running time is %d sec\n", target_recording_time);
+      printf("Running time is %ld sec\n", target_recording_time);
 
       app_recorde_process(target_recording_time);
 
