@@ -117,7 +117,7 @@ int main(int argc, FAR char *argv[])
         }
     }
 
-  printf("Free space %u bytes\n", fwup_client_getfreespace());
+  printf("Free space %lu bytes\n", fwup_client_getfreespace());
 
   if (farg)
     {

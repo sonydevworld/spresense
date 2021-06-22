@@ -155,7 +155,7 @@ static int do_partial_download(struct fwup_client_s *fwup, char* pathname,
 
     remain -= size;
 
-    printf("->dl(0x%08x, %d / %d): ret=%d\n",
+    printf("->dl(0x%08lx, %ld / %ld): ret=%d\n",
            (uint32_t)buf, fwsize - remain, fwsize, ret);
 
     fwup->msgsync();
@@ -195,7 +195,7 @@ int fwupdate_file(char* pathname)
   /* debug information */
 
   printf("File: %s\n", pathname);
-  printf("Size: %d\n", fwsize);
+  printf("Size: %ld\n", fwsize);
   printf("Type: %s\n", get_file_type_string(fwtype));
   if (fwsize <= 0)
     {
