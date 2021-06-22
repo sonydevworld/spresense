@@ -149,7 +149,7 @@ static int addEntryToRegDbList(BSO_REGDB_ENTRY* entry, BSO_CONTEXT* ctx)
 
   memset(entry, 0, sizeof(BSO_REGDB_ENTRY));
   readRec = fread(&entry->record, sizeof(BSO_REGDB_RECORD), 1, fp);
-  btdbg("fread_______entry->record.key = %d, entry->revord.value = %02x:%02x:%02x:%02x:%02x:%02x\n",\
+  btdbg("fread_______entry->record.key = %ld, entry->revord.value = %02x:%02x:%02x:%02x:%02x:%02x\n",\
           entry->record.key,\
           entry->record.value[5],\
           entry->record.value[4],\
