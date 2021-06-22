@@ -123,7 +123,7 @@ uint32_t OscillatorComponent::activate(MsgQueId    msgq_id,
 
   if (osc_dsp_version != *dsp_inf)
     {
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08lx / actual %08lx",
               osc_dsp_version, *dsp_inf);
 
       OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -143,7 +143,7 @@ bool OscillatorComponent::deactivate(void)
     {
       /* DSP is not loaded */
 
-      logerr("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure.\n");
       OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
 
       return false;
@@ -168,7 +168,7 @@ bool OscillatorComponent::deactivate(void)
 /* ------------------------------------------------------------------------ */
 uint32_t OscillatorComponent::init(const InitOscParam& param, uint32_t *dsp_inf)
 {
-  OSCILLATOR_CMP_DBG("INIT: WaveMode %d, channel_num %d, bit len %d, sampling_rate %d\n",
+  OSCILLATOR_CMP_DBG("INIT: WaveMode %d, channel_num %d, bit len %d, sampling_rate %ld\n",
                      param.type,
                      param.channel_num,
                      param.bit_length,
@@ -334,7 +334,7 @@ bool OscillatorComponent::send_apu(Apu::Wien2ApuCmd* p_cmd)
     {
       /* DSP is not loaded */
 
-      logerr("DD_SendCommand() failure. %d\n", ret);
+      logerr("DD_SendCommand() failure.\n");
       OSCILLATOR_CMP_ERR(AS_ATTENTION_SUB_CODE_DSP_LOAD_ERROR);
 
       return false;

@@ -443,7 +443,7 @@ void SynthesizerObject::initOnReady(MsgPacket *msg)
   uint32_t               dsp_inf = 0;
 
   SYNTHESIZER_OBJ_DBG(
-        "INIT: type %d, ch num %d, bit len %d, sampling_rate %d sample %d\n",
+        "INIT: type %d, ch num %d, bit len %d, sampling_rate %ld sample %d\n",
         param.type,
         param.channel_num,
         param.bit_width,

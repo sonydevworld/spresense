@@ -229,7 +229,7 @@ uint32_t EncoderComponent::activate_apu(AudioCodec param,
 
   if (encoder_dsp_version != *dsp_inf)
     {
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08lx / actual %08lx",
               encoder_dsp_version, *dsp_inf);
 
       ENCODER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -272,7 +272,7 @@ bool EncoderComponent::deactivate_apu(void)
 /*--------------------------------------------------------------------*/
 uint32_t EncoderComponent::init_apu(const InitEncParam& param, uint32_t *dsp_inf)
 {
-  ENCODER_DBG("INIT: codec %d, infs %d, outfs %d, bit len %d, ch num %d, complexity %d, bit rate %d, cb %08x\n",
+  ENCODER_DBG("INIT: codec %d, infs %ld, outfs %ld, bit len %d, ch num %d, complexity %d, bit rate %ld, cb %p\n",
               param.codec_type, param.input_sampling_rate, param.output_sampling_rate, param.bit_width,
               param.channel_num, param.complexity, param.bit_rate, param.callback);
 

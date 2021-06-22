@@ -828,7 +828,7 @@ bool CaptureComponent::act(const CaptureComponentParam& param)
 {
   bool result = true;
 
-  CAPTURE_DBG("ACT: path %d, signal %d, outdev %d\n",
+  CAPTURE_DBG("ACT: path %d, outdev %d\n",
               param.act_param.dma_path_id,
               param.act_param.output_device);
 
@@ -901,7 +901,7 @@ bool CaptureComponent::init(const CaptureComponentParam& param)
 {
   bool result = true;
 
-  CAPTURE_DBG("INIT: ch num %d, bit len %d, cb %08x\n",
+  CAPTURE_DBG("INIT: ch num %d, bit len %d, cb %p\n",
               param.init_param.capture_ch_num,
               param.init_param.capture_bit_width,
               param.init_param.callback);

@@ -145,7 +145,7 @@ static bool decoder_comp_done_callback(void *p_response, FAR void *p_requester)
         cmplt.stop_dec_cmplt.is_valid_frame =
           ((packet->result.exec_result == Apu::ApuExecOK) ? true : false);
 
-        MEDIA_PLAYER_VDBG("FlsDec s %d v %d\n",
+        MEDIA_PLAYER_VDBG("FlsDec s %ld v %d\n",
                           cmplt.stop_dec_cmplt.output_buffer.size,
                           cmplt.stop_dec_cmplt.is_valid_frame);
 
@@ -600,7 +600,7 @@ void PlayerObj::init(MsgPacket *msg)
   uint8_t result;
   uint32_t dsp_inf;
 
-  MEDIA_PLAYER_DBG("INIT: ch num %d, bit len %d, codec %d(%s), fs %d\n",
+  MEDIA_PLAYER_DBG("INIT: ch num %d, bit len %d, codec %d(%s), fs %ld\n",
                    param.channel_number,
                    param.bit_length,
                    param.codec_type,
