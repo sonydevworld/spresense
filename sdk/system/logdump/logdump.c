@@ -105,7 +105,7 @@ int logdump_main(int argc, char **argv)
     }
   else
     {
-      printf("=== Dump %s at 0x%08x (%d bytes)\n", name, (uint32_t)addr, size);
+      printf("=== Dump %s at 0x%08lx (%d bytes)\n", name, (uint32_t)addr, size);
       logdump_sub(name, addr, size);
     }
 

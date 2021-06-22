@@ -67,7 +67,7 @@ static void stackdump(uint32_t *stack, int size)
 
   for (i = 0; i < size; i++)
     {
-      printf("%08x ", stack[i]);
+      printf("%08lx ", stack[i]);
       if (7 == (i % 8))
         {
           printf("\n");
@@ -78,39 +78,39 @@ static void stackdump(uint32_t *stack, int size)
 
 static void regdump(uint32_t *regs, int size)
 {
-  printf("S0:  %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("S0:  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_S0], regs[REG_S1], regs[REG_S2], regs[REG_S3],
          regs[REG_S4], regs[REG_S5], regs[REG_S6], regs[REG_S7]);
-  printf("S8:  %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("S8:  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_S8], regs[REG_S9], regs[REG_S10], regs[REG_S11],
          regs[REG_S12], regs[REG_S13], regs[REG_S14], regs[REG_S15]);
-  printf("S16: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("S16: %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_S16], regs[REG_S17], regs[REG_S18], regs[REG_S19],
          regs[REG_S20], regs[REG_S21], regs[REG_S22], regs[REG_S23]);
-  printf("S24: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("S24: %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_S24], regs[REG_S25], regs[REG_S26], regs[REG_S27],
          regs[REG_S28], regs[REG_S29], regs[REG_S30], regs[REG_S31]);
-  printf("FPSCR: %08x\n", regs[REG_FPSCR]);
-  printf("R0:  %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("FPSCR: %08lx\n", regs[REG_FPSCR]);
+  printf("R0:  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_R0], regs[REG_R1], regs[REG_R2], regs[REG_R3],
          regs[REG_R4], regs[REG_R5], regs[REG_R6], regs[REG_R7]);
-  printf("R8:  %08x %08x %08x %08x %08x %08x %08x %08x\n",
+  printf("R8:  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_R8], regs[REG_R9], regs[REG_R10], regs[REG_R11],
          regs[REG_R12], regs[REG_R13], regs[REG_R14], regs[REG_R15]);
 #ifdef CONFIG_ARMV7M_USEBASEPRI
 #  ifdef REG_EXC_RETURN
-  printf("xPSR: %08x BASEPRI: %08x EXC_RETURN: %08x\n",
+  printf("xPSR: %08lx BASEPRI: %08lx EXC_RETURN: %08lx\n",
          regs[REG_XPSR], regs[REG_BASEPRI], regs[REG_EXC_RETURN]);
 #  else
-  printf("xPSR: %08x BASEPRI: %08x\n",
+  printf("xPSR: %08lx BASEPRI: %08lx\n",
          regs[REG_XPSR], regs[REG_BASEPRI]);
 #  endif
 #else
 #  ifdef REG_EXC_RETURN
-  printf("xPSR: %08x PRIMASK: %08x EXC_RETURN: %08x\n",
+  printf("xPSR: %08lx PRIMASK: %08lx EXC_RETURN: %08lx\n",
          regs[REG_XPSR], regs[REG_PRIMASK], regs[REG_EXC_RETURN]);
 #  else
-  printf("xPSR: %08x PRIMASK: %08x\n",
+  printf("xPSR: %08lx PRIMASK: %08lx\n",
          regs[REG_XPSR], regs[REG_PRIMASK]);
 #  endif
 #endif /* CONFIG_ARMV7M_USEBASEPRI */
@@ -142,13 +142,13 @@ int logdump_crash(void *buf, size_t size)
       printf("task: %s ", pdump->info.name);
 #endif
       printf("pid: %d\n", pdump->info.pid);
-      printf("user sp: %08x\n", pdump->info.stacks.user.sp);
-      printf("stack base: %08x\n", pdump->info.stacks.user.top);
-      printf("stack size: %08x\n", pdump->info.stacks.user.size);
+      printf("user sp: %08lx\n", pdump->info.stacks.user.sp);
+      printf("stack base: %08lx\n", pdump->info.stacks.user.top);
+      printf("stack size: %08lx\n", pdump->info.stacks.user.size);
 #if CONFIG_ARCH_INTERRUPTSTACK > 3
-      printf("int sp: %08x\n", pdump->info.stacks.interrupt.sp);
-      printf("stack base: %08x\n", pdump->info.stacks.interrupt.top);
-      printf("stack size: %08x\n", pdump->info.stacks.interrupt.size);
+      printf("int sp: %08lx\n", pdump->info.stacks.interrupt.sp);
+      printf("stack base: %08lx\n", pdump->info.stacks.interrupt.top);
+      printf("stack size: %08lx\n", pdump->info.stacks.interrupt.size);
 #endif
       printf("regs:\n");
       regdump(pdump->info.regs, XCPTCONTEXT_REGS);
