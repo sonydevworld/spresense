@@ -131,7 +131,7 @@ static void dump_data(struct scutimestamp_s *ts, void *data, int nbytes)
             }
         }
 
-      printf("[%d] %d[lx] Raw[%04x %04x]\n", i, lx, ta->als0, ta->als1);
+      printf("[%d] %ld[lx] Raw[%04x %04x]\n", i, lx, ta->als0, ta->als1);
     }
 
   delta.sec = ts->sec - prev.sec;
