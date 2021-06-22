@@ -221,7 +221,7 @@ static int run_worker(const char *filename)
       err("mpmq_recieve() failure. %d\n", ret);
       goto finish;
     }
-  message("Worker response: ID = %d, data = %08x\n",
+  message("Worker response: ID = %d, data = %08lx\n",
           ret, msgdata);
 
   /* Show worker copied data */
@@ -289,7 +289,7 @@ int main(int argc, FAR char *argv[])
       ret = mount("/dev/ram0", MOUNTPT, "romfs", MS_RDONLY, NULL);
       if (ret < 0)
         {
-          err("ERROR: mount(%s,%s,romfs) failed: %s\n",
+          err("ERROR: mount(%s,%s,romfs) failed: %d\n",
               "/dev/ram0", MOUNTPT, errno);
         }
     }
