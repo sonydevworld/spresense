@@ -367,7 +367,7 @@ static void get_timestamp(int fd)
 
       ts = (struct timestamp_s *)&buffer[1];
 
-      printf("sec=%d nsec=%d (sz=%d)\n", ts->sec, ts->nsec, sz);
+      printf("sec=%ld nsec=%ld (sz=%d)\n", ts->sec, ts->nsec, sz);
     }
 
   free(buffer);
