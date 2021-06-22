@@ -40,7 +40,7 @@
 #include <asmp/mpmq.h>
 #include <asmp/mpsignal.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "nvic.h"
 
 #include "arch/intrinsics.h"

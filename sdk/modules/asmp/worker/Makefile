@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 VPATH   = arch
@@ -63,6 +63,8 @@ ifneq ($(CONFIG_ARCH_FAMILY),)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
 endif
 
+AFLAGS += -isystem $(SDKDIR)/modules/include
+
 all: $(BIN)
 .PHONY: context depend clean distclean
 
@@ -73,7 +75,7 @@ $(COBJS): %$(OBJEXT): %.c
 	$(call COMPILE, $<, $@)
 
 $(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
+	$(call ARCHIVE_ADD, $@, $(LIB_OBJS))
 
 .depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep

@@ -87,9 +87,9 @@
 /* The receive timeout in milliseconds. */
 #define RCV_TIMEOUT_MS 50
 
-#if CONFIG_NFILE_DESCRIPTORS < 1
+#if CONFIG_NFILE_DESCRIPTORS_PER_BLOCK < 1
 #error                                                                         \
-    "You must provide file descriptors via CONFIG_NFILE_DESCRIPTORS in your configuration file"
+    "You must provide file descriptors via CONFIG_NFILE_DESCRIPTORS_PER_BLOCK in your configuration file"
 #endif
 
 #define message(format, ...) printf(format, ##__VA_ARGS__)

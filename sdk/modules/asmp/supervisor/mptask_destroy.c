@@ -53,7 +53,7 @@
 
 #include <arch/chip/pm.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "cxd56_clock.h"
 #include "cxd56_sysctl.h"
 

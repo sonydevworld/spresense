@@ -301,7 +301,7 @@ int rawelf_symvalue(FAR struct rawelf_loadinfo_s *loadinfo, FAR Elf32_Sym *sym)
       {
         secbase = loadinfo->shdr[sym->st_shndx].sh_addr;
 
-        binfo("Other: %08x+%08x=%08x\n",
+        binfo("Other: %08lx+%08x=%08lx\n",
               sym->st_value, secbase, sym->st_value + secbase);
 
         sym->st_value += secbase;

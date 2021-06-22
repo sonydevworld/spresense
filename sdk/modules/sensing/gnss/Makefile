@@ -35,7 +35,7 @@
 
 # Do not change
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 DELIM ?= $(strip /)
 CXXEXT ?= .cpp
@@ -76,7 +76,7 @@ $(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
 	$(call COMPILE, $<, $@)
 
 $(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
+	$(call ARCHIVE_ADD, $@, $(LIB_OBJS))
 
 .depend: Makefile $(SRCS)
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(ASRCS) $(CSRCS) >Make.dep

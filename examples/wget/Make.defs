@@ -1,7 +1,7 @@
 ############################################################################
-# system/glues/Make.defs
+# examples/wget/Make.defs
 #
-#   Copyright 2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,6 +33,14 @@
 #
 ############################################################################
 
-ifneq ($(CONFIG_LIBM),y)
-CONFIGURED_APPS += glues
+ifeq ($(CONFIG_EXAMPLES_WGET),y)
+ifeq ($(filter distclean,$(MAKECMDGOALS)),)
+ifeq ($(filter clean,$(MAKECMDGOALS)),)
+$(error To use wget command, EXAMPLES_SPRESENSE_WGET should be enabled, not EXAMPLES_WGET of nuttx-apps)
+endif
+endif
+endif
+
+ifeq ($(CONFIG_EXAMPLES_SPRESENSE_WGET),y)
+CONFIGURED_APPS += wget
 endif

@@ -1,7 +1,7 @@
 /****************************************************************************
- * system/glues/glues_errno.c
+ * externals/sslutils/include/sslutils/sslutil.h
  *
- *   Copyright 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,14 +33,44 @@
  *
  ****************************************************************************/
 
-#include <nuttx/config.h>
-#include <errno.h>
+#ifndef __EXTERNALS_SSLUTILS_SSLUTIL_H__
+#define __EXTERNALS_SSLUTILS_SSLUTIL_H__
 
-#ifndef CONFIG_LIBM
+#include "netutils/webclient.h"
 
-int *__errno(void)
+struct sslutil_tls_context
 {
-  return get_errno_ptr();
-}
+  FAR const char *ca_dir;
+  FAR const char *ca_file;
+  FAR const char *cli_file;
+  FAR const char *privkey;
+  FAR const char *custom_id;
+};
 
-#endif
+#define SSLUTIL_CTX_INIT(p_ctx) \
+  do { \
+    (p_ctx)->ca_dir = NULL; \
+    (p_ctx)->ca_file = NULL;  \
+    (p_ctx)->cli_file = NULL; \
+    (p_ctx)->privkey = NULL;  \
+    (p_ctx)->custom_id = NULL;  \
+  } while(0)
+
+#define SSLUTIL_CTX_SET_CADIR(p_ctx, path) \
+  do { (p_ctx)->ca_dir = path; }while(0)
+
+#define SSLUTIL_CTX_SET_CAFILE(p_ctx, path) \
+  do { (p_ctx)->ca_file = path; }while(0)
+
+#define SSLUTIL_CTX_SET_CLIENTCAFILE(p_ctx, path) \
+  do { (p_ctx)->cli_file = path; }while(0)
+
+#define SSLUTIL_CTX_SET_PRIVKEY(p_ctx, path) \
+  do { (p_ctx)->privkey = path; }while(0)
+
+#define SSLUTIL_CTX_SET_CUSTOMID(p_ctx, id) \
+  do { (p_ctx)->custom_id = id; }while(0)
+
+struct webclient_tls_ops *sslutil_webclient_tlsops(void);
+
+#endif  /* __EXTERNALS_SSLUTILS_SSLUTIL_H__ */

@@ -988,7 +988,10 @@ int main(int argc, FAR char *argv[])
 #endif
     }
 
+/* TODO: Need to implement new TLS solution */
+#if 0
   wget_initialize();
+#endif
 
   /* Retrieve the file with the specified URL. */
 

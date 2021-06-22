@@ -34,7 +34,7 @@
  ****************************************************************************/
 #include <asmp/types.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 
 #define CPU_ID  (CXD56_CPU_BASE + 0x40)

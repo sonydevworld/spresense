@@ -44,13 +44,13 @@ NXTOOLARCHIVE=${NXTOOL}.tar.gz
 GENROMFS=genromfs-0.5.2
 
 CROSSBASEURL=https://developer.arm.com/-/media/Files/downloads/gnu-rm
-CROSSTOOLDIR=7-2018q2
-CROSSTOOLFILE=gcc-arm-none-eabi-7-2018-q2-update
+CROSSTOOLDIR=9-2019q4
+CROSSTOOLFILE=gcc-arm-none-eabi-9-2019-q4-major
 
 # MD5 check sums
-TOOLCHAINSUM_win=bc8ae26d7c429f30d583a605a4bcf9bc
-TOOLCHAINSUM_mac=a66be9828cf3c57d7d21178e07cd8904
-TOOLCHAINSUM_linux=299ebd3f1c2c90930d28ab82e5d8d6c0
+TOOLCHAINSUM_win=82525522fefbde0b7811263ee8172b10
+TOOLCHAINSUM_mac=241b64f0578db2cf146034fc5bcee3d4
+TOOLCHAINSUM_linux=fe0029de4f4ec43cf7008944e34ff8cc
 
 OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
 OPENOCDRELEASE=v0.10.0-spr1
@@ -171,7 +171,15 @@ linux_install_toolchain()
 
     # Download cross toolchain
 
-    local _fn=${CROSSTOOLFILE}-${OS}.tar.bz2
+    local _fn
+    local _mach=`uname -m 2>/dev/null`
+
+    if [ "${_mach}" != "x86_64" -a "${_mach}" != "aarch64" ]; then
+        echo Sorry, this machine ${_mach} is not supported.
+        return
+    fi
+
+    _fn=${CROSSTOOLFILE}-${_mach}-${OS}.tar.bz2
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
@@ -316,10 +324,6 @@ do
     shift
 done
 
-if [ -n "$REINSTALL" ]; then
-    rm -rf ${SPRROOT}
-    rm -rf *.zip *.tar.* *.tgz
-fi
 
 case "`uname -s`" in
     Linux)
@@ -348,6 +352,13 @@ if [ "${OS}" == "win" ]; then
 	SPRROOT=/opt/${SPRBASENAME}
 else
 	SPRROOT=${HOME}/${SPRBASENAME}
+fi
+
+# Re-install
+
+if [ -n "$REINSTALL" ]; then
+    rm -rf ${SPRROOT}
+    rm -rf *.zip *.tar.* *.tgz
 fi
 
 # Setup base tools for current system

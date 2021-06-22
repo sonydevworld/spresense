@@ -1,7 +1,7 @@
 ############################################################################
-# system/glues/Makefile
+# examples/wget/Makefile
 #
-#   Copyright 2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,9 +33,16 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
-include $(SDKDIR)/Make.defs
+-include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-CSRCS += glues_errno.c
+PROGNAME = $(CONFIG_EXAMPLES_SPRESENSE_WGET_PROGNAME)
+PRIORITY = $(CONFIG_EXAMPLES_SPRESENSE_WGET_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_SPRESENSE_WGET_STACKSIZE)
+MODULE = $(CONFIG_EXAMPLES_SPRESENSE_WGET)
+
+ASRCS =
+CSRCS =
+MAINSRC = wget_main.c
 
 include $(APPDIR)/Application.mk
