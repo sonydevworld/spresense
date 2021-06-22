@@ -190,7 +190,7 @@ static int gpioint_status(int argc, FAR char *argv[])
     {
       if (g_irqlist[i].pin)
         {
-          printf("%-3d %3d %5d\n", i + CXD56_IRQ_EXDEVICE_0,
+          printf("%-3d %3ld %5d\n", i + CXD56_IRQ_EXDEVICE_0,
                  g_irqlist[i].pin, g_irqlist[i].count);
         }
       else
