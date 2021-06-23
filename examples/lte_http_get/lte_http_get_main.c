@@ -49,6 +49,10 @@
 #include "lte/lte_api.h"
 #include "netutils/webclient.h"
 
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+#include "sslutils/sslutil.h"
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -539,6 +543,26 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
 }
 
 /****************************************************************************
+ * Name: app_wget_initialize
+ *
+ * Description:
+ *   This function initialize a context that contains a webclient setting.
+ ****************************************************************************/
+
+static void app_wget_initialize(struct webclient_context *ctx,
+                                FAR char *buffer, int buflen,
+                                webclient_sink_callback_t callback)
+{
+  webclient_set_defaults(ctx);
+
+  ctx->method = "GET";
+  ctx->buffer = buffer;
+  ctx->buflen = buflen;
+  ctx->sink_callback = callback;
+  ctx->sink_callback_arg = NULL;
+}
+
+/****************************************************************************
  * Name: app_wget_cb
  *
  * Description:
@@ -546,12 +570,14 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  *   each block of file data as it is received.
  ****************************************************************************/
 
-static void app_wget_cb(FAR char **buffer, int offset, int datend,
+static int app_wget_cb(FAR char **buffer, int offset, int datend,
                         FAR int *buflen, FAR void *arg)
 {
   /* Write HTTP data to standard output */
 
   (void)write(1, &((*buffer)[offset]), datend - offset);
+
+  return 0;
 }
 
 /****************************************************************************
@@ -772,11 +798,15 @@ int main(int argc, FAR char *argv[])
 {
   int ret       = 0;
   int result    = LTE_RESULT_OK;
-  FAR char *url = APP_WGET_URL;
   lte_apn_setting_t apnsetting = {0};
   lte_errinfo_t     info       = {0};
 
   uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
+
+  struct webclient_context ctx;
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+  struct sslutil_tls_context ssl_ctx;
+#endif
 
 #ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
   lte_pdn_t pdn = {0};
@@ -789,11 +819,6 @@ int main(int argc, FAR char *argv[])
    * The URL starts with "http://"
    * (eg, http://example.com/index.html, or http://192.0.2.1:80/index.html)
    */
-
-  if (argc > 1)
-    {
-      url = argv[1];
-    }
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.
@@ -988,14 +1013,36 @@ int main(int argc, FAR char *argv[])
 #endif
     }
 
-/* TODO: Need to implement new TLS solution */
-#if 0
-  wget_initialize();
+  /* Initialilze a webclient context */
+
+  app_wget_initialize(&ctx, g_app_iobuffer, APP_IOBUFFER_LEN, app_wget_cb);
+
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+  /* Setup TLS context */
+  SSLUTIL_CTX_INIT(&ssl_ctx);
+  ctx.tls_ops = sslutil_webclient_tlsops();
+  ctx.tls_ctx = (FAR void *)&ssl_ctx;
 #endif
+
+  /* Specify a URL */
+
+  if (argc > 1)
+    {
+      ctx.url = argv[1];
+    }
+  else
+    {
+      ctx.url = APP_WGET_URL;
+    }
 
   /* Retrieve the file with the specified URL. */
 
-  wget(url, g_app_iobuffer, APP_IOBUFFER_LEN, app_wget_cb, NULL);
+  ret = webclient_perform(&ctx);
+
+  if (ret != 0)
+    {
+      printf("webclient_perform failed with %d\n", ret);
+    }
 
   /* Disconnect from the data PDN and Detach from the LTE network */
 
