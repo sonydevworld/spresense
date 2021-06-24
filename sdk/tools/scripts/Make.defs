@@ -125,6 +125,3 @@ HOSTCFLAGS = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
 include $(SDKDIR)/Library.mk
 -include $(TOPDIR)/../externals/Library.mk
 
-ifneq ($(CONFIG_LIBM),y)
-  EXTRA_LIBS += "${shell $(CC) $(CFLAGS) -print-file-name=libm.a}"
-endif
