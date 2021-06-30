@@ -138,10 +138,10 @@ int main(int argc, char **argv)
   output_wav.length = input_wav.length / dec_factor;
 
   printf("Sampling rate = %d(Hz)\n", input_wav.fs);
-  printf("Sampling length = %d\n\n", input_wav.length);
+  printf("Sampling length = %ld\n\n", input_wav.length);
 
   printf("Output Sampling rate = %d\n", output_wav.fs);
-  printf("Output Sampling length = %d\n", output_wav.length);
+  printf("Output Sampling length = %ld\n", output_wav.length);
   printf("Saving filename : %s\n", argv[4]);
 
   /* Open output wav file */
