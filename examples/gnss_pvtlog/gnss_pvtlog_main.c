@@ -193,18 +193,18 @@ static int read_and_print(int fd)
              (int)(posdat.receiver.time.usec/1000));
 
       double_to_dmf(posdat.receiver.latitude, &dmf);
-      printf(", Lat %d:%d:%d",
+      printf(", Lat %d:%d:%ld",
              dmf.degree, dmf.minute, dmf.frac);
 
       double_to_dmf(posdat.receiver.longitude, &dmf);
-      printf(" , Lon %d:%d:%d",
+      printf(" , Lon %d:%d:%ld",
              dmf.degree, dmf.minute, dmf.frac);
 
       /* Get Log status */
 
       ret = ioctl(fd, CXD56_GNSS_IOCTL_PVTLOG_GET_STATUS,
                   (unsigned long)&pvtlog_status);
-      printf(", Log No:%d \n", pvtlog_status.status.log_count);
+      printf(", Log No:%ld \n", pvtlog_status.status.log_count);
     }
   else
     {
@@ -341,7 +341,7 @@ static int writefile(uint32_t file_count)
 
   /* Make file name */
 
-  snprintf(filename, FILE_NAME_LEN, "%s%d.dat", 
+  snprintf(filename, FILE_NAME_LEN, "%s%ld.dat",
            CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
   /* Open file */
@@ -589,7 +589,7 @@ int gnss_pvtlog_read(int argc, char *argv[])
     {
       /* Make file name */
 
-      snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
+      snprintf(filename, FILE_NAME_LEN, "%s%ld.dat",
                CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Open file */
@@ -619,7 +619,7 @@ int gnss_pvtlog_read(int argc, char *argv[])
               ret = OK;
 
               log_max = pvtlogdat.log_count;
-              printf("%s read OK(%d line)\n", filename, log_max);
+              printf("%s read OK(%ld line)\n", filename, log_max);
 
               /* Printf pvtlog file */
 
@@ -640,7 +640,7 @@ int gnss_pvtlog_read(int argc, char *argv[])
                   printf(" , Lon %d:%d:%d", log->longitude.degree,
                          log->longitude.minute, log->longitude.frac);
 
-                  printf(", Log No:%d \n", (log_count + 1));
+                  printf(", Log No:%ld \n", (log_count + 1));
                 }
             }
         }
@@ -688,7 +688,7 @@ int gnss_pvtlog_delete(int argc, char *argv[])
     {
       /* Make file name */
 
-      snprintf(filename, FILE_NAME_LEN, "%s%d.dat",
+      snprintf(filename, FILE_NAME_LEN, "%s%ld.dat",
                CONFIG_EXAMPLES_GNSS_PVTLOG_FILEPATH, file_count);
 
       /* Delete file */

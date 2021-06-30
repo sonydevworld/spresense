@@ -103,7 +103,7 @@ int main(int argc, FAR char *argv[])
 
   if (setparam.satellite == 0)
     {
-      printf("invalid svid!! %d\n", setparam.satellite);
+      printf("invalid svid!! %ld\n", setparam.satellite);
       return -EINVAL;
     }
 
@@ -126,7 +126,7 @@ int main(int argc, FAR char *argv[])
     }
   else
     {
-      printf("start test(svid %d)\n", setparam.satellite);
+      printf("start test(svid %ld)\n", setparam.satellite);
 
       for (count = TEST_COUNT; count > 0; count--)
         {
@@ -140,7 +140,7 @@ int main(int argc, FAR char *argv[])
             {
               /* Print test result */
 
-              printf("  cn %d, doppler %ld\n", (int)(get.cn * 1000000),
+              printf("  cn %d, doppler %lld\n", (int)(get.cn * 1000000),
                      (int64_t)(get.doppler * 1000000));
               break;
             }

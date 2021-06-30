@@ -60,7 +60,7 @@
 #define INI_FILE_PATH "/mnt/spif/aws_iot.ini"
 
 #define LOCATION_TOPIC      "data/%s/gps"
-#define LOCATION_TOPIC_FMT  "{ \"timestamp\": %u, \"device_loc\": { \"lat\": %f, \"lon\": %f } }"
+#define LOCATION_TOPIC_FMT  "{ \"timestamp\": %lu, \"device_loc\": { \"lat\": %f, \"lon\": %f } }"
 
 /****************************************************************************
  * Private Data
