@@ -153,7 +153,7 @@ static int32_t set_adv_data(void)
 
   if (BLE_SUCCESS != ret)
     {
-      DBG_LOG_DEBUG("set ble adv data failed, ret=%d\n", ret);
+      DBG_LOG_DEBUG("set ble adv data failed, ret=%ld\n", ret);
     }
 
   return ret;

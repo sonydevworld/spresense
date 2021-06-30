@@ -221,7 +221,7 @@ static void onInquiryComplete(void)
 {
   /* If receive inquiry complete event, this function will call. */
 
-  printf("%s [BT] Inquiry complete\n");
+  printf("%s [BT] Inquiry complete\n", __func__);
 
 }
 

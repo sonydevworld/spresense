@@ -503,7 +503,7 @@ int BLE_GapSaveBondInfo(BLE_GapBondInfo *info)
   generateKey();
   size = sizeof(bondInfo.bondNum);
   ret = BSO_GetRegistryValue(gapMem.sizeKey, (void *)&bondInfo.bondNum, size);
-  btdbg("bondNum = %d\n", bondInfo.bondNum);
+  btdbg("bondNum = %ld\n", bondInfo.bondNum);
   if(0 != ret)
     {
       if (-ENOENT == ret)
@@ -601,7 +601,7 @@ int BLE_GapClearBondInfo(BLE_GapBondInfo *info)
       ret = -ENOENT;
       goto exit_clear_failure;
     }
-  btdbg("bond num = %d\n", bondInfo.bondNum);
+  btdbg("bond num = %ld\n", bondInfo.bondNum);
   ret = BSO_GetRegistryValue(gapMem.infoKey, (void *)bondInfo.bondInfoId, bondInfoSize);
   if(0 != ret)
     {
