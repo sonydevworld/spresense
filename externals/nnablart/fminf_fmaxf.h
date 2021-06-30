@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/dnnrt/libs/fminf_fmaxf.h
+ * externals/nnablart/fminf_fmaxf.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,5 +38,12 @@
  * Do not include this file from any sources.
  */
 
-#define fminf(a,b) ((a)<(b)?(a):(b))
-#define fmaxf(a,b) ((a)>(b)?(a):(b))
+static inline float fminf(float x, float y)
+{
+  return (x < y) ? x : y;
+}
+
+static inline float fmaxf(float x, float y)
+{
+  return (x > y) ? x : y;
+}
