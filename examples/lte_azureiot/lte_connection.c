@@ -160,7 +160,7 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   current_time.tv_sec = mktime(&calTime);
   if (current_time.tv_sec < 0)
     {
-      ERRF("%s: mktime falied\n");
+      ERRF("mktime falied: %d\n", errno);
       return;
     }
 
@@ -169,11 +169,11 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   ret = settimeofday(&current_time, NULL);
   if (ret < 0)
     {
-      ERRF("%s: settimeofday falied: %d\n", errno);
+      ERRF("settimeofday falied: %d\n", errno);
       return;
     }
 
-  LOGF("set localtime completed: %4d/%02d/%02d,%02d:%02d:%02d\n",
+  LOGF("set localtime completed: %4ld/%02ld/%02ld,%02ld:%02ld:%02ld\n",
          localtime->year + 1900 + 100, localtime->mon, localtime->mday,
          localtime->hour, localtime->min, localtime->sec);
 }
@@ -419,11 +419,11 @@ static void app_show_errinfo(void)
     {
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRCODE)
         {
-          ERRF("err_result_code : %d\n", info.err_result_code);
+          ERRF("err_result_code : %ld\n", info.err_result_code);
         }
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
         {
-          ERRF("err_no          : %d\n", info.err_no);
+          ERRF("err_no          : %ld\n", info.err_no);
         }
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRSTR)
         {
@@ -445,7 +445,7 @@ static void app_show_pdn(lte_pdn_t *pdn)
 
   LOGF("pdn.session_id : %d\n", pdn->session_id);
   LOGF("pdn.active     : %d\n", pdn->active);
-  LOGF("pdn.apn_type   : 0x%x\n", pdn->apn_type);
+  LOGF("pdn.apn_type   : 0x%lx\n", pdn->apn_type);
 
   for (i = 0; i < pdn->ipaddr_num; i++)
     {
@@ -462,7 +462,7 @@ static void app_show_pdn(lte_pdn_t *pdn)
 
 static void app_radio_on_cb(uint32_t result)
 {
-  LOGF("%s called. result: %d\n", __func__, result);
+  LOGF("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -483,7 +483,7 @@ static void app_radio_on_cb(uint32_t result)
 
 static void app_radio_off_cb(uint32_t result)
 {
-  LOGF("%s called. result: %d\n", __func__, result);
+  LOGF("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -504,7 +504,7 @@ static void app_radio_off_cb(uint32_t result)
 
 static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
 {
-  LOGF("%s called. result: %d\n", __func__, result);
+  LOGF("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_OK)
     {
@@ -530,7 +530,7 @@ static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
 
 static void app_deactivate_pdn_cb(uint32_t result)
 {
-  LOGF("%s called. result: %d\n", __func__, result);
+  LOGF("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -551,7 +551,7 @@ static void app_deactivate_pdn_cb(uint32_t result)
 
 static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
 {
-  LOGF("%s called: localtime : \"%02d/%02d/%02d : %02d:%02d:%02d\"\n",
+  LOGF("%s called: localtime : \"%02ld/%02ld/%02ld : %02ld:%02ld:%02ld\"\n",
          __func__, localtime->year, localtime->mon, localtime->mday,
          localtime->hour, localtime->min, localtime->sec);
 

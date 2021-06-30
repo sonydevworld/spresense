@@ -32,7 +32,7 @@ void cwebsocket_subprotocol_echo_client_onopen(void *websocket) {
 
 void cwebsocket_subprotocol_echo_client_onmessage(void *websocket, cwebsocket_message *message) {
 	cwebsocket_client *client = (cwebsocket_client *)websocket;
-	printf("cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04x, payload_len=%lld, payload=%s\n",
+	printf("cwebsocket_subprotocol_echo_client_onmessage: fd=%i, opcode=%#04lx, payload_len=%lld, payload=%s\n",
 		client->fd, message->opcode, message->payload_len, message->payload);
 }
 
