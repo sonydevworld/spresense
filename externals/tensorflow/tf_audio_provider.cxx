@@ -119,7 +119,7 @@ static void outputDeviceCallback(uint32_t size)
 
 static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n",
+  printf("Attention!! %s L%d ecode %d subcode %ld\n",
           attparam->error_filename,
           attparam->line_number,
           attparam->error_code,
