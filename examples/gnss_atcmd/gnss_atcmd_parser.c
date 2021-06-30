@@ -734,7 +734,7 @@ static int command_gptc(FAR struct gnss_atcmd_info *info,
       goto _err;
     }
   len = snprintf(wbuf + _HEADER_SIZE, _WBUF_SIZE - _HEADER_SIZE,
-                 "%d\r\n", offset);
+                 "%ld\r\n", offset);
   if (len < 0)
     {
       ret = len;

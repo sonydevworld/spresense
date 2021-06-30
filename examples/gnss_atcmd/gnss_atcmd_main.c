@@ -286,7 +286,7 @@ FAR static char *reqbuf(uint16_t size)
 #ifdef _USE_STATIC_NMEA_BUF
   if (size > sizeof(nmea_buf))
     {
-      printf("reqbuf error: oversize %s\n", size);
+      printf("reqbuf error: oversize %d\n", size);
       return NULL;
     }
   return nmea_buf;
@@ -386,7 +386,7 @@ static FAR void atcmd_emulator(FAR void *arg)
     }
 #else
 # if defined(CONFIG_EXAMPLES_GNSS_ATCMD_STDINOUT)
-  /* Open tty0 using nash */
+  /* Open tty0 using nsh */
 
   cmdfds[GNSS_ATCMD_WRITE_FD] = fileno(stdout);
   cmdfds[GNSS_ATCMD_READ_FD] = fileno(stdin);
@@ -403,24 +403,25 @@ static FAR void atcmd_emulator(FAR void *arg)
       goto _err;
     }
 
+  /* Fill the termios struct with the current values. */
+
+  tcgetattr(cmdfds[GNSS_ATCMD_READ_FD], &tio);
+
   /* tty: setup parameters */
 
-  tio.c_cflag += CREAD;  /* Enable receive */
-  tio.c_cflag += CLOCAL; /* Local line, no modem control */
-  tio.c_cflag += CS8;    /* Data bit 8bit */
-  tio.c_cflag += 0;      /* Stop bit 1bit */
-  tio.c_cflag += 0;      /* Paritiy none */
-  cfsetispeed(&tio, baudRate);
-  cfsetospeed(&tio, baudRate);
+  tio.c_cflag |= CREAD;   /* Enable receive */
+  tio.c_cflag |= CLOCAL;  /* Local line, no modem control */
+  tio.c_cflag &= ~CSIZE;  /* Clean the bits */
+  tio.c_cflag |= CS8;     /* Data bit 8bit */
+  tio.c_cflag &= ~CSTOPB; /* Stop bit 1bit */
+  tio.c_cflag &= ~PARENB; /* Paritiy none */
+
+  cfsetspeed(&tio, baudRate);
 
   /* tty: set to tty device */
 
-  tcsetattr(cmdfds[GNSS_ATCMD_WRITE_FD], TCSANOW, &tio);
   tcsetattr(cmdfds[GNSS_ATCMD_READ_FD], TCSANOW, &tio);
 
-  /* tty: Enable settings */
-
-  ioctl(fd, TCSETS, (unsigned long)&tio);
 #endif
 
   atcmd_info.gnssfd = fd;
@@ -733,7 +734,12 @@ int main(int argc, FAR char *argv[])
 
 #endif /* ifdef USE_ATCMD_SUB_THREAD */
 
-#ifndef CONFIG_EXAMPLES_GNSS_ATCMD_CREATE_EMULATOR_PTHREAD
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_CREATE_EMULATOR_PTHREAD
+  /* Wait for finishing atcmd thread */
+
+  pthread_join(atcmd_tid, NULL);
+
+#else
 
   atcmd_emulator(NULL);
 
