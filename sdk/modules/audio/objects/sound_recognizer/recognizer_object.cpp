@@ -807,14 +807,12 @@ bool AS_DeleteRecognizer(void)
 /*--------------------------------------------------------------------------*/
 bool AS_checkAvailabilityRecognizer(void)
 {
-	printf("check %d\n",RecognizerObject::get_instance());
   return (RecognizerObject::get_instance() != NULL);
 }
 
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::create(AsObjectParams_t* params)
 {
-	printf("create %d\n",RecognizerObject::get_instance());
   RecognizerObject* inst = new(RecognizerObject::get_adr()) RecognizerObject(params->msgq_id,params->pool_id);
   if (inst != NULL)
     {

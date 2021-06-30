@@ -141,7 +141,7 @@ uint32_t MPPComponent::activate_apu(const char *path,
 
   if (DSP_MPPEAX_VERSION != *dsp_inf)
     {
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08x / actual %08lx",
               DSP_MPPEAX_VERSION, *dsp_inf);
 
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -173,9 +173,9 @@ bool MPPComponent::deactivate_apu(void)
 /*--------------------------------------------------------------------*/
 uint32_t MPPComponent::init_apu(InitXLOUDParam *param, uint32_t* dsp_inf)
 {
-  FILTER_DBG("INIT MPP: ch num %d, sample num %d, infs %d, mode %d, "
-             "bit len <in %d/out %d>, xloud coef <tbl %08x/size %d>, "
-             "eax coef <tbl %08x/size %d>, sel out %08x\n",
+  FILTER_DBG("INIT MPP: ch num %d, sample num %ld, infs %ld, mode %d, "
+             "bit len <in %d/out %d>, xloud coef <tbl %p/size %ld>, "
+             "eax coef <tbl %p/size %ld>, sel out %p\n",
              param->ch_num, param->sample_per_frame, param->in_fs,
              param->mode, param->in_bytelength, param->out_bytelength,
              param->p_xloud_coef_image, param->xloud_coef_size,
@@ -358,8 +358,8 @@ bool MPPComponent::setparam_apu(SetXLOUDParam *param)
 bool MPPComponent::tuning_apu(TuningXLOUDParam *param)
 {
   FILTER_DBG("TUNING MPP: param idx %d, "
-             "xloud tbl <conf %08x/param %08x>, "
-             "eax tbl <conf %08x/param %08x>\n",
+             "xloud tbl <conf %08lx/param %08lx>, "
+             "eax tbl <conf %08lx/param %08lx>\n",
              param->param_idx,
              param->xloud_config_table,
              param->xloud_param_table,

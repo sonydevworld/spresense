@@ -171,7 +171,7 @@ E_AS AS_ReadDmac(asReadDmacParam *pReadDmacParam)
   if ((uint32_t*)(pReadDmacParam->addr) == NULL)
     {
       DMAC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      _err("ERR: dma(%d) addr(0x%x)\n",
+      _err("ERR: dma(%d) addr(0x%lx)\n",
              pReadDmacParam->dmacId, pReadDmacParam->addr);
 
       return E_AS_DMAC_TRANS_ADDR_NULL;
@@ -192,7 +192,7 @@ E_AS AS_ReadDmac(asReadDmacParam *pReadDmacParam)
    && ((uint32_t*)(pReadDmacParam->addr2) == NULL))
     {
       DMAC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      _err("ERR: dma(%d) size2(%d) addr2(0x%x)\n",
+      _err("ERR: dma(%d) size2(%d) addr2(0x%lx)\n",
              pReadDmacParam->dmacId, pReadDmacParam->size2,
              pReadDmacParam->addr2);
 
@@ -262,7 +262,7 @@ E_AS AS_WriteDmac(asWriteDmacParam *pWriteDmacParam)
   if ((uint32_t*)(pWriteDmacParam->addr) == NULL)
     {
       DMAC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      _err("ERR: dma(%d) addr(0x%x)\n",
+      _err("ERR: dma(%d) addr(0x%lx)\n",
              pWriteDmacParam->dmacId, pWriteDmacParam->addr);
 
       return E_AS_DMAC_TRANS_ADDR_NULL;
@@ -283,7 +283,7 @@ E_AS AS_WriteDmac(asWriteDmacParam *pWriteDmacParam)
    && ((uint32_t*)(pWriteDmacParam->addr2) == NULL))
     {
       DMAC_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
-      _err("ERR: dma(%d) size2(%d) addr2(0x%x)\n",
+      _err("ERR: dma(%d) size2(%d) addr2(0x%lx)\n",
              pWriteDmacParam->dmacId, pWriteDmacParam->size2,
              pWriteDmacParam->addr2);
 
@@ -342,7 +342,7 @@ E_AS AS_GetReadyCmdNumDmac(cxd56_audio_dma_t dmacId, uint32_t *pResult)
 
   *pResult = dmaInfo.ready_empty + dmaInfo.running_empty;
 
-  _info("dma(%d:%d,%d)\n", dmacId, dmaInfo.state, *pResult);
+  _info("dma(%d:%d,%ld)\n", dmacId, dmaInfo.state, *pResult);
 
   return rtCode;
 }

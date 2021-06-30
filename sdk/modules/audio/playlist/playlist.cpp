@@ -491,7 +491,7 @@ bool Playlist::addTrack(FAR const char *key_str, int track_no)
 /*--------------------------------------------------------------------------*/
 bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
 {
-  _info("remove track from [%s : pos %d]\n", key_str, remove_pos);
+  _info("remove track from [%s : pos %ld]\n", key_str, remove_pos);
 
   /* Check argument */
 

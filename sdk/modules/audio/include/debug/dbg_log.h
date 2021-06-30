@@ -52,7 +52,7 @@
 
 #ifdef CONFIG_AUDIOUTILS_EVENTLOG
 #define AUDIO_LOG_EVENT(id, fmt, ...) syslog(LOG_DEBUG, \
-                                             "<%2d>"fmt, \
+                                             "<%2d>" fmt, \
                                              id, \
                                              ##__VA_ARGS__)
 #else
@@ -61,7 +61,7 @@
 
 #ifdef CONFIG_AUDIOUTILS_STATELOG
 #define AUDIO_LOG_STATE(id, fmt, ...) syslog(LOG_DEBUG, \
-                                             "<%2d>"fmt, \
+                                             "<%2ld>" fmt, \
                                              id, \
                                              ##__VA_ARGS__)
 #else
@@ -70,7 +70,7 @@
 
 #ifdef CONFIG_AUDIOUTILS_DETAILLOG
 #define AUDIO_LOG_DETAIL(id, fmt, ...) syslog(LOG_DEBUG, \
-                                              "<%2d>"fmt, \
+                                              "<%2d>" fmt, \
   id, ##__VA_ARGS__)
 #else
 #define AUDIO_LOG_DETAIL(id, fmt, ...)

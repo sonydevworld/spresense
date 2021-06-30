@@ -160,7 +160,7 @@ uint32_t MFEComponent::activate_apu(const char *path, uint32_t *dsp_inf)
 
   if (DSP_MFESRC_VERSION != *dsp_inf)
     {
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08x / actual %08lx",
               DSP_MFESRC_VERSION, *dsp_inf);
 
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -204,8 +204,8 @@ bool MFEComponent::deactivate_apu(void)
 /*--------------------------------------------------------------------*/
 uint32_t MFEComponent::init_apu(InitMFEParam *param, uint32_t* dsp_inf)
 {
-  FILTER_DBG("INIT MFE: sample num %d, proc mode %d, ch num <mic %d/ref %d>,"
-             " fs %d, aec <use %d/enable %d>, conf tbl %08x\n",
+  FILTER_DBG("INIT MFE: sample num %ld, proc mode %ld, ch num <mic %d/ref %ld>,"
+             " fs %ld, aec <use %d/enable %d>, conf tbl %08lx\n",
              param->sample_per_frame, param->proc_mode, param->ch_num,
              param->ref_channel_num, param->in_fs,
              param->use_aec, param->enable_mfe_aec, param->config_table);
@@ -363,7 +363,7 @@ bool MFEComponent::flush_apu()
 /*--------------------------------------------------------------------*/
 bool MFEComponent::setparam_apu(SetMFEParam *param)
 {
-  FILTER_DBG("SET MFE: param idx %d, eax handle %08x\n",
+  FILTER_DBG("SET MFE: param idx %d, eax handle %p\n",
              param->param_idx,
              param->p_eax_handle);
 
@@ -373,8 +373,8 @@ bool MFEComponent::setparam_apu(SetMFEParam *param)
 /*--------------------------------------------------------------------*/
 bool MFEComponent::tuning_apu(TuningMFEParam *param)
 {
-  FILTER_DBG("TUNING MFE: mic delay %d, "
-             "ref delay %d, conf tbl %08x\n",
+  FILTER_DBG("TUNING MFE: mic delay %ld, "
+             "ref delay %ld, conf tbl %08lx\n",
              param->mic_delay,
              param->ref_delay, param->mfe_config_table);
 

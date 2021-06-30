@@ -153,7 +153,7 @@ static bool encoder_done_callback(void* p_response)
           cmplt.exec_enc_cmplt.output_buffer =
             packet->exec_enc_cmd.output_buffer;
 
-          MEDIA_RECORDER_VDBG("Enc s %d\n",
+          MEDIA_RECORDER_VDBG("Enc s %ld\n",
                               cmplt.exec_enc_cmplt.output_buffer.size);
 
           er = MsgLib::send<EncCmpltParam>(s_msgq_id.recorder,
@@ -170,7 +170,7 @@ static bool encoder_done_callback(void* p_response)
           cmplt.stop_enc_cmplt.output_buffer =
             packet->flush_enc_cmd.output_buffer;
 
-          MEDIA_RECORDER_VDBG("FlsEnc s %d\n",
+          MEDIA_RECORDER_VDBG("FlsEnc s %ld\n",
                               cmplt.stop_enc_cmplt.output_buffer.size);
 
           er = MsgLib::send<EncCmpltParam>(s_msgq_id.recorder,
@@ -571,8 +571,8 @@ void MediaRecorderObjectTask::init(MsgPacket *msg)
   RecorderCommand cmd = msg->moveParam<RecorderCommand>();
   uint32_t rst = AS_ECODE_OK;
 
-  MEDIA_RECORDER_DBG("INIT: fs %d, ch num %d, bit len %d, codec %d(%s),"
-                     "complexity %d, bitrate %d\n",
+  MEDIA_RECORDER_DBG("INIT: fs %ld, ch num %d, bit len %d, codec %d(%s),"
+                     "complexity %d, bitrate %ld\n",
                      cmd.init_param.sampling_rate,
                      cmd.init_param.channel_number,
                      cmd.init_param.bit_length,
