@@ -69,7 +69,7 @@ ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF_USEPREPROC),y)
 worker_build:
 	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: worker_build
+$(OBJS): worker_build
 
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
