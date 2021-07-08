@@ -108,6 +108,8 @@ void closelog(void);
 int getpriority(int which, id_t who);
 int setpriority(int which, id_t who, int prio);
 
+int update_vtun_state(int enable);
+
 pid_t setsid(void);
 
 ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt);

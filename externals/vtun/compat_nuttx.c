@@ -42,6 +42,7 @@
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/blowfish.h>
 #include <syslog.h>
+#include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <time.h>
 #include <string.h>
@@ -53,12 +54,6 @@
 #include "linkfd.h"
 
 #include "compat_nuttx.h"
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-static int session_established = 0;
 
 /****************************************************************************
  * Public Functions
@@ -86,8 +81,49 @@ int getpriority(int which, id_t who)
 
 int setpriority(int which, id_t who, int prio)
 {
-  session_established = (prio == LINKFD_PRIO) ? 1 : 0;
   return 0;
+}
+
+int update_vtun_state(int enable)
+{
+  static int sockfd     = -1;
+  int        ret        = 0;
+  uint8_t    sock_type  = 0;
+
+  if (sockfd < 0)
+    {
+      sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    }
+
+  if (sockfd < 0)
+    {
+      return -1;
+    }
+
+  if (enable)
+    {
+      /* VTUN established */
+
+      sock_type = DENY_INET_SOCK_ENABLE;
+    }
+  else
+    {
+      /* VTUN abolished */
+
+      sock_type = DENY_INET_SOCK_DISABLE;
+    }
+
+  ret = ioctl(sockfd, SIOCDENYINETSOCK, (unsigned long) &sock_type);
+
+  if (!enable)
+    {
+      /* Close socket */
+
+      close(sockfd);
+      sockfd = -1;
+    }
+
+  return ret;
 }
 
 unsigned char *MD5(char *msg, size_t msg_len, char *out)
@@ -638,10 +674,5 @@ ssize_t vtun_udp_readv(int fd, const struct iovec *iov, int iovcnt)
     }
 
   return recv_len;
-}
-
-int vtun_session_established(void)
-{
-  return session_established;
 }
 

@@ -54,7 +54,7 @@ LEXFLAGS := -t
 YACC      := yacc
 YACCFLAGS := -d
 
-VTUN_SH1 := c519f003072029efab49fad75efd7e6c7ea28c16
+VTUN_SH1 := cbc46c9ad44e6c02196d5ea632fb41536331a200
 VTUN_DIR := VTun-$(VTUN_SH1)
 VTUN_URL := "https://codeload.github.com/SPRESENSE/VTun/zip/$(VTUN_SH1)"
 VTUN_DL_NAME := archive.zip
