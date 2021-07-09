@@ -70,7 +70,7 @@ CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
 # Build
 
 .PHONY: lib depend clean
-all: lib $(WORKER_ELF)
+all: $(WORKER_ELF)
 
 # Build ASMP worker library
 
@@ -85,9 +85,9 @@ $(CXXOBJS): %$(OBJEXT):%.cpp
 
 # Build workers
 
-$(WORKER_ELF): $(CXXOBJS)
+$(WORKER_ELF): lib $(CXXOBJS)
 	@echo "LD: $@"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $(CXXOBJS) $(LDLIBS)
 	$(Q) $(STRIP) -d $(WORKER_ELF)
 
 .depend:

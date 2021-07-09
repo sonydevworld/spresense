@@ -69,7 +69,7 @@ ifeq ($(CONFIG_EXAMPLES_AUDIO_PLAYER_OBJIF_USEPOSTPROC),y)
 build_worker:
 	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: build_worker
+$(OBJS): build_worker
 
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
