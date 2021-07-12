@@ -230,7 +230,7 @@ int32_t sys_create_task(FAR sys_task_t *task,
       return -ENOMEM;
     }
 
-  snprintf(param->myaddr, MYADDR_LEN, "%p", param);
+  snprintf(param->myaddr, MYADDR_LEN, "%08x", param);
   param->myaddr[MYADDR_LEN - 1] = '\0';
   param->arg = params->arg;
   param->function = params->function;
@@ -687,7 +687,7 @@ int32_t sys_create_mqueue(FAR sys_mq_t *mq, FAR const sys_cremq_s *params)
   memset(&mq_attr, 0, sizeof(struct mq_attr));
 
   sched_lock();
-  snprintf((char*)mq->name, sizeof(mq->name), MQ_NAME_PREFIX"%ld", suffix_num);
+  snprintf((char*)mq->name, sizeof(mq->name), MQ_NAME_PREFIX"%d", suffix_num);
   suffix_num++;
   sched_unlock();
 
