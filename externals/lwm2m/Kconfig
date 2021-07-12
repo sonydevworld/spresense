@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig EXTERNALS_LWM2M
+	bool "LwM2M Wakaama library"
+	default n
+	---help---
+		Enable LwM2M Wakaama library.
+		This library is provided from https://github.com/eclipse/wakaama
+		and licensed under the Eclipse Public License, version 1.0/2.0.
+

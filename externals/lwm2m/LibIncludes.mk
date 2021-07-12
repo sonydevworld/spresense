@@ -1,7 +1,7 @@
 ############################################################################
-# lte_lwm2m/Makefile
+# externals/lwm2m/LibIncludes.mk
 #
-#   Copyright 2019 Sony Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,45 +33,17 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
-include $(SDKDIR)/Make.defs
-
-# lte_lwm2m built-in application info
-
-PROGNAME = $(CONFIG_EXAMPLES_LTE_LWM2M_PROGNAME)
-PRIORITY = $(CONFIG_EXAMPLES_LTE_LWM2M_PRIORITY)
-ifeq ($(CONFIG_EXTERNALS_MBEDTLS),y)
-STACKSIZE = $(CONFIG_EXAMPLES_LTE_LWM2M_STACKSIZE_IN_USING_MBEDTLS)
-else
-STACKSIZE = $(CONFIG_EXAMPLES_LTE_LWM2M_STACKSIZE)
+ifeq ($(CONFIG_EXTERNALS_LWM2M),y)
+LWM2MCORDIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)core
+LWM2MSHADIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)examples$(DELIM)shared
+LWM2MCLIDIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)examples$(DELIM)client
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCORDIR)"}
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)"}
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)$(DELIM)tinydtls"}
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCLIDIR)"}
+CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCORDIR)"}
+CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)"}
+CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)$(DELIM)tinydtls"}
+CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCLIDIR)"}
 endif
-MODULE    = $(CONFIG_EXAMPLES_LTE_LWM2M)
 
-# define
-
-CFLAGS += -DHAVE_ASSERT_H
-CFLAGS += -DLWM2M_CLIENT_MODE
-CFLAGS += -DLWM2M_BOOTSTRAP
-CFLAGS += -DLWM2M_LITTLE_ENDIAN
-CFLAGS += -DLWM2M_SUPPORT_JSON
-CFLAGS += -DWITH_TINYDTLS
-CFLAGS += -DUIP_BUFSIZE=1294
-CFLAGS += -DUIP_LLH_LEN=14
-CFLAGS += -DUIP_IPUDPH_LEN=48
-
-# lte_lwm2m Example
-
-CSRCS += object_access_control.c
-CSRCS += object_device.c
-CSRCS += object_firmware.c
-CSRCS += object_location.c
-CSRCS += object_connectivity_moni.c
-CSRCS += object_security.c
-CSRCS += object_server.c
-CSRCS += object_connectivity_stat.c
-CSRCS += system_api.c
-CSRCS += test_object.c
-CSRCS += lwm2m_lte_connection.c
-MAINSRC = lwm2mclient.c
-
-include $(APPDIR)/Application.mk
