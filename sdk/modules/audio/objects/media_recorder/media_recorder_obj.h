@@ -97,17 +97,17 @@ public:
 
   static pthread_t get_pid(void)
   {
-    return get_instance()->m_pid;
+    return (get_instance() == 0) ? INVALID_PROCESS_ID : get_instance()->m_pid;
   }
 
   static void set_pid(pthread_t id)
   {
-    get_instance()->m_pid = id;
+    if (get_instance() != 0) { get_instance()->m_pid = id; }
   }
 
   static pthread_t get_msgq_id(void)
   {
-    return get_instance()->m_msgq_id.self;
+    return (get_instance() == 0) ? 0 : get_instance()->m_msgq_id.self;
   }
 
   typedef struct

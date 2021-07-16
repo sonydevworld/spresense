@@ -74,7 +74,7 @@ static void capture_done_callback(CaptureDataParam param)
 {
   err_t er;
 
-  er = MsgLib::send<CaptureDataParam>(MicFrontEndObject::get_self(),
+  er = MsgLib::send<CaptureDataParam>(MicFrontEndObject::get_msgq_id(),
                                       MsgPriNormal,
                                       MSG_AUD_MFE_RST_CAPTURE_DONE,
                                       NULL,
@@ -87,7 +87,7 @@ static void capture_error_callback(CaptureErrorParam param)
 {
   err_t er;
 
-  er = MsgLib::send<CaptureErrorParam>(MicFrontEndObject::get_self(),
+  er = MsgLib::send<CaptureErrorParam>(MicFrontEndObject::get_msgq_id(),
                                        MsgPriNormal,
                                        MSG_AUD_MFE_RST_CAPTURE_ERR,
                                        NULL,
@@ -103,7 +103,7 @@ static bool preproc_done_callback(ComponentCbParam *cmplt, void* p_requester)
   param.event_type = cmplt->event_type;
   param.result     = cmplt->result;
 
-  err_t er = MsgLib::send<MicFrontendObjPreProcDoneCmd>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendObjPreProcDoneCmd>(MicFrontEndObject::get_msgq_id(),
                                                         MsgPriNormal,
                                                         MSG_AUD_MFE_RST_PREPROC,
                                                         NULL,
@@ -1739,7 +1739,7 @@ bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam)
 {
   /* Parameter check */
 
-  if (actparam == NULL)
+  if ( (actparam == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1750,7 +1750,7 @@ bool AS_ActivateMicFrontend(FAR AsActivateMicFrontend *actparam)
 
   cmd.act_param = *actparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_ACT,
                                               NULL,
@@ -1765,7 +1765,7 @@ bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam)
 {
   /* Parameter check */
 
-  if (initparam == NULL)
+  if ( (initparam == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1776,7 +1776,7 @@ bool AS_InitMicFrontend(FAR AsInitMicFrontendParam *initparam)
 
   cmd.init_param = *initparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_INIT,
                                               NULL,
@@ -1791,7 +1791,7 @@ bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam)
 {
   /* Parameter check */
 
-  if (startparam == NULL)
+  if ( (startparam == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1802,7 +1802,7 @@ bool AS_StartMicFrontend(FAR AsStartMicFrontendParam *startparam)
 
   cmd.start_param = *startparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_START,
                                               NULL,
@@ -1828,7 +1828,7 @@ bool AS_StopMicFrontend(FAR AsStopMicFrontendParam *stopparam)
 
   cmd.stop_param = *stopparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_STOP,
                                               NULL,
@@ -1843,7 +1843,7 @@ bool AS_InitPreprocFrontend(FAR AsInitPreProcParam *initpreparam)
 {
   /* Parameter check */
 
-  if (initpreparam == NULL)
+  if ( (initpreparam == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1854,7 +1854,7 @@ bool AS_InitPreprocFrontend(FAR AsInitPreProcParam *initpreparam)
 
   cmd.initpreproc_param = *initpreparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_INITPREPROC,
                                               NULL,
@@ -1869,7 +1869,7 @@ bool AS_SetPreprocMicFrontend(FAR AsSetPreProcParam *setpreparam)
 {
   /* Parameter check */
 
-  if (setpreparam == NULL)
+  if ( (setpreparam == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1880,7 +1880,7 @@ bool AS_SetPreprocMicFrontend(FAR AsSetPreProcParam *setpreparam)
 
   cmd.setpreproc_param = *setpreparam;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_SETPREPROC,
                                               NULL,
@@ -1894,7 +1894,7 @@ bool AS_SetPreprocMicFrontend(FAR AsSetPreProcParam *setpreparam)
 /*--------------------------------------------------------------------------*/
 bool AS_SetMicGainMicFrontend(FAR AsMicFrontendMicGainParam *micgain_param)
 {
-  if (micgain_param == NULL)
+  if ( (micgain_param == NULL) || !AS_checkAvailabilityMicFrontend() )
     {
       return false;
     }
@@ -1903,7 +1903,7 @@ bool AS_SetMicGainMicFrontend(FAR AsMicFrontendMicGainParam *micgain_param)
 
   cmd.mic_gain_param = *micgain_param;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_SETMICGAIN,
                                               NULL,
@@ -1916,9 +1916,14 @@ bool AS_SetMicGainMicFrontend(FAR AsMicFrontendMicGainParam *micgain_param)
 /*--------------------------------------------------------------------------*/
 bool AS_DeactivateMicFrontend(FAR AsDeactivateMicFrontendParam *deactparam)
 {
+  if ( !AS_checkAvailabilityMicFrontend() )
+    {
+      return false;
+    }
+
   MicFrontendCommand cmd;
 
-  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_self(),
+  err_t er = MsgLib::send<MicFrontendCommand>(MicFrontEndObject::get_msgq_id(),
                                               MsgPriNormal,
                                               MSG_AUD_MFE_CMD_DEACT,
                                               NULL,
@@ -1942,8 +1947,7 @@ bool AS_DeleteMicFrontend(void)
   pthread_cancel(pid);
   pthread_join(pid, NULL);
 
-  pid = INVALID_PROCESS_ID;
-
+  MicFrontEndObject::set_pid(INVALID_PROCESS_ID);
   /* Unregister attention callback */
 
   MIC_FRONTEND_UNREG_ATTCB();
