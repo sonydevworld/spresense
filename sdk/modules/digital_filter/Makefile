@@ -38,7 +38,7 @@
 MODNAME = digital_filter
 
 ifeq ($(CONFIG_DIGITAL_FILTER),y)
-CSRCS   = fir_base_filters.c
+CSRCS   = fir_base_filters.c edge_detection.c
 endif
 
 include $(SDKDIR)/modules/Module.mk
