@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/fir_filter/wav.h
+ * examples/digital_filter/wav.h
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -37,6 +37,7 @@
 #define __EXAMPLES_FIR_FILTER_WAV_H__
 
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef struct
 {
@@ -49,9 +50,11 @@ typedef struct
 
 int open_input_wavfile(wav_instance_t *wav, const char *file_name);
 int read_wavdata(wav_instance_t *wav, float *data, int len);
+int read_wavdata16(wav_instance_t *wav, int16_t *data, int len);
 
 int open_output_wavfile(wav_instance_t *wav, const char *file_name);
 void write_wavdata(wav_instance_t *wav, float *data, int len);
+void write_wavdata16(wav_instance_t *wav, int16_t *data, int len);
 
 void close_wavfile(wav_instance_t *wav);
 

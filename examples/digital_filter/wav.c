@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/fir_filter/wav.c
+ * examples/digital_filter/wav.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -139,6 +139,8 @@ int open_input_wavfile(wav_instance_t *wav, const char *file_name)
   DEBUG_PRINT("chunk_size=%d\n", hdr.data_chunk_size);
   wav->length = hdr.data_chunk_size / 2;
 
+  wav->read_len = 0;
+
   return 0;
 }
 
@@ -220,12 +222,34 @@ void close_wavfile(wav_instance_t *wav)
 int read_wavdata(wav_instance_t *wav, float *data, int len)
 {
   int i;
-  short tmp_data;
+  int16_t tmp_data;
 
   for (i = 0; wav->read_len < wav->length && i < len; i++, wav->read_len++)
     {
+
+      /* PCM data is stored as little endian in WAV format */
+
       fread(&tmp_data, 2, 1, wav->fp);
       data[i] = (float)tmp_data;
+    }
+  
+  return i;
+}
+
+/** read_wavdata16() */
+
+int read_wavdata16(wav_instance_t *wav, int16_t *data, int len)
+{
+  int i;
+  int16_t tmp_data;
+
+  for (i = 0; wav->read_len < wav->length && i < len; i++, wav->read_len++)
+    {
+
+      /* PCM data is stored as little endian in WAV format */
+
+      fread(&tmp_data, 2, 1, wav->fp);
+      data[i] = tmp_data;
     }
   
   return i;
@@ -236,7 +260,7 @@ int read_wavdata(wav_instance_t *wav, float *data, int len)
 void write_wavdata(wav_instance_t *wav, float *data, int len)
 {
   int i;
-  short tmp_data;
+  int16_t tmp_data;
 
   for (i = 0; i < len; i++)
     {
@@ -253,5 +277,17 @@ void write_wavdata(wav_instance_t *wav, float *data, int len)
 
       tmp_data = (short)data[i];
       fwrite(&tmp_data, 2, 1, wav->fp);
+    }
+}
+
+/** write_wavdata16() */
+
+void write_wavdata16(wav_instance_t *wav, int16_t *data, int len)
+{
+  int i;
+
+  for (i = 0; i < len; i++)
+    {
+      fwrite(&data[i], 2, 1, wav->fp);
     }
 }
