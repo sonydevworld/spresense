@@ -86,14 +86,11 @@ int setpriority(int which, id_t who, int prio)
 
 int update_vtun_state(int enable)
 {
-  static int sockfd     = -1;
-  int        ret        = 0;
-  uint8_t    sock_type  = 0;
+  int     sockfd     = -1;
+  int     ret        = 0;
+  uint8_t sock_type  = 0;
 
-  if (sockfd < 0)
-    {
-      sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    }
+  sockfd = socket(PF_USRSOCK, SOCK_STREAM, 0);
 
   if (sockfd < 0)
     {
@@ -115,13 +112,9 @@ int update_vtun_state(int enable)
 
   ret = ioctl(sockfd, SIOCDENYINETSOCK, (unsigned long) &sock_type);
 
-  if (!enable)
-    {
-      /* Close socket */
+  /* Close socket */
 
-      close(sockfd);
-      sockfd = -1;
-    }
+  close(sockfd);
 
   return ret;
 }
