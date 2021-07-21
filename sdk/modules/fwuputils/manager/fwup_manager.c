@@ -49,6 +49,8 @@
 #include <mqueue.h>
 #include <fcntl.h>
 
+#include <arch/chip/chip.h>
+
 #include "fwuputils/fwup_manager.h"
 #include "sys_update_mgr.h"
 
@@ -153,7 +155,7 @@ static int fwup_write(void *data, uint32_t size)
   int ret = 0;
   struct fwup_mgr_s *mgr = get_manager();
 
-  ret = fw_um_commit(mgr->handle, data, size);
+  ret = fw_um_commit(mgr->handle, (void *)CXD56_PHYSADDR(data), size);
 
   mgr->remain -= size;
 
