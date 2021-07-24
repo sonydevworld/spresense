@@ -45,6 +45,7 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_RECORDER)
 
 # Audio Example
 
+CXXSRCS = audio_util.cxx
 MAINSRC = audio_recorder_main.cxx
 
 # Audio Example paths
