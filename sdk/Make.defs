@@ -34,7 +34,9 @@
 #
 ############################################################################
 
+ifneq ($(wildcard $(TOPDIR)/.config),)
 -include $(TOPDIR)/Make.defs
+endif
 
 DELIM ?= $(strip /)
 
@@ -59,7 +61,9 @@ endif
 
 # include path setting in external sub directories which contains 'LibIncludes.mk' file.
 
+ifneq ($(wildcard $(TOPDIR)/.config),)
 -include $(SDKDIR)/tools/LibInclude.mk
+endif
 
 DEPCONFIG = $(TOPDIR)/.config
 

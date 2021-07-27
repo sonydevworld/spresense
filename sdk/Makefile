@@ -34,11 +34,26 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
 -include Make.defs
 
 TOPDIR ?= ../nuttx
 DELIM ?= $(strip /)
+
+# Check if the system has been configured
+
+ifeq ($(wildcard $(TOPDIR)/.config),)
+.DEFAULT:
+	@echo
+	@echo "SDK has not been configured!"
+	@echo "To configure the project:"
+	@echo "  tools/config.py <config> [<config> ...]"
+	@echo "For a list of available configurations:"
+	@echo "  tools/config.py -l"
+	@echo
+
+else
+
+-include $(TOPDIR)/Make.defs
 
 # XXX: Sorry, this make file only for Linux/Cygwin
 
@@ -218,10 +233,12 @@ archive:
 
 register:
 
+endif # ifeq ($(wildcard $(TOPDIR)/.config),)
+
 help:
 	@echo  ''
 	@echo  'SDK targets:'
-	@echo  '  (all)           - Build sdk (if buildkernel is done in advance)'
+	@echo  '  (all)           - Build sdk (if tools/config.py is done in advance)'
 	@echo  '  clean           - Remove most generated files but keep the sdk config'
 	@echo  '  distclean       - Remove all generated files + sdk config'
 	@echo  ''
