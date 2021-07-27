@@ -6,6 +6,7 @@
 config EXTERNALS_VTUN
 	bool "VTUN Command"
 	default n
+	select EXTERNALS_MBEDTLS
 	---help---
 		Download VTUN from https://jaist.dl.sourceforge.net/project/vtun,
 		and build it on Spresense SDK. The version to download is v3.0.4.
