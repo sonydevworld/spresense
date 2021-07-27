@@ -1,5 +1,5 @@
 /****************************************************************************
- * mpcomm_prime/worker/helper/helper_main.c
+ * mpcomm_prime/worker/mpcomm/prime.h
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -33,30 +33,30 @@
  *
  ****************************************************************************/
 
+#ifndef __PRIME_H
+#define __PRIME_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <mpcomm/helper.h>
-
-#include "prime.h"
+#include <stdint.h>
 
 /****************************************************************************
- * Private Functions
+ * Public Types
  ****************************************************************************/
 
-static void user_func(void *data)
+typedef struct prime_data
 {
-  prime_data_t *task = (prime_data_t *)data;
-
-  task->result = find_primes(task->start, task->end);
-}
+  uint32_t start;
+  uint32_t end;
+  uint32_t result;
+} prime_data_t;
 
 /****************************************************************************
- * Public Functions
+ * Public Function Prototypes
  ****************************************************************************/
 
-int main(void)
-{
-  return helper_main(user_func);
-}
+uint32_t find_primes(uint32_t start, uint32_t end);
+
+#endif /* __PRIME_H */

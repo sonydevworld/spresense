@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/Makefile
+# mpcomm_prime/worker/mpcomm/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,55 +36,44 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-VPATH   =
-SUBDIRS =
-DEPPATH = --dep-path .
+BIN = PRIME
 
-CSRCS = controller.c
+CSRCS += mpcomm_main.c
+CSRCS += prime.c
+
+ASMPW_DIR = "../lib/asmpw"
+MPCOMMW_DIR = "../lib/mpcommw"
+
+LDLIBPATH += -L $(TOPDIR)/staging
+LDLIBPATH += -L $(ASMPW_DIR)
+LDLIBPATH += -L $(MPCOMMW_DIR)
+
+LDLIBS += -lc
+LDLIBS += -lmpcommw
+LDLIBS += -lasmpw
+
+LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
 
-LIB_OBJS = $(AOBJS) $(COBJS)
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libmpcommc$(LIBEXT)
-
-CFLAGS += -I$(SDKDIR)/modules/asmp/worker
+OBJEXT ?= .o
 
 all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
 
 $(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
+	@echo "CC: $<"
+	$(Q) $(CC) -c $(CELFFLAGS) $< -o $@
 
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE, $@, $(LIB_OBJS))
+$(AOBJS): %$(OBJEXT): %.S
+	@echo "AS: $<"
+	$(Q) $(CC) -c $(AFLAGS) $< -o $@
 
-.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context: .context
+$(BIN): $(COBJS) $(AOBJS)
+	@echo "LD: $<"
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBM)
+	$(Q) $(STRIP) -d $(BIN)
 
 clean:
 	$(call DELFILE, $(BIN))
 	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-

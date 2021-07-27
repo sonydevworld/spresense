@@ -1,5 +1,5 @@
 /****************************************************************************
- * mpcomm_prime/worker/common/prime.c
+ * mpcomm_prime/worker/mpcomm/prime.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *

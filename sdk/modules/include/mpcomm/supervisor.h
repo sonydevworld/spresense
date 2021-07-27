@@ -44,11 +44,13 @@
  * Included Files
  ****************************************************************************/
 
+#include <pthread.h>
+
 #include <asmp/types.h>
 #include <asmp/mptask.h>
 #include <asmp/mpmq.h>
 
-#include <mpcomm/common.h>
+#include <mpcomm/mpcomm.h>
 
 /****************************************************************************
  * Public Types
@@ -83,7 +85,7 @@ typedef struct worker_info
  *
  * Structure of information needed by a supervisor in the MPCOMM framework.
  *
- * @typedef supervisor_context_t
+ * @typedef mpcomm_supervisor_context_t
  * See @ref supervisor_context
  */
 
@@ -104,7 +106,15 @@ typedef struct supervisor_context
   /** Number of helpers used. */
 
   uint8_t helper_num;
-} supervisor_context_t;
+
+  /** Controller listener thread identifier. */
+
+  pthread_t controller_listener_pid;
+
+  /** Semaphore to wait for controller done messages. */
+
+  sem_t sem_done;
+} mpcomm_supervisor_context_t;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -113,6 +123,7 @@ typedef struct supervisor_context
 /**
  * Initialize the MPCOMM framework.
  *
+ * @param [in] ctx: Context with information about MPCOMM workers.
  * @param [in] filepath: Path to controller and helper binary file.
  * @param [in] helper_num: Number of helpers to be used.
  *
@@ -120,35 +131,46 @@ typedef struct supervisor_context
  * negative value is returned according to <errno.h>.
  */
 
-int supervisor_init(const char *filepath, uint8_t helper_num);
+int mpcomm_supervisor_init(mpcomm_supervisor_context_t **ctx,
+                           const char *filepath,
+                           uint8_t helper_num);
 
 /**
  * Deinitialize the MPCOMM framework.
+ *
+ * @param [in] ctx: Context with information about MPCOMM workers.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
-int supervisor_deinit(void);
+int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx);
 
 /**
  * Send the user data to the controller for processing.
  *
+ * @param [in] ctx: Context with information about MPCOMM workers.
  * @param [in] data: User data.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
-int supervisor_send_controller(void *data);
+int mpcomm_supervisor_send_controller(mpcomm_supervisor_context_t *ctx,
+                                      void *data);
 
 /**
  * Wait until user data has been processed by controller.
+ *
+ * @param [in] ctx: Context with information about MPCOMM workers.
+ * @param [in] abstime: The absolute time to wait until a timeout
+ *                      is declared.
  *
  * @return On success, 0 is returned. On failure,
  * negative value is returned according to <errno.h>.
  */
 
-int supervisor_wait_controller_done(void);
+int mpcomm_supervisor_wait_controller_done(mpcomm_supervisor_context_t *ctx,
+                                           const struct timespec *abstime);
 
 #endif /* __MODULES_INCLUDE_MPCOMM_SUPERVISOR_H */

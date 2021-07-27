@@ -1,5 +1,5 @@
 /****************************************************************************
- * mpcomm_prime/worker/common/prime.h
+ * mpcomm_prime/worker/mpcomm/mpcomm_main.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -33,30 +33,91 @@
  *
  ****************************************************************************/
 
-#ifndef __PRIME_H
-#define __PRIME_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <stdint.h>
+#include <math.h>
+#include <string.h>
+
+#include <mpcomm/mpcomm.h>
+
+#include "prime.h"
 
 /****************************************************************************
- * Public Types
+ * Private Functions
  ****************************************************************************/
 
-typedef struct prime_data
+static int split_load(int start, int end, prime_data_t *tasks, int task_num)
 {
-  uint32_t start;
-  uint32_t end;
-  uint32_t result;
-} prime_data_t;
+  int i;
+  int total_load = end - start;
+  int load = (int)ceilf((float)total_load / task_num);
+  int offset = start;
+
+  memset(tasks, 0, sizeof(prime_data_t) * task_num);
+
+  for (i = 0; offset < end; ++i)
+    {
+      tasks[i].start = offset;
+      offset += load;
+      tasks[i].end = offset;
+
+      if ((end - offset) < load)
+        {
+          load = end - offset;
+        }
+    }
+
+  return 0;
+}
+
+static void controller_user_func(void *data)
+{
+  int i;
+
+  prime_data_t *main_task = (prime_data_t *)data;
+  int task_num = mpcomm_get_helpers_num() + 1;
+
+  prime_data_t split_tasks[MPCOMM_MAX_HELPERS + 1];
+
+  split_load(main_task->start, main_task->end, split_tasks, task_num);
+
+  for (i = 0; i < task_num; ++i)
+    {
+      if (i < mpcomm_get_helpers_num())
+        {
+          mpcomm_send_helper(i, MEM_V2P(&split_tasks[i]));
+        }
+      else
+        {
+          split_tasks[i].result = find_primes(split_tasks[i].start,
+                                              split_tasks[i].end);
+        }
+    }
+
+  mpcomm_wait_helpers_done();
+
+  main_task->result = 0;
+
+  for (i = 0; i < task_num; ++i)
+    {
+      main_task->result += split_tasks[i].result;
+    }
+}
+
+static void helper_user_func(void *data)
+{
+  prime_data_t *task = (prime_data_t *)data;
+
+  task->result = find_primes(task->start, task->end);
+}
 
 /****************************************************************************
- * Public Function Prototypes
+ * Public Functions
  ****************************************************************************/
 
-uint32_t find_primes(uint32_t start, uint32_t end);
-
-#endif /* __PRIME_H */
+int main(void)
+{
+  return mpcomm_main(controller_user_func, helper_user_func);
+}

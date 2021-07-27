@@ -1,5 +1,5 @@
 ############################################################################
-# mpcomm_prime/worker/helper/Makefile
+# modules/mpcomm/worker/Makefile
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -36,46 +36,54 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-WORKERDIR = $(TOPDIR)/../examples/mpcomm_prime/worker
+VPATH   =
+SUBDIRS =
+DEPPATH = --dep-path .
 
-BIN = helper
-
-CSRCS += helper_main.c
-
-VPATH += $(WORKERDIR)/common
-CSRCS += prime.c
-
-CELFFLAGS += -I$(WORKERDIR)/common
-
-ASMPW_DIR = "../lib/asmpw"
-MPCOMMC_DIR = "../lib/mpcommh"
-
-LDLIBPATH += -L $(ASMPW_DIR)
-LDLIBPATH += -L $(MPCOMMC_DIR)
-
-LDLIBS += -lmpcommh
-LDLIBS += -lasmpw
+CSRCS = mpcomm.c
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
 
-OBJEXT ?= .o
+LIB_OBJS = $(AOBJS) $(COBJS)
+
+SRCS = $(ASRCS) $(CSRCS)
+OBJS = $(AOBJS) $(COBJS)
+
+BIN = libmpcommw$(LIBEXT)
+
+CFLAGS += -I$(SDKDIR)/modules/asmp/worker
 
 all: $(BIN)
-
-$(COBJS): %$(OBJEXT): %.c
-	@echo "CC: $<"
-	$(Q) $(CC) -c $(CELFFLAGS) $< -o $@
+.PHONY: context depend clean distclean
 
 $(AOBJS): %$(OBJEXT): %.S
-	@echo "AS: $<"
-	$(Q) $(CC) -c $(AFLAGS) $< -o $@
+	$(call ASSEMBLE, $<, $@)
 
-$(BIN): $(COBJS) $(AOBJS)
-	@echo "LD: $<"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
-	$(Q) $(STRIP) -d $(BIN)
+$(COBJS): %$(OBJEXT): %.c
+	$(call COMPILE, $<, $@)
+
+$(BIN): $(LIB_OBJS)
+	$(call ARCHIVE, $@, $(LIB_OBJS))
+
+.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
+	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
+	$(Q) touch $@
+
+depend: .depend
+
+.context:
+	$(Q) touch $@
+
+context: .context
 
 clean:
 	$(call DELFILE, $(BIN))
 	$(call CLEAN)
+
+distclean: clean
+	$(call DELFILE, .context)
+	$(call DELFILE, Make.dep)
+	$(call DELFILE, .depend)
+
+-include Make.dep
