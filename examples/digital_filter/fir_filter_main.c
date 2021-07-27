@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/fir_filter/fir_filter_main.c
+ * examples/digital_filter/fir_filter_main.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *

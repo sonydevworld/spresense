@@ -1,5 +1,5 @@
 ############################################################################
-# examples/fir_filter/Make.defs
+# examples/fir_filter/Makefile
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -33,6 +33,51 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_FIR_FILTER),y)
-CONFIGURED_APPS += fir_filter
-endif
+include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
+
+# For "fir" command
+
+PROGNAME = $(CONFIG_EXAMPLES_FIR_FIR_PROGNAME)
+PRIORITY = $(CONFIG_EXAMPLES_FIR_FIR_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_FIR_FIR_STACKSIZE)
+
+ASRCS =
+CSRCS = wav.c
+MAINSRC = fir_filter_main.c
+
+# For "decimate" command
+
+PROGNAME += $(CONFIG_EXAMPLES_FIR_DECIMATOR_PROGNAME)
+PRIORITY += $(CONFIG_EXAMPLES_FIR_DECIMATOR_PRIORITY)
+STACKSIZE += $(CONFIG_EXAMPLES_FIR_DECIMATOR_STACKSIZE)
+
+MAINSRC += fir_decimator_main.c
+
+# For "envelope" command
+
+PROGNAME += $(CONFIG_EXAMPLES_ENVELOPE_PROGNAME)
+PRIORITY += $(CONFIG_EXAMPLES_ENVELOPE_PRIORITY)
+STACKSIZE += $(CONFIG_EXAMPLES_ENVELOPE_STACKSIZE)
+
+MAINSRC += fir_envelope_main.c
+
+# For "edge" command
+
+PROGNAME += $(CONFIG_EXAMPLES_EDGE_PROGNAME)
+PRIORITY += $(CONFIG_EXAMPLES_EDGE_PRIORITY)
+STACKSIZE += $(CONFIG_EXAMPLES_EDGE_STACKSIZE)
+
+MAINSRC += edge_main.c
+
+# For "edge16" command
+
+PROGNAME += $(CONFIG_EXAMPLES_EDGE16_PROGNAME)
+PRIORITY += $(CONFIG_EXAMPLES_EDGE16_PRIORITY)
+STACKSIZE += $(CONFIG_EXAMPLES_EDGE16_STACKSIZE)
+
+MAINSRC += edge16_main.c
+
+MODULE = $(CONFIG_EXAMPLES_DIGITAL_FILTER)
+
+include $(APPDIR)/Application.mk

@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/fir_filter/fir_decimation_main.c
+ * examples/digital_filter/fir_envelope_main.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
@@ -44,14 +44,21 @@
 #include <string.h>
 #include <math.h>
 
-#include <digital_filter/fir_decimator.h>
+#include <digital_filter/fir_filter.h>
 
 #include "wav.h"
 
-#define BLOCK_SIZE  (256)
+#define BLOCK_SIZE      (256)
 
-static float si_data[BLOCK_SIZE];
-static float so_data[BLOCK_SIZE];
+#define BPF_CUTOFF_LOW  (2000)
+#define BPF_CUTOFF_HIGH (15000)
+#define BPF_TAP_NUM     (64)
+
+#define LPF_CUTOFF_FREQ (1000)
+#define LPF_TAP_NUM     (64)
+
+static float sig_data[BLOCK_SIZE];
+static float tmp_data[BLOCK_SIZE];
 
 /****************************************************************************
  * Private Functions
@@ -59,11 +66,19 @@ static float so_data[BLOCK_SIZE];
 
 static void print_usage(const char *appname)
 {
-  printf("Usage: %s <input wav file> <Decimation Factor>"
-      " <TransitionWidth or TapNum> <output wav file>\n", appname);
-  printf("       \"TransitionWidth or TapNum\" : it means tap number if it is "
-      "less than 1000.\n        And it means Tanssition band width(Hz)"
-      " if it is over 1000.\n");
+  printf("Usage: %s <input wav file> <output wav file>\n>", appname);
+}
+
+static void envelope_h_function(fir_instancef_t *bpf, fir_instancef_t *lpf,
+    float *target_data, int len)
+{
+  /* Execute BPF with Absolution */
+
+  firabs_executef(bpf, target_data, tmp_data, len);
+
+  /* Execute LPF */
+
+  fir_executef(lpf, tmp_data, target_data, len);
 }
 
 /****************************************************************************
@@ -79,28 +94,17 @@ static void print_usage(const char *appname)
 
 int main(int argc, char **argv)
 {
-  decimator_instancef_t *dec;
+  fir_instancef_t *bpf;
+  fir_instancef_t *lpf;
   wav_instance_t input_wav;
   wav_instance_t output_wav;
   int n;
-  int dec_factor;
-  int dec_count;
-  int dec_total;
-  int param;
 
-  if (argc != 5)
+  if (argc != 3)
     {
       print_usage(argv[0]);
       return -1;
     }
-
-  /* Decimation factor */
-
-  dec_factor = atoi(argv[2]);
-
-  /* Transition Width (>=1000) or Tap number (<1000 and >0) or no filter (=0) */
-
-  param = atoi(argv[3]);
 
   /* Open input wav file */
 
@@ -111,75 +115,72 @@ int main(int argc, char **argv)
       return -1;
     }
 
-  /* Create Decimation filter */
+  /* Create Filters for Envelope processing */
 
-  if (param >= 1000)
+  bpf = fir_create_bpff_tap(input_wav.fs, BPF_CUTOFF_LOW, BPF_CUTOFF_HIGH,
+      BPF_TAP_NUM, BLOCK_SIZE);
+  if (bpf == NULL)
     {
-      dec = create_decimatorf(input_wav.fs, dec_factor, param, BLOCK_SIZE);
-    }
-  else
-    {
-      dec = create_decimatorf_tap(input_wav.fs, dec_factor, param, BLOCK_SIZE);
-    }
-
-  if (dec == NULL)
-    {
-      printf("Could not create decimator.\n");
+      printf("Could not create Band pass filter.\n");
       close_wavfile(&input_wav);
       return -1;
     }
 
-  printf("Decimation Factor = %d\n", dec_factor);
-  printf("Filter Block size = %d\n", BLOCK_SIZE);
-  printf("Filter tap number = %d\n", decimator_tapnumf(dec));
+  lpf = fir_create_lpff_tap(input_wav.fs, LPF_CUTOFF_FREQ, LPF_TAP_NUM,
+      BLOCK_SIZE);
+  if (lpf == NULL)
+    {
+      printf("Could not create Low pass filter.\n");
+      fir_deletef(bpf);
+      close_wavfile(&input_wav);
+      return -1;
+    }
 
-  output_wav.fs     = input_wav.fs / dec_factor;
+  printf("Filter Block size = %d\n", BLOCK_SIZE);
+  printf("BPF Filter %d~%d : (Taps %d)\n", BPF_CUTOFF_LOW, BPF_CUTOFF_HIGH,
+      fir_get_tapnumf(bpf));
+  printf("LPF Filter %d : (Taps %d)\n", LPF_CUTOFF_FREQ, fir_get_tapnumf(lpf));
+
+  output_wav.fs     = input_wav.fs;
   output_wav.bits   = input_wav.bits;
-  output_wav.length = input_wav.length / dec_factor;
+  output_wav.length = input_wav.length;
 
   printf("Sampling rate = %d(Hz)\n", input_wav.fs);
   printf("Sampling length = %ld\n\n", input_wav.length);
-
-  printf("Output Sampling rate = %d\n", output_wav.fs);
-  printf("Output Sampling length = %ld\n", output_wav.length);
-  printf("Saving filename : %s\n", argv[4]);
+  printf("Saving filename : %s\n", argv[2]);
 
   /* Open output wav file */
 
-  if (open_output_wavfile(&output_wav, argv[4]))
+  if (open_output_wavfile(&output_wav, argv[2]))
     {
       printf("Error : could not open output file..\n");
-      decimator_deletef(dec);
       close_wavfile(&input_wav);
+      fir_deletef(bpf);
+      fir_deletef(lpf);
       return -1;
     }
 
-  dec_total = 0;
   for (n = 0; n < (input_wav.length - BLOCK_SIZE + 1); n += BLOCK_SIZE)
     {
       /* Load PCM data from input wav file */
 
-      read_wavdata(&input_wav, si_data, BLOCK_SIZE);
+      read_wavdata(&input_wav, sig_data, BLOCK_SIZE);
 
-      /* Execute Decimation */
+      /* Do envelope processing */
 
-      dec_count = decimator_executef(dec, si_data, BLOCK_SIZE,
-          so_data, BLOCK_SIZE);
+      envelope_h_function(bpf, lpf, sig_data, BLOCK_SIZE);
 
-      /* Save decimated data into output wav file */
+      /* Save enveloped data into output wav file */
 
-      write_wavdata(&output_wav, so_data, dec_count);
-
-      dec_total += dec_count;
+      write_wavdata(&output_wav, sig_data, BLOCK_SIZE);
     }
 
   close_wavfile(&output_wav);
   close_wavfile(&input_wav);
 
-  decimator_deletef(dec);
+  fir_deletef(lpf);
+  fir_deletef(bpf);
 
-  printf("Actual decimated data length = %d\n", dec_total);
   printf("Done\n");
-
   return 0;
 }

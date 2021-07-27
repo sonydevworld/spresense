@@ -1,5 +1,5 @@
 ############################################################################
-# examples/fir_filter/Makefile
+# examples/digital_filter/Make.defs
 #
 #   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
@@ -33,35 +33,6 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-
-# For "fir" command
-
-PROGNAME = $(CONFIG_EXAMPLES_FIR_FIR_PROGNAME)
-PRIORITY = $(CONFIG_EXAMPLES_FIR_FIR_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_FIR_FIR_STACKSIZE)
-
-ASRCS =
-CSRCS = wav.c
-MAINSRC = fir_filter_main.c
-
-# For "decimate" command
-
-PROGNAME += $(CONFIG_EXAMPLES_FIR_DECIMATOR_PROGNAME)
-PRIORITY += $(CONFIG_EXAMPLES_FIR_DECIMATOR_PRIORITY)
-STACKSIZE += $(CONFIG_EXAMPLES_FIR_DECIMATOR_STACKSIZE)
-
-MAINSRC += fir_decimator_main.c
-
-# For "envelope" command
-
-PROGNAME += $(CONFIG_EXAMPLES_ENVELOPE_PROGNAME)
-PRIORITY += $(CONFIG_EXAMPLES_ENVELOPE_PRIORITY)
-STACKSIZE += $(CONFIG_EXAMPLES_ENVELOPE_STACKSIZE)
-
-MAINSRC += fir_envelope_main.c
-
-MODULE = $(CONFIG_EXAMPLES_FIR_FILTER)
-
-include $(APPDIR)/Application.mk
+ifeq ($(CONFIG_EXAMPLES_DIGITAL_FILTER),y)
+CONFIGURED_APPS += digital_filter
+endif

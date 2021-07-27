@@ -26,6 +26,13 @@ config DIGITAL_FILTER_DECIMATOR
 		Enable to use FIR Decimation filters.
 		You need to enable ARM CMSIS DSP library because This filter is based on it.
 
+config DIFITAL_FILTER_EDGE_DETECT
+	bool "Edge Detection Filter"
+	default y
+	---help---
+		Enable to use Edge detection filter.
+		You need to enable ARM CMSIS DSP library because This filter is based on it.
+
 endif
 
 endmenu
