@@ -57,6 +57,9 @@ endef
 $(foreach SDIR, $(MODULEDIRS), $(eval $(call Add_Module,$(SDIR))))
 
 all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
+	$(Q) for app in ${CONFIGURED_APPS}; do \
+		$(MAKE) -C "$${app}" archive ; \
+	done
 
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))

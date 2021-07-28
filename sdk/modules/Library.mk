@@ -37,3 +37,8 @@ ifeq ($(CONFIG_GPSUTILS_CXD56NMEA_LIB),y)
 EXTRA_LIBPATHS += -L "$(MODULEDIR)$(DELIM)sensing$(DELIM)gnss$(DELIM)cxd56nmea"
 EXTRA_LIBS     += -lcxd56nmea
 endif
+
+ifneq ($(wildcard $(MODULEDIR)/libmodules.a),)
+EXTRA_LIBPATHS += -L "$(MODULEDIR)"
+EXTRA_LIBS     += -lmodules
+endif

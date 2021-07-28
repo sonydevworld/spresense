@@ -37,3 +37,5 @@
 -include $(SDKDIR)/Make.defs
 
 CXXEXT ?= .cpp
+
+BIN := $(SDKDIR)$(DELIM)modules$(DELIM)libmodules$(LIBEXT)
