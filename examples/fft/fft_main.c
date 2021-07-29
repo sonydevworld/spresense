@@ -58,14 +58,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Check configuration.  This is not all of the configuration settings that
- * are required -- only the more obvious.
- */
-
-#if CONFIG_NFILE_DESCRIPTORS_PER_BLOCK < 1
-#  error "You must provide file descriptors via CONFIG_NFILE_DESCRIPTORS_PER_BLOCK in your configuration file"
-#endif
-
 #ifdef CONFIG_EXAMPLES_FFT_DSP_PATH
 #  define DSP_LIBFILE CONFIG_EXAMPLES_FFT_DSP_PATH
 #else

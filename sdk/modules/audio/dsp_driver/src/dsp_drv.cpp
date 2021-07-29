@@ -60,14 +60,6 @@
 
 #define KEY_MQ 2
 
-/* Check configuration.  This is not all of the configuration settings that
- * are required -- only the more obvious.
- */
-
-#if CONFIG_NFILE_DESCRIPTORS_PER_BLOCK < 1
-#  error "You need to set the configuration file CONFIG_NFILE_DESCRIPTORS_PER_BLOCK"
-#endif
-
 #ifndef CONFIG_ASMP
 #  error "ASMP support library is not enabled!"
 #endif
