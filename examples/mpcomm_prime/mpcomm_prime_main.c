@@ -69,10 +69,6 @@
 #define MOUNTPT "/mnt/sd0/BIN"
 #endif
 
-#if CONFIG_NFILE_DESCRIPTORS_PER_BLOCK < 1
-#error "You must provide file descriptors via CONFIG_NFILE_DESCRIPTORS_PER_BLOCK in your configuration file"
-#endif
-
 #define PRIME_MIN 0
 #define PRIME_MAX 1500
 
