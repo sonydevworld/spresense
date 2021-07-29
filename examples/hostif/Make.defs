@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_HOSTIF),y)
+ifneq ($(CONFIG_EXAMPLES_HOSTIF),)
 CONFIGURED_APPS += hostif
 endif

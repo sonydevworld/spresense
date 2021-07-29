@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_DIGITAL_FILTER),y)
+ifneq ($(CONFIG_EXAMPLES_DIGITAL_FILTER),)
 CONFIGURED_APPS += digital_filter
 endif
