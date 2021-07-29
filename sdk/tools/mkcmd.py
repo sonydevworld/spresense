@@ -93,7 +93,7 @@ include $(APPDIR)/Application.mk
 '''
 
 MAKEDEFS_TMPL = '''
-ifeq ($(CONFIG_{configname}),y)
+ifneq ($(CONFIG_{configname}),)
 CONFIGURED_APPS += {appname}
 endif
 '''
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     dst = os.path.join(defconfigdir, 'defconfig')
     shutil.copyfile(src, dst)
     with open(dst, "a") as f:
-        f.write("CONFIG_%s" % configname)
+        f.write("CONFIG_%s=y\n" % configname)
 
     print("New '%s' app successfully created at '%s'." % (appname, os.path.join(basedir, appname)))
 
