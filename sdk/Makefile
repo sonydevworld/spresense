@@ -179,14 +179,14 @@ PHONY += depend
 
 subdir_clean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_clean)
 	$(Q) for dir in $(SDKCLEANDIRS); do \
-		find $$dir -name "Make.dep" -delete; \
-		find $$dir -name ".depend" -delete; \
+		find $$dir -name "Make.dep" -print | xargs rm -f; \
+		find $$dir -name ".depend" -print | xargs rm -f; \
 	done
 PHONY += subdir_clean
 
 depend_clean:
-	$(Q)find $(SDKDIR) -name "Make.dep" -delete
-	$(Q)find $(SDKDIR) -name ".depend" -delete
+	$(Q)find $(SDKDIR) -name "Make.dep" -print | xargs rm -f
+	$(Q)find $(SDKDIR) -name ".depend" -print | xargs rm -f
 PHONY += depend_clean
 
 ifeq ($(MAKELEVEL),0)
