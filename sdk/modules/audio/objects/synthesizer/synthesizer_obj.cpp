@@ -1010,7 +1010,7 @@ bool AS_DeleteMediaSynthesizer(void)
   pthread_cancel(pid);
   pthread_join(pid, NULL);
 
-  pid = INVALID_PROCESS_ID;
+  SynthesizerObject::set_pid(INVALID_PROCESS_ID);
 
   SYNTHESIZER_OBJ_UNREG_ATTCB();
 

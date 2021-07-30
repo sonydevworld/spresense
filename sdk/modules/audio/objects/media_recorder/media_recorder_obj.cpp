@@ -1878,13 +1878,12 @@ bool AS_CreateMediaRecorder(FAR AsCreateRecorderParams_t *param)
   return AS_CreateMediaRecorder(param, NULL);
 }
 
-
 /*--------------------------------------------------------------------------*/
 bool AS_ActivateMediaRecorder(FAR AsActivateRecorder *actparam)
 {
   /* Parameter check */
 
-  if (actparam == NULL)
+  if ( (actparam == NULL) || !AS_checkAvailabilityMediaRecorder() )
     {
       return false;
     }
@@ -1910,7 +1909,7 @@ bool AS_InitMediaRecorder(FAR AsInitRecorderParam *initparam)
 {
   /* Parameter check */
 
-  if (initparam == NULL)
+  if ( (initparam == NULL) || !AS_checkAvailabilityMediaRecorder() )
     {
       return false;
     }
@@ -1936,7 +1935,7 @@ bool AS_ReqEncodeMediaRecorder(AsPcmDataParam *pcmparam)
 {
   /* Parameter check */
 
-  if (pcmparam == NULL)
+  if ( (pcmparam == NULL) || !AS_checkAvailabilityMediaRecorder() )
     {
       return false;
     }
@@ -1958,6 +1957,11 @@ bool AS_StartMediaRecorder(void)
 {
   /* Start */
 
+  if ( !AS_checkAvailabilityMediaRecorder() )
+    {
+      return false;
+    }
+
   RecorderCommand cmd;
 
   err_t er = MsgLib::send<RecorderCommand>(MediaRecorderObject::get_msgq_id(),
@@ -1975,6 +1979,11 @@ bool AS_StopMediaRecorder(void)
 {
   /* Stop */
 
+  if ( !AS_checkAvailabilityMediaRecorder() )
+    {
+      return false;
+    }
+
   RecorderCommand cmd;
 
   err_t er = MsgLib::send<RecorderCommand>(MediaRecorderObject::get_msgq_id(),
@@ -1990,6 +1999,11 @@ bool AS_StopMediaRecorder(void)
 /*--------------------------------------------------------------------------*/
 bool AS_DeactivateMediaRecorder(void)
 {
+  if ( !AS_checkAvailabilityMediaRecorder() )
+    {
+      return false;
+    }
+
   RecorderCommand cmd;
 
   err_t er = MsgLib::send<RecorderCommand>(MediaRecorderObject::get_msgq_id(),
