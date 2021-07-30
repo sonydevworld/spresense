@@ -48,6 +48,8 @@
 #include "audio/audio_frontend_api.h"
 #include "audio_state.h"
 
+#include "../object_base.h"
+
 #include "components/capture/capture_component.h"
 #include "components/customproc/usercustom_component.h"
 #include "components/customproc/thruproc_component.h"
@@ -82,17 +84,53 @@ struct MicFrontendObjSendDoneCmd
 
 /* Class definition */
 
-class MicFrontEndObject {
+class MicFrontEndObject:ObjectBase
+{
 public:
-  static void create(AsMicFrontendMsgQueId_t msgq_id,
-                     AsMicFrontendPoolId_t pool_id);
+
+  static void create(AsObjectParams_t*);
+  static void destory() { get_instance()->m_is_created = false; }
+
+  static MicFrontEndObject *get_adr(void)
+  {
+    static MicFrontEndObject s_inst;
+    return &s_inst;
+  }
+
+  static MicFrontEndObject *get_instance(void)
+  {
+    MicFrontEndObject* s_inst = get_adr();
+    if(s_inst->m_is_created){
+      return s_inst;
+    }
+    return 0;
+  }
+
+  static pthread_t get_pid(void)
+  {
+    return get_instance()->m_pid;
+  }
+
+  static void set_pid(pthread_t id)
+  {
+    get_instance()->m_pid = id;
+  }
+
+  static pthread_t get_self(void)
+  {
+    return get_instance()->m_msgq_id.self;
+  }
 
 private:
-  MicFrontEndObject(AsMicFrontendMsgQueId_t msgq_id,
-                    AsMicFrontendPoolId_t pool_id)
-    : m_msgq_id(msgq_id)
-    , m_pool_id(pool_id)
-    , m_state(AS_MODULE_ID_MIC_FRONTEND_OBJ, "", MicFrontendStateInactive)
+  MicFrontEndObject(void)
+    : ObjectBase()
+    , m_preproc_type(AsMicFrontendPreProcInvalid)
+    , m_callback(NULL) {}
+//    , m_notify_path(AsNotifyPathCallback) {}
+
+
+  MicFrontEndObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+    : ObjectBase(AS_MODULE_ID_MIC_FRONTEND_OBJ, msgq_id, pool_id)
     , m_preproc_type(AsMicFrontendPreProcInvalid)
     , m_channel_num(2)
     , m_pcm_bit_width(AudPcmFormatInt16)
@@ -109,25 +147,11 @@ private:
     memset(m_dsp_path, 0, sizeof(m_dsp_path));
   }
 
-  enum MicFrontendState_e
-  {
-    MicFrontendStateInactive = 0,
-    MicFrontendStateReady,
-    MicFrontendStateActive,
-    MicFrontendStateStopping,
-    MicFrontendStateErrorStopping,
-    MicFrontendStateWaitStop,
-    MicFrontendStateNum
-  };
-
-  AsMicFrontendMsgQueId_t m_msgq_id;
-  AsMicFrontendPoolId_t   m_pool_id;
-
-  AudioState<MicFrontendState_e> m_state;
   AsMicFrontendDataPath m_pcm_data_path;
   AsDataDest m_pcm_data_dest;
   AsMicFrontendPreProcType m_preproc_type;
   char m_dsp_path[AS_PREPROCESS_FILE_PATH_LEN];
+
   int8_t  m_channel_num;
   uint8_t m_pcm_bit_width;
   uint32_t m_samples_per_frame;
@@ -142,30 +166,30 @@ private:
   ComponentBase *m_p_preproc_instance;
 
   typedef void (MicFrontEndObject::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_MFE_MSG_NUM][MicFrontendStateNum];
-  static MsgProc MsgParamTbl[AUD_MFE_PRM_NUM][MicFrontendStateNum];
-  static MsgProc RsltProcTbl[AUD_MFE_RST_MSG_NUM][MicFrontendStateNum];
-
+  static MsgProc MsgParamTbl[AUD_MFE_PRM_NUM][StateNum];
+  static MsgProc RsltProcTbl[AUD_MFE_RST_MSG_NUM][StateNum];
   s_std::Queue<AsMicFrontendEvent, 1> m_external_cmd_que;
 
   MicFrontendCallback m_callback;
 
-  void run();
-  void parse(MsgPacket *);
+  void parseResult(MsgPacket *msg);
 
   void reply(AsMicFrontendEvent evtype,
              MsgType msg_type,
              uint32_t result);
 
   void illegal(MsgPacket *);
-  void activate(MsgPacket *);
-  void deactivate(MsgPacket *);
 
-  void init(MsgPacket *);
-  void startOnReady(MsgPacket *);
-  void stopOnActive(MsgPacket *);
-  void stopOnErrorStop(MsgPacket *);
-  void stopOnWait(MsgPacket *);
+  void activateOnBooted(MsgPacket *msg);
+  void deactivateOnReady(MsgPacket *msg);
+  void initOnReady(MsgPacket *msg);
+  void startOnReady(MsgPacket *msg);
+  void stopOnActive(MsgPacket *msg);
+  void stopOnErrorStopping(MsgPacket *msg);
+  void stopOnWaitStop(MsgPacket *msg);
+  void setOnReady(MsgPacket *msg) { set(msg); }
+  void setOnActive(MsgPacket *msg) { set(msg); }
+  void setOnErrorStoppping(MsgPacket *msg) { set(msg); }
   void set(MsgPacket *msg);
 
   void initPreproc(MsgPacket *msg);
