@@ -67,7 +67,7 @@ BIN ?= $(APPDIR)$(DELIM)libapps$(LIBEXT)
 
 # Targets follow
 
-all:: .built
+all:: $(OBJS)
 .PHONY: clean preconfig depend distclean
 
 $(AOBJS): %$(SUFFIX)$(OBJEXT): %.S
@@ -79,7 +79,7 @@ $(COBJS): %$(SUFFIX)$(OBJEXT): %.c
 $(CXXOBJS): %$(SUFFIX)$(OBJEXT): %$(CXXEXT)
 	$(call COMPILEXX, $<, $@)
 
-.built: $(OBJS)
+archive:
 ifeq ($(WINTOOL),y)
 	$(call ARCHIVE_ADD, "${shell cygpath -w $(BIN)}", $(OBJS))
 else
@@ -103,7 +103,6 @@ endif
 depend:: .depend
 
 clean::
-	$(call DELFILE, .built)
 	$(call CLEAN)
 
 distclean:: clean
