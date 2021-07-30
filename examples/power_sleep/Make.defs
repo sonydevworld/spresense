@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_POWER_SLEEP),y)
+ifneq ($(CONFIG_EXAMPLES_POWER_SLEEP),)
 CONFIGURED_APPS += power_sleep
 endif

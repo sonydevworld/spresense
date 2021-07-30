@@ -41,6 +41,6 @@ endif
 endif
 endif
 
-ifeq ($(CONFIG_EXAMPLES_SPRESENSE_WGET),y)
+ifneq ($(CONFIG_EXAMPLES_SPRESENSE_WGET),)
 CONFIGURED_APPS += wget
 endif

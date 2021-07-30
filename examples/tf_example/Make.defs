@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_TF_EXAMPLE),y)
+ifneq ($(CONFIG_EXAMPLES_TF_EXAMPLE),)
 CONFIGURED_APPS += tf_example
 endif
