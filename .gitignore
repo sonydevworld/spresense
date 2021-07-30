@@ -1,1 +1,4 @@
 .vscode
+firmware/*/*.spk
+firmware/*/*.espk
+firmware/*/stored_version.json
