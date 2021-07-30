@@ -51,6 +51,8 @@
 #include "components/capture/capture_component.h"
 #include "audio_state.h"
 
+#include "../object_base.h"
+
 #include "components/encoder/encoder_component.h"
 #include "components/customproc/thruproc_component.h"
 #include "components/filter/src_filter_component.h"
@@ -71,22 +73,57 @@ __WIEN2_BEGIN_NAMESPACE
  * Public Types
  ****************************************************************************/
 
-class MediaRecorderObjectTask {
+class MediaRecorderObject:ObjectBase
+{
 public:
+
+  static void create(AsObjectParams_t*);
+  static void destory() { get_instance()->m_is_created = false; }
+
+  static MediaRecorderObject *get_adr(void)
+  {
+    static MediaRecorderObject s_inst;
+    return &s_inst;
+  }
+
+  static MediaRecorderObject *get_instance(void)
+  {
+    MediaRecorderObject* s_inst = get_adr();
+    if(s_inst->m_is_created){
+      return s_inst;
+    }
+    return 0;
+  }
+
+  static pthread_t get_pid(void)
+  {
+    return get_instance()->m_pid;
+  }
+
+  static void set_pid(pthread_t id)
+  {
+    get_instance()->m_pid = id;
+  }
+
+  static pthread_t get_msgq_id(void)
+  {
+    return get_instance()->m_msgq_id.self;
+  }
+
   typedef struct
   {
     ComponentEventType event_type;
     bool                result;
   } FilterDoneCmd;
 
-  static void create(AsRecorderMsgQueId_t msgq_id,
-                     AsRecorderPoolId_t pool_id);
 
-  MediaRecorderObjectTask(AsRecorderMsgQueId_t msgq_id,
-                          AsRecorderPoolId_t pool_id):
-    m_msgq_id(msgq_id),
-    m_pool_id(pool_id),
-    m_state(AS_MODULE_ID_MEDIA_RECORDER_OBJ, "", RecorderStateInactive),
+private:
+
+  MediaRecorderObject()
+    : ObjectBase() {}
+
+  MediaRecorderObject(AsObjectMsgQueId_t msgq_id, AsObjectPoolId_t pool_id)
+    : ObjectBase(AS_MODULE_ID_MEDIA_RECORDER_OBJ, msgq_id, pool_id),
     m_channel_num(2),
     m_pcm_bit_width(AudPcmFormatInt16),
     m_sampling_rate(48000),
@@ -100,34 +137,18 @@ public:
      * heap memory area leak.
      */
 
-    m_src_instance = new SRCComponent(m_pool_id.dsp, m_msgq_id.dsp);
+    m_src_instance = new SRCComponent(m_pool_id.cmp, m_msgq_id.cmp);
     m_packing_instance = new PackingComponent();
     m_thruproc_instance = new ThruProcComponent();
   }
 
-  ~MediaRecorderObjectTask()
+  ~MediaRecorderObject()
   {
     delete m_src_instance;
     delete m_packing_instance;
     delete m_thruproc_instance;
   }
 
-private:
-  enum RecorderState_e
-  {
-    RecorderStateInactive = 0,
-    RecorderStateReady,
-    RecorderStateActive,
-    RecorderStateStopping,
-    RecorderStateErrorStopping,
-    RecorderStateWaitStop,
-    RecorderStateNum
-  };
-
-  AsRecorderMsgQueId_t m_msgq_id;
-  AsRecorderPoolId_t   m_pool_id;
-
-  AudioState<RecorderState_e> m_state;
   int8_t m_channel_num;
   AudioPcmFormat m_pcm_bit_width;
   int32_t m_sampling_rate;
@@ -144,9 +165,8 @@ private:
   PackingComponent *m_packing_instance;
   ThruProcComponent *m_thruproc_instance;
 
-  typedef void (MediaRecorderObjectTask::*MsgProc)(MsgPacket *);
-  static MsgProc MsgProcTbl[AUD_MRC_MSG_NUM][RecorderStateNum];
-  static MsgProc RsltProcTbl[AUD_MRC_RST_MSG_NUM][RecorderStateNum];
+  typedef void (MediaRecorderObject::*MsgProc)(MsgPacket *);
+  static MsgProc RsltProcTbl[AUD_MRC_RST_MSG_NUM][StateNum];
 
   typedef s_std::Queue<AsPcmDataParam, CAPTURE_PCM_BUF_QUE_SIZE> CnvInQueue;
   CnvInQueue m_cnv_in_que;
@@ -159,29 +179,33 @@ private:
 
   MediaRecorderCallback m_callback;
 
-  void run();
-  void parse(MsgPacket *);
+  void parseResult(MsgPacket *msg);
 
   void reply(AsRecorderEvent evtype,
              MsgType msg_type,
              uint32_t result);
 
   void illegal(MsgPacket *);
-  void activate(MsgPacket *);
-  void deactivate(MsgPacket *);
+  void illegalReqEnc(MsgPacket *);
 
-  void init(MsgPacket *);
+  void activateOnBooted(MsgPacket *);
+  void deactivateOnReady(MsgPacket *);
+  void initOnReady(MsgPacket *);
+  void startOnReady(MsgPacket *);
 
-  void startOnReady(MsgPacket *msg);
+  void stopOnReady(MsgPacket *);
+  void stopOnActive(MsgPacket *);
+  void stopOnStopping(MsgPacket *);
+  void stopOnErrorStopping(MsgPacket *);
+  void stopOnWaitStop(MsgPacket *);
 
-  void illegalReqEnc(MsgPacket *msg);
-  void reqEncOnActive(MsgPacket *msg);
-
-  void flushOnReady(MsgPacket *msg);
-  void flushOnActive(MsgPacket *msg);
-  void flushOnStop(MsgPacket *msg);
-  void flushOnErrorStop(MsgPacket *msg);
-  void flushOnWait(MsgPacket *msg);
+  void execOnActive(MsgPacket *);
+  void execOnBooted(MsgPacket *msg) { illegalReqEnc(msg); }
+  void execOnReady(MsgPacket *msg) { illegalReqEnc(msg); }
+  void execOnPreActive(MsgPacket *msg) { illegalReqEnc(msg); }
+  void execOnStopping(MsgPacket *msg) { illegalReqEnc(msg); }
+  void execOnErrorStopping(MsgPacket *msg) { illegalReqEnc(msg); }
+  void execOnWaitStop(MsgPacket *msg) { illegalReqEnc(msg); }
 
   void illegalFilterDone(MsgPacket *);
   void filterDoneOnActive(MsgPacket *);
