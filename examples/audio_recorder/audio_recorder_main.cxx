@@ -76,7 +76,7 @@ const format_type_e format_type = FORMAT_TYPE_WAV;
 
 /* Do not support WAV & MP3 */
 
-static_assert(!((codec_type == AS_CODECTYPE_MP3) && (codec_type == FORMAT_TYPE_WAV)));
+static_assert(!((codec_type == AS_CODECTYPE_MP3) && (format_type == FORMAT_TYPE_WAV)));
 
 /* Sampling rate definition.
  *   Select what you want and uncomment it.
