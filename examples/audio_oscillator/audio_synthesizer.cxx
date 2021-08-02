@@ -220,7 +220,7 @@ bool app_init_synthesizer(uint8_t  channel_num,
   init.sustain                  = sustain;
   init.release                  = release;
 
-  sprintf(init.dsp_path, "%s/%s", DSPBIN_PATH, "OSCPROC");
+  snprintf(init.dsp_path, sizeof(init.dsp_path), "%s/%s", DSPBIN_PATH, "OSCPROC");
 
   AS_InitMediaSynthesizer(&init);
 

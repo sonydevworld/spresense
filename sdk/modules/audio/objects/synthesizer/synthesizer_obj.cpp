@@ -471,7 +471,7 @@ void SynthesizerObject::initOnReady(MsgPacket *msg)
     {
       /* Set parameter */
 
-      strcpy(m_dsp_path, param.dsp_path);
+      strncpy(m_dsp_path, param.dsp_path, sizeof(m_dsp_path));
 
       m_sample_size = param.sample_size;
 
