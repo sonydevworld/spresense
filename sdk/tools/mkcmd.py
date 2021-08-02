@@ -77,8 +77,8 @@ endif
 '''
 
 MAKEFILE_TMPL = '''
--include $(TOPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+include $(APPDIR)/Make.defs
+include $(SDKDIR)/Make.defs
 
 PROGNAME = $(CONFIG_{configname}_PROGNAME)
 PRIORITY = $(CONFIG_{configname}_PRIORITY)
