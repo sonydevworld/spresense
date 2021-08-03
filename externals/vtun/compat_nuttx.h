@@ -105,10 +105,6 @@ void closelog(void);
 /* signal */
 #define SIGHUP 1
 
-#ifndef CONFIG_PSEUDOFS_SOFTLINKS
-int link(FAR const char *path1, FAR const char *path2);
-#endif
-
 int getpriority(int which, id_t who);
 int setpriority(int which, id_t who, int prio);
 
