@@ -208,7 +208,7 @@ PHONY += clean
 subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
 PHONY += subdir_distclean
 
-distclean: clean subdir_distclean clean_context
+distclean: subdir_distclean clean_context
 
 endif
 

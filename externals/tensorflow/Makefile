@@ -139,7 +139,7 @@ tensorflow_clean:
 	fi
 	$(Q) rm -f dummy_src.c
 
-delete_tensorflow:
+delete_tensorflow: tensorflow_clean
 	$(Q) if [ -d $(TENSORFLOW_DIR) ]; then \
 		rm -rf $(TENSORFLOW_DIR); \
 	fi

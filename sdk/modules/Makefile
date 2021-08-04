@@ -38,6 +38,7 @@ include $(SDKDIR)/modules/Make.defs
 
 MODULEDIRS := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Make.defs))
 CLEANDIRS  := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Makefile))
+CLEANDIRS  += $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)*$(DELIM)Makefile))
 
 define SDIR_template
 $(1)_$(2):
