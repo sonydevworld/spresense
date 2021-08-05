@@ -716,7 +716,7 @@ int BLE_GapGetBondInfoIdList(BLE_GapBondInfoList *bondInfo)
   for(index = 0; index < bondNum; index++)
     {
       memcpy(bondInfo->bondInfoId[index], infoList.bondInfoId[bondNum - 1 - index], BLE_GAP_ADDR_LENGTH);
-      memcpy(bondInfo->didInfo[index], infoList.didInfo[bondNum - 1 - index], BLE_GAP_ADDR_LENGTH);
+      memcpy(bondInfo->didInfo[index], infoList.didInfo[bondNum - 1 - index], BLE_DID_INFO_LEN);
     }
   return ret;
 }
