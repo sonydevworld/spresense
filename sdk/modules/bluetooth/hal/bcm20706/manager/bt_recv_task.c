@@ -111,7 +111,7 @@ static void btRecvDeviceStatus(uint8_t *p, uint16_t len, int group)
 {
   struct bt_event_cmd_stat_t cmd_stat_evt;
   
-  memcpy(&cmd_stat_evt.cmd_status, p,  MIN(len, BT_EVT_DATA_LEN));
+  memcpy(&cmd_stat_evt.cmd_status, p,  sizeof(cmd_stat_evt.cmd_status));
 
   switch (group)
     {
@@ -763,7 +763,7 @@ void bleRecvGattWriteRequest(BLE_Evt *pBleEvent,
   write_req_evt.length = len - BLE_HANDLE_LEN - BLE_HANDLE_LEN;
 
   /* Get data body */
-  memcpy(write_req_evt.data, rp, MAX_RCV_DATA_LENGTH);
+  memcpy(write_req_evt.data, rp, write_req_evt.length);
 
   /* This HAL doesn't support service handle ID while write request */
 

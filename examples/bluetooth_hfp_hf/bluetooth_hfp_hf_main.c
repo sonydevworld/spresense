@@ -374,7 +374,7 @@ static void btSendAtCommand(int argc, char *argv[])
       goto bye;
     }
 
-  for (i = 1, offset = 0; argv[i] && offset < sizeof(param); i++, offset += len)
+  for (i = 1, offset = 0; i < argc && offset < sizeof(param); i++, offset += len)
     {
       len = snprintf(param + offset, sizeof(param) - offset, "%s ", argv[i]);
       if (len < 0)
