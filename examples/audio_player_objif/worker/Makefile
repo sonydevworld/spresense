@@ -44,9 +44,8 @@ LIB_DIR = "lib"
 endif
 
 LDLIBPATH += -L $(LIB_DIR)
-LDLIBPATH += -L $(TOPDIR)/staging
 
-LDLIBS += -lasmpw -lc
+LDLIBS += -lasmpw
 
 WORKER_ELF = POSTPROC
 
@@ -60,9 +59,11 @@ CXXELFFLAGS += -Os
 ifeq ($(WINTOOL),y)
 CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
 CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
+CXXELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
 else
 CXXELFFLAGS += -Iuserproc/include
 CXXELFFLAGS += -I$(APPDIR)
+CXXELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
 endif
 
 CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
