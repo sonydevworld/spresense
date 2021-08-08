@@ -44,15 +44,19 @@ CSRCS += prime.c
 ASMPW_DIR = "../lib/asmpw"
 MPCOMMW_DIR = "../lib/mpcommw"
 
-LDLIBPATH += -L $(TOPDIR)/staging
 LDLIBPATH += -L $(ASMPW_DIR)
 LDLIBPATH += -L $(MPCOMMW_DIR)
 
-LDLIBS += -lc
 LDLIBS += -lmpcommw
 LDLIBS += -lasmpw
 
 LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
+
+ifeq ($(WINTOOL),y)
+CELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
+else
+CELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
+endif
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))

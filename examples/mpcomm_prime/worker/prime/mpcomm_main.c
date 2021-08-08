@@ -43,6 +43,7 @@
 #include <mpcomm/mpcomm.h>
 
 #include "prime.h"
+#include "asmp.h"
 
 /****************************************************************************
  * Private Functions
@@ -55,7 +56,7 @@ static int split_load(int start, int end, prime_data_t *tasks, int task_num)
   int load = (int)ceilf((float)total_load / task_num);
   int offset = start;
 
-  memset(tasks, 0, sizeof(prime_data_t) * task_num);
+  wk_memset(tasks, 0, sizeof(prime_data_t) * task_num);
 
   for (i = 0; offset < end; ++i)
     {
