@@ -51,10 +51,23 @@
  * Public Variables
  ****************************************************************************/
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 mpbindobj_t *asmp_findmpbindobj(mpobjtype_t type, key_t key);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ASMP_WORKER_COMMON_H_ */
