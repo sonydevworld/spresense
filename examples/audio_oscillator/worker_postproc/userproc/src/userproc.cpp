@@ -34,6 +34,7 @@
  ****************************************************************************/
 
 #include "userproc.h"
+#include "asmp.h"
 
 /*--------------------------------------------------------------------*/
 /*                                                                    */
@@ -54,9 +55,9 @@ void UserProc::exec(ExecParam *param)
 {
   /* Simple copy of input to output */
 
-  memcpy(param->exec_cmd.output.addr,
-         param->exec_cmd.input.addr,
-         param->exec_cmd.input.size);
+  wk_memcpy(param->exec_cmd.output.addr,
+            param->exec_cmd.input.addr,
+            param->exec_cmd.input.size);
 
   /* Execute signal process to input audio data. */
 
