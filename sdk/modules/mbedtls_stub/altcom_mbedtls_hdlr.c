@@ -6762,7 +6762,7 @@ static int32_t pkinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_info_from_typeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
-      if (ret == 0)
+      if (*ret == 0)
         {
           pk_info->id = ntohl(in->pk_info);
         }
@@ -6804,7 +6804,7 @@ static int32_t pkwritekeypem_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_write_key_pemres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
-      if (ret == 0)
+      if (*ret == 0)
         {
           memcpy(buf, in->buf, req_buf_len);
         }
@@ -6887,7 +6887,7 @@ static int32_t pkrsa_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_rsares_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
-      if (ret == 0)
+      if (*ret == 0)
         {
           rsa_context->id = ntohl(in->rsa);
         }
