@@ -49,13 +49,11 @@ DEPPATH =
 CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c
 CXXSRCS =
 
-# Include sub directory source files
-
-include $(wildcard */Make.defs)
-
-# Here is a example of adding include paths.
-# Note that include path addtion will be affected to build time.
-# Don't add unnecessary include paths for module.
+ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
+ifeq ($(CONFIG_EXTERNALS_MBEDTLS),y)
+$(error "Configs LTE_NET_MBEDTLS and EXTERNALS_MBEDTLS are exclusive. \
+        So disable one or the other")
+endif
+endif
 
 include $(SDKDIR)/modules/Module.mk
-
