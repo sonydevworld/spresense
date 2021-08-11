@@ -52,14 +52,28 @@
  * Public Variables
  ****************************************************************************/
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 void *wk_memset(void *s, int c, size_t n);
+void *wk_memcpy(void *dest, const void *src, size_t n);
 void wk_exit(int status);
 
 cpuid_t asmp_getglobalcpuid(void);
 cpuid_t asmp_getlocalcpuid(void);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ASMP_WORKER_ASMP_H_ */

@@ -46,7 +46,6 @@ endif
 VPATH = userproc/src
 
 LDLIBPATH += -L $(LIB_DIR)
-LDLIBPATH += -L $(TOPDIR)/staging
 
 LDLIBS += -lasmpw
 

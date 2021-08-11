@@ -44,9 +44,8 @@ LIB_DIR = "lib"
 endif
 
 LDLIBPATH += -L $(LIB_DIR)
-LDLIBPATH += -L $(TOPDIR)/staging
 
-LDLIBS += -lasmpw -lc
+LDLIBS += -lasmpw
 
 WORKER_ELF = POSTPROC
 

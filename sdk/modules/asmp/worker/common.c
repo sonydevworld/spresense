@@ -61,6 +61,19 @@ void *wk_memset(void *s, int c, size_t n)
   return s;
 }
 
+void *wk_memcpy(void *dest, const void *src, size_t n)
+{
+  unsigned char *pout = (unsigned char *)dest;
+  unsigned char *pin  = (unsigned char *)src;
+
+  while (n-- > 0)
+    {
+      *pout++ = *pin++;
+    }
+
+  return dest;
+}
+
 void wk_exit(int status)
 {
   _signal(2, MPSIGEXIT, (uint32_t)status);
