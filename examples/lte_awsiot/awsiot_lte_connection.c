@@ -705,12 +705,12 @@ int app_awsiot_connect_to_lte(void)
 
       /* Attach to the LTE network and connect to the data PDN */
 
-      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.apn       = APP_APN_NAME;
       apnsetting.ip_type   = APP_APN_IPTYPE;
       apnsetting.auth_type = APP_APN_AUTHTYPE;
       apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+      apnsetting.user_name = APP_APN_USR_NAME;
+      apnsetting.password  = APP_APN_PASSWD;
 
       ret = lte_activate_pdn(&apnsetting, app_activate_pdn_cb);
       if (ret >= 0)

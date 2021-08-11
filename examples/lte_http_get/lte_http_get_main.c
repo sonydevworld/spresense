@@ -641,7 +641,7 @@ static void* app_modem_recovery(void *arg)
    * This means APN type for data traffic.
    */
 
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
+  apnsetting.apn       = APP_APN_NAME;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
   apnsetting.ip_type   = APP_APN_IPTYPE;
 
@@ -651,8 +651,8 @@ static void* app_modem_recovery(void *arg)
    */
 
   apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+  apnsetting.user_name = APP_APN_USR_NAME;
+  apnsetting.password  = APP_APN_PASSWD;
 
   /* Attach to the LTE network and connect to the data PDN */
 
@@ -956,7 +956,7 @@ int main(int argc, FAR char *argv[])
        * This means APN type for data traffic.
        */
 
-      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.apn       = APP_APN_NAME;
       apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
       apnsetting.ip_type   = APP_APN_IPTYPE;
 
@@ -966,8 +966,8 @@ int main(int argc, FAR char *argv[])
        */
 
       apnsetting.auth_type = APP_APN_AUTHTYPE;
-      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+      apnsetting.user_name = APP_APN_USR_NAME;
+      apnsetting.password  = APP_APN_PASSWD;
 
       /* Attach to the LTE network and connect to the data PDN */
 
