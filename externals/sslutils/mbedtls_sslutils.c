@@ -39,6 +39,7 @@
 
 #include <nuttx/config.h>
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -56,6 +57,7 @@
 #include "mbedtls/net_sockets.h"
 #include "mbedtls/platform.h"
 #include "mbedtls/ssl.h"
+#include "mbedtls/debug.h"
 
 #include "sslutils/sslutil.h"
 
@@ -112,6 +114,16 @@ struct webclient_tls_connection
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Name: sslutil_debuglog
+ ****************************************************************************/
+
+static void sslutil_debuglog(void *ctx, int level, const char *file,
+    int line, const char *str)
+{
+  printf("mbedTLS[%d] %s(%d): %s", level, file, line, str);
+}
 
 /****************************************************************************
  * Name: sslutil_delete_connection
@@ -183,6 +195,11 @@ static struct webclient_tls_connection *sslutil_create_connection(
           return NULL;
         }
 
+      /* Initialize mbedTLS debug log config */
+
+      conn->conf.f_dbg = sslutil_debuglog;
+      conn->conf.p_dbg = stdout;
+      mbedtls_debug_set_threshold(CONFIG_EXTERNALS_SSLUTILS_LOGLEVEL);
     }
 
   return conn;
