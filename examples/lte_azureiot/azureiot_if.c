@@ -148,13 +148,9 @@ static int http_get_etags(const char *buffer, int buffer_size)
 static int jparse_lite(const char *buffer, int buffer_size)
 {
   int i = 0;
+  int res = 0;
 
   /* Get SAS URI from Azure response */
-
-  for (i = 0; i < AZURE_JPARSE_NUM && jparse[i].name; i++)
-    {
-      memset(jparse[i].buf, 0, jparse[i].size);
-    }
 
   for (i = 0; i < AZURE_JPARSE_NUM && jparse[i].name; i++)
     {
@@ -162,8 +158,11 @@ static int jparse_lite(const char *buffer, int buffer_size)
                             strlen(jparse[i].name));
       char  *cp;
 
+      memset(jparse[i].buf, 0, jparse[i].size);
+
       if (str == NULL)
         {
+          res = -1;
           continue;
         }
 
@@ -173,12 +172,7 @@ static int jparse_lite(const char *buffer, int buffer_size)
         {
           *cp = *str;
         }
-    }
 
-  int   res = 0;
-
-  for (i = 0; i < AZURE_JPARSE_NUM && jparse[i].name; i++)
-    {
       if (jparse[i].buf[0] == '\0')
         {
           res = -1;
