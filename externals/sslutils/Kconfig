@@ -11,3 +11,15 @@ config EXTERNALS_SSLUTILS
 		Enable support mbedTLS connection utility. Some examples are using
 		this utility for connection TLS socket.
 
+if EXTERNALS_SSLUTILS
+
+config EXTERNALS_SSLUTILS_LOGLEVEL
+	int "mbedTLS debug log level (0 to 5)"
+	range 0 5
+	default 0
+	---help---
+		Set debug log level of mbedTLS library.
+		0 is no log message. If set this more than 0, you can see debug log
+		mbedTLS library outputs. 5 is the maximum (Most verbose).
+
+endif
