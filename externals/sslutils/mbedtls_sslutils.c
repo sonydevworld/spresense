@@ -115,6 +115,7 @@ struct webclient_tls_connection
  * Private Functions
  ****************************************************************************/
 
+#ifdef CONFIG_EXTERNALS_MBEDTLS
 /****************************************************************************
  * Name: sslutil_debuglog
  ****************************************************************************/
@@ -124,6 +125,7 @@ static void sslutil_debuglog(void *ctx, int level, const char *file,
 {
   printf("mbedTLS[%d] %s(%d): %s", level, file, line, str);
 }
+#endif
 
 /****************************************************************************
  * Name: sslutil_delete_connection
@@ -195,11 +197,13 @@ static struct webclient_tls_connection *sslutil_create_connection(
           return NULL;
         }
 
+#ifdef CONFIG_EXTERNALS_MBEDTLS
       /* Initialize mbedTLS debug log config */
 
       conn->conf.f_dbg = sslutil_debuglog;
       conn->conf.p_dbg = stdout;
       mbedtls_debug_set_threshold(CONFIG_EXTERNALS_SSLUTILS_LOGLEVEL);
+#endif
     }
 
   return conn;
