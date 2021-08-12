@@ -74,6 +74,7 @@
 #define TLS_ERROR printf
 
 #define SSL_CIPHER_STR_BUF     64
+#define BUFF_CLEAR_SIZE        16
 
 #define MBEDTLS_INVALID_CTX_ID (0xFFFFFFFF)
 #define MBEDTLS_MINIMUM_CTX_ID (0x00000001)
@@ -8481,7 +8482,8 @@ static int32_t ciphercmd_pkt_parse(FAR uint8_t *pktbuf,
  * Public Functions
  ****************************************************************************/
 
-compose_handler_t alt1250_sslcomposehdlr(uint32_t cmdid)
+compose_handler_t alt1250_sslcomposehdlr(uint32_t cmdid,
+  FAR uint8_t *payload, size_t size)
 {
   int i;
   compose_handler_t ret = NULL;
@@ -8491,6 +8493,15 @@ compose_handler_t alt1250_sslcomposehdlr(uint32_t cmdid)
       if (g_composehdlrs[i].cmdid == cmdid)
         {
           ret = g_composehdlrs[i].hdlr;
+
+          if (size >= BUFF_CLEAR_SIZE)
+            {
+              /* Clear the common area of 16 bytes from the top to 0
+               * to prevent sending garbage data.
+               */
+
+              memset(payload, 0, BUFF_CLEAR_SIZE);
+            }
         }
     }
 
