@@ -355,12 +355,12 @@ int main(int argc, FAR char *argv[])
   long ip_type;
   long auth_type;
 
-  setting_apn.apn       = (int8_t*)APP_APN_NAME;
+  setting_apn.apn       = APP_APN_NAME;
   setting_apn.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
   setting_apn.ip_type   = APP_APN_IPTYPE;
   setting_apn.auth_type = APP_APN_AUTHTYPE;
-  setting_apn.user_name = (int8_t*)APP_APN_USR_NAME;
-  setting_apn.password  = (int8_t*)APP_APN_PASSWD;
+  setting_apn.user_name = APP_APN_USR_NAME;
+  setting_apn.password  = APP_APN_PASSWD;
 
   optind = -1;
   while ((opt = getopt(argc, argv, "a:t:i:v:u:p:r:h")) != -1)
@@ -374,7 +374,7 @@ int main(int argc, FAR char *argv[])
                 show_usage(argv[0], EXIT_FAILURE);
               }
 
-            setting_apn.apn = (int8_t *)optarg;
+            setting_apn.apn = optarg;
             break;
           case 't':
             apn_type = strtol(optarg, NULL, LTE_DAEMON_STRTOL_BASE_HEX);
@@ -420,7 +420,7 @@ int main(int argc, FAR char *argv[])
                 show_usage(argv[0], EXIT_FAILURE);
               }
 
-            setting_apn.user_name = (int8_t *)optarg;
+            setting_apn.user_name = optarg;
             break;
           case 'p':
             if (strlen(optarg) >=LTE_APN_PASSWD_LEN)
@@ -429,7 +429,7 @@ int main(int argc, FAR char *argv[])
                 show_usage(argv[0], EXIT_FAILURE);
               }
 
-            setting_apn.password = (int8_t *)optarg;
+            setting_apn.password = optarg;
             break;
           case 'r':
             rat_str = optarg;
