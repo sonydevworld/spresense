@@ -1,0 +1,91 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config LTE_SYSCTL
+	bool "lte_sysctl system command"
+	default n
+	---help---
+		Enable lte_sysctl system command.
+		This command can control alt1250 usrsock daemon.
+
+if LTE_SYSCTL
+
+config LTE_SYSCTL_CMDNAME
+	string "Command name of lte_sysctl (default lte_sysctl)"
+	default "lte_sysctl"
+	---help---
+		Command name of this command.
+		Default is "lte_sysctl".
+		In older SDK than v2.3, this command name was "lte_daemon".
+		If you want to use this as the same as older, you can change
+		this value to "lte_daemon", but keeping default value is
+		recommended.
+
+config LTE_SYSCTL_APN_NAME
+	string "Default access Point Name"
+	default ""
+	---help---
+		Set default access point name.
+		This parameter can be changed by command line option of "-a".
+		This default value is used when the command line option
+		was not set.
+
+choice
+	prompt "Default IP type Selection"
+	default LTE_SYSCTL_APN_IPTYPE_IP
+	---help---
+		Set default IP type.
+		This parameter can be changed by command line option of "-i".
+		This default value is used when the command line option
+		was not set.
+
+	config LTE_SYSCTL_APN_IPTYPE_IP
+		bool "IPv4"
+
+	config LTE_SYSCTL_APN_IPTYPE_IPV6
+		bool "IPv6"
+
+	config LTE_SYSCTL_APN_IPTYPE_IPV4V6
+		bool "IPv4/v6"
+endchoice
+
+choice
+	prompt "Default authentication type Selection"
+	default LTE_SYSCTL_APN_AUTHTYPE_NONE
+	---help---
+		Set default authentication type.
+		This parameter can be changed by command line option of "-v".
+		This default value is used when the command line option
+		was not set.
+
+	config LTE_SYSCTL_APN_AUTHTYPE_NONE
+		bool "None"
+
+	config LTE_SYSCTL_APN_AUTHTYPE_PAP
+		bool "PAP"
+
+	config LTE_SYSCTL_APN_AUTHTYPE_CHAP
+		bool "CHAP"
+endchoice
+
+config LTE_SYSCTL_APN_USERNAME
+	string "Default username used for authentication"
+	default ""
+	---help---
+		Set default username.
+		This parameter can be cnahged by command line option of "-u".
+		This default value is used when the command line option
+		was not set.
+
+config LTE_SYSCTL_APN_PASSWD
+	string "Password used for authentication"
+	default ""
+	---help---
+		Set default password.
+		This parameter can be changed by command line option of "-p".
+		This default value is used when the command line option
+		was not set.
+
+endif

@@ -1,5 +1,5 @@
 /****************************************************************************
- * system/lte_daemon/lte_daemon.c
+ * system/lte_sysctl/lte_sysctl.c
  *
  *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
  *
@@ -56,44 +56,44 @@
 #  define ARRAY_SZ(array) (sizeof(array)/sizeof(array[0]))
 #endif
 
-#define LTE_DAEMON_STRTOL_BASE     (10)
-#define LTE_DAEMON_STRTOL_BASE_HEX (16)
+#define LTE_SYSCTL_STRTOL_BASE     (10)
+#define LTE_SYSCTL_STRTOL_BASE_HEX (16)
 
 #define RAT_KEEP 0
 #define NPDN 1
 
 /* APN settings */
 
-#ifdef CONFIG_LTE_DAEMON_APN_NAME
-#  define APP_APN_NAME   CONFIG_LTE_DAEMON_APN_NAME
+#ifdef CONFIG_LTE_SYSCTL_APN_NAME
+#  define APP_APN_NAME   CONFIG_LTE_SYSCTL_APN_NAME
 #else
-#  define APP_APN_NAME   "lte_daemon_sample_apn"
+#  define APP_APN_NAME   "lte_sysctl_sample_apn"
 #endif
 
-#ifdef CONFIG_LTE_DAEMON_APN_IPTYPE_IPV6
+#ifdef CONFIG_LTE_SYSCTL_APN_IPTYPE_IPV6
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV6
-#elif defined CONFIG_LTE_DAEMON_APN_IPTYPE_IPV4V6
+#elif defined CONFIG_LTE_SYSCTL_APN_IPTYPE_IPV4V6
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV4V6
 #else
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IP
 #endif
 
-#ifdef CONFIG_LTE_DAEMON_APN_AUTHTYPE_PAP
+#ifdef CONFIG_LTE_SYSCTL_APN_AUTHTYPE_PAP
 #  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_PAP
-#elif defined CONFIG_LTE_DAEMON_APN_AUTHTYPE_CHAP
+#elif defined CONFIG_LTE_SYSCTL_APN_AUTHTYPE_CHAP
 #  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_CHAP
 #else
 #  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_NONE
 #endif
 
-#ifdef CONFIG_LTE_DAEMON_APN_USERNAME
-#  define APP_APN_USR_NAME CONFIG_LTE_DAEMON_APN_USERNAME
+#ifdef CONFIG_LTE_SYSCTL_APN_USERNAME
+#  define APP_APN_USR_NAME CONFIG_LTE_SYSCTL_APN_USERNAME
 #else
 #  define APP_APN_USR_NAME ""
 #endif
 
-#ifdef CONFIG_LTE_DAEMON_APN_PASSWD
-#  define APP_APN_PASSWD   CONFIG_LTE_DAEMON_APN_PASSWD
+#ifdef CONFIG_LTE_SYSCTL_APN_PASSWD
+#  define APP_APN_PASSWD   CONFIG_LTE_SYSCTL_APN_PASSWD
 #else
 #  define APP_APN_PASSWD   ""
 #endif
@@ -109,11 +109,11 @@
 #define APN_PASS_FMT "  Password: %s\n"
 #define RAT_FMT "RAT: %s\n"
 #define VER_FMT "RAT: %s\n"
-#define LTE_DAEMON_CMD_START "start"
-#define LTE_DAEMON_CMD_STOP "stop"
-#define LTE_DAEMON_CMD_STAT "stat"
-#define LTE_DAEMON_CMD_RAT_CATM1 "M1"
-#define LTE_DAEMON_CMD_RAT_NB "NB"
+#define LTE_SYSCTL_CMD_START "start"
+#define LTE_SYSCTL_CMD_STOP "stop"
+#define LTE_SYSCTL_CMD_STAT "stat"
+#define LTE_SYSCTL_CMD_RAT_CATM1 "M1"
+#define LTE_SYSCTL_CMD_RAT_NB "NB"
 #define STAT_STOPPED "stopped"
 #define STAT_RUNNING "running"
 #define STAT_SEARCHING "searching"
@@ -190,12 +190,12 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
     {
       if (ret == -EALREADY)
         {
-          fprintf(stderr, ERR_FMT_STR, progname, LTE_DAEMON_CMD_START,
-                  "lte_daemon is running");
+          fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_START,
+                  "daemon is already running");
         }
       else
         {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_DAEMON_CMD_START, -ret);
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
         }
 
       goto err_out;
@@ -204,7 +204,7 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   ret = lte_set_report_restart(restart_callback);
   if (ret < 0)
     {
-      fprintf(stderr, ERR_FMT_NUM, progname, LTE_DAEMON_CMD_START, -ret);
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
 
       lte_finalize();
       goto err_out;
@@ -213,7 +213,7 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   ret = lte_power_on();
   if (ret < 0)
     {
-      fprintf(stderr, ERR_FMT_NUM, progname, LTE_DAEMON_CMD_START, -ret);
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
 
       lte_finalize();
       goto err_out;
@@ -226,7 +226,7 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   ret = save_apnsettings(apn);
   if (ret < 0)
     {
-      fprintf(stderr, ERR_FMT_NUM, progname, LTE_DAEMON_CMD_START, -ret);
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
       lte_finalize();
       goto err_out;
     }
@@ -236,12 +236,12 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
       ret = lte_set_rat_sync(rat, LTE_ENABLE);
       if (ret == -ENOTSUP)
         {
-          fprintf(stderr, ERR_FMT_STR, progname, LTE_DAEMON_CMD_START,
+          fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_START,
           "RAT changes are not supported in the FW version of the modem");
         }
       else
         {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_DAEMON_CMD_START, -ret);
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
         }
 
       lte_finalize();
@@ -377,7 +377,7 @@ int main(int argc, FAR char *argv[])
             setting_apn.apn = optarg;
             break;
           case 't':
-            apn_type = strtol(optarg, NULL, LTE_DAEMON_STRTOL_BASE_HEX);
+            apn_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE_HEX);
             if (apn_type != (LTE_APN_TYPE_IA | LTE_APN_TYPE_DEFAULT))
               {
                 fprintf(stderr, "Currently supported APN type is 0x%x",
@@ -389,7 +389,7 @@ int main(int argc, FAR char *argv[])
             setting_apn.apn_type = (uint32_t)apn_type;
             break;
           case 'i':
-            ip_type = strtol(optarg, NULL, LTE_DAEMON_STRTOL_BASE);
+            ip_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE);
             if ((ip_type != LTE_IPTYPE_V4) &&
                 (ip_type != LTE_IPTYPE_V6) &&
                 (ip_type != LTE_IPTYPE_V4V6))
@@ -401,7 +401,7 @@ int main(int argc, FAR char *argv[])
             setting_apn.ip_type = (uint8_t)ip_type;
             break;
           case 'v':
-            auth_type = strtol(optarg, NULL, LTE_DAEMON_STRTOL_BASE);
+            auth_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE);
             if ((auth_type != LTE_APN_AUTHTYPE_NONE) &&
                 (auth_type != LTE_APN_AUTHTYPE_PAP) &&
                 (auth_type != LTE_APN_AUTHTYPE_CHAP))
@@ -433,11 +433,11 @@ int main(int argc, FAR char *argv[])
             break;
           case 'r':
             rat_str = optarg;
-            if (MATCH_STRING(rat_str, LTE_DAEMON_CMD_RAT_CATM1))
+            if (MATCH_STRING(rat_str, LTE_SYSCTL_CMD_RAT_CATM1))
               {
                 rat = LTE_RAT_CATM;
               }
-            else if (MATCH_STRING(rat_str, LTE_DAEMON_CMD_RAT_NB))
+            else if (MATCH_STRING(rat_str, LTE_SYSCTL_CMD_RAT_NB))
               {
                 rat = LTE_RAT_NBIOT;
               }
@@ -470,7 +470,7 @@ int main(int argc, FAR char *argv[])
       show_usage(argv[0], EXIT_FAILURE);
     }
 
-  if (MATCH_STRING(cmd, LTE_DAEMON_CMD_START))
+  if (MATCH_STRING(cmd, LTE_SYSCTL_CMD_START))
     {
       /* Acquire semaphore for exclusive control */
 
@@ -482,7 +482,7 @@ int main(int argc, FAR char *argv[])
 
       sem_post(&g_exclsem);
     }
-  else if (MATCH_STRING(cmd, LTE_DAEMON_CMD_STOP))
+  else if (MATCH_STRING(cmd, LTE_SYSCTL_CMD_STOP))
     {
       ret = lte_finalize();
       if (ret < 0)
@@ -490,7 +490,7 @@ int main(int argc, FAR char *argv[])
           if (ret == -EALREADY)
             {
               fprintf(stderr, ERR_FMT_STR, argv[0], cmd,
-                      "lte_daemon is not running");
+                      "daemon is not running");
             }
           else
             {
@@ -500,7 +500,7 @@ int main(int argc, FAR char *argv[])
           goto err_out;
         }
     }
-  else if (MATCH_STRING(cmd, LTE_DAEMON_CMD_STAT))
+  else if (MATCH_STRING(cmd, LTE_SYSCTL_CMD_STAT))
     {
       show_daemon_stat();
     }

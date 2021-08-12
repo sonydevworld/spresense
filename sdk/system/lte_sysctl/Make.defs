@@ -1,5 +1,5 @@
 ############################################################################
-# system/lte_daemon/Makefile
+# system/lte_sysctl/Make.defs
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
 #
@@ -33,19 +33,6 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
-include $(SDKDIR)/Make.defs
-
-LTEALTCOMAPIINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)include$(DELIM)lte
-
-CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom
-CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom$(DELIM)net
-
-MAINSRC = lte_daemon.c
-
-PROGNAME  = lte_daemon
-PRIORITY  = SCHED_PRIORITY_DEFAULT
-STACKSIZE = 2048
-MODULE    = $(CONFIG_LTE_DAEMON)
-
-include $(APPDIR)/Application.mk
+ifneq ($(CONFIG_LTE_SYSCTL),)
+CONFIGURED_APPS += lte_sysctl
+endif
