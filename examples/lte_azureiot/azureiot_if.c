@@ -199,13 +199,14 @@ static char *sas_token(struct azureiot_info *info)
   const char *target = "%s.%s/devices/%s";
 
   len = strlen(target)
-      + strlen(info->IoTHubName)
+      + strnlen(info->IoTHubName, AZURE_IOT_INFO_NAME_MAX_SIZE)
       + strlen(AZURE_IOT_HUB_HOST_NAME)
-      + strlen(info->DeviceID);
+      + strnlen(info->DeviceID, AZURE_IOT_INFO_PRIKEY_MAX_SIZE);
 
   url = alloca(len);
 
-  sprintf(url,
+  snprintf(url,
+          len,
           target,
           info->IoTHubName,
           AZURE_IOT_HUB_HOST_NAME,
@@ -282,7 +283,8 @@ static int create_command(struct azureiot_info *info,
 
   /* Output HTTP command */
 
-  len = sprintf(request,
+  len = snprintf(request,
+                request_size,
                 target,
                 cmd,
                 info->DeviceID,
@@ -293,21 +295,24 @@ static int create_command(struct azureiot_info *info,
 
   if (content_type[0] != '\0')
     {
-      len += sprintf(request + len,
+      len += snprintf(request + len,
+                     request_size - len,
                      target_content_type,
                      content_type); 
     }
 
   if (content[0] != '\0')
     {
-      len += sprintf(request + len,
+      len += snprintf(request + len,
+                     request_size - len,
                      target_content_len,
                      strlen(content)); 
     }
 
   /* Output borders and content */
 
-  len += sprintf(request + len, "\r\n%s", content); 
+  len += snprintf(request + len,
+                  request_size - len, "\r\n%s", content); 
 
   LOGF("\n\n***%s***\n\n", request);
 
@@ -385,10 +390,11 @@ int azureiot_create_deletemsg(struct azureiot_info *info,
 
   const char *target = "messages/deviceBound/%s";
   char       *funcs;
+  size_t     size = strlen(target) + strnlen(_eTags, sizeof(_eTags)) + 1;
 
-  funcs = alloca(strlen(target) + strlen(_eTags) + 1);
+  funcs = alloca(size);
 
-  sprintf(funcs, target, _eTags);
+  snprintf(funcs, size, target, _eTags);
 
   return create_command(info,
                         io_buffer,
@@ -407,12 +413,14 @@ int azureiot_create_fileinfo_msg(struct azureiot_info *info,
 {
   const char *target = "{\"blobName\":\"%s\"}";
   char       *body;
+  size_t     size = strlen(target) + strlen(file_name) + 1;
+  
 
   /* Create body string */
 
-  body = alloca(strlen(target) + strlen(file_name) + 1);
+  body = alloca(size);
 
-  sprintf(body, "{\"blobName\":\"%s\"}", file_name);
+  snprintf(body, size, "{\"blobName\":\"%s\"}", file_name);
 
   return create_command(info,
                         request,
@@ -492,7 +500,8 @@ int azureiot_create_uploadmsg(char *io_buffer,
 
   /* Output HTTP command */
 
-  len = sprintf(io_buffer,
+  len = snprintf(io_buffer,
+                io_buffer_size,
                 http_request,
                 method,
                 _containerName,
@@ -504,14 +513,15 @@ int azureiot_create_uploadmsg(char *io_buffer,
     {
       /* Set upload size */
 
-      len += sprintf(io_buffer + len,
+      len += snprintf(io_buffer + len,
+                    io_buffer_size - len,
                     target_content_len,
                     upload_file_size);
     }
 
   /* Set boundaries */
 
-  len += sprintf(io_buffer + len, "\r\n");
+  len += snprintf(io_buffer + len, io_buffer_size - len, "\r\n");
 
   return len;
 }
