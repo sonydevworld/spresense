@@ -83,9 +83,9 @@ static int  s_cert_file_size;
 
 /* Azure resources */
 
-static char IoTHubName[64];
-static char DeviceID[64];
-static char PrimaryKey[64];
+static char IoTHubName[AZURE_IOT_INFO_NAME_MAX_SIZE];
+static char DeviceID[AZURE_IOT_INFO_ID_MAX_SIZE];
+static char PrimaryKey[AZURE_IOT_INFO_PRIKEY_MAX_SIZE];
 
 /****************************************************************************
  * Private Functions

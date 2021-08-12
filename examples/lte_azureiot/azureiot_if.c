@@ -49,6 +49,7 @@
 
 #define AZURE_IOT_HUB_HOST_NAME       "azure-devices.net"
 #define AZURE_SAS_EXPIRATION_SEC      600
+#define AZURE_JPARSE_NUM              (6)
 
 #if 1
 #define LOGF(...)
@@ -80,7 +81,7 @@ static struct
   char       *buf;
   int         size;
 }
-jparse[] =
+jparse[AZURE_JPARSE_NUM] =
 {
   {"\"correlationId\"", _correlationId, sizeof(_correlationId)},
   {"\"hostName\"",      _hostName,      sizeof(_hostName)     },
@@ -88,8 +89,7 @@ jparse[] =
   {"\"blobName\"",      _blobName,      sizeof(_blobName)     },
   {"\"sasToken\"",      _sasToken,      sizeof(_sasToken)     },
   {NULL,                NULL,           0                     },
-},
-*jp;
+};
 
 /****************************************************************************
  * Private functions
@@ -110,7 +110,7 @@ static char *strnstr(const char *str,
       return NULL;
     }
 
-  for (int i = 0; *str && i < buflen; i++, str++)
+  for (int i = 0; i < buflen && *str; i++, str++)
     {
       if (strncmp(str, substr, len) == 0)
         {
@@ -147,42 +147,39 @@ static int http_get_etags(const char *buffer, int buffer_size)
 /* ------------------------------------------------------------------------ */
 static int jparse_lite(const char *buffer, int buffer_size)
 {
+  int i = 0;
+  int res = 0;
+
   /* Get SAS URI from Azure response */
 
-  for (jp = jparse; jp->name; jp++)
+  for (i = 0; i < AZURE_JPARSE_NUM && jparse[i].name; i++)
     {
-      memset(jp->buf, 0, jp->size);
-    }
-
-  for (jp = jparse; jp->name; jp++)
-    {
-      char  *str = strnstr((char *)buffer, buffer_size, jp->name, strlen(jp->name));
+      char  *str = strnstr((char *)buffer, buffer_size, jparse[i].name, 
+                            strlen(jparse[i].name));
       char  *cp;
+
+      memset(jparse[i].buf, 0, jparse[i].size);
 
       if (str == NULL)
         {
+          res = -1;
           continue;
         }
 
-      str += strlen(jp->name) + 2;
+      str += strlen(jparse[i].name) + 2;
 
-      for (cp = jp->buf; *str && *str != '\"'; str++, cp++)
+      for (cp = jparse[i].buf; *str && *str != '\"'; str++, cp++)
         {
           *cp = *str;
         }
-    }
 
-  int   res = 0;
-
-  for (jp = jparse; jp->name; jp++)
-    {
-      if (jp->buf[0] == '\0')
+      if (jparse[i].buf[0] == '\0')
         {
           res = -1;
         }
       else
         {
-          LOGF("%s: %s\n", jp->name, jp->buf);
+          LOGF("%s: %s\n", jparse[i].name, jparse[i].buf);
         }
     }
 
@@ -199,13 +196,14 @@ static char *sas_token(struct azureiot_info *info)
   const char *target = "%s.%s/devices/%s";
 
   len = strlen(target)
-      + strlen(info->IoTHubName)
+      + strnlen(info->IoTHubName, AZURE_IOT_INFO_NAME_MAX_SIZE)
       + strlen(AZURE_IOT_HUB_HOST_NAME)
-      + strlen(info->DeviceID);
+      + strnlen(info->DeviceID, AZURE_IOT_INFO_PRIKEY_MAX_SIZE);
 
   url = alloca(len);
 
-  sprintf(url,
+  snprintf(url,
+          len,
           target,
           info->IoTHubName,
           AZURE_IOT_HUB_HOST_NAME,
@@ -282,7 +280,8 @@ static int create_command(struct azureiot_info *info,
 
   /* Output HTTP command */
 
-  len = sprintf(request,
+  len = snprintf(request,
+                request_size,
                 target,
                 cmd,
                 info->DeviceID,
@@ -293,21 +292,24 @@ static int create_command(struct azureiot_info *info,
 
   if (content_type[0] != '\0')
     {
-      len += sprintf(request + len,
+      len += snprintf(request + len,
+                     request_size - len,
                      target_content_type,
                      content_type); 
     }
 
   if (content[0] != '\0')
     {
-      len += sprintf(request + len,
+      len += snprintf(request + len,
+                     request_size - len,
                      target_content_len,
                      strlen(content)); 
     }
 
   /* Output borders and content */
 
-  len += sprintf(request + len, "\r\n%s", content); 
+  len += snprintf(request + len,
+                  request_size - len, "\r\n%s", content); 
 
   LOGF("\n\n***%s***\n\n", request);
 
@@ -385,10 +387,11 @@ int azureiot_create_deletemsg(struct azureiot_info *info,
 
   const char *target = "messages/deviceBound/%s";
   char       *funcs;
+  size_t     size = strlen(target) + strnlen(_eTags, sizeof(_eTags)) + 1;
 
-  funcs = alloca(strlen(target) + strlen(_eTags) + 1);
+  funcs = alloca(size);
 
-  sprintf(funcs, target, _eTags);
+  snprintf(funcs, size, target, _eTags);
 
   return create_command(info,
                         io_buffer,
@@ -407,12 +410,14 @@ int azureiot_create_fileinfo_msg(struct azureiot_info *info,
 {
   const char *target = "{\"blobName\":\"%s\"}";
   char       *body;
+  size_t     size = strlen(target) + strlen(file_name) + 1;
+  
 
   /* Create body string */
 
-  body = alloca(strlen(target) + strlen(file_name) + 1);
+  body = alloca(size);
 
-  sprintf(body, "{\"blobName\":\"%s\"}", file_name);
+  snprintf(body, size, "{\"blobName\":\"%s\"}", file_name);
 
   return create_command(info,
                         request,
@@ -492,7 +497,8 @@ int azureiot_create_uploadmsg(char *io_buffer,
 
   /* Output HTTP command */
 
-  len = sprintf(io_buffer,
+  len = snprintf(io_buffer,
+                io_buffer_size,
                 http_request,
                 method,
                 _containerName,
@@ -504,14 +510,15 @@ int azureiot_create_uploadmsg(char *io_buffer,
     {
       /* Set upload size */
 
-      len += sprintf(io_buffer + len,
+      len += snprintf(io_buffer + len,
+                    io_buffer_size - len,
                     target_content_len,
                     upload_file_size);
     }
 
   /* Set boundaries */
 
-  len += sprintf(io_buffer + len, "\r\n");
+  len += snprintf(io_buffer + len, io_buffer_size - len, "\r\n");
 
   return len;
 }
