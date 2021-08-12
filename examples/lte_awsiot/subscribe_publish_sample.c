@@ -217,7 +217,7 @@ int main(int argc, char FAR **argv)
 		return rc;
 	}
 
-	sprintf(cPayload, "%s : %ld ", "hello from SDK", i);
+	snprintf(cPayload, sizeof(cPayload), "%s : %ld ", "hello from SDK", i);
 
 	paramsQOS0.qos = QOS0;
 	paramsQOS0.payload = (void *) cPayload;
@@ -243,7 +243,7 @@ int main(int argc, char FAR **argv)
 
 		IOT_INFO("-->sleep");
 		sleep(1);
-		sprintf(cPayload, "%s : %ld ", "hello from SDK QOS0", i++);
+		snprintf(cPayload, sizeof(cPayload), "%s : %ld ", "hello from SDK QOS0", i++);
 		paramsQOS0.payloadLen = strlen(cPayload);
 		rc = aws_iot_mqtt_publish(&client, "sdkTest/sub", 11, &paramsQOS0);
 		if(publishCount > 0) {
@@ -254,7 +254,7 @@ int main(int argc, char FAR **argv)
 			break;
 		}
 
-		sprintf(cPayload, "%s : %ld ", "hello from SDK QOS1", i++);
+		snprintf(cPayload, sizeof(cPayload), "%s : %ld ", "hello from SDK QOS1", i++);
 		paramsQOS1.payloadLen = strlen(cPayload);
 		rc = aws_iot_mqtt_publish(&client, "sdkTest/sub", 11, &paramsQOS1);
 		if (rc == MQTT_REQUEST_TIMEOUT_ERROR) {
