@@ -150,5 +150,6 @@
 #include "apicmd_rsa_init.h"
 #include "apicmd_rsa_free.h"
 #include "apicmd_rsa_gen_key.h"
+#include "apicmd_config_verify_callback.h"
 
 #endif /* __MODULES_MBEDTLS_STUBS_MBEDTLS_HDLR_H */
