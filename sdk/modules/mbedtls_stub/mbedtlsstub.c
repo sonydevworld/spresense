@@ -1041,13 +1041,34 @@ int mbedtls_pk_parse_keyfile(mbedtls_pk_context *ctx, const char *path, const ch
   FAR void *inarg[] = {ctx, (void *)path, (void *)password};
   FAR void *outarg[] = {&result};
 
-  ret = lapi_req(LTE_CMDID_TLS_PK_PARSE_KEYFILE,
-                 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
+  FAR unsigned char *parse_buf = NULL;
+  size_t parse_len;
+
+  result = mbedtls_load_local_file(path, &parse_buf, &parse_len);
+  if (result == 0)
     {
-      ret = result;
+      if (password == NULL)
+        {
+          ret = mbedtls_pk_parse_key(ctx, parse_buf, parse_len, NULL, 0);
+        }
+      else
+        {
+          ret = mbedtls_pk_parse_key(ctx, parse_buf, parse_len,
+                      (const unsigned char*)password, strlen(password));
+        }
+
+      free(parse_buf);
+    }
+  else
+    {
+      ret = lapi_req(LTE_CMDID_TLS_PK_PARSE_KEYFILE,
+                     (FAR void *)inarg, ARRAY_SZ(inarg),
+                     (FAR void *)outarg, ARRAY_SZ(outarg),
+                     NULL);
+      if (ret == 0)
+        {
+          ret = result;
+        }
     }
 
   return ret;
