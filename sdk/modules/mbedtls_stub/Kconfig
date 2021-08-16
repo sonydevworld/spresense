@@ -8,6 +8,7 @@ menu "mbedTLS stub"
 config LTE_NET_MBEDTLS
 	bool "mbedTLS stub Library Support"
 	default n
+	select MODEM_ALT1250_ADDITIONAL_FUNC
 	---help---
 		This option enables to use mbed TLS library in alt1250 modem.
 		And when you select this, make sure CONFIG_EXTERNALS_MBEDTLS is disabled.
