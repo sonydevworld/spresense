@@ -387,6 +387,7 @@ extern "C" int main(int argc, FAR char *argv[])
   if (!app_start_recorder())
     {
       printf("Error: app_start_recorder() failure.\n");
+      standby_audio();
       goto ErrorReturn;
     }
 

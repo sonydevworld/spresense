@@ -782,12 +782,14 @@ bool set_recording_mode(uint8_t codec_type, format_type_e format_type, uint32_t 
   if (!init_audio_preproc())
     {
       printf("Error: init_audio_preproc() failure.\n");
+      standby_audio();
       return false;
     }
 
   if (!set_audio_preproc())
     {
       printf("Error: set_audio_preproc() failure.\n");
+      standby_audio();
       return false;
     }
 #endif /* CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC */
