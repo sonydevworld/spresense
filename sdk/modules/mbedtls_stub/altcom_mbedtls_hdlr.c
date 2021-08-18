@@ -70,8 +70,16 @@
 #  define ARRAY_SZ(array) (sizeof(array)/sizeof(array[0]))
 #endif
 
-#define TLS_DEBUG printf
-#define TLS_ERROR printf
+#ifdef CONFIG_LTE_NET_MBEDTLS_DEBUG_MSG
+#  define TLS_DEBUG(v, ...) printf("%s: "v, __func__, ##__VA_ARGS__) 
+#else
+#  define TLS_DEBUG(v, ...)
+#endif
+#ifdef CONFIG_LTE_NET_MBEDTLS_ERROR_MSG
+#  define TLS_ERROR(v, ...) printf("%s: "v, __func__, ##__VA_ARGS__)
+#else
+#  define TLS_ERROR(v, ...)
+#endif
 
 #define SSL_CIPHER_STR_BUF     64
 #define BUFF_CLEAR_SIZE        16
@@ -3174,7 +3182,7 @@ static int32_t x509crtvrfyinfo_pkt_compose(FAR void **arg,
       TLS_DEBUG("[x509_crt_verify_info]size: %d\n", *size);
       TLS_DEBUG("[x509_crt_verify_info]prefix: %s\n",
         out->prefix);
-      TLS_DEBUG("[x509_crt_verify_info]flags: %lu\n", *flags);
+      TLS_DEBUG("[x509_crt_verify_info]flags: %ld\n", *flags);
 
       *altcid = APICMDID_TLS_X509_CRT_VERIFY_INFO;
       ret_size = sizeof(struct apicmd_x509_crt_verify_info_s);
@@ -3198,7 +3206,7 @@ static int32_t x509crtvrfyinfo_pkt_compose(FAR void **arg,
       TLS_DEBUG("[x509_crt_verify_info]size: %d\n", *size);
       TLS_DEBUG("[x509_crt_verify_info]prefix: %s\n",
         out->u.verify_info.prefix);
-      TLS_DEBUG("[x509_crt_verify_info]flags: %lu\n", *flags);
+      TLS_DEBUG("[x509_crt_verify_info]flags: %ld\n", *flags);
 
       *altcid = APICMDID_TLS_X509_CRT_CMD_V4;
       ret_size = sizeof(struct apicmd_x509_crtcmd_s);
@@ -5709,6 +5717,7 @@ static int32_t sslinit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5731,6 +5740,7 @@ static int32_t sslfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5753,6 +5763,7 @@ static int32_t sslsetup_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_setupres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_setup res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5775,6 +5786,7 @@ static int32_t sslhostname_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_hostnameres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_hostname res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5797,6 +5809,7 @@ static int32_t sslbio_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_biores_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_bio res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5819,6 +5832,7 @@ static int32_t sslhandshake_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_handshakeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_handshake res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5841,6 +5855,7 @@ static int32_t sslwrite_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_writeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_write res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5869,6 +5884,7 @@ static int32_t sslread_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_readres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_read res]ret: %ld\n", *ret);
       if (*ret <= 0)
         {
           /* Nothing to do */
@@ -5904,6 +5920,7 @@ static int32_t sslclosenotif_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_close_notifyres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_close_notify res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5927,8 +5944,10 @@ static int32_t sslver_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_versionres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_version res]ret: %ld\n", *ret);
       in->version[APICMD_SSL_VERSION_LEN-1] = '\0';
       *version = get_ssl_tls_version(in->version);
+      TLS_DEBUG("[ssl_version res]version: %s\n", *version);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -5981,6 +6000,8 @@ static int32_t sslciphersuiteid_pkt_parse(FAR uint8_t *pktbuf,
 
       *ret = ntohl(in->ret_code);
       ret_cipher_id = ntohl(in->id);
+      TLS_DEBUG("[ssl_ciphersuite_id res]ret: %ld\n", *ret);
+      TLS_DEBUG("[ssl_ciphersuite_id res]id: %ld\n", ret_cipher_id);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6003,6 +6024,7 @@ static int32_t sslrecexp_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_record_expansionres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_record_expansion res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6025,6 +6047,7 @@ static int32_t sslvrfyresult_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_verify_resultres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_verify_result res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6047,6 +6070,7 @@ static int32_t ssltimercb_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_timer_cbres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ssl_timer_cb res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6072,6 +6096,7 @@ static int32_t sslpeercert_pkt_parse(FAR uint8_t *pktbuf,
       *ret = ntohl(in->ret_code);
 
       x509_crt->id = ntohl(in->crt);
+      TLS_DEBUG("[ssl_peer_cert res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6094,6 +6119,7 @@ static int32_t sslbytesavail_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ssl_bytes_availres_s *)pktbuf;
 
       *ret = ntohl( in->avail_bytes);
+      TLS_DEBUG("[ssl_bytes_avail res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6116,6 +6142,7 @@ static int32_t confinit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6138,6 +6165,7 @@ static int32_t conffree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6160,6 +6188,7 @@ static int32_t confdefauts_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_defaultsres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_defaults res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6182,6 +6211,7 @@ static int32_t confauth_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_authmoderes_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_authmode res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6204,6 +6234,7 @@ static int32_t confrng_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_rngres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_rng res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6226,6 +6257,7 @@ static int32_t confcachain_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_ca_chainres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_ca_chain res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6248,6 +6280,7 @@ static int32_t confowncert_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_own_certres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_own_cert res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6270,6 +6303,7 @@ static int32_t confreadtimeo_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_read_timeoutres_s *)pktbuf;
 
       *ret = ntohl( in->ret_code);
+      TLS_DEBUG("[config_read_timeout res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6292,6 +6326,7 @@ static int32_t confvrfy_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_verifyres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_verify res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6330,6 +6365,7 @@ static int32_t confalpnproto_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_alpn_protocolsres_s *)pktbuf;
 
       *ret = ntohl( in->ret_code);
+      TLS_DEBUG("[config_alpn_protocols res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6352,6 +6388,7 @@ static int32_t confciphersuites_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_config_ciphersuitesres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[config_ciphersuites res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6374,6 +6411,7 @@ static int32_t ssesioninit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_session_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[session_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6396,6 +6434,7 @@ static int32_t sessionfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_session_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[session_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6418,6 +6457,7 @@ static int32_t sessionget_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_session_getres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[session_get res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6440,6 +6480,7 @@ static int32_t sessionset_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_session_setres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[session_set res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6462,6 +6503,7 @@ static int32_t x509crtinit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crt_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[x509_crt_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6484,6 +6526,7 @@ static int32_t x509crtfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crt_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[x509_crt_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6506,6 +6549,7 @@ static int32_t x509crtparsefile_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crt_parse_fileres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[x509_crt_parse_file res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6528,6 +6572,7 @@ static int32_t x509crtparseder_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crt_parse_derres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[x509_crt_parse_der res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6550,6 +6595,7 @@ static int32_t x509crtparse_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crt_parseres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[x509_crt_parse res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6578,7 +6624,7 @@ static int32_t x509crtinfo_pkt_parse(FAR uint8_t *pktbuf,
   *ret = (*ret <= buflen) ? *ret : buflen;
   memcpy(buf, in->buf, *ret);
 
-  TLS_DEBUG("[x509_crt_info res]ret: %lu\n", *ret);
+  TLS_DEBUG("[x509_crt_info res]ret: %ld\n", *ret);
 
   return 0;
 }
@@ -6603,6 +6649,7 @@ static int32_t x509crtvrfyinfo_pkt_parse(FAR uint8_t *pktbuf,
       *ret = ntohl( in->ret_code);
       *ret = (*ret <= buflen) ? *ret : buflen;
       memcpy(buf, in->buf, *ret);
+      TLS_DEBUG("[x509_crt_verify_info res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6625,6 +6672,7 @@ static int32_t pkinit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6649,6 +6697,7 @@ static int32_t pkfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6673,6 +6722,7 @@ static int32_t pkparsekeyfile_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_parse_keyfileres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_parse_keyfile res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6697,6 +6747,7 @@ static int32_t pkparsekey_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_parse_keyres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_parse_key res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6721,6 +6772,7 @@ static int32_t pkcheckpair_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_check_pairres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_check_pair res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6745,6 +6797,7 @@ static int32_t pksetup_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_setupres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_setup res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6774,6 +6827,7 @@ static int32_t pkinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
         {
           pk_info->id = ntohl(in->pk_info);
         }
+      TLS_DEBUG("[pk_info_from_type res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6816,6 +6870,7 @@ static int32_t pkwritekeypem_pkt_parse(FAR uint8_t *pktbuf,
         {
           memcpy(buf, in->buf, req_buf_len);
         }
+      TLS_DEBUG("[pk_write_key_pem res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6851,6 +6906,7 @@ static int32_t pkwritekeyder_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pk_write_key_derres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[pk_write_key_der res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6899,6 +6955,7 @@ static int32_t pkrsa_pkt_parse(FAR uint8_t *pktbuf,
         {
           rsa_context->id = ntohl(in->rsa);
         }
+      TLS_DEBUG("[pk_rsa res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6921,6 +6978,7 @@ static int32_t ctrdrbginit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ctr_drbg_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ctr_drbg_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6943,6 +7001,7 @@ static int32_t ctrdrbgfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ctr_drbg_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ctr_drbg_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6965,6 +7024,7 @@ static int32_t ctrdrbgseed_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ctr_drbg_seedres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ctr_drbg_seed res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -6987,6 +7047,7 @@ static int32_t entropyinit_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_entropy_initres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[entropy_init res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -7009,6 +7070,7 @@ static int32_t entropyfree_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_entropy_freeres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[entropy_free res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -7182,6 +7244,7 @@ static int32_t mdinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
 
       *ret = ntohl(in->md_info);
       md_info->id = *ret;
+      TLS_DEBUG("[md_info_from_type res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -7260,6 +7323,7 @@ static int32_t md_pkt_parse(FAR uint8_t *pktbuf,
       *ret = ntohl(in->ret_code);
 
       memcpy(output, in->output, APICMD_MD_OUTPUT_LEN);
+      TLS_DEBUG("[md res]ret: %ld\n", *ret);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -7339,6 +7403,8 @@ static int32_t base64enc_pkt_parse(FAR uint8_t *pktbuf,
           *olen = 0;
           return -1;
         }
+      TLS_DEBUG("[base64_encode res]ret: %ld\n", *ret);
+      TLS_DEBUG("[base64_encode res]length: %lu\n", out_len);
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -7366,6 +7432,8 @@ static int32_t base64enc_pkt_parse(FAR uint8_t *pktbuf,
           *olen = 0;
           return -1;
         }
+      TLS_DEBUG("[base64_encode res]ret: %ld\n", *ret);
+      TLS_DEBUG("[base64_encode res]length: %lu\n", out_len);
     }
 
   return 0;
@@ -7386,6 +7454,8 @@ static int32_t sha1_pkt_parse(FAR uint8_t *pktbuf,
       *ret = ntohl(in->ret_code);
 
       memcpy(output, in->output, APICMD_SHA1_OUTPUT_LEN);
+      TLS_DEBUG("[sha1 res]ret: %ld\n", *ret);
+
     }
   else if (altver == ALTCOM_VER4)
     {
@@ -8140,6 +8210,7 @@ static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_sslcmdres_s *)pktbuf;
 
       uint32_t subcmd_id = ntohl(in->subcmd_id);
+      TLS_DEBUG("[sslcmd_pkt_parse res]ret: %ld\n", ntohl(in->ret_code));
 
       if (subcmd_id == 0 || subcmd_id > APISUBCMDID_TLS_SSL_BYTES_AVAIL)
         {
@@ -8169,6 +8240,8 @@ static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
               TLS_ERROR("Unexpected buffer length: %ld\n", *ret_code);
               return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
             }
+
+          TLS_DEBUG("[ssl_read res]ret: %ld\n", ntohl(in->ret_code));
         }
       else if (subcmd_id == APISUBCMDID_TLS_SSL_VERSION)
         {
@@ -8190,10 +8263,14 @@ static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
           *ret_code = ntohl(in->ret_code);
 
           x509_crt->id = ntohl(in->u.peer_certres.crt);
+
+          TLS_DEBUG("[ssl_peer_cert res]ret: %ld\n", ntohl(in->ret_code));
+
         }
       else if (subcmd_id == APISUBCMDID_TLS_SSL_BYTES_AVAIL)
         {
           *ret_code = ntohl( in->u.bytes_availres.avail_bytes);
+          TLS_DEBUG("[ssl_bytes_avail res]avail_bytes: %ld\n", *ret_code);
         }
       else if (subcmd_id == APISUBCMDID_TLS_SSL_CIPHERSUITE)
         {
@@ -8211,6 +8288,9 @@ static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
         {
           *ret_code = ntohl(in->ret_code);
           ret = ntohl(in->u.ciphersuite_idres.id);
+
+          TLS_DEBUG("[ssl_ciphersuite_id res]ret: %ld\n", *ret_code);
+          TLS_DEBUG("[ssl_ciphersuite_id res]id: %ld\n", ret);
         }
       else
         {
@@ -8238,6 +8318,7 @@ static int32_t configcmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_configcmdres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[configcmd_pkt_parse res]ret: %ld\n", *ret);
     }
 
   return 0;
@@ -8260,6 +8341,7 @@ static int32_t sessioncmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_sessioncmdres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[sessioncmd_pkt_parse res]ret: %ld\n", *ret);
     }
 
   return 0;
@@ -8283,6 +8365,7 @@ static int32_t x509crtcmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_x509_crtcmdres_s *)pktbuf;
 
       uint32_t subcmd_id = ntohl(in->subcmd_id);
+      TLS_DEBUG("[x509crtcmd_pkt_parse res]ret: %ld\n", ntohl(in->ret_code));
 
       if (subcmd_id == 0 || subcmd_id > APISUBCMDID_TLS_X509_CRT_VERIFY_INFO)
         {
@@ -8304,7 +8387,7 @@ static int32_t x509crtcmd_pkt_parse(FAR uint8_t *pktbuf,
           *ret_code = (*ret_code <= buflen) ? *ret_code : buflen;
           memcpy(buf, in->u.verify_infores.buf, *ret_code);
 
-          TLS_DEBUG("[x509_crt_info res]ret: %lu\n", *ret_code);
+          TLS_DEBUG("[x509_crt_verify_info res]ret: %lu\n", *ret_code);
         }
       else
         {
@@ -8333,6 +8416,7 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_pkcmdres_s *)pktbuf;
 
       uint32_t subcmd_id = ntohl(in->subcmd_id);
+      TLS_DEBUG("[pkcmd_pkt_parse res]ret: %ld\n", ntohl(in->ret_code));
 
       if (subcmd_id == 0 || subcmd_id > APISUBCMDID_TLS_PK_RSA)
         {
@@ -8348,6 +8432,7 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
             {
               pk_info->id = ntohl(in->u.info_from_typeres.pk_info);
             }
+          TLS_DEBUG("[pk_info_from_type res]ret: %ld\n", ntohl(in->ret_code));
         }
       else if (subcmd_id == APISUBCMDID_TLS_PK_WRITE_KEY_PEM)
         {
@@ -8360,6 +8445,8 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
 
           *ret_code = ntohl(in->ret_code);
           memcpy(buf, in->u.write_key_pemres.buf, req_buf_len);
+
+          TLS_DEBUG("[pk_write_key_pem res]ret: %ld\n", ntohl(in->ret_code));
         }
       else if (subcmd_id == APISUBCMDID_TLS_PK_WRITE_KEY_DER)
         {
@@ -8384,6 +8471,8 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
               TLS_ERROR("Unexpected buffer length: %ld\n", *ret_code);
               return MBEDTLS_ERR_PK_BAD_INPUT_DATA;
             }
+
+          TLS_DEBUG("[pk_write_key_der res]ret: %ld\n", ntohl(in->ret_code));
         }
       else if (subcmd_id == APISUBCMDID_TLS_PK_RSA)
         {
@@ -8392,6 +8481,8 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
 
           *ret_code = ntohl(in->ret_code);
           rsa_context->id = ntohl(in->u.rsares.rsa);
+
+          TLS_DEBUG("[pk_rsa res]ret: %ld\n", ntohl(in->ret_code));
         }
       else
         {
@@ -8419,6 +8510,7 @@ static int32_t ctrdrbgcmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_ctr_drbgcmdres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[ctrdrbgcmd_pkt_parse res]ret: %ld\n", *ret);
     }
 
   return 0;
@@ -8441,6 +8533,7 @@ static int32_t entropycmd_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_entropycmdres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
+      TLS_DEBUG("[entropycmd_pkt_parse res]ret: %ld\n", *ret);
     }
 
   return 0;
@@ -8492,6 +8585,7 @@ static int32_t ciphercmd_pkt_parse(FAR uint8_t *pktbuf,
       else if (subcmd_id == APISUBCMDID_TLS_SHA1)
         {
           ret = sha1_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          TLS_DEBUG("[sha1 res]ret: %ld\n", ntohl(in->ret_code));
         }
     }
 
