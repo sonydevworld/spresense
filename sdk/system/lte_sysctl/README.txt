@@ -1,11 +1,11 @@
-system/lte_daemon
+system/lte_sysctl
 ^^^^^^^^^^^^^^^^^
 ******************************************************************************
 * Description
 ******************************************************************************
 
-  This is a daemon for using LTE network.
-  When the daemon is started, it performs the search up to the LTE network.
+  This is a modem control command for using LTE network.
+  By using this command, you can control user socket daemon of LTE.
 
   Supported LTE modem is ALT1250.
 
@@ -28,7 +28,7 @@ system/lte_daemon
 
   $ tools/config.py -m
     Application Configuration -> Spresense SDK -> System tools
-      [*] lte_daemon
+      [*] lte_sysctl
         Access Point Name
         IP type Selection
         Authentication type Selection
@@ -39,7 +39,7 @@ system/lte_daemon
 
   NSH prompt can setting APN.
     type example for...
-    nsh> lte_daemon -a apn -t 202 -i 0 -v 2 -u user -p password start
+    nsh> lte_sysctl -a apn -t 202 -i 0 -v 2 -u user -p password start
 
   After that, if ifup command is issued,
   it connects to the lte network with the set your APN.
@@ -49,8 +49,8 @@ system/lte_daemon
 ******************************************************************************
 
   Execute under nsh:
-    Type 'lte_daemon <start/stop>' on nsh like this.
-    nsh> lte_daemon start
+    Type 'lte_sysctl <start/stop>' on nsh like this.
+    nsh> lte_sysctl start
       or
-    nsh> lte_daemon stop
+    nsh> lte_sysctl stop
 
