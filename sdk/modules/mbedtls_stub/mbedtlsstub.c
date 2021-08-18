@@ -1429,6 +1429,11 @@ int mbedtls_cipher_update(mbedtls_cipher_context_t *ctx, const unsigned char *in
   FAR void *inarg[] = {ctx, (void *)input, &ilen};
   FAR void *outarg[] = {&result, output, olen};
 
+  if (!ctx || !input || !output || !olen)
+    {
+      return MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
+    }
+
   ret = lapi_req(LTE_CMDID_TLS_CIPHER_UPDATE,
                  (FAR void *)inarg, ARRAY_SZ(inarg),
                  (FAR void *)outarg, ARRAY_SZ(outarg),
@@ -1699,7 +1704,12 @@ int mbedtls_mpi_write_string(const mbedtls_mpi *X, int radix, char *buf, size_t 
   int ret;
   int32_t result;
   FAR void *inarg[] = {(void *)X, &radix, &buflen};
-  FAR void *outarg[] = {&result, buf, olen};
+  FAR void *outarg[] = {&result, buf, &buflen, olen};
+
+  if (!X || !buf || !olen)
+    {
+      return MBEDTLS_ERR_MPI_BAD_INPUT_DATA;
+    }
 
   ret = lapi_req(LTE_CMDID_TLS_MPI_WRITE_STRING,
                  (FAR void *)inarg, ARRAY_SZ(inarg),

@@ -7140,7 +7140,6 @@ static int32_t cipherupdate_pkt_parse(FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen)
 {
-  uint32_t out_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *output = (FAR unsigned char *)arg[1];
   FAR size_t *olen = (FAR size_t *)arg[2];
@@ -7149,11 +7148,19 @@ static int32_t cipherupdate_pkt_parse(FAR uint8_t *pktbuf,
     {
       FAR struct apicmd_cipher_updateres_s *in =
         (FAR struct apicmd_cipher_updateres_s *)pktbuf;
+      size_t len = ntohl(in->olen);
 
       *ret = ntohl(in->ret_code);
-      out_len = ntohl(in->olen);
-      memcpy(output, in->output, out_len);
-      *olen = out_len;
+      if (*olen < len)
+        {
+          *ret = MBEDTLS_ERR_CIPHER_BAD_INPUT_DATA;
+        }
+      else
+        {
+          memcpy(output, in->output, len);
+        }
+
+      *olen = len;
 
       TLS_DEBUG("[cipher_update res]ret: %ld\n", *ret);
     }
@@ -7545,10 +7552,10 @@ static int32_t mpiwritestr_pkt_parse(FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen)
 {
-  uint32_t out_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR char *buf = (FAR char *)arg[1];
-  FAR size_t *olen = (FAR size_t *)arg[2];
+  FAR size_t *buflen = (FAR size_t *)arg[2];
+  FAR size_t *olen = (FAR size_t *)arg[3];
 
   if (altver == ALTCOM_VER1)
     {
@@ -7556,9 +7563,15 @@ static int32_t mpiwritestr_pkt_parse(FAR uint8_t *pktbuf,
         (FAR struct apicmd_mpi_write_stringres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
-      out_len = ntohl(in->olen);
-      memcpy(buf, in->buf, out_len);
-      *olen = out_len;
+      *olen = ntohl(in->olen);
+      if (*buflen < *olen)
+        {
+          *ret = MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL;
+        }
+      else
+        {
+          memcpy(buf, in->buf, *olen);
+        }
 
       TLS_DEBUG("[mpi_write_string res]ret: %ld\n", *ret);
     }
