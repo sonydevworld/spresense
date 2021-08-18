@@ -13,4 +13,14 @@ config LTE_NET_MBEDTLS
 		And when you select this, make sure CONFIG_EXTERNALS_MBEDTLS is disabled.
 		Those are exclusive items.
 
+if LTE_NET_MBEDTLS
+
+config HAVE_EXTHANDLER
+	bool "Enable user extension alt1250 command handler"
+	default n
+	---help---
+		Enable compose/parse packet handler of alt1250 for user extension.
+
+endif
+
 endmenu # MBEDTLS_STUB

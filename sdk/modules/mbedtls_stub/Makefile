@@ -46,7 +46,7 @@ VPATH   =
 SUBDIRS =
 DEPPATH =
 
-CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c
+CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c altcom_additional_hdlr.c
 CXXSRCS =
 
 ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
