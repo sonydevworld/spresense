@@ -2403,11 +2403,6 @@ static int32_t confvrfy_pkt_compose(FAR void **arg,
       size = -ENOSYS;
     }
 
-  /* TODO: implement */
-#if 0
-  set_conf_verify(f_vrfy, p_vrfy);
-#endif
-
   TLS_DEBUG("[config_verify]config id: %lu\n", conf->id);
 
   return size;
@@ -2418,7 +2413,16 @@ static int32_t confvrfycb_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
-  /* TODO: implement */
+  FAR int *ret = (FAR int *)arg[0];
+  FAR uint32_t *flags = (FAR uint32_t *)arg[1];
+
+  FAR struct apicmd_config_verify_callback_s *out =
+    (FAR struct apicmd_config_verify_callback_s *)pktbuf;
+
+  size = sizeof(struct apicmd_config_verify_callback_s);
+
+  out->ret_code = htonl(*ret);
+  out->flags = htonl(*flags);
 
   if (altver == ALTCOM_VER1)
     {
@@ -6302,11 +6306,14 @@ static int32_t confvrfycb_pkt_parse(FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen)
 {
-  FAR int32_t *ret = (FAR int32_t *)arg[0];
+  FAR uint32_t *crt = (FAR uint32_t *)arg[0];
+  FAR int32_t *depth = (FAR int32_t *)arg[1];
+
   FAR struct apicmd_config_verify_callbackres_s *in =
     (FAR struct apicmd_config_verify_callbackres_s *)pktbuf;
 
-  /* TODO: implement */
+  *crt = htonl(in->crt);
+  *depth = htonl(in->certificate_depth);
 
   return 0;
 }
@@ -8510,8 +8517,6 @@ compose_handler_t alt1250_sslcomposehdlr(uint32_t cmdid,
 
 parse_handler_t alt1250_sslparsehdlr(uint16_t altcid, uint8_t altver)
 {
-  #define ALTCOM_CMDID_REPLY_BIT (0x8000)
-
   int i;
   parse_handler_t ret = NULL;
 

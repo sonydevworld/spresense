@@ -78,10 +78,29 @@ static struct mbedtls_pk_info_t g_pk_info  = {0};
 static mbedtls_rsa_context g_rsa_context   = {0};
 static mbedtls_cipher_info_t g_cipher_info = {0};
 static mbedtls_md_info_t g_md_info         = {0};
+static sem_t g_vrfylock = SEM_INITIALIZER(1);
+static int (*g_f_vrfy)(void *, mbedtls_x509_crt *, int, uint32_t *);
+static void *g_p_vrfy;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+static inline void ssllock(FAR sem_t *lock)
+{
+  int ret;
+
+  do
+    {
+      ret = sem_wait(lock);
+    }
+  while (ret == -EINTR);
+}
+
+static inline void sslunlock(FAR sem_t *lock)
+{
+  sem_post(lock);
+}
 
 static int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, size_t *len)
 {
@@ -139,6 +158,40 @@ static int32_t mbedtls_load_local_file(const char *path, unsigned char **buf, si
     }
 
   return(0);
+}
+
+static void verifycb_event(FAR void **cbarg)
+{
+  int ret;
+  uint32_t flags = 0;
+  uint32_t id = *((FAR uint32_t *)cbarg[0]);
+  int32_t depth = *((FAR int32_t *)cbarg[1]);
+  int (*f_vrfy)(void *, mbedtls_x509_crt *, int, uint32_t *);
+  void *p_vrfy;
+  mbedtls_x509_crt crt =
+    {
+    };
+
+  FAR void *inarg[] =
+    {
+      &ret, &flags
+    };
+
+  crt.id = id;
+
+  ssllock(&g_vrfylock);
+  f_vrfy = g_f_vrfy;
+  p_vrfy = g_p_vrfy;
+  sslunlock(&g_vrfylock);
+
+  if (f_vrfy)
+    {
+      ret = f_vrfy(p_vrfy, &crt, depth, &flags);
+
+      lapi_req(LTE_CMDID_TLS_CONFIG_VERIFY_CALLBACK | LTE_CMDOPT_ASYNC_BIT,
+               (FAR void *)inarg, ARRAY_SZ(inarg),
+               NULL, 0, NULL);
+    }
 }
 
 /****************************************************************************
@@ -646,10 +699,20 @@ void mbedtls_ssl_conf_verify(mbedtls_ssl_config *conf, int (*f_vrfy)(void *, mbe
   ret = lapi_req(LTE_CMDID_TLS_CONFIG_VERIFY,
                  (FAR void *)inarg, ARRAY_SZ(inarg),
                  (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
+                 verifycb_event);
   if (ret == 0)
     {
       ret = result;
+
+      /* Only one callback can be registered with mbedtls_ssl_conf_verify().
+       * Therefore, note that if mbedtls_ssl_conf_verify() is executed,
+       * it will be overwritten.
+       */
+
+      ssllock(&g_vrfylock);
+      g_f_vrfy = f_vrfy;
+      g_p_vrfy = p_vrfy;
+      sslunlock(&g_vrfylock);
     }
 
   return ;
@@ -978,13 +1041,34 @@ int mbedtls_pk_parse_keyfile(mbedtls_pk_context *ctx, const char *path, const ch
   FAR void *inarg[] = {ctx, (void *)path, (void *)password};
   FAR void *outarg[] = {&result};
 
-  ret = lapi_req(LTE_CMDID_TLS_PK_PARSE_KEYFILE,
-                 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
+  FAR unsigned char *parse_buf = NULL;
+  size_t parse_len;
+
+  result = mbedtls_load_local_file(path, &parse_buf, &parse_len);
+  if (result == 0)
     {
-      ret = result;
+      if (password == NULL)
+        {
+          ret = mbedtls_pk_parse_key(ctx, parse_buf, parse_len, NULL, 0);
+        }
+      else
+        {
+          ret = mbedtls_pk_parse_key(ctx, parse_buf, parse_len,
+                      (const unsigned char*)password, strlen(password));
+        }
+
+      free(parse_buf);
+    }
+  else
+    {
+      ret = lapi_req(LTE_CMDID_TLS_PK_PARSE_KEYFILE,
+                     (FAR void *)inarg, ARRAY_SZ(inarg),
+                     (FAR void *)outarg, ARRAY_SZ(outarg),
+                     NULL);
+      if (ret == 0)
+        {
+          ret = result;
+        }
     }
 
   return ret;
