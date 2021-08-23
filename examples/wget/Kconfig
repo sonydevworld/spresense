@@ -2,6 +2,7 @@
 config EXAMPLES_SPRESENSE_WGET
 	tristate "wget app"
 	default n
+	select NSH_DISABLE_WGET
 	---help---
 		Enable the wget app with TLS
 
