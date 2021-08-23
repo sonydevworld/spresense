@@ -51,8 +51,10 @@ CXXSRCS =
 
 ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
 ifeq ($(CONFIG_EXTERNALS_MBEDTLS),y)
+ifeq ($(filter clean distclean,$(MAKECMDGOALS)),)
 $(error "Configs LTE_NET_MBEDTLS and EXTERNALS_MBEDTLS are exclusive. \
         So disable one or the other")
+endif
 endif
 endif
 
