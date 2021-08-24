@@ -51,7 +51,7 @@ CFLAGS += -std=c99
 
 CFLAGS := $(patsubst -O%,-O3,$(CFLAGS))
 
-CSRCS    =   accessor.c list.c shape.c
+CSRCS    =   accessor.c fixedpoint.c list.c shape.c
 ROOTDEPPATH  = --dep-path $(SRCDIR)/functions/utilities
 VPATH    = $(SRCDIR)/functions/utilities
 
@@ -68,7 +68,7 @@ CSRCS   += binary_tanh.c binary_sigmoid.c binary_connect_affine.c binary_weight_
 ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/quantization
 VPATH   += $(SRCDIR)/functions/implements/quantization
 
-CSRCS   += add_scalar.c arithmetic.c arithmetic_generic.c div2.c mul2.c mul_scalar.c
+CSRCS   += add_scalar.c arithmetic.c arithmetic_fixed.c arithmetic_generic.c div2.c mul2.c mul_scalar.c
 CSRCS   += pow2.c pow_scalar.c r_div_scalar.c r_pow_scalar.c r_sub_scalar.c
 CSRCS   += sub2.c add2.c
 ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/arithmetic
@@ -87,11 +87,11 @@ CSRCS   += pooling.c max_pooling.c sum_pooling.c average_pooling.c unpooling.c d
 ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network
 VPATH   += $(SRCDIR)/functions/implements/neural_network
 
-CSRCS   += affine.c affine_generic.c
+CSRCS   += affine.c affine_fixed8.c affine_fixed16.c affine_generic.c
 ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/affine
 VPATH   += $(SRCDIR)/functions/implements/neural_network/affine
 
-CSRCS   += convolution.c convolution_generic.c convolution_float.c convolution_common.c
+CSRCS   += convolution.c convolution_generic.c convolution_float.c convolution_int8.c convolution_int16.c convolution_common.c
 CSRCS   += binary_connect_convolution.c binary_weight_convolution.c depthwise_convolution.c
 ROOTDEPPATH += --dep-path $(SRCDIR)/functions/implements/neural_network/convolution
 VPATH   += $(SRCDIR)/functions/implements/neural_network/convolution
