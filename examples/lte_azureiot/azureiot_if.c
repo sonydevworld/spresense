@@ -168,7 +168,10 @@ static int jparse_lite(const char *buffer, int buffer_size)
 
       str += strlen(jparse[i].name) + 2;
 
-      for (cp = jparse[i].buf; *str && *str != '\"'; str++, cp++)
+      for (cp = jparse[i].buf;
+           cp - jparse[i].buf < jparse[i].size &&
+           str - buffer < buffer_size &&
+           *str && *str != '\"'; str++, cp++)
         {
           *cp = *str;
         }
