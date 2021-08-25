@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/Makefile
+# dnnrt_lenet/worker/Makefile
 #
-#   Copyright 2018 Sony Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,9 +13,10 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. Neither the name of Sony Corporation nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
+#    the names of its contributors may be used to endorse or promote
+#    products derived from this software without specific prior written
+#    permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -32,33 +33,25 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
-include $(SDKDIR)/Make.defs
+WORKER_ELFS = dnnrt-mp/DNNRT-MP
 
-# dnnrt_lenet built-in application info
+SUBDIRS = $(dir $(WORKER_ELFS))
 
-PROGNAME  = $(CONFIG_EXAMPLES_DNNRT_LENET_PROGNAME)
-PRIORITY  = $(CONFIG_EXAMPLES_DNNRT_LENET_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_DNNRT_LENET_STACKSIZE)
-MODULE    = $(CONFIG_EXAMPLES_DNNRT_LENET)
+define DIR_template
+$(1)_$(2):
+	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
+endef
 
-# dnnrt_lenet
+.PHONY: clean
+all: $(WORKER_ELFS)
 
-MAINSRC = dnnrt_lenet_main.c
-CSRCS   = loader_nnb.c pnm_util.c
+# Build workers
 
-include $(APPDIR)/Application.mk
+$(WORKER_ELFS):
+	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-ifeq ($(CONFIG_DNN_RT_MPCOMM),y)
+# Clean each subdirectory
 
-build_worker:
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
 
-$(OBJS): build_worker
-
-clean:: clean_worker
-
-clean_worker:
-	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
-
-endif
+$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
