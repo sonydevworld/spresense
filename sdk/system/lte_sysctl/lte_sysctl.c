@@ -234,18 +234,21 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   if (rat != RAT_KEEP)
     {
       ret = lte_set_rat_sync(rat, LTE_ENABLE);
-      if (ret == -ENOTSUP)
+      if (ret < 0)
         {
-          fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_START,
-          "RAT changes are not supported in the FW version of the modem");
-        }
-      else
-        {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
-        }
+          if (ret == -ENOTSUP)
+            {
+              fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_START,
+              "RAT changes are not supported in the FW version of the modem");
+            }
+          else
+            {
+              fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
+            }
 
-      lte_finalize();
-      goto err_out;
+          lte_finalize();
+          goto err_out;
+        }
     }
 
   sem_destroy(&g_sem);
