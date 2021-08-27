@@ -119,10 +119,6 @@ else
   LDFLAGS += -Map=$(TOPDIR)/nuttx.map --cref
 endif
 
-# Avoid order of archive list to enabling override weak symbol
-
-LDFLAGS += --whole-archive
-
 ifneq ($(CONFIG_ASMP_MEMSIZE),)
   LDFLAGS += --defsym=__reserved_ramsize=$(CONFIG_ASMP_MEMSIZE)
 endif
