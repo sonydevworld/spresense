@@ -40,20 +40,4 @@ endif
 
 endif
 
-if LTE_NET_MBEDTLS
-
-config LTE_NET_MBEDTLS_ERROR_MSG
-	bool "Enable error output messages"
-	default n
-
-if LTE_NET_MBEDTLS_ERROR_MSG
-
-config LTE_NET_MBEDTLS_DEBUG_MSG
-	bool "Enable debug output messages"
-	default n
-
-endif
-
-endif
-
 endmenu # MBEDTLS_STUB
