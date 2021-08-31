@@ -108,7 +108,7 @@
 #define APN_USER_FMT "  Username: %s\n"
 #define APN_PASS_FMT "  Password: %s\n"
 #define RAT_FMT "RAT: %s\n"
-#define VER_FMT "RAT: %s\n"
+#define VER_FMT "VER: %s\n"
 #define LTE_SYSCTL_CMD_START "start"
 #define LTE_SYSCTL_CMD_STOP "stop"
 #define LTE_SYSCTL_CMD_STAT "stat"
