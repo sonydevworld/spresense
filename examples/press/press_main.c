@@ -117,9 +117,9 @@ static int32_t bmp280_compensate_T_int32(int32_t adc_T, struct bmp280_temp_adj_s
   int32_t var2;
   int32_t T;
 
-  var1 = ((((adc_T >> 3) - ((int32_t)adj->dig_T1 << 1))) * ((int32_t)adj->dig_T2)) >> 11;
-  var2 = (((((adc_T >> 4) - ((int32_t)adj->dig_T1)) * ((adc_T >> 4) - ((int32_t)adj->dig_T1))) >> 12) *
-  ((int32_t)adj->dig_T3)) >> 14;
+  var1 = ((((adc_T >> 3) - ((int32_t)adj->dig_t1 << 1))) * ((int32_t)adj->dig_t2)) >> 11;
+  var2 = (((((adc_T >> 4) - ((int32_t)adj->dig_t1)) * ((adc_T >> 4) - ((int32_t)adj->dig_t1))) >> 12) *
+  ((int32_t)adj->dig_t3)) >> 14;
 
   g_t_fine = var1 + var2;
 
@@ -149,11 +149,11 @@ static uint32_t bmp280_compensate_P_int32(int32_t adc_P, struct bmp280_press_adj
   uint32_t p;
 
   var1 = (((int32_t)g_t_fine) >> 1) - (int32_t)64000;
-  var2 = (((var1 >> 2) * (var1 >> 2)) >> 11 ) * ((int32_t)adj->dig_P6);
-  var2 = var2 + ((var1 * ((int32_t)adj->dig_P5)) << 1);
-  var2 = (var2 >> 2) + (((int32_t)adj->dig_P4) << 16);
-  var1 = (((adj->dig_P3 * (((var1 >> 2) * (var1 >> 2)) >> 13 )) >> 3) + ((((int32_t)adj->dig_P2) * var1) >> 1)) >> 18;
-  var1 = ((((32768 + var1)) * ((int32_t)adj->dig_P1)) >> 15);
+  var2 = (((var1 >> 2) * (var1 >> 2)) >> 11 ) * ((int32_t)adj->dig_p6);
+  var2 = var2 + ((var1 * ((int32_t)adj->dig_p5)) << 1);
+  var2 = (var2 >> 2) + (((int32_t)adj->dig_p4) << 16);
+  var1 = (((adj->dig_p3 * (((var1 >> 2) * (var1 >> 2)) >> 13 )) >> 3) + ((((int32_t)adj->dig_p2) * var1) >> 1)) >> 18;
+  var1 = ((((32768 + var1)) * ((int32_t)adj->dig_p1)) >> 15);
 
   /* avoid exception caused by division by zero */
 
@@ -173,9 +173,9 @@ static uint32_t bmp280_compensate_P_int32(int32_t adc_P, struct bmp280_press_adj
       p = (p / (uint32_t)var1) * 2;
     }
 
-  var1 = (((int32_t)adj->dig_P9) * ((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >> 12;
-  var2 = (((int32_t)(p >> 2)) * ((int32_t)adj->dig_P8)) >> 13;
-  p = (uint32_t)((int32_t)p + ((var1 + var2 + adj->dig_P7) >> 4));
+  var1 = (((int32_t)adj->dig_p9) * ((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >> 12;
+  var2 = (((int32_t)(p >> 2)) * ((int32_t)adj->dig_p8)) >> 13;
+  p = (uint32_t)((int32_t)p + ((var1 + var2 + adj->dig_p7) >> 4));
 
   return p;
 }
@@ -236,7 +236,7 @@ static void show_scutime(struct scutimestamp_s *ts)
       delta.tick = 0;
     }
 
-  printf("SCU Timestamp: %lu.%05u (%lu.%05u)\n",
+  printf("SCU Timestamp: %lu.%05lu (%lu.%05lu)\n",
          ts->sec, (uint32_t)ts->tick * 100000 / 32768,
          delta.sec, (uint32_t)delta.tick * 100000 / 32768);
 
@@ -451,18 +451,18 @@ int main(int argc, FAR char *argv[])
     }
 
   printf("[Calibration parameters]\n");
-  printf("dig_T1 = %6d\n", g_temp_adj.dig_T1);
-  printf("dig_T2 = %6d\n", g_temp_adj.dig_T2);
-  printf("dig_T3 = %6d\n", g_temp_adj.dig_T3);
-  printf("dig_P1 = %6d\n", g_press_adj.dig_P1);
-  printf("dig_P2 = %6d\n", g_press_adj.dig_P2);
-  printf("dig_P3 = %6d\n", g_press_adj.dig_P3);
-  printf("dig_P4 = %6d\n", g_press_adj.dig_P4);
-  printf("dig_P5 = %6d\n", g_press_adj.dig_P5);
-  printf("dig_P6 = %6d\n", g_press_adj.dig_P6);
-  printf("dig_P7 = %6d\n", g_press_adj.dig_P7);
-  printf("dig_P8 = %6d\n", g_press_adj.dig_P8);
-  printf("dig_P9 = %6d\n", g_press_adj.dig_P9);
+  printf("dig_t1 = %6d\n", g_temp_adj.dig_t1);
+  printf("dig_t2 = %6d\n", g_temp_adj.dig_t2);
+  printf("dig_t3 = %6d\n", g_temp_adj.dig_t3);
+  printf("dig_p1 = %6d\n", g_press_adj.dig_p1);
+  printf("dig_p2 = %6d\n", g_press_adj.dig_p2);
+  printf("dig_p3 = %6d\n", g_press_adj.dig_p3);
+  printf("dig_p4 = %6d\n", g_press_adj.dig_p4);
+  printf("dig_p5 = %6d\n", g_press_adj.dig_p5);
+  printf("dig_p6 = %6d\n", g_press_adj.dig_p6);
+  printf("dig_p7 = %6d\n", g_press_adj.dig_p7);
+  printf("dig_p8 = %6d\n", g_press_adj.dig_p8);
+  printf("dig_p9 = %6d\n", g_press_adj.dig_p9);
 
   sensing_main(pressfd, tempfd);
 

@@ -165,7 +165,7 @@ static int get_own_position(int fd, long *latitude, long *longitude)
               *latitude   = DOUBLE_TO_LONG(g_posdat.receiver.latitude);
               *longitude  = DOUBLE_TO_LONG(g_posdat.receiver.longitude);
 
-              printf("## POSITION: LAT %d, LNG %d \n", *latitude, *longitude);
+              printf("## POSITION: LAT %ld, LNG %ld \n", *latitude, *longitude);
               break;
             }
           else
@@ -285,7 +285,7 @@ int main(int argc, FAR char *argv[])
   region_center.longitude = own_longitude;
   region_center.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID0:LAN %d, LNG %d, RAD %d\n", region_center.latitude,
+  printf("  ID0:LAN %ld, LNG %ld, RAD %d\n", region_center.latitude,
          region_center.longitude, region_center.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD,
@@ -310,7 +310,7 @@ int main(int argc, FAR char *argv[])
   region_center.longitude = own_longitude;
   region_center.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID0:LAN %d, LNG %d, RAD %d\n", region_center.latitude,
+  printf("  ID0:LAN %ld, LNG %ld, RAD %d\n", region_center.latitude,
          region_center.longitude, region_center.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD,
@@ -327,7 +327,7 @@ int main(int argc, FAR char *argv[])
   region_north.longitude = own_longitude;
   region_north.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID1:LAN %d, LNG %d, RAD %d\n", region_north.latitude,
+  printf("  ID1:LAN %ld, LNG %ld, RAD %d\n", region_north.latitude,
          region_north.longitude , region_north.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD,
@@ -344,7 +344,7 @@ int main(int argc, FAR char *argv[])
   region_south.longitude = own_longitude;
   region_south.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID2:LAN %d, LNG %d, RAD %d\n", region_south.latitude,
+  printf("  ID2:LAN %ld, LNG %ld, RAD %d\n", region_south.latitude,
          region_south.longitude, region_south.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD,
@@ -361,7 +361,7 @@ int main(int argc, FAR char *argv[])
   region_east.longitude = own_longitude + GEOFENE_REGION_OFFSET;
   region_east.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID3:LAN %d, LNG %d, RAD %d\n", region_east.latitude,
+  printf("  ID3:LAN %ld, LNG %ld, RAD %d\n", region_east.latitude,
          region_east.longitude, region_east.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD, (unsigned long)&region_east);
@@ -377,7 +377,7 @@ int main(int argc, FAR char *argv[])
   region_west.longitude = own_longitude - GEOFENE_REGION_OFFSET;
   region_west.radius    = GEOFENE_REGION_RADIUS;
 
-  printf("  ID4:LAN %d, LNG %d, RAD %d\n", region_west.latitude,
+  printf("  ID4:LAN %ld, LNG %ld, RAD %d\n", region_west.latitude,
          region_west.longitude, region_west.radius);
 
   ret = ioctl(g_fdgeo, CXD56_GEOFENCE_IOCTL_ADD, (unsigned long)&region_west);
@@ -439,7 +439,7 @@ int main(int argc, FAR char *argv[])
     {
       printf("Error Get Used ID \n");
     }
-  printf("Used ID : 0x%08x\n", used_region_data);
+  printf("Used ID : 0x%08lx\n", used_region_data);
 
   /* Start geofencing */
 
@@ -540,7 +540,7 @@ int main(int argc, FAR char *argv[])
               ret = OK;
             }
 
-          printf("[GNSS] POS: LAT %d, LNG %d \n",
+          printf("[GNSS] POS: LAT %ld, LNG %ld \n",
                  DOUBLE_TO_LONG(g_posdat.receiver.latitude),
                  DOUBLE_TO_LONG(g_posdat.receiver.longitude));
 

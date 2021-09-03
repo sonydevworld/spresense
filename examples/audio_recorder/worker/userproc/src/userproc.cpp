@@ -34,6 +34,7 @@
  ****************************************************************************/
 
 #include "userproc.h"
+#include "asmp.h"
 
 /*--------------------------------------------------------------------*/
 /*                                                                    */
@@ -52,9 +53,9 @@ void UserProc::exec(ExecParam *param)
 {
   /* Execute signal process to input audio data. */
 
-  memcpy(param->exec_cmd.output.addr,
-         param->exec_cmd.input.addr,
-         param->exec_cmd.input.size);
+  wk_memcpy(param->exec_cmd.output.addr,
+            param->exec_cmd.input.addr,
+            param->exec_cmd.input.size);
 
   param->exec_cmd.output.size = param->exec_cmd.input.size;
 

@@ -774,7 +774,7 @@ bool RendererComponent::init(const RendererComponentParam& param)
 {
   asInitDmacParam init_param;
 
-  RENDERER_DBG("INIT: fmt %d, cb %08x, req %08x\n",
+  RENDERER_DBG("INIT: fmt %d, cb %p, req %p\n",
                param.init_render_param.format,
                param.init_render_param.callback,
                param.init_render_param.p_requester);

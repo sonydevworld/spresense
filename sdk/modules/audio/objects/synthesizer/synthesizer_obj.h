@@ -109,12 +109,12 @@ public:
 
   static pthread_t get_pid(void)
   {
-    return get_instance()->m_pid;
+    return (get_instance() == 0) ? INVALID_PROCESS_ID : get_instance()->m_pid;
   }
 
   static void set_pid(pthread_t id)
   {
-    get_instance()->m_pid = id;
+    if (get_instance() != 0) { get_instance()->m_pid = id; }
   }
 
   err_t send(MsgType type, const SynthesizerCommand& param)

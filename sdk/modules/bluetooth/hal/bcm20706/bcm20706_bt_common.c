@@ -193,7 +193,7 @@ static int btPushNvAllBondInfo(void)
   generateKey();
   size = sizeof(bondInfo.bondNum);
   ret = BSO_GetRegistryValue(btGapMem->sizeKey, (void *)&bondInfo.bondNum, size);
-  btdbg("bondNum = %d\n", bondInfo.bondNum);
+  btdbg("bondNum = %ld\n", bondInfo.bondNum);
   if(0 != ret)
     {
       if (-ENOENT == ret)

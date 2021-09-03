@@ -848,7 +848,7 @@ void OutputMixToHPI2S::clock_recovery(MsgPacket* msg)
   OutputMixerCommand cmd =
     msg->moveParam<OutputMixerCommand>();
 
-  OUTPUT_MIX_DBG("CLOCK RECOVERY: dir %d, times %d\n",
+  OUTPUT_MIX_DBG("CLOCK RECOVERY: dir %d, times %ld\n",
                  cmd.fterm_param.direction, cmd.fterm_param.times);
 
   /* Check Paramete. */

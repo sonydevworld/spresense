@@ -49,6 +49,10 @@
 #include "lte/lte_api.h"
 #include "netutils/webclient.h"
 
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+#include "sslutils/sslutil.h"
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -157,7 +161,7 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   current_time.tv_sec = mktime(&calTime);
   if (current_time.tv_sec < 0)
     {
-      printf("%s: mktime falied\n");
+      printf("mktime falied: %d\n", errno);
       return;
     }
 
@@ -166,11 +170,11 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   ret = settimeofday(&current_time, NULL);
   if (ret < 0)
     {
-      printf("%s: settimeofday falied: %d\n", errno);
+      printf("settimeofday falied: %d\n", errno);
       return;
     }
 
-  printf("set localtime completed: %4d/%02d/%02d,%02d:%02d:%02d\n",
+  printf("set localtime completed: %4ld/%02ld/%02ld,%02ld:%02ld:%02ld\n",
          localtime->year + 1900 + 100, localtime->mon, localtime->mday,
          localtime->hour, localtime->min, localtime->sec);
 }
@@ -396,11 +400,11 @@ static void app_show_errinfo(void)
     {
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRCODE)
         {
-          printf("err_result_code : %d\n", info.err_result_code);
+          printf("err_result_code : %ld\n", info.err_result_code);
         }
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
         {
-          printf("err_no          : %d\n", info.err_no);
+          printf("err_no          : %ld\n", info.err_no);
         }
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRSTR)
         {
@@ -422,7 +426,7 @@ static void app_show_pdn(lte_pdn_t *pdn)
 
   printf("pdn.session_id : %d\n", pdn->session_id);
   printf("pdn.active     : %d\n", pdn->active);
-  printf("pdn.apn_type   : 0x%x\n", pdn->apn_type);
+  printf("pdn.apn_type   : 0x%lx\n", pdn->apn_type);
 
   for (i = 0; i < pdn->ipaddr_num; i++)
     {
@@ -441,7 +445,7 @@ static void app_show_pdn(lte_pdn_t *pdn)
 
 static void app_radio_on_cb(uint32_t result)
 {
-  printf("%s called. result: %d\n", __func__, result);
+  printf("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -461,7 +465,7 @@ static void app_radio_on_cb(uint32_t result)
 
 static void app_radio_off_cb(uint32_t result)
 {
-  printf("%s called. result: %d\n", __func__, result);
+  printf("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -482,7 +486,7 @@ static void app_radio_off_cb(uint32_t result)
 
 static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
 {
-  printf("%s called. result: %d\n", __func__, result);
+  printf("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_OK)
     {
@@ -508,7 +512,7 @@ static void app_activate_pdn_cb(uint32_t result, lte_pdn_t *pdn)
 
 static void app_deactivate_pdn_cb(uint32_t result)
 {
-  printf("%s called. result: %d\n", __func__, result);
+  printf("%s called. result: %ld\n", __func__, result);
 
   if (result == LTE_RESULT_ERROR)
     {
@@ -531,11 +535,31 @@ static void app_deactivate_pdn_cb(uint32_t result)
 
 static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
 {
-  printf("%s called: localtime : \"%02d/%02d/%02d : %02d:%02d:%02d\"\n",
+  printf("%s called: localtime : \"%02ld/%02ld/%02ld : %02ld:%02ld:%02ld\"\n",
          __func__, localtime->year, localtime->mon, localtime->mday,
          localtime->hour, localtime->min, localtime->sec);
 
   app_lte_setlocaltime(localtime);
+}
+
+/****************************************************************************
+ * Name: app_wget_initialize
+ *
+ * Description:
+ *   This function initialize a context that contains a webclient setting.
+ ****************************************************************************/
+
+static void app_wget_initialize(struct webclient_context *ctx,
+                                FAR char *buffer, int buflen,
+                                webclient_sink_callback_t callback)
+{
+  webclient_set_defaults(ctx);
+
+  ctx->method = "GET";
+  ctx->buffer = buffer;
+  ctx->buflen = buflen;
+  ctx->sink_callback = callback;
+  ctx->sink_callback_arg = NULL;
 }
 
 /****************************************************************************
@@ -546,12 +570,14 @@ static void app_localtime_report_cb(FAR lte_localtime_t *localtime)
  *   each block of file data as it is received.
  ****************************************************************************/
 
-static void app_wget_cb(FAR char **buffer, int offset, int datend,
+static int app_wget_cb(FAR char **buffer, int offset, int datend,
                         FAR int *buflen, FAR void *arg)
 {
   /* Write HTTP data to standard output */
 
   (void)write(1, &((*buffer)[offset]), datend - offset);
+
+  return 0;
 }
 
 /****************************************************************************
@@ -615,7 +641,7 @@ static void* app_modem_recovery(void *arg)
    * This means APN type for data traffic.
    */
 
-  apnsetting.apn       = (int8_t*)APP_APN_NAME;
+  apnsetting.apn       = APP_APN_NAME;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
   apnsetting.ip_type   = APP_APN_IPTYPE;
 
@@ -625,8 +651,8 @@ static void* app_modem_recovery(void *arg)
    */
 
   apnsetting.auth_type = APP_APN_AUTHTYPE;
-  apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-  apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+  apnsetting.user_name = APP_APN_USR_NAME;
+  apnsetting.password  = APP_APN_PASSWD;
 
   /* Attach to the LTE network and connect to the data PDN */
 
@@ -772,11 +798,15 @@ int main(int argc, FAR char *argv[])
 {
   int ret       = 0;
   int result    = LTE_RESULT_OK;
-  FAR char *url = APP_WGET_URL;
   lte_apn_setting_t apnsetting = {0};
   lte_errinfo_t     info       = {0};
 
   uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
+
+  struct webclient_context ctx;
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+  struct sslutil_tls_context ssl_ctx;
+#endif
 
 #ifdef CONFIG_EXAMPLES_LTE_HTTP_GET_USE_SYNC_API
   lte_pdn_t pdn = {0};
@@ -789,11 +819,6 @@ int main(int argc, FAR char *argv[])
    * The URL starts with "http://"
    * (eg, http://example.com/index.html, or http://192.0.2.1:80/index.html)
    */
-
-  if (argc > 1)
-    {
-      url = argv[1];
-    }
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.
@@ -931,7 +956,7 @@ int main(int argc, FAR char *argv[])
        * This means APN type for data traffic.
        */
 
-      apnsetting.apn       = (int8_t*)APP_APN_NAME;
+      apnsetting.apn       = APP_APN_NAME;
       apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
       apnsetting.ip_type   = APP_APN_IPTYPE;
 
@@ -941,8 +966,8 @@ int main(int argc, FAR char *argv[])
        */
 
       apnsetting.auth_type = APP_APN_AUTHTYPE;
-      apnsetting.user_name = (int8_t*)APP_APN_USR_NAME;
-      apnsetting.password  = (int8_t*)APP_APN_PASSWD;
+      apnsetting.user_name = APP_APN_USR_NAME;
+      apnsetting.password  = APP_APN_PASSWD;
 
       /* Attach to the LTE network and connect to the data PDN */
 
@@ -988,11 +1013,36 @@ int main(int argc, FAR char *argv[])
 #endif
     }
 
-  wget_initialize();
+  /* Initialilze a webclient context */
+
+  app_wget_initialize(&ctx, g_app_iobuffer, APP_IOBUFFER_LEN, app_wget_cb);
+
+#ifdef CONFIG_EXTERNALS_SSLUTILS
+  /* Setup TLS context */
+  SSLUTIL_CTX_INIT(&ssl_ctx);
+  ctx.tls_ops = sslutil_webclient_tlsops();
+  ctx.tls_ctx = (FAR void *)&ssl_ctx;
+#endif
+
+  /* Specify a URL */
+
+  if (argc > 1)
+    {
+      ctx.url = argv[1];
+    }
+  else
+    {
+      ctx.url = APP_WGET_URL;
+    }
 
   /* Retrieve the file with the specified URL. */
 
-  wget(url, g_app_iobuffer, APP_IOBUFFER_LEN, app_wget_cb, NULL);
+  ret = webclient_perform(&ctx);
+
+  if (ret != 0)
+    {
+      printf("webclient_perform failed with %d\n", ret);
+    }
 
   /* Disconnect from the data PDN and Detach from the LTE network */
 

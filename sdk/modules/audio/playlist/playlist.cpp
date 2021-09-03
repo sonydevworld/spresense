@@ -365,7 +365,7 @@ bool Playlist::updatePlaylist(ListType type, FAR const char *key_str)
 
   if (fseek(this->m_track_db_fp, 0, SEEK_SET) != 0)
     {
-      printf("Cannot move file pointer.\n", file_name);
+      printf("Cannot move file pointer. file_name=%s\n", file_name);
       fclose(list_fp);
       return false;
     }
@@ -491,7 +491,7 @@ bool Playlist::addTrack(FAR const char *key_str, int track_no)
 /*--------------------------------------------------------------------------*/
 bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
 {
-  _info("remove track from [%s : pos %d]\n", key_str, remove_pos);
+  _info("remove track from [%s : pos %ld]\n", key_str, remove_pos);
 
   /* Check argument */
 

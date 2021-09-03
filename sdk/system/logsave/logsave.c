@@ -85,7 +85,7 @@ int logsave_main(int argc, char **argv)
 
       /* Save the logging data */
 
-      printf("Save at 0x%08x (%d bytes) into %s\n", (uint32_t)addr, size, logfile);
+      printf("Save at 0x%08lx (%d bytes) into %s\n", (uint32_t)addr, size, logfile);
 
       fp = fopen(logfile, "ab");
       if (fp == NULL)

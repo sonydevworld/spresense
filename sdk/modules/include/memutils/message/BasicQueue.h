@@ -116,7 +116,7 @@ public:
 			m_put, m_get, capacity(), elem_size(), size(), rest(), empty(), full());
 		printf("      0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
 		for (NumT i = 0; i < capacity(); ++i) {
-			printf("% 3u: ", i);
+			printf("%3u: ", i);
 			for (NumT j = 0; j < MIN(elem_size(), 16); ++j) {
 				printf("%02x ", static_cast<uint8_t*>(getAddr(i))[j]);
 			}

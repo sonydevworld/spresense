@@ -480,7 +480,7 @@ static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
 {
   if (AUDRLT_ERRORRESPONSE == result.header.result_code) {
     printf("Command code(0x%x): AUDRLT_ERRORRESPONSE:"
-           "Module id(0x%x): Error code(0x%x)\n",
+           "Module id(0x%x): Error code(0x%lx)\n",
             command_code,
             result.error_response_param.module_id,
             result.error_response_param.error_code);
@@ -495,7 +495,7 @@ static bool printAudCmdResult(uint8_t command_code, AudioResult& result)
 
 static void app_attention_callback(const ErrorAttentionParam *attparam)
 {
-  printf("Attention!! %s L%d ecode %d subcode %d\n",
+  printf("Attention!! %s L%d ecode %d subcode %ld\n",
           attparam->error_filename,
           attparam->line_number,
           attparam->error_code,

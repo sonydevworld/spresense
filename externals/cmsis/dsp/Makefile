@@ -33,7 +33,7 @@
 #
 ###########################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 BIN = libarm_cortexM4lf_math$(LIBEXT)

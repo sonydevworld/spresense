@@ -34,11 +34,26 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
 -include Make.defs
 
 TOPDIR ?= ../nuttx
 DELIM ?= $(strip /)
+
+# Check if the system has been configured
+
+ifeq ($(wildcard $(TOPDIR)/.config),)
+.DEFAULT:
+	@echo
+	@echo "SDK has not been configured!"
+	@echo "To configure the project:"
+	@echo "  tools/config.py <config> [<config> ...]"
+	@echo "For a list of available configurations:"
+	@echo "  tools/config.py -l"
+	@echo
+
+else
+
+-include $(TOPDIR)/Make.defs
 
 # XXX: Sorry, this make file only for Linux/Cygwin
 
@@ -164,14 +179,14 @@ PHONY += depend
 
 subdir_clean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_clean)
 	$(Q) for dir in $(SDKCLEANDIRS); do \
-		find $$dir -name "Make.dep" -delete; \
-		find $$dir -name ".depend" -delete; \
+		find $$dir -name "Make.dep" -print | xargs rm -f; \
+		find $$dir -name ".depend" -print | xargs rm -f; \
 	done
 PHONY += subdir_clean
 
 depend_clean:
-	$(Q)find $(SDKDIR) -name "Make.dep" -delete
-	$(Q)find $(SDKDIR) -name ".depend" -delete
+	$(Q)find $(SDKDIR) -name "Make.dep" -print | xargs rm -f
+	$(Q)find $(SDKDIR) -name ".depend" -print | xargs rm -f
 PHONY += depend_clean
 
 ifeq ($(MAKELEVEL),0)
@@ -193,7 +208,7 @@ PHONY += clean
 subdir_distclean: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_distclean)
 PHONY += subdir_distclean
 
-distclean: clean subdir_distclean clean_context
+distclean: subdir_distclean clean_context
 
 endif
 
@@ -214,10 +229,16 @@ PHONY += savedefconfig
 preconfig: $(foreach SDIR,$(TARGETDIRS),$(SDIR)_preconfig)
 	$(Q) python3 tools/mkkconfig.py -m "Spresense SDK" $(TARGETDIRS)
 
+archive:
+
+register:
+
+endif # ifeq ($(wildcard $(TOPDIR)/.config),)
+
 help:
 	@echo  ''
 	@echo  'SDK targets:'
-	@echo  '  (all)           - Build sdk (if buildkernel is done in advance)'
+	@echo  '  (all)           - Build sdk (if tools/config.py is done in advance)'
 	@echo  '  clean           - Remove most generated files but keep the sdk config'
 	@echo  '  distclean       - Remove all generated files + sdk config'
 	@echo  ''

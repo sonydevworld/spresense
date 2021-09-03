@@ -221,7 +221,7 @@ static void gpio_status_pin(uint32_t pin, const char *name)
         break;
     }
 
-  printf("(%3d)%-17s : %-4d %c/%c %-2d %-4s %-4d %-3d %-4s %-2s %-2s\n",
+  printf("(%3ld)%-17s : %-4d %c/%c %-2d %-4s %-4d %-3d %-4s %-2s %-2s\n",
          pin, name, mode,
          (input) ? 'I' : ' ',
          (output) ? 'O' : ' ',

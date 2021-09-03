@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # Bt_Spp built-in application info

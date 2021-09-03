@@ -1,0 +1,43 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "mbedTLS stub"
+
+config LTE_NET_MBEDTLS
+	bool "mbedTLS stub Library Support"
+	default n
+	select MODEM_ALT1250_ADDITIONAL_FUNC
+	---help---
+		This option enables to use mbed TLS library in alt1250 modem.
+		And when you select this, make sure CONFIG_EXTERNALS_MBEDTLS is disabled.
+		Those are exclusive items.
+
+if LTE_NET_MBEDTLS
+
+config HAVE_EXTHANDLER
+	bool "Enable user extension alt1250 command handler"
+	default n
+	---help---
+		Enable compose/parse packet handler of alt1250 for user extension.
+
+endif
+
+if LTE_NET_MBEDTLS
+
+config LTE_NET_MBEDTLS_ERROR_MSG
+	bool "Enable error output messages"
+	default n
+
+if LTE_NET_MBEDTLS_ERROR_MSG
+
+config LTE_NET_MBEDTLS_DEBUG_MSG
+	bool "Enable debug output messages"
+	default n
+
+endif
+
+endif
+
+endmenu # MBEDTLS_STUB

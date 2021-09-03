@@ -46,6 +46,7 @@
  * dnnrt is an Deep Neural Networks RunTime optimized for for CXD5602
  */
 
+#  include <malloc.h>
 #  include <asmp/types.h>
 #  include <dnnrt/nnablart/network.h>
 

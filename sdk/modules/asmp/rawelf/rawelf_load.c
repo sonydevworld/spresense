@@ -124,7 +124,7 @@ static int rawelf_elfsize(struct rawelf_loadinfo_s *loadinfo)
 
               (void) rawelf_read(loadinfo, (FAR uint8_t *)&sp, sizeof(uint32_t),
                                  shdr->sh_offset);
-              binfo("Stack pointer: %08x\n", sp);
+              binfo("Stack pointer: %08lx\n", sp);
             }
         }
     }

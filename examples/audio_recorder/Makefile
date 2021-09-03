@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # Audio application info
@@ -45,6 +45,7 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_RECORDER)
 
 # Audio Example
 
+CXXSRCS = audio_util.cxx
 MAINSRC = audio_recorder_main.cxx
 
 # Audio Example paths
@@ -69,7 +70,7 @@ ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_USEPREPROC),y)
 build_worker:
 	$(Q) $(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: build_worker
+$(OBJS): build_worker
 
 clean_worker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean

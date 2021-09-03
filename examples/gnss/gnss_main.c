@@ -169,7 +169,7 @@ static int read_and_print(int fd)
 
   /* Print time. */
 
-  printf(">Hour:%d, minute:%d, sec:%d, usec:%d\n",
+  printf(">Hour:%d, minute:%d, sec:%d, usec:%ld\n",
          posdat.receiver.time.hour, posdat.receiver.time.minute,
          posdat.receiver.time.sec, posdat.receiver.time.usec);
   if (posdat.receiver.pos_fixmode != CXD56_GNSS_PVT_POSFIX_INVALID)
@@ -180,10 +180,10 @@ static int read_and_print(int fd)
       posfixflag = 1;
 
       double_to_dmf(posdat.receiver.latitude, &dmf);
-      printf(">LAT %d.%d.%04d\n", dmf.degree, dmf.minute, dmf.frac);
+      printf(">LAT %d.%d.%04ld\n", dmf.degree, dmf.minute, dmf.frac);
 
       double_to_dmf(posdat.receiver.longitude, &dmf);
-      printf(">LNG %d.%d.%04d\n", dmf.degree, dmf.minute, dmf.frac);
+      printf(">LNG %d.%d.%04ld\n", dmf.degree, dmf.minute, dmf.frac);
     }
   else
     {

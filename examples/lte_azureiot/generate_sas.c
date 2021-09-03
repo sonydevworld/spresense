@@ -98,7 +98,7 @@ int generate_sas_token(char       *sas,
 
   expiry += time(NULL);
 
-  snprintf(sign_key, sign_key_len, "%s\n%d", urlencoded_url, expiry);
+  snprintf(sign_key, sign_key_len, "%s\n%ld", urlencoded_url, expiry);
 
   /* Create HMAC hash */
 
@@ -157,7 +157,7 @@ int generate_sas_token(char       *sas,
 
       snprintf(sas,
                size,
-               "SharedAccessSignature sig=%s&se=%d&sr=%s",
+               "SharedAccessSignature sig=%s&se=%ld&sr=%s",
                sign_key,
                expiry,
                urlencoded_url);

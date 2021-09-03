@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # FFT Example
@@ -51,7 +51,7 @@ include $(APPDIR)/Application.mk
 build_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: build_dsp
+$(OBJS): build_dsp
 
 clean_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean

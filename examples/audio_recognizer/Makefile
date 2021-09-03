@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # Audio application info
@@ -71,7 +71,7 @@ ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 endif
 	@$(MAKE) -C worker_recognizer TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-.built: build_worker
+$(OBJS): build_worker
 
 clean:: clean_worker clean_local
 

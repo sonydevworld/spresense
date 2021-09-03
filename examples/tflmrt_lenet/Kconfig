@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_TFLMRT_LENET
+	tristate "tflmrt example of LeNet-5"
+	depends on TFLM_RT
+	default n
+	---help---
+		classify MNIST digits by LeNet-5
+
+if EXAMPLES_TFLMRT_LENET
+
+config EXAMPLES_TFLMRT_LENET_PROGNAME
+	string "Program name"
+	default "tflmrt_lenet"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_TFLMRT_LENET_PRIORITY
+	int "tflmrt_lenet task priority"
+	default 100
+
+config EXAMPLES_TFLMRT_LENET_STACKSIZE
+	int "tflmrt_lenet stack size"
+	default 8192
+
+endif

@@ -248,8 +248,8 @@ void cbRcvDspRes(void *p_response, void *p_instance)
 uint32_t DecoderComponent::init_apu(const InitDecCompParam& param,
                                     uint32_t *dsp_inf)
 {
-  DECODER_DBG("INIT: code %d, fs %d, ch num %d, bit len %d, "
-              "sample num %d, cb %08x, req %08x\n",
+  DECODER_DBG("INIT: code %d, fs %ld, ch num %d, bit len %d, "
+              "sample num %ld, cb %p, req %p\n",
                param.codec_type, param.input_sampling_rate, param.channel_num,
                param.bit_width, param.frame_sample_num, param.callback,
                param.p_requester);
@@ -507,7 +507,7 @@ bool DecoderComponent::recv_apu(void *p_response)
       logerr(" result  = %d\n", packet->result.exec_result);
       logerr(" res_src = %d\n", packet->result.internal_result[0].res_src);
       logerr(" code    = %d\n", packet->result.internal_result[0].code);
-      logerr(" value   = %d\n", packet->result.internal_result[0].value);
+      logerr(" value   = %ld\n", packet->result.internal_result[0].value);
       DECODER_WARN(AS_ATTENTION_SUB_CODE_DSP_EXEC_ERROR);
     }
 
@@ -540,7 +540,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
   char filepath[64];
   uint32_t decoder_dsp_version;
 
-  DECODER_DBG("ACT: codec %d\n", param);
+  DECODER_DBG("ACT: codec %d\n", param->codec);
 
   switch (param->codec)
     {
@@ -604,7 +604,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
   if (decoder_dsp_version != DSP_VERSION_GET_VER(*param->dsp_inf))
     {
       is_version_matched = false;
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08lx / actual %08lx",
               decoder_dsp_version, DSP_VERSION_GET_VER(*param->dsp_inf));
 
       DECODER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -633,7 +633,7 @@ uint32_t DecoderComponent::activate(FAR ActDecCompParam *param)
 
       if (decoder_dsp_version != DSP_VERSION_GET_VER(slave_dsp_inf))
         {
-          logerr("Slave DSP version unmatch. expect %08x / actual %08x",
+          logerr("Slave DSP version unmatch. expect %08lx / actual %08lx",
                   decoder_dsp_version, DSP_VERSION_GET_VER(slave_dsp_inf));
 
           if (!is_version_matched)

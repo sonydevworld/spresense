@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
 # Audio oscillator application info
@@ -73,7 +73,7 @@ ifeq ($(CONFIG_EXAMPLES_AUDIO_OSCILLATOR_USEPOSTPROC),y)
 	$(Q) $(MAKE) -C worker_postproc TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 endif
 
-.built: build_worker
+$(OBJS): build_worker
 
 clean_worker:
 	@$(MAKE) -C worker_oscillator TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean

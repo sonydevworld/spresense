@@ -443,7 +443,7 @@ void SynthesizerObject::initOnReady(MsgPacket *msg)
   uint32_t               dsp_inf = 0;
 
   SYNTHESIZER_OBJ_DBG(
-        "INIT: type %d, ch num %d, bit len %d, sampling_rate %d sample %d\n",
+        "INIT: type %d, ch num %d, bit len %d, sampling_rate %ld sample %d\n",
         param.type,
         param.channel_num,
         param.bit_width,
@@ -471,7 +471,7 @@ void SynthesizerObject::initOnReady(MsgPacket *msg)
     {
       /* Set parameter */
 
-      strcpy(m_dsp_path, param.dsp_path);
+      strncpy(m_dsp_path, param.dsp_path, sizeof(m_dsp_path));
 
       m_sample_size = param.sample_size;
 
@@ -1010,7 +1010,7 @@ bool AS_DeleteMediaSynthesizer(void)
   pthread_cancel(pid);
   pthread_join(pid, NULL);
 
-  pid = INVALID_PROCESS_ID;
+  SynthesizerObject::set_pid(INVALID_PROCESS_ID);
 
   SYNTHESIZER_OBJ_UNREG_ATTCB();
 

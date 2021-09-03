@@ -33,6 +33,6 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER),y)
+ifneq ($(CONFIG_EXAMPLES_AWSIOT_GNSSLOGGER),)
 CONFIGURED_APPS += awsiot_gnsslogger
 endif

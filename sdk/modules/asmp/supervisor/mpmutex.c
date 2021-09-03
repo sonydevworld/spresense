@@ -50,7 +50,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "up_arch.h"
+#include "arm_arch.h"
 #include "chip.h"
 
 #include "cxd56_sph.h"

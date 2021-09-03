@@ -2,7 +2,7 @@
 # apps/Makefile
 #
 #   Copyright (C) 2011 Uros Platise. All rights reserved.
-#   Copyright (C) 2011-2014 Gregory Nutt. All rights reserved.
+#   Copyright (C) 2011-2014, 2018-2019 Gregory Nutt. All rights reserved.
 #   Authors: Uros Platise <uros.platise@isotel.eu>
 #            Gregory Nutt <gnutt@nuttx.org>
 #
@@ -35,93 +35,151 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+export APPDIR = $(CURDIR)
 include $(APPDIR)/Make.defs
-
-# Application Directories
-
-# BUILDIRS is the list of top-level directories containing Make.defs files
-# CLEANDIRS is the list of all top-level directories containing Makefiles.
-#   It is used only for cleaning.
 
 BUILDIRS   := $(dir $(wildcard */Make.defs))
 CLEANDIRS  := $(dir $(wildcard */Makefile))
-
-# CONFIGURED_APPS is the application directories that should be built in
-#   the current configuration.
+CONFIGDIRS := $(filter-out $(dir $(wildcard */Kconfig)),$(BUILDIRS))
 
 CONFIGURED_APPS =
 
-define Add_Application
-  include $(1)Make.defs
-endef
-
 $(foreach BDIR, $(BUILDIRS), $(eval $(call Add_Application,$(BDIR))))
 
-# Library path
+# Symbol table for loadable apps.
 
-LIBPATH ?= $(TOPDIR)$(DELIM)libs
-
-# The install path
-
-BIN_DIR = $(APPDIR)$(DELIM)bin
+SYMTABSRC = symtab_apps.c
+SYMTABOBJ = $(SYMTABSRC:.c=$(OBJEXT))
 
 # Build targets
 
+# We first remove libapps.a before letting the other rules add objects to it
+# so that we ensure libapps.a does not contain objects from prior build
+
 all: .built
-.PHONY: import install dirlinks context context_serialize context_rest .depdirs preconfig depend clean distclean
-
-define MAKE_template
-	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
-
-endef
-
-define SDIR_template
-$(1)_$(2):
-	$(Q) cd $(1) && $(MAKE) $(2) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)"
-
-endef
+  
+.PHONY: import install dirlinks export .depdirs preconfig depend clean distclean
+.PHONY: context clean_context context_all register register_all
+.PRECIOUS: $(BIN)
 
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),install)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))
+$(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),register)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),depend)))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),clean)))
 $(foreach SDIR, $(CLEANDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 
-.built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
-	@ touch $@
+$(MKDEP): $(TOPDIR)/tools/mkdeps.c
+	$(HOSTCC) $(HOSTINCLUDES) $(HOSTCFLAGS) $< -o $@
+
+$(INCDIR): $(TOPDIR)/tools/incdir.c
+	$(HOSTCC) $(HOSTINCLUDES) $(HOSTCFLAGS) $< -o $@
+
+IMPORT_TOOLS = $(MKDEP) $(INCDIR)
+
+# In the KERNEL build, we must build and install all of the modules.  No
+# symbol table is needed
+
+ifeq ($(CONFIG_BUILD_KERNEL),y)
 
 install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
 
-.import: $(BIN) install
+.import: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
+	$(Q) $(MAKE) install
 
-import:
+import: $(IMPORT_TOOLS)
+	$(Q) $(MAKE) context TOPDIR="$(APPDIR)$(DELIM)import"
+	$(Q) $(MAKE) register TOPDIR="$(APPDIR)$(DELIM)import"
+	$(Q) $(MAKE) depend TOPDIR="$(APPDIR)$(DELIM)import"
 	$(Q) $(MAKE) .import TOPDIR="$(APPDIR)$(DELIM)import"
+
+else
+
+# In FLAT and protected modes, the modules have already been created.  A
+# symbol table is required.
+
+.built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
+	$(Q) for app in ${CONFIGURED_APPS}; do \
+		$(MAKE) -C "$${app}" archive ; \
+	done
+	$(Q) touch $@
+
+install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
+
+# Link nuttx
+
+HEAD_OBJ += $(wildcard $(APPDIR)$(DELIM)import$(DELIM)startup$(DELIM)*$(OBJEXT))
+HEAD_OBJ += $(wildcard $(APPDIR)$(DELIM)builtin$(DELIM)*$(OBJEXT))
+
+.import: $(BIN) install
+	$(Q) echo "LD: nuttx"
+	$(Q) $(LD) --entry=__start $(LDFLAGS) $(LDLIBPATH) $(EXTRA_LIBPATHS) \
+	  -L$(APPDIR)$(DELIM)import$(DELIM)scripts -T$(LDNAME) \
+	  -o nuttx$(EXEEXT) $(HEAD_OBJ) $(EXTRA_OBJS) $(LDSTARTGROUP) \
+	  $(BIN) $(LDLIBS) $(EXTRA_LIBS) $(LDENDGROUP)
+ifeq ($(CONFIG_INTELHEX_BINARY),y)
+	$(Q) echo "CP: nuttx.hex"
+	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O ihex nuttx$(EXEEXT) nuttx.hex
+endif
+ifeq ($(CONFIG_RAW_BINARY),y)
+	$(Q) echo "CP: nuttx.bin"
+	$(Q) $(OBJCOPY) $(OBJCOPYARGS) -O binary nuttx$(EXEEXT) nuttx.bin
+endif
+	$(call POSTBUILD, $(APPDIR))
+
+import: $(IMPORT_TOOLS)
+	$(Q) $(MAKE) context TOPDIR="$(APPDIR)$(DELIM)import"
+	$(Q) $(MAKE) register TOPDIR="$(APPDIR)$(DELIM)import"
+	$(Q) $(MAKE) depend TOPDIR="$(APPDIR)$(DELIM)import"
+	$(Q) $(MAKE) .import TOPDIR="$(APPDIR)$(DELIM)import"
+
+endif # CONFIG_BUILD_KERNEL
 
 dirlinks:
 
-context: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_context)
+context_all: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_context)
+register_all: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_register)
+
+context:
+	$(Q) $(MAKE) context_all
+	$(Q) $(MAKE) register_all
 
 Kconfig:
-	$(foreach SDIR, $(BUILDIRS), $(call MAKE_template,$(SDIR),preconfig))
+	$(foreach SDIR, $(CONFIGDIRS), $(call MAKE_template,$(SDIR),preconfig))
 ifneq ($(MENUDESC),)
 	$(Q) $(MKKCONFIG) -m $(MENUDESC)
 endif
 
 preconfig: Kconfig
 
+export:
+ifneq ($(EXPORTDIR),)
+ifneq ($(BUILTIN_REGISTRY),)
+	$(Q) mkdir -p "${EXPORTDIR}"/registry || exit 1; \
+	for f in "${BUILTIN_REGISTRY}"/*.bdat "${BUILTIN_REGISTRY}"/*.pdat ; do \
+		[ -f "$${f}" ] && cp -f "$${f}" "${EXPORTDIR}"/registry ; \
+	done
+endif
+endif
+
 .depdirs: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_depend)
 
-.depend: context Makefile .depdirs
+.depend: Makefile .depdirs
 	$(Q) touch $@
 
 depend: .depend
 
+clean_context:
+	$(Q) $(MAKE) -C platform clean_context
+	$(Q) $(MAKE) -C builtin clean_context
+
 clean: $(foreach SDIR, $(CLEANDIRS), $(SDIR)_clean)
+	$(call DELFILE, $(SYMTABSRC))
+	$(call DELFILE, $(SYMTABOBJ))
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, Kconfig)
-	$(call DELDIR, $(BIN_DIR))
+	$(call DELDIR, $(BINDIR))
 	$(call CLEAN)
 
 distclean: $(foreach SDIR, $(CLEANDIRS), $(SDIR)_distclean)
@@ -136,11 +194,13 @@ else
 		echo "********************************************************"; \
 		echo "* The external directory/link must be removed manually *"; \
 		echo "********************************************************"; \
-	   fi; \
+		fi; \
 	)
 endif
 	$(call DELFILE, .depend)
+	$(call DELFILE, $(SYMTABSRC))
+	$(call DELFILE, $(SYMTABOBJ))
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, Kconfig)
-	$(call DELDIR, $(BIN_DIR))
+	$(call DELDIR, $(BINDIR))
 	$(call CLEAN)

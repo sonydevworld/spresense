@@ -328,7 +328,7 @@ static int sensing_main(int fd)
         {
           struct scuev_arg_s *arg = (struct scuev_arg_s *)info.si_value.sival_ptr;
 
-          printf("Tilt detected! (%s) %u\n",
+          printf("Tilt detected! (%s) %lu\n",
                  arg->type == SCU_EV_RISE ? "Rise" : "Fall",
                  arg->ts.sec);
         }

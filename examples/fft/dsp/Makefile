@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 BIN = DSPFFT
@@ -112,6 +112,7 @@ $(WORKER_LIB): libdepend
 
 $(CMSIS_DSP_LIB):
 	$(Q) $(MAKE) -C $(CMSIS_DSP_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)"
+	$(Q) $(MAKE) -C $(CMSIS_DSP_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" archive
 
 context:
 

@@ -110,7 +110,7 @@ static void dump_data(struct scutimestamp_s *ts, void *data, int nbytes)
             }
           temp *= 2;
         }
-      printf("[%3d] %u.%u raw[%02x %02x %02x]\n", i, press >> 8, deci / 1000000,
+      printf("[%3d] %lu.%lu raw[%02x %02x %02x]\n", i, press >> 8, deci / 1000000,
                                                   meas_press[i].msb, meas_press[i].lsb, meas_press[i].xlsb);
     }
 

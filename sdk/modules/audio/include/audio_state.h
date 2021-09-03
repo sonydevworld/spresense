@@ -70,7 +70,7 @@ public:
 
   AudioState& operator=(T state)
     {
-      AUDIO_LOG_STATE(m_mod_id, "(%04x) %s[%d>%d]\n",
+      AUDIO_LOG_STATE(m_mod_id, "(%04lx) %s[%d>%d]\n",
         ((uint32_t)this & 0xffff), m_name, m_state, state);
       m_state = state;
       return *this;

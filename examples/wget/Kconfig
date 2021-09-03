@@ -1,0 +1,49 @@
+
+config EXAMPLES_SPRESENSE_WGET
+	tristate "wget app"
+	default n
+	select NSH_DISABLE_WGET
+	---help---
+		Enable the wget app with TLS
+
+if EXAMPLES_SPRESENSE_WGET
+
+config EXAMPLES_SPRESENSE_WGET_PROGNAME
+	string "Program name"
+	default "wget"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_SPRESENSE_WGET_PRIORITY
+	int "wget task priority"
+	default 100
+
+config EXAMPLES_SPRESENSE_WGET_STACKSIZE
+	int "wget stack size"
+	default 8192
+
+config EXAMPLES_SPRESENSE_WGET_URL
+  string "File URL"
+  default ""
+  ---help---
+    The URL of the file to get
+
+config EXAMPLES_SPRESENSE_WGET_NOMAC
+  bool "Use Canned MAC Address"
+  depends on !NSH_NETINIT
+  default n
+
+config EXAMPLES_SPRESENSE_WGET_IPADDR
+  hex "Target IP address"
+  default 0x0a000002
+
+config EXAMPLES_SPRESENSE_WGET_DRIPADDR
+  hex "Default Router IP address (Gateway)"
+  default 0x0a000001
+
+config EXAMPLES_SPRESENSE_WGET_NETMASK
+  hex "Network Mask"
+  default 0xffffff00
+
+endif

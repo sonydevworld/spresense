@@ -58,14 +58,6 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-/* Check configuration.  This is not all of the configuration settings that
- * are required -- only the more obvious.
- */
-
-#if CONFIG_NFILE_DESCRIPTORS < 1
-#  error "You must provide file descriptors via CONFIG_NFILE_DESCRIPTORS in your configuration file"
-#endif
-
 #ifdef CONFIG_EXAMPLES_FFT_DSP_PATH
 #  define DSP_LIBFILE CONFIG_EXAMPLES_FFT_DSP_PATH
 #else
@@ -224,7 +216,7 @@ static int fft_request_test(void)
   printf("FFT times: %d\n", TEST_NUM);
   printf("FFT samples: %d\n", SAMPLES);
   printf("FFT total time: %8.5f [ms]\n", (now2 - now1) / 32.768f);
-  printf("FFT execution result: ret=%d addr=0x%08x\n", ret, addr);
+  printf("FFT execution result: ret=%d addr=0x%08lx\n", ret, addr);
 
   /* Display the results of FFT calculation */
 
@@ -254,7 +246,7 @@ static int fft_monitor(int argc, FAR char *argv[])
           break;
         }
 
-      printf("FFT execution result: ret=%d addr=0x%08x\n", ret, addr);
+      printf("FFT execution result: ret=%d addr=0x%08lx\n", ret, addr);
       for (i = 0; i < TEST_NUM; i++)
         {
           printf("%2d: %9.3f\n", i, g_peakBuffer[i]);

@@ -33,7 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/Make.defs
+include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 CUR_DIR=$(shell pwd)
@@ -89,13 +89,15 @@ TENSORFLOW_OPTKERNEL = cmsis_nn
 TENSORFLOW_TARGET = spresense
 TENSORFLOW_LIBOUT = $(TENSORFLOW_DIR)$(DELIM)tensorflow$(DELIM)lite$(DELIM)micro$(DELIM)tools$(DELIM)make$(DELIM)gen$(DELIM)spresense_cortex-m4_micro$(DELIM)lib
 SPRESENSE_MAKEDEF = $(TOPDIR)$(DELIM)Make.defs
+SPRESENSE_TF_C_RUNTIME = $(CUR_DIR)$(DELIM)c-runtime$(DELIM)Runtime.mk
 
 TF_MAKECMD := make -f $(TENSORFLOW_MAKEFILE) \
 											OPTIMIZED_KERNEL_DIR=$(TENSORFLOW_OPTKERNEL) \
 											TARGET=$(TENSORFLOW_TARGET) \
 											SPRESENSE_DEFS=$(SPRESENSE_MAKEDEF) \
 											SPRESENSE_CONFIG_H=$(TOPDIR)$(DELIM)include$(DELIM)nuttx$(DELIM)config.h \
-											SPRESENSE_CURDIR=$(CUR_DIR)
+											SPRESENSE_CURDIR=$(CUR_DIR) \
+											SPRESENSE_APP_TFMAKE=$(SPRESENSE_TF_C_RUNTIME)
 
 context:: $(TENSORFLOW_DIR)
 
@@ -137,7 +139,7 @@ tensorflow_clean:
 	fi
 	$(Q) rm -f dummy_src.c
 
-delete_tensorflow:
+delete_tensorflow: tensorflow_clean
 	$(Q) if [ -d $(TENSORFLOW_DIR) ]; then \
 		rm -rf $(TENSORFLOW_DIR); \
 	fi

@@ -78,7 +78,7 @@ static bool recognition_done_callback(ComponentCbParam *cmplt, void* p_requester
   result_param.result     = cmplt->result;
 
   err_t er = MsgLib::send<RecognizerObject::RecognitionDoneCmd>
-                                                (RecognizerObject::get_self(),
+                                                (RecognizerObject::get_msgq_id(),
                                                  MsgPriNormal,
                                                  MSG_AUD_RCG_RCG_CMPLT,
                                                  NULL,
@@ -794,7 +794,7 @@ bool AS_DeleteRecognizer(void)
   pthread_cancel(pid);
   pthread_join(pid, NULL);
 
-  pid = INVALID_PROCESS_ID;
+  RecognizerObject::set_pid(INVALID_PROCESS_ID);
 
   /* Unregister attention callback */
 
@@ -807,14 +807,12 @@ bool AS_DeleteRecognizer(void)
 /*--------------------------------------------------------------------------*/
 bool AS_checkAvailabilityRecognizer(void)
 {
-	printf("check %d\n",RecognizerObject::get_instance());
   return (RecognizerObject::get_instance() != NULL);
 }
 
 /*--------------------------------------------------------------------------*/
 void RecognizerObject::create(AsObjectParams_t* params)
 {
-	printf("create %d\n",RecognizerObject::get_instance());
   RecognizerObject* inst = new(RecognizerObject::get_adr()) RecognizerObject(params->msgq_id,params->pool_id);
   if (inst != NULL)
     {

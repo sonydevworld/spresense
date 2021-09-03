@@ -129,7 +129,7 @@ uint32_t SRCComponent::activate(ComponentCallback callback,
 
   if (DSP_SRC_VERSION != *dsp_inf)
     {
-      logerr("DSP version unmatch. expect %08x / actual %08x",
+      logerr("DSP version unmatch. expect %08x / actual %08lx",
               DSP_SRC_VERSION, *dsp_inf);
 
       FILTER_ERR(AS_ATTENTION_SUB_CODE_DSP_VERSION_ERROR);
@@ -187,7 +187,7 @@ uint32_t SRCComponent::init(const InitComponentParam& param)
   Apu::Wien2ApuCmd *p_apu_cmd =
     static_cast<Apu::Wien2ApuCmd*>(reqdata.cmd_mh.getPa());
 
-  FILTER_DBG("INIT SRC: sample num %d, fs <in %d/out %d>, "
+  FILTER_DBG("INIT SRC: sample num %ld, fs <in %ld/out %ld>, "
              "byte len <in %d/out %d>, ch num %d\n",
              param.common.samples, param.common.in_fs,
              param.common.out_fs,

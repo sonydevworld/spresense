@@ -38,6 +38,7 @@ include $(SDKDIR)/modules/Make.defs
 
 MODULEDIRS := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Make.defs))
 CLEANDIRS  := $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)Makefile))
+CLEANDIRS  += $(dir $(wildcard $(SDKDIR)$(DELIM)modules$(DELIM)*$(DELIM)*$(DELIM)Makefile))
 
 define SDIR_template
 $(1)_$(2):
@@ -57,6 +58,9 @@ endef
 $(foreach SDIR, $(MODULEDIRS), $(eval $(call Add_Module,$(SDIR))))
 
 all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
+	$(Q) for app in ${CONFIGURED_APPS}; do \
+		$(MAKE) -C "$${app}" archive ; \
+	done
 
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))

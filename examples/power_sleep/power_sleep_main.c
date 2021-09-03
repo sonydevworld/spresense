@@ -125,14 +125,14 @@ int main(int argc, FAR char *argv[])
     {
       /* Last time was cold sleep, so go to deep sleep then */
 
-      printf("Sleep DEEPLY in %d seconds...\n", seconds);
+      printf("Sleep DEEPLY in %ld seconds...\n", seconds);
       boardctl(BOARDIOC_POWEROFF, 0);
     }
   else
     {
       /* Last time was deep sleep or POR, so go to deep sleep then */
 
-      printf("Sleep COLDLY in %d seconds...\n", seconds);
+      printf("Sleep COLDLY in %ld seconds...\n", seconds);
       boardctl(BOARDIOC_POWEROFF, 1);
     }
 

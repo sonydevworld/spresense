@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <queue.h>
 #include <errno.h>
+#include <mqueue.h>
 
 #include "memutils/memory_manager/MemHandle.h"
 #include "include/mem_layout.h"

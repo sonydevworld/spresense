@@ -135,7 +135,7 @@ static int do_partial_download(struct fwup_client_s *fwup, FILE *fp,
 
     remain -= size;
 
-    printf("->dl(0x%08x, %d / %d): ret=%d\n",
+    printf("->dl(0x%08lx, %ld / %ld): ret=%d\n",
            (uint32_t)buf, fwsize - remain, fwsize, ret);
 
     fwup->msgsync();
@@ -174,7 +174,7 @@ static int do_package_download(struct fwup_client_s *fwup, char* pathname)
       /* debug information */
 
       printf("File: %s(%d)\n", pathname, fwnum++);
-      printf("Size: %d\n", fwsize);
+      printf("Size: %ld\n", fwsize);
       printf("Type: %s\n", get_file_type_string(fwtype));
       if (fwsize <= 0)
         {
@@ -216,7 +216,7 @@ int fwupdate_package(char* pathname)
   /* debug information */
 
   printf("File: %s\n", pathname);
-  printf("Size: %d\n", get_file_size(pathname));
+  printf("Size: %ld\n", get_file_size(pathname));
 
   /*
    * FW Download into SPI-Flash

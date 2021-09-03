@@ -92,7 +92,7 @@ InputDataManagerObject::GetEsResult
   Mp3StreamMng::getEs(FAR void *es_buf, FAR uint32_t *es_size)
 {
   InputDataManagerObject::GetEsResult ret = EsEnd;
-  int ready_to_extract_frames = 0;
+  int32_t ready_to_extract_frames = 0;
   if (m_done_open && (0 < *es_size))
     {
       size_t size = 0;

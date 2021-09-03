@@ -1,0 +1,105 @@
+
+config EXAMPLES_DIGITAL_FILTER
+	tristate "Digital filters example"
+	default n
+	---help---
+		Enable the several apps base on digital_filter module.
+
+if EXAMPLES_DIGITAL_FILTER
+
+menu "FIR filter example app"
+
+config EXAMPLES_FIR_FIR_PROGNAME
+	string "Program name"
+	default "fir"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed. This "fir" creates a wav file filtered from input wav file.
+
+config EXAMPLES_FIR_FIR_PRIORITY
+	int "fir task priority"
+	default 100
+
+config EXAMPLES_FIR_FIR_STACKSIZE
+	int "fir stack size"
+	default 2048
+
+endmenu # "FIR filter example app"
+
+menu "Decimation filter example app"
+
+config EXAMPLES_FIR_DECIMATOR_PROGNAME
+	string "Program name"
+	default "decimate"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed. This "decimate" creates a wav file decimated from input wav file.
+
+config EXAMPLES_FIR_DECIMATOR_PRIORITY
+	int "decimate task priority"
+	default 100
+
+config EXAMPLES_FIR_DECIMATOR_STACKSIZE
+	int "decimate stack size"
+	default 2048
+
+endmenu # "Decimation filter example app"
+
+menu "Envelope example app"
+
+config EXAMPLES_ENVELOPE_PROGNAME
+	string "Program name"
+	default "envelope"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ENVELOPE_PRIORITY
+	int "envelope task priority"
+	default 100
+
+config EXAMPLES_ENVELOPE_STACKSIZE
+	int "envelope stack size"
+	default 2048
+
+endmenu # "Decimation filter example app"
+
+menu "Edge example app"
+
+config EXAMPLES_EDGE_PROGNAME
+	string "Program name"
+	default "edge"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_EDGE_PRIORITY
+	int "edge task priority"
+	default 100
+
+config EXAMPLES_EDGE_STACKSIZE
+	int "edge stack size"
+	default 2048
+
+endmenu # "Edge example app"
+
+menu "Edge16 example app"
+
+config EXAMPLES_EDGE16_PROGNAME
+	string "Program name"
+	default "edge16"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_EDGE16_PRIORITY
+	int "edge16 task priority"
+	default 100
+
+config EXAMPLES_EDGE16_STACKSIZE
+	int "edge16 stack size"
+	default 2048
+
+endmenu # "Edge example app"
+
+endif

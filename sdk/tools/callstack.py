@@ -41,7 +41,7 @@ syms = []
 def get_symbol(x):
     try:
         addr = int(x, 16)
-    except ValueError, e:
+    except ValueError as e:
         return
     for num in range(len(syms)-1):
         if syms[num][0] <= addr and addr < syms[num+1][0]:
@@ -52,7 +52,7 @@ def main():
     argc = len(argv)
 
     if (argc < 3):
-        print 'Usage: python %s <System.map> <stackdump.log>' % argv[0]
+        print('Usage: python %s <System.map> <stackdump.log>' % argv[0])
         quit()
 
     for line in open(argv[1], 'r'):
@@ -62,15 +62,15 @@ def main():
 
     callstack = []
     for line in open(argv[2], 'r'):
-        print line[:-1]
+        print(line[:-1])
         if 'up_stackdump:' in line:
             for item in line.split(' '):
                 callstack.append(get_symbol(item))
 
-    print '----------------- callstack -----------------'
+    print('----------------- callstack -----------------')
     for cs in callstack:
         if cs is not None:
-            print cs
+            print(cs)
 
 if __name__ == '__main__':
     main()

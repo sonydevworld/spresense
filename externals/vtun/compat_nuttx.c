@@ -73,7 +73,7 @@ void closelog(void)
 }
 
 #ifndef CONFIG_PSEUDOFS_SOFTLINKS
-int link(const char *path1, const char *path2)
+int symlink(const char *path1, const char *path2)
 {
   return 0;
 }
