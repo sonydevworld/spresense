@@ -1,3 +1,6 @@
+[![twitter spresense handle][]][twitter spresense badge]
+[![twitter devworld handle][]][twitter devworld badge]
+
 # Spresense SDK repository
 
 Clone this repository and update submodules.
@@ -71,3 +74,8 @@ $ make
 
 A `nuttx.spk` file appears in the `sdk` folder when this step has successfully finished.
 This file is the final result and can be flashed into the your board.
+
+[twitter spresense handle]: https://img.shields.io/twitter/follow/SpresensebySony?style=social&logo=twitter
+[twitter spresense badge]: https://twitter.com/intent/follow?screen_name=SpresensebySony
+[twitter devworld handle]: https://img.shields.io/twitter/follow/SonyDevWorld?style=social&logo=twitter
+[twitter devworld badge]: https://twitter.com/intent/follow?screen_name=SonyDevWorld
