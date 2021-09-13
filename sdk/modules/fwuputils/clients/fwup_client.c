@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/fwuputils/clients/fwup_client.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,30 +37,24 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
+#include <nuttx/config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <debug.h>
+#include <assert.h>
 
 #include <errno.h>
 #include <sched.h>
 #include <mqueue.h>
 #include <fcntl.h>
 
+#include <arch/chip/chip.h>
 #include "hardware/cxd5602_backupmem.h"
 
-#include "fwuputils/fwup_manager.h"
 #include "fwuputils/fwup_client.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-/****************************************************************************
- * Private Types
- ****************************************************************************/
+#include "sys_update_mgr.h"
 
 /****************************************************************************
  * Private Function Prototypes
@@ -80,8 +74,8 @@ static int fwup_client_finalize(void);
  * Private Data
  ****************************************************************************/
 
-static mqd_t g_fwup_mqd;
-static sem_t g_fwup_sem;
+static UM_Handle g_handle;
+static uint32_t  g_remain;
 
 static struct fwup_client_s g_client =
 {
@@ -106,89 +100,148 @@ static struct fwup_client_s *get_client(void)
 
 static int fwup_client_initialize(void)
 {
-  struct fwup_msg_s msg;
-
-  msg.cmd = FWUP_INIT;
-
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+  return fw_um_init(false);
 }
 
 static int fwup_client_msgsync(void)
 {
+  /* old function to keep for compatibility */
+
+  return 0;
+}
+
+static int get_fw_property(enum fw_type_e fwtype,
+                           uint32_t *type, char *keyfile)
+{
+  int ret = 0;
+
+  switch (fwtype)
+    {
+      case FW_APP:
+        *type = UM_TYPE_FIRMWARE;
+        strncpy(keyfile, "app.key", 16);
+        break;
+     case FW_SYS:
+        *type = UM_TYPE_FIRMWARE;
+        strncpy(keyfile, "sys.key", 16);
+        break;
+      case FW_UPDATER:
+        *type = UM_TYPE_FIRMWARE;
+        strncpy(keyfile, "updater.key", 16);
+        break;
+     case FW_SBL:
+        *type = UM_TYPE_SBL;
+        break;
+      default:
+        ret = -EINVAL;
+        break;
+    }
+
+  return ret;
+}
+
+static int fwup_open(enum fw_type_e fwtype, uint32_t fwsize)
+{
+  int ret = 0;
+  char keyfile[32];
+  uint32_t type = 0;
+
+  memset(keyfile, 0, sizeof(keyfile));
+
+  ret = get_fw_property(fwtype, &type, keyfile);
+  if (ret)
+    {
+      DEBUGASSERT(ret == 0);
+      return ret;
+    }
+
+  g_handle = fw_um_open(keyfile, fwsize, type);
+  g_remain = fwsize;
+
+  return ret;
+}
+
+static int fwup_write(void *data, uint32_t size)
+{
+  int ret = 0;
+
+  ret = fw_um_commit(g_handle, (void *)CXD56_PHYSADDR(data), size);
+  if (ret == 0)
+    {
+      g_remain -= size;
+    }
+
+  return ret;
+}
+
+static int fwup_close(void)
+{
   int ret;
-  struct fwup_msg_s msg;
 
-  msg.cmd = FWUP_MSGSYNC;
+  ret = fw_um_close(g_handle);
+  g_remain = 0;
 
-  msg.u.syncparam.sem = &g_fwup_sem;
-
-  ret = mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
-
-  sem_wait(&g_fwup_sem);
   return ret;
 }
 
 static int fwup_client_download(enum fw_type_e fwtype, uint32_t fwsize,
                                 void *data, uint32_t size)
 {
-  struct fwup_msg_s msg;
+  int ret;
 
-  msg.cmd = FWUP_DOWNLOAD;
+  /* if now on downloading or not */
 
-  msg.u.dlparam.fwtype = fwtype;
-  msg.u.dlparam.fwsize = fwsize;
-  msg.u.dlparam.data = data;
-  msg.u.dlparam.size = size;
+  if (g_remain == 0)
+    {
+      /* start to download */
 
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+      ret = fwup_open(fwtype, fwsize);
+    }
+
+  /* downloading */
+
+  ret = fwup_write(data, size);
+  if (ret)
+    {
+      return -EIO;
+    }
+
+  /* if download finish or not */
+
+  if (g_remain == 0)
+    {
+      /* stop to download */
+
+      ret = fwup_close();
+    }
+
+  return ret;
 }
 
 static int fwup_client_update(void)
 {
-  struct fwup_msg_s msg;
-
-  msg.cmd = FWUP_UPDATE;
-
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+  return fw_um_doupdatesequence();
 }
 
 static int fwup_client_suspend(void)
 {
-  struct fwup_msg_s msg;
-
-  msg.cmd = FWUP_SUSPEND;
-
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+  return fw_um_checkpoint();
 }
 
 static int fwup_client_resume(void)
 {
-  struct fwup_msg_s msg;
-
-  msg.cmd = FWUP_RESUME;
-
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+  return fw_um_init(true);
 }
 
 static int fwup_client_abort(void)
 {
-  struct fwup_msg_s msg;
+  fw_um_abort();
 
-  msg.cmd = FWUP_ABORT;
-
-  return mq_send(g_fwup_mqd, (const char*)&msg, sizeof(msg), 0);
+  return 0;
 }
 
 static int fwup_client_finalize(void)
 {
-  /* close message queue to send a message to manager */
-
-  mq_close(g_fwup_mqd);
-
-  /* finalize manager */
-
-  fwup_finalize();
-
   return 0;
 }
 
@@ -199,16 +252,6 @@ static int fwup_client_finalize(void)
 struct fwup_client_s *fwup_client_setup(void)
 {
   struct fwup_client_s *client = get_client();
-
-  /* initialize manager */
-
-  fwup_initialize();
-
-  /* open message queue to send a message to manager */
-
-  g_fwup_mqd = mq_open(FWUP_MSGQ_NAME, O_WRONLY, 0666, NULL);
-
-  sem_init(&g_fwup_sem, 0, 0);
 
   return client;
 }
