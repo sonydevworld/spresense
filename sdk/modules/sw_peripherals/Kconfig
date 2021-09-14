@@ -9,6 +9,7 @@ menu "Software Peripherals"
 config SW_PERIPHERALS
 	bool "Software emulated peripheral libraries"
 	default n
+	select SPI_BITBANG
 
 if SW_PERIPHERALS
 

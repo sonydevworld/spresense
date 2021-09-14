@@ -37,8 +37,8 @@
  * @file sw_spi.h
  */
 
-#ifndef __MODULES_SWPERIPHERALS_SW_SPI_H__
-#define __MODULES_SWPERIPHERALS_SW_SPI_H__
+#ifndef __MODULES_SW_PERIPHERALS_SW_SPI_H__
+#define __MODULES_SW_PERIPHERALS_SW_SPI_H__
 
 /**
  * @defgroup sw_spi Software SPI
@@ -48,31 +48,6 @@
  */
 
 #include <nuttx/spi/spi.h>
-
-/**
- * @defgroup sw_spi_datatype Data Types
- * @{
- */
-
-/**
- * @struct swspi_s
- *
- * Instance of software SPI device.
- */
-
-struct swspi_s
-{
-  int cs;
-  int sck;
-  int mosi;
-  int miso;
-
-  enum spi_mode_e mode;
-  int bits;
-  int delay_us;
-};
-
-/** @} sw_spi_datatype */
 
 #  ifdef __cplusplus
 #    define EXTERN extern "C"
@@ -92,76 +67,24 @@ extern "C"
  */
 
 /**
- * Setup Software emulated SPI driver instance
+ * Create software emulated SPI driver.
  *
- * @param [in] dev: Instance of Software SPI to setup.
  * @param [in] cs_pin: Chip Select pin number.
  * @param [in] sck_pin: SCK signal pin number.
  * @param [in] mosi_pin: MOSI signal pin number.
  * @param [in] miso_pin: MISO signal pin number.
  */
 
-void SWSPI_SETUP(FAR struct swspi_s *dev, int cs_pin,
-    int sck_pin, int mosi_pin, int miso_pin);
+FAR struct spi_dev_s *create_swspi(int cs_pin, int sck_pin, int mosi_pin,
+    int miso_pin);
 
 /**
- * Select the device.
+ * Destroy an instance of software emulated SPI driver.
  *
  * @param [in] dev: Instance of Software SPI.
- * @param [in] devid: Device ID to select. Now this is just dummy.
- * @param [in] selected: Set true to activate Chip Select pin.
  */
 
-void SWSPI_SELECT(FAR struct swspi_s *dev, uint32_t devid, bool selected);
-
-/**
- * Set SPI mode.
- * Now this supports only mode0.
- *
- * @param [in] dev: Instance of Software SPI.
- * @param [in] mode: SPI Mode selection. Choose @ref SPIDEV_MODE0,
- *                  @ref SPIDEV_MODE1, @ref SPIDEV_MODE2 or @ref SPIDEV_MODE3
- */
-
-void SWSPI_SETMODE(FAR struct swspi_s *dev, enum spi_mode_e mode);
-
-/**
- * Set SPI bits per a word.
- * Now this supports only 8 bits.
- *
- * @param [in] dev: Instance of Software SPI.
- * @param [in] bits: Bits per words. Select 8, 16 or 32.
- */
-
-void SWSPI_SETBITS(FAR struct swspi_s *dev, int bits);
-
-/**
- * Set SPI Frequency.
- * Now this supports only maximum.
- *
- * @param [in] dev: Instance of Software SPI.
- * @param [in] freq: Frequency to set.
-
- * @return Actual frequency.
- */
-
-uint32_t SWSPI_SETFREQUENCY(FAR struct swspi_s *dev, uint32_t freq);
-
-/**
- * Execute SPI transaction.
- *
- * @param [in] dev: Instance of Software SPI.
- * @param [in] txbuff: Data memory address to send.
- *                     If set NULL, MOSI signal is always Low.
- * @param [in] rxbuff: Memory address to store received data.
- *                     If set NULL, MISO signal is avoided.
- * @param [in] nwords: Words to send/receive.
- *                     txbuff and rxbuff size is required
- *                     more than bits * nwords.
- */
-
-void SWSPI_EXCHANGE(FAR struct swspi_s *dev,
-    FAR const void *txbuff, FAR void *rxbuff, size_t nwords);
+void destroy_swspi(FAR struct spi_dev_s *dev);
 
 /** @} sw_spi_func */
 
@@ -172,4 +95,4 @@ void SWSPI_EXCHANGE(FAR struct swspi_s *dev,
 
 /** @} sw_spi */
 
-#endif  /* __MODULES_SWPERIPHERALS_SW_SPI_H__ */
+#endif  /* __MODULES_SW_PERIPHERALS_SW_SPI_H__ */

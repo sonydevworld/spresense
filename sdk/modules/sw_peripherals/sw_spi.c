@@ -42,20 +42,86 @@
 #include <nuttx/arch.h>
 #include <arch/board/board.h>
 #include <arch/chip/pin.h>
+#include <nuttx/spi/spi_bitbang.h>
+#include <nuttx/kmalloc.h>
 
 #include <sw_peripherals/sw_spi.h>
 
 /****************************************************************************
- * Private functions
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#ifdef CONFIG_SPI_BITBANG_VARWIDTH
+#define BIT_PER_WORD(dev)  ((dev)->nbit)
+#else
+#define BIT_PER_WORD(dev)  (8)
+#endif
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static void swspi_select(FAR struct spi_bitbang_s *dev, uint32_t devid,
+    bool selected);
+static uint32_t swspi_setfrequency(FAR struct spi_bitbang_s *priv,
+    uint32_t frequency);
+static void swspi_setmode(FAR struct spi_bitbang_s *dev,
+    enum spi_mode_e mode);
+static uint16_t swspi_exchange(FAR struct spi_bitbang_s *priv,
+    uint16_t dataout);
+static uint8_t swspi_status(FAR struct spi_bitbang_s *priv, uint32_t devid);
+#ifdef CONFIG_SPI_CMDDATA
+static int swspi_cmddata(FAR struct spi_bitbang_s *priv, uint32_t devid,
+    bool cmd);
+#endif
+
+/****************************************************************************
+ * Private Types
+ ****************************************************************************/
+
+struct swspi_s
+{
+  int cs;
+  int sck;
+  int mosi;
+  int miso;
+};
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct spi_bitbang_ops_s swspi_ops =
+{
+  swspi_select,
+  swspi_setfrequency,
+  swspi_setmode,
+  swspi_exchange,
+  swspi_status,
+#ifdef CONFIG_SPI_CMDDATA
+  swspi_cmddata,
+#endif
+};
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+ 
+/****************************************************************************
+ * Name: set_pin_default
  ****************************************************************************/
 
 static void set_pin_default(FAR struct swspi_s *dev)
 {
   /* Now mode0 is suppoeted only */
 
-  SWSPI_SELECT(dev, 0, false);
+  board_gpio_write(dev->cs, 1);
   board_gpio_write(dev->sck, 0);
 }
+
+/****************************************************************************
+ * Name: exchange_one_bit
+ ****************************************************************************/
 
 static bool exchange_one_bit(FAR struct swspi_s *dev, bool bit)
 {
@@ -66,12 +132,10 @@ static bool exchange_one_bit(FAR struct swspi_s *dev, bool bit)
   /* Clock Low */
 
   board_gpio_write(dev->mosi, bit ? 1 : 0); /* Data set on MOSI */
-  up_udelay(dev->delay_us);
 
   /* Clock High */
 
   board_gpio_write(dev->sck, 1); /* Latch timing */
-  up_udelay(dev->delay_us);
   recv_bit = board_gpio_read(dev->miso); /* Latch MIOSO */
 
   /* Clock Low */
@@ -82,112 +146,149 @@ static bool exchange_one_bit(FAR struct swspi_s *dev, bool bit)
 }
 
 /****************************************************************************
- * Public Functions
+ * Name: swspi_select
  ****************************************************************************/
 
-/** SWSPI_SETUP */
-
-void SWSPI_SETUP(FAR struct swspi_s *dev, int cs_pin,
-    int sck_pin, int mosi_pin, int miso_pin)
-{
-  dev->cs   = cs_pin;
-  dev->sck  = sck_pin;
-  dev->mosi = mosi_pin;
-  dev->miso = miso_pin;
-
-  /* Output pin setting
-   * Mode:GPIO, Direction:output, Drivability:high drive, Pull:None
-   */
-
-  board_gpio_config(cs_pin,   0 /* GPIO */, false, true, PIN_FLOAT);
-  board_gpio_config(sck_pin,  0 /* GPIO */, false, true, PIN_FLOAT);
-  board_gpio_config(mosi_pin, 0 /* GPIO */, false, true, PIN_FLOAT);
-
-  /* Input pin setting
-   * Mode:GPIO, Direction:input, Drivability:high drive, Pull:None
-   */
-
-  board_gpio_config(miso_pin, 0 /* GPIO */, true, true, PIN_FLOAT);
-
-  /* Default parameter settings */
-
-  dev->mode = SPIDEV_MODE0;
-  dev->bits = 8;
-  dev->delay_us = 1;
-
-  set_pin_default(dev);
-}
-
-/** SWSPI_SELECT */
-
-void SWSPI_SELECT(FAR struct swspi_s *dev,
+static void swspi_select(FAR struct spi_bitbang_s *priv,
     uint32_t devid, bool selected)
 {
-  up_udelay(dev->delay_us);
+  FAR struct swspi_s *dev = (FAR struct swspi_s *)priv->priv;
+
+  up_udelay(1);
   board_gpio_write(dev->cs, selected ? 0 : 1);
-  up_udelay(dev->delay_us);
+  up_udelay(1);
 }
 
-/** SWSPI_SETMODE */
+/****************************************************************************
+ * Name: swspi_setmode
+ ****************************************************************************/
 
-void SWSPI_SETMODE(FAR struct swspi_s *dev, enum spi_mode_e mode)
+static void swspi_setmode(FAR struct spi_bitbang_s *dev,
+    enum spi_mode_e mode)
 {
   /* Do nothing, just MODE0 is supported. */
 }
 
-/** SWSPI_SETBITS */
+/****************************************************************************
+ * Name: swspi_setfrequency
+ ****************************************************************************/
 
-void SWSPI_SETBITS(FAR struct swspi_s *dev, int bits)
-{
-  /* Do nothing, just 8 bit is supported. */
-}
-
-/** SWSPI_SETFREQUENCY */
-
-uint32_t SWSPI_SETFREQUENCY(FAR struct swspi_s *dev, uint32_t freq)
+static uint32_t swspi_setfrequency(FAR struct spi_bitbang_s *dev,
+    uint32_t freq)
 {
   /* Support only 1Mbps now */
 
   return 1000000;
 }
 
-/** SWSPI_EXCHANGE */
+/****************************************************************************
+ * Name: swspi_exchange
+ ****************************************************************************/
 
-void SWSPI_EXCHANGE(FAR struct swspi_s *dev,
-    FAR const void *txbuff, FAR void *rxbuff, size_t nwords)
+static uint16_t swspi_exchange(FAR struct spi_bitbang_s *dev,
+  uint16_t dataout)
 {
-  size_t words;
-  uint32_t bitmask;
-  uint8_t dummy_tx = 0;
-  uint8_t dummy_rx;
+  uint16_t rxdata;
+  uint16_t bitmask;
 
-  uint8_t *odata;
-  uint8_t *idata;
- 
-  odata = txbuff != NULL ? (uint8_t *)txbuff : &dummy_tx;
-  idata = rxbuff != NULL ? (uint8_t *)rxbuff : &dummy_rx;
-
-  /* TODO: now 8 bits per word is supported only. */
-
-  for (words = 0; words < nwords; words++)
+  rxdata = 0;
+  for (bitmask = (1<<(BIT_PER_WORD(dev) - 1)); bitmask != 0; bitmask >>= 1)
     {
-      /* MSB first only */
+      rxdata |= exchange_one_bit((struct swspi_s *)dev->priv,
+          (dataout & bitmask) ? true : false)
+        ? bitmask : 0;
+    }
 
-      *idata = 0;
-      for (bitmask = (1<<(dev->bits - 1)); bitmask != 0; bitmask >>= 1)
-        {
-          *idata |= exchange_one_bit(dev, (*odata & bitmask) ? true : false)
-            ? bitmask : 0;
-        }
+  return rxdata;
+}
 
-      if (txbuff != NULL)
-        {
-          odata++;
-        }
+/****************************************************************************
+ * Name: swspi_status
+ ****************************************************************************/
 
-      if (rxbuff != NULL)
+static uint8_t swspi_status(FAR struct spi_bitbang_s *priv, uint32_t devid)
+{
+  return 0;
+}
+
+/****************************************************************************
+ * Name: swspi_cmddata
+ ****************************************************************************/
+
+#ifdef CONFIG_SPI_CMDDATA
+static int swspi_cmddata(FAR struct spi_bitbang_s *priv, uint32_t devid,
+    bool cmd)
+{
+  return OK;
+}
+#endif
+
+/****************************************************************************
+ * Public Functions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Name: create_swspi
+ ****************************************************************************/
+
+FAR struct spi_dev_s *create_swspi(int cs_pin,
+    int sck_pin, int mosi_pin, int miso_pin)
+{
+  FAR struct spi_dev_s *dev = NULL;
+  FAR struct swspi_s *priv;
+
+  priv = (FAR struct swspi_s *)kmm_zalloc(sizeof(struct swspi_s));
+  if (priv)
+    {
+      priv->cs   = cs_pin;
+      priv->sck  = sck_pin;
+      priv->mosi = mosi_pin;
+      priv->miso = miso_pin;
+
+      dev = spi_create_bitbang(&swspi_ops, (FAR void *)priv);
+      if (dev)
         {
-          idata++;
+          /* Output pin setting
+           * Mode:GPIO, Direction:output, Drivability:high drive, Pull:None
+           */
+
+          board_gpio_config(cs_pin,   0 , false, true, PIN_FLOAT);
+          board_gpio_config(sck_pin,  0 , false, true, PIN_FLOAT);
+          board_gpio_config(mosi_pin, 0 , false, true, PIN_FLOAT);
+
+          /* Input pin setting
+           * Mode:GPIO, Direction:input, Drivability:high drive, Pull:None
+           */
+
+          board_gpio_config(miso_pin, 0 , true, true, PIN_FLOAT);
+
+          /* Default parameter settings */
+
+          set_pin_default(priv);
         }
+      else
+        {
+          kmm_free(priv);
+        }
+    }
+
+  return dev;
+}
+
+/****************************************************************************
+ * Name: destroy_swspi
+ ****************************************************************************/
+
+void destroy_swspi(FAR struct spi_dev_s *spi)
+{
+  FAR struct spi_bitbang_s *dev = (FAR struct spi_bitbang_s *)spi;
+
+  if (dev)
+    {
+      if (dev->priv)
+        {
+          kmm_free(dev->priv);
+        }
+      spi_destroy_bitbang(spi);
     }
 }
