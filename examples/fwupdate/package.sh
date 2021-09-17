@@ -11,7 +11,7 @@ usage () {
   echo "  Output a package file named as \"$OUTPUT\""
   echo "Examples:"
   echo "  ../examples/fwupdate/package.sh nuttx.spk"
-  echo "  ../examples/fwupdate/package.sh nuttx.spk ../firmware/spresense/bin/{loader,gnssfw}.espk"
+  echo "  ../examples/fwupdate/package.sh nuttx.spk ../firmware/spresense/{loader,gnssfw}.espk"
   exit 1
 }
 
