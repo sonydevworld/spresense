@@ -56,6 +56,11 @@ void *_sbrk(int incr)
   for (;;);
 }
 
+int printf(const char *fmt, ...)
+{
+  return 0;
+}
+
 int main(void)
 {
   return mpcomm_main(dnn_controller_handle_msg, dnn_helper_handle_msg);
