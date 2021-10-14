@@ -110,8 +110,8 @@ connection_t * connection_create(connection_t * connList,
     struct addrinfo *servinfo = NULL;
     struct addrinfo *p;
     int s;
-    struct sockaddr *sa;
-    socklen_t sl;
+    struct sockaddr *sa = NULL;
+    socklen_t sl = 0;
     connection_t * connP = NULL;
 
     memset(&hints, 0, sizeof(hints));
@@ -170,7 +170,7 @@ int connection_send(connection_t *connP,
 
 #ifdef LWM2M_WITH_LOGS
     char s[INET6_ADDRSTRLEN];
-    in_port_t port;
+    in_port_t port = 0;
 
     s[0] = 0;
 
@@ -187,7 +187,7 @@ int connection_send(connection_t *connP,
         port = saddr->sin6_port;
     }
 
-    fprintf(stderr, "Sending %lu bytes to [%s]:%hu\r\n", length, s, ntohs(port));
+    fprintf(stderr, "Sending %zu bytes to [%s]:%hu\r\n", length, s, ntohs(port));
 
     output_buffer(stderr, buffer, length, 0);
 #endif
@@ -213,13 +213,13 @@ uint8_t lwm2m_buffer_send(void * sessionH,
 
     if (connP == NULL)
     {
-        fprintf(stderr, "#> failed sending %lu bytes, missing connection\r\n", length);
+        fprintf(stderr, "#> failed sending %zu bytes, missing connection\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
     if (-1 == connection_send(connP, buffer, length))
     {
-        fprintf(stderr, "#> failed sending %lu bytes\r\n", length);
+        fprintf(stderr, "#> failed sending %zu bytes\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 

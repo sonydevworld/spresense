@@ -34,7 +34,7 @@ typedef struct _dtls_app_context_
     dtls_connection_t * connList;
 } dtls_app_context_t;
 
-dtls_app_context_t appContext;
+dtls_app_context_t g_appContext;
 
 /********************* Security Obj Helpers **********************/
 char * security_get_uri(lwm2m_context_t * lwm2mH, lwm2m_object_t * obj, int instanceId, char * uriBuffer, int bufferSize){
@@ -197,16 +197,16 @@ static int get_psk_info(struct dtls_context_t *ctx,
         case DTLS_PSK_IDENTITY:
         {
             int idLen;
-            char * id;
-            id = security_get_public_id(appContext->lwm2mH, cnx->securityObj, cnx->securityInstId, &idLen);
+            char * pskid;
+            pskid = security_get_public_id(appContext->lwm2mH, cnx->securityObj, cnx->securityInstId, &idLen);
             if (result_length < idLen)
             {
                 printf("cannot set psk_identity -- buffer too small\n");
                 return dtls_alert_fatal_create(DTLS_ALERT_INTERNAL_ERROR);
             }
 
-            memcpy(result, id,idLen);
-            lwm2m_free(id);
+            memcpy(result, pskid,idLen);
+            lwm2m_free(pskid);
             return idLen;
         }
         case DTLS_PSK_KEY:
@@ -292,11 +292,11 @@ static dtls_handler_t cb = {
 };
 
 dtls_context_t * get_dtls_context(lwm2m_context_t * lwm2mH, dtls_connection_t * connList) {
-    appContext.lwm2mH = lwm2mH;
-    appContext.connList = connList;
+    g_appContext.lwm2mH = lwm2mH;
+    g_appContext.connList = connList;
     if (dtlsContext == NULL) {
         dtls_init();
-        dtlsContext = dtls_new_context(&appContext);
+        dtlsContext = dtls_new_context(&g_appContext);
         if (dtlsContext == NULL)
             fprintf(stderr, "Failed to create the DTLS context\r\n");
         dtls_set_handler(dtlsContext, &cb);
@@ -446,8 +446,8 @@ dtls_connection_t * connection_create(dtls_connection_t * connList,
     struct addrinfo *servinfo = NULL;
     struct addrinfo *p;
     int s;
-    struct sockaddr *sa;
-    socklen_t sl;
+    struct sockaddr *sa = NULL;
+    socklen_t sl = 0;
     dtls_connection_t * connP = NULL;
     char uriBuf[URI_LENGTH];
     char * uri;
@@ -641,13 +641,13 @@ uint8_t lwm2m_buffer_send(void * sessionH,
 
     if (connP == NULL)
     {
-        fprintf(stderr, "#> failed sending %lu bytes, missing connection\r\n", length);
+        fprintf(stderr, "#> failed sending %u bytes, missing connection\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
     if (-1 == connection_send(connP, buffer, length))
     {
-        fprintf(stderr, "#> failed sending %lu bytes\r\n", length);
+        fprintf(stderr, "#> failed sending %u bytes\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
