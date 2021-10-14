@@ -17,7 +17,8 @@
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
  *    Scott Bertin, AMETEK, Inc. - Please refer to git log
- *    
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
+ *
  *******************************************************************************/
 /*
  Copyright (c) 2013, 2014 Intel Corporation
@@ -122,6 +123,7 @@
 ((S) == STATE_REGISTERING ? "STATE_REGISTERING" :      \
 ((S) == STATE_READY ? "STATE_READY" :      \
 "Unknown"))))))
+#define STR_NULL2EMPTY(S) ((const char *)(S) ? (const char *)(S) : "")
 #else
 #define LOG_ARG(FMT, ...)
 #define LOG(STR)
@@ -145,7 +147,8 @@
 
 #define REG_OBJECT_MIN_LEN  5   // "</n>,"
 #define REG_PATH_END        ">,"
-#define REG_PATH_SEPARATOR  "/"
+#define REG_VERSION_START   ">;ver="
+#define REG_PATH_SEPARATOR  '/'
 
 #define REG_OBJECT_PATH             "<%s/%hu>,"
 #define REG_OBJECT_INSTANCE_PATH    "<%s/%hu/%hu>,"
@@ -158,6 +161,8 @@
 #define QUERY_STARTER        "?"
 #define QUERY_NAME           "ep="
 #define QUERY_NAME_LEN       3       // strlen("ep=")
+#define QUERY_PCT            "pct="
+#define QUERY_PCT_LEN        4
 #define QUERY_SMS            "sms="
 #define QUERY_SMS_LEN        4
 #define QUERY_LIFETIME       "lt="
@@ -193,6 +198,8 @@
 #define REG_ATTR_TYPE_VALUE_LEN          11
 #define REG_ATTR_CONTENT_KEY             "ct"
 #define REG_ATTR_CONTENT_KEY_LEN         2
+#define REG_ATTR_CONTENT_TLV             "11542"
+#define REG_ATTR_CONTENT_TLV_LEN         5
 #define REG_ATTR_CONTENT_JSON            "11543"
 #define REG_ATTR_CONTENT_JSON_LEN        5
 #define REG_ATTR_CONTENT_JSON_OLD        "1543"
@@ -214,6 +221,12 @@
 #define ATTR_STEP_LEN            3
 #define ATTR_DIMENSION_STR       "dim="
 #define ATTR_DIMENSION_LEN       4
+#define ATTR_VERSION_STR         "ver="
+#define ATTR_VERSION_LEN         4
+#define ATTR_SSID_STR            "ssid="
+#define ATTR_SSID_LEN            5
+#define ATTR_URI_STR             "uri=\""
+#define ATTR_URI_LEN             5
 
 #ifdef LWM2M_VERSION_1_0
 #define URI_MAX_STRING_LEN    18      // /65535/65535/65535
@@ -245,6 +258,16 @@ typedef struct
     void * userData;
 } dm_data_t;
 
+typedef struct
+{
+    uint16_t                id;
+    uint16_t                client;
+    lwm2m_uri_t             uri;
+    lwm2m_result_callback_t callback;
+    void *                  userData;
+    lwm2m_context_t *       contextP;
+} observation_data_t;
+
 typedef enum
 {
     URI_DEPTH_NONE,
@@ -273,16 +296,21 @@ typedef enum
 } lwm2m_request_type_t;
 
 // defined in uri.c
-lwm2m_request_type_t uri_decode(char * altPath, multi_option_t *uriPath, lwm2m_uri_t *uriP);
+lwm2m_request_type_t uri_decode(char * altPath, multi_option_t *uriPath, uint8_t code, lwm2m_uri_t *uriP);
 int uri_getNumber(uint8_t * uriString, size_t uriLength);
 int uri_toString(const lwm2m_uri_t * uriP, uint8_t * buffer, size_t bufferLen, uri_depth_t * depthP);
 
 // defined in objects.c
 uint8_t object_readData(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, int * sizeP, lwm2m_data_t ** dataP);
-uint8_t object_read(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t * formatP, uint8_t ** bufferP, size_t * lengthP);
-uint8_t object_write(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length);
+uint8_t object_read(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, const uint16_t * accept, uint8_t acceptNum, lwm2m_media_type_t * formatP, uint8_t ** bufferP, size_t * lengthP);
+uint8_t object_write(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length, bool partial);
 uint8_t object_create(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length);
 uint8_t object_execute(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, uint8_t * buffer, size_t length);
+#ifdef LWM2M_RAW_BLOCK1_REQUESTS
+uint8_t object_raw_block1_write(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length, uint32_t block_num, uint8_t block_more);
+uint8_t object_raw_block1_create(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length, uint32_t block_num, uint8_t block_more);
+uint8_t object_raw_block1_execute(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, uint8_t * buffer, size_t length, uint32_t block_num, uint8_t block_more);
+#endif
 uint8_t object_delete(lwm2m_context_t * contextP, lwm2m_uri_t * uriP);
 uint8_t object_discover(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_server_t * serverP, uint8_t ** bufferP, size_t * lengthP);
 uint8_t object_checkReadable(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_attributes_t * attrP);
@@ -300,6 +328,8 @@ void transaction_free(lwm2m_transaction_t * transacP);
 void transaction_remove(lwm2m_context_t * contextP, lwm2m_transaction_t * transacP);
 bool transaction_handleResponse(lwm2m_context_t * contextP, void * fromSessionH, coap_packet_t * message, coap_packet_t * response);
 void transaction_step(lwm2m_context_t * contextP, time_t currentTime, time_t * timeoutP);
+bool transaction_free_userData(lwm2m_context_t * context, lwm2m_transaction_t * transaction);
+bool transaction_set_payload(lwm2m_transaction_t *transaction, uint8_t *buffer, size_t length);
 
 // defined in management.c
 uint8_t dm_handleRequest(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_server_t * serverP, coap_packet_t * message, coap_packet_t * response);
@@ -334,9 +364,11 @@ uint8_t bootstrap_handleRequest(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, 
 void bootstrap_start(lwm2m_context_t * contextP);
 lwm2m_status_t bootstrap_getStatus(lwm2m_context_t * contextP);
 
+#ifdef LWM2M_SUPPORT_TLV
 // defined in tlv.c
 int tlv_parse(const uint8_t * buffer, size_t bufferLen, lwm2m_data_t ** dataP);
 int tlv_serialize(bool isResourceInstance, int size, lwm2m_data_t * dataP, uint8_t ** bufferP);
+#endif
 
 // defined in json.c
 #ifdef LWM2M_SUPPORT_JSON
@@ -364,33 +396,47 @@ lwm2m_data_t * json_extendData(lwm2m_data_t * parentP);
 int json_dataStrip(int size, lwm2m_data_t * dataP, lwm2m_data_t ** resultP);
 lwm2m_data_t * json_findDataItem(lwm2m_data_t * listP, size_t count, uint16_t id);
 uri_depth_t json_decreaseLevel(uri_depth_t level);
-int json_findAndCheckData(const lwm2m_uri_t * uriP, uri_depth_t level, size_t size, const lwm2m_data_t * tlvP, lwm2m_data_t ** targetP);
+int json_findAndCheckData(const lwm2m_uri_t * uriP, uri_depth_t baseLevel, size_t size, const lwm2m_data_t * tlvP, lwm2m_data_t ** targetP, uri_depth_t *targetLevelP);
 #endif
 
 // defined in discover.c
 int discover_serialize(lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_server_t * serverP, int size, lwm2m_data_t * dataP, uint8_t ** bufferP);
 
-// defined in block1.c
-uint8_t coap_block1_handler(lwm2m_block1_data_t ** block1Data, uint16_t mid, uint8_t * buffer, size_t length, uint16_t blockSize, uint32_t blockNum, bool blockMore, uint8_t ** outputBuffer, size_t * outputLength);
-void free_block1_buffer(lwm2m_block1_data_t * block1Data);
+// defined in block.c
+#ifdef LWM2M_RAW_BLOCK1_REQUESTS
+uint8_t coap_block1_handler(lwm2m_block_data_t ** blockData, const char * uri, uint16_t mid, uint8_t * buffer, size_t length, uint16_t blockSize, uint32_t blockNum, bool blockMore, uint8_t ** outputBuffer, size_t * outputLength);
+#else
+uint8_t coap_block1_handler(lwm2m_block_data_t ** blockData, const char * uri, uint8_t * buffer, size_t length, uint16_t blockSize, uint32_t blockNum, bool blockMore, uint8_t ** outputBuffer, size_t * outputLength);
+#endif
+void block1_delete(lwm2m_block_data_t ** pBlockDataHead, char * uri);
+uint8_t coap_block2_handler(lwm2m_block_data_t ** blockData, uint16_t mid, uint8_t * buffer, size_t length, uint16_t blockSize, uint32_t blockNum, bool blockMore, uint8_t ** outputBuffer, size_t * outputLength);
+void coap_block2_set_expected_mid(lwm2m_block_data_t *blockDataHead, uint16_t currentMid, uint16_t expectedMid);
+void free_block_data(lwm2m_block_data_t * blockData);
+void block2_delete(lwm2m_block_data_t ** pBlockDataHead, uint16_t mid);
 
 // defined in utils.c
 lwm2m_data_type_t utils_depthToDatatype(uri_depth_t depth);
 lwm2m_version_t utils_stringToVersion(uint8_t *buffer, size_t length);
 lwm2m_binding_t utils_stringToBinding(uint8_t *buffer, size_t length);
 lwm2m_media_type_t utils_convertMediaType(coap_content_type_t type);
+uint8_t utils_getResponseFormat(uint8_t accept_num,
+                                const uint16_t *accept,
+                                int numData,
+                                const lwm2m_data_t *dataP,
+                                bool singleResource,
+                                lwm2m_media_type_t *format);
 int utils_isAltPathValid(const char * altPath);
 int utils_stringCopy(char * buffer, size_t length, const char * str);
 size_t utils_intToText(int64_t data, uint8_t * string, size_t length);
 size_t utils_uintToText(uint64_t data, uint8_t * string, size_t length);
-size_t utils_floatToText(double data, uint8_t * string, size_t length);
+size_t utils_floatToText(double data, uint8_t * string, size_t length, bool allowExponential);
 size_t utils_objLinkToText(uint16_t objectId,
                            uint16_t objectInstanceId,
                            uint8_t * string,
                            size_t length);
 int utils_textToInt(const uint8_t * buffer, int length, int64_t * dataP);
 int utils_textToUInt(const uint8_t * buffer, int length, uint64_t * dataP);
-int utils_textToFloat(const uint8_t * buffer, int length, double * dataP);
+int utils_textToFloat(const uint8_t * buffer, int length, double * dataP, bool allowExponential);
 int utils_textToObjLink(const uint8_t * buffer,
                         int length,
                         uint16_t * objectId,
@@ -403,6 +449,8 @@ size_t utils_base64Decode(const char * dataP, size_t dataLen, uint8_t * bufferP,
 #ifdef LWM2M_CLIENT_MODE
 lwm2m_server_t * utils_findServer(lwm2m_context_t * contextP, void * fromSessionH);
 lwm2m_server_t * utils_findBootstrapServer(lwm2m_context_t * contextP, void * fromSessionH);
+#else
+lwm2m_client_t * utils_findClient(lwm2m_context_t * contextP, void * fromSessionH);
 #endif
 
 #endif

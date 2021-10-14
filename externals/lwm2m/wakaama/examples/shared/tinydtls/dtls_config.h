@@ -1,10 +1,8 @@
 /* dtls_config.h.  Generated from dtls_config.h.in by configure.  */
-/* dtls_config.h.in.  Generated from configure.in by autoheader.  */
+/* dtls_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
-
-#define WITH_SHA256 1
 
 /* Define to 1 if building with ECC support. */
 #define DTLS_ECC 1
@@ -26,10 +24,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
-   to 0 otherwise. */
-#define HAVE_MALLOC 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -107,7 +101,7 @@
 #define PACKAGE_NAME "tinydtls"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "tinydtls 0.8.2"
+#define PACKAGE_STRING "tinydtls 0.8.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tinydtls"
@@ -116,13 +110,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.8.2"
+#define PACKAGE_VERSION "0.8.6"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
-
-/* Define to 1 if building for Contiki. */
-/* #undef WITH_CONTIKI */
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -142,25 +133,5 @@
 /* #undef inline */
 #endif
 
-/* Define to rpl_malloc if the replacement function should be used. */
-/* #undef malloc */
-
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
-
-
-#ifdef WITH_CONTIKI
-#include "platform-specific/platform.h"
-#endif
-
-/*** SHA-256/384/512 Context Structures *******************************/
-/* NOTE: If your architecture does not define either u_intXX_t types or
- * uintXX_t (from inttypes.h), you may need to define things by hand
- * for your system:
- */
-#if 0
-typedef unsigned char u_int8_t;         /* 1-byte  (8-bits)  */
-typedef unsigned int u_int32_t;         /* 4-bytes (32-bits) */
-typedef unsigned long long u_int64_t;   /* 8-bytes (64-bits) */
-#endif
-

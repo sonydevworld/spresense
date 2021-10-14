@@ -20,6 +20,7 @@
  *    Pascal Rieux - Please refer to git log
  *    Ville Skyttä - Please refer to git log
  *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
  *
  *******************************************************************************/
 
@@ -84,6 +85,14 @@ extern "C" {
 #endif
 #endif
 
+#ifndef LWM2M_SUPPORT_TLV
+#if defined(LWM2M_VERSION_1_0) || defined(LWM2M_SERVER_MODE) || defined(LWM2M_BOOTSTRAP_SERVER_MODE)
+/* TLV is mandatory for LWM2M 1.0 client and server. */
+/* TLV is mandatory for LWM2M 1.1 server. */
+#define LWM2M_SUPPORT_TLV
+#endif
+#endif
+
 #if defined(LWM2M_BOOTSTRAP) && defined(LWM2M_BOOTSTRAP_SERVER_MODE)
 #error "LWM2M_BOOTSTRAP and LWM2M_BOOTSTRAP_SERVER_MODE cannot be defined at the same time!"
 #endif
@@ -111,6 +120,7 @@ void    lwm2m_trace_free(void * mem, const char * file, const char * function, i
 #endif
 // Compare at most the n first bytes of s1 and s2, return 0 if they match
 int lwm2m_strncmp(const char * s1, const char * s2, size_t n);
+int lwm2m_strcasecmp(const char * str1, const char * str2);
 // This function must return the number of seconds elapsed since origin.
 // The origin (Epoch, system boot, etc...) does not matter as this
 // function is used only to determine the elapsed time since the last
@@ -124,9 +134,12 @@ time_t lwm2m_gettime(void);
 void lwm2m_printf(const char * format, ...);
 #endif
 
+typedef struct _lwm2m_context_ lwm2m_context_t;
+
 // communication layer
 #ifdef LWM2M_CLIENT_MODE
 // Returns a session handle that MUST uniquely identify a peer.
+// contextP: Pointer to the LWM2M context
 // secObjInstID: ID of the Securty Object instance to open a connection to
 // userData: parameter to lwm2m_init()
 void * lwm2m_connect_server(uint16_t secObjInstID, void * userData);
@@ -152,6 +165,7 @@ bool lwm2m_session_is_equal(void * session1, void * session2, void * userData);
 
 #define COAP_NO_ERROR                   (uint8_t)0x00
 #define COAP_IGNORE                     (uint8_t)0x01
+#define COAP_RETRANSMISSION             (uint8_t)0x02
 
 #define COAP_201_CREATED                (uint8_t)0x41
 #define COAP_202_DELETED                (uint8_t)0x42
@@ -262,6 +276,12 @@ void lwm2m_list_free(lwm2m_list_t * head);
 #define LWM2M_LIST_RM(H,I,N) lwm2m_list_remove((lwm2m_list_t *)H, I, (lwm2m_list_t **)N);
 #define LWM2M_LIST_FIND(H,I) lwm2m_list_find((lwm2m_list_t *)H, I)
 #define LWM2M_LIST_FREE(H) lwm2m_list_free((lwm2m_list_t *)H)
+
+/*
+ * Helper functions for CoAP block size settings.
+ */
+bool lwm2m_set_coap_block_size(uint16_t coap_block_size_arg);
+uint16_t lwm2m_get_coap_block_size(void);
 
 /*
  * URI
@@ -426,22 +446,41 @@ int lwm2m_decode_TLV(const uint8_t * buffer, size_t buffer_len, lwm2m_data_type_
 
 typedef struct _lwm2m_object_t lwm2m_object_t;
 
-typedef uint8_t (*lwm2m_read_callback_t) (uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_discover_callback_t) (uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_write_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_execute_callback_t) (uint16_t instanceId, uint16_t resourceId, uint8_t * buffer, int length, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_create_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_delete_callback_t) (uint16_t instanceId, lwm2m_object_t * objectP);
+typedef enum
+{
+    LWM2M_WRITE_PARTIAL_UPDATE,     // Write should add or update resources and resource instances.
+    LWM2M_WRITE_REPLACE_RESOURCES,  // Write should replace resources entirely.
+    LWM2M_WRITE_REPLACE_INSTANCE,   // Write should replace the entire instance.
+} lwm2m_write_type_t;
+
+typedef uint8_t (*lwm2m_read_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_discover_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_write_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP, lwm2m_write_type_t writeType);
+typedef uint8_t (*lwm2m_execute_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, uint16_t resourceId, uint8_t * buffer, int length, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_create_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
+#ifdef LWM2M_RAW_BLOCK1_REQUESTS
+typedef uint8_t (*lwm2m_raw_block1_create_callback_t) (lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, int length, lwm2m_object_t * objectP, uint32_t block_num, uint8_t block_more);
+typedef uint8_t (*lwm2m_raw_block1_write_callback_t) (lwm2m_context_t * contextP, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, int length, lwm2m_object_t * objectP, uint32_t block_num, uint8_t block_more);
+typedef uint8_t (*lwm2m_raw_block1_execute_callback_t) (lwm2m_context_t * contextP, lwm2m_uri_t * uriP, uint8_t * buffer, int length, lwm2m_object_t * objectP, uint32_t block_num, uint8_t block_more);
+#endif
+typedef uint8_t (*lwm2m_delete_callback_t) (lwm2m_context_t * contextP, uint16_t instanceId, lwm2m_object_t * objectP);
 
 struct _lwm2m_object_t
 {
     struct _lwm2m_object_t * next;           // for internal use only.
     uint16_t       objID;
+    uint8_t        versionMajor;
+    uint8_t        versionMinor;
     lwm2m_list_t * instanceList;
     lwm2m_read_callback_t     readFunc;
     lwm2m_write_callback_t    writeFunc;
     lwm2m_execute_callback_t  executeFunc;
     lwm2m_create_callback_t   createFunc;
+#ifdef LWM2M_RAW_BLOCK1_REQUESTS
+    lwm2m_raw_block1_create_callback_t   rawBlock1CreateFunc;
+    lwm2m_raw_block1_write_callback_t    rawBlock1WriteFunc;
+    lwm2m_raw_block1_execute_callback_t  rawBlock1ExecuteFunc;
+#endif
     lwm2m_delete_callback_t   deleteFunc;
     lwm2m_discover_callback_t discoverFunc;
     void * userData;
@@ -456,7 +495,7 @@ struct _lwm2m_object_t
 
 typedef enum
 {
-    STATE_DEREGISTERED = 0,        // not registered or boostrap not started
+    STATE_DEREGISTERED = 0,        // not registered or bootstrap not started
     STATE_REG_HOLD_OFF,            // initial registration delay or delay between retries
     STATE_REG_PENDING,             // registration pending
     STATE_REGISTERED,              // successfully registered
@@ -467,8 +506,8 @@ typedef enum
     STATE_DEREG_PENDING,           // deregistration pending
     STATE_BS_HOLD_OFF,             // bootstrap hold off time
     STATE_BS_INITIATED,            // bootstrap request sent
-    STATE_BS_PENDING,              // boostrap ongoing
-    STATE_BS_FINISHING,            // boostrap finish received
+    STATE_BS_PENDING,              // bootstrap ongoing
+    STATE_BS_FINISHING,            // bootstrap finish received
     STATE_BS_FINISHED,             // bootstrap done
     STATE_BS_FAILING,              // bootstrap error occurred
     STATE_BS_FAILED,               // bootstrap failed
@@ -496,19 +535,38 @@ typedef enum
 typedef uint8_t lwm2m_binding_t;
 
 /*
- * LWM2M block1 data
+ * LWM2M block data
  *
- * Temporary data needed to handle block1 request.
- * Currently support only one block1 request by server.
+ * Temporary data needed to handle block1 request and block2 responses.
  */
-typedef struct _lwm2m_block1_data_ lwm2m_block1_data_t;
-
-struct _lwm2m_block1_data_
+typedef enum
 {
-    uint8_t *             block1buffer;     // data buffer
-    size_t                block1bufferSize; // buffer size
-    uint16_t              lastmid;          // mid of the last message received
+    BLOCK_1,
+    BLOCK_2,
+} block_type_t;
+
+typedef union _block_data_identifier_
+{
+    char * uri;                               // resource string if block1 
+    int32_t mid;                                    // mid of the last request if block2 eg the mid for the expected block
+} block_data_identifier_t;
+
+
+typedef struct _lwm2m_block_data_ lwm2m_block_data_t;
+
+struct _lwm2m_block_data_
+{
+    struct _lwm2m_block_data_ *     next;
+    block_type_t                    blockType;
+    block_data_identifier_t         identifier;
+    uint8_t *                       blockBuffer;        // data buffer
+    size_t                          blockBufferSize;    // buffer size
+    uint32_t                        blockNum;           // block num of the last message received
+#ifdef LWM2M_RAW_BLOCK1_REQUESTS
+    uint16_t                        mid;                // mid of the last message received
+#endif
 };
+
 
 typedef struct _lwm2m_server_
 {
@@ -522,7 +580,7 @@ typedef struct _lwm2m_server_
     lwm2m_status_t          status;
     char *                  location;
     bool                    dirty;
-    lwm2m_block1_data_t *   block1Data;   // buffer to handle block1 data, should be replace by a list to support several block1 transfer by server.
+    lwm2m_block_data_t *    blockData;   // list to handle temporary block data.
 #ifndef LWM2M_VERSION_1_0
     uint16_t                servObjInstID;// Server object instance ID if not a bootstrap server.
     uint8_t                 attempt;      // Current registration attempt
@@ -530,14 +588,21 @@ typedef struct _lwm2m_server_
 #endif
 } lwm2m_server_t;
 
-typedef struct _lwm2m_context_ lwm2m_context_t;
+typedef struct _block_info_t
+{
+    int block_num;
+    int block_size;
+    bool block_more;
+} block_info_t;
 
 /*
  * LWM2M result callback
  *
  * When used with an observe, if 'data' is not nil, 'status' holds the observe counter.
  */
-typedef void (*lwm2m_result_callback_t) (uint16_t clientID, lwm2m_uri_t * uriP, int status, lwm2m_media_type_t format, uint8_t * data, int dataLength, void * userData);
+typedef void (*lwm2m_result_callback_t)(lwm2m_context_t *contextP, uint16_t clientID, lwm2m_uri_t *uriP, int status,
+                                        block_info_t *block_info, lwm2m_media_type_t format, uint8_t *data,
+                                        size_t dataLength, void *userData);
 
 /*
  * LWM2M Observations
@@ -596,6 +661,8 @@ typedef struct _lwm2m_client_object_
 {
     struct _lwm2m_client_object_ * next; // matches lwm2m_list_t::next
     uint16_t                 id;         // matches lwm2m_list_t::id
+    uint8_t                  versionMajor;
+    uint8_t                  versionMinor;
     lwm2m_list_t *           instanceList;
 } lwm2m_client_object_t;
 
@@ -615,6 +682,7 @@ typedef struct _lwm2m_client_
     lwm2m_client_object_t * objectList;
     lwm2m_observation_t *   observationList;
     uint16_t                observationId;
+    lwm2m_block_data_t *    blockData;   // list to handle temporary block data.
 } lwm2m_client_t;
 
 
@@ -640,6 +708,9 @@ struct _lwm2m_transaction_
     void * message;
     uint16_t buffer_len;
     uint8_t * buffer;
+    size_t
+        payload_len;  // the length of the entire payload, message payload might be smaller in case of a block1 transfer
+    uint8_t *payload; // carries the entire payload across multiple transactions in case of a block 1 transfer
     lwm2m_transaction_callback_t callback;
     void * userData;
 };
@@ -702,7 +773,10 @@ typedef enum
 // name is set. The callback must return a COAP_* error code. COAP_204_CHANGED for success.
 // After a lwm2m_bootstrap_delete() or a lwm2m_bootstrap_write(), the callback is called with the status returned by the
 // client, the URI of the operation (may be nil) and name is nil. The callback return value is ignored.
-typedef int (*lwm2m_bootstrap_callback_t) (void * sessionH, uint8_t status, lwm2m_uri_t * uriP, char * name, void * userData);
+// If data is present and no preferred format is provided by the client the format will be 0, otherwise it will be set.
+typedef int (*lwm2m_bootstrap_callback_t)(lwm2m_context_t *contextP, void *sessionH, uint8_t status, lwm2m_uri_t *uriP,
+                                          char *name, lwm2m_media_type_t format, uint8_t *data, size_t dataLength,
+                                          void *userData);
 #endif
 
 struct _lwm2m_context_
@@ -717,8 +791,10 @@ struct _lwm2m_context_
     lwm2m_object_t *     objectList;
     lwm2m_observed_t *   observedList;
 #endif
-#ifdef LWM2M_SERVER_MODE
+#if defined(LWM2M_SERVER_MODE) || defined(LWM2M_BOOTSTRAP_SERVER_MODE)
     lwm2m_client_t *        clientList;
+#endif
+#ifdef LWM2M_SERVER_MODE
     lwm2m_result_callback_t monitorCallback;
     void *                  monitorUserData;
 #endif
@@ -740,7 +816,7 @@ void lwm2m_close(lwm2m_context_t * contextP);
 // perform any required pending operation and adjust timeoutP to the maximal time interval to wait in seconds.
 int lwm2m_step(lwm2m_context_t * contextP, time_t * timeoutP);
 // dispatch received data to liblwm2m
-void lwm2m_handle_packet(lwm2m_context_t * contextP, uint8_t * buffer, int length, void * fromSessionH);
+void lwm2m_handle_packet(lwm2m_context_t *contextP, uint8_t *buffer, size_t length, void *fromSessionH);
 
 #ifdef LWM2M_CLIENT_MODE
 // configure the client side with the Endpoint Name, binding, MSISDN (can be nil), alternative path
@@ -755,7 +831,8 @@ int lwm2m_remove_object(lwm2m_context_t * contextP, uint16_t id);
 // or all if the ID is 0.
 // If withObjects is true, the registration update contains the object list.
 int lwm2m_update_registration(lwm2m_context_t * contextP, uint16_t shortServerID, bool withObjects);
-
+// send deregistration to all servers connected to client
+void lwm2m_deregister(lwm2m_context_t * context);
 void lwm2m_resource_value_changed(lwm2m_context_t * contextP, lwm2m_uri_t * uriP);
 #endif
 
@@ -771,10 +848,13 @@ void lwm2m_set_monitoring_callback(lwm2m_context_t * contextP, lwm2m_result_call
 // Device Management APIs
 int lwm2m_dm_read(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
 int lwm2m_dm_discover(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
-int lwm2m_dm_write(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, int length, lwm2m_result_callback_t callback, void * userData);
+int lwm2m_dm_write(lwm2m_context_t *contextP, uint16_t clientID, lwm2m_uri_t *uriP, lwm2m_media_type_t format,
+                   uint8_t *buffer, size_t length, bool partialUpdate, lwm2m_result_callback_t callback,
+                   void *userData);
 int lwm2m_dm_write_attributes(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_attributes_t * attrP, lwm2m_result_callback_t callback, void * userData);
-int lwm2m_dm_execute(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, int length, lwm2m_result_callback_t callback, void * userData);
-int lwm2m_dm_create(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, int length, lwm2m_result_callback_t callback, void * userData);
+int lwm2m_dm_execute(lwm2m_context_t *contextP, uint16_t clientID, lwm2m_uri_t *uriP, lwm2m_media_type_t format,
+                     uint8_t *buffer, size_t length, lwm2m_result_callback_t callback, void *userData);
+int lwm2m_dm_create(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, int numData, lwm2m_data_t * dataP, lwm2m_result_callback_t callback, void * userData);
 int lwm2m_dm_delete(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
 
 // Information Reporting APIs
@@ -792,7 +872,10 @@ void lwm2m_set_bootstrap_callback(lwm2m_context_t * contextP, lwm2m_bootstrap_ca
 int lwm2m_bootstrap_delete(lwm2m_context_t * contextP, void * sessionH, lwm2m_uri_t * uriP);
 int lwm2m_bootstrap_write(lwm2m_context_t * contextP, void * sessionH, lwm2m_uri_t * uriP, lwm2m_media_type_t format, uint8_t * buffer, size_t length);
 int lwm2m_bootstrap_finish(lwm2m_context_t * contextP, void * sessionH);
-
+int lwm2m_bootstrap_discover(lwm2m_context_t * contextP, void * sessionH, lwm2m_uri_t * uriP);
+#ifndef LWM2M_VERSION_1_0
+int lwm2m_bootstrap_read(lwm2m_context_t * contextP, void * sessionH, lwm2m_uri_t * uriP);
+#endif
 #endif
 
 #ifdef __cplusplus

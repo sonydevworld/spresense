@@ -15,6 +15,7 @@
  *    Toby Jaffey - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
  *
  *******************************************************************************/
 
@@ -167,6 +168,7 @@ uint8_t observe_handleRequest(lwm2m_context_t * contextP,
 {
     lwm2m_observed_t * observedP;
     lwm2m_watcher_t * watcherP;
+    lwm2m_data_t * valueP;
     uint32_t count;
 
     (void) size; /* unused */
@@ -190,27 +192,29 @@ uint8_t observe_handleRequest(lwm2m_context_t * contextP,
         watcherP->active = true;
         watcherP->lastTime = lwm2m_gettime();
         watcherP->lastMid = response->mid;
-        if (IS_OPTION(message, COAP_OPTION_ACCEPT))
-        {
-            watcherP->format = utils_convertMediaType(message->accept[0]);
-        }
-        else
-        {
-            watcherP->format = LWM2M_CONTENT_TLV;
-        }
+        watcherP->format = (lwm2m_media_type_t)response->content_type;
 
+        valueP = dataP;
+#ifndef LWM2M_VERSION_1_0
+        if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP)
+         && dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE
+         && dataP->value.asChildren.count == 1)
+        {
+            valueP = dataP->value.asChildren.array;
+        }
+#endif
         if (LWM2M_URI_IS_SET_RESOURCE(uriP))
         {
-            switch (dataP->type)
+            switch (valueP->type)
             {
             case LWM2M_TYPE_INTEGER:
-                if (1 != lwm2m_data_decode_int(dataP, &(watcherP->lastValue.asInteger))) return COAP_500_INTERNAL_SERVER_ERROR;
+                if (1 != lwm2m_data_decode_int(valueP, &(watcherP->lastValue.asInteger))) return COAP_500_INTERNAL_SERVER_ERROR;
                 break;
             case LWM2M_TYPE_UNSIGNED_INTEGER:
-                if (1 != lwm2m_data_decode_uint(dataP, &(watcherP->lastValue.asUnsigned))) return COAP_500_INTERNAL_SERVER_ERROR;
+                if (1 != lwm2m_data_decode_uint(valueP, &(watcherP->lastValue.asUnsigned))) return COAP_500_INTERNAL_SERVER_ERROR;
                 break;
             case LWM2M_TYPE_FLOAT:
-                if (1 != lwm2m_data_decode_float(dataP, &(watcherP->lastValue.asFloat))) return COAP_500_INTERNAL_SERVER_ERROR;
+                if (1 != lwm2m_data_decode_float(valueP, &(watcherP->lastValue.asFloat))) return COAP_500_INTERNAL_SERVER_ERROR;
                 break;
             default:
                 break;
@@ -390,6 +394,10 @@ uint8_t observe_setParameters(lwm2m_context_t * contextP,
             if (watcherP->parameters == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
             memcpy(watcherP->parameters, attrP, sizeof(lwm2m_attributes_t));
         }
+        else
+        {
+            return COAP_204_CHANGED;
+        }
     }
     else
     {
@@ -517,6 +525,7 @@ void observe_step(lwm2m_context_t * contextP,
         uint8_t * buffer = NULL;
         size_t length = 0;
         lwm2m_data_t * dataP = NULL;
+        lwm2m_data_type_t dataType = LWM2M_TYPE_UNDEFINED;
         int size = 0;
         double floatValue = 0;
         int64_t integerValue = 0;
@@ -530,11 +539,23 @@ void observe_step(lwm2m_context_t * contextP,
         LOG_URI(&(targetP->uri));
         if (LWM2M_URI_IS_SET_RESOURCE(&targetP->uri))
         {
+            lwm2m_data_t *valueP;
+
             if (COAP_205_CONTENT != object_readData(contextP, &targetP->uri, &size, &dataP)) continue;
-            switch (dataP->type)
+            valueP = dataP;
+#ifndef LWM2M_VERSION_1_0
+            if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(&targetP->uri)
+             && dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE
+             && dataP->value.asChildren.count == 1)
+            {
+                valueP = dataP->value.asChildren.array;
+            }
+#endif
+            dataType = valueP->type;
+            switch (dataType)
             {
             case LWM2M_TYPE_INTEGER:
-                if (1 != lwm2m_data_decode_int(dataP, &integerValue))
+                if (1 != lwm2m_data_decode_int(valueP, &integerValue))
                 {
                     lwm2m_data_free(size, dataP);
                     continue;
@@ -542,7 +563,7 @@ void observe_step(lwm2m_context_t * contextP,
                 storeValue = true;
                 break;
             case LWM2M_TYPE_UNSIGNED_INTEGER:
-                if (1 != lwm2m_data_decode_uint(dataP, &unsignedValue))
+                if (1 != lwm2m_data_decode_uint(valueP, &unsignedValue))
                 {
                     lwm2m_data_free(size, dataP);
                     continue;
@@ -550,7 +571,7 @@ void observe_step(lwm2m_context_t * contextP,
                 storeValue = true;
                 break;
             case LWM2M_TYPE_FLOAT:
-                if (1 != lwm2m_data_decode_float(dataP, &floatValue))
+                if (1 != lwm2m_data_decode_float(valueP, &floatValue))
                 {
                     lwm2m_data_free(size, dataP);
                     continue;
@@ -587,7 +608,7 @@ void observe_step(lwm2m_context_t * contextP,
                         {
                             LOG("Checking lower threshold");
                             // Did we cross the lower threshold ?
-                            switch (dataP->type)
+                            switch (dataType)
                             {
                             case LWM2M_TYPE_INTEGER:
                                 if ((integerValue < watcherP->parameters->lessThan
@@ -627,7 +648,7 @@ void observe_step(lwm2m_context_t * contextP,
                         {
                             LOG("Checking upper threshold");
                             // Did we cross the upper threshold ?
-                            switch (dataP->type)
+                            switch (dataType)
                             {
                             case LWM2M_TYPE_INTEGER:
                                 if ((integerValue < watcherP->parameters->greaterThan
@@ -667,7 +688,7 @@ void observe_step(lwm2m_context_t * contextP,
                         {
                             LOG("Checking step");
 
-                            switch (dataP->type)
+                            switch (dataType)
                             {
                             case LWM2M_TYPE_INTEGER:
                             {
@@ -775,7 +796,7 @@ void observe_step(lwm2m_context_t * contextP,
                         }
                         else
                         {
-                            if (COAP_205_CONTENT != object_read(contextP, &targetP->uri, &(watcherP->format), &buffer, &length))
+                            if (COAP_205_CONTENT != object_read(contextP, &targetP->uri, NULL, 0, &(watcherP->format), &buffer, &length))
                             {
                                 buffer = NULL;
                                 break;
@@ -797,7 +818,7 @@ void observe_step(lwm2m_context_t * contextP,
                 // Store this value
                 if (notify == true && storeValue == true)
                 {
-                    switch (dataP->type)
+                    switch (dataType)
                     {
                     case LWM2M_TYPE_INTEGER:
                         watcherP->lastValue.asInteger = integerValue;
@@ -832,24 +853,12 @@ void observe_step(lwm2m_context_t * contextP,
 
 typedef struct
 {
-    uint16_t                client;
-    lwm2m_uri_t             uri;
-    lwm2m_result_callback_t callbackP;
-    void *                  userDataP;
-    lwm2m_context_t *       contextP;
+    uint16_t                        client;
+    lwm2m_uri_t                     uri;
+    lwm2m_result_callback_t         callbackP;
+    void *                          userDataP;
+    lwm2m_context_t *               contextP;
 } cancellation_data_t;
-
-typedef struct
-{
-    uint16_t                id;
-    uint16_t                client;
-    lwm2m_uri_t             uri;
-    lwm2m_result_callback_t callback;
-    void *                  userData;
-    lwm2m_context_t *       contextP;
-} observation_data_t;
-
-
 
 static lwm2m_observation_t * prv_findObservationByURI(lwm2m_client_t * clientP,
                                                       lwm2m_uri_t * uriP)
@@ -893,18 +902,22 @@ static void prv_obsRequestCallback(lwm2m_context_t * contextP,
     uint8_t code;
     lwm2m_client_t * clientP;
     lwm2m_uri_t * uriP = & observationData->uri;
+    uint32_t block_num = 0;
+    uint16_t block_size = 0;
+    uint8_t block_more = 0;
+    block_info_t block_info;
 
     (void)contextP; /* unused */
 
-    clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)observationData->contextP->clientList, observationData->client);
-    if (clientP == NULL)
-    {
-        observationData->callback(observationData->client,
-                &observationData->uri,
-                COAP_500_INTERNAL_SERVER_ERROR,  //?
-                0, NULL, 0,
-                observationData->userData);
-        goto end;
+    clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)observationData->contextP->clientList,
+                                                observationData->client);
+    if (clientP == NULL) {
+        // No client matching this notification, inform request callback with an error code.
+        observationData->callback(contextP, observationData->client, &observationData->uri,
+                                  COAP_500_INTERNAL_SERVER_ERROR, //?
+                                  NULL, LWM2M_CONTENT_TEXT, NULL, 0, observationData->userData);
+        transaction_free_userData(contextP, transacP);
+        return;
     }
 
     observationP = prv_findObservationByURI(clientP, uriP);
@@ -928,33 +941,44 @@ static void prv_obsRequestCallback(lwm2m_context_t * contextP,
         code = packet->code;
     }
 
-    if (code != COAP_205_CONTENT)
-    {
-        observationData->callback(clientP->internalID,
-                &observationData->uri,
-                code,
-                LWM2M_CONTENT_TEXT, NULL, 0,
-                observationData->userData);
-    }
-    else
-    {
-        if(observationP == NULL)
-        {
-            observationP = (lwm2m_observation_t *)lwm2m_malloc(sizeof(*observationP));
-            if (observationP == NULL) goto end;
-            memset(observationP, 0, sizeof(*observationP));
+    if (code != COAP_205_CONTENT) {
+        // Some kind of error occurred, call the request callback with an error code
+        observationData->callback(contextP, observationData->client, &observationData->uri,
+                                  code, //?
+                                  NULL, LWM2M_CONTENT_TEXT, NULL, 0, observationData->userData);
+    } else if (IS_OPTION(packet, COAP_OPTION_BLOCK2) && packet->block2_more) {
+        // Call request callback with partial block2 content.
+        observationData->callback(contextP, observationData->client, &observationData->uri,
+                                  code, //?
+                                  NULL, utils_convertMediaType(packet->content_type), packet->payload,
+                                  packet->payload_len, observationData->userData);
+    } else {
+        int has_block2 = coap_get_header_block2(packet, &block_num, &block_more, &block_size, NULL);
+        if (has_block2) {
+            block_info.block_num = block_num;
+            block_info.block_size = block_size;
+            block_info.block_more = block_more;
         }
-        else
-        {
+
+        if (observationP == NULL) {
+            observationP = (lwm2m_observation_t *)lwm2m_malloc(sizeof(*observationP));
+            if (observationP == NULL) {
+                transaction_free_userData(contextP, transacP);
+                return;
+            }
+            memset(observationP, 0, sizeof(*observationP));
+        } else {
             observationP->clientP->observationList = (lwm2m_observation_t *) LWM2M_LIST_RM(observationP->clientP->observationList, observationP->id, NULL);
 
             // give the user chance to free previous observation userData
             // indicator: COAP_202_DELETED and (Length ==0)
-            observationP->callback(observationP->clientP->internalID,
-                    &observationP->uri,
-                    COAP_202_DELETED,
-                    0, NULL, 0,
-                    observationP->userData);
+            observationData->callback(contextP,
+                                      observationData->client,
+                                      &observationData->uri,
+                                      COAP_202_DELETED,
+                                      NULL,
+                                      LWM2M_CONTENT_TEXT, NULL, 0,
+                                      observationData->userData);
         }
 
         observationP->id = observationData->id;
@@ -967,17 +991,32 @@ static void prv_obsRequestCallback(lwm2m_context_t * contextP,
 
         observationP->clientP->observationList = (lwm2m_observation_t *)LWM2M_LIST_ADD(observationP->clientP->observationList, observationP);
 
-        observationData->callback(observationData->client,
-                &observationData->uri,
-                0,
-                packet->content_type, packet->payload, packet->payload_len,
-                observationData->userData);
+        const int status = 0;
+
+        if (has_block2) {
+            observationData->callback(contextP,
+                                      observationData->client,
+                                      &observationData->uri,
+                                      status,
+                                      &block_info,
+                                      utils_convertMediaType(packet->content_type),
+                                      packet->payload,
+                                      packet->payload_len,
+                                      observationData->userData);
+        } else {
+            observationData->callback(contextP,
+                                      observationData->client,
+                                      &observationData->uri,
+                                      status,
+                                      NULL,
+                                      utils_convertMediaType(packet->content_type),
+                                      packet->payload,
+                                      packet->payload_len,
+                                      observationData->userData);
+        }
     }
-
-end:
-    lwm2m_free(observationData);
+    transaction_free_userData(contextP, transacP);
 }
-
 
 static void prv_obsCancelRequestCallback(lwm2m_context_t * contextP,
                                          lwm2m_transaction_t * transacP,
@@ -986,18 +1025,22 @@ static void prv_obsCancelRequestCallback(lwm2m_context_t * contextP,
     cancellation_data_t * cancelP = (cancellation_data_t *)transacP->userData;
     coap_packet_t * packet = (coap_packet_t *)message;
     uint8_t code;
-    lwm2m_client_t * clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)cancelP->contextP->clientList, cancelP->client);
+    uint32_t block_num = 0;
+    uint16_t block_size = 0;
+    uint8_t block_more = 0;
+    block_info_t block_info;
 
     (void)contextP; /* unused */
 
+    lwm2m_client_t *clientP =
+        (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)cancelP->contextP->clientList, cancelP->client);
     if (clientP == NULL)
     {
-        cancelP->callbackP(cancelP->client,
-                &cancelP->uri,
-                COAP_500_INTERNAL_SERVER_ERROR,
-                packet->content_type, NULL, 0,
-                cancelP->userDataP);
-        goto end;
+        cancelP->callbackP(contextP, cancelP->client, &cancelP->uri,
+                           COAP_500_INTERNAL_SERVER_ERROR, //?
+                           NULL, LWM2M_CONTENT_TEXT, NULL, 0, cancelP->userDataP);
+        transaction_free_userData(contextP, transacP);
+        return;
     }
 
     lwm2m_observation_t * observationP = prv_findObservationByURI(clientP, &cancelP->uri);
@@ -1013,28 +1056,57 @@ static void prv_obsCancelRequestCallback(lwm2m_context_t * contextP,
 
     if (code != COAP_205_CONTENT)
     {
-        cancelP->callbackP(cancelP->client,
-                &cancelP->uri,
-                code,
-                LWM2M_CONTENT_TEXT, NULL, 0,
-                cancelP->userDataP);
+        cancelP->callbackP(contextP, cancelP->client, &cancelP->uri,
+                           code, //?
+                           NULL, LWM2M_CONTENT_TEXT, NULL, 0, cancelP->userDataP);
+        transaction_free_userData(contextP, transacP);
+        return;
     }
     else
     {
-        cancelP->callbackP(cancelP->client,
-                &cancelP->uri,
-                0,
-                packet->content_type, packet->payload, packet->payload_len,
-                cancelP->userDataP);
-    }
+        const int status = 0;
+        int has_block2 = coap_get_header_block2(message, &block_num, &block_more, &block_size, NULL);
+        if (has_block2) {
+            block_info.block_num = block_num;
+            block_info.block_size = block_size;
+            block_info.block_more = block_more;
+        }
+        if (has_block2)
+        {
+            cancelP->callbackP(contextP,
+                               cancelP->client,
+                               &cancelP->uri,
+                               status,  //?
+                               &block_info,
+                               utils_convertMediaType(packet->content_type),
+                               packet->payload,
+                               packet->payload_len,
+                               cancelP->userDataP);
+        }
+        else
+        {
+            cancelP->callbackP(contextP,
+                               cancelP->client,
+                               &cancelP->uri,
+                               status,  //?
+                               NULL,
+                               utils_convertMediaType(packet->content_type),
+                               packet->payload,
+                               packet->payload_len,
+                               cancelP->userDataP);
+        }
 
-    observe_remove(observationP);
-end:
-    lwm2m_free(cancelP);
+        if (!has_block2 || !block_info.block_more) {
+            // Remove observation only if there is no block transfer or if
+            // its the last block.
+            observe_remove(observationP);
+        }
+    }
+    transaction_free_userData(contextP, transacP);
 }
 
-
-int lwm2m_observe(lwm2m_context_t * contextP,
+static
+int prv_lwm2m_observe(lwm2m_context_t * contextP,
         uint16_t clientID,
         lwm2m_uri_t * uriP,
         lwm2m_result_callback_t callback,
@@ -1110,7 +1182,21 @@ int lwm2m_observe(lwm2m_context_t * contextP,
     return ret;
 }
 
-int lwm2m_observe_cancel(lwm2m_context_t * contextP,
+int lwm2m_observe(lwm2m_context_t * contextP,
+        uint16_t clientID,
+        lwm2m_uri_t * uriP,
+        lwm2m_result_callback_t callback,
+        void * userData)
+{
+    return prv_lwm2m_observe(contextP,
+                             clientID,
+                             uriP,
+                             callback,
+                             userData);
+}
+
+static
+int prv_lwm2m_observe_cancel(lwm2m_context_t * contextP,
         uint16_t clientID,
         lwm2m_uri_t * uriP,
         lwm2m_result_callback_t callback,
@@ -1193,6 +1279,16 @@ int lwm2m_observe_cancel(lwm2m_context_t * contextP,
     return ret;
 }
 
+
+int lwm2m_observe_cancel(lwm2m_context_t * contextP,
+        uint16_t clientID,
+        lwm2m_uri_t * uriP,
+        lwm2m_result_callback_t callback,
+        void * userData)
+{
+    return prv_lwm2m_observe_cancel(contextP, clientID, uriP, callback, userData);
+}
+
 bool observe_handleNotify(lwm2m_context_t * contextP,
                            void * fromSessionH,
                            coap_packet_t * message,
@@ -1230,11 +1326,36 @@ bool observe_handleNotify(lwm2m_context_t * contextP,
             coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
             message_send(contextP, response, fromSessionH);
         }
-        observationP->callback(clientID,
-                               &observationP->uri,
-                               (int)count,
-                               message->content_type, message->payload, message->payload_len,
-                               observationP->userData);
+
+        /*
+         * Handle notify callback
+         * TODO: status is misused by notify counter value. Issue #521
+         */
+        uint32_t block_num = 0;
+        uint16_t block_size = 0;
+        uint8_t block_more = 0;
+
+        if (coap_get_header_block2(message, &block_num, &block_more, &block_size, NULL)) {
+            block_info_t block_info;
+            block_info.block_num = block_num;
+            block_info.block_size = block_size;
+            block_info.block_more = block_more;
+            observationP->callback(contextP,
+                                   clientID,
+                                   &observationP->uri,
+                                   (int)count,
+                                   &block_info,
+                                   utils_convertMediaType(message->content_type), message->payload, message->payload_len,
+                                   observationP->userData);
+        } else {
+            observationP->callback(contextP,
+                                   clientID,
+                                   &observationP->uri,
+                                   (int)count,
+                                   NULL,
+                                   utils_convertMediaType(message->content_type), message->payload, message->payload_len,
+                                   observationP->userData);
+        }
     }
     return true;
 }

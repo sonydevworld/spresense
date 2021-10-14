@@ -18,7 +18,8 @@
  *    Achim Kraus, Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
  *    Ville Skyttä - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -60,39 +61,30 @@
  *
  *  Resources:
  *              Supported    Multiple
- *  Name | ID | Operations | Instances | Mandatory |  Type   | Range | Units | Description |
- *  test |  1 |    R/W     |    No     |    Yes    | Integer | 0-255 |       |             |
- *  exec |  2 |     E      |    No     |    Yes    |         |       |       |             |
- *  dec  |  3 |    R/W     |    No     |    Yes    |  Float  |       |       |             |
+ *  Name | ID | Operations | Instances | Mandatory |  Type   | Range | Units |      Description      |
+ *  test |  1 |    R/W     |    No     |    Yes    | Integer | 0-255 |       |                       |
+ *  exec |  2 |     E      |    No     |    Yes    |         |       |       |                       |
+ *  dec  |  3 |    R/W     |    No     |    Yes    |  Float  |       |       |                       |
+ *  sig  |  4 |    R/W     |    No     |    Yes    | Integer |       |       | 16-bit signed integer |
  *
  */
 
 #include "liblwm2m.h"
-#include "lwm2mclient.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
-#define PRV_TLV_BUFFER_SIZE 64
-
-/*
- * Multiple instance objects can use userdata to store data that will be shared between the different instances.
- * The lwm2m_object_t object structure - which represent every object of the liblwm2m as seen in the single instance
- * object - contain a chained list called instanceList with the object specific structure prv_instance_t:
- */
-typedef struct _prv_instance_
-{
-    /*
-     * The first two are mandatories and represent the pointer to the next instance and the ID of this one. The rest
-     * is the instance scope user data (uint8_t test in this case)
-     */
-    struct _prv_instance_ * next;   // matches lwm2m_list_t::next
-    uint16_t shortID;               // matches lwm2m_list_t::id
-    uint8_t  test;
-    double   dec;
-} prv_instance_t;
+static uint8_t prv_delete(lwm2m_context_t * contextP,
+                          uint16_t id,
+                          lwm2m_object_t * objectP);
+static uint8_t prv_create(lwm2m_context_t * contextP,
+                          uint16_t instanceId,
+                          int numData,
+                          lwm2m_data_t * dataArray,
+                          lwm2m_object_t * objectP);
 
 static void prv_output_buffer(uint8_t * buffer,
                               int length)
@@ -131,7 +123,26 @@ static void prv_output_buffer(uint8_t * buffer,
     }
 }
 
-static uint8_t prv_read(uint16_t instanceId,
+/*
+ * Multiple instance objects can use userdata to store data that will be shared between the different instances.
+ * The lwm2m_object_t object structure - which represent every object of the liblwm2m as seen in the single instance
+ * object - contain a chained list called instanceList with the object specific structure prv_instance_t:
+ */
+typedef struct _prv_instance_
+{
+    /*
+     * The first two are mandatories and represent the pointer to the next instance and the ID of this one. The rest
+     * is the instance scope user data (uint8_t test in this case)
+     */
+    struct _prv_instance_ * next;   // matches lwm2m_list_t::next
+    uint16_t shortID;               // matches lwm2m_list_t::id
+    uint8_t  test;
+    double   dec;
+    int16_t  sig;
+} prv_instance_t;
+
+static uint8_t prv_read(lwm2m_context_t * contextP,
+                        uint16_t instanceId,
                         int * numDataP,
                         lwm2m_data_t ** dataArrayP,
                         lwm2m_object_t * objectP)
@@ -139,20 +150,29 @@ static uint8_t prv_read(uint16_t instanceId,
     prv_instance_t * targetP;
     int i;
 
+    /* Unused parameter */
+    (void)contextP;
+
     targetP = (prv_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
 
     if (*numDataP == 0)
     {
-        *dataArrayP = lwm2m_data_new(2);
+        *dataArrayP = lwm2m_data_new(3);
         if (*dataArrayP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
-        *numDataP = 2;
+        *numDataP = 3;
         (*dataArrayP)[0].id = 1;
         (*dataArrayP)[1].id = 3;
+        (*dataArrayP)[2].id = 4;
     }
 
     for (i = 0 ; i < *numDataP ; i++)
     {
+        if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            return COAP_404_NOT_FOUND;
+        }
+
         switch ((*dataArrayP)[i].id)
         {
         case 1:
@@ -163,6 +183,9 @@ static uint8_t prv_read(uint16_t instanceId,
         case 3:
             lwm2m_data_encode_float(targetP->dec, *dataArrayP + i);
             break;
+        case 4:
+            lwm2m_data_encode_int(targetP->sig, *dataArrayP + i);
+            break;
         default:
             return COAP_404_NOT_FOUND;
         }
@@ -171,22 +194,27 @@ static uint8_t prv_read(uint16_t instanceId,
     return COAP_205_CONTENT;
 }
 
-static uint8_t prv_discover(uint16_t instanceId,
+static uint8_t prv_discover(lwm2m_context_t * contextP,
+                            uint16_t instanceId,
                             int * numDataP,
                             lwm2m_data_t ** dataArrayP,
                             lwm2m_object_t * objectP)
 {
     int i;
 
+    /* Unused parameter */
+    (void)contextP;
+
     // is the server asking for the full object ?
     if (*numDataP == 0)
     {
-        *dataArrayP = lwm2m_data_new(3);
+        *dataArrayP = lwm2m_data_new(4);
         if (*dataArrayP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
-        *numDataP = 3;
+        *numDataP = 4;
         (*dataArrayP)[0].id = 1;
         (*dataArrayP)[1].id = 2;
         (*dataArrayP)[2].id = 3;
+        (*dataArrayP)[3].id = 4;
     }
     else
     {
@@ -197,20 +225,22 @@ static uint8_t prv_discover(uint16_t instanceId,
             case 1:
             case 2:
             case 3:
+            case 4:
                 break;
             default:
                 return COAP_404_NOT_FOUND;
             }
         }
     }
-
     return COAP_205_CONTENT;
 }
 
-static uint8_t prv_write(uint16_t instanceId,
+static uint8_t prv_write(lwm2m_context_t * contextP,
+                         uint16_t instanceId,
                          int numData,
                          lwm2m_data_t * dataArray,
-                         lwm2m_object_t * objectP)
+                         lwm2m_object_t * objectP,
+                         lwm2m_write_type_t writeType)
 {
     prv_instance_t * targetP;
     int i;
@@ -218,8 +248,25 @@ static uint8_t prv_write(uint16_t instanceId,
     targetP = (prv_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
 
+    if (writeType == LWM2M_WRITE_REPLACE_INSTANCE)
+    {
+        uint8_t result = prv_delete(contextP, instanceId, objectP);
+        if (result == COAP_202_DELETED)
+        {
+            result = prv_create(contextP, instanceId, numData, dataArray, objectP);
+            if (result == COAP_201_CREATED)
+            {
+                result = COAP_204_CHANGED;
+            }
+        }
+        return result;
+    }
+
     for (i = 0 ; i < numData ; i++)
     {
+        /* No multiple instance resources */
+        if (dataArray[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return  COAP_404_NOT_FOUND;
+
         switch (dataArray[i].id)
         {
         case 1:
@@ -241,6 +288,17 @@ static uint8_t prv_write(uint16_t instanceId,
                 return COAP_400_BAD_REQUEST;
             }
             break;
+        case 4:
+        {
+            int64_t value;
+
+            if (1 != lwm2m_data_decode_int(dataArray + i, &value) || value < INT16_MIN || value > INT16_MAX)
+            {
+                return COAP_400_BAD_REQUEST;
+            }
+            targetP->sig = (int16_t)value;
+        }
+        break;
         default:
             return COAP_404_NOT_FOUND;
         }
@@ -249,10 +307,14 @@ static uint8_t prv_write(uint16_t instanceId,
     return COAP_204_CHANGED;
 }
 
-static uint8_t prv_delete(uint16_t id,
+static uint8_t prv_delete(lwm2m_context_t * contextP,
+                          uint16_t id,
                           lwm2m_object_t * objectP)
 {
     prv_instance_t * targetP;
+
+    /* Unused parameter */
+    (void)contextP;
 
     objectP->instanceList = lwm2m_list_remove(objectP->instanceList, id, (lwm2m_list_t **)&targetP);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
@@ -262,7 +324,8 @@ static uint8_t prv_delete(uint16_t id,
     return COAP_202_DELETED;
 }
 
-static uint8_t prv_create(uint16_t instanceId,
+static uint8_t prv_create(lwm2m_context_t * contextP,
+                          uint16_t instanceId,
                           int numData,
                           lwm2m_data_t * dataArray,
                           lwm2m_object_t * objectP)
@@ -278,11 +341,11 @@ static uint8_t prv_create(uint16_t instanceId,
     targetP->shortID = instanceId;
     objectP->instanceList = LWM2M_LIST_ADD(objectP->instanceList, targetP);
 
-    result = prv_write(instanceId, numData, dataArray, objectP);
+    result = prv_write(contextP, instanceId, numData, dataArray, objectP, LWM2M_WRITE_REPLACE_RESOURCES);
 
     if (result != COAP_204_CHANGED)
     {
-        (void)prv_delete(instanceId, objectP);
+        (void)prv_delete(contextP, instanceId, objectP);
     }
     else
     {
@@ -292,12 +355,15 @@ static uint8_t prv_create(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_exec(uint16_t instanceId,
+static uint8_t prv_exec(lwm2m_context_t * contextP,
+                        uint16_t instanceId,
                         uint16_t resourceId,
                         uint8_t * buffer,
                         int length,
                         lwm2m_object_t * objectP)
 {
+    /* Unused parameter */
+    (void)contextP;
 
     if (NULL == lwm2m_list_find(objectP->instanceList, instanceId)) return COAP_404_NOT_FOUND;
 
@@ -320,21 +386,6 @@ static uint8_t prv_exec(uint16_t instanceId,
     }
 }
 
-void display_test_object(lwm2m_object_t * object)
-{
-#ifdef WITH_LOGS
-    fprintf(stdout, "  /%u: Test object, instances:\r\n", object->objID);
-    prv_instance_t * instance = (prv_instance_t *)object->instanceList;
-    while (instance != NULL)
-    {
-        fprintf(stdout, "    /%u/%u: shortId: %u, test: %u\r\n",
-                object->objID, instance->shortID,
-                instance->shortID, instance->test);
-        instance = (prv_instance_t *)instance->next;
-    }
-#endif
-}
-
 lwm2m_object_t * get_test_object(void)
 {
     lwm2m_object_t * testObj;
@@ -348,7 +399,7 @@ lwm2m_object_t * get_test_object(void)
 
         memset(testObj, 0, sizeof(lwm2m_object_t));
 
-        testObj->objID = TEST_OBJECT_ID;
+        testObj->objID = 31024;
         for (i=0 ; i < 3 ; i++)
         {
             targetP = (prv_instance_t *)lwm2m_malloc(sizeof(prv_instance_t));
@@ -357,6 +408,7 @@ lwm2m_object_t * get_test_object(void)
             targetP->shortID = 10 + i;
             targetP->test    = 20 + i;
             targetP->dec     = -30 + i + (double)i/100.0;
+            targetP->sig     = 0 - i;
             testObj->instanceList = LWM2M_LIST_ADD(testObj->instanceList, targetP);
         }
         /*
@@ -367,11 +419,11 @@ lwm2m_object_t * get_test_object(void)
          *   allocated to it)
          */
         testObj->readFunc = prv_read;
-        testObj->discoverFunc = prv_discover;
         testObj->writeFunc = prv_write;
         testObj->executeFunc = prv_exec;
         testObj->createFunc = prv_create;
         testObj->deleteFunc = prv_delete;
+        testObj->discoverFunc = prv_discover;
     }
 
     return testObj;
@@ -387,4 +439,3 @@ void free_test_object(lwm2m_object_t * object)
     }
     lwm2m_free(object);
 }
-

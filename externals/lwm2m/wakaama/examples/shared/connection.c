@@ -13,7 +13,7 @@
  * Contributors:
  *    David Navarro, Intel Corporation - initial API and implementation
  *    Pascal Rieux - Please refer to git log
- *    
+ *
  *******************************************************************************/
 
 #include <stdlib.h>
@@ -21,6 +21,10 @@
 #include <ctype.h>
 #include "connection.h"
 #include "commandline.h"
+
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
 
 int create_socket(const char * portStr, int addressFamily)
 {
@@ -164,7 +168,7 @@ int connection_send(connection_t *connP,
     int nbSent;
     size_t offset;
 
-#ifdef WITH_LOGS
+#ifdef LWM2M_WITH_LOGS
     char s[INET6_ADDRSTRLEN];
     in_port_t port;
 

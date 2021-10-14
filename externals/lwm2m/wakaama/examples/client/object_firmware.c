@@ -17,7 +17,8 @@
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
  *    Gregory Lemercier - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -70,7 +71,8 @@ typedef struct
     uint8_t delivery_method;
 } firmware_data_t;
 
-static uint8_t prv_firmware_read(uint16_t instanceId,
+static uint8_t prv_firmware_read(lwm2m_context_t *contextP,
+                                 uint16_t instanceId,
                                  int * numDataP,
                                  lwm2m_data_t ** dataArrayP,
                                  lwm2m_object_t * objectP)
@@ -78,6 +80,9 @@ static uint8_t prv_firmware_read(uint16_t instanceId,
     int i;
     uint8_t result;
     firmware_data_t * data = (firmware_data_t*)(objectP->userData);
+
+    /* unused parameter */
+    (void)contextP;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -88,7 +93,7 @@ static uint8_t prv_firmware_read(uint16_t instanceId,
     // is the server asking for the full object ?
     if (*numDataP == 0)
     {
-        *dataArrayP = lwm2m_data_new(3);
+        *dataArrayP = lwm2m_data_new(6);
         if (*dataArrayP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
         *numDataP = 6;
         (*dataArrayP)[0].id = 3;
@@ -112,55 +117,78 @@ static uint8_t prv_firmware_read(uint16_t instanceId,
 
         case RES_M_STATE:
             // firmware update state (int)
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
             lwm2m_data_encode_int(data->state, *dataArrayP + i);
             result = COAP_205_CONTENT;
             break;
 
         case RES_M_UPDATE_RESULT:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
             lwm2m_data_encode_int(data->result, *dataArrayP + i);
             result = COAP_205_CONTENT;
             break;
 
         case RES_O_PKG_NAME:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
             lwm2m_data_encode_string(data->pkg_name, *dataArrayP + i);
             result = COAP_205_CONTENT;
             break;
 
         case RES_O_PKG_VERSION:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
             lwm2m_data_encode_string(data->pkg_version, *dataArrayP + i);
             result = COAP_205_CONTENT;
             break;
 
         case RES_O_UPDATE_PROTOCOL:
         {
-            int ri;
+            lwm2m_data_t * subTlvP;
+            size_t count;
+            size_t ri;
             int num = 0;
-            lwm2m_data_t* subTlvP = NULL;
 
             while ((num < LWM2M_FIRMWARE_PROTOCOL_NUM) &&
                     (data->protocol_support[num] != LWM2M_FIRMWARE_PROTOCOL_NULL))
                 num++;
 
-            if (num) {
-                subTlvP = lwm2m_data_new(num);
-                for (ri = 0; ri<num; ri++)
-                {
-                    subTlvP[ri].id = ri;
-                    lwm2m_data_encode_int(data->protocol_support[ri], subTlvP + ri);
-                }
-            } else {
-                /* If no protocol is provided, use CoAP as default (per spec) */
-                num = 1;
-                subTlvP = lwm2m_data_new(num);
-                subTlvP[0].id = 0;
-                lwm2m_data_encode_int(0, subTlvP);
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+            {
+                count = (*dataArrayP)[i].value.asChildren.count;
+                subTlvP = (*dataArrayP)[i].value.asChildren.array;
             }
-            lwm2m_data_encode_instances(subTlvP, num, *dataArrayP + i);
+            else
+            {
+                count = num;
+                if (!count) count = 1;
+                subTlvP = lwm2m_data_new(count);
+                for (ri = 0; ri < count; ri++) subTlvP[ri].id = ri;
+                lwm2m_data_encode_instances(subTlvP, count, *dataArrayP + i);
+            }
+
+            if (num)
+            {
+                for (ri = 0; ri < count; ri++)
+                {
+                    if (subTlvP[ri].id >= num) return COAP_404_NOT_FOUND;
+                    lwm2m_data_encode_int(data->protocol_support[subTlvP[ri].id],
+                                          subTlvP + ri);
+                }
+            }
+            else
+            {
+                /* If no protocol is provided, use CoAP as default (per spec) */
+                for (ri = 0; ri < count; ri++)
+                {
+                    if (subTlvP[ri].id != 0) return COAP_404_NOT_FOUND;
+                    lwm2m_data_encode_int(0, subTlvP + ri);
+                }
+            }
             result = COAP_205_CONTENT;
             break;
         }
 
         case RES_M_UPDATE_METHOD:
+            if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
             lwm2m_data_encode_int(data->delivery_method, *dataArrayP + i);
             result = COAP_205_CONTENT;
             break;
@@ -175,13 +203,21 @@ static uint8_t prv_firmware_read(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_firmware_write(uint16_t instanceId,
+static uint8_t prv_firmware_write(lwm2m_context_t *contextP,
+                                  uint16_t instanceId,
                                   int numData,
                                   lwm2m_data_t * dataArray,
-                                  lwm2m_object_t * objectP)
+                                  lwm2m_object_t * objectP,
+                                  lwm2m_write_type_t writeType)
 {
     int i;
     uint8_t result;
+
+    /* unused parameter */
+    (void)contextP;
+
+    // All write types are treated the same here
+    (void)writeType;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -193,6 +229,13 @@ static uint8_t prv_firmware_write(uint16_t instanceId,
 
     do
     {
+        /* No multiple instance resources */
+        if (dataArray[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+            continue;
+        }
+
         switch (dataArray[i].id)
         {
         case RES_M_PACKAGE:
@@ -215,13 +258,17 @@ static uint8_t prv_firmware_write(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_firmware_execute(uint16_t instanceId,
+static uint8_t prv_firmware_execute(lwm2m_context_t *contextP,
+                                    uint16_t instanceId,
                                     uint16_t resourceId,
                                     uint8_t * buffer,
                                     int length,
                                     lwm2m_object_t * objectP)
 {
     firmware_data_t * data = (firmware_data_t*)(objectP->userData);
+
+    /* unused parameter */
+    (void)contextP;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -254,7 +301,6 @@ static uint8_t prv_firmware_execute(uint16_t instanceId,
 
 void display_firmware_object(lwm2m_object_t * object)
 {
-#ifdef WITH_LOGS
     firmware_data_t * data = (firmware_data_t *)object->userData;
     fprintf(stdout, "  /%u: Firmware object:\r\n", object->objID);
     if (NULL != data)
@@ -262,7 +308,6 @@ void display_firmware_object(lwm2m_object_t * object)
         fprintf(stdout, "    state: %u, result: %u\r\n", data->state,
                 data->result);
     }
-#endif
 }
 
 lwm2m_object_t * get_object_firmware(void)

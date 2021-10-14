@@ -14,7 +14,8 @@
  *    David Navarro, Intel Corporation - initial API and implementation
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -139,7 +140,8 @@ static uint8_t prv_get_value(lwm2m_data_t * dataP,
     }
 }
 
-static uint8_t prv_security_read(uint16_t instanceId,
+static uint8_t prv_security_read(lwm2m_context_t * contextP,
+                                 uint16_t instanceId,
                                  int * numDataP,
                                  lwm2m_data_t ** dataArrayP,
                                  lwm2m_object_t * objectP)
@@ -147,6 +149,9 @@ static uint8_t prv_security_read(uint16_t instanceId,
     security_instance_t * targetP;
     uint8_t result;
     int i;
+
+    /* Unused parameter */
+    (void)contextP;
 
     targetP = (security_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
@@ -180,7 +185,14 @@ static uint8_t prv_security_read(uint16_t instanceId,
     i = 0;
     do
     {
-        result = prv_get_value((*dataArrayP) + i, targetP);
+        if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+        }
+        else
+        {
+            result = prv_get_value((*dataArrayP) + i, targetP);
+        }
         i++;
     } while (i < *numDataP && result == COAP_205_CONTENT);
 

@@ -16,8 +16,8 @@
  *
  *******************************************************************************/
 
-
 #include "internals.h"
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -275,7 +275,7 @@ static bool prv_convertValue(_record_t * recordP,
         {
             size_t stringLen;
             uint8_t *string = (uint8_t *)lwm2m_malloc(recordP->valueLen);
-            if (!string) return false;
+            if (string == NULL) return false;
             stringLen = json_unescapeString(string, recordP->value, recordP->valueLen);
             if (stringLen)
             {
@@ -493,7 +493,7 @@ int json_parse(lwm2m_uri_t * uriP,
     _record_t * recordArray;
     lwm2m_data_t * parsedP;
 
-    LOG_ARG("bufferLen: %d, buffer: \"%s\"", bufferLen, (char *)buffer);
+    LOG_ARG("bufferLen: %d, buffer: \"%s\"", bufferLen, STR_NULL2EMPTY((char *)buffer));
     LOG_URI(uriP);
     *dataP = NULL;
     recordArray = NULL;
@@ -651,6 +651,10 @@ int json_parse(lwm2m_uri_t * uriP,
             }
             else
             {
+                /* Base name may have a trailing "/" on a multiple instance
+                 * resource. This isn't valid for a URI string in LWM2M 1.0.
+                 * Strip off any trailing "/" to avoid an error. */
+                if (buffer[bnStart + bnLen - 1] == '/') bnLen -= 1;
                 res = lwm2m_stringToUri((char *)buffer + bnStart, bnLen, &baseURI);
                 if (res < 0 || (size_t)res != bnLen) goto error;
                 baseUriP = &baseURI;
@@ -699,18 +703,10 @@ int json_parse(lwm2m_uri_t * uriP,
                         targetP = resultP + i;
                         if (targetP->id == uriP->resourceId)
                         {
-                            if (targetP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
-                            {
-                                resP = targetP->value.asChildren.array;
-                                size = targetP->value.asChildren.count;
-                            }
-                            else
-                            {
-                                size = json_dataStrip(1, targetP, &resP);
-                                if (size <= 0) goto error;
-                                lwm2m_data_free(count, parsedP);
-                                parsedP = NULL;
-                            }
+                            size = json_dataStrip(1, targetP, &resP);
+                            if (size <= 0) goto error;
+                            lwm2m_data_free(count, parsedP);
+                            parsedP = NULL;
                         }
                     }
                     if (resP == NULL) goto error;
@@ -758,8 +754,8 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
                               uint8_t * buffer,
                               size_t bufferLen)
 {
-    int res;
-    int head;
+    size_t res;
+    size_t head;
 
     switch (tlvP->type)
     {
@@ -773,7 +769,7 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
                                 bufferLen - head,
                                 tlvP->value.asBuffer.buffer,
                                 tlvP->value.asBuffer.length);
-        if (!res) return -1;
+        if (tlvP->value.asBuffer.length != 0 && res == 0) return -1;
         head += res;
 
         if (bufferLen - head < JSON_ITEM_STRING_END_SIZE) return -1;
@@ -793,7 +789,7 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
         head = JSON_ITEM_NUM_SIZE;
 
         res = utils_intToText(value, buffer + head, bufferLen - head);
-        if (res <= 0) return -1;
+        if (!res) return -1;
         head += res;
 
         if (bufferLen - head < JSON_ITEM_NUM_END_SIZE) return -1;
@@ -813,7 +809,7 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
         head = JSON_ITEM_NUM_SIZE;
 
         res = utils_uintToText(value, buffer + head, bufferLen - head);
-        if (res <= 0) return -1;
+        if (!res) return -1;
         head += res;
 
         if (bufferLen - head < JSON_ITEM_NUM_END_SIZE) return -1;
@@ -832,8 +828,11 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
         memcpy(buffer, JSON_ITEM_NUM, JSON_ITEM_NUM_SIZE);
         head = JSON_ITEM_NUM_SIZE;
 
-        res = utils_floatToText(value, buffer + head, bufferLen - head);
-        if (res <= 0) return -1;
+        res = utils_floatToText(value, buffer + head, bufferLen - head, true);
+        if (!res) return -1;
+        /* Error if inf or nan */
+        if (buffer[head] != '-' && !isdigit(buffer[head])) return -1;
+        if (res > 1 && buffer[head] == '-' && !isdigit(buffer[head+1])) return -1;
         head += res;
 
         if (bufferLen - head < JSON_ITEM_NUM_END_SIZE) return -1;
@@ -886,7 +885,7 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
                                   tlvP->value.asObjLink.objectInstanceId,
                                   buffer + head,
                                   bufferLen - head);
-        if (res <= 0) return -1;
+        if (!res) return -1;
         head += res;
 
         if (bufferLen - head < JSON_ITEM_OBJECT_LINK_END_SIZE) return -1;
@@ -898,7 +897,7 @@ static int prv_serializeValue(lwm2m_data_t * tlvP,
         return -1;
     }
 
-    return head;
+    return (int)head;
 }
 
 static int prv_serializeData(lwm2m_data_t * tlvP,
@@ -984,6 +983,7 @@ int json_serialize(lwm2m_uri_t * uriP,
     uint8_t baseUriStr[URI_MAX_STRING_LEN];
     int baseUriLen;
     uri_depth_t rootLevel;
+    uri_depth_t baseLevel;
     int num;
     lwm2m_data_t * targetP;
     const uint8_t *parentUriStr = NULL;
@@ -1007,12 +1007,20 @@ int json_serialize(lwm2m_uri_t * uriP,
     }
 #endif
 
-    baseUriLen = uri_toString(uriP, baseUriStr, URI_MAX_STRING_LEN, &rootLevel);
+    baseUriLen = uri_toString(uriP, baseUriStr, URI_MAX_STRING_LEN, &baseLevel);
     if (baseUriLen < 0) return -1;
-    rootLevel = json_decreaseLevel(rootLevel);
 
-    num = json_findAndCheckData(uriP, rootLevel, size, tlvP, &targetP);
+    num = json_findAndCheckData(uriP, baseLevel, size, tlvP, &targetP, &rootLevel);
     if (num < 0) return -1;
+
+    if (baseLevel >= URI_DEPTH_RESOURCE
+     && rootLevel == baseLevel
+     && baseUriLen > 1)
+    {
+        /* Remove the ID from the base name */
+        while (baseUriLen > 1 && baseUriStr[baseUriLen - 1] != '/') baseUriLen--;
+        if (baseUriLen > 1 && baseUriStr[baseUriLen - 1] == '/') baseUriLen--;
+    }
 
     while (num == 1
         && (targetP->type == LWM2M_TYPE_OBJECT
