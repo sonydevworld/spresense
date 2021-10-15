@@ -1222,6 +1222,7 @@ int main(int argc, char FAR *argv[])
     /*
      * We now enter in a while loop that will handle the communications from the server
      */
+    g_quit = 0;
     while (0 == g_quit)
     {
         struct timeval tv;
