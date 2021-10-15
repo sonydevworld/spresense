@@ -1469,7 +1469,7 @@ int main(int argc, char FAR *argv[])
     free_object_conn_s(objArray[7]);
     acl_ctrl_free_object(objArray[8]);
 
-#ifdef MEMORY_TRACE
+#ifdef LWM2M_MEMORY_TRACE
     if (g_quit == 1)
     {
         trace_print(0, 1);
