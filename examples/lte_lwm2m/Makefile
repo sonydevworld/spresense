@@ -49,15 +49,7 @@ MODULE    = $(CONFIG_EXAMPLES_LTE_LWM2M)
 
 # define
 
-CFLAGS += -DHAVE_ASSERT_H
-CFLAGS += -DLWM2M_CLIENT_MODE
-CFLAGS += -DLWM2M_BOOTSTRAP
-CFLAGS += -DLWM2M_LITTLE_ENDIAN
-CFLAGS += -DLWM2M_SUPPORT_JSON
-CFLAGS += -DWITH_TINYDTLS
-CFLAGS += -DUIP_BUFSIZE=1294
-CFLAGS += -DUIP_LLH_LEN=14
-CFLAGS += -DUIP_IPUDPH_LEN=48
+include $(EXTERNAL_DIR)/lwm2m/wakaama.mk
 
 # lte_lwm2m Example
 
@@ -70,7 +62,7 @@ CSRCS += object_security.c
 CSRCS += object_server.c
 CSRCS += object_connectivity_stat.c
 CSRCS += system_api.c
-CSRCS += test_object.c
+CSRCS += object_test.c
 CSRCS += lwm2m_lte_connection.c
 MAINSRC = lwm2mclient.c
 
