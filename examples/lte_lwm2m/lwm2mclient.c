@@ -844,7 +844,7 @@ static void close_backup_object(void)
 
 void print_usage(void)
 {
-    fprintf(stdout, "Usage: lwm2m [OPTION]\r\n");
+    fprintf(stdout, "Usage: %s [OPTION]\r\n", CONFIG_EXAMPLES_LTE_LWM2M_PROGNAME);
     fprintf(stdout, "Launch a LWM2M client.\r\n");
     fprintf(stdout, "Options:\r\n");
     fprintf(stdout, "  -n NAME\tSet the endpoint name of the Client. Default: testlwm2mclient\r\n");
