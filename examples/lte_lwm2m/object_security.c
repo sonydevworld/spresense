@@ -517,7 +517,7 @@ void display_security_object(lwm2m_object_t * object)
     security_instance_t * instance = (security_instance_t *)object->instanceList;
     while (instance != NULL)
     {
-        fprintf(stdout, "    /%u/%u: instanceId: %u, uri: %s, isBootstrap: %s, shortId: %u, clientHoldOffTime: %u\r\n",
+        fprintf(stdout, "    /%u/%u: instanceId: %u, uri: %s, isBootstrap: %s, shortId: %u, clientHoldOffTime: %lu\r\n",
                 object->objID, instance->instanceId,
                 instance->instanceId, instance->uri, instance->isBootstrap ? "true" : "false",
                 instance->shortID, instance->clientHoldOffTime);

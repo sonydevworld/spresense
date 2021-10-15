@@ -1063,7 +1063,7 @@ void display_server_object(lwm2m_object_t * object)
     server_instance_t * serverInstance = (server_instance_t *)object->instanceList;
     while (serverInstance != NULL)
     {
-        fprintf(stdout, "    /%u/%u: instanceId: %u, shortServerId: %u, lifetime: %u, storing: %s, binding: %s",
+        fprintf(stdout, "    /%u/%u: instanceId: %u, shortServerId: %u, lifetime: %lu, storing: %s, binding: %s",
                 object->objID, serverInstance->instanceId,
                 serverInstance->instanceId, serverInstance->shortServerId, serverInstance->lifetime,
                 serverInstance->storing ? "true" : "false", serverInstance->binding);
