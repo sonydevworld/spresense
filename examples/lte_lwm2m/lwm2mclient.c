@@ -653,27 +653,6 @@ static void prv_remove(lwm2m_context_t * lwm2mH,
     return;
 }
 
-#ifdef LWM2M_BOOTSTRAP
-
-static void prv_initiate_bootstrap(lwm2m_context_t * lwm2mH,
-                                   char * buffer,
-                                   void * user_data)
-{
-    lwm2m_server_t * targetP;
-
-    /* unused parameter */
-    (void)user_data;
-
-    // HACK !!!
-    lwm2mH->state = STATE_BOOTSTRAP_REQUIRED;
-    targetP = lwm2mH->bootstrapServerList;
-    while (targetP != NULL)
-    {
-        targetP->lifetime = 0;
-        targetP = targetP->next;
-    }
-}
-
 static void prv_display_objects(lwm2m_context_t * lwm2mH,
                                 char * buffer,
                                 void * user_data)
@@ -713,6 +692,27 @@ static void prv_display_objects(lwm2m_context_t * lwm2mH,
                 break;
             }
         }
+    }
+}
+
+#ifdef LWM2M_BOOTSTRAP
+
+static void prv_initiate_bootstrap(lwm2m_context_t * lwm2mH,
+                                   char * buffer,
+                                   void * user_data)
+{
+    lwm2m_server_t * targetP;
+
+    /* unused parameter */
+    (void)user_data;
+
+    // HACK !!!
+    lwm2mH->state = STATE_BOOTSTRAP_REQUIRED;
+    targetP = lwm2mH->bootstrapServerList;
+    while (targetP != NULL)
+    {
+        targetP->lifetime = 0;
+        targetP = targetP->next;
     }
 }
 
@@ -1300,6 +1300,7 @@ int main(int argc, char FAR *argv[])
         if (result != 0)
         {
             fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
+#ifdef LWM2M_BOOTSTRAP
             if(previousState == STATE_BOOTSTRAPPING)
             {
 #ifdef LWM2M_WITH_LOGS
@@ -1309,6 +1310,9 @@ int main(int argc, char FAR *argv[])
                 lwm2mH->state = STATE_INITIAL;
             }
             else return -1;
+#else
+            return -1;
+#endif
         }
 #ifdef LWM2M_BOOTSTRAP
         update_bootstrap_info(&previousState, lwm2mH);
