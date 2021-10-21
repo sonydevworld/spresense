@@ -1417,7 +1417,9 @@ int main(int argc, char FAR *argv[])
              */
             else if (FD_ISSET(STDIN_FILENO, &readfds))
             {
-                numBytes = read(STDIN_FILENO, buffer, MAX_PACKET_SIZE - 1);
+                memset(buffer, 0, MAX_PACKET_SIZE);
+                fgets((char*)buffer, MAX_PACKET_SIZE, stdin);
+                numBytes = strlen((char*)buffer);
 
                 if (numBytes > 1)
                 {
