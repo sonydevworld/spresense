@@ -139,7 +139,7 @@ int send_data(dtls_connection_t *connP,
 
 #ifdef LWM2M_WITH_LOGS
     char s[INET6_ADDRSTRLEN];
-    in_port_t port;
+    in_port_t port = 0;
 
     s[0] = 0;
 
@@ -416,7 +416,7 @@ dtls_connection_t * connection_new_incoming(dtls_connection_t * connList,
 {
     dtls_connection_t * connP;
 
-    connP = (dtls_connection_t *)malloc(sizeof(dtls_connection_t));
+    connP = (dtls_connection_t *)lwm2m_malloc(sizeof(dtls_connection_t));
     if (connP != NULL)
     {
         memset(connP, 0, sizeof(dtls_connection_t));
@@ -425,7 +425,7 @@ dtls_connection_t * connection_new_incoming(dtls_connection_t * connList,
         connP->addrLen = addrLen;
         connP->next = connList;
 
-        connP->dtlsSession = (session_t *)malloc(sizeof(session_t));
+        connP->dtlsSession = (session_t *)lwm2m_malloc(sizeof(session_t));
         memset(connP->dtlsSession, 0, sizeof(session_t));
         connP->dtlsSession->addr.sin6 = connP->addr;
         connP->dtlsSession->size = connP->addrLen;
@@ -540,6 +540,10 @@ dtls_connection_t * connection_create(dtls_connection_t * connList,
             else
             {
                 // no dtls session
+                if (connP->dtlsSession)
+                {
+                    lwm2m_free(connP->dtlsSession);
+                }
                 connP->dtlsSession = NULL;
             }
         }
@@ -558,8 +562,13 @@ void connection_free(dtls_connection_t * connList)
     {
         dtls_connection_t * nextP;
 
+        if (connList->dtlsSession)
+        {
+            lwm2m_free(connList->dtlsSession);
+        }
+
         nextP = connList->next;
-        free(connList);
+        lwm2m_free(connList);
 
         connList = nextP;
     }
