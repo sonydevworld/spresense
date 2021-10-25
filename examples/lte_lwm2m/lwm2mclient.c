@@ -1447,7 +1447,7 @@ int main(int argc, char FAR *argv[])
     /*
      * Finally when the loop is left smoothly - asked by user in the command line interface - we unregister our client from it
      */
-    if (g_quit == 1)
+    if (g_quit >= 1)
     {
 #ifdef WITH_TINYDTLS
         free(pskBuffer);
@@ -1474,7 +1474,7 @@ int main(int argc, char FAR *argv[])
     acl_ctrl_free_object(objArray[8]);
 
 #ifdef LWM2M_MEMORY_TRACE
-    if (g_quit == 1)
+    if (g_quit >= 1)
     {
         trace_print(0, 1);
     }
