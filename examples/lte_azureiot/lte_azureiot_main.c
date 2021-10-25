@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "azureiot_if.h"
 #include "lte_connection.h"
 #include "mbedtls_if.h"
@@ -551,14 +552,54 @@ static int get_fileinfo(struct azureiot_info *info,
 }
 
 /* ------------------------------------------------------------------------ */
+static int notify_status(struct azureiot_info *info,
+                                char                 *io_buffer,
+                                int                   io_buffer_size,
+                                char                 *hostname,
+                                int                   hostname_size,
+                                bool                  is_success,
+                                int                   status_code)
+{
+  /* Create response message */
+
+  int len = azureiot_create_notifymsg(info,
+                                      io_buffer,
+                                      io_buffer_size,
+                                      is_success,
+                                      status_code);
+
+  if (len < 0)
+    {
+      printf("Fail: create_notifymsg()=%d\n", len);
+
+      return ERROR;
+    }
+
+  if (azureiot_get_hostname(info, hostname, hostname_size) < 0)
+    {
+      printf("Fail: get_hostname()\n");
+
+      return ERROR;
+    }
+
+  return send_and_recv_message(hostname,
+                               io_buffer,
+                               len,
+                               io_buffer_size);
+}
+
+/* ------------------------------------------------------------------------ */
 static int upload(struct azureiot_info *info,
                   const char           *src_filename,
                   const char           *dst_filename)
 {
   char hostname[APP_IO_HOSTNAME_SIZE];
   char io_buffer[APP_IO_BUFFER_SIZE];
+  int  res = ERROR;
   int  len = 0;
   int  file_size;
+  bool is_success = false;
+  int  status;
 
   /* Get upload file size */
 
@@ -652,16 +693,41 @@ static int upload(struct azureiot_info *info,
 
   /* Check HTTP response status code */
 
-  if (check_HTTP_response_status_code(io_buffer))
+  status = get_http_status_code(io_buffer);
+  if (status < 200 || 300 <= status)
     {
-      return ERROR;
+      printf("Failed\n");
     }
   else
     {
       printf("Successful\n");
+
+      is_success = true;
     }
 
-  return OK;
+  /* Notify IoT Hub of a completed file upload */
+
+  if (notify_status(info,
+                    io_buffer,
+                    sizeof(io_buffer),
+                    hostname,
+                    sizeof(hostname),
+                    is_success,
+                    status) < 0)
+    {
+      printf("Notify failed\n");
+    }
+  else
+    {
+      printf("Notify OK\n");
+
+      if (is_success)
+        {
+          res = OK;
+        }
+    }
+
+  return res;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -673,6 +739,8 @@ static int download(struct azureiot_info *info,
   char io_buffer[APP_IO_BUFFER_SIZE];
   int  res = ERROR;
   int  len = 0;
+  bool is_success = false;
+  int  status = 0;
 
   /* Get AzureStrage SAS URI */
 
@@ -731,9 +799,14 @@ static int download(struct azureiot_info *info,
 
   /* Check HTTP response status code */
 
-  if (check_HTTP_response_status_code(io_buffer))
+  status = get_http_status_code(io_buffer);
+  if (status < 200 || 300 <= status)
     {
       goto errout;
+    }
+  else
+    {
+      is_success = true;
     }
 
   /* Analyze Azure response */
@@ -814,8 +887,6 @@ static int download(struct azureiot_info *info,
 
   printf("Download end.\n");
 
-  res = OK;
-
 errout_fclose:
 
   fclose(fp);
@@ -823,6 +894,30 @@ errout_fclose:
 errout:
 
   tls_disconnect();
+
+  /* Notify IoT Hub of a completed file download */
+  if (100 <= status && status < 600)
+    {
+      if (notify_status(info,
+                        io_buffer,
+                        sizeof(io_buffer),
+                        hostname,
+                        sizeof(hostname),
+                        is_success,
+                        status) < 0)
+        {
+          printf("Notify failed\n");
+        }
+      else
+        {
+          printf("Notify OK\n");
+
+          if (is_success)
+            {
+              res = OK;
+            }
+        }
+    }
 
   return res;
 }
