@@ -122,10 +122,11 @@ static void prv_quit(lwm2m_context_t * lwm2mH,
     g_quit = 1;
 }
 
-//void handle_sigint(int signum)
-//{
-//    g_quit = 2;
-//}
+void handle_sigint(int signum)
+{
+    printf("signum=%d\n", signum);
+    g_quit = 2;
+}
 
 void handle_value_changed(lwm2m_context_t * lwm2mH,
                           lwm2m_uri_t * uri,
@@ -1210,7 +1211,7 @@ int main(int argc, char FAR *argv[])
         return -1;
     }
 
-//    signal(SIGINT, handle_sigint);
+    signal(SIGINT, handle_sigint);
 
     /**
      * Initialize value changed callback.
