@@ -40,6 +40,7 @@
  */
 
 #include "liblwm2m.h"
+#include "lwm2mclient.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +61,22 @@
 
 #define LWM2M_FIRMWARE_PROTOCOL_NUM     4
 #define LWM2M_FIRMWARE_PROTOCOL_NULL    ((uint8_t)-1)
+
+#define STATE_IDLE                      0
+#define STATE_DOWNLOADING               1
+#define STATE_DOWNLOADED                2
+#define STATE_UPDATING                  3
+
+#define RESULT_INITIAL                  0
+#define RESULT_SUCCESS                  1
+#define RESULT_NO_FLASH                 2
+#define RESULT_NO_MEMORY                3
+#define RESULT_CONNECTION_LOST          4
+#define RESULT_INTEGRITY_FAIL           5
+#define RESULT_UNSUPPORTED_PACKAGE      6
+#define RESULT_INVALID_URI              7
+#define RESULT_FAILURE                  8
+#define RESULT_UNSUPPORTED_PROTOCOL     9
 
 typedef struct
 {
@@ -212,6 +229,8 @@ static uint8_t prv_firmware_write(lwm2m_context_t *contextP,
 {
     int i;
     uint8_t result;
+    int ret;
+    firmware_data_t * data = (firmware_data_t*)(objectP->userData);
 
     /* unused parameter */
     (void)contextP;
@@ -239,8 +258,24 @@ static uint8_t prv_firmware_write(lwm2m_context_t *contextP,
         switch (dataArray[i].id)
         {
         case RES_M_PACKAGE:
-            // inline firmware binary
-            result = COAP_204_CHANGED;
+            data->state = STATE_DOWNLOADING;
+            data->result = RESULT_INITIAL;
+            /* Save package into storage */
+            ret = save_package(dataArray[i].value.asBuffer.buffer,
+                               dataArray[i].value.asBuffer.length);
+            if (ret < 0)
+            {
+                data->result = RESULT_NO_FLASH;
+                result = COAP_408_REQ_ENTITY_INCOMPLETE;
+            }
+            else
+            {
+                /* Update package info from storage */
+                get_package_info(data->pkg_name, sizeof(data->pkg_name),
+                                 data->pkg_version, sizeof(data->pkg_version));
+                data->state = STATE_DOWNLOADED;
+                result = COAP_204_CHANGED;
+            }
             break;
 
         case RES_M_PACKAGE_URI:
@@ -266,6 +301,7 @@ static uint8_t prv_firmware_execute(lwm2m_context_t *contextP,
                                     lwm2m_object_t * objectP)
 {
     firmware_data_t * data = (firmware_data_t*)(objectP->userData);
+    int ret;
 
     /* unused parameter */
     (void)contextP;
@@ -282,11 +318,18 @@ static uint8_t prv_firmware_execute(lwm2m_context_t *contextP,
     switch (resourceId)
     {
     case RES_M_UPDATE:
-        if (data->state == 1)
+        if (data->state == STATE_DOWNLOADED)
         {
             fprintf(stdout, "\n\t FIRMWARE UPDATE\r\n\n");
             // trigger your firmware download and update logic
-            data->state = 2;
+            data->state = STATE_UPDATING;
+            // firmware update
+            ret = execute_fwupdate();
+            if (ret < 0)
+            {
+                data->result = RESULT_UNSUPPORTED_PACKAGE;
+                return COAP_400_BAD_REQUEST;
+            }
             return COAP_204_CHANGED;
         }
         else
@@ -361,11 +404,14 @@ lwm2m_object_t * get_object_firmware(void)
         {
             firmware_data_t *data = (firmware_data_t*)(firmwareObj->userData);
 
-            data->state = 1;
-            data->result = 0;
-            strcpy(data->pkg_name, "lwm2mclient");
-            strcpy(data->pkg_version, "1.0");
-
+            data->state = STATE_IDLE;
+            data->result = RESULT_INITIAL;
+            /* Get package info from storage */
+            if (0 == get_package_info(data->pkg_name, sizeof(data->pkg_name),
+                                      data->pkg_version, sizeof(data->pkg_version)))
+            {
+                data->state = STATE_DOWNLOADED;
+            }
             /* Only support CoAP based protocols */
             data->protocol_support[0] = 0;
             data->protocol_support[1] = 1;

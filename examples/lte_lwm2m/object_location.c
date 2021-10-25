@@ -45,6 +45,7 @@
  *              |     |      |         |     |         |       |       | for direction: the scalar component of velocity.                                 |
  */
 
+#include "lwm2mclient.h"
 #include "liblwm2m.h"
 
 #include <stdio.h>
@@ -262,15 +263,19 @@ void location_setVelocity(lwm2m_object_t* locationObj,
   * A convenience function to set the location coordinates with its timestamp.
   * @see testMe()
   * @param locationObj location object reference (to be casted!)
-  * @param latitude  the second argument.
-  * @param longitude the second argument.
-  * @param altitude  the second argument.
+  * @param latitude  the decimal notation of latitude in degree.
+  * @param longitude the decimal notation of longitude in degree.
+  * @param altitude  the decimal notation of altitude in meters above sea level.
+  * @param radius    The decimal notation of radius of a circular area in meters.
+  * @param speed     the decimal notation of speed in m/s.
   * @param timestamp the related timestamp. Seconds since 1970.
   */
 void location_setLocationAtTime(lwm2m_object_t* locationObj,
                              float latitude,
                              float longitude,
                              float altitude,
+                             float radius,
+                             float speed,
                              uint64_t timestamp)
 {
     //-------------------------------------------------------------------- JH --
@@ -279,6 +284,8 @@ void location_setLocationAtTime(lwm2m_object_t* locationObj,
     pData->latitude  = latitude;
     pData->longitude = longitude;
     pData->altitude  = altitude;
+    pData->radius    = radius;
+    pData->speed     = speed;
     pData->timestamp = timestamp;
 }
 
@@ -324,13 +331,15 @@ lwm2m_object_t * get_object_location(void)
         if (NULL != locationObj->userData)
         {
             location_data_t* data = (location_data_t*)locationObj->userData;
-            data->latitude    = 27.986065;  // Mount Everest :)
-            data->longitude   = 86.922623;
-            data->altitude    = 8495.0000;
+            data->latitude    = 0.0;
+            data->longitude   = 0.0;
+            data->altitude    = 0.0;
             data->radius      = 0.0;
             location_setVelocity(locationObj, 0, 0, 255); // 255: speedUncertainty not supported!
-            data->timestamp   = time(NULL);
+            data->timestamp   = 0;
             data->speed       = 0.0;
+            // Start GNSS system
+            gnss_start(locationObj);
         }
         else
         {
@@ -344,6 +353,8 @@ lwm2m_object_t * get_object_location(void)
 
 void free_object_location(lwm2m_object_t * object)
 {
+    // Stop GNSS system
+    gnss_stop();
     lwm2m_list_free(object->instanceList);
     lwm2m_free(object->userData);
     lwm2m_free(object);

@@ -50,6 +50,22 @@ void display_firmware_object(lwm2m_object_t * objectP);
 lwm2m_object_t * get_object_location(void);
 void free_object_location(lwm2m_object_t * object);
 void display_location_object(lwm2m_object_t * objectP);
+void location_setVelocity(lwm2m_object_t* object,
+                          uint16_t bearing,
+                          uint16_t horizontalSpeed,
+                          uint8_t speedUncertainty);
+void location_setLocationAtTime(lwm2m_object_t* object,
+                             float latitude,
+                             float longitude,
+                             float altitude,
+                             float radius,
+                             float speed,
+                             uint64_t timestamp);
+/*
+ * system_gnss.c
+ */
+int gnss_start(void *arg);
+int gnss_stop(void);
 /*
  * object_test.c
  */
@@ -108,6 +124,14 @@ const char * get_firmware_version(void);
 void device_reboot(void);
 int get_free_memory(void);
 int get_total_memory(void);
+
+/*
+ * system_fwupdate.c
+ */
+int get_package_info(char *pkg_name, size_t pkg_name_len,
+                     char *pkg_version, size_t pkg_ver_len);
+int save_package(void *buffer, size_t length);
+int execute_fwupdate(void);
 
 /*
  * object_security.c
