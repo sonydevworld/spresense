@@ -1246,7 +1246,7 @@ int main(int argc, char FAR *argv[])
                  * Message should normally be lost with reboot ...
                  */
                 fprintf(stderr, "reboot time expired, rebooting ...");
-                system_reboot();
+                device_reboot();
             }
             else
             {

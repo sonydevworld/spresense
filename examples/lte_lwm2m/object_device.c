@@ -66,10 +66,6 @@
 #include <time.h>
 
 
-#define PRV_MANUFACTURER      "Open Mobile Alliance"
-#define PRV_MODEL_NUMBER      "Lightweight M2M Client"
-#define PRV_SERIAL_NUMBER     "345000123"
-#define PRV_FIRMWARE_VERSION  "1.0"
 #define PRV_POWER_SOURCE_1    1
 #define PRV_POWER_SOURCE_2    5
 #define PRV_POWER_VOLTAGE_1   3800
@@ -118,6 +114,7 @@ typedef struct
     int64_t time;
     uint8_t battery_level;
     char time_offset[PRV_OFFSET_MAXLEN];
+    int64_t total_memory;
 } device_data_t;
 
 
@@ -173,22 +170,22 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
     {
     case RES_O_MANUFACTURER:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
-        lwm2m_data_encode_string(PRV_MANUFACTURER, dataP);
+        lwm2m_data_encode_string(get_manufacture(), dataP);
         return COAP_205_CONTENT;
 
     case RES_O_MODEL_NUMBER:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
-        lwm2m_data_encode_string(PRV_MODEL_NUMBER, dataP);
+        lwm2m_data_encode_string(get_model_number(), dataP);
         return COAP_205_CONTENT;
 
     case RES_O_SERIAL_NUMBER:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
-        lwm2m_data_encode_string(PRV_SERIAL_NUMBER, dataP);
+        lwm2m_data_encode_string(get_serial_number(), dataP);
         return COAP_205_CONTENT;
 
     case RES_O_FIRMWARE_VERSION:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
-        lwm2m_data_encode_string(PRV_FIRMWARE_VERSION, dataP);
+        lwm2m_data_encode_string(get_firmware_version(), dataP);
         return COAP_205_CONTENT;
 
     case RES_M_REBOOT:
@@ -303,6 +300,7 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
 
     case RES_O_MEMORY_FREE:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
+        devDataP->free_memory = get_free_memory();
         lwm2m_data_encode_int(devDataP->free_memory, dataP);
         return COAP_205_CONTENT;
 
@@ -358,6 +356,11 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
         lwm2m_data_encode_string(PRV_BINDING_MODE, dataP);
         return COAP_205_CONTENT;
 
+    case RES_O_MEMORY_TOTAL:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
+        lwm2m_data_encode_int(devDataP->total_memory, dataP);
+        return COAP_205_CONTENT;
+
     default:
         return COAP_404_NOT_FOUND;
     }
@@ -401,7 +404,8 @@ static uint8_t prv_device_read(lwm2m_context_t *contextP,
                 RES_O_CURRENT_TIME,
                 RES_O_UTC_OFFSET,
                 RES_O_TIMEZONE,
-                RES_M_BINDING_MODES
+                RES_M_BINDING_MODES,
+                RES_O_MEMORY_TOTAL
         };
         int nbRes = sizeof(resList)/sizeof(uint16_t);
 
@@ -464,7 +468,8 @@ static uint8_t prv_device_discover(lwm2m_context_t *contextP,
             RES_O_CURRENT_TIME,
             RES_O_UTC_OFFSET,
             RES_O_TIMEZONE,
-            RES_M_BINDING_MODES
+            RES_M_BINDING_MODES,
+            RES_O_MEMORY_TOTAL
         };
         int nbRes = sizeof(resList) / sizeof(uint16_t);
 
@@ -499,6 +504,7 @@ static uint8_t prv_device_discover(lwm2m_context_t *contextP,
             case RES_O_UTC_OFFSET:
             case RES_O_TIMEZONE:
             case RES_M_BINDING_MODES:
+            case RES_O_MEMORY_TOTAL:
                 break;
             default:
                 result = COAP_404_NOT_FOUND;
@@ -682,10 +688,11 @@ lwm2m_object_t * get_object_device()
         if (NULL != deviceObj->userData)
         {
             ((device_data_t*)deviceObj->userData)->battery_level = PRV_BATTERY_LEVEL;
-            ((device_data_t*)deviceObj->userData)->free_memory   = PRV_MEMORY_FREE;
+            ((device_data_t*)deviceObj->userData)->free_memory   = get_free_memory();
             ((device_data_t*)deviceObj->userData)->error = PRV_ERROR_CODE;
-            ((device_data_t*)deviceObj->userData)->time  = 1367491215;
+            ((device_data_t*)deviceObj->userData)->time  = 0;
             strcpy(((device_data_t*)deviceObj->userData)->time_offset, "+01:00");
+            ((device_data_t*)deviceObj->userData)->total_memory  = get_total_memory();
         }
         else
         {

@@ -98,6 +98,16 @@ void handle_value_changed(lwm2m_context_t* lwm2mH, lwm2m_uri_t* uri, const char 
  */
 void init_value_change(lwm2m_context_t * lwm2m);
 void system_reboot(void);
+/*
+ * system_device.c
+ */
+const char * get_manufacture(void);
+const char * get_model_number(void);
+const char * get_serial_number(void);
+const char * get_firmware_version(void);
+void device_reboot(void);
+int get_free_memory(void);
+int get_total_memory(void);
 
 /*
  * object_security.c
