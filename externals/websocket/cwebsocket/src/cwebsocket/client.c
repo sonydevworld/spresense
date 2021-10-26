@@ -25,11 +25,6 @@
 
 #include "client.h"
 
-/* for NUTTX */
-extern int getaddrinfo(const char *nodename, const char *servname,
-                const struct addrinfo *hints, struct addrinfo **res);
-extern void freeaddrinfo(struct addrinfo *res);
-
 int cwebsocket_client_init(cwebsocket_client *websocket, cwebsocket_subprotocol **subprotocols, int subprotocol_len) {
 	if (subprotocol_len > WEBSOCKET_SUBPROTOCOL_MAX)
 		return -1;
