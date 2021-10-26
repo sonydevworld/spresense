@@ -174,7 +174,7 @@ linux_install_toolchain()
     local _fn
     local _mach=`uname -m 2>/dev/null`
 
-    if [ "${_mach}" != "x86_64" -a "${_mach}" != "aarch64" ]; then
+    if [ "${_mach}" != "x86_64" ] && [ "${_mach}" != "aarch64" ]; then
         echo Sorry, this machine ${_mach} is not supported.
         return
     fi
@@ -249,8 +249,10 @@ linux_install_openocd()
     local _sha
 
     openocd_need_update || return
-	
-    if [ "`uname -m 2>/dev/null`" = "x86_64" ]; then
+
+    local _mach=`uname -m 2>/dev/null`
+
+    if [ "${_mach}" == "x86_64" ] || [ "${_mach}" == "aarch64" ]; then
         _fn=${_fn}-linux64.tar.bz2
     else
         _fn=${_fn}-linux32.tar.bz2
@@ -341,10 +343,13 @@ case "`uname -s`" in
         ;;
 esac
 
+ARCH=`uname -m 2>/dev/null`
 # 32bit linux is not supported
-if [ "${OS}" == "linux" -a "`uname -m`" != "x86_64" ]; then
-	echo Sorry, this platform is not supported.
-	exit 1
+if [ "${OS}" == "linux" ]; then
+    if [ "${ARCH}" != "x86_64" ] && [ "${ARCH}" != "aarch64" ]; then
+	    echo Sorry, this platform is not supported.
+	    exit 1
+    fi
 fi
 
 # Switch SPRROOT by platform
