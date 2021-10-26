@@ -310,6 +310,11 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			WS_DEBUG( " failed\n	 ! mbedtls_ssl_setup returned -0x%x\n\n", -ret );
 			goto fail;
 		}
+		if( ( ret = mbedtls_ssl_set_hostname( &websocket->ssl, hostname ) ) != 0 )
+		{
+			WS_DEBUG( " failed\n	 ! mbedtls_ssl_set_hostname returned -0x%x\n\n", -ret );
+			goto fail;
+		}
 		if(websocket->flags & WEBSOCKET_FLAG_PROXY) {
 			/*  SSL On / Proxy On
 				Execute CONNECT command of non-secure message after connecting to proxy server.
