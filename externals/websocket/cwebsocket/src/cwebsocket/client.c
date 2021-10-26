@@ -315,6 +315,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			WS_DEBUG( " failed\n	 ! mbedtls_ssl_set_hostname returned -0x%x\n\n", -ret );
 			goto fail;
 		}
+		mbedtls_ssl_conf_read_timeout( &websocket->conf, 1000); /* 1 second Timeout */
 		if(websocket->flags & WEBSOCKET_FLAG_PROXY) {
 			/*  SSL On / Proxy On
 				Execute CONNECT command of non-secure message after connecting to proxy server.
@@ -577,6 +578,9 @@ int cwebsocket_client_read_handshake(cwebsocket_client *websocket, char *seckey,
 
 		if(byte == 0) return -1;
 		if(byte == -1) {
+			if (errno == EAGAIN) {
+				continue;
+			}
 			WS_DEBUG("client_read_handshake: %s", strerror(errno));
 //			cwebsocket_client_onerror(websocket, strerror(errno));
 			return -1;
@@ -1188,9 +1192,21 @@ void cwebsocket_client_close(cwebsocket_client *websocket, uint16_t code, const 
 
 ssize_t cwebsocket_client_read(cwebsocket_client *websocket, void *buf, int len) {
 #ifdef ENABLE_SSL
-	return (websocket->flags & WEBSOCKET_FLAG_SSL) ?
-			mbedtls_ssl_read(&websocket->ssl, buf, len ) :
-			read(websocket->fd, buf, len);
+	if (websocket->flags & WEBSOCKET_FLAG_SSL) {
+		int ret = mbedtls_ssl_read(&websocket->ssl, buf, len );
+		if ( ret == MBEDTLS_ERR_SSL_TIMEOUT ) {
+			errno = EAGAIN;
+			return -1;
+		} else if ( ret < 0 ) {
+			WS_DEBUG("cwebsocket_client_read: error websocket: %X\n", -ret);
+			errno = EIO;
+			return -1;
+		} else {
+			return ret;
+		}
+	} else {
+		return read(websocket->fd, buf, len);
+	}
 #else
 	return read(websocket->fd, buf, len);
 #endif
