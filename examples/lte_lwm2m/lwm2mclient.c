@@ -1387,6 +1387,10 @@ int main(int argc, char FAR *argv[])
                 if (0 > numBytes)
                 {
                     fprintf(stderr, "Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+                    if (errno == EPIPE)
+                    {
+                        g_reboot = 1;
+                    }
                 }
                 else if (numBytes >= MAX_PACKET_SIZE) 
                 {
