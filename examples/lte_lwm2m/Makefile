@@ -67,6 +67,11 @@ CSRCS += lwm2m_lte_connection.c
 CSRCS += system_device.c
 CSRCS += system_fwupdate.c
 CSRCS += system_gnss.c
+CSRCS += object_digital_input.c
+CSRCS += object_digital_output.c
+CSRCS += system_gpio.c
+CSRCS += object_analog_input.c
+CSRCS += system_adc.c
 MAINSRC = lwm2mclient.c
 
 include $(APPDIR)/Application.mk

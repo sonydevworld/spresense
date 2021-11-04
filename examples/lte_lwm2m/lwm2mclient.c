@@ -90,7 +90,7 @@
 int g_reboot = 0;
 static int g_quit = 0;
 
-#define OBJ_COUNT 9
+#define OBJ_COUNT 12
 lwm2m_object_t * objArray[OBJ_COUNT];
 
 // only backup security and server objects
@@ -689,6 +689,15 @@ static void prv_display_objects(lwm2m_context_t * lwm2mH,
                 break;
             case LWM2M_CONN_STATS_OBJECT_ID:
                 break;
+            case LWM2M_DIGITAL_INPUT_OBJECT_ID:
+                display_digital_input_object(object);
+                break;
+            case LWM2M_DIGITAL_OUTPUT_OBJECT_ID:
+                display_digital_output_object(object);
+                break;
+            case LWM2M_ANALOG_INPUT_OBJECT_ID:
+                display_analog_input_object(object);
+                break;
             case TEST_OBJECT_ID:
                 display_test_object(object);
                 break;
@@ -1186,6 +1195,28 @@ int main(int argc, char FAR *argv[])
         fprintf(stderr, "Failed to create Access Control ACL resource for serverId: 999\r\n");
         return -1;
     }
+
+    objArray[9] = get_digital_input_object();
+    if (NULL == objArray[9])
+    {
+        fprintf(stderr, "Failed to create digital input object\r\n");
+        return -1;
+    }
+
+    objArray[10] = get_digital_output_object();
+    if (NULL == objArray[10])
+    {
+        fprintf(stderr, "Failed to create digital output object\r\n");
+        return -1;
+    }
+
+    objArray[11] = get_analog_input_object();
+    if (NULL == objArray[11])
+    {
+        fprintf(stderr, "Failed to create analog input object\r\n");
+        return -1;
+    }
+
     /*
      * The liblwm2m library is now initialized with the functions that will be in
      * charge of communication
@@ -1472,6 +1503,9 @@ int main(int argc, char FAR *argv[])
     free_object_conn_m(objArray[6]);
     free_object_conn_s(objArray[7]);
     acl_ctrl_free_object(objArray[8]);
+    free_digital_input_object(objArray[9]);
+    free_digital_output_object(objArray[10]);
+    free_analog_input_object(objArray[11]);
 
 #ifdef LWM2M_MEMORY_TRACE
     if (g_quit >= 1)
