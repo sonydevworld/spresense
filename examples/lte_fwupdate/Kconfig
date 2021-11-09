@@ -1,0 +1,25 @@
+
+config EXAMPLES_LTE_FWUPDATE
+	tristate "lte_fwupdate app"
+	default n
+	---help---
+		Enable the lte_fwupdate app
+
+if EXAMPLES_LTE_FWUPDATE
+
+config EXAMPLES_LTE_FWUPDATE_PROGNAME
+	string "Program name"
+	default "lte_fwupdate"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_FWUPDATE_PRIORITY
+	int "lte_fwupdate task priority"
+	default 100
+
+config EXAMPLES_LTE_FWUPDATE_STACKSIZE
+	int "lte_fwupdate stack size"
+	default 2048
+
+endif
