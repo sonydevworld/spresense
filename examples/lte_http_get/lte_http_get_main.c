@@ -159,11 +159,6 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   /* struct tm -> struct time_t */
 
   current_time.tv_sec = mktime(&calTime);
-  if (current_time.tv_sec < 0)
-    {
-      printf("mktime falied: %d\n", errno);
-      return;
-    }
 
   /* Set time */
 
@@ -324,6 +319,7 @@ static void app_mq_notify_parameter(int result, void* param,
     {
       errcode = errno;
       printf("mq_open() failed: %d\n", errcode);
+      free(buffer);
       return;
     }
 
@@ -335,6 +331,7 @@ static void app_mq_notify_parameter(int result, void* param,
       errcode = errno;
       printf("mq_send() failed: %d\n", errcode);
       mq_close(mqd);
+      free(buffer);
       return;
     }
   mq_close(mqd);

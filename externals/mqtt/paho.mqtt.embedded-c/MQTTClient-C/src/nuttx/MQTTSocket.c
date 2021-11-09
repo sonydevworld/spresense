@@ -217,6 +217,9 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 	struct addrinfo *result = NULL;
 	struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
 	static struct timeval tv;
+	int family = AF_INET;
+	int type = SOCK_STREAM;
+	int protocol = 0;
 
 	*sock = -1;
 	if (addr[0] == '[')
@@ -237,6 +240,10 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 			res = res->ai_next;
 		}
 
+		family = result->ai_family;
+		type = result->ai_socktype;
+		protocol = result->ai_protocol;
+
 		if (result->ai_family == AF_INET6)
 		{
 			address6.sin6_port = htons(port);
@@ -252,11 +259,13 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 		}
 		else
 			rc = -1;
+
+		freeaddrinfo(result);
 	}
 
 	if (rc == 0)
 	{
-		*sock = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+		*sock = socket(family, type, protocol);
 		if (*sock != -1)
 		{
 #if defined(NOSIGPIPE)
@@ -266,10 +275,10 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 				Log(TRACE_MIN, -1, "Could not set SO_NOSIGPIPE for socket %d", *sock);
 #endif
 			if (n->use_ssl){
-				if (result->ai_family == AF_INET)
+				if (family == AF_INET)
 					rc = connect(*sock, (struct sockaddr*)&address, sizeof(address));
 				else
-				if (result->ai_family == AF_INET6)
+				if (family == AF_INET6)
 					rc = connect(*sock, (struct sockaddr*)&address6, sizeof(address6));
 				else
 					rc = -1;
@@ -280,10 +289,10 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 
 			}
 			else {
-				if (result->ai_family == AF_INET)
+				if (family == AF_INET)
 					rc = connect(*sock, (struct sockaddr*)&address, sizeof(address));
 				else
-				if (result->ai_family == AF_INET6)
+				if (family == AF_INET6)
 					rc = connect(*sock, (struct sockaddr*)&address6, sizeof(address6));
 				else
 					rc = -1;
@@ -292,8 +301,6 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 		else {
 			rc = -1;
 		}
-
-		freeaddrinfo(result);
 	}
 	if (n->my_socket == -1 || rc == -1)
 		return rc;
