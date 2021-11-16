@@ -44,6 +44,11 @@
 #define AZURE_IOT_INFO_ID_MAX_SIZE     (64)
 #define AZURE_IOT_INFO_PRIKEY_MAX_SIZE (64)
 
+#define AZURE_IOT_NOTIFY_STATUS_BODY_FORMAT "{\"correlationId\":\"%s\", \
+\"isSuccess\":%s, \
+\"statusCode\":%s, \
+\"statusDescription\":\"\"}"
+
 /****************************************************************************
  * Public types
  ****************************************************************************/
@@ -136,6 +141,22 @@ int azureiot_create_fileinfo_msg(struct azureiot_info *info,
                                  char                 *request,
                                  int                   request_size,
                                  const char           *file_name);
+
+/*!
+ * \brief      Create http command to notify completed file operation
+ * \param[in]  info         : Information for Azure connection
+ * \param[out] request      : Command creation buffer
+ * \param[in]  request_size : Buffer size
+ * \param[in]  is_success   : true = successful, false = failed
+ * \param[in]  status_code  : Status code of operation
+ * \retval <=0 NG
+ */
+
+int azureiot_create_notifymsg(struct azureiot_info *info,
+                              char                 *request,
+                              int                   request_size,
+                              bool                  is_success,
+                              int                   status_code);
 
 /*!
  * \brief      Create http command to upload file to Azure

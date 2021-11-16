@@ -1,8 +1,7 @@
-#!/bin/bash
 ############################################################################
-# tools/mkversion.sh
+# examples/lte_fwupdate/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -14,9 +13,9 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
-#    the names of its contributors may be used to endorse or promote
-#    products derived from this software without specific prior written
+# 3. Neither the name Sony Semiconductor Solutions nor the names of
+#    its contributors may be used to endorse or promote products
+#    derived from this software without specific prior written
 #    permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -34,34 +33,6 @@
 #
 ############################################################################
 
-TAG=${1:-HEAD}
-
-if [ "X${TOPDIR}" = "X" ]; then
-    echo "Please specify a TOPDIR variable"
-    exit 1
-fi
-
-APP_VERSION="0.0.0"
-SDK_VERSION="SDK2.3.1"
-if [ -r sdk_version ]; then
-    SDK_VERSION="SDK`cat sdk_version`"
-fi
-
-NUTTX_VERSION="10.1.0"
-
-# Get short hash for specified tag
-GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
-
-if [ "${GIT_REVISION}" != "" ]; then
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}-${GIT_REVISION}"
-else
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}"
-fi
-
-# BUILD_ID must be 40 characters or less
-if [ ${#BUILD_ID} -gt 40 ]; then
-    echo "BUILD_ID too long! ${BUILD_ID}"
-    exit 1
-fi
-
-${TOPDIR}/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${TOPDIR}/.version
+ifneq ($(CONFIG_EXAMPLES_LTE_FWUPDATE),)
+CONFIGURED_APPS += lte_fwupdate
+endif

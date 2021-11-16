@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include <alloca.h>
 #include "generate_sas.h"
 #include "azureiot_if.h"
@@ -72,6 +73,8 @@ static char _containerName[64];
 static char _blobName[64];
 static char _sasToken[256];
 static char _sas[256];
+static char _isSuccess[8];
+static char _statusCode[8];
 
 /* SAS URI information */
 
@@ -427,6 +430,50 @@ int azureiot_create_fileinfo_msg(struct azureiot_info *info,
                         request_size,
                         "POST",
                         "files",
+                        "application/json",
+                        body);
+}
+
+/* ------------------------------------------------------------------------ */
+int azureiot_create_notifymsg(struct azureiot_info *info,
+                                       char                 *request,
+                                       int                   request_size,
+                                       bool                  is_success,
+                                       int                   status_code)
+{
+  const char *target = AZURE_IOT_NOTIFY_STATUS_BODY_FORMAT;
+  char       *body;
+  size_t     size;
+
+  if (is_success)
+    {
+      snprintf(_isSuccess, sizeof(_isSuccess), "%s", "true");
+    }
+  else
+    {
+      snprintf(_isSuccess, sizeof(_isSuccess), "%s", "false");
+    }
+
+  snprintf(_statusCode, sizeof(_statusCode), "%d", status_code);
+
+  size = strlen(target) + strlen(_correlationId)
+                        + strlen(_isSuccess)
+                        + strlen(_statusCode) + 1;
+
+  /* Create body string */
+
+  body = alloca(size);
+
+  snprintf(body, size, AZURE_IOT_NOTIFY_STATUS_BODY_FORMAT,
+                       _correlationId,
+                       _isSuccess,
+                       _statusCode);
+
+  return create_command(info,
+                        request,
+                        request_size,
+                        "POST",
+                        "files/notifications",
                         "application/json",
                         body);
 }

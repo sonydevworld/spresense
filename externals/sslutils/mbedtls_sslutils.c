@@ -457,7 +457,28 @@ static ssize_t sslutil_send(FAR void *ctx,
                        FAR struct webclient_tls_connection *conn,
                        FAR const void *buf, size_t len)
 {
-  return mbedtls_ssl_write(&conn->ssl, buf, len);
+  int ret;
+
+  while ((ret = mbedtls_ssl_write(&conn->ssl, buf, len)) < 0)
+    {
+      /* If mbedtls_ssl_write returns MBEDTLS_ERR_SSL_WANT_READ or
+       * MBEDTLS_ERR_SSL_WANT_WRITE, need to retry to call
+       * mbedtls_ssl_write.
+       */
+
+      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
+          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
+        {
+          /* The return code is defined by -0xXXXX in "mbedtls/ssl.h ".
+           * e.g. MBEDTLS_ERR_SSL_TIMEOUT: -0x6800
+           */
+
+          nerr("mbedtls_ssl_write() error : -0x%x\n", -ret);
+          return ret;
+        }
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -468,7 +489,40 @@ static ssize_t sslutil_recv(FAR void *ctx,
                        FAR struct webclient_tls_connection *conn,
                        FAR void *buf, size_t len)
 {
-  return mbedtls_ssl_read(&conn->ssl, buf, len);
+  int ret;
+
+  while ((ret = mbedtls_ssl_read(&conn->ssl, buf, len)) < 0)
+    {
+      /* If mbedtls_ssl_read returns MBEDTLS_ERR_SSL_WANT_READ or
+       * MBEDTLS_ERR_SSL_WANT_WRITE, need to retry to call
+       * mbedtls_ssl_read.
+       */
+
+      if ((ret != MBEDTLS_ERR_SSL_WANT_READ) &&
+          (ret != MBEDTLS_ERR_SSL_WANT_WRITE))
+        {
+          if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY)
+            {
+              /* WebClient cannot handle this error code.
+               * Return 0 to exit as same as normal situation.
+               * Reference:
+               *   https://github.com/ARMmbed/mbedtls
+               *   /blob/development/programs/ssl/ssl_client1.c
+               */
+
+              return 0;
+            }
+
+          /* The return code is defined by -0xXXXX in "mbedtls/ssl.h ".
+           * e.g. MBEDTLS_ERR_SSL_TIMEOUT: -0x6800
+           */
+
+          nerr("mbedtls_ssl_read() error : -0x%x\n", -ret);
+          return ret;
+        }
+    }
+
+  return ret;
 }
 
 /****************************************************************************
