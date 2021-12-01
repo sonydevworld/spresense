@@ -58,7 +58,7 @@ static int split_load(int start, int end, prime_data_t *tasks, int task_num)
 
   wk_memset(tasks, 0, sizeof(prime_data_t) * task_num);
 
-  for (i = 0; offset < end; ++i)
+  for (i = 0; i < task_num; ++i)
     {
       tasks[i].start = offset;
       offset += load;
