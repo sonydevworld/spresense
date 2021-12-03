@@ -1,7 +1,7 @@
 ############################################################################
-# asmp/worker/Makefile
+# modules/dnnrt/src-mpcomm/worker/lib/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,56 +33,28 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
-include $(APPDIR)/Make.defs
-include $(APPDIR)/Make.defs
-
-WORKER_ELFS = hello/hello
-
-SUBDIRS = $(dir $(WORKER_ELFS))
+WORKER_LIBS = asmpw mpcommw cmsis-nn nnablart
 
 define DIR_template
 $(1)_$(2):
 	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-.PHONY: lib depend clean
-all: romfs.h
+.PHONY: all clean build
+all: build
 
-# Create the romfs.img file from the populated romfs directory
+# Build each subdirectory
 
-romfs.img: $(WORKER_ELFS)
-	$(Q) mkdir -p romfs
-	$(Q) cp $^ romfs
-	$(Q) genromfs -f $@ -d romfs -V "WORKER"
+build: $(foreach DIR, $(WORKER_LIBS), $(DIR)_build)
 
-# Create the romfs.h header file from the romfs.img file
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),build,)))
 
-romfs.h: romfs.img
-	$(Q) xxd -i $< | sed -e "s/^unsigned/static const unsigned/g" >$@
+depend: $(foreach DIR, $(WORKER_LIBS), $(DIR)_depend)
 
-# Build ASMP worker library
-
-lib:
-	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-# Build workers
-
-$(WORKER_ELFS): lib
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-
-.depend:
-	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
-	@touch $@
-
-depend: .depend
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),depend,depend)))
 
 # Clean each subdirectory
 
-lib_clean:
-	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" clean
+clean: $(foreach DIR, $(WORKER_LIBS), $(DIR)_clean)
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean) lib_clean
-	$(Q) rm -rf romfs romfs.img romfs.h
-
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),clean,clean)))

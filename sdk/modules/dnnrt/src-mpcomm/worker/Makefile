@@ -1,7 +1,7 @@
 ############################################################################
-# asmp/worker/Makefile
+# modules/dnnrt/src-mpcomm/worker/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,11 +33,7 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
-include $(APPDIR)/Make.defs
-include $(APPDIR)/Make.defs
-
-WORKER_ELFS = hello/hello
+WORKER_ELFS = dnnrt-mp/DNNRT-MP
 
 SUBDIRS = $(dir $(WORKER_ELFS))
 
@@ -46,22 +42,10 @@ $(1)_$(2):
 	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-.PHONY: lib depend clean
-all: romfs.h
+.PHONY: lib clean
+all: $(WORKER_ELFS)
 
-# Create the romfs.img file from the populated romfs directory
-
-romfs.img: $(WORKER_ELFS)
-	$(Q) mkdir -p romfs
-	$(Q) cp $^ romfs
-	$(Q) genromfs -f $@ -d romfs -V "WORKER"
-
-# Create the romfs.h header file from the romfs.img file
-
-romfs.h: romfs.img
-	$(Q) xxd -i $< | sed -e "s/^unsigned/static const unsigned/g" >$@
-
-# Build ASMP worker library
+# Build worker libraries
 
 lib:
 	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
@@ -80,9 +64,8 @@ depend: .depend
 # Clean each subdirectory
 
 lib_clean:
-	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" clean
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
 clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean) lib_clean
-	$(Q) rm -rf romfs romfs.img romfs.h
 
 $(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
