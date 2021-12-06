@@ -46,6 +46,6 @@ CSRCS += jidctflt.c jidctfst.c jidctint.c jquant1.c
 CSRCS += jquant2.c jutils.c jmemmgr.c
 CSRCS += jmemname.c
 
-CFLAGS += -DTEMP_DIRECTORY=\"/mnt/spif\"
+CFLAGS += -DTEMP_DIRECTORY=\"$(CONFIG_EXTERNALS_LIBJPEG_TEMP_DIR)\"
 
 include $(APPDIR)/Application.mk
