@@ -275,6 +275,7 @@ int main(int argc, char FAR **argv)
 		IOT_INFO("Publish done\n");
 	}
 
+	aws_iot_mqtt_disconnect(&client);
 	app_awsiot_disconnect_from_lte();
 
 	return rc;
