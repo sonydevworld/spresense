@@ -223,7 +223,6 @@ int uconv_utf8_to_ucs2(int src_size, uint8_t *src,
   if (i != src_size)
     {
       UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", dst_idx);
-      return -ENOBUFS;
     }
 
   return dst_idx;
@@ -280,7 +279,7 @@ int uconv_ucs2_to_utf8(int src_size, uint16_t *src,
           if (dst_size < (dst_idx + 2))
             {
               UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", (dst_idx + 2));
-              return -ENOBUFS;
+              break;
             }
           else
             {
@@ -307,7 +306,7 @@ int uconv_ucs2_to_utf8(int src_size, uint16_t *src,
           if (dst_size < (dst_idx + 3))
             {
               UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", (dst_idx + 3));
-              return -ENOBUFS;
+              break;
             }
           else
             {
@@ -332,7 +331,6 @@ int uconv_ucs2_to_utf8(int src_size, uint16_t *src,
   if (i != src_size)
     {
       UCONV_DEBUG("Exceeded the maximum length of dst [%d].\n", dst_idx);
-      return -ENOBUFS;
     }
 
   return dst_idx;
