@@ -83,6 +83,7 @@ enum CaptureDevice
 {
   CaptureDeviceAnalogMic = 0,
   CaptureDeviceDigitalMic,
+  CaptureDeviceI2S,
   CaptureDeviceTypeNum
 };
 
