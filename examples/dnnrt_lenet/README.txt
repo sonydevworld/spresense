@@ -30,6 +30,8 @@ Detailed instructions for this operation are available in the following page:
 
 https://developer.sony.com/develop/spresense/docs/sdk_developer_guide_en.html#_dnn_runtime
 
+The example file of `lenet-5.nnb` is provided in `examples/dnnrt_lenet/lenet-5/model`.
+
 ### file arrangement on SD card:
 
 First, copy a directory, `examples/dnnrt_lenet/lenet-5/`, onto the root of SD card as below.  
