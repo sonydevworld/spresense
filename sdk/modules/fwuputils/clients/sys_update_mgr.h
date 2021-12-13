@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/fwuputils/manager/sys_update_mgr.h
+ * modules/fwuputils/clients/sys_update_mgr.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
