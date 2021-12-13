@@ -74,6 +74,8 @@
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV6
 #elif defined CONFIG_LTE_SYSCTL_APN_IPTYPE_IPV4V6
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV4V6
+#elif defined CONFIG_LTE_SYSCTL_APN_IPTYPE_NON
+#  define APP_APN_IPTYPE   LTE_IPTYPE_NON
 #else
 #  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IP
 #endif
@@ -121,6 +123,7 @@
 #define IPV4_STR "IPv4"
 #define IPV6_STR "IPv6"
 #define IPV4V6_STR "IPv4 and IPv6"
+#define NONIP_STR "Non-IP"
 #define NONE_STR "NONE"
 #define PAP_STR "PAP"
 #define CHAP_STR "CHAP"
@@ -151,7 +154,7 @@ static void show_usage(FAR const char *progname, int exitcode)
   fprintf(stderr, "\nUSAGE: %s command\n", progname);
   fprintf(stderr, " [-a <apn_name>] [-i <ip_type>] [-v <auth_type>] [-u <user_name>] [-p <password>] [-r <rat_type>] start\n");
   fprintf(stderr, "  -a: APN name\n");
-  fprintf(stderr, "  -i: IP type 0=IPv4, 1=IPv6, 2=IPv4 and IPv6\n");
+  fprintf(stderr, "  -i: IP type 0=IPv4, 1=IPv6, 2=IPv4 and IPv6, 3=Non-IP\n");
   fprintf(stderr, "  -v: Authenticaion type 0=NONE, 1=PAP, 2=CHAP\n");
   fprintf(stderr, "  -u: User name for authenticaion\n");
   fprintf(stderr, "  -p: Password for authenticaion\n");
@@ -306,6 +309,10 @@ static void show_daemon_stat(void)
             {
               fprintf(stderr, APN_TYPE_FMT, IPV4V6_STR);
             }
+          else if (apn.ip_type == LTE_IPTYPE_NON)
+            {
+              fprintf(stderr, APN_TYPE_FMT, NONIP_STR);
+            }
 
           if (apn.auth_type == LTE_APN_AUTHTYPE_NONE)
             {
@@ -395,7 +402,8 @@ int main(int argc, FAR char *argv[])
             ip_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE);
             if ((ip_type != LTE_IPTYPE_V4) &&
                 (ip_type != LTE_IPTYPE_V6) &&
-                (ip_type != LTE_IPTYPE_V4V6))
+                (ip_type != LTE_IPTYPE_V4V6) &&
+                (ip_type != LTE_IPTYPE_NON))
               {
                 fprintf(stderr, "Invalid IP type:%ld\n", ip_type);
                 show_usage(argv[0], EXIT_FAILURE);
