@@ -300,8 +300,6 @@ rt_function_error_t dnnrt_exec_convolution(rt_function_t *f,
       (convolution_local_context_t *)f->local_context;
   convolution_private_t *p = (convolution_private_t *)(c->data);
 
-  memset(p->out_var.v->data, 0, var_buf_size(p->out_var.v));
-
   if (f->inputs[X]->type == NN_DATA_TYPE_FLOAT)
     {
       return dnnrt_exec_convolution_float(f, begin, end);

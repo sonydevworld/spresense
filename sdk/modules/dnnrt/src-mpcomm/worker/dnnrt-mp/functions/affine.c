@@ -321,8 +321,6 @@ rt_function_error_t dnnrt_exec_affine(rt_function_t *f, int begin, int end)
                    (f->inputs[X]->type == f->inputs[BIAS]->type) &&
                    (f->inputs[X]->type == f->outputs[Y]->type));
 
-  memset(p->output->data, 0, var_buf_size(p->output));
-
   if (same_type && (f->inputs[WEIGHT]->type == NN_DATA_TYPE_INT8))
     {
       return dnnrt_exec_affine_fixed8(f, begin, end);
