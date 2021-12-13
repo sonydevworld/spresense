@@ -1,7 +1,7 @@
 ############################################################################
-# externals/awsiot/Makefile
+# externals/awsiot/awsiot_config.mk
 #
-#   Copyright 2019,2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,49 +33,23 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+# Log option
+ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_DEBUG),y)
+  CFLAGS += -DENABLE_IOT_DEBUG
+endif
 
-# configurations for awsiot
-include awsiot_config.mk
+ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_TRACE),y)
+  CFLAGS += -DENABLE_IOT_TRACE
+endif
 
-BIN = libawsiot$(LIBEXT)
+ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_INFO),y)
+  CFLAGS += -DENABLE_IOT_INFO
+endif
 
-AWSCOREDIR = aws-iot-device-sdk-embedded-C
-AWSPLATDIR = $(AWSCOREDIR)$(DELIM)platform$(DELIM)linux
+ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_WARN),y)
+  CFLAGS += -DENABLE_IOT_WARN
+endif
 
-ROOTDEPPATH += --dep-path $(AWSCOREDIR)$(DELIM)src
-ROOTDEPPATH += --dep-path $(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
-ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)common
-ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)mbedtls
-ROOTDEPPATH += --dep-path $(AWSPLATDIR)$(DELIM)pthread
-
-VPATH += :$(AWSCOREDIR)$(DELIM)src
-VPATH += :$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
-VPATH += :$(AWSPLATDIR)$(DELIM)common
-VPATH += :$(AWSPLATDIR)$(DELIM)mbedtls
-VPATH += :$(AWSPLATDIR)$(DELIM)pthread
-
-# AWS-IoT
-CSRCS += aws_iot_jobs_interface.c
-CSRCS += aws_iot_jobs_json.c
-CSRCS += aws_iot_jobs_topics.c
-CSRCS += aws_iot_jobs_types.c
-CSRCS += aws_iot_json_utils.c
-CSRCS += aws_iot_mqtt_client.c
-CSRCS += aws_iot_mqtt_client_common_internal.c
-CSRCS += aws_iot_mqtt_client_connect.c
-CSRCS += aws_iot_mqtt_client_publish.c
-CSRCS += aws_iot_mqtt_client_subscribe.c
-CSRCS += aws_iot_mqtt_client_unsubscribe.c
-CSRCS += aws_iot_mqtt_client_yield.c
-CSRCS += aws_iot_shadow_actions.c
-CSRCS += aws_iot_shadow.c
-CSRCS += aws_iot_shadow_json.c
-CSRCS += aws_iot_shadow_records.c
-CSRCS += timer.c
-CSRCS += network_mbedtls_wrapper.c
-CSRCS += threads_pthread_wrapper.c
-CSRCS += jsmn.c
-
-include $(APPDIR)/Application.mk
+ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_ERROR),y)
+  CFLAGS += -DENABLE_IOT_ERROR
+endif
