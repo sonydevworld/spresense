@@ -1352,6 +1352,10 @@ uint32_t MicFrontEndObject::activateParamCheck(
         }
         break;
 
+      case AsMicFrontendDeviceI2S:
+        m_input_device = CaptureDeviceI2S;
+        break;
+
       default:
         MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
         return AS_ECODE_COMMAND_PARAM_INPUT_DEVICE;
@@ -1369,9 +1373,16 @@ uint32_t MicFrontEndObject::initParamCheck(const MicFrontendCommand& cmd)
 
   switch(cmd.init_param.channel_number)
     {
-      case AS_CHANNEL_MONO:
       case AS_CHANNEL_STEREO:
+          break;
+
+      case AS_CHANNEL_MONO:
       case AS_CHANNEL_4CH:
+        if (m_input_device == CaptureDeviceI2S)
+          {
+            MIC_FRONTEND_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);
+            return AS_ECODE_COMMAND_PARAM_CHANNEL_NUMBER;
+          }
           break;
 
       case AS_CHANNEL_6CH:
