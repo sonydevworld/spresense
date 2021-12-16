@@ -38,7 +38,7 @@ get_fw_type () {
   filename=`basename $1`
   case "$filename" in
     nuttx*)        echo "0" ;;
-    bcm20706fw*)   echo "0" ;;
+    sysutil*)      echo "0" ;;
     sbl*)          echo "3" ;;
     updater*|usb*) echo "2" ;;
     *)             echo "1" ;;
