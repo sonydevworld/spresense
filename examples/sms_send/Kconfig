@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_SMS_SEND
+	tristate "Send Short Message Service example"
+	default n
+	select UTILS_UCONV
+	---help---
+		Enable the Send Short Message Service example.
+		This application requires an SMS capable SIM to work properly.
+
+if EXAMPLES_SMS_SEND
+
+config EXAMPLES_SMS_SEND_PROGNAME
+	string "Program name"
+	default "sms_send"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_SMS_SEND_PRIORITY
+	int "sms_send task priority"
+	default 100
+
+config EXAMPLES_SMS_SEND_STACKSIZE
+	int "sms_send stack size"
+	default 2048
+
+endif
