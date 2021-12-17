@@ -184,6 +184,7 @@ static uint8_t prv_write(lwm2m_context_t *contextP,
     if (ret == OK)
     {
         targetP->timestamp = time.tv_sec + time.tv_nsec / 1000000000;
+        targetP->timestamp -= get_utc_offset_sec();
         time.tv_nsec %= 1000000000;
         targetP->timestamp_frac = (float)time.tv_nsec / 1000000000.0;
     }

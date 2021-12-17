@@ -124,6 +124,8 @@ const char * get_firmware_version(void);
 void device_reboot(void);
 int get_free_memory(void);
 int get_total_memory(void);
+void set_utc_offset_sec(char * timeoffset);
+int get_utc_offset_sec(void);
 
 /*
  * system_fwupdate.c

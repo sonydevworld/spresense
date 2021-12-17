@@ -335,6 +335,7 @@ void digital_input_setValue(uint16_t id, bool state)
     if (ret == OK)
     {
         targetP->timestamp = time.tv_sec + time.tv_nsec / 1000000000;
+        targetP->timestamp -= get_utc_offset_sec();
         time.tv_nsec %= 1000000000;
         targetP->timestamp_frac = (float)time.tv_nsec / 1000000000.0;
     }
@@ -359,6 +360,7 @@ void digital_input_setCounter(uint16_t id)
     if (ret == OK)
     {
         targetP->timestamp = time.tv_sec + time.tv_nsec / 1000000000;
+        targetP->timestamp -= get_utc_offset_sec();
         time.tv_nsec %= 1000000000;
         targetP->timestamp_frac = (float)time.tv_nsec / 1000000000.0;
     }

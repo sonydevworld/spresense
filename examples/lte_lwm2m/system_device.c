@@ -58,6 +58,12 @@
 #define PRV_MEMORY_TOTAL      (1536 * 1024 / 1000)
 
 /****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static int g_utc_offset_sec = 0;
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -111,4 +117,28 @@ int get_free_memory(void)
 int get_total_memory(void)
 {
   return PRV_MEMORY_TOTAL;
+}
+
+void set_utc_offset_sec(char * timeoffset)
+{
+  int hour = 0;
+  int min = 0;
+
+  if (3 == strlen(timeoffset))
+    {
+      sscanf(timeoffset, "%d", &hour);
+    }
+  else
+    {
+      sscanf(timeoffset, "%d:%d", &hour, &min);
+    }
+
+  g_utc_offset_sec = (hour * 60 + min) * 60;
+
+  return;
+}
+
+int get_utc_offset_sec(void)
+{
+  return g_utc_offset_sec;
 }

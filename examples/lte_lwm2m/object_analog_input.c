@@ -327,6 +327,7 @@ void analog_input_setValue(uint16_t id, float value,
     if (ret == OK)
     {
         targetP->timestamp = time.tv_sec + time.tv_nsec / 1000000000;
+        targetP->timestamp -= get_utc_offset_sec();
         time.tv_nsec %= 1000000000;
         targetP->timestamp_frac = (float)time.tv_nsec / 1000000000.0;
     }
