@@ -75,7 +75,8 @@
 #define PRV_BATTERY_LEVEL     100
 #define PRV_MEMORY_FREE       15
 #define PRV_ERROR_CODE        0
-#define PRV_TIME_ZONE         "Europe/Berlin"
+#define PRV_TIME_OFFSET       "+09:00"
+#define PRV_TIME_ZONE         "Asia/Tokyo"
 #define PRV_BINDING_MODE      "U"
 
 #define PRV_OFFSET_MAXLEN   7 //+HH:MM\0 at max
@@ -338,7 +339,7 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
 
     case RES_O_CURRENT_TIME:
         if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
-        lwm2m_data_encode_int(time(NULL) + devDataP->time, dataP);
+        lwm2m_data_encode_int(time(NULL) + devDataP->time - get_utc_offset_sec(), dataP);
         return COAP_205_CONTENT;
 
     case RES_O_UTC_OFFSET:
@@ -567,6 +568,7 @@ static uint8_t prv_device_write(lwm2m_context_t *contextP,
             {
                 strncpy(((device_data_t*)(objectP->userData))->time_offset, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
                 ((device_data_t*)(objectP->userData))->time_offset[dataArray[i].value.asBuffer.length] = 0;
+                set_utc_offset_sec(((device_data_t*)(objectP->userData))->time_offset);
                 result = COAP_204_CHANGED;
             }
             else
@@ -691,7 +693,8 @@ lwm2m_object_t * get_object_device()
             ((device_data_t*)deviceObj->userData)->free_memory   = get_free_memory();
             ((device_data_t*)deviceObj->userData)->error = PRV_ERROR_CODE;
             ((device_data_t*)deviceObj->userData)->time  = 0;
-            strcpy(((device_data_t*)deviceObj->userData)->time_offset, "+01:00");
+            strcpy(((device_data_t*)deviceObj->userData)->time_offset, PRV_TIME_OFFSET);
+            set_utc_offset_sec(((device_data_t*)deviceObj->userData)->time_offset);
             ((device_data_t*)deviceObj->userData)->total_memory  = get_total_memory();
         }
         else
