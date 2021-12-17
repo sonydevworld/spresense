@@ -16,7 +16,7 @@
  *    Toby Jaffey - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *
  *******************************************************************************/
 
 /*
@@ -94,12 +94,13 @@ int uri_getNumber(uint8_t * uriString,
 
 lwm2m_request_type_t uri_decode(char * altPath,
                                 multi_option_t *uriPath,
+                                uint8_t code,
                                 lwm2m_uri_t * uriP)
 {
     int readNum;
     lwm2m_request_type_t requestType = LWM2M_REQUEST_TYPE_DM;
 
-    LOG_ARG("altPath: \"%s\"", altPath);
+    LOG_ARG("altPath: \"%s\"", STR_NULL2EMPTY(altPath));
 
     LWM2M_URI_RESET(uriP);
 
@@ -142,7 +143,14 @@ lwm2m_request_type_t uri_decode(char * altPath,
         }
         if (NULL == uriPath || uriPath->len == 0)
         {
-            return LWM2M_REQUEST_TYPE_DELETE_ALL;
+            if (COAP_DELETE == code)
+            {
+                return LWM2M_REQUEST_TYPE_DELETE_ALL;
+            }
+            else
+            {
+                return LWM2M_REQUEST_TYPE_DM;
+            }
         }
     }
 
@@ -216,7 +224,7 @@ int lwm2m_stringToUri(const char * buffer,
     size_t head;
     int readNum;
 
-    LOG_ARG("buffer_len: %u, buffer: \"%.*s\"", buffer_len, buffer_len, buffer);
+    LOG_ARG("buffer_len: %u, buffer: \"%.*s\"", buffer_len, buffer_len, STR_NULL2EMPTY(buffer));
 
     if (uriP == NULL) return 0;
 

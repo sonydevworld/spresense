@@ -11,3 +11,113 @@ menuconfig EXTERNALS_LWM2M
 		This library is provided from https://github.com/eclipse/wakaama
 		and licensed under the Eclipse Public License, version 1.0/2.0.
 
+if EXTERNALS_LWM2M
+
+menu "Wakaama configuration"
+
+comment "Mode"
+
+config EXTERNALS_LWM2M_CLIENT_MODE
+	bool "Client mode"
+	default y
+	---help---
+		Enable LWM2M Client interfaces.
+
+config EXTERNALS_LWM2M_BOOTSTRAP
+	bool "Bootstrap"
+	default y
+	depends on EXTERNALS_LWM2M_CLIENT_MODE
+	---help---
+		Enable LWM2M Bootstrap support in a LWM2M Client.
+
+config EXTERNALS_LWM2M_SERVER_MODE
+	bool "Server mode"
+	default n
+	depends on !EXTERNALS_LWM2M_CLIENT_MODE
+	---help---
+		Enable LWM2M Server interfaces.
+
+config EXTERNALS_LWM2M_BOOTSTRAP_SERVER_MODE
+	bool "Bootstrap Server mode"
+	default n
+	depends on !EXTERNALS_LWM2M_BOOTSTRAP
+	---help---
+		Enable LWM2M Bootstrap Server interfaces.
+
+comment "Content Format"
+
+config EXTERNALS_LWM2M_SUPPORT_TLV
+	bool "TLV payload"
+	default y
+	---help---
+		Enable TLV payload support.
+
+config EXTERNALS_LWM2M_SUPPORT_JSON
+	bool "JSON payload"
+	default y
+	---help---
+		Enable JSON payload support.
+
+config EXTERNALS_LWM2M_SUPPORT_SENML_JSON
+	bool "SenML JSON payload"
+	default n
+	depends on !EXTERNALS_LWM2M_VERSION_1_0
+	---help---
+		Enable SenML JSON payload support.
+
+config EXTERNALS_LWM2M_OLD_CONTENT_FORMAT_SUPPORT
+	bool "Old content format"
+	default n
+	---help---
+		Support the deprecated content format values for TLV and JSON.
+
+comment "Encryption Options"
+
+config EXTERNALS_LWM2M_WITH_TINYDTLS
+	bool "TinyDTLS"
+	default y
+	---help---
+		Enable TinyDTLS.
+		This library is provided from https://github.com/eclipse/tinydtls
+		and licensed under the Eclipse Public License version 1.0 and the
+		Eclipse Distribution License version 1.0.
+
+comment "Miscellaneous Options"
+
+config EXTERNALS_LWM2M_VERSION_1_0
+	bool "Old version 1.0"
+	default n
+	---help---
+		Specify version 1.0.
+
+config EXTERNALS_LWM2M_RAW_BLOCK1_REQUESTS
+	bool "Each unprocessed block 1 payload"
+	default n
+	---help---
+		Enable each unprocessed block 1 payload to be passed to the application,
+		typically to be stored to a flash memory.
+
+config EXTERNALS_LWM2M_COAP_DEFAULT_BLOCK_SIZE
+	int "CoAP block size"
+	default 1024
+	---help---
+		CoAP block size used by CoAP layer when performing block-wise transfers.
+		Possible values: 16, 32, 64, 128, 256, 512 and 1024.
+
+comment "Debug Options"
+
+config EXTERNALS_LWM2M_WITH_LOGS
+	bool "Debug logs"
+	default n
+	---help---
+		Enable debug logs.
+
+config EXTERNALS_LWM2M_MEMORY_TRACE
+	bool "Memory Trace"
+	default n
+	---help---
+		Enable memory trace.
+
+endmenu
+
+endif # EXTERNALS_LWM2M

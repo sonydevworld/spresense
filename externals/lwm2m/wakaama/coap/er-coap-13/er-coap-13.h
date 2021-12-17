@@ -36,6 +36,7 @@
  *      Matthias Kovatsch <kovatsch@inf.ethz.ch>
  * \contributors
  *    David Navarro, Intel Corporation - Adapt to usage in liblwm2m
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
  */
 
 
@@ -44,14 +45,6 @@
 
 #include <stdint.h>
 #include <stddef.h> /* for size_t */
-
-/*
- * The maximum buffer size that is provided for resource responses and must be respected due to the limited IP buffer.
- * Larger data must be handled by the resource and will be sent chunk-wise through a TCP stream or CoAP blocks.
- */
-#ifndef REST_MAX_CHUNK_SIZE
-#define REST_MAX_CHUNK_SIZE     128
-#endif
 
 #define COAP_DEFAULT_MAX_AGE                 60
 #define COAP_RESPONSE_TIMEOUT                2
@@ -81,21 +74,6 @@
 #define COAP_HEADER_OPTION_DELTA_MASK        0xF0
 #define COAP_HEADER_OPTION_SHORT_LENGTH_MASK 0x0F
 
-/*
- * Conservative size limit, as not all options have to be set at the same time.
- */
-#ifndef COAP_MAX_HEADER_SIZE
-/*                            Hdr CoT Age  Tag              Obs  Tok               Blo strings */
-#define COAP_MAX_HEADER_SIZE  (4 + 3 + 5 + 1+COAP_ETAG_LEN + 3 + 1+COAP_TOKEN_LEN + 4 + 30) /* 70 */
-#endif /* COAP_MAX_HEADER_SIZE */
-
-#define COAP_MAX_PACKET_SIZE  (COAP_MAX_HEADER_SIZE + REST_MAX_CHUNK_SIZE)
-/*                                        0/14          48 for IPv6 (28 for IPv4) */
-#if COAP_MAX_PACKET_SIZE > (UIP_BUFSIZE - UIP_LLH_LEN - UIP_IPUDPH_LEN)
-//#error "UIP_CONF_BUFFER_SIZE too small for REST_MAX_CHUNK_SIZE"
-#endif
-
-
 /* Bitmap for set options */
 enum { OPTION_MAP_SIZE = sizeof(uint8_t) * 8 };
 #define SET_OPTION(packet, opt) {if (opt <= sizeof((packet)->options) * OPTION_MAP_SIZE) {(packet)->options[opt / OPTION_MAP_SIZE] |= 1 << (opt % OPTION_MAP_SIZE);}}
@@ -104,6 +82,10 @@ enum { OPTION_MAP_SIZE = sizeof(uint8_t) * 8 };
 #ifndef MIN
 #define MIN(a, b) ((a) < (b)? (a) : (b))
 #endif /* MIN */
+
+#ifndef MAX
+#define MAX(a, b) ((a) > (b)? (a) : (b))
+#endif /* MAX */
 
 /* CoAP message types */
 typedef enum {
@@ -258,7 +240,7 @@ typedef struct {
   multi_option_t *uri_query;
   uint8_t if_none_match;
 
-  uint16_t payload_len;
+  size_t payload_len;
   uint8_t *payload;
 
 } coap_packet_t;
@@ -330,7 +312,9 @@ size_t coap_serialize_message(void *packet, uint8_t *buffer);
 coap_status_t coap_parse_message(void *request, uint8_t *data, uint16_t data_len);
 void coap_free_header(void *packet);
 
-char * coap_get_multi_option_as_string(multi_option_t * option);
+char * coap_get_multi_option_as_path_string(multi_option_t * option);
+char * coap_get_multi_option_as_query_string(multi_option_t * option);
+char * coap_get_packet_uri_as_string(coap_packet_t * packet);
 void coap_add_multi_option(multi_option_t **dst, uint8_t *option, size_t option_len, uint8_t is_static);
 void free_multi_option(multi_option_t *dst);
 
@@ -372,8 +356,12 @@ int coap_get_header_uri_path(void *packet, const char **path); /* In-place strin
 int coap_set_header_uri_path(void *packet, const char *path);
 int coap_set_header_uri_path_segment(void *packet, const char *path);
 
+uint16_t coap_get_header_uri_port(void *packet);
+void coap_set_header_uri_port(void *packet, uint16_t port);
+
 int coap_get_header_uri_query(void *packet, const char **query); /* In-place string might not be 0-terminated. */
 int coap_set_header_uri_query(void *packet, const char *query);
+int coap_set_header_uri_query_segment(void *packet, const char *segment);
 
 int coap_get_header_location_path(void *packet, const char **path); /* In-place string might not be 0-terminated. */
 int coap_set_header_location_path(void *packet, const char *path); /* Also splits optional query into Location-Query option. */
@@ -390,10 +378,12 @@ int coap_set_header_block2(void *packet, uint32_t num, uint8_t more, uint16_t si
 int coap_get_header_block1(void *packet, uint32_t *num, uint8_t *more, uint16_t *size, uint32_t *offset);
 int coap_set_header_block1(void *packet, uint32_t num, uint8_t more, uint16_t size);
 
+int coap_get_header_block(void *packet, uint32_t *num, uint8_t *more, uint16_t *size, uint32_t *offset);
+
 int coap_get_header_size(void *packet, uint32_t *size);
 int coap_set_header_size(void *packet, uint32_t size);
 
-int coap_get_payload(void *packet, const uint8_t **payload);
-int coap_set_payload(void *packet, const void *payload, size_t length);
+size_t coap_get_payload(void *packet, const uint8_t **payload);
+size_t coap_set_payload(void *packet, const void *payload, size_t length);
 
 #endif /* COAP_13_H_ */

@@ -12,7 +12,8 @@
  *
  * Contributors:
  *    Bosch Software Innovations GmbH - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -64,36 +65,37 @@ static uint8_t prv_set_tlv(lwm2m_data_t * dataP, conn_s_data_t * connStDataP)
     case RES_O_SMS_TX_COUNTER:
         lwm2m_data_encode_int(connStDataP->smsTxCounter, dataP);
         return COAP_205_CONTENT;
-        break;
     case RES_O_SMS_RX_COUNTER:
         lwm2m_data_encode_int(connStDataP->smsRxCounter, dataP);
         return COAP_205_CONTENT;
-        break;
     case RES_O_TX_DATA:
         lwm2m_data_encode_int(connStDataP->txDataByte/1024, dataP);
         return COAP_205_CONTENT;
-        break;
     case RES_O_RX_DATA:
         lwm2m_data_encode_int(connStDataP->rxDataByte/1024, dataP);
         return COAP_205_CONTENT;
-        break;
     case RES_O_MAX_MESSAGE_SIZE:
         lwm2m_data_encode_int(connStDataP->maxMessageSize, dataP);
         return COAP_205_CONTENT;
-        break;
     case RES_O_AVERAGE_MESSAGE_SIZE:
         lwm2m_data_encode_int(connStDataP->avrMessageSize, dataP);
         return COAP_205_CONTENT;
-        break;
     default:
         return COAP_404_NOT_FOUND ;
     }
 }
 
-static uint8_t prv_read(uint16_t instanceId, int * numDataP, lwm2m_data_t** dataArrayP, lwm2m_object_t * objectP)
+static uint8_t prv_read(lwm2m_context_t *contextP,
+                        uint16_t instanceId,
+                        int * numDataP,
+                        lwm2m_data_t** dataArrayP,
+                        lwm2m_object_t * objectP)
 {
     uint8_t result;
     int i;
+
+    /* unused parameter */
+    (void)contextP;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -127,7 +129,14 @@ static uint8_t prv_read(uint16_t instanceId, int * numDataP, lwm2m_data_t** data
     i = 0;
     do
     {
-        result = prv_set_tlv((*dataArrayP) + i, (conn_s_data_t*) (objectP->userData));
+        if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+        }
+        else
+        {
+            result = prv_set_tlv((*dataArrayP) + i, (conn_s_data_t*) (objectP->userData));
+        }
         i++;
     } while (i < *numDataP && result == COAP_205_CONTENT );
 
@@ -147,9 +156,16 @@ static void prv_resetCounter(lwm2m_object_t* objectP, bool start)
     myData->collectDataStarted  = start;
 }
 
-static uint8_t prv_exec(uint16_t instanceId, uint16_t resourceId,
-                        uint8_t * buffer, int length, lwm2m_object_t * objectP)
+static uint8_t prv_exec(lwm2m_context_t *contextP,
+                        uint16_t instanceId,
+                        uint16_t resourceId,
+                        uint8_t * buffer,
+                        int length,
+                        lwm2m_object_t * objectP)
 {
+    /* unused parameter */
+    (void)contextP;
+
     // this is a single instance object
     if (instanceId != 0)
     {

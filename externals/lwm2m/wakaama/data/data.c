@@ -1,22 +1,22 @@
 /*******************************************************************************
-*
-* Copyright (c) 2013, 2014 Intel Corporation and others.
-* All rights reserved. This program and the accompanying materials
-* are made available under the terms of the Eclipse Public License v2.0
-* and Eclipse Distribution License v1.0 which accompany this distribution.
-*
-* The Eclipse Public License is available at
-*    http://www.eclipse.org/legal/epl-v20.html
-* The Eclipse Distribution License is available at
-*    http://www.eclipse.org/org/documents/edl-v10.php.
-*
-* Contributors:
-*    David Navarro, Intel Corporation - initial API and implementation
-*    Fabien Fleutot - Please refer to git log
-*    Bosch Software Innovations GmbH - Please refer to git log
-*    Scott Bertin, AMETEK, Inc. - Please refer to git log
-*
-*******************************************************************************/
+ *
+ * Copyright (c) 2013, 2014 Intel Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    http://www.eclipse.org/legal/epl-v20.html
+ * The Eclipse Distribution License is available at
+ *    http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *    David Navarro, Intel Corporation - initial API and implementation
+ *    Fabien Fleutot - Please refer to git log
+ *    Bosch Software Innovations GmbH - Please refer to git log
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
+ *******************************************************************************/
 
 #include "internals.h"
 #include <float.h>
@@ -72,7 +72,7 @@ static int prv_textSerialize(lwm2m_data_t * dataP,
     {
         uint8_t floatString[_PRV_STR_LENGTH * 2];
 
-        res = utils_floatToText(dataP->value.asFloat, floatString, _PRV_STR_LENGTH * 2);
+        res = utils_floatToText(dataP->value.asFloat, floatString, _PRV_STR_LENGTH * 2, false);
         if (res == 0) return -1;
 
         *bufferP = (uint8_t *)lwm2m_malloc(res);
@@ -211,7 +211,7 @@ void lwm2m_data_encode_string(const char * string,
     size_t len;
     int res;
 
-    LOG_ARG("\"%s\"", string);
+    LOG_ARG("\"%s\"", STR_NULL2EMPTY(string));
     if (string == NULL)
     {
         len = 0;
@@ -274,7 +274,7 @@ void lwm2m_data_encode_nstring(const char * string,
                                size_t length,
                                lwm2m_data_t * dataP)
 {
-    LOG_ARG("length: %d, string: \"%.*s\"", length, length, string);
+    LOG_ARG("length: %d, string: \"%.*s\"", length, length, STR_NULL2EMPTY(string));
     lwm2m_data_encode_opaque((uint8_t *)string, length, dataP);
 
     if (dataP->type == LWM2M_TYPE_OPAQUE)
@@ -477,7 +477,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
         break;
 
     case LWM2M_TYPE_STRING:
-        result = utils_textToFloat(dataP->value.asBuffer.buffer, dataP->value.asBuffer.length, valueP);
+        result = utils_textToFloat(dataP->value.asBuffer.buffer, dataP->value.asBuffer.length, valueP, false);
         break;
 
     case LWM2M_TYPE_OPAQUE:
@@ -584,7 +584,7 @@ int lwm2m_data_decode_bool(const lwm2m_data_t * dataP,
 
 void lwm2m_data_encode_corelink(const char * corelink, lwm2m_data_t * dataP)
 {
-    LOG_ARG("\"%s\"", corelink);
+    LOG_ARG("\"%s\"", STR_NULL2EMPTY(corelink));
     lwm2m_data_encode_string(corelink, dataP);
     if (dataP->type == LWM2M_TYPE_STRING)
     {
@@ -626,7 +626,8 @@ void lwm2m_data_include(lwm2m_data_t * subDataP,
         dataP->type = LWM2M_TYPE_OBJECT;
         break;
     default:
-        return;
+        dataP->type = LWM2M_TYPE_MULTIPLE_RESOURCE;
+        break;
     }
     dataP->value.asChildren.count = count;
     dataP->value.asChildren.array = subDataP;
@@ -655,13 +656,13 @@ int lwm2m_data_parse(lwm2m_uri_t * uriP,
     {
     case LWM2M_CONTENT_TEXT:
         if (!LWM2M_URI_IS_SET_RESOURCE(uriP)) return 0;
-#ifndef LWM2M_VERSION_1_0
-		// TODO: Support resource instance
-        if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP)) return 0;
-#endif
         *dataP = lwm2m_data_new(1);
         if (*dataP == NULL) return 0;
         (*dataP)->id = uriP->resourceId;
+#ifndef LWM2M_VERSION_1_0
+        if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP))
+            (*dataP)->id = uriP->resourceInstanceId;
+#endif
         (*dataP)->type = LWM2M_TYPE_STRING;
         res = prv_setBuffer(*dataP, buffer, bufferLen);
         if (res == 0)
@@ -673,13 +674,13 @@ int lwm2m_data_parse(lwm2m_uri_t * uriP,
 
     case LWM2M_CONTENT_OPAQUE:
         if (!LWM2M_URI_IS_SET_RESOURCE(uriP)) return 0;
-#ifndef LWM2M_VERSION_1_0
-		// TODO: Support resource instance
-        if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP)) return 0;
-#endif
         *dataP = lwm2m_data_new(1);
         if (*dataP == NULL) return 0;
         (*dataP)->id = uriP->resourceId;
+#ifndef LWM2M_VERSION_1_0
+        if (LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP))
+            (*dataP)->id = uriP->resourceInstanceId;
+#endif
         (*dataP)->type = LWM2M_TYPE_OPAQUE;
         res = prv_setBuffer(*dataP, buffer, bufferLen);
         if (res == 0)
@@ -689,11 +690,13 @@ int lwm2m_data_parse(lwm2m_uri_t * uriP,
         }
         return res;
 
+#ifdef LWM2M_SUPPORT_TLV
 #ifdef LWM2M_OLD_CONTENT_FORMAT_SUPPORT
     case LWM2M_CONTENT_TLV_OLD:
 #endif
     case LWM2M_CONTENT_TLV:
         return tlv_parse(buffer, bufferLen, dataP);
+#endif
 
 #ifdef LWM2M_SUPPORT_JSON
 #ifdef LWM2M_OLD_CONTENT_FORMAT_SUPPORT
@@ -736,8 +739,10 @@ int lwm2m_data_serialize(lwm2m_uri_t * uriP,
             *formatP = LWM2M_CONTENT_SENML_JSON;
 #elif defined(LWM2M_SUPPORT_JSON)
             *formatP = LWM2M_CONTENT_JSON;
-#else
+#elif defined(LWM2M_SUPPORT_TLV)
             *formatP = LWM2M_CONTENT_TLV;
+#else
+            return -1;
 #endif
         }
     }
@@ -762,32 +767,34 @@ int lwm2m_data_serialize(lwm2m_uri_t * uriP,
         memcpy(*bufferP, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
         return (int)dataP->value.asBuffer.length;
 
+#ifdef LWM2M_SUPPORT_TLV
     case LWM2M_CONTENT_TLV:
 #ifdef LWM2M_OLD_CONTENT_FORMAT_SUPPORT
     case LWM2M_CONTENT_TLV_OLD:
 #endif
     {
-            bool isResourceInstance;
+        bool isResourceInstance;
 
 #ifndef LWM2M_VERSION_1_0
-            if (uriP != NULL && LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP))
-            {
-                if(size != 1 || dataP->id != uriP->resourceInstanceId) return -1;
-                isResourceInstance = true;
-            }
-            else
-#endif
-            if (uriP != NULL && LWM2M_URI_IS_SET_RESOURCE(uriP)
-             && (size != 1 || dataP->id != uriP->resourceId))
-            {
-                isResourceInstance = true;
-            }
-            else
-            {
-                isResourceInstance = false;
-            }
-            return tlv_serialize(isResourceInstance, size, dataP, bufferP);
+        if (uriP != NULL && LWM2M_URI_IS_SET_RESOURCE_INSTANCE(uriP))
+        {
+            if(size != 1 || dataP->id != uriP->resourceInstanceId) return -1;
+            isResourceInstance = true;
         }
+        else
+#endif
+        if (uriP != NULL && LWM2M_URI_IS_SET_RESOURCE(uriP)
+         && (size != 1 || dataP->id != uriP->resourceId))
+        {
+            isResourceInstance = true;
+        }
+        else
+        {
+            isResourceInstance = false;
+        }
+        return tlv_serialize(isResourceInstance, size, dataP, bufferP);
+    }
+#endif
 
 #ifdef LWM2M_CLIENT_MODE
     case LWM2M_CONTENT_LINK:

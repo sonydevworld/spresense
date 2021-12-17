@@ -15,7 +15,8 @@
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
  *    Ville Skyttä - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -133,7 +134,8 @@ static uint8_t prv_get_value(lwm2m_data_t * dataP,
     }
 }
 
-static uint8_t prv_security_read(uint16_t instanceId,
+static uint8_t prv_security_read(lwm2m_context_t *contextP,
+                                 uint16_t instanceId,
                                  int * numDataP,
                                  lwm2m_data_t ** dataArrayP,
                                  lwm2m_object_t * objectP)
@@ -141,6 +143,9 @@ static uint8_t prv_security_read(uint16_t instanceId,
     security_instance_t * targetP;
     uint8_t result;
     int i;
+
+    /* unused parameter */
+    (void)contextP;
 
     targetP = (security_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
@@ -175,7 +180,14 @@ static uint8_t prv_security_read(uint16_t instanceId,
     i = 0;
     do
     {
-        result = prv_get_value((*dataArrayP) + i, targetP);
+        if ((*dataArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+        }
+        else
+        {
+            result = prv_get_value((*dataArrayP) + i, targetP);
+        }
         i++;
     } while (i < *numDataP && result == COAP_205_CONTENT);
 
@@ -184,14 +196,22 @@ static uint8_t prv_security_read(uint16_t instanceId,
 
 #ifdef LWM2M_BOOTSTRAP
 
-static uint8_t prv_security_write(uint16_t instanceId,
+static uint8_t prv_security_write(lwm2m_context_t *contextP,
+                                  uint16_t instanceId,
                                   int numData,
                                   lwm2m_data_t * dataArray,
-                                  lwm2m_object_t * objectP)
+                                  lwm2m_object_t * objectP,
+                                  lwm2m_write_type_t writeType)
 {
     security_instance_t * targetP;
     int i;
     uint8_t result = COAP_204_CHANGED;
+
+    /* unused parameter */
+    (void)contextP;
+
+    /* All write types are ignored. They don't apply during bootstrap. */
+    (void)writeType;
 
     targetP = (security_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == targetP)
@@ -201,6 +221,13 @@ static uint8_t prv_security_write(uint16_t instanceId,
 
     i = 0;
     do {
+        /* No multiple instance resources */
+        if (dataArray[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+            continue;
+        }
+
         switch (dataArray[i].id)
         {
         case LWM2M_SECURITY_URI_ID:
@@ -397,10 +424,14 @@ static uint8_t prv_security_write(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_security_delete(uint16_t id,
+static uint8_t prv_security_delete(lwm2m_context_t *contextP,
+                                   uint16_t id,
                                    lwm2m_object_t * objectP)
 {
     security_instance_t * targetP;
+
+    /* unused parameter */
+    (void)contextP;
 
     objectP->instanceList = lwm2m_list_remove(objectP->instanceList, id, (lwm2m_list_t **)&targetP);
     if (NULL == targetP) return COAP_404_NOT_FOUND;
@@ -414,7 +445,8 @@ static uint8_t prv_security_delete(uint16_t id,
     return COAP_202_DELETED;
 }
 
-static uint8_t prv_security_create(uint16_t instanceId,
+static uint8_t prv_security_create(lwm2m_context_t *contextP,
+                                   uint16_t instanceId,
                                    int numData,
                                    lwm2m_data_t * dataArray,
                                    lwm2m_object_t * objectP)
@@ -429,11 +461,11 @@ static uint8_t prv_security_create(uint16_t instanceId,
     targetP->instanceId = instanceId;
     objectP->instanceList = LWM2M_LIST_ADD(objectP->instanceList, targetP);
 
-    result = prv_security_write(instanceId, numData, dataArray, objectP);
+    result = prv_security_write(contextP, instanceId, numData, dataArray, objectP, LWM2M_WRITE_REPLACE_RESOURCES);
 
     if (result != COAP_204_CHANGED)
     {
-        (void)prv_security_delete(instanceId, objectP);
+        (void)prv_security_delete(contextP, instanceId, objectP);
     }
     else
     {
@@ -481,18 +513,16 @@ void copy_security_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSr
 
 void display_security_object(lwm2m_object_t * object)
 {
-#ifdef WITH_LOGS
     fprintf(stdout, "  /%u: Security object, instances:\r\n", object->objID);
     security_instance_t * instance = (security_instance_t *)object->instanceList;
     while (instance != NULL)
     {
-        fprintf(stdout, "    /%u/%u: instanceId: %u, uri: %s, isBootstrap: %s, shortId: %u, clientHoldOffTime: %u\r\n",
+        fprintf(stdout, "    /%u/%u: instanceId: %u, uri: %s, isBootstrap: %s, shortId: %u, clientHoldOffTime: %lu\r\n",
                 object->objID, instance->instanceId,
                 instance->instanceId, instance->uri, instance->isBootstrap ? "true" : "false",
                 instance->shortID, instance->clientHoldOffTime);
         instance = (security_instance_t *)instance->next;
     }
-#endif
 }
 
 void clean_security_object(lwm2m_object_t * objectP)

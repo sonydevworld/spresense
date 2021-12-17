@@ -1,5 +1,5 @@
 /*******************************************************************************
- * 
+ *
  * Copyright (c) 2014 Bosch Software Innovations GmbH, Germany.
  *
  * All rights reserved. This program and the accompanying materials
@@ -14,7 +14,8 @@
  * Contributors:
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  ******************************************************************************/
 /*! \file
   LWM2M object "Location" implementation
@@ -44,6 +45,7 @@
  *              |     |      |         |     |         |       |       | for direction: the scalar component of velocity.                                 |
  */
 
+#include "lwm2mclient.h"
 #include "liblwm2m.h"
 
 #include <stdio.h>
@@ -65,11 +67,12 @@
 #define RES_O_SPEED        6
 
 //-----  3GPP TS 23.032 V11.0.0(2012-09) ---------
-#define HORIZONTAL_VELOCITY                  0  // for Octet-1 upper half(..<<4)
-#define HORIZONTAL_VELOCITY_VERTICAL         1  // set vertical direction bit!
-#define HORIZONTAL_VELOCITY_WITH_UNCERTAINTY 2
+#define HORIZONTAL_VELOCITY                           0  // for Octet-1 upper half(..<<4)
+#define HORIZONTAL_VELOCITY_VERTICAL                  1  // set vertical direction bit!
+#define HORIZONTAL_VELOCITY_WITH_UNCERTAINTY          2
+#define HORIZONTAL_VELOCITY_VERTICAL_WITH_UNCERTAINTY 3
 
-#define VELOCITY_OCTETS                      5  // for HORIZONTAL_VELOCITY_WITH_UNCERTAINTY 
+#define VELOCITY_OCTETS                               7  // for HORIZONTAL_VELOCITY_VERTICAL_WITH_UNCERTAINTY
 
 typedef struct
 {
@@ -105,8 +108,39 @@ static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
         lwm2m_data_encode_float(locDataP->radius, dataP);
         break;
     case RES_O_VELOCITY:
-        lwm2m_data_encode_string((const char*)locDataP->velocity, dataP);
+    {
+        size_t length;
+        switch( locDataP->velocity[0] >> 4 )
+        {
+           case HORIZONTAL_VELOCITY:
+           {
+               length = 4;
+              break;
+           }
+           case HORIZONTAL_VELOCITY_VERTICAL:
+           {
+               length = 5;
+              break;
+           }
+           case HORIZONTAL_VELOCITY_WITH_UNCERTAINTY:
+           {
+               length = 5;
+              break;
+           }
+           case HORIZONTAL_VELOCITY_VERTICAL_WITH_UNCERTAINTY:
+           {
+               length = 7;
+              break;
+           }
+           default:
+           {
+               length = 0;
+               break;
+           }
+        }
+        lwm2m_data_encode_opaque(locDataP->velocity, length, dataP);
         break;
+    }
     case RES_M_TIMESTAMP:
         lwm2m_data_encode_int(locDataP->timestamp, dataP);
         break;
@@ -127,13 +161,15 @@ static uint8_t prv_res2tlv(lwm2m_data_t* dataP,
   * object, single resources or a sequence of resources
   * see 3GPP TS 23.032 V11.0.0(2012-09) page 23,24.
   * implemented for: HORIZONTAL_VELOCITY_WITH_UNCERTAINT
+  * @param contextP     in,     unused pointer to LWM2M context
   * @param objInstId    in,     instances ID of the location object to read
   * @param numDataP     in/out, pointer to the number of resource to read. 0 is the
   *                             exception for all readable resource of object instance
   * @param tlvArrayP    in/out, TLV data sequence with initialized resource ID to read
   * @param objectP      in,     private location data structure
   */
-static uint8_t prv_location_read(uint16_t objInstId,
+static uint8_t prv_location_read(lwm2m_context_t *contextP,
+                                 uint16_t objInstId,
                                  int*  numDataP,
                                  lwm2m_data_t** tlvArrayP,
                                  lwm2m_object_t*  objectP)
@@ -142,6 +178,9 @@ static uint8_t prv_location_read(uint16_t objInstId,
     int     i;
     uint8_t result = COAP_500_INTERNAL_SERVER_ERROR;
     location_data_t* locDataP = (location_data_t*)(objectP->userData);
+
+    /* unused parameter */
+    (void)contextP;
 
     // defined as single instance object!
     if (objInstId != 0) return COAP_404_NOT_FOUND;
@@ -171,7 +210,14 @@ static uint8_t prv_location_read(uint16_t objInstId,
     
     for (i = 0 ; i < *numDataP ; i++)
     {
-        result = prv_res2tlv ((*tlvArrayP)+i, locDataP);
+        if ((*tlvArrayP)[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+        }
+        else
+        {
+            result = prv_res2tlv ((*tlvArrayP)+i, locDataP);
+        }
         if (result!=COAP_205_CONTENT) break;
     }
     
@@ -180,7 +226,6 @@ static uint8_t prv_location_read(uint16_t objInstId,
 
 void display_location_object(lwm2m_object_t * object)
 {
-#ifdef WITH_LOGS
     location_data_t * data = (location_data_t *)object->userData;
     fprintf(stdout, "  /%u: Location object:\r\n", object->objID);
     if (NULL != data)
@@ -188,7 +233,6 @@ void display_location_object(lwm2m_object_t * object)
         fprintf(stdout, "    latitude: %.6f, longitude: %.6f, altitude: %.6f, radius: %.6f, timestamp: %lu, speed: %.6f\r\n",
                 data->latitude, data->longitude, data->altitude, data->radius, data->timestamp, data->speed);
     }
-#endif
 }
 
 /**
@@ -208,7 +252,7 @@ void location_setVelocity(lwm2m_object_t* locationObj,
     //-------------------------------------------------------------------- JH --
     location_data_t* pData = locationObj->userData;
     pData->velocity[0] = HORIZONTAL_VELOCITY_WITH_UNCERTAINTY << 4;
-    pData->velocity[0] = (bearing & 0x100) >> 8;
+    pData->velocity[0] |= (bearing & 0x100) >> 8;
     pData->velocity[1] = (bearing & 0x0FF);
     pData->velocity[2] = horizontalSpeed >> 8;
     pData->velocity[3] = horizontalSpeed & 0xff;
@@ -219,15 +263,19 @@ void location_setVelocity(lwm2m_object_t* locationObj,
   * A convenience function to set the location coordinates with its timestamp.
   * @see testMe()
   * @param locationObj location object reference (to be casted!)
-  * @param latitude  the second argument.
-  * @param longitude the second argument.
-  * @param altitude  the second argument.
+  * @param latitude  the decimal notation of latitude in degree.
+  * @param longitude the decimal notation of longitude in degree.
+  * @param altitude  the decimal notation of altitude in meters above sea level.
+  * @param radius    The decimal notation of radius of a circular area in meters.
+  * @param speed     the decimal notation of speed in m/s.
   * @param timestamp the related timestamp. Seconds since 1970.
   */
 void location_setLocationAtTime(lwm2m_object_t* locationObj,
                              float latitude,
                              float longitude,
                              float altitude,
+                             float radius,
+                             float speed,
                              uint64_t timestamp)
 {
     //-------------------------------------------------------------------- JH --
@@ -236,6 +284,8 @@ void location_setLocationAtTime(lwm2m_object_t* locationObj,
     pData->latitude  = latitude;
     pData->longitude = longitude;
     pData->altitude  = altitude;
+    pData->radius    = radius;
+    pData->speed     = speed;
     pData->timestamp = timestamp;
 }
 
@@ -281,13 +331,15 @@ lwm2m_object_t * get_object_location(void)
         if (NULL != locationObj->userData)
         {
             location_data_t* data = (location_data_t*)locationObj->userData;
-            data->latitude    = 27.986065;  // Mount Everest :)
-            data->longitude   = 86.922623;
-            data->altitude    = 8495.0000;
+            data->latitude    = 0.0;
+            data->longitude   = 0.0;
+            data->altitude    = 0.0;
             data->radius      = 0.0;
             location_setVelocity(locationObj, 0, 0, 255); // 255: speedUncertainty not supported!
-            data->timestamp   = time(NULL);
+            data->timestamp   = 0;
             data->speed       = 0.0;
+            // Start GNSS system
+            gnss_start(locationObj);
         }
         else
         {
@@ -301,6 +353,8 @@ lwm2m_object_t * get_object_location(void)
 
 void free_object_location(lwm2m_object_t * object)
 {
+    // Stop GNSS system
+    gnss_stop();
     lwm2m_list_free(object->instanceList);
     lwm2m_free(object->userData);
     lwm2m_free(object);

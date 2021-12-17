@@ -50,6 +50,22 @@ void display_firmware_object(lwm2m_object_t * objectP);
 lwm2m_object_t * get_object_location(void);
 void free_object_location(lwm2m_object_t * object);
 void display_location_object(lwm2m_object_t * objectP);
+void location_setVelocity(lwm2m_object_t* object,
+                          uint16_t bearing,
+                          uint16_t horizontalSpeed,
+                          uint8_t speedUncertainty);
+void location_setLocationAtTime(lwm2m_object_t* object,
+                             float latitude,
+                             float longitude,
+                             float altitude,
+                             float radius,
+                             float speed,
+                             uint64_t timestamp);
+/*
+ * system_gnss.c
+ */
+int gnss_start(void *arg);
+int gnss_stop(void);
 /*
  * object_test.c
  */
@@ -98,6 +114,24 @@ void handle_value_changed(lwm2m_context_t* lwm2mH, lwm2m_uri_t* uri, const char 
  */
 void init_value_change(lwm2m_context_t * lwm2m);
 void system_reboot(void);
+/*
+ * system_device.c
+ */
+const char * get_manufacture(void);
+const char * get_model_number(void);
+const char * get_serial_number(void);
+const char * get_firmware_version(void);
+void device_reboot(void);
+int get_free_memory(void);
+int get_total_memory(void);
+
+/*
+ * system_fwupdate.c
+ */
+int get_package_info(char *pkg_name, size_t pkg_name_len,
+                     char *pkg_version, size_t pkg_ver_len);
+int save_package(void *buffer, size_t length);
+int execute_fwupdate(void);
 
 /*
  * object_security.c
@@ -107,5 +141,48 @@ void clean_security_object(lwm2m_object_t * objectP);
 char * get_server_uri(lwm2m_object_t * objectP, uint16_t secObjInstID);
 void display_security_object(lwm2m_object_t * objectP);
 void copy_security_object(lwm2m_object_t * objectDest, lwm2m_object_t * objectSrc);
+
+/*
+ * object_digital_input.c
+ */
+#define LWM2M_DIGITAL_INPUT_OBJECT_ID     3200
+lwm2m_object_t * get_digital_input_object(void);
+void free_digital_input_object(lwm2m_object_t * objectP);
+void display_digital_input_object(lwm2m_object_t * object);
+void digital_input_setValue(uint16_t id, bool state);
+void digital_input_setCounter(uint16_t id);
+
+/*
+ * object_digital_output.c
+ */
+#define LWM2M_DIGITAL_OUTPUT_OBJECT_ID    3201
+lwm2m_object_t * get_digital_output_object(void);
+void free_digital_output_object(lwm2m_object_t * objectP);
+void display_digital_output_object(lwm2m_object_t * object);
+
+/*
+ * system_gpio.c
+ */
+int gpio_input_config(uint16_t id, bool polarity);
+int gpio_output_config(uint16_t id);
+int gpio_read(uint16_t id, bool polarity);
+int gpio_interrupt(uint16_t id, int selection);
+int gpio_write(uint16_t id, bool state, bool polarity);
+
+/*
+ * object_analog_input.c
+ */
+#define LWM2M_ANALOG_INPUT_OBJECT_ID      3202
+lwm2m_object_t * get_analog_input_object(void);
+void free_analog_input_object(lwm2m_object_t * objectP);
+void display_analog_input_object(lwm2m_object_t * object);
+void analog_input_setValue(uint16_t id, float value,
+                           float range_min, float range_max);
+
+/*
+ * system_adc.c
+ */
+int adc_start(int ch);
+int adc_stop(int ch);
 
 #endif /* LWM2MCLIENT_H_ */

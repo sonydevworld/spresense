@@ -16,6 +16,7 @@
  *    Toby Jaffey - Please refer to git log
  *    Pascal Rieux - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
  *
  *******************************************************************************/
 
@@ -119,7 +120,11 @@ static int prv_checkFinished(lwm2m_transaction_t * transacP,
 {
     int len;
     uint8_t* token;
-    coap_packet_t * transactionMessage = transacP->message;
+    coap_packet_t * transactionMessage = (coap_packet_t *) transacP->message;
+
+    if (transactionMessage->mid != receivedMessage->mid) {
+        return false;
+    }
 
     if (COAP_DELETE < transactionMessage->code)
     {
@@ -153,7 +158,7 @@ lwm2m_transaction_t * transaction_new(void * sessionH,
     int result;
 
     LOG_ARG("method: %d, altPath: \"%s\", mID: %d, token_len: %d",
-            method, altPath, mID, token_len);
+            method, STR_NULL2EMPTY(altPath), mID, token_len);
     LOG_URI(uriP);
 
     // no transactions without peer
@@ -239,6 +244,11 @@ lwm2m_transaction_t * transaction_new(void * sessionH,
 
 error:
     LOG("Exiting on failure");
+    if(transacP->message)
+    {
+        coap_free_header(transacP->message);
+        lwm2m_free(transacP->message);
+    }
     lwm2m_free(transacP);
     return NULL;
 }
@@ -250,9 +260,19 @@ void transaction_free(lwm2m_transaction_t * transacP)
     {
        coap_free_header(transacP->message);
        lwm2m_free(transacP->message);
+       transacP->message = NULL;
     }
 
-    if (transacP->buffer) lwm2m_free(transacP->buffer);
+    if (transacP->payload) {
+        lwm2m_free(transacP->payload);
+        transacP->payload = NULL;
+    }
+
+    if (transacP->buffer) {
+        lwm2m_free(transacP->buffer);
+        transacP->buffer = NULL;
+    }
+
     lwm2m_free(transacP);
 }
 
@@ -285,11 +305,11 @@ bool transaction_handleResponse(lwm2m_context_t * contextP,
                 if ((COAP_TYPE_ACK == message->type) || (COAP_TYPE_RST == message->type))
                 {
                     if (transacP->mID == message->mid)
-	                {
-    	                found = true;
-        	            transacP->ack_received = true;
-            	        reset = COAP_TYPE_RST == message->type;
-            	    }
+                    {
+                        found = true;
+                        transacP->ack_received = true;
+                        reset = COAP_TYPE_RST == message->type;
+                    }
                 }
             }
 
@@ -305,14 +325,14 @@ bool transaction_handleResponse(lwm2m_context_t * contextP,
                         coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
                         message_send(contextP, response, fromSessionH);
                     }
-                
-	                if ((COAP_401_UNAUTHORIZED == message->code) && (COAP_MAX_RETRANSMIT > transacP->retrans_counter))
-    	            {
-        	            transacP->ack_received = false;
-            	        transacP->retrans_time += COAP_RESPONSE_TIMEOUT;
-                	    return true;
-                	}
-				}       
+
+                    if ((COAP_401_UNAUTHORIZED == message->code) && (COAP_MAX_RETRANSMIT > transacP->retrans_counter))
+                    {
+                        transacP->ack_received = false;
+                        transacP->retrans_time += COAP_RESPONSE_TIMEOUT;
+                        return true;
+                    }
+                }
                 if (transacP->callback != NULL)
                 {
                     transacP->callback(contextP, transacP, message);
@@ -411,19 +431,24 @@ int transaction_send(lwm2m_context_t * contextP,
             maxRetriesReached = true;
         }
     }
-
-    if (transacP->ack_received || maxRetriesReached)
+    else
     {
-        if (transacP->callback)
-        {
-            LOG_ARG("transaction %p expired..calling callback", transacP);
-            transacP->callback(contextP, transacP, NULL);
-        }
-        transaction_remove(contextP, transacP);
-        return -1;
+        goto error;
+    }
+    if (maxRetriesReached)
+    {
+        goto error;
     }
 
     return 0;
+error:
+    if (transacP->callback)
+    {
+        LOG_ARG("transaction %p expired..calling callback", transacP);
+        transacP->callback(contextP, transacP, NULL);
+    }
+    transaction_remove(contextP, transacP);
+    return -1;
 }
 
 void transaction_step(lwm2m_context_t * contextP,
@@ -470,4 +495,36 @@ void transaction_step(lwm2m_context_t * contextP,
 
         transacP = nextP;
     }
+}
+
+bool transaction_set_payload(lwm2m_transaction_t *transaction, uint8_t *buffer, size_t length) {
+    // copy payload as we might need it beyond scope of the current request / method call (e.g. in case of
+    // retransmissions or block transfer)
+    uint8_t *transaction_payload = (uint8_t *)lwm2m_malloc(length);
+    if (transaction_payload == NULL) {
+        return false;
+    }
+    memcpy(transaction_payload, buffer, length);
+
+    transaction->payload = transaction_payload;
+    transaction->payload_len = length;
+    const uint16_t lwm2m_coap_block_size = lwm2m_get_coap_block_size();
+    if (length > lwm2m_coap_block_size) {
+        coap_set_header_block1(transaction->message, 0, true, lwm2m_coap_block_size);
+    }
+
+    coap_set_payload(transaction->message, buffer, MIN(length, lwm2m_coap_block_size));
+    return true;
+}
+
+bool transaction_free_userData(lwm2m_context_t * context, lwm2m_transaction_t * transaction)
+{
+    lwm2m_transaction_t * target = context->transactionList;
+    while (target != NULL){
+        if (target->userData == transaction->userData && target != transaction) return false;
+        target = target->next;
+    }
+    lwm2m_free(transaction->userData);
+    transaction->userData = NULL;
+    return true;
 }

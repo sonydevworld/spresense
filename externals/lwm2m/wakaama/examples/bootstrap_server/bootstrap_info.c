@@ -62,7 +62,7 @@ static int prv_find_next_section(FILE * fd,
     {
         if (line[0] == '[')
         {
-            int i;
+            size_t i;
 
             length = strlen(line);
             i = 1;
@@ -71,7 +71,7 @@ static int prv_find_next_section(FILE * fd,
             if (i < length)
             {
                 line[i] = 0;
-                if (strcasecmp(line + 1, tag) == 0)
+                if (lwm2m_strcasecmp(line + 1, tag) == 0)
                 {
                     found = 1;
                 }
@@ -263,7 +263,7 @@ static read_server_t * prv_read_next_server(FILE * fd)
 
     while((res = prv_read_key_value(fd, &key, &value)) == 1)
     {
-        if (strcasecmp(key, "id") == 0)
+        if (lwm2m_strcasecmp(key, "id") == 0)
         {
             int num;
 
@@ -272,24 +272,24 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->id = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "uri") == 0)
+        else if (lwm2m_strcasecmp(key, "uri") == 0)
         {
             readSrvP->uri = value;
         }
-        else if (strcasecmp(key, "bootstrap") == 0)
+        else if (lwm2m_strcasecmp(key, "bootstrap") == 0)
         {
-            if (strcasecmp(value, "yes") == 0)
+            if (lwm2m_strcasecmp(value, "yes") == 0)
             {
                 readSrvP->isBootstrap = true;
             }
-            else if (strcasecmp(value, "no") == 0)
+            else if (lwm2m_strcasecmp(value, "no") == 0)
             {
                 readSrvP->isBootstrap = false;
             }
             else goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "lifetime") == 0)
+        else if (lwm2m_strcasecmp(key, "lifetime") == 0)
         {
             int num;
 
@@ -298,47 +298,47 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->lifetime = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "security") == 0)
+        else if (lwm2m_strcasecmp(key, "security") == 0)
         {
-            if (strcasecmp(value, "nosec") == 0)
+            if (lwm2m_strcasecmp(value, "nosec") == 0)
             {
                 readSrvP->securityMode = LWM2M_SECURITY_MODE_NONE;
             }
-            else if (strcasecmp(value, "PSK") == 0)
+            else if (lwm2m_strcasecmp(value, "PSK") == 0)
             {
                 readSrvP->securityMode = LWM2M_SECURITY_MODE_PRE_SHARED_KEY;
             }
-            else if (strcasecmp(value, "RPK") == 0)
+            else if (lwm2m_strcasecmp(value, "RPK") == 0)
             {
                 readSrvP->securityMode = LWM2M_SECURITY_MODE_RAW_PUBLIC_KEY;
             }
-            else if (strcasecmp(value, "certificate") == 0)
+            else if (lwm2m_strcasecmp(value, "certificate") == 0)
             {
                 readSrvP->securityMode = LWM2M_SECURITY_MODE_CERTIFICATE;
             }
             else goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "public") == 0)
+        else if (lwm2m_strcasecmp(key, "public") == 0)
         {
             readSrvP->publicKeyLen = prv_readSecurityKey(value, &(readSrvP->publicKey));
             if (readSrvP->publicKeyLen == 0) goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "server") == 0)
+        else if (lwm2m_strcasecmp(key, "server") == 0)
         {
             readSrvP->serverKeyLen = prv_readSecurityKey(value, &(readSrvP->serverKey));
             if (readSrvP->serverKeyLen == 0) goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "secret") == 0)
+        else if (lwm2m_strcasecmp(key, "secret") == 0)
         {
             readSrvP->secretKeyLen = prv_readSecurityKey(value, &(readSrvP->secretKey));
             if (readSrvP->secretKeyLen == 0) goto error;
             lwm2m_free(value);
         }
 #ifndef LWM2M_VERSION_1_0
-        else if (strcasecmp(key, "registrationPriorityOrder") == 0)
+        else if (lwm2m_strcasecmp(key, "registrationPriorityOrder") == 0)
         {
             int num;
 
@@ -347,7 +347,7 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->registrationPriorityOrder = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "initialRegistrationDelay") == 0)
+        else if (lwm2m_strcasecmp(key, "initialRegistrationDelay") == 0)
         {
             int num;
 
@@ -356,33 +356,33 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->initialRegistrationDelayTimer = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "registrationFailureBlock") == 0)
+        else if (lwm2m_strcasecmp(key, "registrationFailureBlock") == 0)
         {
-            if (strcasecmp(value, "yes") == 0)
+            if (lwm2m_strcasecmp(value, "yes") == 0)
             {
                 readSrvP->registrationFailureBlock = true;
             }
-            else if (strcasecmp(value, "no") == 0)
+            else if (lwm2m_strcasecmp(value, "no") == 0)
             {
                 readSrvP->registrationFailureBlock = false;
             }
             else goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "bootstrapOnRegistrationFailure") == 0)
+        else if (lwm2m_strcasecmp(key, "bootstrapOnRegistrationFailure") == 0)
         {
-            if (strcasecmp(value, "yes") == 0)
+            if (lwm2m_strcasecmp(value, "yes") == 0)
             {
                 readSrvP->bootstrapOnRegistrationFailure = true;
             }
-            else if (strcasecmp(value, "no") == 0)
+            else if (lwm2m_strcasecmp(value, "no") == 0)
             {
                 readSrvP->bootstrapOnRegistrationFailure = false;
             }
             else goto error;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "communicationRetryCount") == 0)
+        else if (lwm2m_strcasecmp(key, "communicationRetryCount") == 0)
         {
             int num;
 
@@ -391,7 +391,7 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->communicationRetryCount = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "communicationRetryTimer") == 0)
+        else if (lwm2m_strcasecmp(key, "communicationRetryTimer") == 0)
         {
             int num;
 
@@ -400,7 +400,7 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->communicationRetryTimer = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "communicationSequenceDelayTimer") == 0)
+        else if (lwm2m_strcasecmp(key, "communicationSequenceDelayTimer") == 0)
         {
             int num;
 
@@ -409,7 +409,7 @@ static read_server_t * prv_read_next_server(FILE * fd)
             readSrvP->communicationSequenceDelayTimer = num;
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "communicationSequenceRetryCount") == 0)
+        else if (lwm2m_strcasecmp(key, "communicationSequenceRetryCount") == 0)
         {
             int num;
 
@@ -459,167 +459,152 @@ error:
 static int prv_add_server(bs_info_t * infoP,
                           read_server_t * dataP)
 {
-    lwm2m_data_t * tlvP;
-    int size;
-    bs_server_tlv_t * serverP;
-    lwm2m_media_type_t format;
-    int res;
+    bs_server_data_t * serverP;
+
+    serverP = (bs_server_data_t *)lwm2m_malloc(sizeof(bs_server_data_t));
+    if (serverP == NULL) return -1;
+    memset(serverP, 0, sizeof(bs_server_data_t));
+
+    serverP->id = dataP->id;
 
     switch (dataP->securityMode)
     {
     case LWM2M_SECURITY_MODE_NONE:
-        size = 4;
+        serverP->securitySize = 4;
         break;
     case LWM2M_SECURITY_MODE_PRE_SHARED_KEY:
-        size = 6;
+        serverP->securitySize = 6;
         break;
     case LWM2M_SECURITY_MODE_RAW_PUBLIC_KEY:
     case LWM2M_SECURITY_MODE_CERTIFICATE:
-        size = 7;
+        serverP->securitySize = 7;
         break;
     default:
-        return -1;
+        goto error;
     }
 
-    serverP = (bs_server_tlv_t *)lwm2m_malloc(sizeof(bs_server_tlv_t));
-    if (serverP == NULL) return -1;
-    memset(serverP, 0, sizeof(bs_server_tlv_t));
-
-    serverP->id = dataP->id;
-
-    tlvP = lwm2m_data_new(size);
-    if (tlvP == NULL) goto error;
+    serverP->securityData = lwm2m_data_new(serverP->securitySize);
+    if (serverP->securityData == NULL) goto error;
 
     // LWM2M Server URI
-    tlvP[0].id = LWM2M_SECURITY_URI_ID;
-    lwm2m_data_encode_string(dataP->uri, tlvP);
+    serverP->securityData[0].id = LWM2M_SECURITY_URI_ID;
+    lwm2m_data_encode_string(dataP->uri, serverP->securityData);
 
     // Bootstrap Server
-    tlvP[1].id = LWM2M_SECURITY_BOOTSTRAP_ID;
-    lwm2m_data_encode_bool(dataP->isBootstrap, tlvP + 1);
+    serverP->securityData[1].id = LWM2M_SECURITY_BOOTSTRAP_ID;
+    lwm2m_data_encode_bool(dataP->isBootstrap, serverP->securityData + 1);
 
     // Short Server ID
-    tlvP[2].id = LWM2M_SECURITY_SHORT_SERVER_ID;
-    lwm2m_data_encode_int(dataP->id, tlvP + 2);
+    serverP->securityData[2].id = LWM2M_SECURITY_SHORT_SERVER_ID;
+    lwm2m_data_encode_int(dataP->id, serverP->securityData + 2);
 
     // Security Mode
-    tlvP[3].id = LWM2M_SECURITY_SECURITY_ID;
-    lwm2m_data_encode_int(dataP->securityMode, tlvP + 3);
+    serverP->securityData[3].id = LWM2M_SECURITY_SECURITY_ID;
+    lwm2m_data_encode_int(dataP->securityMode, serverP->securityData + 3);
 
-    if (size > 4)
+    if (serverP->securitySize > 4)
     {
-        tlvP[4].id = LWM2M_SECURITY_PUBLIC_KEY_ID;
-        lwm2m_data_encode_opaque(dataP->publicKey, dataP->publicKeyLen, tlvP + 4);
+        serverP->securityData[4].id = LWM2M_SECURITY_PUBLIC_KEY_ID;
+        lwm2m_data_encode_opaque(dataP->publicKey, dataP->publicKeyLen, serverP->securityData + 4);
 
-        tlvP[5].id = LWM2M_SECURITY_SECRET_KEY_ID;
-        lwm2m_data_encode_opaque(dataP->secretKey, dataP->secretKeyLen, tlvP + 5);
+        serverP->securityData[5].id = LWM2M_SECURITY_SECRET_KEY_ID;
+        lwm2m_data_encode_opaque(dataP->secretKey, dataP->secretKeyLen, serverP->securityData + 5);
 
-        if (size == 7)
+        if (serverP->securitySize == 7)
         {
-            tlvP[6].id = LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID;
-            lwm2m_data_encode_opaque(dataP->serverKey, dataP->serverKeyLen, tlvP + 5);
+            serverP->securityData[6].id = LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID;
+            lwm2m_data_encode_opaque(dataP->serverKey, dataP->serverKeyLen, serverP->securityData + 6);
         }
     }
-
-    format = LWM2M_CONTENT_TLV;
-    res = lwm2m_data_serialize(NULL, size, tlvP, &format, &(serverP->securityData));
-    if (res <= 0) goto error;
-    serverP->securityLen = (size_t)res;
-    lwm2m_data_free(size, tlvP);
 
     if (dataP->isBootstrap == false)
     {
 #ifndef LWM2M_VERSION_1_0
         int i;
 #endif
-        size = 4;
+        serverP->serverSize = 4;
 #ifndef LWM2M_VERSION_1_0
-        if (dataP->registrationPriorityOrder >= 0) size++;
-        if (dataP->initialRegistrationDelayTimer >= 0) size++;
-        if (dataP->registrationFailureBlock >= 0) size++;
-        if (dataP->bootstrapOnRegistrationFailure >= 0) size++;
-        if (dataP->communicationRetryCount >= 0) size++;
-        if (dataP->communicationRetryTimer >= 0) size++;
-        if (dataP->communicationSequenceDelayTimer >= 0) size++;
-        if (dataP->communicationSequenceRetryCount >= 0) size++;
+        if (dataP->registrationPriorityOrder >= 0) serverP->serverSize++;
+        if (dataP->initialRegistrationDelayTimer >= 0) serverP->serverSize++;
+        if (dataP->registrationFailureBlock >= 0) serverP->serverSize++;
+        if (dataP->bootstrapOnRegistrationFailure >= 0) serverP->serverSize++;
+        if (dataP->communicationRetryCount >= 0) serverP->serverSize++;
+        if (dataP->communicationRetryTimer >= 0) serverP->serverSize++;
+        if (dataP->communicationSequenceDelayTimer >= 0) serverP->serverSize++;
+        if (dataP->communicationSequenceRetryCount >= 0) serverP->serverSize++;
 #endif
 
-        tlvP = lwm2m_data_new(size);
-        if (tlvP == NULL) goto error;
+        serverP->serverData = lwm2m_data_new(serverP->serverSize);
+        if (serverP->serverData == NULL) goto error;
 
         // Short Server ID
-        tlvP[0].id = LWM2M_SERVER_SHORT_ID_ID;
-        lwm2m_data_encode_int(dataP->id, tlvP);
+        serverP->serverData[0].id = LWM2M_SERVER_SHORT_ID_ID;
+        lwm2m_data_encode_int(dataP->id, serverP->serverData);
 
         // Lifetime
-        tlvP[1].id = LWM2M_SERVER_LIFETIME_ID;
-        lwm2m_data_encode_int(dataP->lifetime, tlvP + 1);
+        serverP->serverData[1].id = LWM2M_SERVER_LIFETIME_ID;
+        lwm2m_data_encode_int(dataP->lifetime, serverP->serverData + 1);
 
         // Notification Storing
-        tlvP[2].id = LWM2M_SERVER_STORING_ID;
-        lwm2m_data_encode_bool(false, tlvP + 2);
+        serverP->serverData[2].id = LWM2M_SERVER_STORING_ID;
+        lwm2m_data_encode_bool(false, serverP->serverData + 2);
 
         // Binding
-        tlvP[3].id = LWM2M_SERVER_BINDING_ID;
-        lwm2m_data_encode_string("U", tlvP + 3);
+        serverP->serverData[3].id = LWM2M_SERVER_BINDING_ID;
+        lwm2m_data_encode_string("U", serverP->serverData + 3);
 
 #ifndef LWM2M_VERSION_1_0
         i = 3;
         if (dataP->registrationPriorityOrder >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_REG_ORDER_ID;
-            lwm2m_data_encode_uint(dataP->registrationPriorityOrder, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_REG_ORDER_ID;
+            lwm2m_data_encode_uint(dataP->registrationPriorityOrder, serverP->serverData + i);
         }
         if (dataP->initialRegistrationDelayTimer >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_INITIAL_REG_DELAY_ID;
-            lwm2m_data_encode_uint(dataP->initialRegistrationDelayTimer, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_INITIAL_REG_DELAY_ID;
+            lwm2m_data_encode_uint(dataP->initialRegistrationDelayTimer, serverP->serverData + i);
         }
         if (dataP->registrationFailureBlock >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_REG_FAIL_BLOCK_ID;
-            lwm2m_data_encode_bool(dataP->registrationFailureBlock > 0, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_REG_FAIL_BLOCK_ID;
+            lwm2m_data_encode_bool(dataP->registrationFailureBlock > 0, serverP->serverData + i);
         }
         if (dataP->bootstrapOnRegistrationFailure >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_REG_FAIL_BOOTSTRAP_ID;
-            lwm2m_data_encode_bool(dataP->bootstrapOnRegistrationFailure > 0, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_REG_FAIL_BOOTSTRAP_ID;
+            lwm2m_data_encode_bool(dataP->bootstrapOnRegistrationFailure > 0, serverP->serverData + i);
         }
         if (dataP->communicationRetryCount >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_COMM_RETRY_COUNT_ID;
-            lwm2m_data_encode_uint(dataP->communicationRetryCount, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_COMM_RETRY_COUNT_ID;
+            lwm2m_data_encode_uint(dataP->communicationRetryCount, serverP->serverData + i);
         }
         if (dataP->communicationRetryTimer >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_COMM_RETRY_TIMER_ID;
-            lwm2m_data_encode_uint(dataP->communicationRetryTimer, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_COMM_RETRY_TIMER_ID;
+            lwm2m_data_encode_uint(dataP->communicationRetryTimer, serverP->serverData + i);
         }
         if (dataP->communicationSequenceDelayTimer >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_SEQ_DELAY_TIMER_ID;
-            lwm2m_data_encode_uint(dataP->communicationSequenceDelayTimer, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_SEQ_DELAY_TIMER_ID;
+            lwm2m_data_encode_uint(dataP->communicationSequenceDelayTimer, serverP->serverData + i);
         }
         if (dataP->communicationSequenceRetryCount >= 0)
         {
-            tlvP[++i].id = LWM2M_SERVER_SEQ_RETRY_COUNT_ID;
-            lwm2m_data_encode_uint(dataP->communicationSequenceRetryCount, tlvP + i);
+            serverP->serverData[++i].id = LWM2M_SERVER_SEQ_RETRY_COUNT_ID;
+            lwm2m_data_encode_uint(dataP->communicationSequenceRetryCount, serverP->serverData + i);
         }
 #endif
-        res = lwm2m_data_serialize(NULL, size, tlvP, &format, &(serverP->serverData));
-        if (res <= 0) goto error;
-        serverP->serverLen = res;
-        lwm2m_data_free(size, tlvP);
     }
 
-    infoP->serverList = (bs_server_tlv_t *)LWM2M_LIST_ADD(infoP->serverList, serverP);
+    infoP->serverList = (bs_server_data_t *)LWM2M_LIST_ADD(infoP->serverList, serverP);
 
     return 0;
 
 error:
-    if (tlvP != NULL) lwm2m_data_free(size, tlvP);
-    if (serverP->securityData != NULL) lwm2m_free(serverP->securityData);
-    if (serverP->serverData != NULL) lwm2m_free(serverP->serverData);
+    if (serverP->securityData != NULL) lwm2m_data_free(serverP->securitySize, serverP->securityData);
+    if (serverP->serverData != NULL) lwm2m_data_free(serverP->serverSize, serverP->serverData);
     lwm2m_free(serverP);
 
     return -1;
@@ -643,14 +628,54 @@ static bs_endpoint_info_t * prv_read_next_endpoint(FILE * fd)
 
     while((res = prv_read_key_value(fd, &key, &value)) == 1)
     {
-        if (strcasecmp(key, "Name") == 0)
+        if (lwm2m_strcasecmp(key, "Name") == 0)
         {
             endptP->name = value;
         }
-        else if (strcasecmp(key, "Delete") == 0)
+        else if (lwm2m_strcasecmp(key, "Discover") == 0)
         {
             lwm2m_uri_t uri;
 
+            if (lwm2m_stringToUri(value, strlen(value), &uri) == 0) goto error;
+
+            cmdP = (bs_command_t *)lwm2m_malloc(sizeof(bs_command_t));
+            if (cmdP == NULL) goto error;
+            memset(cmdP, 0, sizeof(bs_command_t));
+
+            cmdP->operation = BS_DISCOVER;
+            if (LWM2M_URI_IS_SET_OBJECT(&uri))
+            {
+                cmdP->uri = (lwm2m_uri_t *)lwm2m_malloc(sizeof(lwm2m_uri_t));
+                if (cmdP->uri == NULL) goto error;
+                memcpy(cmdP->uri, &uri, sizeof(lwm2m_uri_t));
+            }
+
+            lwm2m_free(value);
+        }
+        else if (lwm2m_strcasecmp(key, "Read") == 0)
+        {
+#ifndef LWM2M_VERSION_1_0
+            lwm2m_uri_t uri;
+
+            if (lwm2m_stringToUri(value, strlen(value), &uri) == 0) goto error;
+
+            cmdP = (bs_command_t *)lwm2m_malloc(sizeof(bs_command_t));
+            if (cmdP == NULL) goto error;
+            memset(cmdP, 0, sizeof(bs_command_t));
+
+            cmdP->operation = BS_READ;
+            if (LWM2M_URI_IS_SET_OBJECT(&uri))
+            {
+                cmdP->uri = (lwm2m_uri_t *)lwm2m_malloc(sizeof(lwm2m_uri_t));
+                if (cmdP->uri == NULL) goto error;
+                memcpy(cmdP->uri, &uri, sizeof(lwm2m_uri_t));
+            }
+#endif
+            lwm2m_free(value);
+        }
+        else if (lwm2m_strcasecmp(key, "Delete") == 0)
+        {
+            lwm2m_uri_t uri;
 
             if (lwm2m_stringToUri(value, strlen(value), &uri) == 0) goto error;
 
@@ -668,7 +693,7 @@ static bs_endpoint_info_t * prv_read_next_endpoint(FILE * fd)
 
             lwm2m_free(value);
         }
-        else if (strcasecmp(key, "Server") == 0)
+        else if (lwm2m_strcasecmp(key, "Server") == 0)
         {
             int num;
 
@@ -716,6 +741,9 @@ static bs_endpoint_info_t * prv_read_next_endpoint(FILE * fd)
             cmdP = NULL;
         }
     }
+
+    if (res != 0) goto error;
+
     if (endptP->commandList != NULL)
     {
         bs_command_t * parentP;
@@ -840,9 +868,9 @@ bs_info_t *  bs_get_info(FILE * fd)
 
             case BS_WRITE_SERVER:
             {
-                bs_server_tlv_t * serverP;
+                bs_server_data_t * serverP;
 
-                serverP = (bs_server_tlv_t *)LWM2M_LIST_FIND(infoP->serverList, cmdP->serverId);
+                serverP = (bs_server_data_t *)LWM2M_LIST_FIND(infoP->serverList, cmdP->serverId);
                 if (serverP == NULL) goto error;
                 if (serverP->serverData == NULL)
                 {
@@ -891,13 +919,13 @@ void bs_free_info(bs_info_t * infoP)
 
     while (infoP->serverList != NULL)
     {
-        bs_server_tlv_t * targetP;
+        bs_server_data_t * targetP;
 
         targetP = infoP->serverList;
         infoP->serverList = infoP->serverList->next;
 
-        if (targetP->securityData != NULL) lwm2m_free(targetP->securityData);
-        if (targetP->serverData != NULL) lwm2m_free(targetP->serverData);
+        if (targetP->securityData != NULL) lwm2m_data_free(targetP->securitySize, targetP->securityData);
+        if (targetP->serverData != NULL) lwm2m_data_free(targetP->serverSize, targetP->serverData);
 
         lwm2m_free(targetP);
     }
