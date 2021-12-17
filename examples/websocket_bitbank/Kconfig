@@ -1,0 +1,43 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_WEBSOCKET_BITBANK
+	tristate "WebSocket sample application using bitbank"
+	default n
+	depends on EXTERNALS_WEBSOCKET
+	depends on LTE_NET_MBEDTLS || EXTERNALS_MBEDTLS
+	---help---
+		Enable the websocket sample application using bitbank
+
+if EXAMPLES_WEBSOCKET_BITBANK
+
+config EXAMPLES_WEBSOCKET_BITBANK_PROGNAME
+	string "Program name"
+	default "websocket_bitbank"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_WEBSOCKET_BITBANK_PRIORITY
+	int "websocket_bitbank task priority"
+	default 100
+
+config EXAMPLES_WEBSOCKET_BITBANK_STACKSIZE
+	int "websocket_bitbank stack size"
+	default 1024
+
+config EXAMPLES_WEBSOCKET_BITBANK_ROOT_CA_FILE
+	string "Root CA file for bitbank WebSocket API"
+	default "/mnt/sd0/BaltimoreCyberTrustRoot.crt.pem"
+
+config EXAMPLES_WEBSOCKET_BITBANK_TASK_PRIORITY
+	int "websocket_bitbank websockt task priority"
+	default 95
+
+config EXAMPLES_WEBSOCKET_BITBANK_TASK_STACKSIZE
+	int "websocket_bitbank websockt stack size"
+	default 10240
+
+endif
