@@ -551,449 +551,449 @@ static int32_t rsagenkey_pkt_compose(FAR void **arg,
                               size_t arglen, uint8_t altver, FAR uint8_t *pktbuf,
                               const size_t pktsz, FAR uint16_t *altcid);
 
-static int32_t sslinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslsetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslsetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslhostname_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslhostname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslbio_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslbio_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslhandshake_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslhandshake_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslwrite_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslwrite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslread_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslread_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslclosenotif_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslclosenotif_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslver_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslciphersuite_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslciphersuite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslciphersuiteid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslciphersuiteid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslrecexp_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslrecexp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslvrfyresult_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslvrfyresult_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ssltimercb_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ssltimercb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslpeercert_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslpeercert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslbytesavail_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslbytesavail_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t conffree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t conffree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confdefauts_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confdefauts_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confauth_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confauth_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confrng_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confrng_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confcachain_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confcachain_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confowncert_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confowncert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confreadtimeo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confreadtimeo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confvrfy_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confvrfy_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confvrfycb_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confvrfycb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confalpnproto_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confalpnproto_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t confciphersuites_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confciphersuites_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ssesioninit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ssesioninit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sessionfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sessionget_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionget_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sessionset_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionset_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtparsefile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtparseder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtparse_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtinfo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtinfo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtvrfyinfo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtvrfyinfo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkparsekeyfile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkparsekeyfile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkparsekey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkparsekey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkcheckpair_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkcheckpair_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pksetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pksetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkinfofromtype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkwritekeypem_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkwritekeypem_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkwritekeyder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkwritekeyder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkrsa_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkrsa_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ctrdrbginit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbginit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ctrdrbgfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ctrdrbgseed_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgseed_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t entropyinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropyinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t entropyfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropyfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t cipherinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t cipherfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t cipherinfofromstr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherinfofromstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ciphersetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ciphersetkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ciphersetiv_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetiv_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t cipherupdate_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherupdate_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mdinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mdinfofromtype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mdgetsize_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mdgetsize_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t md_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t md_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mddigest_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mddigest_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t base64enc_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t base64enc_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sha1_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sha1_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslexportsrtpkeys_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslexportsrtpkeys_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslusesrtp_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslusesrtp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t srtpprofile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t srtpprofile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslturn_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslturn_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mpiinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpiinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mpifree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpifree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mpireadstr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpireadstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t mpiwritestr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpiwritestr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509csrinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509csrfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509csrparsefile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509csrparseder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509csrparse_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509dngetscrt_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509dngetscrt_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509dngetscsr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509dngetscsr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtpem_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtpem_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtsubkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtissuerkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtissuerkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtsubname_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtissuername_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtissuername_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtver_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtmdalg_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtmdalg_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtserial_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtserial_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtvalidity_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtvalidity_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtconst_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtconst_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtsubid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtauthid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtauthid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtkeyusage_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtkeyusage_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509writecrtnscerttype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtnscerttype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t rsainit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsainit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t rsafree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsafree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t rsagenkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsagenkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t configcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t configcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t sessioncmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessioncmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t x509crtcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ctrdrbgcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t entropycmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropycmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
-static int32_t ciphercmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphercmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen);
+                             size_t arglen, FAR uint64_t *bitmap);
 
 /****************************************************************************
  * Private Data
@@ -5705,9 +5705,9 @@ static int32_t rsagenkey_pkt_compose(FAR void **arg,
  * Private Functions
  ****************************************************************************/
 
-static int32_t sslinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5728,9 +5728,9 @@ static int32_t sslinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5751,9 +5751,9 @@ static int32_t sslfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslsetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslsetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5774,9 +5774,9 @@ static int32_t sslsetup_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslhostname_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslhostname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5797,9 +5797,9 @@ static int32_t sslhostname_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslbio_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslbio_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5820,9 +5820,9 @@ static int32_t sslbio_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslhandshake_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslhandshake_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5843,9 +5843,9 @@ static int32_t sslhandshake_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslwrite_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslwrite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5866,9 +5866,9 @@ static int32_t sslwrite_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslread_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslread_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -5908,9 +5908,9 @@ static int32_t sslread_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslclosenotif_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslclosenotif_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -5931,9 +5931,9 @@ static int32_t sslclosenotif_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslver_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR const char **version = (FAR const char **)arg[1];
@@ -5958,9 +5958,9 @@ static int32_t sslver_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslciphersuite_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslciphersuite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR char *cipher_str_buf = (FAR char *)arg[1];
@@ -5986,9 +5986,9 @@ static int32_t sslciphersuite_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslciphersuiteid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslciphersuiteid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   int32_t  ret_cipher_id = 0;
@@ -6012,9 +6012,9 @@ static int32_t sslciphersuiteid_pkt_parse(FAR uint8_t *pktbuf,
   return ret_cipher_id;
 }
 
-static int32_t sslrecexp_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslrecexp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6035,9 +6035,9 @@ static int32_t sslrecexp_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslvrfyresult_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslvrfyresult_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6058,9 +6058,9 @@ static int32_t sslvrfyresult_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ssltimercb_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ssltimercb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6081,9 +6081,9 @@ static int32_t ssltimercb_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslpeercert_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslpeercert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_x509_crt *x509_crt = (FAR mbedtls_x509_crt *)arg[1];
@@ -6107,9 +6107,9 @@ static int32_t sslpeercert_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslbytesavail_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslbytesavail_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6130,9 +6130,9 @@ static int32_t sslbytesavail_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6153,9 +6153,9 @@ static int32_t confinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t conffree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t conffree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6176,9 +6176,9 @@ static int32_t conffree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confdefauts_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confdefauts_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6199,9 +6199,9 @@ static int32_t confdefauts_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confauth_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confauth_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6222,9 +6222,9 @@ static int32_t confauth_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confrng_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confrng_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6245,9 +6245,9 @@ static int32_t confrng_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confcachain_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confcachain_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6268,9 +6268,9 @@ static int32_t confcachain_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confowncert_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confowncert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6291,9 +6291,9 @@ static int32_t confowncert_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confreadtimeo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confreadtimeo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6314,9 +6314,9 @@ static int32_t confreadtimeo_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confvrfy_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confvrfy_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6337,9 +6337,9 @@ static int32_t confvrfy_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confvrfycb_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confvrfycb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR uint32_t *crt = (FAR uint32_t *)arg[0];
   FAR int32_t *depth = (FAR int32_t *)arg[1];
@@ -6353,9 +6353,9 @@ static int32_t confvrfycb_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confalpnproto_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confalpnproto_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6376,9 +6376,9 @@ static int32_t confalpnproto_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t confciphersuites_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t confciphersuites_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6399,9 +6399,9 @@ static int32_t confciphersuites_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ssesioninit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ssesioninit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6422,9 +6422,9 @@ static int32_t ssesioninit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sessionfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6445,9 +6445,9 @@ static int32_t sessionfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sessionget_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionget_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6468,9 +6468,9 @@ static int32_t sessionget_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sessionset_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessionset_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6491,9 +6491,9 @@ static int32_t sessionset_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6514,9 +6514,9 @@ static int32_t x509crtinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6537,9 +6537,9 @@ static int32_t x509crtfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtparsefile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6560,9 +6560,9 @@ static int32_t x509crtparsefile_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtparseder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6583,9 +6583,9 @@ static int32_t x509crtparseder_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtparse_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6606,9 +6606,9 @@ static int32_t x509crtparse_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtinfo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtinfo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   uint32_t buflen = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -6629,9 +6629,9 @@ static int32_t x509crtinfo_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtvrfyinfo_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtvrfyinfo_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   uint32_t buflen = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -6660,9 +6660,9 @@ static int32_t x509crtvrfyinfo_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6685,9 +6685,9 @@ static int32_t pkinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6710,9 +6710,9 @@ static int32_t pkfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkparsekeyfile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkparsekeyfile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6735,9 +6735,9 @@ static int32_t pkparsekeyfile_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkparsekey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkparsekey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6760,9 +6760,9 @@ static int32_t pkparsekey_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkcheckpair_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkcheckpair_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6785,9 +6785,9 @@ static int32_t pkcheckpair_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pksetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pksetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6810,9 +6810,9 @@ static int32_t pksetup_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkinfofromtype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_pk_info_t *pk_info = (FAR mbedtls_pk_info_t *)arg[1];
@@ -6848,9 +6848,9 @@ static int32_t pkinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkwritekeypem_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkwritekeypem_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -6891,9 +6891,9 @@ static int32_t pkwritekeypem_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkwritekeyder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkwritekeyder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -6937,9 +6937,9 @@ static int32_t pkwritekeyder_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t pkrsa_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkrsa_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_rsa_context *rsa_context =
@@ -6966,9 +6966,9 @@ static int32_t pkrsa_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ctrdrbginit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbginit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -6989,9 +6989,9 @@ static int32_t ctrdrbginit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ctrdrbgfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7012,9 +7012,9 @@ static int32_t ctrdrbgfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ctrdrbgseed_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgseed_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7035,9 +7035,9 @@ static int32_t ctrdrbgseed_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t entropyinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropyinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7058,9 +7058,9 @@ static int32_t entropyinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t entropyfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropyfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7081,9 +7081,9 @@ static int32_t entropyfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t cipherinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7100,9 +7100,9 @@ static int32_t cipherinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t cipherfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7119,9 +7119,9 @@ static int32_t cipherfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t cipherinfofromstr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherinfofromstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_cipher_info_t *cipher_info =
@@ -7141,9 +7141,9 @@ static int32_t cipherinfofromstr_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ciphersetup_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7160,9 +7160,9 @@ static int32_t ciphersetup_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ciphersetkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7179,9 +7179,9 @@ static int32_t ciphersetkey_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ciphersetiv_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphersetiv_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7198,9 +7198,9 @@ static int32_t ciphersetiv_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t cipherupdate_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t cipherupdate_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *output = (FAR unsigned char *)arg[1];
@@ -7230,9 +7230,9 @@ static int32_t cipherupdate_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mdinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mdinfofromtype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_md_info_t *md_info = (FAR mbedtls_md_info_t *)arg[1];
@@ -7265,9 +7265,9 @@ static int32_t mdinfofromtype_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mdgetsize_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mdgetsize_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR uint8_t *md_size = (FAR uint8_t *)arg[1];
@@ -7308,9 +7308,9 @@ static int32_t mdgetsize_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t md_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t md_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *output = (FAR unsigned char *)arg[1];
@@ -7344,9 +7344,9 @@ static int32_t md_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mddigest_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mddigest_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *buf = (FAR unsigned char *)arg[1];
@@ -7374,9 +7374,9 @@ static int32_t mddigest_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t base64enc_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t base64enc_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   uint32_t out_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -7439,9 +7439,9 @@ static int32_t base64enc_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sha1_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sha1_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *output = (FAR unsigned char *)arg[1];
@@ -7476,9 +7476,9 @@ static int32_t sha1_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslexportsrtpkeys_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslexportsrtpkeys_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   uint32_t buflen = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -7501,9 +7501,9 @@ static int32_t sslexportsrtpkeys_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslusesrtp_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslusesrtp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7520,9 +7520,9 @@ static int32_t sslusesrtp_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t srtpprofile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t srtpprofile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   int32_t profile = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -7542,9 +7542,9 @@ static int32_t srtpprofile_pkt_parse(FAR uint8_t *pktbuf,
   return profile;
 }
 
-static int32_t sslturn_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslturn_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7561,9 +7561,9 @@ static int32_t sslturn_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mpiinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpiinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7580,9 +7580,9 @@ static int32_t mpiinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mpifree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpifree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7599,9 +7599,9 @@ static int32_t mpifree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mpireadstr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpireadstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7618,9 +7618,9 @@ static int32_t mpireadstr_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t mpiwritestr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t mpiwritestr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR char *buf = (FAR char *)arg[1];
@@ -7649,9 +7649,9 @@ static int32_t mpiwritestr_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509csrinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7668,9 +7668,9 @@ static int32_t x509csrinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509csrfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7687,9 +7687,9 @@ static int32_t x509csrfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509csrparsefile_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7706,9 +7706,9 @@ static int32_t x509csrparsefile_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509csrparseder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7725,9 +7725,9 @@ static int32_t x509csrparseder_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509csrparse_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509csrparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7744,9 +7744,9 @@ static int32_t x509csrparse_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509dngetscrt_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509dngetscrt_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7763,9 +7763,9 @@ static int32_t x509dngetscrt_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509dngetscsr_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509dngetscsr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7782,9 +7782,9 @@ static int32_t x509dngetscsr_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtinit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7801,9 +7801,9 @@ static int32_t x509writecrtinit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtfree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7820,9 +7820,9 @@ static int32_t x509writecrtfree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtder_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -7858,9 +7858,9 @@ static int32_t x509writecrtder_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtpem_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtpem_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
@@ -7887,9 +7887,9 @@ static int32_t x509writecrtpem_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtsubkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7906,9 +7906,9 @@ static int32_t x509writecrtsubkey_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtissuerkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtissuerkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7925,9 +7925,9 @@ static int32_t x509writecrtissuerkey_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtsubname_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7944,9 +7944,9 @@ static int32_t x509writecrtsubname_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtissuername_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtissuername_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7963,9 +7963,9 @@ static int32_t x509writecrtissuername_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtver_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -7982,9 +7982,9 @@ static int32_t x509writecrtver_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtmdalg_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtmdalg_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8001,9 +8001,9 @@ static int32_t x509writecrtmdalg_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtserial_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtserial_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8020,9 +8020,9 @@ static int32_t x509writecrtserial_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtvalidity_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtvalidity_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8039,9 +8039,9 @@ static int32_t x509writecrtvalidity_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtconst_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtconst_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8058,9 +8058,9 @@ static int32_t x509writecrtconst_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtsubid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtsubid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8078,9 +8078,9 @@ static int32_t x509writecrtsubid_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtauthid_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtauthid_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8097,9 +8097,9 @@ static int32_t x509writecrtauthid_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtkeyusage_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtkeyusage_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8116,9 +8116,9 @@ static int32_t x509writecrtkeyusage_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509writecrtnscerttype_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509writecrtnscerttype_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8135,9 +8135,9 @@ static int32_t x509writecrtnscerttype_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t rsainit_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsainit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8154,9 +8154,9 @@ static int32_t rsainit_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t rsafree_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsafree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8173,9 +8173,9 @@ static int32_t rsafree_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t rsagenkey_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t rsagenkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                               size_t pktsz, uint8_t altver, FAR void **arg,
-                              size_t arglen)
+                              size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8192,9 +8192,9 @@ static int32_t rsagenkey_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sslcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret_code = (FAR int32_t *)arg[0];
   int32_t ret = 0;
@@ -8301,9 +8301,9 @@ static int32_t sslcmd_pkt_parse(FAR uint8_t *pktbuf,
   return ret;
 }
 
-static int32_t configcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t configcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8324,9 +8324,9 @@ static int32_t configcmd_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t sessioncmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t sessioncmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8347,9 +8347,9 @@ static int32_t sessioncmd_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t x509crtcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t x509crtcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret_code = (FAR int32_t *)arg[0];
   int32_t ret = 0;
@@ -8398,9 +8398,9 @@ static int32_t x509crtcmd_pkt_parse(FAR uint8_t *pktbuf,
   return ret;
 }
 
-static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t pkcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret_code = (FAR int32_t *)arg[0];
   int32_t ret = 0;
@@ -8493,9 +8493,9 @@ static int32_t pkcmd_pkt_parse(FAR uint8_t *pktbuf,
   return ret;
 }
 
-static int32_t ctrdrbgcmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ctrdrbgcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8516,9 +8516,9 @@ static int32_t ctrdrbgcmd_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t entropycmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t entropycmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   FAR int32_t *ret = (FAR int32_t *)arg[0];
 
@@ -8539,9 +8539,9 @@ static int32_t entropycmd_pkt_parse(FAR uint8_t *pktbuf,
   return 0;
 }
 
-static int32_t ciphercmd_pkt_parse(FAR uint8_t *pktbuf,
+static int32_t ciphercmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t *pktbuf,
                              size_t pktsz, uint8_t altver, FAR void **arg,
-                             size_t arglen)
+                             size_t arglen, FAR uint64_t *bitmap)
 {
   int32_t ret = 0;
 
@@ -8564,27 +8564,31 @@ static int32_t ciphercmd_pkt_parse(FAR uint8_t *pktbuf,
         }
       if (subcmd_id == APISUBCMDID_TLS_MD_INFO_FROM_TYPE)
         {
-          ret = mdinfofromtype_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = mdinfofromtype_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen,
+                                         bitmap);
         }
       else if (subcmd_id == APISUBCMDID_TLS_MD_GET_SIZE)
         {
-          ret = mdgetsize_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = mdgetsize_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen,
+                                    bitmap);
         }
       else if (subcmd_id == APISUBCMDID_TLS_MD)
         {
-          ret = md_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = md_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen, bitmap);
         }
       else if (subcmd_id == APISUBCMDID_TLS_MD_DIGEST)
         {
-          ret = mddigest_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = mddigest_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen,
+                                   bitmap);
         }
       else if (subcmd_id == APISUBCMDID_TLS_BASE64_ENCODE)
         {
-          ret = base64enc_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = base64enc_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen,
+                                    bitmap);
         }
       else if (subcmd_id == APISUBCMDID_TLS_SHA1)
         {
-          ret = sha1_pkt_parse(pktbuf, pktsz, altver, arg, arglen);
+          ret = sha1_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen, bitmap);
           TLS_DEBUG("[sha1 res]ret: %ld\n", ntohl(in->ret_code));
         }
     }
