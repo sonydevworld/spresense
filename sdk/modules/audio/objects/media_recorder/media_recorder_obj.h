@@ -78,8 +78,10 @@ class MediaRecorderObject:ObjectBase
 public:
 
   static void create(AsObjectParams_t*);
-  static void destory() { get_instance()->m_is_created = false; }
-
+  static void destory() {
+    get_instance()->~MediaRecorderObject();
+    get_instance()->m_is_created = false;
+  }
   static MediaRecorderObject *get_adr(void)
   {
     static MediaRecorderObject s_inst;
