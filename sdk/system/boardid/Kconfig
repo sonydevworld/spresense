@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_BOARDID
+	bool "Print board unique ID command"
+	default n
+	depends on BOARDCTL_UNIQUEID
+	---help---
+		Enable support for the NSH 'boardid' command which shows board unique ID.
+
+if SYSTEM_BOARDID
+
+config SYSTEM_BOARDID_PROGNAME
+	string "Program name"
+	default "boardid"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config SYSTEM_BOARDID_PRIORITY
+	int "boardid task priority"
+	default 100
+
+config SYSTEM_BOARDID_STACKSIZE
+	int "boardid stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif # SYSTEM_BOARDID
