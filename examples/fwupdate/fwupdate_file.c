@@ -98,7 +98,7 @@ static enum fw_type_e get_file_type(char *pathname)
     {
       return FW_APP;
     }
-  else if (0 == strncasecmp(filename, "bcm20706fw", 10))
+  else if (0 == strncasecmp(filename, "sysutil", 7))
     {
       return FW_APP;
     }

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/fwuputils/fwup_client.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2021 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,17 +40,20 @@
  * Included Files
  ****************************************************************************/
 
-#include <sdk/config.h>
-
-#include "fwuputils/fwup_manager.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
+#include <nuttx/config.h>
+#include <stdint.h>
 
 /****************************************************************************
  * Public Types
  ****************************************************************************/
+
+enum fw_type_e
+{
+  FW_APP,
+  FW_SYS,
+  FW_UPDATER,
+  FW_SBL,
+};
 
 struct fwup_client_s
 {

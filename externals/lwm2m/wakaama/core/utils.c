@@ -14,7 +14,8 @@
  *    David Navarro, Intel Corporation - initial API and implementation
  *    Toby Jaffey - Please refer to git log
  *    Scott Bertin, AMETEK, Inc. - Please refer to git log
- *    
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -48,6 +49,8 @@
 */
 
 #include "internals.h"
+#include <ctype.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -130,66 +133,40 @@ int utils_textToUInt(const uint8_t * buffer,
 
 int utils_textToFloat(const uint8_t * buffer,
                       int length,
-                      double * dataP)
+                      double * dataP,
+                      bool allowExponential)
 {
-    double result;
-    int sign;
-    int i;
+    int ret = 0;
 
-    if (0 == length) return 0;
-
-    if (buffer[0] == '-')
-    {
-        sign = -1;
-        i = 1;
-    }
-    else
-    {
-        sign = 1;
-        i = 0;
+    if (length == 0) {
+        return 0;
     }
 
-    result = 0;
-    while (i < length && buffer[i] != '.')
-    {
-        if ('0' <= buffer[i] && buffer[i] <= '9')
-        {
-            if (result > (DBL_MAX / 10)) return 0;
-            result *= 10;
-            result += (buffer[i] - '0');
-        }
-        else
-        {
-            return 0;
-        }
-        i++;
-    }
-    if (buffer[i] == '.')
-    {
-        double dec;
+    char *const buffer_c_str = lwm2m_malloc(length + 1);
+    char *tailptr;
 
-        i++;
-        if (i == length) return 0;
-
-        dec = 0.1;
-        while (i < length)
-        {
-            if ('0' <= buffer[i] && buffer[i] <= '9')
-            {
-                if (result > (DBL_MAX - 1)) return 0;
-                result += (buffer[i] - '0') * dec;
-                dec /= 10;
-            }
-            else
-            {
-                return 0;
-            }
-            i++;
-        }
+    if (!buffer_c_str) {
+        return 0;
     }
 
-    *dataP = result * sign;
-    return 1;
+    memcpy(buffer_c_str, buffer, length);
+    buffer_c_str[length] = '\0';
+
+    if (!allowExponential && (strchr(buffer_c_str, 'e') != NULL || strchr(buffer_c_str, 'E') != NULL)) {
+        goto out;
+    }
+
+    *dataP = strtod(buffer_c_str, &tailptr);
+
+    if (tailptr == buffer_c_str) {
+        goto out;
+    }
+
+    ret = 1;
+
+out:
+    lwm2m_free(buffer_c_str);
+    return ret;
 }
 
 int utils_textToObjLink(const uint8_t * buffer,
@@ -227,7 +204,21 @@ size_t utils_intToText(int64_t data,
     {
         if (length == 0) return 0;
         string[0] = '-';
-        result = utils_uintToText((uint64_t)(0-data), string + 1, length - 1);
+        /*
+         * Hack around the fact that -1 * INT64_MIN can not be represented as
+         * int64_t.
+         */
+        if (data == INT64_MIN) {
+            const char *const int64_min_str = "-9223372036854775808";
+            const size_t int64_min_strlen = strlen(int64_min_str);
+            if (int64_min_strlen >= length) {
+                return 0;
+            }
+            memcpy(string, "-9223372036854775808", int64_min_strlen);
+            string[int64_min_strlen] = '\0';
+            return int64_min_strlen;
+        }
+        result = utils_uintToText((uint64_t)labs(data), string + 1, length - 1);
         if(result != 0)
         {
             result += 1;
@@ -275,66 +266,284 @@ size_t utils_uintToText(uint64_t data,
 
 size_t utils_floatToText(double data,
                          uint8_t * string,
-                         size_t length)
+                         size_t length,
+                         bool allowExponential)
 {
-    size_t intLength;
-    size_t decLength;
-    int64_t intPart;
+    uint64_t intPart;
     double decPart;
+    double noiseFloor;
+    double roundCheck;
+    size_t res;
+    size_t head = 0;
+    int zeros = 0; /* positive for trailing, negative for leading */
+    uint8_t expLen = 0;
+    int precisionFactor = 1; /* Adjusts for inaccuracies caused by power of 10 operations. */
+    unsigned digits;
 
-    if (data <= (double)INT64_MIN || data >= (double)INT64_MAX) return 0;
+    if (!length || !string) return 0;
 
-    intPart = (int64_t)data;
-    decPart = data - intPart;
-    if (decPart < 0)
+    if (data < 0)
     {
-        decPart = 1 - decPart;
+        string[head++] = '-';
+        data = -data;
+    }
+
+    /* Handle special cases */
+    if (data < DBL_MIN)
+    {
+        /* Intentionally not distinguishing between +0.0 and -0.0. */
+        if (length < 3) return 0;
+        string[0] = '0';
+        string[1] = '.';
+        string[2] = '0';
+        if (length > 3) string[3] = '\0';
+        return 3;
+    }
+    else if (data > DBL_MAX )
+    {
+        /* Note that this is not valid for JSON. */
+        if (length < 3 + head) return 0;
+        string[head++] = 'i';
+        string[head++] = 'n';
+        string[head++] = 'f';
+        if (length > head) string[head] = '\0';
+        return head;
+    }
+    else if (isnan(data))
+    {
+        /* NaN */
+        /* Note that this is not valid for JSON. */
+        if (length < 3 + head) return 0;
+        string[head++] = 'n';
+        string[head++] = 'a';
+        string[head++] = 'n';
+        if (length > head) string[head] = '\0';
+        return head;
+    }
+
+    /* Scale to usable range. Assumes DBL_DIG is 15 (IEEE 754 double) */
+    if (data > 1e15)
+    {
+        while (data > 1e100)
+        {
+            data *= 1e-100;
+            zeros += 100;
+            precisionFactor++;
+        }
+        if (allowExponential)
+        {
+            /* Take data down below 10 so only 1 digit before the decimal point */
+            while (data > 1e10)
+            {
+                data *= 1e-10;
+                zeros += 10;
+                precisionFactor++;
+            }
+            while (data > 10)
+            {
+                data *= 0.1;
+                zeros += 1;
+                precisionFactor++;
+            }
+            if (zeros >= 100)
+            {
+                expLen = 4;
+            }
+            else if(zeros >= 10)
+            {
+                expLen = 3;
+            }
+            else
+            {
+                expLen = 2;
+            }
+        }
+        else
+        {
+            /* Take data down to 15 significant digits before 0s. */
+            while (data >= 1e25)
+            {
+                data *= 1e-10;
+                zeros += 10;
+                precisionFactor++;
+            }
+            while (data > 1e15)
+            {
+                data *= 0.1;
+                zeros += 1;
+                precisionFactor++;
+            }
+            /* Account for lost digits of precision */
+            if (precisionFactor >= 19)
+            {
+                data *= 0.01;
+                zeros += 2;
+                precisionFactor++;
+            }
+            else if (precisionFactor >= 10)
+            {
+                data *= 0.1;
+                zeros += 1;
+                precisionFactor++;
+            }
+        }
+    }
+    /* Exponential notation will add at least 3 characters. Make sure we save
+     * at least that many 0s. */
+    else if (data < (allowExponential ? 1e-3 : 0.1))
+    {
+        /* For exponential notation take data to between 1 and 10, excluding 10.
+         * Otherwise take data to between 0.1 and 1, excluding 1. */
+        while (data < 1e-100)
+        {
+            data *= 1e100;
+            zeros -= 100;
+            precisionFactor++;
+        }
+        while (data < 1e-10)
+        {
+            data *= 1e10;
+            zeros -= 10;
+            precisionFactor++;
+        }
+        while (data < (allowExponential ? 1 : 0.1))
+        {
+            data *= 10;
+            zeros -= 1;
+            precisionFactor++;
+        }
+        if (allowExponential)
+        {
+            if (zeros <= -100)
+            {
+                expLen = 5;
+            }
+            else if(zeros <= -10)
+            {
+                expLen = 4;
+            }
+            else
+            {
+                expLen = 3;
+            }
+        }
+    }
+
+    noiseFloor = DBL_EPSILON * precisionFactor;
+    /* Adjust the noise floor to account for digits left of the decimal point. */
+    intPart = (uint64_t)data;
+    if (!intPart)
+    {
+        /* Leading 0 and decimal point */
+        digits = 2;
     }
     else
     {
-        decPart = 1 + decPart;
+        /* Decimal point */
+        digits = 1;
+    }
+    while (intPart > 0)
+    {
+        noiseFloor *= 10;
+        intPart /= 10;
+        digits++;
     }
 
-    if (decPart <= 1 + FLT_EPSILON)
+    intPart = (uint64_t)data;
+    decPart = data - intPart;
+    if (!allowExponential && zeros > 0)
     {
+        /* Ensure all significant digits are left of the zeros */
+        while (zeros > 0 && noiseFloor < 1)
+        {
+            decPart *= 10;
+            intPart = intPart * 10 + (unsigned)decPart;
+            decPart -= (unsigned)decPart;
+            zeros--;
+            noiseFloor *= 10;
+            digits++;
+        }
         decPart = 0;
     }
 
-    if (intPart == 0 && data < 0)
+    if (decPart > noiseFloor)
     {
-        // deal with numbers between -1 and 0
-        if (length < 4) return 0;   // "-0.n"
-        string[0] = '-';
-        string[1] = '0';
-        intLength = 2;
+        /* Add 1 to the decimal part so we don't lose leading 0s. */
+        decPart += 1;
+
+        /* Limit the number of digits to space in the buffer and round. */
+        roundCheck = 2;
+        do
+        {
+            digits++;
+            if (head + expLen + digits > length) break;
+            decPart *= 10;
+            roundCheck *= 10;
+            noiseFloor *= 10;
+        } while (decPart - (uint64_t)decPart > noiseFloor);
+        decPart += 0.5;
+        if (decPart >= roundCheck)
+        {
+            intPart += 1;
+        }
+    }
+
+    /* Put out the significant digits left of the decimal point or zeros. */
+    res = utils_uintToText(intPart, string + head, length - head);
+    if (res == 0) return 0;
+    head += res;
+
+    if (decPart <= noiseFloor
+     || (!allowExponential && -zeros >= (int)(length - head)))
+    {
+        /* Only 0s right of the significant digits */
+        if (!allowExponential && zeros > 0)
+        {
+            if (head + zeros > length) return 0;
+            memset(string + head, '0', zeros);
+            head += zeros;
+        }
+        /* Add as much of ".0" as space permits */
+        if (head < length) string[head++] = '.';
+        if (head < length) string[head++] = '0';
+        if (head < length) string[head] = '\0';
+        return head;
+    }
+
+    if (!allowExponential && zeros < 0)
+    {
+        /* Add "." plus leading 0s. Leaving one off to be added back later. */
+        if (head - zeros > length) return 0;
+        string[head] = '.';
+        if (zeros < -1) memset(string + head + 1, '0', -(zeros) - 1);
+        head -= zeros;
+    }
+
+    /* Digits for the fractional part. */
+    res = utils_uintToText((uint64_t)decPart, string + head, length - head);
+    if (!res) return 0;
+
+    // replace the leading 1 with a decimal point or 0
+    if (!allowExponential && zeros < 0)
+    {
+        string[head] = '0';
     }
     else
     {
-        intLength = utils_intToText(intPart, string, length);
-        if (intLength == 0) return 0;
+        string[head] = '.';
     }
-    decLength = 0;
-    if (decPart >= FLT_EPSILON)
+    head += res;
+
+    if (allowExponential && zeros)
     {
-        double noiseFloor;
-
-        if (intLength >= length - 1) return 0;
-
-        noiseFloor = FLT_EPSILON;
-        do
-        {
-            decPart *= 10;
-            noiseFloor *= 10;
-        } while (decPart - (int64_t)decPart > noiseFloor);
-
-        decLength = utils_intToText(decPart, string + intLength, length - intLength);
-        if (decLength <= 1) return 0;
-
-        // replace the leading 1 with a dot
-        string[intLength] = '.';
+        if (head + expLen > length) return 0;
+        string[head++] = 'e';
+        res = utils_intToText(zeros, string + head, length - head);
+        if (res == 0) return 0;
+        head += res;
     }
 
-    return intLength + decLength;
+    return head;
 }
 
 size_t utils_objLinkToText(uint16_t objectId,
@@ -509,6 +718,113 @@ lwm2m_media_type_t utils_convertMediaType(coap_content_type_t type)
     return result;
 }
 
+uint8_t utils_getResponseFormat(uint8_t accept_num,
+                                const uint16_t *accept,
+                                int numData,
+                                const lwm2m_data_t *dataP,
+                                bool singleResource,
+                                lwm2m_media_type_t *format)
+{
+    uint8_t result = COAP_205_CONTENT;
+    bool singular;
+
+    if (numData == 1)
+    {
+        switch (dataP->type)
+        {
+        case LWM2M_TYPE_OBJECT:
+        case LWM2M_TYPE_OBJECT_INSTANCE:
+        case LWM2M_TYPE_MULTIPLE_RESOURCE:
+            singular = false;
+            break;
+        default:
+            singular = singleResource;
+            break;
+        }
+    }
+    else
+    {
+        singular = singleResource;
+    }
+
+    *format = LWM2M_CONTENT_TEXT;
+    if (accept_num > 0)
+    {
+        uint8_t i;
+        bool found = false;
+        for(i = 0; i < accept_num && !found; i++)
+        {
+            switch (accept[i])
+            {
+            case TEXT_PLAIN:
+                if (singular)
+                {
+                    found = true;
+                }
+                break;
+            case APPLICATION_OCTET_STREAM:
+                if (singular)
+                {
+                    *format = LWM2M_CONTENT_OPAQUE;
+                    found = true;
+                }
+                break;
+
+#ifdef LWM2M_SUPPORT_TLV
+#ifdef LWM2M_OLD_CONTENT_FORMAT_SUPPORT
+            case LWM2M_CONTENT_TLV_OLD:
+                *format = LWM2M_CONTENT_TLV_OLD;
+                found = true;
+                break;
+#endif
+            case LWM2M_CONTENT_TLV:
+                *format = LWM2M_CONTENT_TLV;
+                found = true;
+                break;
+#endif
+
+#ifdef LWM2M_SUPPORT_JSON
+#ifdef LWM2M_OLD_CONTENT_FORMAT_SUPPORT
+            case LWM2M_CONTENT_JSON_OLD:
+                *format = LWM2M_CONTENT_JSON_OLD;
+                found = true;
+                break;
+#endif
+            case LWM2M_CONTENT_JSON:
+                *format = LWM2M_CONTENT_JSON;
+                found = true;
+                break;
+#endif
+
+#ifdef LWM2M_SUPPORT_SENML_JSON
+            case LWM2M_CONTENT_SENML_JSON:
+                *format = LWM2M_CONTENT_SENML_JSON;
+                found = true;
+                break;
+#endif
+
+            default:
+                break;
+            }
+        }
+        if (!found) result = COAP_406_NOT_ACCEPTABLE;
+    }
+    else
+    {
+#ifdef LWM2M_SUPPORT_SENML_JSON
+        *format = LWM2M_CONTENT_SENML_JSON;
+#elif defined(LWM2M_SUPPORT_JSON)
+        *format = LWM2M_CONTENT_JSON;
+#elif defined(LWM2M_SUPPORT_TLV)
+        *format = LWM2M_CONTENT_TLV;
+#else
+        result = COAP_500_INTERNAL_SERVER_ERROR;
+#endif
+    }
+
+    return result;
+}
+
 #ifdef LWM2M_CLIENT_MODE
 lwm2m_server_t * utils_findServer(lwm2m_context_t * contextP,
                                   void * fromSessionH)
@@ -548,6 +864,23 @@ lwm2m_server_t * utils_findBootstrapServer(lwm2m_context_t * contextP,
 
 #endif
 }
+
+#ifndef LWM2M_CLIENT_MODE
+lwm2m_client_t * utils_findClient(lwm2m_context_t * contextP,
+                                  void * fromSessionH)
+{
+    lwm2m_client_t * targetP;
+
+    targetP = contextP->clientList;
+    while (targetP != NULL
+        && false == lwm2m_session_is_equal(targetP->sessionH, fromSessionH, contextP->userData))
+    {
+        targetP = targetP->next;
+    }
+
+    return targetP;
+}
+#endif
 
 int utils_isAltPathValid(const char * altPath)
 {
@@ -765,7 +1098,7 @@ size_t utils_base64Decode(const char * dataP, size_t dataLen, uint8_t * bufferP,
                     {
                         v4 = prv_base64Value(dataP[dataIndex++]);
                         if (v4 >= 64) return 0;
-                        bufferP[bufferIndex++] = (v2 << 6) + v4;
+                        bufferP[bufferIndex++] = (v3 << 6) + v4;
                     }
                     else
                     {

@@ -1,7 +1,7 @@
 ############################################################################
 # externals/awsiot/Makefile
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2019,2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,6 +36,9 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
+# configurations for awsiot
+include awsiot_config.mk
+
 BIN = libawsiot$(LIBEXT)
 
 AWSCOREDIR = aws-iot-device-sdk-embedded-C
@@ -52,27 +55,6 @@ VPATH += :$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
 VPATH += :$(AWSPLATDIR)$(DELIM)common
 VPATH += :$(AWSPLATDIR)$(DELIM)mbedtls
 VPATH += :$(AWSPLATDIR)$(DELIM)pthread
-
-# Log option
-ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_DEBUG),y)
-  CFLAGS += -DENABLE_IOT_DEBUG
-endif
-
-ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_TRACE),y)
-  CFLAGS += -DENABLE_IOT_TRACE
-endif
-
-ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_INFO),y)
-  CFLAGS += -DENABLE_IOT_INFO
-endif
-
-ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_WARN),y)
-  CFLAGS += -DENABLE_IOT_WARN
-endif
-
-ifeq ($(CONFIG_EXTERNALS_AWSIOT_ENABLE_IOT_ERROR),y)
-  CFLAGS += -DENABLE_IOT_ERROR
-endif
 
 # AWS-IoT
 CSRCS += aws_iot_jobs_interface.c

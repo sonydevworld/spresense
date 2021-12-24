@@ -17,7 +17,8 @@
  *    Axel Lorente - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *    Scott Bertin, AMETEK, Inc. - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -135,7 +136,7 @@ static int prv_check_time_offset(char * buffer,
         if (buffer[2] < '0' || buffer[2] > '9') return 0;
         break;
     case '1':
-        if (buffer[2] < '0' || buffer[2] > '2') return 0;
+        if (buffer[2] < '0' || (buffer[0] == '-' && buffer[2] > '2') || (buffer[0] == '+' && buffer[2] > '4')) return 0;
         break;
     default:
         return 0;
@@ -164,22 +165,29 @@ static int prv_check_time_offset(char * buffer,
 static uint8_t prv_set_value(lwm2m_data_t * dataP,
                              device_data_t * devDataP)
 {
+    lwm2m_data_t * subTlvP;
+    size_t count;
+    size_t i;
     // a simple switch structure is used to respond at the specified resource asked
     switch (dataP->id)
     {
     case RES_O_MANUFACTURER:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_MANUFACTURER, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_MODEL_NUMBER:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_MODEL_NUMBER, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_SERIAL_NUMBER:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_SERIAL_NUMBER, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_FIRMWARE_VERSION:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_FIRMWARE_VERSION, dataP);
         return COAP_205_CONTENT;
 
@@ -191,70 +199,139 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
 
     case RES_O_AVL_POWER_SOURCES: 
     {
-        lwm2m_data_t * subTlvP;
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            count = dataP->value.asChildren.count;
+            subTlvP = dataP->value.asChildren.array;
+        }
+        else
+        {
+            count = 2;
+            subTlvP = lwm2m_data_new(count);
+            for (i = 0; i < count; i++) subTlvP[i].id = i;
+            lwm2m_data_encode_instances(subTlvP, count, dataP);
+        }
 
-        subTlvP = lwm2m_data_new(2);
-
-        subTlvP[0].id = 0;
-        lwm2m_data_encode_int(PRV_POWER_SOURCE_1, subTlvP);
-        subTlvP[1].id = 1;
-        lwm2m_data_encode_int(PRV_POWER_SOURCE_2, subTlvP + 1);
-
-        lwm2m_data_encode_instances(subTlvP, 2, dataP);
+        for (i = 0; i < count; i++)
+        {
+            switch (subTlvP[i].id)
+            {
+            case 0:
+                lwm2m_data_encode_int(PRV_POWER_SOURCE_1, subTlvP + i);
+                break;
+            case 1:
+                lwm2m_data_encode_int(PRV_POWER_SOURCE_2, subTlvP + i);
+                break;
+            default:
+                return COAP_404_NOT_FOUND;
+            }
+        }
 
         return COAP_205_CONTENT;
     }
 
     case RES_O_POWER_SOURCE_VOLTAGE:
     {
-        lwm2m_data_t * subTlvP;
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            count = dataP->value.asChildren.count;
+            subTlvP = dataP->value.asChildren.array;
+        }
+        else
+        {
+            count = 2;
+            subTlvP = lwm2m_data_new(count);
+            for (i = 0; i < count; i++) subTlvP[i].id = i;
+            lwm2m_data_encode_instances(subTlvP, count, dataP);
+        }
 
-        subTlvP = lwm2m_data_new(2);
-
-        subTlvP[0].id = 0;
-        lwm2m_data_encode_int(PRV_POWER_VOLTAGE_1, subTlvP);
-        subTlvP[1].id = 1;
-        lwm2m_data_encode_int(PRV_POWER_VOLTAGE_2, subTlvP + 1);
-
-        lwm2m_data_encode_instances(subTlvP, 2, dataP);
+        for (i = 0; i < count; i++)
+        {
+            switch (subTlvP[i].id)
+            {
+            case 0:
+                lwm2m_data_encode_int(PRV_POWER_VOLTAGE_1, subTlvP + i);
+                break;
+            case 1:
+                lwm2m_data_encode_int(PRV_POWER_VOLTAGE_2, subTlvP + i);
+                break;
+            default:
+                return COAP_404_NOT_FOUND;
+            }
+        }
 
         return COAP_205_CONTENT;
     }
 
     case RES_O_POWER_SOURCE_CURRENT:
     {
-        lwm2m_data_t * subTlvP;
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            count = dataP->value.asChildren.count;
+            subTlvP = dataP->value.asChildren.array;
+        }
+        else
+        {
+            count = 2;
+            subTlvP = lwm2m_data_new(count);
+            for (i = 0; i < count; i++) subTlvP[i].id = i;
+            lwm2m_data_encode_instances(subTlvP, count, dataP);
+        }
 
-        subTlvP = lwm2m_data_new(2);
-
-        subTlvP[0].id = 0;
-        lwm2m_data_encode_int(PRV_POWER_CURRENT_1, &subTlvP[0]);
-        subTlvP[1].id = 1;
-        lwm2m_data_encode_int(PRV_POWER_CURRENT_2, &subTlvP[1]);
- 
-        lwm2m_data_encode_instances(subTlvP, 2, dataP);
+        for (i = 0; i < count; i++)
+        {
+            switch (subTlvP[i].id)
+            {
+            case 0:
+                lwm2m_data_encode_int(PRV_POWER_CURRENT_1, subTlvP + i);
+                break;
+            case 1:
+                lwm2m_data_encode_int(PRV_POWER_CURRENT_2, subTlvP + i);
+                break;
+            default:
+                return COAP_404_NOT_FOUND;
+            }
+        }
 
         return COAP_205_CONTENT;
     }
 
     case RES_O_BATTERY_LEVEL:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_int(devDataP->battery_level, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_MEMORY_FREE:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_int(devDataP->free_memory, dataP);
         return COAP_205_CONTENT;
 
     case RES_M_ERROR_CODE:
     {
-        lwm2m_data_t * subTlvP;
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            count = dataP->value.asChildren.count;
+            subTlvP = dataP->value.asChildren.array;
+        }
+        else
+        {
+            count = 1;
+            subTlvP = lwm2m_data_new(count);
+            for (i = 0; i < count; i++) subTlvP[i].id = i;
+            lwm2m_data_encode_instances(subTlvP, count, dataP);
+        }
 
-        subTlvP = lwm2m_data_new(1);
-
-        subTlvP[0].id = 0;
-        lwm2m_data_encode_int(devDataP->error, subTlvP);
-
-        lwm2m_data_encode_instances(subTlvP, 1, dataP);
+        for (i = 0; i < count; i++)
+        {
+            switch (subTlvP[i].id)
+            {
+            case 0:
+                lwm2m_data_encode_int(devDataP->error, subTlvP + i);
+                break;
+            default:
+                return COAP_404_NOT_FOUND;
+            }
+        }
 
         return COAP_205_CONTENT;
     }        
@@ -262,18 +339,22 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
         return COAP_405_METHOD_NOT_ALLOWED;
 
     case RES_O_CURRENT_TIME:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_int(time(NULL) + devDataP->time, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_UTC_OFFSET:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(devDataP->time_offset, dataP);
         return COAP_205_CONTENT;
 
     case RES_O_TIMEZONE:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_TIME_ZONE, dataP);
         return COAP_205_CONTENT;
       
     case RES_M_BINDING_MODES:
+        if (dataP->type == LWM2M_TYPE_MULTIPLE_RESOURCE) return COAP_404_NOT_FOUND;
         lwm2m_data_encode_string(PRV_BINDING_MODE, dataP);
         return COAP_205_CONTENT;
 
@@ -282,13 +363,17 @@ static uint8_t prv_set_value(lwm2m_data_t * dataP,
     }
 }
 
-static uint8_t prv_device_read(uint16_t instanceId,
+static uint8_t prv_device_read(lwm2m_context_t *contextP,
+                               uint16_t instanceId,
                                int * numDataP,
                                lwm2m_data_t ** dataArrayP,
                                lwm2m_object_t * objectP)
 {
     uint8_t result;
     int i;
+
+    /* unused parameter */
+    (void)contextP;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -339,13 +424,17 @@ static uint8_t prv_device_read(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_device_discover(uint16_t instanceId,
+static uint8_t prv_device_discover(lwm2m_context_t *contextP,
+                                   uint16_t instanceId,
                                    int * numDataP,
                                    lwm2m_data_t ** dataArrayP,
                                    lwm2m_object_t * objectP)
 {
     uint8_t result;
     int i;
+
+    /* unused parameter */
+    (void)contextP;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -420,13 +509,21 @@ static uint8_t prv_device_discover(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_device_write(uint16_t instanceId,
+static uint8_t prv_device_write(lwm2m_context_t *contextP,
+                                uint16_t instanceId,
                                 int numData,
                                 lwm2m_data_t * dataArray,
-                                lwm2m_object_t * objectP)
+                                lwm2m_object_t * objectP,
+                                lwm2m_write_type_t writeType)
 {
     int i;
     uint8_t result;
+
+    /* unused parameter */
+    (void)contextP;
+
+    // All write types are treated the same here
+    (void)writeType;
 
     // this is a single instance object
     if (instanceId != 0)
@@ -438,6 +535,13 @@ static uint8_t prv_device_write(uint16_t instanceId,
 
     do
     {
+        /* No multiple instance resources */
+        if (dataArray[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        {
+            result = COAP_404_NOT_FOUND;
+            continue;
+        }
+
         switch (dataArray[i].id)
         {
         case RES_O_CURRENT_TIME:
@@ -480,12 +584,16 @@ static uint8_t prv_device_write(uint16_t instanceId,
     return result;
 }
 
-static uint8_t prv_device_execute(uint16_t instanceId,
+static uint8_t prv_device_execute(lwm2m_context_t *contextP,
+                                  uint16_t instanceId,
                                   uint16_t resourceId,
                                   uint8_t * buffer,
                                   int length,
                                   lwm2m_object_t * objectP)
 {
+    /* unused parameter */
+    (void)contextP;
+
     // this is a single instance object
     if (instanceId != 0)
     {
@@ -514,7 +622,6 @@ static uint8_t prv_device_execute(uint16_t instanceId,
 
 void display_device_object(lwm2m_object_t * object)
 {
-#ifdef WITH_LOGS
     device_data_t * data = (device_data_t *)object->userData;
     fprintf(stdout, "  /%u: Device object:\r\n", object->objID);
     if (NULL != data)
@@ -522,7 +629,6 @@ void display_device_object(lwm2m_object_t * object)
         fprintf(stdout, "    time: %lld, time_offset: %s\r\n",
                 (long long) data->time, data->time_offset);
     }
-#endif
 }
 
 lwm2m_object_t * get_object_device()

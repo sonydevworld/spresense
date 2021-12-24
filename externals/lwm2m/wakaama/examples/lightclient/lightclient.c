@@ -58,20 +58,21 @@
 #include "liblwm2m.h"
 #include "connection.h"
 
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/select.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/stat.h>
+#include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 extern lwm2m_object_t * get_object_device(void);
 extern void free_object_device(lwm2m_object_t * objectP);
@@ -83,7 +84,7 @@ extern char * get_server_uri(lwm2m_object_t * objectP, uint16_t secObjInstID);
 extern lwm2m_object_t * get_test_object(void);
 extern void free_test_object(lwm2m_object_t * object);
 
-#define MAX_PACKET_SIZE 1024
+#define MAX_PACKET_SIZE 2048
 
 int g_reboot = 0;
 static int g_quit = 0;
@@ -200,6 +201,8 @@ void print_usage(void)
     fprintf(stdout, "  -n NAME\tSet the endpoint name of the Client. Default: testlightclient\r\n");
     fprintf(stdout, "  -l PORT\tSet the local UDP port of the Client. Default: 56830\r\n");
     fprintf(stdout, "  -4\t\tUse IPv4 connection. Default: IPv6 connection\r\n");
+    fprintf(stdout, "  -S BYTES\tCoAP block size. Options: 16, 32, 64, 128, 256, 512, 1024. Default: %" PRIu16 "\r\n",
+            LWM2M_COAP_DEFAULT_BLOCK_SIZE);
     fprintf(stdout, "\r\n");
 }
 
@@ -368,6 +371,20 @@ int main(int argc, char *argv[])
         case '4':
             data.addressFamily = AF_INET;
             break;
+        case 'S':
+            opt++;
+            if (opt >= argc) {
+                print_usage();
+                return 0;
+            }
+            uint16_t coap_block_size_arg;
+            if (1 == sscanf(argv[opt], "%" SCNu16, &coap_block_size_arg) &&
+                lwm2m_set_coap_block_size(coap_block_size_arg)) {
+                break;
+            } else {
+                print_usage();
+                return 0;
+            }
         default:
             print_usage();
             return 0;
@@ -493,7 +510,7 @@ int main(int argc, char *argv[])
         else if (result > 0)
         {
             uint8_t buffer[MAX_PACKET_SIZE];
-            int numBytes;
+            ssize_t numBytes;
 
             /*
              * If an event happens on the socket
@@ -514,6 +531,10 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stderr, "Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
                 }
+                else if (numBytes >= MAX_PACKET_SIZE) 
+                {
+                    fprintf(stderr, "Received packet >= MAX_PACKET_SIZE\r\n");
+                } 
                 else if (0 < numBytes)
                 {
                     connection_t * connP;
@@ -524,7 +545,7 @@ int main(int argc, char *argv[])
                         /*
                          * Let liblwm2m respond to the query depending on the context
                          */
-                        lwm2m_handle_packet(lwm2mH, buffer, numBytes, connP);
+                        lwm2m_handle_packet(lwm2mH, buffer, (size_t)numBytes, connP);
                     }
                     else
                     {

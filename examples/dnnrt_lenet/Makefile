@@ -48,3 +48,17 @@ MAINSRC = dnnrt_lenet_main.c
 CSRCS   = loader_nnb.c pnm_util.c
 
 include $(APPDIR)/Application.mk
+
+ifeq ($(CONFIG_DNN_RT_MPCOMM),y)
+
+build_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(OBJS): build_worker
+
+clean:: clean_worker
+
+clean_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+endif

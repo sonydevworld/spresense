@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_SMS_RECV
+	tristate "Receive Short Message Service example"
+	default n
+	select UTILS_UCONV
+	---help---
+		Enable the Receive Short Message Service example.
+		This application requires an SMS capable SIM to work properly.
+
+if EXAMPLES_SMS_RECV
+
+config EXAMPLES_SMS_RECV_PROGNAME
+	string "Program name"
+	default "sms_recv"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_SMS_RECV_PRIORITY
+	int "sms_recv task priority"
+	default 100
+
+config EXAMPLES_SMS_RECV_STACKSIZE
+	int "sms_recv stack size"
+	default 2048
+
+endif

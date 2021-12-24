@@ -16,7 +16,8 @@
  *    Simon Bernard - Please refer to git log
  *    Toby Jaffey - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *    Tuve Nordius, Husqvarna Group - Please refer to git log
+ *
  *******************************************************************************/
 
 /*
@@ -98,7 +99,15 @@ static void prv_deleteServer(lwm2m_server_t * serverP, void *userData)
     {
         lwm2m_free(serverP->location);
     }
-    free_block1_buffer(serverP->block1Data);
+
+    while(serverP->blockData != NULL)
+    {
+        lwm2m_block_data_t * targetP;
+        targetP = serverP->blockData;
+        serverP->blockData = serverP->blockData->next;
+        free_block_data(targetP);
+    }
+    
     lwm2m_free(serverP);
 }
 
@@ -121,7 +130,6 @@ static void prv_deleteBootstrapServer(lwm2m_server_t * serverP, void *userData)
     {
          lwm2m_close_connection(serverP->sessionH, userData);
     }
-    free_block1_buffer(serverP->block1Data);
     lwm2m_free(serverP);
 }
 
@@ -261,7 +269,11 @@ int lwm2m_configure(lwm2m_context_t * contextP,
     int i;
     uint8_t found;
 
-    LOG_ARG("endpointName: \"%s\", msisdn: \"%s\", altPath: \"%s\", numObject: %d", endpointName, msisdn, altPath, numObject);
+    LOG_ARG("endpointName: \"%s\", msisdn: \"%s\", altPath: \"%s\", numObject: %d",
+            STR_NULL2EMPTY(endpointName),
+            STR_NULL2EMPTY(msisdn),
+            STR_NULL2EMPTY(altPath),
+            numObject);
     // This API can be called only once for now
     if (contextP->endpointName != NULL || contextP->objectList != NULL) return COAP_400_BAD_REQUEST;
 
@@ -366,7 +378,7 @@ int lwm2m_step(lwm2m_context_t * contextP,
 {
     time_t tv_sec;
 
-    LOG_ARG("timeoutP: %" PRId64, *timeoutP);
+    LOG_ARG("timeoutP: %d", (int) *timeoutP);
     tv_sec = lwm2m_gettime();
     if (tv_sec < 0) return COAP_500_INTERNAL_SERVER_ERROR;
 
@@ -389,7 +401,6 @@ next_step:
             contextP->state = STATE_BOOTSTRAP_REQUIRED;
         }
         goto next_step;
-        break;
 
     case STATE_BOOTSTRAP_REQUIRED:
 #ifdef LWM2M_BOOTSTRAP
@@ -413,7 +424,6 @@ next_step:
         case STATE_BS_FINISHED:
             contextP->state = STATE_INITIAL;
             goto next_step;
-            break;
 
         case STATE_BS_FAILED:
             return COAP_503_SERVICE_UNAVAILABLE;
@@ -445,7 +455,6 @@ next_step:
             // TODO avoid infinite loop by checking the bootstrap info is different
             contextP->state = STATE_BOOTSTRAP_REQUIRED;
             goto next_step;
-            break;
 
         case STATE_REG_PENDING:
         default:
@@ -476,7 +485,7 @@ next_step:
     registration_step(contextP, tv_sec, timeoutP);
     transaction_step(contextP, tv_sec, timeoutP);
 
-    LOG_ARG("Final timeoutP: %" PRId64, *timeoutP);
+    LOG_ARG("Final timeoutP: %d", (int) *timeoutP);
 #ifdef LWM2M_CLIENT_MODE
     LOG_ARG("Final state: %s", STR_STATE(contextP->state));
 #endif

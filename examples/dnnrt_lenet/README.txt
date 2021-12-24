@@ -30,6 +30,8 @@ Detailed instructions for this operation are available in the following page:
 
 https://developer.sony.com/develop/spresense/docs/sdk_developer_guide_en.html#_dnn_runtime
 
+The example file of `lenet-5.nnb` is provided in `examples/dnnrt_lenet/lenet-5/model`.
+
 ### file arrangement on SD card:
 
 First, copy a directory, `examples/dnnrt_lenet/lenet-5/`, onto the root of SD card as below.  
@@ -39,13 +41,13 @@ You can confirm actual images by `display` command in ImageMagick, etc.
 
 ```
 $ cd Spresense.git/examples/dnnrt_lenet/
-$ cp -r lenet-5 <sd mount point>
+$ cp lenet-5/data/* <sd mount point>
 ```
 
-Next, locate `lenet-5.nnb` inside a neighboring directory, `lenet-5/model/`.
+Next, copy `lenet-5.nnb` into SD card.
 
 ```
-$ cp <somewhere>/lenet-5.nnb  <sd mount point>/lenet-5/model/
+$ cp <somewhere>/lenet-5.nnb <sd mount point>
 ```
 
 ### command usage:
@@ -82,9 +84,9 @@ Then, you can refer to `output[0-9]` as probabilities that each digit is drawn.
 In this example, since you feed `3.pgm`, the corresponding `output[3]` should be almost 1.0.  
 
 ```
-nsh> dnnrt_lenet /mnt/sd0/lenet-5/model/lenet-5.nnb /mnt/sd0/lenet-5/data/3.pgm
-load nnb file: /mnt/sd0/lenet-5/model/lenet-5.nnb
-load pnm image: /mnt/sd0/lenet-5/data/3.pgm # 3 is hand-written
+nsh> dnnrt_lenet /mnt/sd0/lenet-5.nnb /mnt/sd0/3.pgm
+load nnb file: /mnt/sd0/lenet-5.nnb
+load pnm image: /mnt/sd0/3.pgm # 3 is hand-written
 normalization: divide image data by 255.0 # normalization is done in the application-side
 ...
 start dnn_runtime_forward()
@@ -114,9 +116,9 @@ These outputs are difficult for humans to understand at a glance,
 but you can regard an index of the largest element as a classification result as well as the above case.
 
 ```
-nsh> dnnrt_lenet -s /mnt/sd0/lenet-5/model/lenet-5.nnb /mnt/sd0/lenet-5/data/3.pgm
-load nnb file: /mnt/sd0/lenet-5/model/lenet-5.nnb
-load pnm image: /mnt/sd0/lenet-5/data/3.pgm # 3 is hand-written
+nsh> dnnrt_lenet -s /mnt/sd0/lenet-5.nnb /mnt/sd0/3.pgm
+load nnb file: /mnt/sd0/lenet-5.nnb
+load pnm image: /mnt/sd0/3.pgm # 3 is hand-written
 normalization: skipped # the application-side is NOT involved in normalization
 ...
 output[0]=-21.355482

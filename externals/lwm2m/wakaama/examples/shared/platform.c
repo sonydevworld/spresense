@@ -17,9 +17,10 @@
 #include <liblwm2m.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <sys/time.h>
+#include <time.h>
 
 #ifndef LWM2M_MEMORY_TRACE
 
@@ -35,7 +36,19 @@ void lwm2m_free(void * p)
 
 char * lwm2m_strdup(const char * str)
 {
-    return strdup(str);
+    if (!str) {
+      return NULL;
+    }
+
+    const int len = strlen(str) + 1;
+    char * const buf = lwm2m_malloc(len);
+
+    if (buf) {
+      memset(buf, 0, len);
+      memcpy(buf, str, len - 1);
+    }
+
+    return buf;
 }
 
 #endif
@@ -47,16 +60,13 @@ int lwm2m_strncmp(const char * s1,
     return strncmp(s1, s2, n);
 }
 
+int lwm2m_strcasecmp(const char * str1, const char * str2) {
+    return strcasecmp(str1, str2);
+}
+
 time_t lwm2m_gettime(void)
 {
-    struct timeval tv;
-
-    if (0 != gettimeofday(&tv, NULL))
-    {
-        return -1;
-    }
-
-    return tv.tv_sec;
+    return time(NULL);
 }
 
 void lwm2m_printf(const char * format, ...)

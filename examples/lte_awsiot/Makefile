@@ -2,6 +2,7 @@
 # lte_awsiot/Makefile
 #
 #   Copyright 2019 Sony Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,6 +36,10 @@
 
 include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
+
+# configurations for awsiot
+AWSIOTDIR = $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)awsiot
+include $(AWSIOTDIR)/awsiot_config.mk
 
 # lte_awsiot built-in application info
 

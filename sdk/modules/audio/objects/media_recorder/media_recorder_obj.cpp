@@ -382,9 +382,7 @@ void MediaRecorderObject::activateOnBooted(MsgPacket *msg)
   uint32_t rst;
   AsActivateRecorder act = msg->moveParam<RecorderCommand>().act_param;
 
-  MEDIA_RECORDER_DBG("ACT: indev %d, outdev %d\n",
-                     act.param.input_device,
-                     act.param.output_device);
+  MEDIA_RECORDER_DBG("ACT: outdev %d\n", act.param.output_device);
 
   /* Set event callback */
 
@@ -1620,7 +1618,7 @@ uint32_t MediaRecorderObject::isValidInitParamLPCM(
       case AS_CHANNEL_4CH:
       case AS_CHANNEL_6CH:
       case AS_CHANNEL_8CH:
-          break;
+        break;
 
       default:
         MEDIA_RECORDER_ERR(AS_ATTENTION_SUB_CODE_UNEXPECTED_PARAM);

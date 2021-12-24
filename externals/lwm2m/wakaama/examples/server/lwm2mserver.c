@@ -74,7 +74,7 @@
 #include "commandline.h"
 #include "connection.h"
 
-#define MAX_PACKET_SIZE 1024
+#define MAX_PACKET_SIZE 2048
 
 static int g_quit = 0;
 
@@ -160,11 +160,23 @@ static void prv_dump_client(lwm2m_client_t * targetP)
     {
         if (objectP->instanceList == NULL)
         {
-            fprintf(stdout, "/%d, ", objectP->id);
+            if (objectP->versionMajor != 0 || objectP->versionMinor != 0)
+            {
+                fprintf(stdout, "/%d (%u.%u), ", objectP->id, objectP->versionMajor, objectP->versionMinor);
+            }
+            else
+            {
+                fprintf(stdout, "/%d, ", objectP->id);
+            }
         }
         else
         {
             lwm2m_list_t * instanceP;
+
+            if (objectP->versionMajor != 0 || objectP->versionMinor != 0)
+            {
+                fprintf(stdout, "/%d (%u.%u), ", objectP->id, objectP->versionMajor, objectP->versionMinor);
+            }
 
             for (instanceP = objectP->instanceList; instanceP != NULL ; instanceP = instanceP->next)
             {
@@ -175,11 +187,14 @@ static void prv_dump_client(lwm2m_client_t * targetP)
     fprintf(stdout, "\r\n");
 }
 
-static void prv_output_clients(char * buffer,
+static void prv_output_clients(lwm2m_context_t *lwm2mH,
+                               char * buffer,
                                void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     lwm2m_client_t * targetP;
+
+    /* unused parameter */
+    (void)user_data;
 
     targetP = lwm2mH->clientList;
 
@@ -234,52 +249,53 @@ static void prv_printUri(const lwm2m_uri_t * uriP)
 #endif
 }
 
-static void prv_result_callback(uint16_t clientID,
-                                lwm2m_uri_t * uriP,
-                                int status,
-                                lwm2m_media_type_t format,
-                                uint8_t * data,
-                                int dataLength,
-                                void * userData)
-{
+static void prv_result_callback(lwm2m_context_t *contextP, uint16_t clientID, lwm2m_uri_t *uriP, int status,
+                                block_info_t *block_info, lwm2m_media_type_t format, uint8_t *data, size_t dataLength,
+                                void *userData) {
+    /* unused parameters */
+    (void)contextP;
+    (void)userData;
+
     fprintf(stdout, "\r\nClient #%d ", clientID);
     prv_printUri(uriP);
     fprintf(stdout, " : ");
     print_status(stdout, status);
     fprintf(stdout, "\r\n");
 
-    output_data(stdout, format, data, dataLength, 1);
+    output_data(stdout, block_info, format, data, dataLength, 1);
 
     fprintf(stdout, "\r\n> ");
     fflush(stdout);
 }
 
-static void prv_notify_callback(uint16_t clientID,
-                                lwm2m_uri_t * uriP,
-                                int count,
-                                lwm2m_media_type_t format,
-                                uint8_t * data,
-                                int dataLength,
-                                void * userData)
-{
+static void prv_notify_callback(lwm2m_context_t *contextP, uint16_t clientID, lwm2m_uri_t *uriP, int count,
+                                block_info_t *block_info, lwm2m_media_type_t format, uint8_t *data, size_t dataLength,
+                                void *userData) {
+    /* unused parameters */
+    (void)contextP;
+    (void)userData;
+
     fprintf(stdout, "\r\nNotify from client #%d ", clientID);
     prv_printUri(uriP);
     fprintf(stdout, " number %d\r\n", count);
 
-    output_data(stdout, format, data, dataLength, 1);
+    output_data(stdout, block_info, format, data, dataLength, 1);
 
     fprintf(stdout, "\r\n> ");
     fflush(stdout);
 }
 
-static void prv_read_client(char * buffer,
+static void prv_read_client(lwm2m_context_t * lwm2mH,
+                            char * buffer,
                             void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+
+    /* unused parameters */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -292,7 +308,7 @@ static void prv_read_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_read(lwm2mH, clientId, &uri, prv_result_callback, NULL);
+    result = lwm2m_dm_read(lwm2mH, clientId, &uri,  prv_result_callback, NULL);
 
     if (result == 0)
     {
@@ -308,14 +324,17 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_discover_client(char * buffer,
+static void prv_discover_client(lwm2m_context_t * lwm2mH,
+                                char * buffer,
                                 void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -344,12 +363,14 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_write_client(char * buffer,
-                             void * user_data)
+static void prv_do_write_client(char * buffer,
+                                lwm2m_context_t * lwm2mH,
+                                bool partialUpdate)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
+    lwm2m_data_t * dataP = NULL;
+    int count = 0;
     char * end = NULL;
     int result;
 
@@ -367,7 +388,71 @@ static void prv_write_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_write(lwm2mH, clientId, &uri, LWM2M_CONTENT_TEXT, (uint8_t *)buffer, end - buffer, prv_result_callback, NULL);
+#ifdef LWM2M_SUPPORT_SENML_JSON
+    if (count <= 0)
+    {
+        count = lwm2m_data_parse(&uri, (uint8_t *)buffer, end - buffer, LWM2M_CONTENT_SENML_JSON, &dataP);
+    }
+#endif
+#ifdef LWM2M_SUPPORT_JSON
+    if (count <= 0)
+    {
+        count = lwm2m_data_parse(&uri, (uint8_t *)buffer, end - buffer, LWM2M_CONTENT_JSON, &dataP);
+    }
+#endif
+    if (count > 0)
+    {
+        lwm2m_client_t * clientP = NULL;
+        clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)lwm2mH->clientList, clientId);
+        if (clientP != NULL)
+        {
+            lwm2m_media_type_t format = clientP->format;
+            uint8_t *serialized;
+            int length = lwm2m_data_serialize(&uri,
+                                              count,
+                                              dataP,
+                                              &format,
+                                              &serialized);
+            if (length > 0)
+            {
+                result = lwm2m_dm_write(lwm2mH,
+                                        clientId,
+                                        &uri,
+                                        format,
+                                        serialized,
+                                        length,
+                                        partialUpdate,
+                                        prv_result_callback,
+                                        NULL);
+                lwm2m_free(serialized);
+            }
+            else
+            {
+                result = COAP_500_INTERNAL_SERVER_ERROR;
+            }
+        }
+        else
+        {
+            result = COAP_404_NOT_FOUND;
+        }
+        lwm2m_data_free(count, dataP);
+    }
+    else if(!partialUpdate)
+    {
+        result = lwm2m_dm_write(lwm2mH,
+                                clientId,
+                                &uri,
+                                LWM2M_CONTENT_TEXT,
+                                (uint8_t *)buffer,
+                                end - buffer,
+                                partialUpdate,
+                                prv_result_callback,
+                                NULL);
+    }
+    else
+    {
+        goto syntax_error;
+    }
 
     if (result == 0)
     {
@@ -383,11 +468,30 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
+static void prv_write_client(lwm2m_context_t * lwm2mH,
+                             char * buffer,
+                             void * user_data)
+{
+    /* unused parameter */
+    (void)user_data;
 
-static void prv_time_client(char * buffer,
+    prv_do_write_client(buffer, lwm2mH, false);
+}
+
+static void prv_update_client(lwm2m_context_t * lwm2mH,
+                              char * buffer,
+                              void * user_data)
+{
+    /* unused parameter */
+    (void)user_data;
+
+    prv_do_write_client(buffer, lwm2mH, true);
+}
+
+static void prv_time_client(lwm2m_context_t * lwm2mH,
+                            char * buffer,
                             void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
@@ -395,6 +499,9 @@ static void prv_time_client(char * buffer,
     lwm2m_attributes_t attr;
     int nb;
     int value;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -443,10 +550,10 @@ syntax_error:
 }
 
 
-static void prv_attr_client(char * buffer,
+static void prv_attr_client(lwm2m_context_t *lwm2mH,
+                            char * buffer,
                             void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
@@ -454,6 +561,9 @@ static void prv_attr_client(char * buffer,
     lwm2m_attributes_t attr;
     int nb;
     float value;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -510,15 +620,18 @@ syntax_error:
 }
 
 
-static void prv_clear_client(char * buffer,
+static void prv_clear_client(lwm2m_context_t *lwm2mH,
+                             char * buffer,
                              void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
     int result;
     lwm2m_attributes_t attr;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -552,14 +665,17 @@ syntax_error:
 }
 
 
-static void prv_exec_client(char * buffer,
+static void prv_exec_client(lwm2m_context_t *lwm2mH,
+                            char * buffer,
                             void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
     int result;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -598,18 +714,20 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_create_client(char * buffer,
+static void prv_create_client(lwm2m_context_t *lwm2mH,
+                              char * buffer,
                               void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
     int result;
     int64_t value;
-    uint8_t * temp_buffer = NULL;
-    int temp_length = 0;
-    lwm2m_media_type_t format = LWM2M_CONTENT_TEXT;
+    lwm2m_data_t * dataP = NULL;
+    int size = 0;
+
+    /* unused parameter */
+    (void)user_data;
 
     //Get Client ID
     result = prv_read_id(buffer, &clientId);
@@ -621,6 +739,7 @@ static void prv_create_client(char * buffer,
 
     result = lwm2m_stringToUri(buffer, end - buffer, &uri);
     if (result == 0) goto syntax_error;
+    if (LWM2M_URI_IS_SET_RESOURCE(&uri)) goto syntax_error;
 
     //Get Data to Post
     buffer = get_next_arg(end, &end);
@@ -630,19 +749,38 @@ static void prv_create_client(char * buffer,
 
    // TLV
 
+#ifdef LWM2M_SUPPORT_SENML_JSON
+    if (size <= 0)
+    {
+        size = lwm2m_data_parse(&uri,
+                                (uint8_t *)buffer,
+                                end - buffer,
+                                LWM2M_CONTENT_SENML_JSON,
+                                &dataP);
+    }
+#endif
+#ifdef LWM2M_SUPPORT_JSON
+    if (size <= 0)
+    {
+        size = lwm2m_data_parse(&uri,
+                                (uint8_t *)buffer,
+                                end - buffer,
+                                LWM2M_CONTENT_JSON,
+                                &dataP);
+    }
+#endif
    /* Client dependent part   */
 
-    if (uri.objectId == 31024)
+    if (size <= 0 && uri.objectId == 31024)
     {
-        lwm2m_data_t * dataP;
-
         if (1 != sscanf(buffer, "%"PRId64, &value))
         {
             fprintf(stdout, "Invalid value !");
             return;
         }
 
-        dataP = lwm2m_data_new(1);
+        size = 1;
+        dataP = lwm2m_data_new(size);
         if (dataP == NULL)
         {
             fprintf(stdout, "Allocation error !");
@@ -650,14 +788,36 @@ static void prv_create_client(char * buffer,
         }
         lwm2m_data_encode_int(value, dataP);
         dataP->id = 1;
-
-        format = LWM2M_CONTENT_TLV;
-        temp_length = lwm2m_data_serialize(NULL, 1, dataP, &format, &temp_buffer);
     }
    /* End Client dependent part*/
 
+    if (size <= 0) {
+        goto syntax_error;
+    }
+
+    if (LWM2M_URI_IS_SET_INSTANCE(&uri))
+    {
+        /* URI is only allowed to have the object ID. Wrap the instance in an
+         * object instance to get it to the client. */
+        int count = size;
+        lwm2m_data_t * subDataP = dataP;
+        size = 1;
+        dataP = lwm2m_data_new(size);
+        if (dataP == NULL)
+        {
+            fprintf(stdout, "Allocation error !");
+            lwm2m_data_free(count, subDataP);
+            return;
+        }
+        lwm2m_data_include(subDataP, count, dataP);
+        dataP->type = LWM2M_TYPE_OBJECT_INSTANCE;
+        dataP->id = uri.instanceId;
+        uri.instanceId = LWM2M_MAX_ID;
+    }
+
     //Create
-    result = lwm2m_dm_create(lwm2mH, clientId, &uri, format, temp_buffer, temp_length, prv_result_callback, NULL);
+    result = lwm2m_dm_create(lwm2mH, clientId, &uri, size, dataP, prv_result_callback, NULL);
+    lwm2m_data_free(size, dataP);
 
     if (result == 0)
     {
@@ -673,14 +833,17 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_delete_client(char * buffer,
+static void prv_delete_client(lwm2m_context_t *lwm2mH,
+                              char * buffer,
                               void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -709,14 +872,17 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_observe_client(char * buffer,
+static void prv_observe_client(lwm2m_context_t *lwm2mH,
+                               char * buffer,
                                void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -745,14 +911,17 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_cancel_client(char * buffer,
+static void prv_cancel_client(lwm2m_context_t *lwm2mH,
+                              char * buffer,
                               void * user_data)
 {
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+
+    /* unused parameter */
+    (void)user_data;
 
     result = prv_read_id(buffer, &clientId);
     if (result != 1) goto syntax_error;
@@ -781,16 +950,13 @@ syntax_error:
     fprintf(stdout, "Syntax error !");
 }
 
-static void prv_monitor_callback(uint16_t clientID,
-                                 lwm2m_uri_t * uriP,
-                                 int status,
-                                 lwm2m_media_type_t format,
-                                 uint8_t * data,
-                                 int dataLength,
-                                 void * userData)
-{
-    lwm2m_context_t * lwm2mH = (lwm2m_context_t *) userData;
+static void prv_monitor_callback(lwm2m_context_t *lwm2mH, uint16_t clientID, lwm2m_uri_t *uriP, int status,
+                                 block_info_t *block_info, lwm2m_media_type_t format, uint8_t *data, size_t dataLength,
+                                 void *userData) {
     lwm2m_client_t * targetP;
+
+    /* unused parameter */
+    (void)userData;
 
     switch (status)
     {
@@ -823,10 +989,14 @@ static void prv_monitor_callback(uint16_t clientID,
     fflush(stdout);
 }
 
-
-static void prv_quit(char * buffer,
+static void prv_quit(lwm2m_context_t *lwm2mH,
+                     char * buffer,
                      void * user_data)
 {
+    /* unused parameters */
+    (void)lwm2mH;
+    (void)user_data;
+
     g_quit = 1;
 }
 
@@ -842,9 +1012,10 @@ void print_usage(void)
     fprintf(stdout, "Options:\r\n");
     fprintf(stdout, "  -4\t\tUse IPv4 connection. Default: IPv6 connection\r\n");
     fprintf(stdout, "  -l PORT\tSet the local UDP port of the Server. Default: "LWM2M_STANDARD_PORT_STR"\r\n");
+    fprintf(stdout, "  -S BYTES\tCoAP block size. Options: 16, 32, 64, 128, 256, 512, 1024. Default: %" PRIu16 "\r\n",
+            LWM2M_COAP_DEFAULT_BLOCK_SIZE);
     fprintf(stdout, "\r\n");
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -853,7 +1024,6 @@ int main(int argc, char *argv[])
     struct timeval tv;
     int result;
     lwm2m_context_t * lwm2mH = NULL;
-    int i;
     connection_t * connList = NULL;
     int addressFamily = AF_INET6;
     int opt;
@@ -873,8 +1043,13 @@ int main(int argc, char *argv[])
             {"write", "Write to a client.", " write CLIENT# URI DATA\r\n"
                                             "   CLIENT#: client number as returned by command 'list'\r\n"
                                             "   URI: uri to write to such as /3, /3/0/2, /1024/11, /1024/0/1\r\n"
-                                            "   DATA: data to write\r\n"
+                                            "   DATA: data to write. Text or a supported JSON format.\r\n"
                                             "Result will be displayed asynchronously.", prv_write_client, NULL},
+            {"update", "Write to a client with partial update.", " update CLIENT# URI DATA\r\n"
+                                            "   CLIENT#: client number as returned by command 'list'\r\n"
+                                            "   URI: uri to write to such as /3, /3/0/2, /1024/11, /1024/0/1\r\n"
+                                            "   DATA: data to write. Must be a supported JSON format.\r\n"
+                                            "Result will be displayed asynchronously.", prv_update_client, NULL},
             {"time", "Write time-related attributes to a client.", " time CLIENT# URI PMIN PMAX\r\n"
                                             "   CLIENT#: client number as returned by command 'list'\r\n"
                                             "   URI: uri to write attributes to such as /3, /3/0/2, /1024/11, /1024/0/1\r\n"
@@ -903,7 +1078,7 @@ int main(int argc, char *argv[])
             {"create", "Create an Object instance.", " create CLIENT# URI DATA\r\n"
                                             "   CLIENT#: client number as returned by command 'list'\r\n"
                                             "   URI: uri to which create the Object Instance such as /1024, /1024/45 \r\n"
-                                            "   DATA: data to initialize the new Object Instance (0-255 for object 31024) \r\n"
+                                            "   DATA: data to initialize the new Object Instance (0-255 for object 31024 or any supported JSON format) \r\n"
                                             "Result will be displayed asynchronously.", prv_create_client, NULL},
             {"observe", "Observe from a client.", " observe CLIENT# URI\r\n"
                                             "   CLIENT#: client number as returned by command 'list'\r\n"
@@ -943,6 +1118,20 @@ int main(int argc, char *argv[])
             }
             localPort = argv[opt];
             break;
+        case 'S':
+            opt++;
+            if (opt >= argc) {
+                print_usage();
+                return 0;
+            }
+            uint16_t coap_block_size_arg;
+            if (1 == sscanf(argv[opt], "%" SCNu16, &coap_block_size_arg) &&
+                lwm2m_set_coap_block_size(coap_block_size_arg)) {
+                break;
+            } else {
+                print_usage();
+                return 0;
+            }
         default:
             print_usage();
             return 0;
@@ -966,13 +1155,9 @@ int main(int argc, char *argv[])
 
     signal(SIGINT, handle_sigint);
 
-    for (i = 0 ; commands[i].name != NULL ; i++)
-    {
-        commands[i].userData = (void *)lwm2mH;
-    }
     fprintf(stdout, "> "); fflush(stdout);
 
-    lwm2m_set_monitoring_callback(lwm2mH, prv_monitor_callback, lwm2mH);
+    lwm2m_set_monitoring_callback(lwm2mH, prv_monitor_callback, NULL);
 
     while (0 == g_quit)
     {
@@ -1002,7 +1187,7 @@ int main(int argc, char *argv[])
         else if (result > 0)
         {
             uint8_t buffer[MAX_PACKET_SIZE];
-            int numBytes;
+            ssize_t numBytes;
 
             if (FD_ISSET(sock, &readfds))
             {
@@ -1016,6 +1201,10 @@ int main(int argc, char *argv[])
                 {
                     fprintf(stderr, "Error in recvfrom(): %d\r\n", errno);
                 }
+                else if (numBytes >= MAX_PACKET_SIZE) 
+                {
+                    fprintf(stderr, "Received packet >= MAX_PACKET_SIZE\r\n");
+                } 
                 else
                 {
                     char s[INET6_ADDRSTRLEN];
@@ -1036,8 +1225,8 @@ int main(int argc, char *argv[])
                         port = saddr->sin6_port;
                     }
 
-                    fprintf(stderr, "%d bytes received from [%s]:%hu\r\n", numBytes, s, ntohs(port));
-                    output_buffer(stderr, buffer, numBytes, 0);
+                    fprintf(stderr, "%zd bytes received from [%s]:%hu\r\n", numBytes, s, ntohs(port));
+                    output_buffer(stderr, buffer, (size_t)numBytes, 0);
 
                     connP = connection_find(connList, &addr, addrLen);
                     if (connP == NULL)
@@ -1050,7 +1239,7 @@ int main(int argc, char *argv[])
                     }
                     if (connP != NULL)
                     {
-                        lwm2m_handle_packet(lwm2mH, buffer, numBytes, connP);
+                        lwm2m_handle_packet(lwm2mH, buffer, (size_t)numBytes, connP);
                     }
                 }
             }
@@ -1061,7 +1250,7 @@ int main(int argc, char *argv[])
                 if (numBytes > 1)
                 {
                     buffer[numBytes] = 0;
-                    handle_command(commands, (char*)buffer);
+                    handle_command(lwm2mH, commands, (char*)buffer);
                     fprintf(stdout, "\r\n");
                 }
                 if (g_quit == 0)

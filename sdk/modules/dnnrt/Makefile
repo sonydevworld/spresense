@@ -41,11 +41,18 @@ MODNAME = dnnrt
 CSRCS :=
 
 ifeq ($(CONFIG_DNN_RT_MP),y)
+ifeq ($(CONFIG_DNN_RT_MPCOMM),y)
+CSRCS += runtime_client.c
+
+VPATH += src-mpcomm/runtime
+DEPPATH = --dep-path src-mpcomm/runtime
+else
 CSRCS += runtime_client.c
 CSRCS += mp_manager.c
 
 VPATH += src-mp/runtime
 DEPPATH = --dep-path src-mp/runtime
+endif
 else
 CSRCS +=  runtime_nnabla.c
 CSRCS +=  shared_chunk.c
@@ -74,3 +81,16 @@ $(SDKDIR)/modules/include/dnnrt/nnablart/network.h: $(RUNTIMEDIR)/include/nnabla
 
 context:: $(SDKDIR)/modules/include/dnnrt/nnablart/network.h
 
+ifeq ($(CONFIG_DNN_RT_MPCOMM),y)
+
+build_worker:
+	@$(MAKE) -C src-mpcomm/worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(OBJS): build_worker
+
+clean:: clean_worker
+
+clean_worker:
+	@$(MAKE) -C src-mpcomm/worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+endif

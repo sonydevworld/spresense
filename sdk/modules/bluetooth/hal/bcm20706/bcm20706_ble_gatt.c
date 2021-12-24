@@ -230,6 +230,10 @@ static int bcm20706_ble_add_characteristic(uint16_t serv_handle, struct ble_gatt
 
   memset(&char_value, 0, sizeof(BLE_GattsAttr));
 
+  /* Setup char handle */
+
+  memset(&char_handle, 0, sizeof(BLE_GattsCharHandles));
+
   ret = bcm20706_ble_copy_uuid(&char_value.valueUuid, &ble_gatt_char->uuid);
 
   if (ret != BT_SUCCESS)

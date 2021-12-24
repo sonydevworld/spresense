@@ -49,6 +49,9 @@ choice
 
 	config LTE_SYSCTL_APN_IPTYPE_IPV4V6
 		bool "IPv4/v6"
+
+	config LTE_SYSCTL_APN_IPTYPE_NON
+		bool "Non-IP"
 endchoice
 
 choice

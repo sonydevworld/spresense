@@ -1,0 +1,43 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_WEBSOCKET_GMOCOIN
+	tristate "WebSocket sample application using GMO coin"
+	default n
+	depends on EXTERNALS_WEBSOCKET
+	depends on LTE_NET_MBEDTLS || EXTERNALS_MBEDTLS
+	---help---
+		Enable the websocket sample application using GMO coin
+
+if EXAMPLES_WEBSOCKET_GMOCOIN
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_PROGNAME
+	string "Program name"
+	default "websocket_gmocoin"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_PRIORITY
+	int "websocket_gmocoin task priority"
+	default 100
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_STACKSIZE
+	int "websocket_gmocoin stack size"
+	default 1024
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_ROOT_CA_FILE
+	string "Root CA file for GMO coin WebSocket API"
+	default "/mnt/sd0/rootcacert_r3.cer"
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_TASK_PRIORITY
+	int "websocket_gmocoin websockt task priority"
+	default 95
+
+config EXAMPLES_WEBSOCKET_GMOCOIN_TASK_STACKSIZE
+	int "websocket_gmocoin websockt stack size"
+	default 10240
+
+endif

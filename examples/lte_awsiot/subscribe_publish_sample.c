@@ -131,7 +131,7 @@ static void parseInputArgsForConnectParams(int argc, char **argv) {
 
 }
 
-int main(int argc, char FAR **argv)
+static int awsiot_main(int argc, FAR char *argv[])
 {
 	bool infinitePublishFlag = true;
 
@@ -144,9 +144,6 @@ int main(int argc, char FAR **argv)
 	int32_t i = 0;
 
 	IoT_Error_t rc = FAILURE;
-
-	if (app_awsiot_connect_to_lte())
-		return ERROR;
 
 	AWS_IoT_Client client;
 	IoT_Client_Init_Params mqttInitParams = iotClientInitParamsDefault;
@@ -275,7 +272,23 @@ int main(int argc, char FAR **argv)
 		IOT_INFO("Publish done\n");
 	}
 
-	app_awsiot_disconnect_from_lte();
+	aws_iot_mqtt_disconnect(&client);
 
 	return rc;
+}
+
+int main(int argc, FAR char *argv[])
+{
+  int ret = 0;
+
+  if (app_awsiot_connect_to_lte())
+    {
+      return ERROR;
+    }
+
+  ret = awsiot_main(argc, argv);
+
+  app_awsiot_disconnect_from_lte();
+
+  return ret;
 }

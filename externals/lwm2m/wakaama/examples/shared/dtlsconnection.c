@@ -1,7 +1,6 @@
 /*******************************************************************************
  *
  * Copyright (c) 2015 Intel Corporation and others.
- * Copyright 2019 Sony Corporation
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -27,26 +26,30 @@
 #define COAPS_PORT "5684"
 #define URI_LENGTH 256
 
-extern int getaddrinfo(const char *nodename, const char *servname,
-                const struct addrinfo *hints, struct addrinfo **res);
-extern void freeaddrinfo(struct addrinfo *res);
+dtls_context_t * dtlsContext;
 
-dtls_context_t * dtlsContext = NULL;
+typedef struct _dtls_app_context_
+{
+    lwm2m_context_t * lwm2mH;
+    dtls_connection_t * connList;
+} dtls_app_context_t;
+
+dtls_app_context_t g_appContext;
 
 /********************* Security Obj Helpers **********************/
-char * security_get_uri(lwm2m_object_t * obj, int instanceId, char * uriBuffer, int bufferSize){
+char * security_get_uri(lwm2m_context_t * lwm2mH, lwm2m_object_t * obj, int instanceId, char * uriBuffer, int bufferSize){
     int size = 1;
     lwm2m_data_t * dataP = lwm2m_data_new(size);
     dataP->id = 0; // security server uri
 
-    obj->readFunc(instanceId, &size, &dataP, obj);
+    obj->readFunc(lwm2mH, instanceId, &size, &dataP, obj);
     if (dataP != NULL &&
             dataP->type == LWM2M_TYPE_STRING &&
             dataP->value.asBuffer.length > 0)
     {
         if (bufferSize > dataP->value.asBuffer.length){
             memset(uriBuffer,0,dataP->value.asBuffer.length+1);
-            strncpy(uriBuffer,(char*)dataP->value.asBuffer.buffer,dataP->value.asBuffer.length);
+            strncpy(uriBuffer,(const char *)dataP->value.asBuffer.buffer,dataP->value.asBuffer.length);
             lwm2m_data_free(size, dataP);
             return uriBuffer;
         }
@@ -55,13 +58,13 @@ char * security_get_uri(lwm2m_object_t * obj, int instanceId, char * uriBuffer, 
     return NULL;
 }
 
-int64_t security_get_mode(lwm2m_object_t * obj, int instanceId){
+int64_t security_get_mode(lwm2m_context_t * lwm2mH, lwm2m_object_t * obj, int instanceId){
     int64_t mode;
     int size = 1;
     lwm2m_data_t * dataP = lwm2m_data_new(size);
     dataP->id = 2; // security mode
 
-    obj->readFunc(instanceId, &size, &dataP, obj);
+    obj->readFunc(lwm2mH, instanceId, &size, &dataP, obj);
     if (0 != lwm2m_data_decode_int(dataP,&mode))
     {
         lwm2m_data_free(size, dataP);
@@ -73,12 +76,12 @@ int64_t security_get_mode(lwm2m_object_t * obj, int instanceId){
     return LWM2M_SECURITY_MODE_NONE;
 }
 
-char * security_get_public_id(lwm2m_object_t * obj, int instanceId, int * length){
+char * security_get_public_id(lwm2m_context_t * lwm2mH, lwm2m_object_t * obj, int instanceId, int * length){
     int size = 1;
     lwm2m_data_t * dataP = lwm2m_data_new(size);
     dataP->id = 3; // public key or id
 
-    obj->readFunc(instanceId, &size, &dataP, obj);
+    obj->readFunc(lwm2mH, instanceId, &size, &dataP, obj);
     if (dataP != NULL &&
         dataP->type == LWM2M_TYPE_OPAQUE)
     {
@@ -99,12 +102,12 @@ char * security_get_public_id(lwm2m_object_t * obj, int instanceId, int * length
 }
 
 
-char * security_get_secret_key(lwm2m_object_t * obj, int instanceId, int * length){
+char * security_get_secret_key(lwm2m_context_t * lwm2mH, lwm2m_object_t * obj, int instanceId, int * length){
     int size = 1;
     lwm2m_data_t * dataP = lwm2m_data_new(size);
     dataP->id = 5; // secret key
 
-    obj->readFunc(instanceId, &size, &dataP, obj);
+    obj->readFunc(lwm2mH, instanceId, &size, &dataP, obj);
     if (dataP != NULL &&
         dataP->type == LWM2M_TYPE_OPAQUE)
     {
@@ -134,9 +137,9 @@ int send_data(dtls_connection_t *connP,
     int nbSent;
     size_t offset;
 
-#ifdef WITH_LOGS
+#ifdef LWM2M_WITH_LOGS
     char s[INET6_ADDRSTRLEN];
-    in_port_t port;
+    in_port_t port = 0;
 
     s[0] = 0;
 
@@ -153,7 +156,7 @@ int send_data(dtls_connection_t *connP,
         port = saddr->sin6_port;
     }
 
-    fprintf(stderr, "Sending %d bytes to [%s]:%hu\r\n", length, s, ntohs(port));
+    fprintf(stderr, "Sending %d bytes to [%s]:%hu\r\n", (int)length, s, ntohs(port));
 
     output_buffer(stderr, buffer, length, 0);
 #endif
@@ -180,8 +183,10 @@ static int get_psk_info(struct dtls_context_t *ctx,
         const unsigned char *id, size_t id_len,
         unsigned char *result, size_t result_length) {
 
+    dtls_app_context_t *appContext = (dtls_app_context_t *)ctx->app;
+
     // find connection
-    dtls_connection_t* cnx = connection_find((dtls_connection_t *) ctx->app, &(session->addr.st),session->size);
+    dtls_connection_t* cnx = connection_find(appContext->connList, &(session->addr.st),session->size);
     if (cnx == NULL)
     {
         printf("GET PSK session not found\n");
@@ -193,7 +198,7 @@ static int get_psk_info(struct dtls_context_t *ctx,
         {
             int idLen;
             char * pskid;
-            pskid = security_get_public_id(cnx->securityObj, cnx->securityInstId, &idLen);
+            pskid = security_get_public_id(appContext->lwm2mH, cnx->securityObj, cnx->securityInstId, &idLen);
             if (result_length < idLen)
             {
                 printf("cannot set psk_identity -- buffer too small\n");
@@ -208,7 +213,7 @@ static int get_psk_info(struct dtls_context_t *ctx,
         {
             int keyLen;
             char * key;
-            key = security_get_secret_key(cnx->securityObj, cnx->securityInstId, &keyLen);
+            key = security_get_secret_key(appContext->lwm2mH, cnx->securityObj, cnx->securityInstId, &keyLen);
 
             if (result_length < keyLen)
             {
@@ -238,9 +243,10 @@ static int get_psk_info(struct dtls_context_t *ctx,
 static int send_to_peer(struct dtls_context_t *ctx,
         session_t *session, uint8 *data, size_t len) {
 
+    dtls_app_context_t *appContext = (dtls_app_context_t *)ctx->app;
+
     // find connection
-//    dtls_connection_t * connP = (dtls_connection_t *) ctx->app;
-    dtls_connection_t* cnx = connection_find((dtls_connection_t *) ctx->app, &(session->addr.st),session->size);
+    dtls_connection_t* cnx = connection_find(appContext->connList, &(session->addr.st),session->size);
     if (cnx != NULL)
     {
         // send data to peer
@@ -259,12 +265,13 @@ static int send_to_peer(struct dtls_context_t *ctx,
 static int read_from_peer(struct dtls_context_t *ctx,
           session_t *session, uint8 *data, size_t len) {
 
+    dtls_app_context_t *appContext = (dtls_app_context_t *)ctx->app;
+
     // find connection
-//    dtls_connection_t * connP = (dtls_connection_t *) ctx->app;
-    dtls_connection_t* cnx = connection_find((dtls_connection_t *) ctx->app, &(session->addr.st),session->size);
+    dtls_connection_t* cnx = connection_find(appContext->connList, &(session->addr.st),session->size);
     if (cnx != NULL)
     {
-        lwm2m_handle_packet(cnx->lwm2mH, (uint8_t*)data, len, (void*)cnx);
+        lwm2m_handle_packet(appContext->lwm2mH, (uint8_t*)data, len, (void*)cnx);
         return 0;
     }
     return -1;
@@ -284,15 +291,15 @@ static dtls_handler_t cb = {
 //#endif /* DTLS_ECC */
 };
 
-dtls_context_t * get_dtls_context(dtls_connection_t * connList) {
+dtls_context_t * get_dtls_context(lwm2m_context_t * lwm2mH, dtls_connection_t * connList) {
+    g_appContext.lwm2mH = lwm2mH;
+    g_appContext.connList = connList;
     if (dtlsContext == NULL) {
         dtls_init();
-        dtlsContext = dtls_new_context(connList);
+        dtlsContext = dtls_new_context(&g_appContext);
         if (dtlsContext == NULL)
             fprintf(stderr, "Failed to create the DTLS context\r\n");
         dtls_set_handler(dtlsContext, &cb);
-    }else{
-        dtlsContext->app = connList;
     }
     return dtlsContext;
 }
@@ -409,7 +416,7 @@ dtls_connection_t * connection_new_incoming(dtls_connection_t * connList,
 {
     dtls_connection_t * connP;
 
-    connP = (dtls_connection_t *)malloc(sizeof(dtls_connection_t));
+    connP = (dtls_connection_t *)lwm2m_malloc(sizeof(dtls_connection_t));
     if (connP != NULL)
     {
         memset(connP, 0, sizeof(dtls_connection_t));
@@ -418,7 +425,7 @@ dtls_connection_t * connection_new_incoming(dtls_connection_t * connList,
         connP->addrLen = addrLen;
         connP->next = connList;
 
-        connP->dtlsSession = (session_t *)malloc(sizeof(session_t));
+        connP->dtlsSession = (session_t *)lwm2m_malloc(sizeof(session_t));
         memset(connP->dtlsSession, 0, sizeof(session_t));
         connP->dtlsSession->addr.sin6 = connP->addr;
         connP->dtlsSession->size = connP->addrLen;
@@ -451,7 +458,7 @@ dtls_connection_t * connection_create(dtls_connection_t * connList,
     hints.ai_family = addressFamily;
     hints.ai_socktype = SOCK_DGRAM;
 
-    uri = security_get_uri(securityObj, instanceId, uriBuf, URI_LENGTH);
+    uri = security_get_uri(lwm2mH, securityObj, instanceId, uriBuf, URI_LENGTH);
     if (uri == NULL) return NULL;
 
     // parse uri in the form "coaps://[host]:[port]"
@@ -525,14 +532,18 @@ dtls_connection_t * connection_create(dtls_connection_t * connList,
             connP->securityInstId = instanceId;
             connP->lwm2mH = lwm2mH;
 
-            if (security_get_mode(connP->securityObj,connP->securityInstId)
+            if (security_get_mode(lwm2mH, connP->securityObj,connP->securityInstId)
                      != LWM2M_SECURITY_MODE_NONE)
             {
-                connP->dtlsContext = get_dtls_context(connP);
+                connP->dtlsContext = get_dtls_context(lwm2mH, connP);
             }
             else
             {
                 // no dtls session
+                if (connP->dtlsSession)
+                {
+                    lwm2m_free(connP->dtlsSession);
+                }
                 connP->dtlsSession = NULL;
             }
         }
@@ -551,8 +562,13 @@ void connection_free(dtls_connection_t * connList)
     {
         dtls_connection_t * nextP;
 
+        if (connList->dtlsSession)
+        {
+            lwm2m_free(connList->dtlsSession);
+        }
+
         nextP = connList->next;
-        free(connList);
+        lwm2m_free(connList);
 
         connList = nextP;
     }
@@ -561,7 +577,7 @@ void connection_free(dtls_connection_t * connList)
 int connection_send(dtls_connection_t *connP, uint8_t * buffer, size_t length){
     if (connP->dtlsSession == NULL) {
         // no security
-        if ( 0 > send_data(connP, buffer, length)) {
+        if (0 >= send_data(connP, buffer, length)) {
             return -1 ;
         }
     } else {

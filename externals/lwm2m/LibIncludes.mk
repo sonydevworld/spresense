@@ -34,16 +34,15 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_LWM2M),y)
-LWM2MCORDIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)core
+LWM2MINCDIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)include
 LWM2MSHADIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)examples$(DELIM)shared
-LWM2MCLIDIR  = $(EXTERNAL_DIR)$(DELIM)lwm2m$(DELIM)wakaama$(DELIM)examples$(DELIM)client
-CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCORDIR)"}
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MINCDIR)"}
 CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)"}
-CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)$(DELIM)tinydtls"}
-CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCLIDIR)"}
-CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCORDIR)"}
+CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MINCDIR)"}
 CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)"}
+ifeq ($(CONFIG_EXTERNALS_LWM2M_WITH_TINYDTLS),y)
+CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)$(DELIM)tinydtls"}
 CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MSHADIR)$(DELIM)tinydtls"}
-CXXFLAGS    += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCLIDIR)"}
+endif
 endif
 

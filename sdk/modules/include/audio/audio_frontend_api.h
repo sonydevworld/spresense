@@ -133,6 +133,7 @@ typedef enum
 typedef enum
 {
   AsMicFrontendDeviceMic = 0,
+  AsMicFrontendDeviceI2S,
 
 } AsMicFrontendInputDevice;
 

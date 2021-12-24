@@ -9,3 +9,14 @@ config EXTERNALS_LIBJPEG
 	---help---
 		Enable libjpeg.
 		libjpeg is provided from http://www.ijg.org/files/jpegsrc.v9c.tar.gz
+
+if EXTERNALS_LIBJPEG
+
+config EXTERNALS_LIBJPEG_TEMP_DIR
+	string "Temporary directory"
+	default "/mnt/spif/"
+	---help---
+		This is the directory path including the trailing slash '/'
+		to store the temporary files created by libjpeg.
+
+endif # EXTERNALS_LIBJPEG
