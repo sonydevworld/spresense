@@ -73,7 +73,7 @@ PATCHFILES = $(shell find $(CUR_DIR)/patches -name "*.patch")
 WGET ?= wget
 RM ?= rm
 MV ?= mv
-UNZIP ?= unzip
+UNPACK := unzip
 
 ## For Tensorflow Repository
 
@@ -108,7 +108,7 @@ distclean:: delete_tensorflow
 $(TENSORFLOW_DIR):
 	$(Q) if [ ! -d $(TENSORFLOW_DIR) ]; then \
 		$(WGET) -O $(TENSORFLOW_ARCHIVE) $(TENSORFLOW_URL); \
-		$(UNZIP) $(TENSORFLOW_ARCHIVE); \
+		$(UNPACK) $(TENSORFLOW_ARCHIVE); \
 		$(RM) $(TENSORFLOW_ARCHIVE); \
 		files="$(PATCHFILES)"; \
 		cd $(TENSORFLOW_DIR); \
