@@ -46,7 +46,7 @@ MODULE    = $(CONFIG_EXTERNALS_VTUN)
 # Set up build environment
 
 WGET   ?= wget
-UNZIP  ?= unzip
+UNPACK := unzip
 
 LEX      := lex
 LEXFLAGS := -t
@@ -68,7 +68,7 @@ $(VTUN_DIR):
 	$(Q) echo "Downloading: $(VTUN_URL)"
 	$(Q) mkdir -p $(VTUN_DIR)
 	$(Q) $(WGET) -O $(VTUN_DL_NAME) $(VTUN_URL)
-	$(Q) $(UNZIP) $(VTUN_DL_NAME)
+	$(Q) $(UNPACK) $(VTUN_DL_NAME)
 
 ASRCS =
 CSRCS += compat_nuttx.c
