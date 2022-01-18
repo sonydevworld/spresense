@@ -1,12 +1,11 @@
-/**************************************************************************//**
+/******************************************************************************
  * @file     startup_ARMCM23.S
- * @brief    CMSIS Core Device Startup File for
- *           ARMCM23 Device
- * @version  V5.3.1
- * @date     09. July 2018
+ * @brief    CMSIS-Core Device Startup File for Cortex-M23 Device
+ * @version  V2.2.0
+ * @date     26. May 2021
  ******************************************************************************/
 /*
- * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+ * Copyright (c) 2009-2021 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,51 +22,14 @@
  * limitations under the License.
  */
 
-/*
-;//-------- <<< Use Configuration Wizard in Context Menu >>> ------------------
-*/
-
                 .syntax  unified
                 .arch    armv8-m.base
 
-
-/*
-;<h> Stack Configuration
-;  <o> Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
-;</h>
-*/
-                .equ     Stack_Size, 0x00000400
-
-                .section .stack
-                .align   3
-	            .globl   __StackTop
-	            .globl   __StackLimit
-__StackLimit:
-                .space   Stack_Size
-                .size    __StackLimit, . - __StackLimit
-__StackTop:
-                .size    __StackTop, . - __StackTop
-
-
-/*
-;<h> Heap Configuration
-;  <o> Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
-;</h>
-*/
-                .equ     Heap_Size, 0x00000C00
-
-                .if      Heap_Size != 0                     /* Heap is provided */
-                .section .heap
-                .align   3
-	            .globl   __HeapBase
-	            .globl   __HeapLimit
-__HeapBase:
-                .space   Heap_Size
-                .size    __HeapBase, . - __HeapBase
-__HeapLimit:
-                .size    __HeapLimit, . - __HeapLimit
-                .endif
-
+                #define __INITIAL_SP     __StackTop
+                #define __STACK_LIMIT    __StackLimit
+                #if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+                #define __STACK_SEAL     __StackSeal
+                #endif
 
                 .section .vectors
                 .align   2
@@ -75,7 +37,7 @@ __HeapLimit:
                 .globl   __Vectors_End
                 .globl   __Vectors_Size
 __Vectors:
-                .long    __StackTop                         /*     Top of Stack */
+                .long    __INITIAL_SP                       /*     Initial Stack Pointer */
                 .long    Reset_Handler                      /*     Reset Handler */
                 .long    NMI_Handler                        /* -14 NMI Handler */
                 .long    HardFault_Handler                  /* -13 Hard Fault Handler */
@@ -119,36 +81,35 @@ __Vectors_End:
                 .globl   Reset_Handler
                 .fnstart
 Reset_Handler:
-/* Firstly it copies data from read only memory to RAM.
- * There are two schemes to copy. One can copy more than one sections.
- * Another can copy only one section. The former scheme needs more
- * instructions and read-only data to implement than the latter.
- * Macro __STARTUP_COPY_MULTIPLE is used to choose between two schemes.
- */
+                ldr      r0, =__INITIAL_SP
+                msr      psp, r0
 
-#ifdef __STARTUP_COPY_MULTIPLE
-/* Multiple sections scheme.
- *
- * Between symbol address __copy_table_start__ and __copy_table_end__,
- * there are array of triplets, each of which specify:
- *   offset 0: LMA of start of a section to copy from
- *   offset 4: VMA of start of a section to copy to
- *   offset 8: size of the section to copy. Must be multiply of 4
- *
- * All addresses must be aligned to 4 bytes boundary.
- */
+                #if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+                ldr      r0, =__STACK_LIMIT
+                msr      msplim, r0
+                msr      psplim, r0
+
+                ldr      r0, =__STACK_SEAL
+                ldr      r1, =0xFEF5EDA5U
+                str      r1,[r0,#0]
+                str      r1,[r0,#4]
+                #endif
+
+                bl       SystemInit
+
                 ldr      r4, =__copy_table_start__
                 ldr      r5, =__copy_table_end__
 
 .L_loop0:
                 cmp      r4, r5
                 bge      .L_loop0_done
-                ldr      r1, [r4]
-                ldr      r2, [r4, #4]
-                ldr      r3, [r4, #8]
+                ldr      r1, [r4]                /* source address */
+                ldr      r2, [r4, #4]            /* destination address */
+                ldr      r3, [r4, #8]            /* word count */
+                lsls     r3, r3, #2              /* byte count */
 
 .L_loop0_0:
-                subs     r3, #4
+                subs     r3, #4                  /* decrement byte count */
                 blt      .L_loop0_0_done
                 ldr      r0, [r1, r3]
                 str      r0, [r2, r3]
@@ -157,64 +118,21 @@ Reset_Handler:
 .L_loop0_0_done:
                 adds     r4, #12
                 b        .L_loop0
-
 .L_loop0_done:
-#else
-/* Single section scheme.
- *
- * The ranges of copy from/to are specified by following symbols
- *   __etext: LMA of start of the section to copy from. Usually end of text
- *   __data_start__: VMA of start of the section to copy to
- *   __data_end__: VMA of end of the section to copy to
- *
- * All addresses must be aligned to 4 bytes boundary.
- */
-                ldr      r1, =__etext
-                ldr      r2, =__data_start__
-                ldr      r3, =__data_end__
 
-                subs     r3, r2
-                ble      .L_loop1_done
-
-.L_loop1:
-                subs     r3, #4
-                ldr      r0, [r1,r3]
-                str      r0, [r2,r3]
-                bgt      .L_loop1
-
-.L_loop1_done:
-#endif /*__STARTUP_COPY_MULTIPLE */
-
-/* This part of work usually is done in C library startup code.
- * Otherwise, define this macro to enable it in this startup.
- *
- * There are two schemes too.
- * One can clear multiple BSS sections. Another can only clear one section.
- * The former is more size expensive than the latter.
- *
- * Define macro __STARTUP_CLEAR_BSS_MULTIPLE to choose the former.
- * Otherwise define macro __STARTUP_CLEAR_BSS to choose the later.
- */
-#ifdef __STARTUP_CLEAR_BSS_MULTIPLE
-/* Multiple sections scheme.
- *
- * Between symbol address __copy_table_start__ and __copy_table_end__,
- * there are array of tuples specifying:
- *   offset 0: Start of a BSS section
- *   offset 4: Size of this BSS section. Must be multiply of 4
- */
                 ldr      r3, =__zero_table_start__
                 ldr      r4, =__zero_table_end__
 
 .L_loop2:
                 cmp      r3, r4
                 bge      .L_loop2_done
-                ldr      r1, [r3]
-                ldr      r2, [r3, #4]
+                ldr      r1, [r3]                /* destination address */
+                ldr      r2, [r3, #4]            /* word count */
+                lsls     r2, r2, #2              /* byte count */
                 movs     r0, 0
 
 .L_loop2_0:
-                subs     r2, #4
+                subs     r2, #4                  /* decrement byte count */
                 blt      .L_loop2_0_done
                 str      r0, [r1, r2]
                 b        .L_loop2_0
@@ -223,38 +141,24 @@ Reset_Handler:
                 adds     r3, #8
                 b        .L_loop2
 .L_loop2_done:
-#elif defined (__STARTUP_CLEAR_BSS)
-/* Single BSS section scheme.
- *
- * The BSS section is specified by following symbols
- *   __bss_start__: start of the BSS section.
- *   __bss_end__: end of the BSS section.
- *
- * Both addresses must be aligned to 4 bytes boundary.
- */
-                ldr      r1, =__bss_start__
-                ldr      r2, =__bss_end__
 
-                movs     r0, 0
-                subs     r2, r1
-                ble      .L_loop3_done
-
-.L_loop3:
-                subs     r2, #4
-                str      r0, [r1, r2]
-                bgt      .L_loop3
-.L_loop3_done:
-#endif /* __STARTUP_CLEAR_BSS_MULTIPLE || __STARTUP_CLEAR_BSS */
-
-                ldr      r0, =__StackLimit
-                msr      msplim, r0
-
-                bl       SystemInit
                 bl       _start
 
                 .fnend
                 .size    Reset_Handler, . - Reset_Handler
 
+
+/* The default macro is not used for HardFault_Handler
+ * because this results in a poor debug illusion.
+ */
+                .thumb_func
+                .type    HardFault_Handler, %function
+                .weak    HardFault_Handler
+                .fnstart
+HardFault_Handler:
+                b        .
+                .fnend
+                .size    HardFault_Handler, . - HardFault_Handler
 
                 .thumb_func
                 .type    Default_Handler, %function
@@ -278,7 +182,6 @@ Default_Handler:
 /* Default exception/interrupt handler */
 
                 Set_Default_Handler  NMI_Handler
-                Set_Default_Handler  HardFault_Handler
                 Set_Default_Handler  SVC_Handler
                 Set_Default_Handler  PendSV_Handler
                 Set_Default_Handler  SysTick_Handler
@@ -293,6 +196,5 @@ Default_Handler:
                 Set_Default_Handler  Interrupt7_Handler
                 Set_Default_Handler  Interrupt8_Handler
                 Set_Default_Handler  Interrupt9_Handler
-
 
                 .end

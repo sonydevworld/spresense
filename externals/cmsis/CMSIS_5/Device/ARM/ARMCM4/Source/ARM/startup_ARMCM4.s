@@ -2,11 +2,11 @@
 ; * @file     startup_ARMCM4.s
 ; * @brief    CMSIS Core Device Startup File for
 ; *           ARMCM4 Device
-; * @version  V5.3.1
-; * @date     09. July 2018
+; * @version  V1.0.1
+; * @date     23. July 2019
 ; ******************************************************************************/
 ;/*
-; * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+; * Copyright (c) 2009-2019 Arm Limited. All rights reserved.
 ; *
 ; * SPDX-License-Identifier: Apache-2.0
 ; *
@@ -74,7 +74,7 @@ __Vectors       DCD      __initial_sp                        ;     Top of Stack
                 DCD      0                                   ;     Reserved
                 DCD      0                                   ;     Reserved
                 DCD      0                                   ;     Reserved
-                DCD      SVC_Handler                         ;  -5 SVCall Handler
+                DCD      SVC_Handler                         ;  -5 SVC Handler
                 DCD      DebugMon_Handler                    ;  -4 Debug Monitor Handler
                 DCD      0                                   ;     Reserved
                 DCD      PendSV_Handler                      ;  -2 PendSV Handler
@@ -112,6 +112,12 @@ Reset_Handler   PROC
                 BX       R0
                 ENDP
 
+; The default macro is not used for HardFault_Handler
+; because this results in a poor debug illusion.
+HardFault_Handler PROC
+                EXPORT   HardFault_Handler         [WEAK]
+                B        .
+                ENDP
 
 ; Macro to define default exception/interrupt handlers.
 ; Default handler are weak symbols with an endless loop.
@@ -128,7 +134,6 @@ $Handler_Name   PROC
 ; Default exception/interrupt handler
 
                 Set_Default_Handler  NMI_Handler
-                Set_Default_Handler  HardFault_Handler
                 Set_Default_Handler  MemManage_Handler
                 Set_Default_Handler  BusFault_Handler
                 Set_Default_Handler  UsageFault_Handler
@@ -152,6 +157,10 @@ $Handler_Name   PROC
 
 
 ; User setup Stack & Heap
+
+                IF       :LNOT::DEF:__MICROLIB
+                IMPORT   __use_two_region_memory
+                ENDIF
 
                 EXPORT   __stack_limit
                 EXPORT   __initial_sp

@@ -2,7 +2,7 @@
 ; * @file     startup_ARMv8MML.s
 ; * @brief    CMSIS Core Device Startup File for
 ; *           ARMv8MML Device
-; * @version  V5.3.1
+; * @version  V1.0.0
 ; * @date     09. July 2018
 ; ******************************************************************************/
 ;/*
@@ -69,7 +69,7 @@ __vector_table_0x1c
                 DCD      0                                   ;     Reserved
                 DCD      0                                   ;     Reserved
                 DCD      0                                   ;     Reserved
-                DCD      SVC_Handler                         ;  -5 SVCall Handler
+                DCD      SVC_Handler                         ;  -5 SVC Handler
                 DCD      DebugMon_Handler                    ;  -4 Debug Monitor Handler
                 DCD      0                                   ;     Reserved
                 DCD      PendSV_Handler                      ;  -2 PendSV Handler

@@ -32,12 +32,12 @@ Here is a simple example that shows how two thread can communicate with each oth
 The following steps are required to use event flags:
 -# In the thread that is supposed to send a event with id sig1_id, call the set function:
 \code
-osDelay (1000);                                           // wait for 1 second
-osEventFlagsSet (sig1_id, 0x0001U);                       // set the flag 0x0001U for event sig1_id
+osDelay(1000U);                                           // wait for 1 second
+osEventFlagsSet(sig1_id, 0x0001U);                        // set the flag 0x0001U for event sig1_id
 \endcode
 -# In another thread (or threads) that are supposed to wait for the event, call the wait function:
 \code
-osEventFlagsWait (sig1_id, 0x0001U, NULL, osWaitForever); // wait forever for any flag
+osEventFlagsWait(sig1_id, 0x0001U, NULL, osWaitForever);  // wait forever for any flag
 \endcode
 
 The following complete example code can be directly used with the "CMSIS-RTOS2 main template" and is also provided as a
@@ -45,42 +45,54 @@ stand-alone template for RTX5:
 
 <b>Code Example</b>
 \code
-void Thread_EventSender   (void *argument);                   // thread function 1
-void Thread_EventReceiver (void *argument);                   // thread function 2
-osThreadId_t tid_Thread_EventSender;                          // thread id 1
-osThreadId_t tid_Thread_EventReceiver;                        // thread id 2
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
  
-osEventFlagsId_t evt_id;                                      // message queue id
+/*----------------------------------------------------------------------------
+ *  Event Flags creation & usage
+ *---------------------------------------------------------------------------*/
  
-#define FLAGS_MSK1 0x00000001ul
+#define FLAGS_MSK1 0x00000001U
  
-void app_main (void)
-{
-  tid_Thread_EventSender = osThreadNew (Thread_EventSender, NULL, NULL);
+osEventFlagsId_t evt_id;                        // event flags id
+ 
+osThreadId_t tid_Thread_EventSender;            // thread id 1
+osThreadId_t tid_Thread_EventReceiver;          // thread id 2
+ 
+void Thread_EventSender   (void *argument);     // thread function 1
+void Thread_EventReceiver (void *argument);     // thread function 2
+ 
+int Init_Events (void) {
+ 
+  evt_id = osEventFlagsNew(NULL);
+  if (evt_id == NULL) {
+    ; // Event Flags object not created, handle failure
+  }
+ 
+  tid_Thread_EventSender = osThreadNew(Thread_EventSender, NULL, NULL);
   if (tid_Thread_EventSender == NULL) {
-    ;                                                         // do something
+    return(-1);
   }
-  tid_Thread_EventReceiver = osThreadNew (Thread_EventReceiver, NULL, NULL);
+  tid_Thread_EventReceiver = osThreadNew(Thread_EventReceiver, NULL, NULL);
   if (tid_Thread_EventReceiver == NULL) {
-    ;                                                         // do something
+    return(-1);
   }
-  ;                                                           // do something
+
+  return(0);
 }
  
-void Thread_EventSender (void *argument)
-{
-  evt_id = osEventFlagsNew(NULL);
+void Thread_EventSender (void *argument) {
+ 
   while (1) {    
     osEventFlagsSet(evt_id, FLAGS_MSK1);
-    osDelay (1000);                                           // suspend thread
+    osThreadYield();                            // suspend thread
   }
 }
  
-void Thread_EventReceiver (void *argument)
-{
+void Thread_EventReceiver (void *argument) {
   uint32_t flags;
+ 
   while (1) {
-    flags = osEventFlagsWait (evt_id,FLAGS_MSK1,osFlagsWaitAny, osWaitForever);
+    flags = osEventFlagsWait(evt_id, FLAGS_MSK1, osFlagsWaitAny, osWaitForever);
     //handle event
   }
 }
@@ -123,27 +135,19 @@ set to \token{NULL}, i.e. kernel memory allocation is used for the event control
 
 <b>Code Example</b>
 \code
-#include "cmsis_os2.h"                                        // CMSIS RTOS header file
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
  
-osEventFlagsId_t evt_id;                                      // message queue id
+osEventFlagsId_t evt_id;                        // message queue id
  
-void Thread_EventSender (void *argument)
-{
+int Init_Events (void) {
+ 
   evt_id = osEventFlagsNew(NULL);
-  while (1) {    
-    osEventFlagsSet(evt_id, FLAGS_MSK1);
-    osThreadYield ();                                         // suspend thread
+  if (evt_id == NULL) {
+    ; // Event Flags object not created, handle failure
+    return(-1);
   }
-}
- 
-void Thread_EventReceiver (void *argument)
-{
-  uint32_t  flags;
- 
-  while (1) {
-    flags = osEventFlagsWait (evt_id,FLAGS_MSK1,osFlagsWaitAny, osWaitForever);
-    //handle event
-  }
+
+  return(0);
 }
 \endcode
 */
@@ -153,38 +157,31 @@ void Thread_EventReceiver (void *argument)
 \fn uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags)
 \details
 The function \b osEventFlagsSet sets the event flags specified by the parameter \a flags in an event flags object specified
-by parameter \a ef_id. All threads waiting for the flag set will be notified to resume from \ref ThreadStates "BLOCKED" state.
-The function returns the event flags after setting or an error code (highest bit is set, refer to \ref flags_error_codes).
+by parameter \a ef_id. 
+
+The threads with highest priority waiting for the flag(s) set will be notified to resume from \ref ThreadStates "BLOCKED" state.
+The function returns the event flags stored in the event control block or an error code (highest bit is set, refer to
+\ref flags_error_codes). Further threads may be wakened in priority order when the option \b osFlagsNoClear is given to the
+\ref osEventFlagsWait call.
 
 Possible \ref flags_error_codes return values:
-    - \em osFlagsErrorUnknown: Unspecified error.
-    - \em osFlagsErrorResource: Event flags object specified by parameter \a ef_id is not ready to be used.
-    - \em osFlagsErrorParameter: Parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
-	
+    - \em osFlagsErrorUnknown: unspecified error.
+    - \em osFlagsErrorParameter: parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
+    - \em osFlagsErrorResource: the event flags object is in an invalid state.
+
 \note This function may be called from \ref CMSIS_RTOS_ISR_Calls "Interrupt Service Routines".
 
 <b>Code Example</b>
 \code
-#include "cmsis_os2.h"                                        // CMSIS RTOS header file
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
  
-osEventFlagsId_t evt_id;                                      // message queue id
+osEventFlagsId_t evt_id;                        // event flags id
  
-void Thread_EventSender (void *argument)
-{
-  evt_id = osEventFlagsNew(NULL);
+void Thread_EventSender (void *argument) {
+ 
   while (1) {    
-    osEventFlagsSet(evt_id, FLAGS_MSK1);
-    osThreadYield ();                                         // suspend thread
-  }
-}
- 
-void Thread_EventReceiver (void *argument)
-{
-  uint32_t  flags;
- 
-  while (1) {
-    flags = osEventFlagsWait (evt_id,FLAGS_MSK1,osFlagsWaitAny, osWaitForever);
-    //handle event
+    osEventFlagsSet(evt_id, 0x00000001U);
+    osThreadYield();                            // suspend thread
   }
 }
 \endcode
@@ -199,9 +196,9 @@ specified by parameter \a ef_id. The function returns the event flags before cle
 refer to \ref flags_error_codes).
 
 Possible \ref flags_error_codes return values:
-    - \em osFlagsErrorUnknown: Unspecified error.
-    - \em osFlagsErrorResource: Event flags object specified by parameter \a ef_id is not ready to be used.
-    - \em osFlagsErrorParameter: Parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
+    - \em osFlagsErrorUnknown: unspecified error.
+    - \em osFlagsErrorParameter: parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
+    - \em osFlagsErrorResource: the event flags object is in an invalid state.
 
 \note This function may be called from \ref CMSIS_RTOS_ISR_Calls "Interrupt Service Routines".
 */
@@ -244,35 +241,25 @@ that is calling this function is put into the \ref ThreadStates "BLOCKED" state.
 The function returns the event flags before clearing or an error code (highest bit is set, refer to \ref flags_error_codes).
 
 Possible \ref flags_error_codes return values:
-    - \em osFlagsErrorUnknown: Unspecified error.
-    - \em osFlagsErrorTimeout: The awaited flags has not been set during given timeout.
-    - \em osFlagsErrorResource: Event flags object specified by parameter \a ef_id is not ready to be used.
-    - \em osFlagsErrorParameter: Parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
+    - \em osFlagsErrorUnknown: unspecified error.
+    - \em osFlagsErrorTimeout: awaited flags have not been set in the given time.
+    - \em osFlagsErrorResource: awaited flags have not been set when no \a timeout was specified.
+    - \em osFlagsErrorParameter: parameter \a ef_id does not identify a valid event flags object or \em flags has highest bit set. 
 
 \note May be called from \ref CMSIS_RTOS_ISR_Calls "Interrupt Service Routines" if the parameter \a timeout is set to
 \token{0}.
 
 \b Code \b Example
 \code
-#include "cmsis_os2.h"                                        // CMSIS RTOS header file
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
  
-osEventFlagsId_t evt_id;                                      // message queue id
+osEventFlagsId_t evt_id;                        // event flasg id
  
-void Thread_EventSender (void *argument)
-{
-  evt_id = osEventFlagsNew(NULL);
-  while (1) {    
-    osEventFlagsSet(evt_id, FLAGS_MSK1);
-    osThreadYield ();                                         // suspend thread
-  }
-}
- 
-void Thread_EventReceiver (void *argument)
-{
-  uint32_t  flags;
+void Thread_EventReceiver (void *argument) {
+  uint32_t flags;
  
   while (1) {
-    flags = osEventFlagsWait (evt_id,FLAGS_MSK1,osFlagsWaitAny, osWaitForever);
+    flags = osEventFlagsWait(evt_id, 0x00000001U, osFlagsWaitAny, osWaitForever);
     //handle event
   }
 }
@@ -291,8 +278,8 @@ function \ref osEventFlagsNew.
 Possible \ref osStatus_t return values:
  - \em osOK: the specified event flags object has been deleted.
  - \em osErrorISR: \b osEventFlagsDelete cannot be called from interrupt service routines.
- - \em osErrorParameter: the value of the parameter \a ef_id is incorrect.
- - \em osErrorResource: parameter \em ef_id is \token{NULL} or wrong.
+ - \em osErrorParameter: parameter \a ef_id is \token{NULL} or invalid.
+ - \em osErrorResource: the event flags object is in an invalid state.
 
 \note This function \b cannot be called from \ref CMSIS_RTOS_ISR_Calls "Interrupt Service Routines".
 */
@@ -308,11 +295,15 @@ The function \b osEventFlagsGetName returns the pointer to the name string of th
 
 <b>Code Example</b>
 \code
+#include "cmsis_os2.h"                          // CMSIS RTOS header file
+ 
+osEventFlagsId_t evt_id;                        // event flasg id
+ 
 void EvtFlagsGetName_example (void)  {
-  char id;                                           // id of the event flags object
+  char *name;
    
-  id = osEventFlagsGetName ();
-  if (id == NULL) {
+  name = osEventFlagsGetName(evt_id);
+  if (name == NULL) {
     // Failed to get the event flags object name
   }
 }
@@ -325,21 +316,23 @@ void EvtFlagsGetName_example (void)  {
 /**
 \var osEventFlagsAttr_t::attr_bits
 \details
-Reserved for future use (set to '0').\n
-Default: \token{0}.
+Reserved for future use (must be set to '0' for future compatibility).
 
 \var osEventFlagsAttr_t::cb_mem
 \details
-Pointer to a memory location for the event control block object. This can optionally be used for custom memory management systems.\n
-Default: \token{NULL} (uses kernel memory management).
+Pointer to a memory for the event flag control block object. Refer to \ref StaticObjectMemory for more information.
 
+Default: \token{NULL} to use \ref CMSIS_RTOS_MemoryMgmt_Automatic for the event flag control block.
 
 \var osEventFlagsAttr_t::cb_size
 \details
-The size of the memory block passed with \ref cb_mem. Must be the size of an event control block object or larger.
+The size (in bytes) of memory block passed with \ref cb_mem. For RTX, the minimum value is defined with \ref osRtxEventFlagsCbSize (higher values are permitted).
+
+Default: \token{0} as the default is no memory provided with \ref cb_mem.
 
 \var osEventFlagsAttr_t::name
 \details
-Pointer to a string with a human readable name of the event object.\n
-Default: \token{NULL}.
+Pointer to a constant string with a human readable name (displayed during debugging) of the event flag object.
+
+Default: \token{NULL} no name specified.
 */

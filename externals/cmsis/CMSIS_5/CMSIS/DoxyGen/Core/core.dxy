@@ -38,7 +38,7 @@ PROJECT_NAME           = "CMSIS-Core (Cortex-M)"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = "Version 5.1.2"
+PROJECT_NUMBER         = "Version 5.5.0"
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -99,7 +99,7 @@ BRIEF_MEMBER_DESC      = YES
 # brief descriptions will be completely suppressed.
 # The default value is: YES.
 
-REPEAT_BRIEF           = NO
+REPEAT_BRIEF           = YES
 
 # This tag implements a quasi-intelligent brief description abbreviator that is
 # used to form the text in various listings. Each string in this list, if found
@@ -612,7 +612,8 @@ GENERATE_DEPRECATEDLIST= YES
 # sections, marked by \if <section_label> ... \endif and \cond <section_label>
 # ... \endcond blocks.
 
-ENABLED_SECTIONS       = 
+ENABLED_SECTIONS       = ARMv8M \
+                         ARMSC
 
 # The MAX_INITIALIZER_LINES tag determines the maximum number of lines that the
 # initial value of a variable or macro / define can have for it to appear in the
@@ -763,7 +764,10 @@ INPUT                  = src/Overview.txt \
                          src/Ref_cmInstr.txt \
                          src/Ref_cm4_simd.txt \
                          src/Ref_FPU.txt \
+                         src/Ref_MVE.txt \
                          src/Ref_MPU.txt \
+                         src/Ref_MPU8.txt \
+                         src/Ref_PMU8.txt \
                          src/Ref_Systick.txt \
                          src/Ref_Debug.txt \
                          src/Ref_Trustzone.txt \
@@ -994,25 +998,6 @@ USE_HTAGS              = NO
 # The default value is: YES.
 
 VERBATIM_HEADERS       = NO
-
-# If the CLANG_ASSISTED_PARSING tag is set to YES, then doxygen will use the
-# clang parser (see: http://clang.llvm.org/) for more acurate parsing at the
-# cost of reduced performance. This can be particularly helpful with template
-# rich C++ code for which doxygen's built-in parser lacks the necessary type
-# information.
-# Note: The availability of this option depends on whether or not doxygen was
-# compiled with the --with-libclang option.
-# The default value is: NO.
-
-CLANG_ASSISTED_PARSING = NO
-
-# If clang assisted parsing is enabled you can provide the compiler with command
-# line options that you would normally use when invoking the compiler. Note that
-# the include paths will already be set by doxygen for the files and directories
-# specified with INPUT and INCLUDE_PATH.
-# This tag requires that the tag CLANG_ASSISTED_PARSING is set to YES.
-
-CLANG_OPTIONS          = 
 
 #---------------------------------------------------------------------------
 # Configuration options related to the alphabetical class index
