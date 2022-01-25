@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# modules/tflmrt/src-mpcomm/worker/lib/tensorflow-microlite/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,25 +33,26 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
+include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-SUBDIRS = $(dir $(WORKER_ELFS))
+BIN = libtensorflow-microlite$(LIBEXT)
+WORKER_DIR = $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)tensorflow
+LIB = $(WORKER_DIR)$(DELIM)$(BIN)
 
-define DIR_template
-$(1)_$(2):
-	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-endef
+.PHONY: depend clean distclean
+all: $(BIN)
 
-.PHONY: clean
-all: $(WORKER_ELFS)
+depend:
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend
 
-# Build workers
+$(LIB): depend
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" $(BIN)
 
-$(WORKER_ELFS):
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+$(BIN): $(LIB)
+	$(Q) install $< $@
 
-# Clean each subdirectory
+clean:
+	$(call CLEAN)
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
-
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
+distclean: clean

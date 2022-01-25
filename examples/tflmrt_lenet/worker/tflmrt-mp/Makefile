@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# tflmrt_lenet/worker/tflmrt-mp/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,25 +33,27 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
+include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-SUBDIRS = $(dir $(WORKER_ELFS))
+BIN = TFLMRT-MP
+WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)tflmrt$(DELIM)src-mpcomm$(DELIM)worker
+WORKER = $(WORKER_DIR)$(DELIM)tflmrt-mp$(DELIM)$(BIN)
 
-define DIR_template
-$(1)_$(2):
-	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-endef
+.PHONY: depend clean distclean
+all: $(BIN)
 
-.PHONY: clean
-all: $(WORKER_ELFS)
+depend:
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" depend
 
-# Build workers
+$(WORKER): depend
+	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)"
 
-$(WORKER_ELFS):
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+$(BIN): $(WORKER)
+	$(Q) install $< $@
 
-# Clean each subdirectory
+clean:
+	$(call DELFILE, $(BIN))
+	$(call CLEAN)
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
-
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
+distclean: clean

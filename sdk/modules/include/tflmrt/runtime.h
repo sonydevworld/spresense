@@ -104,7 +104,7 @@ typedef struct tflm_mallinfo
  * Initialize the whole tflmrt subsystem
  *
  * @param [in] config: configuration of multicore processing. <br>
- *                     If CONFIG_TFLM_RT_MP=y, tflm_config_t::cpu_num
+ *                     If CONFIG_TFLM_RT_MPCOMM=y, tflm_config_t::cpu_num
  *                     must be 1 or more, <br>
  *                     otherwise tflm_config_t::cpu_num must be 1.
  *
@@ -336,7 +336,7 @@ int tflm_nuttx_mallinfo(tflm_mallinfo_t *info);
  *                            This value must be tflm_config_t::cpu_num
  * @param [out] info_array:   Array to store memory allocation stats
  *
- * @return 0 on success. -EPERM if CONFIG_TFLM_RT_MP=n
+ * @return 0 on success. -EPERM if CONFIG_TFLM_RT_MPCOMM=n
  */
 
 int tflm_asmp_mallinfo(unsigned char array_length,

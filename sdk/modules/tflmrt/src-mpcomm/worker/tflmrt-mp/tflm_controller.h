@@ -1,7 +1,7 @@
 /****************************************************************************
- * externals/tensorflow/c-runtime/tf_runtime.h
+ * modules/tflmrt/src-mpcomm/worker/tflmrt-mp/tflm_controller.h
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,55 +33,49 @@
  *
  ****************************************************************************/
 
-#ifndef __EXTERNALS_TENSORFLOW_C_RUNTIME_TF_RUNTIME_H
-#define __EXTERNALS_TENSORFLOW_C_RUNTIME_TF_RUNTIME_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+#ifndef _TFLMRT_MPCOMM_WORKER_DNN_CONTROLLER_H_
+#define _TFLMRT_MPCOMM_WORKER_DNN_CONTROLLER_H_
 
 /****************************************************************************
- * Included Files
+ * Public Types
  ****************************************************************************/
 
-#include "tensorflow/lite/c/common.h"
+typedef struct tflm_runtime
+{
+  void *impl_ctx;
+} tflm_runtime_t;
 
-/****************************************************************************
- * Type Declarations
- ****************************************************************************/
+typedef enum
+{
+  TFLMRT_MSG_NRT_INIT,
+  TFLMRT_MSG_NRT_FINI,
+  TFLMRT_MSG_NRT_FOWARD,
+  TFLMRT_MSG_NRT_INPUT_NUM,
+  TFLMRT_MSG_NRT_INPUT_SIZE,
+  TFLMRT_MSG_NRT_INPUT_NDIM,
+  TFLMRT_MSG_NRT_INPUT_SHAPE,
+  TFLMRT_MSG_NRT_INPUT_VARIABLE,
+  TFLMRT_MSG_NRT_OUTPUT_NUM,
+  TFLMRT_MSG_NRT_OUTPUT_SIZE,
+  TFLMRT_MSG_NRT_OUTPUT_NDIM,
+  TFLMRT_MSG_NRT_OUTPUT_SHAPE,
+  TFLMRT_MSG_NRT_OUTPUT_BUFFER,
+  TFLMRT_MSG_NRT_OUTPUT_VARIABLE,
+} tflm_msg_id_t;
 
-typedef void *tf_rt_context_pointer;
+typedef struct tflm_msg
+{
+  uint8_t id;
+  int arg[3];
+  int ret;
+} tflm_msg_t;
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-int tf_rt_allocate_context(tf_rt_context_pointer *context);
-int tf_rt_initialize_context(tf_rt_context_pointer context,
-                             const void *n, int size);
-int tf_rt_free_context(tf_rt_context_pointer *context);
-int tf_rt_num_of_input(tf_rt_context_pointer context);
-int tf_rt_input_size(tf_rt_context_pointer context, size_t index);
-int tf_rt_input_dimension(tf_rt_context_pointer context, size_t index);
-int tf_rt_input_shape(tf_rt_context_pointer context, size_t index,
-                      size_t shape_index);
-void *tf_rt_input_buffer(tf_rt_context_pointer context, size_t index);
-int tf_rt_num_of_output(tf_rt_context_pointer context);
-int tf_rt_output_size(tf_rt_context_pointer context, size_t index);
-int tf_rt_output_dimension(tf_rt_context_pointer context, size_t index);
-int tf_rt_output_shape(tf_rt_context_pointer context, size_t index,
-                       size_t shape_index);
-void *tf_rt_output_buffer(tf_rt_context_pointer context, size_t index);
-TfLiteTensor *tf_rt_input_variable(tf_rt_context_pointer context,
-                                   size_t index);
-TfLiteTensor *tf_rt_output_variable(tf_rt_context_pointer context,
-                                    size_t index);
-int tf_rt_forward(tf_rt_context_pointer context);
-void tf_rt_set_malloc(void *(*user_malloc)(size_t size));
-void tf_rt_set_free(void (*user_free)(void *ptr));
+void tflm_controller_handle_msg(void *data);
+void *tflm_controller_malloc(size_t size);
+void tflm_controller_free(void *ptr);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* __EXTERNALS_TENSORFLOW_C_RUNTIME_TF_RUNTIME_H */
+#endif /* _TFLMRT_MPCOMM_WORKER_DNN_CONTROLLER_H_ */

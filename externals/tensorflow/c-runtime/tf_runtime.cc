@@ -48,13 +48,17 @@
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
+void *(*tf_rt_malloc_func)(size_t size) = malloc;
+void (*tf_rt_free_func)(void *ptr) = free;
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 int tf_rt_allocate_context(tf_rt_context_pointer *context)
 {
-  tf_rt_context_t *c = (tf_rt_context_t *) malloc(sizeof(tf_rt_context_t));
+  tf_rt_context_t *c =
+    (tf_rt_context_t *) tf_rt_malloc_func(sizeof(tf_rt_context_t));
   if (c == 0)
     {
       return -ENOMEM;
@@ -92,7 +96,7 @@ int tf_rt_initialize_context(tf_rt_context_pointer context,
   tflite::AllOpsResolver resolver;
 
   c->tensor_arena_size = size;
-  c->tensor_arena = (uint8_t *) malloc(c->tensor_arena_size);
+  c->tensor_arena = (uint8_t *) tf_rt_malloc_func(c->tensor_arena_size);
   if (c->tensor_arena == 0)
     {
       return -ENOMEM;
@@ -125,12 +129,12 @@ int tf_rt_free_context(tf_rt_context_pointer *context)
 
   if (c->tensor_arena)
     {
-      free(c->tensor_arena);
+      tf_rt_free_func(c->tensor_arena);
       c->tensor_arena = NULL;
       c->tensor_arena_size = 0;
     }
 
-  free(*context);
+  tf_rt_free_func(*context);
 
   return 0;
 }
@@ -217,4 +221,28 @@ int tf_rt_forward(tf_rt_context_pointer context)
     }
 
   return 0;
+}
+
+void tf_rt_set_malloc(void *(*user_malloc)(size_t size))
+{
+  if (user_malloc == 0)
+    {
+      tf_rt_malloc_func = malloc;
+    }
+  else
+    {
+      tf_rt_malloc_func = user_malloc;
+    }
+}
+
+void tf_rt_set_free(void (*user_free)(void *ptr))
+{
+  if (user_free == 0)
+    {
+      tf_rt_free_func = free;
+    }
+  else
+    {
+      tf_rt_free_func = user_free;
+    }
 }
