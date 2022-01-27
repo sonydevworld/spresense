@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/mbedtls_stub/altcom_additional_hdlr.c
+ * modules/lte_ext/altcom_additional_hdlr.c
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021,2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,8 +65,14 @@ extern parse_handler_t alt1250_extparsehdlr(uint16_t, uint8_t);
 
 parse_handler_t alt1250_additional_parsehdlr(uint16_t altcid, uint8_t altver)
 {
-  parse_handler_t ret;
-  ret = alt1250_sslparsehdlr(altcid, altver);
+  parse_handler_t ret = NULL;
+
+#ifdef CONFIG_LTE_NET_MBEDTLS
+  if (ret == NULL)
+    {
+      ret = alt1250_sslparsehdlr(altcid, altver);
+    }
+#endif
 
 #ifdef CONFIG_HAVE_EXTHANDLER
   if (ret == NULL)
@@ -83,8 +89,14 @@ parse_handler_t alt1250_additional_parsehdlr(uint16_t altcid, uint8_t altver)
 compose_handler_t alt1250_additional_composehdlr(uint32_t cmdid,
     FAR uint8_t *payload, size_t size)
 {
-  compose_handler_t ret;
-  ret = alt1250_sslcomposehdlr(cmdid, payload, size);
+  compose_handler_t ret = NULL;
+
+#ifdef CONFIG_LTE_NET_MBEDTLS
+  if (ret == NULL)
+    {
+      ret = alt1250_sslcomposehdlr(cmdid, payload, size);
+    }
+#endif
 
 #ifdef CONFIG_HAVE_EXTHANDLER
   if (ret == NULL)
