@@ -1,0 +1,12 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config LTE_FACTORY_RESET_API
+	bool "LTE Factory Reset API"
+	default n
+	select LTE_ALT1250_EXTEND_IOCTL
+	---help---
+		Enable Factory Reset API for ALT1250 module.
+

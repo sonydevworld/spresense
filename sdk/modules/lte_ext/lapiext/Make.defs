@@ -1,7 +1,7 @@
 ############################################################################
-# modules/Library.mk
+# modules/lte_ext/lapiext/Make.defs
 #
-#   Copyright 2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,17 +33,15 @@
 #
 ############################################################################
 
-ifeq ($(CONFIG_GPSUTILS_CXD56NMEA_LIB),y)
-EXTRA_LIBPATHS += -L "$(MODULEDIR)$(DELIM)sensing$(DELIM)gnss$(DELIM)cxd56nmea"
-EXTRA_LIBS     += -lcxd56nmea
-endif
-
 ifeq ($(CONFIG_LTE_FACTORY_RESET_API),y)
-EXTRA_LIBPATHS += -L "$(MODULEDIR)$(DELIM)lte_ext$(DELIM)lapiext"
-EXTRA_LIBS     += -llteext
+
+CSRCS += alt1250_ioctl_extend.c
+
+CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250"}
+CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)usock_handlers"}
+CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)callback_handlers"}
+VPATH += lapiext
+DEPPATH += --dep-path lapiext
+
 endif
 
-ifneq ($(wildcard $(MODULEDIR)/libmodules.a),)
-EXTRA_LIBPATHS += -L "$(MODULEDIR)"
-EXTRA_LIBS     += -lmodules
-endif

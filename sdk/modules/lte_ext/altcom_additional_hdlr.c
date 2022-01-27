@@ -52,6 +52,12 @@ extern compose_handler_t
 extern parse_handler_t
     alt1250_sslparsehdlr(uint16_t, uint8_t);
 
+extern compose_handler_t
+    alt1250_fresetcomposehdlr(uint32_t, FAR uint8_t *, size_t);
+
+extern parse_handler_t
+    alt1250_fresetparsehdlr(uint16_t, uint8_t);
+
 /* Below 2 functions are for extension commands for alt1250 driver */
 
 extern compose_handler_t alt1250_extcomposehdlr(uint32_t);
@@ -71,6 +77,13 @@ parse_handler_t alt1250_additional_parsehdlr(uint16_t altcid, uint8_t altver)
   if (ret == NULL)
     {
       ret = alt1250_sslparsehdlr(altcid, altver);
+    }
+#endif
+
+#ifdef CONFIG_LTE_FACTORY_RESET_API
+  if (ret == NULL)
+    {
+      ret = alt1250_fresetparsehdlr(altcid, altver);
     }
 #endif
 
@@ -95,6 +108,13 @@ compose_handler_t alt1250_additional_composehdlr(uint32_t cmdid,
   if (ret == NULL)
     {
       ret = alt1250_sslcomposehdlr(cmdid, payload, size);
+    }
+#endif
+
+#ifdef CONFIG_LTE_FACTORY_RESET_API
+  if (ret == NULL)
+    {
+      ret = alt1250_fresetcomposehdlr(cmdid, payload, size);
     }
 #endif
 

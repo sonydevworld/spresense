@@ -16,6 +16,8 @@ if SDK_LTE_EXT
 
 menu "LTE extension libraries"
 
+source "$APPSDIR/../modules/lte_ext/lapiext/Kconfig"
+
 endmenu # LTE extension libraries
 
 endif
