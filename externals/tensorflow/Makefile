@@ -68,36 +68,32 @@ CXXFLAGS += -I wrapper_include
 # Build script of Tensorflow microlite
 #
 
-PATCHFILES = $(shell find $(CUR_DIR)/patches -name "*.patch")
-
 WGET ?= wget
 RM ?= rm
 MV ?= mv
 UNPACK := unzip
 
-## For Tensorflow Repository
+## For tflite-micro-spresense-examples repository
 
-include TensorflowSHA1.mk
+include TensorflowTag.mk
 
-TENSORFLOW_BASE_URL = https://codeload.github.com/tensorflow/tensorflow/zip/
-TENSORFLOW_URL = $(TENSORFLOW_BASE_URL)$(DELIM)$(TENSORFLOW_SHA1)
-TENSORFLOW_ARCHIVE = archive.zip
+TENSORFLOW_URL = https://github.com/sonydevworld/tflite-micro-spresense-examples/archive/refs/tags/$(TENSORFLOW_TAG).zip
+TENSORFLOW_ARCHIVE = $(TENSORFLOW_TAG).zip
 
-TENSORFLOW_DIR = tensorflow-$(TENSORFLOW_SHA1)
+TENSORFLOW_DIR = tflite-micro-spresense-examples-$(TENSORFLOW_TAG)
 TENSORFLOW_MAKEFILE = tensorflow$(DELIM)lite$(DELIM)micro$(DELIM)tools$(DELIM)make$(DELIM)Makefile
 TENSORFLOW_OPTKERNEL = cmsis_nn
 TENSORFLOW_TARGET = spresense
-TENSORFLOW_LIBOUT = $(TENSORFLOW_DIR)$(DELIM)tensorflow$(DELIM)lite$(DELIM)micro$(DELIM)tools$(DELIM)make$(DELIM)gen$(DELIM)spresense_cortex-m4_micro$(DELIM)lib
+TENSORFLOW_LIBOUT = $(TENSORFLOW_DIR)$(DELIM)gen
 SPRESENSE_MAKEDEF = $(TOPDIR)$(DELIM)Make.defs
 SPRESENSE_TF_C_RUNTIME = $(CUR_DIR)$(DELIM)c-runtime$(DELIM)Runtime.mk
 
-TF_MAKECMD := make -f $(TENSORFLOW_MAKEFILE) \
-											OPTIMIZED_KERNEL_DIR=$(TENSORFLOW_OPTKERNEL) \
-											TARGET=$(TENSORFLOW_TARGET) \
-											SPRESENSE_DEFS=$(SPRESENSE_MAKEDEF) \
-											SPRESENSE_CONFIG_H=$(TOPDIR)$(DELIM)include$(DELIM)nuttx$(DELIM)config.h \
-											SPRESENSE_CURDIR=$(CUR_DIR) \
-											SPRESENSE_APP_TFMAKE=$(SPRESENSE_TF_C_RUNTIME)
+TF_MAKECMD := make OPTIMIZED_KERNEL_DIR=$(TENSORFLOW_OPTKERNEL) \
+					TARGET=$(TENSORFLOW_TARGET) \
+					SPRESENSE_DEFS=$(SPRESENSE_MAKEDEF) \
+					SPRESENSE_CONFIG_H=$(TOPDIR)$(DELIM)include$(DELIM)nuttx$(DELIM)config.h \
+					SPRESENSE_CURDIR=$(CUR_DIR) \
+					SPRESENSE_APP_TFMAKE=$(SPRESENSE_TF_C_RUNTIME)
 
 context:: $(TENSORFLOW_DIR)
 
@@ -110,14 +106,10 @@ $(TENSORFLOW_DIR):
 		$(WGET) -O $(TENSORFLOW_ARCHIVE) $(TENSORFLOW_URL); \
 		$(UNPACK) $(TENSORFLOW_ARCHIVE); \
 		$(RM) $(TENSORFLOW_ARCHIVE); \
-		files="$(PATCHFILES)"; \
-		cd $(TENSORFLOW_DIR); \
-		for ff in $$files; do patch -p1 < $$ff; done; \
 		cd $(CUR_DIR); \
 	fi
 
 $(BIN): $(TENSORFLOW_DIR)
-	$(Q) cd $(TENSORFLOW_DIR); $(TF_MAKECMD) third_party_downloads
 	$(Q) cd $(TENSORFLOW_DIR); $(TF_MAKECMD)
 	$(Q) cp $(TENSORFLOW_LIBOUT)$(DELIM)$(BIN) $(CUR_DIR)
 
@@ -145,4 +137,3 @@ delete_tensorflow: tensorflow_clean
 	fi
 
 include $(APPDIR)$(DELIM)Application.mk
-

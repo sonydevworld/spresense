@@ -35,8 +35,8 @@
 
 ifeq ($(CONFIG_EXTERNALS_TENSORFLOW),y)
 EXTERNALS_TFDIR = $(EXTERNAL_DIR)$(DELIM)tensorflow
-include $(EXTERNALS_TFDIR)$(DELIM)TensorflowSHA1.mk
-TF_DIR = $(EXTERNALS_TFDIR)$(DELIM)tensorflow-$(TENSORFLOW_SHA1)
+include $(EXTERNALS_TFDIR)$(DELIM)TensorflowTag.mk
+TF_DIR = $(EXTERNALS_TFDIR)$(DELIM)tflite-micro-spresense-examples-$(TENSORFLOW_TAG)
 CFLAGS     += -I $(TF_DIR)
 CXXFLAGS   += -I $(TF_DIR)
 endif
