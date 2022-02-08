@@ -3,55 +3,46 @@ Solutions Corporation.
 The CXD5602 is ARM powered SoC, including many peripherals for IoT and
 wearable solutions.
   
-SPRESENSE SDK is based on NuttX. So please refer to [original NuttX site](http://www.nuttx.org/) to see basic
+SPRESENSE SDK is based on NuttX. So please refer to [original NuttX site](https://nuttx.apache.org/) to see basic
 kernel information.
 
-This SDK constructed by series of libraies, drivers and architecture specific
-code, these helps to you getting started and create faster for your products.
+This SDK is constructed by series of libraries, drivers and architecture specific
+code, and it will help you get started and create faster for your products.
 
 
 # Directory structure
 
 ```
 sdk
-|-- bsp            - Board support package
-|   |-- board      - Board specific code
-|   |-- include    - SDK headers
-|   |-- scripts    - Linker scripts
-|   `-- src        - Common source
-|-- configs        - Default configuration files
-|   `-- kernel
-|-- drivers        - External device drivers
-|   |-- lcd
-|   `-- sensors
-|-- lib            - Kernel and SDK library output directory
+|-- configs        - Pre-defined configuration files
+|   |-- default    - Default configuration file
+|   |-- device     - Device configuration files
+|   |-- feature    - Feature configuration files
+|   `-- examples   - Examples configuration files
 |-- modules
-|   |-- asmp       - ASMP framework
-|   |-- audio      - Audio library
-|   |-- fwuputils  - Firmware update utility
-|   |-- include    - Library headers
-|   |-- sensing    - Smart sensing library
-|   |   |-- arm_gesture   - Arm gesture detection
-|   |   |-- barometer     - Barometer
-|   |   |-- compass       - Compass
-|   |   |-- gnss          - GNSS
-|   |   `-- tap           - Tap detection
-|   `-- skeleton
+|   |-- asmp           - ASMP framework
+|   |-- audio          - Audio library
+|   |-- bluetooth      - Bluetooth library
+|   |-- digital_filter - Digital filter library
+|   |-- dnnrt          - DNN Runtime library
+|   |-- fwuputils      - Firmware update utility
+|   |-- include        - Library headers
+|   |-- mpcomm         - Multi processor communication framework
+|   |-- sensing        - Smart sensing library
+|   `-- tflmrt         - TensorFlow Lite for Microcontrollers Runtime library
 |-- system         - System commands
 `-- tools          - Build utilities
 ```
 
 # Build instruction
 
-Getting started
+Please see [Spresense SDK Getting Started Guide](https://developer.sony.com/develop/spresense/docs/sdk_set_up_en.html) for more details.
 
 ```
-$ make buildkernel KERNCONF=release
 $ tools/config.py default
 $ make
 ```
 
-SDK and NuttX kernel's configuration and build sequence are separated.
 
 # Configuration
 
@@ -60,18 +51,12 @@ kernel configuration. `tools/config.py` invokes kconfig tool so this must
 be installed prior it is used.
 `tools/config.py` must be called from top of SDK source tree.
 
-`tools/config.py` can be switched with `-k` or `--kernel` option to configure
-the kernel.
-If no `-k` or `--kernel` option has been specified, then the configuration
-affects SDK.
-
 e.g.
 ```
-$ tools/config.py --kernel --list (list kernel predefined configs)
 $ tools/config.py --list  (list SDK predefined configs)
 ```
 
-The first timeyou run SDK setup, or if you want to change to predefined config,
+The first time you run SDK setup, or if you want to change to predefined config,
 specify predefined `<config name>` as parameter:
 
 ```
@@ -82,7 +67,7 @@ You can specify multiple predefines, it allows combination of predefines.
 
 e.g.
 ```
-$ tools/config.py audio gnss
+$ tools/config.py examples/audio_player examples/gnss
 ```
 
 `tools/config.py` can be invoked menu style configuration UI by following
@@ -94,7 +79,7 @@ $ tools/config.py --qconfig    (same as 'make qconfig')
 $ tools/config.py --gconfig    (same as 'make gconfig')
 ```
 
-Additionally, you can use menu invokation with predefined configs like this:
+Additionally, you can use menu invocation with predefined configs like this:
 
 ```
 $ tools/config.py --menuconfig default
@@ -111,17 +96,11 @@ You can save current SDK configuration like this:
 $ tools/mkdefconfig.py <config name>
 ```
 
-And also kernel configuration too.
-
-```
-$ tools/mkdefconfig.py -k <config name>
-```
-
 After that, you can choose their saved default configs to specify `tools/config.py`'s
 config name.
 
-If your specified config name is already exists, `tools/mkdefconfig.py` shows
-comfirm message to overwrite.
+If your specified config name already exists, `tools/mkdefconfig.py` shows
+a confirm message to overwrite.
 
 By default, `tools/config.py` and `tools/mkdefconfig.py` find out specified
 configurations under `configs` directory.
@@ -140,33 +119,17 @@ When you want to use configurations in alternative directory:
 $ tools/config.py -d ../path/to/configs <config name>
 ```
 
-Also they can be use `-k` option with `-d` to saving/restoring kernel
-configuration.
-
 
 # Build
 
-SDK build system has been separated from NuttX, it to be able to build NuttX
-kernel indipendently, and build SDK faster.
-User must be build kernel before SDK build by following command.
-
-```
-$ make buildkernel
-```
-
-If you don't interest about kernel sources, then never been built again.
-And you can specify kernel default config from `KERNCONF`, configure specified
-config and build at the same time.
-
-```
-$ make buildkernel KERNCONF=<config name>
-```
-
-Finally, build SDK drivers and libraries.
+Build the NuttX and SDK source code by following the above configuration.
 
 ```
 $ make
 ```
+
+To increase build speed, you can pass the `-jN` flag to `make`,
+where `N` is the number of parallel jobs to run simultaneously.
 
 After built successfully, you can see `nuttx` and `nuttx.spk` files in top of
 SDK source tree.
