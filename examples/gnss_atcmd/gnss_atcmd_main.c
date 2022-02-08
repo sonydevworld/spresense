@@ -43,6 +43,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <debug.h>
 #include <errno.h>
 #include <sched.h>
 #include <semaphore.h>
