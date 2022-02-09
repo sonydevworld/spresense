@@ -214,6 +214,9 @@ __STATIC_FORCEINLINE arm_status arm_sqrt_f32(
       *pOut = sqrtf(in);
   #endif
 
+#elif defined(__GNUC__)
+      *pOut = __builtin_sqrtf(in);
+
 #else
       *pOut = sqrtf(in);
 #endif
