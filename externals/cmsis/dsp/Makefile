@@ -44,8 +44,11 @@ endif
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP_ARM_MATH_ROUNDING),y)
 CFLAGS += -DARM_MATH_ROUNDING
 endif
-CFLAGS += -fno-strict-aliasing -ffunction-sections -fdata-sections
 CFLAGS += -ffast-math
+CFLAGS += -Wno-shadow
+
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude"}
+CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude"}
 
 CMSIS_ROOT = ../CMSIS_5/CMSIS
 
@@ -54,7 +57,7 @@ SUBDIRS := $(dir $(wildcard $(CMSIS_ROOT)/DSP/Source/*/))
 VPATH   := $(SUBDIRS)
 ROOTDEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
 
-CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.c)))
+CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/arm_*.c)))
 ASRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.S)))
 
 include $(APPDIR)/Application.mk

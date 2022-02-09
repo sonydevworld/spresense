@@ -34,8 +34,8 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS),y)
-CFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U
-CXXFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U
+CFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U -D__ARM_FEATURE_MVE=0
+CXXFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U -D__ARM_FEATURE_MVE=0
 endif
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP),y)
