@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dnnrt/runtime.h>
+#include <assert.h>
 
 #include "nnablart/runtime.h"
 #include "runtime_internal.h"

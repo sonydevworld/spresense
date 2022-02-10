@@ -46,6 +46,7 @@
 #include <bt/bt_avrc_con.h>
 #include <ble/ble_comm.h>
 #include <arch/board/board.h>
+#include <assert.h>
 
 #include "manager/bt_freq_lock.h"
 #include "manager/bt_uart_manager.h"

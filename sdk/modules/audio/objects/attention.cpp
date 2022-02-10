@@ -33,6 +33,8 @@
  *
  ****************************************************************************/
 
+#include <syslog.h>
+
 #include "audio/audio_high_level_api.h"
 #include "attention.h"
 #include "audio/audio_message_types.h"

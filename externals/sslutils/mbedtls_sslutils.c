@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <debug.h>
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"
