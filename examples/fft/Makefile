@@ -48,10 +48,11 @@ MAINSRC = fft_main.c
 
 include $(APPDIR)/Application.mk
 
+.PHONY: build_dsp
 build_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-$(OBJS): build_dsp
+dsp_rpc.c: build_dsp
 
 clean_dsp:
 	@$(MAKE) -C dsp TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
