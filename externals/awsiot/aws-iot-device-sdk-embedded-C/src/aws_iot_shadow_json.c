@@ -344,13 +344,13 @@ static IoT_Error_t convertDataToString(char *pStringBuffer, size_t maxSizoString
 	}
 
 	if(type == SHADOW_JSON_INT32) {
-		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%i,", *(int32_t *) (pData));
+		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%li,", *(int32_t *) (pData));
 	} else if(type == SHADOW_JSON_INT16) {
 		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%hi,", *(int16_t *) (pData));
 	} else if(type == SHADOW_JSON_INT8) {
 		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%hhi,", *(int8_t *) (pData));
 	} else if(type == SHADOW_JSON_UINT32) {
-		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%u,", *(uint32_t *) (pData));
+		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%lu,", *(uint32_t *) (pData));
 	} else if(type == SHADOW_JSON_UINT16) {
 		snPrintfReturn = snprintf(pStringBuffer, maxSizoStringBuffer, "%hu,", *(uint16_t *) (pData));
 	} else if(type == SHADOW_JSON_UINT8) {
@@ -387,7 +387,7 @@ bool isJsonValidAndParse(const char *pJsonDocument, size_t jsonSize, void *pJson
 							sizeof(jsonTokenStruct) / sizeof(jsonTokenStruct[0]));
 
 	if(tokenCount < 0) {
-		IOT_WARN("Failed to parse JSON: %d\n", tokenCount);
+		IOT_WARN("Failed to parse JSON: %ld\n", tokenCount);
 		return false;
 	}
 
@@ -486,7 +486,7 @@ bool isReceivedJsonValid(const char *pJsonDocument, size_t jsonSize ) {
 							sizeof(jsonTokenStruct) / sizeof(jsonTokenStruct[0]));
 
 	if(tokenCount < 0) {
-		IOT_WARN("Failed to parse JSON: %d\n", tokenCount);
+		IOT_WARN("Failed to parse JSON: %ld\n", tokenCount);
 		return false;
 	}
 
@@ -508,7 +508,7 @@ bool extractClientToken(const char *pJsonDocument, size_t jsonSize, char *pExtra
 							sizeof(jsonTokenStruct) / sizeof(jsonTokenStruct[0]));
 
 	if(tokenCount < 0) {
-		IOT_WARN("Failed to parse JSON: %d\n", tokenCount);
+		IOT_WARN("Failed to parse JSON: %ld\n", tokenCount);
 		return false;
 	}
 

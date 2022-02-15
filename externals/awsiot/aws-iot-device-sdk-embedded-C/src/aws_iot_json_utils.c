@@ -51,7 +51,7 @@ IoT_Error_t parseUnsignedInteger32Value(uint32_t *i, const char *jsonString, jsm
 		return JSON_PARSE_ERROR;
 	}
 
-	if(('-' == (char) (jsonString[token->start])) || (1 != sscanf(jsonString + token->start, "%u", i))) {
+	if(('-' == (char) (jsonString[token->start])) || (1 != sscanf(jsonString + token->start, "%lu", i))) {
 		IOT_WARN("Token was not an unsigned integer.");
 		return JSON_PARSE_ERROR;
 	}
@@ -93,7 +93,7 @@ IoT_Error_t parseInteger32Value(int32_t *i, const char *jsonString, jsmntok_t *t
 		return JSON_PARSE_ERROR;
 	}
 
-	if(1 != sscanf(jsonString + token->start, "%i", i)) {
+	if(1 != sscanf(jsonString + token->start, "%li", i)) {
 		IOT_WARN("Token was not an integer.");
 		return JSON_PARSE_ERROR;
 	}
