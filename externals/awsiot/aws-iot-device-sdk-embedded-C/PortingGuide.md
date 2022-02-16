@@ -126,11 +126,6 @@ Destroy the mutex provided as argument.
 
 The threading layer provides the implementation of mutexes used for thread-safe operations.
 
-### Sample Porting:
-
-Marvell has ported the SDK for their development boards. [These](https://github.com/marvell-iot/aws_starter_sdk/tree/master/sdk/external/aws_iot/platform/wmsdk) files are example implementations of the above mentioned functions.
-This provides a port of the timer and network layer. The threading layer is not a part of this port.
-
 ## Time source for certificate validation
 
 As part of the TLS handshake the device (client) needs to validate the server certificate which includes validation of the certificate lifetime requiring that the device is aware of the actual time. Devices should be equipped with a real time clock or should be able to obtain the current time via NTP. Bypassing validation of the lifetime of a certificate is not recommended as it exposes the device to a security vulnerability, as it will still accept server certificates even when they have already has_timer_expired.
@@ -143,7 +138,7 @@ The single threaded implementation implies that the sample application code (SDK
 ### Multi-Threaded implementation
 
 In the simple multi-threaded case the `yield` function can be moved to a background thread. Ensure this task runs at the frequency described above. In this case, depending on the OS mechanism, a message queue or mailbox could be used to proxy incoming MQTT messages from the callback to the worker task responsible for responding to or dispatching messages. A similar mechanism could be employed to queue publish messages from threads into a publish queue that are processed by a publishing task. Ensure the threading layer is enabled as the library is not thread safe otherwise.
-There is a validation test for the multi-threaded implementation that can be found with the integration tests. You can find further details in the Readme for the integration tests [here](https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/master/tests/integration/README.md). We have run the validation test with 10 threads sending 500 messages each and verified to be working fine. It can be used as a reference testing application to validate whether your use case will work with multi-threading enabled.
+There is a validation test for the multi-threaded implementation that can be found with the integration tests. You can find further details in the Readme for the integration tests [here](https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/master/tests/integration/README.md/). We have run the validation test with 10 threads sending 500 messages each and verified to be working fine. It can be used as a reference testing application to validate whether your use case will work with multi-threading enabled.
 
 ## Sample applications
 

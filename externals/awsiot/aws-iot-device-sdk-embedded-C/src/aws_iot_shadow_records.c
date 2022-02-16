@@ -504,7 +504,7 @@ static void shadow_delta_callback(AWS_IoT_Client *pClient, char *topicName,
 			if(tempVersionNumber > shadowJsonVersionNum) {
 				shadowJsonVersionNum = tempVersionNumber;
 			} else {
-				IOT_WARN("Old Delta Message received - Ignoring rx: %d local: %d", tempVersionNumber,
+				IOT_WARN("Old Delta Message received - Ignoring rx: %lu local: %lu", tempVersionNumber,
 						 shadowJsonVersionNum);
 				return;
 			}

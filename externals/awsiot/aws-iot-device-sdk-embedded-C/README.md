@@ -1,28 +1,11 @@
+# AWS IoT Device SDK for Embedded C
 
-[![Build Status](https://travis-ci.org/aws/aws-iot-device-sdk-embedded-C.svg?branch=master)](https://travis-ci.org/aws/aws-iot-device-sdk-embedded-C)
+This tag [3.1.5](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/v3.1.5) contains the v3 version of AWS IoT Device SDK for Embedded C. No new features will be added to this tag; instead, only bug fixes will be made and minimally tested.
 
-<a href="https://scan.coverity.com/projects/aws-iot-device-sdk-embedded-c">
-  <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/15543/badge.svg"/>
-</a>
-
-**We have released version 4.0.0 beta 1 of this SDK on the [v4_beta](https://github.com/aws/aws-iot-device-sdk-embedded-C/tree/v4_beta) branch and encourage everyone to give it a try.**
-
-Version 4 is a new design, and therefore **NOT** backwards compatible with version 3.0.1. We will continue to fix bugs in v3.0.1 even after v4.0.0 is released, but we may not add new features to v3.0.1.
-
-Please be aware that v4 beta may have bugs and performance issues. Additionally, there are currently missing features compared to v3.0.1. See the [README](https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/v4_beta/README.md) on the v4_beta branch for more information.
-
-## Branches
-
-### Master branch
-The master branch will now contain bug fixes/features that have been minimally tested to ensure nothing major is broken. The current version on the master branch is v3.0.1. Eventually, we will move v4.0.0 to the master branch and move v3.0.1 to a legacy branch.
-
-### Release branch
-The release branch will contain new releases for the SDK that have been tested thoroughly on all supported platforms. Please ensure that you are tracking the release branch for all production work. The current version on the release branch is v3.0.1. Eventually, we will move v4.0.0 to the release branch and move v3.0.1 to a legacy branch.
 
 ## Overview
 
-The AWS IoT device SDK for embedded C is a collection of C source files which can be used in embedded applications to securely connect to the [AWS IoT platform](http://docs.aws.amazon.com/iot/latest/developerguide/what-is-aws-iot.html). It includes transport clients **MQTT**, **TLS** implementations and examples for their use. It also supports AWS IoT specific features such as **Thing Shadow**. It is distributed in source form and intended to be built into customer firmware along with application code, other libraries and RTOS. For additional information about porting the Device SDK for embedded C onto additional platforms please refer to the [PortingGuide](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/PortingGuide.md/).
+The AWS IoT device SDK for embedded C is a collection of C source files which can be used in embedded applications to securely connect to the [AWS IoT platform](http://docs.aws.amazon.com/iot/latest/developerguide/what-is-aws-iot.html). It includes transport clients **MQTT**, **TLS** implementations and examples for their use. It also supports AWS IoT specific features such as **Thing Shadow**. It is distributed in source form and intended to be built into customer firmware along with application code, other libraries and RTOS. For additional information about porting the Device SDK for embedded C onto additional platforms please refer to the [PortingGuide](./PortingGuide.md).
 
 ## Features
 The Device SDK simplifies access to the Pub/Sub functionality of the AWS IoT broker via MQTT and provide APIs to interact with Thing Shadows. The SDK has been tested to work with the AWS IoT platform to ensure best interoperability of a device with the AWS IoT platform.
@@ -54,14 +37,14 @@ Beginning with Release v2.2.0 of the SDK, AWS collects usage metrics indicating 
 ## How to get started ?
 Ensure you understand the AWS IoT platform and create the necessary certificates and policies. For more information on the AWS IoT platform please visit the [AWS IoT developer guide](http://docs.aws.amazon.com/iot/latest/developerguide/iot-security-identity.html).
 
-In order to quickly get started with the AWS IoT platform, we have ported the SDK for POSIX type Operating Systems like Ubuntu, OS X and RHEL. The SDK is configured for the mbedTLS library and can be built out of the box with *GCC* using *make utility*. You'll need to download mbedTLS from the official ARMmbed repository. We recommend that you pick the latest version in order to have up-to-date security fixes.
+In order to quickly get started with the AWS IoT platform, we have ported the SDK for POSIX type Operating Systems like Ubuntu, OS X and RHEL. The SDK is configured for the mbedTLS library and can be built out of the box with *GCC* using *make utility*. You'll need to download mbedTLS from the official ARMmbed repository. We recommend that you pick the latest version of 2.16 LTS release in order to have up-to-date security fixes.
 
 ## Installation
 This section explains the individual steps to retrieve the necessary files and be able to build your first application using the AWS IoT device SDK for embedded C.
 
 Steps:
 
- * Create a directory to hold your application e.g. (/home/<user>/aws_iot/my_app)
+ * Create a directory to hold your application e.g. (/home/*user*/aws_iot/my_app)
  * Change directory to this new directory
  * Download the SDK to device and place in the newly created directory
  * Expand the tarball (tar -xf <tarball.tar>).  This will create the below directories:
@@ -72,13 +55,13 @@ Steps:
     * `platform` - Platform specific files for timer, TLS and threading layers
     * `samples` - The sample applications
     * `src` - The AWS IoT SDK source files
-    * `tests` - Contains tests for verifying that the SDK is functioning as expected. More information can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/tests/README.md)
- * View further information on how to use the SDK in the Readme file for samples that can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/samples/README.md)
+    * `tests` - Contains tests for verifying that the SDK is functioning as expected. More information can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/tests/README.md/)
+ * View further information on how to use the SDK in the README file for samples that can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/samples/README.md/)
 
 Also, for a guided example on getting started with the Thing Shadow, visit the AWS IoT Console's [Interactive Guide](https://console.aws.amazon.com/iot).
 
 ## Porting to different platforms
-As Embedded devices run on different Real Time Operating Systems and TCP/IP stacks, it is one of the important design goals for the Device SDK to keep it portable. Please refer to the [porting guide](https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/master/PortingGuide.md) to get more information on how to make this SDK run on your devices (i.e. micro-controllers).
+As Embedded devices run on different real-time operating systems and TCP/IP stacks, it is one of the important design goals for the Device SDK to keep it portable. Please refer to the [porting guide](https://github.com/aws/aws-iot-device-sdk-embedded-C/blob/master/PortingGuide.md/) to get more information on how to make this SDK run on your devices (i.e. microcontrollers).
 
 ## Migrating from 1.x to 2.x
 The 2.x branch makes several changes to the SDK. This section provides information on what changes will be required in the client application for migrating from v1.x to 2.x.
@@ -100,7 +83,7 @@ The 2.x branch makes several changes to the SDK. This section provides informati
     | Publish | ```IoT_Error_t aws_iot_mqtt_publish(MQTTPublishParams *pParams);``` | ```IoT_Error_t aws_iot_mqtt_publish(AWS_IoT_Client *pClient, const char *pTopicName, uint16_t topicNameLen, IoT_Publish_Message_Params *pParams);``` |
     | Disconnect | ```IoT_Error_t aws_iot_mqtt_disconnect(void);``` | ```IoT_Error_t aws_iot_mqtt_disconnect(AWS_IoT_Client *pClient);``` |
 
-You can find more information on how to use the new APIs in the Readme file for samples that can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/samples/README.md)
+You can find more information on how to use the new APIs in the README file for samples that can be found [here](https://github.com/aws/aws-iot-device-sdk-embedded-c/blob/master/samples/README.md/)
 
 ## Migrating from 2.x to 3.x
 AWS IoT Device SDK for Embedded C v3.0.0 fixes two bugs (see #152 and #155) that create a potential buffer overflows. This version is not backward compatible with previous versions, so users will need to recompile their applications with the new version.
