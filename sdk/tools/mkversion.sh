@@ -47,7 +47,7 @@ if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
 
-NUTTX_VERSION="10.1.0"
+NUTTX_VERSION="10.2.0"
 
 # Get short hash for specified tag
 GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
