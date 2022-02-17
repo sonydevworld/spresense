@@ -34,11 +34,12 @@ typedef struct {
 
   /* Private state for RGB->Y conversion */
   INT32 * rgb_y_tab;		/* => table for RGB to Y conversion */
-
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Size of output unit
    */
   JDIMENSION output_width;
+#endif
 } my_color_deconverter;
 
 typedef my_color_deconverter * my_cconvert_ptr;
@@ -443,38 +444,33 @@ null_convert (j_decompress_ptr cinfo,
 	      JSAMPIMAGE input_buf, JDIMENSION input_row,
 	      JSAMPARRAY output_buf, int num_rows)
 {
+#ifndef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Delete unnecessary variables by modifying output format
    *  to CbYCrY format.
    */
-  /* int ci; */
-  /* register int nc = cinfo->num_components; */
+  int ci;
+  register int nc = cinfo->num_components;
+#endif
   register JSAMPROW outptr;
   register JSAMPROW inptr;
   register JDIMENSION col;
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Modify num_cols due to CbYCrY output.
    */
-  /* JDIMENSION num_cols = cinfo->output_width; */
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
   JDIMENSION num_cols = cconvert->output_width;
   JSAMPLE indata_h, indata_l;
+#else
+  JDIMENSION num_cols = cinfo->output_width;
+#endif
 
   while (--num_rows >= 0) {
+#ifdef SPRESENSE_PORT
     /* Modified for Spresense by Sony Semiconductor Solutions.
      * Modify output format to CbYCrY format.
      */
-
-    /* for (ci = 0; ci < nc; ci++) {
-     *   inptr = input_buf[ci][input_row];
-     *   outptr = output_buf[0] + ci;
-     *   for (col = 0; col < num_cols; col++) {
-     *     *outptr = *inptr++;     * needn't bother with GETJSAMPLE() here *
-     *     outptr += nc;
-     *   }
-     * }
-     */
-
     /* Copy Y */
 
     inptr = input_buf[0][input_row];
@@ -505,6 +501,16 @@ null_convert (j_decompress_ptr cinfo,
       *outptr = (indata_h + indata_l)/2; /* Get middle value for YUV4:2:2 */
       outptr += 4;
     }
+#else
+    for (ci = 0; ci < nc; ci++) {
+      inptr = input_buf[ci][input_row];
+      outptr = output_buf[0] + ci;
+      for (col = 0; col < num_cols; col++) {
+	*outptr = *inptr++;	/* needn't bother with GETJSAMPLE() here */
+	outptr += nc;
+      }
+    }
+#endif
     input_row++;
     output_buf++;
   }
@@ -634,7 +640,7 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
 				SIZEOF(my_color_deconverter));
   cinfo->cconvert = &cconvert->pub;
   cconvert->pub.start_pass = start_pass_dcolor;
-
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Spresense supports only CbYCrY.
    */
@@ -654,7 +660,7 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
   if (cinfo->out_color_space == JCS_CbYCrY) {
     cinfo->out_color_space = JCS_YCbCr;
   }
-
+#endif
   /* Make sure num_components agrees with jpeg_color_space */
   switch (cinfo->jpeg_color_space) {
   case JCS_GRAYSCALE:
@@ -795,15 +801,16 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
   }
-
+#ifdef SPRESENSE_PORT
   cconvert->output_width = cinfo->output_width;
-
+#endif
   if (cinfo->quantize_colors)
     cinfo->output_components = 1; /* single colormapped output component */
   else
     cinfo->output_components = cinfo->out_color_components;
 }
 
+#ifdef SPRESENSE_PORT
 /*
  * Modified for Spresense by Sony Semiconductor Solutions.
  * MCU decode preparation routine for output colorspace conversion.
@@ -815,4 +822,4 @@ jmcu_color_deconverter(j_decompress_ptr cinfo)
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
   cconvert->output_width = cinfo->output_width / cinfo->MCUs_per_row;
 }
-
+#endif

@@ -246,13 +246,15 @@ GLOBAL(int)
 jpeg_read_header (j_decompress_ptr cinfo, boolean require_image)
 {
   int retcode;
-
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Add state which source has been already set,
    * and fix conditional branch
    */
-  /* if (cinfo->global_state != DSTATE_START && */
   if (cinfo->global_state != DSTATE_SETSRC &&
+#else
+  if (cinfo->global_state != DSTATE_START &&
+#endif
       cinfo->global_state != DSTATE_INHEADER)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
 
@@ -300,12 +302,15 @@ jpeg_consume_input (j_decompress_ptr cinfo)
 
   /* NB: every possible DSTATE value should be listed in this switch */
   switch (cinfo->global_state) {
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Add state which source has been already set, 
    * and fix conditional branch
    */
-  /* case DSTATE_START: */
   case DSTATE_SETSRC:
+#else
+  case DSTATE_START:
+#endif
     /* Start-of-datastream actions: reset appropriate modules */
     (*cinfo->inputctl->reset_input_controller) (cinfo);
     /* Initialize application's data source module */
@@ -349,13 +354,16 @@ GLOBAL(boolean)
 jpeg_input_complete (j_decompress_ptr cinfo)
 {
   /* Check for valid jpeg object */
-  /* Modified for Spresense by Sony Semiconductor Solutions.
-   * Add state which source has been already set,
-   * and fix conditional branch
-   */
   if (cinfo->global_state < DSTATE_START ||
-      /* cinfo->global_state > DSTATE_STOPPING) */
+#ifdef SPRESENSE_PORT
+      /* Modified for Spresense by Sony Semiconductor Solutions.
+       * Add state which source has been already set,
+       * and fix conditional branch
+       */
       cinfo->global_state > DSTATE_SETSRC)
+#else
+      cinfo->global_state > DSTATE_STOPPING)
+#endif
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
   return cinfo->inputctl->eoi_reached;
 }
@@ -391,13 +399,16 @@ jpeg_finish_decompress (j_decompress_ptr cinfo)
   if ((cinfo->global_state == DSTATE_SCANNING ||
        cinfo->global_state == DSTATE_RAW_OK) && ! cinfo->buffered_image) {
     /* Terminate final pass of non-buffered mode */
+#ifdef SPRESENSE_PORT
     /* Modified for Spresense by Sony Semiconductor Solutions.
      * Add offset information to decode by mcu unit,
      * and add offset condition.
      */
-    /* if (cinfo->output_scanline < cinfo->output_height) */
     if ((cinfo->output_scanline < cinfo->output_height) &&
         (cinfo->output_offset < cinfo->output_width * cinfo->output_height))
+#else
+    if (cinfo->output_scanline < cinfo->output_height)
+#endif
       ERREXIT(cinfo, JERR_TOO_LITTLE_DATA);
     (*cinfo->master->finish_output_pass) (cinfo);
     cinfo->global_state = DSTATE_STOPPING;

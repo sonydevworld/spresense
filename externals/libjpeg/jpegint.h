@@ -13,6 +13,9 @@
  */
 
 
+/* Modified for Spresense by Sony Semiconductor Solutions. */
+#define SPRESENSE_PORT
+
 /* Declarations for both compression & decompression */
 
 typedef enum {			/* Operating modes for buffer controllers */
@@ -39,10 +42,12 @@ typedef enum {			/* Operating modes for buffer controllers */
 #define DSTATE_BUFPOST	208	/* looking for SOS/EOI in jpeg_finish_output */
 #define DSTATE_RDCOEFS	209	/* reading file in jpeg_read_coefficients */
 #define DSTATE_STOPPING	210	/* looking for EOI in jpeg_finish_decompress */
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add state which source has been already set.
  */
 #define DSTATE_SETSRC   211     /* after stdio_src or mem_src */
+#endif
 
 /* Declarations for compression modules */
 
@@ -407,12 +412,14 @@ EXTERN(void) jinit_color_deconverter JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_1pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_2pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_merged_upsampler JPP((j_decompress_ptr cinfo));
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * MCU decode preparation routines
  */
 EXTERN(void) jmcu_d_coef_controller JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_upsampler JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_color_deconverter JPP((j_decompress_ptr cinfo));
+#endif
 
 /* Memory manager initialization */
 EXTERN(void) jinit_memory_mgr JPP((j_common_ptr cinfo));

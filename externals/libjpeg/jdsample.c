@@ -98,6 +98,7 @@ sep_upsample (j_decompress_ptr cinfo,
   int ci;
   jpeg_component_info * compptr;
   JDIMENSION num_rows;
+
   /* Fill the conversion buffer, if it's empty */
   if (upsample->next_row_out >= cinfo->max_v_samp_factor) {
     for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
@@ -224,7 +225,7 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
   }
 }
 
-
+#ifndef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Spresense supports only CbYCrY format.
  * Delete unnecessary function in the case.
@@ -234,29 +235,30 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  * It's still a box filter.
  */
 
-/* METHODDEF(void)
- * h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
- *                JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
- * {
- *   JSAMPARRAY output_data = *output_data_ptr;
- *   register JSAMPROW inptr, outptr;
- *   register JSAMPLE invalue;
- *   JSAMPROW outend;
- *   int outrow;
- *
- *   for (outrow = 0; outrow < cinfo->max_v_samp_factor; outrow++) {
- *     inptr = input_data[outrow];
- *     outptr = output_data[outrow];
- *     outend = outptr + cinfo->output_width;
- *     while (outptr < outend) {
- *       invalue = *inptr++;       * don't need GETJSAMPLE() here *
- *       *outptr++ = invalue;
- *       *outptr++ = invalue;
- *     }
- *   }
- * }
- */
+METHODDEF(void)
+h2v1_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
+	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
+{
+  JSAMPARRAY output_data = *output_data_ptr;
+  register JSAMPROW inptr, outptr;
+  register JSAMPLE invalue;
+  JSAMPROW outend;
+  int outrow;
 
+  for (outrow = 0; outrow < cinfo->max_v_samp_factor; outrow++) {
+    inptr = input_data[outrow];
+    outptr = output_data[outrow];
+    outend = outptr + cinfo->output_width;
+    while (outptr < outend) {
+      invalue = *inptr++;	/* don't need GETJSAMPLE() here */
+      *outptr++ = invalue;
+      *outptr++ = invalue;
+    }
+  }
+}
+#endif
+
+#ifndef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Spresense supports only CbYCrY format.
  * Delete unnecessary function in the case.
@@ -266,33 +268,33 @@ int_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
  * It's still a box filter.
  */
 
-/* METHODDEF(void)
- * h2v2_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
- *                JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
- * {
- *   JSAMPARRAY output_data = *output_data_ptr;
- *   register JSAMPROW inptr, outptr;
- *   register JSAMPLE invalue;
- *   JSAMPROW outend;
- *   int inrow, outrow;
- *
- *   inrow = outrow = 0;
- *   while (outrow < cinfo->max_v_samp_factor) {
- *     inptr = input_data[inrow];
- *     outptr = output_data[outrow];
- *     outend = outptr + cinfo->output_width;
- *     while (outptr < outend) {
- *       invalue = *inptr++;       * don't need GETJSAMPLE() here *
- *       *outptr++ = invalue;
- *       *outptr++ = invalue;
- *     }
- *     jcopy_sample_rows(output_data, outrow, output_data, outrow+1,
- *                       1, cinfo->output_width);
- *     inrow++;
- *     outrow += 2;
- *   }
- * }
- */
+METHODDEF(void)
+h2v2_upsample (j_decompress_ptr cinfo, jpeg_component_info * compptr,
+	       JSAMPARRAY input_data, JSAMPARRAY * output_data_ptr)
+{
+  JSAMPARRAY output_data = *output_data_ptr;
+  register JSAMPROW inptr, outptr;
+  register JSAMPLE invalue;
+  JSAMPROW outend;
+  int inrow, outrow;
+
+  inrow = outrow = 0;
+  while (outrow < cinfo->max_v_samp_factor) {
+    inptr = input_data[inrow];
+    outptr = output_data[outrow];
+    outend = outptr + cinfo->output_width;
+    while (outptr < outend) {
+      invalue = *inptr++;	/* don't need GETJSAMPLE() here */
+      *outptr++ = invalue;
+      *outptr++ = invalue;
+    }
+    jcopy_sample_rows(output_data, outrow, output_data, outrow+1,
+		      1, cinfo->output_width);
+    inrow++;
+    outrow += 2;
+  }
+}
+#endif
 
 
 /*
@@ -344,22 +346,28 @@ jinit_upsampler (j_decompress_ptr cinfo)
       continue;		/* don't need to allocate buffer */
     }
     if (h_in_group * 2 == h_out_group && v_in_group == v_out_group) {
+      /* Special case for 2h1v upsampling */
+#ifdef SPRESENSE_PORT
       /* Modified for Spresense by Sony Semiconductor Solutions.
        * Spresense supports only CbYCrY.
        * Use fullsize_upsample in the case.
        */
-      /* Special case for 2h1v upsampling */
-      /* upsample->methods[ci] = h2v1_upsample; */
       upsample->methods[ci] = fullsize_upsample;
+#else
+      upsample->methods[ci] = h2v1_upsample;
+#endif
     } else if (h_in_group * 2 == h_out_group &&
 	       v_in_group * 2 == v_out_group) {
+      /* Special case for 2h2v upsampling */
+#ifdef SPRESENSE_PORT
       /* Modified for Spresense by Sony Semiconductor Solutions.
        * Spresense supports only CbYCrY.
        * Use fullsize_upsample in the case.
        */
-      /* Special case for 2h2v upsampling */
-      /* upsample->methods[ci] = h2v2_upsample; */
       upsample->methods[ci] = fullsize_upsample;
+#else
+      upsample->methods[ci] = h2v2_upsample;
+#endif
     } else if ((h_out_group % h_in_group) == 0 &&
 	       (v_out_group % v_in_group) == 0) {
       /* Generic integral-factors upsampling method */
@@ -376,15 +384,15 @@ jinit_upsampler (j_decompress_ptr cinfo)
   }
 }
 
+#ifdef SPRESENSE_PORT
 /*
  * Modified for Spresense by Sony Semiconductor Solutions.
  * MCU decode preparation routine for upsampling.
  */
-
 GLOBAL(void)
 jmcu_upsampler (j_decompress_ptr cinfo)
 {
   my_upsample_ptr upsample = (my_upsample_ptr) cinfo->upsample;
   upsample->rows_to_go = cinfo->output_height * cinfo->MCUs_per_row;
 }
-
+#endif
