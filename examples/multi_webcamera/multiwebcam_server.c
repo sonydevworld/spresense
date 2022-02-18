@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/multi_webcamera/multiwebcam_server.c
  *
- *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +58,18 @@ static int send_binary(int s, const char *data, int len)
       sending_len = len - sent_len;
       sending_len = ( sending_len > MAX_SENDING_LEN ) ? MAX_SENDING_LEN : sending_len;
       ret = write(s, data, sending_len);
+
+      if (ret == 0)
+        {
+          /* It may fail to write when the host browser is stopped due to
+           * network error. In this case, it returns an error to terminate
+           * this thread and waits for new socket reconnection.
+           */
+
+          printf("Error. Cannot send socket.\n");
+          return -1;
+        }
+
       if (ret < 0)
         {
           return ret;

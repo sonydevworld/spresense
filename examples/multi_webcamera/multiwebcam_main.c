@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/multi_webcamera/multiwebcam_main.c
  *
- *   Copyright 2019, 2020 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019, 2020, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,16 +115,17 @@ int main(int argc, FAR char *argv[])
       /* accept TCP connection from client */
 
       wsock = multiwebcam_waitconnection(rsock, &client);
+      printf("Accept wsock=%d\n", wsock);
 
       if (wsock > 0)
         {
           printf("Start Jpeg thread.\n");
           jpeg_thd = multiwebcam_start_jpegsender(wsock);
           pthread_join(jpeg_thd, NULL);
-          printf("Finith Jpeg thread.\n");
+          printf("Finish Jpeg thread.\n");
           wsock = 0;
-          sleep(1);
         }
+      sleep(1);
     }
 
   /* NOTREACHED */
