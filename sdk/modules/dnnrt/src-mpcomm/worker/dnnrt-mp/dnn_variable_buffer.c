@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <nnablart/network.h>
 #include <nnablart/runtime.h>
