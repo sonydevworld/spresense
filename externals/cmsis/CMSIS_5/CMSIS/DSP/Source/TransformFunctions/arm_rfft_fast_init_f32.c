@@ -28,6 +28,12 @@
 
 #include "dsp/transform_functions.h"
 #include "arm_common_tables.h"
+#include "arm_const_structs.h"
+
+#define FFTINIT(EXT,SIZE)                                           \
+  Sint->bitRevLength = arm_cfft_sR_##EXT##_len##SIZE.bitRevLength;  \
+  Sint->pBitRevTable = arm_cfft_sR_##EXT##_len##SIZE.pBitRevTable;  \
+  Sint->pTwiddle = arm_cfft_sR_##EXT##_len##SIZE.pTwiddle;
 
 /**
   @ingroup groupTransforms
@@ -41,7 +47,6 @@
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_16) && defined(ARM_TABLE_BITREVIDX_FLT_16) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_32))
 
 /**
-  @private
   @brief         Initialization function for the 32pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -51,15 +56,19 @@
 
 arm_status arm_rfft_32_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),16);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 16U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,16);
 
   S->fftLenRFFT = 32U;
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_32;
@@ -71,7 +80,6 @@ arm_status arm_rfft_32_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_32) && defined(ARM_TABLE_BITREVIDX_FLT_32) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_64))
 
 /**
-  @private
   @brief         Initialization function for the 64pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -81,15 +89,20 @@ arm_status arm_rfft_32_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_64_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),32);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 32U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,32);
+
   S->fftLenRFFT = 64U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_64;
@@ -101,7 +114,6 @@ arm_status arm_rfft_64_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_64) && defined(ARM_TABLE_BITREVIDX_FLT_64) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_128))
 
 /**
-  @private
   @brief         Initialization function for the 128pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -111,15 +123,20 @@ arm_status arm_rfft_64_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_128_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),64);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 64U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,64);
+
   S->fftLenRFFT = 128;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_128;
@@ -131,7 +148,6 @@ arm_status arm_rfft_128_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_128) && defined(ARM_TABLE_BITREVIDX_FLT_128) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_256))
 
 /**
-  @private
   @brief         Initialization function for the 256pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -141,15 +157,20 @@ arm_status arm_rfft_128_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_256_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),128);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 128U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,128);
+
   S->fftLenRFFT = 256U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_256;
@@ -161,7 +182,6 @@ arm_status arm_rfft_256_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_256) && defined(ARM_TABLE_BITREVIDX_FLT_256) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_512))
 
 /**
-  @private
   @brief         Initialization function for the 512pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -171,15 +191,20 @@ arm_status arm_rfft_256_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_512_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),256);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 256U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,256);
+
   S->fftLenRFFT = 512U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_512;
@@ -190,7 +215,6 @@ arm_status arm_rfft_512_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_512) && defined(ARM_TABLE_BITREVIDX_FLT_512) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_1024))
 /**
-  @private
   @brief         Initialization function for the 1024pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -200,15 +224,20 @@ arm_status arm_rfft_512_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_1024_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),512);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 512U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,512);
+
   S->fftLenRFFT = 1024U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_1024;
@@ -219,7 +248,6 @@ arm_status arm_rfft_1024_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_1024) && defined(ARM_TABLE_BITREVIDX_FLT_1024) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_2048))
 /**
-  @private
   @brief         Initialization function for the 2048pt floating-point real FFT.
   @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -228,15 +256,20 @@ arm_status arm_rfft_1024_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
  */
 arm_status arm_rfft_2048_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),1024);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 1024U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,1024);
+
   S->fftLenRFFT = 2048U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_2048;
@@ -247,7 +280,6 @@ arm_status arm_rfft_2048_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F32_2048) && defined(ARM_TABLE_BITREVIDX_FLT_2048) && defined(ARM_TABLE_TWIDDLECOEF_RFFT_F32_4096))
 /**
-  @private
 * @brief         Initialization function for the 4096pt floating-point real FFT.
 * @param[in,out] S  points to an arm_rfft_fast_instance_f32 structure
   @return        execution status
@@ -257,15 +289,20 @@ arm_status arm_rfft_2048_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
 arm_status arm_rfft_4096_fast_init_f32( arm_rfft_fast_instance_f32 * S ) {
 
-  arm_status status;
-
   if( !S ) return ARM_MATH_ARGUMENT_ERROR;
 
-  status=arm_cfft_init_f32(&(S->Sint),2048);
-  if (status != ARM_MATH_SUCCESS)
-  {
-    return(status);
-  }
+  /* Initialize parameters without arm_cfft_init_f32 to reduce code size */
+
+  arm_cfft_instance_f32 * Sint;
+
+  Sint = &(S->Sint);
+
+  /*  Initialise the FFT length */
+  Sint->fftLen = 2048U;
+
+  /*  Initialise the bit reversal table modifier */
+  FFTINIT(f32,2048);
+
   S->fftLenRFFT = 4096U;
 
   S->pTwiddleRFFT    = (float32_t *) twiddleCoef_rfft_4096;
