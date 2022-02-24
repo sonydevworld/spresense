@@ -47,6 +47,9 @@
 
 #include <stdio.h>
 
+/* Modified for Spresense by Sony Semiconductor Solutions. */
+#define SPRESENSE_PORT
+
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * <unistd.h> is used for read().
  */
@@ -94,11 +97,12 @@
  * Furthermore, macros are provided for fflush() and ferror() in order
  * to facilitate adaption by applications using an own FILE class.
  */
-
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add read function for decode from file descriptor.
  */
 #define JREAD read
+#endif
 #define JFREAD(file,buf,sizeofbuf)  \
   ((size_t) fread((void *) (buf), (size_t) 1, (size_t) (sizeofbuf), (file)))
 #define JFWRITE(file,buf,sizeofbuf)  \

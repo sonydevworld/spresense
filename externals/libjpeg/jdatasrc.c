@@ -2,7 +2,7 @@
  * jdatasrc.c
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
- * Modified 2009-2015 by Guido Vollbeding.
+ * Modified 2009-2019 by Guido Vollbeding.
  * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
@@ -27,17 +27,20 @@
 #include "jerror.h"
 #include "jpegint.h"
 
+
 /* Expanded data source object for stdio input */
 
 typedef struct {
   struct jpeg_source_mgr pub;	/* public fields */
 
   FILE * infile;		/* source stream */
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Add decode function which uses file descriptor,
    * and, enable to save input file descriptor.
    */ 
   int    infd;                  /* source file descriptor */
+#endif
   JOCTET * buffer;		/* start of buffer */
   boolean start_of_file;	/* have we gotten any data yet? */
 } my_source_mgr;
@@ -47,10 +50,10 @@ typedef my_source_mgr * my_src_ptr;
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Modify INPUT_BUF_SIZE configurable.
  */
-/* #define INPUT_BUF_SIZE  4096 choose an efficiently fread'able size */
-#ifndef CONFIG_JPEGDEC_INPUT_BUF_SIZE
-/* choose an efficiently fread'able size */
-#  define CONFIG_JPEGDEC_INPUT_BUF_SIZE  4096
+#ifdef CONFIG_JPEGDEC_INPUT_BUF_SIZE
+#define INPUT_BUF_SIZE  CONFIG_JPEGDEC_INPUT_BUF_SIZE
+#else
+#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
 #endif
 
 /*
@@ -116,11 +119,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes;
 
-  /* Modified for Spresense by Sony Semiconductor Solutions.
-   * Modify INPUT_BUF_SIZE configurable.
-   */
-  /* nbytes = JFREAD(src->infile, src->buffer, INPUT_BUF_SIZE); */
-  nbytes = JFREAD(src->infile, src->buffer, CONFIG_JPEGDEC_INPUT_BUF_SIZE);
+  nbytes = JFREAD(src->infile, src->buffer, INPUT_BUF_SIZE);
 
   if (nbytes <= 0) {
     if (src->start_of_file)	/* Treat empty input file as fatal error */
@@ -139,6 +138,7 @@ fill_input_buffer (j_decompress_ptr cinfo)
   return TRUE;
 }
 
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add decode function which uses file descriptor,
  */
@@ -148,10 +148,10 @@ fill_fd_input_buffer (j_decompress_ptr cinfo)
   my_src_ptr src = (my_src_ptr) cinfo->src;
   size_t nbytes;
 
-  nbytes = JREAD(src->infd, src->buffer, CONFIG_JPEGDEC_INPUT_BUF_SIZE);
+  nbytes = JREAD(src->infd, src->buffer, INPUT_BUF_SIZE);
 
   if (nbytes <= 0) {
-    if (src->start_of_file)     /* Treat empty input file as fatal error */
+    if (src->start_of_file)	/* Treat empty input file as fatal error */
       ERREXIT(cinfo, JERR_INPUT_EMPTY);
     WARNMS(cinfo, JWRN_JPEG_EOF);
     /* Insert a fake EOI marker */
@@ -166,6 +166,7 @@ fill_fd_input_buffer (j_decompress_ptr cinfo)
 
   return TRUE;
 }
+#endif
 
 METHODDEF(boolean)
 fill_mem_input_buffer (j_decompress_ptr cinfo)
@@ -205,21 +206,23 @@ METHODDEF(void)
 skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
   struct jpeg_source_mgr * src = cinfo->src;
+  size_t nbytes;
 
   /* Just a dumb implementation for now.  Could use fseek() except
    * it doesn't work on pipes.  Not clear that being smart is worth
    * any trouble anyway --- large skips are infrequent.
    */
   if (num_bytes > 0) {
-    while (num_bytes > (long) src->bytes_in_buffer) {
-      num_bytes -= (long) src->bytes_in_buffer;
+    nbytes = (size_t) num_bytes;
+    while (nbytes > src->bytes_in_buffer) {
+      nbytes -= src->bytes_in_buffer;
       (void) (*src->fill_input_buffer) (cinfo);
       /* note we assume that fill_input_buffer will never return FALSE,
        * so suspension need not be handled.
        */
     }
-    src->next_input_byte += (size_t) num_bytes;
-    src->bytes_in_buffer -= (size_t) num_bytes;
+    src->next_input_byte += nbytes;
+    src->bytes_in_buffer -= nbytes;
   }
 }
 
@@ -260,13 +263,13 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
 {
   my_src_ptr src;
 
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Block execution in the middle of decode.
    */
-
   if (cinfo->global_state != DSTATE_START)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
-
+#endif
   /* The source object and input buffer are made permanent so that a series
    * of JPEG images can be read from the same file by calling jpeg_stdio_src
    * only before the first one.  (If we discarded the buffer at the end of
@@ -275,20 +278,11 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
    * manager serially with the same JPEG object.  Caveat programmer.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  SIZEOF(my_source_mgr));
+    cinfo->src = (struct jpeg_source_mgr *) (*cinfo->mem->alloc_small)
+      ((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
-    /* Modified for Spresense by Sony Semiconductor Solutions.
-     * Modify INPUT_BUF_SIZE configurable.
-     */
-    /* src->buffer = (JOCTET *)
-     * (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-     *                             INPUT_BUF_SIZE * SIZEOF(JOCTET));
-     */
-    src->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  CONFIG_JPEGDEC_INPUT_BUF_SIZE * SIZEOF(JOCTET));
+    src->buffer = (JOCTET *) (*cinfo->mem->alloc_small)
+      ((j_common_ptr) cinfo, JPOOL_PERMANENT, INPUT_BUF_SIZE * SIZEOF(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -300,15 +294,15 @@ jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile)
   src->infile = infile;
   src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
   src->pub.next_input_byte = NULL; /* until buffer loaded */
-
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Add state which source has been already set.
    */
-
   cinfo->global_state = DSTATE_SETSRC;
+#endif
 }
 
-
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add decode function which uses file descriptor.
  */
@@ -335,14 +329,12 @@ jpeg_fd_src (j_decompress_ptr cinfo, int infd)
    * This makes it unsafe to use this manager and a different source
    * manager serially with the same JPEG object.  Caveat programmer.
    */
-  if (cinfo->src == NULL) {     /* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  SIZEOF(my_source_mgr));
+  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+    cinfo->src = (struct jpeg_source_mgr *) (*cinfo->mem->alloc_small)
+      ((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(my_source_mgr));
     src = (my_src_ptr) cinfo->src;
-    src->buffer = (JOCTET *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  CONFIG_JPEGDEC_INPUT_BUF_SIZE * SIZEOF(JOCTET));
+    src->buffer = (JOCTET *) (*cinfo->mem->alloc_small)
+      ((j_common_ptr) cinfo, JPOOL_PERMANENT, INPUT_BUF_SIZE * SIZEOF(JOCTET));
   }
 
   src = (my_src_ptr) cinfo->src;
@@ -357,7 +349,7 @@ jpeg_fd_src (j_decompress_ptr cinfo, int infd)
 
   cinfo->global_state = DSTATE_SETSRC;
 }
-
+#endif
 
 /*
  * Prepare for input from a supplied memory buffer.
@@ -366,28 +358,27 @@ jpeg_fd_src (j_decompress_ptr cinfo, int infd)
 
 GLOBAL(void)
 jpeg_mem_src (j_decompress_ptr cinfo,
-	      const unsigned char * inbuffer, unsigned long insize)
+	      const unsigned char * inbuffer, size_t insize)
 {
   struct jpeg_source_mgr * src;
 
   if (inbuffer == NULL || insize == 0)	/* Treat empty input as fatal error */
     ERREXIT(cinfo, JERR_INPUT_EMPTY);
 
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Block execution in the middle of decode.
    */
-
   if (cinfo->global_state != DSTATE_START)
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
-
+#endif
   /* The source object is made permanent so that a series of JPEG images
    * can be read from the same buffer by calling jpeg_mem_src only before
    * the first one.
    */
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
-    cinfo->src = (struct jpeg_source_mgr *)
-      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                  SIZEOF(struct jpeg_source_mgr));
+    cinfo->src = (struct jpeg_source_mgr *) (*cinfo->mem->alloc_small)
+      ((j_common_ptr) cinfo, JPOOL_PERMANENT, SIZEOF(struct jpeg_source_mgr));
   }
 
   src = cinfo->src;
@@ -396,12 +387,12 @@ jpeg_mem_src (j_decompress_ptr cinfo,
   src->skip_input_data = skip_input_data;
   src->resync_to_restart = jpeg_resync_to_restart; /* use default method */
   src->term_source = term_source;
-  src->bytes_in_buffer = (size_t) insize;
+  src->bytes_in_buffer = insize;
   src->next_input_byte = (const JOCTET *) inbuffer;
-
+#ifdef SPRESENSE_PORT
   /* Modified for Spresense by Sony Semiconductor Solutions.
    * Add state which source has been already set.
    */
-
   cinfo->global_state = DSTATE_SETSRC;
+#endif
 }
