@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Arm Limited. All rights reserved.
+ * Copyright (c) 2013-2021 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,14 +27,22 @@
 #define RTX_CORE_CA_H_
 
 #ifndef RTX_CORE_C_H_
+#ifndef RTE_COMPONENTS_H
 #include "RTE_Components.h"
+#endif
 #include CMSIS_device_header
 #endif
 
 #include <stdbool.h>
 typedef bool bool_t;
+
+#ifndef FALSE
 #define FALSE                   ((bool_t)0)
+#endif
+
+#ifndef TRUE
 #define TRUE                    ((bool_t)1)
+#endif
 
 #define DOMAIN_NS               0
 #define EXCLUSIVE_ACCESS        1
@@ -104,26 +112,26 @@ __STATIC_INLINE uint32_t StackOffsetR0 (uint8_t stack_frame) {
 /// Get xPSR Register - emulate M profile: SP_usr - (8*4)
 /// \return      xPSR Register value
 #if defined(__CC_ARM)
+#pragma push
+#pragma arm
 static __asm    uint32_t __get_PSP (void) {
-  arm
   sub   sp, sp, #4
   stm   sp, {sp}^
   pop   {r0}
   sub   r0, r0, #32
   bx    lr
 }
+#pragma pop
 #else
 #ifdef __ICCARM__
 __arm
+#else
+__attribute__((target("arm")))
 #endif
 __STATIC_INLINE uint32_t __get_PSP (void) {
   register uint32_t ret;
 
   __ASM volatile (
-#ifndef __ICCARM__
-    ".syntax unified\n\t"
-    ".arm\n\t"
-#endif
     "sub  sp,sp,#4\n\t"
     "stm  sp,{sp}^\n\t"
     "pop  {%[ret]}\n\t"
@@ -152,9 +160,9 @@ __STATIC_INLINE bool_t IsPrivileged (void) {
   return (__get_mode() != CPSR_MODE_USER);
 }
 
-/// Check if in IRQ Mode
-/// \return     true=IRQ, false=thread
-__STATIC_INLINE bool_t IsIrqMode (void) {
+/// Check if in Exception
+/// \return     true=exception, false=thread
+__STATIC_INLINE bool_t IsException (void) {
   return ((__get_mode() != CPSR_MODE_USER) && (__get_mode() != CPSR_MODE_SYSTEM));
 }
 

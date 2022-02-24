@@ -2,8 +2,8 @@
  * @file     ARMSC300.h
  * @brief    CMSIS Core Peripheral Access Layer Header File for
  *           ARMSC300 Device
- * @version  V5.3.1
- * @date     09. July 2018
+ * @version  V5.3.2
+ * @date     10. Jan 2020
  ******************************************************************************/
 /*
  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
@@ -41,9 +41,9 @@ typedef enum IRQn
   MemoryManagement_IRQn         = -12,     /*  4 Memory Management Interrupt */
   BusFault_IRQn                 = -11,     /*  5 Bus Fault Interrupt */
   UsageFault_IRQn               = -10,     /*  6 Usage Fault Interrupt */
-  SVCall_IRQn                   =  -5,     /* 11 SV Call Interrupt */
+  SVCall_IRQn                   =  -5,     /* 11 SVC Interrupt */
   DebugMonitor_IRQn             =  -4,     /* 12 Debug Monitor Interrupt */
-  PendSV_IRQn                   =  -2,     /* 14 Pend SV Interrupt */
+  PendSV_IRQn                   =  -2,     /* 14 PendSV Interrupt */
   SysTick_IRQn                  =  -1,     /* 15 System Tick Interrupt */
 
 /* -------------------  Processor Interrupt Numbers  ------------------------------ */
@@ -95,7 +95,7 @@ typedef enum IRQn
 #define __NVIC_PRIO_BITS          3U        /* Number of Bits used for Priority Levels */
 #define __Vendor_SysTickConfig    0U        /* Set to 1 if different SysTick Config is used */
 
-#include "core_SC300.h"                     /* Processor and core peripherals */
+#include "core_sc300.h"                     /* Processor and core peripherals */
 #include "system_ARMSC300.h"                /* System Header */
 
 

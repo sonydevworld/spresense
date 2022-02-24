@@ -99,6 +99,47 @@
       <th>Description</th>
     </tr>
     <tr>
+      <td>V5.5.3</td>
+      <td>
+       - CVE-2021-27431 vulnerability mitigation.
+       - Added OS Initialization for IAR.
+       - Fixed osDelay/osDelayUntil error handling.
+       - Fixed Round-Robin (timeout value is not reset when switching to higher priority threads).
+       - Fixed osThreadJoin (when terminating thread which is waiting to be joined).
+       - Fixed Message Queue Data allocation size when using object specific memory allocation.
+       - Fixed Mutex priority inversion (when mixing mutexes with and without priority inherit).
+       - Enhanced stack overrun checking.
+       - Updated osKernelResume handling (processing past sleep ticks).
+       - Updated configuration (Event Recorder).
+       - Reorganized and optimized IRQ modules.
+      </td>
+    </tr>
+    <tr>
+      <td>V5.5.2</td>
+      <td>
+       - Added support for Cortex-M55.
+       - Fixed thread priority restore on mutex acquire timeout (when priority inherit is used).
+       - Enhanced support for Armv8-M (specifying thread TrustZone module identifier is optional).
+       - Updated configuration default values (Global Dynamic Memory and Thread Stack).
+      </td>
+    </tr>
+    <tr>
+      <td>V5.5.1</td>
+      <td>
+       - Fixed osMutexRelease issue (thread owning multiple mutexes).
+       - Improved osThreadJoin robustness (user programing errors).
+      </td>
+    </tr>
+    <tr>
+      <td>V5.5.0</td>
+      <td>
+       - Updated and enhanced generated events (reorganized components).
+       - Updated configuration (Event Recorder).
+       - Updated Component Viewer (improved performance).
+       - Minor code optimizations.
+      </td>
+    </tr>
+    <tr>
       <td>V5.4.0</td>
       <td>
        - Based on CMSIS-RTOS API V2.1.3.
@@ -151,7 +192,7 @@
       <td>V5.2.0</td>
       <td>
        - Based on CMSIS-RTOS API V2.1.1.
-       - Added support for for Cortex-A.
+       - Added support for Cortex-A.
        - Using OS Tick API for RTX Kernel Timer Tick.
        - Fixed potential corruption of terminated threads list.
        - Corrected MessageQueue to use actual message length (before padding).

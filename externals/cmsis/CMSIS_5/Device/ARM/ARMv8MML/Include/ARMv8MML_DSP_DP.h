@@ -2,10 +2,11 @@
  * @file     ARMv8MML_DSP_DP.h
  * @brief    CMSIS Core Peripheral Access Layer Header File for
  *           ARMv8MML Mainline Device (configured for Armv8-M MainlineARMv8MML
- * @date     09. July 2018
+ * @version  V5.4.0
+ * @date     03. March 2020
  ******************************************************************************/
 /*
- * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+ * Copyright (c) 2009-2020 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,9 +42,9 @@ typedef enum IRQn
   BusFault_IRQn                 = -11,     /*  5 Bus Fault Interrupt */
   UsageFault_IRQn               = -10,     /*  6 Usage Fault Interrupt */
   SecureFault_IRQn              =  -9,     /*  7 Secure Fault Interrupt */
-  SVCall_IRQn                   =  -5,     /* 11 SV Call Interrupt */
+  SVCall_IRQn                   =  -5,     /* 11 SVC Interrupt */
   DebugMonitor_IRQn             =  -4,     /* 12 Debug Monitor Interrupt */
-  PendSV_IRQn                   =  -2,     /* 14 Pend SV Interrupt */
+  PendSV_IRQn                   =  -2,     /* 14 PendSV Interrupt */
   SysTick_IRQn                  =  -1,     /* 15 System Tick Interrupt */
 
 /* -------------------  Processor Interrupt Numbers  ------------------------------ */
@@ -98,6 +99,8 @@ typedef enum IRQn
 #define __FPU_PRESENT             1U        /* FPU present */
 #define __FPU_DP                  1U        /* double precision FPU */
 #define __DSP_PRESENT             1U        /* DSP extension present */
+#define __ICACHE_PRESENT          1U
+#define __DCACHE_PRESENT          1U
 
 #include "core_armv8mml.h"                  /* Processor and core peripherals */
 #include "system_ARMv8MML.h"                /* System Header */

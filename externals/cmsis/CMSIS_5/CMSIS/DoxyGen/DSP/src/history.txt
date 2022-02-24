@@ -7,6 +7,204 @@
     <th>Description</th>
   </tr>
   <tr>
+    <td>V1.9.0</td>
+    <td>
+      Re-organization of arm_math.h
+
+      Re-organization of interpolation functions:
+      - New Interpolation folder
+
+      New q7 functions:
+      - arm_mat_mult_q7.c
+      - arm_mat_trans_q7.c
+
+      Matrix x vector multiply
+
+      Complex Matrix Transpose
+
+      Cholesky (LL^t and LDL^t decompositions)
+
+      More support for f16 datatype:
+      - arm_cfft_f16.c
+      - arm_rfft_fast_f16.c
+      - f16 basic Maths
+      - f16 complex Maths
+      - f16 filtering (FIR and BiQuad and correlate)
+      - f16 matrix
+      - f16 interpolation
+      - f16 statistics
+      - f16 support functions
+      - f16 svm
+      - f16 distances
+      - f16 bayes
+
+      Support for Quaternions
+
+      Levinson Durbin algorithm
+
+      Q15 scalar division
+
+      New absmax and absmin functions
+
+      GCC issues:
+      Some functions have build issues when building Helium code with gcc. So
+      they are replaced with a less efficient scalar version when built with gcc.
+      - Scalar version of arm_mat_cmplx_mult_f16.c
+      - Scalar version of arm_biquad_cascade_stereo_df2T_f16.c
+      - Scalar version of arm_levinson_durbin_f32.c
+      - Scalar version of arm_levinson_durbin_f16.c
+      - Scalar version of arm_levinson_durbin_q31.c
+      - Scalar version of arm_float_to_f16.c
+      - Scalar version of arm_f16_to_float.c
+
+      Important:
+      - Initialization of FIRs has changed for the Helium version (state and coefs).
+        Read the corresponding documentations.
+      - Initialization of float biquad DF1 has changed for the Helium
+        version (two init functions are required).
+        Read the corresponding documentations.
+      - The states of the vectorized filters are different from their scalar
+        versions (which may break some algorithms which are working on the
+        state of a filter like Goertzel)
+      - For performance reasons, some vectorized algorithms may read one vector
+        after the end of buffer (but the data read is not used).
+        If the buffer is close to the end of a memory zone, it is advised
+        to leave some free memory area between the end of the buffer and the end
+        of the memory zone.
+
+    </td>
+  </tr>
+  <tr>
+    <td>V1.8.0</td>
+    <td> 
+      Helium implementation of lots of functions in the CMSIS-DSP.
+      More will be added in future releases.
+      - ARM_MATH_HELIUM, ARM_MATH_MVEF or ARM_MATH_MVEI must be defined.
+
+      New folder SVMFunctions : Support vector machines.
+      - Training must be done with scikit-learn. 
+      - DSP/Examples/ARM/arm_svm_example is showing how to train with scikit-learn
+      and dump the result for use with CMSIS-DSP
+
+      New folder BayesFunctions : Functions related to Bayesian probability.
+      In this version only a naive gaussian classifier.
+      - Training must be done with scikit-learn. 
+      - DSP/Examples/ARM/arm_bayes_example is showing how to train with scikit-learn
+      and dump the result for use with CMSIS-DSP
+      
+      New folder DistanceFunctions: 
+      - Distance functions for clustering algorithms.
+
+      For the new functions in SVMFunctions, BayesFunctions and DistanceFunctions,
+      <a href="https://developer.arm.com/solutions/machine-learning-on-arm/developer-material/how-to-guides/implement-classical-ml-with-arm-cmsis-dsp-libraries">a tutorial is available</a>.
+
+      New BasicMathFunctions:
+      - Elementwise bit operations.
+
+      New support functions:
+      - arm_barycenter_f32 and arm_weighted_sum_f32.
+      - Sorting functions.
+      - Spline interpolation.
+
+      New statistics functions:
+      - arm_entropy_f32, arm_kullback_leibler_f32, arm_logsumexp_f32
+        and arm_logsumexp_dot_prod_f32
+
+      New testing framework:
+      - Developed for our internal needs. We have released it but won't give
+        support for the first few releases since it is a work in progress.
+
+      Improvements to the cmake build:
+      - It is more easy to switch toolchains. CMAKE_PREFIX_PATH can be used.
+
+    </td>
+  </tr>
+  <tr>
+    <td>V1.7.0</td>
+    <td>
+      New Neon implementations of f32 functions
+       - Can be enabled with macros ARM_MATH_NEON and ARM_MATH_NEON_EXPERIMENTAL
+       
+      Python wrapper compatible with Numpy
+       - DSP/PythonWrapper/README.md is explaining how to build the wrapper
+
+      Preliminary cmake build
+       - DSP/README.md is explaining how to use it.
+         This first version is restricted to AC6 toolchain and
+         assume (hard coded path) that ArmDS is used.
+         Future versions will make it easier to switch toolchains.
+
+      Modified arm_math.h
+       - Removed dependance on cores. It is no more testing for some
+         specific cores but is now using features like ARM_MATH_LOOPUNROLL
+         (see comments in arm_math.h)
+       - Deprecated __SIMD32 and introduced new functions for
+         SIMD accesses.
+
+      Added compilation flags for FFT:
+       - It is now possible to include only the tables required for FFTs.
+         It is explained in DSP/README.md since it is simpler to use
+         it from the cmake (which is defining the right macros). But
+         the macros can also be defined without cmake.
+ 
+    </td>
+  </tr>
+  <tr>
+    <td>V1.6.0</td>
+    <td>
+      Reworked DSP library source files
+       - added macro ARM_MATH_LOOPUNROLL
+       - removed macro UNALIGNED_SUPPORT_DISABLE
+       - added const-correctness
+       - replaced SIMD pointer construct with memcopy solution
+       - replaced macro combination "CMSIS_INLINE __STATIC_INLINE with "__STATIC_FORCEINLINE"
+
+      Reworked DSP library documentation
+
+      Changed DSP folder structure
+       - moved DSP libraries to ./DSP/Lib
+       
+      ARM DSP Libraries are built with ARMCLANG
+      
+      Added DSP Libraries source variant
+    </td>
+  </tr>
+  <tr>
+    <td>V1.5.4</td>
+    <td>
+      Updated IAR projects
+
+      Note: binaries NOT rebuild!
+    </td>
+  </tr>
+  <tr>
+    <td>V1.5.3</td>
+    <td>
+      Note: binaries NOT rebuild!
+
+      Merged PullRequests
+       - #439, #430, #369, #265, #166
+
+      Modified arm_math.h
+       - reworked macros ARM_MATH_CMx
+       - removed macros __FPU_USED, __DSP_PRESENT
+       - used different include files
+
+      Modified source files (because of new arm_math.h)
+       - FilteringFunctions\arm_biquad_cascade_df2T_f32.c
+       - FilteringFunctions\arm_biquad_cascade_df2T_f64.c
+       - FilteringFunctions\arm_biquad_cascade_stereo_df2T_f32.c
+       - FilteringFunctions\arm_conv_partial_q15.c
+       - FilteringFunctions\arm_correlate_q15.c
+       - FilteringFunctions\arm_fir_f32.c
+       - MatrixFunctions\arm_mat_scale_q31.c
+       - StatisticsFunctions\arm_rms_q31.c
+       - TransformFunctions\arm_bitreversal2.S
+       - TransformFunctions\arm_cfft_radix4_q31.c
+      Reworked DSP_Lib_TestSuite
+    </td>
+  </tr>
+  <tr>
     <td>V1.5.2</td>
     <td>
       Modified arm_math.h
