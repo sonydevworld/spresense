@@ -25,13 +25,8 @@
 
 #include <signal.h>
 #include "client.h"
-#include "echo_client.h"
 #include "chat_client.h"
 #include "websocket_lte_connection.h"
-
-#define WEBSOCKET_ECHO_SERVER         "ws://echo.websocket.org:80/"
-#define WEBSOCKET_ECHO_SERVER_SSL     "wss://echo.websocket.org:443/"
-#define WEBSOCKET_ECHO_SERVER_ROOTCA  "/mnt/sd0/gd-class2-root.crt"
 
 #define WEBSOCKET_CHAT_SERVER         "ws://ruby-websockets-chat.herokuapp.com:80/"
 #define WEBSOCKET_CHAT_SERVER_SSL     "wss://ruby-websockets-chat.herokuapp.com:443/"
@@ -65,8 +60,6 @@ void print_program_header(void) {
 
 void print_program_usage(const char *progname) {
 	printf("usage: [type] [message] ...\n");
-	printf("example: %s echo WebSocket Works!\n", progname);
-	printf("example: %s echo-ssl WebSocket Works!\n", progname);
 	printf("example: %s chat WebSocket Works!\n", progname);
 	printf("example: %s chat-ssl WebSocket Works!\n", progname);
 	printf("\n");
@@ -81,61 +74,8 @@ int main(int argc, char FAR **argv)
 
 	print_program_header();
 
-	/* Echo protocol */
-	if (strstr(argv[1], "echo") != NULL) {
-
-		/* Check argument */
-
-		if(argc < 3) print_program_usage(argv[0]);
-
-		/* Connect to lte */
-
-		if (app_websocket_connect_to_lte()) {
-			return EXIT_FAILURE;
-		}
-
-		/* Initialize */
-
-		cwebsocket_subprotocol_echo_client_new(&websocket_protocol);
-		protocols = &websocket_protocol;
-		cwebsocket_client_init(&websocket_client, &protocols, 1);
-
-		if ((strstr(argv[1], "ssl") != NULL) || (strstr(argv[1], "SSL") != NULL)) {
-			websocket_client.uri = WEBSOCKET_ECHO_SERVER_SSL;
-			cwebsocket_client_ssl_init(&websocket_client,
-				 WEBSOCKET_ECHO_SERVER_ROOTCA, NULL, NULL, "");
-		}
-		else {
-			websocket_client.uri = WEBSOCKET_ECHO_SERVER;
-		}
-
-		/* Connect */
-
-		if (cwebsocket_client_connect(&websocket_client) == -1) {
-			return main_exit(EXIT_FAILURE);
-		}
-
-		/* Create message */
-
-		memset(buffer, 0, BUFFER_SIZE+1);
-		for (cnt=2; cnt<argc; cnt++) {
-			strncat(buffer, argv[cnt], BUFFER_SIZE-strlen(buffer)-1);
-			strncat(buffer, " ", 1);
-		}
-
-		/* Send request and recv responsee */
-
-		cwebsocket_client_write_data(&websocket_client, buffer, strlen(buffer), TEXT_FRAME);
-		cwebsocket_client_read_data(&websocket_client);
-
-		/* Close */
-
-		cwebsocket_client_close(&websocket_client, 1000, "main: run loop complete");
-		return main_exit(EXIT_SUCCESS);
-	}
-
 	/* Chat protocol */
-	else if (strstr(argv[1], "chat") != NULL) {
+	if (strstr(argv[1], "chat") != NULL) {
 
 		/* Check argument */
 
