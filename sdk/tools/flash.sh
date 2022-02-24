@@ -77,6 +77,19 @@ case "$(uname -s)" in
 		;;
 esac
 
+# Exec file extension postfix
+EXEEXT=""
+
+# WSL/WSL2 detection
+if [ "${PLATFORM}" == "linux" ]; then
+	if [ "$(uname -r | grep -i microsoft)" != "" ]; then
+		# WSL/WSL2 is a linux but USB related SDK tools
+		# should use windows binary.
+		PLATFORM=windows
+		EXEEXT=".exe"
+	fi
+fi
+
 # Option handler
 # -b: UART Baudrate (default: 115200)
 # -c: UART Port (default: /dev/ttyUSB0)
@@ -136,7 +149,7 @@ if [ "${FLASH_MODE}" == "SPK" ]; then
 	fi
 
 	# Flash spk files into spresense board
-	${SCRIPT_DIR}/${PLATFORM}/flash_writer -s -c ${UART_PORT} -d -b ${UART_BAUDRATE} -n ${ESPK_FILES} ${SPK_FILES}
+	${SCRIPT_DIR}/${PLATFORM}/flash_writer${EXEEXT} -s -c ${UART_PORT} -d -b ${UART_BAUDRATE} -n ${ESPK_FILES} ${SPK_FILES}
 elif [ "${FLASH_MODE}" == "ELF" ]; then
 	if [ "$#" == "0" ]; then
 		echo "ERROR: No elf files are contains."
@@ -145,8 +158,8 @@ elif [ "${FLASH_MODE}" == "ELF" ]; then
 	fi
 
 	# Flash elf files into spresense board
-	${SCRIPT_DIR}/${PLATFORM}/xmodem_writer -d -c ${UART_PORT} $@
+	${SCRIPT_DIR}/${PLATFORM}/xmodem_writer${EXEEXT} -d -c ${UART_PORT} $@
 elif [ "${FLASH_MODE}" == "REMOVE" ]; then
 	# Remove nuttx spk file from spresense board
-	${SCRIPT_DIR}/${PLATFORM}/flash_writer -s -c ${UART_PORT} -d -e nuttx
+	${SCRIPT_DIR}/${PLATFORM}/flash_writer${EXEEXT} -s -c ${UART_PORT} -d -e nuttx
 fi
