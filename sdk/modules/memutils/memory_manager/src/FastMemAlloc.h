@@ -38,7 +38,7 @@
 
 #include <new>			/* operator new */
 #include <stdio.h>		/* printf */
-#include "memutils/common_utils/common_macro.h"	/* ROUND_UP */
+#include "memutils/common_utils/common_macro.h"	/* MEMUTILS_ROUND_UP */
 #include "memutils/common_utils/common_assert.h"	/* D_ASSERT */
 #include "memutils/os_utils/cpp_util.h"		/* CopyGuard */
 
@@ -75,7 +75,7 @@ public:
 	void* alloc(size_t sz, size_t align) {
 		D_ASSERT(align != 0);
 		size_t adr  = m_init_addr + m_alloc_size;
-		size_t skip = ROUND_UP(adr, align) - adr;
+		size_t skip = MEMUTILS_ROUND_UP(adr, align) - adr;
 		if (sz + skip > rest()) return 0;
 		m_alloc_size += sz + skip;
 		return reinterpret_cast<void*>(adr + skip);
