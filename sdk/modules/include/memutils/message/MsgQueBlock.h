@@ -322,7 +322,7 @@ size_t MsgQueBlock::getSendSize(const T& /* param */, bool type_check)
 {
 	return type_check ?
 			sizeof(MsgPacketHeader) + sizeof(TypeHolder<T>) :
-			sizeof(MsgPacketHeader) + ROUND_UP(sizeof(T), sizeof(int));
+			sizeof(MsgPacketHeader) + MEMUTILS_ROUND_UP(sizeof(T), sizeof(int));
 }
 /* Send message size(No parameter). */
 
@@ -394,7 +394,7 @@ err_t MsgQueBlock::send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags
 
       if (isShare())
         {
-          Dcache_flush_clear(msg, ROUND_UP(sizeof(MsgPacketHeader), CACHE_BLOCK_SIZE));
+          Dcache_flush_clear(msg, MEMUTILS_ROUND_UP(sizeof(MsgPacketHeader), CACHE_BLOCK_SIZE));
         }
 
       /* Since most ITRON APIs can not be executed in the interrupt
@@ -420,7 +420,7 @@ err_t MsgQueBlock::send(MsgPri pri, MsgType type, MsgQueId reply, MsgFlags flags
       
       if (!MsgPacketInfo<T>::null_param && isShare())
         {
-          Dcache_flush_clear_sync(msg, ROUND_UP(send_size, CACHE_BLOCK_SIZE));
+          Dcache_flush_clear_sync(msg, MEMUTILS_ROUND_UP(send_size, CACHE_BLOCK_SIZE));
         }
 
       if (isShare() == false || isOwn())
