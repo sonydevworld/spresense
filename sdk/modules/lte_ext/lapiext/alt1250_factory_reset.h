@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/mbedtls_stub/altcom_additional_hdlr.c
+ * modules/lte_ext/lapiext/alt1250_factory_reset.h
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,65 +33,24 @@
  *
  ****************************************************************************/
 
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#include <nuttx/config.h>
-
-#include <sys/types.h>
-#include <nuttx/modem/alt1250.h>
+#ifndef __ALT1250_FACTORY_RESET_H
+#define __ALT1250_FACTORY_RESET_H
 
 /****************************************************************************
- * Functions prototypes
+ * Pre-processor Definitions
  ****************************************************************************/
 
-extern compose_handler_t
-    alt1250_sslcomposehdlr(uint32_t, FAR uint8_t *, size_t);
+/* Command definitions */
 
-extern parse_handler_t
-    alt1250_sslparsehdlr(uint16_t, uint8_t);
+#define ALT1250_FRESET_CMD_INQUIRE_PRE_RESET 0x1201
+#define ALT1250_FRESET_CMD_PRE_RESET         0x1202
+#define ALT1250_FRESET_CMD_FACTORY_RESET     0x1203
 
-/* Below 2 functions are for extension commands for alt1250 driver */
+/* Result code definitions */
 
-extern compose_handler_t alt1250_extcomposehdlr(uint32_t);
-extern parse_handler_t alt1250_extparsehdlr(uint16_t, uint8_t);
+#define ALT1250_FRESET_PRE_RESET_NEEDED      0x1204
+#define ALT1250_FRESET_PRE_RESET_UNNEEDED    0x1205
+#define ALT1250_FRESET_RESLT_OK              0x1206
+#define ALT1250_FRESET_RESLT_ERROR           0x1207
 
-/****************************************************************************
- * Public Functions
- ****************************************************************************/
-
-/** Name: alt1250_additional_parsehdlr */
-
-parse_handler_t alt1250_additional_parsehdlr(uint16_t altcid, uint8_t altver)
-{
-  parse_handler_t ret;
-  ret = alt1250_sslparsehdlr(altcid, altver);
-
-#ifdef CONFIG_HAVE_EXTHANDLER
-  if (ret == NULL)
-    {
-      ret = alt1250_extparsehdlr(altcid, altver);
-    }
-#endif
-
-  return ret;
-}
-
-/** Name: alt1250_additional_composehdlr */
-
-compose_handler_t alt1250_additional_composehdlr(uint32_t cmdid,
-    FAR uint8_t *payload, size_t size)
-{
-  compose_handler_t ret;
-  ret = alt1250_sslcomposehdlr(cmdid, payload, size);
-
-#ifdef CONFIG_HAVE_EXTHANDLER
-  if (ret == NULL)
-    {
-      ret = alt1250_extcomposehdlr(cmdid);
-    }
-#endif
-
-  return ret;
-}
+#endif /* __ALT1250_FACTORY_RESET_H */

@@ -1,7 +1,7 @@
 ############################################################################
-# modules/mbedtls_stub/Makefile
+# modules/lte_ext/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -35,27 +35,12 @@
 
 -include $(SDKDIR)/modules/Make.defs
 
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
+MODNAME = lte_ext
 
-MODNAME = mbedtls_stub
+CSRCS += altcom_additional_hdlr.c
 
-# Add sub directory if exists
+# Include sub directory source files
 
-VPATH   =
-SUBDIRS =
-DEPPATH =
-
-CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c
-CXXSRCS =
-
-ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
-ifeq ($(CONFIG_EXTERNALS_MBEDTLS),y)
-ifeq ($(filter clean distclean,$(MAKECMDGOALS)),)
-$(error "Configs LTE_NET_MBEDTLS and EXTERNALS_MBEDTLS are exclusive. \
-        So disable one or the other")
-endif
-endif
-endif
+include $(wildcard */Make.defs)
 
 include $(SDKDIR)/modules/Module.mk
