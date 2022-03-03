@@ -4004,6 +4004,9 @@
 
 /* \} name SECTION: Customisation configuration options */
 
+/* This is spresense specific porting file */
+#include "mbedtls/spresense_porting.h"
+
 /* Target and application specific configurations
  *
  * Allow user to override any previous default.

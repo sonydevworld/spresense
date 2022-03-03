@@ -5849,6 +5849,7 @@ int mbedtls_ssl_handshake_step( mbedtls_ssl_context *ssl )
 int mbedtls_ssl_handshake( mbedtls_ssl_context *ssl )
 {
     int ret = 0;
+    PM_CPU_FREQLOCK_INSTANCE();
 
     /* Sanity checks */
 
@@ -5867,6 +5868,8 @@ int mbedtls_ssl_handshake( mbedtls_ssl_context *ssl )
 
     MBEDTLS_SSL_DEBUG_MSG( 2, ( "=> handshake" ) );
 
+    PM_CPU_FREQLOCK_ACQUIRE(PM_CPUFREQLOCK_FLAG_HV);
+
     /* Main handshake loop */
     while( ssl->state != MBEDTLS_SSL_HANDSHAKE_OVER )
     {
@@ -5875,6 +5878,8 @@ int mbedtls_ssl_handshake( mbedtls_ssl_context *ssl )
         if( ret != 0 )
             break;
     }
+
+    PM_CPU_FREQLOCK_RELEASE();
 
     MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= handshake" ) );
 
