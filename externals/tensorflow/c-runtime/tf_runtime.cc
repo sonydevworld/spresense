@@ -98,6 +98,8 @@ int tf_rt_initialize_context(tf_rt_context_pointer context,
       return -ENOMEM;
     }
 
+  memset(c->tensor_arena, 0, c->tensor_arena_size);
+
   /* Build an interpreter to run the model with. */
 
   tflite::MicroInterpreter interpreter(
