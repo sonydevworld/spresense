@@ -307,17 +307,31 @@ unsigned long mbedtls_timing_get_timer( struct mbedtls_timing_hr_time *val, int 
     }
 }
 
-static void sighandler( int signum )
+/* It's OK to use a global because alarm() is supposed to be global anyway */
+static int alarmMs;
+int task_id;
+
+void
+mbed_thread_new( const char *pcName, void( *pxThread )( void *pvParameters ), void *pvArg, int iStackSize, int iPriority )
 {
+    task_id=task_create( pcName, iPriority, iStackSize, (main_t)pxThread, pvArg );
+    return ;
+}
+
+static void TimerProc(void *arg)
+{
+    usleep( alarmMs * 1000);
     mbedtls_timing_alarmed = 1;
-    signal( signum, sighandler );
+    task_delete(task_id);
+    return;
 }
 
 void mbedtls_set_alarm( int seconds )
 {
     mbedtls_timing_alarmed = 0;
-    signal( SIGALRM, sighandler );
-    alarm( seconds );
+    alarmMs = seconds * 1000;
+
+    mbed_thread_new("ttcp_thread", TimerProc, NULL, 2048,  2);
     if( seconds == 0 )
     {
         /* alarm(0) cancelled any previous pending alarm, but the
