@@ -57,6 +57,7 @@ extern "C" {
 #include <asmp/types.h>
 
 #include "tensorflow/lite/c/common.h"
+#include "tensorflow/lite/micro/spresense/debug_log_callback.h"
 
 /****************************************************************************
  * Public Types
