@@ -51,7 +51,9 @@ CSRCS += sha1.c sha256.c sha512.c ssl_cache.c ssl_ciphersuites.c ssl_cli.c ssl_c
 CSRCS += threading.c timing.c version.c version_features.c
 CSRCS += x509.c x509_create.c x509_crl.c x509_crt.c x509_csr.c x509write_crt.c x509write_csr.c xtea.c 
 
-VPATH = library
-ROOTDEPPATH = --dep-path library
+CFLAGS += ${shell $(INCDIR) "$(CC)" "$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)mbedtls$(DELIM)mbedtls-v2$(DELIM)library"}
+
+VPATH = mbedtls-v2/library
+ROOTDEPPATH = --dep-path mbedtls-v2/library
 
 include $(APPDIR)/Application.mk

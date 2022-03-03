@@ -6,7 +6,7 @@ examples
 sdk/modules
 sdk/tools
 install-tools.sh
-externals/mbedtls/include/mbedtls/spresense_porting.h
+externals/mbedtls/mbedtls-v2/include/mbedtls/spresense_porting.h
 externals/tensorflow
 externals/vtun
 
