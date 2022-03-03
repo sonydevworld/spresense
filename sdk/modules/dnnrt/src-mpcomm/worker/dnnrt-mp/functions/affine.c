@@ -284,39 +284,12 @@ static rt_function_error_t dnnrt_exec_affine_generic(rt_function_t *f,
   return RT_FUNCTION_ERROR_NOERROR;
 }
 
-static int var_buf_size(rt_variable_t *var)
-{
-  int elem_size = 0;
-
-  if (var->type == NN_DATA_TYPE_FLOAT)
-    {
-      elem_size = sizeof(float);
-    }
-  else if (var->type == NN_DATA_TYPE_INT16)
-    {
-      elem_size = sizeof(int16_t);
-    }
-  else if (var->type == NN_DATA_TYPE_INT8)
-    {
-      elem_size = sizeof(int8_t);
-    }
-  else
-    {
-      return 0;
-    }
-
-  return elem_size * calc_shape_size(var->shape);
-}
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 rt_function_error_t dnnrt_exec_affine(rt_function_t *f, int begin, int end)
 {
-  affine_private_t *p =
-      (affine_private_t
-           *)(((affine_local_context_t *)(f->local_context))->data);
   int same_type = ((f->inputs[X]->type == f->inputs[WEIGHT]->type) &&
                    (f->inputs[X]->type == f->inputs[BIAS]->type) &&
                    (f->inputs[X]->type == f->outputs[Y]->type));
