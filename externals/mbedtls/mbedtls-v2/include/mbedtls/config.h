@@ -779,7 +779,7 @@
  *
  * Comment this macro to keep 3DES in the default ciphersuite list.
  */
-#define MBEDTLS_REMOVE_3DES_CIPHERSUITES
+//#define MBEDTLS_REMOVE_3DES_CIPHERSUITES
 
 /**
  * \def MBEDTLS_ECP_DP_SECP192R1_ENABLED
