@@ -33,6 +33,7 @@
 #include "mbedtls/error.h"
 
 #include <string.h>
+#include <sys/stat.h>
 
 #if defined(MBEDTLS_FS_IO)
 #include <stdio.h>
@@ -510,13 +511,18 @@ int mbedtls_entropy_update_seed_file( mbedtls_entropy_context *ctx, const char *
     FILE *f;
     size_t n;
     unsigned char buf[ MBEDTLS_ENTROPY_MAX_SEED_SIZE ];
+    struct stat st_buf;
 
     if( ( f = fopen( path, "rb" ) ) == NULL )
         return( MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR );
 
-    fseek( f, 0, SEEK_END );
-    n = (size_t) ftell( f );
-    fseek( f, 0, SEEK_SET );
+    if (stat(path, &st_buf) < 0)
+    {
+      fclose(f);
+      return( MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR );
+    }
+
+    n = st_buf.st_size;
 
     if( n > MBEDTLS_ENTROPY_MAX_SEED_SIZE )
         n = MBEDTLS_ENTROPY_MAX_SEED_SIZE;

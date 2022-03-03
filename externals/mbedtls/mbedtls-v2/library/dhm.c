@@ -34,6 +34,7 @@
 #include "mbedtls/error.h"
 
 #include <string.h>
+#include <sys/stat.h>
 
 #if defined(MBEDTLS_PEM_PARSE_C)
 #include "mbedtls/pem.h"
@@ -587,20 +588,18 @@ exit:
 static int load_file( const char *path, unsigned char **buf, size_t *n )
 {
     FILE *f;
-    long size;
+    struct stat st_buf;
 
     if( ( f = fopen( path, "rb" ) ) == NULL )
         return( MBEDTLS_ERR_DHM_FILE_IO_ERROR );
 
-    fseek( f, 0, SEEK_END );
-    if( ( size = ftell( f ) ) == -1 )
+    if (stat(path, &st_buf) < 0)
     {
         fclose( f );
         return( MBEDTLS_ERR_DHM_FILE_IO_ERROR );
     }
-    fseek( f, 0, SEEK_SET );
 
-    *n = (size_t) size;
+    *n = (size_t) st_buf.st_size;
 
     if( *n + 1 == 0 ||
         ( *buf = mbedtls_calloc( 1, *n + 1 ) ) == NULL )
