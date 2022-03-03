@@ -162,7 +162,7 @@ int mbedtls_ssl_cookie_write( void *p_ctx,
     MBEDTLS_SSL_CHK_BUF_PTR( *p, end, COOKIE_LEN );
 
 #if defined(MBEDTLS_HAVE_TIME)
-    t = (unsigned long) mbedtls_time( NULL );
+    t = (unsigned long) customize_mbedtls_time( NULL );
 #else
     t = ctx->serial++;
 #endif
@@ -234,7 +234,7 @@ int mbedtls_ssl_cookie_check( void *p_ctx,
     }
 
 #if defined(MBEDTLS_HAVE_TIME)
-    cur_time = (unsigned long) mbedtls_time( NULL );
+    cur_time = (unsigned long) customize_mbedtls_time( NULL );
 #else
     cur_time = ctx->serial;
 #endif

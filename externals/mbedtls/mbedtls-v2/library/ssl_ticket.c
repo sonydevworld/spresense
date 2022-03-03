@@ -103,7 +103,7 @@ static int ssl_ticket_update_keys( mbedtls_ssl_ticket_context *ctx )
 #else
     if( ctx->ticket_lifetime != 0 )
     {
-        uint32_t current_time = (uint32_t) mbedtls_time( NULL );
+        uint32_t current_time = (uint32_t) customize_mbedtls_time( NULL );
         uint32_t key_time = ctx->keys[ctx->active].generation_time;
 
         if( current_time >= key_time &&
@@ -366,7 +366,7 @@ int mbedtls_ssl_ticket_parse( void *p_ticket,
 #if defined(MBEDTLS_HAVE_TIME)
     {
         /* Check for expiration */
-        mbedtls_time_t current_time = mbedtls_time( NULL );
+        mbedtls_time_t current_time = customize_mbedtls_time( NULL );
 
         if( current_time < session->start ||
             (uint32_t)( current_time - session->start ) > ctx->ticket_lifetime )

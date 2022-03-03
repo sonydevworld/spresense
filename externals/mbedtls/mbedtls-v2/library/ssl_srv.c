@@ -2851,7 +2851,7 @@ static int ssl_write_server_hello( mbedtls_ssl_context *ssl )
                         buf[4], buf[5] ) );
 
 #if defined(MBEDTLS_HAVE_TIME)
-    t = mbedtls_time( NULL );
+    t = customize_mbedtls_time( NULL );
     MBEDTLS_PUT_UINT32_BE( t, p, 0 );
     p += 4;
 
@@ -2884,7 +2884,7 @@ static int ssl_write_server_hello( mbedtls_ssl_context *ssl )
         ssl->state++;
 
 #if defined(MBEDTLS_HAVE_TIME)
-        ssl->session_negotiate->start = mbedtls_time( NULL );
+        ssl->session_negotiate->start = customize_mbedtls_time( NULL );
 #endif
 
 #if defined(MBEDTLS_SSL_SESSION_TICKETS)

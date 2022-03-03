@@ -37,6 +37,7 @@
 #define __MBEDTLS_V2_INCLUDE_MBEDTLS_SPRESENSE_PORTING_H
 
 #include <nuttx/config.h>
+#include <time.h>
 
 #ifdef CONFIG_CPUFREQ_RELEASE_LOCK
 #include <arch/chip/pm.h>
@@ -69,5 +70,14 @@
 #define PM_CPU_FREQLOCK_RELEASE()
 
 #endif /* CONFIG_CPUFREQ_RELEASE_LOCK */
+
+static inline time_t customize_mbedtls_time(time_t *tloc)
+{
+  struct timespec tp;
+
+  clock_gettime( CLOCK_MONOTONIC, &tp);
+
+  return tp.tv_sec;
+}
 
 #endif /* __MBEDTLS_V2_INCLUDE_MBEDTLS_SPRESENSE_PORTING_H */

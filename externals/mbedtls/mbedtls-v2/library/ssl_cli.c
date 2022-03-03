@@ -888,7 +888,7 @@ static int ssl_generate_random( mbedtls_ssl_context *ssl )
 #endif
 
 #if defined(MBEDTLS_HAVE_TIME)
-    t = mbedtls_time( NULL );
+    t = customize_mbedtls_time( NULL );
     MBEDTLS_PUT_UINT32_BE( t, p, 0 );
     p += 4;
 
@@ -2266,7 +2266,7 @@ static int ssl_parse_server_hello( mbedtls_ssl_context *ssl )
         ssl->state++;
         ssl->handshake->resume = 0;
 #if defined(MBEDTLS_HAVE_TIME)
-        ssl->session_negotiate->start = mbedtls_time( NULL );
+        ssl->session_negotiate->start = customize_mbedtls_time( NULL );
 #endif
         ssl->session_negotiate->ciphersuite = i;
         ssl->session_negotiate->compression = comp;
