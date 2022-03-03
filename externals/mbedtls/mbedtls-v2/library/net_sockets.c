@@ -33,7 +33,7 @@
 
 #if !defined(unix) && !defined(__unix__) && !defined(__unix) && \
     !defined(__APPLE__) && !defined(_WIN32) && !defined(__QNXNTO__) && \
-    !defined(__HAIKU__) && !defined(__midipix__)
+    !defined(__HAIKU__) && !defined(__midipix__) && !defined(__NuttX__)
 #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in config.h"
 #endif
 
@@ -84,6 +84,7 @@ static int wsa_init_done = 0;
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -128,7 +129,7 @@ static int net_prepare( void )
         wsa_init_done = 1;
     }
 #else
-#if !defined(EFIX64) && !defined(EFI32)
+#if !defined(EFIX64) && !defined(EFI32) && !defined(__NuttX__)
     signal( SIGPIPE, SIG_IGN );
 #endif
 #endif
@@ -347,7 +348,9 @@ int mbedtls_net_accept( mbedtls_net_context *bind_ctx,
 
 #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
     defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t) || \
-    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)
+    defined(socklen_t) || \
+    (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) || \
+    defined(__NuttX__)
     socklen_t n = (socklen_t) sizeof( client_addr );
     socklen_t type_len = (socklen_t) sizeof( type );
 #else

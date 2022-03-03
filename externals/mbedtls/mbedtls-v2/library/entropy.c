@@ -56,6 +56,17 @@
 #include "mbedtls/havege.h"
 #endif
 
+static int entropy_dummy_source( void *data, unsigned char *output,
+                                 size_t len, size_t *olen )
+{
+    ((void) data);
+
+    memset( output, 0x2a, len );
+    *olen = len;
+
+    return( 0 );
+}
+
 #define ENTROPY_MAX_LOOP    256     /**< Maximum amount to loop before error */
 
 void mbedtls_entropy_init( mbedtls_entropy_context *ctx )
@@ -112,6 +123,10 @@ void mbedtls_entropy_init( mbedtls_entropy_context *ctx )
                                 MBEDTLS_ENTROPY_SOURCE_STRONG );
     ctx->initial_entropy_run = 0;
 #endif
+#else
+    mbedtls_entropy_add_source( ctx, entropy_dummy_source, NULL,
+                                MBEDTLS_ENTROPY_MIN_HARDWARE,
+                                MBEDTLS_ENTROPY_SOURCE_STRONG );
 #endif /* MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES */
 }
 

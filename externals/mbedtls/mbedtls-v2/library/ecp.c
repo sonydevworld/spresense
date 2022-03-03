@@ -752,7 +752,12 @@ void mbedtls_ecp_group_free( mbedtls_ecp_group *grp )
     {
         for( i = 0; i < grp->T_size; i++ )
             mbedtls_ecp_point_free( &grp->T[i] );
-        mbedtls_free( grp->T );
+
+        if (grp->T != NULL)
+        {
+          mbedtls_free( grp->T );
+          grp->T = NULL;
+        }
     }
 
     mbedtls_platform_zeroize( grp, sizeof( mbedtls_ecp_group ) );
@@ -1861,6 +1866,8 @@ static int ecp_precompute_comb( const mbedtls_ecp_group *grp,
     size_t j = 0;
     const unsigned char T_size = 1U << ( w - 1 );
     mbedtls_ecp_point *cur, *TT[COMB_MAX_PRE - 1];
+
+    memset(TT, 0, COMB_MAX_PRE - 1); 
 
 #if defined(MBEDTLS_ECP_RESTARTABLE)
     if( rs_ctx != NULL && rs_ctx->rsm != NULL )
