@@ -74,7 +74,7 @@ void usage(void)
 
 void cfinish(int sig)
 {
-//	signal(SIGINT, NULL);
+	signal(SIGINT, NULL);
 	toStop = 1;
 }
 
@@ -211,7 +211,7 @@ void messageArrived(MessageData* md)
 		printf("%.*s", (int)message->payloadlen, (char*)message->payload);
 	else
 		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
-	//fflush(stdout);
+	fflush(stdout);
 }
 
 
@@ -239,8 +239,8 @@ int main(int argc, char** argv)
 	MQTTSocket n;
 	MQTTClient c;
 
-//	signal(SIGINT, cfinish);
-//	signal(SIGTERM, cfinish);
+	signal(SIGINT, cfinish);
+	signal(SIGTERM, cfinish);
 
 	MQTTSocketInit(&n, 0);
 	MQTTSocketConnect(&n, opts.host, opts.port);
