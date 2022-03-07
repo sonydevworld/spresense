@@ -120,7 +120,7 @@ examples/awsiot_gnsslogger
         Location is NOT fixed. 3 satellites is captured.
         ....
 
-      To capture GNSS sattelites, take the device outside or by a window.
+      To capture GNSS satellites, take the device outside or by a window.
 
       After fix the measured location, the application will set UTC time and
       date which is measured by GNSS as a system time on the board. Then it
@@ -128,7 +128,7 @@ examples/awsiot_gnsslogger
       And after established the connectionm the location latitude and longitude
       is published as a topic on "data/device/gps" with below message.
 
-        Location is fixed. 4 sattelites is captured.
+        Location is fixed. 4 satellites is captured.
             Publish data to data/device/gps topic as <<{ "device_loc": { "lat": xxx.xxxxx, "lng": xxx.xxxxxx } }>>
 
       If you subscribe the topic "data/device/gps" in AWS IoTCore, you can see
