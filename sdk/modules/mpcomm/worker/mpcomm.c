@@ -380,7 +380,8 @@ void *mpcomm_memory_virt_to_phys(void *addr)
 {
   mpcomm_context_t *ctx = get_mpcomm_context();
 
-  return addr < CONFIG_RAM_START ? addr + (uint32_t)ctx->loadaddr : addr;
+  return (uintptr_t)addr < CONFIG_RAM_START ?
+           addr + (uint32_t)ctx->loadaddr : addr;
 }
 
 int mpcomm_send_malloc(void **ptr, size_t size)
