@@ -67,6 +67,9 @@ void usage(void)
 	printf("  --username none\n");
 	printf("  --password none\n");
 	printf("  --showtopics <on or off> (default is on if the topic has a wildcard, else off)\n");
+	printf("  --cafile <file> (path to a file of trusted CA certificate)\n");
+	printf("  --cert <file> (path to a file of client certificate)\n");
+	printf("  --key <file> (path to a file of client private key)\n");
 	printf("  --publish <message>\n");
 	exit(-1);
 }
@@ -90,6 +93,9 @@ struct opts_struct
 	char* host;
 	int port;
 	int showtopics;
+	char* cafile;
+	char* certfile;
+	char* keyfile;
 	char* message;
 } opts =
 {
@@ -101,19 +107,6 @@ void getopts(int argc, char** argv)
 {
 	int count = 2;
 	
-	/* Initialize options structure */
-
-	opts.clientid    = (char*)"stdout-subscriber";
-	opts.nodelimiter = 0;
-	opts.delimiter   = (char*)"\n";
-	opts.qos         = QOS2;
-	opts.username    = NULL;
-	opts.password    = NULL;
-	opts.host        = (char*)"localhost";
-	opts.port        = 1883;
-	opts.showtopics  = 0;
-	opts.message     = NULL;
-
 	while (count < argc)
 	{
 		if (strcmp(argv[count], "--qos") == 0)
@@ -188,6 +181,27 @@ void getopts(int argc, char** argv)
 			else
 				usage();
 		}
+		else if (strcmp(argv[count], "--cafile") == 0)
+		{
+			if (++count < argc)
+				opts.cafile = argv[count];
+			else
+				usage();
+		}
+		else if (strcmp(argv[count], "--cert") == 0)
+		{
+			if (++count < argc)
+				opts.certfile = argv[count];
+			else
+				usage();
+		}
+		else if (strcmp(argv[count], "--key") == 0)
+		{
+			if (++count < argc)
+				opts.keyfile = argv[count];
+			else
+				usage();
+		}
 		else if (strcmp(argv[count], "--publish") == 0)
 		{
 			if (++count < argc)
@@ -220,11 +234,30 @@ int main(int argc, char** argv)
 	int rc = 0;
 	unsigned char buf[100];
 	unsigned char readbuf[100];
+	int use_ssl = 0;
 	
 	if (argc < 2)
 		usage();
 	
 	char* topic = argv[1];
+
+	/* Initialize global variables for repeated execution */
+
+	toStop = 0;
+
+	opts.clientid    = (char*)"stdout-subscriber";
+	opts.nodelimiter = 0;
+	opts.delimiter   = (char*)"\n";
+	opts.qos         = QOS2;
+	opts.username    = NULL;
+	opts.password    = NULL;
+	opts.host        = (char*)"localhost";
+	opts.port        = 1883;
+	opts.showtopics  = 0;
+	opts.cafile      = NULL;
+	opts.certfile    = NULL;
+	opts.keyfile     = NULL;
+	opts.message     = NULL;
 
 	if (strchr(topic, '#') || strchr(topic, '+'))
 		opts.showtopics = 1;
@@ -242,7 +275,16 @@ int main(int argc, char** argv)
 	signal(SIGINT, cfinish);
 	signal(SIGTERM, cfinish);
 
-	MQTTSocketInit(&n, 0);
+	/* Use MQTT over SSL/TLS if set CA certificate */
+
+	if (opts.cafile != NULL)
+	{
+		use_ssl = 1;
+		n.pRootCALocation = opts.cafile;
+		n.pDeviceCertLocation = opts.certfile;
+		n.pDevicePrivateKeyLocation = opts.keyfile;
+	}
+	MQTTSocketInit(&n, use_ssl);
 	MQTTSocketConnect(&n, opts.host, opts.port);
 	MQTTClientInit(&c, &n, 1000, buf, 100, readbuf, 100);
  
@@ -293,6 +335,7 @@ int main(int argc, char** argv)
 
 	MQTTDisconnect(&c);
 	MQTTSocketDisconnect(&n);
+	MQTTSocketFin(&n);
 
 	app_disconnect_from_lte();
 
