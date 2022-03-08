@@ -144,7 +144,7 @@ static void app_lte_setlocaltime(FAR lte_localtime_t *localtime)
   ret = settimeofday(&current_time, NULL);
   if (ret < 0)
     {
-      printf("settimeofday falied: %d\n", errno);
+      printf("settimeofday failed: %d\n", errno);
       return;
     }
 
