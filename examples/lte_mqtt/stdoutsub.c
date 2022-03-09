@@ -57,8 +57,8 @@ volatile int toStop = 0;
 
 void usage(void)
 {
-	printf("MQTT stdout subscriber\n");
-	printf("Usage: stdoutsub topicname <options>, where options are:\n");
+	printf("MQTT stdout subscriber/publisher\n");
+	printf("Usage: lte_mqtt topicname <options>, where options are:\n");
 	printf("  --host <hostname> (default is localhost)\n");
 	printf("  --port <port> (default is 1883)\n");
 	printf("  --qos <qos> (default is 2)\n");
@@ -67,13 +67,14 @@ void usage(void)
 	printf("  --username none\n");
 	printf("  --password none\n");
 	printf("  --showtopics <on or off> (default is on if the topic has a wildcard, else off)\n");
+	printf("  --publish <message>\n");
 	exit(-1);
 }
 
 
 void cfinish(int sig)
 {
-//	signal(SIGINT, NULL);
+	signal(SIGINT, NULL);
 	toStop = 1;
 }
 
@@ -89,9 +90,10 @@ struct opts_struct
 	char* host;
 	int port;
 	int showtopics;
+	char* message;
 } opts =
 {
-	(char*)"stdout-subscriber", 0, (char*)"\n", QOS2, NULL, NULL, (char*)"localhost", 1883, 0
+	(char*)"stdout-subscriber", 0, (char*)"\n", QOS2, NULL, NULL, (char*)"localhost", 1883, 0, NULL
 };
 
 
@@ -99,6 +101,19 @@ void getopts(int argc, char** argv)
 {
 	int count = 2;
 	
+	/* Initialize options structure */
+
+	opts.clientid    = (char*)"stdout-subscriber";
+	opts.nodelimiter = 0;
+	opts.delimiter   = (char*)"\n";
+	opts.qos         = QOS2;
+	opts.username    = NULL;
+	opts.password    = NULL;
+	opts.host        = (char*)"localhost";
+	opts.port        = 1883;
+	opts.showtopics  = 0;
+	opts.message     = NULL;
+
 	while (count < argc)
 	{
 		if (strcmp(argv[count], "--qos") == 0)
@@ -173,6 +188,13 @@ void getopts(int argc, char** argv)
 			else
 				usage();
 		}
+		else if (strcmp(argv[count], "--publish") == 0)
+		{
+			if (++count < argc)
+				opts.message = argv[count];
+			else
+				usage();
+		}
 		count++;
 	}
 	
@@ -189,7 +211,7 @@ void messageArrived(MessageData* md)
 		printf("%.*s", (int)message->payloadlen, (char*)message->payload);
 	else
 		printf("%.*s%s", (int)message->payloadlen, (char*)message->payload, opts.delimiter);
-	//fflush(stdout);
+	fflush(stdout);
 }
 
 
@@ -217,8 +239,8 @@ int main(int argc, char** argv)
 	MQTTSocket n;
 	MQTTClient c;
 
-//	signal(SIGINT, cfinish);
-//	signal(SIGTERM, cfinish);
+	signal(SIGINT, cfinish);
+	signal(SIGTERM, cfinish);
 
 	MQTTSocketInit(&n, 0);
 	MQTTSocketConnect(&n, opts.host, opts.port);
@@ -237,17 +259,37 @@ int main(int argc, char** argv)
 	
 	rc = MQTTConnect(&c, &data);
 	printf("Connected %d\n", rc);
-    
-    printf("Subscribing to %s\n", topic);
-	rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
-	printf("Subscribed %d\n", rc);
 
-	while (!toStop)
+	if (opts.message)
 	{
-		MQTTYield(&c, 1000);	
+		/* If there is any message, publish the message on a topic. */
+
+		MQTTMessage pubmsg;
+
+		memset(&pubmsg, 0, sizeof(pubmsg));
+		pubmsg.qos = opts.qos;
+		pubmsg.retained = 0;
+		pubmsg.dup = 0;
+		pubmsg.payload = opts.message;
+		pubmsg.payloadlen = strlen(opts.message);
+
+		printf("Publishing to %s\n", topic);
+		rc = MQTTPublish(&c, topic, &pubmsg);
+		printf("Published %d\n", rc);
 	}
-	
-	printf("Stopping\n");
+	else
+	{
+		printf("Subscribing to %s\n", topic);
+		rc = MQTTSubscribe(&c, topic, opts.qos, messageArrived);
+		printf("Subscribed %d\n", rc);
+
+		while (!toStop)
+		{
+			MQTTYield(&c, 1000);
+		}
+
+		printf("Stopping\n");
+	}
 
 	MQTTDisconnect(&c);
 	MQTTSocketDisconnect(&n);
