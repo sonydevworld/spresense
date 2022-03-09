@@ -63,7 +63,7 @@ void MQTTSslInit(MQTTSocket* n)
                                  (const unsigned char *)pers, strlen(pers))) != 0) {
     goto exit;
   }
-  mbedtls_ssl_conf_rng(&g_ssl_conf, NULL, &g_ctr_drbg);
+  mbedtls_ssl_conf_rng(&g_ssl_conf, mbedtls_ctr_drbg_random, &g_ctr_drbg);
 
   // General configuration
   if ((r = mbedtls_ssl_config_defaults(&g_ssl_conf, MBEDTLS_SSL_IS_CLIENT,
