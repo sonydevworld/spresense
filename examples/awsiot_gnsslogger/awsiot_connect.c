@@ -225,7 +225,7 @@ int publish_topic(AWS_IoT_Client *client, const char *topic, uint8_t *data, int 
 
   if (rc != SUCCESS)
     {
-      printf("An error occured of the publish : %d.\n", rc);
+      printf("An error occurred of the publish : %d.\n", rc);
       return -1;
     }
 
