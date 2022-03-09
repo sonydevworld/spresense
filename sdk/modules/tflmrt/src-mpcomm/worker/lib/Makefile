@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# modules/tflmrt/src-mpcomm/worker/lib/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,25 +33,28 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
-
-SUBDIRS = $(dir $(WORKER_ELFS))
+WORKER_LIBS = asmpw mpcommw tensorflow-microlite
 
 define DIR_template
 $(1)_$(2):
-	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-.PHONY: clean
-all: $(WORKER_ELFS)
+.PHONY: all clean build
+all: build
 
-# Build workers
+# Build each subdirectory
 
-$(WORKER_ELFS):
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+build: $(foreach DIR, $(WORKER_LIBS), $(DIR)_build)
+
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),build,)))
+
+depend: $(foreach DIR, $(WORKER_LIBS), $(DIR)_depend)
+
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),depend,depend)))
 
 # Clean each subdirectory
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
+clean: $(foreach DIR, $(WORKER_LIBS), $(DIR)_clean)
 
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
+$(foreach DIR, $(WORKER_LIBS), $(eval $(call DIR_template,$(DIR),clean,clean)))

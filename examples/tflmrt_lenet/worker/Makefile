@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# tflmrt_lenet/worker/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
+WORKER_ELFS = tflmrt-mp/DNNRT-MP
 
 SUBDIRS = $(dir $(WORKER_ELFS))
 

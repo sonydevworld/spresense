@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# modules/tflmrt/src-mpcomm/worker/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,25 +33,39 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
+WORKER_ELFS = tflmrt-mp/TFLMRT-MP
 
 SUBDIRS = $(dir $(WORKER_ELFS))
 
 define DIR_template
 $(1)_$(2):
-	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" APPDIR="$(APPDIR)" SDKDIR="$(SDKDIR)" CROSSDEV=$(CROSSDEV)
 endef
 
-.PHONY: clean
+.PHONY: lib clean
 all: $(WORKER_ELFS)
+
+# Build worker libraries
+
+lib:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
 # Build workers
 
-$(WORKER_ELFS):
+$(WORKER_ELFS): lib
 	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+.depend:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) depend
+	@touch $@
+
+depend: .depend
 
 # Clean each subdirectory
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
+lib_clean:
+	$(Q) $(MAKE) -C lib TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean) lib_clean
 
 $(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))

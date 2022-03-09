@@ -39,13 +39,34 @@ RUNTIMEDIR := $(SDKDIR)/../externals/tensorflow/c-runtime
 
 MODNAME = tflmrt
 
+ifeq ($(CONFIG_TFLM_RT_MPCOMM),y)
+CSRCS += runtime_client.c
+
+VPATH += src-mpcomm/runtime
+DEPPATH = --dep-path src-mpcomm/runtime
+else
 CSRCS := runtime_tensorflow.c
 
 CFLAGS += -Isrc/runtime
 
 VPATH = src/runtime
 DEPPATH = --dep-path src/runtime
+endif
 
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)}
 
 include $(SDKDIR)/modules/Module.mk
+
+ifeq ($(CONFIG_TFLM_RT_MPCOMM),y)
+
+build_worker:
+	@$(MAKE) -C src-mpcomm/worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(OBJS): build_worker
+
+clean:: clean_worker
+
+clean_worker:
+	@$(MAKE) -C src-mpcomm/worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+endif

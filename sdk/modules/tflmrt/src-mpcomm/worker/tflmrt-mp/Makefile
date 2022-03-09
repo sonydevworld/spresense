@@ -1,7 +1,7 @@
 ############################################################################
-# dnnrt_lenet/worker/Makefile
+# modules/tflmrt/src-mpcomm/worker/tflmrt-mp/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,25 +33,60 @@
 #
 ############################################################################
 
-WORKER_ELFS = dnnrt-mp/DNNRT-MP
+include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-SUBDIRS = $(dir $(WORKER_ELFS))
+BIN = TFLMRT-MP
 
-define DIR_template
-$(1)_$(2):
-	+$(Q) $(MAKE) -C $(1) $(3) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
-endef
+CSRCS += tflm_main.c
 
-.PHONY: clean
-all: $(WORKER_ELFS)
+CSRCS += tflm_controller.c
 
-# Build workers
+ASMPW_DIR = "../lib/asmpw"
+MPCOMMW_DIR = "../lib/mpcommw"
+TENSORFLOW_MICROLITE_DIR = "../lib/tensorflow-microlite"
 
-$(WORKER_ELFS):
-	$(Q) $(MAKE) -C $(dir $@) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+LDLIBPATH += -L $(ASMPW_DIR)
+LDLIBPATH += -L $(MPCOMMW_DIR)
+LDLIBPATH += -L $(TENSORFLOW_MICROLITE_DIR)
 
-# Clean each subdirectory
+LDLIBS += -lmpcommw
+LDLIBS += -lasmpw
+LDLIBS += -ltensorflow-microlite
 
-clean: $(foreach DIR, $(SUBDIRS), $(DIR)_clean)
+LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
+LIBC = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libc_nano.a}"
+LIBGCC = "$(shell "$(CC)" $(ARCHCPUFLAGS) -print-libgcc-file-name)"
 
-$(foreach DIR, $(SUBDIRS), $(eval $(call DIR_template,$(DIR),clean,clean)))
+TENSORFLOW_RUNTIME_DIR := $(SDKDIR)/../externals/tensorflow/c-runtime
+
+CELFFLAGS += -I"$(TENSORFLOW_RUNTIME_DIR)"
+
+STACK_SIZE = 8192
+WORKERSTACKSIZE = $(STACK_SIZE)
+CELFFLAGS += -DSTACK_SIZE=$(STACK_SIZE)
+CELFFLAGS += -DTF_LITE_STATIC_MEMORY
+
+AOBJS = $(ASRCS:.S=$(OBJEXT))
+COBJS = $(CSRCS:.c=$(OBJEXT))
+
+OBJEXT ?= .o
+
+all: $(BIN)
+
+$(COBJS): %$(OBJEXT): %.c
+	@echo "CC: $<"
+	$(Q) $(CC) -c $(CELFFLAGS) $< -o $@
+
+$(AOBJS): %$(OBJEXT): %.S
+	@echo "AS: $<"
+	$(Q) $(CC) -c $(AFLAGS) $< -o $@
+
+$(BIN): $(COBJS) $(AOBJS)
+	@echo "LD: $<"
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBM) $(LIBC) $(LIBGCC)
+	$(Q) $(STRIP) -d $(BIN)
+
+clean:
+	$(call DELFILE, $(BIN))
+	$(call CLEAN)
