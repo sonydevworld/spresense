@@ -315,7 +315,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			WS_DEBUG( " failed\n	 ! mbedtls_ssl_set_hostname returned -0x%x\n\n", -ret );
 			goto fail;
 		}
-		mbedtls_ssl_conf_read_timeout( &websocket->conf, 1000); /* 1 second Timeout */
+		mbedtls_ssl_conf_read_timeout( &websocket->conf, 10000); /* 10 second Timeout */
 		if(websocket->flags & WEBSOCKET_FLAG_PROXY) {
 			/*  SSL On / Proxy On
 				Execute CONNECT command of non-secure message after connecting to proxy server.
@@ -424,7 +424,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			goto fail;
 		}
 		struct timeval tv;
-		tv.tv_sec  =  1;  /* 1 second Timeout */
+		tv.tv_sec  =  10;  /* 10 second Timeout */
 		tv.tv_usec =  0;
 
 		if(setsockopt(websocket->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
