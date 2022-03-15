@@ -42,7 +42,7 @@ if [ "X${TOPDIR}" = "X" ]; then
 fi
 
 APP_VERSION="0.0.0"
-SDK_VERSION="SDK2.4.0"
+SDK_VERSION="SDK2.5.0"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
