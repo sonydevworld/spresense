@@ -32,7 +32,7 @@ extern "C" {
 
 /* This is the value used for ssl read timeout */
 #ifndef IOT_SSL_READ_TIMEOUT_MS
-	#define IOT_SSL_READ_TIMEOUT_MS 3
+	#define IOT_SSL_READ_TIMEOUT_MS 10000
 #endif
 
 /* When this much time has elapsed after receiving MBEDTLS_ERR_SSL_WANT_READ
