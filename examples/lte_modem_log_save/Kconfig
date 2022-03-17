@@ -1,0 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_MODEM_LOG_SAVE
+	tristate "Save modem FW logs example"
+	default n
+	---help---
+		Enable the Save Modem FW logs example
+
+if EXAMPLES_LTE_MODEM_LOG_SAVE
+
+config EXAMPLES_LTE_MODEM_LOG_SAVE_PROGNAME
+	string "Program name"
+	default "lte_modem_log_save"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_MODEM_LOG_SAVE_PRIORITY
+	int "LTE modem log save task priority"
+	default 100
+
+config EXAMPLES_LTE_MODEM_LOG_SAVE_STACKSIZE
+	int "LTE modem log save stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif
