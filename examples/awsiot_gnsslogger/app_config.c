@@ -50,7 +50,7 @@
  ****************************************************************************/
 
 #define DEFAULT_MQTT_CMDTIMEOUT 20000
-#define DEFAULT_MQTT_SSLTIMEOUT 5000
+#define DEFAULT_MQTT_SSLTIMEOUT 10000
 #define DEFAULT_MQTT_KEEPALIVE  600
 
 #define MATCH(s, n) ((strncmp(section, s, strlen(s))==0) && (strncmp(name, n, strlen(n))==0))

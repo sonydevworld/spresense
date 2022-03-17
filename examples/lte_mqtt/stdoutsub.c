@@ -286,7 +286,7 @@ int main(int argc, char** argv)
 	}
 	MQTTSocketInit(&n, use_ssl);
 	MQTTSocketConnect(&n, opts.host, opts.port);
-	MQTTClientInit(&c, &n, 1000, buf, 100, readbuf, 100);
+	MQTTClientInit(&c, &n, 10000, buf, 100, readbuf, 100);
  
 	MQTTPacket_connectData data = MQTTPacket_connectData_initializer;       
 	data.willFlag = 0;
