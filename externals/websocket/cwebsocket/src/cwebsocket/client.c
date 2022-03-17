@@ -175,7 +175,7 @@ int cwebsocket_client_ssl_init(cwebsocket_client *websocket, char *cert_name, ch
 	 * but makes interop easier in this simplified example */
 		mbedtls_ssl_conf_authmode( &websocket->conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 		mbedtls_ssl_conf_ca_chain( &websocket->conf, &websocket->cacert, NULL );
-		mbedtls_ssl_conf_rng( &websocket->conf, NULL, &websocket->ctr_drbg );
+		mbedtls_ssl_conf_rng( &websocket->conf, mbedtls_ctr_drbg_random, &websocket->ctr_drbg );
 
 	if (cli_cert != NULL && cli_key != NULL){
 		ret = mbedtls_x509_crt_parse_file(&websocket->clicert, cli_cert);
