@@ -599,7 +599,7 @@ int cwebsocket_client_read_handshake(cwebsocket_client *websocket, char *seckey,
 	tmplen = bytes_read - 3;
 	char buf[tmplen+1];
 	memcpy(buf, data, tmplen);
-	buf[tmplen+1] = '\0';
+	buf[tmplen] = '\0';
 	
 	if(flags & WEBSOCKET_FLAG_PROXY) {
 		return cwebsocket_proxy_client_handshake_handler(websocket, buf);
@@ -978,7 +978,6 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		WS_DEBUG("client_read_data: received PING control frame");
 		uint8_t payload[payload_length];
 		memcpy(payload, &data[header_length], payload_length);
-		payload[payload_length] = '\0';
 		free(data);
 		return cwebsocket_client_send_control_frame(websocket, PONG, "PONG", payload, payload_length);
 	}
@@ -999,7 +998,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		   header_length += 2;
 		   payload_length -= 2;
 		}
-		uint8_t payload[payload_length];
+		uint8_t payload[payload_length+1];
 		memcpy(payload, &data[header_length], (payload_length) * sizeof(uint8_t));
 		payload[payload_length] = '\0';
 		free(data);
