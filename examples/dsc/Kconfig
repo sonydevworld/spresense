@@ -1,0 +1,37 @@
+
+config EXAMPLES_DSC
+	tristate "Digital Still Camera(DSC) application"
+	default n
+	---help---
+		Enable the dsc app
+
+if EXAMPLES_DSC
+
+config EXAMPLES_DSC_PROGNAME
+	string "Program name"
+	default "dsc"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_DSC_PRIORITY
+	int "DSC task priority"
+	default 100
+
+config EXAMPLES_DSC_STACKSIZE
+	int "DSC stack size"
+	default 2048
+
+choice
+	prompt "DSC Input Device"
+	default EXAMPLES_DSC_BUTTON_INPUT
+
+config EXAMPLES_DSC_BUTTON_INPUT
+	bool "Button Input"
+
+config EXAMPLES_DSC_KEYBOARD_INPUT
+	bool "Keyboard Input"
+
+endchoice
+
+endif
