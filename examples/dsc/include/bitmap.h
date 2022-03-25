@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/dsc/include/font_draw.h
+ * examples/dsc/include/bitmap.h
  *
  *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
@@ -33,27 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__
-#define __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#include <stdint.h>
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define FONT_COLOR_RED     (0xF800)
-#define FONT_COLOR_GREEN   (0x07E0)
-#define FONT_COLOR_BLUE    (0x001F)
-#define FONT_COLOR_YELLOW  (0xFFE0)
-#define FONT_COLOR_WHITE   (0xFFFF)
-#define FONT_COLOR_BLACK   (0x0000)
-#define FONT_COLOR_GRAY    (0x7BEF) /* 0111_1 011_111 0_1111 */
-#define FONT_COLOR_DRKGRAY (0x39E7) /* 0011_1 001_111 0_0111 */
+#ifndef __EXAMPLES_DSC_INCLUDE_BITMAP_H__
+#define __EXAMPLES_DSC_INCLUDE_BITMAP_H__
 
 #ifdef __cplusplus
 extern "C"
@@ -64,19 +45,11 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
-void draw_borderingfont(uint8_t *frame_buff, int fb_width, int fb_height,
-                    int draw_pos_x, int draw_pos_y, uint16_t fg_color,
-                    uint16_t edge_color, const uint8_t *font_data,
-                    int font_width, int font_height);
-
-void print_borderingfont(FAR const char *msg, uint8_t *canvas, int w, int h,
-    int posx, int posy, uint16_t fg, uint16_t bg);
-
-int get_drawfontwidth(void);
-int get_drawfontheight(void);
+int write_bmp(const char *filename, unsigned short *rgb565,
+              int height, int width);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__ */
+#endif  /* __EXAMPLES_DSC_INCLUDE_BITMAP_H__ */

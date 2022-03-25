@@ -48,6 +48,7 @@ CSRCS += nx_backend.c
 CSRCS += camera_ctrl.c
 CSRCS += dsc_file.c
 CSRCS += MonoFont_2bit.c
+CSRCS += bitmap.c
 
 CXXSRCS  = dsc_appmenu.cxx
 CXXSRCS += simple_menu.cxx
