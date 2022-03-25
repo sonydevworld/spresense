@@ -321,7 +321,7 @@ int ambient_send(FAR ambient_ctx_t *ctx)
 
   usleep(30 * 1000);
 
-  ret = recv(sockfd, iobuffer, IOBUFFER_MAXLEN, 0);
+  ret = recv(sockfd, iobuffer, IOBUFFER_MAXLEN - 1, 0);
   if (ret < 0)
     {
       nerr("ERROR: recv failed: %d\n", errno);

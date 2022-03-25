@@ -140,7 +140,7 @@ static int parse_args(FAR struct args_s *args, int argc, FAR char *argv[])
 
   /* Create dataset to be sent */
 
-  args->pdata = (dataset *)malloc(sizeof(dataset) * args->datanum);
+  args->pdata = (dataset *)zalloc(sizeof(dataset) * args->datanum);
   if (!args->pdata)
     {
       fprintf(stderr, "ERROR: Out of memory\n");
