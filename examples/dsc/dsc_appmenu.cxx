@@ -152,7 +152,7 @@ static struct camera_param_name onoff_param[] =
 #define ONOFF_PARAMSIZE  (sizeof(onoff_param)/sizeof(onoff_param[0]))
 
 static camera_extctl hdr_item("MShotHDR",
-                      V4L2_CTRL_CLASS_USER, V4L2_CID_WIDE_DYNAMIC_RANGE,
+                      V4L2_CTRL_CLASS_CAMERA, V4L2_CID_WIDE_DYNAMIC_RANGE,
                       onoff_param, ONOFF_PARAMSIZE, 0);
 
 static struct camera_param_name quality_param[] =

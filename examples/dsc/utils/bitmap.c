@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/dsc/include/bitmap.h
+ * examples/dsc/include/bitmap.c
  *
  *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
