@@ -1414,8 +1414,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num  */
- /* Num € */   {
+}, /* end of Num  */
+ /* Num  */   {
 	/* line 0 */
 	0x00, 0xfc, 0xff, 0x00, 
 	/* line 1 */
@@ -1458,8 +1458,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num € */
- /* Num  */   {
+}, /* end of Num  */
+ /* Num  */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1502,8 +1502,8 @@ const unsigned char MonoFont_data[][84] = {
 	0xfc, 0xff, 0x0f, 0x00, 
 	/* line 20 */
 	0xf0, 0xff, 0x03, 0x00, 
-}, /* end of Num  */
- /* Num ‚ */   {
+}, /* end of Num  */
+ /* Num  */   {
 	/* line 0 */
 	0xfc, 0x03, 0x00, 0x00, 
 	/* line 1 */
@@ -1546,8 +1546,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ‚ */
- /* Num ƒ */   {
+}, /* end of Num  */
+ /* Num  */   {
 	/* line 0 */
 	0xc0, 0x3f, 0x00, 0x00, 
 	/* line 1 */
@@ -1590,8 +1590,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ƒ */
- /* Num „ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0xfc, 0x03, 0x00, 
 	/* line 1 */
@@ -1634,8 +1634,8 @@ const unsigned char MonoFont_data[][84] = {
 	0xfc, 0xff, 0x0f, 0x00, 
 	/* line 20 */
 	0xf0, 0xff, 0x03, 0x00, 
-}, /* end of Num „ */
- /* Num … */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0xfc, 0x03, 0x00, 0x00, 
 	/* line 1 */
@@ -1678,8 +1678,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num … */
- /* Num † */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0xfc, 0xff, 0x00, 0x00, 
 	/* line 1 */
@@ -1722,8 +1722,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num † */
- /* Num ‡ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1766,8 +1766,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ‡ */
- /* Num ˆ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1810,8 +1810,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ˆ */
- /* Num ‰ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1854,8 +1854,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ‰ */
- /* Num Š */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1898,8 +1898,8 @@ const unsigned char MonoFont_data[][84] = {
 	0xff, 0x0f, 0x00, 0x00, 
 	/* line 20 */
 	0xfc, 0x03, 0x00, 0x00, 
-}, /* end of Num Š */
- /* Num ‹ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1942,8 +1942,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0xf0, 0xff, 0x00, 
 	/* line 20 */
 	0x00, 0xc0, 0x3f, 0x00, 
-}, /* end of Num ‹ */
- /* Num Œ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -1986,8 +1986,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num Œ */
- /* Num  */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2030,8 +2030,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num  */
- /* Num  */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2074,8 +2074,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num  */
- /* Num  */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2118,8 +2118,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num  */
- /* Num  */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2162,8 +2162,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num  */
- /* Num ‘ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2206,8 +2206,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ‘ */
- /* Num ’ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2250,8 +2250,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x0c, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ’ */
- /* Num “ */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2294,8 +2294,8 @@ const unsigned char MonoFont_data[][84] = {
 	0xff, 0x3f, 0x00, 0x00, 
 	/* line 20 */
 	0xff, 0x0f, 0x00, 0x00, 
-}, /* end of Num “ */
- /* Num ” */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */
@@ -2338,8 +2338,8 @@ const unsigned char MonoFont_data[][84] = {
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 20 */
 	0x00, 0x00, 0x00, 0x00, 
-}, /* end of Num ” */
- /* Num d */   {
+}, /* end of Num */
+ /* Num */   {
 	/* line 0 */
 	0x00, 0x00, 0x00, 0x00, 
 	/* line 1 */

@@ -129,6 +129,9 @@ extern "C" int inputdev_update(void)
     {
       switch (c)
         {
+          case 'h':
+            key = MENU_KEY_LEFT;
+            break;
           case 'k':
             key = MENU_KEY_UP;
             break;

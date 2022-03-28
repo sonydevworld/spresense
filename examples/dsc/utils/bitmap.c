@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/dsc/include/font_draw.h
+ * examples/dsc/include/bitmap.c
  *
  *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
@@ -33,50 +33,109 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__
-#define __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Private Data
  ****************************************************************************/
 
-#define FONT_COLOR_RED     (0xF800)
-#define FONT_COLOR_GREEN   (0x07E0)
-#define FONT_COLOR_BLUE    (0x001F)
-#define FONT_COLOR_YELLOW  (0xFFE0)
-#define FONT_COLOR_WHITE   (0xFFFF)
-#define FONT_COLOR_BLACK   (0x0000)
-#define FONT_COLOR_GRAY    (0x7BEF) /* 0111_1 011_111 0_1111 */
-#define FONT_COLOR_DRKGRAY (0x39E7) /* 0011_1 001_111 0_0111 */
+static char tag[] = { 'B', 'M' };
 
-#ifdef __cplusplus
-extern "C"
+static const int default_header[] = {
+        0, 0, 0x36, 0x28, 0, 0, 0x180001, 
+        0, 0, 0x002e23, 0x002e23, 0, 0
+};
+#define HEADER_SIZE	(sizeof(default_header)/sizeof(default_header[0]))
+
+static int header[HEADER_SIZE];
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+static void init_header(void)
 {
-#endif
+	int i;
+  for (i=0; i<HEADER_SIZE; i++)
+    {
+      header[i] = (int)default_header[i];
+    }
+}
+
+static void expand_color(unsigned short rgb565,
+                  unsigned char *r,
+                  unsigned char *g,
+                  unsigned char *b)
+{
+  *r = (unsigned char)((rgb565 >> 8) & 0xF8);
+  *g = (unsigned char)((rgb565 >> 3) & 0xFC);
+  *b = (unsigned char)((rgb565 << 3) & 0xF8);
+}
 
 /****************************************************************************
- * Public Function Prototypes
+ * Public Functions
  ****************************************************************************/
 
-void draw_borderingfont(uint8_t *frame_buff, int fb_width, int fb_height,
-                    int draw_pos_x, int draw_pos_y, uint16_t fg_color,
-                    uint16_t edge_color, const uint8_t *font_data,
-                    int font_width, int font_height);
+int write_bmp(const char *filename, unsigned short *rgb565,
+              int height, int width)
+{
+  FILE *fp;
+  int padding_len;
+  int bitmap_size;
+  int row, col;
+  unsigned char r, g, b, z;
 
-void print_borderingfont(FAR const char *msg, uint8_t *canvas, int w, int h,
-    int posx, int posy, uint16_t fg, uint16_t bg);
+  printf("Saveing Image into %s.\n", filename);
 
-int get_drawfontwidth(void);
-int get_drawfontheight(void);
+  /* Pad the width of the destination to a multiple of 4 */
 
-#ifdef __cplusplus
+  padding_len = (4 - ((width * 3) % 4)) % 4;
+    
+  bitmap_size = height * (width + padding_len) * 3;
+
+  /* Create header */
+
+  init_header();
+  header[0] = sizeof(tag) + sizeof(header) + bitmap_size;
+  header[4] = width;
+  header[5] = -height;
+
+  fp = fopen(filename, "wb");
+  if (fp == NULL)
+    {
+      printf("Could not open %s\n", filename);
+      return -1;
+    }
+
+  fwrite(&tag, sizeof(tag), 1, fp);
+  fwrite(&header, sizeof(header), 1, fp);
+
+  z = 0;
+
+  /* For each pixel in the RGB image... */
+
+  for (row = 0; row < height; row++)
+    {
+      for (col = 0; col < width; col++)
+        {
+          expand_color(*rgb565, &r, &g, &b);
+          fwrite(&b, 1, 1, fp);
+          fwrite(&g, 1, 1, fp);
+          fwrite(&r, 1, 1, fp);
+          rgb565++;
+        }
+      for (col = 0; col < padding_len; col++)
+        {
+          fwrite(&z, 1, 1, fp);
+        }
+    }
+
+  fclose(fp);
+
+  return 0;
 }
-#endif
-
-#endif  /* __EXAMPLES_DSC_INCLUDE_FONT_DRAW_H__ */

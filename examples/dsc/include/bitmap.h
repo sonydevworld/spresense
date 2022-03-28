@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/dsc/utils/camera_parambase.cxx
+ * examples/dsc/include/bitmap.h
  *
  *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
@@ -33,68 +33,23 @@
  *
  ****************************************************************************/
 
-/****************************************************************************
- * Included Files
- ****************************************************************************/
+#ifndef __EXAMPLES_DSC_INCLUDE_BITMAP_H__
+#define __EXAMPLES_DSC_INCLUDE_BITMAP_H__
 
-#include <nuttx/config.h>
-
-#include <stdio.h>
-
-#include "camera_parambase.h"
-#include "camera_ctrl.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /****************************************************************************
- * Class Methods
+ * Public Function Prototypes
  ****************************************************************************/
 
-template<class T>
-camera_parambase<T>::camera_parambase(const char *name,
-                             T *cpn, int num, int initval)
-  : cam_menuitem(name, initval), param(cpn), param_num(num)
-{
+int write_bmp(const char *filename, unsigned short *rgb565,
+              int height, int width);
+
+#ifdef __cplusplus
 }
+#endif
 
-template<class T>
-camera_parambase<T>::~camera_parambase()
-{
-}
-
-template<class T>
-int camera_parambase<T>::exec()
-{
-  int i;
-  int ret;
-  int fd = cam_menuitem::get_camfd();
-
-  printf("Called exec()\n");
-
-  /* Next supported item will be set */
-
-  for (i = item_value + 1, ret = -1; i < param_num && ret < 0; i++)
-    {
-      ret = exec_item(fd, i);
-      if (ret >= 0)
-        {
-          printf("[%d] Successed!!!\n", i);
-          item_value = i;
-        }
-    }
-
-  if (ret < 0)
-    {
-      /* Lap-round */
-
-      for (i = 0; i < item_value && ret < 0; i++)
-        {
-          ret = exec_item(fd, i);
-          if (ret >= 0)
-            {
-              printf("[%d] Successed!!!\n", i);
-              item_value = i;
-            }
-        }
-    }
-
-  return MENU_EXEC_DONE;
-}
+#endif  /* __EXAMPLES_DSC_INCLUDE_BITMAP_H__ */

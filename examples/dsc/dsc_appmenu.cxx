@@ -57,7 +57,9 @@
 // Pre-processor Definitions
 //***************************************************************************
 
+#define MENU_MORE_MSG "more"
 #define ITEM_DRAW_START_XPOS(fw)   ((fw) * 4)
+#define MSG_DRAW_START_XPOS(fw)    ((fw) * 8)
 #define ITEM_DRAW_START_YOFFSET    (3)
 #define ITEM_DRAW_START_YPOS(l,fh) ((ITEM_DRAW_START_YOFFSET + (l)) * (fh))
 
@@ -76,6 +78,7 @@ class lcd_drawer : public display_menu
   public:
     lcd_drawer() : display_menu(5), canvas(NULL) {};
     virtual void draw_title(menu *m);
+    virtual void draw_tail(menu *m);
     virtual void draw_menuitem(menu_item *itm, int line, bool sel);
     void set_sensorname(const char *name) { sensor_name = name; };
     void set_canvas(unsigned char *cvs) { canvas = cvs; };
@@ -149,7 +152,7 @@ static struct camera_param_name onoff_param[] =
 #define ONOFF_PARAMSIZE  (sizeof(onoff_param)/sizeof(onoff_param[0]))
 
 static camera_extctl hdr_item("MShotHDR",
-                      V4L2_CTRL_CLASS_USER, V4L2_CID_WIDE_DYNAMIC_RANGE,
+                      V4L2_CTRL_CLASS_CAMERA, V4L2_CID_WIDE_DYNAMIC_RANGE,
                       onoff_param, ONOFF_PARAMSIZE, 0);
 
 static struct camera_param_name quality_param[] =
@@ -238,7 +241,7 @@ static struct camera_pair_param_name jpgsize_param[] =
 
 static camera_jpgsize jpgsize_item(jpgsize_param, JPGSIZE_PARAMSIZE, 3);
 
-static endmenu_item end_item("GoBackCamera");
+static endmenu_item end_item("ExitMenu");
 
 static lcd_drawer  drawer;
 static lcd_menu_system sys;
@@ -250,20 +253,30 @@ static lcd_menu_system sys;
 void lcd_drawer::draw_title(menu *m)
 {
   const char *title = m->get_menutitle();
-  int fwidth = get_drawfontwidth();
+  int fwidth  = get_drawfontwidth();
+  int fheight = get_drawfontheight();
 
   if (canvas)
     {
       print_borderingfont(title, canvas, lcd_width, lcd_height,
                      0, 0, FONT_COLOR_BLACK, FONT_COLOR_WHITE);
 
-      print_borderingfont(" with ", canvas, lcd_width, lcd_height,
-                     fwidth * strlen(title), 0,
+      print_borderingfont("with", canvas, lcd_width, lcd_height,
+                     fwidth * (strlen(title) + 1), 0,
                      FONT_COLOR_BLACK, FONT_COLOR_WHITE);
 
       print_borderingfont(sensor_name, canvas, lcd_width, lcd_height,
-                     fwidth * (strlen(title) + 6), 0,
+                     fwidth * (strlen(title) + 5), 0,
                      FONT_COLOR_RED, FONT_COLOR_WHITE);
+
+      if (m->get_displaypos() != 0)
+        {
+          print_borderingfont(MENU_MORE_MSG, canvas, lcd_width, lcd_height,
+                        MSG_DRAW_START_XPOS(fwidth),
+                        ITEM_DRAW_START_YPOS(-1, fheight),
+                        FONT_COLOR_BLACK, FONT_COLOR_WHITE);
+
+        }
     }
 }
 
@@ -302,6 +315,24 @@ void lcd_drawer::draw_menuitem(menu_item *itm, int line, bool sel)
                            fwidth * 15, ITEM_DRAW_START_YPOS(line, fheight),
                            fgcolor, bgcolor);
         }
+    }
+}
+
+void lcd_drawer::draw_tail(menu *m)
+{
+  int fwidth;
+  int fheight;
+
+  if (m->get_displaypos() + lines() < m->get_menunum())
+    {
+      fwidth  = get_drawfontwidth();
+      fheight = get_drawfontheight();
+
+      print_borderingfont(MENU_MORE_MSG, canvas, lcd_width, lcd_height,
+                    MSG_DRAW_START_XPOS(fwidth),
+                    ITEM_DRAW_START_YPOS(lines(), fheight),
+                    FONT_COLOR_BLACK, FONT_COLOR_WHITE);
+
     }
 }
 

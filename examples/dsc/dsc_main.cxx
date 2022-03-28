@@ -54,10 +54,13 @@
 
 #include "dsc_file.h"
 #include "dsc_appmenu.h"
+#include "bitmap.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#define BITMAP_FILENAME  "/mnt/spif/lcd_bitmap.bmp"
 
 #define APP_MODE_SHOOTER  (0)
 #define APP_MODE_MENU     (1)
@@ -248,7 +251,7 @@ static int action_in_menumode(unsigned char *img, int key)
  * name: app_action
  ****************************************************************************/
 
-static void app_action(unsigned char **img)
+static int app_action(unsigned char **img)
 {
   int key;
 
@@ -268,6 +271,8 @@ static void app_action(unsigned char **img)
         g_appinst.app_mode = APP_MODE_SHOOTER;
         break;
     }
+
+  return key;
 }
 
 /****************************************************************************
@@ -280,6 +285,7 @@ static void app_action(unsigned char **img)
 
 extern "C" int main(void)
 {
+  int key;
   unsigned char *img;
 
   // Initial mode is SHOOTER mode
@@ -345,9 +351,22 @@ extern "C" int main(void)
   while (1)
     {
       get_previewimage(g_appinst.vfd, &img);
-      app_action(&img);
+      key = app_action(&img);
       draw_cardstatus(img);
       nximage_draw(img);
+
+      if (key == MENU_KEY_LEFT)
+        {
+          /* Left menu key code is just used as a capture key
+           * to capture and save drawing picture on the LCD display
+           * to the file. This function can be used for debugging
+           * or for getting a picture of the documentat of this app ;-)
+           */
+
+          write_bmp(BITMAP_FILENAME, (unsigned short *)img,
+                                     g_appinst.lcd_h, g_appinst.lcd_w);
+        }
+
       release_previewimage(g_appinst.vfd, img);
     }
 
