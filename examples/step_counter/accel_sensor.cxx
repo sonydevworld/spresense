@@ -99,7 +99,7 @@ static FAR void *accel_sensor_entry(pthread_addr_t arg)
 
   /* Free instance of AccelSensorClass. */
 
-  free(instance);
+  delete(instance);
 
   return (void *)&s_sensor_entry_result;
 }
