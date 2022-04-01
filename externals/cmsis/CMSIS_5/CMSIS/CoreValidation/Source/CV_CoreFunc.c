@@ -2,7 +2,7 @@
  *      Name:         CV_CoreFunc.c
  *      Purpose:      CMSIS CORE validation tests implementation
  *-----------------------------------------------------------------------------
- *      Copyright (c) 2017 - 2018 Arm Limited. All rights reserved.
+ *      Copyright (c) 2017 - 2021 Arm Limited. All rights reserved.
  *----------------------------------------------------------------------------*/
 
 #include "CV_Framework.h"
@@ -194,12 +194,10 @@ Check expected behavior of interrupt vector relocation functions:
 void TC_CoreFunc_IRQVect(void) {
 #if defined(__VTOR_PRESENT) && __VTOR_PRESENT
   /* relocate vector table */
-  extern uint32_t __Vectors[];
-  static uint32_t vectors[32] __ALIGNED(512);
+  extern const VECTOR_TABLE_Type __VECTOR_TABLE[48];
+  static VECTOR_TABLE_Type vectors[sizeof(__VECTOR_TABLE)/sizeof(__VECTOR_TABLE[0])] __ALIGNED(512);
 
-  for(uint32_t i=0U; i<32U; i++) {
-    vectors[i] = __Vectors[i];
-  }
+  memcpy(vectors, __VECTOR_TABLE, sizeof(__VECTOR_TABLE));
 
   const uint32_t orig_vtor = SCB->VTOR;
   const uint32_t vtor = ((uint32_t)vectors) & SCB_VTOR_TBLOFF_Msk;
@@ -308,19 +306,19 @@ void TC_CoreFunc_IPSR (void) {
 /*=======0=========1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1====*/
 
 #if defined(__CC_ARM)
-#define SUBS(Rd, Rm, Rn) __ASM("SUBS " # Rd ", " # Rm ", " # Rn)
-#define ADDS(Rd, Rm, Rn) __ASM("ADDS " # Rd ", " # Rm ", " # Rn)
+#define SUBS(Rd, Rm, Rn) __ASM volatile("SUBS " # Rd ", " # Rm ", " # Rn)
+#define ADDS(Rd, Rm, Rn) __ASM volatile("ADDS " # Rd ", " # Rm ", " # Rn)
 #elif defined( __GNUC__ )  && (!defined(__ARMCC_VERSION))  && (defined(__ARM_ARCH_6M__) || defined(__ARM_ARCH_8M_BASE__))
-#define SUBS(Rd, Rm, Rn) __ASM("SUB %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
-#define ADDS(Rd, Rm, Rn) __ASM("ADD %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
+#define SUBS(Rd, Rm, Rn) __ASM volatile("SUB %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
+#define ADDS(Rd, Rm, Rn) __ASM volatile("ADD %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
 #elif defined(_lint)
 //lint -save -e(9026) allow function-like macro
 #define SUBS(Rd, Rm, Rn) ((Rd) = (Rm) - (Rn))
 #define ADDS(Rd, Rm, Rn) ((Rd) = (Rm) + (Rn))
 //lint -restore
 #else
-#define SUBS(Rd, Rm, Rn) __ASM("SUBS %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
-#define ADDS(Rd, Rm, Rn) __ASM("ADDS %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
+#define SUBS(Rd, Rm, Rn) __ASM volatile("SUBS %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
+#define ADDS(Rd, Rm, Rn) __ASM volatile("ADDS %0, %1, %2" : "=r"(Rd) : "r"(Rm), "r"(Rn) : "cc")
 #endif
 
 /**
@@ -331,13 +329,13 @@ void TC_CoreFunc_IPSR (void) {
 - Check negative, zero and overflow flags
 */
 void TC_CoreFunc_APSR (void) {
-  uint32_t result;
+  volatile uint32_t result;
   //lint -esym(838, Rm) unused values
   //lint -esym(438, Rm) unused values
 
   // Check negative flag
-  int32_t Rm = 5;
-  int32_t Rn = 7;
+  volatile int32_t Rm = 5;
+  volatile int32_t Rn = 7;
   SUBS(Rm, Rm, Rn);
   result  = __get_APSR();
   ASSERT_TRUE((result & APSR_N_Msk) == APSR_N_Msk);
@@ -437,8 +435,9 @@ void TC_CoreFunc_MSP (void) {
 - Check if __get_PSPLIM and __set_PSPLIM intrinsic can be used to manipulate process stack pointer limit.
 */
 void TC_CoreFunc_PSPLIM (void) {
-#if ((defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
-     (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    )
+#if ((defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) || \
+     (defined (__ARM_ARCH_8M_BASE__   ) && (__ARM_ARCH_8M_BASE__   == 1))    )
   // don't use stack for this variables
   static uint32_t orig;
   static uint32_t psplim;
@@ -453,8 +452,9 @@ void TC_CoreFunc_PSPLIM (void) {
 
   __set_PSPLIM(orig);
 
-#if (!(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) && \
-     (!defined (__ARM_FEATURE_CMSE  ) || (__ARM_FEATURE_CMSE   < 3)))
+#if (!(defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) && \
+     !(defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) && \
+     (!defined (__ARM_FEATURE_CMSE     ) || (__ARM_FEATURE_CMSE      < 3))    )
   // without main extensions, the non-secure PSPLIM is RAZ/WI
   ASSERT_TRUE(result == 0U);
 #else
@@ -471,8 +471,9 @@ void TC_CoreFunc_PSPLIM (void) {
 - Check if __TZ_get_PSPLIM_NS and __TZ_set_PSPLIM_NS intrinsic can be used to manipulate process stack pointer limit.
 */
 void TC_CoreFunc_PSPLIM_NS (void) {
-#if ((defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
-     (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    )
+#if ((defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) || \
+     (defined (__ARM_ARCH_8M_BASE__   ) && (__ARM_ARCH_8M_BASE__   == 1))    )
 
 #if (defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3))
   uint32_t orig;
@@ -488,7 +489,8 @@ void TC_CoreFunc_PSPLIM_NS (void) {
 
   __TZ_set_PSPLIM_NS(orig);
 
-#if (!(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)))
+#if (!(defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) && \
+     !(defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1))    )
   // without main extensions, the non-secure PSPLIM is RAZ/WI
   ASSERT_TRUE(result == 0U);
 #else
@@ -506,8 +508,9 @@ void TC_CoreFunc_PSPLIM_NS (void) {
 - Check if __get_MSPLIM and __set_MSPLIM intrinsic can be used to manipulate main stack pointer limit.
 */
 void TC_CoreFunc_MSPLIM (void) {
-#if ((defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
-     (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    )
+#if ((defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) || \
+     (defined (__ARM_ARCH_8M_BASE__   ) && (__ARM_ARCH_8M_BASE__   == 1))    )
   // don't use stack for this variables
   static uint32_t orig;
   static uint32_t msplim;
@@ -528,8 +531,9 @@ void TC_CoreFunc_MSPLIM (void) {
 
   __set_CONTROL(ctrl);
 
-#if (!(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) && \
-     (!defined (__ARM_FEATURE_CMSE  ) || (__ARM_FEATURE_CMSE   < 3)))
+#if (!(defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) && \
+     !(defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) && \
+     (!defined (__ARM_FEATURE_CMSE     ) || (__ARM_FEATURE_CMSE      < 3))    )
   // without main extensions, the non-secure MSPLIM is RAZ/WI
   ASSERT_TRUE(result == 0U);
 #else
@@ -546,7 +550,8 @@ void TC_CoreFunc_MSPLIM (void) {
 - Check if __TZ_get_MSPLIM_NS and __TZ_set_MSPLIM_NS intrinsic can be used to manipulate process stack pointer limit.
 */
 void TC_CoreFunc_MSPLIM_NS (void) {
-#if ((defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
+#if ((defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
      (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    )
 
 #if (defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3))
@@ -563,7 +568,8 @@ void TC_CoreFunc_MSPLIM_NS (void) {
 
   __TZ_set_MSPLIM_NS(orig);
 
-#if (!(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)))
+#if (!(defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1)) && \
+     !(defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1))    )
   // without main extensions, the non-secure MSPLIM is RAZ/WI
   ASSERT_TRUE(result == 0U);
 #else
@@ -589,7 +595,6 @@ void TC_CoreFunc_PRIMASK (void) {
 
   __set_PRIMASK(primask);
   uint32_t result = __get_PRIMASK();
-
   ASSERT_TRUE(result == primask);
 
   __disable_irq();
@@ -615,9 +620,10 @@ void TC_CoreFunc_PRIMASK (void) {
 - Check if __enable_fault_irq and __disable_fault_irq are reflected in FAULTMASK.
 */
 void TC_CoreFunc_FAULTMASK (void) {
-#if ((defined (__ARM_ARCH_7M__      ) && (__ARM_ARCH_7M__      == 1)) || \
-     (defined (__ARM_ARCH_7EM__     ) && (__ARM_ARCH_7EM__     == 1)) || \
-     (defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1))    )
+#if ((defined (__ARM_ARCH_7M__        ) && (__ARM_ARCH_7M__        == 1)) || \
+     (defined (__ARM_ARCH_7EM__       ) && (__ARM_ARCH_7EM__       == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) || \
+     (defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1))    )
 
   uint32_t orig = __get_FAULTMASK();
 
@@ -626,7 +632,6 @@ void TC_CoreFunc_FAULTMASK (void) {
 
   __set_FAULTMASK(faultmask);
   uint32_t result = __get_FAULTMASK();
-
   ASSERT_TRUE(result == faultmask);
 
   __disable_fault_irq();
@@ -654,9 +659,10 @@ void TC_CoreFunc_FAULTMASK (void) {
 - Check if __set_BASEPRI_MAX intrinsic can be used to manipulate BASEPRI.
 */
 void TC_CoreFunc_BASEPRI(void) {
-#if ((defined (__ARM_ARCH_7M__      ) && (__ARM_ARCH_7M__      == 1)) || \
-     (defined (__ARM_ARCH_7EM__     ) && (__ARM_ARCH_7EM__     == 1)) || \
-     (defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1))    )
+#if ((defined (__ARM_ARCH_7M__        ) && (__ARM_ARCH_7M__        == 1)) || \
+     (defined (__ARM_ARCH_7EM__       ) && (__ARM_ARCH_7EM__       == 1)) || \
+     (defined (__ARM_ARCH_8M_MAIN__   ) && (__ARM_ARCH_8M_MAIN__   == 1)) || \
+     (defined (__ARM_ARCH_8_1M_MAIN__ ) && (__ARM_ARCH_8_1M_MAIN__ == 1))    )
 
   uint32_t orig = __get_BASEPRI();
 

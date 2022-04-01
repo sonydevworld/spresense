@@ -174,7 +174,7 @@ int main(int argc, FAR char *argv[])
 
   snprintf(topic_name, sizeof(topic_name), LOCATION_TOPIC, app_config.client_id);
 
-  /* Initialze GNSS driver */
+  /* Initialize GNSS driver */
 
   gnss_fd = init_gnss(&mask);
   if (gnss_fd < 0)
@@ -265,7 +265,7 @@ int main(int argc, FAR char *argv[])
             aws_iot_mqtt_yield(&client, 10);
             break;
 
-          case GNSS_UTIL_STATE_ERROR: /* Error is occured */
+          case GNSS_UTIL_STATE_ERROR: /* Error is occurred */
             printf("Known error is returned.. ");
           default:
             printf("Error happened.\n");

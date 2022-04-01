@@ -46,6 +46,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <debug.h>
 
 #include "vtun.h"
 #include "lib.h"

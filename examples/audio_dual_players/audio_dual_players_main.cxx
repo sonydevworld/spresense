@@ -1109,8 +1109,12 @@ extern "C" int main(int argc, FAR char *argv[])
 
   /* Task start */
 
-  tsk0 = task_create("Player0", 155, 1024, player_thread, (FAR char* const*)argv0);
-  tsk1 = task_create("Player1", 155, 1024, player_thread, (FAR char* const*)argv1);
+  tsk0 = task_create("Player0", 155,
+                     CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_STACKSIZE,
+                     player_thread, (FAR char* const*)argv0);
+  tsk1 = task_create("Player1", 155,
+                     CONFIG_EXAMPLES_AUDIO_DUAL_PLAYERS_STACKSIZE,
+                     player_thread, (FAR char* const*)argv1);
 
   /* Wait task end. */
 

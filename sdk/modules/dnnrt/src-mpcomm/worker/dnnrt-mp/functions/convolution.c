@@ -269,37 +269,9 @@ static rt_function_error_t dnnrt_exec_convolution_float(rt_function_t *f,
   return RT_FUNCTION_ERROR_NOERROR;
 }
 
-static int var_buf_size(rt_variable_t *var)
-{
-  int elem_size = 0;
-
-  if (var->type == NN_DATA_TYPE_FLOAT)
-    {
-      elem_size = sizeof(float);
-    }
-  else if (var->type == NN_DATA_TYPE_INT16)
-    {
-      elem_size = sizeof(int16_t);
-    }
-  else if (var->type == NN_DATA_TYPE_INT8)
-    {
-      elem_size = sizeof(int8_t);
-    }
-  else
-    {
-      return 0;
-    }
-
-  return elem_size * calc_shape_size(var->shape);
-}
-
 rt_function_error_t dnnrt_exec_convolution(rt_function_t *f,
                                            int begin, int end)
 {
-  convolution_local_context_t *c =
-      (convolution_local_context_t *)f->local_context;
-  convolution_private_t *p = (convolution_private_t *)(c->data);
-
   if (f->inputs[X]->type == NN_DATA_TYPE_FLOAT)
     {
       return dnnrt_exec_convolution_float(f, begin, end);

@@ -1,0 +1,25 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menu "SDK LTE Extension"
+
+config SDK_LTE_EXT
+	bool "SDK LTE Extension library"
+	default n
+	select MODEM_ALT1250_ADDITIONAL_FUNC
+	---help---
+		Enable support for LTE extension libraries
+
+if SDK_LTE_EXT
+
+menu "LTE extension libraries"
+
+source "$APPSDIR/../modules/lte_ext/lapiext/Kconfig"
+
+endmenu # LTE extension libraries
+
+endif
+
+endmenu

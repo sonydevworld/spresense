@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 Arm Limited. All rights reserved.
+ * Copyright (c) 2013-2021 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
  *
  * -----------------------------------------------------------------------------
  *
- * $Revision:   V5.4.0
+ * $Revision:   V5.5.2
  *
  * Project:     CMSIS-RTOS RTX
  * Title:       RTX Configuration definitions
@@ -42,9 +42,9 @@
  
 //   <o>Global Dynamic Memory size [bytes] <0-1073741824:8>
 //   <i> Defines the combined global dynamic memory size.
-//   <i> Default: 4096
+//   <i> Default: 32768
 #ifndef OS_DYNAMIC_MEM_SIZE
-#define OS_DYNAMIC_MEM_SIZE         4096
+#define OS_DYNAMIC_MEM_SIZE         32768
 #endif
  
 //   <o>Kernel Tick Frequency [Hz] <1-1000000>
@@ -69,7 +69,7 @@
  
 //   </e>
  
-//   <o>ISR FIFO Queue 
+//   <o>ISR FIFO Queue
 //      <4=>  4 entries    <8=>   8 entries   <12=>  12 entries   <16=>  16 entries
 //     <24=> 24 entries   <32=>  32 entries   <48=>  48 entries   <64=>  64 entries
 //     <96=> 96 entries  <128=> 128 entries  <196=> 196 entries  <256=> 256 entries
@@ -122,16 +122,16 @@
  
 //   <o>Default Thread Stack size [bytes] <96-1073741824:8>
 //   <i> Defines stack size for threads with zero stack size specified.
-//   <i> Default: 256
+//   <i> Default: 3072
 #ifndef OS_STACK_SIZE
-#define OS_STACK_SIZE               256
+#define OS_STACK_SIZE               3072
 #endif
  
 //   <o>Idle Thread Stack size [bytes] <72-1073741824:8>
 //   <i> Defines stack size for Idle thread.
-//   <i> Default: 256
+//   <i> Default: 512
 #ifndef OS_IDLE_THREAD_STACK_SIZE
-#define OS_IDLE_THREAD_STACK_SIZE   256
+#define OS_IDLE_THREAD_STACK_SIZE   512
 #endif
  
 //   <o>Idle Thread TrustZone Module Identifier
@@ -143,10 +143,10 @@
 #endif
  
 //   <q>Stack overrun checking
-//   <i> Enables stack overrun check at thread switch.
+//   <i> Enables stack overrun check at thread switch (requires RTX source variant).
 //   <i> Enabling this option increases slightly the execution time of a thread switch.
 #ifndef OS_STACK_CHECK
-#define OS_STACK_CHECK              1
+#define OS_STACK_CHECK              0
 #endif
  
 //   <q>Stack usage watermark
@@ -156,8 +156,8 @@
 #define OS_STACK_WATERMARK          0
 #endif
  
-//   <o>Processor mode for Thread execution 
-//     <0=> Unprivileged mode 
+//   <o>Processor mode for Thread execution
+//     <0=> Unprivileged mode
 //     <1=> Privileged mode
 //   <i> Default: Privileged mode
 #ifndef OS_PRIVILEGE_MODE
@@ -198,9 +198,9 @@
 //   <o>Timer Thread Stack size [bytes] <0-1073741824:8>
 //   <i> Defines stack size for Timer thread.
 //   <i> May be set to 0 when timers are not used.
-//   <i> Default: 256
+//   <i> Default: 512
 #ifndef OS_TIMER_THREAD_STACK_SIZE
-#define OS_TIMER_THREAD_STACK_SIZE  256
+#define OS_TIMER_THREAD_STACK_SIZE  512
 #endif
  
 //   <o>Timer Thread TrustZone Module Identifier
@@ -353,7 +353,7 @@
 #endif
  
 //     <h>Global Event Filter Setup
-//     <i> Initial event filter settings applied to all components.
+//     <i> Initial recording level applied to all components.
 //       <o.0>Error events
 //       <o.1>API function call events
 //       <o.2>Operation events
@@ -364,106 +364,128 @@
 #endif
  
 //     <h>RTOS Event Filter Setup
-//     <i> Event filter settings for RTX components.
+//     <i> Recording levels for RTX components.
 //     <i> Only applicable if events for the respective component are generated.
  
 //       <e.7>Memory Management
-//       <i> Filter enable settings for Memory Management events.
+//       <i> Recording level for Memory Management events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_MEMORY_FILTER
-#define OS_EVR_MEMORY_FILTER        0x81U
+#ifndef OS_EVR_MEMORY_LEVEL
+#define OS_EVR_MEMORY_LEVEL         0x81U
 #endif
  
 //       <e.7>Kernel
-//       <i> Filter enable settings for Kernel events.
+//       <i> Recording level for Kernel events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_KERNEL_FILTER
-#define OS_EVR_KERNEL_FILTER        0x81U
+#ifndef OS_EVR_KERNEL_LEVEL
+#define OS_EVR_KERNEL_LEVEL         0x81U
 #endif
  
 //       <e.7>Thread
-//       <i> Filter enable settings for Thread events.
+//       <i> Recording level for Thread events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_THREAD_FILTER
-#define OS_EVR_THREAD_FILTER        0x85U
+#ifndef OS_EVR_THREAD_LEVEL
+#define OS_EVR_THREAD_LEVEL         0x85U
 #endif
  
-//       <e.7>Timer
-//       <i> Filter enable settings for Timer events.
+//       <e.7>Generic Wait
+//       <i> Recording level for Generic Wait events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_TIMER_FILTER
-#define OS_EVR_TIMER_FILTER         0x81U
+#ifndef OS_EVR_WAIT_LEVEL
+#define OS_EVR_WAIT_LEVEL           0x81U
+#endif
+ 
+//       <e.7>Thread Flags
+//       <i> Recording level for Thread Flags events.
+//         <o.0>Error events
+//         <o.1>API function call events
+//         <o.2>Operation events
+//         <o.3>Detailed operation events
+//       </e>
+#ifndef OS_EVR_THFLAGS_LEVEL
+#define OS_EVR_THFLAGS_LEVEL        0x81U
 #endif
  
 //       <e.7>Event Flags
-//       <i> Filter enable settings for Event Flags events.
+//       <i> Recording level for Event Flags events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_EVFLAGS_FILTER
-#define OS_EVR_EVFLAGS_FILTER       0x81U
+#ifndef OS_EVR_EVFLAGS_LEVEL
+#define OS_EVR_EVFLAGS_LEVEL        0x81U
+#endif
+ 
+//       <e.7>Timer
+//       <i> Recording level for Timer events.
+//         <o.0>Error events
+//         <o.1>API function call events
+//         <o.2>Operation events
+//         <o.3>Detailed operation events
+//       </e>
+#ifndef OS_EVR_TIMER_LEVEL
+#define OS_EVR_TIMER_LEVEL          0x81U
 #endif
  
 //       <e.7>Mutex
-//       <i> Filter enable settings for Mutex events.
+//       <i> Recording level for Mutex events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_MUTEX_FILTER
-#define OS_EVR_MUTEX_FILTER         0x81U
+#ifndef OS_EVR_MUTEX_LEVEL
+#define OS_EVR_MUTEX_LEVEL          0x81U
 #endif
  
 //       <e.7>Semaphore
-//       <i> Filter enable settings for Semaphore events.
+//       <i> Recording level for Semaphore events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_SEMAPHORE_FILTER
-#define OS_EVR_SEMAPHORE_FILTER     0x81U
+#ifndef OS_EVR_SEMAPHORE_LEVEL
+#define OS_EVR_SEMAPHORE_LEVEL      0x81U
 #endif
  
 //       <e.7>Memory Pool
-//       <i> Filter enable settings for Memory Pool events.
+//       <i> Recording level for Memory Pool events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_MEMPOOL_FILTER
-#define OS_EVR_MEMPOOL_FILTER       0x81U
+#ifndef OS_EVR_MEMPOOL_LEVEL
+#define OS_EVR_MEMPOOL_LEVEL        0x81U
 #endif
  
 //       <e.7>Message Queue
-//       <i> Filter enable settings for Message Queue events.
+//       <i> Recording level for Message Queue events.
 //         <o.0>Error events
 //         <o.1>API function call events
 //         <o.2>Operation events
 //         <o.3>Detailed operation events
 //       </e>
-#ifndef OS_EVR_MSGQUEUE_FILTER
-#define OS_EVR_MSGQUEUE_FILTER      0x81U
+#ifndef OS_EVR_MSGQUEUE_LEVEL
+#define OS_EVR_MSGQUEUE_LEVEL       0x81U
 #endif
  
 //     </h>
@@ -491,10 +513,16 @@
 #define OS_EVR_THREAD               1
 #endif
  
-//     <q>Timer
-//     <i> Enables Timer event generation.
-#ifndef OS_EVR_TIMER
-#define OS_EVR_TIMER                1
+//     <q>Generic Wait
+//     <i> Enables Generic Wait event generation.
+#ifndef OS_EVR_WAIT
+#define OS_EVR_WAIT                 1
+#endif
+ 
+//     <q>Thread Flags
+//     <i> Enables Thread Flags event generation.
+#ifndef OS_EVR_THFLAGS
+#define OS_EVR_THFLAGS              1
 #endif
  
 //     <q>Event Flags
@@ -502,7 +530,13 @@
 #ifndef OS_EVR_EVFLAGS
 #define OS_EVR_EVFLAGS              1
 #endif
-  
+ 
+//     <q>Timer
+//     <i> Enables Timer event generation.
+#ifndef OS_EVR_TIMER
+#define OS_EVR_TIMER                1
+#endif
+ 
 //     <q>Mutex
 //     <i> Enables Mutex event generation.
 #ifndef OS_EVR_MUTEX
@@ -534,7 +568,9 @@
 // Number of Threads which use standard C/C++ library libspace
 // (when thread specific memory allocation is not used).
 #if (OS_THREAD_OBJ_MEM == 0)
+#ifndef OS_THREAD_LIBSPACE_NUM
 #define OS_THREAD_LIBSPACE_NUM      4
+#endif
 #else
 #define OS_THREAD_LIBSPACE_NUM      OS_THREAD_NUM
 #endif

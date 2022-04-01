@@ -39,6 +39,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
 
@@ -47,6 +48,15 @@
 #include "runtime_common.h"
 
 #include "tf_runtime.h"
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+static void debug_log_printf(const char *s)
+{
+  printf(s);
+}
 
 /****************************************************************************
  * Public Functions
@@ -86,6 +96,10 @@ int tflm_runtime_initialize(tflm_runtime_t *rt,
       tflm_err("network is null.\n");
       return -EINVAL;
     }
+
+  /* Register callback for printing debug log */
+
+  RegisterDebugLogCallback(debug_log_printf);
 
   ret = tf_rt_allocate_context((tf_rt_context_pointer *) &(rt->impl_ctx));
   if (ret != 0)

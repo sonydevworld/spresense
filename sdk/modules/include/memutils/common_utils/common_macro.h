@@ -48,8 +48,8 @@ typedef enum { false, true } bool;
 #define ALIGN_OF(type) offsetof(struct { char x; type y; }, y)
 #define COUNT_OF(array) (sizeof(array) / sizeof(array[0]))
 
-#define ROUND_DOWN(n, power2) ((n) & ~((power2) - 1))
-#define ROUND_UP(n, power2) ROUND_DOWN(((n) + ((power2) - 1)), power2)
+#define MEMUTILS_ROUND_DOWN(n, power2) ((n) & ~((power2) - 1))
+#define MEMUTILS_ROUND_UP(n, power2) MEMUTILS_ROUND_DOWN(((n) + ((power2) - 1)), power2)
 
 #define JOIN_MACRO(x, y) JOIN_TOKEN(x, y)
 #define JOIN_TOKEN(x, y) x ## y

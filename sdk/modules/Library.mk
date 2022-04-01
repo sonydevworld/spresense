@@ -38,6 +38,11 @@ EXTRA_LIBPATHS += -L "$(MODULEDIR)$(DELIM)sensing$(DELIM)gnss$(DELIM)cxd56nmea"
 EXTRA_LIBS     += -lcxd56nmea
 endif
 
+ifeq ($(CONFIG_LTE_FACTORY_RESET_API),y)
+EXTRA_LIBPATHS += -L "$(MODULEDIR)$(DELIM)lte_ext$(DELIM)lapiext"
+EXTRA_LIBS     += -llteext
+endif
+
 ifneq ($(wildcard $(MODULEDIR)/libmodules.a),)
 EXTRA_LIBPATHS += -L "$(MODULEDIR)"
 EXTRA_LIBS     += -lmodules

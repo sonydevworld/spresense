@@ -16,156 +16,153 @@ The table below lists the core exception vectors of the various Cortex-M process
 <table class="cmtable" summary="Core Exception Name">
     <tr>
       <th>Exception Vector</th>
+      <th>Handler Function</th>
       <th>IRQn<br/>Value</th>
-      <th>M0</th>
-      <th>M0+</th>
-      <th>M3</th>
-      <th>M4</th>
-      <th>M7</th>
-      <th>SC000</th>
-      <th>SC300</th>
-      <th>Armv8-M<br/>Baseline</th>
-      <th>Armv8-M<br/>Mainline</th>
+      <th title="Cortex-M0/M0+
+\if ARMSC
+and SC000
+\endif
+      ">Armv6-M</th>
+      <th title="Cortex-M3/M4/M7
+\if ARMSC
+and SC300
+\endif
+      ">Armv7-M</th>
+\if ARMv8M
+      <th title="Cortex-M23">Armv8-M<br/>Baseline</th>
+      <th title="Cortex-M33/M35P">Armv8-M<br/>Mainline</th>
+      <th>Armv8.1-M<br/>Mainline</th>
+\endif
       <th>Description</th>
     </tr>
     <tr>
       <td><b>NonMaskableInt_IRQn</b></td>
+      <td>NMI_Handler</td>
       <td>-14</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Non Maskable Interrupt</td>
     </tr>
     <tr>
       <td><b>HardFault_IRQn</b></td>
+      <td>HardFault_Handler</td>
       <td>-13</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Hard Fault Interrupt</td>
     </tr>
     <tr>
       <td><b>MemoryManagement_IRQn</b></td>
+      <td>MemManage_Handler</td>
       <td>-12</td>
       <td>&nbsp;</td>
+      <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td>&nbsp;</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Memory Management Interrupt</td>
     </tr>
     <tr>
       <td><b>BusFault_IRQn</b></td>
+      <td>BusFault_Handler</td>
       <td>-11</td>
       <td>&nbsp;</td>
+      <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td>&nbsp;</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Bus Fault Interrupt</td>
     </tr>
     <tr>
       <td><b>UsageFault_IRQn</b></td>
+      <td>UsageFault_Handler</td>
       <td>-10</td>
       <td>&nbsp;</td>
+      <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td>&nbsp;</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Usage Fault Interrupt</td>
     </tr>
+\if ARMv8M
     <tr>
       <td><b>SecureFault_IRQn</b></td>
+      <td>SecureFault_Handler</td>
       <td>-9</td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
-      <td>&nbsp;</td>
+      <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td>Secure Fault Interrupt</td>
     </tr>
+\endif
     <tr>
       <td><b>SVCall_IRQn</b></td>
+      <td>SVC_Handler</td>
       <td>-5</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td>SV Call Interrupt </td>
+\endif
+      <td>SVC Interrupt </td>
     </tr>
     <tr>
       <td><b>DebugMonitor_IRQn</b></td>
+      <td>DebugMon_Handler</td>
       <td>-4</td>
       <td>&nbsp;</td>
+      <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td>&nbsp;</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
-      <td>&nbsp;</td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Debug Monitor Interrupt</td>
     </tr>
     <tr>
       <td><b>PendSV_IRQn</b></td>
+      <td>PendSV_Handler</td>
       <td>-2</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>Pend SV Interrupt</td>
     </tr>
     <tr>
       <td><b>SysTick_IRQn</b></td>
+      <td>SysTick_Handler</td>
       <td>-1</td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
+\if ARMv8M
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
       <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
-      <td><img src="check.png" alt="available"></td>
+\endif
       <td>System Tick Interrupt</td>
     </tr>
 </table>
@@ -179,11 +176,13 @@ program memory, however \ref using_VTOR_pg it can be relocated to RAM.  The symb
 <b>__Vectors</b> is the address of the vector table in the startup code and the
 register <b>SCB->VTOR</b> holds the start address of the vector table. 
 
+\if ARMv8M
 An Armv8-M implementation with TrustZone provides two vector tables: 
   - vector table for Secure handlers
   - vector table for Non-Secure handlers
 
 Refer to \ref Model_TrustZone for more information.
+\endif
 
 Processor Exceptions
 --------------------
@@ -204,7 +203,7 @@ __Vectors       DCD     __initial_sp              ; Top of Stack initialization
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
-                DCD     SVC_Handler               ; SVCall Handler
+                DCD     SVC_Handler               ; SVC Handler
                 DCD     DebugMon_Handler          ; Debug Monitor Handler
                 DCD     0                         ; Reserved
                 DCD     PendSV_Handler            ; PendSV Handler
@@ -297,8 +296,8 @@ uint32_t active;                                            /* Variable to store
  
 void TIMER0_IRQHandler(void)  {                             /* Timer 0 interrupt handler  */
  
-  if (LPC_TIM0->IR & (1 << 0))  {                           /* Check if interrupt for match channel 0 occured */ 
-    LPC_TIM0->IR |= (1 << 0);                               /* Acknowledge interrupt for match channel 0 occured */
+  if (LPC_TIM0->IR & (1 << 0))  {                           /* Check if interrupt for match channel 0 occurred */ 
+    LPC_TIM0->IR |= (1 << 0);                               /* Acknowledge interrupt for match channel 0 occurred */
   }
   active = NVIC_GetActive(TIMER0_IRQn);                     /* Get interrupt active state of timer 0 */
 }
@@ -374,7 +373,7 @@ NVIC_SetVector                 | __NVIC_SetVector
 /** \brief  Definition of IRQn numbers
 
 
-The core exception enumeration names for IRQn values are defined in the file \b device.h.
+The core exception enumeration names for IRQn values are defined in the \ref device_h_pg.
 
  - Negative IRQn values represent processor core exceptions (internal interrupts).
  - Positive IRQn values represent device-specific exceptions (external interrupts). 
@@ -390,8 +389,10 @@ typedef enum IRQn
   MemoryManagement_IRQn    = -12,      ///<  Exception 4: Memory Management Interrupt [not on Cortex-M0 variants]
   BusFault_IRQn            = -11,      ///<  Exception 5: Bus Fault Interrupt [not on Cortex-M0 variants]
   UsageFault_IRQn          = -10,      ///<  Exception 6: Usage Fault Interrupt [not on Cortex-M0 variants]
+\if ARMv8M  
   SecureFault_IRQn         = -9,       ///<  Exception 7: Secure Fault Interrupt [only on Armv8-M]
-  SVCall_IRQn              = -5,       ///<  Exception 11: SV Call Interrupt
+\endif  
+  SVCall_IRQn              = -5,       ///<  Exception 11: SVC Interrupt
   DebugMonitor_IRQn        = -4,       ///<  Exception 12: Debug Monitor Interrupt [not on Cortex-M0 variants]
   PendSV_IRQn              = -2,       ///<  Exception 14: Pend SV Interrupt [not on Cortex-M0 variants]
   SysTick_IRQn             = -1,       ///<  Exception 15: System Tick Interrupt
@@ -481,7 +482,7 @@ void NVIC_EnableIRQ(IRQn_Type IRQn);
     
     \returns    
             - 0  Interrupt is not enabled
-            - 1  Interrupt is pending
+            - 1  Interrupt is enabled
 
     \remarks
         - IRQn must not be negative.
@@ -597,7 +598,7 @@ void NVIC_ClearPendingIRQ(IRQn_Type IRQn);
         - IRQn must not be negative.
         - Each external interrupt has an active status bit. When the processor starts the interrupt 
         handler the bit is set to 1 and cleared when the interrupt return is executed.
-        - When an ISR is preempted and the processor executes anohter interrupt handler, the 
+        - When an ISR is preempted and the processor executes another interrupt handler, the 
         previous interrupt is still defined as active.
     
     \sa     
@@ -637,8 +638,8 @@ uint32_t NVIC_GetActive(IRQn_Type IRQn);
     - <b>For Cortex-M3, Cortex-M4, and Cortex-M7</b>: 
         - Dynamic switching of interrupt priority levels is supported.
         - Supports 0 to 255 priority levels.
-        - Priority-level registers have a maximum width of 8 bits and a minumum of 3 bits.
-        Each register can be further devided into preempt priority level and subpriority level.
+        - Priority-level registers have a maximum width of 8 bits and a minimum of 3 bits.
+        Each register can be further divided into preempt priority level and subpriority level.
         
     \sa     
         - \ref NVIC_GetPriority;  NVIC_SetPriorityGrouping; __set_BASEPRI;
@@ -778,7 +779,9 @@ void NVIC_SetVector(IRQn_Type IRQn, uint32_t vector);
 */
 void NVIC_SystemReset (void);
 
-
+/**
+\cond (ARMv8M)
+*/
 /**
   \brief   Get Interrupt Target State
   \details Reads the interrupt target field from the non-secure NVIC when in secure state.
@@ -824,6 +827,9 @@ uint32_t NVIC_SetTargetState(IRQn_Type IRQn);
  */
 uint32_t NVIC_ClearTargetState(IRQn_Type IRQn);
 
+/**
+\endcond
+*/
 
 /*@} end of NVIC_gr */
 

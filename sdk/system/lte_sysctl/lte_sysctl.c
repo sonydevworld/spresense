@@ -114,6 +114,7 @@
 #define LTE_SYSCTL_CMD_START "start"
 #define LTE_SYSCTL_CMD_STOP "stop"
 #define LTE_SYSCTL_CMD_STAT "stat"
+#define LTE_SYSCTL_CMD_FRESET "factoryreset"
 #define LTE_SYSCTL_CMD_RAT_CATM1 "M1"
 #define LTE_SYSCTL_CMD_RAT_NB "NB"
 #define STAT_STOPPED "stopped"
@@ -161,6 +162,10 @@ static void show_usage(FAR const char *progname, int exitcode)
   fprintf(stderr, "  -r: Radio Access Technology type M1=CAT-M1, NB=NB-IoT\n");
   fprintf(stderr, " stop\n");
   fprintf(stderr, " stat\n");
+#ifdef CONFIG_LTE_SYSCTL_FACTORY_RESET
+  fprintf(stderr, " factoryreset: Reset parameters to the factory default.\n"
+                  "               It takes around 30 sec\n");
+#endif
   fprintf(stderr, " [-h]: Show this message\n");
   exit(exitcode);
 }
@@ -348,6 +353,110 @@ static void show_daemon_stat(void)
     }
 }
 
+#ifdef CONFIG_LTE_SYSCTL_FACTORY_RESET
+static int factory_reset(FAR const char *progname)
+{
+  int ret;
+
+  sem_init(&g_sem, 0, 0);
+
+  ret = lte_initialize();
+  if (ret < 0)
+    {
+      if (ret == -EALREADY)
+        {
+          fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_FRESET,
+                  "Please stop daemon before run factory reset");
+        }
+      else
+        {
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+        }
+
+      goto err_out;
+    }
+
+  ret = lte_set_report_restart(restart_callback);
+  if (ret < 0)
+    {
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+
+      lte_finalize();
+      goto err_out;
+    }
+
+  ret = lte_power_on();
+  if (ret < 0)
+    {
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+
+      lte_finalize();
+      goto err_out;
+    }
+
+  sem_wait(&g_sem);
+
+  /* Acquire the wakelock during factory reset running */
+
+  ret = lte_acquire_wakelock();
+  if (ret <= 0)
+    {
+      fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_FRESET,
+              "Failed to acquire a wakelock");
+
+      lte_finalize();
+      goto err_out;
+    }
+
+  ret = lte_factory_reset_sync();
+  if (ret < 0)
+    {
+      if (ret == -ENOTSUP)
+        {
+          fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_FRESET,
+                  "Factory reset is not supported in the FW version of"
+                  " the modem");
+        }
+      else
+        {
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+        }
+
+      lte_release_wakelock();
+      lte_finalize();
+      goto err_out;
+    }
+
+  fprintf(stdout, "Factory reset running...\n"
+                  "Please do not turn off the device. Factory reset"
+                  " takes around 30 sec.\n");
+
+  sem_wait(&g_sem);
+
+  lte_release_wakelock();
+
+  lte_set_report_restart(NULL);
+
+  sem_destroy(&g_sem);
+
+  ret = lte_finalize();
+  if (ret < 0)
+    {
+      fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+
+      return ret;
+    }
+
+  fprintf(stdout, "Factory reset done.\n");
+
+  return 0;
+
+err_out:
+  sem_destroy(&g_sem);
+  return ret;
+}
+#endif
+
 
 /****************************************************************************
  * Public Functions
@@ -515,6 +624,20 @@ int main(int argc, FAR char *argv[])
     {
       show_daemon_stat();
     }
+#ifdef CONFIG_LTE_SYSCTL_FACTORY_RESET
+  else if (MATCH_STRING(cmd, LTE_SYSCTL_CMD_FRESET))
+    {
+      /* Acquire semaphore for exclusive control */
+
+      sem_wait(&g_exclsem);
+
+      ret = factory_reset(argv[0]);
+
+      /* Release semaphore for exclusive control */
+
+      sem_post(&g_exclsem);
+    }
+#endif
   else
     {
       fprintf(stderr, "%s: Invalid required argument(s)\n", argv[0]);

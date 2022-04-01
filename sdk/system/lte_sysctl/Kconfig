@@ -91,4 +91,11 @@ config LTE_SYSCTL_APN_PASSWD
 		This default value is used when the command line option
 		was not set.
 
+config LTE_SYSCTL_FACTORY_RESET
+	bool "Enable factoryreset sub-command"
+	default n
+	select SDK_LTE_EXT
+	select LTE_FACTORY_RESET_API
+	---help---
+		Enable the factory reset function in the lte_sysctl command.
 endif

@@ -49,3 +49,17 @@ MAINSRC = tflmrt_lenet_main.c
 CSRCS   = loader_tflite.c pnm_util.c model.c image0.c
 
 include $(APPDIR)/Application.mk
+
+ifeq ($(CONFIG_TFLM_RT_MPCOMM),y)
+
+build_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(OBJS): build_worker
+
+clean:: clean_worker
+
+clean_worker:
+	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+
+endif

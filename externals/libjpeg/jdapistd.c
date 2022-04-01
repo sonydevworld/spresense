@@ -20,6 +20,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
+
 /* Forward declarations */
 LOCAL(boolean) output_pass_setup JPP((j_decompress_ptr cinfo));
 
@@ -99,11 +100,13 @@ output_pass_setup (j_decompress_ptr cinfo)
     /* First call: do pass setup */
     (*cinfo->master->prepare_for_output_pass) (cinfo);
     cinfo->output_scanline = 0;
+#ifdef SPRESENSE_PORT
     /* Modified for Spresense by Sony Semiconductor Solutions.
      * Add offset information to decode by mcu unit,
      * and add initialization.
      */
     cinfo->output_offset = 0;
+#endif
     cinfo->global_state = DSTATE_PRESCAN;
   }
   /* Loop over any required dummy passes */
@@ -181,6 +184,7 @@ jpeg_read_scanlines (j_decompress_ptr cinfo, JSAMPARRAY scanlines,
   return row_ctr;
 }
 
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add decode function by mcu unit.
  */
@@ -240,7 +244,7 @@ jpeg_read_mcus (j_decompress_ptr cinfo, JSAMPARRAY mcu_buffer,
 
   return row_ctr;
 }
-
+#endif
 
 /*
  * Alternate entry point to read raw data.

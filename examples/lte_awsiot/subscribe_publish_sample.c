@@ -172,7 +172,7 @@ static int awsiot_main(int argc, FAR char *argv[])
 	mqttInitParams.pDeviceCertLocation = clientCRT;
 	mqttInitParams.pDevicePrivateKeyLocation = clientKey;
 	mqttInitParams.mqttCommandTimeout_ms = 20000;
-	mqttInitParams.tlsHandshakeTimeout_ms = 5000;
+	mqttInitParams.tlsHandshakeTimeout_ms = 10000;
 	mqttInitParams.isSSLHostnameVerify = true;
 	mqttInitParams.disconnectHandler = disconnectCallbackHandler;
 	mqttInitParams.disconnectHandlerData = NULL;

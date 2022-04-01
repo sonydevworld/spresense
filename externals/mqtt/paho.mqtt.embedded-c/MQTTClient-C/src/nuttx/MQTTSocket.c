@@ -305,7 +305,7 @@ int MQTTSocketConnect(MQTTSocket* n, char* addr, int port)
 	if (n->my_socket == -1 || rc == -1)
 		return rc;
 
-	tv.tv_sec = 1;  /* 1 second Timeout */
+	tv.tv_sec = 10;  /* 10 second Timeout */
 	tv.tv_usec = 0;
 	setsockopt(n->my_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
 	return n->my_socket;

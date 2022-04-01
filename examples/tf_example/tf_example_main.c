@@ -40,23 +40,25 @@
 #include <nuttx/config.h>
 #include <stdio.h>
 
+#include "tensorflow/lite/micro/spresense/debug_log_callback.h"
+
 #ifndef CONFIG_EXTERNALS_TENSORFLOW
 #error "tf_example require external library of tensorflow lite micro." \
   " Please enable it as set EXTERNALS_TENSORFLOW in configuration."
 #endif
 
 #ifdef CONFIG_EXTERNALS_TENSORFLOW_EXAMPLE_HELLOWORLD
-#include "tensorflow/lite/micro/examples/hello_world/main_functions.h"
+#include "examples/hello_world/main_functions.h"
 #define EXAMPLE_NAME  "Hello world"
 #endif
 
 #ifdef CONFIG_EXTERNALS_TENSORFLOW_EXAMPLE_MICROSPEECH
-#include "tensorflow/lite/micro/examples/micro_speech/main_functions.h"
+#include "examples/micro_speech/main_functions.h"
 #define EXAMPLE_NAME  "Micro Speech"
 #endif
 
 #ifdef CONFIG_EXTERNALS_TENSORFLOW_EXAMPLE_PERSONDETECTION
-#include "tensorflow/lite/micro/examples/person_detection/main_functions.h"
+#include "examples/person_detection/main_functions.h"
 #define EXAMPLE_NAME  "Person Detection"
 #endif
 
@@ -66,12 +68,25 @@
 #endif
 
 /****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+static void debug_log_printf(const char *s)
+{
+  printf(s);
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 int main(int argc, FAR char *argv[])
 {
   printf("Start Tensorflow example : " EXAMPLE_NAME "\n");
+
+  /* Register callback for printing debug log */
+
+  RegisterDebugLogCallback(debug_log_printf);
 
   setup();
 

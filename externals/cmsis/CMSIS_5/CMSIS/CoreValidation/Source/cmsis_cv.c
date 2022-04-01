@@ -2,7 +2,7 @@
  *      Name:         cmsis_cv.c
  *      Purpose:      Driver validation test cases entry point
  *----------------------------------------------------------------------------
- *      Copyright (c) 2017 - 2018 Arm Limited. All rights reserved.
+ *      Copyright (c) 2017 - 2021 Arm Limited. All rights reserved.
  *----------------------------------------------------------------------------*/
 #include "cmsis_cv.h"
 #include "RTE_Components.h"
@@ -116,6 +116,7 @@ static TEST_CASE TC_LIST[] = {
 
   #elif defined(__CORTEX_A)
     TCD ( TC_CoreAFunc_IRQ,                        TC_COREAFUNC_IRQ                          ),
+    TCD ( TC_CoreAFunc_FaultIRQ,                   TC_COREAFUNC_FAULTIRQ                     ),
     TCD ( TC_CoreAFunc_FPSCR,                      TC_COREAFUNC_FPSCR                        ),
     TCD ( TC_CoreAFunc_CPSR,                       TC_COREAFUNC_CPSR                         ),
     TCD ( TC_CoreAFunc_Mode,                       TC_COREAFUNC_MODE                         ),
@@ -135,6 +136,7 @@ static TEST_CASE TC_LIST[] = {
     TCD ( TC_CoreAFunc_MPIDR,                      TC_COREAFUNC_MPIDR                        ),
     TCD ( TC_CoreAFunc_VBAR,                       TC_COREAFUNC_VBAR                         ),
     TCD ( TC_CoreAFunc_MVBAR,                      TC_COREAFUNC_MVBAR                        ),
+    TCD ( TC_CoreAFunc_FPU_Enable,                 TC_COREAFUNC_FPU_ENABLE                   ),
   #endif
 #endif /* RTE_CV_COREFUNC */
 
@@ -152,12 +154,18 @@ static TEST_CASE TC_LIST[] = {
 #endif /* RTE_CV_GENTIMER */
 
 #if defined(RTE_CV_L1CACHE) && RTE_CV_L1CACHE
-    TCD ( TC_L1Cache_EnDisable,                    TC_L1CACHE_ENDISABLE                      ),
-    TCD ( TC_L1Cache_EnDisableBTAC,                TC_L1CACHE_ENDISABLEBTAC                  ),
-    TCD ( TC_L1Cache_log2_up,                      TC_L1CACHE_LOG2_UP                        ),
-    TCD ( TC_L1Cache_InvalidateDCacheAll,          TC_L1CACHE_INVALIDATEDCACHEALL            ),
-    TCD ( TC_L1Cache_CleanDCacheAll,               TC_L1CACHE_CLEANDCACHEALL                 ),
-    TCD ( TC_L1Cache_CleanInvalidateDCacheAll,     TC_L1CACHE_CLEANINVALIDATEDCACHEALL       ),
+  #if defined(__CORTEX_M)
+    TCD ( TC_CML1Cache_EnDisableICache,              TC_CML1CACHE_ENDISABLE_ICACHE          ),
+    TCD ( TC_CML1Cache_EnDisableDCache,              TC_CML1CACHE_ENDISABLE_DCACHE          ),
+    TCD ( TC_CML1Cache_CleanDCacheByAddrWhileDisabled, TC_CML1CACHE_CLEANDCACHEBYADDRWHILEDISABLED),
+  #elif defined(__CORTEX_A)
+    TCD ( TC_CAL1Cache_EnDisable,                    TC_CAL1CACHE_ENDISABLE                 ),
+    TCD ( TC_CAL1Cache_EnDisableBTAC,                TC_CAL1CACHE_ENDISABLEBTAC             ),
+    TCD ( TC_CAL1Cache_log2_up,                      TC_CAL1CACHE_LOG2_UP                   ),
+    TCD ( TC_CAL1Cache_InvalidateDCacheAll,          TC_CAL1CACHE_INVALIDATEDCACHEALL       ),
+    TCD ( TC_CAL1Cache_CleanDCacheAll,               TC_CAL1CACHE_CLEANDCACHEALL            ),
+    TCD ( TC_CAL1Cache_CleanInvalidateDCacheAll,     TC_CAL1CACHE_CLEANINVALIDATEDCACHEALL  ),
+  #endif 
 #endif /* RTE_CV_L1CACHE */
 };
 

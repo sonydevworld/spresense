@@ -34,6 +34,12 @@ config EXTERNALS_CMSIS_DSP_ARM_MATH_ROUNDING
 	---help---
 		Enable rounding on support functions
 
+config EXTERNALS_CMSIS_DSP_ARM_MATH_LOOPUNROLL
+	bool "CMSIS DSP MATH LOOPUNROLL"
+	default y
+	---help---
+		Enable manual loop unrolling in DSP functions
+
 endif # EXTERNALS_CMSIS_DSP
 
 config EXTERNALS_CMSIS_NN

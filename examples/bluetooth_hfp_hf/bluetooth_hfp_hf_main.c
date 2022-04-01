@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include "system/readline.h"
 
 #include <bluetooth/bluetooth.h>

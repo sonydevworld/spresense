@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_AMBIENT_GNSSLOGGER
+	tristate "Ambient GNSS Logger example"
+	default n
+	depends on SYSTEM_AMBIENT
+	---help---
+		Enable the Ambient GNSS Logger application
+
+if EXAMPLES_AMBIENT_GNSSLOGGER
+
+config EXAMPLES_AMBIENT_GNSSLOGGER_PROGNAME
+	string "Program name"
+	default "ambient_gnsslogger"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AMBIENT_GNSSLOGGER_PRIORITY
+	int "Ambient GNSS Logger task priority"
+	default 100
+
+config EXAMPLES_AMBIENT_GNSSLOGGER_STACKSIZE
+	int "Ambient GNSS Logger stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif

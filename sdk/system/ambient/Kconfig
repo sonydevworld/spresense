@@ -1,0 +1,28 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_AMBIENT
+	bool "Ambient"
+	default n
+	---help---
+		Enable support for connecting to the Ambient server.
+		Ambient is an IoT data visualization service.
+		https://ambidata.io
+
+if SYSTEM_AMBIENT
+
+config AMBIENT_IPADDR
+	string "Ambient IP address"
+	default "54.65.206.59"
+	---help---
+		Ambient Server IP address.
+
+config AMBIENT_PORT
+	int "Ambient port number"
+	default 80
+	---help---
+		Ambient Server port number.
+
+endif

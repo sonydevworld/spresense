@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/awsiot_gnsslogger/gnss_util.c
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,8 @@
 /****************************************************************************
  * Included Files
  ****************************************************************************/
+
+#include <nuttx/config.h>
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -73,7 +75,7 @@ static struct cxd56_gnss_positiondata_s posdat;
  *
  * Returned Value:
  *   Negative value is returned when an error is happened.
- *   When the initialization is successed, file descripter is returned.
+ *   When the initialization is successful, file descripter is returned.
  *
  ****************************************************************************/
 
@@ -108,7 +110,7 @@ int init_gnss(sigset_t *mask)
   setting.signo   = MY_GNSS_SIG;
   setting.data    = NULL;
   er = ioctl(fd, CXD56_GNSS_IOCTL_SIGNAL_SET, (unsigned long)&setting);
-  if(er < 0)
+  if (er < 0)
     {
       printf("ioctl(SIGNAL_SET) error:%d\n", er);
       sigprocmask(SIG_UNBLOCK, mask, NULL);
@@ -232,6 +234,10 @@ int get_position(int fd, sigset_t *mask, int *scnt, struct datetime_s *dt,
 void fin_gnss(int fd, sigset_t *mask)
 {
   struct cxd56_gnss_signal_setting_s setting;
+
+  /* Stop GNSS. */
+
+  ioctl(fd, CXD56_GNSS_IOCTL_STOP, 0);
 
   memset(&setting, 0, sizeof(setting));
 

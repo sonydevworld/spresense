@@ -67,7 +67,7 @@ extern "C" {
 	}
 #define FUNC_EXIT_RC(x)    \
 	{\
-	printf("FUNC_EXIT:   %s L#%d Return Code : %d \n", __func__, __LINE__, x);  \
+	printf("FUNC_EXIT:   %s L#%d Return Code : %d \n", __func__, __LINE__, (int)(x));  \
 	return x; \
 	}
 #else

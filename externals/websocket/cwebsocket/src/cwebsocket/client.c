@@ -175,7 +175,7 @@ int cwebsocket_client_ssl_init(cwebsocket_client *websocket, char *cert_name, ch
 	 * but makes interop easier in this simplified example */
 		mbedtls_ssl_conf_authmode( &websocket->conf, MBEDTLS_SSL_VERIFY_OPTIONAL );
 		mbedtls_ssl_conf_ca_chain( &websocket->conf, &websocket->cacert, NULL );
-		mbedtls_ssl_conf_rng( &websocket->conf, NULL, &websocket->ctr_drbg );
+		mbedtls_ssl_conf_rng( &websocket->conf, mbedtls_ctr_drbg_random, &websocket->ctr_drbg );
 
 	if (cli_cert != NULL && cli_key != NULL){
 		ret = mbedtls_x509_crt_parse_file(&websocket->clicert, cli_cert);
@@ -315,7 +315,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			WS_DEBUG( " failed\n	 ! mbedtls_ssl_set_hostname returned -0x%x\n\n", -ret );
 			goto fail;
 		}
-		mbedtls_ssl_conf_read_timeout( &websocket->conf, 1000); /* 1 second Timeout */
+		mbedtls_ssl_conf_read_timeout( &websocket->conf, 10000); /* 10 second Timeout */
 		if(websocket->flags & WEBSOCKET_FLAG_PROXY) {
 			/*  SSL On / Proxy On
 				Execute CONNECT command of non-secure message after connecting to proxy server.
@@ -424,7 +424,7 @@ int cwebsocket_client_connect(cwebsocket_client *websocket) {
 			goto fail;
 		}
 		struct timeval tv;
-		tv.tv_sec  =  1;  /* 1 second Timeout */
+		tv.tv_sec  =  10;  /* 10 second Timeout */
 		tv.tv_usec =  0;
 
 		if(setsockopt(websocket->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval)) == -1) {
@@ -599,7 +599,7 @@ int cwebsocket_client_read_handshake(cwebsocket_client *websocket, char *seckey,
 	tmplen = bytes_read - 3;
 	char buf[tmplen+1];
 	memcpy(buf, data, tmplen);
-	buf[tmplen+1] = '\0';
+	buf[tmplen] = '\0';
 	
 	if(flags & WEBSOCKET_FLAG_PROXY) {
 		return cwebsocket_proxy_client_handshake_handler(websocket, buf);
@@ -978,7 +978,6 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		WS_DEBUG("client_read_data: received PING control frame");
 		uint8_t payload[payload_length];
 		memcpy(payload, &data[header_length], payload_length);
-		payload[payload_length] = '\0';
 		free(data);
 		return cwebsocket_client_send_control_frame(websocket, PONG, "PONG", payload, payload_length);
 	}
@@ -999,7 +998,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 		   header_length += 2;
 		   payload_length -= 2;
 		}
-		uint8_t payload[payload_length];
+		uint8_t payload[payload_length+1];
 		memcpy(payload, &data[header_length], (payload_length) * sizeof(uint8_t));
 		payload[payload_length] = '\0';
 		free(data);

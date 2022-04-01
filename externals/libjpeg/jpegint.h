@@ -2,7 +2,7 @@
  * jpegint.h
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Modified 1997-2017 by Guido Vollbeding.
+ * Modified 1997-2020 by Guido Vollbeding.
  * Copyright 2021 Sony Semiconductor Solutions Corporation
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
@@ -12,6 +12,9 @@
  * applications using the library shouldn't need to include this file.
  */
 
+
+/* Modified for Spresense by Sony Semiconductor Solutions. */
+#define SPRESENSE_PORT
 
 /* Declarations for both compression & decompression */
 
@@ -39,10 +42,12 @@ typedef enum {			/* Operating modes for buffer controllers */
 #define DSTATE_BUFPOST	208	/* looking for SOS/EOI in jpeg_finish_output */
 #define DSTATE_RDCOEFS	209	/* reading file in jpeg_read_coefficients */
 #define DSTATE_STOPPING	210	/* looking for EOI in jpeg_finish_decompress */
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Add state which source has been already set.
  */
 #define DSTATE_SETSRC   211     /* after stdio_src or mem_src */
+#endif
 
 /* Declarations for compression modules */
 
@@ -107,8 +112,7 @@ struct jpeg_downsampler {
 typedef JMETHOD(void, forward_DCT_ptr,
 		(j_compress_ptr cinfo, jpeg_component_info * compptr,
 		 JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
-		 JDIMENSION start_row, JDIMENSION start_col,
-		 JDIMENSION num_blocks));
+		 JDIMENSION start_col, JDIMENSION num_blocks));
 
 struct jpeg_forward_dct {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo));
@@ -119,7 +123,7 @@ struct jpeg_forward_dct {
 /* Entropy encoding */
 struct jpeg_entropy_encoder {
   JMETHOD(void, start_pass, (j_compress_ptr cinfo, boolean gather_statistics));
-  JMETHOD(boolean, encode_mcu, (j_compress_ptr cinfo, JBLOCKROW *MCU_data));
+  JMETHOD(boolean, encode_mcu, (j_compress_ptr cinfo, JBLOCKARRAY MCU_data));
   JMETHOD(void, finish_pass, (j_compress_ptr cinfo));
 };
 
@@ -215,7 +219,7 @@ struct jpeg_marker_reader {
 /* Entropy decoding */
 struct jpeg_entropy_decoder {
   JMETHOD(void, start_pass, (j_decompress_ptr cinfo));
-  JMETHOD(boolean, decode_mcu, (j_decompress_ptr cinfo, JBLOCKROW *MCU_data));
+  JMETHOD(boolean, decode_mcu, (j_decompress_ptr cinfo, JBLOCKARRAY MCU_data));
   JMETHOD(void, finish_pass, (j_decompress_ptr cinfo));
 };
 
@@ -305,6 +309,13 @@ struct jpeg_color_quantizer {
 #define SHIFT_TEMPS
 #define RIGHT_SHIFT(x,shft)	((x) >> (shft))
 #endif
+
+/* Descale and correctly round an INT32 value that's scaled by N bits.
+ * We assume RIGHT_SHIFT rounds towards minus infinity, so adding
+ * the fudge factor is correct for either sign of X.
+ */
+
+#define DESCALE(x,n)	RIGHT_SHIFT((x) + ((INT32) 1 << ((n)-1)), n)
 
 
 /* Short forms of external names for systems with brain-damaged linkers. */
@@ -407,12 +418,14 @@ EXTERN(void) jinit_color_deconverter JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_1pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_2pass_quantizer JPP((j_decompress_ptr cinfo));
 EXTERN(void) jinit_merged_upsampler JPP((j_decompress_ptr cinfo));
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * MCU decode preparation routines
  */
 EXTERN(void) jmcu_d_coef_controller JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_upsampler JPP((j_decompress_ptr cinfo));
 EXTERN(void) jmcu_color_deconverter JPP((j_decompress_ptr cinfo));
+#endif
 
 /* Memory manager initialization */
 EXTERN(void) jinit_memory_mgr JPP((j_common_ptr cinfo));
@@ -420,8 +433,8 @@ EXTERN(void) jinit_memory_mgr JPP((j_common_ptr cinfo));
 /* Utility routines in jutils.c */
 EXTERN(long) jdiv_round_up JPP((long a, long b));
 EXTERN(long) jround_up JPP((long a, long b));
-EXTERN(void) jcopy_sample_rows JPP((JSAMPARRAY input_array, int source_row,
-				    JSAMPARRAY output_array, int dest_row,
+EXTERN(void) jcopy_sample_rows JPP((JSAMPARRAY input_array,
+				    JSAMPARRAY output_array,
 				    int num_rows, JDIMENSION num_cols));
 EXTERN(void) jcopy_block_row JPP((JBLOCKROW input_row, JBLOCKROW output_row,
 				  JDIMENSION num_blocks));

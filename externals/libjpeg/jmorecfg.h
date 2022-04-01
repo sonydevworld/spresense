@@ -12,6 +12,8 @@
  * optimizations.  Most users will not need to touch this file.
  */
 
+/* Modified for Spresense by Sony Semiconductor Solutions. */
+#define SPRESENSE_PORT
 
 /*
  * Define BITS_IN_JSAMPLE as either
@@ -43,13 +45,15 @@
  * bytes of storage, whether actually used in an image or not.)
  */
 
+#ifdef SPRESENSE_PORT
 /* Modified for Spresense by Sony Semiconductor Solutions.
  * Spresense supports only CbYCrY format,
  * So, components number is 3.
  */
-/* #define MAX_COMPONENTS  10 *//* maximum number of image components */
 #define MAX_COMPONENTS  3	/* maximum number of image components */
-
+#else
+#define MAX_COMPONENTS  10	/* maximum number of image components */
+#endif
 
 /*
  * Basic data types.
@@ -252,6 +256,7 @@ typedef unsigned int JDIMENSION;
 #define GLOBAL(type)		type
 /* a reference to a GLOBAL function: */
 #define EXTERN(type)		extern type
+
 
 /* This macro is used to declare a "method", that is, a function pointer.
  * We want to supply prototype parameters if the compiler can cope.

@@ -62,6 +62,7 @@ The \ref packFormat is structured using grouping elements and contains the follo
  - \subpage pdsc_package_pg "<package>": describes package related information like vendor, package name, description, version. Is the root element. 
  - \subpage element_keywords "<keywords>": lists keywords to search for packages. Can be used for search engines. 
  - \subpage element_repository "<repository>": specifies the URL and repository type of a public repository where the pack originates from.
+ - \subpage element_dominate "<dominate>": the pack contains one or more device, API, or component that overrules other packs with identical items.
  - \subpage element_releases "<releases>": lists release versions with descriptions.
  - \subpage element_requirements_pg "<requirements>": lists required packs, compiler, programming language standards and their version or version range.
  - \subpage element_taxonomy "<taxonomy>": lists description elements that define component classes and component group names. 
@@ -155,7 +156,7 @@ assists searching for packages.
   <tr>
     <td>xmlns:xs</td>
     <td>Is set to: \token{"http://www.w3.org/2001/XMLSchema-instance"} to indicate compliance to the XML format.</td>
-    <td>xs:decimal</td>
+    <td>xs:string</td>
     <td>required</td>
   </tr>
   <tr>
@@ -165,29 +166,57 @@ assists searching for packages.
     <td>required</td>
   </tr>
   <tr>
+    <td>Dcore</td>
+    <td>Pack only used for a specific processor core.  Use predefined values as listed in the table \ref DcoreEnum "Device Cores". Note: do not apply for packs that define a device</td>
+    <td>DcoreEnum</td>
+    <td>optional</td>
+  </tr>
+  <tr>
+    <td>Dvendor</td>
+    <td>Pack only used for a specific silicon vendor of the device. Use predefined values as listed in the table \ref DeviceVendorEnum "Device Vendor".  Note: do not apply for packs that define a device</td>
+    <td>DeviceVendorEnum</td>
+    <td>optional</td>
+  </tr>
+  <tr>
+    <td>Dname<b>*</b></td>
+    <td>Pack only used for a specific name of the device. Note: do not apply for packs that define a device</td>
+    <td>xs:string</td>
+    <td>optional</td>
+  </tr>
+  <tr>
+    <td>Tcompiler</td>
+    <td>Pack only used for a specific compiler toolchain (ARMCC, GCC, IAR, Tasking, ...). Use predefined values as listed in table \ref CompilerEnumType "Compiler Types".</td>
+    <td>CompilerEnumType</td>
+    <td>optional</td>
+  </tr>
+  <tr>
     <th>Child Elements</th>
     <th>Description</th>
     <th>Type</th>
     <th>Occurrence</th>
   </tr>
+  \anchor package_name
   <tr>
     <td>name</td>
     <td>Name of the \ref cp_SWComponents "Software Pack". Could be displayed by an installer.</td>
     <td>xs:string </td>
     <td>1..1 </td>
   </tr>
+  \anchor package_vendor
   <tr>
     <td>vendor</td>
     <td>Name of the supplier or vendor of the \ref cp_SWComponents "Software Pack".</td>
     <td>xs:string </td>
     <td>1..1 </td>
   </tr>
+  \anchor package_description  
   <tr>
     <td>description</td>
     <td>Brief description of the \ref cp_SWComponents "Software Pack".</td>
     <td>xs:string </td>
     <td>1..1 </td>
   </tr>
+  \anchor package_url
   <tr>
     <td>url</td>
     <td><a href="https://en.wikipedia.org/wiki/Uniform_resource_locator" target="_blank">HTTP URL</a> 
@@ -197,17 +226,25 @@ assists searching for packages.
     <td>xs:anyURI </td>
     <td>1..1 </td>
   </tr>
+  \anchor package_supportContact
   <tr>
     <td>supportContact</td>
     <td>HTTP URL or e-mail address for users to get support for the content of the Pack</td>
     <td>xs:string</td>
     <td>0..1 </td>
   </tr>
+  \anchor package_url
   <tr>
     <td>license</td>
     <td>Path to a license document.</td>
     <td>xs:string </td>
     <td>0..1 </td>
+  </tr>
+  <tr>
+    <td>\ref element_dominate "dominate"</td>
+    <td>dominate</td>
+    <td>A pack that has \ref element_dominate "dominate" attribute overrules other packs that provide devices, APIs, or software components with the same name.</td>
+    <td>\em empty</td>
   </tr>
   <tr>
     <td>\ref element_requirements "requirements"</td>
@@ -219,7 +256,7 @@ assists searching for packages.
   </td>
   <tr>
     <td>create</td>
-    <td>Use only when creating CMSIS software projects. Refer to \ref cpdsc_pg for details.</td>
+    <td>!!! Deprecated, use cprj format instead !!! Use only when creating CMSIS software projects.</td>
     <td>CreateType</td>
     <td>0..1 </td>
   </tr>
@@ -294,6 +331,11 @@ assists searching for packages.
     <td>0..1 </td>
   </tr>
 </table>
+
+<b>*)</b> Wild-cards can be used to match names with the following definitions:
+       - '*'  matches any substring
+       - '?'  matches any single character
+       - [abc] matches any character in the set (a,b,c)
 
 <p>&nbsp;</p>
 
@@ -461,9 +503,59 @@ Contributing to a software pack hosted on GitHub:
 - Open the URL specified by the \c \<repository> element in a browser.
 - Create a fork of the repository.
 - Clone the fork on your machine (you may want to checkout the \c tag specified in the \ref element_releases "\<release>" element).
-- Create a branch for you modifications.
+- Create a branch for your modifications.
 - Develop and test the modifications of your branch and push the branch to GitHub.
 - Create a pull request of your branch into the upstream repository.
+
+<hr>
+*/
+
+
+/**************************************************************************************************/
+/**
+\page element_dominate /package/dominate element
+The \ref element_dominate specifies that the Pack contains one or more \ref element_devices "device", \ref element_apis "API", or \ref element_components "component" that overrules 
+other packs that contain identical named \ref element_devices "device", \ref element_apis "API", or \ref element_components "component".
+
+This attribute is useful for framing packs that:
+  - Contain \em certified software components which should overrule software components with identical name of other packs.
+  - Contain new device definitions of devices that were previously defined in different packs.
+
+
+
+\b Example:
+\code
+<package>
+  ...
+  <dominate info="CMSIS-Core, RTOS2, RTX5, Event Recorder, C Library certified for Cortex-M3"/>
+  ...
+</package>
+\endcode
+
+<p>&nbsp;</p>
+
+<table class="cmtable" summary="Element: dominate">
+  <tr>
+    <th>Parent Element</th>
+    <th colspan="3">Element Chain</th>
+  </tr>
+  <tr>
+    <td>\ref element_package "package"</td>
+    <td colspan=3>\ref element_package</td>
+  </tr>
+  <tr>
+    <th>Attributes</th>
+    <th>Description</th>
+    <th>Type</th>
+    <th>Use</th>
+  </tr>
+  <tr>
+    <td>info</td>
+    <td>Descriptive text that explains the reason for the overwrite using dominate.</td>
+    <td>xs:string</td>
+    <td>optional</td>
+  </tr>
+</table>
 
 <hr>
 */
@@ -522,11 +614,11 @@ The latest release version is always listed on top.
 \b Example:
 \code
 <releases>
-  <release version="1.1.1">Fixed a problem with the feature xyz.
+  <release version="1.1.1" date="2020-05-12">Fixed a problem with the feature xyz.
   </release>     
-  <release version="1.1.0">Introduces a new feature xyz.
+  <release version="1.1.0" date="2020-03-13">Introduces a new feature xyz.
   </release>     
-  <release version="1.0.0">First published version.
+  <release version="1.0.0" date="2020-02-23">First published version.
   </release>     
 </releases>
 \endcode
@@ -546,6 +638,16 @@ The latest release version is always listed on top.
   </releases>
   ...
 </package> 
+\endcode
+
+\b Example for a deprecated pack with a replacement:
+\code
+<releases>
+  <release version="1.0.1" date="2020-04-18" deprecated="2020-04-18" replacement="Vendor.pack_name">Deprecated: use Vendor.pack_name instead.
+  </release>     
+  <release version="1.0.0" date="2020-03-24">Initial version.
+  </release>     
+</releases>
 \endcode
 
 <p>&nbsp;</p>
@@ -1014,7 +1116,6 @@ These values can be used in the elements:
 - \ref element_bundle
 - \ref element_api
 - \ref element_taxonomyDescription
-- \ref element_project_component
 
 \b Example:
 \code
@@ -1029,19 +1130,40 @@ The table lists predefined Component Classes.
     <th>Description</th>
   </tr>
   <tr>
+    <td class="XML-Token">Audio</td>
+	<td>Software components for audio processing</td>
+  </tr>
+  <tr>
     <td class="XML-Token">Board Support</td>
 	<td>Components providing interfaces for Evaluation and Development Boards</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">Board Part</td>
+    <td>Drivers that support an external component available on an evaluation board</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">Compiler</td>
+    <td>Components implementing compiler specific interfaces (e.g. Retargeting)</td>
+  </tr>
   <tr>
     <td class="XML-Token">CMSIS</td>
-    <td>Components defined by Cortex Microcontroller Software Interface Standard (e.g. <a class=el href="../../Core/html/index.html">CMSIS-Core(M)</a>, <a class=el href="../../Core_A/html/index.html">CMSIS-Core(A)</a>, <a class=el href="../../DSP/html/index.html">CMSIS-DSP</a> and <a class=el href="../../RTOS/html/index.html">CMSIS-RTOS</a>)</td>
+    <td>Components defined by the Common Microcontroller Software Interface Standard (e.g. <a class=el href="../../Core/html/index.html">CMSIS-Core(M)</a>, <a class=el href="../../Core_A/html/index.html">CMSIS-Core(A)</a>, <a class=el href="../../DSP/html/index.html">CMSIS-DSP</a> and <a class=el href="../../RTOS/html/index.html">CMSIS-RTOS</a>)</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">CMSIS Driver</td>
+    <td>Components implementing unified device drivers compliant to <a class=el href="../../Driver/html/index.html">CMSIS-Driver</a> (e.g. UART, SPI, USB, etc.) </td>
   </tr>
   <tr>
     <td class="XML-Token">Device</td>
     <td>Components containing device specific implementations of non-standard APIs (e.g. HAL drivers, CMSIS Startup files)</td>
   </tr>
   <tr>
-    <td class="XML-Token">CMSIS Driver</td>
-    <td>Components implementing unified device drivers compliant to <a class=el href="../../Driver/html/index.html">CMSIS-Driver</a> (e.g. UART, SPI, USB, etc.) </td>
+    <td class="XML-Token">Data Exchange</td>
+    <td>Components implementing some kind of data exchange or data formatter</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">Extension Board</td>
+    <td>Drivers that support an extension board or shield</td>
   </tr>
   <tr>
     <td class="XML-Token">File System</td>
@@ -1052,20 +1174,32 @@ The table lists predefined Component Classes.
     <td>Components implementing some kind of Display and Graphics Software</td>
   </tr>
   <tr>
+    <td class="XML-Token">IoT Client</td>
+    <td>Components implementing some kind of IoT cloud client connector</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">IoT Utility</td>
+    <td>IoT specific software utility</td>
+  </tr>
+  <tr>
     <td class="XML-Token">Network</td>
-    <td>Components implementing some kind of Network Communications (e.g. TCP/IP Stack)</td>
+    <td>Components implementing some kind of network communications (e.g. TCP/IP Stack)</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">RTOS</td>
+    <td>Components implementing some kind of real-time operating system (e.g. FreeRTOS, Micrium Real Time Kernel)</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">Security</td>
+    <td>Components implementing some kind of encryption for secure communication or storage</td>
   </tr>
   <tr>
     <td class="XML-Token">USB</td>
     <td>Components implementing some kind of USB interfaces (e.g. Host and Device interfaces)</td>
   </tr>
   <tr>
-    <td class="XML-Token">Compiler</td>
-    <td>Components implementing Compiler specific interfaces (e.g. Retargeting)</td>
-  </tr>
-  <tr>
-    <td class="XML-Token">RTOS</td>
-    <td>Components implementing some kind of Real-time Operating System (e.g. FreeRTOS, Micrium Real Time Kernel)</td>
+    <td class="XML-Token">Utility</td>
+    <td>Generic software utility components</td>
   </tr>
 </table>
 
@@ -1091,10 +1225,8 @@ Component Groups can be used in the elements:
 - \ref element_component
 - \ref element_api
 - \ref element_taxonomyDescription
-- \ref element_project_component
 
-The table lists predefined values for the Component Class <b>Cclass="CMSIS"</b>.
-No other Component Groups have been defined so far.
+The following table lists predefined values for the Component Class <b>Cclass="CMSIS"</b>.
 <table class="cmtable" summary="Predefined Cgroup names for Component Class CMSIS">
   <tr>
     <th>Cgroup=</th>
@@ -1102,16 +1234,37 @@ No other Component Groups have been defined so far.
   </tr>
   <tr>
     <td class="XML-Token">CORE</td>
-	<td>A component containing device support in accordance to the <a class=el href="../../Core/html/index.html">CMSIS-Core(M)</a>
-  or <a class=el href="../../Core_A/html/index.html">CMSIS-Core(A)</a> specifications (startup, system and device files)</td>
+    <td>A component containing core support in accordance to the <a class=el href="../../Core/html/index.html">CMSIS-Core(M)</a>
+  or <a class=el href="../../Core_A/html/index.html">CMSIS-Core(A)</a> specifications.</td>
   </tr>
   <tr>
     <td class="XML-Token">DSP</td>
-	<td>A component implementing the <a class=el href="../../DSP/html/index.html">CMSIS-DSP</a> API specification.</td>
+    <td>A component implementing the <a class=el href="../../DSP/html/index.html">CMSIS-DSP</a> API specification.</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">NN Lib</td>
+    <td>A component implementing the <a class=el href="../../NN/html/index.html">CMSIS-NN</a> API specification.</td>
   </tr>
   <tr>
     <td class="XML-Token">RTOS</td>
-	<td>A component implementing the <a class=el href="../../RTOS/html/index.html">CMSIS-RTOS</a> API specification.</td>
+    <td>A component implementing the <a class=el href="../../RTOS/html/index.html">CMSIS-RTOS</a> API specification.</td>
+  </tr>
+  <tr>
+    <td class="XML-Token">RTOS2</td>
+    <td>A component implementing the <a class=el href="../../RTOS2/html/index.html">CMSIS-RTOS v2</a> API specification.</td>
+  </tr>
+</table>
+
+The following table lists predefined values for the Component Class <b>Cclass="Device"</b>.
+<table class="cmtable" summary="Predefined Cgroup names for Component Class Device">
+  <tr>
+    <th>Cgroup=</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td class="XML-Token">Startup</td>
+    <td>A component containing the device support files system_device.c and startup_device.s/c in accordance to the <a class=el href="../../Core/html/index.html">CMSIS-Core(M)</a>
+  or <a class=el href="../../Core_A/html/index.html">CMSIS-Core(A)</a> specifications (startup, system and device files).</td>
   </tr>
 </table>
 
