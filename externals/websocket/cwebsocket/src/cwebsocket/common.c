@@ -38,11 +38,11 @@ char* cwebsocket_base64_encode(const unsigned char *input, int length) {
 
 	if ((olen > 1) && (olen <= 128))
 	{
-		char *buff = (char *)malloc(olen);
+		char *buff = (char *)malloc(olen+1);
 		if (buff != NULL)
 		{
-			memcpy(buff, buffer, olen-1); 
-			buff[olen-1] = '\0'; 
+			memcpy(buff, buffer, olen);
+			buff[olen] = '\0';
 			return buff;
 		}
 	}
