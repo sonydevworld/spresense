@@ -24,7 +24,7 @@ Below is the workflow, from cloning to merging a pull request.
 4. Keep your fork up-to-date/synced with the remote repository
 5. Commit your changes
 6. Push changes back to the remote on GitHub
-7. Create pull request
+7. Create pull request to "develop" branch
 8. If you get feedback, fix according to comments/discussion and push a new commit
 9. When the review is done and accepted it will be squashed and merged into master by the maintainers
 
