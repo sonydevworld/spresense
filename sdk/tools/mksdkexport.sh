@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tools/mksdkexport.sh
 #
 #   Copyright 2020 Sony Semiconductor Solutions Corporation
