@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tools/mkmsys2deps.sh
 #
 #   Copyright (C) 2016 Gregory Nutt. All rights reserved.

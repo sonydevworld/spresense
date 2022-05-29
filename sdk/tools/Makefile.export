@@ -59,7 +59,7 @@ default: all
 .PHONY: clean
 
 $(EXPORTDIR)/makeinfo.sh: $(TOPDIR)/.config $(EXPORTDIR)/Make.defs
-	@echo "#!/bin/bash" > $(EXPORTDIR)/makeinfo.sh
+	@echo "#!/usr/bin/env bash" > $(EXPORTDIR)/makeinfo.sh
 	@echo "" >> $(EXPORTDIR)/makeinfo.sh
 	@echo "ARCHSUBDIR=\"$(ARCHSUBDIR)\"" >> $(EXPORTDIR)/makeinfo.sh
 	@echo "ARCHDIR=\"$(ARCHDIR)\"" >> $(EXPORTDIR)/makeinfo.sh
