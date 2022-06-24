@@ -91,7 +91,7 @@ typedef struct
 #if NRF_QUEUE_CLI_CMDS
     const char      * p_name;           //!< Pointer to string with queue name.
 #endif
-    NRF_LOG_INSTANCE_PTR_DECLARE(p_log) //!< Pointer to instance of the logger object (Conditionally compiled).
+    nrf_log_module_dynamic_data_t * p_log; //!< Pointer to instance of the logger object (Conditionally compiled).
 } nrf_queue_t;
 
 #if NRF_QUEUE_CLI_CMDS

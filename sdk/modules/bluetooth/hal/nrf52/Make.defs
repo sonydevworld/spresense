@@ -1,7 +1,7 @@
 ############################################################################
-# bluetooth/Makefile
+# bluetooth/hal/nrf52/Make.defs
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2021 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -13,10 +13,9 @@
 #    notice, this list of conditions and the following disclaimer in
 #    the documentation and/or other materials provided with the
 #    distribution.
-# 3. Neither the name of Sony Semiconductor Solutions Corporation nor
-#    the names of its contributors may be used to endorse or promote
-#    products derived from this software without specific prior written
-#    permission.
+# 3. Neither the name of Sony Corporation nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,34 +32,34 @@
 #
 ############################################################################
 
--include $(SDKDIR)/modules/Make.defs
-
-MODNAME = bluetooth
-
-CSRCS  =  bluetooth_common.c
-ifeq ($(CONFIG_BLUETOOTH_A2DP),y)
-CSRCS +=  bluetooth_a2dp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_AVRCP),y)
-CSRCS +=  bluetooth_avrcp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_HFP),y)
-CSRCS +=  bluetooth_hfp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_SPP),y)
-CSRCS +=  bluetooth_spp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
-CSRCS +=  bluetooth_le_gatt.c
-endif
-CSRCS +=  bluetooth_hal_init.c
-
-ifeq ($(CONFIG_BCM20706),y)
-include hal/bcm20706/Make.defs
+BLEDIR := $(SDKDIR)$(DELIM)modules$(DELIM)bluetooth$(DELIM)hal$(DELIM)nrf52
+ifeq ($(CONFIG_BLUETOOTH_NRF52_S132),y)
+BLE_IGNORE_DIR := "*s140*"
+BLE_API_VERSION := 7
+else
+BLE_IGNORE_DIR := "*s132*"
+BLE_API_VERSION := 7
 endif
 
-ifeq ($(CONFIG_BLUETOOTH_NRF52),y)
-include hal/nrf52/Make.defs
+# SOURCES
+BLE_C_FILES := $(shell find $(BLEDIR) -name "*.c" -printf '%f ')
+BLE_C_DIRS := $(sort $(dir $(shell find $(BLEDIR) -name "*.c")))
+# INCLUDES
+BLE_H_DIRS := $(sort $(dir $(shell find $(BLEDIR) -name "*.h" -not -path $(BLE_IGNORE_DIR))))
+BLE_INCLUDES := $(addprefix -I, $(BLE_H_DIRS))
+
+ifeq ($(WINTOOL),y)
+INCLUDES += -I"${shell cygpath -w $(BLEDIR)/include}"
+else
+INCLUDES += -I$(BLEDIR)/include
 endif
 
-include $(SDKDIR)/modules/Module.mk
+CFLAGS += $(INCLUDES) $(BLE_INCLUDES)
+CFLAGS += -DBLE_STACK_SUPPORT_REQD -DNRF_SD_BLE_API_VERSION=$(BLE_API_VERSION) -DSVCALL_AS_NORMAL_FUNCTION -DBLE_SUPPORT_BLE5 -std=c99
+CFLAGS += -DBLE_ENABLE_NORDIC_ORIGINAL
+
+CSRCS += $(BLE_C_FILES)
+
+DEPPATH += --dep-path ". $(BLE_C_DIRS)"
+VPATH   += $(BLE_C_DIRS)
+

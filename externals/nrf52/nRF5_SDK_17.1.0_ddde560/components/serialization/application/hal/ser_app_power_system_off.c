@@ -55,8 +55,4 @@ bool ser_app_power_system_off_get(void)
 
 void ser_app_power_system_off_enter(void)
 {
-    NRF_POWER->SYSTEMOFF = POWER_SYSTEMOFF_SYSTEMOFF_Enter;
-
-    /*Only for debugging purpose, will not be reached without connected debugger*/
-    while (1);
 }

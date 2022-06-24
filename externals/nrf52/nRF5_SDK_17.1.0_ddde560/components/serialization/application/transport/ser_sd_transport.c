@@ -45,12 +45,17 @@
 #include "nrf_error.h"
 #include "app_error.h"
 #include "ble_serialization.h"
-#include "ser_dbg_sd_str.h"
+//#include "ser_dbg_sd_str.h"
 #include "ser_app_power_system_off.h"
 #include "app_util.h"
-#define NRF_LOG_MODULE_NAME ser_xfer
-#include "nrf_log.h"
-NRF_LOG_MODULE_REGISTER();
+
+#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_DEBUG printf
+#else
+#define NRF_LOG_DEBUG(...)
+#endif
 
 #ifdef BLE_STACK_SUPPORT_REQD
 /** SoftDevice event handler. */
@@ -82,6 +87,8 @@ static volatile bool m_rsp_wait = false;
 
 /** SoftDevice call return value decoded by user decoder handler. */
 static uint32_t m_return_value;
+
+extern volatile bool m_rsp_timeout;
 
 /**@brief Function for handling the rx packets comming from hal_transport.
  *
@@ -133,7 +140,7 @@ static void ser_sd_transport_rx_packet_handler(uint8_t * p_data, uint16_t length
 #ifdef BLE_STACK_SUPPORT_REQD
             case SER_PKT_TYPE_EVT:
                 /* It is ensured during opening that handler is not NULL. No check needed. */
-                NRF_LOG_DEBUG("[EVT]: %s ", (uint32_t)ser_dbg_sd_evt_str_get(uint16_decode(&p_data[SER_EVT_ID_POS]))); // p_data points to EVT_ID
+                NRF_LOG_DEBUG("[EVT]: %s \n", "SER_PKT_TYPE_EVT"); // p_data points to EVT_ID
                 m_ble_evt_handler(p_data, length);
                 break;
 #endif // BLE_STACK_SUPPORT_REQD
@@ -313,13 +320,20 @@ uint32_t ser_sd_transport_cmd_write(const uint8_t *                p_buffer,
         }
 
         m_os_rsp_wait_handler();
-        err_code = m_return_value;
+        if (m_rsp_timeout) {
+            m_rsp_wait = false;
+            NRF_LOG_DEBUG("Timeout\n");
+            err_code = NRF_ERROR_TIMEOUT;
+        } else {
+            NRF_LOG_DEBUG("Wait END\n");
+            err_code = m_return_value;
+        }
     }
     else
     {
         m_rsp_wait = false;
     }
 
-    NRF_LOG_DEBUG("[SD_CALL]:%s, err_code= 0x%X", (uint32_t)ser_dbg_sd_call_str_get(p_buffer[1]), err_code);
+    NRF_LOG_DEBUG("[SD_CALL]:%lx, err_code= 0x%lX", (uint32_t)p_buffer[1], err_code);
     return err_code;
 }

@@ -5,5 +5,6 @@
 
 menu "Device support"
 source "$APPSDIR/../modules/bluetooth/hal/bcm20706/Kconfig"
+source "$APPSDIR/../modules/bluetooth/hal/nrf52/Kconfig"
 endmenu
 

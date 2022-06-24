@@ -39,8 +39,13 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <time.h>
+
 #include "nrf_queue.h"
-#include "app_scheduler.h"
+//#include "app_scheduler.h"
+#include "app_error.h"
 #include "nrf_sdh.h"
 #include "nrf_sdm.h"
 #include "ser_sd_transport.h"
@@ -56,7 +61,25 @@
 #include "ant_event.h"
 #endif
 
+//#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_DEBUG printf
+#else
+#define NRF_LOG_DEBUG(...)
+#endif
+
 #define SD_BLE_EVT_MAILBOX_QUEUE_SIZE 5 /**< Size of mailbox queue. */
+#define SD_BLE_RESPONSE_TIMEOUT 5000
+#define SD_BLE_RESPONSE_TIMEOUT_FLAG 0x01
+#define SD_BLE_EVENT_FLAG 0x10
+
+static pthread_t g_rcv_tid;
+static int g_rcv_loop;
+static void *ble_rcv_evt_task(void *param);
+static sem_t evt_sid;
+static sem_t rsp_sid;
+volatile bool m_rsp_timeout = false;
 
 /** @brief Structure used to pass packet details through mailbox.
  */
@@ -102,11 +125,11 @@ NRF_QUEUE_DEF(uint32_t,
 /**
  * @brief Function to be replaced by user implementation if needed.
  *
- * Weak function - user can add different implementation of this function if application needs it.
+ * function - user can add different implementation of this function if application needs it.
  */
-__WEAK void os_rsp_set_handler(void)
+void os_rsp_set_handler(void)
 {
-
+    (void)sem_post(&rsp_sid);
 }
 
 static void connectivity_reset_low(void)
@@ -144,6 +167,8 @@ static void ser_softdevice_ble_evt_handler(uint8_t * p_data, uint16_t length)
     APP_ERROR_CHECK(err_code);
 
     ser_app_hal_nrf_evt_pending();
+    (void)sem_post(&evt_sid);
+    NRF_LOG_DEBUG("ser_softdevice_ble_evt_handler END\n");
 }
 #endif
 
@@ -183,13 +208,20 @@ void ser_softdevice_flash_operation_success_evt(bool success)
  */
 static void ser_sd_rsp_wait(void)
 {
-    do
-    {
-        (void)sd_app_evt_wait();
+    int ret = 0;
+    struct timespec time;
 
-        //intern_softdevice_events_execute();
+    ret = clock_gettime(CLOCK_REALTIME, &time);
+    if (ret != 0) {
+        m_rsp_timeout = true;
+        return;
     }
-    while (ser_sd_transport_is_busy());
+    time.tv_sec += (SD_BLE_RESPONSE_TIMEOUT / 1000);
+    ret = sem_timedwait(&rsp_sid, &time);
+    if (ret != 0) {
+        m_rsp_timeout = true;
+        return;
+    }
 }
 
 uint32_t sd_evt_get(uint32_t * p_evt_id)
@@ -256,6 +288,17 @@ uint32_t sd_ble_evt_mailbox_length_get(uint32_t * p_mailbox_length)
 }
 #endif
 
+static void *ble_rcv_evt_task(void *args)
+{
+    while(g_rcv_loop)
+    {
+        sem_wait(&evt_sid);
+        //usleep(100 * 1000);
+        nrf_sdh_evts_poll();
+    }
+    return NULL;
+}
+
 #if (defined(S332) || defined(S212))
 uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
                               nrf_fault_handler_t fault_handler,
@@ -272,6 +315,8 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
     if (err_code == NRF_SUCCESS)
     {
         connectivity_reset_low();
+        connectivity_reset_high();
+        m_rsp_timeout = false;
 
         nrf_queue_reset(&m_sd_soc_evt_mailbox);
         ser_sd_transport_evt_handler_t ble_evt_handler = NULL;
@@ -292,20 +337,49 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
                                          os_rsp_set_handler,
                                          NULL);
 
-        if (err_code == NRF_SUCCESS)
+        if (err_code)
         {
-          connectivity_reset_high();
+            return err_code;
         }
 
         ser_app_hal_nrf_evt_irq_priority_set();
     }
+    else
+    {
+        return err_code;
+    }
 
-    return err_code;
+    if (sem_init(&evt_sid, 0, 0)) {
+        return NRF_ERROR_SOFTDEVICE_NOT_ENABLED;
+    }
+
+    if (sem_init(&rsp_sid, 0, 0)) {
+        (void)sem_destroy(&evt_sid);
+        return NRF_ERROR_SOFTDEVICE_NOT_ENABLED;
+    }
+
+    g_rcv_loop = 1;
+    err_code = pthread_create(&g_rcv_tid, NULL, ble_rcv_evt_task, NULL);
+    if (err_code)
+    {
+        (void)sem_destroy(&evt_sid);
+        (void)sem_destroy(&rsp_sid);
+        return NRF_ERROR_SOFTDEVICE_NOT_ENABLED;
+    }
+
+    return NRF_SUCCESS;
 }
 
 
 uint32_t sd_softdevice_disable(void)
 {
+    g_rcv_loop = 0;
+#ifdef BLE_STACK_SUPPORT_REQD
+    (void)sem_post(&evt_sid);
+#endif
+    (void)pthread_join(g_rcv_tid, NULL);
+    (void)sem_destroy(&evt_sid);
+    (void)sem_destroy(&rsp_sid);
     return ser_sd_transport_close();
 }
 

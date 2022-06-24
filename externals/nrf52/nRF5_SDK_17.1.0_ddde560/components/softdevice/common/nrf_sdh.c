@@ -46,9 +46,12 @@
 #include <stdint.h>
 
 #include "nrf_sdm.h"
-#include "nrf_nvic.h"
+//#include "nrf_nvic.h"
 #include "sdk_config.h"
 #include "app_error.h"
+
+#ifndef NOT_USE_NRF_SECTION
+
 #include "app_util_platform.h"
 
 
@@ -88,11 +91,13 @@ NRF_SECTION_SET_DEF(sdh_state_observers, nrf_sdh_state_observer_t, NRF_SDH_STATE
 // Create section "sdh_stack_observers".
 NRF_SECTION_SET_DEF(sdh_stack_observers, nrf_sdh_stack_observer_t, NRF_SDH_STACK_OBSERVER_PRIO_LEVELS);
 
+#endif// NOT_USE_NRF_SECTION
 
 static bool m_nrf_sdh_enabled;   /**< Variable to indicate whether the SoftDevice is enabled. */
 static bool m_nrf_sdh_suspended; /**< Variable to indicate whether this module is suspended. */
 static bool m_nrf_sdh_continue;  /**< Variable to indicate whether enable/disable process was started. */
 
+#ifndef NOT_USE_NRF_SECTION
 
 /**@brief   Function for notifying request observers.
  *
@@ -127,7 +132,6 @@ static ret_code_t sdh_request_observer_notify(nrf_sdh_req_evt_t req)
     }
     return NRF_SUCCESS;
 }
-
 
 /**@brief   Function for stage request observers.
  *
@@ -177,6 +181,7 @@ static void softdevice_evt_irq_disable(void)
 #endif
 }
 
+#endif// NOT_USE_NRF_SECTION
 
 ret_code_t nrf_sdh_enable_request(void)
 {
@@ -189,47 +194,15 @@ ret_code_t nrf_sdh_enable_request(void)
 
     m_nrf_sdh_continue = true;
 
-    // Notify observers about SoftDevice enable request.
-    if (sdh_request_observer_notify(NRF_SDH_EVT_ENABLE_REQUEST) == NRF_ERROR_BUSY)
-    {
-        // Enable process was stopped.
-        return NRF_SUCCESS;
-    }
-
-    // Notify observers about starting SoftDevice enable process.
-    sdh_state_observer_notify(NRF_SDH_EVT_STATE_ENABLE_PREPARE);
-
-    nrf_clock_lf_cfg_t const clock_lf_cfg =
-    {
-        .source       = NRF_SDH_CLOCK_LF_SRC,
-        .rc_ctiv      = NRF_SDH_CLOCK_LF_RC_CTIV,
-        .rc_temp_ctiv = NRF_SDH_CLOCK_LF_RC_TEMP_CTIV,
-        .accuracy     = NRF_SDH_CLOCK_LF_ACCURACY
-    };
-
-    CRITICAL_REGION_ENTER();
-#ifdef ANT_LICENSE_KEY
-    ret_code = sd_softdevice_enable(&clock_lf_cfg, app_error_fault_handler, ANT_LICENSE_KEY);
-#else
-    ret_code = sd_softdevice_enable(&clock_lf_cfg, app_error_fault_handler);
-#endif
-    m_nrf_sdh_enabled = (ret_code == NRF_SUCCESS);
-    CRITICAL_REGION_EXIT();
-
+    ret_code = sd_softdevice_enable(NULL, NULL);
     if (ret_code != NRF_SUCCESS)
     {
         return ret_code;
     }
 
+    m_nrf_sdh_enabled   = true;
     m_nrf_sdh_continue  = false;
     m_nrf_sdh_suspended = false;
-
-    // Enable event interrupt.
-    // Interrupt priority has already been set by the stack.
-    softdevices_evt_irq_enable();
-
-    // Notify observers about a finished SoftDevice enable process.
-    sdh_state_observer_notify(NRF_SDH_EVT_STATE_ENABLED);
 
     return NRF_SUCCESS;
 }
@@ -246,32 +219,14 @@ ret_code_t nrf_sdh_disable_request(void)
 
     m_nrf_sdh_continue = true;
 
-    // Notify observers about SoftDevice disable request.
-    if (sdh_request_observer_notify(NRF_SDH_EVT_DISABLE_REQUEST) == NRF_ERROR_BUSY)
-    {
-        // Disable process was stopped.
-        return NRF_SUCCESS;
-    }
-
-    // Notify observers about starting SoftDevice disable process.
-    sdh_state_observer_notify(NRF_SDH_EVT_STATE_DISABLE_PREPARE);
-
-    CRITICAL_REGION_ENTER();
     ret_code          = sd_softdevice_disable();
-    m_nrf_sdh_enabled = false;
-    CRITICAL_REGION_EXIT();
-
     if (ret_code != NRF_SUCCESS)
     {
         return ret_code;
     }
 
+    m_nrf_sdh_enabled  = false;
     m_nrf_sdh_continue = false;
-
-    softdevice_evt_irq_disable();
-
-    // Notify observers about a finished SoftDevice enable process.
-    sdh_state_observer_notify(NRF_SDH_EVT_STATE_DISABLED);
 
     return NRF_SUCCESS;
 }
@@ -308,7 +263,6 @@ void nrf_sdh_suspend(void)
         return;
     }
 
-    softdevice_evt_irq_disable();
     m_nrf_sdh_suspended = true;
 }
 
@@ -320,16 +274,6 @@ void nrf_sdh_resume(void)
         return;
     }
 
-    // Force calling ISR again to make sure that events not previously pulled have been processed.
-#ifdef SOFTDEVICE_PRESENT
-    ret_code_t ret_code = sd_nvic_SetPendingIRQ((IRQn_Type)SD_EVT_IRQn);
-    APP_ERROR_CHECK(ret_code);
-#else
-    NVIC_SetPendingIRQ((IRQn_Type)SD_EVT_IRQn);
-#endif
-
-    softdevices_evt_irq_enable();
-
     m_nrf_sdh_suspended = false;
 }
 
@@ -339,6 +283,7 @@ bool nrf_sdh_is_suspended(void)
     return (!m_nrf_sdh_enabled) || (m_nrf_sdh_suspended);
 }
 
+#ifndef NOT_USE_NRF_SECTION
 
 void nrf_sdh_evts_poll(void)
 {
@@ -359,44 +304,13 @@ void nrf_sdh_evts_poll(void)
     }
 }
 
-
-#if (NRF_SDH_DISPATCH_MODEL == NRF_SDH_DISPATCH_MODEL_INTERRUPT)
-
-void SD_EVT_IRQHandler(void)
-{
-    nrf_sdh_evts_poll();
-}
-
-#elif (NRF_SDH_DISPATCH_MODEL == NRF_SDH_DISPATCH_MODEL_APPSH)
-
-/**@brief   Function for polling SoftDevice events.
- *
- * @note    This function is compatible with @ref app_sched_event_handler_t.
- *
- * @param[in]   p_event_data Pointer to the event data.
- * @param[in]   event_size   Size of the event data.
- */
-static void appsh_events_poll(void * p_event_data, uint16_t event_size)
-{
-    UNUSED_PARAMETER(p_event_data);
-    UNUSED_PARAMETER(event_size);
-
-    nrf_sdh_evts_poll();
-}
-
-
-void SD_EVT_IRQHandler(void)
-{
-    ret_code_t ret_code = app_sched_event_put(NULL, 0, appsh_events_poll);
-    APP_ERROR_CHECK(ret_code);
-}
-
-#elif (NRF_SDH_DISPATCH_MODEL == NRF_SDH_DISPATCH_MODEL_POLLING)
-
 #else
 
-#error "Unknown SoftDevice handler dispatch model."
-
-#endif // NRF_SDH_DISPATCH_MODEL
+extern void nrf_sdh_ble_evts_poll(void * p_context);
+void nrf_sdh_evts_poll(void)
+{
+    nrf_sdh_ble_evts_poll(NULL);
+}
+#endif // NOT_USE_NRF_SECTION
 
 #endif // NRF_MODULE_ENABLED(NRF_SDH)

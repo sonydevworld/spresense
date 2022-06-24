@@ -37,327 +37,538 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <unistd.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <sched.h>
+#include <poll.h>
+#include <errno.h>
+#include "sdk/config.h"
+
+
 #include "ser_phy.h"
 #include "ser_config.h"
 #ifdef SER_CONNECTIVITY
     #include "ser_phy_config_conn.h"
 #else
-    #include "ser_phy_config_app.h"
+//    #include "ser_phy_config_app.h"
 #endif
-#include "nrf_drv_uart.h"
+//#include "nrf_drv_uart.h"
 #include "app_error.h"
 #include "app_util.h"
 #include "app_util_platform.h"
+#include "nrf_error.h"
 
-#define UART_TRANSFER_MAX 255
-
-static const nrf_drv_uart_t m_uart = NRF_DRV_UART_INSTANCE(0);
-static const nrf_drv_uart_config_t m_uart_config = {
-    .pseltxd            = SER_PHY_UART_TX,
-    .pselrxd            = SER_PHY_UART_RX,
-    .pselrts            = SER_PHY_UART_RTS,
-    .pselcts            = SER_PHY_UART_CTS,
-    .p_context          = NULL,
-    .interrupt_priority = UART_IRQ_PRIORITY,
-#if defined(NRF_DRV_UART_WITH_UARTE) && defined(NRF_DRV_UART_WITH_UART)
-    .use_easy_dma       = true,
+//#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_DEBUG printf
+#else
+#define NRF_LOG_DEBUG(...)
 #endif
-    // These values are common for application and connectivity, they are
-    // defined in "ser_config.h".
-    .hwfc      = SER_PHY_UART_FLOW_CTRL,
-    .parity    = SER_PHY_UART_PARITY,
-    .baudrate  = (nrf_uart_baudrate_t)SER_PHY_UART_BAUDRATE
-};
 
-static bool volatile   m_tx_in_progress;
-static uint8_t         m_tx_header_buf[SER_PHY_HEADER_SIZE];
-static uint16_t        m_bytes_to_transmit;
-static uint8_t const * mp_tx_buffer;
+#define BLE_UART_FILE "/dev/ttyS2"
 
-static uint8_t         m_rx_header_buf[SER_PHY_HEADER_SIZE];
-static uint16_t        m_bytes_to_receive;
-static uint8_t         m_rx_drop_buf[1];
+#define FD_SET_UART 0
+#define FD_SET_CTRL 1
 
-static ser_phy_events_handler_t m_ser_phy_event_handler;
-static ser_phy_evt_t m_ser_phy_rx_event;
+typedef enum {
+  CTL_IN = 0,
+  CTL_OUT,
+  CTL_MAX
+} CTL_FD;
 
+typedef enum {
+  CTL_CMD_EXIT = 0,
+  CTL_CMD_MAX
+} CTL_CMD;
 
-static void packet_sent_callback(void)
+typedef struct
 {
-    static ser_phy_evt_t const event = {
-        .evt_type = SER_PHY_EVT_TX_PKT_SENT,
-    };
-    m_ser_phy_event_handler(event);
-}
+  int uart_fd;
+  int ctrl_fd[CTL_MAX];
+} UART_CONTEXT;
 
-static void buffer_request_callback(uint16_t num_of_bytes)
+static UART_CONTEXT g_ctx;
+static pthread_t m_rx_tid = 0;
+static uint8_t m_rx_loop = 0;
+
+static uint8_t * mp_tx_stream; /**< Pointer to Tx data */
+static uint16_t  m_tx_stream_length; /**< Length of Tx data including SER_PHY header */
+static uint16_t  m_tx_stream_index; /**< Byte index in Tx data */
+static uint8_t   m_tx_length_buf[SER_PHY_HEADER_SIZE]; /**< Buffer for header of Tx packet */
+
+static uint8_t * mp_rx_stream; /**< Pointer to Rx buffer */
+static uint16_t  m_rx_stream_length; /**< Length of Rx data including SER_PHY header*/
+static uint16_t  m_rx_stream_index; /**< Byte index in Rx data */
+static uint8_t   m_rx_length_buf[SER_PHY_HEADER_SIZE]; /**< Buffer for header of Rx packet */
+static uint8_t   m_rx_drop_buf[1]; /**< 1-byte buffer used to trash incoming data */
+static uint8_t   m_rx_byte; /**< Rx byte passed from low-level driver */
+
+static ser_phy_events_handler_t m_ser_phy_event_handler; /**< Event handler for upper layer */
+static ser_phy_evt_t            m_ser_phy_rx_event; /**< Rx event for upper layer notification */
+static ser_phy_evt_t            m_ser_phy_tx_event; /**< Tx event for upper layer notification */
+
+/**
+ *@brief Callback for requesting from upper layer memory for an incomming packet.
+ */
+static __INLINE void callback_mem_request(void)
 {
-    m_ser_phy_rx_event.evt_type = SER_PHY_EVT_RX_BUF_REQUEST;
-    m_ser_phy_rx_event.evt_params.rx_buf_request.num_of_bytes = num_of_bytes;
+  m_rx_stream_length = uint16_decode(m_rx_length_buf) + SER_PHY_HEADER_SIZE;
+  m_ser_phy_rx_event.evt_type = SER_PHY_EVT_RX_BUF_REQUEST;
+  m_ser_phy_rx_event.evt_params.rx_buf_request.num_of_bytes =
+    m_rx_stream_length - SER_PHY_HEADER_SIZE;
+
+  if (m_ser_phy_event_handler != NULL)
+  {
     m_ser_phy_event_handler(m_ser_phy_rx_event);
+  }
 }
 
-static void packet_received_callback(void)
+/**
+ *@brief Callback for notifying upper layer that either a packet was succesfully received or it was
+ * dropped.
+ */
+static __INLINE void callback_packet_received(void)
 {
+//  NRF_LOG_DEBUG("callback_packet_received\n");
+  if (mp_rx_stream == m_rx_drop_buf)
+  {
+    m_ser_phy_rx_event.evt_type = SER_PHY_EVT_RX_PKT_DROPPED;
+    NRF_LOG_DEBUG("callback_packet_received : dropped\n");
+  }
+  else
+  {
+    m_ser_phy_rx_event.evt_type = SER_PHY_EVT_RX_PKT_RECEIVED;
+    m_ser_phy_rx_event.evt_params.rx_pkt_received.num_of_bytes =
+      m_rx_stream_index - SER_PHY_HEADER_SIZE;
+    m_ser_phy_rx_event.evt_params.rx_pkt_received.p_buffer =
+      mp_rx_stream;
+  }
+
+  mp_rx_stream = NULL;
+  m_rx_stream_length = 0;
+  m_rx_stream_index  = 0;
+
+  if (m_ser_phy_event_handler != NULL)
+  {
     m_ser_phy_event_handler(m_ser_phy_rx_event);
+  }
+  //NRF_LOG_DEBUG("callback_packet_received END\n");
 }
 
-static void packet_dropped_callback(void)
+/**
+ *@brief Function for handling Rx procedure.
+ */
+static int ser_phy_uart_rx(uint8_t rx_byte)
 {
-    static ser_phy_evt_t const event = {
-        .evt_type = SER_PHY_EVT_RX_PKT_DROPPED,
-    };
-    m_ser_phy_event_handler(event);
-}
+  int ret = 0;
+//  NRF_LOG_DEBUG("ser_phy_uart_rx\n");
 
-static void hardware_error_callback(uint32_t hw_error)
-{
-    ser_phy_evt_t event = {
-        .evt_type = SER_PHY_EVT_HW_ERROR,
-        .evt_params.hw_error.error_code = hw_error,
-    };
-    m_ser_phy_event_handler(event);
-}
-
-static void packet_rx_start(void)
-{
-    APP_ERROR_CHECK(nrf_drv_uart_rx(&m_uart, m_rx_header_buf,
-        SER_PHY_HEADER_SIZE));
-}
-
-static void packet_byte_drop(void)
-{
-    APP_ERROR_CHECK(nrf_drv_uart_rx(&m_uart, m_rx_drop_buf, 1));
-}
-
-static void uart_event_handler(nrf_drv_uart_event_t * p_event,
-                               void * p_context)
-{
-    (void)p_context;
-
-    switch (p_event->type)
+  if (mp_rx_stream == NULL )
+  {
+    //Receive length value and request rx buffer from higher layer
+    if (m_rx_stream_index < SER_PHY_HEADER_SIZE)
     {
-        case NRF_DRV_UART_EVT_ERROR:
-            // Process the error only if this is a parity or overrun error.
-            // Break and framing errors will always occur before the other
-            // side becomes active.
-            if (p_event->data.error.error_mask &
-                (NRF_UART_ERROR_PARITY_MASK | NRF_UART_ERROR_OVERRUN_MASK))
-            {
-                // Pass error source to upper layer.
-                hardware_error_callback(p_event->data.error.error_mask);
-            }
+      m_rx_length_buf[m_rx_stream_index++] = rx_byte;
 
-            packet_rx_start();
-            break;
-
-        case NRF_DRV_UART_EVT_TX_DONE:
-            if (p_event->data.rxtx.p_data == m_tx_header_buf)
-            {
-#if (SER_HAL_TRANSPORT_TX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                if (m_bytes_to_transmit > UART_TRANSFER_MAX)
-                {
-                    APP_ERROR_CHECK(nrf_drv_uart_tx(&m_uart, mp_tx_buffer,
-                        UART_TRANSFER_MAX));
-                }
-                else
-#endif // (SER_HAL_TRANSPORT_TX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                {
-                    APP_ERROR_CHECK(nrf_drv_uart_tx(&m_uart, mp_tx_buffer,
-                        m_bytes_to_transmit));
-                }
-            }
-            else
-            {
-#if (SER_HAL_TRANSPORT_TX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                ASSERT(p_event->data.rxtx.bytes <= m_bytes_to_transmit);
-                m_bytes_to_transmit -= p_event->data.rxtx.bytes;
-                if (m_bytes_to_transmit != 0)
-                {
-                    APP_ERROR_CHECK(nrf_drv_uart_tx(&m_uart,
-                        p_event->data.rxtx.p_data + p_event->data.rxtx.bytes,
-                        m_bytes_to_transmit < UART_TRANSFER_MAX ?
-                            m_bytes_to_transmit : UART_TRANSFER_MAX));
-                }
-                else
-#endif // (SER_HAL_TRANSPORT_TX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                {
-                    m_tx_in_progress = false;
-                    packet_sent_callback();
-                }
-            }
-            break;
-
-        case NRF_DRV_UART_EVT_RX_DONE:
-            if (p_event->data.rxtx.p_data == m_rx_header_buf)
-            {
-                m_bytes_to_receive = uint16_decode(m_rx_header_buf);
-                buffer_request_callback(m_bytes_to_receive);
-            }
-            else if (p_event->data.rxtx.p_data == m_rx_drop_buf)
-            {
-                --m_bytes_to_receive;
-                if (m_bytes_to_receive != 0)
-                {
-                    packet_byte_drop();
-                }
-                else
-                {
-                    packet_dropped_callback();
-
-                    packet_rx_start();
-                }
-            }
-            else
-            {
-#if (SER_HAL_TRANSPORT_RX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                ASSERT(p_event->data.rxtx.bytes <= m_bytes_to_receive);
-                m_bytes_to_receive -= p_event->data.rxtx.bytes;
-                if (m_bytes_to_receive != 0)
-                {
-                    APP_ERROR_CHECK(nrf_drv_uart_rx(&m_uart,
-                        p_event->data.rxtx.p_data + p_event->data.rxtx.bytes,
-                        m_bytes_to_receive < UART_TRANSFER_MAX ?
-                            m_bytes_to_receive : UART_TRANSFER_MAX));
-                }
-                else
-#endif // (SER_HAL_TRANSPORT_RX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-                {
-                    packet_received_callback();
-
-                    packet_rx_start();
-                }
-            }
-            break;
-
-        default:
-            APP_ERROR_CHECK(NRF_ERROR_INTERNAL);
+      if (m_rx_stream_index == SER_PHY_HEADER_SIZE)
+      {
+        //Request rx buffer from upper layer
+        callback_mem_request();
+      }
     }
+  }
+  else if (m_rx_stream_index < m_rx_stream_length)
+  {
+    //Receive or drop payload
+    if (mp_rx_stream == m_rx_drop_buf)
+    {
+      //Drop incoming data to the one-element drop buffer
+      *mp_rx_stream = rx_byte;
+      m_rx_stream_index++;
+    }
+    else
+    {
+      mp_rx_stream[m_rx_stream_index - SER_PHY_HEADER_SIZE] = rx_byte;
+      m_rx_stream_index++;
+    }
+  }
+
+  //Process RX packet, notify higher layer
+  if (m_rx_stream_index == m_rx_stream_length)
+  {
+    callback_packet_received();
+  }
+//  NRF_LOG_DEBUG("ser_phy_uart_rx END\n");
+  return ret;
 }
+
+/**
+ *@brief Poll uart data
+ */
+static int ser_phy_poll_uart_receive(UART_CONTEXT *ctx)
+{
+  int errcode = 0;
+  struct pollfd fdSet[] = {
+    {.fd = ctx->uart_fd,         .events = POLLIN, .revents = 0},
+      {.fd = ctx->ctrl_fd[CTL_IN], .events = POLLIN, .revents = 0}
+    };
+
+  do {
+    errcode = 0;
+    if (poll(fdSet, (sizeof(fdSet) / sizeof(fdSet[0])), 10) < 0) {
+      errcode = errno;
+      NRF_LOG_DEBUG("ser_phy_poll_uart_receive: poll error: %d\n", errcode);
+    }
+
+    if (fdSet[FD_SET_CTRL].revents & POLLIN) {
+      NRF_LOG_DEBUG("ctrl event : called\n");
+      return 0;
+    }
+    if (fdSet[FD_SET_UART].revents & POLLIN) {
+      //NRF_LOG_DEBUG("event uart\n");
+      return 1;
+    }
+
+    /* Need sleep because this thread has higher priority */
+    usleep(5000);
+
+  } while ((EINTR == errcode) || (0 == errcode));
+
+  return -1;
+}
+
+static int ser_phy_get_ctrl_cmd(UART_CONTEXT *ctx, CTL_CMD *cmd)
+{
+  ssize_t rx_len = 0;
+  *cmd = CTL_CMD_MAX;
+  rx_len = read(ctx->ctrl_fd[CTL_IN], cmd, sizeof(CTL_CMD));
+  if (rx_len <= 0)
+  {
+    NRF_LOG_DEBUG("ser_phy_get_ctrl_cmd: rx_len %d errno %d\n", rx_len, -errno);
+    return -1;
+  }
+  NRF_LOG_DEBUG("read exit value = %d\n", *cmd);
+  return NRF_SUCCESS;
+}
+
+static void ser_phy_null_read(UART_CONTEXT *ctx)
+{
+  struct pollfd fdSet[] = {
+    {.fd = ctx->uart_fd, .events = POLLIN, .revents = 0}
+  };
+
+  while (poll(fdSet, (sizeof(fdSet) / sizeof(fdSet[0])), 10) > 0) {
+    if (fdSet[0].revents & POLLIN) {
+      read(ctx->uart_fd, &m_rx_byte, 1);
+      NRF_LOG_DEBUG("ser_phy_null_read: %02X\n", m_rx_byte);
+      continue;
+    }
+  }
+}
+
+static void *ser_phy_uart_receive(void *param)
+{
+  ssize_t rx_len = 0;
+  UART_CONTEXT *ctx = &g_ctx;
+  int ret = 0;
+  CTL_CMD cmd;
+
+  NRF_LOG_DEBUG("ser_phy_uart_receive: start\n");
+  while (m_rx_loop)
+  {
+    ret = ser_phy_poll_uart_receive(ctx);
+    if (ret == 1)
+    {
+      rx_len = read(ctx->uart_fd, &m_rx_byte, 1);
+      if (rx_len <= 0)
+
+      {
+        NRF_LOG_DEBUG("ser_phy_uart_receive: rx_len %d errno %d\n", rx_len, errno);
+      }
+      else
+      {
+        ser_phy_uart_rx(m_rx_byte);
+      }
+    }
+    else if (ret == 0) {
+      ret = ser_phy_get_ctrl_cmd(ctx, &cmd);
+      if ((ret == NRF_SUCCESS) && (CTL_CMD_EXIT == cmd))
+      {
+        NRF_LOG_DEBUG("close uart : %d\n", ctx->uart_fd);
+        ret = close(ctx->uart_fd);
+        if (ret) {
+          NRF_LOG_DEBUG("close uart failed\n");
+        }
+        NRF_LOG_DEBUG("close pipe : %d/%d\n", ctx->ctrl_fd[CTL_IN], ctx->ctrl_fd[CTL_OUT]);
+        ret = close(ctx->ctrl_fd[CTL_IN]);
+        if (ret) {
+          NRF_LOG_DEBUG("close pipe ctrl_in failed\n");
+        }
+        ret = close(ctx->ctrl_fd[CTL_OUT]);
+        if (ret) {
+          NRF_LOG_DEBUG("close pipe ctrl_out failed\n");
+        }
+        m_ser_phy_event_handler = NULL;
+        m_rx_loop = 0;
+        memset(ctx, 0, sizeof(UART_CONTEXT));
+        NRF_LOG_DEBUG("uart pthread exit\n");
+        break;
+      }
+      else
+      {
+        NRF_LOG_DEBUG("uart pthread exit failed\n");
+      }
+    }
+    else
+    {
+      NRF_LOG_DEBUG("ser_phy_uart_receive: poll error\n");
+    }
+  }
+
+  pthread_exit(0);
+  return NULL;
+}
+
 
 /** API FUNCTIONS */
 
 uint32_t ser_phy_open(ser_phy_events_handler_t events_handler)
 {
-    uint32_t err_code;
+  int errcode = 0;
+  UART_CONTEXT *ctx = &g_ctx;
+  int ret = 0;
+  pthread_attr_t ser_attr;
+  struct sched_param ser_param;
+  int prio;
 
-    if (events_handler == NULL)
-    {
-        return NRF_ERROR_NULL;
+  if (events_handler == NULL)
+  {
+    return NRF_ERROR_NULL;
+  }
+
+  //Check if function was not called before
+  if (m_ser_phy_event_handler != NULL)
+  {
+    return NRF_ERROR_INVALID_STATE;
+  }
+
+  //Configure UART and register handler
+  //uart_evt_handler is used to handle events produced by low-level uart driver
+  m_ser_phy_event_handler = events_handler;
+
+  mp_tx_stream = NULL;
+  m_tx_stream_length = 0;
+  m_tx_stream_index  = 0;
+
+  mp_rx_stream = NULL;
+  m_rx_stream_length = 0;
+  m_rx_stream_index  = 0;
+
+  NRF_LOG_DEBUG("ser_phy_open: %s\n", BLE_UART_FILE);
+  ctx->uart_fd = open(BLE_UART_FILE, O_RDWR);
+  if (ctx->uart_fd < 0)
+  {
+    NRF_LOG_DEBUG("ser_phy_open: open err %d\n", ctx->uart_fd);
+    return ctx->uart_fd;
+  }
+  ser_phy_null_read(ctx);
+
+  ret = pipe(ctx->ctrl_fd);
+  if (ret)
+  {
+    errcode = errno;
+    NRF_LOG_DEBUG("ser_phy_open: pipe err %d\n", errcode);
+    (void)close(ctx->uart_fd);
+    return -errcode;
+  }
+
+  m_rx_tid = 0;
+  m_rx_loop = 1;
+  ret = pthread_attr_init(&ser_attr);
+  if (!ret) {
+    ret = pthread_attr_getschedparam(&ser_attr, &ser_param);
+  }
+  if (!ret) {
+#if defined(CONFIG_BLUETOOTH_NRF52_UART_PRIORITY)
+    prio = CONFIG_BLUETOOTH_NRF52_UART_PRIORITY;
+#else
+    if (ser_param.sched_priority < sched_get_priority_max(SCHED_FIFO)) {
+      prio = ser_param.sched_priority + 1;
     }
-
-    // Check if function was not called before.
-    if (m_ser_phy_event_handler != NULL)
-    {
-        return NRF_ERROR_INVALID_STATE;
+    else {
+      prio = ser_param.sched_priority;
     }
+#endif
+    NRF_LOG_DEBUG("ser_phy_open: priority : %d->%d\n", ser_param.sched_priority, prio);
+    ser_param.sched_priority = prio;
+    ret = pthread_attr_setschedparam(&ser_attr, &ser_param);
+  }
+  if (!ret) {
+    ret = pthread_create(&m_rx_tid, &ser_attr, ser_phy_uart_receive, NULL);
+  }
+  if (ret)
+  {
+    errcode = errno;
+    NRF_LOG_DEBUG("ser_phy_open: pthread_create err %d\n", errcode);
+    (void)close(ctx->uart_fd);
+    (void)close(ctx->ctrl_fd[CTL_IN]);
+    (void)close(ctx->ctrl_fd[CTL_OUT]);
+    return -errcode;
+  }
 
-    err_code = nrf_drv_uart_init(&m_uart, &m_uart_config, uart_event_handler);
-    if (err_code != NRF_SUCCESS)
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
+  NRF_LOG_DEBUG("ser_phy_open: success\n");
+  return NRF_SUCCESS;
+}
 
-    m_ser_phy_event_handler = events_handler;
+/**
+ *@brief Callback for notifying upper layer that a packet was succesfully transmitted
+ */
+static __INLINE void callback_packet_sent(void)
+{
+  mp_tx_stream = NULL;
+  m_tx_stream_length = 0;
+  m_tx_stream_index  = 0;
 
-    packet_rx_start();
+  m_ser_phy_tx_event.evt_type = SER_PHY_EVT_TX_PKT_SENT;
 
-    return err_code;
+  if (m_ser_phy_event_handler != NULL)
+  {
+    m_ser_phy_event_handler(m_ser_phy_tx_event);
+  }
+}
+
+static int ser_phy_uart_send_char(uint8_t byte)
+{
+  ssize_t sent_len = 0;
+  //NRF_LOG_DEBUG("Send 0x%02x\n", byte);
+
+  int errcode = 0;
+  UART_CONTEXT *ctx = &g_ctx;
+
+  do
+  {
+    sent_len = write(ctx->uart_fd, &byte, 1);
+  } while (sent_len == 0);
+  if (sent_len < 0)
+  {
+    errcode = errno;
+    NRF_LOG_DEBUG("ser_phy_uart_send_char: write:err %d\n", errcode);
+    return -errcode;
+  }
+  return NRF_SUCCESS;
+}
+
+static int ser_phy_uart_send(void* buf, int size)
+{
+  int ret = 0;
+  int index=0;
+  NRF_LOG_DEBUG("ser_phy_uart_send size %d\n", size);
+
+  for(index=0; index<size; index++)
+  {
+    ret = ser_phy_uart_send_char(*((uint8_t *)buf+index));
+    NRF_LOG_DEBUG("Send %#x\n", *((uint8_t *)buf+index));
+    if (ret < 0) return ret;
+  }
+  return NRF_SUCCESS;
 }
 
 uint32_t ser_phy_tx_pkt_send(const uint8_t * p_buffer, uint16_t num_of_bytes)
 {
-    if (p_buffer == NULL)
-    {
-        return NRF_ERROR_NULL;
-    }
-    else if (num_of_bytes == 0)
-    {
-        return NRF_ERROR_INVALID_PARAM;
-    }
+//  NRF_LOG_DEBUG("ser_phy_tx_pkt_send num %d\n", num_of_bytes);
+  if (p_buffer == NULL)
+  {
+    return NRF_ERROR_NULL;
+  }
+  else if (num_of_bytes == 0)
+  {
+    return NRF_ERROR_INVALID_PARAM;
+  }
 
-    bool busy;
+  //Check if there is no ongoing transmission at the moment
+  if ((mp_tx_stream == NULL) && (m_tx_stream_length == 0) && (m_tx_stream_index == 0))
+  {
+    uint32_t ret = 0;
+    (void) uint16_encode(num_of_bytes, m_tx_length_buf);
+    mp_tx_stream = (uint8_t *)p_buffer;
+    m_tx_stream_length = num_of_bytes + SER_PHY_HEADER_SIZE;
 
-    CRITICAL_REGION_ENTER();
-    busy = m_tx_in_progress;
-    m_tx_in_progress = true;
-    CRITICAL_REGION_EXIT();
+    //Call tx procedure to start transmission of a packet
+    ret = ser_phy_uart_send(&m_tx_length_buf[0], SER_PHY_HEADER_SIZE);
+    if (ret) return ret;
+    ret = ser_phy_uart_send(&mp_tx_stream[0], num_of_bytes);
+    if (ret) return ret;
+    callback_packet_sent();
+//    NRF_LOG_DEBUG("ser_phy_tx_pkt_send : finished\n");
+  }
+  else
+  {
+    return NRF_ERROR_BUSY;
+  }
 
-    if (busy)
-    {
-        return NRF_ERROR_BUSY;
-    }
-
-    (void)uint16_encode(num_of_bytes, m_tx_header_buf);
-    mp_tx_buffer = p_buffer;
-    m_bytes_to_transmit = num_of_bytes;
-    APP_ERROR_CHECK(nrf_drv_uart_tx(&m_uart, m_tx_header_buf,
-        SER_PHY_HEADER_SIZE));
-
-    return NRF_SUCCESS;
+  return NRF_SUCCESS;
 }
-
 
 uint32_t ser_phy_rx_buf_set(uint8_t * p_buffer)
 {
+  if (m_ser_phy_rx_event.evt_type != SER_PHY_EVT_RX_BUF_REQUEST)
+  {
+    return NRF_ERROR_INVALID_STATE;
+  }
 
-    if (m_ser_phy_rx_event.evt_type != SER_PHY_EVT_RX_BUF_REQUEST)
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
+  if (p_buffer != NULL)
+  {
+    mp_rx_stream = p_buffer;
+  }
+  else
+  {
+    mp_rx_stream = m_rx_drop_buf;
+  }
 
-    m_ser_phy_rx_event.evt_type = SER_PHY_EVT_RX_PKT_RECEIVED;
-    m_ser_phy_rx_event.evt_params.rx_pkt_received.p_buffer = p_buffer;
-    m_ser_phy_rx_event.evt_params.rx_pkt_received.num_of_bytes =
-        m_bytes_to_receive;
-
-    // If there is not enough memory to receive the packet (no buffer was
-    // provided), drop its data byte by byte (using an internal 1-byte buffer).
-    if (p_buffer == NULL)
-    {
-        packet_byte_drop();
-    }
-#if (SER_HAL_TRANSPORT_RX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-    else if (m_bytes_to_receive > UART_TRANSFER_MAX)
-    {
-        APP_ERROR_CHECK(nrf_drv_uart_rx(&m_uart, p_buffer, UART_TRANSFER_MAX));
-    }
-#endif // (SER_HAL_TRANSPORT_RX_MAX_PKT_SIZE > UART_TRANSFER_MAX)
-    else
-    {
-        APP_ERROR_CHECK(nrf_drv_uart_rx(&m_uart, p_buffer, m_bytes_to_receive));
-    }
-
-    return NRF_SUCCESS;
+  return NRF_SUCCESS;
 }
-
 
 void ser_phy_close(void)
 {
-    nrf_drv_uart_uninit(&m_uart);
-    m_ser_phy_event_handler = NULL;
-}
+  UART_CONTEXT *ctx = &g_ctx;
+  CTL_CMD cmd_exit = CTL_CMD_EXIT;
+  ssize_t sent_len = 0;
+  int ret = 0;
 
+  NRF_LOG_DEBUG("ser_phy_close: called\n");
+  do
+  {
+    sent_len = write(ctx->ctrl_fd[CTL_OUT], &cmd_exit, sizeof(CTL_CMD));
+  } while (sent_len == 0);
+  if (sent_len < 0)
+  {
+    NRF_LOG_DEBUG("ser_phy_close: writed err: %d\n", errno);
+  }
+
+  if (m_rx_tid != 0) {
+    ret = pthread_join(m_rx_tid, NULL);
+    if (ret)
+    {
+      NRF_LOG_DEBUG("ser_phy_close: pthread_join err: %d\n", errno);
+    }
+  }
+  else {
+    NRF_LOG_DEBUG("ser_phy_close: pthread_join not created\n");
+  }
+
+  NRF_LOG_DEBUG("ser_phy_close: end\n");
+}
 
 void ser_phy_interrupts_enable(void)
 {
-    IRQn_Type irqn;
-#if defined(NRF_DRV_UART_WITH_UARTE)
-    irqn = nrfx_get_irq_number(m_uart.uarte.p_reg);
-#else
-    irqn = nrfx_get_irq_number(m_uart.uart.p_reg);
-#endif
-    NVIC_EnableIRQ(irqn);
+  /* not needed */
 }
-
 
 void ser_phy_interrupts_disable(void)
 {
-    IRQn_Type irqn;
-#if defined(NRF_DRV_UART_WITH_UARTE)
-    irqn = nrfx_get_irq_number(m_uart.uarte.p_reg);
-#else
-    irqn = nrfx_get_irq_number(m_uart.uart.p_reg);
-#endif
-    NVIC_DisableIRQ(irqn);
+  /* not needed */
 }
