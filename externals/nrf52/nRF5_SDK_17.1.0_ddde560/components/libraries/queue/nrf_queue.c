@@ -42,15 +42,18 @@
 #include "nrf_queue.h"
 #include "app_util_platform.h"
 
-#if NRF_QUEUE_CONFIG_LOG_ENABLED
-    #define NRF_LOG_LEVEL             NRF_QUEUE_CONFIG_LOG_LEVEL
-    #define NRF_LOG_INIT_FILTER_LEVEL NRF_QUEUE_CONFIG_LOG_INIT_FILTER_LEVEL
-    #define NRF_LOG_INFO_COLOR        NRF_QUEUE_CONFIG_INFO_COLOR
-    #define NRF_LOG_DEBUG_COLOR       NRF_QUEUE_CONFIG_DEBUG_COLOR
+//#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_INST_WARNING printf
+#define NRF_LOG_INST_DEBUG(...)
 #else
-    #define NRF_LOG_LEVEL       0
-#endif // NRF_QUEUE_CONFIG_LOG_ENABLED
-#include "nrf_log.h"
+#define NRF_LOG_INST_WARNING(...)
+#define NRF_LOG_INST_DEBUG(...)
+#endif
+
+#define __STATIC_INLINE static __inline
+
 
 NRF_SECTION_DEF(nrf_queue, nrf_queue_t);
 
@@ -394,8 +397,6 @@ size_t nrf_queue_in(nrf_queue_t const * p_queue,
     ASSERT(p_queue != NULL);
     ASSERT(p_data != NULL);
 
-    size_t req_element_count = element_count;
-
     if (element_count == 0)
     {
         return 0;
@@ -502,7 +503,7 @@ size_t nrf_queue_out(nrf_queue_t const * p_queue,
     ASSERT(p_queue != NULL);
     ASSERT(p_data != NULL);
 
-    size_t req_element_count = element_count;
+    //size_t req_element_count = element_count;
 
     if (element_count == 0)
     {

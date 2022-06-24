@@ -47,68 +47,31 @@
 #include "app_error.h"
 #include "nrf_strerror.h"
 
-
-#define NRF_LOG_MODULE_NAME nrf_sdh_ble
-#if NRF_SDH_BLE_LOG_ENABLED
-    #define NRF_LOG_LEVEL       NRF_SDH_BLE_LOG_LEVEL
-    #define NRF_LOG_INFO_COLOR  NRF_SDH_BLE_INFO_COLOR
-    #define NRF_LOG_DEBUG_COLOR NRF_SDH_BLE_DEBUG_COLOR
+//#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_ERROR printf
+#define NRF_LOG_DEBUG printf
 #else
-    #define NRF_LOG_LEVEL       0
-#endif // NRF_SDH_BLE_LOG_ENABLED
-#include "nrf_log.h"
-NRF_LOG_MODULE_REGISTER();
+#define NRF_LOG_ERROR(...)
+#define NRF_LOG_DEBUG(...)
+#endif
 
-
+#ifndef NOT_USE_NRF_SECTION
 // Create section set "sdh_ble_observers".
 NRF_SECTION_SET_DEF(sdh_ble_observers, nrf_sdh_ble_evt_observer_t, NRF_SDH_BLE_OBSERVER_PRIO_LEVELS);
-
-
-//lint -save -e10 -e19 -e40 -e27 Illegal character (0x24)
-#if defined(__CC_ARM)
-    extern uint32_t  Image$$RW_IRAM1$$Base;
-    uint32_t const * const m_ram_start = &Image$$RW_IRAM1$$Base;
-#elif defined(__ICCARM__)
-    extern uint32_t  __ICFEDIT_region_RAM_start__;
-    uint32_t const * const m_ram_start = &__ICFEDIT_region_RAM_start__;
-#elif defined(__SES_ARM)
-    extern uint32_t  __app_ram_start__;
-    uint32_t const * const m_ram_start = &__app_ram_start__;
-#elif defined(__GNUC__)
-    extern uint32_t  __data_start__;
-    uint32_t const * const m_ram_start = &__data_start__;
 #endif
-//lint -restore
-
-#define RAM_START       0x20000000
-#define APP_RAM_START   (uint32_t)m_ram_start
 
 
 static bool m_stack_is_enabled;
-
-
-ret_code_t nrf_sdh_ble_app_ram_start_get(uint32_t * p_app_ram_start)
-{
-    if (p_app_ram_start == NULL)
-    {
-        return NRF_ERROR_NULL;
-    }
-
-    *p_app_ram_start = APP_RAM_START;
-
-    return NRF_SUCCESS;
-}
 
 
 ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_start)
 {
     uint32_t ret_code;
 
-    ret_code = nrf_sdh_ble_app_ram_start_get(p_ram_start);
-    if (ret_code != NRF_SUCCESS)
-    {
-        return ret_code;
-    }
+    uint32_t ram_start =0;
+    p_ram_start = &ram_start;
 
 #if defined (S112) || defined(S312)
     STATIC_ASSERT(NRF_SDH_BLE_CENTRAL_LINK_COUNT == 0, "When using s112, NRF_SDH_BLE_CENTRAL_LINK_COUNT must be 0.");
@@ -132,6 +95,7 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     {
         NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_CONN_CFG_GAP.",
                       nrf_strerror_get(ret_code));
+        return ret_code;
     }
 
     // Configure the connection roles.
@@ -150,6 +114,7 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     {
         NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_GAP_CFG_ROLE_COUNT.",
                       nrf_strerror_get(ret_code));
+        return ret_code;
     }
 
     // Configure the maximum ATT MTU.
@@ -163,6 +128,7 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     {
         NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_CONN_CFG_GATT.",
                       nrf_strerror_get(ret_code));
+        return ret_code;
     }
 #endif  // NRF_SDH_BLE_GATT_MAX_MTU_SIZE != 23
 #endif  // NRF_SDH_BLE_TOTAL_LINK_COUNT != 0
@@ -176,6 +142,7 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     {
         NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_COMMON_CFG_VS_UUID.",
                       nrf_strerror_get(ret_code));
+        return ret_code;
     }
 
     // Configure the GATTS attribute table.
@@ -198,55 +165,16 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     {
         NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_GATTS_CFG_SERVICE_CHANGED.",
                       nrf_strerror_get(ret_code));
+        return ret_code;
     }
 
     return NRF_SUCCESS;
 }
 
 
-/**@brief   Function for finding the end address of the RAM. */
-static uint32_t ram_end_address_get(void)
-{
-    uint32_t ram_total_size;
-
-#ifdef NRF51
-    uint32_t block_size = NRF_FICR->SIZERAMBLOCKS;
-    ram_total_size      = block_size * NRF_FICR->NUMRAMBLOCK;
-#else
-    ram_total_size      = NRF_FICR->INFO.RAM * 1024;
-#endif
-
-    return RAM_START + ram_total_size;
-}
-
-
 ret_code_t nrf_sdh_ble_enable(uint32_t * const p_app_ram_start)
 {
-    // Start of RAM, obtained from linker symbol.
-    uint32_t const app_ram_start_link = *p_app_ram_start;
-
     ret_code_t ret_code = sd_ble_enable(p_app_ram_start);
-    if (*p_app_ram_start > app_ram_start_link)
-    {
-        NRF_LOG_WARNING("Insufficient RAM allocated for the SoftDevice.");
-
-        NRF_LOG_WARNING("Change the RAM start location from 0x%x to 0x%x.",
-                        app_ram_start_link, *p_app_ram_start);
-        NRF_LOG_WARNING("Maximum RAM size for application is 0x%x.",
-                        ram_end_address_get() - (*p_app_ram_start));
-    }
-    else
-    {
-        NRF_LOG_DEBUG("RAM starts at 0x%x", app_ram_start_link);
-        if (*p_app_ram_start != app_ram_start_link)
-        {
-            NRF_LOG_DEBUG("RAM start location can be adjusted to 0x%x.", *p_app_ram_start);
-
-            NRF_LOG_DEBUG("RAM size for application can be adjusted to 0x%x.",
-                          ram_end_address_get() - (*p_app_ram_start));
-        }
-    }
-
     if (ret_code == NRF_SUCCESS)
     {
         m_stack_is_enabled = true;
@@ -264,7 +192,12 @@ ret_code_t nrf_sdh_ble_enable(uint32_t * const p_app_ram_start)
  *
  * @param[in]   p_context   Context of the observer.
  */
+#ifndef NOT_USE_NRF_SECTION
 static void nrf_sdh_ble_evts_poll(void * p_context)
+#else
+extern void bleEvtDispatch(ble_evt_t *pBleNrfEvt);
+void nrf_sdh_ble_evts_poll(void * p_context)
+#endif
 {
     UNUSED_VARIABLE(p_context);
 
@@ -291,9 +224,8 @@ static void nrf_sdh_ble_evts_poll(void * p_context)
         }
 
         p_ble_evt = (ble_evt_t *)evt_buffer;
-
+#ifndef NOT_USE_NRF_SECTION
         NRF_LOG_DEBUG("BLE event: 0x%x.", p_ble_evt->header.evt_id);
-
         // Forward the event to BLE observers.
         nrf_section_iter_t  iter;
         for (nrf_section_iter_init(&iter, &sdh_ble_observers);
@@ -305,9 +237,12 @@ static void nrf_sdh_ble_evts_poll(void * p_context)
 
             p_observer = (nrf_sdh_ble_evt_observer_t *)nrf_section_iter_get(&iter);
             handler    = p_observer->handler;
-
+            //NRF_LOG_DEBUG("nrf_sdh_ble_evts_poll handler 0x%x\n", handler);
             handler(p_ble_evt, p_observer->p_context);
         }
+#else
+    bleEvtDispatch(p_ble_evt);
+#endif
     }
 
     if (ret_code != NRF_ERROR_NOT_FOUND)
@@ -316,11 +251,11 @@ static void nrf_sdh_ble_evts_poll(void * p_context)
     }
 }
 
-
+#ifndef NOT_USE_NRF_SECTION
 NRF_SDH_STACK_OBSERVER(m_nrf_sdh_ble_evts_poll, NRF_SDH_BLE_STACK_OBSERVER_PRIO) =
 {
     .handler   = nrf_sdh_ble_evts_poll,
     .p_context = NULL,
 };
-
+#endif
 #endif // NRF_MODULE_ENABLED(NRF_SDH_BLE)

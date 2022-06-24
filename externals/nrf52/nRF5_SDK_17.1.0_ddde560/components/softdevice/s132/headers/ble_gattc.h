@@ -58,6 +58,8 @@
 extern "C" {
 #endif
 
+#define __STATIC_INLINE static __inline
+
 /** @addtogroup BLE_GATTC_ENUMERATIONS Enumerations
  * @{ */
 

@@ -44,19 +44,16 @@
 #include "ser_config.h"
 #include "ser_phy.h"
 #include "ser_hal_transport.h"
-#if defined(APP_SCHEDULER_WITH_PAUSE) && APP_SCHEDULER_WITH_PAUSE
-#include "app_scheduler.h"
+#include "nrf_error.h"
+
+//#define BLE_DBGPRT_ENABLE
+#ifdef BLE_DBGPRT_ENABLE
+#include <stdio.h>
+#define NRF_LOG_INFO printf
+#else
+#define NRF_LOG_INFO(...)
 #endif
-#define NRF_LOG_MODULE_NAME ser_hal_transport
-#if SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
-    #define NRF_LOG_LEVEL       SER_HAL_TRANSPORT_CONFIG_LOG_LEVEL
-    #define NRF_LOG_INFO_COLOR  SER_HAL_TRANSPORT_CONFIG_INFO_COLOR
-    #define NRF_LOG_DEBUG_COLOR SER_HAL_TRANSPORT_CONFIG_DEBUG_COLOR
-#else //SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
-    #define NRF_LOG_LEVEL       0
-#endif //SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
-#include "nrf_log.h"
-NRF_LOG_MODULE_REGISTER();
+
 
 /**
  * @brief States of the RX state machine.
@@ -463,11 +460,15 @@ uint32_t ser_hal_transport_tx_pkt_send(const uint8_t * p_buffer, uint16_t num_of
     else if (HAL_TRANSP_TX_STATE_TX_ALLOCATED == m_tx_state)
     {
         ser_phy_interrupts_disable();
+        m_tx_state = HAL_TRANSP_TX_STATE_TRANSMITTING;
         err_code = ser_phy_tx_pkt_send(p_buffer, num_of_bytes);
 
         if (NRF_SUCCESS == err_code)
         {
-            m_tx_state = HAL_TRANSP_TX_STATE_TRANSMITTING;
+            // phy_events_handler in callback_packet_sent is called
+            // before setting HAL_TRANSP_TX_STATE_TRANSMITTING when
+            // debug uart enable.
+            //m_tx_state = HAL_TRANSP_TX_STATE_TRANSMITTING;
         }
         else
         {

@@ -1,7 +1,7 @@
 ############################################################################
-# bluetooth/Makefile
+# externals/nrf52/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,34 +33,32 @@
 #
 ############################################################################
 
--include $(SDKDIR)/modules/Make.defs
+-include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-MODNAME = bluetooth
+BIN = libnrf52$(LIBEXT)
 
-CSRCS  =  bluetooth_common.c
-ifeq ($(CONFIG_BLUETOOTH_A2DP),y)
-CSRCS +=  bluetooth_a2dp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_AVRCP),y)
-CSRCS +=  bluetooth_avrcp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_HFP),y)
-CSRCS +=  bluetooth_hfp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_SPP),y)
-CSRCS +=  bluetooth_spp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
-CSRCS +=  bluetooth_le_gatt.c
-endif
-CSRCS +=  bluetooth_hal_init.c
+NRF52_ROOT    = nRF5_SDK_17.1.0_ddde560
 
-ifeq ($(CONFIG_BCM20706),y)
-include hal/bcm20706/Make.defs
-endif
 
-ifeq ($(CONFIG_BLUETOOTH_NRF52),y)
-include hal/nrf52/Make.defs
-endif
+NRF52_SER_DIRS   := $(shell find $(NRF52_ROOT)/components/serialization -type d)
+NRF52_SD_DIRS    := $(shell find $(NRF52_ROOT)/components/softdevice -type d)
+NRF52_MOD_DIRS   := $(shell find $(NRF52_ROOT)/modules -type d)
 
-include $(SDKDIR)/modules/Module.mk
+#NRF52_DIRS    := $(NRF52_SER_DIRS) $(NRF52_SD_DIRS) $(NRF52_MOD_DIRS)
+
+NRF52_DIRS    := $(shell find $(NRF52_ROOT) -type d)
+NRF52_SRCS    := $(foreach dir, $(NRF52_DIRS), $(wildcard $(dir)/*.c))
+NRF52_OBJS    := $(NRF52_SRCS:.c=.o)
+
+CSRCS         := $(NRF52_SRCS)
+CFLAGS        += -DBLE_STACK_SUPPORT_REQD -DNRF_SD_BLE_API_VERSION=$(BLE_API_VERSION) -DSVCALL_AS_NORMAL_FUNCTION -DBLE_SUPPORT_BLE5 -std=c99
+CFLAGS        += -DBLE_ENABLE_NORDIC_ORIGINAL 
+CFLAGS        += -DNOT_USE_NRF_SECTION
+
+CFLAGS        += $(addprefix "-I", $(NRF52_DIRS))
+
+VPATH         := $(NRF52_DIRS)
+ROOTDEPPATH   := $(foreach dir,$(NRF52_DIRS), --dep-path $(dir))
+
+include $(APPDIR)/Application.mk

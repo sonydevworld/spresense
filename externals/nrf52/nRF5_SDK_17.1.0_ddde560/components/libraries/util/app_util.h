@@ -56,6 +56,8 @@
 #include "nordic_common.h"
 #include "nrf.h"
 
+extern uint32_t __REV(uint32_t val);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
