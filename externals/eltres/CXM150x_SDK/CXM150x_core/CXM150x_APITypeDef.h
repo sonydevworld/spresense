@@ -37,6 +37,7 @@
 #ifndef __CXM150x_APITYPEDEF_H
 #define __CXM150x_APITYPEDEF_H
 
+#include <nuttx/config.h>
 #include <stdint.h>
 
 // API version definition
@@ -49,13 +50,25 @@
 #define RECEIVE_EVENT_BUF_SIZE      (10)
 
 // Set whether to compile transmission test mode API (valid if not 0)
+#ifdef CONFIG_EXTERNALS_ELTRES_TEST_MODE
+#define CXM150x_TEST_MODE_API_USE     (1)
+#else
 #define CXM150x_TEST_MODE_API_USE     (0)
+#endif
 
 // Set whether to compile CONTROL FW UPDATE API (valid if not 0)
+#ifdef CONFIG_EXTERNALS_ELTRES_CTRL_FWUPDATE
+#define CXM150x_CTRL_FW_UPDATE_API_USE     (1)
+#else
 #define CXM150x_CTRL_FW_UPDATE_API_USE     (0)
+#endif
 
 // Set whether to compile GNSS FW UPDATE API (valid if not 0)
+#ifdef CONFIG_EXTERNALS_ELTRES_GNSS_FWUPDATE
+#define CXM150x_GNSS_FW_UPDATE_API_USE     (1)
+#else
 #define CXM150x_GNSS_FW_UPDATE_API_USE     (0)
+#endif
 
 // command maximum length
 #define CXM150x_MAX_COMMAND_LEN       (128)

@@ -13,4 +13,22 @@ menuconfig EXTERNALS_ELTRES
 
 if EXTERNALS_ELTRES
 
+config EXTERNALS_ELTRES_CTRL_FWUPDATE
+	bool "Control firmware update"
+	default n
+	---help---
+		Enable the Control firmware update.
+
+config EXTERNALS_ELTRES_GNSS_FWUPDATE
+	bool "GNSS firmware update"
+	default n
+	---help---
+		Enable the GNSS firmware update.
+
+config EXTERNALS_ELTRES_TEST_MODE
+	bool "Transmission test mode"
+	default n
+	---help---
+		Enable the transmission test mode.
+
 endif # EXTERNALS_ELTRES
