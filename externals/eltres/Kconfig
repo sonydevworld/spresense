@@ -1,0 +1,16 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig EXTERNALS_ELTRES
+	bool "ELTRES SDK library"
+	default n
+	---help---
+		Enable ELTRES SDK library.
+		This SDK is provided from https://eltres-iot.jp and is licensed
+		under the 3-Clause BSD License.
+
+if EXTERNALS_ELTRES
+
+endif # EXTERNALS_ELTRES
