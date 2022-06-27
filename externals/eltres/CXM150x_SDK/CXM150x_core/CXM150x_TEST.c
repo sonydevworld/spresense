@@ -97,7 +97,7 @@ return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02X\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_CH,CXM150x_COMMAND_SET,param);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_CH,CXM150x_COMMAND_SET,param);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_ch,res);
@@ -136,7 +136,7 @@ void res_check_get_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
         // Whether the message ends in 'OK' or not
         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             if(get_last_word(response,ch_str) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)ch_str,"%02X",&res->m_num) == NULL){
+                if(sscanf((char*)ch_str,"%02lX",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_ERROR;
                 }
             } else {
@@ -243,7 +243,7 @@ return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02X\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_MODE,CXM150x_COMMAND_SET,mode);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_MODE,CXM150x_COMMAND_SET,mode);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_mode,res);
@@ -281,7 +281,7 @@ void res_check_get_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
         uint8_t mode_str[CXM150x_MAX_COMMAND_LEN] = "";
          if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             if(get_last_word(response,mode_str) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)mode_str,"%02X",&res->m_num) == NULL){
+                if(sscanf((char*)mode_str,"%02lX",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_ERROR;
                 }
             } else {
@@ -542,7 +542,7 @@ return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPISt
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %d\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPI,CXM150x_COMMAND_GET,param);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPI,CXM150x_COMMAND_GET,param);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_check_get_CXM150x_test_gpi_state,res);
@@ -618,9 +618,9 @@ return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM15
     
     // Create command string
     if(param->m_port_state == CXM150x_GPIO_PORT_STATE_H){
-        snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %d,%s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_SET,param->m_port_type,CXM150x_COMMAND_GPIO_PORT_H);
+        snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld,%s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_SET,param->m_port_type,CXM150x_COMMAND_GPIO_PORT_H);
     } else {
-        snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %d,%s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_SET,param->m_port_type,CXM150x_COMMAND_GPIO_PORT_L);
+        snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld,%s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_SET,param->m_port_type,CXM150x_COMMAND_GPIO_PORT_L);
     }
     
     if(func != NULL){
@@ -698,7 +698,7 @@ return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOSt
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %d\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_GET,param);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_GET,param);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_check_get_CXM150x_test_gpo_state,res);

@@ -302,7 +302,7 @@ uint32_t conv_CXM150x_GNSSTime_to_second(uint8_t *p_s, uint32_t *p_num){
     uint32_t timeword_sec;
     uint32_t val = 0;
 
-    if (sscanf((char*)p_s, "%x", &val)) {
+    if (sscanf((char*)p_s, "%lx", &val)) {
         timeword_week = GET_GPS_FORMAT_UPPER(val);
         timeword_sec = GET_GPS_FORMAT_LOWER(val);
         *p_num = ((timeword_week * SECONDS_PER_WEEK) + timeword_sec);
@@ -333,7 +333,7 @@ uint32_t conv_CXM150x_GNSSTime_to_string(uint8_t *p_s, uint8_t *p_date){
     uint32_t timeword_sec;
     uint32_t val = 0;
 
-    if (sscanf((char*)p_s, "%x", &val)) {
+    if (sscanf((char*)p_s, "%lx", &val)) {
         base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
         base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
         base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;
@@ -417,98 +417,98 @@ uint32_t parse_nmea_sentence_gga(uint8_t *p_nmea_str, CXM150xNMEAGGAInfo *p_gga)
             switch (e_sentence_num) {
             case GGA_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_gga->m_talker_id, p_gga->m_sentence_id) == NULL){
-                    memset(p_gga->m_talker_id,NULL,sizeof(p_gga->m_talker_id));
-                    memset(p_gga->m_sentence_id,NULL,sizeof(p_gga->m_sentence_id));
+                if(sscanf((char*)field_str, "| $%2s%3s", p_gga->m_talker_id, p_gga->m_sentence_id) == 0){
+                    memset(p_gga->m_talker_id, 0, sizeof(p_gga->m_talker_id));
+                    memset(p_gga->m_sentence_id, 0, sizeof(p_gga->m_sentence_id));
                 }
                 break;
             case GGA_SENTENCE_UTC:
                 // UTC
-                if(sscanf((char*)field_str, "%9s", p_gga->m_utc) == NULL){
-                    memset(p_gga->m_utc,NULL,sizeof(p_gga->m_utc));
+                if(sscanf((char*)field_str, "%9s", p_gga->m_utc) == 0){
+                    memset(p_gga->m_utc, 0, sizeof(p_gga->m_utc));
                 }
                 break;
             case GGA_SENTENCE_LAT:
                 // latitude
-                if(sscanf((char*)field_str, "%10s", p_gga->m_lat) == NULL){
-                    memset(p_gga->m_lat,NULL,sizeof(p_gga->m_lat));
+                if(sscanf((char*)field_str, "%10s", p_gga->m_lat) == 0){
+                    memset(p_gga->m_lat, 0, sizeof(p_gga->m_lat));
                 }
                 break;
             case GGA_SENTENCE_N_S:
                 // North / South latitude
-                if(sscanf((char*)field_str, "%1s", p_gga->m_n_s) == NULL){
-                    memset(p_gga->m_n_s,NULL,sizeof(p_gga->m_n_s));
+                if(sscanf((char*)field_str, "%1s", p_gga->m_n_s) == 0){
+                    memset(p_gga->m_n_s, 0, sizeof(p_gga->m_n_s));
                 }
                 break;
             case GGA_SENTENCE_LON:
                 // longitude
-                if(sscanf((char*)field_str, "%10s", p_gga->m_lon) == NULL){
-                    memset(p_gga->m_lon,NULL,sizeof(p_gga->m_lon));
+                if(sscanf((char*)field_str, "%10s", p_gga->m_lon) == 0){
+                    memset(p_gga->m_lon, 0, sizeof(p_gga->m_lon));
                 }
                 break;
             case GGA_SENTENCE_E_W:
                 // East / West longitude
-                if(sscanf((char*)field_str, "%1s", p_gga->m_e_w) == NULL){
-                    memset(p_gga->m_e_w,NULL,sizeof(p_gga->m_e_w));
+                if(sscanf((char*)field_str, "%1s", p_gga->m_e_w) == 0){
+                    memset(p_gga->m_e_w, 0, sizeof(p_gga->m_e_w));
                 }
                 break;
             case GGA_SENTENCE_POS_STATUS:
                 // GPS Quality indicator
-                if(sscanf((char*)field_str, "%d", &p_gga->m_pos_status) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gga->m_pos_status) == 0){
                     p_gga->m_pos_status = 0;
                 }
                 break;
             case GGA_SENTENCE_SAT_USED:
                 // Number of satellites used
-                if(sscanf((char*)field_str, "%d", &p_gga->m_sat_used) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gga->m_sat_used) == 0){
                     p_gga->m_sat_used = 0;
                 }
                 break;
             case GGA_SENTENCE_HDOP:
                 // HDOP
-                if(sscanf((char*)field_str, "%f", &p_gga->m_hdop) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gga->m_hdop) == 0){
                     p_gga->m_hdop = 0;
                 }
                 break;
             case GGA_SENTENCE_HEIGHT:
                 // Altitude
-                if(sscanf((char*)field_str, "%f", &p_gga->m_height) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gga->m_height) == 0){
                     p_gga->m_height = 0;
                 }
                 break;
             case GGA_SENTENCE_HEIGHT_UNIT:
                 // Altitude unit: M
-                if(sscanf((char*)field_str, "%1s", p_gga->m_height_unit) == NULL){
-                    memset(p_gga->m_height_unit,NULL,sizeof(p_gga->m_height_unit));
+                if(sscanf((char*)field_str, "%1s", p_gga->m_height_unit) == 0){
+                    memset(p_gga->m_height_unit, 0, sizeof(p_gga->m_height_unit));
                 }
                 break;
             case GGA_SENTENCE_GEOID:
                 // geoid height
-                if(sscanf((char*)field_str, "%f", &p_gga->m_geoid) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gga->m_geoid) == 0){
                     p_gga->m_geoid = 0;
                 }
                 break;
             case GGA_SENTENCE_GEOID_UNIT:
                 // Geoid height unit: M
-                if(sscanf((char*)field_str, "%1s", p_gga->m_geoid_unit) == NULL){
-                    memset(p_gga->m_geoid_unit,NULL,sizeof(p_gga->m_geoid_unit));
+                if(sscanf((char*)field_str, "%1s", p_gga->m_geoid_unit) == 0){
+                    memset(p_gga->m_geoid_unit, 0, sizeof(p_gga->m_geoid_unit));
                 }
                 break;
             case GGA_SENTENCE_DGPS_DATA:
                 // DGPS data
-                if(sscanf((char*)field_str, "%9s", p_gga->m_dgps_data) == NULL){
-                    memset(p_gga->m_dgps_data,NULL,sizeof(p_gga->m_dgps_data));
+                if(sscanf((char*)field_str, "%9s", p_gga->m_dgps_data) == 0){
+                    memset(p_gga->m_dgps_data, 0, sizeof(p_gga->m_dgps_data));
                 }
                 break;
             case GGA_SENTENCE_BS_ID:
                 // base station ID
-                if(sscanf((char*)field_str, "%d", &p_gga->m_bs_id) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gga->m_bs_id) == 0){
                     p_gga->m_bs_id = 0;
                 }
                 break;
             case GGA_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_gga->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_gga->m_cs) == 0){
                     p_gga->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_gga->m_cs){
@@ -585,56 +585,56 @@ uint32_t parse_nmea_sentence_gll(uint8_t *p_nmea_str, CXM150xNMEAGLLInfo *p_gll)
             switch (e_sentence_num) {
             case GLL_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_gll->m_talker_id, p_gll->m_sentence_id) == NULL){
-                    memset(p_gll->m_talker_id,NULL,sizeof(p_gll->m_talker_id));
-                    memset(p_gll->m_sentence_id,NULL,sizeof(p_gll->m_sentence_id));
+                if(sscanf((char*)field_str, "| $%2s%3s", p_gll->m_talker_id, p_gll->m_sentence_id) == 0){
+                    memset(p_gll->m_talker_id, 0, sizeof(p_gll->m_talker_id));
+                    memset(p_gll->m_sentence_id, 0, sizeof(p_gll->m_sentence_id));
                 }
                 break;
             case GLL_SENTENCE_LAT:
                 // latitude
-                if(sscanf((char*)field_str, "%10s", p_gll->m_lat) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_gll->m_lat) == 0){
                     memset(p_gll->m_lat,0,sizeof(p_gll->m_lat));
                 }
                 break;
             case GLL_SENTENCE_N_S:
                 // North / South latitude
-                if(sscanf((char*)field_str, "%1s", p_gll->m_n_s) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gll->m_n_s) == 0){
                     memset(p_gll->m_n_s,0,sizeof(p_gll->m_n_s));
                 }
                 break;
             case GLL_SENTENCE_LON:
                 // longitude
-                if(sscanf((char*)field_str, "%10s", p_gll->m_lon) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_gll->m_lon) == 0){
                     memset(p_gll->m_lon,0,sizeof(p_gll->m_lon));
                 }
                 break;
             case GLL_SENTENCE_E_W:
                 // East / West longitude
-                if(sscanf((char*)field_str, "%1s", p_gll->m_e_w) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gll->m_e_w) == 0){
                     memset(p_gll->m_e_w,0,sizeof(p_gll->m_e_w));
                 }
                 break;
             case GLL_SENTENCE_UTC:
                 // UTC
-                if(sscanf((char*)field_str, "%9s", p_gll->m_utc) == NULL){
-                    memset(p_gll->m_utc,NULL,sizeof(p_gll->m_utc));
+                if(sscanf((char*)field_str, "%9s", p_gll->m_utc) == 0){
+                    memset(p_gll->m_utc,0,sizeof(p_gll->m_utc));
                 }
                 break;
             case GLL_SENTENCE_POS_STATUS:
                 // GPS Quality indicator
-                if(sscanf((char*)field_str, "%1s", p_gll->m_pos_status) == NULL){
-                    memset(p_gll->m_pos_status,NULL,sizeof(p_gll->m_pos_status));
+                if(sscanf((char*)field_str, "%1s", p_gll->m_pos_status) == 0){
+                    memset(p_gll->m_pos_status,0,sizeof(p_gll->m_pos_status));
                 }
                 break;
             case GLL_SENTENCE_MODE:
                 // mode
-                if(sscanf((char*)field_str, "%1s", p_gll->m_mode) == NULL){
-                    memset(p_gll->m_mode,NULL,sizeof(p_gll->m_mode));
+                if(sscanf((char*)field_str, "%1s", p_gll->m_mode) == 0){
+                    memset(p_gll->m_mode,0,sizeof(p_gll->m_mode));
                 }
                 break;
             case GLL_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_gll->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_gll->m_cs) == 0){
                     p_gll->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_gll->m_cs){
@@ -711,62 +711,62 @@ uint32_t parse_nmea_sentence_gns(uint8_t *p_nmea_str, CXM150xNMEAGNSInfo *p_gns)
             switch (e_sentence_num) {
             case GNS_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_gns->m_talker_id, p_gns->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_gns->m_talker_id, p_gns->m_sentence_id) == 0){
                     memset(p_gns->m_talker_id,0,sizeof(p_gns->m_talker_id));
                     memset(p_gns->m_sentence_id,0,sizeof(p_gns->m_sentence_id));
                 }
                 break;
             case GNS_SENTENCE_UTC:
                 // UTC
-                if(sscanf((char*)field_str, "%9s", p_gns->m_utc) == NULL){
+                if(sscanf((char*)field_str, "%9s", p_gns->m_utc) == 0){
                     memset(p_gns->m_utc,0,sizeof(p_gns->m_utc));
                 }
                 break;
             case GNS_SENTENCE_LAT:
                 // latitude
-                if(sscanf((char*)field_str, "%10s", p_gns->m_lat) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_gns->m_lat) == 0){
                     memset(p_gns->m_lat,0,sizeof(p_gns->m_lat));
                 }
                 break;
             case GNS_SENTENCE_N_S:
                 // North / South latitude
-                if(sscanf((char*)field_str, "%1s", p_gns->m_n_s) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gns->m_n_s) == 0){
                     memset(p_gns->m_n_s,0,sizeof(p_gns->m_n_s));
                 }
                 break;
             case GNS_SENTENCE_LON:
                 // longitude
-                if(sscanf((char*)field_str, "%10s", p_gns->m_lon) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_gns->m_lon) == 0){
                     memset(p_gns->m_lon,0,sizeof(p_gns->m_lon));
                 }
                 break;
             case GNS_SENTENCE_E_W:
                 // East / West longitude
-                if(sscanf((char*)field_str, "%1s", p_gns->m_e_w) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gns->m_e_w) == 0){
                     memset(p_gns->m_e_w,0,sizeof(p_gns->m_e_w));
                 }
                 break;
             case GNS_SENTENCE_MODE:
                 // MODE
-                if(sscanf((char*)field_str, "%2s", p_gns->m_mode) == NULL){
+                if(sscanf((char*)field_str, "%2s", p_gns->m_mode) == 0){
                     memset(p_gns->m_mode,0,sizeof(p_gns->m_mode));
                 }
                 break;
             case GNS_SENTENCE_SAT_USED:
                 // Number of satellites used
-                if(sscanf((char*)field_str, "%d", &p_gns->m_sat_used) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gns->m_sat_used) == 0){
                     p_gns->m_sat_used = 0;
                 }
                 break;
             case GNS_SENTENCE_HDOP:
                 // HDOP
-                if(sscanf((char*)field_str, "%f", &p_gns->m_hdop) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gns->m_hdop) == 0){
                     p_gns->m_hdop = 0;
                 }
                 break;
             case GNS_SENTENCE_HEIGHT:
                 // Altitude
-                if(sscanf((char*)field_str, "%f", &p_gns->m_height) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gns->m_height) == 0){
                     p_gns->m_height = 0;
                 }
                 break;
@@ -775,7 +775,7 @@ uint32_t parse_nmea_sentence_gns(uint8_t *p_nmea_str, CXM150xNMEAGNSInfo *p_gns)
                 break;
             case GNS_SENTENCE_GEOID:
                 // geoid height
-                if(sscanf((char*)field_str, "%f", &p_gns->m_geoid) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gns->m_geoid) == 0){
                     p_gns->m_geoid = 0;
                 }
                 break;
@@ -784,19 +784,19 @@ uint32_t parse_nmea_sentence_gns(uint8_t *p_nmea_str, CXM150xNMEAGNSInfo *p_gns)
                 break;
             case GNS_SENTENCE_DGPS_DATA:
                 // DGPS data
-                if(sscanf((char*)field_str, "%9s", p_gns->m_dgps_data) == NULL){
+                if(sscanf((char*)field_str, "%9s", p_gns->m_dgps_data) == 0){
                     memset(p_gns->m_dgps_data,0,sizeof(p_gns->m_dgps_data));
                 }
                 break;
             case GNS_SENTENCE_BS_ID:
                 // base station ID
-                if(sscanf((char*)field_str, "%d", &p_gns->m_bs_id) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gns->m_bs_id) == 0){
                     p_gns->m_bs_id = 0;
                 }
                 break;
             case GNS_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_gns->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_gns->m_cs) == 0){
                     p_gns->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_gns->m_cs){
@@ -874,20 +874,20 @@ uint32_t parse_nmea_sentence_gsa(uint8_t *p_nmea_str, CXM150xNMEAGSAInfo *p_gsa)
             switch (e_sentence_num) {
             case GSA_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_gsa->m_talker_id, p_gsa->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_gsa->m_talker_id, p_gsa->m_sentence_id) == 0){
                     memset(p_gsa->m_talker_id,0,sizeof(p_gsa->m_talker_id));
                     memset(p_gsa->m_sentence_id,0,sizeof(p_gsa->m_sentence_id));
                 }
                 break;
             case GSA_SENTENCE_MODE1:
                 // MODE1
-                if(sscanf((char*)field_str, "%1s", p_gsa->m_mode1) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gsa->m_mode1) == 0){
                     memset(p_gsa->m_mode1,0,sizeof(p_gsa->m_mode1));
                 }
                 break;
             case GSA_SENTENCE_MODE2:
                 // MODE2
-                if(sscanf((char*)field_str, "%1s", p_gsa->m_mode2) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_gsa->m_mode2) == 0){
                     memset(p_gsa->m_mode2,0,sizeof(p_gsa->m_mode2));
                 }
                 break;
@@ -904,32 +904,32 @@ uint32_t parse_nmea_sentence_gsa(uint8_t *p_nmea_str, CXM150xNMEAGSAInfo *p_gsa)
             case GSA_SENTENCE_PRN_NUM_11:
             case GSA_SENTENCE_PRN_NUM_12:
                 // Number of satellite PRN numbers
-                if(sscanf((char*)field_str, "%d", &p_gsa->m_prn_num[prn_num_cnt]) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsa->m_prn_num[prn_num_cnt]) == 0){
                     p_gsa->m_prn_num[prn_num_cnt] = 0;
                 }
                 prn_num_cnt++;
                 break;
             case GSA_SENTENCE_PDOP:
                 // PDOP
-                if(sscanf((char*)field_str, "%f", &p_gsa->m_pdop) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gsa->m_pdop) == 0){
                     p_gsa->m_pdop = 0;
                 }
                 break;
             case GSA_SENTENCE_HDOP:
                 // HDOP
-                if(sscanf((char*)field_str, "%f", &p_gsa->m_hdop) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gsa->m_hdop) == 0){
                     p_gsa->m_hdop = 0;
                 }
                 break;
             case GSA_SENTENCE_VDOP:
                 // VDOP
-                if(sscanf((char*)field_str, "%f", &p_gsa->m_vdop) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_gsa->m_vdop) == 0){
                     p_gsa->m_vdop = 0;
                 }
                 break;
             case GSA_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_gsa->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_gsa->m_cs) == 0){
                     p_gsa->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_gsa->m_cs){
@@ -1006,128 +1006,128 @@ uint32_t parse_nmea_sentence_gsv(uint8_t *p_nmea_str, CXM150xNMEAGSVInfo *p_gsv)
             switch (e_sentence_num) {
             case GSV_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_gsv->m_talker_id, p_gsv->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_gsv->m_talker_id, p_gsv->m_sentence_id) == 0){
                     memset(p_gsv->m_talker_id,0,sizeof(p_gsv->m_talker_id));
                     memset(p_gsv->m_sentence_id,0,sizeof(p_gsv->m_sentence_id));
                 }
                 break;
             case GSV_SENTENCE_MSG_TOTAL:
                 // number of all GSV messages
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_msg_total) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_msg_total) == 0){
                     p_gsv->m_msg_total = 0;
                 }
                 break;
             case GSV_SENTENCE_MSG_NUM:
                 // message number
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_msg_num) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_msg_num) == 0){
                     p_gsv->m_msg_num = 0;
                 }
                 break;
             case GSV_SENTENCE_SV_TOTAL:
                 // satellites that can be used
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_sv_total) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_sv_total) == 0){
                     p_gsv->m_sv_total = 0;
                 }
                 break;
             case GSV_SENTENCE_SV_PRN_NUM_1:
                 // 1: Satellite PRN number
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_sv_prn_num_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_sv_prn_num_1) == 0){
                     p_gsv->m_sv_prn_num_1 = 0;
                 }
                 break;
             case GSV_SENTENCE_ELEVATION_IN_DEGREES_1:
                 // 1: satellite elevation angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_elevation_in_degrees_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_elevation_in_degrees_1) == 0){
                     p_gsv->m_elevation_in_degrees_1 = 0;
                 }
                 break;
             case GSV_SENTENCE_AZIMUTH_1:
                 // 1: satellite azimuth angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_azimuth_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_azimuth_1) == 0){
                     p_gsv->m_azimuth_1 = 0;
                 }
                 break;
             case GSV_SENTENCE_SNR_1:
                 // 1: satellite SN ratio
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_snr_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_snr_1) == 0){
                     p_gsv->m_snr_1 = 0;
                 }
                 break;
             case GSV_SENTENCE_SV_PRN_NUM_2:
                 // 2: Satellite PRN number
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_sv_prn_num_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_sv_prn_num_2) == 0){
                     p_gsv->m_sv_prn_num_2 = 0;
                 }
                 break;
             case GSV_SENTENCE_ELEVATION_IN_DEGREES_2:
                 // 2: satellite elevation angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_elevation_in_degrees_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_elevation_in_degrees_2) == 0){
                     p_gsv->m_elevation_in_degrees_2 = 0;
                 }
                 break;
             case GSV_SENTENCE_AZIMUTH_2:
                 // 2: satellite azimuth angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_azimuth_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_azimuth_2) == 0){
                     p_gsv->m_azimuth_2 = 0;
                 }
                 break;
             case GSV_SENTENCE_SNR_2:
                 // 2: satellite SN ratio
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_snr_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_snr_2) == 0){
                     p_gsv->m_snr_2 = 0;
                 }
                 break;
             case GSV_SENTENCE_SV_PRN_NUM_3:
                 // 3: Satellite PRN number
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_sv_prn_num_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_sv_prn_num_3) == 0){
                     p_gsv->m_sv_prn_num_3 = 0;
                 }
                 break;
             case GSV_SENTENCE_ELEVATION_IN_DEGREES_3:
                 // 3: satellite elevation angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_elevation_in_degrees_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_elevation_in_degrees_3) == 0){
                     p_gsv->m_elevation_in_degrees_3 = 0;
                 }
                 break;
             case GSV_SENTENCE_AZIMUTH_3:
                 // 3: satellite azimuth angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_azimuth_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_azimuth_3) == 0){
                     p_gsv->m_azimuth_3 = 0;
                 }
                 break;
             case GSV_SENTENCE_SNR_3:
                 // 3: satellite SN ratio
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_snr_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_snr_3) == 0){
                     p_gsv->m_snr_3 = 0;
                 }
                 break;
             case GSV_SENTENCE_SV_PRN_NUM_4:
                 // 4: Satellite PRN number
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_sv_prn_num_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_sv_prn_num_4) == 0){
                     p_gsv->m_sv_prn_num_4 = 0;
                 }
                 break;
             case GSV_SENTENCE_ELEVATION_IN_DEGREES_4:
                 // 4: satellite elevation angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_elevation_in_degrees_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_elevation_in_degrees_4) == 0){
                     p_gsv->m_elevation_in_degrees_4 = 0;
                 }
                 break;
             case GSV_SENTENCE_AZIMUTH_4:
                 // 4: satellite azimuth angle
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_azimuth_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_azimuth_4) == 0){
                     p_gsv->m_azimuth_4 = 0;
                 }
                 break;
             case GSV_SENTENCE_SNR_4:
                 // 4: satellite SN ratio
-                if(sscanf((char*)field_str, "%d", &p_gsv->m_snr_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_gsv->m_snr_4) == 0){
                     p_gsv->m_snr_4 = 0;
                 }
                 break;
             case GSV_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_gsv->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_gsv->m_cs) == 0){
                     p_gsv->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_gsv->m_cs){
@@ -1204,86 +1204,86 @@ uint32_t parse_nmea_sentence_rmc(uint8_t *p_nmea_str, CXM150xNMEARMCInfo *p_rmc)
             switch (e_sentence_num) {
             case RMC_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_rmc->m_talker_id, p_rmc->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_rmc->m_talker_id, p_rmc->m_sentence_id) == 0){
                     memset(p_rmc->m_talker_id,0,sizeof(p_rmc->m_talker_id));
                     memset(p_rmc->m_sentence_id,0,sizeof(p_rmc->m_sentence_id));
                 }
                 break;
             case RMC_SENTENCE_UTC:
                 // UTC
-                if(sscanf((char*)field_str, "%9s", p_rmc->m_utc) == NULL){
+                if(sscanf((char*)field_str, "%9s", p_rmc->m_utc) == 0){
                     memset(p_rmc->m_utc,0,sizeof(p_rmc->m_utc));
                 }
                 break;
             case RMC_SENTENCE_POS_STATUS:
                 // status
-                if(sscanf((char*)field_str, "%1s", p_rmc->m_pos_status) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_rmc->m_pos_status) == 0){
                     memset(p_rmc->m_pos_status,0,sizeof(p_rmc->m_pos_status));
                 }
                 break;
             case RMC_SENTENCE_LAT:
                 // latitude
-                if(sscanf((char*)field_str, "%10s", p_rmc->m_lat) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_rmc->m_lat) == 0){
                     memset(p_rmc->m_lat,0,sizeof(p_rmc->m_lat));
                 }
                 break;
             case RMC_SENTENCE_N_S:
                 // North / South latitude
-                if(sscanf((char*)field_str, "%1s", p_rmc->m_n_s) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_rmc->m_n_s) == 0){
                     memset(p_rmc->m_n_s,0,sizeof(p_rmc->m_n_s));
                 }
                 break;
             case RMC_SENTENCE_LON:
                 // longitude
-                if(sscanf((char*)field_str, "%10s", p_rmc->m_lon) == NULL){
+                if(sscanf((char*)field_str, "%10s", p_rmc->m_lon) == 0){
                     memset(p_rmc->m_lon,0,sizeof(p_rmc->m_lon));
                 }
                 break;
             case RMC_SENTENCE_E_W:
                 // East / West longitude
-                if(sscanf((char*)field_str, "%1s", p_rmc->m_e_w) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_rmc->m_e_w) == 0){
                     memset(p_rmc->m_e_w,0,sizeof(p_rmc->m_e_w));
                 }
                 break;
             case RMC_SENTENCE_SPEED:
                 // Speed over ground
-                if(sscanf((char*)field_str, "%f", &p_rmc->m_speed) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_rmc->m_speed) == 0){
                     p_rmc->m_speed = 0;
                 }
                 break;
             case RMC_SENTENCE_DIRECTION:
                 // Cource over ground
-                if(sscanf((char*)field_str, "%f", &p_rmc->m_direction) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_rmc->m_direction) == 0){
                     p_rmc->m_direction = 0;
                 }
                 break;
             case RMC_SENTENCE_DATE_UTC:
                 // UTC date
-                if(sscanf((char*)field_str, "%6s", p_rmc->m_date_utc) == NULL){
+                if(sscanf((char*)field_str, "%6s", p_rmc->m_date_utc) == 0){
                     memset(p_rmc->m_date_utc,0,sizeof(p_rmc->m_date_utc));
                 }
                 break;
             case RMC_SENTENCE_MAGNETIC_DECLINATION:
                 // Magnetic variation
-                if(sscanf((char*)field_str, "%d", &p_rmc->m_magnetic_declination) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_rmc->m_magnetic_declination) == 0){
                     p_rmc->m_magnetic_declination = 0;
                 }
                 break;
             case RMC_SENTENCE_MAGNETIC_DECLINATION_DIRECTION:
                 // magnetic variation direction
-                if(sscanf((char*)field_str, "%d", &p_rmc->m_magnetic_declination_direction) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_rmc->m_magnetic_declination_direction) == 0){
                     p_rmc->m_magnetic_declination_direction = 0;
                 }
                 break;
             case RMC_SENTENCE_POS_MODE:
                 // positioning mode
-                if(sscanf((char*)field_str, "%1s", p_rmc->m_pos_mode) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_rmc->m_pos_mode) == 0){
                     memset(p_rmc->m_pos_mode,0,sizeof(p_rmc->m_pos_mode));
                 }
                 break;
             case RMC_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_rmc->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_rmc->m_cs) == 0){
                     p_rmc->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_rmc->m_cs){
@@ -1360,68 +1360,68 @@ uint32_t parse_nmea_sentence_vtg(uint8_t *p_nmea_str, CXM150xNMEAVTGInfo *p_vtg)
             switch (e_sentence_num) {
             case VTG_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_vtg->m_talker_id, p_vtg->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_vtg->m_talker_id, p_vtg->m_sentence_id) == 0){
                     memset(p_vtg->m_talker_id,0,sizeof(p_vtg->m_talker_id));
                     memset(p_vtg->m_sentence_id,0,sizeof(p_vtg->m_sentence_id));
                 }
                 break;
             case VTG_SENTENCE_DEGREES_TRUE:
                 // Course (Measured heading)
-                if(sscanf((char*)field_str, "%f", &p_vtg->m_degrees_true) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_vtg->m_degrees_true) == 0){
                     p_vtg->m_degrees_true = 0;
                 }
                 break;
             case VTG_SENTENCE_T:
                 // Unit of Cource (Measured heading ) : T
-                if(sscanf((char*)field_str, "%1s", p_vtg->m_t) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_vtg->m_t) == 0){
                     memset(p_vtg->m_t,0,sizeof(p_vtg->m_t));
                 }
                 break;
             case VTG_SENTENCE_DEGREES_MAGNETIC:
                 // Cource (Measured heading)
-                if(sscanf((char*)field_str, "%f", &p_vtg->m_degrees_magnetic) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_vtg->m_degrees_magnetic) == 0){
                     p_vtg->m_degrees_magnetic = 0;
                 }
                 break;
             case VTG_SENTENCE_M:
                 // Unit of Cource (Measured heading) : M
-                if(sscanf((char*)field_str, "%1s", p_vtg->m_m) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_vtg->m_m) == 0){
                     memset(p_vtg->m_m,0,sizeof(p_vtg->m_m));
                 }
                 break;
             case VTG_SENTENCE_SPEED_KNOT:
                 // speed [knot]
-                if(sscanf((char*)field_str, "%f", &p_vtg->m_speed_knot) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_vtg->m_speed_knot) == 0){
                     p_vtg->m_speed_knot = 0;
                 }
                 break;
             case VTG_SENTENCE_KNOT:
                 // N: unit of knot
-                if(sscanf((char*)field_str, "%1s", p_vtg->m_knot) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_vtg->m_knot) == 0){
                     memset(p_vtg->m_knot,0,sizeof(p_vtg->m_knot));
                 }
                 break;
             case VTG_SENTENCE_SPEED_KPH:
                 // speed [km / h]
-                if(sscanf((char*)field_str, "%f", &p_vtg->m_speed_kph) == NULL){
+                if(sscanf((char*)field_str, "%f", &p_vtg->m_speed_kph) == 0){
                     p_vtg->m_speed_kph = 0;
                 }
                 break;
             case VTG_SENTENCE_KPH:
                 // speed unit: K
-                if(sscanf((char*)field_str, "%1s", p_vtg->m_kph) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_vtg->m_kph) == 0){
                     memset(p_vtg->m_kph,0,sizeof(p_vtg->m_kph));
                 }
                 break;
             case VTG_SENTENCE_MODE:
                 // Mode
-                if(sscanf((char*)field_str, "%1s", p_vtg->m_mode) == NULL){
+                if(sscanf((char*)field_str, "%1s", p_vtg->m_mode) == 0){
                     memset(p_vtg->m_mode,0,sizeof(p_vtg->m_mode));
                 }
                 break;
             case VTG_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_vtg->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_vtg->m_cs) == 0){
                     p_vtg->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_vtg->m_cs){
@@ -1498,50 +1498,50 @@ uint32_t parse_nmea_sentence_zda(uint8_t *p_nmea_str, CXM150xNMEAZDAInfo *p_zda)
             switch (e_sentence_num) {
             case ZDA_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_zda->m_talker_id, p_zda->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_zda->m_talker_id, p_zda->m_sentence_id) == 0){
                     memset(p_zda->m_talker_id,0,sizeof(p_zda->m_talker_id));
                     memset(p_zda->m_sentence_id,0,sizeof(p_zda->m_sentence_id));
                 }
                 break;
             case ZDA_SENTENCE_UTC:
                 // UTC
-                if(sscanf((char*)field_str, "%9s", p_zda->m_utc) == NULL){
+                if(sscanf((char*)field_str, "%9s", p_zda->m_utc) == 0){
                     memset(p_zda->m_utc,0,sizeof(p_zda->m_utc));
                 }
                 break;
             case ZDA_SENTENCE_DAY:
                 // Day
-                if(sscanf((char*)field_str, "%d", &p_zda->m_day) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_zda->m_day) == 0){
                     p_zda->m_day = 0;
                 }
                 break;
             case ZDA_SENTENCE_MONTH:
                 // Month
-                if(sscanf((char*)field_str, "%d", &p_zda->m_month) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_zda->m_month) == 0){
                     p_zda->m_month = 0;
                 }
                 break;
             case ZDA_SENTENCE_YEAR:
                 // Year
-                if(sscanf((char*)field_str, "%d", &p_zda->m_year) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_zda->m_year) == 0){
                     p_zda->m_year = 0;
                 }
                 break;
             case ZDA_SENTENCE_LOCAL_ZONE_HOURS:
                 // time (local time zone offset from GMT)
-                if(sscanf((char*)field_str, "%d", &p_zda->m_local_zone_hours) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_zda->m_local_zone_hours) == 0){
                     p_zda->m_local_zone_hours = 0;
                 }
                 break;
             case ZDA_SENTENCE_LOCAL_ZONE_MINUTES:
                 // minute (local time zone offset from GMT)
-                if(sscanf((char*)field_str, "%d", &p_zda->m_local_zone_minutes) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_zda->m_local_zone_minutes) == 0){
                     p_zda->m_local_zone_minutes = 0;
                 }
                 break;
             case ZDA_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_zda->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_zda->m_cs) == 0){
                     p_zda->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_zda->m_cs){
@@ -1618,98 +1618,98 @@ uint32_t parse_nmea_sentence_psges(uint8_t *p_nmea_str, CXM150xNMEAPSGESInfo *p_
             switch (e_sentence_num) {
             case PSGES_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_psges->m_talker_id, p_psges->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_psges->m_talker_id, p_psges->m_sentence_id) == 0){
                     memset(p_psges->m_talker_id,0,sizeof(p_psges->m_talker_id));
                     memset(p_psges->m_sentence_id,0,sizeof(p_psges->m_sentence_id));
                 }
                 break;
             case PSGES_SENTENCE_MSG_TOTAL:
                 // number of all PSGES messages
-                if(sscanf((char*)field_str, "%d", &p_psges->m_msg_total) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_msg_total) == 0){
                     p_psges->m_msg_total = 0;
                 }
                 break;
             case PSGES_SENTENCE_MSG_NUM:
                 // message number
-                if(sscanf((char*)field_str, "%d", &p_psges->m_msg_num) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_msg_num) == 0){
                     p_psges->m_msg_num = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_1:
                 // satellite number 1 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_1) == 0){
                     p_psges->m_prn_num_1 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_2:
                 // satellite number 2 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_2) == 0){
                     p_psges->m_prn_num_2 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_3:
                 // satellite number 3 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_3) == 0){
                     p_psges->m_prn_num_3 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_4:
                 // satellite number 4 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_4) == 0){
                     p_psges->m_prn_num_4 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_5:
                 // satellite number 5 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_5) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_5) == 0){
                     p_psges->m_prn_num_5 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_6:
                 // satellite number 6 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_6) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_6) == 0){
                     p_psges->m_prn_num_6 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_7:
                 // satellite number 7 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_7) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_7) == 0){
                     p_psges->m_prn_num_7 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_8:
                 // satellite number 8 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_8) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_8) == 0){
                     p_psges->m_prn_num_8 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_9:
                 // satellite number 9 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_9) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_9) == 0){
                     p_psges->m_prn_num_9 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_10:
                 // satellite number 10 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_10) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_10) == 0){
                     p_psges->m_prn_num_10 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_11:
                 // satellite number 11 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_11) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_11) == 0){
                     p_psges->m_prn_num_11 = 0;
                 }
                 break;
             case PSGES_SENTENCE_PRN_NUM_12:
                 // satellite number 12 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psges->m_prn_num_12) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psges->m_prn_num_12) == 0){
                     p_psges->m_prn_num_12 = 0;
                 }
                 break;
             case PSGES_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_psges->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_psges->m_cs) == 0){
                     p_psges->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_psges->m_cs){
@@ -1786,98 +1786,98 @@ uint32_t parse_nmea_sentence_psles(uint8_t *p_nmea_str, CXM150xNMEAPSLESInfo *p_
             switch (e_sentence_num) {
             case PSLES_SENTENCE_SENTENCE_ID:
                 // talker ID, sentence ID
-                if(sscanf((char*)field_str, "| $%2s%3s", p_psles->m_talker_id, p_psles->m_sentence_id) == NULL){
+                if(sscanf((char*)field_str, "| $%2s%3s", p_psles->m_talker_id, p_psles->m_sentence_id) == 0){
                     memset(p_psles->m_talker_id,0,sizeof(p_psles->m_talker_id));
                     memset(p_psles->m_sentence_id,0,sizeof(p_psles->m_sentence_id));
                 }
                 break;
             case PSLES_SENTENCE_MSG_TOTAL:
                 // number of all PSLES messages
-                if(sscanf((char*)field_str, "%d", &p_psles->m_msg_total) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_msg_total) == 0){
                     p_psles->m_msg_total = 0;
                 }
                 break;
             case PSLES_SENTENCE_MSG_NUM:
                 // message number
-                if(sscanf((char*)field_str, "%d", &p_psles->m_msg_num) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_msg_num) == 0){
                     p_psles->m_msg_num = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_1:
                 // satellite number 1 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_1) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_1) == 0){
                     p_psles->m_prn_num_1 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_2:
                 // satellite number 2 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_2) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_2) == 0){
                     p_psles->m_prn_num_2 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_3:
                 // satellite number 3 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_3) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_3) == 0){
                     p_psles->m_prn_num_3 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_4:
                 // satellite number 4 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_4) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_4) == 0){
                     p_psles->m_prn_num_4 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_5:
                 // satellite number 5 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_5) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_5) == 0){
                     p_psles->m_prn_num_5 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_6:
                 // satellite number 6 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_6) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_6) == 0){
                     p_psles->m_prn_num_6 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_7:
                 // satellite number 7 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_7) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_7) == 0){
                     p_psles->m_prn_num_7 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_8:
                 // satellite number 8 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_8) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_8) == 0){
                     p_psles->m_prn_num_8 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_9:
                 // satellite number 9 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_9) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_9) == 0){
                     p_psles->m_prn_num_9 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_10:
                 // satellite number 10 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_10) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_10) == 0){
                     p_psles->m_prn_num_10 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_11:
                 // satellite number 11 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_11) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_11) == 0){
                     p_psles->m_prn_num_11 = 0;
                 }
                 break;
             case PSLES_SENTENCE_PRN_NUM_12:
                 // satellite number 12 of the satellite with ephemeris
-                if(sscanf((char*)field_str, "%d", &p_psles->m_prn_num_12) == NULL){
+                if(sscanf((char*)field_str, "%ld", &p_psles->m_prn_num_12) == 0){
                     p_psles->m_prn_num_12 = 0;
                 }
                 break;
             case PSLES_SENTENCE_CS:
                 // Checksum
-                if(sscanf((char*)field_str, "%x", &p_psles->m_cs) == NULL){
+                if(sscanf((char*)field_str, "%lx", &p_psles->m_cs) == 0){
                     p_psles->m_cs = 0;
                 } else{
                     if(calc_nmea_checksum(p_nmea_str) == p_psles->m_cs){
@@ -2027,7 +2027,7 @@ void ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len){
         buf[0] = ascii[i];
         buf[1] = ascii[i+1];
         uint32_t cnv = 0;
-        if(sscanf((char*)buf,"%x",&cnv) != NULL){
+        if(sscanf((char*)buf,"%lx",&cnv) != 0){
             bin[i/2] = (uint8_t)cnv;
         } else {
             bin[i/2] = 0;
@@ -2056,7 +2056,7 @@ uint32_t get_last_uint32(uint8_t *msg){
         return 0xFFFFFFFF;
     }
     
-    if(sscanf((char*)buf,"%d",&ret) == 0){
+    if(sscanf((char*)buf,"%ld",&ret) == 0){
         return 0xFFFFFFFF;
     }
     

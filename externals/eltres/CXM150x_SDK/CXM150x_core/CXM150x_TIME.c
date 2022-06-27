@@ -118,7 +118,7 @@ void res_check_get_next_LPWA_tx_CXM150x_power_on_limit_time(uint8_t *response,vo
         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
             if(get_last_word(response,buf) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)buf, "%d", &prem_time)){
+                if(sscanf((char*)buf, "%ld", &prem_time)){
                     res->m_num = prem_time;
                 } else {
                     res->m_num = CXM150x_RESPONSE_ERROR;
@@ -197,7 +197,7 @@ void res_check_get_next_LPWA_tx_renew_limit_time(uint8_t *response,void *res_buf
         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
             if(get_last_word(response,buf) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)buf, "%d", &drem_time)){
+                if(sscanf((char*)buf, "%ld", &drem_time)){
                     res->m_num = drem_time;
                 } else {
                     res->m_num = CXM150x_RESPONSE_ERROR;
@@ -276,7 +276,7 @@ void res_check_get_next_LPWA_tx_term(uint8_t *response,void *res_buf){
         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
             if(get_last_word(response,buf) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)buf, "%d", &trem_time)){
+                if(sscanf((char*)buf, "%ld", &trem_time)){
                     res->m_num = trem_time;
                 } else {
                     res->m_num = CXM150x_RESPONSE_ERROR;

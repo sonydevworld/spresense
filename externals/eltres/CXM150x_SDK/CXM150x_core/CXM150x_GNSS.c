@@ -369,7 +369,7 @@ void res_check_get_GNSS_state_event_info(uint8_t *response,void *res_buf){
         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
             if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)last_word,"0x%02x",&res->m_num) == NULL){
+                if(sscanf((char*)last_word,"0x%02lx",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_NG;
                 }
             } else {
@@ -670,7 +670,7 @@ CXM150xGNSSState conv_gnss_stt_message_to_code(uint8_t *msg){
     uint8_t buf[RECEIVE_BUF_SIZE] = "";
     // Get the last word out of the message
     if(get_last_word(msg,buf) == CXM150x_RESPONSE_OK){
-        if(sscanf((char*)buf, "%x", &state) == NULL){
+        if(sscanf((char*)buf, "%lx", &state) == 0){
             return (CXM150xGNSSState)0x00;
         }
     }
@@ -731,7 +731,7 @@ return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *re
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
 
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s 0x%08X\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_HOST_FW_SENT,CXM150x_COMMAND_SET_EVT,param);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s 0x%08lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_HOST_FW_SENT,CXM150x_COMMAND_SET_EVT,param);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_check_set_NMEA_event,res);
@@ -772,7 +772,7 @@ void res_check_get_NMEA_event(uint8_t *response,void *res_buf){
             // Get the last word out of the message
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
             if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)last_word,"0x%08X",&res->m_num) == NULL){
+                if(sscanf((char*)last_word,"0x%08lX",&res->m_num) == 0){
                     res->m_num = (uint32_t)CXM150x_RESPONSE_ERROR;
                 }
             } else {

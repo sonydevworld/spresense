@@ -381,7 +381,7 @@ void check_command_response(void){
         uint32_t current_tick = wrapper_CXM150x_get_tick();
         if(current_tick - g_command_send_tick_count > g_max_time_out_tick_count){
             // timed out
-            printf("timeout command.(%dmsec)\r\n",g_max_time_out_tick_count);
+            printf("timeout command.(%ldmsec)\r\n",g_max_time_out_tick_count);
             g_command_response_info.m_result_code = COMMAND_RESULT_TIME_OUT;
             g_command_response_wait_flag = UART_DRIVER_FLAG_OFF;
             if(g_rcv_power_on_message_wait == UART_DRIVER_FLAG_ON){
@@ -482,8 +482,8 @@ void check_event(void){
         //error
         if(proc_event_msg[0] != '|' || proc_event_msg[1] != ' '){
             // Mark the event message as processed
-           uint32_t len = strlen((char*)proc_event_msg);
-           printf("error evt[%d]:%s\r\n",g_rcv_event_buf_proc_index,(char*)proc_event_msg);
+           //uint32_t len = strlen((char*)proc_event_msg);
+           printf("error evt[%ld]:%s\r\n",g_rcv_event_buf_proc_index,(char*)proc_event_msg);
            memset(&g_event_buf[g_rcv_event_buf_proc_index],'\0',RECEIVE_BUF_SIZE);
             
            return;

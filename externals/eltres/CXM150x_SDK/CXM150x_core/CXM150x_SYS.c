@@ -255,7 +255,7 @@ return_code set_CXM150x_mode(uint32_t mode,CmdResSetCXM150xMode *res,CXM150x_CAL
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t mode_name[3] = "";
     
-    snprintf((char*)mode_name,sizeof(mode_name),"%02d",mode);
+    snprintf((char*)mode_name,sizeof(mode_name),"%02ld",mode);
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_MODE,CXM150x_COMMAND_SET,mode_name);
@@ -296,7 +296,7 @@ void res_check_get_CXM150x_mode(uint8_t *response,void *res_buf){
         uint8_t mode_str[CXM150x_MAX_COMMAND_LEN] = "";
          if(chk_response_error(response) == CXM150x_RESPONSE_OK){
             if(get_last_word(response,mode_str) == CXM150x_RESPONSE_OK){
-                if(sscanf((char*)mode_str,"%d",&res->m_num) == NULL){
+                if(sscanf((char*)mode_str,"%ld",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_ERROR;
                 }
             } else {
@@ -641,7 +641,7 @@ void res_check_get_CXM150x_firmware_version(uint8_t *response,void *res_buf){
         if(space_pos != NULL && (space_pos - find_start_pos) ==  SYS_GET_VER_FORMAT_COMMITID_LEN){
             uint8_t commit_id_buf[SYS_GET_VER_FORMAT_COMMITID_LEN+1] = "";
             memcpy(commit_id_buf,find_start_pos,SYS_GET_VER_FORMAT_COMMITID_LEN);
-            if(sscanf((char*)commit_id_buf,"%X",&res->m_commit_id) == NULL){
+            if(sscanf((char*)commit_id_buf,"%lX",&res->m_commit_id) == 0){
                 res->m_commit_id = 0;
             }
         } else {
@@ -1081,7 +1081,7 @@ void res_check_get_CXM150x_EEPROM_data(uint8_t *response,void *res_buf){
             uint8_t val_str[CXM150x_MAX_COMMAND_LEN] = "";
             if(get_last_word(response,val_str)){
                 uint32_t val = 0;
-                if(sscanf((char*)val_str,"0x%08X",&val) == NULL){
+                if(sscanf((char*)val_str,"0x%08lX",&val) == 0){
                     res->m_num = (uint32_t)CXM150x_RESPONSE_ERROR;
                 } else {
                     res->m_num = val;
@@ -1117,7 +1117,7 @@ return_code get_CXM150x_EEPROM_data(uint32_t param, CmdResGetCXM150xEEPROMData *
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     uint8_t offset_address_str[7] = "";
-    snprintf((char*)offset_address_str,sizeof(offset_address_str),"0x%04X",param);
+    snprintf((char*)offset_address_str,sizeof(offset_address_str),"0x%04lX",param);
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_EEPROM,CXM150x_COMMAND_GET,offset_address_str);
@@ -1191,7 +1191,7 @@ return_code set_CXM150x_EEPROM_data(CXM150xEEPROMSetData*  param, CmdResSetCXM15
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     uint8_t opp_str[CXM150x_MAX_COMMAND_LEN] = "";
-    snprintf((char*)opp_str,sizeof(opp_str),"0x%04X,0x%08X",param->m_offset_address,param->m_val);
+    snprintf((char*)opp_str,sizeof(opp_str),"0x%04lX,0x%08lX",param->m_offset_address,param->m_val);
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_EEPROM,CXM150x_COMMAND_SET,opp_str);
@@ -1463,7 +1463,7 @@ void res_get_CXM150x_EEPROM_data_sequential(uint8_t *response,void *res_buf){
             uint8_t val_str[CXM150x_MAX_COMMAND_LEN] = "";
             if(get_last_word(response,val_str)){
                 uint32_t val = 0;
-                if(sscanf((char*)val_str,"0x%08X",&val) == NULL){
+                if(sscanf((char*)val_str,"0x%08lX",&val) == 0){
                     res->m_num = (uint32_t)CXM150x_RESPONSE_ERROR;
                 } else {
                     res->m_num = val;
@@ -1571,7 +1571,7 @@ return_code set_CXM150x_sys_to_deep_sleep (uint32_t param, CmdResSetCXM150xSysTo
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %d\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_TO_DSLP,CXM150x_COMMAND_SET,param);
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_TO_DSLP,CXM150x_COMMAND_SET,param);
     
     if(func != NULL){
         return send_and_register_callback(command,func,res_set_CXM150x_sys_to_deep_sleep,res);
