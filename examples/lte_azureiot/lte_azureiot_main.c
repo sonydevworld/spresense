@@ -503,12 +503,12 @@ static int filelength(const char *file_name)
       return ERROR;
     }
 
-  if ((st.st_mode & S_IFMT) != S_IFREG)
+  if (!S_ISREG(st.st_mode))
     {
       return ERROR;
     }
 
-  return st.st_size;
+  return (int)st.st_size;
 }
 
 /* ------------------------------------------------------------------------ */
