@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 #include "azureiot_if.h"
 #include "lte_connection.h"
 #include "mbedtls_if.h"
@@ -495,25 +496,19 @@ static int recv_message(struct azureiot_info *info,
 /* ------------------------------------------------------------------------ */
 static int filelength(const char *file_name)
 {
-  int    size = ERROR;
-  FILE  *fp   = fopen(file_name, "rb");
+  struct stat st;
 
-  if (fp)
+  if (stat(file_name, &st))
     {
-      if (fseek(fp, 0L, SEEK_END) == 0)
-        {
-          fpos_t pos;
-
-          if (fgetpos(fp, &pos) == 0)
-            {
-              size = (int)pos;
-            }
-        }
-
-      fclose(fp);
+      return ERROR;
     }
 
-  return (int)size;
+  if ((st.st_mode & S_IFMT) != S_IFREG)
+    {
+      return ERROR;
+    }
+
+  return st.st_size;
 }
 
 /* ------------------------------------------------------------------------ */
