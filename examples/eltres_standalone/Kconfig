@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ELTRES_STANDALONE
+	tristate "ELTRES standalone sample application"
+	depends on EXTERNALS_ELTRES
+	default n
+	---help---
+		Enable the ELTRES standalone sample application example
+
+if EXAMPLES_ELTRES_STANDALONE
+
+config EXAMPLES_ELTRES_STANDALONE_PROGNAME
+	string "Program name"
+	default "eltres_standalone"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ELTRES_STANDALONE_PRIORITY
+	int "ELTRES standalone sample application task priority"
+	default 100
+
+config EXAMPLES_ELTRES_STANDALONE_STACKSIZE
+	int "ELTRES standalone sample application stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif
