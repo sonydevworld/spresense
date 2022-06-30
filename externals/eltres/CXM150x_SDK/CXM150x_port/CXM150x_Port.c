@@ -4,7 +4,7 @@
 * @brief    HAL wrapper functions
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -34,18 +34,36 @@
 */
 // =========================================================================
 
+#include <nuttx/config.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef CONFIG_ARCH_BOARD_SPRESENSE
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <nuttx/board.h>
+#include <arch/board/board.h>
+#include <arch/chip/pin.h>
+
+#include <pthread.h>
+#include <arch/chip/uart0.h>
+#endif
+
 #include "CXM150x_Port.h"
 #include "CXM150x_LIB.h"
-#include "stm32l0xx_hal.h"
-#include "usart.h"
 #include "CXM150x_GNSS.h"
 #include "CXM150x_SYS.h"
 #include "CXM150x_TIME.h"
 #include "CXM150x_TX.h"
 
-#define FOR_STM32_HAL_DRIVER
+/* Board-specific power control */
+
+#define POWER_ELTRES_DDC2V  PMIC_GPO(2)
+#define POWER_ELTRES_ENABLE PMIC_GPO(3)
+#define POWER_ELTRES_SDCARD PMIC_GPO(5)
+
+#define PIN_WAKEUP          PIN_HIF_GPIO0
 
 uint8_t g_uart_error_flg = UART_DRIVER_FLAG_OFF;
 
@@ -53,6 +71,12 @@ static uint32_t g_rcv_cnt = 0;
 static uint8_t *g_rcv_buf = NULL;
 static uint8_t g_rcv_char = '\0';
 
+#ifdef CONFIG_ARCH_BOARD_SPRESENSE
+int g_uart0_fd;
+int g_fw_updating;
+static pthread_t g_uart0_recv_thid;
+static void uart0_recv_main(void);
+#endif
 
 // ===========================================================================
 //! Description to switch output destination of printf to PC
@@ -100,6 +124,8 @@ int32_t wrapper_CXM150x_set_uart_rx_buf(uint8_t *rcv_char_buf){
     g_rcv_buf = rcv_char_buf;
 #ifdef FOR_STM32_HAL_DRIVER
     return HAL_UART_Receive_IT(&huart1, &g_rcv_char, 1);
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+    return OK;
 #endif
 }
 
@@ -117,15 +143,37 @@ int32_t wrapper_CXM150x_set_uart_rx_buf(uint8_t *rcv_char_buf){
 */
 // ===========================================================================
 void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
+    pthread_addr_t result;
     if(on_off == CXM150x_POWER_ON){
         // CXM150x power ON
 #ifdef FOR_STM32_HAL_DRIVER
         HAL_GPIO_WritePin(D9_GPO_RST_GPIO_Port, D9_GPO_RST_Pin, GPIO_PIN_SET);
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+        board_power_control_tristate(POWER_ELTRES_ENABLE, -1); // Hi-Z
+        board_power_control(POWER_ELTRES_DDC2V, true);
+
+        /* Create UART reception thread */
+        struct sched_param param;
+        pthread_attr_t attr;
+
+        pthread_attr_init(&attr);
+        param.sched_priority = 110; // larger than application task priority
+        pthread_attr_setschedparam(&attr, &param);
+        pthread_create(&g_uart0_recv_thid,
+                       &attr,
+                       (pthread_startroutine_t)uart0_recv_main,
+                       NULL);
 #endif
     } else {
         // Power OFF operation
 #ifdef FOR_STM32_HAL_DRIVER
         HAL_GPIO_WritePin(D9_GPO_RST_GPIO_Port, D9_GPO_RST_Pin, GPIO_PIN_RESET);
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+        board_power_control(POWER_ELTRES_ENABLE, false);
+        board_power_control(POWER_ELTRES_DDC2V, false);
+
+        // Wait for reception thread exit
+        pthread_join(g_uart0_recv_thid, &result);
 #endif
     }
 }
@@ -143,16 +191,19 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
  * @return none
 */
 // ===========================================================================
+
+// TBD: This is an obsolete function to keep compatibility.
+// We should use wrapper_CXM150x_set_wakeup_pin instead of it.
 void wrapper_CXM150x_set_Wakeup_pin(CXM150x_power_state on_off){
+  wrapper_CXM150x_set_wakeup_pin(on_off);
+}
+
+void wrapper_CXM150x_set_wakeup_pin(CXM150x_wakeup_state high_low){
     
-    if(on_off == CXM150x_POWER_ON){
-#ifdef FOR_STM32_HAL_DRIVER
-        HAL_GPIO_WritePin(D12_WAKEUP_GPIO_Port, D12_WAKEUP_Pin, GPIO_PIN_SET);
-#endif
+    if(high_low == CXM150x_WAKEUP_H){
+        board_gpio_write(PIN_WAKEUP, true);
     } else {
-#ifdef FOR_STM32_HAL_DRIVER
-        HAL_GPIO_WritePin(D12_WAKEUP_GPIO_Port, D12_WAKEUP_Pin, GPIO_PIN_RESET);
-#endif
+        board_gpio_write(PIN_WAKEUP, false);
     }
 }
 
@@ -187,6 +238,8 @@ void wrapper_CXM150x_set_uart_Hiz(void){
 
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_3,GPIO_PIN_SET);
     HAL_GPIO_WritePin(GPIOB,GPIO_PIN_4,GPIO_PIN_SET);
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+    // TODO: unnecessary for SPRESENSE??
 #endif
 }
 
@@ -212,6 +265,13 @@ uint32_t wrapper_CXM150x_get_power(void){
     } else {
         return CXM150x_POWER_OFF;
     }
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+    if ((board_power_monitor_tristate(POWER_ELTRES_ENABLE) == -1) &&
+        (board_power_monitor(POWER_ELTRES_DDC2V) == true)){
+        return CXM150x_POWER_ON;
+    } else {
+        return CXM150x_POWER_OFF;
+    }
 #endif
 }
 
@@ -233,6 +293,7 @@ uint32_t wrapper_CXM150x_get_power(void){
 */
 // ===========================================================================
 void wrapper_CXM150x_uart_rx_callback(void){
+    int ret;
     // Receive UART communication from CXM150x
     uint32_t st_tick = wrapper_CXM150x_get_tick();
     while(1){
@@ -257,7 +318,7 @@ void wrapper_CXM150x_uart_rx_callback(void){
                 // Make settings to receive the next character
 #ifdef FOR_STM32_HAL_DRIVER
                 int32_t set_result = HAL_UART_Receive(&huart1,&g_rcv_char,1,MAX_TIME_OUT_TICK_COUNT);
-#endif
+
                 // Setting error check
                 if(set_result != 0){
                     if(g_rcv_cnt > 0){
@@ -265,6 +326,29 @@ void wrapper_CXM150x_uart_rx_callback(void){
                     }
                     g_uart_error_flg = UART_DRIVER_FLAG_ON;
                 }
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+                while (1){
+                    ret = read(g_uart0_fd, &g_rcv_char, 1);
+                    if (ret > 0) break;
+
+                    if (errno != 0){
+                        // Clear errno
+                        set_errno(0);
+
+                        // Turn on error flag and finish reading one line forcibly.
+                        g_uart_error_flg = UART_DRIVER_FLAG_ON;
+                        g_rcv_char = '\n';
+                        break;
+                    }
+                }
+
+                if (ret < 0)
+                {
+                  // Turn on error flag and finish reading one line forcibly.
+                  g_uart_error_flg = UART_DRIVER_FLAG_ON;
+                  g_rcv_char = '\n';
+                }
+#endif
             }
         } else {
             // Number of received bytes exceeded
@@ -287,6 +371,51 @@ void wrapper_CXM150x_uart_rx_callback(void){
         }
     }
 }
+
+#ifdef CONFIG_ARCH_BOARD_SPRESENSE
+static void uart0_recv_main(void)
+{
+  int ret;
+
+  while (wrapper_CXM150x_get_power() == CXM150x_POWER_ON)
+    {
+      g_fw_updating = false;
+      cxd56_uart0initialize("/dev/uart0");
+      g_uart0_fd = open("/dev/uart0", O_RDWR | O_NONBLOCK);
+      while ((g_uart_error_flg == UART_DRIVER_FLAG_OFF) &&
+             (wrapper_CXM150x_get_power() == CXM150x_POWER_ON))
+        {
+          if (g_fw_updating)
+            {
+              // In FW update, do not read in this thread.
+              usleep(1);
+              continue;
+            }
+
+          ret = read(g_uart0_fd, &g_rcv_char, 1);
+          if (ret > 0)
+            {
+              wrapper_CXM150x_uart_rx_callback();
+            }
+          else
+            {
+              if (errno != 0)
+                {
+                  // Clear errno
+                  set_errno(0);
+
+                  // Break to recover UART0
+                  break;
+                }
+            }
+          usleep(1);
+        }
+      usleep(1);
+      close(g_uart0_fd);
+      cxd56_uart0uninitialize("/dev/uart0");
+    }
+}
+#endif
 
 // ===========================================================================
 //! UART transmission
@@ -345,6 +474,29 @@ return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uint32_t wa
     }
 
     return RETURN_OK;	
+#elif defined CONFIG_ARCH_BOARD_SPRESENSE
+    size_t  remain_size = len;
+    uint8_t *send_addr  = data;
+    ssize_t write_size;
+
+    wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_ON);
+
+    while (remain_size > 0){
+        write_size  =  write(g_uart0_fd, send_addr, remain_size);
+        if (write_size < 0) {
+            printf("Error: UART0 write %d\r\n", errno);
+            wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
+            return RETURN_NG;
+        }
+        send_addr   += write_size;
+        remain_size -= write_size;
+    }
+
+    // Do not turn off the Wakeup pin when issuing a reset command
+    if(strstr((char*)data,"SYS RESET SET") == NULL){
+        wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
+    }
+    return RETURN_OK;
 #endif
 }
 
@@ -365,6 +517,10 @@ return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uint32_t wa
 uint32_t wrapper_CXM150x_get_tick(void){
 #ifdef FOR_STM32_HAL_DRIVER
     return HAL_GetTick();
+#else
+    struct   timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (ts.tv_sec * 1000) + (ts.tv_nsec / (1000 * 1000));
 #endif
 }
 
@@ -384,6 +540,51 @@ uint32_t wrapper_CXM150x_get_tick(void){
 void wrapper_CXM150x_delay(uint32_t tick){
 #ifdef FOR_STM32_HAL_DRIVER
     HAL_Delay(tick);
+#else
+    usleep(tick * 1000);
+#endif
+}
+
+
+// ===========================================================================
+//! Enter the microcomputer to the stop mode.
+/*! Call HAL functions
+ *
+ * @param [in] none
+ * @param [out] none
+ * @par Global variable
+ *        [in] none
+ *        [out] none
+ *
+ * @return none
+*/
+// ===========================================================================
+void wrapper_enter_stop_mode(void){
+#ifdef FOR_STM32_HAL_DRIVER
+    HAL_SuspendTick();
+    HAL_PWR_EnableSleepOnExit();
+    HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFI);
+#endif
+}
+
+// ===========================================================================
+//! Enter the microcomputer to the normal mode.
+/*! Call HAL functions
+ *
+ * @param [in] none
+ * @param [out] none
+ * @par Global variable
+ *        [in] none
+ *        [out] none
+ *
+ * @return none
+*/
+// ===========================================================================
+void wrapper_resume_stop_mode(void){
+#ifdef FOR_STM32_HAL_DRIVER
+    SystemClock_Config();
+    HAL_ResumeTick();
+    HAL_PWR_DisableSleepOnExit();
 #endif
 }
 
@@ -419,4 +620,21 @@ void wrapper_CXM150x_int_out1(void){
 // ===========================================================================
 void wrapper_CXM150x_int_out2(void){
     on_int2();
+}
+
+// ===========================================================================
+//! Reset the microcomputer.
+/*! Call HAL functions
+ *
+ * @param [in] none
+ * @param [out] none
+ * @par Global variable
+ *        [in] none
+ *        [out] none
+ *
+ * @return none
+*/
+// ===========================================================================
+void wrapper_system_reset(void){
+    //NVIC_SystemReset();
 }
