@@ -4,7 +4,7 @@
 * @brief    header file of main_standalone_mode_sample_app.c
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -39,13 +39,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
 #include <string.h>
-#include "stm32l0xx_hal.h"
-#include "CXM150x_typedef.h"
+#include "CXM150x_APITypeDef.h"
 #include "CXM150x_Port.h"
 /* Includes ------------------------------------------------------------------*/
 int main_standalone_mode_sample_app(void);
 void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt);
-void int2_callback(void);
 
 /* Private define ------------------------------------------------------------*/
 
