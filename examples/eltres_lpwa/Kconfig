@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ELTRES_LPWA
+	tristate "ELTRES LPWA sample application"
+	depends on EXTERNALS_ELTRES
+	default n
+	---help---
+		Enable the ELTRES LPWA sample application
+
+if EXAMPLES_ELTRES_LPWA
+
+config EXAMPLES_ELTRES_LPWA_PROGNAME
+	string "Program name"
+	default "eltres_lpwa"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ELTRES_LPWA_PRIORITY
+	int "ELTRES LPWA sample application task priority"
+	default 100
+
+config EXAMPLES_ELTRES_LPWA_STACKSIZE
+	int "ELTRES LPWA sample application stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif
