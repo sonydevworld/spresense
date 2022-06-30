@@ -4,7 +4,7 @@
 * @brief    header file of main_LPWA_sample_app.c
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -36,13 +36,9 @@
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __MAIN_LPWA_SAMPLE_APP_H
 #define __MAIN_LPWA_SAMPLE_APP_H
-  /* Includes ------------------------------------------------------------------*/
-#include "stm32l0xx_hal.h"
 
 /* Includes ------------------------------------------------------------------*/
 int main_LPWA_sample_app(void);
-void push_btn_CXM150x(void);
-void rtc_callback(void);
 
 /* Private define ------------------------------------------------------------*/
 

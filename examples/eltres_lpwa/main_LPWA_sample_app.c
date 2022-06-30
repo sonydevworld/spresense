@@ -4,7 +4,7 @@
 * @brief    LPWA sample application
 * @date     2021/12/24
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -36,16 +36,21 @@
 
 /* Includes ------------------------------------------------------------------*/
 /*Host Microcomputer dependence include BEGIN */
-#include "main.h"
-#include "stm32l0xx_hal.h"
-#include "rtc.h"
-#include "usart.h"
-#include "gpio.h"
+
+#include <nuttx/config.h>
+#include <nuttx/timers/rtc.h>
+#include <arch/board/board.h>
+#include <arch/chip/pin.h>
+
 /*Host Microcomputer dependence include END   */
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <time.h>
+#include <sys/ioctl.h>
+#include <assert.h>
 #include "CXM150x_APITypeDef.h"
 #include "CXM150x_GNSS.h"
 #include "CXM150x_SYS.h"
@@ -110,76 +115,92 @@ time_t g_last_gnss_backup_time = 0;
 #define RTC_STRUCT_TM_BASE_TIME_DIFF_MONTH           (1)    // RTC starts in month 1, struct tm starts in month 0
 #define RTC_STRUCT_TM_BASE_TIME_DIFF_WEEK            (1)    // week of RTC starts at 1, week of struct tm starts at 0
 
+// Signal number for RTC alarm notification
+#define RTC_SIGNO                               (1)
+
+// INT_OUT1 pin assignment
+#define INT_OUT1_PIN                            PIN_PWM3
+
+// INT_OUT2 pin assignment
+#define INT_OUT2_PIN                            PIN_PWM2
+
+// INT_BUTTON pin assignment
+#define INT_BUTTON1_PIN                         PIN_SPI4_SCK
+#define INT_BUTTON2_PIN                         PIN_SPI4_MISO
+#define INT_BUTTON3_PIN                         PIN_SPI4_MOSI
+#define INT_BUTTON4_PIN                         PIN_SPI4_CS_X
+
 // Flag ON / OFF definition
 typedef enum {
     FLAG_OFF = 0,
     FLAG_ON
 }FlagOnOff;
 
-uint32_t get_current_tm(void);
-void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss);
-void wait_gps_data(void);
-void wait_profile_change(void);
-void get_current_gga_data(void);
-void set_rtc_time(void);
+static uint32_t get_current_tm(void);
+static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss);
+static void wait_gps_data(void);
+static void wait_profile_change(void);
+static void set_rtc_time(void);
 #if GNSS_BACKUP_USE
-time_t get_rtc_time(void);
-void set_GNSS_backup_info(void);
-void GNSS_backup_exec(void);
+static time_t get_rtc_time(void);
+static void set_GNSS_backup_info(void);
+static void GNSS_backup_exec(void);
 #endif
 
 // buffer for event information
-CXM150xSysState g_sys_stt_info;
-CXM150xNMEAGGAInfo g_nmea_gga_info_buf;
-CXM150xFATALMessage g_fatalmessage_info;
-CXM150xEventBufferOverflow g_buffer_overflow_info;
-CXM150xTxPoCEnableMessage g_tx_poc_enable_message_info;
-CXM150xTxDutyEventInfo g_duty_event_info;
+static CXM150xSysState g_sys_stt_info;
+static CXM150xNMEAGGAInfo g_nmea_gga_info_buf;
+static CXM150xFATALMessage g_fatalmessage_info;
+static CXM150xEventBufferOverflow g_buffer_overflow_info;
+static CXM150xTxPoCEnableMessage g_tx_poc_enable_message_info;
+#if TX_DUTY_USE
+static CXM150xTxDutyEventInfo g_duty_event_info;
+#endif
 
 // Payload buffer for LPWA transmission
-uint8_t g_payload_data_all0[CXM150x_PAYLOAD_LEN] = {0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30};
+static uint8_t g_payload_data_all0[CXM150x_PAYLOAD_LEN] = {0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30};
 // Push button interrupt flag
-uint8_t g_push_btn_flag = FLAG_ON;
+static uint8_t g_push_btn_flag = FLAG_ON;
 
 // Event transmission completion flag
-uint8_t g_ev_tx_complete_flag = FLAG_OFF;
+static uint8_t g_ev_tx_complete_flag = FLAG_OFF;
 // INT_OUT1 interrupt flag
-uint8_t g_int1_callback_flg = FLAG_OFF;
+static uint8_t g_int1_callback_flg = FLAG_OFF;
 
 // transmission completion flag
-uint8_t g_tx_comlete_flg = FLAG_OFF;
+static uint8_t g_tx_comlete_flg = FLAG_OFF;
 
 // profile change completion flag
-uint8_t g_profile_change_comlete_flg = FLAG_OFF;
+static uint8_t g_profile_change_comlete_flg = FLAG_OFF;
 
 // CXM150x power ON offset time
-uint32_t g_pow_enable_remain_offset = 0;
+static uint32_t g_pow_enable_remain_offset = 0;
 
 // Event transmission valid flag
-uint32_t g_profile_event_enable = FLAG_OFF;
+static uint32_t g_profile_event_enable = FLAG_OFF;
 
 // periodec valid flag
-uint32_t g_periodec_enable = FLAG_OFF;
+static uint32_t g_periodec_enable = FLAG_OFF;
 
 // RTC interrupt flag
-uint32_t g_rtc_callback_flg = FLAG_OFF;
+static uint32_t g_rtc_callback_flg = FLAG_OFF;
 
 // GNSS is avairable if CXM150x status is "EPM_FILL" or later state
-uint32_t g_gnss_ready_flg = FLAG_OFF;
+static uint32_t g_gnss_ready_flg = FLAG_OFF;
 
 #if GNSS_BACKUP_USE
 // GNSS backup completion wait flag
-uint32_t g_gnss_backup_done_flag = FLAG_OFF;
+static uint32_t g_gnss_backup_done_flag = FLAG_OFF;
 #endif
 
 // GNSS operation state event information buffer
-CXM150xGNSSState g_gnss_stt_info;
+static CXM150xGNSSState g_gnss_stt_info;
 // GNSS acquisition timeout flag
-uint8_t g_gnss_timeout_flag = FLAG_OFF;
+static uint8_t g_gnss_timeout_flag = FLAG_OFF;
 // GNSS Sleep flag
-uint8_t g_gnss_sleep_flag = FLAG_OFF;
+static uint8_t g_gnss_sleep_flag = FLAG_OFF;
 // GGA event information reception flag
-uint8_t g_gga_event_callback_flg = FLAG_OFF;
+static uint8_t g_gga_event_callback_flg = FLAG_OFF;
 
 // ===========================================================================
 //! Push button interrupt callback function
@@ -194,7 +215,7 @@ uint8_t g_gga_event_callback_flg = FLAG_OFF;
  * @return none
 */
 // ===========================================================================
-void push_btn_CXM150x(void){
+static void push_btn_CXM150x(void){
     if(g_push_btn_flag == FLAG_OFF){
         printf("push_btn_callback!\r\n");
         g_push_btn_flag = FLAG_ON;
@@ -218,7 +239,7 @@ void push_btn_CXM150x(void){
  * @return none
 */
 // ===========================================================================
-void sys_stt_event_callback(void *info,uint32_t id){
+static void sys_stt_event_callback(void *info,uint32_t id){
 
     if(g_sys_stt_info == SYS_STT_IDLE){
         printf("sys_stt_event_callback:code=%d(IDLE)\r\n",g_sys_stt_info);
@@ -280,7 +301,7 @@ void sys_stt_event_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void gnss_stt_event_callback(void *info,uint32_t id){
+static void gnss_stt_event_callback(void *info,uint32_t id){
 
     if(g_gnss_stt_info & 0x80){   // Sleeping
         g_gnss_sleep_flag = FLAG_ON;
@@ -303,7 +324,7 @@ void gnss_stt_event_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void nmea_gga_event_callback(void *info,uint32_t id){
+static void nmea_gga_event_callback(void *info,uint32_t id){
     CXM150xNMEAGGAInfo *gga_inf = (CXM150xNMEAGGAInfo*)info;
     if(gga_inf->m_utc[0] == '\0'){
         printf("GGA: not ready\r\n");
@@ -328,7 +349,7 @@ void nmea_gga_event_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void int1_callback(void* msg,uint32_t id){
+static void int1_callback(void* msg,uint32_t id){
     printf("int1_callback\r\n");
     g_int1_callback_flg = FLAG_ON;
 }
@@ -347,7 +368,7 @@ void int1_callback(void* msg,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void int2_callback(void* msg,uint32_t id){
+static void int2_callback(void* msg,uint32_t id){
     printf("int2_callback\r\n");
 }
 
@@ -364,45 +385,9 @@ void int2_callback(void* msg,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void fatal_message_event_callback(void *info,uint32_t id){
+static void fatal_message_event_callback(void *info,uint32_t id){
     CXM150xFATALMessage *fatal_info = (CXM150xFATALMessage*)info;
     printf("FATAL Message Event: %s\r\n",fatal_info->m_str);
-}
-
-// ===========================================================================
-//! Sleep Nucleo
-/*!
- *
- * @param [in] none
- * @param [out] none
- * @par Global variable
- *        [in] none
- *        [out] none
- * @return none
-*/
-// ===========================================================================
-void sleep_nucleo(void){
-    printf("Go Sleep Nucleo!\r\n");
-    HAL_SuspendTick();
-    __HAL_RCC_PWR_CLK_ENABLE();
-    HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-}
-
-// ===========================================================================
-//! resume NUCLEO
-/*!
- *
- * @param [in] none
- * @param [out] none
- * @par Global variable
- *        [in] none
- *        [out] none
- * @return none
-*/
-// ===========================================================================
-void resume_nucleo(void){
-    HAL_ResumeTick();
-    printf("Resume Nucleo!\r\n");
 }
 
 // ===========================================================================
@@ -418,7 +403,7 @@ void resume_nucleo(void){
  * @return none
 */
 // ===========================================================================
-void resume_CXM150x(void){
+static void resume_CXM150x(void){
     
     // Get power supply status
     CmdResGetCXM150xPower pwstate;
@@ -428,7 +413,9 @@ void resume_CXM150x(void){
     if(pwstate.m_num == CXM150x_POWER_OFF){
         // Power ON and set normal mode
         g_gnss_ready_flg = FLAG_OFF;
-        EXTI->IMR |= GPIO_PIN_0;  // Unmask INT1
+        board_gpio_intconfig(INT_OUT1_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
+        board_gpio_int(INT_OUT1_PIN, true);
+
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
         set_CXM150x_power(CXM150x_POWER_ON,&res_set_power,NULL);
@@ -476,7 +463,7 @@ void resume_CXM150x(void){
  * @return none
 */
 // ===========================================================================
-void power_off_check(void){
+static void power_off_check(void){
     uint32_t c_time = 0;
     uint32_t next_time = 0;
     struct tm c_tm;
@@ -494,7 +481,8 @@ void power_off_check(void){
 #endif
         printf("event only mode\r\n");
         printf("CXM150x power off\r\n");
-        EXTI->IMR &= ~ GPIO_PIN_0;      // mask INT1
+        board_gpio_int(INT_OUT1_PIN, false);
+
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
         set_CXM150x_power(CXM150x_POWER_OFF,&res_set_power,NULL);
@@ -536,20 +524,20 @@ void power_off_check(void){
 
     // Judge whether to turn off the power of CXM150x (Calculate the time it takes to turn off the power and return to normal)
     int32_t interval = next_time - c_time - g_pow_enable_remain_offset;
-    printf("next interval:%d sec\r\n",interval);
+    printf("next interval:%ld sec\r\n",interval);
     if(interval > CXM150x_POWER_OFF_INTERVAL_SEC){
         printf("CXM150x power off\r\n");
         set_rtc_time();
 #if GNSS_BACKUP_USE
         GNSS_backup_exec();
 #endif
-        EXTI->IMR &= ~ GPIO_PIN_0;      // mask INT1
+        board_gpio_int(INT_OUT1_PIN, false);
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
         set_CXM150x_power(CXM150x_POWER_OFF,&res_set_power,NULL);
         g_gnss_ready_flg = FLAG_OFF;
         g_int1_callback_flg = FLAG_OFF;
-        HAL_Delay(1000);
+        sleep(1);
         uint32_t power_on_time = next_time - g_pow_enable_remain_offset;
         struct tm p_tm;
         (void)localtime_r(&power_on_time,&p_tm);
@@ -574,7 +562,7 @@ void power_off_check(void){
  * @return none
 */
 // ===========================================================================
-void wait_gps_data(void){
+static void wait_gps_data(void){
     if(g_gnss_ready_flg == FLAG_OFF){
         printf("-wait GNSS ready-\r\n");
         // Set system state event to ON
@@ -605,7 +593,7 @@ void wait_gps_data(void){
  * @return none
 */
 // ===========================================================================
-void wait_profile_change(void){
+static void wait_profile_change(void){
     if(g_profile_change_comlete_flg == FLAG_OFF && g_gnss_ready_flg == FLAG_OFF){
         printf("-wait profile change-\r\n");
         // Set system state event to ON
@@ -641,7 +629,7 @@ void wait_profile_change(void){
  * @return none
 */
 // ===========================================================================
-void data_send(void){
+static void data_send(void){
     g_tx_comlete_flg = FLAG_OFF;
 
     // Payload settings
@@ -721,22 +709,24 @@ void data_send(void){
  * @return none
 */
 // ===========================================================================
-void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
+static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
+    struct rtc_setrelative_s setrel;
+
+    int fd = open("/dev/rtc0", O_WRONLY);
+
+    setrel.id      = 0;
+    setrel.pid     = 0;
+    setrel.reltime = (time_t)(hh*60*60 + mm*60 + ss);
+
+    setrel.event.sigev_notify = SIGEV_SIGNAL;
+    setrel.event.sigev_signo  = RTC_SIGNO;
+    setrel.event.sigev_value.sival_int = 0;
+
+    ioctl(fd, RTC_SET_RELATIVE, (unsigned long)((uintptr_t)&setrel));
     g_rtc_callback_flg = FLAG_OFF;
-    RTC_AlarmTypeDef sAlarm;
-    sAlarm.AlarmTime.Hours = hh;
-    sAlarm.AlarmTime.Minutes = mm;
-    sAlarm.AlarmTime.Seconds = ss;
-    sAlarm.AlarmTime.TimeFormat = RTC_HOURFORMAT_24;
-    sAlarm.AlarmTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    sAlarm.AlarmTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    sAlarm.AlarmMask = RTC_ALARMMASK_DATEWEEKDAY;
-    sAlarm.AlarmDateWeekDaySel = RTC_ALARMDATEWEEKDAYSEL_DATE;
-    sAlarm.AlarmDateWeekDay = RTC_WEEKDAY_WEDNESDAY;
-    sAlarm.Alarm = RTC_ALARM_A;
-    HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, FORMAT_BIN);
-    
-    printf("set_rtc_alarm %02d:%02d.%02d(utc)\r\n",sAlarm.AlarmTime.Hours,sAlarm.AlarmTime.Minutes,sAlarm.AlarmTime.Seconds);
+    close(fd);
+
+    printf("set_rtc_alarm %02ld:%02ld:%02ld\r\n",hh,mm,ss);
 }
 
 // ===========================================================================
@@ -751,7 +741,7 @@ void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
  * @return current time
 */
 // ===========================================================================
-uint32_t get_current_tm(void){
+static uint32_t get_current_tm(void){
     // Get current time
     CmdResGetCXM150xCurrentGNSSTime res;
     while(1){
@@ -759,7 +749,7 @@ uint32_t get_current_tm(void){
         if(res.m_str[0] != '\0'){
             break;
         } else {
-            HAL_Delay(1000);
+            sleep(1);
         }
     }
     
@@ -781,8 +771,7 @@ uint32_t get_current_tm(void){
  * @return current time
 */
 // ===========================================================================
-void set_rtc_time(void){
-    RTC_TimeTypeDef sTime;
+static void set_rtc_time(void){
     uint32_t sec = get_current_tm();
     // Convert the number of seconds elapsed since GPS reference date and time obtained by get_current_tm to the number of seconds elapsed since 00:00:00 on January 1, 1900
     // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
@@ -798,31 +787,16 @@ void set_rtc_time(void){
     base_time.tm_isdst = GPS_FORMAT_BASE_TIME_ISDST;
     sec += mktime(&base_time);
     
+    struct timespec ts;
+    ts.tv_sec = sec;
+    ts.tv_nsec = 0;
+    clock_settime(CLOCK_REALTIME, &ts);
+
     struct tm s_tm;
-    (void)localtime_r(&sec,&s_tm);
+    localtime_r(&ts.tv_sec, &s_tm);
     printf("local time:%02d:%02d.%02d(utc)\r\n",s_tm.tm_hour,s_tm.tm_min,s_tm.tm_sec);
-    
-    // Set time (hour, minute, second) in RTC
-    sTime.Hours = s_tm.tm_hour;
-    sTime.Minutes = s_tm.tm_min;
-    sTime.Seconds = s_tm.tm_sec;
-    sTime.TimeFormat = RTC_HOURFORMAT_24;
-    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    HAL_RTC_SetTime(&hrtc, &sTime, FORMAT_BIN);
-    
-    // Set time (year / month / day) in RTC
-    // The year of RTC_DateTypeDef needs to be set in years since 2000, but the base year of struct tm is the year since 1900, so subtract 100 years
-    // Also, the month and week of RTC_DateTypeDef are counted from 1, whereas struct tm counts from 0, so you need to add 1
-    RTC_DateTypeDef sdatestructure;
-    sdatestructure.Year    = s_tm.tm_year - RTC_STRUCT_TM_BASE_TIME_DIFF_YEAR;
-    sdatestructure.Month   = s_tm.tm_mon + RTC_STRUCT_TM_BASE_TIME_DIFF_MONTH;
-    sdatestructure.Date    = s_tm.tm_mday;
-    sdatestructure.WeekDay = s_tm.tm_wday + RTC_STRUCT_TM_BASE_TIME_DIFF_WEEK;
-  
-    HAL_RTC_SetDate(&hrtc,&sdatestructure,FORMAT_BIN);
-    
-    printf("RTC init:%04d-%02d-%02d %02d:%02d:%02d\r\n",sdatestructure.Year+2000,sdatestructure.Month,sdatestructure.Date,sTime.Hours,sTime.Minutes,sTime.Seconds);
+    printf("RTC init:%04d-%02d-%02d %02d:%02d:%02d\r\n",
+           s_tm.tm_year + 1900, s_tm.tm_mon + 1, s_tm.tm_mday, s_tm.tm_hour, s_tm.tm_min, s_tm.tm_sec);
     
 }
 
@@ -839,33 +813,19 @@ void set_rtc_time(void){
  * @return current time (time_t format)
 */
 // ===========================================================================
-time_t get_rtc_time(void){
+static time_t get_rtc_time(void){
+    int ret;
+    struct timespec ts;
     // Get the time set in RTC
-    RTC_DateTypeDef sdatestructureget;
-    memset(&sdatestructureget,0,sizeof(sdatestructureget));
-    RTC_TimeTypeDef stimestructureget;
-    memset(&stimestructureget,0,sizeof(stimestructureget));
-    HAL_RTC_GetTime(&hrtc, &stimestructureget, RTC_FORMAT_BIN);
-    HAL_RTC_GetDate(&hrtc, &sdatestructureget, RTC_FORMAT_BIN);
+    ret = clock_gettime(CLOCK_REALTIME, &ts);
     
-    if(sdatestructureget.Year > 0){
-        // The year of RTC_DateTypeDef is counted by the number of years since 2000, but add 100 years to struct tm since it is necessary to set the year since 1900
-        // In addition, the month of RTC_DateTypeDef starts in January, whereas struct tm starts in January, so -1
+    if(ret == 0){
         struct tm s_tm;
-        s_tm.tm_year = sdatestructureget.Year + RTC_STRUCT_TM_BASE_TIME_DIFF_YEAR;
-        s_tm.tm_mon = sdatestructureget.Month - RTC_STRUCT_TM_BASE_TIME_DIFF_MONTH;
-        s_tm.tm_mday = sdatestructureget.Date;
-        s_tm.tm_wday = sdatestructureget.WeekDay - RTC_STRUCT_TM_BASE_TIME_DIFF_WEEK;
-        s_tm.tm_hour = stimestructureget.Hours;
-        s_tm.tm_min = stimestructureget.Minutes;
-        s_tm.tm_sec = stimestructureget.Seconds;
 
-        // Convert to time_t format
-        time_t c_sec = mktime(&s_tm);
-        
+        localtime_r(&ts.tv_sec, &s_tm);
         printf("get_rtc_time:%04d-%02d-%02d %02d:%02d:%02d\r\n",s_tm.tm_year+1900,s_tm.tm_mon+1,s_tm.tm_mday,s_tm.tm_hour,s_tm.tm_min,s_tm.tm_sec);
         
-        return c_sec;
+        return ts.tv_sec;
     } else {
         //Acquisition failure
         printf("get_rtc_time invalid.\r\n");
@@ -885,7 +845,7 @@ time_t get_rtc_time(void){
  * @return none
 */
 // ===========================================================================
-void get_utc_time_str(uint8_t *str){
+static void get_utc_time_str(uint8_t *str){
     time_t rtc_time = get_rtc_time();
     if(rtc_time > 0){
         // Successful acquisition
@@ -913,7 +873,7 @@ void get_utc_time_str(uint8_t *str){
  * @return none
 */
 // ===========================================================================
-void set_GNSS_backup_info(void){
+static void set_GNSS_backup_info(void){
 /*
     // Set location information
     // After GNSS BACKUP, if you move a long distance before starting, the effect of hot start may not be obtained
@@ -957,7 +917,7 @@ void set_GNSS_backup_info(void){
  * @return none
 */
 // ===========================================================================
-void GNSS_backup_exec(void){
+static void GNSS_backup_exec(void){
     
     // Do not backup if GNSS_BACKUP_INTERVAL_SEC seconds have not elapsed since last backup time
     time_t c_tm = get_rtc_time();
@@ -1001,7 +961,7 @@ void GNSS_backup_exec(void){
         }
     } else {
         // Skip backup processing because it is less than the specified interval
-        printf("GNSS_backup_exec skip(%dsec/%dsec)\r\n",(c_tm - g_last_gnss_backup_time),GNSS_BACKUP_INTERVAL_SEC);
+        printf("GNSS_backup_exec skip(%ldsec/%dsec)\r\n",(c_tm - g_last_gnss_backup_time),GNSS_BACKUP_INTERVAL_SEC);
     }
 }
 #endif
@@ -1018,7 +978,7 @@ void GNSS_backup_exec(void){
  * @return FLAG_ON if message exist
 */
 // ===========================================================================
-uint32_t check_message_count(void){
+static uint32_t check_message_count(void){
     // Get power supply status
     CmdResGetCXM150xPower pwstate;
     get_CXM150x_power(NULL,&pwstate,NULL);
@@ -1047,9 +1007,24 @@ uint32_t check_message_count(void){
  * @return none
 */
 // ===========================================================================
-void rtc_callback(void){
+static void rtc_callback(void){
     printf("rtc_callback\r\n");
     g_rtc_callback_flg = FLAG_ON;
+}
+
+// ===========================================================================
+//! RTC alarm handler
+/*!
+ *
+ * @param[in]    signo    : signal number
+ * @param[in]    info     : signal information
+ * @param[in]    ucontext : signal context
+ * @return none
+*/
+// ===========================================================================
+static void rtc_alarm_handler(int signo, FAR siginfo_t *info, FAR void *ucontext)
+{
+  rtc_callback();
 }
 
 // ===========================================================================
@@ -1065,7 +1040,7 @@ void rtc_callback(void){
  * @return none
 */
 // ===========================================================================
-void event_buffer_overflow_callback(void *info,uint32_t id){
+static void event_buffer_overflow_callback(void *info,uint32_t id){
     printf("event buffer overflow\r\n");
 }
 
@@ -1082,16 +1057,17 @@ void event_buffer_overflow_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void tx_poc_enable_message_callback(void *info,uint32_t id){
+static void tx_poc_enable_message_callback(void *info,uint32_t id){
 #if TX_POC_USE
     printf("TX PoC enable message callback\r\n");
 #else
     //If TX PoC enable message callback occurs when TX PoC is disable, turn off the power due to a fatal error.
     printf("FATAL errot :An unencrypted message\r\n");
-    NVIC_SystemReset();
+    assert(0);
 #endif
 }
 
+#if TX_DUTY_USE
 // ===========================================================================
 //! tx Duty event callback function
 /*!
@@ -1105,7 +1081,7 @@ void tx_poc_enable_message_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void tx_duty_event_callback(void *info,uint32_t id){
+static void tx_duty_event_callback(void *info,uint32_t id){
     CXM150xTxDutyEventInfo *tx_duty_event_info = (CXM150xTxDutyEventInfo*)info;
     if(tx_duty_event_info->m_result == CXM150x_RESPONSE_OK){
         printf("TX DUTY EVENT OK,%s\r\n",tx_duty_event_info->m_str);
@@ -1113,6 +1089,7 @@ void tx_duty_event_callback(void *info,uint32_t id){
         printf("TX DUTY EVENT NG,%s\r\n",tx_duty_event_info->m_str);
     }
 }
+#endif
 
 // ===========================================================================
 //! Display sample app and API version
@@ -1126,7 +1103,7 @@ void tx_duty_event_callback(void *info,uint32_t id){
  * @return none
 */
 // ===========================================================================
-void disp_version(void){
+static void disp_version(void){
     CmdResGetCXM150xAPIVersion api_ver_inf;
     get_CXM150x_api_version(NULL,&api_ver_inf,NULL);
     printf("%s:Ver.%s, API:Ver.%s\r\n",SAMPLE_APP_NAME,SAMPLE_APP_VER,api_ver_inf.m_version);
@@ -1155,16 +1132,56 @@ int main_LPWA_sample_app(void){
     disp_version();
     ///////////////////////////////////////////////////////////
     // mask the INT2 interrupt
-    EXTI->IMR &= ~ D6_GPI_WKUP_Pin;
+    board_gpio_int(INT_OUT2_PIN, false);
     ///////////////////////////////////////////////////////////
+
+    /* Register alarm signal handler */
+
+    struct sigaction act;
+    sigset_t set;
+
+    sigemptyset(&set);
+    sigaddset(&set, RTC_SIGNO);
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
+
+    act.sa_sigaction = rtc_alarm_handler;
+    act.sa_flags     = SA_SIGINFO;
+
+    sigfillset(&act.sa_mask);
+    sigdelset(&act.sa_mask, RTC_SIGNO);
+
+    sigaction(RTC_SIGNO, &act, NULL);
 
     // FATAL message event callback setting
     register_CXM150x_FATAL_message_event(&g_fatalmessage_info,fatal_message_event_callback);
     register_CXM150x_event_buffer_overflow(&g_buffer_overflow_info,event_buffer_overflow_callback);
     register_CXM150x_tx_PoC_enable_message_event(&g_tx_poc_enable_message_info,tx_poc_enable_message_callback);
 
+    // INT_OUT interrupt setting
+    board_gpio_intconfig(INT_OUT1_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
+    board_gpio_int(INT_OUT1_PIN, true);
+
+    board_gpio_intconfig(INT_OUT2_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out2);
+    board_gpio_int(INT_OUT2_PIN, true);
+
+    // Button interrupt setting
+    board_gpio_config(INT_BUTTON1_PIN, 0, true, false, PIN_PULLUP);
+    board_gpio_intconfig(INT_BUTTON1_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
+    board_gpio_int(INT_BUTTON1_PIN, true);
+
+    board_gpio_config(INT_BUTTON2_PIN, 0, true, false, PIN_PULLUP);
+    board_gpio_intconfig(INT_BUTTON2_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
+    board_gpio_int(INT_BUTTON2_PIN, true);
+
+    board_gpio_config(INT_BUTTON3_PIN, 0, true, false, PIN_PULLUP);
+    board_gpio_intconfig(INT_BUTTON3_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
+    board_gpio_int(INT_BUTTON3_PIN, true);
+
+    board_gpio_config(INT_BUTTON4_PIN, 0, true, false, PIN_PULLUP);
+    board_gpio_intconfig(INT_BUTTON4_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
+    board_gpio_int(INT_BUTTON4_PIN, true);
+
     // Power ON and set normal mode
-    EXTI->IMR |= GPIO_PIN_0;      // Unmask INT1
     CmdResSetCXM150xPower res_set_power;
     memset(&res_set_power,0,sizeof(res_set_power));
     set_CXM150x_power(CXM150x_POWER_ON,&res_set_power,NULL);
@@ -1213,10 +1230,10 @@ int main_LPWA_sample_app(void){
     get_CXM150x_EEPROM_data(EEPROM_EF_ENABLE,&eep_data,NULL);
     g_profile_event_enable = eep_data.m_num;
 
-    printf("*** pow_enable_remain_offset:%d\r\n",g_pow_enable_remain_offset);
-    printf("*** periodic1_eanable:%d  periodic2_eanable:%d\r\n",periodic1_eanable,periodic2_eanable);
-    printf("*** periodic  enable:%d\r\n",g_periodec_enable);
-    printf("*** event     enable:%d\r\n",g_profile_event_enable);
+    printf("*** pow_enable_remain_offset:%ld\r\n",g_pow_enable_remain_offset);
+    printf("*** periodic1_eanable:%ld  periodic2_eanable:%ld\r\n",periodic1_eanable,periodic2_eanable);
+    printf("*** periodic  enable:%ld\r\n",g_periodec_enable);
+    printf("*** event     enable:%ld\r\n",g_profile_event_enable);
 
     // int2 interrupt callback setting
     register_CXM150x_uart_start_interrupt(NULL,int2_callback);
@@ -1241,11 +1258,9 @@ int main_LPWA_sample_app(void){
     while(1){
         // Sleep processing if no interrupt
         if(g_int1_callback_flg == FLAG_OFF && g_push_btn_flag == FLAG_OFF && check_message_count() == FLAG_OFF){
-            // sleep start
-            sleep_nucleo();
-
-            // wake from sleep
-            resume_nucleo();
+            // TBD: Implement sleep function
+            sleep(1);
+            continue;
         }
 
         // resume CXM150x
