@@ -891,5 +891,11 @@ typedef enum {
     EVENT_BUFFER_OVERFLOW
 }CXM150xEventBufferOverflow;
 
+// CXM150x WAKEUP High / Low state constant
+typedef enum {
+    CXM150x_WAKEUP_L = 0,
+    CXM150x_WAKEUP_H
+}CXM150x_wakeup_state;
+
 #endif // __CXM150x_APITYPEDEF_H
 
