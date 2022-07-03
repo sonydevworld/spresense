@@ -441,39 +441,28 @@ static __INLINE void callback_packet_sent(void)
   }
 }
 
-static int ser_phy_uart_send_char(uint8_t byte)
-{
-  ssize_t sent_len = 0;
-  //NRF_LOG_DEBUG("Send 0x%02x\n", byte);
-
-  int errcode = 0;
-  UART_CONTEXT *ctx = &g_ctx;
-
-  do
-  {
-    sent_len = write(ctx->uart_fd, &byte, 1);
-  } while (sent_len == 0);
-  if (sent_len < 0)
-  {
-    errcode = errno;
-    NRF_LOG_DEBUG("ser_phy_uart_send_char: write:err %d\n", errcode);
-    return -errcode;
-  }
-  return NRF_SUCCESS;
-}
-
 static int ser_phy_uart_send(void* buf, int size)
 {
   int ret = 0;
-  int index=0;
+  size_t sz;
+  size_t rem_sz = size;
+  uint8_t *addr = buf;
   NRF_LOG_DEBUG("ser_phy_uart_send size %d\n", size);
 
-  for(index=0; index<size; index++)
-  {
-    ret = ser_phy_uart_send_char(*((uint8_t *)buf+index));
-    NRF_LOG_DEBUG("Send %#x\n", *((uint8_t *)buf+index));
-    if (ret < 0) return ret;
-  }
+  while (rem_sz > 0)
+    {
+      sz = write(g_ctx.uart_fd, addr, rem_sz);
+      if (sz < 0)
+        {
+          ret = errno;
+          NRF_LOG_DEBUG("ser_phy_uart_send: write:err %d\n", ret);
+          return -ret;
+        }
+
+      addr   += sz;
+      rem_sz -= sz;
+    }
+
   return NRF_SUCCESS;
 }
 
