@@ -470,7 +470,7 @@ static void power_off_check(void){
     struct tm n_tm;
     CmdResGetCXM150xNextLPWATxTerm res_next_term;
     CmdResGetCXM150xTxProfile res_profile;
-    TxProfileType current_profile_type;
+    CXM150xTxProfileType current_profile_type;
 
     // If Periodic is invalid, judgment is unnecessary because only event transmission is performed
     if(g_periodec_enable == FLAG_OFF){
@@ -495,7 +495,7 @@ static void power_off_check(void){
 
     // get current profile
     if(get_CXM150x_tx_profile(NULL,&res_profile,NULL) == RETURN_OK){
-        current_profile_type = (TxProfileType)res_profile.m_num;
+        current_profile_type = (CXM150xTxProfileType)res_profile.m_num;
     } else {
         current_profile_type = TX_CUR_FRM_TYPE_EVENT;
     }

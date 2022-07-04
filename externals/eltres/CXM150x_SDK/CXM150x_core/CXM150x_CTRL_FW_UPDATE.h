@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (for CONTROL FW UPDATE mode)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -41,14 +41,14 @@
 
 #if CXM150x_CTRL_FW_UPDATE_API_USE
 
-return_code get_CXM150x_ctrl_fw_update_routine_name(void *param, CmdResGetCtrlFWUpdateRoutineName *res);
-return_code get_CXM150x_ctrl_fw_update_version(void* param, CmdResGetCtrlFWUpdateVersion *res);
-return_code get_CXM150x_ctrl_fw_update_company_name(void* param, CmdResGetCtrlFWUpdateCompanyName *res);
-return_code get_CXM150x_ctrl_fw_update_device_name(void* param, CmdResGetCtrlFWUpdateDeviceName *res);
-return_code get_CXM150x_ctrl_fw_update_state(uint32_t param, CmdResGetCtrlFWUpdateState *res);
-return_code set_CXM150x_ctrl_fw_update_end_request(CXM150xFWUpdateType param, CmdResSetCtrlFWUpdateEndRequest *res);
-return_code set_CXM150x_ctrl_fw_update_data(CXM150xFWUpdateSetData* param, CmdResSetCtrlFWUpdateData *res);
-return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *param, CmdResSetCtrlFWUpdatePower *res);
+CXM150x_return_code get_CXM150x_ctrl_fw_update_routine_name(void *param, CmdResGetCtrlFWUpdateRoutineName *res);
+CXM150x_return_code get_CXM150x_ctrl_fw_update_version(void* param, CmdResGetCtrlFWUpdateVersion *res);
+CXM150x_return_code get_CXM150x_ctrl_fw_update_company_name(void* param, CmdResGetCtrlFWUpdateCompanyName *res);
+CXM150x_return_code get_CXM150x_ctrl_fw_update_device_name(void* param, CmdResGetCtrlFWUpdateDeviceName *res);
+CXM150x_return_code get_CXM150x_ctrl_fw_update_state(uint32_t param, CmdResGetCtrlFWUpdateState *res);
+CXM150x_return_code set_CXM150x_ctrl_fw_update_end_request(CXM150xFWUpdateType param, CmdResSetCtrlFWUpdateEndRequest *res);
+CXM150x_return_code set_CXM150x_ctrl_fw_update_data(CXM150xFWUpdateSetData* param, CmdResSetCtrlFWUpdateData *res);
+CXM150x_return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *param, CmdResSetCtrlFWUpdatePower *res);
 
 #endif // CXM150x_CTRL_FW_UPDATE_API_USE
 

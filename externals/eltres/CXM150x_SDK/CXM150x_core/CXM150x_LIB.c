@@ -4,7 +4,7 @@
 * @brief    UART communication related driver
 * @date     2021/12/27
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -44,11 +44,38 @@
 #include "CXM150x_TX.h"
 #include "CXM150x_GNSS.h"
 
+// Communication wait time with CXM (unit is msec)
+#define MAX_TIME_OUT_TICK_COUNT     (5000)
+
+// Timeout period for CXM150x power ON message wait
+#define MAX_POWER_ON_TIME_OUT_TICK_COUNT     (10000)
+
+// Command receive result
+#define COMMAND_RESULT_RESPONSE_WAIT        (0)
+#define COMMAND_RESULT_OK                   (1)
+#define COMMAND_RESULT_ERROR                (2)
+#define COMMAND_RESULT_BUSY                 (3)
+#define COMMAND_RESULT_TIME_OUT             (4)
+#define COMMAND_RESULT_COMMAND_INVALID      (5)
+
+// Command transmission result
+#define COMMAND_SEND_RESULT_OK              (0)
+#define COMMAND_SEND_RESULT_BUSY            (1)
+#define COMMAND_SEND_RESULT_NG              (2)
+#define COMMAND_SEND_RESULT_TIME_OUT        (3)
+
+// Response data structure
+typedef struct {
+    uint32_t m_result_code;                        // OK, NG (NG in response from CXM150x), timeout, BUSY
+    int32_t m_option_num;                         // Numeric response (XX seconds, etc.)
+    uint8_t m_option_str[CXM150x_RECEIVE_BUF_SIZE];      // On / Off, version information, previous payload, GPS time, etc.
+}CommandResponseInfo;
+
 // Buffer for received data from CXM, and variables for buffer control used in interrupt context
-static uint8_t g_rcv_buf[RECEIVE_BUF_SIZE] = "";   // Receive buffer
+static uint8_t g_rcv_buf[CXM150x_RECEIVE_BUF_SIZE] = "";   // Receive buffer
 
 // Response message buffer
-static uint8_t g_response_buf[RECEIVE_BUF_SIZE] = "";   // Unprocessed command response message buffer
+static uint8_t g_response_buf[CXM150x_RECEIVE_BUF_SIZE] = "";   // Unprocessed command response message buffer
 static CommandResponseInfo g_command_response_info;
 static CXM150x_CALLBACK_RESPONSE_FUNC_POINTER g_command_response_callback = NULL;
 static CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER g_command_response_parse_func = NULL;
@@ -61,10 +88,10 @@ static uint32_t g_command_send_tick_count = 0;
 
 static uint32_t volatile g_rcv_event_buf_rcv_index = 0;       // Index counter on addtional side
 static uint32_t g_rcv_event_buf_proc_index = 0;      // Index counter on analysis processing side
-static uint8_t g_event_buf[RECEIVE_EVENT_BUF_SIZE][RECEIVE_BUF_SIZE];      // unprocessed event message buffer
+static uint8_t g_event_buf[CXM150x_RECEIVE_EVENT_BUF_SIZE][CXM150x_RECEIVE_BUF_SIZE];      // unprocessed event message buffer
 
 // Flag for reception status of CXM150x power ON message
-static uint32_t g_rcv_power_on_message_wait = UART_DRIVER_FLAG_OFF;
+static uint32_t g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_OFF;
 
 // Wait message count
 static uint32_t g_analyse_wait_message_cnt_res = 0;
@@ -74,7 +101,7 @@ static uint32_t g_analyse_wait_message_cnt_evt = 0;
 static uint32_t g_max_time_out_tick_count = MAX_TIME_OUT_TICK_COUNT;
 
 // event buffer overflow flag
-static uint32_t g_event_buffer_overflow_flag = UART_DRIVER_FLAG_OFF;
+static uint32_t g_event_buffer_overflow_flag = CXM150x_UART_DRIVER_FLAG_OFF;
 
 // variables for callback when event occurs
 CXM150xSysState *g_sys_state_info = NULL;
@@ -134,7 +161,7 @@ extern uint8_t g_uart_error_flg;
  * @return processing result
 */
 // ===========================================================================
-uint32_t init_uart_driver(void){
+uint32_t CXM150x_init_uart_driver(void){
     return wrapper_CXM150x_set_uart_rx_buf(g_rcv_buf);
 }
 
@@ -152,8 +179,8 @@ uint32_t init_uart_driver(void){
  * @return none
 */
 // ===========================================================================
-void add_response_message_buf(uint8_t *msg,uint8_t msg_len){
-    if(msg_len > RECEIVE_BUF_SIZE || msg_len == 0){
+static void add_response_message_buf(uint8_t *msg,uint8_t msg_len){
+    if(msg_len > CXM150x_RECEIVE_BUF_SIZE || msg_len == 0){
         printf("add_response_message_buf length error[%dbyte]\r\n",msg_len);
         return;
     }
@@ -177,8 +204,8 @@ void add_response_message_buf(uint8_t *msg,uint8_t msg_len){
 * @return none
 */
 // ===========================================================================
-void add_event_message_buf(uint8_t *msg,uint8_t msg_len){
-    if(msg_len > RECEIVE_BUF_SIZE || msg_len == 0){
+static void add_event_message_buf(uint8_t *msg,uint8_t msg_len){
+    if(msg_len > CXM150x_RECEIVE_BUF_SIZE || msg_len == 0){
         printf("add_event_message_buf length error[%dbyte]\r\n",msg_len);
         return;
     }
@@ -188,21 +215,21 @@ void add_event_message_buf(uint8_t *msg,uint8_t msg_len){
         // If overwriting occurs
 
         // Flag ON because event buffer overflow occurred
-        g_event_buffer_overflow_flag = UART_DRIVER_FLAG_ON;
+        g_event_buffer_overflow_flag = CXM150x_UART_DRIVER_FLAG_ON;
         
         // In case of overflow, return without overwriting the event message
         return;
     }else {
         // If overwriting does not occur
         // Increment unprocessed message counter
-        if(g_analyse_wait_message_cnt_evt < RECEIVE_EVENT_BUF_SIZE){
+        if(g_analyse_wait_message_cnt_evt < CXM150x_RECEIVE_EVENT_BUF_SIZE){
             g_analyse_wait_message_cnt_evt++;
         }
     }
     strncpy((char*)g_event_buf[g_rcv_event_buf_rcv_index],(char*)msg,msg_len);
     g_event_buf[g_rcv_event_buf_rcv_index][msg_len-1] = '\0';
     g_rcv_event_buf_rcv_index++;
-    if(g_rcv_event_buf_rcv_index >= RECEIVE_EVENT_BUF_SIZE){
+    if(g_rcv_event_buf_rcv_index >= CXM150x_RECEIVE_EVENT_BUF_SIZE){
         g_rcv_event_buf_rcv_index = 0;
     }
 }
@@ -220,7 +247,7 @@ void add_event_message_buf(uint8_t *msg,uint8_t msg_len){
  * @return none
 */
 // ===========================================================================
-void add_rx_buffer(uint8_t *rx_message,uint8_t rcv_cnt){
+static void add_rx_buffer(uint8_t *rx_message,uint8_t rcv_cnt){
     if(rx_message[0] == '|'){
         // receive event message
         add_event_message_buf(rx_message,rcv_cnt);
@@ -247,7 +274,7 @@ void add_rx_buffer(uint8_t *rx_message,uint8_t rcv_cnt){
  * @return none
 */
 // ===========================================================================
-void weak_function uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt)
+void weak_function CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt)
 {
     if(type_from==WRAPPER_UART_RX_FROM_CXM150x){
         add_rx_buffer((uint8_t*)g_rcv_buf,rcv_cnt);
@@ -271,28 +298,28 @@ void weak_function uart_receive_to_buffer_callback(uint32_t type_from,uint32_t r
  * @return processing result
 */
 // ===========================================================================
-return_code send_command(uint8_t *command){
+static CXM150x_return_code send_command(uint8_t *command){
     
     // Check if there is a command that has been sent and is waiting for a response (if any, end with BUSY)
-    if(g_command_response_wait_flag == UART_DRIVER_FLAG_ON){
+    if(g_command_response_wait_flag == CXM150x_UART_DRIVER_FLAG_ON){
         printf("BUSY:%s",command);
         g_command_response_info.m_result_code = COMMAND_SEND_RESULT_BUSY;
         return RETURN_BUSY;
     }
     
     // Turn on the reception wait flag and start measuring the timeout
-    g_command_response_wait_flag = UART_DRIVER_FLAG_ON;
+    g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_ON;
     g_command_send_tick_count = wrapper_CXM150x_get_tick();
     g_command_response_info.m_result_code = COMMAND_RESULT_RESPONSE_WAIT;
     memset(g_command_response_info.m_option_str,'\0',sizeof(g_command_response_info.m_option_str));
     g_response_buf[0] = '\0';
     
     // Send processing
-    return_code ret = wrapper_CXM150x_uart_transmit(command,strlen((char*)command),MAX_TIME_OUT_TICK_COUNT);
+    CXM150x_return_code ret = wrapper_CXM150x_uart_transmit(command,strlen((char*)command),MAX_TIME_OUT_TICK_COUNT);
     printf("snd:%s",command);
     if(ret != RETURN_OK){
         // Cancel command response wait
-        g_command_response_wait_flag = UART_DRIVER_FLAG_OFF;
+        g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_OFF;
         return ret;
     }
     
@@ -313,7 +340,7 @@ return_code send_command(uint8_t *command){
  * @return none
 */
 // ===========================================================================
-void set_command_response_data(CommandResponseInfo *result,uint8_t *msg){
+static void set_command_response_data(CommandResponseInfo *result,uint8_t *msg){
     result->m_result_code = RETURN_OK;
     strncpy((char*)result->m_option_str,(char*)msg,strlen((char*)msg));
     result->m_option_str[strlen((char*)msg)] = '\0';
@@ -336,11 +363,11 @@ void set_command_response_data(CommandResponseInfo *result,uint8_t *msg){
  * @return none
 */
 // ===========================================================================
-void check_command_response(void){
+static void check_command_response(void){
     
     // Check if there is an unprocessed response
     if(g_response_buf[0] != '\0'){
-        g_command_response_wait_flag = UART_DRIVER_FLAG_OFF;
+        g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_OFF;
         printf("rcv:%s",g_response_buf);
         set_command_response_data(&g_command_response_info,g_response_buf);
         g_response_buf[0] = '\0';
@@ -356,8 +383,8 @@ void check_command_response(void){
                 CmdResResetCXM150x resCmdResResetCXM150x;
                 g_command_response_parse_func((uint8_t*)g_command_response_info.m_option_str,&resCmdResResetCXM150x);
                 if(resCmdResResetCXM150x.m_result == CXM150x_RESPONSE_OK){
-                    g_command_response_wait_flag = UART_DRIVER_FLAG_ON;
-                    prep_wait_power_on_message_reset();
+                    g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_ON;
+                    CXM150x_prep_wait_power_on_message_reset();
                 } else {
                     CXM150x_CALLBACK_RESPONSE_FUNC_POINTER tmp_func_p = g_command_response_callback;
                     g_command_response_callback = NULL;
@@ -378,15 +405,15 @@ void check_command_response(void){
     }
     
     // response timeout check
-    if(g_command_response_wait_flag == UART_DRIVER_FLAG_ON || g_rcv_power_on_message_wait == UART_DRIVER_FLAG_ON){
+    if(g_command_response_wait_flag == CXM150x_UART_DRIVER_FLAG_ON || g_rcv_power_on_message_wait == CXM150x_UART_DRIVER_FLAG_ON){
         uint32_t current_tick = wrapper_CXM150x_get_tick();
         if(current_tick - g_command_send_tick_count > g_max_time_out_tick_count){
             // timed out
             printf("timeout command.(%ldmsec)\r\n",g_max_time_out_tick_count);
             g_command_response_info.m_result_code = COMMAND_RESULT_TIME_OUT;
-            g_command_response_wait_flag = UART_DRIVER_FLAG_OFF;
-            if(g_rcv_power_on_message_wait == UART_DRIVER_FLAG_ON){
-                g_rcv_power_on_message_wait = UART_DRIVER_FLAG_OFF;
+            g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_OFF;
+            if(g_rcv_power_on_message_wait == CXM150x_UART_DRIVER_FLAG_ON){
+                g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_OFF;
             }
             if(g_command_response_callback != NULL){
                 CXM150x_CALLBACK_RESPONSE_FUNC_POINTER tmp_func_p = g_command_response_callback;
@@ -452,9 +479,9 @@ void check_command_response(void){
  * @return none
 */
 // ===========================================================================
-void check_event(void){
+static void check_event(void){
     
-    if(g_rcv_event_buf_proc_index >= RECEIVE_EVENT_BUF_SIZE){
+    if(g_rcv_event_buf_proc_index >= CXM150x_RECEIVE_EVENT_BUF_SIZE){
         printf("check_event g_rcv_event_buf_proc_index count over error\r\n");
         return;
     }
@@ -466,9 +493,9 @@ void check_event(void){
     }
     
     // If an event buffer overflow occurs, call the registered callback function
-    if(g_event_buffer_overflow_flag == UART_DRIVER_FLAG_ON){
+    if(g_event_buffer_overflow_flag == CXM150x_UART_DRIVER_FLAG_ON){
         if(g_event_buffer_overflow_func_p != NULL){
-            g_event_buffer_overflow_flag = UART_DRIVER_FLAG_OFF;
+            g_event_buffer_overflow_flag = CXM150x_UART_DRIVER_FLAG_OFF;
             if(g_eventbuffer_overflow_info != NULL){
                 *g_eventbuffer_overflow_info = EVENT_BUFFER_OVERFLOW;
             }
@@ -485,7 +512,7 @@ void check_event(void){
             // Mark the event message as processed
            //uint32_t len = strlen((char*)proc_event_msg);
            printf("error evt[%ld]:%s\r\n",g_rcv_event_buf_proc_index,(char*)proc_event_msg);
-           memset(&g_event_buf[g_rcv_event_buf_proc_index],'\0',RECEIVE_BUF_SIZE);
+           memset(&g_event_buf[g_rcv_event_buf_proc_index],'\0',CXM150x_RECEIVE_BUF_SIZE);
             
            return;
         }
@@ -507,11 +534,11 @@ void check_event(void){
         else if(strstr((char*)proc_event_msg,"| SYS RESET") != NULL){
             
             // If a message is received other than when waiting for the CXM150x power ON message, perform FATAL message event callback
-            if(g_rcv_power_on_message_wait == UART_DRIVER_FLAG_ON){
+            if(g_rcv_power_on_message_wait == CXM150x_UART_DRIVER_FLAG_ON){
                 // In case of waiting for CXM150x power ON message
-                g_rcv_power_on_message_wait = UART_DRIVER_FLAG_OFF;
+                g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_OFF;
                 if(g_command_response_callback != NULL){
-                    g_command_response_wait_flag = UART_DRIVER_FLAG_OFF;
+                    g_command_response_wait_flag = CXM150x_UART_DRIVER_FLAG_OFF;
                     // Callback processing when waiting for non-block CXM150x power ON message reception
                     CXM150x_CALLBACK_RESPONSE_FUNC_POINTER tmp_func_p = g_command_response_callback;
                     g_command_response_callback = NULL;
@@ -523,8 +550,8 @@ void check_event(void){
             } else {
                 // When not waiting for CXM150x power ON message
                 if(g_FATAL_message_info != NULL){
-                    memcpy(g_FATAL_message_info->m_str,&proc_event_msg[0],RECEIVE_BUF_SIZE);
-                    g_FATAL_message_info->m_str[RECEIVE_BUF_SIZE - 1] = '\0';
+                    memcpy(g_FATAL_message_info->m_str,&proc_event_msg[0],CXM150x_RECEIVE_BUF_SIZE);
+                    g_FATAL_message_info->m_str[CXM150x_RECEIVE_BUF_SIZE - 1] = '\0';
                     proc_event_msg[0] = '\0';
                     if(g_FATAL_message_callback_func_p != NULL){
                         g_FATAL_message_callback_func_p(g_FATAL_message_info,CXM150x_EVENT_CALLBACK_ID_FATAL_MESSAGE_EVENT);
@@ -657,16 +684,16 @@ void check_event(void){
             
             if(g_sys_to_deepsleep_event_info != NULL){
                 g_sys_to_deepsleep_event_info->m_type = TO_DEEPSLEEP_EVENT_TYPE_TO_DSLP;
-                g_sys_to_deepsleep_event_info->m_sleep_time = get_last_uint32(proc_event_msg);
+                g_sys_to_deepsleep_event_info->m_sleep_time = CXM150x_get_last_uint32(proc_event_msg);
                 if(g_sys_to_deepsleep_callback_func_p != NULL){
                     g_sys_to_deepsleep_callback_func_p(g_sys_to_deepsleep_event_info,CXM150x_EVENT_CALLBACK_ID_SYS_TO_DEEP_SLEEP_EVENT);
                 }
             }
         } else if(strstr((char*)proc_event_msg,"| TX PLD") != NULL){
             if(g_tx_payload_event_info != NULL){
-                uint8_t rcv_str_last_word[RECEIVE_BUF_SIZE] = "";
-                if(get_last_word(proc_event_msg,rcv_str_last_word) == CXM150x_RESPONSE_OK){
-                    ascii_to_bin(rcv_str_last_word,g_tx_payload_event_info->m_payload_data,CXM150x_PAYLOAD_LEN*2);
+                uint8_t rcv_str_last_word[CXM150x_RECEIVE_BUF_SIZE] = "";
+                if(CXM150x_get_last_word(proc_event_msg,rcv_str_last_word) == CXM150x_RESPONSE_OK){
+                    CXM150x_ascii_to_bin(rcv_str_last_word,g_tx_payload_event_info->m_payload_data,CXM150x_PAYLOAD_LEN*2);
                 } else {
                     g_tx_payload_event_info->m_payload_data[0] = '\0';
                 }
@@ -676,16 +703,16 @@ void check_event(void){
             }
         } else if(strstr((char*)proc_event_msg,"| TX DUTY") != NULL){
             if(g_tx_duty_event_info != NULL){
-                uint8_t rcv_str_last_word[RECEIVE_BUF_SIZE] = "";
-                if(get_last_word(proc_event_msg,rcv_str_last_word) == CXM150x_RESPONSE_OK){
+                uint8_t rcv_str_last_word[CXM150x_RECEIVE_BUF_SIZE] = "";
+                if(CXM150x_get_last_word(proc_event_msg,rcv_str_last_word) == CXM150x_RESPONSE_OK){
                     if(strstr((char*)rcv_str_last_word,"OK")){
                         g_tx_duty_event_info->m_result = CXM150x_RESPONSE_OK;
-                        strncpy((char*)g_tx_duty_event_info->m_str, (char*)&rcv_str_last_word[5], RECEIVE_BUF_GNSSTIME_SIZE);
-                        g_tx_duty_event_info->m_str[RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
+                        strncpy((char*)g_tx_duty_event_info->m_str, (char*)&rcv_str_last_word[5], CXM150x_RECEIVE_BUF_GNSSTIME_SIZE);
+                        g_tx_duty_event_info->m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
                     }else if(strstr((char*)rcv_str_last_word,"NG")){
                         g_tx_duty_event_info->m_result = CXM150x_RESPONSE_NG;
-                        strncpy((char*)g_tx_duty_event_info->m_str, (char*)&rcv_str_last_word[5], RECEIVE_BUF_GNSSTIME_SIZE);
-                        g_tx_duty_event_info->m_str[RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
+                        strncpy((char*)g_tx_duty_event_info->m_str, (char*)&rcv_str_last_word[5], CXM150x_RECEIVE_BUF_GNSSTIME_SIZE);
+                        g_tx_duty_event_info->m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
                     }else{
                         g_tx_duty_event_info->m_result = CXM150x_RESPONSE_NG;
                         g_tx_duty_event_info->m_str[0] = '\0';
@@ -700,8 +727,8 @@ void check_event(void){
             }
         } else {
             if(g_FATAL_message_info != NULL){
-                memcpy(g_FATAL_message_info->m_str,&proc_event_msg[0],RECEIVE_BUF_SIZE);
-                g_FATAL_message_info->m_str[RECEIVE_BUF_SIZE - 1] = '\0';
+                memcpy(g_FATAL_message_info->m_str,&proc_event_msg[0],CXM150x_RECEIVE_BUF_SIZE);
+                g_FATAL_message_info->m_str[CXM150x_RECEIVE_BUF_SIZE - 1] = '\0';
                 proc_event_msg[0] = '\0';
                 if(g_FATAL_message_callback_func_p != NULL){
                     g_FATAL_message_callback_func_p(g_FATAL_message_info,CXM150x_EVENT_CALLBACK_ID_FATAL_MESSAGE_EVENT);
@@ -711,9 +738,9 @@ void check_event(void){
         
         // Mark the event message as processed
         proc_event_msg[0] = '\0';
-        memset(&g_event_buf[g_rcv_event_buf_proc_index],'\0',RECEIVE_BUF_SIZE);
+        memset(&g_event_buf[g_rcv_event_buf_proc_index],'\0',CXM150x_RECEIVE_BUF_SIZE);
         g_rcv_event_buf_proc_index++;
-        if(g_rcv_event_buf_proc_index >= RECEIVE_EVENT_BUF_SIZE){
+        if(g_rcv_event_buf_proc_index >= CXM150x_RECEIVE_EVENT_BUF_SIZE){
             g_rcv_event_buf_proc_index = 0;
         }
         g_analyse_wait_message_cnt_evt--;
@@ -733,12 +760,12 @@ void check_event(void){
  * @return none
 */
 // ===========================================================================
-void trigger_analyse(void){
+void CXM150x_trigger_analyse(void){
     // Perform recovery processing if a UART error has occurred
-    if(g_uart_error_flg == UART_DRIVER_FLAG_ON){
+    if(g_uart_error_flg == CXM150x_UART_DRIVER_FLAG_ON){
         printf("uart1 error recovery\r\n");
-        init_uart_driver();
-        g_uart_error_flg = UART_DRIVER_FLAG_OFF;
+        CXM150x_init_uart_driver();
+        g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_OFF;
     }
 
     // Monitor command response and judge timeout
@@ -763,22 +790,22 @@ void trigger_analyse(void){
  * @return command transmission result
 */
 // ===========================================================================
-return_code send_and_wait_command_response(uint8_t *cmd,uint8_t *respons_message){
+CXM150x_return_code CXM150x_send_and_wait_command_response(uint8_t *cmd,uint8_t *respons_message){
     g_max_time_out_tick_count = MAX_TIME_OUT_TICK_COUNT;
-    return_code ret = send_command(cmd);
+    CXM150x_return_code ret = send_command(cmd);
     if(ret != RETURN_OK){
         return ret;
     }
     
-    while(g_command_response_wait_flag == UART_DRIVER_FLAG_ON){
-        trigger_analyse();
+    while(g_command_response_wait_flag == CXM150x_UART_DRIVER_FLAG_ON){
+        CXM150x_trigger_analyse();
     }
     
     if(g_command_response_info.m_result_code == COMMAND_RESULT_TIME_OUT){
         return RETURN_TIMEOUT;
     }
     
-    strncpy((char*)respons_message,(char*)g_command_response_info.m_option_str,RECEIVE_BUF_SIZE);
+    strncpy((char*)respons_message,(char*)g_command_response_info.m_option_str,CXM150x_RECEIVE_BUF_SIZE);
     respons_message[strlen((char*)g_command_response_info.m_option_str)] = '\0';
     
     return RETURN_OK;
@@ -798,22 +825,22 @@ return_code send_and_wait_command_response(uint8_t *cmd,uint8_t *respons_message
  * @return command transmission result
 */
 // ===========================================================================
-return_code send_and_wait_command_response_long_wait(uint8_t *cmd,uint8_t *respons_message,uint32_t max_wait){
+CXM150x_return_code CXM150x_send_and_wait_command_response_long_wait(uint8_t *cmd,uint8_t *respons_message,uint32_t max_wait){
     g_max_time_out_tick_count = max_wait;
-    return_code ret = send_command(cmd);
+    CXM150x_return_code ret = send_command(cmd);
     if(ret != RETURN_OK){
         return ret;
     }
     
-    while(g_command_response_wait_flag == UART_DRIVER_FLAG_ON){
-        trigger_analyse();
+    while(g_command_response_wait_flag == CXM150x_UART_DRIVER_FLAG_ON){
+        CXM150x_trigger_analyse();
     }
     
     if(g_command_response_info.m_result_code == COMMAND_RESULT_TIME_OUT){
         return RETURN_TIMEOUT;
     }
     
-    strncpy((char*)respons_message,(char*)g_command_response_info.m_option_str,RECEIVE_BUF_SIZE);
+    strncpy((char*)respons_message,(char*)g_command_response_info.m_option_str,CXM150x_RECEIVE_BUF_SIZE);
     respons_message[strlen((char*)g_command_response_info.m_option_str)] = '\0';
     
     return RETURN_OK;
@@ -838,9 +865,9 @@ return_code send_and_wait_command_response_long_wait(uint8_t *cmd,uint8_t *respo
  * @return command transmission result
 */
 // ===========================================================================
-return_code send_and_register_callback(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct){
+CXM150x_return_code CXM150x_send_and_register_callback(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct){
     g_max_time_out_tick_count = MAX_TIME_OUT_TICK_COUNT;
-    return_code ret = send_command(cmd);
+    CXM150x_return_code ret = send_command(cmd);
     if(ret != RETURN_OK){
         return ret;
     }
@@ -871,9 +898,9 @@ return_code send_and_register_callback(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FU
  * @return command transmission result
 */
 // ===========================================================================
-return_code send_and_register_callback_long_wait(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct,uint32_t max_wait){
+CXM150x_return_code CXM150x_send_and_register_callback_long_wait(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct,uint32_t max_wait){
     g_max_time_out_tick_count = max_wait;
-    return_code ret = send_command(cmd);
+    CXM150x_return_code ret = send_command(cmd);
     if(ret != RETURN_OK){
         return ret;
     }
@@ -899,20 +926,20 @@ return_code send_and_register_callback_long_wait(uint8_t *cmd,CXM150x_CALLBACK_R
  * @return command transmission result
 */
 // ===========================================================================
-return_code wait_power_on_message(void){
-    g_rcv_power_on_message_wait = UART_DRIVER_FLAG_ON;
+CXM150x_return_code CXM150x_wait_power_on_message(void){
+    g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_ON;
     g_max_time_out_tick_count = MAX_POWER_ON_TIME_OUT_TICK_COUNT;
     g_command_send_tick_count = wrapper_CXM150x_get_tick();
     
     uint32_t start_tm = wrapper_CXM150x_get_tick();
     while(1){
-        if(g_rcv_power_on_message_wait == UART_DRIVER_FLAG_OFF){
+        if(g_rcv_power_on_message_wait == CXM150x_UART_DRIVER_FLAG_OFF){
             break;
         }
-        trigger_analyse();
+        CXM150x_trigger_analyse();
         // Check for timeout
         if(wrapper_CXM150x_get_tick() - start_tm > MAX_POWER_ON_TIME_OUT_TICK_COUNT){
-            printf("wait_power_on_message timeout\r\n");
+            printf("CXM150x_wait_power_on_message timeout\r\n");
             return RETURN_TIMEOUT;
         }
     }
@@ -939,15 +966,15 @@ return_code wait_power_on_message(void){
  * @return processing result
 */
 // ===========================================================================
-return_code prep_wait_power_on_message(CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct){
-    if(g_command_response_wait_flag == UART_DRIVER_FLAG_ON){
+CXM150x_return_code CXM150x_prep_wait_power_on_message(CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct){
+    if(g_command_response_wait_flag == CXM150x_UART_DRIVER_FLAG_ON){
         printf("BUSY:POWER ON\r\n");
         return RETURN_BUSY;
     }
     
     g_max_time_out_tick_count = MAX_POWER_ON_TIME_OUT_TICK_COUNT;
 
-    g_rcv_power_on_message_wait = UART_DRIVER_FLAG_ON;
+    g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_ON;
     g_command_response_callback = res_func;
     g_command_response_parse_func = parse_func;
     g_response_parse_struct = ret_struct;
@@ -969,8 +996,8 @@ return_code prep_wait_power_on_message(CXM150x_CALLBACK_RESPONSE_FUNC_POINTER re
  * @return processing result
 */
 // ===========================================================================
-return_code prep_wait_power_on_message_reset(void){
-    g_rcv_power_on_message_wait = UART_DRIVER_FLAG_ON;
+CXM150x_return_code CXM150x_prep_wait_power_on_message_reset(void){
+    g_rcv_power_on_message_wait = CXM150x_UART_DRIVER_FLAG_ON;
     g_max_time_out_tick_count = MAX_POWER_ON_TIME_OUT_TICK_COUNT;
     
     return RETURN_OK;
@@ -992,10 +1019,10 @@ return_code prep_wait_power_on_message_reset(void){
 uint32_t get_CXM150x_Rx_message_count(void){
     
     // Perform recovery processing if a UART error has occurred
-    if(g_uart_error_flg == UART_DRIVER_FLAG_ON){
+    if(g_uart_error_flg == CXM150x_UART_DRIVER_FLAG_ON){
         printf("uart1 error recovery\r\n");
-        init_uart_driver();
-        g_uart_error_flg = UART_DRIVER_FLAG_OFF;
+        CXM150x_init_uart_driver();
+        g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_OFF;
     }
     
     return (g_analyse_wait_message_cnt_res + g_analyse_wait_message_cnt_evt);

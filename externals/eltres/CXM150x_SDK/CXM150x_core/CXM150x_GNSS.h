@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (GNSS group command)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -39,11 +39,11 @@
 
 #include "CXM150x_APITypeDef.h"
 
-return_code get_CXM150x_GNSS_firmware_version(void *param,CmdResGetCXM150xGNSSFirmwareVersion *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_GNSS_firmware_version(void *param,CmdResGetCXM150xGNSSFirmwareVersion *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_GNSS_state_event(CXM150xGNSSState *info,CXM150x_CALLBACK_FUNC_POINTER func);
-return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_GNSS_state_event_info(void *param, CmdResGetCXM150xGnssStateEventInfo *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_GNSS_state_event_info(void *param, CmdResGetCXM150xGnssStateEventInfo *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAGGA_event(CXM150xNMEAGGAInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAGLL_event(CXM150xNMEAGLLInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAGNS_event(CXM150xNMEAGNSInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
@@ -54,10 +54,10 @@ CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAVTG_event(CXM150xNMEAVTGInfo 
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAZDA_event(CXM150xNMEAZDAInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAPSGES_event(CXM150xNMEAPSGESInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAPSLES_event(CXM150xNMEAPSLESInfo *info,CXM150x_CALLBACK_FUNC_POINTER func);
-return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
 CXM150xGNSSState conv_gnss_stt_message_to_code(uint8_t *msg);
-return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData*param, CmdResSetCXM150xGNSSPosition *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code set_CXM150x_GNSS_datetime (uint8_t *param, CmdResSetCXM150xGNSSDateTime *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData*param, CmdResSetCXM150xGNSSPosition *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_GNSS_datetime (uint8_t *param, CmdResSetCXM150xGNSSDateTime *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
 
 #endif // __CXM150x_GNSS_H

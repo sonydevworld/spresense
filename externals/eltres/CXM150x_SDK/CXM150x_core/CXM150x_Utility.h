@@ -4,7 +4,7 @@
 * @brief    utility function
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -51,12 +51,12 @@ uint32_t parse_nmea_sentence_vtg(uint8_t *p_nmea_str, CXM150xNMEAVTGInfo *p_vtg)
 uint32_t parse_nmea_sentence_zda(uint8_t *p_nmea_str, CXM150xNMEAZDAInfo *p_zda);
 uint32_t parse_nmea_sentence_psges(uint8_t *p_nmea_str, CXM150xNMEAPSGESInfo *p_psges);
 uint32_t parse_nmea_sentence_psles(uint8_t *p_nmea_str, CXM150xNMEAPSLESInfo *p_psles);
-int32_t chk_response_error(uint8_t *str);
-int32_t get_last_word(uint8_t *msg,uint8_t *word);
-int32_t check_last_ok_ng(uint8_t *msg);
-int32_t check_last_on_off(uint8_t *msg);
-void ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len);
-uint32_t get_last_uint32(uint8_t *msg);
+int32_t CXM150x_chk_response_error(uint8_t *str);
+int32_t CXM150x_get_last_word(uint8_t *msg,uint8_t *word);
+int32_t CXM150x_check_last_ok_ng(uint8_t *msg);
+int32_t CXM150x_check_last_on_off(uint8_t *msg);
+void CXM150x_ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len);
+uint32_t CXM150x_get_last_uint32(uint8_t *msg);
 
 #endif // __CXM150x_UTILITY_H
 

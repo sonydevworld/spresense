@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (for CONTROL FW UPDATE mode)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -62,7 +62,7 @@
  * @return message length
 */
 // ===========================================================================
-uint8_t create_tx_data(uint8_t cmd,uint8_t *data,uint8_t data_len,uint8_t *send_buf){
+static uint8_t create_tx_data(uint8_t cmd,uint8_t *data,uint8_t data_len,uint8_t *send_buf){
     uint32_t sum = 0;
     uint8_t msg_len;
     send_buf[CXM150x_CTRL_FW_UPDATE_API_POS_SD0] = CXM150x_CTRL_FW_UPDATE_API_SD;
@@ -108,7 +108,7 @@ uint8_t create_tx_data(uint8_t cmd,uint8_t *data,uint8_t data_len,uint8_t *send_
  * @return Value converted to uint32_t
 */
 // ===========================================================================
-uint32_t conv_uint32_big_endian(uint8_t *little_endian_bytes){
+static uint32_t conv_uint32_big_endian(uint8_t *little_endian_bytes){
     return (little_endian_bytes[3] << 24) + (little_endian_bytes[2] << 16) + (little_endian_bytes[1] << 8) + little_endian_bytes[0];
 }
 
@@ -125,7 +125,7 @@ uint32_t conv_uint32_big_endian(uint8_t *little_endian_bytes){
  * @return none
 */
 // ===========================================================================
-void conv_uint32_little_endian(uint32_t big_endian_val,uint8_t *little_endian_bytes){
+static void conv_uint32_little_endian(uint32_t big_endian_val,uint8_t *little_endian_bytes){
     little_endian_bytes[0] = (big_endian_val & 0x000000FF);
     little_endian_bytes[1] = (big_endian_val & 0x0000FF00) >> 8;
     little_endian_bytes[2] = (big_endian_val & 0x00FF0000) >> 16;
@@ -145,7 +145,7 @@ void conv_uint32_little_endian(uint32_t big_endian_val,uint8_t *little_endian_by
  * @return none
 */
 // ===========================================================================
-void get_res_data_str(uint8_t *recv_buf,uint8_t *data_str){
+static void get_res_data_str(uint8_t *recv_buf,uint8_t *data_str){
     uint8_t *st_p;
     // Convert the string length in the first 4 bytes of the DATA section in little endian format
     uint8_t str_len = conv_uint32_big_endian(&recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_DATA]);
@@ -184,7 +184,7 @@ void get_res_data_str(uint8_t *recv_buf,uint8_t *data_str){
  * @return ACK receive result
 */
 // ===========================================================================
-uint32_t check_ack(uint8_t *recv_buf){
+static uint32_t check_ack(uint8_t *recv_buf){
     
     // Send message format check (whether the first byte starts with 0x68)
     if(recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_SD0] != CXM150x_CTRL_FW_UPDATE_API_SD){
@@ -213,7 +213,7 @@ uint32_t check_ack(uint8_t *recv_buf){
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_ctrl_fw_update_routine_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateRoutineName *res){
+static void res_check_get_CXM150x_ctrl_fw_update_routine_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateRoutineName *res){
     // Set the character string stored in the DATA section as a response
     if(res != NULL){
         get_res_data_str(recv_buf,res->m_str);
@@ -233,8 +233,8 @@ void res_check_get_CXM150x_ctrl_fw_update_routine_name(uint8_t *recv_buf,CmdResG
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_ctrl_fw_update_routine_name(void *param, CmdResGetCtrlFWUpdateRoutineName *res){
-    return_code ret;
+CXM150x_return_code get_CXM150x_ctrl_fw_update_routine_name(void *param, CmdResGetCtrlFWUpdateRoutineName *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -273,7 +273,7 @@ return_code get_CXM150x_ctrl_fw_update_routine_name(void *param, CmdResGetCtrlFW
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_ctrl_fw_update_version(uint8_t *recv_buf,CmdResGetCtrlFWUpdateVersion *res){
+static void res_check_get_CXM150x_ctrl_fw_update_version(uint8_t *recv_buf,CmdResGetCtrlFWUpdateVersion *res){
     // Endian conversion of version number stored in DATA section and set as response
     if(res != NULL){
         res->m_num = conv_uint32_big_endian(&recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_DATA]);
@@ -293,8 +293,8 @@ void res_check_get_CXM150x_ctrl_fw_update_version(uint8_t *recv_buf,CmdResGetCtr
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_ctrl_fw_update_version(void* param, CmdResGetCtrlFWUpdateVersion *res){
-    return_code ret;
+CXM150x_return_code get_CXM150x_ctrl_fw_update_version(void* param, CmdResGetCtrlFWUpdateVersion *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -333,7 +333,7 @@ return_code get_CXM150x_ctrl_fw_update_version(void* param, CmdResGetCtrlFWUpdat
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_ctrl_fw_update_company_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateCompanyName *res){
+static void res_check_get_CXM150x_ctrl_fw_update_company_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateCompanyName *res){
     // Set the character string stored in the DATA section as a response
     if(res != NULL){
         get_res_data_str(recv_buf,res->m_str);
@@ -353,8 +353,8 @@ void res_check_get_CXM150x_ctrl_fw_update_company_name(uint8_t *recv_buf,CmdResG
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_ctrl_fw_update_company_name(void* param, CmdResGetCtrlFWUpdateCompanyName *res){
-    return_code ret;
+CXM150x_return_code get_CXM150x_ctrl_fw_update_company_name(void* param, CmdResGetCtrlFWUpdateCompanyName *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -393,7 +393,7 @@ return_code get_CXM150x_ctrl_fw_update_company_name(void* param, CmdResGetCtrlFW
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_ctrl_fw_update_device_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateDeviceName *res){
+static void res_check_get_CXM150x_ctrl_fw_update_device_name(uint8_t *recv_buf,CmdResGetCtrlFWUpdateDeviceName *res){
     // Set the character string stored in the DATA section as a response
     if(res != NULL){
         get_res_data_str(recv_buf,res->m_str);
@@ -413,8 +413,8 @@ void res_check_get_CXM150x_ctrl_fw_update_device_name(uint8_t *recv_buf,CmdResGe
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_ctrl_fw_update_device_name(void* param, CmdResGetCtrlFWUpdateDeviceName *res){
-    return_code ret;
+CXM150x_return_code get_CXM150x_ctrl_fw_update_device_name(void* param, CmdResGetCtrlFWUpdateDeviceName *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -453,7 +453,7 @@ return_code get_CXM150x_ctrl_fw_update_device_name(void* param, CmdResGetCtrlFWU
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_ctrl_fw_update_state(uint8_t *recv_buf,CmdResGetCtrlFWUpdateState *res){
+static void res_check_get_CXM150x_ctrl_fw_update_state(uint8_t *recv_buf,CmdResGetCtrlFWUpdateState *res){
     if(res != NULL){
         uint32_t recv_val = conv_uint32_big_endian(&recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_DATA]);
         switch(recv_val){
@@ -495,8 +495,8 @@ void res_check_get_CXM150x_ctrl_fw_update_state(uint8_t *recv_buf,CmdResGetCtrlF
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_ctrl_fw_update_state(uint32_t param, CmdResGetCtrlFWUpdateState *res){
-    return_code ret;
+CXM150x_return_code get_CXM150x_ctrl_fw_update_state(uint32_t param, CmdResGetCtrlFWUpdateState *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -554,12 +554,12 @@ return_code get_CXM150x_ctrl_fw_update_state(uint32_t param, CmdResGetCtrlFWUpda
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_ctrl_fw_update_end_request_type_A(uint8_t *recv_buf,CmdResSetCtrlFWUpdateEndRequest *res){
+static void res_check_set_CXM150x_ctrl_fw_update_end_request_type_A(uint8_t *recv_buf,CmdResSetCtrlFWUpdateEndRequest *res){
     if(res != NULL){
         if(recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_SD0] != CXM150x_CTRL_FW_UPDATE_API_SD){
             // After the update is completed, if "| SYS UPDATE OK" message is received, it ends normally
             if(strstr((char*)recv_buf,CXM150x_CTRL_FW_UPDATE_API_POWER_ON_MESSAGE_TYPE_A)){
-                if(check_last_ok_ng(recv_buf) == CXM150x_RESPONSE_OK){
+                if(CXM150x_check_last_ok_ng(recv_buf) == CXM150x_RESPONSE_OK){
                     res->m_result = CXM150x_RESPONSE_OK;
                 } else {
                     res->m_result = CXM150x_RESPONSE_NG;
@@ -586,7 +586,7 @@ void res_check_set_CXM150x_ctrl_fw_update_end_request_type_A(uint8_t *recv_buf,C
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_ctrl_fw_update_end_request_type_B(uint8_t *recv_buf,CmdResSetCtrlFWUpdateEndRequest *res){
+static void res_check_set_CXM150x_ctrl_fw_update_end_request_type_B(uint8_t *recv_buf,CmdResSetCtrlFWUpdateEndRequest *res){
     if(res != NULL){
         if(recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_SD0] != CXM150x_CTRL_FW_UPDATE_API_SD){
             // After the update is completed, if the "| SYS RESET POR_PIN" message can be received, the process ends normally.
@@ -615,8 +615,8 @@ void res_check_set_CXM150x_ctrl_fw_update_end_request_type_B(uint8_t *recv_buf,C
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_ctrl_fw_update_end_request(CXM150xFWUpdateType param, CmdResSetCtrlFWUpdateEndRequest *res){
-    return_code ret;
+CXM150x_return_code set_CXM150x_ctrl_fw_update_end_request(CXM150xFWUpdateType param, CmdResSetCtrlFWUpdateEndRequest *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint32_t ack_check_result;
@@ -680,7 +680,7 @@ return_code set_CXM150x_ctrl_fw_update_end_request(CXM150xFWUpdateType param, Cm
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_ctrl_fw_update_data(uint8_t *recv_buf,CmdResSetCtrlFWUpdateData *res){
+static void res_check_set_CXM150x_ctrl_fw_update_data(uint8_t *recv_buf,CmdResSetCtrlFWUpdateData *res){
     if(res != NULL){
         // Normal termination if ACK can be received
          res->m_result = check_ack(recv_buf);
@@ -700,8 +700,8 @@ void res_check_set_CXM150x_ctrl_fw_update_data(uint8_t *recv_buf,CmdResSetCtrlFW
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_ctrl_fw_update_data(CXM150xFWUpdateSetData* param, CmdResSetCtrlFWUpdateData *res){
-    return_code ret;
+CXM150x_return_code set_CXM150x_ctrl_fw_update_data(CXM150xFWUpdateSetData* param, CmdResSetCtrlFWUpdateData *res){
+    CXM150x_return_code ret;
     uint8_t send_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     uint8_t recv_buf[CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN] = "";
     
@@ -791,7 +791,7 @@ return_code set_CXM150x_ctrl_fw_update_data(CXM150xFWUpdateSetData* param, CmdRe
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *param, CmdResSetCtrlFWUpdatePower *res){
+CXM150x_return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *param, CmdResSetCtrlFWUpdatePower *res){
     if(param == NULL){
         return RETURN_NG;
     }

@@ -43,7 +43,6 @@
 #include "CXM150x_Port.h"
 /* Includes ------------------------------------------------------------------*/
 int main_standalone_mode_sample_app(void);
-void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt);
 
 /* Private define ------------------------------------------------------------*/
 

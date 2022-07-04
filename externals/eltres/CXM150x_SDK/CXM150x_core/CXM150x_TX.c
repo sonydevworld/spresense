@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (TX group command)
 * @date     2021/12/27
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -42,6 +42,9 @@
 #include "CXM150x_Port.h"
 #include "CXM150x_Utility.h"
 
+// Profile changing timeout time
+#define MAX_SET_PROFILE_TIME_OUT_TICK_COUNT     (50000)
+
 extern CXM150xTxState *g_tx_state_info;
 extern CXM150x_CALLBACK_FUNC_POINTER g_tx_prev_stt_callback_func_p;
 extern CXM150xTxPoCEnableMessage *g_tx_poc_enable_message_event_info;
@@ -64,13 +67,13 @@ extern CXM150x_CALLBACK_FUNC_POINTER g_tx_duty_event_callback_func_p;
  * @return none
 */
 // ===========================================================================
-void res_check_set_LPWA_payload(uint8_t *response,void *res_buf){
+static void res_check_set_LPWA_payload(uint8_t *response,void *res_buf){
     CmdResSetCXM150xLPWAPayload *res = (CmdResSetCXM150xLPWAPayload*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -95,12 +98,12 @@ void res_check_set_LPWA_payload(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_LPWA_payload(uint8_t *payload,CmdResSetCXM150xLPWAPayload *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_LPWA_payload(uint8_t *payload,CmdResSetCXM150xLPWAPayload *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PLD SET ABCDEF00000000000000000000000000
     //> TX PLD SET OK
     
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResSetCXM150xLPWAPayload));
@@ -119,10 +122,10 @@ return_code set_CXM150x_LPWA_payload(uint8_t *payload,CmdResSetCXM150xLPWAPayloa
     strncat((char*)command,"\r\n",2);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_LPWA_payload,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_LPWA_payload,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -147,11 +150,11 @@ return_code set_CXM150x_LPWA_payload(uint8_t *payload,CmdResSetCXM150xLPWAPayloa
  * @return none
 */
 // ===========================================================================
-void res_check_get_prev_LPWA_tx_data(uint8_t *response,void *res_buf){
+static void res_check_get_prev_LPWA_tx_data(uint8_t *response,void *res_buf){
     CmdResGetCXM150xPrevLPWATxData *res = (CmdResGetCXM150xPrevLPWATxData*)res_buf;
     if(res != NULL){
         // Check the response message error from CXM (Error; Invalid Param, etc.)
-        if(chk_response_error(response) != CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) != CXM150x_RESPONSE_OK){
             res->m_str[0] = '\0';
             return;
         }
@@ -159,9 +162,9 @@ void res_check_get_prev_LPWA_tx_data(uint8_t *response,void *res_buf){
         memset(res,'\0',sizeof(CmdResGetCXM150xPrevLPWATxData));
         
         // ASCII-> byte array conversion
-        uint8_t rcv_str_last_word[RECEIVE_BUF_SIZE] = "";
-        if(get_last_word(response,rcv_str_last_word) == CXM150x_RESPONSE_OK){
-            ascii_to_bin(rcv_str_last_word,res->m_str,CXM150x_PAYLOAD_LEN*2);
+        uint8_t rcv_str_last_word[CXM150x_RECEIVE_BUF_SIZE] = "";
+        if(CXM150x_get_last_word(response,rcv_str_last_word) == CXM150x_RESPONSE_OK){
+            CXM150x_ascii_to_bin(rcv_str_last_word,res->m_str,CXM150x_PAYLOAD_LEN*2);
         } else {
             res->m_str[0] = '\0';
         }
@@ -182,12 +185,12 @@ void res_check_get_prev_LPWA_tx_data(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_prev_LPWA_tx_data(void *param,CmdResGetCXM150xPrevLPWATxData *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_prev_LPWA_tx_data(void *param,CmdResGetCXM150xPrevLPWATxData *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PREV_PLD GET
     //> TX PREV_PLD GET 333535332E33353831333934372E3331
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResGetCXM150xPrevLPWATxData));
@@ -196,10 +199,10 @@ return_code get_CXM150x_prev_LPWA_tx_data(void *param,CmdResGetCXM150xPrevLPWATx
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_PREV_PLD,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_prev_LPWA_tx_data,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_prev_LPWA_tx_data,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -223,11 +226,11 @@ return_code get_CXM150x_prev_LPWA_tx_data(void *param,CmdResGetCXM150xPrevLPWATx
  * @return none
 */
 // ===========================================================================
-void res_check_get_LPWA_payload(uint8_t *response,void *res_buf){
+static void res_check_get_LPWA_payload(uint8_t *response,void *res_buf){
     CmdResGetCXM150xLPWAPayload *res = (CmdResGetCXM150xLPWAPayload*)res_buf;
     if(res != NULL){
         // Check the response message error from CXM (Error; Invalid Param, etc.)
-        if(chk_response_error(response) != CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) != CXM150x_RESPONSE_OK){
             res->m_str[0] = '\0';
             return;
         }
@@ -235,9 +238,9 @@ void res_check_get_LPWA_payload(uint8_t *response,void *res_buf){
         memset(res,'\0',sizeof(CmdResGetCXM150xLPWAPayload));
         
         // ASCII-> byte array conversion
-        uint8_t rcv_str_last_word[RECEIVE_BUF_SIZE] = "";
-        if(get_last_word(response,rcv_str_last_word) == CXM150x_RESPONSE_OK){
-            ascii_to_bin(rcv_str_last_word,res->m_str,CXM150x_PAYLOAD_LEN*2);
+        uint8_t rcv_str_last_word[CXM150x_RECEIVE_BUF_SIZE] = "";
+        if(CXM150x_get_last_word(response,rcv_str_last_word) == CXM150x_RESPONSE_OK){
+            CXM150x_ascii_to_bin(rcv_str_last_word,res->m_str,CXM150x_PAYLOAD_LEN*2);
         } else {
             res->m_str[0] = '\0';
         }
@@ -258,12 +261,12 @@ void res_check_get_LPWA_payload(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_LPWA_payload(void *param,CmdResGetCXM150xLPWAPayload *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_LPWA_payload(void *param,CmdResGetCXM150xLPWAPayload *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PLD GET
     //> TX PLD GET 30303030303030303030303030303030
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResGetCXM150xLPWAPayload));
@@ -272,10 +275,10 @@ return_code get_CXM150x_LPWA_payload(void *param,CmdResGetCXM150xLPWAPayload *re
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_PLD,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_LPWA_payload,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_LPWA_payload,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -323,13 +326,13 @@ CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_tx_state_event(CXM150xTxState *in
  * @return none
 */
 // ===========================================================================
-void res_check_set_tx_state_event(uint8_t *response,void *res_buf){
+static void res_check_set_tx_state_event(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTxStateEvent *res = (CmdResSetCXM150xTxStateEvent*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -354,12 +357,12 @@ void res_check_set_tx_state_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_tx_state_event(uint32_t on_off,CmdResSetCXM150xTxStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_tx_state_event(uint32_t on_off,CmdResSetCXM150xTxStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PREV_STT SET_EVT ON
     //> TX PREV_STT SET_EVT OK
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResSetCXM150xTxStateEvent));
@@ -373,10 +376,10 @@ return_code set_CXM150x_tx_state_event(uint32_t on_off,CmdResSetCXM150xTxStateEv
     
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_tx_state_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_tx_state_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -401,12 +404,12 @@ return_code set_CXM150x_tx_state_event(uint32_t on_off,CmdResSetCXM150xTxStateEv
  * @return none
 */
 // ===========================================================================
-void res_check_get_tx_state_event(uint8_t *response,void *res_buf){
+static void res_check_get_tx_state_event(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTxStateEvent *res = (CmdResGetCXM150xTxStateEvent*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            res->m_num = check_last_on_off(response);
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            res->m_num = CXM150x_check_last_on_off(response);
         } else {
             res->m_num = CXM150x_RESPONSE_ERROR;
         }
@@ -427,10 +430,10 @@ void res_check_get_tx_state_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_tx_state_event(void *param,CmdResGetCXM150xTxStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_tx_state_event(void *param,CmdResGetCXM150xTxStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PREV_STT GET_EVT
     //> TX PREV_STT GET_EVT ON
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -438,10 +441,10 @@ return_code get_CXM150x_tx_state_event(void *param,CmdResGetCXM150xTxStateEvent 
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_PREV_STT,CXM150x_COMMAND_GET_EVT);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_tx_state_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_tx_state_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -469,7 +472,7 @@ return_code get_CXM150x_tx_state_event(void *param,CmdResGetCXM150xTxStateEvent 
 // ===========================================================================
 CXM150xTxState conv_tx_stt_message_to_code(uint8_t *msg){
     uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-    get_last_word(msg,(uint8_t*)last_word);
+    CXM150x_get_last_word(msg,(uint8_t*)last_word);
     // At first, check the message if the last word is "CS_*"
     if(strstr((char*)last_word,"CS_OK")){
         return TX_PREV_STT_CS_OK;
@@ -498,19 +501,19 @@ CXM150xTxState conv_tx_stt_message_to_code(uint8_t *msg){
  * @return none
 */
 // ===========================================================================
-void res_check_get_prev_LPWA_tx_time(uint8_t *response,void *res_buf){
+static void res_check_get_prev_LPWA_tx_time(uint8_t *response,void *res_buf){
     CmdResGetCXM150xPrevLPWATxTime *res = (CmdResGetCXM150xPrevLPWATxTime*)res_buf;
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // Parse CXM150x response message
     if(res != NULL){
         //Error checking
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
-            if(get_last_word(response,buf) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,buf) == CXM150x_RESPONSE_OK){
                 // buf [2]-> Since "0x" is prefixed, parse from the third character
-                strncpy((char*)res->m_str, (char*)&buf[2], RECEIVE_BUF_GNSSTIME_SIZE);
-                res->m_str[RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
+                strncpy((char*)res->m_str, (char*)&buf[2], CXM150x_RECEIVE_BUF_GNSSTIME_SIZE);
+                res->m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
             } else {
                 res->m_str[0] = '\0';
             }
@@ -535,12 +538,12 @@ void res_check_get_prev_LPWA_tx_time(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_prev_LPWA_tx_time(void *param,CmdResGetCXM150xPrevLPWATxTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_prev_LPWA_tx_time(void *param,CmdResGetCXM150xPrevLPWATxTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX PREV_TIME GET
     //> TX PREV_TIME GET 0x7D044AFC
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResGetCXM150xPrevLPWATxTime));
@@ -549,10 +552,10 @@ return_code get_CXM150x_prev_LPWA_tx_time(void *param,CmdResGetCXM150xPrevLPWATx
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_PREV_TIME,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_prev_LPWA_tx_time,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_prev_LPWA_tx_time,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -577,19 +580,19 @@ return_code get_CXM150x_prev_LPWA_tx_time(void *param,CmdResGetCXM150xPrevLPWATx
  * @return none
 */
 // ===========================================================================
-void res_check_get_next_LPWA_tx_time(uint8_t *response,void *res_buf){
+static void res_check_get_next_LPWA_tx_time(uint8_t *response,void *res_buf){
     CmdResGetCXM150xNextLPWATxTime *res = (CmdResGetCXM150xNextLPWATxTime*)res_buf;
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // Parse CXM150x response message
     if(res != NULL){
         //Error checking
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
-            if(get_last_word(response,buf) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,buf) == CXM150x_RESPONSE_OK){
                 // buf [2]-> Since "0x" is prefixed, parse from the third character
-                strncpy((char*)res->m_str, (char*)&buf[2], RECEIVE_BUF_GNSSTIME_SIZE);
-                res->m_str[RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
+                strncpy((char*)res->m_str, (char*)&buf[2], CXM150x_RECEIVE_BUF_GNSSTIME_SIZE);
+                res->m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE] = '\0';
             } else {
                 res->m_str[0] = '\0';
             }
@@ -614,12 +617,12 @@ void res_check_get_next_LPWA_tx_time(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_next_LPWA_tx_time(void *param,CmdResGetCXM150xNextLPWATxTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_next_LPWA_tx_time(void *param,CmdResGetCXM150xNextLPWATxTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX NEXT_TIME GET
     //> TX NEXT_TIME GET 0x7D045204
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     memset(res,0,sizeof(CmdResGetCXM150xNextLPWATxTime));
@@ -628,10 +631,10 @@ return_code get_CXM150x_next_LPWA_tx_time(void *param,CmdResGetCXM150xNextLPWATx
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_NEXT_TIME,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_next_LPWA_tx_time,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_next_LPWA_tx_time,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -656,13 +659,13 @@ return_code get_CXM150x_next_LPWA_tx_time(void *param,CmdResGetCXM150xNextLPWATx
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_tx_profile(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_tx_profile(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTxProfile *res = (CmdResSetCXM150xTxProfile*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -687,12 +690,12 @@ void res_check_set_CXM150x_tx_profile(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_tx_profile(uint32_t param, CmdResSetCXM150xTxProfile *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_tx_profile(uint32_t param, CmdResSetCXM150xTxProfile *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX CUR_FRM_TYPE SET P,1
     //> TX CUR_FRM_TYPE SET OK
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     uint8_t *mode = NULL;
@@ -719,10 +722,10 @@ return_code set_CXM150x_tx_profile(uint32_t param, CmdResSetCXM150xTxProfile *re
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_CUR_FRM_TYPE,CXM150x_COMMAND_SET,mode);
     
     if(func != NULL){
-        return send_and_register_callback_long_wait(command,func,res_check_set_CXM150x_tx_profile,res,MAX_SET_PROFILE_TIME_OUT_TICK_COUNT);
+        return CXM150x_send_and_register_callback_long_wait(command,func,res_check_set_CXM150x_tx_profile,res,MAX_SET_PROFILE_TIME_OUT_TICK_COUNT);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response_long_wait(command,response,MAX_SET_PROFILE_TIME_OUT_TICK_COUNT);
+        ret = CXM150x_send_and_wait_command_response_long_wait(command,response,MAX_SET_PROFILE_TIME_OUT_TICK_COUNT);
     }
     
     if(ret != RETURN_OK){
@@ -750,15 +753,15 @@ return_code set_CXM150x_tx_profile(uint32_t param, CmdResSetCXM150xTxProfile *re
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_tx_profile(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_tx_profile(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTxProfile *res = (CmdResGetCXM150xTxProfile*)res_buf;
     if(res != NULL){
         // Check the response message error from CXM (Error; Invalid Param, etc.)
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             
             // Determine response mesage
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_NG){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_NG){
                 res->m_num = CXM150x_RESPONSE_ERROR;
             } else {
                 // Note: "CXM150x_COMMAND_TX_CUR_FRM_TYPE_MODE_STR_P1" , "CXM150x_COMMAND_TX_CUR_FRM_TYPE_MODE_STR_P2"
@@ -795,22 +798,22 @@ void res_check_get_CXM150x_tx_profile(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_tx_profile(void* param, CmdResGetCXM150xTxProfile *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_tx_profile(void* param, CmdResGetCXM150xTxProfile *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX CUR_FRM_TYPE GET
     //> TX CUR_FRM_TYPE GET P,1
 
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_CUR_FRM_TYPE,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_tx_profile,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_tx_profile,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -835,13 +838,13 @@ return_code get_CXM150x_tx_profile(void* param, CmdResGetCXM150xTxProfile *res, 
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_tx_PoC_enable(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_tx_PoC_enable(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTxPoCEnable *res = (CmdResSetCXM150xTxPoCEnable*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -866,22 +869,22 @@ void res_check_set_CXM150x_tx_PoC_enable(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_tx_PoC_enable(void *param, CmdResSetCXM150xTxPoCEnable *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_tx_PoC_enable(void *param, CmdResSetCXM150xTxPoCEnable *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX POC_EN SET ON
     //> TX POC_EN SET OK
     
-    return_code ret;
-    uint8_t command[RECEIVE_BUF_SIZE] = "";
+    CXM150x_return_code ret;
+    uint8_t command[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_POC_EN,CXM150x_COMMAND_SET,CXM150x_COMMAND_ON);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_tx_PoC_enable,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_tx_PoC_enable,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -906,13 +909,13 @@ return_code set_CXM150x_tx_PoC_enable(void *param, CmdResSetCXM150xTxPoCEnable *
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_tx_duty_event(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_tx_duty_event(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTxDutyEvent *res = (CmdResSetCXM150xTxDutyEvent*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -937,13 +940,13 @@ void res_check_set_CXM150x_tx_duty_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_tx_duty_event(uint32_t on_off, CmdResSetCXM150xTxDutyEvent *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_tx_duty_event(uint32_t on_off, CmdResSetCXM150xTxDutyEvent *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX DUTY SET_EVT ON
     //> TX DUTY SET_EVT OK
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
-    uint8_t response[RECEIVE_BUF_SIZE] = "";
+    uint8_t response[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     
     // Create command string
@@ -955,10 +958,10 @@ return_code set_CXM150x_tx_duty_event(uint32_t on_off, CmdResSetCXM150xTxDutyEve
 
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_tx_duty_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_tx_duty_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -983,12 +986,12 @@ return_code set_CXM150x_tx_duty_event(uint32_t on_off, CmdResSetCXM150xTxDutyEve
  * @return none
 */
 // ===========================================================================
-void res_check_get_tx_duty_event(uint8_t *response,void *res_buf){
+static void res_check_get_tx_duty_event(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTxDutyEvent *res = (CmdResGetCXM150xTxDutyEvent*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            res->m_num = check_last_on_off(response);
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            res->m_num = CXM150x_check_last_on_off(response);
         } else {
             res->m_num = CXM150x_RESPONSE_ERROR;
         }
@@ -1009,21 +1012,21 @@ void res_check_get_tx_duty_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_tx_duty_event(void *param,CmdResGetCXM150xTxDutyEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_tx_duty_event(void *param,CmdResGetCXM150xTxDutyEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TX DUTY GET_EVT
     //> TX DUTY GET_EVT ON
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
-    uint8_t response[RECEIVE_BUF_SIZE] = "";
+    uint8_t response[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // Create command string
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TX_DUTY,CXM150x_COMMAND_GET_EVT);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_tx_duty_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_tx_duty_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){

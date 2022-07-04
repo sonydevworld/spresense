@@ -4,7 +4,7 @@
 * @brief    Define HAL wrapper functions for GNSS FW UPDATE
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -66,7 +66,7 @@ extern int g_uart0_fd;
  * @return receive result
 */
 // ===========================================================================
-return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt){
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt){
     uint8_t c = 0;
     uint32_t rcv_cnt = 0;
 #ifdef FOR_STM32_HAL_DRIVER_GNSS_FW_UPDATE
@@ -132,7 +132,7 @@ return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,uint32_t w
  * @return transmission result
 */
 // ===========================================================================
-return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,uint32_t snd_cnt,uint32_t wait_cnt){
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,uint32_t snd_cnt,uint32_t wait_cnt){
 #if defined CONFIG_ARCH_BOARD_SPRESENSE
     g_fw_updating = true;
 #endif
@@ -191,7 +191,7 @@ return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,uint32_t 
  * @return none
 */
 // ===========================================================================
-return_code wrapper_CXM150x_GNSS_fw_update_uart_abort_IT(void){
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_uart_abort_IT(void){
 #ifdef FOR_STM32_HAL_DRIVER_GNSS_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Abort_IT(&huart1);
     if(ret == HAL_TIMEOUT){

@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (TIME group command)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -41,11 +41,11 @@
 
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_LPWA_start_interrupt(void *info,CXM150x_CALLBACK_FUNC_POINTER func);
 CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_tx_start_message_event(CXM150xTimeAlarm *info,CXM150x_CALLBACK_FUNC_POINTER func);
-return_code get_CXM150x_next_LPWA_tx_power_on_limit_time(void *param,CmdResGetCXM150xNextLPWATxPowerOnLimitTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_next_LPWA_tx_renew_limit_time(void *param,CmdResGetCXM150xNextLPWATxRenewLimitTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_next_LPWA_tx_term(void *param,CmdResGetCXM150xNextLPWATxTerm *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_current_GNSS_time(void *param,CmdResGetCXM150xCurrentGNSSTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-void on_int1(void);
-void on_int2(void);
+CXM150x_return_code get_CXM150x_next_LPWA_tx_power_on_limit_time(void *param,CmdResGetCXM150xNextLPWATxPowerOnLimitTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_next_LPWA_tx_renew_limit_time(void *param,CmdResGetCXM150xNextLPWATxRenewLimitTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_next_LPWA_tx_term(void *param,CmdResGetCXM150xNextLPWATxTerm *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_current_GNSS_time(void *param,CmdResGetCXM150xCurrentGNSSTime *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+void CXM150x_on_int1(void);
+void CXM150x_on_int2(void);
 
 #endif // __CXM150x_TIME_H

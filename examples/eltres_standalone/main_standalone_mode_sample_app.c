@@ -118,13 +118,13 @@ typedef enum {
 }FlagOnOff;
 
 // Buffer for UART RX (used in the receive interrupt)
-static uint8_t g_rcv_buf[RECEIVE_BUF_SIZE] = "";
+static uint8_t g_rcv_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
 
 // Buffer for event message from CXM150x
-static uint8_t g_event_buf[RECEIVE_BUF_SIZE] = "";
+static uint8_t g_event_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
 
 // Buffer for response message from CXM150x
-static uint8_t g_response_buf[RECEIVE_BUF_SIZE] = "";
+static uint8_t g_response_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
 
 // Buffer for LPWA payload data
 static uint8_t g_payload_buf[CXM150x_PAYLOAD_LEN] = "";
@@ -145,7 +145,7 @@ static FlagOnOff g_INT_OUT2_flag = FLAG_OFF;
 // Set to a value other than 0 to enable TX Duty event
 #define TX_DUTY_USE                          (0)
 
-static return_code send_TX_PLD_SET_command(void);
+static CXM150x_return_code send_TX_PLD_SET_command(void);
 static uint32_t get_additional_val(void);
 static void set_additional_payload_data(uint32_t additional_val);
 
@@ -164,7 +164,7 @@ static void set_additional_payload_data(uint32_t additional_val);
  * @return none
 */
 // ===========================================================================
-void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt){
+void CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt){
     g_INT_OUT2_flag = FLAG_OFF;
     
     // Check the first byte to determine if it is an event or a response.
@@ -196,7 +196,7 @@ void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt){
 // ===========================================================================
 static void int2_callback(void* msg,uint32_t id){
     if(g_host_mode == HOST_STOP_MODE){
-        wrapper_resume_stop_mode();
+        wrapper_CXM150x_resume_stop_mode();
         g_host_mode = HOST_NORMAL_MODE;
         printf("host resume:int2_callback\r\n");
     }
@@ -259,9 +259,9 @@ static void set_payload_bits(uint32_t st_bit,uint32_t bit_len,uint32_t dt,uint8_
 */
 // ===========================================================================
 static void parse_payload_event_data(void){
-    uint8_t payload_data_str[RECEIVE_BUF_SIZE] = "";
-    if(get_last_word(g_event_buf,payload_data_str) == CXM150x_RESPONSE_OK){
-        ascii_to_bin(payload_data_str,g_payload_buf,CXM150x_PAYLOAD_LEN*2);
+    uint8_t payload_data_str[CXM150x_RECEIVE_BUF_SIZE] = "";
+    if(CXM150x_get_last_word(g_event_buf,payload_data_str) == CXM150x_RESPONSE_OK){
+        CXM150x_ascii_to_bin(payload_data_str,g_payload_buf,CXM150x_PAYLOAD_LEN*2);
     } else {
         printf("payload event parse error");
     }
@@ -325,14 +325,14 @@ static CXM150x_Event check_event(void){
  * @return none
 */
 // ===========================================================================
-static return_code send_and_wait_response(uint8_t *command_str,uint8_t *command_response_str,uint32_t response_wait_tick_count){
-    return_code ret = RETURN_NG;
+static CXM150x_return_code send_and_wait_response(uint8_t *command_str,uint8_t *command_response_str,uint32_t response_wait_tick_count){
+    CXM150x_return_code ret = RETURN_NG;
     
     g_response_buf[0] = '\0';
     
     // transmit command
     printf("snd:%s",command_str);
-    return_code tx_result = wrapper_CXM150x_uart_transmit(command_str,strlen((char*)command_str),MAX_TIME_OUT_TICK_COUNT);
+    CXM150x_return_code tx_result = wrapper_CXM150x_uart_transmit(command_str,strlen((char*)command_str),MAX_TIME_OUT_TICK_COUNT);
     if(tx_result != RETURN_OK){
         printf("TX NG(%d)\r\n",tx_result);
         return RETURN_NG;
@@ -345,7 +345,7 @@ static return_code send_and_wait_response(uint8_t *command_str,uint8_t *command_
             printf("rcv:%s",g_response_buf);
             
             if(strstr((char*)g_response_buf,(char*)command_response_str) != NULL){
-                if(check_last_ok_ng(g_response_buf) == CXM150x_RESPONSE_OK){
+                if(CXM150x_check_last_ok_ng(g_response_buf) == CXM150x_RESPONSE_OK){
                     printf("response OK\r\n");
                     ret = RETURN_OK;
                 } else {
@@ -367,7 +367,7 @@ static return_code send_and_wait_response(uint8_t *command_str,uint8_t *command_
                 printf("TX PoC enable message\r\n");
 #else
                 printf("FATAL error :An unencrypted message\r\n");
-                wrapper_system_reset();
+                wrapper_CXM150x_system_reset();
 #endif
             } else if(event == CXM150x_EVENT_GNSS_TIMER_TOUT){
                 printf("GNSS TIMER TOUT event\r\n");
@@ -410,12 +410,12 @@ static return_code send_and_wait_response(uint8_t *command_str,uint8_t *command_
  * @return none
 */
 // ===========================================================================
-static return_code send_TX_PLD_SET_command(){
-    return_code ret = RETURN_NG;
-    uint8_t command_buf[RECEIVE_BUF_SIZE] = "";
+static CXM150x_return_code send_TX_PLD_SET_command(){
+    CXM150x_return_code ret = RETURN_NG;
+    uint8_t command_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // creating a command transmission string
-    snprintf((char*)command_buf,RECEIVE_BUF_SIZE,"%s %s ",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_PAYLOAD_SET_COMMAND);
+    snprintf((char*)command_buf,CXM150x_RECEIVE_BUF_SIZE,"%s %s ",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_PAYLOAD_SET_COMMAND);
     // byte array to ASCII conversion
     for(uint32_t i=0;i<CXM150x_PAYLOAD_LEN;i++){
         uint8_t dt = g_payload_buf[i];
@@ -443,12 +443,12 @@ static return_code send_TX_PLD_SET_command(){
  * @return none
 */
 // ===========================================================================
-static return_code send_SYS_MODE_SET_command(void){
-    return_code ret = RETURN_NG;
-    uint8_t command_buf[RECEIVE_BUF_SIZE] = "";
+static CXM150x_return_code send_SYS_MODE_SET_command(void){
+    CXM150x_return_code ret = RETURN_NG;
+    uint8_t command_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // creating a command transmission string
-    snprintf((char*)command_buf,RECEIVE_BUF_SIZE,"%s %s %02d\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_SYS_MODE_SET_COMMAND,CXM150x_NORMAL_MODE);
+    snprintf((char*)command_buf,CXM150x_RECEIVE_BUF_SIZE,"%s %s %02d\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_SYS_MODE_SET_COMMAND,CXM150x_NORMAL_MODE);
 
     ret = send_and_wait_response(command_buf,(uint8_t*)CXM150x_SYS_MODE_SET_RESPONSE,MAX_SET_MODE_TIME_OUT_TICK_COUNT);
     return ret;
@@ -468,12 +468,12 @@ static return_code send_SYS_MODE_SET_command(void){
  * @return none
 */
 // ===========================================================================
-static return_code send_TX_POC_EN_SET_command(){
-    return_code ret = RETURN_NG;
-    uint8_t command_buf[RECEIVE_BUF_SIZE] = "";
+static CXM150x_return_code send_TX_POC_EN_SET_command(){
+    CXM150x_return_code ret = RETURN_NG;
+    uint8_t command_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // creating a command transmission string
-    snprintf((char*)command_buf,RECEIVE_BUF_SIZE,"%c %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_TX_POC_EN_SET_COMMAND,CXM150x_POC_EN_ON);
+    snprintf((char*)command_buf,CXM150x_RECEIVE_BUF_SIZE,"%c %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_TX_POC_EN_SET_COMMAND,CXM150x_POC_EN_ON);
 
     ret = send_and_wait_response(command_buf,(uint8_t*)CXM150x_TX_POC_EN_SET_RESPONSE,MAX_TIME_OUT_TICK_COUNT);
     return ret;
@@ -494,12 +494,12 @@ static return_code send_TX_POC_EN_SET_command(){
  * @return none
 */
 // ===========================================================================
-static return_code send_TX_DUTY_SET_EVT_command(){
-    return_code ret = RETURN_NG;
-    uint8_t command_buf[RECEIVE_BUF_SIZE] = "";
+static CXM150x_return_code send_TX_DUTY_SET_EVT_command(){
+    CXM150x_return_code ret = RETURN_NG;
+    uint8_t command_buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     
     // creating a command transmission string
-    snprintf((char*)command_buf,RECEIVE_BUF_SIZE,"%c %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_TX_DUTY_SET_EVT_COMMAND,CXM150x_TX_DUTY_SET_EVT_ON);
+    snprintf((char*)command_buf,CXM150x_RECEIVE_BUF_SIZE,"%c %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_TX_DUTY_SET_EVT_COMMAND,CXM150x_TX_DUTY_SET_EVT_ON);
 
     ret = send_and_wait_response(command_buf,(uint8_t*)CXM150x_TX_DUTY_SET_EVT_RESPONSE,MAX_TIME_OUT_TICK_COUNT);
     return ret;
@@ -639,7 +639,7 @@ int main_standalone_mode_sample_app(void){
         // enter stop mode if unporosessed messages are not exist
         if(check_unprosessed_messages() == FLAG_OFF){
             g_host_mode = HOST_STOP_MODE;
-            wrapper_enter_stop_mode();
+            wrapper_CXM150x_enter_stop_mode();
             // TBD: Implement sleep function
             sleep(1);
             continue;
@@ -678,7 +678,7 @@ int main_standalone_mode_sample_app(void){
                 printf("TX PoC enable message\r\n");
 #else
                 printf("FATAL error :An unencrypted message\r\n");
-                wrapper_system_reset();
+                wrapper_CXM150x_system_reset();
 #endif
             } else if(ret == CXM150x_EVENT_GNSS_TIMER_TOUT){
                 g_event_buf[0] = '\0';

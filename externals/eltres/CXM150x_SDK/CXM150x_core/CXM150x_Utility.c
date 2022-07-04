@@ -4,7 +4,7 @@
 * @brief    utility function
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -246,7 +246,7 @@ typedef enum {
  * @return Calculated checksum (0xFFFFFFFF on error)
 */
 // ===========================================================================
-uint32_t calc_nmea_checksum(const uint8_t *p_nmea_str){
+static uint32_t calc_nmea_checksum(const uint8_t *p_nmea_str){
     uint32_t ret = 0xFFFFFFFF;
     uint32_t sum = 0;
     
@@ -1910,7 +1910,7 @@ uint32_t parse_nmea_sentence_psles(uint8_t *p_nmea_str, CXM150xNMEAPSLESInfo *p_
 */
 // ===========================================================================
 #define CXM150x_COMMAND_ERROR_STR     "Error"
-int32_t chk_response_error(uint8_t *str){
+int32_t CXM150x_chk_response_error(uint8_t *str){
     if(strstr((char*)str,CXM150x_COMMAND_ERROR_STR)){
         return CXM150x_RESPONSE_NG;
     }
@@ -1931,7 +1931,7 @@ int32_t chk_response_error(uint8_t *str){
  * @return processing result
 */
 // ===========================================================================
-int32_t get_last_word(uint8_t *msg,uint8_t *word){
+int32_t CXM150x_get_last_word(uint8_t *msg,uint8_t *word){
     if(msg == NULL || word == NULL){
         return CXM150x_RESPONSE_NG;
     }
@@ -1970,9 +1970,9 @@ int32_t get_last_word(uint8_t *msg,uint8_t *word){
  * @return judgment result
 */
 // ===========================================================================
-int32_t check_last_ok_ng(uint8_t *msg){
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
-    if(get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
+int32_t CXM150x_check_last_ok_ng(uint8_t *msg){
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
+    if(CXM150x_get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
         return CXM150x_RESPONSE_NG;
     }
     
@@ -1995,9 +1995,9 @@ int32_t check_last_ok_ng(uint8_t *msg){
  * @return judgment result
 */
 // ===========================================================================
-int32_t check_last_on_off(uint8_t *msg){
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
-    if(get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
+int32_t CXM150x_check_last_on_off(uint8_t *msg){
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
+    if(CXM150x_get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
         return EVENT_ON;
     }
     
@@ -2021,7 +2021,7 @@ int32_t check_last_on_off(uint8_t *msg){
  * @return none
 */
 // ===========================================================================
-void ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len){
+void CXM150x_ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len){
     for(uint32_t i=0;i<ascii_len;i+=2){
         uint8_t buf[3] = "";
         buf[0] = ascii[i];
@@ -2048,11 +2048,11 @@ void ascii_to_bin(uint8_t *ascii,uint8_t *bin,uint32_t ascii_len){
  * @return convert result
 */
 // ===========================================================================
-uint32_t get_last_uint32(uint8_t *msg){
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
+uint32_t CXM150x_get_last_uint32(uint8_t *msg){
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     uint32_t ret = 0;
 
-    if(get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
+    if(CXM150x_get_last_word(msg,(uint8_t*)buf) == CXM150x_RESPONSE_NG){
         return 0xFFFFFFFF;
     }
     

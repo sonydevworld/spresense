@@ -4,7 +4,7 @@
 * @brief    Define type of API
 * @date     2021/12/24
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -42,12 +42,12 @@
 
 // API version definition
 // Maximum string length of API version
-#define API_VERSION_MAX_LEN  (11)
+#define CXM150x_API_VERSION_MAX_LEN  (11)
 // Character string to be displayed in API version display (up to 11 characters)
-#define API_VERSION    "3.0.4"
+#define CXM150x_API_VERSION    "3.0.4"
 
 // Buffer for unprocessed event messages (ring buffer)
-#define RECEIVE_EVENT_BUF_SIZE      (10)
+#define CXM150x_RECEIVE_EVENT_BUF_SIZE      (10)
 
 // Set whether to compile transmission test mode API (valid if not 0)
 #ifdef CONFIG_EXTERNALS_ELTRES_TEST_MODE
@@ -77,13 +77,13 @@
 #define CXM150x_PAYLOAD_LEN   (16)
 
 // Maximum message length from CXM150x
-#define RECEIVE_BUF_SIZE    (0x80)
+#define CXM150x_RECEIVE_BUF_SIZE    (0x80)
 
 // Response error value from CXM150x
 #define CXM150x_RESPONSE_ERROR    (-1)
 
 // Maximum length of GNSS Time string from CXM500GE
-#define RECEIVE_BUF_GNSSTIME_SIZE    (8)
+#define CXM150x_RECEIVE_BUF_GNSSTIME_SIZE    (8)
 
 // CXM150x power ON / OFF state constant
 typedef enum {
@@ -107,7 +107,7 @@ typedef enum {
     RETURN_OK,
     RETURN_TIMEOUT,
     RETURN_BUSY
-} return_code;
+} CXM150x_return_code;
 
 // OK or NG in the command response message from CXM150x
 typedef enum {
@@ -132,7 +132,7 @@ typedef enum {
 typedef void (* CXM150x_CALLBACK_FUNC_POINTER)(void*,uint32_t); 
 
 // Response callback function pointer type definition
-typedef void (* CXM150x_CALLBACK_RESPONSE_FUNC_POINTER)(return_code,void*);
+typedef void (* CXM150x_CALLBACK_RESPONSE_FUNC_POINTER)(CXM150x_return_code,void*);
 
 // callback function pointer for response parsing
 typedef void (* CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER)(uint8_t*,void*); 
@@ -433,11 +433,11 @@ typedef struct {
 } CmdResGetCXM150xTxStateEvent;
 
 typedef struct {
-    uint8_t m_str[RECEIVE_BUF_GNSSTIME_SIZE + 1];
+    uint8_t m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE + 1];
 } CmdResGetCXM150xPrevLPWATxTime;
 
 typedef struct {
-    uint8_t m_str[RECEIVE_BUF_GNSSTIME_SIZE + 1];
+    uint8_t m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE + 1];
 } CmdResGetCXM150xNextLPWATxTime;
 
 typedef struct {
@@ -453,7 +453,7 @@ typedef struct {
 } CmdResGetCXM150xNextLPWATxTerm;
 
 typedef struct {
-    uint8_t m_str[RECEIVE_BUF_GNSSTIME_SIZE + 1];
+    uint8_t m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE + 1];
 } CmdResGetCXM150xCurrentGNSSTime;
 
 typedef struct {
@@ -507,7 +507,7 @@ typedef struct {
 } CmdResGetCXM150xNMEAEvent;
 
 typedef struct {
-    uint8_t m_version[API_VERSION_MAX_LEN+1];
+    uint8_t m_version[CXM150x_API_VERSION_MAX_LEN+1];
 } CmdResGetCXM150xAPIVersion;
 
 typedef struct {
@@ -565,7 +565,7 @@ typedef struct {
 
 typedef struct {
     uint32_t m_result;
-    uint8_t m_str[RECEIVE_BUF_GNSSTIME_SIZE + 1];
+    uint8_t m_str[CXM150x_RECEIVE_BUF_GNSSTIME_SIZE + 1];
 } CXM150xTxDutyEventInfo;
 
 typedef struct {
@@ -753,11 +753,11 @@ typedef enum {
     CODE_DATA_FIRST = 0,    // First data
     CODE_DATA_MID = 1,      // Data in the second or later transmissions except the last one
     CODE_DATA_LAST = 2,      // Last data
-} DataPosFlag;
+} CXM150xDataPosFlag;
 
 // firmware binary image structure
 typedef struct {
-    DataPosFlag m_data_pos_flag;                      
+    CXM150xDataPosFlag m_data_pos_flag;
     uint32_t m_data_len;                            // Length of divided binary image
     uint8_t m_data[CXM150x_GNSS_FW_UPDATE_SEND_MAX_LEN + 1];   // Binary data ( maximum transmission data and terminator length )
 } CXM150xGNSSFWUpdateCodeData;
@@ -837,7 +837,7 @@ typedef enum{
     TX_CUR_FRM_TYPE_PERIODIC_2,
     TX_CUR_FRM_TYPE_EVENT,
     TX_CUR_FRM_TYPE_PERIODIC
-}TxProfileType;
+}CXM150xTxProfileType;
 
 
 // Define event callback ID
@@ -883,7 +883,7 @@ typedef struct {
 
 // FATAL message event information
 typedef struct {
-    uint8_t m_str[RECEIVE_BUF_SIZE];
+    uint8_t m_str[CXM150x_RECEIVE_BUF_SIZE];
 } CXM150xFATALMessage;
 
 // buffer overflow

@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (for GNSS FW UPDATE mode)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -41,10 +41,10 @@
 
 #if CXM150x_GNSS_FW_UPDATE_API_USE
 
-return_code get_CXM150x_GNSS_fw_update_mode_check(void *param, CmdResGetGNSSFWUpdateModeCheck *res);
-return_code set_CXM150x_GNSS_fw_update_header_data(uint8_t* param, CmdResSetGNSSFWUpdateHeaderData *res);
-return_code set_CXM150x_GNSS_fw_update_code_data(CXM150xGNSSFWUpdateCodeData* param, CmdResSetGNSSFWUpdateCodeData *res);
-return_code get_CXM150x_GNSS_fw_update_result(void* param, CmdResGetGNSSFWUpdateResult *res);
+CXM150x_return_code get_CXM150x_GNSS_fw_update_mode_check(void *param, CmdResGetGNSSFWUpdateModeCheck *res);
+CXM150x_return_code set_CXM150x_GNSS_fw_update_header_data(uint8_t* param, CmdResSetGNSSFWUpdateHeaderData *res);
+CXM150x_return_code set_CXM150x_GNSS_fw_update_code_data(CXM150xGNSSFWUpdateCodeData* param, CmdResSetGNSSFWUpdateCodeData *res);
+CXM150x_return_code get_CXM150x_GNSS_fw_update_result(void* param, CmdResGetGNSSFWUpdateResult *res);
 
 #endif // CXM150x_GNSS_FW_UPDATE_API_USE
 

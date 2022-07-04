@@ -4,7 +4,7 @@
 * @brief    UART communication related driver
 * @date     2021/12/27
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -39,34 +39,9 @@
 
 #include "CXM150x_APITypeDef.h"
 
-// Communication wait time with CXM (unit is msec)
-#define MAX_TIME_OUT_TICK_COUNT     (5000)
-// Timeout period for CXM150x power ON message wait
-#define MAX_POWER_ON_TIME_OUT_TICK_COUNT     (10000)
-// Profile changing timeout time
-#define MAX_SET_PROFILE_TIME_OUT_TICK_COUNT     (50000)
-// Timeout period from receiving the first character of UART communication to receiving CR + LF
-#define MAX_UART_LINE_TIME_OUT_TICK_COUNT     (3000)
-// Mode setting timeout time
-#define MAX_SET_MODE_TIME_OUT_TICK_COUNT     (10000)
-
 // Flag ON, OFF
-#define UART_DRIVER_FLAG_ON         (1)
-#define UART_DRIVER_FLAG_OFF        (0)
-
-// Command receive result
-#define COMMAND_RESULT_RESPONSE_WAIT        (0)
-#define COMMAND_RESULT_OK                   (1)
-#define COMMAND_RESULT_ERROR                (2)
-#define COMMAND_RESULT_BUSY                 (3)
-#define COMMAND_RESULT_TIME_OUT             (4)
-#define COMMAND_RESULT_COMMAND_INVALID      (5)
-
-// Command transmission result
-#define COMMAND_SEND_RESULT_OK              (0)
-#define COMMAND_SEND_RESULT_BUSY            (1)
-#define COMMAND_SEND_RESULT_NG              (2)
-#define COMMAND_SEND_RESULT_TIME_OUT        (3)
+#define CXM150x_UART_DRIVER_FLAG_ON         (1)
+#define CXM150x_UART_DRIVER_FLAG_OFF        (0)
 
 /* Command string definition */
 // first character of command
@@ -118,24 +93,17 @@
 #define CXM150x_COMMAND_TX_CUR_FRM_TYPE_MODE_STR_E  "E"
 #define CXM150x_COMMAND_TX_CUR_FRM_TYPE_MODE_STR_P  "P"
 
-// Response data structure
-typedef struct {
-    uint32_t m_result_code;                        // OK, NG (NG in response from CXM150x), timeout, BUSY
-    int32_t m_option_num;                         // Numeric response (XX seconds, etc.)
-    uint8_t m_option_str[RECEIVE_BUF_SIZE];      // On / Off, version information, previous payload, GPS time, etc.
-}CommandResponseInfo;
-
-return_code wait_power_on_message(void);
-uint32_t init_uart_driver(void);
-void trigger_analyse(void);
-void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt);
-return_code send_and_wait_command_response(uint8_t *cmd,uint8_t *respons_message);
-return_code send_and_wait_command_response_long_wait(uint8_t *cmd,uint8_t *respons_message,uint32_t max_wait);
-return_code send_and_register_callback(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct);
-return_code send_and_register_callback_long_wait(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct,uint32_t max_wait);
-return_code prep_wait_power_on_message(CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct);
+CXM150x_return_code CXM150x_wait_power_on_message(void);
+uint32_t CXM150x_init_uart_driver(void);
+void CXM150x_trigger_analyse(void);
+void CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt);
+CXM150x_return_code CXM150x_send_and_wait_command_response(uint8_t *cmd,uint8_t *respons_message);
+CXM150x_return_code CXM150x_send_and_wait_command_response_long_wait(uint8_t *cmd,uint8_t *respons_message,uint32_t max_wait);
+CXM150x_return_code CXM150x_send_and_register_callback(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct);
+CXM150x_return_code CXM150x_send_and_register_callback_long_wait(uint8_t *cmd,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct,uint32_t max_wait);
+CXM150x_return_code CXM150x_prep_wait_power_on_message(CXM150x_CALLBACK_RESPONSE_FUNC_POINTER res_func,CXM150x_RES_PARSE_CALLBACK_FUNC_POINTER parse_func,void *ret_struct);
 uint32_t get_CXM150x_Rx_message_count(void);
-return_code prep_wait_power_on_message_reset(void);
+CXM150x_return_code CXM150x_prep_wait_power_on_message_reset(void);
 
 // Definition for test mode
 #if CXM150x_TEST_MODE_API_USE

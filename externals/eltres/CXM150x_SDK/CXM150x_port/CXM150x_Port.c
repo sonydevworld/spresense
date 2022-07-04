@@ -57,6 +57,9 @@
 #include "CXM150x_TIME.h"
 #include "CXM150x_TX.h"
 
+// Timeout period from receiving the first character of UART communication to receiving CR + LF
+#define MAX_UART_LINE_TIME_OUT_TICK_COUNT     (3000)
+
 /* Board-specific power control */
 
 #define POWER_ELTRES_DDC2V  PMIC_GPO(2)
@@ -65,7 +68,7 @@
 
 #define PIN_WAKEUP          PIN_HIF_GPIO0
 
-uint8_t g_uart_error_flg = UART_DRIVER_FLAG_OFF;
+uint8_t g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_OFF;
 
 static uint32_t g_rcv_cnt = 0;
 static uint8_t *g_rcv_buf = NULL;
@@ -278,7 +281,7 @@ uint32_t wrapper_CXM150x_get_power(void){
 // ===========================================================================
 //! UART receive handler
 /*! Buffers characters received by UART from CXM150x and continues UART reception until line feed code is received (timeout is fixed at 5 seconds)
- * Call the uart_receive_to_buffer_callback function of the library core when a line feed code is received
+ * Call the CXM150x_uart_receive_to_buffer_callback function of the library core when a line feed code is received
  *
  * @param [in] none
  * @param [out] none
@@ -297,14 +300,14 @@ void wrapper_CXM150x_uart_rx_callback(void){
     // Receive UART communication from CXM150x
     uint32_t st_tick = wrapper_CXM150x_get_tick();
     while(1){
-        if(g_rcv_cnt < RECEIVE_BUF_SIZE - 1){       // Subtract one because '\0' requires 1 byte
+        if(g_rcv_cnt < CXM150x_RECEIVE_BUF_SIZE - 1){       // Subtract one because '\0' requires 1 byte
 
             if(g_rcv_char == '\n'){ // receive line feed code
                 // Set in receive buffer and inclement buffer counter
                 g_rcv_buf[g_rcv_cnt++] = g_rcv_char;
                 // Receive line feed code
                 g_rcv_buf[g_rcv_cnt++] = '\0';
-                uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                CXM150x_uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
                 g_rcv_cnt = 0;
                 g_rcv_buf[0] = '\0';
 #ifdef FOR_STM32_HAL_DRIVER
@@ -324,7 +327,7 @@ void wrapper_CXM150x_uart_rx_callback(void){
                     if(g_rcv_cnt > 0){
                         g_rcv_cnt--;
                     }
-                    g_uart_error_flg = UART_DRIVER_FLAG_ON;
+                    g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_ON;
                 }
 #elif defined CONFIG_ARCH_BOARD_SPRESENSE
                 while (1){
@@ -336,7 +339,7 @@ void wrapper_CXM150x_uart_rx_callback(void){
                         set_errno(0);
 
                         // Turn on error flag and finish reading one line forcibly.
-                        g_uart_error_flg = UART_DRIVER_FLAG_ON;
+                        g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_ON;
                         g_rcv_char = '\n';
                         break;
                     }
@@ -345,7 +348,7 @@ void wrapper_CXM150x_uart_rx_callback(void){
                 if (ret < 0)
                 {
                   // Turn on error flag and finish reading one line forcibly.
-                  g_uart_error_flg = UART_DRIVER_FLAG_ON;
+                  g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_ON;
                   g_rcv_char = '\n';
                 }
 #endif
@@ -382,7 +385,7 @@ static void uart0_recv_main(void)
       g_fw_updating = false;
       cxd56_uart0initialize("/dev/uart0");
       g_uart0_fd = open("/dev/uart0", O_RDWR | O_NONBLOCK);
-      while ((g_uart_error_flg == UART_DRIVER_FLAG_OFF) &&
+      while ((g_uart_error_flg == CXM150x_UART_DRIVER_FLAG_OFF) &&
              (wrapper_CXM150x_get_power() == CXM150x_POWER_ON))
         {
           if (g_fw_updating)
@@ -432,7 +435,7 @@ static void uart0_recv_main(void)
  * @return transmission result (OK, ERROR, BUSY, TIMEOUT)
 */
 // ===========================================================================
-return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uint32_t wait_count){
+CXM150x_return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uint32_t wait_count){
 #ifdef FOR_STM32_HAL_DRIVER	
     int32_t     ret;
     char    uartState;
@@ -559,7 +562,7 @@ void wrapper_CXM150x_delay(uint32_t tick){
  * @return none
 */
 // ===========================================================================
-void wrapper_enter_stop_mode(void){
+void wrapper_CXM150x_enter_stop_mode(void){
 #ifdef FOR_STM32_HAL_DRIVER
     HAL_SuspendTick();
     HAL_PWR_EnableSleepOnExit();
@@ -580,7 +583,7 @@ void wrapper_enter_stop_mode(void){
  * @return none
 */
 // ===========================================================================
-void wrapper_resume_stop_mode(void){
+void wrapper_CXM150x_resume_stop_mode(void){
 #ifdef FOR_STM32_HAL_DRIVER
     SystemClock_Config();
     HAL_ResumeTick();
@@ -602,7 +605,7 @@ void wrapper_resume_stop_mode(void){
 */
 // ===========================================================================
 void wrapper_CXM150x_int_out1(void){
-    on_int1();
+    CXM150x_on_int1();
 }
 
 // ===========================================================================
@@ -619,7 +622,7 @@ void wrapper_CXM150x_int_out1(void){
 */
 // ===========================================================================
 void wrapper_CXM150x_int_out2(void){
-    on_int2();
+    CXM150x_on_int2();
 }
 
 // ===========================================================================
@@ -635,6 +638,6 @@ void wrapper_CXM150x_int_out2(void){
  * @return none
 */
 // ===========================================================================
-void wrapper_system_reset(void){
+void wrapper_CXM150x_system_reset(void){
     //NVIC_SystemReset();
 }

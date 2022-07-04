@@ -4,7 +4,7 @@
 * @brief    Define HAL wrapper functions for GNSS FW UPDATE
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -94,9 +94,9 @@
 #define CXM150x_GNSS_FW_UPDATE_API_FLAG_OFF        (0)
 
 // prototype declaration
-return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt);
-return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,uint32_t snd_cnt,uint32_t wait_cnt);
-return_code wrapper_CXM150x_GNSS_fw_update_uart_abort_IT(void);
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt);
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,uint32_t snd_cnt,uint32_t wait_cnt);
+CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_uart_abort_IT(void);
 
 #endif // CXM150x_GNSS_FW_UPDATE_API_USE
 

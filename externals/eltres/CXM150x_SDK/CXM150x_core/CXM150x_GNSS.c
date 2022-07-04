@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (GNSS group command)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -79,12 +79,12 @@ extern CXM150x_CALLBACK_FUNC_POINTER g_NMEAPSLES_callback_func_p;
  * @return none
 */
 // ===========================================================================
-void res_check_get_GNSS_firmware_version(uint8_t *response,void *res_buf){
+static void res_check_get_GNSS_firmware_version(uint8_t *response,void *res_buf){
     CmdResGetCXM150xGNSSFirmwareVersion *res = res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         //Error checking
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Parse to <FW version>, <version ID1>, <version ID2>
             memset(res,'\0',sizeof(CmdResGetCXM150xGNSSFirmwareVersion));
             uint8_t *st_pos = NULL;
@@ -139,11 +139,11 @@ void res_check_get_GNSS_firmware_version(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_GNSS_firmware_version(void *param,CmdResGetCXM150xGNSSFirmwareVersion *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_GNSS_firmware_version(void *param,CmdResGetCXM150xGNSSFirmwareVersion *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS VER GET
     //> GNSS VER GET <FW version> <version ID1> <version ID2>
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -151,10 +151,10 @@ return_code get_CXM150x_GNSS_firmware_version(void *param,CmdResGetCXM150xGNSSFi
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_VER,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_GNSS_firmware_version,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_GNSS_firmware_version,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     
@@ -205,13 +205,13 @@ CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_GNSS_state_event(CXM150xGNSSState
  * @return none
 */
 // ===========================================================================
-void res_check_set_GNSS_state_event(uint8_t *response,void *res_buf){
+static void res_check_set_GNSS_state_event(uint8_t *response,void *res_buf){
     CmdResSetCXM150xGNSSStateEvent *res = (CmdResSetCXM150xGNSSStateEvent*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -236,11 +236,11 @@ void res_check_set_GNSS_state_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS STT SET_EVT ON
     //> GNSS STT SET_EVT OK
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -252,10 +252,10 @@ return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSSta
     }
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_GNSS_state_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_GNSS_state_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -281,16 +281,16 @@ return_code set_CXM150x_GNSS_state_event(uint32_t on_off,CmdResSetCXM150xGNSSSta
  * @return none
 */
 // ===========================================================================
-void res_check_get_GNSS_state_event(uint8_t *response,void *res_buf){
+static void res_check_get_GNSS_state_event(uint8_t *response,void *res_buf){
     CmdResGetCXM150xGNSSStateEvent *res = (CmdResGetCXM150xGNSSStateEvent*)res_buf;
 
     // Parse response message from CXM150x
     if(res != NULL){
         //Error checking
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
                 if(!strcmp((char*)last_word,CXM150x_COMMAND_ON)){
                     res->m_num = EVENT_ON;
                 } else if(!strcmp((char*)last_word,CXM150x_COMMAND_OFF)) {
@@ -322,11 +322,11 @@ void res_check_get_GNSS_state_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS STT GET_EVT
     //> GNSS STT GET_EVT ON
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -334,10 +334,10 @@ return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEv
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_STT,CXM150x_COMMAND_GET_EVT);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_GNSS_state_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_GNSS_state_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -362,13 +362,13 @@ return_code get_CXM150x_GNSS_state_event(void *param,CmdResGetCXM150xGNSSStateEv
  * @return none
 */
 // ===========================================================================
-void res_check_get_GNSS_state_event_info(uint8_t *response,void *res_buf){
+static void res_check_get_GNSS_state_event_info(uint8_t *response,void *res_buf){
     CmdResGetCXM150xGnssStateEventInfo *res = (CmdResGetCXM150xGnssStateEventInfo*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
                 if(sscanf((char*)last_word,"0x%02lx",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_NG;
                 }
@@ -395,11 +395,11 @@ void res_check_get_GNSS_state_event_info(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_GNSS_state_event_info(void *param, CmdResGetCXM150xGnssStateEventInfo *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_GNSS_state_event_info(void *param, CmdResGetCXM150xGnssStateEventInfo *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS STT GET
     //> GNSS STT GET 0x01
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -407,10 +407,10 @@ return_code get_CXM150x_GNSS_state_event_info(void *param, CmdResGetCXM150xGnssS
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_STT,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_GNSS_state_event_info,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_GNSS_state_event_info,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -667,9 +667,9 @@ CXM150x_CALLBACK_FUNC_POINTER register_CXM150x_NMEAPSLES_event(CXM150xNMEAPSLESI
 // ===========================================================================
 CXM150xGNSSState conv_gnss_stt_message_to_code(uint8_t *msg){
     uint32_t state = 0;
-    uint8_t buf[RECEIVE_BUF_SIZE] = "";
+    uint8_t buf[CXM150x_RECEIVE_BUF_SIZE] = "";
     // Get the last word out of the message
-    if(get_last_word(msg,buf) == CXM150x_RESPONSE_OK){
+    if(CXM150x_get_last_word(msg,buf) == CXM150x_RESPONSE_OK){
         if(sscanf((char*)buf, "%lx", &state) == 0){
             return (CXM150xGNSSState)0x00;
         }
@@ -690,14 +690,14 @@ CXM150xGNSSState conv_gnss_stt_message_to_code(uint8_t *msg){
  * @return none
 */
 // ===========================================================================
-void res_check_set_NMEA_event(uint8_t *response,void *res_buf){
+static void res_check_set_NMEA_event(uint8_t *response,void *res_buf){
     CmdResSetCXM150xNMEAEvent *res = (CmdResSetCXM150xNMEAEvent*)res_buf;
     
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -722,11 +722,11 @@ void res_check_set_NMEA_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS HOST_FW_SENT SET_EVT 0x000C
     //> GNSS HOST_FW_SENT SET_EVT OK
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
 
@@ -734,10 +734,10 @@ return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *re
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s 0x%08lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_HOST_FW_SENT,CXM150x_COMMAND_SET_EVT,param);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_NMEA_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_NMEA_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -763,15 +763,15 @@ return_code set_CXM150x_NMEA_event(uint32_t param, CmdResSetCXM150xNMEAEvent *re
  * @return none
 */
 // ===========================================================================
-void res_check_get_NMEA_event(uint8_t *response,void *res_buf){
+static void res_check_get_NMEA_event(uint8_t *response,void *res_buf){
     CmdResGetCXM150xNMEAEvent *res = (CmdResGetCXM150xNMEAEvent*)res_buf;
     
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             // Get the last word out of the message
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
                 if(sscanf((char*)last_word,"0x%08lX",&res->m_num) == 0){
                     res->m_num = (uint32_t)CXM150x_RESPONSE_ERROR;
                 }
@@ -798,11 +798,11 @@ void res_check_get_NMEA_event(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS HOST_FW_SENT GET_EVT
     //> GNSS HOST_FW_SENT GET_EVT 0x0000
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
 
@@ -810,10 +810,10 @@ return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,C
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_HOST_FW_SENT,CXM150x_COMMAND_GET_EVT);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_NMEA_event,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_NMEA_event,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -838,14 +838,14 @@ return_code get_CXM150x_NMEA_event(void* param, CmdResGetCXM150xNMEAEvent *res,C
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_GNSS_position(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_GNSS_position(uint8_t *response,void *res_buf){
     CmdResSetCXM150xGNSSPosition *res = (CmdResSetCXM150xGNSSPosition*)res_buf;
     
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -870,11 +870,11 @@ void res_check_set_CXM150x_GNSS_position(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData *param, CmdResSetCXM150xGNSSPosition *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData *param, CmdResSetCXM150xGNSSPosition *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS GPOE SET 3525.6911,N,13922.2240,E
     //> GNSS GPOE SET OK
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -886,10 +886,10 @@ return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData *param, CmdRes
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s,%s,%s,%s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_GPOE,CXM150x_COMMAND_SET,param->m_lat,param->m_n_s,param->m_lon,param->m_e_w);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_GNSS_position,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_GNSS_position,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){
@@ -914,14 +914,14 @@ return_code set_CXM150x_GNSS_position (CXM150xGNSSPositionSetData *param, CmdRes
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_GNSS_datetime(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_GNSS_datetime(uint8_t *response,void *res_buf){
     CmdResSetCXM150xGNSSDateTime *res = (CmdResSetCXM150xGNSSDateTime*)res_buf;
     
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -946,11 +946,11 @@ void res_check_set_CXM150x_GNSS_datetime(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_GNSS_datetime (uint8_t *param, CmdResSetCXM150xGNSSDateTime *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_GNSS_datetime (uint8_t *param, CmdResSetCXM150xGNSSDateTime *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< GNSS GTIM SET 20170901150130
     //> GNSS GTIM SET OK
 
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -962,10 +962,10 @@ return_code set_CXM150x_GNSS_datetime (uint8_t *param, CmdResSetCXM150xGNSSDateT
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_GNSS_GTIM,CXM150x_COMMAND_SET,param);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_GNSS_datetime,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_GNSS_datetime,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
 
     if(ret != RETURN_OK){

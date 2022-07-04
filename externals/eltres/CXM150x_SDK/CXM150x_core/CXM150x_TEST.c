@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (TEST group command)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -57,13 +57,13 @@
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTestTxCh *res = (CmdResSetCXM150xTestTxCh*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -89,10 +89,10 @@ void res_check_set_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_CH SET 27
     //> TEST TX_CH SET OK
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -100,10 +100,10 @@ return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_CH,CXM150x_COMMAND_SET,param);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_ch,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_ch,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -128,14 +128,14 @@ return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTestTxCh *res = (CmdResGetCXM150xTestTxCh*)res_buf;
     uint8_t ch_str[CXM150x_MAX_COMMAND_LEN] = "";
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(get_last_word(response,ch_str) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,ch_str) == CXM150x_RESPONSE_OK){
                 if(sscanf((char*)ch_str,"%02lX",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_ERROR;
                 }
@@ -163,10 +163,10 @@ void res_check_get_CXM150x_test_tx_ch(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_CH GET
     //> TEST TX_CH GET 01
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -174,10 +174,10 @@ return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, C
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_CH,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_ch,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_ch,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -203,13 +203,13 @@ return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, C
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTestTxMode *res = (CmdResSetCXM150xTestTxMode*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -234,11 +234,11 @@ void res_check_set_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_MODE SET 00
     //> TEST TX_MODE SET OK
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -246,10 +246,10 @@ return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %02lX\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_MODE,CXM150x_COMMAND_SET,mode);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_mode,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_mode,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -274,13 +274,13 @@ return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTestTxMode *res = (CmdResGetCXM150xTestTxMode*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         uint8_t mode_str[CXM150x_MAX_COMMAND_LEN] = "";
-         if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(get_last_word(response,mode_str) == CXM150x_RESPONSE_OK){
+         if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,mode_str) == CXM150x_RESPONSE_OK){
                 if(sscanf((char*)mode_str,"%02lX",&res->m_num) == 0){
                     res->m_num = CXM150x_RESPONSE_ERROR;
                 }
@@ -309,11 +309,11 @@ void res_check_get_CXM150x_test_tx_mode(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_MODE GET
     //> TEST TX_MODE GET 00
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -321,10 +321,10 @@ return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *re
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_MODE,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_mode,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_mode,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -349,13 +349,13 @@ return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *re
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTestTxRun *res = (CmdResSetCXM150xTestTxRun*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -380,11 +380,11 @@ void res_check_set_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_RUN SET ON
     //> TEST TX_RUN SET OK
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -397,10 +397,10 @@ return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *
     
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_run,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_test_tx_run,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -425,12 +425,12 @@ return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTestTxRun *res = (CmdResGetCXM150xTestTxRun*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_on_off(response) == EVENT_ON){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_on_off(response) == EVENT_ON){
                 res->m_num = CXM150x_TX_TEST_RUN_ON;
             } else {
                 res->m_num = CXM150x_TX_TEST_RUN_OFF;
@@ -456,11 +456,11 @@ void res_check_get_CXM150x_test_tx_run(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST TX_RUN GET
     //> TEST TX_RUN GET ON
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -468,10 +468,10 @@ return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res,
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_TX_RUN,CXM150x_COMMAND_GET);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_run,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_test_tx_run,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -496,13 +496,13 @@ return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res,
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_test_gpi_state(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_test_gpi_state(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTestGPIState *res = (CmdResGetCXM150xTestGPIState*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
                 if(last_word[0] == 'H'){
                     res->m_num = CXM150x_GPIO_PORT_STATE_H;
                 } else if(last_word[0] == 'L'){
@@ -533,11 +533,11 @@ void res_check_get_CXM150x_test_gpi_state(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPIState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPIState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST GPI GET 0
     //> TEST GPI GET L
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -545,10 +545,10 @@ return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPISt
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPI,CXM150x_COMMAND_GET,param);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_test_gpi_state,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_test_gpi_state,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -573,13 +573,13 @@ return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPISt
  * @return none
 */
 // ===========================================================================
-void res_check_set_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
+static void res_check_set_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
     CmdResSetCXM150xTestGPOState *res = (CmdResSetCXM150xTestGPOState*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
         // Whether the message ends in 'OK' or not
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
-            if(check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
+            if(CXM150x_check_last_ok_ng(response) == CXM150x_RESPONSE_OK){
                 res->m_result = CXM150x_RESPONSE_OK;
             } else {
                 res->m_result = CXM150x_RESPONSE_NG;
@@ -604,11 +604,11 @@ void res_check_set_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST GPO SET 1,L
     //> TEST GPO SET OK
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -624,10 +624,10 @@ return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM15
     }
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_set_CXM150x_test_gpo_state,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_test_gpo_state,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){
@@ -652,13 +652,13 @@ return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM15
  * @return none
 */
 // ===========================================================================
-void res_check_get_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
+static void res_check_get_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
     CmdResGetCXM150xTestGPOState *res = (CmdResGetCXM150xTestGPOState*)res_buf;
     // Parse CXM150x response message
     if(res != NULL){
-        if(chk_response_error(response) == CXM150x_RESPONSE_OK){
+        if(CXM150x_chk_response_error(response) == CXM150x_RESPONSE_OK){
             uint8_t last_word[CXM150x_MAX_COMMAND_LEN] = "";
-            if(get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
+            if(CXM150x_get_last_word(response,last_word) == CXM150x_RESPONSE_OK){
                 if(last_word[0] == 'H'){
                     res->m_num = CXM150x_GPIO_PORT_STATE_H;
                 } else if(last_word[0] == 'L'){
@@ -689,11 +689,11 @@ void res_check_get_CXM150x_test_gpo_state(uint8_t *response,void *res_buf){
  * @return command transmission result
 */
 // ===========================================================================
-return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
+CXM150x_return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     //< TEST GPO GET 1
     //> TEST GPO GET L
     
-    return_code ret;
+    CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
     
@@ -701,10 +701,10 @@ return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOSt
     snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %ld\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_TEST_GPO,CXM150x_COMMAND_GET,param);
     
     if(func != NULL){
-        return send_and_register_callback(command,func,res_check_get_CXM150x_test_gpo_state,res);
+        return CXM150x_send_and_register_callback(command,func,res_check_get_CXM150x_test_gpo_state,res);
     } else {
         // Send command and wait for response
-        ret = send_and_wait_command_response(command,response);
+        ret = CXM150x_send_and_wait_command_response(command,response);
     }
     
     if(ret != RETURN_OK){

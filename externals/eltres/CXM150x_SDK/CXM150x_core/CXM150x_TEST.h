@@ -4,7 +4,7 @@
 * @brief    CXM150x control API (TEST group command)
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -42,15 +42,15 @@
 // Compile only if certain symbols are defined in CXM150x_APITypedef.h
 #if CXM150x_TEST_MODE_API_USE
 
-return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPIState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
-return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_test_tx_ch(uint32_t param, CmdResSetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_test_tx_ch(void* param, CmdResGetCXM150xTestTxCh *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_test_tx_mode(uint32_t mode, CmdResSetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_test_tx_mode(void* param, CmdResGetCXM150xTestTxMode *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_test_tx_run(uint32_t on_off, CmdResSetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_test_tx_run(void* param, CmdResGetCXM150xTestTxRun *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_test_gpi_state(uint32_t param, CmdResGetCXM150xTestGPIState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code set_CXM150x_test_gpo_state(CXM150xSetGPOState *param, CmdResSetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
+CXM150x_return_code get_CXM150x_test_gpo_state(uint32_t param, CmdResGetCXM150xTestGPOState *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func);
 
 #endif  // CXM150x_TEST_MODE_API_USE
 

@@ -4,7 +4,7 @@
 * @brief    Define HAL wrapper functions for CONTROL FW UPDATE
 * @date     2021/08/16
 *
-* Copyright 2021 Sony Semiconductor Solutions Corporation
+* Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
 * 
 * Redistribution and use in source and binary forms, with or without modification,
 * are permitted provided that the following conditions are met:
@@ -66,7 +66,7 @@ extern int g_uart0_fd;
  * @return confirmation result
 */
 // ===========================================================================
-uint32_t sum_check(uint8_t *rx_buf){
+static uint32_t sum_check(uint8_t *rx_buf){
     uint32_t sum = 0;
     uint8_t data_len = rx_buf[CXM150x_CTRL_FW_UPDATE_API_POS_LE0];
     uint8_t calc_sum;
@@ -106,7 +106,7 @@ uint32_t sum_check(uint8_t *rx_buf){
  * @return receive result
 */
 // ===========================================================================
-return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt){
+CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,uint32_t wait_cnt){
     uint8_t c = 0;
     uint32_t rcv_cnt = 0;
     uint32_t dt_n = 0;
@@ -316,7 +316,7 @@ return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,uint32_t w
  * @return transmission result
 */
 // ===========================================================================
-return_code wrapper_CXM150x_ctrl_fw_update_tx_message(uint8_t *snd_buf,uint8_t snd_cnt,uint32_t wait_cnt){
+CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_tx_message(uint8_t *snd_buf,uint8_t snd_cnt,uint32_t wait_cnt){
     // display sent message
 #if defined CONFIG_ARCH_BOARD_SPRESENSE
     g_fw_updating = true;
@@ -374,7 +374,7 @@ return_code wrapper_CXM150x_ctrl_fw_update_tx_message(uint8_t *snd_buf,uint8_t s
  * @return none
 */
 // ===========================================================================
-return_code wrapper_CXM150x_ctrl_fw_update_uart_abort_IT(void){
+CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_uart_abort_IT(void){
 #ifdef FOR_STM32_HAL_DRIVER_CONTROL_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Abort_IT(&huart1);
     if(ret == HAL_TIMEOUT){
