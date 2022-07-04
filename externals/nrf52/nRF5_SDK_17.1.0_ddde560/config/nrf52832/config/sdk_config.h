@@ -345,6 +345,60 @@
 #define SER_HAL_TRANSPORT_CONFIG_DEBUG_COLOR 0
 #endif
 
+//==========================================================
+// <e> SER_SD_TRANSPORT_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef SER_SD_TRANSPORT_CONFIG_LOG_ENABLED
+#define SER_SD_TRANSPORT_CONFIG_LOG_ENABLED 0
+#endif
+// <o> SER_SD_TRANSPORT_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef SER_SD_TRANSPORT_CONFIG_LOG_LEVEL
+#define SER_SD_TRANSPORT_CONFIG_LOG_LEVEL 3
+#endif
+
+//==========================================================
+// <e> SER_SD_HANDLER_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef SER_SD_HANDLER_CONFIG_LOG_ENABLED
+#define SER_SD_HANDLER_CONFIG_LOG_ENABLED 0
+#endif
+// <o> SER_SD_HANDLER_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef SER_SD_HANDLER_CONFIG_LOG_LEVEL
+#define SER_SD_HANDLER_CONFIG_LOG_LEVEL 3
+#endif
+
+//==========================================================
+// <e> SER_SD_HANDLER_CONFIG_LOG_ENABLED - Enables logging in the module.
+//==========================================================
+#ifndef SER_PHY_UART_CONFIG_LOG_ENABLED
+#define SER_PHY_UART_CONFIG_LOG_ENABLED 0
+#endif
+// <o> SER_PHY_UART_CONFIG_LOG_LEVEL  - Default Severity level
+ 
+// <0=> Off 
+// <1=> Error 
+// <2=> Warning 
+// <3=> Info 
+// <4=> Debug 
+
+#ifndef SER_PHY_UART_CONFIG_LOG_LEVEL
+#define SER_PHY_UART_CONFIG_LOG_LEVEL 3
+#endif
+
 // </h> 
 //==========================================================
 
