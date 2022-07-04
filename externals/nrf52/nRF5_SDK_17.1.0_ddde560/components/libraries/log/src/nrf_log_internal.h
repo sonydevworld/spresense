@@ -45,6 +45,7 @@
 #include "app_util.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "nrf_log_instance.h"
 #include "nrf_log_types.h"
 
@@ -134,9 +135,13 @@
 #endif
 
 
-#define LOG_INTERNAL_X(N, ...)          CONCAT_2(LOG_INTERNAL_, N) (__VA_ARGS__)
-#define LOG_INTERNAL(type, ...) LOG_INTERNAL_X(NUM_VA_ARGS_LESS_1( \
-                                                           __VA_ARGS__), type, __VA_ARGS__)
+#define stringify(x) #x
+#define MODULE_NAME(x) stringify(x)
+#define LOG_INTERNAL(level, ...) \
+    printf("[" #level "][%s] ", MODULE_NAME(NRF_LOG_MODULE_NAME)); \
+    printf(__VA_ARGS__);                                           \
+    printf("\n");
+
 #if NRF_LOG_ENABLED
 #define NRF_LOG_INTERNAL_LOG_PUSH(_str) nrf_log_push(_str)
 #define LOG_INTERNAL_0(type, str) \
@@ -195,7 +200,7 @@
     {                                                                                    \
         if (NRF_LOG_INST_FILTER(p_inst) >= level)                                        \
         {                                                                                \
-            LOG_INTERNAL(LOG_SEVERITY_INST_ID(level_id, p_inst), __VA_ARGS__);           \
+            LOG_INTERNAL(level, __VA_ARGS__);           \
         }                                                                                \
     }
 
@@ -205,7 +210,7 @@
     {                                                                                    \
         if (NRF_LOG_FILTER >= level)                                                     \
         {                                                                                \
-            LOG_INTERNAL(LOG_SEVERITY_MOD_ID(level_id), __VA_ARGS__);                    \
+            LOG_INTERNAL(level, __VA_ARGS__);                    \
         }                                                                                \
     }
 

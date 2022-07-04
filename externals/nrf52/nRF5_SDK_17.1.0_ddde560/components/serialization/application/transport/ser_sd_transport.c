@@ -48,14 +48,15 @@
 //#include "ser_dbg_sd_str.h"
 #include "ser_app_power_system_off.h"
 #include "app_util.h"
-
-#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_DEBUG printf
+#include "sdk_config.h"
+#define NRF_LOG_MODULE_NAME ser_sd_transport
+#if SER_SD_TRANSPORT_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL SER_SD_TRANSPORT_CONFIG_LOG_LEVEL
 #else
-#define NRF_LOG_DEBUG(...)
+    #define NRF_LOG_LEVEL 0
 #endif
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 #ifdef BLE_STACK_SUPPORT_REQD
 /** SoftDevice event handler. */

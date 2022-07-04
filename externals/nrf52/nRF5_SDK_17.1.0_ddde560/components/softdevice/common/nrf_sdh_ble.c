@@ -47,15 +47,17 @@
 #include "app_error.h"
 #include "nrf_strerror.h"
 
-//#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_ERROR printf
-#define NRF_LOG_DEBUG printf
+
+#define NRF_LOG_MODULE_NAME nrf_sdh_ble
+#if NRF_SDH_BLE_LOG_ENABLED
+    #define NRF_LOG_LEVEL       NRF_SDH_BLE_LOG_LEVEL
+    #define NRF_LOG_INFO_COLOR  NRF_SDH_BLE_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR NRF_SDH_BLE_DEBUG_COLOR
 #else
-#define NRF_LOG_ERROR(...)
-#define NRF_LOG_DEBUG(...)
-#endif
+    #define NRF_LOG_LEVEL       0
+#endif // NRF_SDH_BLE_LOG_ENABLED
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 #ifndef NOT_USE_NRF_SECTION
 // Create section set "sdh_ble_observers".
