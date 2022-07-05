@@ -46,6 +46,8 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define __STATIC_INLINE static __inline
+
 #ifdef CONFIG_EXTERNALS_NRF52_OUTPUT_LOG_LEVEL
 #  if CONFIG_EXTERNALS_NRF52_OUTPUT_LOG_LEVEL > 0
 #    define NRF_LOG_ENABLED 1

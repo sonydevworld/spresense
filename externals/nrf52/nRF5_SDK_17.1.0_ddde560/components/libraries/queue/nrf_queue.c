@@ -41,6 +41,7 @@
 #if NRF_MODULE_ENABLED(NRF_QUEUE)
 #include "nrf_queue.h"
 #include "app_util_platform.h"
+#include "nrf_porting.h"
 
 #if NRF_QUEUE_CONFIG_LOG_ENABLED
     #define NRF_LOG_LEVEL             NRF_QUEUE_CONFIG_LOG_LEVEL
@@ -51,9 +52,6 @@
     #define NRF_LOG_LEVEL       0
 #endif // NRF_QUEUE_CONFIG_LOG_ENABLED
 #include "nrf_log.h"
-
-#define __STATIC_INLINE static __inline
-
 
 NRF_SECTION_DEF(nrf_queue, nrf_queue_t);
 
