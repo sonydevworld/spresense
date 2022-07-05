@@ -53,12 +53,11 @@
 #include "ble_types.h"
 #include "ble_err.h"
 #include "ble_gatt.h"
+#include "nrf_porting.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define __STATIC_INLINE static __inline
 
 /** @addtogroup BLE_GATTC_ENUMERATIONS Enumerations
  * @{ */
