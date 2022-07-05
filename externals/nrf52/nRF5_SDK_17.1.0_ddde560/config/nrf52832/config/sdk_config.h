@@ -43,6 +43,8 @@
 #ifndef SDK_CONFIG_H
 #define SDK_CONFIG_H
 
+#include "nrf_porting.h"
+
 // <q> NRF_STRERROR_ENABLED  - nrf_strerror - Library for converting error code to string.
 
 #ifndef NRF_STRERROR_ENABLED
