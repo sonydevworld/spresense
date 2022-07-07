@@ -37,6 +37,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <arch/board/board.h>
 #include "nrf.h"
 #include "ser_app_power_system_off.h"
 
@@ -55,4 +56,8 @@ bool ser_app_power_system_off_get(void)
 
 void ser_app_power_system_off_enter(void)
 {
+    boardctl(BOARDIOC_POWEROFF, 0);
+
+    /*Only for debugging purpose, will not be reached without connected debugger*/
+    while (1);
 }
