@@ -49,7 +49,6 @@
 #include "nrf_sdh.h"
 #include "nrf_sdm.h"
 #include "ser_sd_transport.h"
-#include "ser_app_hal.h"
 #include "ser_config.h"
 #include "nrf_soc.h"
 #include "ble_serialization.h"
@@ -135,20 +134,10 @@ void os_rsp_set_handler(void)
 
 static void connectivity_reset_low(void)
 {
-    //Signal a reset to the connectivity chip by setting the reset pin low.
-    ser_app_hal_nrf_reset_pin_clear();
-    ser_app_hal_delay(CONN_CHIP_RESET_TIME);
-
 }
 
 static void connectivity_reset_high(void)
 {
-
-    //Set the reset level to high again.
-    ser_app_hal_nrf_reset_pin_set();
-
-    //Wait for connectivity chip to be ready.
-    ser_app_hal_delay(CONN_CHIP_WAKEUP_TIME);
 }
 
 #if defined(BLE_STACK_SUPPORT_REQD)
@@ -167,7 +156,6 @@ static void ser_softdevice_ble_evt_handler(uint8_t * p_data, uint16_t length)
     err_code = nrf_queue_push(&m_sd_ble_evt_mailbox, &item);
     APP_ERROR_CHECK(err_code);
 
-    ser_app_hal_nrf_evt_pending();
     (void)sem_post(&evt_sid);
     NRF_LOG_DEBUG("ser_softdevice_ble_evt_handler END\n");
 }
@@ -188,8 +176,6 @@ static void ser_softdevice_ant_evt_handler(uint8_t * p_data, uint16_t length)
 
     err_code = nrf_queue_push(&m_sd_ant_evt_mailbox, &item);
     APP_ERROR_CHECK(err_code);
-
-    ser_app_hal_nrf_evt_pending();
 }
 #endif
 
@@ -200,8 +186,6 @@ void ser_softdevice_flash_operation_success_evt(bool success)
 
     uint32_t err_code = nrf_queue_push(&m_sd_soc_evt_mailbox, &evt_type);
     APP_ERROR_CHECK(err_code);
-
-    ser_app_hal_nrf_evt_pending();
 }
 
 /**
@@ -311,7 +295,7 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
 {
     uint32_t err_code;
 
-    err_code = ser_app_hal_hw_init(ser_softdevice_flash_operation_success_evt);
+    err_code = NRF_SUCCESS;
 
     if (err_code == NRF_SUCCESS)
     {
@@ -342,8 +326,6 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
         {
             return err_code;
         }
-
-        ser_app_hal_nrf_evt_irq_priority_set();
     }
     else
     {
