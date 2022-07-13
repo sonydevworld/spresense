@@ -379,7 +379,7 @@ int bleConvertErrorCode(uint32_t errCode)
         break;
       case NRF_ERROR_INVALID_STATE:
         BLE_ERR("errno: 0x%lx, Invalid state.\n", errCode);
-        ret = -EINVAL;
+        ret = -EPERM;
         break;
       case NRF_ERROR_INVALID_ADDR:
         BLE_ERR("errno: 0x%lx, Bad Memory Address.\n", errCode);
@@ -403,15 +403,15 @@ int bleConvertErrorCode(uint32_t errCode)
         break;
       case NRF_ERROR_NOT_SUPPORTED:
         BLE_ERR("errno: 0x%lx, Not supported.\n", errCode);
-        ret = -EINVAL;
+        ret = -ENOTSUP;
         break;
       case NRF_ERROR_BUSY:
         BLE_ERR("errno: 0x%lx, Busy.\n", errCode);
-        ret = -EPERM;
+        ret = -EBUSY;
         break;
       case NRF_ERROR_NO_MEM:
         BLE_ERR("errno: 0x%lx, No Memory for operation.\n", errCode);
-        ret = -EPERM;
+        ret = -ENOMEM;
         break;
       case NRF_ERROR_FORBIDDEN:
         BLE_ERR("errno: 0x%lx, Forbidden Operation.\n", errCode);
