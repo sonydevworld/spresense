@@ -40,6 +40,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <pthread.h>
 #include "ser_sd_transport.h"
 #include "ser_hal_transport.h"
 #include "nrf_error.h"
@@ -85,6 +86,8 @@ static ser_sd_transport_rsp_handler_t m_rsp_dec_handler = NULL;
 
 /** Flag indicated whether module is waiting for response packet. */
 static volatile bool m_rsp_wait = false;
+static pthread_mutex_t m_mutex_rsp_wait;
+static pthread_cond_t  m_cond_rsp_wait;
 
 /** SoftDevice call return value decoded by user decoder handler. */
 static uint32_t m_return_value;
@@ -213,6 +216,9 @@ uint32_t ser_sd_transport_open(ser_sd_transport_evt_handler_t             ble_ev
                                ser_sd_transport_rsp_set_handler_t         os_rsp_set_handler,
                                ser_sd_transport_rx_notification_handler_t rx_not_handler)
 {
+    pthread_mutex_init(&m_mutex_rsp_wait, NULL);
+    pthread_cond_init(&m_cond_rsp_wait, NULL);
+
     m_os_rsp_wait_handler = os_rsp_wait_handler;
     m_os_rsp_set_handler  = os_rsp_set_handler;
     m_rx_notify_handler   = rx_not_handler;
@@ -259,6 +265,9 @@ uint32_t ser_sd_transport_close(void)
 
     ser_hal_transport_close();
 
+    pthread_cond_destroy(&m_cond_rsp_wait);
+    pthread_mutex_destroy(&m_mutex_rsp_wait);
+
     return NRF_SUCCESS;
 }
 
@@ -278,6 +287,8 @@ uint32_t ser_sd_transport_tx_alloc(uint8_t * * pp_data, uint16_t * p_len)
 {
     uint32_t err_code;
 
+    pthread_mutex_lock(&m_mutex_rsp_wait);
+
     if (m_rsp_wait)
     {
         err_code = NRF_ERROR_BUSY;
@@ -286,6 +297,13 @@ uint32_t ser_sd_transport_tx_alloc(uint8_t * * pp_data, uint16_t * p_len)
     {
         err_code = ser_hal_transport_tx_pkt_alloc(pp_data, p_len);
     }
+
+    if ((err_code == NRF_ERROR_BUSY) || (err_code == NRF_ERROR_NO_MEM))
+    {
+        pthread_cond_wait(&m_cond_rsp_wait, &m_mutex_rsp_wait);
+    }
+
+    pthread_mutex_unlock(&m_mutex_rsp_wait);
     return err_code;
 }
 
@@ -306,6 +324,7 @@ uint32_t ser_sd_transport_cmd_write(const uint8_t *                p_buffer,
 {
     uint32_t err_code = NRF_SUCCESS;
 
+    pthread_mutex_lock(&m_mutex_rsp_wait);
     m_rsp_wait        = true;
     m_rsp_dec_handler = cmd_rsp_decode_callback;
     err_code          = ser_hal_transport_tx_pkt_send(p_buffer, length);
@@ -334,6 +353,9 @@ uint32_t ser_sd_transport_cmd_write(const uint8_t *                p_buffer,
     {
         m_rsp_wait = false;
     }
+
+    pthread_cond_signal(&m_cond_rsp_wait);
+    pthread_mutex_unlock(&m_mutex_rsp_wait);
 
     NRF_LOG_DEBUG("[SD_CALL]:%lx, err_code= 0x%lX", (uint32_t)p_buffer[1], err_code);
     return err_code;
