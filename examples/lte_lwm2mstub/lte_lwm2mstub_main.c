@@ -303,7 +303,6 @@ static int lwm2m_setup(struct app_parameter_s *param)
 static int connect_to_lwm2mserver(struct app_parameter_s *param)
 {
   int ret;
-  int cmd;
 
   lte_set_report_m2mwrite(write_cb);
   lte_set_report_m2mread(read_cb);
