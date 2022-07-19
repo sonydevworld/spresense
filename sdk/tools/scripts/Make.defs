@@ -90,8 +90,8 @@ endif
 
 # ELF module definitions
 
-CELFFLAGS = $(CFLAGS)
-CXXELFFLAGS = $(CXXFLAGS)
+CELFFLAGS = $(CFLAGS) -fno-common
+CXXELFFLAGS = $(CXXFLAGS) -fno-common
 
 LDELFFLAGS = -r -e main
 ifeq ($(CONFIG_CYGWIN_WINTOOL),y)
