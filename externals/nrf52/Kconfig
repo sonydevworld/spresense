@@ -1,0 +1,27 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_NRF52
+	bool "NRF52 Libraries"
+	depends on BLUETOOTH_NRF52
+	default n
+	---help---
+		Enable NRF52 Libraries.
+		from https://www.nordicsemi.com/Products/Development-software/nRF5-SDK/Download
+		For details, see https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_sdk%2Fstruct%2Fsdk_nrf5_latest.html .
+
+if EXTERNALS_NRF52
+
+choice
+	prompt "nRF52xxx & Soft Device"
+	default EXTERNALS_NRF52_S132
+
+config EXTERNALS_NRF52_S132
+	bool "Select nRF52832 & SoftDevice S132"
+
+endchoice
+
+endif # EXTERNALS_NRF52
+

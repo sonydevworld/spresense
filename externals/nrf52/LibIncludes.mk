@@ -1,7 +1,7 @@
 ############################################################################
-# bluetooth/Makefile
+# externals/nrf52/LibIncludes.mk
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,34 +33,24 @@
 #
 ############################################################################
 
--include $(SDKDIR)/modules/Make.defs
+BLEDIR := $(SDKDIR)$(DELIM)modules$(DELIM)bluetooth$(DELIM)hal$(DELIM)nrf52
 
-MODNAME = bluetooth
+BLE_IGNORE_DIR := "*s132*"
+BLE_API_VERSION := 7
 
-CSRCS  =  bluetooth_common.c
-ifeq ($(CONFIG_BLUETOOTH_A2DP),y)
-CSRCS +=  bluetooth_a2dp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_AVRCP),y)
-CSRCS +=  bluetooth_avrcp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_HFP),y)
-CSRCS +=  bluetooth_hfp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_SPP),y)
-CSRCS +=  bluetooth_spp.c
-endif
-ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
-CSRCS +=  bluetooth_le_gatt.c
-endif
-CSRCS +=  bluetooth_hal_init.c
-
-ifeq ($(CONFIG_BCM20706),y)
-include hal/bcm20706/Make.defs
+ifeq ($(CONFIG_EXTERNALS_NRF52),y)
+CFLAGS += -DBLE_STACK_SUPPORT_REQD -DNRF_SD_BLE_API_VERSION=$(BLE_API_VERSION) -DSVCALL_AS_NORMAL_FUNCTION -DBLE_SUPPORT_BLE5 -std=c99
+CFLAGS += -DBLE_ENABLE_NORDIC_ORIGINAL
 endif
 
-ifeq ($(CONFIG_BLUETOOTH_NRF52),y)
-include hal/nrf52/Make.defs
+ifeq ($(CONFIG_EXTERNALS_NRF52),y)
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/common"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/util"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/queue"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/log"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk"}
+CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/config/nrf52832/config"}
 endif
-
-include $(SDKDIR)/modules/Module.mk

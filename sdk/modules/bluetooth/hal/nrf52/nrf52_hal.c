@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/bluetooth/bluetooth_hal_init.c
+ * modules/bluetooth/hal/nrf52/nrf52_hal.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,41 +37,100 @@
  * Included Files
  ****************************************************************************/
 
-#include <bluetooth/bluetooth.h>
+#include <stdio.h>
+#include <bluetooth/hal/bt_if.h>
 
 /****************************************************************************
- * Function prototype
+ * Public Datas
  ****************************************************************************/
 
-#ifdef CONFIG_BCM20706
-extern int bcm20706_probe(void);
-#elif defined CONFIG_BLUETOOTH_NRF52
-extern int nrf52_probe(void);
+/* BT Common HAL I/F */
+
+struct bt_hal_common_ops_s bt_hal_common_ops;
+
+#ifdef CONFIG_NRF52_A2DP
+/* BT A2DP HAL I/F */
+
+struct bt_hal_a2dp_ops_s bt_hal_a2dp_ops;
+#endif
+
+#ifdef CONFIG_NRF52_AVRCP
+/* BT AVRCP HAL I/F */
+
+struct bt_hal_avrcp_ops_s bt_hal_avrcp_ops;
+#endif
+
+#ifdef CONFIG_NRF52_HFP
+/* BT HFP HAL I/F */
+
+struct bt_hal_hfp_ops_s bt_hal_hfp_ops;
+#endif
+
+#ifdef CONFIG_NRF52_SPP
+/* BT SPP HAL I/F */
+
+struct bt_hal_spp_ops_s bt_hal_spp_ops;
+#endif
+
+#ifdef CONFIG_NRF52_LE
+/* BT SPP HAL I/F */
+
+struct ble_hal_common_ops_s ble_hal_common_ops;
+
+#ifdef CONFIG_NRF52_LE_GATT
+/* BT SPP HAL I/F */
+
+struct ble_hal_gatt_ops_s ble_hal_gatt_ops;
+#endif
 #endif
 
 /****************************************************************************
- * Public Function prototype
+ * Public Functions
  ****************************************************************************/
 
-/****************************************************************************
- * Name: bt_hal_init
- *
- * Description:
- *   BT HAL initialize
- *   Probe BT HAL module for register HAL callbacks.
- *
- ****************************************************************************/
-
-int bt_hal_init(void)
+int nrf52_probe(void)
 {
-  int ret = BT_SUCCESS;
+  int ret = 0;
 
-#ifdef CONFIG_BCM20706
-  ret = bcm20706_probe();
-#elif defined CONFIG_BLUETOOTH_NRF52
-  ret = nrf52_probe();
+  /* Register BT common HAL */
+
+  ret = bt_common_register_hal(&bt_hal_common_ops);
+
+#ifdef CONFIG_NRF52_A2DP
+  /* Register BT A2DP HAL */
+
+  ret = bt_a2dp_register_hal(&bt_hal_a2dp_ops);
+#endif
+
+#ifdef CONFIG_NRF52_AVRCP
+  /* Register BT AVRCP HAL */
+
+  ret = bt_avrcp_register_hal(&bt_hal_avrcp_ops);
+#endif
+
+#ifdef CONFIG_NRF52_HFP
+  /* Register BT HFP HAL */
+
+  ret = bt_hfp_register_hal(&bt_hal_hfp_ops);
+#endif
+
+#ifdef CONFIG_NRF52_SPP
+  /* Register BT SPP HAL */
+
+  ret = bt_spp_register_hal(&bt_hal_spp_ops);
+#endif
+
+#ifdef CONFIG_NRF52_LE
+  /* Register BLE common HAL */
+
+  ret = ble_common_register_hal(&ble_hal_common_ops);
+
+#ifdef CONFIG_NRF52_LE_GATT
+  /* Register BLE GATT HAL */
+
+  ret = ble_gatt_register_hal(&ble_hal_gatt_ops);
+#endif
 #endif
 
   return ret;
 }
-
