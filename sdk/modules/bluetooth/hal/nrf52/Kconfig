@@ -16,14 +16,14 @@ config NRF52_LE
 	bool
 	default BLUETOOTH_LE
 	---help---
-		This option enabling Cypress NRF52 Low Energy HAL.
+		This option enabling Nordic nRF52 Low Energy HAL.
 
 if NRF52_LE
 config NRF52_LE_GATT
 	bool
 	default BLUETOOTH_LE_GATT
 	---help---
-		This option enabling Cypress NRF52 LE GATT HAL.
+		This option enabling Nordic nRF52 LE GATT HAL.
 
 endif # NRF52_LE
 
