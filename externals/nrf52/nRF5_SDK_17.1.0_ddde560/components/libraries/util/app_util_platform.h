@@ -49,6 +49,8 @@
 #ifndef APP_UTIL_PLATFORM_H__
 #define APP_UTIL_PLATFORM_H__
 
+#include <sched.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
