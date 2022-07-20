@@ -45,6 +45,10 @@
 #include <sched.h>
 #include <poll.h>
 #include <errno.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <nuttx/fs/ioctl.h>
+#include <nuttx/serial/tioctl.h>
 #include "sdk/config.h"
 
 
@@ -272,6 +276,30 @@ static void ser_phy_null_read(UART_CONTEXT *ctx)
   }
 }
 
+static int ser_phy_even_parity_set(int fd)
+{
+  int ret;
+  struct termios prm;
+
+  ret = ioctl(fd, TCGETS, &prm);
+  if (ret != 0)
+    {
+      return ret;
+    }
+
+  prm.c_cflag |= PARENB;
+  prm.c_cflag &= ~PARODD;
+
+  ret = ioctl(fd, TCSETS, &prm);
+  if (ret != 0)
+    {
+      return ret;
+    }
+
+  ret = ioctl(fd, TCFLSH, NULL);
+  return ret;
+}
+
 static void *ser_phy_uart_receive(void *param)
 {
   ssize_t rx_len = 0;
@@ -377,6 +405,15 @@ uint32_t ser_phy_open(ser_phy_events_handler_t events_handler)
     NRF_LOG_DEBUG("ser_phy_open: open err %d\n", ctx->uart_fd);
     return ctx->uart_fd;
   }
+  ret = ser_phy_even_parity_set(ctx->uart_fd);
+  if (ret != 0)
+  {
+    errcode = errno;
+    NRF_LOG_ERROR("ser_phy_open: UART even parity set err %d\n", errcode);
+    (void)close(ctx->uart_fd);
+    return -errno;
+  }
+
   ser_phy_null_read(ctx);
 
   ret = pipe(ctx->ctrl_fd);
