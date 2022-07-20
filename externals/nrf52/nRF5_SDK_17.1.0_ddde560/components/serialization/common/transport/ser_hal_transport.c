@@ -46,14 +46,16 @@
 #include "ser_hal_transport.h"
 #include "nrf_error.h"
 
-//#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_INFO printf
-#else
-#define NRF_LOG_INFO(...)
-#endif
-
+#define NRF_LOG_MODULE_NAME ser_hal_transport
+#if SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL       SER_HAL_TRANSPORT_CONFIG_LOG_LEVEL
+    #define NRF_LOG_INFO_COLOR  SER_HAL_TRANSPORT_CONFIG_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR SER_HAL_TRANSPORT_CONFIG_DEBUG_COLOR
+#else //SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL       0
+#endif //SER_HAL_TRANSPORT_CONFIG_LOG_ENABLED
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 /**
  * @brief States of the RX state machine.
@@ -363,7 +365,7 @@ void ser_hal_transport_close(void)
 uint32_t ser_hal_transport_rx_pkt_free(uint8_t * p_buffer)
 {
 
-    NRF_LOG_INFO("rx pkt free:%d", p_buffer);
+    NRF_LOG_INFO("rx pkt free:%p", p_buffer);
     uint32_t err_code = NRF_SUCCESS;
 
     ser_phy_interrupts_disable();

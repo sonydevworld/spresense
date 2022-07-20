@@ -61,13 +61,14 @@
 #include "ant_event.h"
 #endif
 
-//#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_DEBUG printf
+#define NRF_LOG_MODULE_NAME ser_sd_handler
+#if SER_SD_HANDLER_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL SER_SD_HANDLER_CONFIG_LOG_LEVEL
 #else
-#define NRF_LOG_DEBUG(...)
+    #define NRF_LOG_LEVEL 0
 #endif
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 #define SD_BLE_EVT_MAILBOX_QUEUE_SIZE 5 /**< Size of mailbox queue. */
 #define SD_BLE_RESPONSE_TIMEOUT 5000

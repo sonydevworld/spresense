@@ -41,19 +41,17 @@
 #if NRF_MODULE_ENABLED(NRF_QUEUE)
 #include "nrf_queue.h"
 #include "app_util_platform.h"
+#include "nrf_porting.h"
 
-//#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_INST_WARNING printf
-#define NRF_LOG_INST_DEBUG(...)
+#if NRF_QUEUE_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL             NRF_QUEUE_CONFIG_LOG_LEVEL
+    #define NRF_LOG_INIT_FILTER_LEVEL NRF_QUEUE_CONFIG_LOG_INIT_FILTER_LEVEL
+    #define NRF_LOG_INFO_COLOR        NRF_QUEUE_CONFIG_INFO_COLOR
+    #define NRF_LOG_DEBUG_COLOR       NRF_QUEUE_CONFIG_DEBUG_COLOR
 #else
-#define NRF_LOG_INST_WARNING(...)
-#define NRF_LOG_INST_DEBUG(...)
-#endif
-
-#define __STATIC_INLINE static __inline
-
+    #define NRF_LOG_LEVEL       0
+#endif // NRF_QUEUE_CONFIG_LOG_ENABLED
+#include "nrf_log.h"
 
 NRF_SECTION_DEF(nrf_queue, nrf_queue_t);
 
@@ -221,7 +219,7 @@ ret_code_t nrf_queue_push(nrf_queue_t const * p_queue, void const * p_element)
 
     CRITICAL_REGION_EXIT();
 
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "pushed element 0x%08X, status:%d", p_element, status);
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "pushed element 0x%p, status:%ld", p_element, status);
     return status;
 }
 
@@ -279,7 +277,7 @@ ret_code_t nrf_queue_generic_pop(nrf_queue_t const * p_queue,
     }
 
     CRITICAL_REGION_EXIT();
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "%s element 0x%08X, status:%d",
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "%s element 0x%p, status:%ld",
                                          just_peek ? "peeked" : "popped", p_element, status);
     return status;
 }
@@ -384,7 +382,7 @@ ret_code_t nrf_queue_write(nrf_queue_t const * p_queue,
 
     CRITICAL_REGION_EXIT();
 
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "Write %d elements (start address: 0x%08X), status:%d",
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "Write %d elements (start address: 0x%p), status:%ld",
                                        element_count, p_data, status);
     return status;
 }
@@ -396,6 +394,8 @@ size_t nrf_queue_in(nrf_queue_t const * p_queue,
 {
     ASSERT(p_queue != NULL);
     ASSERT(p_data != NULL);
+
+    size_t req_element_count = element_count;
 
     if (element_count == 0)
     {
@@ -418,7 +418,7 @@ size_t nrf_queue_in(nrf_queue_t const * p_queue,
 
     CRITICAL_REGION_EXIT();
 
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "Put in %d elements (start address: 0x%08X), requested :%d",
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "Put in %d elements (start address: 0x%p), requested :%d",
                                        element_count, p_data, req_element_count);
 
     return element_count;
@@ -491,7 +491,7 @@ ret_code_t nrf_queue_read(nrf_queue_t const * p_queue,
 
     CRITICAL_REGION_EXIT();
 
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "Read %d elements (start address: 0x%08X), status :%d",
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "Read %d elements (start address: 0x%p), status :%ld",
                                        element_count, p_data, status);
     return status;
 }
@@ -503,7 +503,7 @@ size_t nrf_queue_out(nrf_queue_t const * p_queue,
     ASSERT(p_queue != NULL);
     ASSERT(p_data != NULL);
 
-    //size_t req_element_count = element_count;
+    size_t req_element_count = element_count;
 
     if (element_count == 0)
     {
@@ -519,7 +519,7 @@ size_t nrf_queue_out(nrf_queue_t const * p_queue,
 
     CRITICAL_REGION_EXIT();
 
-    NRF_LOG_INST_DEBUG(p_queue->p_log, "Out %d elements (start address: 0x%08X), requested :%d",
+    NRF_LOG_INST_DEBUG(p_queue->p_log, "Out %d elements (start address: 0x%p), requested :%d",
                                        element_count, p_data, req_element_count);
     return element_count;
 }

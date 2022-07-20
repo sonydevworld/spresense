@@ -60,14 +60,16 @@
 #include "app_util.h"
 #include "app_util_platform.h"
 #include "nrf_error.h"
+#include "sdk_config.h"
 
-//#define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define NRF_LOG_DEBUG printf
+#define NRF_LOG_MODULE_NAME ser_phy_uart
+#if SER_PHY_UART_CONFIG_LOG_ENABLED
+    #define NRF_LOG_LEVEL SER_PHY_UART_CONFIG_LOG_LEVEL
 #else
-#define NRF_LOG_DEBUG(...)
+    #define NRF_LOG_LEVEL 0
 #endif
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
 
 #define BLE_UART_FILE "/dev/ttyS2"
 
