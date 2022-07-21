@@ -86,7 +86,7 @@ enum gmo_command
 struct wss_command
 {
   enum gmo_command command;
-  char             symbol[WSS_GMOCOIN_SYMBOL_SIZE];
+  char             symbol[WSS_GMOCOIN_SYMBOL_SIZE + 1];
 };
 
 /****************************************************************************
@@ -321,7 +321,7 @@ int main(int argc, FAR char *argv[])
 
       /* set new command */
 
-      memset(new_command.symbol, 0, WSS_GMOCOIN_SYMBOL_SIZE);
+      memset(new_command.symbol, 0, sizeof(new_command.symbol));
       if (strncmp(argv[1], "subscribe", 3) == 0)
         {
           strncpy(new_command.symbol, argv[2], WSS_GMOCOIN_SYMBOL_SIZE);
