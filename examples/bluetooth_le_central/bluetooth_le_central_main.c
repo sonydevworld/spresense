@@ -56,17 +56,6 @@
  * Private Function Prototypes
  ****************************************************************************/
 
-/* BT common callbacks */
-
-static void on_command_status(BT_CMD_STATUS status);                      /**< Command status */
-static void on_pairing_complete(BT_ADDR addr, BT_PAIR_STATUS status);     /**< Pairing complete */
-static void on_inquiry_result(BT_ADDR addr, char *name);                  /**< Inquiry data result */
-static void on_inquiry_complete(void);                                    /**< Coplete inquiry */
-static void on_connect_status_changed(struct bt_acl_state_s *bt_acl_state,
-                                    bool connected, int status);          /**< Connection status change */
-static void on_connected_device_name(const char *name);                   /**< Device name change */
-static void on_bond_info(BT_ADDR addr);                                   /**< Bonding information */
-
 /* BLE common callbacks */
 
 static void on_le_connect_status_change(struct ble_state_s *ble_state,
@@ -85,17 +74,6 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc); /**<
  * Private Data
  ****************************************************************************/
 
-static struct bt_common_ops_s bt_common_ops =
-  {
-    .command_status         = on_command_status,
-    .pairing_complete       = on_pairing_complete,
-    .inquiry_result         = on_inquiry_result,
-    .inquiry_complete       = on_inquiry_complete,
-    .connect_status_changed = on_connect_status_changed,
-    .connected_device_name  = on_connected_device_name,
-    .bond_info              = on_bond_info
-  };
-
 static struct ble_common_ops_s ble_common_ops =
   {
     .connect_status_changed     = on_le_connect_status_change,
@@ -113,7 +91,6 @@ static struct ble_gatt_central_ops_s ble_gatt_central_ops =
 
 static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}};
 
-static char local_bt_name[BT_NAME_LEN]  = "SONY_BT";
 static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
 static struct ble_state_s *s_ble_state = NULL;
 #if 0
@@ -164,68 +141,6 @@ static void ble_state_add_bt_addr(struct ble_state_s *state, BT_ADDR *addr)
   ASSERT(state);
 
   memcpy(&state->bt_target_addr, addr, sizeof(state->bt_target_addr));
-}
-
-static void on_command_status(BT_CMD_STATUS status)
-{
-  /* If receive command status event, this function will call. */
-
-  printf("%s [BT] Command status = %d\n", __func__, status);
-}
-
-static void on_pairing_complete(BT_ADDR addr, BT_PAIR_STATUS status)
-{
-  /* If pairing task complete, this function will call.
-   * Print receive event data.
-   */
-
-  printf("[BT] Pairing complete ADDR:%02X:%02X:%02X:%02X:%02X:%02X, status=%d\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          status);
-}
-
-static void on_inquiry_result(BT_ADDR addr, char *name)
-{
-  /* If receive inquiry search result, this function will call. */
-
-  printf("[BT] Inquiry result ADDR:%02X:%02X:%02X:%02X:%02X:%02X, name:%s\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          name);
-}
-
-static void on_inquiry_complete(void)
-{
-  /* If receive inquiry complete event, this function will call. */
-
-  printf("%s [BT] Inquiry complete\n", __func__);
-}
-
-static void on_connect_status_changed(struct bt_acl_state_s *bt_acl_state,
-                                    bool connected, int status)
-{
-  /* If conection status changed, this function will call. */
-
-  printf("%s [BT] Connect status changed\n", __func__);
-}
-
-static void on_connected_device_name(const char *name)
-{
-  /* If receive connected device name data, this function will call. */
-
-  printf("%s [BT] Receive connected device name = %s\n", __func__, name);
-}
-
-static void on_bond_info(BT_ADDR addr)
-{
-  /* If new bonding is comming, this function will call.
-   * Print new bonding information.
-   */
-
-  printf("[BLE_GATT] Bonding information ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5]);
 }
 
 static void on_le_connect_status_change(struct ble_state_s *ble_state,
@@ -372,39 +287,12 @@ int main(int argc, FAR char *argv[])
 {
   int ret = 0;
 
-  /* Register BT event callback function */
-
-  ret = bt_register_common_cb(&bt_common_ops);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Register common call back failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
   /* Initialize BT HAL */
 
   ret = bt_init();
   if (ret != BT_SUCCESS)
     {
       printf("%s [BT] Initialization failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
-  /* Set local device address */
-
-  ret = bt_set_address(&local_addr);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Set local address failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
-  /* Set local device name */
-
-  ret = bt_set_name(local_bt_name);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Set local name failed. ret = %d\n", __func__, ret);
       goto error;
     }
 
