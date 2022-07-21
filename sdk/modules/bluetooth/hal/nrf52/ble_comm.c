@@ -131,16 +131,6 @@ static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
 static int nrf52_bt_enable(bool enable);
-static int nrf52_bt_set_device_addr(BT_ADDR *addr);
-static int nrf52_bt_get_device_addr(BT_ADDR *addr);
-static int nrf52_bt_set_device_name(char *name);
-static int nrf52_bt_get_device_name(char *name);
-static int nrf52_bt_paring_enable(bool enable);
-static int nrf52_bt_get_bond_list(BT_ADDR *addrs, int *num);
-static int nrf52_bt_un_bond(BT_ADDR *addr);
-static int nrf52_bt_set_visibility(BT_VISIBILITY visibility);
-static int nrf52_bt_inquiry_start(void);
-static int nrf52_bt_inquiry_cancel(void);
 
 /******************************************************************************
  * Private Data
@@ -2493,16 +2483,16 @@ struct bt_hal_common_ops_s bt_hal_common_ops =
   .init          = nrf52_bt_init,
   .finalize      = nrf52_bt_finalize,
   .enable        = nrf52_bt_enable,
-  .setDevAddr    = nrf52_bt_set_device_addr,
-  .getDevAddr    = nrf52_bt_get_device_addr,
-  .setDevName    = nrf52_bt_set_device_name,
-  .getDevName    = nrf52_bt_get_device_name,
-  .paringEnable  = nrf52_bt_paring_enable,
-  .getBondList   = nrf52_bt_get_bond_list,
-  .unBond        = nrf52_bt_un_bond,
-  .setVisibility = nrf52_bt_set_visibility,
-  .inquiryStart  = nrf52_bt_inquiry_start,
-  .inquiryCancel = nrf52_bt_inquiry_cancel
+  .setDevAddr    = NULL,
+  .getDevAddr    = NULL,
+  .setDevName    = NULL,
+  .getDevName    = NULL,
+  .paringEnable  = NULL,
+  .getBondList   = NULL,
+  .unBond        = NULL,
+  .setVisibility = NULL,
+  .inquiryStart  = NULL,
+  .inquiryCancel = NULL
 };
 
 /****************************************************************************
@@ -2578,156 +2568,6 @@ static int nrf52_bt_enable(bool enable)
       ret = ble_stop();
     }
 
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_set_device_addr
- *
- * Description:
- *   Bluetooth set device address
- *   Set device address to chip and store local address.
- *
- ****************************************************************************/
-
-static int nrf52_bt_set_device_addr(BT_ADDR *addr)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_get_device_addr
- *
- * Description:
- *   Bluetooth get device address
- *   Get device address from local address.
- *
- ****************************************************************************/
-
-static int nrf52_bt_get_device_addr(BT_ADDR *addr)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_set_device_name
- *
- * Description:
- *   Bluetooth set device name
- *   Set device name to chip and store local name.
- *
- ****************************************************************************/
-
-static int nrf52_bt_set_device_name(char *name)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_get_device_name
- *
- * Description:
- *   Bluetooth get device name
- *   Get device name from local name.
- *
- ****************************************************************************/
-
-static int nrf52_bt_get_device_name(char *name)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_paring_enable
- *
- * Description:
- *   Bluetooth pairing mode enable/disable
- *   Set pairing mode and enable/disable.
- *
- ****************************************************************************/
-
-static int nrf52_bt_paring_enable(bool enable)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_get_bond_list
- *
- * Description:
- *   Bluetooth get bondling address list.
- *   Get bonding address list.
- *
- ****************************************************************************/
-
-static int nrf52_bt_get_bond_list(BT_ADDR *addrs, int *num)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_un_bond
- *
- * Description:
- *   Bluetooth unbond by BT_ADDR.
- *   Remove bondling information by BT_ADDR.
- *
- ****************************************************************************/
-
-static int nrf52_bt_un_bond(BT_ADDR *addr)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_set_visibility
- *
- * Description:
- *   Bluetooth set visibility.
- *   Set visibility from other device.
- *
- ****************************************************************************/
-
-static int nrf52_bt_set_visibility(BT_VISIBILITY visibility)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_inquiry_start
- *
- * Description:
- *   Bluetooth start inquiry.
- *   Start inquiry for search near devices.
- *
- ****************************************************************************/
-
-static int nrf52_bt_inquiry_start(void)
-{
-  int ret = BT_SUCCESS;
-  return ret;
-}
-
-/****************************************************************************
- * Name: nrf52_bt_inquiry_cancel
- *
- * Description:
- *   Bluetooth cancel inquiry.
- *   Cancel inquiry to stop search.
- *
- ****************************************************************************/
-
-static int nrf52_bt_inquiry_cancel(void)
-{
-  int ret = BT_SUCCESS;
   return ret;
 }
 
