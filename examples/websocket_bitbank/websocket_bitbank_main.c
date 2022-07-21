@@ -81,7 +81,7 @@ enum wss_state
 
 struct wss_command
 {
-  char symbol[WSS_BITBANK_SYMBOL_SIZE];
+  char symbol[WSS_BITBANK_SYMBOL_SIZE + 1];
 };
 
 /****************************************************************************
@@ -341,10 +341,9 @@ int main(int argc, FAR char *argv[])
 
       /* set new command */
 
-      memset(new_command.symbol, 0, WSS_BITBANK_SYMBOL_SIZE);
-      strncpy(new_command.symbol, argv[1], WSS_BITBANK_SYMBOL_SIZE);
-      strncat(new_command.symbol, "_", WSS_BITBANK_SYMBOL_SIZE);
-      strncat(new_command.symbol, argv[2], WSS_BITBANK_SYMBOL_SIZE);
+      memset(new_command.symbol, 0, sizeof(new_command.symbol));
+      snprintf(new_command.symbol, sizeof(new_command.symbol),
+               "%s_%s", argv[1], argv[2]);
     }
 
   else if ((argc > 1) && (strncmp(argv[1], "quit", 4) == 0))
