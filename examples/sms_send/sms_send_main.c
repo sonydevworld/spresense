@@ -159,7 +159,8 @@ static int send_sms(FAR char *phone_number, FAR char *text_msg,
 
       ioctl(sms_sock, SIOCSMSGREFID, &smsreq);
 
-      for (i = 0; i < smsreq.smsru.refid.nrefid; i++)
+      for (i = 0; (i < smsreq.smsru.refid.nrefid) &&
+                  (i < SMS_CONCATENATE_MAX); i++)
         {
           printf("Get reference id[%d] = %d\n",
                  i, smsreq.smsru.refid.refid[i]);
