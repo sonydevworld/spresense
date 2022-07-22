@@ -349,10 +349,17 @@ int main(int argc, FAR char *argv[])
     }
 
   modem_restarted = false;
+
+  /* During the update run, the modem must be woken up using
+   * lte_acquire_wakelock() to safely update the modem.
+   */
+
+  lte_acquire_wakelock();
   ret = ltefwupdate_execute();
   if (ret < 0)
     {
       printf("Execution is failed.. : %d\n", ret);
+      lte_release_wakelock();
       lte_finalize();
       return -1;
     }
@@ -363,6 +370,7 @@ int main(int argc, FAR char *argv[])
          "Please wait.\n");
 
   wait_for_modem_restart();
+  lte_release_wakelock();
 
   printf("\nNow the modem is rebooted.\n"
            "Check updated status\n");
