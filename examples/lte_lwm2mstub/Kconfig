@@ -1,0 +1,26 @@
+
+config EXAMPLES_LTE_LWM2MSTUB
+	tristate "LwM2M stub API example"
+	default n
+	---help---
+		Enable the lte_lwm2mstub app. This example shows how to use LwM2M stub APIs.
+		Those APIs uses LwM2M functionality on Alt1250 modem.
+
+if EXAMPLES_LTE_LWM2MSTUB
+
+config EXAMPLES_LTE_LWM2MSTUB_PROGNAME
+	string "Program name"
+	default "lte_lwm2mstub"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_LWM2MSTUB_PRIORITY
+	int "lte_lwm2mstub task priority"
+	default 100
+
+config EXAMPLES_LTE_LWM2MSTUB_STACKSIZE
+	int "lte_lwm2mstub stack size"
+	default 2048
+
+endif
