@@ -126,6 +126,12 @@ int main(int argc, FAR char *argv[])
           printf("Finish Jpeg thread.\n");
           wsock = 0;
         }
+      else
+        {
+          printf("Accept is failed. Re-create server socket\n");
+          rsock = multiwebcam_initserver(MULTIWEBCAM_PORT_NO);
+        }
+
       sleep(1);
     }
 
