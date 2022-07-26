@@ -62,6 +62,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
+#define OBJID_DATACONTAINER  (19)
 #define APP_INIFILE "/mnt/spif/lwm2m.ini"
 
 /****************************************************************************
@@ -71,8 +72,22 @@
 static char tmp_buff[256];
 static uint16_t enableobjs[6] =
 {
-  1, 2, 3, 4, 5, 19
+  1, 2, 3, 4, 5, OBJID_DATACONTAINER
 };
+
+static struct lwm2mstub_resource_s datacontainer_res[] =
+{
+  {
+    .res_id = 0,
+    .operation = LWM2MSTUB_RESOP_RW,
+    .inst_type = LWM2MSTUB_RESINST_SINGLE,
+    .data_type = LWM2MSTUB_RESDATA_OPAQUE,
+    .handl = LWM2MSTUB_RESOURCE_HANDLENOCARE
+  },
+};
+
+#define DATACONTAINER_OBJRESNUM \
+                (sizeof(datacontainer_res) / sizeof(datacontainer_res[0]))
 
 static volatile int periodic_value = 1234;
 static int dummy_value_01 = 0x1122aabb;
@@ -99,10 +114,10 @@ static void write_cb(int seq_no, int srv_id,
 {
   struct app_message_s msg;
 
-  printf("[CB] Write /%d/%d/%d request value >>%s<<\n",
-          inst->object_id, inst->object_inst, inst->res_id, value);
+  printf("[CB] Write /%d/%d/%d request size=%d value >>%s<<\n",
+          inst->object_id, inst->object_inst, inst->res_id, len, value);
 
-  if (inst->object_id == 19 && inst->res_id == 0)
+  if (inst->object_id == OBJID_DATACONTAINER && inst->res_id == 0)
     {
       if (!strcmp(value, "01"))
         {
@@ -137,7 +152,7 @@ static void read_cb(int seq_no, int srv_id,
   printf("[CB] Read /%d/%d/%d request\n",
           inst->object_id, inst->object_inst, inst->res_id);
 
-  if (inst->object_id == 19 && inst->res_id == 0)
+  if (inst->object_id == OBJID_DATACONTAINER && inst->res_id == 0)
     {
       len = sprintf(tmp_buff, "%08x", periodic_value);
       lte_m2m_readresponse(seq_no, inst,
@@ -176,7 +191,7 @@ static void ovstart_cb(int seq_no, int srv_id,
   printf("[CB] Observe Start /%d/%d/%d request: token=%s\n",
           inst->object_id, inst->object_inst, inst->res_id, token);
 
-  if (inst->object_id == 19)
+  if (inst->object_id == OBJID_DATACONTAINER)
     {
       msg.msgid = MESSAGE_ID_LWM2M_OVSTART;
       memcpy(msg.arg.token, token, LWM2MSTUB_MAX_TOKEN_SIZE);
@@ -201,7 +216,7 @@ static void ovstop_cb(int seq_no, int srv_id,
   printf("[CB] Observe Stop /%d/%d/%d request: token=%s\n",
           inst->object_id, inst->object_inst, inst->res_id, token);
 
-  if (inst->object_id == 19)
+  if (inst->object_id == OBJID_DATACONTAINER)
     {
       msg.msgid = MESSAGE_ID_LWM2M_OVSTOP;
       send_message(MESSAGE_QUEUE_NAME, &msg);
@@ -245,6 +260,48 @@ static void fwupstate_cb(int event)
 }
 
 /****************************************************************************
+ * Name: is_the_object_same
+ ****************************************************************************/
+
+static bool is_the_object_same(void)
+{
+  struct lwm2mstub_resource_s res;
+
+  if (lte_getm2m_objresourceinfo(OBJID_DATACONTAINER, 1, &res) >= 0)
+    {
+      if (res.res_id == datacontainer_res[0].res_id &&
+          res.operation == datacontainer_res[0].operation &&
+          res.inst_type == datacontainer_res[0].inst_type &&
+          res.data_type == datacontainer_res[0].data_type )
+        {
+          return true;
+        }
+    }
+
+  return false;
+}
+
+/****************************************************************************
+ * Name: object_datacontainer_setup
+ ****************************************************************************/
+
+static void object_datacontainer_setup(void)
+{
+  int resnum;
+
+  resnum = lte_getm2m_objresourcenum(OBJID_DATACONTAINER);
+  if (resnum != DATACONTAINER_OBJRESNUM || !is_the_object_same())
+    {
+      printf("Setup object %d\n", OBJID_DATACONTAINER);
+      lte_setm2m_objectdefinition(OBJID_DATACONTAINER,
+                                  DATACONTAINER_OBJRESNUM, datacontainer_res);
+      usleep(100 * 1000); /* Wait for update stable */
+    }
+
+  dump_objinfo(OBJID_DATACONTAINER);
+}
+
+/****************************************************************************
  * Name: lwm2m_setup
  ****************************************************************************/
 
@@ -266,7 +323,6 @@ static int lwm2m_setup(struct app_parameter_s *param)
   info.bootstrap = param->bootstrap;
   info.security_mode = param->security_mode;
   info.nonip = (param->ip_type == LTE_IPTYPE_NON) ? true : false;
-  printf("nonip = %s\n", info.nonip ? "YES" : "NO");
 
   ret = lte_setm2m_serverinfo(&info, 0);
   if (ret < 0)
@@ -276,6 +332,10 @@ static int lwm2m_setup(struct app_parameter_s *param)
     }
 
   usleep(100 * 1000); /* Wait for update stable */
+
+  /* Setup Binary App Data Container object (ID:19) */
+
+  object_datacontainer_setup();
 
   /* Setup endpoint name */
 
@@ -331,13 +391,14 @@ static void notify_value(int value)
   int len;
   struct lwm2mstub_instance_s inst;
 
-  inst.object_id = 19;
+  inst.object_id = OBJID_DATACONTAINER;
   inst.object_inst = 0;
   inst.res_id = 0;
   inst.res_inst = -1;
 
   len = sprintf(tmp_buff, "%08x", value);
-  printf("Update value as : token: %s, /19/0/0 %s\n", ov_token, tmp_buff);
+  printf("Update value as : token: %s, /%d/0/0 %s\n",
+                                      ov_token, OBJID_DATACONTAINER, tmp_buff);
   printf("observe update : %d\n",
                    lte_m2m_observeupdate(ov_token, &inst, tmp_buff, len));
 }
