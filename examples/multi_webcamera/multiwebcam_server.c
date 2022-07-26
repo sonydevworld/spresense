@@ -63,6 +63,12 @@ static int send_binary(int s, const char *data, int len)
       if (ret == 0)
         {
           printf("Send 0 byte. Maybe poor reception..\n");
+
+#ifdef CONFIG_EXAMPLES_MULTIWEBCAM_FAILSAFE
+          printf("Behave as an error for fail safe.\n");
+	  return -1;
+#endif
+
         }
 
       if (ret < 0)
