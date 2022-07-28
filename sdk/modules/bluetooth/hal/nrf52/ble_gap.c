@@ -423,7 +423,8 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
     BLE_PRT("pairingFeature is NULL!!!\n");
     return -EINVAL;
   }
-  if((pairingFeature->oob > BLE_GAP_OOB_AUTH_DATA_PRESENT) || (pairingFeature->oob < BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
+  if((pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_PRESENT) &&
+     (pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
     BLE_PRT("pairingFeature->oob=%d\n", pairingFeature->oob);
     return -EINVAL;
   }
