@@ -85,7 +85,7 @@
  *@name BT fail code
  *@{
  */
-#define BT_FAIL    -127
+#define BT_FAIL    -1
 /** @} */
 
 /**
