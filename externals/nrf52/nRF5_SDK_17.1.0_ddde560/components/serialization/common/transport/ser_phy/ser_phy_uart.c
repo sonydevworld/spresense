@@ -483,8 +483,8 @@ static __INLINE void callback_packet_sent(void)
 static int ser_phy_uart_send(void* buf, int size)
 {
   int ret = 0;
-  size_t sz;
-  size_t rem_sz = size;
+  ssize_t sz;
+  ssize_t rem_sz = size;
   uint8_t *addr = buf;
   NRF_LOG_DEBUG("ser_phy_uart_send size %d\n", size);
 
