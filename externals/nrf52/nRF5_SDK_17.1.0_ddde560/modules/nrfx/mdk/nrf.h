@@ -1,6 +1,7 @@
 /*
 
 Copyright (c) 2010 - 2021, Nordic Semiconductor ASA
+Copyright 2022 Sony Semiconductor Solutions Corporation
 
 All rights reserved.
 
