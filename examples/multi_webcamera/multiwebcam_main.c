@@ -69,8 +69,8 @@ int main(int argc, FAR char *argv[])
   int rsock;
   int wsock;
   struct sockaddr_in client;
-  pthread_t cam_thd;
-  pthread_t jpeg_thd;
+  pthread_t cam_thd = -1;
+  pthread_t jpeg_thd = -1;
 
   int v_fd;
   struct v_buffer *vbuffs;
@@ -120,19 +120,28 @@ int main(int argc, FAR char *argv[])
 
       if (wsock > 0)
         {
-          printf("Start Jpeg thread.\n");
-          jpeg_thd = multiwebcam_start_jpegsender(wsock);
-          pthread_join(jpeg_thd, NULL);
-          printf("Finish Jpeg thread.\n");
-          wsock = 0;
+          if (multiwebcam_isstarted_jpegsender(jpeg_thd))
+            {
+              close(wsock);
+              printf("Already started..\n"
+                     "Destroy the new accepted socket, "
+                     "because only single connection is acceptable.\n");
+            }
+          else
+            {
+              jpeg_thd = multiwebcam_start_jpegsender(wsock);
+            }
         }
-#ifndef CONFIG_EXAMPLES_MULTIWEBCAM_FAILSAFE
       else
-#endif
         {
-          printf("Re-create server socket\n");
           close(rsock);
-          rsock = multiwebcam_initserver(MULTIWEBCAM_PORT_NO);
+          rsock = -1;
+          printf("Accept is failed. Re-create server socket\n");
+          while (rsock <= 0)
+            {
+              rsock = multiwebcam_initserver(MULTIWEBCAM_PORT_NO);
+            }
+          printf("Server sofket is created : %d\n", rsock);
         }
 
       sleep(1);
