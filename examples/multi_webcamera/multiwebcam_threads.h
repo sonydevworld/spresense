@@ -36,9 +36,11 @@
 #ifndef __EXAMPLES_MULTIWEBCAM_THREADS_H__
 #define __EXAMPLES_MULTIWEBCAM_THREADS_H__
 
+#include <stdbool.h>
 #include <pthread.h>
 
 pthread_t multiwebcam_start_camerathread(int v_fd);
 pthread_t multiwebcam_start_jpegsender(int sock);
+bool multiwebcam_isstarted_jpegsender(pthread_t thd);
 
 #endif  /* __EXAMPLES_MULTIWEBCAM_THREADS_H__ */
