@@ -37,7 +37,31 @@
 #ifndef __CXM150x_PORT_H
 #define __CXM150x_PORT_H
 
+#include <nuttx/config.h>
+#include <arch/board/board.h>
+#include <arch/chip/pin.h>
 #include "CXM150x_APITypeDef.h"
+
+/* Board-specific pin assignment */
+
+#if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
+#  define ELTRES_PIN_DDC2V        PMIC_GPO(2)
+#  define ELTRES_PIN_ENABLE       PMIC_GPO(3)
+#  define ELTRES_PIN_WAKEUP       PIN_HIF_GPIO0
+#  define ELTRES_PIN_INT_OUT1     PIN_PWM3
+#  define ELTRES_PIN_INT_OUT2     PIN_PWM2
+#elif defined(CONFIG_EXTERNALS_ELTRES_ADDON)
+#  define ELTRES_PIN_ENABLE       PIN_I2S0_BCK
+#  define ELTRES_PIN_WAKEUP       PIN_I2S0_LRCK
+#  define ELTRES_PIN_INT_OUT1     PIN_I2S0_DATA_IN
+#  define ELTRES_PIN_INT_OUT2     PIN_I2S0_DATA_OUT
+#elif defined(CONFIG_EXTERNALS_ELTRES_ORIGINAL)
+#  warning "TODO: Define the pin assignments for your original board."
+#  define ELTRES_PIN_ENABLE       PIN_EMMC_DATA2
+#  define ELTRES_PIN_WAKEUP       PIN_EMMC_DATA3
+#  define ELTRES_PIN_INT_OUT1     PIN_HIF_IRQ_OUT
+#  define ELTRES_PIN_INT_OUT2     PIN_GNSS_1PPS_OUT
+#endif
 
 #define WRAPPER_UART_RX_FROM_CXM150x    (1)
 #define WRAPPER_UART_RX_FROM_PC           (2)

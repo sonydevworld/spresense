@@ -118,17 +118,16 @@ time_t g_last_gnss_backup_time = 0;
 // Signal number for RTC alarm notification
 #define RTC_SIGNO                               (1)
 
-// INT_OUT1 pin assignment
-#define INT_OUT1_PIN                            PIN_PWM3
-
-// INT_OUT2 pin assignment
-#define INT_OUT2_PIN                            PIN_PWM2
+#if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
 
 // INT_BUTTON pin assignment
-#define INT_BUTTON1_PIN                         PIN_SPI4_SCK
-#define INT_BUTTON2_PIN                         PIN_SPI4_MISO
-#define INT_BUTTON3_PIN                         PIN_SPI4_MOSI
-#define INT_BUTTON4_PIN                         PIN_SPI4_CS_X
+#define INT_BUTTON1_PIN   PIN_SPI4_SCK
+#define INT_BUTTON2_PIN   PIN_SPI4_MISO
+#define INT_BUTTON3_PIN   PIN_SPI4_MOSI
+#define INT_BUTTON4_PIN   PIN_SPI4_CS_X
+#define POWER_SDCARD      PMIC_GPO(5)
+
+#endif
 
 // Flag ON / OFF definition
 typedef enum {
@@ -215,12 +214,14 @@ static uint8_t g_gga_event_callback_flg = FLAG_OFF;
  * @return none
 */
 // ===========================================================================
+#if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
 static void push_btn_CXM150x(void){
     if(g_push_btn_flag == FLAG_OFF){
         printf("push_btn_callback!\r\n");
         g_push_btn_flag = FLAG_ON;
     }
 }
+#endif
 
 // ===========================================================================
 //! Callback function when a system state event occurs
@@ -413,8 +414,8 @@ static void resume_CXM150x(void){
     if(pwstate.m_num == CXM150x_POWER_OFF){
         // Power ON and set normal mode
         g_gnss_ready_flg = FLAG_OFF;
-        board_gpio_intconfig(INT_OUT1_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
-        board_gpio_int(INT_OUT1_PIN, true);
+        board_gpio_intconfig(ELTRES_PIN_INT_OUT1, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
+        board_gpio_int(ELTRES_PIN_INT_OUT1, true);
 
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
@@ -481,7 +482,7 @@ static void power_off_check(void){
 #endif
         printf("event only mode\r\n");
         printf("CXM150x power off\r\n");
-        board_gpio_int(INT_OUT1_PIN, false);
+        board_gpio_int(ELTRES_PIN_INT_OUT1, false);
 
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
@@ -531,7 +532,7 @@ static void power_off_check(void){
 #if GNSS_BACKUP_USE
         GNSS_backup_exec();
 #endif
-        board_gpio_int(INT_OUT1_PIN, false);
+        board_gpio_int(ELTRES_PIN_INT_OUT1, false);
         CmdResSetCXM150xPower res_set_power;
         memset(&res_set_power,0,sizeof(res_set_power));
         set_CXM150x_power(CXM150x_POWER_OFF,&res_set_power,NULL);
@@ -1132,7 +1133,7 @@ int main_LPWA_sample_app(void){
     disp_version();
     ///////////////////////////////////////////////////////////
     // mask the INT2 interrupt
-    board_gpio_int(INT_OUT2_PIN, false);
+    board_gpio_int(ELTRES_PIN_INT_OUT2, false);
     ///////////////////////////////////////////////////////////
 
     /* Register alarm signal handler */
@@ -1158,12 +1159,13 @@ int main_LPWA_sample_app(void){
     register_CXM150x_tx_PoC_enable_message_event(&g_tx_poc_enable_message_info,tx_poc_enable_message_callback);
 
     // INT_OUT interrupt setting
-    board_gpio_intconfig(INT_OUT1_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
-    board_gpio_int(INT_OUT1_PIN, true);
+    board_gpio_intconfig(ELTRES_PIN_INT_OUT1, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out1);
+    board_gpio_int(ELTRES_PIN_INT_OUT1, true);
 
-    board_gpio_intconfig(INT_OUT2_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out2);
-    board_gpio_int(INT_OUT2_PIN, true);
+    board_gpio_intconfig(ELTRES_PIN_INT_OUT2, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out2);
+    board_gpio_int(ELTRES_PIN_INT_OUT2, true);
 
+#if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
     // Button interrupt setting
     board_gpio_config(INT_BUTTON1_PIN, 0, true, false, PIN_PULLUP);
     board_gpio_intconfig(INT_BUTTON1_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
@@ -1180,7 +1182,7 @@ int main_LPWA_sample_app(void){
     board_gpio_config(INT_BUTTON4_PIN, 0, true, false, PIN_PULLUP);
     board_gpio_intconfig(INT_BUTTON4_PIN, INT_FALLING_EDGE, true, (xcpt_t)push_btn_CXM150x);
     board_gpio_int(INT_BUTTON4_PIN, true);
-
+#endif
     // Power ON and set normal mode
     CmdResSetCXM150xPower res_set_power;
     memset(&res_set_power,0,sizeof(res_set_power));

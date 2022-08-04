@@ -41,6 +41,7 @@
 #include "CXM150x_SYS.h"
 #include "CXM150x_Utility.h"
 #include "CXM150x_LIB.h"
+#include "CXM150x_Port.h"
 
 // Sample application name definition
 #define SAMPLE_APP_NAME   "main_standalone_mode_sample_app"
@@ -104,12 +105,6 @@ typedef enum {
 #define CXM150x_NORMAL_MODE                (0)
 #define CXM150x_GNSS_TIMER_TOUT_EVENT_MESSAGE "| GNSS TIMER TOUT"
 #define CXM150x_SYS_RESET_CMD_EVENT_MESSAGE   "| SYS RESET CMD"
-
-// INT_OUT1 pin assignment
-#define INT_OUT1_PIN      PIN_PWM3
-
-// INT_OUT2 pin assignment
-#define INT_OUT2_PIN      PIN_PWM2
 
 // Flag ON / OFF definition
 typedef enum {
@@ -591,8 +586,8 @@ int main_standalone_mode_sample_app(void){
     wrapper_CXM150x_set_uart_rx_buf(g_rcv_buf);
     
     // Power ON and set normal mode
-    board_gpio_intconfig(INT_OUT2_PIN, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out2);
-    board_gpio_int(INT_OUT2_PIN, true);
+    board_gpio_intconfig(ELTRES_PIN_INT_OUT2, INT_RISING_EDGE, false, (xcpt_t)wrapper_CXM150x_int_out2);
+    board_gpio_int(ELTRES_PIN_INT_OUT2, true);
 
     // int2 interrupt callback setting
     register_CXM150x_uart_start_interrupt(NULL,int2_callback);
