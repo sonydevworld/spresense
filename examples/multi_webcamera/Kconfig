@@ -66,4 +66,11 @@ config EXAMPLES_MULTIWEBCAM_PERF
 	---help---
 		Enable displaying performance information of multiwebcam.
 
+config EXAMPLES_MULTIWEBCAM_FAILSAFE
+	bool "Enable fail-safe when 0 byte send"
+	default y
+	---help---
+		Connection will be destroyed when data size was zero on sending
+		image data to a client.
+
 endif

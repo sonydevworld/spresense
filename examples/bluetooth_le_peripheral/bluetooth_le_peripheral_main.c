@@ -56,17 +56,6 @@
  * Private Function Prototypes
  ****************************************************************************/
 
-/* BT common callbacks */
-
-static void onCommandStatus(BT_CMD_STATUS status);                      /**< Command status */
-static void onPairingComplete(BT_ADDR addr, BT_PAIR_STATUS status);     /**< Pairing complete */
-static void onInquiryResult(BT_ADDR addr, char *name);                  /**< Inquiry data result */
-static void onInquiryComplete(void);                                    /**< Coplete inquiry */
-static void onConnectStatusChanged(struct bt_acl_state_s *bt_acl_state,
-                                    bool connected, int status);        /**< Connection status change */
-static void onConnectedDeviceName(const char *name);                    /**< Device name change */
-static void onBondInfo(BT_ADDR addr);                                   /**< Bonding information */
-
 /* BLE common callbacks */
 
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
@@ -84,17 +73,6 @@ static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable); /**< N
  * Private Data
  ****************************************************************************/
 
-static struct bt_common_ops_s bt_common_ops =
-  {
-    .command_status         = onCommandStatus,
-    .pairing_complete       = onPairingComplete,
-    .inquiry_result         = onInquiryResult,
-    .inquiry_complete       = onInquiryComplete,
-    .connect_status_changed = onConnectStatusChanged,
-    .connected_device_name  = onConnectedDeviceName,
-    .bond_info              = onBondInfo
-  };
-
 static struct ble_common_ops_s ble_common_ops =
   {
     .connect_status_changed     = onLeConnectStatusChanged,
@@ -111,10 +89,9 @@ static struct ble_gatt_peripheral_ops_s ble_gatt_peripheral_ops =
 
 static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}};
 
-static char local_bt_name[BT_NAME_LEN]  = "SONY_BT";
 static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
 
-static struct bt_acl_state_s *s_bt_acl_state = NULL;
+static bool ble_is_connected = false;
 
 static struct ble_gatt_service_s *g_ble_gatt_service;
 
@@ -158,68 +135,6 @@ static struct ble_gatt_char_s g_ble_gatt_char =
  * Private Functions
  ****************************************************************************/
 
-static void onCommandStatus(BT_CMD_STATUS status)
-{
-  /* If receive command status event, this function will call. */
-
-  printf("%s [BT] Command status = %d\n", __func__, status);
-}
-
-static void onPairingComplete(BT_ADDR addr, BT_PAIR_STATUS status)
-{
-  /* If pairing task complete, this function will call.
-   * Print receive event data.
-   */
-
-  printf("[BT] Pairing complete ADDR:%02X:%02X:%02X:%02X:%02X:%02X, status=%d\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          status);
-}
-
-static void onInquiryResult(BT_ADDR addr, char *name)
-{
-  /* If receive inquiry search result, this function will call. */
-
-  printf("[BT] Inquiry result ADDR:%02X:%02X:%02X:%02X:%02X:%02X, name:%s\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          name);
-}
-
-static void onInquiryComplete(void)
-{
-  /* If receive inquiry complete event, this function will call. */
-
-  printf("%s [BT] Inquiry complete\n", __func__);
-}
-
-static void onConnectStatusChanged(struct bt_acl_state_s *bt_acl_state,
-                                    bool connected, int status)
-{
-  /* If ACL is connected, SPP can start connect */
-
-  s_bt_acl_state = bt_acl_state;
-}
-
-static void onConnectedDeviceName(const char *name)
-{
-  /* If receive connected device name data, this function will call. */
-
-  printf("%s [BT] Receive connected device name = %s\n", __func__, name);
-}
-
-static void onBondInfo(BT_ADDR addr)
-{
-  /* If new bonding is comming, this function will call.
-   * Print new bonding information.
-   */
-
-  printf("[BLE_GATT] Bonding information ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5]);
-}
-
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
                                       bool connected)
 {
@@ -231,6 +146,8 @@ static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
           addr.address[0], addr.address[1], addr.address[2],
           addr.address[3], addr.address[4], addr.address[5],
           connected ? "Connected" : "Disconnected");
+
+  ble_is_connected = connected;
 }
 
 static void onConnectedDeviceNameResp(const char *name)
@@ -278,6 +195,10 @@ static void ble_peripheral_exit(void)
 {
   int ret;
 
+  /* Update connection status */
+
+  ble_is_connected = false;
+
   /* Turn OFF BT */
 
   ret = bt_disable();
@@ -311,39 +232,12 @@ int main(int argc, FAR char *argv[])
   BLE_UUID *s_uuid;
   BLE_UUID *c_uuid;
 
-  /* Register BT event callback function */
-
-  ret = bt_register_common_cb(&bt_common_ops);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Register common call back failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
   /* Initialize BT HAL */
 
   ret = bt_init();
   if (ret != BT_SUCCESS)
     {
       printf("%s [BT] Initialization failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
-  /* Set local device address */
-
-  ret = bt_set_address(&local_addr);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Set local address failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
-
-  /* Set local device name */
-
-  ret = bt_set_name(local_bt_name);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BT] Set local name failed. ret = %d\n", __func__, ret);
       goto error;
     }
 
@@ -477,7 +371,7 @@ int main(int argc, FAR char *argv[])
 
       len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
 
-      if (s_bt_acl_state && s_bt_acl_state->bt_acl_connection == BT_CONNECTED)
+      if (ble_is_connected)
         {
           ret = ble_characteristic_notify(&g_ble_gatt_char, (uint8_t *) buffer, len);
           if (ret != BT_SUCCESS)

@@ -41,6 +41,7 @@
 #include "multiwebcam_util.h"
 #include "multiwebcam_server.h"
 
+static volatile bool is_jpegsender_running;
 static pthread_cond_t queue_cond;
 static pthread_mutex_t queue_mutex;
 
@@ -181,7 +182,24 @@ static void *jpeg_sender(void *param)
         }
     }
 
+  printf("-- Finish JPEG thread --\n");
+  is_jpegsender_running = false;
   return NULL;
+}
+
+bool multiwebcam_isstarted_jpegsender(pthread_t thd)
+{
+  if (is_jpegsender_running)
+    {
+      return true;
+    }
+  else
+    {
+      /* Just in case, make sure the thread is exit */
+
+      pthread_join(thd, NULL);
+      return false;
+    }
 }
 
 pthread_t multiwebcam_start_jpegsender(int sock)
@@ -190,6 +208,7 @@ pthread_t multiwebcam_start_jpegsender(int sock)
   pthread_attr_t attr;
   struct sched_param sparam;
 
+  is_jpegsender_running = true;
   pthread_attr_init(&attr);
   sparam.sched_priority = 101;
   pthread_attr_setschedparam(&attr,&sparam);

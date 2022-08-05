@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+
+config BLUETOOTH_NRF52
+	bool "Nordic nRF52 series"
+	default n
+	---help---
+		Nordic nRF52 provides BLE interfaces for application.
+
+if BLUETOOTH_NRF52
+
+config NRF52_LE
+	bool
+	default BLUETOOTH_LE
+	---help---
+		This option enabling Nordic nRF52 Low Energy HAL.
+
+if NRF52_LE
+config NRF52_LE_GATT
+	bool
+	default BLUETOOTH_LE_GATT
+	---help---
+		This option enabling Nordic nRF52 LE GATT HAL.
+
+endif # NRF52_LE
+
+endif # BLUETOOTH_NRF52

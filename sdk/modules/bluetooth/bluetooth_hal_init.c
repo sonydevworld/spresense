@@ -45,6 +45,8 @@
 
 #ifdef CONFIG_BCM20706
 extern int bcm20706_probe(void);
+#elif defined CONFIG_BLUETOOTH_NRF52
+extern int nrf52_probe(void);
 #endif
 
 /****************************************************************************
@@ -66,6 +68,8 @@ int bt_hal_init(void)
 
 #ifdef CONFIG_BCM20706
   ret = bcm20706_probe();
+#elif defined CONFIG_BLUETOOTH_NRF52
+  ret = nrf52_probe();
 #endif
 
   return ret;

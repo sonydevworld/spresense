@@ -62,13 +62,13 @@ static int send_binary(int s, const char *data, int len)
 
       if (ret == 0)
         {
-          /* It may fail to write when the host browser is stopped due to
-           * network error. In this case, it returns an error to terminate
-           * this thread and waits for new socket reconnection.
-           */
+          printf("Send 0 byte. Maybe poor reception..\n");
 
-          printf("Error. Cannot send socket.\n");
-          return -1;
+#ifdef CONFIG_EXAMPLES_MULTIWEBCAM_FAILSAFE
+          printf("Behave as an error for fail safe.\n");
+	  return -1;
+#endif
+
         }
 
       if (ret < 0)

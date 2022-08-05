@@ -324,11 +324,6 @@ int bt_init(void)
     {
       ret = bt_hal_common_ops->init();
     }
-  else
-    {
-      _err("%s [BT][Common] Initialization failed(HAL not registered).\n", __func__);
-      return BT_FAIL;
-    }
 
   return ret;
 }
@@ -349,11 +344,6 @@ int bt_finalize(void)
   if (bt_hal_common_ops && bt_hal_common_ops->finalize)
     {
       ret = bt_hal_common_ops->finalize();
-    }
-  else
-    {
-      _err("%s [BT][Common] Connect failed(HAL not registered).\n", __func__);
-      return BT_FAIL;
     }
 
   return ret;
@@ -500,20 +490,10 @@ int bt_enable(void)
     {
       ret = bt_hal_common_ops->setDevAddr(&g_bt_common_state.bt_addr);
     }
-  else
-    {
-      _err("%s [BT][Common] Set local address failed(HAL not registered).\n", __func__);
-      return BT_FAIL;
-    }
 
   if (bt_hal_common_ops && bt_hal_common_ops->setDevName)
     {
       ret = bt_hal_common_ops->setDevName(g_bt_common_state.bt_name);
-    }
-  else
-    {
-      _err("%s [BT][Common] Set local name failed(HAL not registered).\n", __func__);
-      return BT_FAIL;
     }
 
   return ret;

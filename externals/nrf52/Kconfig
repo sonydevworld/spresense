@@ -1,0 +1,95 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_NRF52
+	bool "NRF52 Libraries"
+	depends on BLUETOOTH_NRF52
+	default n
+	---help---
+		Enable NRF52 Libraries.
+		from https://www.nordicsemi.com/Products/Development-software/nRF5-SDK/Download
+		For details, see https://infocenter.nordicsemi.com/index.jsp?topic=%2Fstruct_sdk%2Fstruct%2Fsdk_nrf5_latest.html .
+
+if EXTERNALS_NRF52
+
+choice
+	prompt "nRF52xxx & Soft Device"
+	default EXTERNALS_NRF52_S132
+
+config EXTERNALS_NRF52_S132
+	bool "Select nRF52832 & SoftDevice S132"
+
+endchoice
+
+config EXTERNALS_NRF52_OUTPUT_LOG_LEVEL
+	int "Output log level"
+	default 2
+	range 0 4
+	---help---
+		Set output log level, whose value means the following:
+		- 0: off
+		- 1: error
+		- 2: warning
+		- 3: information
+		- 4: debug
+		The log levels of each components can be adjusted by the following
+		configurations:
+		- EXTERNALS_NRF52_NRF_QUEUE_LOG_LEVEL
+		- EXTERNALS_NRF52_NRF_SDH_BLE_LOG_LEVEL
+		- EXTERNALS_NRF52_SER_HAL_TRANSPORT_LOG_LEVEL
+		- EXTERNALS_NRF52_SER_SD_TRANPORT_LOG_LEVEL
+		- EXTERNALS_NRF52_SER_SD_HANDLER_LOG_LEVEL
+		- EXTERNALS_NRF52_SER_PHY_UART_LOG_LEVEL
+		The log levels of each components are valid only if they are
+		EXTERNALS_NRF52_OUTPUT_LOG_LEVEL value or less.
+		Therefore, EXTERNALS_NRF52_OUTPUT_LOG_LEVEL needs to be set to more detailed
+		setting, when more detailed log of each components is needed.
+
+if EXTERNALS_NRF52_OUTPUT_LOG_LEVEL > 0
+config EXTERNALS_NRF52_NRF_QUEUE_LOG_LEVEL
+	int "Log level of nrf_queue component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of nrf_queue component.
+
+config EXTERNALS_NRF52_NRF_SDH_BLE_LOG_LEVEL
+	int "Log level of nrf_sdh_ble component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of nrf_sdh_ble component.
+
+config EXTERNALS_NRF52_SER_HAL_TRANSPORT_LOG_LEVEL
+	int "Log level of ser_hal_transport component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of ser_hal_transport component.
+
+config EXTERNALS_NRF52_SER_SD_TRANSPORT_LOG_LEVEL
+	int "Log level of ser_sd_transport component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of ser_sd_transport component.
+
+config EXTERNALS_NRF52_SER_SD_HANDLER_LOG_LEVEL
+	int "Log level of ser_sd_handler component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of ser_sd_handler component.
+
+config EXTERNALS_NRF52_SER_PHY_UART_LOG_LEVEL
+	int "Log level of ser_phy_uart component"
+	default 4
+	range 0 4
+	---help---
+		Set log level of ser_phy_uart component.
+
+endif # EXTERNALS_NRF52_OUTPUT_LOG_LEVEL > 0
+endif # EXTERNALS_NRF52
+

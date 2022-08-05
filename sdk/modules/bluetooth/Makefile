@@ -59,4 +59,8 @@ ifeq ($(CONFIG_BCM20706),y)
 include hal/bcm20706/Make.defs
 endif
 
+ifeq ($(CONFIG_BLUETOOTH_NRF52),y)
+include hal/nrf52/Make.defs
+endif
+
 include $(SDKDIR)/modules/Module.mk
