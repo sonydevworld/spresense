@@ -1,0 +1,84 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_HTTP_POST
+	tristate "HTTP POST method using LTE example"
+	default n
+	---help---
+		Enable the HTTP POST method using LTE example
+
+if EXAMPLES_LTE_HTTP_POST
+
+config EXAMPLES_LTE_HTTP_POST_PROGNAME
+	string "Program name"
+	default "lte_http_post"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+choice
+	prompt "API call type Selection"
+	default EXAMPLES_LTE_HTTP_POST_USE_SYNC_API
+
+	config EXAMPLES_LTE_HTTP_POST_USE_SYNC_API
+		bool "Use Synchronous API"
+
+	config EXAMPLES_LTE_HTTP_POST_USE_ASYNC_API
+		bool "Use Asynchronous API"
+endchoice
+
+config EXAMPLES_LTE_HTTP_POST_PRIORITY
+	int "lte_http_post task priority"
+	default 100
+
+config EXAMPLES_LTE_HTTP_POST_STACKSIZE
+	int "lte_http_post stack size"
+	default 4096
+
+config EXAMPLES_LTE_HTTP_POST_STACKSIZE_IN_USING_MBEDTLS
+	int "lte_http_post stack size in using mbedTLS"
+	default 7168
+
+config EXAMPLES_LTE_HTTP_POST_APN_NAME
+	string "Access Point Name"
+	default ""
+
+choice
+	prompt "IP type Selection"
+	default EXAMPLES_LTE_HTTP_POST_APN_IPTYPE_IP
+
+	config EXAMPLES_LTE_HTTP_POST_APN_IPTYPE_IP
+		bool "IPv4"
+
+	config EXAMPLES_LTE_HTTP_POST_APN_IPTYPE_IPV6
+		bool "IPv6"
+
+	config EXAMPLES_LTE_HTTP_POST_APN_IPTYPE_IPV4V6
+		bool "IPv4/v6"
+endchoice
+
+choice
+	prompt "Authentication type Selection"
+	default EXAMPLES_LTE_HTTP_POST_APN_AUTHTYPE_NONE
+
+	config EXAMPLES_LTE_HTTP_POST_APN_AUTHTYPE_NONE
+		bool "None"
+
+	config EXAMPLES_LTE_HTTP_POST_APN_AUTHTYPE_PAP
+		bool "PAP"
+
+	config EXAMPLES_LTE_HTTP_POST_APN_AUTHTYPE_CHAP
+		bool "CHAP"
+endchoice
+
+config EXAMPLES_LTE_HTTP_POST_APN_USERNAME
+	string "Username used for authentication"
+	default ""
+
+config EXAMPLES_LTE_HTTP_POST_APN_PASSWD
+	string "Password used for authentication"
+	default ""
+
+endif

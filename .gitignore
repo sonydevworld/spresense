@@ -2,3 +2,5 @@
 firmware/*/*.spk
 firmware/*/*.espk
 firmware/*/stored_version.json
+
+.DS_Store
