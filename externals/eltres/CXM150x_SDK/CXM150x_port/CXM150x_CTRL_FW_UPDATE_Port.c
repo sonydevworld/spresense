@@ -85,7 +85,7 @@ static uint32_t sum_check(uint8_t *rx_buf){
     rx_sum = rx_buf[CXM150x_CTRL_FW_UPDATE_API_POS_DATA + data_len];
     
     if(calc_sum != rx_sum){
-        printf("sum check error(0x%02X)\r\n",calc_sum);
+        printf_err("sum check error(0x%02X)\r\n",calc_sum);
         return CXM150x_RESPONSE_NG;
     }
     
@@ -117,7 +117,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
     uint32_t c_tick;
     uint8_t ed_val;
 
-    printf("rcv: ");
+    printf_info("rcv: ");
 
     // Receive the 1st byte and check if it is CONTROL FW UPDATE communication format
     while(rcv_cnt <= CXM150x_CTRL_FW_UPDATE_API_POS_SD0){
@@ -133,12 +133,12 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
                 else{
                     // Clear errno and return NG
                     set_errno(0);
-                    printf("UART read error.\n");
+                    printf_err("UART read error.\n");
                     return RETURN_NG;
                 }
             }
 #endif
-            printf("%02X ",c);
+            printf_info("%02X ",c);
             rx_buf[rcv_cnt++] = c;
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
             break;
@@ -148,7 +148,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
         // timeout check
         c_tick = wrapper_CXM150x_get_tick();
         if(c_tick - st_tick > wait_cnt){
-            printf("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
+            printf_err("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
             return RETURN_TIMEOUT;
         }
     }
@@ -171,13 +171,13 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
                     else{
                         // Clear errno and return NG
                         set_errno(0);
-                        printf("UART read error.\n");
+                        printf_err("UART read error.\n");
                         return RETURN_NG;
                     }
                 }
 #endif
 
-                printf("%02X ",c);
+                printf_info("%02X ",c);
                 rx_buf[rcv_cnt++] = c;
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
                 break;
@@ -187,14 +187,14 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
             // timeout check
             c_tick = wrapper_CXM150x_get_tick();
             if(c_tick - st_tick > wait_cnt){
-                printf("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
+                printf_err("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
                 return RETURN_TIMEOUT;
             }
         }
         
         // error if first LE and second LE are different
         if(rx_buf[CXM150x_CTRL_FW_UPDATE_API_POS_LE0] != rx_buf[CXM150x_CTRL_FW_UPDATE_API_POS_LE1]){
-            printf("LE0-LE1 invalid.\r\n");
+            printf_err("LE0-LE1 invalid.\r\n");
             return RETURN_NG;
         }
         // Get the length of the DATA section
@@ -202,7 +202,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
         
         // Length check of DATA section (maximum 240 bytes)
         if(dt_n > CTRL_FW_BINARY_IMAGE_MAX_LEN){
-            printf("dt_n invalid.\r\n");
+            printf_err("dt_n invalid.\r\n");
             return RETURN_NG;
         }
         
@@ -220,12 +220,12 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
                     else{
                         // Clear errno and return NG
                         set_errno(0);
-                        printf("UART read error.\n");
+                        printf_err("UART read error.\n");
                         return RETURN_NG;
                     }
                 }
 #endif
-                printf("%02X ",c);
+                printf_info("%02X ",c);
                 rx_buf[rcv_cnt++] = c;
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
                 break;
@@ -235,11 +235,11 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
             // timeout check
             c_tick = wrapper_CXM150x_get_tick();
             if(c_tick - st_tick > wait_cnt){
-                printf("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
+                printf_err("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
                 return RETURN_TIMEOUT;
             }
         }
-        printf("\r\n");
+        printf_info("\r\n");
 
     } else {
         // Case other than CONTROL FW UPDATE communication format
@@ -257,21 +257,21 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
                     else{
                         // Clear errno and return NG
                         set_errno(0);
-                        printf("UART read error.\n");
+                        printf_err("UART read error.\n");
                         return RETURN_NG;
                     }
                 }
 #endif
-                printf("%02X ",c);
+                printf_info("%02X ",c);
                 if(rcv_cnt >= CXM150x_CTRL_FW_UPDATE_MAX_COMMAND_LEN - 1){     // Subtract one because '\0' requires 1 byte
                     rx_buf[rcv_cnt] = '\0';
-                    printf("rcv_cnt over.");
+                    printf_err("rcv_cnt over.");
                     return RETURN_NG;
                 }
                 rx_buf[rcv_cnt++] = c;
                 if(c == '\n'){
                     rx_buf[rcv_cnt] = '\0';
-                    printf("\r\n");
+                    printf_info("\r\n");
                     return RETURN_OK;
                 }
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
@@ -282,7 +282,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
             // timeout check
             c_tick = wrapper_CXM150x_get_tick();
             if(c_tick - st_tick > wait_cnt){
-                printf("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
+                printf_err("\r\ntimeout command.(%ldmsec)\r\n",wait_cnt);
                 return RETURN_TIMEOUT;
             }
         }
@@ -296,7 +296,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_rx_message(uint8_t *rx_buf,ui
     // Check that ED is 0x16
     ed_val = rx_buf[CXM150x_CTRL_FW_UPDATE_API_POS_DATA + dt_n + 1];
     if(ed_val != CXM150x_CTRL_FW_UPDATE_API_ED){
-        printf("ED chek error.\r\n");
+        printf_err("ED chek error.\r\n");
         return RETURN_NG;
     }
     return RETURN_OK;
@@ -321,19 +321,19 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_tx_message(uint8_t *snd_buf,u
 #if defined CONFIG_ARCH_BOARD_SPRESENSE
     g_fw_updating = true;
 #endif
-    printf("snd: ");
+    printf_info("snd: ");
     for(uint32_t i=0;i<snd_cnt;i++){
-        printf("%02X ",snd_buf[i]);
+        printf_info("%02X ",snd_buf[i]);
     }
-    printf("\r\n");
+    printf_info("\r\n");
 
 #ifdef FOR_STM32_HAL_DRIVER_CONTROL_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Transmit(&huart1,snd_buf,snd_cnt,wait_cnt);
     if(ret == HAL_TIMEOUT){
-        printf("transmit timeout.\r\n");
+        printf_err("transmit timeout.\r\n");
         return RETURN_TIMEOUT;
     } else if(ret == HAL_BUSY || ret == HAL_ERROR){
-        printf("transmit error.(%d)\r\n",ret);
+        printf_err("transmit error.(%d)\r\n",ret);
         return RETURN_NG;
     }
 #elif defined CONFIG_ARCH_BOARD_SPRESENSE
@@ -349,7 +349,7 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_tx_message(uint8_t *snd_buf,u
         }
         else {
             if (errno != 0) {
-                printf("Error: UART0 write %d\r\n", errno);
+                printf_err("Error: UART0 write %d\r\n", errno);
                 set_errno(0);
                 wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
                 return RETURN_NG;
@@ -378,10 +378,10 @@ CXM150x_return_code wrapper_CXM150x_ctrl_fw_update_uart_abort_IT(void){
 #ifdef FOR_STM32_HAL_DRIVER_CONTROL_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Abort_IT(&huart1);
     if(ret == HAL_TIMEOUT){
-        printf("abort timeout.\r\n");
+        printf_err("abort timeout.\r\n");
         return RETURN_TIMEOUT;
     } else if(ret == HAL_BUSY || ret == HAL_ERROR){
-        printf("abort error.(%d)\r\n",ret);
+        printf_err("abort error.(%d)\r\n",ret);
         return RETURN_NG;
     }
 #endif

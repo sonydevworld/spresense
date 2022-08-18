@@ -38,9 +38,24 @@
 #define __CXM150x_PORT_H
 
 #include <nuttx/config.h>
+#include <debug.h>
 #include <arch/board/board.h>
 #include <arch/chip/pin.h>
 #include "CXM150x_APITypeDef.h"
+
+/* Debug print */
+
+#ifdef CONFIG_EXTERNALS_ELTRES_DEBUG_ERROR
+#  define printf_err(format, ...)   printf(format, ##__VA_ARGS__)
+#else
+#  define printf_err(format, ...)
+#endif
+
+#ifdef CONFIG_EXTERNALS_ELTRES_DEBUG_INFO
+#  define printf_info(format, ...)  printf(format, ##__VA_ARGS__)
+#else
+#  define printf_info(format, ...)
+#endif
 
 /* Board-specific pin assignment */
 

@@ -90,7 +90,7 @@ CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,ui
                 else{
                     // Clear errno and return NG
                     set_errno(0);
-                    printf("UART read error.\n");
+                    printf_err("UART read error.\n");
                     return RETURN_NG;
                 }
             }
@@ -102,7 +102,7 @@ CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_rx_message(uint8_t *rx_buf,ui
             rx_buf[rcv_cnt++] = c;
             if(c == '\n'){
                 rx_buf[rcv_cnt] = '\0';
-                printf("rcv:%s",rx_buf);
+                printf_info("rcv:%s",rx_buf);
                 return RETURN_OK;
             }
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
@@ -138,19 +138,19 @@ CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,u
 #endif
 
     // display sent message
-    printf("snd: ");
+    printf_info("snd: ");
     for(uint32_t i=0;i<snd_cnt;i++){
-        printf("%02X ",snd_buf[i]);
+        printf_info("%02X ",snd_buf[i]);
     }
-    printf("\r\n");
+    printf_info("\r\n");
 
 #ifdef FOR_STM32_HAL_DRIVER_GNSS_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Transmit(&huart1,snd_buf,snd_cnt,wait_cnt);
     if(ret == HAL_TIMEOUT){
-        printf("transmit timeout.\r\n");
+        printf_err("transmit timeout.\r\n");
         return RETURN_TIMEOUT;
     } else if(ret == HAL_BUSY || ret == HAL_ERROR){
-        printf("transmit error.(%d)\r\n",ret);
+        printf_err("transmit error.(%d)\r\n",ret);
         return RETURN_NG;
     }
 #elif defined CONFIG_ARCH_BOARD_SPRESENSE
@@ -166,7 +166,7 @@ CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_tx_message(uint8_t *snd_buf,u
         }
         else {
             if (errno != 0) {
-                printf("Error: UART0 write %d\r\n", errno);
+                printf_err("Error: UART0 write %d\r\n", errno);
                 set_errno(0);
                 wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
                 return RETURN_NG;
@@ -195,10 +195,10 @@ CXM150x_return_code wrapper_CXM150x_GNSS_fw_update_uart_abort_IT(void){
 #ifdef FOR_STM32_HAL_DRIVER_GNSS_FW_UPDATE
     HAL_StatusTypeDef ret = HAL_UART_Abort_IT(&huart1);
     if(ret == HAL_TIMEOUT){
-        printf("abort timeout.\r\n");
+        printf_err("abort timeout.\r\n");
         return RETURN_TIMEOUT;
     } else if(ret == HAL_BUSY || ret == HAL_ERROR){
-        printf("abort error.(%d)\r\n",ret);
+        printf_err("abort error.(%d)\r\n",ret);
         return RETURN_NG;
     }
 #endif

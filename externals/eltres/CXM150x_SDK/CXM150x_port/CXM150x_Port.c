@@ -299,14 +299,14 @@ void wrapper_CXM150x_uart_rx_callback(void){
             // Number of received bytes exceeded
             g_rcv_cnt = 0;
             g_rcv_buf[0] = '\0';
-            printf("UART_Receive g_rcv_cnt over\r\n");
+            printf_err("UART_Receive g_rcv_cnt over\r\n");
             return;
         }
         
          // timeout check
         uint32_t c_time = wrapper_CXM150x_get_tick();
         if((c_time - st_tick) > MAX_UART_LINE_TIME_OUT_TICK_COUNT){
-            printf("wrapper_CXM150x_uart_rx_callback time out.\r\n");
+            printf_err("wrapper_CXM150x_uart_rx_callback time out.\r\n");
             // advance the counter because you can get one character
             g_rcv_cnt++;
             return;
@@ -325,7 +325,6 @@ static void uart_recv_main(void)
       g_uart_fd = open("/dev/ttyS2", O_RDWR | O_NONBLOCK);
 #else
       cxd56_uart0initialize("/dev/uart0");
-      //printf(">%s open\n", __FUNCTION__);
       g_uart_fd = open("/dev/uart0", O_RDWR | O_NONBLOCK);
 #endif
 
@@ -340,14 +339,13 @@ static void uart_recv_main(void)
           ret = read(g_uart_fd, &g_rcv_char, 1);
           if (ret > 0)
             {
-              //printf("%s ret=%d\n", __FUNCTION__, ret);
               wrapper_CXM150x_uart_rx_callback();
             }
           else
             {
               if ((ret < 0) && (errno != EAGAIN))
                 {
-                  //printf("ERROR:%s errno=%d\n", __FUNCTION__, errno);
+                  //printf_err("ERROR:%s errno=%d\n", __FUNCTION__, errno);
                   // Clear errno
                   set_errno(0);
 
@@ -359,7 +357,6 @@ static void uart_recv_main(void)
         }
 
       usleep(1);
-      //printf("<%s close\n", __FUNCTION__);
       close(g_uart_fd);
 #if !defined(CONFIG_EXTERNALS_ELTRES_ADDON)
       cxd56_uart0uninitialize("/dev/uart0");
@@ -393,7 +390,7 @@ CXM150x_return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uin
     while (remain_size > 0){
         write_size = write(g_uart_fd, send_addr, remain_size);
         if (write_size < 0) {
-            printf("Error: UART0 write %d\r\n", errno);
+            printf_err("Error: UART0 write %d\r\n", errno);
             wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
             return RETURN_NG;
         }

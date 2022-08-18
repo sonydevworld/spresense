@@ -188,7 +188,7 @@ static uint32_t check_ack(uint8_t *recv_buf){
     
     // Send message format check (whether the first byte starts with 0x68)
     if(recv_buf[CXM150x_CTRL_FW_UPDATE_API_POS_SD0] != CXM150x_CTRL_FW_UPDATE_API_SD){
-        printf("str:%s\r\n",recv_buf);
+        printf_info("str:%s\r\n",recv_buf);
         return CXM150x_RESPONSE_NG;
     }
     
@@ -797,7 +797,7 @@ CXM150x_return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *p
     }
     
     if(param->m_on_off == CXM150x_POWER_ON){
-        printf("CXM150x control fw update power on\r\n");
+        printf_info("CXM150x control fw update power on\r\n");
         
         // The CXM150x doesn't transit to CONTROL FW UPDATE mode correctly if LOW state duration of ENABLE pin is too short, so wait for a while after ENABLE pin state is set as LOW.
         wrapper_CXM150x_set_power(CXM150x_POWER_OFF);
@@ -812,11 +812,11 @@ CXM150x_return_code set_CXM150x_ctrl_fw_update_power (CXM150xFWUpdateSetPower *p
     } else {
         if(param->m_update_type == CXM150x_CTRL_FW_UPDATE_END_REQUEST_TYPE_A){
             // Do not change the WAKEUP pin to start transfer of side B after side A update
-            printf("CXM150x control fw update power off type A\r\n");
+            printf_info("CXM150x control fw update power off type A\r\n");
             
             wrapper_CXM150x_set_power(CXM150x_POWER_OFF);
         } else {
-            printf("CXM150x control fw update power off type B\r\n");
+            printf_info("CXM150x control fw update power off type B\r\n");
             
             wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_ON);
             wrapper_CXM150x_set_power(CXM150x_POWER_OFF);

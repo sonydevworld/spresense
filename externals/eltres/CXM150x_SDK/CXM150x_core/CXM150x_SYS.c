@@ -107,7 +107,7 @@ static void res_check_set_CXM150x_power(uint8_t *response,void *res_buf){
 CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res, CXM150x_CALLBACK_RESPONSE_FUNC_POINTER func){
     if(param == CXM150x_POWER_ON){
         // CXM150x normal power ON
-        printf("CXM150x power on\r\n");
+        printf_info("CXM150x power on\r\n");
         CXM150x_init_uart_driver();
         
         wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_ON);
@@ -127,7 +127,7 @@ CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res
         wrapper_CXM150x_set_power(CXM150x_POWER_OFF);
         wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
         
-        printf("CXM150x power off\r\n");
+        printf_info("CXM150x power off\r\n");
         
         if(res != NULL){
             res->m_result = CXM150x_RESPONSE_OK;
@@ -139,7 +139,7 @@ CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res
 
     } else if(param == CXM150x_POWER_CONTROL_FW_UPDATE){
         // CONTROL_FW update mode
-        printf("CXM150x power CONTROL_FW_UPDATE mode\r\n");
+        printf_info("CXM150x power CONTROL_FW_UPDATE mode\r\n");
 
         wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
         wrapper_CXM150x_set_power(CXM150x_POWER_ON);
@@ -155,7 +155,7 @@ CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res
         }
     } else if(param == CXM150x_POWER_GNSS_FW_UPDATE){
         // GNSS block FW update mode
-        printf("CXM150x power GNSS_FW_UPDATE mode\r\n");
+        printf_info("CXM150x power GNSS_FW_UPDATE mode\r\n");
 
         wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_ON);
         wrapper_CXM150x_set_power(CXM150x_POWER_ON);
@@ -170,7 +170,7 @@ CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res
             func(RETURN_OK,res);
         }
     } else {
-        printf("set_CXM150x_power param invalid\r\n");
+        printf_err("set_CXM150x_power param invalid\r\n");
     }
     
     
@@ -590,7 +590,7 @@ CXM150xSysState conv_sys_stt_message_to_code(uint8_t *msg){
         return SYS_STT_GNSS_BACKUP;
     } else {
         // Error if none of the above
-        printf("conv_sys_stt_message_to_code decode error:%s\r\n",msg);
+        printf_err("conv_sys_stt_message_to_code decode error:%s\r\n",msg);
     }
     
     return SYS_STT_PARSE_ERROR;

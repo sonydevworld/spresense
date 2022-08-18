@@ -38,6 +38,18 @@ config EXTERNALS_ELTRES_ORIGINAL
 
 endchoice
 
+config EXTERNALS_ELTRES_DEBUG_ERROR
+	bool "Debug printf for error"
+	default n
+	---help---
+		Enable the debug printf for error.
+
+config EXTERNALS_ELTRES_DEBUG_INFO
+	bool "Debug printf for info"
+	default n
+	---help---
+		Enable the debug printf for info.
+
 config EXTERNALS_ELTRES_CTRL_FWUPDATE
 	bool "Control firmware update"
 	default n

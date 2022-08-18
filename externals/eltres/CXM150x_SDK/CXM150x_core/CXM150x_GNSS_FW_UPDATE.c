@@ -111,7 +111,7 @@ CXM150x_return_code get_CXM150x_GNSS_fw_update_mode_check(void *param, CmdResGet
 
     // Time out if "H>" could not be received.
     if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-        printf("rx_message timeout .\r\n");
+        printf_err("rx_message timeout .\r\n");
         return RETURN_TIMEOUT;
     }
 
@@ -147,7 +147,7 @@ CXM150x_return_code get_CXM150x_GNSS_fw_update_mode_check(void *param, CmdResGet
 
     // Time out if "H>" could not be received.
     if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-        printf("rx_message timeout .\r\n");
+        printf_err("rx_message timeout .\r\n");
         return RETURN_TIMEOUT;
     }
 
@@ -250,7 +250,7 @@ CXM150x_return_code set_CXM150x_GNSS_fw_update_header_data(uint8_t* param, CmdRe
 
     // Timeout if "LOADH" could not be received
     if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-        printf("rx_message timeout .\r\n");
+        printf_err("rx_message timeout .\r\n");
         return RETURN_TIMEOUT;
     }
     
@@ -287,7 +287,7 @@ CXM150x_return_code set_CXM150x_GNSS_fw_update_header_data(uint8_t* param, CmdRe
     
     // time out if OK was not received
     if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-        printf("rx_message timeout .\r\n");
+        printf_err("rx_message timeout .\r\n");
         return RETURN_TIMEOUT;
     }
     
@@ -376,7 +376,7 @@ CXM150x_return_code set_CXM150x_GNSS_fw_update_code_data(CXM150xGNSSFWUpdateCode
 
         // Time out if "LOADC" could not be received
         if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-            printf("rx_message timeout .\r\n");
+            printf_err("rx_message timeout .\r\n");
             return RETURN_TIMEOUT;
         }
 
@@ -439,7 +439,7 @@ CXM150x_return_code set_CXM150x_GNSS_fw_update_code_data(CXM150xGNSSFWUpdateCode
     
         // time out if OK was not received
         if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-            printf("rx_message timeout .\r\n");
+            printf_err("rx_message timeout .\r\n");
             return RETURN_TIMEOUT;
         }
     }else{
@@ -524,7 +524,7 @@ CXM150x_return_code get_CXM150x_GNSS_fw_update_result(void* param, CmdResGetGNSS
     
     // time out if no success was received
     if(timeout_flag == CXM150x_GNSS_FW_UPDATE_API_FLAG_ON){
-        printf("rx_message timeout .\r\n");
+        printf_err("rx_message timeout .\r\n");
         return RETURN_TIMEOUT;
     }
     
