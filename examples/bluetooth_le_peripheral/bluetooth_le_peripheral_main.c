@@ -167,14 +167,76 @@ static void onScanResult(BT_ADDR addr, char *dev_name)
           dev_name);
 }
 
+static void show_uuid(BLE_UUID *uuid)
+{
+  int i;
+
+  printf("uuid : ");
+
+  switch (uuid->type)
+    {
+      case BLE_UUID_TYPE_UUID128:
+
+        /* UUID format YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY */
+
+        for (i = 0; i < BT_UUID128_LEN; i++)
+          {
+            printf("%02x", uuid->value.uuid128.uuid128[BT_UUID128_LEN - i - 1]);
+            if ((i == 3) || (i == 5) || (i == 7) || (i == 9))
+              {
+                printf("-");
+              }
+          }
+
+        printf("\n");
+
+        break;
+
+      case BLE_UUID_TYPE_BASEALIAS_BTSIG:
+      case BLE_UUID_TYPE_BASEALIAS_VENDOR:
+
+        /* UUID format 0000XXXX-YYYY-YYYY-YYYY-YYYYYYYYYYYY (XXXX : alias) */
+
+        printf("0000%04x-", uuid->value.alias.uuidAlias);
+
+        for (i = 4 ; i < BT_UUID128_LEN; i++)
+          {
+            printf("%02x", uuid->value.alias.uuidBase.uuid128[BT_UUID128_LEN - i - 1]);
+            if ((i == 5) || (i == 7) || (i == 9))
+              {
+                printf("-");
+              }
+          }
+
+        printf("\n");
+
+        break;
+
+      default:
+        printf("Irregular UUID type.\n");
+        break;
+    }
+}
 
 static void onWrite(struct ble_gatt_char_s *ble_gatt_char)
 {
-  BLE_CHAR_VALUE *value = &ble_gatt_char->value;
+  int i;
 
   /* If receive connected device name data, this function will call. */
 
-  printf("%s [BLE] data[0] = 0x%02X, Length = %d\n", __func__, value->data[0], value->length);
+  printf("%s [BLE] start\n", __func__);
+  printf("handle : %d\n", ble_gatt_char->handle);
+  show_uuid(&ble_gatt_char->uuid);
+  printf("value_len : %d\n", ble_gatt_char->value.length);
+  printf("value : ");
+  for (i = 0; i < ble_gatt_char->value.length; i++)
+    {
+      printf("%02x ", ble_gatt_char->value.data[i]);
+    }
+
+  printf("\n");
+
+  printf("%s [BLE] end\n", __func__);
 }
 
 static void onRead(struct ble_gatt_char_s *ble_gatt_char)
@@ -188,7 +250,20 @@ static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable)
 {
   /* If receive connected device name data, this function will call. */
 
-  printf("%s [BLE] \n", __func__);
+  printf("%s [BLE] start \n", __func__);
+  printf("handle : %d\n", ble_gatt_char->handle);
+  show_uuid(&ble_gatt_char->uuid);
+
+  if (enable)
+    {
+      printf("notification enabled\n");
+    }
+  else
+    {
+      printf("notification disabled\n");
+    }
+
+  printf("%s [BLE] end \n", __func__);
 }
 
 static void ble_peripheral_exit(void)
