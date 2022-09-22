@@ -737,50 +737,6 @@ static void on_rssi_changed(const BLE_EvtRssiChanged* evt)
   LOG_OUT("[BLE][LOG]RSSI changed, value: %d\n", evt->rssi);
 }
 
-static void on_gatts_evt_write(BLE_EvtGattsWrite* gatts_write)
-{
-  BLE_SrvSds* srv_sds = &g_ble_context.ble_srv_sds;
-  LOG_OUT("gatts_write->data:%.*s\n",gatts_write->dataLen, gatts_write->data);
-  LOG_OUT("gatts_write->handle:%x\n",gatts_write->handle);
-  LOG_OUT("srv_sds->char_ri_handle.dprHandle.cccdHandle:%x\n",srv_sds->char_ri_handle.dprHandle.cccdHandle);
-  LOG_OUT("gatts_write->data[0] & 0x01:%d\n",gatts_write->data[0] & 0x01);
-  if (gatts_write->handle == srv_sds->char_ri_handle.dprHandle.cccdHandle)
-    {
-      /* client characteristic configuration.bit 0: Notification bit 1: Indication.other reserved.
-        see core spec 4.1 Vol3,PartG,3,3,3,3 client characteristic
-        configuration.Table 3.11
-      */
-      srv_sds->notify_enabled = (bool)gatts_write->data[0] & 0x01;
-      if (srv_sds->notify_enabled)
-        {
-          LOG_OUT("notification enabled!\n");
-        } 
-      else
-        {
-          LOG_OUT("notification disabled!\n");
-        }
-    }
-#if 0
-  else {
-    if (CHAR_BUF_MAX >= gatts_write->dataLen) {
-      /* TODO: blocking wait */
-      /* TODO: protect multi-thread accessing */
-      while (0 != srv_sds->char_rw_curr_idx) {
-        usleep(WAIT_TIME);
-      }
-
-      (void)sem_wait(&srv_sds->char_rw_buf_sem);
-      memcpy(srv_sds->char_rw_buf, gatts_write->data, gatts_write->dataLen);
-      srv_sds->char_rw_curr_idx = gatts_write->dataLen;
-      (void)sem_post(&srv_sds->char_rw_buf_sem);
-    }
-    else {
-      LOG_OUT("incoming data exceeds buffer length\n");
-    }
-  }
-#endif
-}
-
 static void on_disp_passkey(BLE_EvtDisplayPasskey* disp_passkey)
 {
   LOG_OUT("[BLE][LOG]Passkey: %s\n", disp_passkey->passkey);
@@ -1686,20 +1642,67 @@ void onRssiChanged(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   on_rssi_changed((BLE_EvtRssiChanged*)pBleEvent->evtData);
 }
 
+static void mk_notify_req_event(BLE_SrvSds *srv)
+{
+  struct ble_gatt_event_notify_req_t notify;
+
+  notify.group_id    = BLE_GROUP_GATT;
+  notify.event_id    = BLE_GATT_EVENT_NOTIFY_REQ;
+  notify.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+  notify.char_handle = srv->char_ri_handle.charHandle;
+  notify.enable      = srv->notify_enabled;
+
+  ble_gatt_event_handler((struct bt_event_t *)&notify);
+}
+
+static void mk_write_req_event(ble_gatts_evt_write_t *gattsWrite)
+{
+  struct ble_gatt_event_write_req_t write;
+
+  write.group_id    = BLE_GROUP_GATT;
+  write.event_id    = BLE_GATT_EVENT_WRITE_REQ;
+  write.serv_handle = BLE_GATT_INVALID_SERVICE_HANDLE;
+  write.char_handle = gattsWrite->handle;
+  write.length      = gattsWrite->len;
+  memcpy(write.data, gattsWrite->data, write.length);
+
+  ble_gatt_event_handler((struct bt_event_t *)&write);
+}
+
 static
 void onGattsWrite(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
-  pBleEvent->evtHeader = BLE_GATTS_EVENT_WRITE;
   ble_gatts_evt_write_t * gattsWrite = &pBleNrfEvt->evt.gatts_evt.params.write;
-  commMem.gattsWriteData.connHandle = pBleNrfEvt->evt.gatts_evt.conn_handle;
-  commMem.gattsWriteData.handle  = gattsWrite->handle;  //attribute handle
-  commMem.gattsWriteData.dataLen = gattsWrite->len;
-  commMem.gattsWriteData.offset  = gattsWrite->offset;
-  memcpy(commMem.gattsWriteData.data, gattsWrite->data, MAX_RCV_DATA_LENGTH);
-  pBleEvent->evtDataSize = sizeof(BLE_EvtGattsWrite);
-  memcpy(pBleEvent->evtData, &commMem.gattsWriteData, pBleEvent->evtDataSize);
+  BLE_SrvSds* srv_sds = &g_ble_context.ble_srv_sds;
 
-  on_gatts_evt_write((BLE_EvtGattsWrite*)pBleEvent->evtData);
+  BLE_PRT("gattsWrite->data:%.*s\n",gattsWrite->len, gattsWrite->data);
+  BLE_PRT("gattsWrite->handle:%x\n",gattsWrite->handle);
+  BLE_PRT("srv_sds->char_ri_handle.dprHandle.cccdHandle:%x\n",
+          srv_sds->char_ri_handle.dprHandle.cccdHandle);
+  BLE_PRT("gattsWrite->data[0] & 0x01:%d\n",gattsWrite->data[0] & 0x01);
+
+  if (gattsWrite->handle == srv_sds->char_ri_handle.dprHandle.cccdHandle)
+    {
+      /* client characteristic configuration.bit 0: Notification bit 1: Indication.other reserved.
+       * see core spec 4.1 Vol3,PartG,3,3,3,3 client characteristic
+       * configuration.Table 3.11
+       */
+
+      srv_sds->notify_enabled = (bool)gattsWrite->data[0] & 0x01;
+
+      mk_notify_req_event(srv_sds);
+    }
+  else
+    {
+      if (BT_MAX_EVENT_DATA_LEN >= gattsWrite->len)
+        {
+          mk_write_req_event(gattsWrite);
+        }
+      else
+        {
+          BLE_PRT("incoming data exceeds buffer length\n");
+        }
+    }
 }
 
 static
