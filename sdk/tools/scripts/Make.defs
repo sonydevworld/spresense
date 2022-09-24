@@ -55,6 +55,10 @@ LDNXFLAT = ldnxflat
 ARCHCFLAGS += -mabi=aapcs
 ARCHPICFLAGS = -fpic -msingle-pic-base -mpic-register=r10
 
+# Remove -nostdinc++ defined commonly in NuttX Toolchain.defs
+
+ARCHCXXFLAGS := $(filter-out -nostdinc++,$(ARCHCXXFLAGS))
+
 CFLAGS := $(ARCHCFLAGS) $(ARCHOPTIMIZATION) $(ARCHCPUFLAGS) $(ARCHINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS) -pipe
 CPICFLAGS = $(ARCHPICFLAGS) $(CFLAGS)
 CXXFLAGS := $(ARCHCXXFLAGS) $(ARCHOPTIMIZATION) $(ARCHCPUFLAGS) $(ARCHXXINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS) -pipe
