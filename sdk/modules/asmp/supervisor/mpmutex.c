@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "arm_arch.h"
+#include "arm_internal.h"
 #include "chip.h"
 
 #include "cxd56_sph.h"
