@@ -1,0 +1,51 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_RS422
+	tristate "RS422 master/slave example"
+	default n
+	---help---
+		Enable the RS422 master/slave communication sample
+
+if EXAMPLES_RS422
+
+choice
+	prompt "Read Enable Pin Assign"
+	default EXAMPLES_RS422_RE_PIN_I2S_DIN
+
+	config EXAMPLES_RS422_RE_PIN_EMMC_DATA3
+		bool "EMMC_DATA3"
+
+	config EXAMPLES_RS422_RE_PIN_I2S_DIN
+		bool "I2S_DIN"
+endchoice
+
+choice
+	prompt "Data Enable Pin Assign"
+	default EXAMPLES_RS422_DE_PIN_I2S_DOUT
+
+	config EXAMPLES_RS422_DE_PIN_EMMC_DATA2
+		bool "EMMC_DATA3"
+
+	config EXAMPLES_RS422_DE_PIN_I2S_DOUT
+		bool "I2S_DOUT"
+endchoice
+
+config EXAMPLES_RS422_PROGNAME
+	string "Program name"
+	default "rs422"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_RS422_PRIORITY
+	int "rs422 task priority"
+	default 100
+
+config EXAMPLES_RS422_STACKSIZE
+	int "rs422 stack size"
+	default 2048
+
+endif
