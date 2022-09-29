@@ -134,10 +134,10 @@ $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 ifeq ($(MAKELEVEL),0)
 MKSDKEXPORT = $(SDKDIR)/tools/mksdkexport.sh
 export:
-	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.zip nuttx-export.zip
+	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.tar.gz nuttx-export.tar.gz
 exportsdk: export
-	$(Q) $(MKSDKEXPORT) -i nuttx-export.zip -o sdk-export.tar.gz
-	$(Q) rm -rf nuttx-export.zip
+	$(Q) $(MKSDKEXPORT) -i nuttx-export.tar.gz -o sdk-export.tar.gz
+	$(Q) rm -rf nuttx-export.tar.gz
 PHONY += export
 PHONY += exportsdk
 endif
