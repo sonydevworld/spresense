@@ -79,7 +79,11 @@ fi
 TMP_DIR=`mktemp -d`
 
 # Extract exported nuttx archive
-unzip -d ${TMP_DIR} ${NUTTX_EXPORT} > /dev/null
+if [ ${NUTTX_EXPORT##*.} == "zip" ]; then
+	unzip -d ${TMP_DIR} ${NUTTX_EXPORT} > /dev/null
+else
+	tar zxf ${NUTTX_EXPORT} -C ${TMP_DIR} > /dev/null
+fi
 
 # Change exported file structure
 # -- sdk-export
