@@ -450,7 +450,7 @@ static FAR void atcmd_emulator(FAR void *arg)
       ret = poll(fds, GNSS_POLL_FD_NUM, GNSS_POLL_TIMEOUT_FOREVER);
       if (ret <= 0 && errno != EINTR)
         {
-          printf("poll error %d,%d,%x,%x\n", ret, errno, fds[0].events,
+          printf("poll error %d,%d,%lx,%lx\n", ret, errno, fds[0].events,
                   fds[0].revents);
           break;
         }
