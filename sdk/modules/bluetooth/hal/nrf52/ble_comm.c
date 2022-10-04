@@ -1594,11 +1594,11 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
         {
           continue;
         }
-      if(!memcmp(BondInfoInFlash[index].peerEncKey.master_id.rand, secinfo->master_id.rand, BLE_GAP_SEC_RAND_LEN))
+      if(!memcmp(BondInfoInFlash[index].ownEncKey.master_id.rand, secinfo->master_id.rand, BLE_GAP_SEC_RAND_LEN))
         {
           BLE_PRT("onSecInfoRequest: master_id exitsting index %d\n", index);
-          enc_info = &BondInfoInFlash[index].peerEncKey.enc_info;
-          id_info = &BondInfoInFlash[index].peerIdKey.id_info;
+          enc_info = &BondInfoInFlash[index].ownEncKey.enc_info;
+          id_info = &BondInfoInFlash[index].ownIdKey.id_info;
           break;
         }
     }

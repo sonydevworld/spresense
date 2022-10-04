@@ -91,8 +91,8 @@ typedef struct
 {
   BLE_GapConnHandle connHandle;
   BLE_GapBondInfo bondInfo;
-  //ble_gap_id_key_t ownIdKey;
-  //ble_gap_enc_key_t ownEncKey;
+  ble_gap_id_key_t ownIdKey;
+  ble_gap_enc_key_t ownEncKey;
   ble_gap_id_key_t peerIdKey;
   ble_gap_enc_key_t peerEncKey;
 } bleGapWrapperBondInfo;
