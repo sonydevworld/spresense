@@ -1,0 +1,68 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_I2C_DIRECT
+	tristate "I2C direct to control sensor (like BMI270 6axis-IMU)"
+	default n
+	---help---
+		Enable the i2c_direct without SCU function
+
+if EXAMPLES_I2C_DIRECT
+
+config EXAMPLES_I2C_DIRECT_PROGNAME
+	string "Program name"
+	default "i2c_direct"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_I2C_DIRECT_PRIORITY
+	int "i2c_direct task priority"
+	default 100
+
+config EXAMPLES_I2C_DIRECT_STACKSIZE
+	int "i2c_direct stack size"
+	default 2048
+
+config EXAMPLES_I2C_DIRECT_DEBUG_ON
+	bool "Enable Debug Print"
+	default n
+	---help---
+		Enable the Debug print in i2c_direct
+	
+if EXAMPLES_I2C_DIRECT_DEBUG_ON
+
+config EXAMPLES_I2C_DIRECT_DPRINT_DEBUG
+	bool "Enable Debug Print (DEBUG) in i2c_direct"
+	default n
+	---help---
+		Enable the DEBUG Debug print in i2c_direct
+
+config EXAMPLES_I2C_DIRECT_DPRINT_TRACE
+	bool "Enable Debug Print (TRACE) in i2c_direct"
+	default n
+	---help---
+		Enable the TRACE Debug print in i2c_direct
+
+config EXAMPLES_I2C_DIRECT_DPRINT_INFO
+	bool "Enable Debug Print (INFO) in i2c_direct"
+	default n
+	---help---
+		Enable the INFO Debug print in i2c_direct
+
+config EXAMPLES_I2C_DIRECT_DPRINT_WARN
+	bool "Enable Debug Print (WARN) in i2c_direct"
+	default n
+	---help---
+		Enable the WARN Debug print in i2c_direct
+
+config EXAMPLES_I2C_DIRECT_DPRINT_ERROR
+	bool "Enable Debug Print (ERROR) in i2c_direct"
+	default n
+	---help---
+		Enable the ERROR Debug print in i2c_direct
+endif
+
+endif
