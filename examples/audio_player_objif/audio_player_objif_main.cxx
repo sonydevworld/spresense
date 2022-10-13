@@ -147,7 +147,7 @@ using namespace MemMgrLite;
 #define PLAYBACK_FILE_NAME     "Sound.mp3"
 #define PLAYBACK_CH_NUM        AS_CHANNEL_STEREO
 #define PLAYBACK_BIT_LEN       AS_BITLENGTH_16
-#define PLAYBACK_SAMPLING_RATE AS_SAMPLINGRATE_48000   
+#define PLAYBACK_SAMPLING_RATE AS_SAMPLINGRATE_48000
 #define PLAYBACK_CODEC_TYPE    AS_CODECTYPE_MP3
 
 /*------------------------------
@@ -235,8 +235,6 @@ struct player_info_s
   struct player_file_info_s   file;
 #ifdef CONFIG_AUDIOUTILS_PLAYLIST
   Playlist *playlist_ins = NULL;
-#else
-#error "AUDIOUTILS_PLAYLIST is not enable"
 #endif
 };
 
@@ -411,6 +409,8 @@ static bool app_get_next_track(Track* track)
   track->bit_length     = PLAYBACK_BIT_LEN;
   track->sampling_rate  = PLAYBACK_SAMPLING_RATE;
   track->codec_type     = PLAYBACK_CODEC_TYPE;
+
+  ret = true;
 #endif /* #ifdef CONFIG_AUDIOUTILS_PLAYLIST */
 
   return ret;
@@ -1429,6 +1429,7 @@ errout_open_next_play_file:
 
   app_freq_release();
 
+#ifdef CONFIG_AUDIOUTILS_PLAYLIST
   /* Close playlist. */
 
   if (!app_close_playlist())
@@ -1436,6 +1437,7 @@ errout_open_next_play_file:
       printf("Error: app_close_playlist() failure.\n");
       return 1;
     }
+#endif
 
   if (!app_close_contents_dir())
     {
