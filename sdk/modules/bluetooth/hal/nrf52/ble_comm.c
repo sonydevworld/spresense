@@ -1180,6 +1180,29 @@ static void onConnect_hal(void)
   bt_common_event_handler((struct bt_event_t *) &con_stat_evt);
 }
 
+static int searchBondInfoIndex(ble_gap_master_id_t *id)
+{
+  int i;
+
+  uint32_t list = bleBondEnableList;
+
+  for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++, list >>= 1)
+    {
+      if (list & 1)
+        {
+          if (memcmp(&BondInfoInFlash[i].ownEncKey.master_id,
+                    id,
+                    sizeof(ble_gap_master_id_t))
+               == 0)
+            {
+              break;
+            }
+        }
+    }
+
+  return i;
+}
+
 static
 void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -1254,8 +1277,27 @@ void onConnParamUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 }
 
 static
+void saveSysAttrData(ble_gap_master_id_t *id, uint8_t *sys_attr_data)
+{
+  int index;
+
+  index = searchBondInfoIndex(id);
+
+  if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
+    {
+      memcpy(BondInfoInFlash[index].sys_attr_data, sys_attr_data, BLE_GATTS_SYS_ATTR_DATA_TOTALLEN);
+      BSO_SetRegistryValue(bleKey.info_key[index],
+                           (const void*)&BondInfoInFlash[index],
+                           sizeof(bleGapWrapperBondInfo));
+    }
+}
+
+static
 void onDisconnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
+  uint16_t len = BLE_GATTS_SYS_ATTR_DATA_TOTALLEN;
+  uint8_t sys_attr_data[BLE_GATTS_SYS_ATTR_DATA_TOTALLEN];
+
   pBleEvent->evtHeader = BLE_GAP_EVENT_DISCONNECTED;
   commMem.disconnectData.handle = pBleNrfEvt->evt.gap_evt.conn_handle;
   commMem.disconnectData.reason = pBleNrfEvt->evt.gap_evt.params.disconnected.reason;
@@ -1265,6 +1307,15 @@ void onDisconnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.gapMem->is_connected = false;
 
   on_disconnected((BLE_EvtDisconnected*)pBleEvent->evtData);
+
+  /* Save system attribute data for next connection. */
+
+  sd_ble_gatts_sys_attr_get(pBleNrfEvt->evt.gap_evt.conn_handle,
+                            sys_attr_data,
+                            &len,
+                            0);
+
+  saveSysAttrData(&commMem.gapMem->wrapperBondInfo.ownEncKey.master_id, sys_attr_data);
 }
 
 static
@@ -1502,6 +1553,8 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   ble_gap_irk_t *id_info = NULL;
   ble_gap_sign_info_t *sign_info = NULL;
   ble_gap_evt_sec_info_request_t *secinfo = &pBleNrfEvt->evt.gap_evt.params.sec_info_request;
+  uint8_t *sys_attr_data = NULL;
+  int index;
 #ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("onSecInfoRequest: handle=%d\n", pBleNrfEvt->evt.gap_evt.conn_handle);
   BLE_PRT("onSecInfoRequest: addr_type=%d\n", secinfo->peer_addr.addr_type);
@@ -1587,22 +1640,22 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       BLE_PRT("onSecInfoRequest: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
 #endif
-  uint32_t list = bleBondEnableList;
-  for(int index = 0; index < BLE_SAVE_BOND_DEVICE_MAX_NUM; index++, list >>= 1)
+
+  index = searchBondInfoIndex(&secinfo->master_id);
+  if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
-      if (!(list & 1))
-        {
-          continue;
-        }
-      if(!memcmp(BondInfoInFlash[index].peerEncKey.master_id.rand, secinfo->master_id.rand, BLE_GAP_SEC_RAND_LEN))
-        {
-          BLE_PRT("onSecInfoRequest: master_id exitsting index %d\n", index);
-          enc_info = &BondInfoInFlash[index].peerEncKey.enc_info;
-          id_info = &BondInfoInFlash[index].peerIdKey.id_info;
-          break;
-        }
+      BLE_PRT("onSecInfoRequest: master_id exitsting index %d\n", index);
+      enc_info = &BondInfoInFlash[index].ownEncKey.enc_info;
+      id_info = &BondInfoInFlash[index].ownIdKey.id_info;
+      sys_attr_data = BondInfoInFlash[index].sys_attr_data;
     }
+
+  memcpy(&commMem.gapMem->wrapperBondInfo, sys_attr_data, sizeof(bleGapWrapperBondInfo));
   sd_ble_gap_sec_info_reply(pBleNrfEvt->evt.gap_evt.conn_handle, enc_info, id_info, sign_info);
+  sd_ble_gatts_sys_attr_set(pBleNrfEvt->evt.gap_evt.conn_handle,
+                            sys_attr_data,
+                            BLE_GATTS_SYS_ATTR_DATA_TOTALLEN,
+                            0);
 }
 
 static

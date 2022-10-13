@@ -82,6 +82,11 @@ extern "C" {
 extern void bleEvtDispatch(ble_evt_t *pBleNrfEvt);
 #endif
 
+#define BLE_GATTS_SYS_ATTR_DATA_LEN (8)
+#define BLE_GATTS_SYS_ATTR_DATA_TOTALLEN (BLE_GATTS_SYS_ATTR_DATA_LEN \
+                                          * BLE_MAX_SERVICES \
+                                          * BLE_MAX_CHARACTERISTICS)
+
 typedef struct{
   uint32_t enable_key;
   uint32_t info_key[BLE_SAVE_BOND_DEVICE_MAX_NUM];
@@ -91,10 +96,11 @@ typedef struct
 {
   BLE_GapConnHandle connHandle;
   BLE_GapBondInfo bondInfo;
-  //ble_gap_id_key_t ownIdKey;
-  //ble_gap_enc_key_t ownEncKey;
+  ble_gap_id_key_t ownIdKey;
+  ble_gap_enc_key_t ownEncKey;
   ble_gap_id_key_t peerIdKey;
   ble_gap_enc_key_t peerEncKey;
+  uint8_t sys_attr_data[BLE_GATTS_SYS_ATTR_DATA_TOTALLEN];
 } bleGapWrapperBondInfo;
 
 /**@brief A collection of variables of gap. */

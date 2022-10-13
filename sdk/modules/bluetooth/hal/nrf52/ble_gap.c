@@ -438,8 +438,8 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   memset(&secParams,0,sizeof(secParams));
   memset(&keysExchanged,0,sizeof(keysExchanged));
 
-  //memset(&gapMem.wrapperBondInfo.ownEncKey,0,sizeof(gapMem.wrapperBondInfo.ownEncKey));
-  //memset(&gapMem.wrapperBondInfo.ownIdKey,0,sizeof(gapMem.wrapperBondInfo.ownIdKey));
+  memset(&gapMem.wrapperBondInfo.ownEncKey,0,sizeof(gapMem.wrapperBondInfo.ownEncKey));
+  memset(&gapMem.wrapperBondInfo.ownIdKey,0,sizeof(gapMem.wrapperBondInfo.ownIdKey));
   memset(&gapMem.wrapperBondInfo.peerEncKey,0,sizeof(gapMem.wrapperBondInfo.peerEncKey));
   memset(&gapMem.wrapperBondInfo.peerIdKey,0,sizeof(gapMem.wrapperBondInfo.peerIdKey));
 
@@ -450,13 +450,13 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   secParams.mitm         = (pairingFeature->authReq & BLE_GAP_AUTH_MITM) >> 1;
   secParams.bond         = (pairingFeature->authReq & BLE_GAP_AUTH_BOND) >> 0;
 
-  //secParams.kdist_own.enc = 1;
-  //secParams.kdist_own.id  = 1;
+  secParams.kdist_own.enc = 1;
+  secParams.kdist_own.id  = 1;
   secParams.kdist_peer.enc  = 1;
   secParams.kdist_peer.id   = 1;
 
-  //keysExchanged.keys_own.p_enc_key  = &gapMem.wrapperBondInfo.ownEncKey;
-  //keysExchanged.keys_own.p_id_key   = &gapMem.wrapperBondInfo.ownIdKey;
+  keysExchanged.keys_own.p_enc_key  = &gapMem.wrapperBondInfo.ownEncKey;
+  keysExchanged.keys_own.p_id_key   = &gapMem.wrapperBondInfo.ownIdKey;
   keysExchanged.keys_peer.p_enc_key    = &gapMem.wrapperBondInfo.peerEncKey;
   keysExchanged.keys_peer.p_id_key    = &gapMem.wrapperBondInfo.peerIdKey;
 
