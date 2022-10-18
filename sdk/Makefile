@@ -145,23 +145,7 @@ endif
 dirlinks:
 PHONY += dirlinks
 
-$(TOPDIR)/tools/cxd56:
-	$(Q) mkdir -p $@
-
-ifeq ($(CONFIG_HOST_LINUX),y)
-  MKSPK_SRC = $(SDKDIR)/tools/linux/mkspk
-endif
-ifeq ($(CONFIG_HOST_MACOS),y)
-  MKSPK_SRC = $(SDKDIR)/tools/macos/mkspk
-endif
-ifeq ($(CONFIG_HOST_WINDOWS),y)
-  MKSPK_SRC = $(SDKDIR)/tools/windows/mkspk$(HOSTEXEEXT)
-endif
-MKSPK = $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT)
-$(MKSPK): $(TOPDIR)/tools/cxd56
-	$(call COPYFILE,$(MKSPK_SRC),$@)
-
-context: dirlinks $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT) $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
+context: dirlinks $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
 PHONY += context
 
 clean_context:
