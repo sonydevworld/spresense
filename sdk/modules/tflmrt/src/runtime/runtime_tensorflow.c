@@ -165,6 +165,17 @@ int tflm_runtime_input_num(tflm_runtime_t *rt)
   return tf_rt_num_of_input((tf_rt_context_pointer) rt->impl_ctx);
 }
 
+int tflm_runtime_actual_arenasize(tflm_runtime_t *rt)
+{
+  if (!rt || !rt->impl_ctx)
+    {
+      tflm_err("rt is null.\n");
+      return -EINVAL;
+    }
+
+  return (int)tf_rt_arenasize((tf_rt_context_pointer) rt->impl_ctx);
+}
+
 int tflm_runtime_input_size(tflm_runtime_t *rt, unsigned char data_index)
 {
   if (!rt)

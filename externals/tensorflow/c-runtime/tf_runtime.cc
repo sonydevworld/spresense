@@ -139,6 +139,11 @@ int tf_rt_free_context(tf_rt_context_pointer *context)
   return 0;
 }
 
+size_t tf_rt_arenasize(tf_rt_context_pointer context)
+{
+  return ((tf_rt_context_t *)context)->interpreter->arena_used_bytes();
+}
+
 int tf_rt_num_of_input(tf_rt_context_pointer context)
 {
   return ((tf_rt_context_t *)context)->interpreter->inputs_size();
