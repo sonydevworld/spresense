@@ -287,6 +287,8 @@ int main(int argc, FAR char *argv[])
       goto rt_error;
     }
 
+  printf("ARENA Size: %d\n", tflm_runtime_actual_arenasize(&rt));
+
   /* convert the image data to datatype this tflm_runtime_t expects */
 
   ret = convert_datatype(&rt);
