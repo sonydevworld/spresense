@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ############################################################################
 # tools/callstack.py
 #
@@ -56,9 +56,13 @@ def main():
         quit()
 
     for line in open(argv[1], 'r'):
-        address, type, symbol = line[:-1].split(' ')
-        if type == 'T' or type == 't' or type == 'W' or type == 'w':
-            syms.append((int(address, 16), symbol))
+        try:
+            address, type, symbol = line[:-1].split(' ')
+            if type == 'T' or type == 't' or type == 'W' or type == 'w':
+                syms.append((int(address, 16), symbol))
+        except:
+            pass
+
 
     callstack = []
     for line in open(argv[2], 'r'):
