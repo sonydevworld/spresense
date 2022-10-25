@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/bluetooth/hal/nrf52/nrf52_hal.c
+ * modules/bluetooth/hal/nrf52/include/nrf52_ble_internal.h
  *
  *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
@@ -33,39 +33,27 @@
  *
  ****************************************************************************/
 
+#ifndef __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H
+#define __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <stdio.h>
-#include <bluetooth/hal/bt_if.h>
-
-#include "nrf52_ble_internal.h"
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-int nrf52_probe(void)
-{
-  int ret = BT_SUCCESS;
-
-  ret = nrf52_bt_common_register();
+int nrf52_bt_common_register(void);
 
 #ifdef CONFIG_NRF52_LE
-  if (ret == BT_SUCCESS)
-    {
-      ret = nrf52_ble_common_register();
-    }
+int nrf52_ble_common_register(void);
+
 #ifdef CONFIG_NRF52_LE_GATT
-  if (ret == BT_SUCCESS)
-    {
-      ret = nrf52_ble_gatt_register();
-    }
+int nrf52_ble_gatt_register(void);
 #endif
 #endif
 
-  return ret;
-}
+#endif /* __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H */

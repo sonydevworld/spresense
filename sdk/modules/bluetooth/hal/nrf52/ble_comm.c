@@ -127,7 +127,15 @@ static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, BLE_GattcCha
 static bool isDescDiscoveryReqd(bleGattcDb *gattcDbDiscovery, BLE_GattcDbDiscChar *currChar, BLE_GattcDbDiscChar *nextChar, BLE_GattcHandleRange *handleRange);
 static  int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, bool *raiseDiscovComplete);
 
+static int nrf52_ble_scan(bool enable);
+static int nrf52_ble_connect(const BT_ADDR *addr);
+static int nrf52_ble_disconnect(const uint16_t conn_handle);
+static int nrf52_ble_advertise(bool enable);
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
+static int nrf52_ble_set_dev_name(char *name);
+static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance);
+static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
+
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
 static int nrf52_bt_enable(bool enable);
@@ -153,6 +161,35 @@ struct bt_common_context_s bt_common_context = {0};
 #define LOG_OUT printf
 #define AUTH_KEY_SIZE   6
 static BLE_GattcDbDiscovery gattc_db_discovery = {0};
+
+static struct ble_hal_common_ops_s ble_hal_common_ops =
+{
+  .setDevAddr    = nrf52_ble_set_dev_addr,
+  .setDevName    = nrf52_ble_set_dev_name,
+  .setAppearance = nrf52_ble_set_appearance,
+  .setPPCP       = nrf52_ble_set_ppcp,
+  .advertise     = nrf52_ble_advertise,
+  .scan          = nrf52_ble_scan,
+  .connect       = nrf52_ble_connect,
+  .disconnect    = nrf52_ble_disconnect
+};
+
+static struct bt_hal_common_ops_s bt_hal_common_ops =
+{
+  .init          = nrf52_bt_init,
+  .finalize      = nrf52_bt_finalize,
+  .enable        = nrf52_bt_enable,
+  .setDevAddr    = NULL,
+  .getDevAddr    = NULL,
+  .setDevName    = NULL,
+  .getDevName    = NULL,
+  .paringEnable  = NULL,
+  .getBondList   = NULL,
+  .unBond        = NULL,
+  .setVisibility = NULL,
+  .inquiryStart  = NULL,
+  .inquiryCancel = NULL
+};
 
 /****************************************************************************
  * Private Functions
@@ -2528,35 +2565,6 @@ static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp)
  ****************************************************************************/
 BLE_Context g_ble_context;
 
-struct ble_hal_common_ops_s ble_hal_common_ops =
-{
-  .setDevAddr    = nrf52_ble_set_dev_addr,
-  .setDevName    = nrf52_ble_set_dev_name,
-  .setAppearance = nrf52_ble_set_appearance,
-  .setPPCP       = nrf52_ble_set_ppcp,
-  .advertise     = nrf52_ble_advertise,
-  .scan          = nrf52_ble_scan,
-  .connect       = nrf52_ble_connect,
-  .disconnect    = nrf52_ble_disconnect
-};
-
-struct bt_hal_common_ops_s bt_hal_common_ops =
-{
-  .init          = nrf52_bt_init,
-  .finalize      = nrf52_bt_finalize,
-  .enable        = nrf52_bt_enable,
-  .setDevAddr    = NULL,
-  .getDevAddr    = NULL,
-  .setDevName    = NULL,
-  .getDevName    = NULL,
-  .paringEnable  = NULL,
-  .getBondList   = NULL,
-  .unBond        = NULL,
-  .setVisibility = NULL,
-  .inquiryStart  = NULL,
-  .inquiryCancel = NULL
-};
-
 /****************************************************************************
  * BT Dummy
  ****************************************************************************/
@@ -2631,5 +2639,31 @@ static int nrf52_bt_enable(bool enable)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_common_register
+ *
+ * Description:
+ *   Register BLE common HAL I/F
+ *
+ ****************************************************************************/
+
+int nrf52_ble_common_register(void)
+{
+  return ble_common_register_hal(&ble_hal_common_ops);
+}
+
+/****************************************************************************
+ * Name: nrf52_bt_common_register
+ *
+ * Description:
+ *   Register BT common HAL I/F
+ *
+ ****************************************************************************/
+
+int nrf52_bt_common_register(void)
+{
+  return bt_common_register_hal(&bt_hal_common_ops);
 }
 

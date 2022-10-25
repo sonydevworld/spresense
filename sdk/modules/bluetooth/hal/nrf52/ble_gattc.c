@@ -60,10 +60,50 @@
  *****************************************************************************/
 extern int bleConvertErrorCode(uint32_t errCode);
 extern bleCommMem commMem;
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int nrf52_ble_copy_uuid(BLE_Uuid *dest_uuid, BLE_UUID *src_uuid);
+static int nrf52_ble_add_service(struct ble_gatt_service_s *ble_gatt_service);
+static int nrf52_ble_add_characteristic(uint16_t serv_handle,
+                                        struct ble_gatt_char_s *ble_gatt_char);
+static int nrf52_ble_gatts_write(struct ble_gatt_char_s *ble_gatt_char,
+                                 uint16_t handle);
+static int nrf52_ble_gatts_read(struct ble_gatt_char_s *ble_gatt_char,
+                                uint16_t handle);
+static int nrf52_ble_notify(struct ble_gatt_char_s *ble_gatt_char,
+                            uint16_t handle);
+static int nrf52_ble_start_db_discovery(uint16_t conn_handle);
+static int nrf52_ble_continue_db_discovery(uint16_t start_handle,
+                                           uint16_t conn_handle);
+static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
+                                 uint16_t handle);
+static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
+                                uint16_t handle);
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 #define SRV_DISC_START_HANDLE  0x0001
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
+{
+  .gatts.addService          = nrf52_ble_add_service,
+  .gatts.addChar             = nrf52_ble_add_characteristic,
+  .gatts.write               = nrf52_ble_gatts_write,
+  .gatts.read                = nrf52_ble_gatts_read,
+  .gatts.notify              = nrf52_ble_notify,
+  .gattc.startDbDiscovery    = nrf52_ble_start_db_discovery,
+  .gattc.continueDbDiscovery = nrf52_ble_continue_db_discovery,
+  .gattc.write               = nrf52_ble_gattc_write,
+  .gattc.read                = nrf52_ble_gattc_read
+};
 
 /******************************************************************************
  * Private Function
@@ -332,23 +372,6 @@ static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t 
 }
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
-{
-  .gatts.addService          = nrf52_ble_add_service,
-  .gatts.addChar             = nrf52_ble_add_characteristic,
-  .gatts.write               = nrf52_ble_gatts_write,
-  .gatts.read                = nrf52_ble_gatts_read,
-  .gatts.notify              = nrf52_ble_notify,
-  .gattc.startDbDiscovery    = nrf52_ble_start_db_discovery,
-  .gattc.continueDbDiscovery = nrf52_ble_continue_db_discovery,
-  .gattc.write               = nrf52_ble_gattc_write,
-  .gattc.read                = nrf52_ble_gattc_read
-};
-
-/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -457,3 +480,9 @@ int BLE_GattcRegisterUuid128(BLE_Uuid128* uuidBase, uint8_t* type)
   return ret;
 }
 #endif
+
+int nrf52_ble_gatt_register(void)
+{
+  return ble_gatt_register_hal(&ble_hal_gatt_ops);
+}
+
