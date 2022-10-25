@@ -83,6 +83,19 @@ extern bleGapMem *bleGetGapMem(void);
 #define PASSKEY_LEN                       4
 
 /****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_ble_set_dev_addr(BT_ADDR *addr);
+static int bcm20706_ble_set_dev_name(char *name);
+static int bcm20706_ble_set_appearance(BLE_APPEARANCE appearance);
+static int bcm20706_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
+static int bcm20706_ble_advertise(bool enable);
+static int bcm20706_ble_scan(bool enable);
+static int bcm20706_ble_connect(const BT_ADDR *addr);
+static int bcm20706_ble_disconnect(const uint16_t conn_handle);
+
+/****************************************************************************
  * Private Data
  ****************************************************************************/
 
@@ -93,6 +106,18 @@ static uint8_t g_manufacturer_adv_data[] = {
   0x10, 0x02,
   0x12,
   0xe4, 0x62, 0x6b, 0xb7, 0x0c, 0xe4 /* same with g_addr[] */
+};
+
+static struct ble_hal_common_ops_s ble_hal_common_ops =
+{
+  .setDevAddr    = bcm20706_ble_set_dev_addr,
+  .setDevName    = bcm20706_ble_set_dev_name,
+  .setAppearance = bcm20706_ble_set_appearance,
+  .setPPCP       = bcm20706_ble_set_ppcp,
+  .advertise     = bcm20706_ble_advertise,
+  .scan          = bcm20706_ble_scan,
+  .connect       = bcm20706_ble_connect,
+  .disconnect    = bcm20706_ble_disconnect
 };
 
 /****************************************************************************
@@ -345,22 +370,6 @@ static int bcm20706_ble_disconnect(const uint16_t conn_handle)
 
   return ret;
 }
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-struct ble_hal_common_ops_s ble_hal_common_ops =
-{
-  .setDevAddr    = bcm20706_ble_set_dev_addr,
-  .setDevName    = bcm20706_ble_set_dev_name,
-  .setAppearance = bcm20706_ble_set_appearance,
-  .setPPCP       = bcm20706_ble_set_ppcp,
-  .advertise     = bcm20706_ble_advertise,
-  .scan          = bcm20706_ble_scan,
-  .connect       = bcm20706_ble_connect,
-  .disconnect    = bcm20706_ble_disconnect
-};
 
 /****************************************************************************
  * Public Functions
@@ -902,3 +911,9 @@ void bleRecvGattCompleteDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
       memset(gattcDbDiscovery, 0, sizeof(bleGattcDb));
     }
 }
+
+int bcm20706_ble_common_register(void)
+{
+  return ble_common_register_hal(&ble_hal_common_ops);
+}
+

@@ -37,6 +37,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <unistd.h>
 #include <arch/board/board.h>
 #include <bt/bt_comm.h>
@@ -75,6 +77,20 @@ extern void generateKey(void);
 extern int btRecvTaskEntry(void);
 extern int btRecvTaskEnd(void);
 
+static int bcm20706_bt_init(void);
+static int bcm20706_bt_finalize(void);
+static int bcm20706_bt_enable(bool enable);
+static int bcm20706_bt_set_device_addr(BT_ADDR *addr);
+static int bcm20706_bt_get_device_addr(BT_ADDR *addr);
+static int bcm20706_bt_set_device_name(char *name);
+static int bcm20706_bt_get_device_name(char *name);
+static int bcm20706_bt_paring_enable(bool enable);
+static int bcm20706_bt_get_bond_list(BT_ADDR *addrs, int *num);
+static int bcm20706_bt_un_bond(BT_ADDR *addr);
+static int bcm20706_bt_set_visibility(BT_VISIBILITY visibility);
+static int bcm20706_bt_inquiry_start(void);
+static int bcm20706_bt_inquiry_cancel(void);
+
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -87,6 +103,23 @@ static struct pm_cpu_wakelock_s g_wake_lock =
 };
 
 struct bt_common_context_s bt_common_context = {};
+
+static struct bt_hal_common_ops_s bt_hal_common_ops =
+{
+  .init          = bcm20706_bt_init,
+  .finalize      = bcm20706_bt_finalize,
+  .enable        = bcm20706_bt_enable,
+  .setDevAddr    = bcm20706_bt_set_device_addr,
+  .getDevAddr    = bcm20706_bt_get_device_addr,
+  .setDevName    = bcm20706_bt_set_device_name,
+  .getDevName    = bcm20706_bt_get_device_name,
+  .paringEnable  = bcm20706_bt_paring_enable,
+  .getBondList   = bcm20706_bt_get_bond_list,
+  .unBond        = bcm20706_bt_un_bond,
+  .setVisibility = bcm20706_bt_set_visibility,
+  .inquiryStart  = bcm20706_bt_inquiry_start,
+  .inquiryCancel = bcm20706_bt_inquiry_cancel
+};
 
 /****************************************************************************
  * Private Functions
@@ -672,27 +705,6 @@ static int bcm20706_bt_inquiry_cancel(void)
 }
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-struct bt_hal_common_ops_s bt_hal_common_ops =
-{
-  .init          = bcm20706_bt_init,
-  .finalize      = bcm20706_bt_finalize,
-  .enable        = bcm20706_bt_enable,
-  .setDevAddr    = bcm20706_bt_set_device_addr,
-  .getDevAddr    = bcm20706_bt_get_device_addr,
-  .setDevName    = bcm20706_bt_set_device_name,
-  .getDevName    = bcm20706_bt_get_device_name,
-  .paringEnable  = bcm20706_bt_paring_enable,
-  .getBondList   = bcm20706_bt_get_bond_list,
-  .unBond        = bcm20706_bt_un_bond,
-  .setVisibility = bcm20706_bt_set_visibility,
-  .inquiryStart  = bcm20706_bt_inquiry_start,
-  .inquiryCancel = bcm20706_bt_inquiry_cancel
-};
-
-/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
@@ -733,3 +745,9 @@ int btSetPairingEnable(uint8_t isEnable)
   UINT8_TO_STREAM(p, isEnable);
   return btUartSendData(buff, p - buff);
 }
+
+int bcm20706_bt_common_register(void)
+{
+  return bt_common_register_hal(&bt_hal_common_ops);
+}
+
