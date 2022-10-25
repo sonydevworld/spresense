@@ -184,7 +184,7 @@ uint32_t OscillatorComponent::init(const InitOscParam& param, uint32_t *dsp_inf)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::OscMode;
   p_apu_cmd->header.event_type   = Apu::InitEvent;
@@ -225,7 +225,7 @@ bool OscillatorComponent::exec(const ExecOscParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::OscMode;
   p_apu_cmd->header.event_type   = Apu::ExecEvent;
@@ -246,7 +246,7 @@ bool OscillatorComponent::set(const SetOscParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::OscMode;
   p_apu_cmd->header.event_type   = Apu::SetParamEvent;
@@ -270,7 +270,7 @@ bool OscillatorComponent::flush()
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::OscMode;
   p_apu_cmd->header.event_type   = Apu::FlushEvent;
