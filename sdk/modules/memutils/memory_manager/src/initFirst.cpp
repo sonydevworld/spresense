@@ -80,7 +80,7 @@ err_t Manager::finalize()
       return ERR_STS;
     }
 
-  memset(theManager, 0x00, sizeof(Manager));
+  memset(static_cast<void*>(theManager), 0x00, sizeof(Manager));
   theManager = NULL;
 
   return ERR_OK;
