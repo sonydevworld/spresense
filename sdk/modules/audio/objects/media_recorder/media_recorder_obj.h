@@ -102,9 +102,11 @@ public:
     return (get_instance() == 0) ? INVALID_PROCESS_ID : get_instance()->m_pid;
   }
 
-  static void set_pid(pthread_t id)
+  static bool set_pid(pthread_t id)
   {
-    if (get_instance() != 0) { get_instance()->m_pid = id; }
+    if (get_instance() == 0) { return false; }
+    get_instance()->m_pid = id;
+    return true;
   }
 
   static pthread_t get_msgq_id(void)
