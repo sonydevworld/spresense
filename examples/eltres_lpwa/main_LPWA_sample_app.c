@@ -854,7 +854,7 @@ static void get_utc_time_str(uint8_t *str){
         rtc_time -= GNSS_DATETIME_ADJUST_LEAP_SECOND;
         struct tm utc_tm;
         (void)localtime_r(&rtc_time,&utc_tm);
-        snprintf((char*)str,GNSS_DATETIME_LEN+1,"%04d%02d%02d%02d%02d%02d",utc_tm.tm_year+1900, utc_tm.tm_mon+1, utc_tm.tm_mday, utc_tm.tm_hour, utc_tm.tm_min, utc_tm.tm_sec);
+        strftime((char*)str, GNSS_DATETIME_LEN+1, "%Y%m%d%H%M%S", &utc_tm);
     } else {
         //Acquisition failure
         str[0] = '\0';
