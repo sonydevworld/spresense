@@ -1191,13 +1191,12 @@ CXM150x_return_code set_CXM150x_EEPROM_data(CXM150xEEPROMSetData*  param, CmdRes
     CXM150x_return_code ret;
     uint8_t command[CXM150x_MAX_COMMAND_LEN] = "";
     uint8_t response[CXM150x_MAX_COMMAND_LEN] = "";
-    
-    uint8_t opp_str[CXM150x_MAX_COMMAND_LEN] = "";
-    snprintf((char*)opp_str,sizeof(opp_str),"0x%04lX,0x%08lX",param->m_offset_address,param->m_val);
-    
+
     // Create command string
-    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s %s\r\n",CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_EEPROM,CXM150x_COMMAND_SET,opp_str);
-    
+    snprintf((char*)command,CXM150x_MAX_COMMAND_LEN,"%s %s %s 0x%04lX,0x%08lX\r\n",
+             CXM150x_COMMAND_PREFIX_CHAR,CXM150x_COMMAND_SYS_EEPROM,CXM150x_COMMAND_SET,
+             param->m_offset_address,param->m_val);
+
     if(func != NULL){
         return CXM150x_send_and_register_callback(command,func,res_check_set_CXM150x_EEPROM_data,res);
     } else {
