@@ -169,7 +169,7 @@ int GnssSensorStartSensing(FAR GnssSensor *sensor)
       ret = poll(fds, GNSS_POLL_FD_NUM, GNSS_POLL_TIMEOUT_FOREVER);
       if (ret <= 0)
         {
-          err("Gnss poll error %d,%x,%x\n", ret, fds[0].events,
+          err("Gnss poll error %d,%lx,%lx\n", ret, fds[0].events,
               fds[0].revents);
           break;
         }

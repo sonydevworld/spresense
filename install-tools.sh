@@ -344,6 +344,7 @@ case "`uname -s`" in
 esac
 
 ARCH=`uname -m 2>/dev/null`
+ISWSL=`uname -r | grep -i microsoft`
 # 32bit linux is not supported
 if [ "${OS}" == "linux" ]; then
     if [ "${ARCH}" != "x86_64" ] && [ "${ARCH}" != "aarch64" ]; then
@@ -380,10 +381,30 @@ install_nxtools
 
 echo "== Install cross toolchain"
 ${OS}_install_toolchain
+if [ "${ISWSL}" != "" ]; then
+	# For WSL
+	SPRROOT=${HOME}/${SPRBASENAME}/windows
+	mkdir -p ${SPRROOT}/usr
+	win_install_toolchain
+	for exe in ${SPRROOT}/usr/bin/arm-none-eabi-*.exe
+	do
+		linkdest=$(dirname ${exe})/$(basename ${exe} .exe)
+		if [ ! -e ${linkdest} ]; then
+			ln -s ${exe} ${linkdest}
+		fi
+	done
+	SPRROOT=${HOME}/${SPRBASENAME}
+fi
 
 # Install openocd prebuilt binary
 
 ${OS}_install_openocd
+if [ "${ISWSL}" != "" ]; then
+	# For WSL
+	SPRROOT=${HOME}/${SPRBASENAME}/windows
+	win_install_openocd
+	SPRROOT=${HOME}/${SPRBASENAME}
+fi
 
 # Create PATH environment setup support script
 

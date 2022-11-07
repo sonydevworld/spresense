@@ -1,0 +1,19 @@
+================================================================================
+
+  CXM1500GE LPWA_sample_app code version information
+
+================================================================================
+2021/12/24 version 3.0.3
+   Add EU Duty function
+   Change files
+    main_LPWA_sample_app.c
+2021/08/16 version 3.0.2
+   Addition of license terms
+   Change files
+    main_LPWA_sample_app.c,main_LPWA_sample_app.h
+2020/12/15 version 3.0.1
+   Bug fix of PoC Enable callback function
+   Change files
+    main_LPWA_sample_app.c
+2020/07/09 version 3.0.0
+   Preliminary(first release version)

@@ -55,7 +55,7 @@
 #include <mm/tile.h>
 
 #include "cxd56_sysctl.h"
-#include "arm_arch.h"
+#include "arm_internal.h"
 #include "chip.h"
 
 /****************************************************************************

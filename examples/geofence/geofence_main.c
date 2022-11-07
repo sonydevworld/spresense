@@ -129,7 +129,7 @@ static int get_own_position(int fd, long *latitude, long *longitude)
       ret = poll(g_fds, POLL_FD_NUM, POLL_TIMEOUT_FOREVER);
       if (ret <= 0)
         {
-          printf("poll error %d,%x,%x\n", ret,
+          printf("poll error %d,%lx,%lx\n", ret,
                   g_fds[0].events, g_fds[0].revents);
           break;
         }
@@ -462,7 +462,7 @@ int main(int argc, FAR char *argv[])
       ret = poll(g_fds, POLL_FD_NUM, POLL_TIMEOUT_FOREVER);
       if (ret <= 0)
         {
-          printf("poll error %d,%x,%x\n", ret,
+          printf("poll error %d,%lx,%lx\n", ret,
                  g_fds[0].events, g_fds[0].revents);
           break;
         }
