@@ -265,7 +265,7 @@ uint32_t DecoderComponent::init_apu(const InitDecCompParam& param,
       return AS_ECODE_DECODER_LIB_INITIALIZE_ERROR;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::DecMode;
   p_apu_cmd->header.event_type   = Apu::InitEvent;
@@ -393,7 +393,7 @@ bool DecoderComponent::exec_apu(const ExecDecCompParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::DecMode;
   p_apu_cmd->header.event_type   = Apu::ExecEvent;
@@ -424,7 +424,7 @@ bool DecoderComponent::flush_apu(const StopDecCompParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::DecMode;
   p_apu_cmd->header.event_type   = Apu::FlushEvent;
@@ -446,7 +446,7 @@ bool DecoderComponent::setparam_apu(const SetDecCompParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::DecMode;
   p_apu_cmd->header.event_type   = Apu::SetParamEvent;

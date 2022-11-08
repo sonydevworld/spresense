@@ -285,7 +285,7 @@ uint32_t EncoderComponent::init_apu(const InitEncParam& param, uint32_t *dsp_inf
       return AS_ECODE_ENCODER_LIB_INITIALIZE_ERROR;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::EncMode;
   p_apu_cmd->header.event_type   = Apu::InitEvent;
@@ -401,7 +401,7 @@ bool EncoderComponent::exec_apu(const ExecEncParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::EncMode;
   p_apu_cmd->header.event_type   = Apu::ExecEvent;
@@ -432,7 +432,7 @@ bool EncoderComponent::flush_apu(const StopEncParam& param)
       return false;
     }
 
-  memset(p_apu_cmd, 0x00, sizeof(Apu::Wien2ApuCmd));
+  memset(static_cast<void*>(p_apu_cmd), 0x00, sizeof(Apu::Wien2ApuCmd));
 
   p_apu_cmd->header.process_mode = Apu::EncMode;
   p_apu_cmd->header.event_type   = Apu::FlushEvent;
