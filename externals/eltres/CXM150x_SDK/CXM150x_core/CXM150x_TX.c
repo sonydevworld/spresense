@@ -119,7 +119,7 @@ CXM150x_return_code set_CXM150x_LPWA_payload(uint8_t *payload,CmdResSetCXM150xLP
         strncat((char*)command,(char*)add_ch,3);
     }
 
-    strncat((char*)command,"\r\n",2);
+    strncat((char*)command,"\r\n",3);
     
     if(func != NULL){
         return CXM150x_send_and_register_callback(command,func,res_check_set_LPWA_payload,res);
