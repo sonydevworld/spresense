@@ -102,8 +102,6 @@ static struct pm_cpu_wakelock_s g_wake_lock =
   .info = PM_CPUWAKELOCK_TAG('B', 'T', 0),
 };
 
-struct bt_common_context_s bt_common_context = {};
-
 static struct bt_hal_common_ops_s bt_hal_common_ops =
 {
   .init          = bcm20706_bt_init,
@@ -120,6 +118,10 @@ static struct bt_hal_common_ops_s bt_hal_common_ops =
   .inquiryStart  = bcm20706_bt_inquiry_start,
   .inquiryCancel = bcm20706_bt_inquiry_cancel
 };
+
+static char g_bt_name[BT_NAME_LEN];
+
+static BT_ADDR g_bt_addr;
 
 /****************************************************************************
  * Private Functions
@@ -439,13 +441,9 @@ static int bcm20706_bt_set_device_addr(BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
 
-  /* Store input address to local address */
-
-  memcpy(&bt_common_context.bt_addr, addr, BT_ADDR_LEN);
-
   /* Send BT Address to chip */
 
-  ret = btSetBtAddress(&bt_common_context.bt_addr);
+  ret = btSetBtAddress(addr);
 
   return ret;
 }
@@ -465,7 +463,7 @@ static int bcm20706_bt_get_device_addr(BT_ADDR *addr)
 
   /* Copy device address from local address */
 
-  memcpy(addr, &bt_common_context.bt_addr, BT_ADDR_LEN);
+  memcpy(addr, &g_bt_addr, BT_ADDR_LEN);
 
   return ret;
 }
@@ -486,7 +484,7 @@ static int bcm20706_bt_set_device_name(char *name)
 
   /* Get name length */
 
-  nameSize = strlen(name);
+  nameSize = strnlen(name, BT_NAME_LEN);
 
   /* If invalid size, retrun NG */
 
@@ -497,11 +495,11 @@ static int bcm20706_bt_set_device_name(char *name)
 
   /* Copy device name to local name */
 
-  strncpy(bt_common_context.bt_name, name, nameSize);
+  strncpy(g_bt_name, name, nameSize);
 
   /* Send device name to chip */
 
-  ret = btSetBtName(bt_common_context.bt_name);
+  ret = btSetBtName(g_bt_name);
 
   return ret;
 }
@@ -522,11 +520,11 @@ static int bcm20706_bt_get_device_name(char *name)
 
   /* Get local name length */
 
-  nameSize = strlen(bt_common_context.bt_name);
+  nameSize = strnlen(g_bt_name, BT_NAME_LEN);
 
   /* Copy local name to name */
 
-  strncpy(name, bt_common_context.bt_name, nameSize);
+  strncpy(name, g_bt_name, nameSize);
 
   return ret;
 }
@@ -714,11 +712,15 @@ int btSetBtAddress(BT_ADDR *addr)
 {
   uint8_t buff[BT_SHORT_COMMAND_LEN] = {0};
   uint8_t *p = buff;
+
   UINT8_TO_STREAM(p, PACKET_CONTROL);
   UINT16_TO_STREAM(p, BT_CONTROL_COMMAND_SET_LOCAL_BDA);
   UINT16_TO_STREAM(p, BT_ADDR_LEN);
   memcpy(p,addr, BT_ADDR_LEN);
   p += BT_ADDR_LEN;
+
+  memcpy(&g_bt_addr, addr, BT_ADDR_LEN);
+
   return btUartSendData(buff, p - buff);
 }
 

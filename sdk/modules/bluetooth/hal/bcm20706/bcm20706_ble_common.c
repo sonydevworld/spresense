@@ -120,6 +120,8 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .disconnect    = bcm20706_ble_disconnect
 };
 
+static char g_ble_name[BT_NAME_LEN];
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -169,7 +171,7 @@ static int32_t set_adv_data(void)
   adv_data.flags = BLE_GAP_ADV_LE_GENERAL_DISC_MODE | BLE_GAP_ADV_BR_EDR_NOT_SUPPORTED;
   adv_data.txPower = tx_power;
   adv_data.complete32Uuid = 0;
-  adv_data.completeLocalName.advData = (uint8_t*) bt_common_context.ble_name;
+  adv_data.completeLocalName.advData = (uint8_t*)g_ble_name;
   adv_data.completeLocalName.advLength =
     strnlen((char*)adv_data.completeLocalName.advData, BUF_LEN_MAX);
   adv_data.manufacturerSpecificData.advData = g_manufacturer_adv_data;
@@ -196,10 +198,6 @@ static int32_t set_adv_data(void)
 static int bcm20706_ble_set_dev_addr(BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
-
-  /* Store input address to local address */
-
-  memcpy(&bt_common_context.bt_addr, addr, BT_ADDR_LEN);
 
   /* Send BT Address to chip */
 
@@ -235,11 +233,11 @@ static int bcm20706_ble_set_dev_name(char *name)
 
   /* Copy device name to local name */
 
-  strncpy(bt_common_context.ble_name, name, nameSize);
+  strncpy(g_ble_name, name, nameSize);
 
   /* Send device name to chip */
 
-  ret = btSetBtName(bt_common_context.ble_name);
+  ret = btSetBtName(name);
 
   return ret;
 }

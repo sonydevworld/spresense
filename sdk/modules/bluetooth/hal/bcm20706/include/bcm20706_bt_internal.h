@@ -64,19 +64,6 @@ typedef enum
   ADDR_TYPE_RANDOM,
 } BT_ADDR_TYPE;
 
-struct bt_common_context_s  
-{
-  BT_ADDR bt_addr;  /* Common address for BT/BLE */
-  char bt_name[BT_NAME_LEN];
-  char ble_name[BT_NAME_LEN];
-};
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-extern struct bt_common_context_s bt_common_context;
-
 /****************************************************************************
  * Public Functions prototype
  ****************************************************************************/
