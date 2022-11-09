@@ -42,9 +42,10 @@ MODNAME = mbedtls_stub
 
 # Add sub directory if exists
 
-VPATH   =
+VPATH   = api handlers
 SUBDIRS =
-DEPPATH =
+DEPPATH = --dep-path api
+DEPPATH += --dep-path handlers
 
 CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c
 CXXSRCS =

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/mbedtls_stub/mbedtlsstub.c
+ * modules/mbedtls_stub/api/mbedtlsstub.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *

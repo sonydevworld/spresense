@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/mbedtls_stub/altcom_mbedtls_hdlr.c
+ * modules/mbedtls_stub/handlers/altcom_mbedtls_hdlr.c
  *
  *   Copyright 2021 Sony Semiconductor Solutions Corporation
  *
