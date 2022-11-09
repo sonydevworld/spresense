@@ -47,7 +47,7 @@
 #include <nuttx/modem/alt1250.h>
 #include <arpa/inet.h>
 
-#include "altcom_mbedtls_hdlr.h"
+#include "include/altcom_mbedtls_hdlr.h"
 
 #include <mbedtls/ssl.h>
 #include <mbedtls/ctr_drbg.h>
@@ -56,8 +56,8 @@
 #include <mbedtls/net_sockets.h>
 #include <mbedtls/pk_internal.h>
 #include <mbedtls/md_internal.h>
-#include "vrfy_callback_mgr.h"
-#include "altcom_cmdid.h"
+#include "include/vrfy_callback_mgr.h"
+#include "include/altcom_cmdid.h"
 
 #include "lte/lte_api.h"
 #include "lte/lapi.h"
