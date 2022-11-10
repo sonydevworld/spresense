@@ -66,7 +66,24 @@ CSRCS  += mbedtlsstub_rsa.c
 CSRCS  += mbedtlsstub_ssl_srtp.c
 CSRCS  += mbedtlsstub_x509_dn.c
 CSRCS  += net_sockets.c
-CSRCS  += altcom_mbedtls_hdlr.c
+CSRCS  += mbedtlsstub_hdlr.c
+CSRCS  += mbedtlsstub_hdlr_ssl.c
+CSRCS  += mbedtlsstub_hdlr_ssl_conf.c
+CSRCS  += mbedtlsstub_hdlr_ssl_session.c
+CSRCS  += mbedtlsstub_hdlr_x509_crt.c
+CSRCS  += mbedtlsstub_hdlr_pk.c
+CSRCS  += mbedtlsstub_hdlr_ctr_drbg.c
+CSRCS  += mbedtlsstub_hdlr_entropy.c
+CSRCS  += mbedtlsstub_hdlr_cipher.c
+CSRCS  += mbedtlsstub_hdlr_md.c
+CSRCS  += mbedtlsstub_hdlr_base64.c
+CSRCS  += mbedtlsstub_hdlr_sha1.c
+CSRCS  += mbedtlsstub_hdlr_bignum.c
+CSRCS  += mbedtlsstub_hdlr_x509_csr.c
+CSRCS  += mbedtlsstub_hdlr_x509write_crt.c
+CSRCS  += mbedtlsstub_hdlr_rsa.c
+CSRCS  += mbedtlsstub_hdlr_ssl_srtp.c
+CSRCS  += mbedtlsstub_hdlr_x509_dn.c
 CXXSRCS =
 
 ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
