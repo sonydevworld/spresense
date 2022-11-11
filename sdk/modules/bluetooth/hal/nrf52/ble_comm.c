@@ -2476,8 +2476,14 @@ static int nrf52_ble_advertise(bool enable)
 
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr)
 {
-  int ret = BT_SUCCESS;
-  return ret;
+  int ret;
+  ble_gap_addr_t nrf52_addr;
+
+  nrf52_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  memcpy(nrf52_addr.addr, addr->address, sizeof(nrf52_addr.addr));
+
+  ret = sd_ble_gap_addr_set(&nrf52_addr);
+  return bleConvertErrorCode(ret);
 }
 
 static int nrf52_ble_set_dev_name(char *name)
