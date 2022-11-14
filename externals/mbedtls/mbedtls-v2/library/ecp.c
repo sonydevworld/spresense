@@ -1867,7 +1867,7 @@ static int ecp_precompute_comb( const mbedtls_ecp_group *grp,
     const unsigned char T_size = 1U << ( w - 1 );
     mbedtls_ecp_point *cur, *TT[COMB_MAX_PRE - 1];
 
-    memset(TT, 0, COMB_MAX_PRE - 1); 
+    memset(TT, 0, sizeof(TT));
 
 #if defined(MBEDTLS_ECP_RESTARTABLE)
     if( rs_ctx != NULL && rs_ctx->rsm != NULL )
