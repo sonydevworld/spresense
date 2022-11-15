@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <crc32.h>
+#include <nuttx/crc32.h>
 #include <errno.h>
 #include <debug.h>
 
