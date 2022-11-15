@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/hal/bt_event.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +70,13 @@
  *@{
  */
 #define BLE_MAX_ADV_DATA_LEN 31
+/** @} */
+
+/**
+ *@name Max ble GATT data length
+ *@{
+ */
+#define BLE_MAX_GATT_DATA_LEN 244
 /** @} */
 
 /****************************************************************************
@@ -428,7 +435,7 @@ struct ble_gatt_event_write_req_t
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Write data length */
-  uint8_t data[BT_MAX_EVENT_DATA_LEN]; /**< Write data */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Write data */
 };
 
 /**
@@ -482,7 +489,7 @@ struct ble_gatt_event_read_rsp_t
   uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Read data length */
-  uint8_t data[BT_MAX_EVENT_DATA_LEN]; /**< Read data */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Read data */
 };
 
 /**
