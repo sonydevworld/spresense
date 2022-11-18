@@ -71,13 +71,13 @@
 #endif
 
 #ifdef CONFIG_LTE_SYSCTL_APN_IPTYPE_IPV6
-#  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV6
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V6
 #elif defined CONFIG_LTE_SYSCTL_APN_IPTYPE_IPV4V6
-#  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IPV4V6
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V4V6
 #elif defined CONFIG_LTE_SYSCTL_APN_IPTYPE_NON
 #  define APP_APN_IPTYPE   LTE_IPTYPE_NON
 #else
-#  define APP_APN_IPTYPE   LTE_APN_IPTYPE_IP
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V4
 #endif
 
 #ifdef CONFIG_LTE_SYSCTL_APN_AUTHTYPE_PAP
@@ -302,15 +302,15 @@ static void show_daemon_stat(void)
         {
           fprintf(stderr, APN_STAT_FMT);
           fprintf(stderr, APN_NAME_FMT, apn.apn);
-          if (apn.ip_type == LTE_APN_IPTYPE_IP)
+          if (apn.ip_type == LTE_IPTYPE_V4)
             {
               fprintf(stderr, APN_TYPE_FMT, IPV4_STR);
             }
-          else if (apn.ip_type == LTE_APN_IPTYPE_IPV6)
+          else if (apn.ip_type == LTE_IPTYPE_V6)
             {
               fprintf(stderr, APN_TYPE_FMT, IPV6_STR);
             }
-          else if (apn.ip_type == LTE_APN_IPTYPE_IPV4V6)
+          else if (apn.ip_type == LTE_IPTYPE_V4V6)
             {
               fprintf(stderr, APN_TYPE_FMT, IPV4V6_STR);
             }
