@@ -135,6 +135,9 @@ static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
 static int nrf52_ble_set_dev_name(char *name);
 static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance);
 static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
+static uint16_t nrf52_ble_set_mtusize(uint16_t sz);
+static uint16_t nrf52_ble_get_mtusize(void);
+static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
 
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
@@ -164,14 +167,17 @@ static BLE_GattcDbDiscovery gattc_db_discovery = {0};
 
 static struct ble_hal_common_ops_s ble_hal_common_ops =
 {
-  .setDevAddr    = nrf52_ble_set_dev_addr,
-  .setDevName    = nrf52_ble_set_dev_name,
-  .setAppearance = nrf52_ble_set_appearance,
-  .setPPCP       = nrf52_ble_set_ppcp,
-  .advertise     = nrf52_ble_advertise,
-  .scan          = nrf52_ble_scan,
-  .connect       = nrf52_ble_connect,
-  .disconnect    = nrf52_ble_disconnect
+  .setDevAddr           = nrf52_ble_set_dev_addr,
+  .setDevName           = nrf52_ble_set_dev_name,
+  .setAppearance        = nrf52_ble_set_appearance,
+  .setPPCP              = nrf52_ble_set_ppcp,
+  .advertise            = nrf52_ble_advertise,
+  .scan                 = nrf52_ble_scan,
+  .connect              = nrf52_ble_connect,
+  .disconnect           = nrf52_ble_disconnect,
+  .setMtuSize           = nrf52_ble_set_mtusize,
+  .getMtuSize           = nrf52_ble_get_mtusize,
+  .getNegotiatedMtuSize = nrf52_ble_get_negotiated_mtusize,
 };
 
 static struct bt_hal_common_ops_s bt_hal_common_ops =
@@ -319,7 +325,11 @@ int BLE_CommonInitializeStack(BLE_InitializeParams *initializeParams)
           {
             commMem.stackInited = true;
           }
-          break;
+
+        commMem.requested_mtu = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+        commMem.client_rx_mtu = BLE_GATT_ATT_MTU_DEFAULT;
+        break;
+
       default:
         ret = -EINVAL;
         break;
@@ -1136,21 +1146,37 @@ void onDataLengthUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   on_data_len_update((BLE_EvtDataLengthUpdate *)pBleEvent->evtData);
 }
 
+static void mk_mtusize_event(uint16_t handle, uint16_t sz)
+{
+  struct ble_event_mtusize_t evt;
+
+  evt.mtusize  = sz;
+  evt.handle   = handle;
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_MTUSIZE;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
 static
 void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
   int ret = 0;
-  ble_gatts_evt_exchange_mtu_request_t *req = &pBleNrfEvt->evt.gatts_evt.params.exchange_mtu_request;
+  ble_gatts_evt_exchange_mtu_request_t *req;
+
+  req = &pBleNrfEvt->evt.gatts_evt.params.exchange_mtu_request;
   BLE_PRT("onMtuReq: mtu=%d\n", req->client_rx_mtu);
-  if (NRF_SDH_BLE_GATT_MAX_MTU_SIZE > req->client_rx_mtu)
+  if (commMem.requested_mtu > req->client_rx_mtu)
     {
       commMem.client_rx_mtu = req->client_rx_mtu;
     }
   else
     {
-      commMem.client_rx_mtu = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+      commMem.client_rx_mtu = commMem.requested_mtu;
     }
-  ret = sd_ble_gatts_exchange_mtu_reply(pBleNrfEvt->evt.gatts_evt.conn_handle, commMem.client_rx_mtu);
+
+  ret = sd_ble_gatts_exchange_mtu_reply(pBleNrfEvt->evt.gatts_evt.conn_handle,
+                                        commMem.client_rx_mtu);
   if (ret)
     {
       BLE_ERR("onLenUp: sd_ble_gatts_exchange_mtu_reply %d\n", ret);
@@ -1161,6 +1187,8 @@ void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.gattsExchangeMTU.client_rx_mtu = req->client_rx_mtu;
   pBleEvent->evtDataSize = sizeof(BLE_EvtGattsExchangeMTU);
   memcpy(pBleEvent->evtData, &commMem.gattsExchangeMTU, pBleEvent->evtDataSize);
+
+  mk_mtusize_event(pBleNrfEvt->evt.gatts_evt.conn_handle, commMem.client_rx_mtu);
 }
 
 static
@@ -2558,6 +2586,38 @@ static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp)
 {
   int ret = BT_SUCCESS;
   return ret;
+}
+
+static uint16_t nrf52_ble_set_mtusize(uint16_t sz)
+{
+  uint16_t ret;
+
+  if (sz > NRF_SDH_BLE_GATT_MAX_MTU_SIZE)
+    {
+      ret = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+    }
+  else
+    {
+      ret = sz;
+    }
+
+  commMem.requested_mtu = ret;
+  return ret;
+}
+
+static uint16_t nrf52_ble_get_mtusize(void)
+{
+  return commMem.requested_mtu;
+}
+
+static int nrf52_ble_get_negotiated_mtusize(uint16_t handle)
+{
+  if (handle != g_ble_context.ble_conn_handle)
+    {
+      return -EINVAL;
+    }
+
+  return commMem.client_rx_mtu;
 }
 
 /****************************************************************************

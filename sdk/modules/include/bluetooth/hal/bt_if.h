@@ -145,6 +145,9 @@ struct ble_hal_common_ops_s
   int (*scan)(bool enable);                        /**< Scan start/stop */
   int (*connect)(const BT_ADDR *addr);             /**< Create a connection */
   int (*disconnect)(const uint16_t conn_handle);   /**< Destroy a connection */
+  uint16_t (*setMtuSize)(uint16_t sz);             /**< Set MTU size */
+  uint16_t (*getMtuSize)(void);                    /**< Get MTU size */
+  int (*getNegotiatedMtuSize)(uint16_t handle);    /**< Get negotiated MTU size */
 };
 
 /**

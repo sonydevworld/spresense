@@ -131,6 +131,7 @@ struct ble_common_ops_s
   void (*connect_status_changed)(struct ble_state_s *ble_state, bool connected);  /**< Connection status change */
   void (*connected_device_name_resp)(const char *name);                           /**< Device name change */
   void (*scan_result)(BT_ADDR addr, char *dev_name);                              /**< Result callback for scan */
+  void (*mtusize)(uint16_t handle, uint16_t sz);                                  /**< MTU size callback */
 };
 
 /****************************************************************************
@@ -419,5 +420,34 @@ int ble_cancel_scan(void);
  */
 
 int ble_register_common_cb(struct ble_common_ops_s *ble_common_ops);
+
+/**
+ * @brief Set MTU size that application requests
+ *
+ * @param[in] sz: MTU size that application requests
+ *
+ * @retval Accepted MTU size
+ */
+
+uint16_t ble_set_request_mtusize(uint16_t sz);
+
+/**
+ * @brief Get MTU size that application requests
+ *
+ * @retval Accepted MTU size
+ */
+
+uint16_t ble_get_request_mtusize(void);
+
+/**
+ * @brief Get negotiated MTU size
+ *
+ * @param[in] handle: connection handle
+ *
+ * @retval Positive value measn Negotiated MTU size,
+ *         otherwise errno.
+ */
+
+int ble_get_negotiated_mtusize(uint16_t handle);
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BT_COMMON_H */
