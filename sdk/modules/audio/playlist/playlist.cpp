@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/audio/playlist/playlist.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -394,7 +394,10 @@ bool Playlist::updatePlaylist(ListType type, FAR const char *key_str)
 
       if (this->isTargetTrack(type, key_str, &track))
         {
-          size_t wsize = fwrite(&fp_offset, sizeof(fp_offset), 1, list_fp);
+          /* Write each file position in 32bit size. */
+
+          uint32_t offset = static_cast<uint32_t>(fp_offset);
+          size_t wsize = fwrite(&offset, sizeof(offset), 1, list_fp);
           if (wsize != 1)
             {
               printf("File write error. [%d]\n", wsize);
