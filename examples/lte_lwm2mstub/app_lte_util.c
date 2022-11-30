@@ -175,7 +175,9 @@ int connect_to_ltenetwork(struct app_parameter_s *param)
 
   lte_set_report_localtime(localtime_cb);
 
+#ifdef CONFIG_EXAMPLES_LTE_LWM2MSTUB_SUPPORT_RATCHANGE
   lte_set_rat_sync(param->rat, LTE_DISABLE);
+#endif
 
   apnsetting.apn       = param->apn_name;
   apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
