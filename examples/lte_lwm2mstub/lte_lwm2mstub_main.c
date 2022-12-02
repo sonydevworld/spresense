@@ -323,6 +323,7 @@ static int lwm2m_setup(struct app_parameter_s *param)
   info.bootstrap = param->bootstrap;
   info.security_mode = param->security_mode;
   info.nonip = (param->ip_type == LTE_IPTYPE_NON) ? true : false;
+  info.lifetime = param->lifetime;
 
   ret = lte_setm2m_serverinfo(&info, 0);
   if (ret < 0)

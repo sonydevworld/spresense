@@ -86,6 +86,7 @@ struct app_parameter_s
   char security_key[LWM2MSTUB_MAX_SEQKEY];
   bool bootstrap;
   int security_mode;
+  int lifetime;
 
   int time_period;
 };
