@@ -462,6 +462,22 @@ static bool handle_message(struct app_message_s *msg)
       case MESSAGE_ID_ENDAPP:
         ret = false;
         break;
+
+      case MESSAGE_ID_LTE_RESTARTED:
+        is_observing = false;
+        printf("LTE modem is resetted. This app will be terminated."
+               " Please execute this app again.\n");
+        ret = false;
+        break;
+
+      case MESSAGE_ID_VERSION:
+          {
+            lte_version_t version;
+            lte_get_version_sync(&version);
+            printf("Modem IC Type : %s\n", version.bb_product);
+            printf("      FW Ver. : %s\n", version.np_package);
+          }
+        break;
     }
 
   return ret;
@@ -593,6 +609,7 @@ static void m2mapp_update_value(int v)
 int main(int argc, char **argv)
 {
   int ret;
+  struct app_message_s msg;
 
   if (!is_task_running)
     {
@@ -610,7 +627,22 @@ int main(int argc, char **argv)
   else if (argc == 2)
     {
       printf("Updating value : %s\n", argv[1]);
-      m2mapp_update_value(atoi(argv[1]));
+      if (argv[1][0] == 'v')
+        {
+          msg.msgid = MESSAGE_ID_VERSION;
+          msg.arg.code = argv[1][0];
+          send_message(MESSAGE_QUEUE_NAME, &msg);
+        }
+      else if (argv[1][0] == 'r')
+        {
+          msg.msgid = MESSAGE_ID_RECONNECT;
+          msg.arg.code = argv[1][0];
+          send_message(MESSAGE_QUEUE_NAME, &msg);
+        }
+      else
+        {
+          m2mapp_update_value(atoi(argv[1]));
+        }
     }
 
   return 0;
