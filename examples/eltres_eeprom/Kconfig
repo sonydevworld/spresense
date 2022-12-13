@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_ELTRES_EEPROM
+	tristate "ELTRES EEPROM read/write sample application"
+	depends on EXTERNALS_ELTRES
+	default n
+	---help---
+		Enable the ELTRES EEPROM sample application
+
+if EXAMPLES_ELTRES_EEPROM
+
+config EXAMPLES_ELTRES_EEPROM_PROGNAME
+	string "Program name"
+	default "eltres_eeprom"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config EXAMPLES_ELTRES_EEPROM_PRIORITY
+	int "ELTRES EEPROM sample application task priority"
+	default 100
+
+config EXAMPLES_ELTRES_EEPROM_STACKSIZE
+	int "ELTRES eeprom sample application stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif
