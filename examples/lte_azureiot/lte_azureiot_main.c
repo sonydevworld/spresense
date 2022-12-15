@@ -102,15 +102,42 @@ static char *strnstr(const char *str,
 
   char  *cp  = NULL;
   int    len = strnlen(substr, subbuflen);
+  int    i   = 0;
 
   if (len > buflen)
     {
       return NULL;
     }
 
-  for (int i = 0; *str && i < buflen; i++, str++)
+  for (i = 0; *str && i < buflen; i++, str++)
     {
       if (strncmp(str, substr, len) == 0)
+        {
+          cp = (char *)str;
+          break;
+        }
+    }
+
+  return cp;
+}
+
+static char *strncasestr(const char *str,
+                         int         buflen,
+                         const char *substr,
+                         int         subbuflen)
+{
+  char  *cp  = NULL;
+  int    len = strnlen(substr, subbuflen);
+  int    i   = 0;
+
+  if (len > buflen)
+    {
+      return NULL;
+    }
+
+  for (i = 0; *str && i < buflen; i++, str++)
+    {
+      if (strncasecmp(str, substr, len) == 0)
         {
           cp = (char *)str;
           break;
@@ -253,8 +280,9 @@ static int get_http_content_length(const char *buffer, int buffer_size)
 {
   /* Get HTTP response body size */
 
-  const char  *target = "Content-Length:";
-  char        *str    = strnstr(buffer, buffer_size, target, strlen(target));
+  const char  *target = "content-length:";
+  char        *str    = strncasestr(buffer, buffer_size,
+                                    target, strlen(target));
 
   if (str == NULL)
     {
@@ -321,26 +349,69 @@ static int send_and_recv_message(const char *hostname,
 {
   /* Connect to Azure, send data, receive data */
 
-  int  len = ERROR;
+  int len     = ERROR;
+  int ret     = 0;
+  int contlen = 0;
+  int headlen = 0;
+  int remain  = 0;
 
   if (tls_connect(hostname, s_cert_file, s_cert_file_size) < 0)
     {
       printf("Fail: Connect\n");
+      goto exit_without_disconnect;
     }
-  else
+
+  if ((len = tls_write(iobuffer, write_len)) < 0)
     {
-      if ((len = tls_write(iobuffer, write_len)) < 0)
-        {
-          printf("Fail: tls_write()=%X\n", len);
-        }
-      else if ((len = tls_http_respons_read(iobuffer, iobuffer_size)) < 0)
-        {
-          printf("Fail: tls_http_respons_read()=%X\n", len);
-        }
-
-      tls_disconnect();
+      printf("Fail: tls_write()=%X\n", len);
+      goto exit;
     }
 
+  if ((len = tls_http_respons_read(iobuffer, iobuffer_size)) < 0)
+    {
+      printf("Fail: tls_http_respons_read()=%X\n", len);
+      goto exit;
+    }
+
+  contlen = get_http_content_length(iobuffer, iobuffer_size);
+
+  if (contlen < 0)
+    {
+      /* Header doesn't have content */
+
+      goto exit;
+    }
+
+  headlen = get_http_body_offset(iobuffer, iobuffer_size);
+
+  if (headlen < 0)
+    {
+      printf("Fail: get_http_body_offset()=%d\n", headlen);
+      len = ERROR;
+      goto exit;
+    }
+
+  remain = headlen + contlen - len;
+
+  while (remain > 0 && len < iobuffer_size)
+    {
+      ret = tls_read(iobuffer + len, iobuffer_size - len);
+
+      if (ret < 0)
+        {
+          printf("Fail: tls_read()=%X\n", ret);
+          len = ret;
+          goto exit;
+        }
+
+      len += ret;
+      remain -= ret;
+    }
+
+exit:
+  tls_disconnect();
+
+exit_without_disconnect:
   return len;
 }
 
