@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/bluetooth/hal/bcm20706/bcm20706_hal.c
+ * modules/bluetooth/hal/nrf52/include/nrf52_ble_internal.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,67 +33,27 @@
  *
  ****************************************************************************/
 
+#ifndef __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H
+#define __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <stdio.h>
-#include <bluetooth/hal/bt_if.h>
-
-#include "bcm20706_bt_internal.h"
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-int bcm20706_probe(void)
-{
-  int ret = BT_SUCCESS;
+int nrf52_bt_common_register(void);
 
-  ret = bcm20706_bt_common_register();
+#ifdef CONFIG_NRF52_LE
+int nrf52_ble_common_register(void);
 
-#ifdef CONFIG_BCM20706_A2DP
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_bt_a2dp_register();
-    }
-#endif
-
-#ifdef CONFIG_BCM20706_AVRCP
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_bt_avrcp_register();
-    }
-#endif
-
-#ifdef CONFIG_BCM20706_HFP
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_bt_hfp_register();
-    }
-#endif
-
-#ifdef CONFIG_BCM20706_SPP
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_bt_spp_register();
-    }
-#endif
-
-#ifdef CONFIG_BCM20706_LE
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_ble_common_register();
-    }
-#ifdef CONFIG_BCM20706_LE_GATT
-  if (ret == BT_SUCCESS)
-    {
-      ret = bcm20706_ble_gatt_register();
-    }
+#ifdef CONFIG_NRF52_LE_GATT
+int nrf52_ble_gatt_register(void);
 #endif
 #endif
 
-  return ret;
-}
+#endif /* __MODULES_BLUETOOTH_HAL_NRF52_INCLUDE_NRF52_BLE_INTERNAL_H */

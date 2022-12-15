@@ -37,12 +37,40 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <bt/bt_avrc_con.h>
 
 #include "bt_util.h"
 #include "manager/bt_uart_manager.h"
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_bt_avrcp_controller_connect(BT_ADDR *addr, uint16_t handle,
+                                                bool connect);
+static int bcm20706_bt_avrcp_target_connect(BT_ADDR *addr, uint16_t handle,
+                                            bool connect);
+static int bcm20706_bt_avrcp_send_avrcp_command(BT_ADDR *addr,
+                                                BT_AVRCP_CMD_ID cmd_id,
+                                                bool press, uint16_t handle);
+static int bcm20706_bt_avrcp_configure_notification
+                           (BT_AVRC_SUPPORT_NOTIFY_EVENT *notification_list);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct bt_hal_avrcp_ops_s bt_hal_avrcp_ops =
+{
+  .avrcc_connect          = bcm20706_bt_avrcp_controller_connect,
+  .avrct_connect          = bcm20706_bt_avrcp_target_connect,
+  .send_avrcp_command     = bcm20706_bt_avrcp_send_avrcp_command,
+  .configure_notification = bcm20706_bt_avrcp_configure_notification
+};
 
 /****************************************************************************
  * Private Functions
@@ -237,14 +265,11 @@ static int bcm20706_bt_avrcp_configure_notification(BT_AVRC_SUPPORT_NOTIFY_EVENT
 }
 
 /****************************************************************************
- * Public Data
+ * Public Functions
  ****************************************************************************/
 
-struct bt_hal_avrcp_ops_s bt_hal_avrcp_ops =
+int bcm20706_bt_avrcp_register(void)
 {
-  .avrcc_connect          = bcm20706_bt_avrcp_controller_connect,
-  .avrct_connect          = bcm20706_bt_avrcp_target_connect,
-  .send_avrcp_command     = bcm20706_bt_avrcp_send_avrcp_command,
-  .configure_notification = bcm20706_bt_avrcp_configure_notification
-};
+  return bt_avrcp_register_hal(&bt_hal_avrcp_ops);
+}
 

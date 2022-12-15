@@ -37,12 +37,35 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <bt/bt_a2dp_sink.h>
 
 #include "bt_util.h"
 #include "manager/bt_uart_manager.h"
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_bt_a2dp_connect(BT_ADDR *addr, uint16_t handle, bool connect);
+static int bcm20706_bt_a2dp_aac_enable(bool enable);
+static int bcm20706_bt_a2dp_codec_enable(bool enable);
+static int bcm20706_bt_a2dp_set_codec(BT_AUDIO_CODEC_INFO *codec_info);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct bt_hal_a2dp_ops_s bt_hal_a2dp_ops =
+{
+  .connect           = bcm20706_bt_a2dp_connect,
+  .aacEnable         = bcm20706_bt_a2dp_aac_enable,
+  .vendorCodecEnable = bcm20706_bt_a2dp_codec_enable,
+  .set_codec         = bcm20706_bt_a2dp_set_codec
+};
 
 /****************************************************************************
  * Private Functions
@@ -355,15 +378,11 @@ static int bcm20706_bt_a2dp_set_codec(BT_AUDIO_CODEC_INFO *codec_info)
 }
 
 /****************************************************************************
- * Public Data
+ * Public Functions
  ****************************************************************************/
 
-struct bt_hal_a2dp_ops_s bt_hal_a2dp_ops =
+int bcm20706_bt_a2dp_register(void)
 {
-  .connect           = bcm20706_bt_a2dp_connect,
-  .aacEnable         = bcm20706_bt_a2dp_aac_enable,
-  .vendorCodecEnable = bcm20706_bt_a2dp_codec_enable,
-  .set_codec         = bcm20706_bt_a2dp_set_codec
-};
-
+  return bt_a2dp_register_hal(&bt_hal_a2dp_ops);
+}
 

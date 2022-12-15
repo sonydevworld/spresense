@@ -37,28 +37,12 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <stdio.h>
 #include <bluetooth/hal/bt_if.h>
 
-/****************************************************************************
- * Public Datas
- ****************************************************************************/
-
-/* BT Common HAL I/F */
-
-struct bt_hal_common_ops_s bt_hal_common_ops;
-
-#ifdef CONFIG_NRF52_LE
-/* BLE common I/F */
-
-struct ble_hal_common_ops_s ble_hal_common_ops;
-
-#ifdef CONFIG_NRF52_LE_GATT
-/* BLE GATT HAL I/F */
-
-struct ble_hal_gatt_ops_s ble_hal_gatt_ops;
-#endif
-#endif
+#include "nrf52_ble_internal.h"
 
 /****************************************************************************
  * Public Functions
@@ -66,21 +50,20 @@ struct ble_hal_gatt_ops_s ble_hal_gatt_ops;
 
 int nrf52_probe(void)
 {
-  int ret = 0;
+  int ret = BT_SUCCESS;
 
-  /* Register BT common HAL */
-
-  ret = bt_common_register_hal(&bt_hal_common_ops);
+  ret = nrf52_bt_common_register();
 
 #ifdef CONFIG_NRF52_LE
-  /* Register BLE common HAL */
-
-  ret = ble_common_register_hal(&ble_hal_common_ops);
-
+  if (ret == BT_SUCCESS)
+    {
+      ret = nrf52_ble_common_register();
+    }
 #ifdef CONFIG_NRF52_LE_GATT
-  /* Register BLE GATT HAL */
-
-  ret = ble_gatt_register_hal(&ble_hal_gatt_ops);
+  if (ret == BT_SUCCESS)
+    {
+      ret = nrf52_ble_gatt_register();
+    }
 #endif
 #endif
 
