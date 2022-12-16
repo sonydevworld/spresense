@@ -290,6 +290,24 @@ static int ble_event_advertise_report(struct ble_event_adv_rept_t *adv_rept_evt)
   return ret;
 }
 
+static int ble_event_mtusize(struct ble_event_mtusize_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->mtusize)
+    {
+      ops->mtusize(evt->handle, evt->mtusize);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1120,6 +1138,60 @@ int ble_cancel_scan(void)
   return ret;
 }
 
+uint16_t ble_set_request_mtusize(uint16_t sz)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->setMtuSize)
+    {
+      ret = ops->setMtuSize(sz);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+uint16_t ble_get_request_mtusize(void)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->getMtuSize)
+    {
+      ret = ops->getMtuSize();
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+int ble_get_negotiated_mtusize(uint16_t handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->getNegotiatedMtuSize)
+    {
+      ret = ops->getNegotiatedMtuSize(handle);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Name: ble_register_common_cb
  *
@@ -1185,6 +1257,9 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
 
       case BLE_COMMON_EVENT_SCAN_RESULT:
         return ble_event_advertise_report((struct ble_event_adv_rept_t *) bt_event);
+
+      case BLE_COMMON_EVENT_MTUSIZE:
+        return ble_event_mtusize((struct ble_event_mtusize_t *) bt_event);
 
       default:
         break;

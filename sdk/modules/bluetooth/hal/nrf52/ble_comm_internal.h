@@ -157,6 +157,7 @@ typedef struct
   bleGattcDb              gattcDb;
   bleGapMem               *gapMem;
   uint8_t                 stackInited;
+  uint16_t                requested_mtu;
   uint16_t                client_rx_mtu;
   BLE_EvtPhyUpdate        phyUpdate;
 } bleCommMem;

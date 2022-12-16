@@ -188,6 +188,7 @@ typedef enum
 	BLE_COMMON_EVENT_CONN_STAT_CHANGE = 0, /**< Connection status change event */
 	BLE_COMMON_EVENT_CONN_DEV_NAME,        /**< Device name receive event */
 	BLE_COMMON_EVENT_SCAN_RESULT,          /**< Scan result event */
+	BLE_COMMON_EVENT_MTUSIZE,              /**< MTU size event */
 } BLE_COMMON_EVENT_ID;
 
 /**
@@ -505,6 +506,14 @@ struct ble_event_adv_rept_t
   uint8_t length;                      /**< Scan response data length */
   uint8_t data[BLE_MAX_ADV_DATA_LEN];  /**< Scan response data */
   BT_ADDR addr;                        /**< Advertising device address @ref BT_ADDR */
+};
+
+struct ble_event_mtusize_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
+  uint16_t handle;                      /**< Connection handle */
+  uint16_t mtusize;                     /**< MTU size */
 };
 
 /**
