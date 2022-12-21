@@ -132,11 +132,13 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
         // CXM150x power ON
 #ifdef ELTRES_PIN_DDC2V
         board_power_control(ELTRES_PIN_DDC2V, true);
+        board_unset_reset_gpo(ELTRES_PIN_DDC2V);
 #endif
 
 #if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
         board_power_control_tristate(ELTRES_PIN_ENABLE, 0);
         board_power_control_tristate(ELTRES_PIN_ENABLE, -1); // Hi-Z
+        board_unset_reset_gpo(ELTRES_PIN_ENABLE);
 #else
         board_gpio_config(ELTRES_PIN_ENABLE, 0, false, false, PIN_FLOAT);
         board_gpio_write(ELTRES_PIN_ENABLE, 0);
@@ -145,6 +147,7 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
     } else {
         // Power OFF operation
 #if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
+        board_set_reset_gpo(ELTRES_PIN_ENABLE);
         board_power_control(ELTRES_PIN_ENABLE, false);
 #else
         board_gpio_write(ELTRES_PIN_ENABLE, 0);
@@ -154,6 +157,7 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
         pthread_join(g_uart_recv_thread, &result);
         g_uart_recv_thread = (pthread_t)0;
 #ifdef ELTRES_PIN_DDC2V
+        board_set_reset_gpo(ELTRES_PIN_DDC2V);
         board_power_control(ELTRES_PIN_DDC2V, false);
 #endif
     }
