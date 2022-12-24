@@ -40,9 +40,10 @@
  */
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include <semaphore.h>
 #include <time.h>
+#include <sys/wait.h>
+#include <sched.h>
 
 #include "nrf_queue.h"
 //#include "app_scheduler.h"
@@ -74,8 +75,10 @@ NRF_LOG_MODULE_REGISTER();
 #define SD_BLE_RESPONSE_TIMEOUT 5000
 #define SD_BLE_RESPONSE_TIMEOUT_FLAG 0x01
 #define SD_BLE_EVENT_FLAG 0x10
+#define SD_BLE_EVTTASK_NAME "nrf52_sdevt_task"
+#define SD_BLE_EVTTASK_STACKSIZE (2048)
 
-static pthread_t g_rcv_tid;
+static pid_t g_rcv_tid;
 static int g_rcv_loop;
 static void *ble_rcv_evt_task(void *param);
 static sem_t evt_sid;
@@ -295,6 +298,7 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
 #endif
 {
     uint32_t err_code;
+    struct sched_param param;
 
     err_code = NRF_SUCCESS;
 
@@ -343,8 +347,13 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
     }
 
     g_rcv_loop = 1;
-    err_code = pthread_create(&g_rcv_tid, NULL, ble_rcv_evt_task, NULL);
-    if (err_code)
+    sched_getparam(0, &param);
+    g_rcv_tid = task_create(SD_BLE_EVTTASK_NAME,
+                            param.sched_priority,
+                            SD_BLE_EVTTASK_STACKSIZE,
+                            (main_t)ble_rcv_evt_task,
+                            NULL);
+    if (g_rcv_tid == ERROR)
     {
         (void)sem_destroy(&evt_sid);
         (void)sem_destroy(&rsp_sid);
@@ -361,7 +370,7 @@ uint32_t sd_softdevice_disable(void)
 #ifdef BLE_STACK_SUPPORT_REQD
     (void)sem_post(&evt_sid);
 #endif
-    (void)pthread_join(g_rcv_tid, NULL);
+    (void)waitpid(g_rcv_tid, NULL, WEXITED);
     (void)sem_destroy(&evt_sid);
     (void)sem_destroy(&rsp_sid);
     return ser_sd_transport_close();

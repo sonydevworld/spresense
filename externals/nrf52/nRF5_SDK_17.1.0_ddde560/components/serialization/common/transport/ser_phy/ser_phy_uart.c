@@ -41,8 +41,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <sched.h>
 #include <poll.h>
 #include <errno.h>
@@ -81,6 +81,9 @@ NRF_LOG_MODULE_REGISTER();
 #define FD_SET_UART 0
 #define FD_SET_CTRL 1
 
+#define NRF52_UARTTASK_NAME "nrf52_uart_task"
+#define NRF52_UARTTASK_STACKSIZE (2048)
+
 typedef enum {
   CTL_IN = 0,
   CTL_OUT,
@@ -99,7 +102,7 @@ typedef struct
 } UART_CONTEXT;
 
 static UART_CONTEXT g_ctx;
-static pthread_t m_rx_tid = 0;
+static pid_t   m_rx_tid;
 static uint8_t m_rx_loop = 0;
 
 static uint8_t * mp_tx_stream; /**< Pointer to Tx data */
@@ -346,12 +349,12 @@ static void *ser_phy_uart_receive(void *param)
         m_ser_phy_event_handler = NULL;
         m_rx_loop = 0;
         memset(ctx, 0, sizeof(UART_CONTEXT));
-        NRF_LOG_DEBUG("uart pthread exit\n");
+        NRF_LOG_DEBUG("uart task exit\n");
         break;
       }
       else
       {
-        NRF_LOG_DEBUG("uart pthread exit failed\n");
+        NRF_LOG_DEBUG("uart task exit failed\n");
       }
     }
     else
@@ -360,7 +363,6 @@ static void *ser_phy_uart_receive(void *param)
     }
   }
 
-  pthread_exit(0);
   return NULL;
 }
 
@@ -372,7 +374,6 @@ uint32_t ser_phy_open(ser_phy_events_handler_t events_handler)
   int errcode = 0;
   UART_CONTEXT *ctx = &g_ctx;
   int ret = 0;
-  pthread_attr_t ser_attr;
   struct sched_param ser_param;
   int prio;
 
@@ -426,12 +427,10 @@ uint32_t ser_phy_open(ser_phy_events_handler_t events_handler)
     return -errcode;
   }
 
-  m_rx_tid = 0;
+  m_rx_tid = ERROR;
   m_rx_loop = 1;
-  ret = pthread_attr_init(&ser_attr);
-  if (!ret) {
-    ret = pthread_attr_getschedparam(&ser_attr, &ser_param);
-  }
+
+  ret = sched_getparam(0, &ser_param);
   if (!ret) {
 #if defined(CONFIG_BLUETOOTH_NRF52_UART_PRIORITY)
     prio = CONFIG_BLUETOOTH_NRF52_UART_PRIORITY;
@@ -444,16 +443,18 @@ uint32_t ser_phy_open(ser_phy_events_handler_t events_handler)
     }
 #endif
     NRF_LOG_DEBUG("ser_phy_open: priority : %d->%d\n", ser_param.sched_priority, prio);
-    ser_param.sched_priority = prio;
-    ret = pthread_attr_setschedparam(&ser_attr, &ser_param);
+
+    m_rx_tid = task_create(NRF52_UARTTASK_NAME,
+                           prio,
+                           NRF52_UARTTASK_STACKSIZE,
+                           (main_t)ser_phy_uart_receive,
+                           NULL);
   }
-  if (!ret) {
-    ret = pthread_create(&m_rx_tid, &ser_attr, ser_phy_uart_receive, NULL);
-  }
-  if (ret)
+
+  if (m_rx_tid == ERROR)
   {
     errcode = errno;
-    NRF_LOG_DEBUG("ser_phy_open: pthread_create err %d\n", errcode);
+    NRF_LOG_DEBUG("ser_phy_open: task_create err %d\n", errcode);
     (void)close(ctx->uart_fd);
     (void)close(ctx->ctrl_fd[CTL_IN]);
     (void)close(ctx->ctrl_fd[CTL_OUT]);
@@ -578,15 +579,15 @@ void ser_phy_close(void)
     NRF_LOG_DEBUG("ser_phy_close: writed err: %d\n", errno);
   }
 
-  if (m_rx_tid != 0) {
-    ret = pthread_join(m_rx_tid, NULL);
+  if (m_rx_tid != ERROR) {
+    ret = waitpid(m_rx_tid, NULL, WEXITED);
     if (ret)
     {
-      NRF_LOG_DEBUG("ser_phy_close: pthread_join err: %d\n", errno);
+      NRF_LOG_DEBUG("ser_phy_close: waitpid err: %d\n", errno);
     }
   }
   else {
-    NRF_LOG_DEBUG("ser_phy_close: pthread_join not created\n");
+    NRF_LOG_DEBUG("ser_phy_close: task not created\n");
   }
 
   NRF_LOG_DEBUG("ser_phy_close: end\n");
