@@ -51,6 +51,15 @@
 #include <bluetooth/bluetooth.h>
 
 /****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define BLE_IRK_LEN  (16)
+#define BLE_CSRK_LEN (16)
+#define BLE_LTK_LEN  (16)
+#define BLE_RAND_LEN (8)
+
+/****************************************************************************
  * Public Types
  ****************************************************************************/
 
@@ -108,6 +117,51 @@ struct ble_state_s
 };
 
 /**
+ * @struct ble_addr_s
+ * @brief BLE address
+ */
+
+struct ble_addr_s
+{
+  uint8_t type;
+  uint8_t addr[BT_ADDR_LEN];
+};
+
+/**
+ * @struct ble_idkey_info_s
+ * @brief BLE device id and key information in bonding information
+ */
+
+struct ble_idkey_s
+{
+  uint8_t  irk[BLE_IRK_LEN];
+  uint8_t  csrk[BLE_CSRK_LEN];
+  uint8_t  ltk[BLE_LTK_LEN];
+  uint8_t  rand[BLE_RAND_LEN];
+  uint16_t ediv;
+};
+
+struct ble_cccd_s
+{
+  uint16_t handle;
+  uint16_t value;
+};
+
+/**
+ * @struct ble_bondinfo_s
+ * @brief Bluetooth LE bonding information
+ */
+
+struct ble_bondinfo_s
+{
+  struct ble_addr_s   peer_addr;
+  struct ble_idkey_s  peer;
+  struct ble_idkey_s  own;
+  uint8_t             cccd_num;
+  struct ble_cccd_s   *cccd;
+};
+
+/**
  * @struct bt_common_ops_s
  * @brief Bluetooth Common application callbacks
  */
@@ -128,10 +182,30 @@ struct bt_common_ops_s
  */
 struct ble_common_ops_s
 {
-  void (*connect_status_changed)(struct ble_state_s *ble_state, bool connected);  /**< Connection status change */
-  void (*connected_device_name_resp)(const char *name);                           /**< Device name change */
-  void (*scan_result)(BT_ADDR addr, char *dev_name);                              /**< Result callback for scan */
-  void (*mtusize)(uint16_t handle, uint16_t sz);                                  /**< MTU size callback */
+  /** Connection status change */
+
+  void (*connect_status_changed)(struct ble_state_s *ble_state,
+                                 bool connected);
+
+  /** Device name change */
+
+  void (*connected_device_name_resp)(const char *name);
+
+  /**< Result callback for scan */
+
+  void (*scan_result)(BT_ADDR addr, char *dev_name);
+
+  /** MTU size callback */
+
+  void (*mtusize)(uint16_t handle, uint16_t sz);
+
+  /** Save bonding information callback */
+
+  void (*save_bondinfo)(int num, struct ble_bondinfo_s *bond);
+
+  /** Load bonding information callback */
+
+  int  (*load_bondinfo)(int num, struct ble_bondinfo_s *bond);
 };
 
 /****************************************************************************
