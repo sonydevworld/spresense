@@ -174,7 +174,12 @@ static bool CreateSynthesizer(AsObjectParams_t params, AudioAttentionCb attcb)
 
   pthread_setname_np(pid, "synthesizer");
 
-  SynthesizerObject::set_pid(pid);
+  while (!SynthesizerObject::set_pid(pid))
+    {
+      /* Wait until the object is created */
+
+      usleep(1);
+    }
 
   return true;
 }
