@@ -70,10 +70,6 @@ static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
 
 static void onConnectedDeviceNameResp(const char *name);
 
-/* Result callback for scan */
-
-static void onScanResult(BT_ADDR addr, char *dev_name);
-
 /* Save bonding information */
 
 static void onSaveBondInfo(int num, struct ble_bondinfo_s *bond);
@@ -104,7 +100,6 @@ static struct ble_common_ops_s ble_common_ops =
   {
     .connect_status_changed     = onLeConnectStatusChanged,
     .connected_device_name_resp = onConnectedDeviceNameResp,
-    .scan_result                = onScanResult,
     .save_bondinfo              = onSaveBondInfo,
     .load_bondinfo              = onLoadBondInfo,
   };
@@ -187,16 +182,6 @@ static void onConnectedDeviceNameResp(const char *name)
   /* If receive connected device name data, this function will call. */
 
   printf("%s [BLE] Receive connected device name = %s\n", __func__, name);
-}
-
-static void onScanResult(BT_ADDR addr, char *dev_name)
-{
-  /* If receive connected device name data, this function will call. */
-
-  printf("[BLE_GATT] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X, name:%s\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          dev_name);
 }
 
 static void onSaveBondInfo(int num, struct ble_bondinfo_s *bond)
