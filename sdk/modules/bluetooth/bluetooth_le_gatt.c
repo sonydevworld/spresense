@@ -227,29 +227,21 @@ static int event_notify_req(struct ble_gatt_event_notify_req_t *notify_req_evt)
 static int event_write_rsp(struct ble_gatt_event_write_rsp_t *write_rsp_evt)
 {
   int ret = BT_SUCCESS;
-  struct ble_gatt_char_s *ble_gatt_char = NULL;
+  struct ble_gatt_char_s ble_gatt_char;
   struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
 
-  /* Search characteristic */
+  /* Only status and handle are valid in write response. */
 
-  ble_gatt_char = ble_search_characteristic(write_rsp_evt->serv_handle, write_rsp_evt->char_handle);
-
-  if (!ble_gatt_char)
-    {
-      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
-      return BT_FAIL;
-    }
-
-  ble_gatt_char->status = write_rsp_evt->status;
-  ble_gatt_char->handle = write_rsp_evt->char_handle;
+  ble_gatt_char.status = write_rsp_evt->status;
+  ble_gatt_char.handle = write_rsp_evt->char_handle;
 
   /* Callback to application with updated characteristic */
 
-  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+  ble_gatt_central_ops = g_ble_gatt_state.ble_gatt_central_ops;
 
   if (ble_gatt_central_ops && ble_gatt_central_ops->write)
     {
-      ble_gatt_central_ops->write(ble_gatt_char);
+      ble_gatt_central_ops->write(&ble_gatt_char);
     }
   else
     {
@@ -263,37 +255,22 @@ static int event_write_rsp(struct ble_gatt_event_write_rsp_t *write_rsp_evt)
 static int event_read_rsp(struct ble_gatt_event_read_rsp_t *read_rsp_evt)
 {
   int ret = BT_SUCCESS;
-  struct ble_gatt_char_s *ble_gatt_char = NULL;
+  struct ble_gatt_char_s ble_gatt_char;
   struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
-  BLE_CHAR_VALUE  *value = NULL;
 
-  /* Search characteristic */
+  /* Only status, handle and value are valid in read response. */
 
-  ble_gatt_char = ble_search_characteristic(read_rsp_evt->serv_handle, read_rsp_evt->char_handle);
-
-  if (!ble_gatt_char)
-    {
-      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
-      return BT_FAIL;
-    }
-
-  ble_gatt_char->handle = read_rsp_evt->char_handle;
-
-  /* Copy write data */
-
-  value = &ble_gatt_char->value;
-
-  memcpy(value->data, read_rsp_evt->data, read_rsp_evt->length);
-
-  value->length = read_rsp_evt->length;
+  ble_gatt_char.handle       = read_rsp_evt->char_handle;
+  ble_gatt_char.value.length = read_rsp_evt->length;
+  ble_gatt_char.value.data   = read_rsp_evt->data;
 
   /* Callback to application with searched characteristic */
 
-  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+  ble_gatt_central_ops = g_ble_gatt_state.ble_gatt_central_ops;
 
   if (ble_gatt_central_ops && ble_gatt_central_ops->read)
     {
-      ble_gatt_central_ops->read(ble_gatt_char);
+      ble_gatt_central_ops->read(&ble_gatt_char);
     }
   else
     {
