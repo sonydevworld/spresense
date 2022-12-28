@@ -91,7 +91,8 @@ static int bcm20706_ble_set_dev_name(char *name);
 static int bcm20706_ble_set_appearance(BLE_APPEARANCE appearance);
 static int bcm20706_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
 static int bcm20706_ble_advertise(bool enable);
-static int bcm20706_ble_scan(bool enable);
+static int bcm20706_ble_start_scan(bool duplicate_filter);
+static int bcm20706_ble_stop_scan(void);
 static int bcm20706_ble_connect(const BT_ADDR *addr);
 static int bcm20706_ble_disconnect(const uint16_t conn_handle);
 
@@ -115,7 +116,8 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .setAppearance = bcm20706_ble_set_appearance,
   .setPPCP       = bcm20706_ble_set_ppcp,
   .advertise     = bcm20706_ble_advertise,
-  .scan          = bcm20706_ble_scan,
+  .startScan     = bcm20706_ble_start_scan,
+  .stopScan      = bcm20706_ble_stop_scan,
   .connect       = bcm20706_ble_connect,
   .disconnect    = bcm20706_ble_disconnect
 };
@@ -314,21 +316,45 @@ static int bcm20706_ble_advertise(bool enable)
 }
 
 /****************************************************************************
- * Name: bcm20706_ble_scan
+ * Name: bcm20706_ble_start_scan
  *
  * Description:
- *   Bluetooth LE start/stop scan.
- *   Start/Stop scan.
+ *   Bluetooth LE start scan.
+
+ * Parameter:
+ *   duplicate_filter:
+ *           true means that duplicate scan results are filtered out.
+ *           false means that all duplicate scan result are notified to
+ *           applications.
+ *           bcm20706 HW do not support true value.
  *
  ****************************************************************************/
 
-static int bcm20706_ble_scan(bool enable)
+static int bcm20706_ble_start_scan(bool duplicate_filter)
 {
-  int ret = BT_SUCCESS;
+  /* Return error if duplicate_filter is true,
+   * because bcm20706 HW do not support duplicate scan result filter.
+   */
 
-  ret = bleGapScan(enable ? BLE_ENABLE : BLE_DISABLE);
+  if (duplicate_filter)
+    {
+      return BT_FAIL;
+    }
 
-  return ret;
+  return bleGapScan(BLE_ENABLE);
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_stop_scan
+ *
+ * Description:
+ *   Bluetooth LE stop scan.
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_stop_scan(void)
+{
+  return bleGapScan(BLE_DISABLE);
 }
 
 /****************************************************************************

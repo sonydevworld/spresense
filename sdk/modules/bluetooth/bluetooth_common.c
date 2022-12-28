@@ -1129,14 +1129,14 @@ int ble_cancel_advertise(void)
  *
  ****************************************************************************/
 
-int ble_start_scan(void)
+int ble_start_scan(bool duplicate_filter)
 {
   int ret = BT_SUCCESS;
   struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
 
-  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+  if (ble_hal_common_ops && ble_hal_common_ops->startScan)
     {
-      ret = ble_hal_common_ops->scan(true);
+      ret = ble_hal_common_ops->startScan(duplicate_filter);
     }
   else
     {
@@ -1161,9 +1161,9 @@ int ble_cancel_scan(void)
   int ret = BT_SUCCESS;
   struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
 
-  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+  if (ble_hal_common_ops && ble_hal_common_ops->stopScan)
     {
-      ret = ble_hal_common_ops->scan(false);
+      ret = ble_hal_common_ops->stopScan();
     }
   else
     {

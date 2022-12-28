@@ -142,7 +142,8 @@ struct ble_hal_common_ops_s
   int (*setAppearance)(BLE_APPEARANCE appearance); /**< Set BLE appearance ID @ref BLE_APPEARANCE */
   int (*setPPCP)(BLE_CONN_PARAMS ppcp);            /**< Set PPCP connection parameter */
   int (*advertise)(bool enable);                   /**< Advertisement start/stop */
-  int (*scan)(bool enable);                        /**< Scan start/stop */
+  int (*startScan)(bool duplicate_filter);         /**< Start scan */
+  int (*stopScan)(void);                           /**< Stop scan */
   int (*connect)(const BT_ADDR *addr);             /**< Create a connection */
   int (*disconnect)(const uint16_t conn_handle);   /**< Destroy a connection */
   uint16_t (*setMtuSize)(uint16_t sz);             /**< Set MTU size */

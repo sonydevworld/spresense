@@ -483,11 +483,13 @@ int ble_cancel_advertise(void);
 /**
  * @brief Bluetooth LE start scan
  *        Start BLE scan mode.
+ * @param[in] duplicate_filter:
+ *            true means that duplicate scan results are filtered out.
  *
  * @retval error code
  */
 
-int ble_start_scan(void);
+int ble_start_scan(bool duplicate_filter);
 
 /**
  * @brief Bluetooth LE cancel scan
