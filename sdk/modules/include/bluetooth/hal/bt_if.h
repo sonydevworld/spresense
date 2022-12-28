@@ -170,10 +170,33 @@ struct ble_hal_gatts_ops_s
  */
 struct ble_hal_gattc_ops_s
 {
-  int (*startDbDiscovery)(uint16_t conn_handle);                           /**< GATT client start attribute database discovery */
-  int (*continueDbDiscovery)(uint16_t start_handle, uint16_t conn_handle); /**< GATT client start attribute database discovery */
-  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);    /**< Write characteristic request(Central)/response(Peripheral) */
-  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);     /**< Read characteristic request(Central)/response(Peripheral) */
+  /** GATT client start attribute database discovery */
+
+  int (*startDbDiscovery)(uint16_t conn_handle);
+
+  /** GATT client start attribute database discovery */
+
+  int (*continueDbDiscovery)(uint16_t start_handle, uint16_t conn_handle);
+
+  /**< Write characteristic request(Central)/response(Peripheral) */
+
+  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
+
+  /**< Read characteristic request(Central)/response(Peripheral) */
+
+  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
+
+  /** Write descriptor request */
+
+  int (*descriptor_write)(uint16_t conn_handle,
+                          uint16_t handle,
+                          uint8_t  *data,
+                          uint16_t len);
+
+  /** Read descriptor request */
+
+  int (*descriptor_read)(uint16_t conn_handle,
+                         uint16_t handle);
 };
 
 /**

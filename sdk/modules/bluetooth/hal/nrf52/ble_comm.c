@@ -1949,16 +1949,18 @@ static void onWriteRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 static
 void onHvx(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
-  pBleEvent->evtHeader = BLE_GATTC_EVENT_NTFIND;
   ble_gattc_evt_t *bleGattcEvt                = &(pBleNrfEvt->evt.gattc_evt);
   const ble_gattc_evt_hvx_t *bleGattcEvtHvx   = &(bleGattcEvt->params.hvx);
-  commMem.gattcNtfIndData.connHandle   = pBleNrfEvt->evt.gattc_evt.conn_handle;
-  commMem.gattcNtfIndData.attrHandle   = bleGattcEvtHvx->handle;
-  commMem.gattcNtfIndData.type         = (BLE_GattNtyIndType)bleGattcEvtHvx->type;
-  commMem.gattcNtfIndData.attrValLen   = bleGattcEvtHvx->len;
-  memcpy(commMem.gattcNtfIndData.attrValData, bleGattcEvtHvx->data, MAX_VAL_DATA_LENGTH);
-  pBleEvent->evtDataSize = sizeof(BLE_EvtGattcNtfInd);
-  memcpy(pBleEvent->evtData, &commMem.gattcNtfIndData, pBleEvent->evtDataSize);
+  struct ble_gatt_event_notification_t evt;
+
+  evt.group_id    = BLE_GROUP_GATT;
+  evt.event_id    = BLE_GATT_EVENT_NOTIFICATION;
+  evt.conn_handle = pBleNrfEvt->evt.gattc_evt.conn_handle;
+  evt.char_handle = bleGattcEvtHvx->handle;
+  evt.length      = bleGattcEvtHvx->len;
+  memcpy(evt.data, bleGattcEvtHvx->data, evt.length);
+
+  ble_gatt_event_handler((struct bt_event_t *)&evt);
 }
 
 static

@@ -362,17 +362,33 @@ struct ble_gatt_event_db_discovery_t
  */
 struct ble_gatt_central_ops_s
 {
-  void (*write)(struct ble_gatt_char_s *ble_gatt_char);                      /**< Write response */
-  void (*read)(struct ble_gatt_char_s *ble_gatt_char);                       /**< Read response */
-  void (*notify)(struct ble_gatt_char_s *ble_gatt_char);                     /**< Notify response */
-  void (*database_discovery)(struct ble_gatt_event_db_discovery_t *db_disc); /**< Database discovery event */
+  /** Write response */
+
+  void (*write)(struct ble_gatt_char_s *ble_gatt_char);
+
+  /** Read response */
+
+  void (*read)(struct ble_gatt_char_s *ble_gatt_char);
+
+  /** Receive notification */
+
+  void (*notify)(struct ble_gatt_char_s *ble_gatt_char);
+
+  /** Database discovery event */
+
+  void (*database_discovery)(struct ble_gatt_event_db_discovery_t *db_disc);
+
+  /** Descriptor write response */
+
+  void (*descriptor_write)(uint16_t conn_handle, uint16_t handle, int status);
+
+  /** Descriptor read response */
+
+  void (*descriptor_read)(uint16_t conn_handle,
+                          uint16_t handle,
+                          uint8_t  *data,
+                          uint16_t len);
 };
-
-
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
 
 /****************************************************************************
  * Public Function Prototypes
@@ -456,6 +472,35 @@ int ble_characteristic_read(struct ble_gatt_char_s *charc);
  */
 
 int ble_characteristic_write(struct ble_gatt_char_s *charc, uint8_t *data, int len);
+
+/**
+ * @brief BLE Read Descriptor value
+ *        Send read descriptor request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle
+ * @param[in] handle:      desctiptor handle
+ *
+ * @retval error code
+ */
+
+int ble_descriptor_read(uint16_t conn_handle, uint16_t handle);
+
+/**
+ * @brief BLE Write Descriptor value
+ *        Send write descriptor request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle
+ * @param[in] handle:      desctiptor handle
+ * @param[in] data: Write data
+ * @param[in] len: Write data length
+ *
+ * @retval error code
+ */
+
+int ble_descriptor_write(uint16_t conn_handle,
+                         uint16_t handle,
+                         uint8_t  *data,
+                         int      len);
 
 /**
  * @brief BLE start database discovery
