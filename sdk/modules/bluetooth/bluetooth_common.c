@@ -279,7 +279,7 @@ static int ble_event_advertise_report(struct ble_event_adv_rept_t *adv_rept_evt)
 
   if (ble_common_ops && ble_common_ops->scan_result)
     {
-      ble_common_ops->scan_result(adv_rept_evt->addr, (char*)(adv_rept_evt->data));
+      ble_common_ops->scan_result(adv_rept_evt->addr, adv_rept_evt->data, adv_rept_evt->length);
     }
   else
     {
@@ -1308,5 +1308,45 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
     }
 
   return BT_SUCCESS;
+}
+
+/****************************************************************************
+ * Name: ble_parse_advertising_data
+ *
+ * Description:
+ *   Parse BLE advertising data and return the target AD type information.
+ *
+ ****************************************************************************/
+
+int ble_parse_advertising_data(BLE_AD_TYPE target,
+                               uint8_t *adv,
+                               uint8_t adv_len,
+                               struct bt_eir_s *eir)
+{
+  int i = 0;
+  uint8_t len;
+  uint8_t type;
+  uint8_t *data;
+  int ret = BT_FAIL;
+
+  while (i < adv_len)
+    {
+      len  = adv[i++];
+      type = adv[i++];
+      data = &adv[i];
+
+      if (type == target)
+        {
+          eir->len  = len,
+          eir->type = type,
+          memcpy(eir->data, data, len - 1); /* len include type and data */
+          ret = BT_SUCCESS;
+          break;
+        }
+
+      i += len - 1;
+    }
+
+  return ret;
 }
 

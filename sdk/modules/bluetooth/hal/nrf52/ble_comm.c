@@ -1050,64 +1050,18 @@ static void on_conn_params_update(BLE_EvtConnParamUpdate* param)
   LOG_OUT("[BLE][LOG]Timeout: %d\n", param->connParams.connSupTimeout);
 }
 
-typedef struct
-{
-  uint8_t *data;
-  uint16_t data_len;
-} data_t;
-
-static int adv_report_parse(uint8_t type, data_t *adv_data, data_t *type_data)
-{
-  uint16_t index = 0;
-  uint8_t *data = adv_data->data;
-
-  while (index < adv_data->data_len)
-    {
-      uint8_t field_length = data[index];
-      uint8_t field_type   = data[index+1];
-
-      if (field_type == type)
-        {
-          type_data->data   = &data[index+2];
-          type_data->data_len = field_length-1;
-          type_data->data[type_data->data_len] = '\0';
-          return 0;
-        }
-
-      index += field_length + 1;
-    }
-
-  return -1;
-}
-
 static void on_adv_report(BLE_EvtAdvReportData *adv_report)
 {
-  data_t advReport = {adv_report->data, adv_report->dlen};
-  data_t localName;
-  uint8_t localNameData[32] = {0};
   struct ble_event_adv_rept_t evt;
-  int ret;
 
-  localName.data = localNameData;
-  localName.data_len = 0;
-
-  ret = adv_report_parse(0x09 /* COMPLETE_LOCAL_NAME */, &advReport, &localName);
-
-  /* Current BT-BLE MW callback interface can notify only device name.
-   * So, not notify if advertising data does not include device name.
-   */
-
-  if (ret == 0)
-    {
-      evt.group_id = BLE_GROUP_COMMON;
-      evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
-      evt.rssi = adv_report->rssi;
-      evt.scan_rsp = adv_report->scan_rsp;
-      evt.length = localName.data_len;
-      strncpy((char *)evt.data, (char *)localName.data, evt.length + 1);
-      memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
-      ble_common_event_handler((struct bt_event_t *)&evt);
-    }
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
+  evt.rssi = adv_report->rssi;
+  evt.scan_rsp = adv_report->scan_rsp;
+  evt.length = adv_report->dlen;
+  memcpy(evt.data, adv_report->data, adv_report->dlen);
+  memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
+  ble_common_event_handler((struct bt_event_t *)&evt);
 }
 
 static void on_phy_update_request(BLE_EvtPhyUpdate *phy_update)

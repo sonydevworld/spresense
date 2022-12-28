@@ -50,6 +50,8 @@
 #include <stdint.h>
 #include <bluetooth/bluetooth.h>
 
+#define BT_EIR_LEN (29)
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -193,7 +195,7 @@ struct ble_common_ops_s
 
   /**< Result callback for scan */
 
-  void (*scan_result)(BT_ADDR addr, char *dev_name);
+  void (*scan_result)(BT_ADDR addr, uint8_t *data, uint8_t len);
 
   /** MTU size callback */
 
@@ -206,6 +208,18 @@ struct ble_common_ops_s
   /** Load bonding information callback */
 
   int  (*load_bondinfo)(int num, struct ble_bondinfo_s *bond);
+};
+
+/**
+ * @struct bt_eir_s
+ * @brief The format of one data in advertising data.
+ */
+
+struct bt_eir_s
+{
+  uint8_t len;
+  uint8_t type;
+  uint8_t data[BT_EIR_LEN]
 };
 
 /****************************************************************************
@@ -523,5 +537,19 @@ uint16_t ble_get_request_mtusize(void);
  */
 
 int ble_get_negotiated_mtusize(uint16_t handle);
+
+/**
+ * @brief Parse advertise data.
+ *
+ * @param[in] target: parse target EIR type
+ * @param[in] adv_data: advertising data
+ * @param[in] adv_len: length of advertising data
+ * @param[in] eir: parse result
+ */
+
+int ble_parse_advertising_data(uint8_t target,
+                               uint8_t *adv_data,
+                               uint8_t adv_len,
+                               struct bt_eir_s *eir);
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BT_COMMON_H */
