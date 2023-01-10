@@ -63,6 +63,8 @@ ifneq ($(CONFIG_ARCH_FAMILY),)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
 endif
 
+CFLAGS += -fno-tree-loop-distribute-patterns
+
 AFLAGS += -isystem $(SDKDIR)/modules/include
 
 all: $(BIN)
