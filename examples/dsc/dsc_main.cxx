@@ -39,8 +39,16 @@
 
 #include <nuttx/config.h>
 
-#include <nuttx/board.h>
-#include <arch/board/board.h>
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+#  include <signal.h>
+#  include <fcntl.h>
+#  include <sys/ioctl.h>
+#  include <nuttx/fs/ioctl.h>
+#  include <nuttx/fs/automount.h>
+#else
+#  include <nuttx/board.h>
+#  include <arch/board/board.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +72,8 @@
 
 #define APP_MODE_SHOOTER  (0)
 #define APP_MODE_MENU     (1)
+
+#define SDCARD_NOTIFY_SIGNO (17)
 
 #define NOCARD_MSG  "NoCard"
 #define NOCARD_SHOW_CYCLE   (15)
@@ -285,8 +295,14 @@ static int app_action(unsigned char **img)
 
 extern "C" int main(void)
 {
+  int ret = 0;
   int key;
   unsigned char *img;
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+  int fd;
+  sigset_t set;
+  struct automount_notify_s notify;
+#endif
 
   // Initial mode is SHOOTER mode
 
@@ -294,7 +310,42 @@ extern "C" int main(void)
 
   // Initialize card status and detection
 
-  board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB, (uintptr_t)card_detection_cb);
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+  sigemptyset(&set);
+  sigaddset(&set, SDCARD_NOTIFY_SIGNO);
+
+  if (sigprocmask(SIG_BLOCK, &set, NULL) < 0)
+    {
+      printf("sigprocmask failed\n");
+      return -1;
+    }
+
+  fd = open("/var/mnt/sd0", 0);
+  if (fd < 0)
+    {
+      printf("open automounter node failed\n");
+      return -1;
+    }
+
+  notify.an_mount = true;
+  notify.an_umount = true;
+  notify.an_event.sigev_notify = SIGEV_SIGNAL;
+  notify.an_event.sigev_signo = SDCARD_NOTIFY_SIGNO;
+
+  if (ioctl(fd, FIOC_NOTIFY, (uintptr_t)&notify) < 0)
+    {
+      printf("ioctl automounter node failed\n");
+      ret = -1;
+      goto errout0;
+    }
+#else
+  if (board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB,
+                  (uintptr_t)card_detection_cb) < 0)
+    {
+      printf("card detection init failed\n");
+      return -1;
+    }
+#endif
   g_appinst.is_card_inserted = file_initialize();
   g_appinst.nocard_fcnt = 0;
 
@@ -303,7 +354,8 @@ extern "C" int main(void)
   if (nximage_initialize(&g_appinst.lcd_w, &g_appinst.lcd_h) < 0)
     {
       printf("NX init failed\n");
-      return -1;
+      ret = -1;
+      goto errout1;
     }
 
   // Initialize Spresense Camera
@@ -311,9 +363,9 @@ extern "C" int main(void)
   g_appinst.sensorname = initialize_cameractrl(&g_appinst.vfd);
   if (g_appinst.sensorname == NULL)
     {
-      nximage_finalize();
       printf("Couldn't init camera\n");
-      return -1;
+      ret = -1;
+      goto errout2;
     }
 
   // Allocate enough frame buffer memory for this application
@@ -321,19 +373,17 @@ extern "C" int main(void)
   g_appinst.fb = camera_framebuffer(&g_appinst.fb_size);
   if (g_appinst.fb == NULL)
     {
-      nximage_finalize();
       printf("Couldn't Allocate camera memory\n");
-      return -1;
+      ret = -1;
+      goto errout2;
     }
 
   // Check if the memory is really enough
 
   if (g_appinst.fb_size < (g_appinst.lcd_w * g_appinst.lcd_h * 2 * 2))
     {
-      free(g_appinst.fb);
-      finalize_cameractrl(g_appinst.vfd);
-      nximage_finalize();
-      return -1;
+      ret = -1;
+      goto errout3;
     }
 
   // Start camera preview image streaming
@@ -350,6 +400,19 @@ extern "C" int main(void)
 
   while (1)
     {
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+      struct siginfo info;
+      struct timespec timeout;
+
+      timeout.tv_sec = 0;
+      timeout.tv_nsec = 0;
+
+      if (sigtimedwait(&set, &info, &timeout) == SDCARD_NOTIFY_SIGNO)
+        {
+          card_detection_cb((bool)info.si_value.sival_int);
+        }
+#endif
+
       get_previewimage(g_appinst.vfd, &img);
       key = app_action(&img);
       draw_cardstatus(img);
@@ -373,12 +436,23 @@ extern "C" int main(void)
   // Finalization
 
   inputdev_finalize();
+
+errout3:
   finalize_cameractrl(g_appinst.vfd);
   free(g_appinst.fb);
+
+errout2:
   nximage_finalize();
 
+errout1:
   file_finalize();
-  board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB, 0);
 
-  return 0;
+errout0:
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+  close(fd);
+#else
+  board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB, 0);
+#endif
+
+  return ret;
 }
