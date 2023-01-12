@@ -113,6 +113,12 @@ CXM150x_return_code set_CXM150x_power(uint32_t param, CmdResSetCXM150xPower *res
         /* Already poweron */
         if (CXM150x_POWER_ON == wrapper_CXM150x_get_power()){
             printf_info("Already power on\r\n");
+            if(res != NULL){
+                res->m_result = CXM150x_RESPONSE_OK;
+            }
+            if (func != NULL){
+                func(RETURN_OK,res);
+            }
             return RETURN_OK;
         }
         wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_ON);
