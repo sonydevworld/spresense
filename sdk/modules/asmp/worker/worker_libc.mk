@@ -40,13 +40,12 @@ LIBC_PATH = $(SDKDIR)/../nuttx/libs/libc
 
 LIBC_LIBS  = ctype
 LIBC_LIBS += fixedmath
-# LIBC_LIBS += math
 LIBC_LIBS += string
 LIBC_LIBS += queue
 
 LIBC_TGTPATH = $(patsubst %,$(LIBC_PATH)/%,$(LIBC_LIBS))
 LIBC_CSRCS = $(notdir $(foreach p,$(LIBC_TGTPATH),$(wildcard $(p)/*.c)))
 LIBC_DEPPATH = --dep-path $(NXINC_PATH) --dep-path $(NXINC_PATH)/nuttx/lib $(patsubst %,--dep-path %,$(LIBC_TGTPATH))
-LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH)
+LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH)  -DCONFIG_ARCH_STDARG_H
 
 endif
