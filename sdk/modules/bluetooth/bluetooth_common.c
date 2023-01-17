@@ -308,6 +308,42 @@ static int ble_event_mtusize(struct ble_event_mtusize_t *evt)
   return ret;
 }
 
+static int ble_event_save_bond(struct ble_event_bondinfo_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->save_bondinfo)
+    {
+      ops->save_bondinfo(evt->num, evt->bond);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_load_bond(struct ble_event_bondinfo_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->load_bondinfo)
+    {
+      ret = ops->load_bondinfo(evt->num, evt->bond);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -1261,9 +1297,16 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
       case BLE_COMMON_EVENT_MTUSIZE:
         return ble_event_mtusize((struct ble_event_mtusize_t *) bt_event);
 
+      case BLE_COMMON_EVENT_SAVE_BOND:
+        return ble_event_save_bond((struct ble_event_bondinfo_t *) bt_event);
+
+      case BLE_COMMON_EVENT_LOAD_BOND:
+        return ble_event_load_bond((struct ble_event_bondinfo_t *) bt_event);
+
       default:
         break;
     }
+
   return BT_SUCCESS;
 }
 

@@ -189,6 +189,8 @@ typedef enum
 	BLE_COMMON_EVENT_CONN_DEV_NAME,        /**< Device name receive event */
 	BLE_COMMON_EVENT_SCAN_RESULT,          /**< Scan result event */
 	BLE_COMMON_EVENT_MTUSIZE,              /**< MTU size event */
+	BLE_COMMON_EVENT_SAVE_BOND,            /**< Save bonding information event */
+	BLE_COMMON_EVENT_LOAD_BOND,            /**< Load bonding information event */
 } BLE_COMMON_EVENT_ID;
 
 /**
@@ -514,6 +516,14 @@ struct ble_event_mtusize_t
   uint8_t  event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t handle;                      /**< Connection handle */
   uint16_t mtusize;                     /**< MTU size */
+};
+
+struct ble_event_bondinfo_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_COMMON_EVENT_ID */
+  int      num;                         /**< The number of bonding information */
+  struct ble_bondinfo_s *bond;          /**< bonding information */
 };
 
 /**

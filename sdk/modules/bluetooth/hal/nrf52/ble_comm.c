@@ -41,6 +41,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <crc16.h>
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include <ble/ble_gatts.h>
@@ -74,6 +75,14 @@ extern void board_nrf52_reset(bool en);
 #define BLE_PRT2(...)
 #define BLE_ERR(...)
 #endif
+
+#define NRF52_SYS_ATTR_DATA_OFFSET_HANDLE (0)
+#define NRF52_SYS_ATTR_DATA_OFFSET_LEN    (2)
+#define NRF52_SYS_ATTR_DATA_OFFSET_VALUE  (4)
+
+#define NRF52_SYS_ATTR_DATA_LEN_HANDLE (2)
+#define NRF52_SYS_ATTR_DATA_LEN_LEN    (2)
+#define NRF52_SYS_ATTR_DATA_LEN_VALUE  (2)
 
  /******************************************************************************
  * Structure define
@@ -236,41 +245,152 @@ static void bleInitBondInfoKey(void)
 #endif
 }
 
+static void set_EncKey_for_save_event(struct ble_idkey_s *apps,
+                                      ble_gap_enc_key_t  *nrf52)
+{
+  memcpy(apps->ltk, nrf52->enc_info.ltk, BLE_LTK_LEN);
+  apps->ediv = nrf52->master_id.ediv;
+  memcpy(apps->rand, nrf52->master_id.rand, BLE_RAND_LEN);
+}
+
+static void set_bondinfo_for_save_event(struct ble_bondinfo_s *apps,
+                                        bleGapWrapperBondInfo *nrf52)
+{
+  static struct ble_cccd_s cccd;
+
+  apps->peer_addr.type = nrf52->bondInfo.addrType;
+  memcpy(apps->peer_addr.addr,
+         nrf52->bondInfo.addr,
+         BLE_GAP_ADDR_LENGTH);
+
+  memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+  set_EncKey_for_save_event(&apps->own,  &nrf52->ownEncKey);
+  set_EncKey_for_save_event(&apps->peer, &nrf52->peerEncKey);
+
+  apps->cccd_num = 1;
+  apps->cccd = &cccd;
+  memcpy(&cccd.handle,
+         &nrf52->sys_attr_data[NRF52_SYS_ATTR_DATA_OFFSET_HANDLE],
+         NRF52_SYS_ATTR_DATA_LEN_HANDLE);
+  memcpy(&cccd.value,
+         &nrf52->sys_attr_data[NRF52_SYS_ATTR_DATA_OFFSET_VALUE],
+         NRF52_SYS_ATTR_DATA_LEN_VALUE);
+}
+
+static void mk_save_bondinfo_event(void)
+{
+  int i;
+  static struct ble_bondinfo_s bond[BLE_SAVE_BOND_DEVICE_MAX_NUM];
+  struct ble_event_bondinfo_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_SAVE_BOND;
+  evt.num = 0;
+
+  for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++)
+    {
+      if (((bleBondEnableList >> i) & 1) == 1)
+        {
+          set_bondinfo_for_save_event(&bond[evt.num],
+                                      &BondInfoInFlash[i]);
+          evt.num++;
+        }
+    }
+
+  evt.bond = bond;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
+static int mk_load_bondinfo_event(struct ble_bondinfo_s *bond)
+{
+  struct ble_event_bondinfo_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_LOAD_BOND;
+  evt.num = BLE_SAVE_BOND_DEVICE_MAX_NUM;
+  evt.bond = bond;
+
+  return ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
+static void save_EncKey(ble_gap_enc_key_t  *nrf52,
+                        struct ble_idkey_s *apps)
+{
+  memcpy(nrf52->enc_info.ltk, apps->ltk, BLE_GAP_SEC_KEY_LEN);
+  nrf52->enc_info.ltk_len = BLE_GAP_SEC_KEY_LEN;
+  nrf52->master_id.ediv = apps->ediv;
+  memcpy(nrf52->master_id.rand, apps->rand, BLE_GAP_SEC_RAND_LEN);
+}
+
+static void save_cccd(int num,
+                      struct ble_cccd_s *cccd,
+                      uint8_t *sys_attr_data)
+{
+  int i;
+  uint16_t *p = (uint16_t *)sys_attr_data;
+
+  for (i = 0; i < num; i++)
+    {
+      *p++ = cccd[i].handle;
+      *p++ = sizeof(cccd[i].value);
+      *p++ = cccd[i].value;
+    }
+
+  /* Append CRC16 value for created sys_attr_data. */
+
+  *p = crc16part(sys_attr_data, (uint8_t *)p - sys_attr_data, 0xFFFF);
+}
+
+static void save_apps_bondinfo(int num,
+                               struct ble_bondinfo_s *apps_bond,
+                               uint32_t *enable_list,
+                               bleGapWrapperBondInfo *bond)
+{
+  int i;
+  struct ble_bondinfo_s *apps = &apps_bond[0];
+  bleGapWrapperBondInfo *nrf52 = &bond[0];
+
+  *enable_list = 0;
+
+  for (i = 0, apps = &apps_bond[0], nrf52 = &bond[0];
+       i < num;
+       i++, apps++, nrf52++)
+    {
+      *enable_list |= (1 << i);
+      nrf52->bondInfo.addrType = apps->peer_addr.type;
+      memcpy(nrf52->bondInfo.addr,
+             apps->peer_addr.addr,
+             BLE_GAP_ADDR_LENGTH);
+      memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
+      memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+      nrf52->peerIdKey.id_addr_info.addr_id_peer = 1;
+      nrf52->peerIdKey.id_addr_info.addr_type = apps->peer_addr.type;
+      memcpy(nrf52->peerIdKey.id_addr_info.addr,
+             apps->peer_addr.addr,
+             BLE_GAP_ADDR_LENGTH);
+      save_EncKey(&nrf52->ownEncKey,  &apps->own);
+      save_EncKey(&nrf52->peerEncKey, &apps->peer);
+      save_cccd(apps->cccd_num, apps->cccd, nrf52->sys_attr_data);
+    }
+}
+
+static void load_apps_bondinfo(uint32_t *enable_list,
+                               bleGapWrapperBondInfo *bond)
+{
+  int num;
+  static struct ble_bondinfo_s apps_bond[BLE_SAVE_BOND_DEVICE_MAX_NUM];
+
+  num = mk_load_bondinfo_event(apps_bond);
+  save_apps_bondinfo(num, apps_bond, enable_list, bond);
+}
+
 static int bleGetBondInfo(void)
 {
-  int ret = 0;
   bleInitBondInfoKey();
-  ret = BSO_GetRegistryValue(bleKey.enable_key, (void *)&bleBondEnableList, sizeof(uint32_t));
-  if (ret == -ENOENT)
-    {
-      BLE_PRT("bleGetBondInfo: Set bleBondEnableList = 0\n");
-      bleBondEnableList = 0;
-      BSO_SetRegistryValue(bleKey.enable_key, (const void*)&bleBondEnableList, sizeof(uint32_t));
-      BSO_Sync();
-    }
-  else if (0 != ret)
-    {
-      BLE_PRT("bleGetBondInfo: Get bleBondEnableList NG %d\n", ret);
-      return ret;
-    }
-  
-  BLE_PRT("bleGetBondInfo: bleBondEnableList 0x%lx\n", bleBondEnableList);
-  for (int i=0; i<BLE_SAVE_BOND_DEVICE_MAX_NUM; i++)
-    {
-      ret = BSO_GetRegistryValue(bleKey.info_key[i], (void *)&BondInfoInFlash[i], sizeof(bleGapWrapperBondInfo));
-      if(ret == -ENOENT)
-        {
-          BLE_PRT("bleGetBondInfo: Set bleBondEnableList = 0\n");
-          bleBondEnableList = 0;
-          BSO_SetRegistryValue(bleKey.info_key[i], (const void*)&BondInfoInFlash[i], sizeof(bleGapWrapperBondInfo));
-          BSO_Sync();
-        }
-      else if (0 != ret)
-        {
-          BLE_PRT("bleGetBondInfo: Get BondInfoInFlash[%d] NG %d\n", i, ret);
-          return ret;
-        }
-    }
+  load_apps_bondinfo(&bleBondEnableList, BondInfoInFlash);
+
   return 0;
 }
 
@@ -845,6 +965,8 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
           bond_id.bondInfoId[index][1],\
           bond_id.bondInfoId[index][0]);
     }
+
+  mk_save_bondinfo_event();
 }
 
 static void on_timeout(BLE_EvtTimeout *timeout)
@@ -1354,6 +1476,7 @@ void saveSysAttrData(ble_gap_master_id_t *id, uint8_t *sys_attr_data)
       BSO_SetRegistryValue(bleKey.info_key[index],
                            (const void*)&BondInfoInFlash[index],
                            sizeof(bleGapWrapperBondInfo));
+      mk_save_bondinfo_event();
     }
 }
 
@@ -1707,6 +1830,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 #endif
 
   index = searchBondInfoIndex(&secinfo->master_id);
+
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
       BLE_PRT("onSecInfoRequest: master_id exitsting index %d\n", index);
@@ -1715,7 +1839,12 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       sys_attr_data = BondInfoInFlash[index].sys_attr_data;
     }
 
-  memcpy(&commMem.gapMem->wrapperBondInfo, sys_attr_data, sizeof(bleGapWrapperBondInfo));
+  memcpy(&commMem.gapMem->wrapperBondInfo.ownEncKey.master_id,
+         &secinfo->master_id,
+         sizeof(ble_gap_master_id_t));
+  memcpy(&commMem.gapMem->wrapperBondInfo.sys_attr_data,
+         sys_attr_data,
+         BLE_GATTS_SYS_ATTR_DATA_TOTALLEN);
   sd_ble_gap_sec_info_reply(pBleNrfEvt->evt.gap_evt.conn_handle, enc_info, id_info, sign_info);
   sd_ble_gatts_sys_attr_set(pBleNrfEvt->evt.gap_evt.conn_handle,
                             sys_attr_data,
