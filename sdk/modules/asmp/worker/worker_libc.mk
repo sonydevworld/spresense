@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/Makefile
+# modules/asmp/worker/worker_libc.mk
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,75 +33,20 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+ifneq ($(CONFIG_ASMP_WORKER_LIBC),)
 
-include worker_libc.mk
+NXINC_PATH = $(SDKDIR)/../nuttx/include
+LIBC_PATH = $(SDKDIR)/../nuttx/libs/libc
 
-VPATH   = arch $(LIBC_TGTPATH)
-SUBDIRS =
-DEPPATH = --dep-path arch --dep-path . $(LIBC_DEPPATH)
+LIBC_LIBS  = ctype
+LIBC_LIBS += fixedmath
+# LIBC_LIBS += math
+LIBC_LIBS += string
+LIBC_LIBS += queue
 
-ASRCS  = exception.S
+LIBC_TGTPATH = $(patsubst %,$(LIBC_PATH)/%,$(LIBC_LIBS))
+LIBC_CSRCS = $(notdir $(foreach p,$(LIBC_TGTPATH),$(wildcard $(p)/*.c)))
+LIBC_DEPPATH = --dep-path $(NXINC_PATH) --dep-path $(NXINC_PATH)/nuttx/lib $(patsubst %,--dep-path %,$(LIBC_TGTPATH))
+LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH)
 
-CSRCS  = common.c mpmq.c mpmutex.c mpshm.c
-CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c
-CSRCS += $(LIBC_CSRCS)
-
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-
-LIB_OBJS = $(AOBJS) $(COBJS)
-
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libasmpw$(LIBEXT)
-
-ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
-
-CFLAGS := $(LIBC_INCPATH) $(CFLAGS)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
-ifneq ($(CONFIG_ARCH_FAMILY),)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
 endif
-
-CFLAGS += -fno-tree-loop-distribute-patterns
-
-AFLAGS += -isystem $(SDKDIR)/modules/include
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE_ADD, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context: .context
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-
