@@ -25,6 +25,12 @@ config ASMP_SMALL_BLOCK
 		Use small block size (64 KiB) to memory management.
 		This option is for improve memory usage, but it tends to fragmentation.
 
+config ASMP_WORKER_LIBC
+	bool "Support some libc functions in worker"
+	default n
+	---help---
+		Support some libraries such as ctype, string, queue, fixedmath and etc. in worker.
+
 config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
 
