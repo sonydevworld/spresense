@@ -115,7 +115,7 @@ linux_install_tools()
 
 win_install_tools()
 {
-    pacman -S --noconfirm --needed base-devel gcc git python3 ncurses-devel unzip tio 2>/dev/null
+    pacman -S --noconfirm --needed base-devel gcc git python3 ncurses-devel unzip tio vim 2>/dev/null
 }
 
 mac_install_tools()
