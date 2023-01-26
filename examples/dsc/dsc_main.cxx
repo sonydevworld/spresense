@@ -447,8 +447,8 @@ errout2:
 errout1:
   file_finalize();
 
-errout0:
 #ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
+errout0:
   close(fd);
 #else
   board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB, 0);
