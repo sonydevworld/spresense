@@ -84,6 +84,14 @@
 /** @} */
 
 /**
+ *@name Invalid attribute handle ID
+ *@{
+ */
+#define BLE_GATT_INVALID_ATTRIBUTE_HANDLE (0x0000)
+
+/** @} */
+
+/**
  *@name Support Max services
  *@{
  */
@@ -299,8 +307,33 @@ struct ble_gattc_char_s
  */
 struct ble_gattc_db_disc_char_s
 {
-  uint16_t                cccd_handle;    /**< Handle of client configuration characteristic descriptor in characteristic */
-  struct ble_gattc_char_s characteristic; /**< Characteristic information */
+  /** Handle of characteristic extended properties descriptor */
+
+  uint16_t                cepd_handle;
+
+  /** Handle of characteristic user description descriptor */
+
+  uint16_t                cudd_handle;
+
+  /** Handle of client configuration characteristic descriptor */
+
+  uint16_t                cccd_handle;
+
+  /** Handle of server characteristic configuration descriptor */
+
+  uint16_t                sccd_handle;
+
+  /** Handle of characteristic presentation format descriptor */
+
+  uint16_t                cpfd_handle;
+
+  /** Handle of characteristic aggregate format descriptor */
+
+  uint16_t                cafd_handle;
+
+  /** Characteristic information */
+
+  struct ble_gattc_char_s characteristic;
 };
 
 /**
