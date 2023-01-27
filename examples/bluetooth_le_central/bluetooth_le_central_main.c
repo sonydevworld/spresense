@@ -259,29 +259,46 @@ static void on_notify(struct ble_gatt_char_s *ble_gatt_char)
   printf("\n");
 }
 
-void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
+static void print_descriptor_handle(const char *name, uint16_t handle)
+{
+  if (handle == BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      return;
+    }
+
+  printf("      %s  handle : 0x%04x\n", name, handle);
+}
+
+static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 {
   int i;
   int j;
   struct ble_gattc_db_discovery_s *db;
   struct ble_gattc_db_disc_srv_s  *srv;
-  struct ble_gattc_db_disc_char_s *chr;
-  db = &db_disc->params.db_discovery;
+  struct ble_gattc_db_disc_char_s *ch;
 
+  db = &db_disc->params.db_discovery;
   srv = &db->services[0];
+
   for (i = 0; i < db->srv_count; i++, srv++)
     {
       printf("=== SRV[%d] ===\n", i);
 
-      chr = &srv->characteristics[0];
+      ch = &srv->characteristics[0];
 
-      for (j = 0; j < srv->char_count; j++, chr++)
+      for (j = 0; j < srv->char_count; j++, ch++)
         {
           printf("   === CHR[%d] ===\n", j);
-          printf("      decl  handle : 0x%04x\n", chr->characteristic.char_declhandle);
-          printf("      value handle : 0x%04x\n", chr->characteristic.char_valhandle);
-          printf("      uuid         : 0x%04x\n", chr->characteristic.char_valuuid.value.alias.uuidAlias);
-          printf("      cccd  handle : 0x%04x\n", chr->cccd_handle);
+          printf("      decl  handle : 0x%04x\n", ch->characteristic.char_declhandle);
+          printf("      value handle : 0x%04x\n", ch->characteristic.char_valhandle);
+          printf("      uuid         : 0x%04x\n", ch->characteristic.char_valuuid.value.alias.uuidAlias);
+
+          print_descriptor_handle("cccd", ch->cccd_handle);
+          print_descriptor_handle("cepd", ch->cepd_handle);
+          print_descriptor_handle("cudd", ch->cudd_handle);
+          print_descriptor_handle("sccd", ch->sccd_handle);
+          print_descriptor_handle("cpfd", ch->cpfd_handle);
+          print_descriptor_handle("cafd", ch->cafd_handle);
           printf("\n");
         }
 
