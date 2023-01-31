@@ -102,7 +102,7 @@ run_progress()
 
 linux_install_tools()
 {
-    local _packages="git gperf libncurses5 libncurses5-dev flex bison genromfs pkg-config autoconf automake curl make minicom"
+    local _packages="git gperf libncurses5 libncurses5-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip"
     local _needed
     for p in ${_packages}; do
         dpkg -s $p >/dev/null 2>&1 || _needed="${_needed} ${p}"
