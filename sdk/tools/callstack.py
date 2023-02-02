@@ -67,7 +67,7 @@ def main():
     callstack = []
     for line in open(argv[2], 'r'):
         print(line[:-1])
-        if 'up_stackdump:' in line:
+        if '_stackdump:' in line:
             for item in line.split(' '):
                 callstack.append(get_symbol(item))
 
