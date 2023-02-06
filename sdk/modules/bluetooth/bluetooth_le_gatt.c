@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/bluetooth_le_gatt.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,6 +54,8 @@ static struct ble_gatt_state_s g_ble_gatt_state =
   .num = 0,
   .services = {{0}}
 };
+
+static bool isDescriptor = false;
 
 /****************************************************************************
  * Private Functions
@@ -224,84 +226,112 @@ static int event_notify_req(struct ble_gatt_event_notify_req_t *notify_req_evt)
   return ret;
 }
 
-static int event_write_rsp(struct ble_gatt_event_write_rsp_t *write_rsp_evt)
+static int event_write_rsp(struct ble_gatt_event_write_rsp_t *evt)
 {
   int ret = BT_SUCCESS;
-  struct ble_gatt_char_s *ble_gatt_char = NULL;
-  struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
-
-  /* Search characteristic */
-
-  ble_gatt_char = ble_search_characteristic(write_rsp_evt->serv_handle, write_rsp_evt->char_handle);
-
-  if (!ble_gatt_char)
-    {
-      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
-      return BT_FAIL;
-    }
-
-  ble_gatt_char->status = write_rsp_evt->status;
-  ble_gatt_char->handle = write_rsp_evt->char_handle;
+  struct ble_gatt_char_s ble_gatt_char;
+  struct ble_gatt_central_ops_s *ops = NULL;
 
   /* Callback to application with updated characteristic */
 
-  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+  ops = g_ble_gatt_state.ble_gatt_central_ops;
 
-  if (ble_gatt_central_ops && ble_gatt_central_ops->write)
+  if (ops)
     {
-      ble_gatt_central_ops->write(ble_gatt_char);
+      if (isDescriptor && ops->descriptor_write)
+        {
+          ops->descriptor_write(evt->conn_handle,
+                                evt->char_handle,
+                                evt->status);
+          isDescriptor = false;
+        }
+      else if (ops->write)
+        {
+          /* Only status and handle are valid in write response. */
+
+          ble_gatt_char.status = evt->status;
+          ble_gatt_char.handle = evt->char_handle;
+
+          ops->write(&ble_gatt_char);
+        }
+      else
+        {
+          _err("%s [BLE][GATT] callback not registered.\n", __func__);
+          return BT_FAIL;
+        }
     }
   else
     {
-      _err("%s [BLE][GATT] Write response event callback failed(CB not registered).\n", __func__);
+      _err("%s [BLE][GATT] callback not registered.\n", __func__);
       return BT_FAIL;
     }
 
   return ret;
 }
 
-static int event_read_rsp(struct ble_gatt_event_read_rsp_t *read_rsp_evt)
+static int event_read_rsp(struct ble_gatt_event_read_rsp_t *evt)
 {
   int ret = BT_SUCCESS;
-  struct ble_gatt_char_s *ble_gatt_char = NULL;
-  struct ble_gatt_central_ops_s *ble_gatt_central_ops = NULL;
-  BLE_CHAR_VALUE  *value = NULL;
-
-  /* Search characteristic */
-
-  ble_gatt_char = ble_search_characteristic(read_rsp_evt->serv_handle, read_rsp_evt->char_handle);
-
-  if (!ble_gatt_char)
-    {
-      _err("%s [BLE][GATT] characteristic search failed(Not found).\n", __func__);
-      return BT_FAIL;
-    }
-
-  ble_gatt_char->handle = read_rsp_evt->char_handle;
-
-  /* Copy write data */
-
-  value = &ble_gatt_char->value;
-
-  memcpy(value->data, read_rsp_evt->data, read_rsp_evt->length);
-
-  value->length = read_rsp_evt->length;
+  struct ble_gatt_char_s ble_gatt_char;
+  struct ble_gatt_central_ops_s *ops = NULL;
 
   /* Callback to application with searched characteristic */
 
-  ble_gatt_central_ops = ble_gatt_char->ble_gatt_central_ops;
+  ops = g_ble_gatt_state.ble_gatt_central_ops;
 
-  if (ble_gatt_central_ops && ble_gatt_central_ops->read)
+  if (ops)
     {
-      ble_gatt_central_ops->read(ble_gatt_char);
+      if (isDescriptor && ops->descriptor_read)
+        {
+          ops->descriptor_read(evt->conn_handle,
+                               evt->char_handle,
+                               evt->data,
+                               evt->length);
+          isDescriptor = false;
+        }
+      else if (ops->read)
+        {
+          /* Only status, handle and value are valid in read response. */
+
+          ble_gatt_char.handle       = evt->char_handle;
+          ble_gatt_char.value.length = evt->length;
+          ble_gatt_char.value.data   = evt->data;
+
+          ops->read(&ble_gatt_char);
+        }
+      else
+        {
+          _err("%s [BLE][GATT] callback not registered.\n", __func__);
+          return BT_FAIL;
+        }
     }
   else
     {
-      _err("%s [BLE][GATT] Read response event callback failed(CB not registered).\n", __func__);
+      _err("%s [BLE][GATT] callback not registered).\n", __func__);
       return BT_FAIL;
     }
 
   return ret;
+}
+
+static int event_notification(struct ble_gatt_event_notification_t *evt)
+{
+  struct ble_gatt_char_s ble_gatt_char;
+  struct ble_gatt_central_ops_s *ops = g_ble_gatt_state.ble_gatt_central_ops;
+
+  if (ops && ops->notify)
+    {
+      ble_gatt_char.handle       = evt->char_handle;
+      ble_gatt_char.value.length = evt->length;
+      ble_gatt_char.value.data   = evt->data;
+      ops->notify(&ble_gatt_char);
+      return BT_SUCCESS;
+    }
+  else
+    {
+      _err("%s [BLE][GATT] callback not registered).\n", __func__);
+      return BT_FAIL;
+    }
 }
 
 static int event_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc_evt)
@@ -686,8 +716,9 @@ int ble_gatt_event_handler(struct bt_event_t *bt_event)
       case BLE_GATT_EVENT_READ_RESP:
         return event_read_rsp((struct ble_gatt_event_read_rsp_t *) bt_event);
 
-      case BLE_GATT_EVENT_NOTIFY_RESP:
-        /* Central role not supported yet */
+      case BLE_GATT_EVENT_NOTIFICATION:
+        return event_notification
+               ((struct ble_gatt_event_notification_t *)bt_event);
         break;
 
       case BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE:
@@ -719,4 +750,69 @@ int ble_register_gatt_central_cb(struct ble_gatt_central_ops_s *central_ops)
   g_ble_gatt_state.ble_gatt_central_ops = central_ops;
 
   return BT_SUCCESS;
+}
+
+/****************************************************************************
+ * Name: ble_descriptor_read
+ *
+ * Description:
+ *   Read GATT descriptor value.
+ *
+ ****************************************************************************/
+
+int ble_descriptor_read(uint16_t conn_handle,
+                        uint16_t handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops = &g_ble_gatt_state.ble_hal_gatt_ops->gattc;
+
+  if (ops && ops->descriptor_read)
+    {
+      ret = ops->descriptor_read(conn_handle, handle);
+      if (ret == BT_SUCCESS)
+        {
+          isDescriptor = true;
+        }
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_descriptor_write
+ *
+ * Description:
+ *   Write GATT descriptor value.
+ *
+ ****************************************************************************/
+
+int ble_descriptor_write(uint16_t conn_handle,
+                         uint16_t handle,
+                         uint8_t  *data,
+                         int      len)
+
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops = &g_ble_gatt_state.ble_hal_gatt_ops->gattc;
+
+  if (ops && ops->descriptor_write)
+    {
+      ret = ops->descriptor_write(conn_handle, handle, data, len);
+      if (ret == BT_SUCCESS)
+        {
+          isDescriptor = true;
+        }
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
 }

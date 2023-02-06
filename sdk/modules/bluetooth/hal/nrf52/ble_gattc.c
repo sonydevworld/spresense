@@ -82,6 +82,12 @@ static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
                                  uint16_t handle);
 static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
                                 uint16_t handle);
+static int nrf52_ble_descriptor_write(uint16_t conn_handle,
+                                      uint16_t handle,
+                                      uint8_t  *data,
+                                      uint16_t len);
+static int nrf52_ble_descriptor_read(uint16_t conn_handle,
+                                     uint16_t handle);
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -102,7 +108,9 @@ static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
   .gattc.startDbDiscovery    = nrf52_ble_start_db_discovery,
   .gattc.continueDbDiscovery = nrf52_ble_continue_db_discovery,
   .gattc.write               = nrf52_ble_gattc_write,
-  .gattc.read                = nrf52_ble_gattc_read
+  .gattc.read                = nrf52_ble_gattc_read,
+  .gattc.descriptor_write    = nrf52_ble_descriptor_write,
+  .gattc.descriptor_read     = nrf52_ble_descriptor_read,
 };
 
 /******************************************************************************
@@ -369,6 +377,34 @@ static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t 
   param.charValHandle = ble_gatt_char->handle;
 
   return BLE_GattcRead(handle, &param);
+}
+
+static int nrf52_ble_descriptor_write(uint16_t conn_handle,
+                                      uint16_t handle,
+                                      uint8_t  *data,
+                                      uint16_t len)
+{
+  int ret;
+  ble_gattc_write_params_t prm;
+
+  prm.handle   = handle;
+  prm.len      = len;
+  prm.p_value  = data;
+  prm.offset   = 0;
+  prm.write_op = BLE_GATT_OP_WRITE_REQ;
+  prm.flags    = BLE_GATT_EXEC_WRITE_FLAG_PREPARED_CANCEL;
+
+  ret = sd_ble_gattc_write(conn_handle, &prm);
+  return bleConvertErrorCode(ret);
+}
+
+static int nrf52_ble_descriptor_read(uint16_t conn_handle,
+                                     uint16_t handle)
+{
+  int ret;
+
+  ret = sd_ble_gattc_read(conn_handle, handle, 0);
+  return bleConvertErrorCode(ret);
 }
 
 /****************************************************************************

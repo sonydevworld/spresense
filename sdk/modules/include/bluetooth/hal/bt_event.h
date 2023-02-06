@@ -204,7 +204,7 @@ typedef enum
 	BLE_GATT_EVENT_NOTIFY_REQ,              /**< GATT Characteristic notify request event */
 	BLE_GATT_EVENT_WRITE_RESP,              /**< GATT Characteristic write response event */
 	BLE_GATT_EVENT_READ_RESP,               /**< GATT Characteristic read response event */
-	BLE_GATT_EVENT_NOTIFY_RESP,             /**< GATT Characteristic notify response event */
+	BLE_GATT_EVENT_NOTIFICATION,            /**< GATT Characteristic notifition event */
 	BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE,   /**< GATTC discovery requested by host completed */
 } BLE_GATT_EVENT_ID;
 
@@ -489,6 +489,20 @@ struct ble_gatt_event_read_rsp_t
   uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
   uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
+  uint16_t conn_handle;                /**< Connection handle ID */
+  uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
+  uint16_t length;                     /**< Read data length */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Read data */
+};
+
+/**
+ * @struct ble_gatt_event_notification_t
+ * @brief Bluetooth LE GATT notification event
+ */
+struct ble_gatt_event_notification_t
+{
+  uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Read data length */
