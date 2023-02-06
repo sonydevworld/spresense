@@ -117,6 +117,8 @@ static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
 
 static bool ble_is_connected = false;
 
+static uint16_t ble_conn_handle;
+
 static struct ble_gatt_service_s *g_ble_gatt_service;
 
 static BLE_UUID128 service_in_uuid = {{0xfb, 0x34, 0x9b, 0x5f,  \
@@ -174,6 +176,7 @@ static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
           addr.address[3], addr.address[4], addr.address[5],
           connected ? "Connected" : "Disconnected");
 
+  ble_conn_handle = ble_state->ble_connect_handle;
   ble_is_connected = connected;
 }
 
@@ -570,7 +573,10 @@ int main(int argc, FAR char *argv[])
 
       if (ble_is_connected)
         {
-          ret = ble_characteristic_notify(&g_ble_gatt_char, (uint8_t *) buffer, len);
+          ret = ble_characteristic_notify(ble_conn_handle,
+                                          &g_ble_gatt_char,
+                                          (uint8_t *) buffer,
+                                          len);
           if (ret != BT_SUCCESS)
             {
               printf("%s [BLE] Send data failed. ret = %d\n", __func__, ret);

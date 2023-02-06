@@ -440,6 +440,7 @@ int ble_add_characteristic(struct ble_gatt_service_s *service, struct ble_gatt_c
  * @brief BLE Notify Characteristic value
  *        Notify characteristic value to Central (For Peripheral role)
  *
+ * @param[in] conn_handle: connection handle for which notification is sent
  * @param[in] charc: Target characteristic @ref ble_gatt_char_s
  * @param[in] data: Notify data
  * @param[in] len: Notify data length
@@ -447,23 +448,28 @@ int ble_add_characteristic(struct ble_gatt_service_s *service, struct ble_gatt_c
  * @retval error code
  */
 
-int ble_characteristic_notify(struct ble_gatt_char_s *charc, uint8_t *data, int len);
+int ble_characteristic_notify(uint16_t               conn_handle,
+                              struct ble_gatt_char_s *charc,
+                              uint8_t                *data,
+                              int                    len);
 
 /**
  * @brief BLE Read Characteristic value
  *        Send read characteristic request to peripheral (For Central role)
  *
+ * @param[in] conn_handle: connection handle for which read request is sent
  * @param[in] charc: Bluetooth LE GATT characteristic context @ref ble_gatt_char_s
  *
  * @retval error code
  */
 
-int ble_characteristic_read(struct ble_gatt_char_s *charc);
+int ble_characteristic_read(uint16_t conn_handle, struct ble_gatt_char_s *charc);
 
 /**
  * @brief BLE Write Characteristic value
  *        Send write characteristic request to peripheral (For Central role)
  *
+ * @param[in] conn_handle: connection handle for which write request is sent
  * @param[in] charc: Bluetooth LE GATT characteristic context @ref ble_gatt_char_s
  * @param[in] data: Write data
  * @param[in] len: Write data length
@@ -471,7 +477,10 @@ int ble_characteristic_read(struct ble_gatt_char_s *charc);
  * @retval error code
  */
 
-int ble_characteristic_write(struct ble_gatt_char_s *charc, uint8_t *data, int len);
+int ble_characteristic_write(uint16_t               conn_handle,
+                             struct ble_gatt_char_s *charc,
+                             uint8_t                *data,
+                             int                    len);
 
 /**
  * @brief BLE Read Descriptor value
