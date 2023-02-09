@@ -36,11 +36,6 @@
 
 TAG=${1:-HEAD}
 
-if [ "X${TOPDIR}" = "X" ]; then
-    echo "Please specify a TOPDIR variable"
-    exit 1
-fi
-
 APP_VERSION="0.0.0"
 SDK_VERSION="SDK3.0.0"
 if [ -r sdk_version ]; then
@@ -64,4 +59,5 @@ if [ ${#BUILD_ID} -gt 40 ]; then
     exit 1
 fi
 
-${TOPDIR}/tools/version.sh -v ${NUTTX_VERSION} -b "${BUILD_ID}" ${TOPDIR}/.version
+VERSION_ARG="-v ${NUTTX_VERSION} -b ${BUILD_ID}"
+echo ${VERSION_ARG}
