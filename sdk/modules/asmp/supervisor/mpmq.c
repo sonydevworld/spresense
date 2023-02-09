@@ -171,6 +171,20 @@ int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
 }
 
 /**
+ * Try send message via MP message queue
+ */
+
+int mpmq_trysend(mpmq_t *mq, int8_t msgid, uint32_t data)
+{
+  if (!mq)
+    {
+      return -EINVAL;
+    }
+
+  return mpmq_do_send(mq, msgid, data, -1);
+}
+
+/**
  * Receive message via MP message queue
  */
 
@@ -196,6 +210,20 @@ int mpmq_timedreceive(mpmq_t *mq, uint32_t *data, uint32_t ms)
     }
 
   return mpmq_do_recv(mq, data, ms);
+}
+
+/**
+ * Try receive message via MP message queue
+ */
+
+int mpmq_tryreceive(mpmq_t *mq, uint32_t *data)
+{
+  if (!mq)
+    {
+      return -EINVAL;
+    }
+
+  return mpmq_do_recv(mq, data, -1);
 }
 
 /**
