@@ -4,5 +4,5 @@ speexdsp
 Files in this directory are downloaded from https://github.com/xiph/speexdsp.git.
 And they are modified some for embedded MCU, using ARM CMSIS and using float type
 insted of double type.
-Downloaded revision is 1d99e79f604aa23fd3c9db2a727f24287519999b
 Please check COPYING as an OSS License (speexdsp original).
+

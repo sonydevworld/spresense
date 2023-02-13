@@ -39,6 +39,18 @@
 #ifndef SPEEX_RESAMPLER_H
 #define SPEEX_RESAMPLER_H
 
+#ifndef OUTSIDE_SPEEX
+#define OUTSIDE_SPEEX
+#endif
+
+#ifndef RANDOM_PREFIX
+#define RANDOM_PREFIX sprmp3
+#endif
+
+#ifndef FIXED_POINT
+#define FIXED_POINT
+#endif
+
 #ifdef OUTSIDE_SPEEX
 
 /********* WARNING: MENTAL SANITY ENDS HERE *************/
@@ -90,6 +102,8 @@
 
 #endif /* OUTSIDE_SPEEX */
 
+#include "speex_arch.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -114,6 +128,41 @@ enum {
 struct SpeexResamplerState_;
 typedef struct SpeexResamplerState_ SpeexResamplerState;
 
+typedef int (*resampler_basic_func)(SpeexResamplerState *, spx_uint32_t , const spx_word16_t *, spx_uint32_t *, spx_word16_t *, spx_uint32_t *);
+
+struct SpeexResamplerState_ {
+   spx_uint32_t in_rate;
+   spx_uint32_t out_rate;
+   spx_uint32_t num_rate;
+   spx_uint32_t den_rate;
+
+   int    quality;
+   spx_uint32_t nb_channels;
+   spx_uint32_t filt_len;
+   spx_uint32_t mem_alloc_size;
+   spx_uint32_t buffer_size;
+   int          int_advance;
+   int          frac_advance;
+   float  cutoff;
+   spx_uint32_t oversample;
+   int          initialised;
+   int          started;
+
+   /* These are per-channel */
+   spx_int32_t  last_sample[2];
+   spx_uint32_t samp_frac_num[2];
+   spx_uint32_t magic_samples[2];
+
+   spx_word16_t mem[(256-1+160)*2*2];
+   spx_word16_t sinc_table[392];
+   spx_uint32_t sinc_table_length;
+   resampler_basic_func resampler_ptr;
+
+   int    in_stride;
+   int    out_stride;
+} ;
+
+
 /** Create a new resampler with integer input and output rates.
  * @param nb_channels Number of channels to be processed
  * @param in_rate Input sampling rate (integer number of Hz).
@@ -123,11 +172,20 @@ typedef struct SpeexResamplerState_ SpeexResamplerState;
  * @return Newly created resampler state
  * @retval NULL Error: not enough memory
  */
+#if 0
 SpeexResamplerState *speex_resampler_init(spx_uint32_t nb_channels,
                                           spx_uint32_t in_rate,
                                           spx_uint32_t out_rate,
                                           int quality,
                                           int *err);
+#else
+int speex_resampler_init(SpeexResamplerState *st,
+                         spx_uint32_t nb_channels,
+                         spx_uint32_t in_rate,
+                         spx_uint32_t out_rate,
+                         int quality);
+#endif
+
 
 /** Create a new resampler with fractional input/output rates. The sampling
  * rate ratio is an arbitrary rational number with both the numerator and
@@ -142,6 +200,7 @@ SpeexResamplerState *speex_resampler_init(spx_uint32_t nb_channels,
  * @return Newly created resampler state
  * @retval NULL Error: not enough memory
  */
+#if 0
 SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels,
                                                spx_uint32_t ratio_num,
                                                spx_uint32_t ratio_den,
@@ -149,6 +208,15 @@ SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels,
                                                spx_uint32_t out_rate,
                                                int quality,
                                                int *err);
+#else
+int speex_resampler_init_frac(SpeexResamplerState *st,
+                              spx_uint32_t nb_channels,
+                              spx_uint32_t ratio_num,
+                              spx_uint32_t ratio_den,
+                              spx_uint32_t in_rate,
+                              spx_uint32_t out_rate,
+                              int quality);
+#endif
 
 /** Destroy a resampler state.
  * @param st Resampler state

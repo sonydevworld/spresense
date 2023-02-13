@@ -1,8 +1,6 @@
 Files in this directory
 ==========
 The files in this directory are downloaded from (https://github.com/lieff/minimp3.git).
-Which rivision is afb604c06bc8beb145fecd42c0ceb5bda8795144
-
 minimp3 is an OSS MP3 decorder licensed as LICENSE file.
 These files are modified some from original minimp3 for embedded MCU, and split header
 file and some implementation.

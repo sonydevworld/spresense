@@ -61,16 +61,27 @@
 #include "config.h"
 #endif
 
+/* #define USE_CMSIS */
+
+#define RANDOM_PREFIX sprmp3
+#define FIXED_POINT
+#define OUTSIDE_SPEEX
+
 #ifdef OUTSIDE_SPEEX
+
+#if 0
 #include <stdlib.h>
 static void *speex_alloc(int size) {return calloc(size,1);}
 static void *speex_realloc(void *ptr, int size) {return realloc(ptr, size);}
 static void speex_free(void *ptr) {free(ptr);}
+#endif
+
 #ifndef EXPORT
 #define EXPORT
 #endif
+
 #include "speex_resampler.h"
-#include "arch.h"
+#include "speex_arch.h"
 #else /* OUTSIDE_SPEEX */
 
 #include "speex/speex_resampler.h"
@@ -79,6 +90,9 @@ static void speex_free(void *ptr) {free(ptr);}
 #endif /* OUTSIDE_SPEEX */
 
 #include <math.h>
+#ifdef USE_CMSIS
+#include <arm_math.h>
+#endif
 #include <limits.h>
 
 #ifndef M_PI
@@ -111,41 +125,7 @@ static void speex_free(void *ptr) {free(ptr);}
 #define FIXED_STACK_ALLOC 1024
 #endif
 
-typedef int (*resampler_basic_func)(SpeexResamplerState *, spx_uint32_t , const spx_word16_t *, spx_uint32_t *, spx_word16_t *, spx_uint32_t *);
-
-struct SpeexResamplerState_ {
-   spx_uint32_t in_rate;
-   spx_uint32_t out_rate;
-   spx_uint32_t num_rate;
-   spx_uint32_t den_rate;
-
-   int    quality;
-   spx_uint32_t nb_channels;
-   spx_uint32_t filt_len;
-   spx_uint32_t mem_alloc_size;
-   spx_uint32_t buffer_size;
-   int          int_advance;
-   int          frac_advance;
-   float  cutoff;
-   spx_uint32_t oversample;
-   int          initialised;
-   int          started;
-
-   /* These are per-channel */
-   spx_int32_t  *last_sample;
-   spx_uint32_t *samp_frac_num;
-   spx_uint32_t *magic_samples;
-
-   spx_word16_t *mem;
-   spx_word16_t *sinc_table;
-   spx_uint32_t sinc_table_length;
-   resampler_basic_func resampler_ptr;
-
-   int    in_stride;
-   int    out_stride;
-} ;
-
-static const double kaiser12_table[68] = {
+static const float kaiser12_table[68] = {
    0.99859849, 1.00000000, 0.99859849, 0.99440475, 0.98745105, 0.97779076,
    0.96549770, 0.95066529, 0.93340547, 0.91384741, 0.89213598, 0.86843014,
    0.84290116, 0.81573067, 0.78710866, 0.75723148, 0.72629970, 0.69451601,
@@ -159,7 +139,7 @@ static const double kaiser12_table[68] = {
    0.00105297, 0.00069463, 0.00043489, 0.00025272, 0.00013031, 0.0000527734,
    0.00001000, 0.00000000};
 /*
-static const double kaiser12_table[36] = {
+static const float kaiser12_table[36] = {
    0.99440475, 1.00000000, 0.99440475, 0.97779076, 0.95066529, 0.91384741,
    0.86843014, 0.81573067, 0.75723148, 0.69451601, 0.62920216, 0.56287762,
    0.49704014, 0.43304576, 0.37206735, 0.31506490, 0.26276832, 0.21567274,
@@ -167,7 +147,7 @@ static const double kaiser12_table[36] = {
    0.03111947, 0.02127838, 0.01402878, 0.00886058, 0.00531256, 0.00298291,
    0.00153438, 0.00069463, 0.00025272, 0.0000527734, 0.00000500, 0.00000000};
 */
-static const double kaiser10_table[36] = {
+static const float kaiser10_table[36] = {
    0.99537781, 1.00000000, 0.99537781, 0.98162644, 0.95908712, 0.92831446,
    0.89005583, 0.84522401, 0.79486424, 0.74011713, 0.68217934, 0.62226347,
    0.56155915, 0.50119680, 0.44221549, 0.38553619, 0.33194107, 0.28205962,
@@ -175,7 +155,7 @@ static const double kaiser10_table[36] = {
    0.05731132, 0.04193980, 0.02979584, 0.02044510, 0.01345224, 0.00839739,
    0.00488951, 0.00257636, 0.00115101, 0.00035515, 0.00000000, 0.00000000};
 
-static const double kaiser8_table[36] = {
+static const float kaiser8_table[36] = {
    0.99635258, 1.00000000, 0.99635258, 0.98548012, 0.96759014, 0.94302200,
    0.91223751, 0.87580811, 0.83439927, 0.78875245, 0.73966538, 0.68797126,
    0.63451750, 0.58014482, 0.52566725, 0.47185369, 0.41941150, 0.36897272,
@@ -183,7 +163,7 @@ static const double kaiser8_table[36] = {
    0.10562887, 0.08273982, 0.06335451, 0.04724088, 0.03412321, 0.02369490,
    0.01563093, 0.00959968, 0.00527363, 0.00233883, 0.00050000, 0.00000000};
 
-static const double kaiser6_table[36] = {
+static const float kaiser6_table[36] = {
    0.99733006, 1.00000000, 0.99733006, 0.98935595, 0.97618418, 0.95799003,
    0.93501423, 0.90755855, 0.87598009, 0.84068475, 0.80211977, 0.76076565,
    0.71712752, 0.67172623, 0.62508937, 0.57774224, 0.53019925, 0.48295561,
@@ -192,7 +172,7 @@ static const double kaiser6_table[36] = {
    0.05031820, 0.03607231, 0.02432151, 0.01487334, 0.00752000, 0.00000000};
 
 struct FuncDef {
-   const double *table;
+   const float *table;
    int oversample;
 };
 
@@ -237,13 +217,13 @@ static const struct QualityMapping quality_map[11] = {
    {256, 32, 0.975f, 0.975f, KAISER12}, /* Q10 */ /* 96.6% cutoff (~100 dB stop) 10 */
 };
 /*8,24,40,56,80,104,128,160,200,256,320*/
-static double compute_func(float x, const struct FuncDef *func)
+static float compute_func(float x, const struct FuncDef *func)
 {
    float y, frac;
-   double interp[4];
+   float interp[4];
    int ind;
    y = x*func->oversample;
-   ind = (int)floor(y);
+   ind = (int)floorf(y);
    frac = (y-ind);
    /* CSE with handle the repeated powers */
    interp[3] =  -0.1666666667*frac + 0.1666666667*(frac*frac*frac);
@@ -254,7 +234,12 @@ static double compute_func(float x, const struct FuncDef *func)
    interp[1] = 1.f-interp[3]-interp[2]-interp[0];
 
    /*sum = frac*accum[1] + (1-frac)*accum[2];*/
+#ifdef USE_CMSIS
+   arm_dot_prod_f32(&interp[0], &func->table[ind], 4, &frac);
+   return frac;
+#else
    return interp[0]*func->table[ind] + interp[1]*func->table[ind+1] + interp[2]*func->table[ind+2] + interp[3]*func->table[ind+3];
+#endif
 }
 
 #if 0
@@ -281,7 +266,11 @@ static spx_word16_t sinc(float cutoff, float x, int N, const struct FuncDef *win
    else if (fabs(x) > .5f*N)
       return 0;
    /*FIXME: Can it really be any slower than this? */
+#ifdef USE_CMSIS
+   return WORD2INT(32768.*cutoff*arm_sin_f32(M_PI*xx)/(M_PI*xx) * compute_func(fabs(2.*x/N), window_func));
+#else
    return WORD2INT(32768.*cutoff*sin(M_PI*xx)/(M_PI*xx) * compute_func(fabs(2.*x/N), window_func));
+#endif
 }
 #else
 /* The slow way of computing a sinc for the table. Should improve that some day */
@@ -346,6 +335,11 @@ static int resampler_basic_direct_single(SpeexResamplerState *st, spx_uint32_t c
       const spx_word16_t *sinct = & sinc_table[samp_frac_num*N];
       const spx_word16_t *iptr = & in[last_sample];
 
+#ifdef USE_CMSIS
+      q63_t outsum;
+      arm_dot_prod_q15(sinct, iptr, N, &outsum);
+      sum = (spx_word32_t)outsum;
+#else /* USE_CMSIS */
 #ifndef OVERRIDE_INNER_PRODUCT_SINGLE
       int j;
       sum = 0;
@@ -367,6 +361,7 @@ static int resampler_basic_direct_single(SpeexResamplerState *st, spx_uint32_t c
 #else
       sum = inner_product_single(sinct, iptr, N);
 #endif
+#endif /* USE_CMSIS */
 
       out[out_stride * out_sample++] = sum;
       last_sample += int_advance;
@@ -385,6 +380,7 @@ static int resampler_basic_direct_single(SpeexResamplerState *st, spx_uint32_t c
 
 #ifdef FIXED_POINT
 #else
+#error "No build"
 /* This is the same as the previous function, except with a double-precision accumulator */
 static int resampler_basic_direct_double(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_word16_t *in, spx_uint32_t *in_len, spx_word16_t *out, spx_uint32_t *out_len)
 {
@@ -497,6 +493,7 @@ static int resampler_basic_interpolate_single(SpeexResamplerState *st, spx_uint3
 
 #ifdef FIXED_POINT
 #else
+#error "No build"
 /* This is the same as the previous function, except with a double-precision accumulator */
 static int resampler_basic_interpolate_double(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_word16_t *in, spx_uint32_t *in_len, spx_word16_t *out, spx_uint32_t *out_len)
 {
@@ -658,11 +655,13 @@ static int update_filter(SpeexResamplerState *st)
    }
    if (st->sinc_table_length < min_sinc_table_length)
    {
+#if 0
       spx_word16_t *sinc_table = (spx_word16_t *)speex_realloc(st->sinc_table,min_sinc_table_length*sizeof(spx_word16_t));
       if (!sinc_table)
          goto fail;
 
       st->sinc_table = sinc_table;
+#endif
       st->sinc_table_length = min_sinc_table_length;
    }
    if (use_direct)
@@ -670,8 +669,8 @@ static int update_filter(SpeexResamplerState *st)
       spx_uint32_t i;
       for (i=0;i<st->den_rate;i++)
       {
-         spx_int32_t j;
-         for (j=0;j<st->filt_len;j++)
+         spx_uint32_t j;
+         for (j=0;j < st->filt_len;j++)
          {
             st->sinc_table[i*st->filt_len+j] = sinc(st->cutoff,((j-(spx_int32_t)st->filt_len/2+1)-((float)i)/st->den_rate), st->filt_len, quality_map[st->quality].window_func);
          }
@@ -709,13 +708,17 @@ static int update_filter(SpeexResamplerState *st)
    min_alloc_size = st->filt_len-1 + st->buffer_size;
    if (min_alloc_size > st->mem_alloc_size)
    {
+#if 0
       spx_word16_t *mem;
+#endif
       if (INT_MAX/sizeof(spx_word16_t)/st->nb_channels < min_alloc_size)
           goto fail;
+#if 0
       else if (!(mem = (spx_word16_t*)speex_realloc(st->mem, st->nb_channels*min_alloc_size * sizeof(*mem))))
           goto fail;
 
       st->mem = mem;
+#endif
       st->mem_alloc_size = min_alloc_size;
    }
    if (!st->started)
@@ -791,22 +794,29 @@ fail:
    return RESAMPLER_ERR_ALLOC_FAILED;
 }
 
-EXPORT SpeexResamplerState *speex_resampler_init(spx_uint32_t nb_channels, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
+EXPORT int speex_resampler_init(SpeexResamplerState *st, spx_uint32_t nb_channels, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality)
 {
-   return speex_resampler_init_frac(nb_channels, in_rate, out_rate, in_rate, out_rate, quality, err);
+   return speex_resampler_init_frac(st, nb_channels, in_rate, out_rate, in_rate, out_rate, quality);
 }
 
-EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality, int *err)
+EXPORT int speex_resampler_init_frac(SpeexResamplerState *st, spx_uint32_t nb_channels, spx_uint32_t ratio_num, spx_uint32_t ratio_den, spx_uint32_t in_rate, spx_uint32_t out_rate, int quality)
 {
+#if 0
    SpeexResamplerState *st;
-   int filter_err;
+#endif
+   int filter_err = RESAMPLER_ERR_SUCCESS;
 
-   if (nb_channels == 0 || ratio_num == 0 || ratio_den == 0 || quality > 10 || quality < 0)
+   if (st == NULL || nb_channels == 0 || ratio_num == 0 || ratio_den == 0 || quality > 10 || quality < 0)
    {
+#if 0
       if (err)
          *err = RESAMPLER_ERR_INVALID_ARG;
       return NULL;
+#else
+      return RESAMPLER_ERR_INVALID_ARG;
+#endif
    }
+#if 0
    st = (SpeexResamplerState *)speex_alloc(sizeof(SpeexResamplerState));
    if (!st)
    {
@@ -814,6 +824,7 @@ EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, 
          *err = RESAMPLER_ERR_ALLOC_FAILED;
       return NULL;
    }
+#endif
    st->initialised = 0;
    st->started = 0;
    st->in_rate = 0;
@@ -824,7 +835,9 @@ EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, 
    st->sinc_table_length = 0;
    st->mem_alloc_size = 0;
    st->filt_len = 0;
+#if 0
    st->mem = 0;
+#endif
    st->resampler_ptr = 0;
 
    st->cutoff = 1.f;
@@ -835,12 +848,15 @@ EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, 
    st->buffer_size = 160;
 
    /* Per channel data */
+#if 0
    if (!(st->last_sample = (spx_int32_t*)speex_alloc(nb_channels*sizeof(spx_int32_t))))
       goto fail;
    if (!(st->magic_samples = (spx_uint32_t*)speex_alloc(nb_channels*sizeof(spx_uint32_t))))
       goto fail;
    if (!(st->samp_frac_num = (spx_uint32_t*)speex_alloc(nb_channels*sizeof(spx_uint32_t))))
       goto fail;
+#else
+#endif
 
    speex_resampler_set_quality(st, quality);
    speex_resampler_set_rate_frac(st, ratio_num, ratio_den, in_rate, out_rate);
@@ -851,28 +867,36 @@ EXPORT SpeexResamplerState *speex_resampler_init_frac(spx_uint32_t nb_channels, 
       st->initialised = 1;
    } else {
       speex_resampler_destroy(st);
-      st = NULL;
    }
+
+#if 0
    if (err)
       *err = filter_err;
+#endif
 
-   return st;
+   return filter_err;
 
+#if 0
 fail:
    if (err)
       *err = RESAMPLER_ERR_ALLOC_FAILED;
    speex_resampler_destroy(st);
    return NULL;
+#endif
 }
 
 EXPORT void speex_resampler_destroy(SpeexResamplerState *st)
 {
+#if 0
    speex_free(st->mem);
    speex_free(st->sinc_table);
    speex_free(st->last_sample);
    speex_free(st->magic_samples);
    speex_free(st->samp_frac_num);
    speex_free(st);
+#else
+   (void)st;
+#endif
 }
 
 static int speex_resampler_process_native(SpeexResamplerState *st, spx_uint32_t channel_index, spx_uint32_t *in_len, spx_word16_t *out, spx_uint32_t *out_len)
@@ -927,7 +951,7 @@ EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t cha
 EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t channel_index, const float *in, spx_uint32_t *in_len, float *out, spx_uint32_t *out_len)
 #endif
 {
-   int j;
+   spx_uint32_t j;
    spx_uint32_t ilen = *in_len;
    spx_uint32_t olen = *out_len;
    spx_word16_t *x = st->mem + channel_index * st->mem_alloc_size;
@@ -943,10 +967,10 @@ EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t c
         spx_uint32_t ochunk = olen;
 
         if (in) {
-           for(j=0;j<ichunk;++j)
+           for(j=0;j < ichunk;++j)
               x[j+filt_offs]=in[j*istride];
         } else {
-          for(j=0;j<ichunk;++j)
+          for(j=0;j < ichunk;++j)
             x[j+filt_offs]=0;
         }
         speex_resampler_process_native(st, channel_index, &ichunk, out, &ochunk);
@@ -968,7 +992,7 @@ EXPORT int speex_resampler_process_float(SpeexResamplerState *st, spx_uint32_t c
 EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t channel_index, const spx_int16_t *in, spx_uint32_t *in_len, spx_int16_t *out, spx_uint32_t *out_len)
 #endif
 {
-   int j;
+   spx_uint32_t j;
    const int istride_save = st->in_stride;
    const int ostride_save = st->out_stride;
    spx_uint32_t ilen = *in_len;
@@ -998,7 +1022,7 @@ EXPORT int speex_resampler_process_int(SpeexResamplerState *st, spx_uint32_t cha
      }
      if (! st->magic_samples[channel_index]) {
        if (in) {
-         for(j=0;j<ichunk;++j)
+         for(j=0;j < ichunk;++j)
 #ifdef FIXED_POINT
            x[j+st->filt_len-1]=WORD2INT(in[j*istride_save]);
 #else
