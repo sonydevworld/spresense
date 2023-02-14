@@ -36,7 +36,6 @@
 
 TAG=${1:-HEAD}
 
-APP_VERSION="0.0.0"
 SDK_VERSION="SDK3.0.0"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
@@ -45,18 +44,15 @@ fi
 NUTTX_VERSION="11.0.0"
 
 # Get short hash for specified tag
-GIT_REVISION=`git rev-parse ${TAG} | cut -b -7`
+GIT_REVISION=`git rev-parse ${TAG} 2>/dev/null | cut -b -7`
 
 if [ "${GIT_REVISION}" != "" ]; then
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}-${GIT_REVISION}"
+    BUILD_ID="${SDK_VERSION}-${GIT_REVISION}"
+    if [ -n "`git diff-index --name-only --ignore-submodules=untracked ${TAG} | head -1`" ]; then
+        BUILD_ID="${BUILD_ID}"-dirty
+    fi
 else
-    BUILD_ID="${APP_VERSION}-${SDK_VERSION}"
-fi
-
-# BUILD_ID must be 40 characters or less
-if [ ${#BUILD_ID} -gt 40 ]; then
-    echo "BUILD_ID too long! ${BUILD_ID}"
-    exit 1
+    BUILD_ID="${SDK_VERSION}"
 fi
 
 VERSION_ARG="-v ${NUTTX_VERSION} -b ${BUILD_ID}"
