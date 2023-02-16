@@ -21,6 +21,21 @@ spresense                  - This repository
       `-- nnabla-c-runtime - Neural Network Runtime library
 ```
 
+## Update SDK2.x.x to SDK3.x.x
+
+The URL of the submodule (nuttx, sdk/apps) in the spresense repository has been changed since SDK3.0.0. If you cloned the repository before SDK2.x, please run the following instructions to update the URL of the submodule.
+
+```
+$ cd spresense
+$ git fetch origin
+$ git checkout <remote branch>
+$ git submodule sync
+$ git submodule update
+```
+* `<remote branch>`
+  * For master branch: `origin/master`
+  * For develop branch: `origin/develop`
+
 # Spresense SDK build instructions
 
 Build instructions are documented at [Spresense SDK Getting Started Guide](https://developer.sony.com/develop/spresense/docs/sdk_set_up_en.html).
