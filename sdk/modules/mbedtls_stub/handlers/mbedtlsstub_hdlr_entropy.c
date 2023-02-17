@@ -66,6 +66,7 @@ int32_t mbedtlsstub_entropyinit_pkt_compose(FAR void **arg,
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_ENTROPY_CTX);
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_entropy_init_s *out =
@@ -76,7 +77,10 @@ int32_t mbedtlsstub_entropyinit_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_ENTROPY_INIT;
       size = sizeof(struct apicmd_entropy_init_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_entropycmd_s *out =
         (FAR struct apicmd_entropycmd_s *)pktbuf;
@@ -88,8 +92,9 @@ int32_t mbedtlsstub_entropyinit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_entropycmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[entropy_init]ctx id: %ld\n", *id);
@@ -104,6 +109,7 @@ int32_t mbedtlsstub_entropyfree_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR mbedtls_entropy_context *ctx = (FAR mbedtls_entropy_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_entropy_free_s *out =
@@ -114,7 +120,10 @@ int32_t mbedtlsstub_entropyfree_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_ENTROPY_FREE;
       size = sizeof(struct apicmd_entropy_free_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_entropycmd_s *out =
         (FAR struct apicmd_entropycmd_s *)pktbuf;
@@ -126,8 +135,9 @@ int32_t mbedtlsstub_entropyfree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_entropycmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[entropy_free]ctx id: %lu\n", ctx->id);
@@ -139,8 +149,11 @@ int32_t mbedtlsstub_entropyinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_entropy_initres_s *in =
@@ -149,10 +162,18 @@ int32_t mbedtlsstub_entropyinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[entropy_init res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -162,8 +183,11 @@ int32_t mbedtlsstub_entropyfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_entropy_freeres_s *in =
@@ -172,10 +196,18 @@ int32_t mbedtlsstub_entropyfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[entropy_free res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -185,20 +217,31 @@ int32_t mbedtlsstub_entropycmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                              size_t pktsz, uint8_t altver, FAR void **arg,
                              size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_entropycmdres_s *in =
         (FAR struct apicmd_entropycmdres_s *)pktbuf;
 
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[entropycmd_pkt_parse res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

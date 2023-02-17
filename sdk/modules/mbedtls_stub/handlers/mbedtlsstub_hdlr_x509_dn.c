@@ -62,11 +62,14 @@ int32_t mbedtlsstub_x509dngetscrt_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t ret_size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   uint32_t buflen = 0;
   FAR char *buf = (FAR char *)arg[0];
   FAR size_t *size = (FAR size_t *)arg[1];
   FAR const mbedtls_x509_crt *crt = (FAR const mbedtls_x509_crt *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_dn_gets_crt_s *out =
@@ -99,6 +102,7 @@ int32_t mbedtlsstub_x509dngetscrt_pkt_compose(FAR void **arg,
       ret_size = sizeof(struct apicmd_x509_dn_gets_crt_s);
     }
   else
+#endif
     {
       ret_size = -ENOTSUP;
     }
@@ -111,11 +115,14 @@ int32_t mbedtlsstub_x509dngetscsr_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t ret_size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   uint32_t buflen = 0;
   FAR char *buf = (FAR char *)arg[0];
   FAR size_t *size = (FAR size_t *)arg[1];
   FAR mbedtls_x509_csr *csr = (FAR mbedtls_x509_csr *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_dn_gets_csr_s *out =
@@ -148,6 +155,7 @@ int32_t mbedtlsstub_x509dngetscsr_pkt_compose(FAR void **arg,
       ret_size = sizeof(struct apicmd_x509_dn_gets_csr_s);
     }
   else
+#endif
     {
       ret_size = -ENOTSUP;
     }
@@ -159,8 +167,11 @@ int32_t mbedtlsstub_x509dngetscrt_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_dn_gets_crtres_s *in =
@@ -170,6 +181,11 @@ int32_t mbedtlsstub_x509dngetscrt_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
 
       TLS_DEBUG("[x509_dn_gets_crt res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -178,8 +194,11 @@ int32_t mbedtlsstub_x509dngetscsr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_dn_gets_csrres_s *in =
@@ -188,6 +207,11 @@ int32_t mbedtlsstub_x509dngetscsr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
       *ret = ntohl(in->ret_code);
 
       TLS_DEBUG("[x509_dn_gets_csr res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

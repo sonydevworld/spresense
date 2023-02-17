@@ -64,6 +64,7 @@ int32_t mbedtlsstub_base64enc_pkt_compose(FAR void **arg,
   FAR const unsigned char *src = (FAR const unsigned char *)arg[1];
   FAR size_t *slen = (FAR size_t *)arg[2];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_base64_encode_s *out =
@@ -76,7 +77,10 @@ int32_t mbedtlsstub_base64enc_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_BASE64_ENCODE;
       size = sizeof(struct apicmd_base64_encode_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_ciphercmd_s *out =
         (FAR struct apicmd_ciphercmd_s *)pktbuf;
@@ -90,6 +94,7 @@ int32_t mbedtlsstub_base64enc_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_ciphercmd_s);
     }
   else
+#endif
     {
       size = -ENOSYS;
     }
@@ -107,6 +112,7 @@ int32_t mbedtlsstub_base64enc_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
   FAR size_t *olen = (FAR size_t *)arg[2];
   FAR size_t *dlen = (FAR size_t *)arg[3];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_base64_encoderes_s *in =
@@ -129,7 +135,10 @@ int32_t mbedtlsstub_base64enc_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
       TLS_DEBUG("[base64_encode res]ret: %ld\n", *ret);
       TLS_DEBUG("[base64_encode res]length: %lu\n", out_len);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_ciphercmdres_s *in =
         (FAR struct apicmd_ciphercmdres_s *)pktbuf;
@@ -157,6 +166,11 @@ int32_t mbedtlsstub_base64enc_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
         }
       TLS_DEBUG("[base64_encode res]ret: %ld\n", *ret);
       TLS_DEBUG("[base64_encode res]length: %lu\n", out_len);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

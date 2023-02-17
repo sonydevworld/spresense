@@ -72,6 +72,7 @@ int32_t mbedtlsstub_cipherinit_pkt_compose(FAR void **arg,
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_CIPHER_CTX);
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_init_s *out =
@@ -83,8 +84,9 @@ int32_t mbedtlsstub_cipherinit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_init_s);
     }
   else
+#endif
     {
-      size = -ENOTSUP;
+      return -ENOTSUP;
     }
 
   TLS_DEBUG("[cipher_init]ctx id: %ld\n", *id);
@@ -97,9 +99,12 @@ int32_t mbedtlsstub_cipherfree_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_cipher_context_t *ctx =
     (FAR mbedtls_cipher_context_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_free_s *out =
@@ -111,8 +116,9 @@ int32_t mbedtlsstub_cipherfree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_free_s);
     }
   else
+#endif
     {
-      size = -ENOTSUP;
+      return -ENOTSUP;
     }
 
   TLS_DEBUG("[cipher_free]ctx id: %lu\n", ctx->id);
@@ -125,8 +131,11 @@ int32_t mbedtlsstub_cipherinfofromstr_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR const char *cipher_name = (FAR const char *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_info_from_string_s *out =
@@ -142,6 +151,7 @@ int32_t mbedtlsstub_cipherinfofromstr_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_info_from_string_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -154,11 +164,14 @@ int32_t mbedtlsstub_ciphersetup_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_cipher_context_t *ctx =
     (FAR mbedtls_cipher_context_t *)arg[0];
   FAR mbedtls_cipher_info_t *cipher_info =
     (FAR mbedtls_cipher_info_t *)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_setup_s *out =
@@ -174,6 +187,7 @@ int32_t mbedtlsstub_ciphersetup_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_setup_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -186,12 +200,15 @@ int32_t mbedtlsstub_ciphersetkey_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_cipher_context_t *ctx =
     (FAR mbedtls_cipher_context_t *)arg[0];
   FAR const unsigned char *key = (FAR const unsigned char *)arg[1];
   FAR int *key_bitlen = (FAR int *)arg[2];
   FAR mbedtls_operation_t *operation = (FAR mbedtls_operation_t *)arg[3];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_setkey_s *out =
@@ -211,6 +228,7 @@ int32_t mbedtlsstub_ciphersetkey_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_setkey_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -223,10 +241,13 @@ int32_t mbedtlsstub_ciphersetiv_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_cipher_context_t *ctx = (FAR mbedtls_cipher_context_t *)arg[0];
   FAR const unsigned char *iv = (FAR const unsigned char *)arg[1];
   FAR size_t *iv_len = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_set_iv_s *out =
@@ -244,6 +265,7 @@ int32_t mbedtlsstub_ciphersetiv_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_set_iv_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -256,11 +278,14 @@ int32_t mbedtlsstub_cipherupdate_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_cipher_context_t *ctx =
     (FAR mbedtls_cipher_context_t *)arg[0];
   FAR const unsigned char *input = (FAR const unsigned char *)arg[1];
   FAR size_t *ilen = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_update_s *out =
@@ -286,6 +311,7 @@ int32_t mbedtlsstub_cipherupdate_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_cipher_update_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -297,8 +323,11 @@ int32_t mbedtlsstub_cipherinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_initres_s *in =
@@ -308,6 +337,11 @@ int32_t mbedtlsstub_cipherinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
 
       TLS_DEBUG("[cipher_init res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -316,8 +350,11 @@ int32_t mbedtlsstub_cipherfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_freeres_s *in =
@@ -327,6 +364,11 @@ int32_t mbedtlsstub_cipherfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
 
       TLS_DEBUG("[cipher_free res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -335,10 +377,13 @@ int32_t mbedtlsstub_cipherinfofromstr_pkt_parse(FAR struct alt1250_dev_s *dev, F
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_cipher_info_t *cipher_info =
     (FAR mbedtls_cipher_info_t *)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_info_from_stringres_s *in =
@@ -349,6 +394,11 @@ int32_t mbedtlsstub_cipherinfofromstr_pkt_parse(FAR struct alt1250_dev_s *dev, F
 
       TLS_DEBUG("[cipher_info_from_string res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -357,8 +407,11 @@ int32_t mbedtlsstub_ciphersetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_setupres_s *in =
@@ -368,6 +421,11 @@ int32_t mbedtlsstub_ciphersetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
 
       TLS_DEBUG("[cipher_setup res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -376,8 +434,11 @@ int32_t mbedtlsstub_ciphersetkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_setkeyres_s *in =
@@ -387,6 +448,11 @@ int32_t mbedtlsstub_ciphersetkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
 
       TLS_DEBUG("[cipher_setkey res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -395,8 +461,11 @@ int32_t mbedtlsstub_ciphersetiv_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_set_ivres_s *in =
@@ -406,6 +475,11 @@ int32_t mbedtlsstub_ciphersetiv_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
 
       TLS_DEBUG("[cipher_set_iv res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -414,10 +488,13 @@ int32_t mbedtlsstub_cipherupdate_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *output = (FAR unsigned char *)arg[1];
   FAR size_t *olen = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_cipher_updateres_s *in =
@@ -438,6 +515,11 @@ int32_t mbedtlsstub_cipherupdate_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
 
       TLS_DEBUG("[cipher_update res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -448,12 +530,16 @@ int32_t mbedtlsstub_ciphercmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
 {
   int32_t ret = 0;
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       ret = -1;
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_pkcmdres_s *in =
         (FAR struct apicmd_pkcmdres_s *)pktbuf;
@@ -494,6 +580,11 @@ int32_t mbedtlsstub_ciphercmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
           ret = mbedtlsstub_sha1_pkt_parse(dev, pktbuf, pktsz, altver, arg, arglen, bitmap);
           TLS_DEBUG("[sha1 res]ret: %ld\n", ntohl(in->ret_code));
         }
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return ret;

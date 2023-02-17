@@ -133,6 +133,7 @@ int32_t mbedtlsstub_sslinit_pkt_compose(FAR void **arg,
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_CTX);
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_init_s *out =
@@ -143,7 +144,10 @@ int32_t mbedtlsstub_sslinit_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_INIT;
       size = sizeof(struct apicmd_ssl_init_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -155,8 +159,9 @@ int32_t mbedtlsstub_sslinit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_init]ctx id: %ld\n", *id);
@@ -171,6 +176,7 @@ int32_t mbedtlsstub_sslfree_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_free_s *out =
@@ -181,7 +187,10 @@ int32_t mbedtlsstub_sslfree_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_FREE;
       size = sizeof(FAR struct apicmd_ssl_free_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
           (struct apicmd_sslcmd_s *)pktbuf;
@@ -193,8 +202,9 @@ int32_t mbedtlsstub_sslfree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_free]ctx id: %ld\n", ssl->id);
@@ -210,6 +220,7 @@ int32_t mbedtlsstub_sslsetup_pkt_compose(FAR void **arg,
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
   FAR mbedtls_ssl_config *conf = (FAR mbedtls_ssl_config *)arg[1];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_setup_s *out =
@@ -221,7 +232,10 @@ int32_t mbedtlsstub_sslsetup_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_SETUP;
       size = sizeof(struct apicmd_ssl_setup_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -234,8 +248,9 @@ int32_t mbedtlsstub_sslsetup_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_setup]ssl id: %ld\n", ssl->id);
@@ -252,6 +267,7 @@ int32_t mbedtlsstub_sslhostname_pkt_compose(FAR void **arg,
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
   FAR const char *hostname = (FAR const char *)arg[1];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_hostname_s *out =
@@ -272,7 +288,10 @@ int32_t mbedtlsstub_sslhostname_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_HOSTNAME;
       size = sizeof(struct apicmd_ssl_hostname_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -294,6 +313,7 @@ int32_t mbedtlsstub_sslhostname_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
       size = -ENOSYS;
     }
@@ -310,6 +330,7 @@ int32_t mbedtlsstub_sslbio_pkt_compose(FAR void **arg,
   FAR void *p_bio = (FAR void *)arg[1];
   uint32_t fd = *(uint32_t *)arg[5];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_bio_s *out =
@@ -333,7 +354,10 @@ int32_t mbedtlsstub_sslbio_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_BIO;
       size = sizeof(struct apicmd_ssl_bio_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -358,6 +382,7 @@ int32_t mbedtlsstub_sslbio_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
       size = -ENOSYS;
     }
@@ -372,6 +397,7 @@ int32_t mbedtlsstub_sslhandshake_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_handshake_s *out =
@@ -382,7 +408,10 @@ int32_t mbedtlsstub_sslhandshake_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_HANDSHAKE;
       size = sizeof(struct apicmd_ssl_handshake_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -394,8 +423,9 @@ int32_t mbedtlsstub_sslhandshake_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_handshake]id: %lu\n", ssl->id);
@@ -413,6 +443,7 @@ int32_t mbedtlsstub_sslwrite_pkt_compose(FAR void **arg,
   FAR const unsigned char *buf = (FAR const unsigned char *)arg[1];
   FAR size_t *len = (FAR size_t *)arg[2];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_write_s *out =
@@ -427,7 +458,10 @@ int32_t mbedtlsstub_sslwrite_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_WRITE;
       size = sizeof(struct apicmd_ssl_write_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -444,8 +478,9 @@ int32_t mbedtlsstub_sslwrite_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_write]ctx id: %lu\n", ssl->id);
@@ -463,6 +498,7 @@ int32_t mbedtlsstub_sslread_pkt_compose(FAR void **arg,
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
   FAR size_t *len = (FAR size_t *)arg[1];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_read_s *out =
@@ -477,7 +513,10 @@ int32_t mbedtlsstub_sslread_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_READ;
       size = sizeof(struct apicmd_ssl_read_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -493,8 +532,9 @@ int32_t mbedtlsstub_sslread_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_read]ctx id: %lu\n", ssl->id);
@@ -510,6 +550,7 @@ int32_t mbedtlsstub_sslclosenotif_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_close_notify_s *out =
@@ -520,7 +561,10 @@ int32_t mbedtlsstub_sslclosenotif_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_CLOSE_NOTIFY;
       size = sizeof(struct apicmd_ssl_close_notify_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -532,8 +576,9 @@ int32_t mbedtlsstub_sslclosenotif_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_close_notify]id: %lu\n", ssl->id);
@@ -549,6 +594,7 @@ int32_t mbedtlsstub_sslver_pkt_compose(FAR void **arg,
   FAR const mbedtls_ssl_context *ssl =
     (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_version_s *out =
@@ -559,7 +605,10 @@ int32_t mbedtlsstub_sslver_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_VERSION;
       size = sizeof(struct apicmd_ssl_version_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -572,8 +621,9 @@ int32_t mbedtlsstub_sslver_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_version]ctx id: %lu\n", ssl->id);
@@ -589,6 +639,7 @@ int32_t mbedtlsstub_sslciphersuite_pkt_compose(FAR void **arg,
   FAR const mbedtls_ssl_context *ssl =
     (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_ciphersuite_s *out =
@@ -599,7 +650,10 @@ int32_t mbedtlsstub_sslciphersuite_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_CIPHERSUITE;
       size = sizeof(struct apicmd_ssl_ciphersuite_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -611,8 +665,9 @@ int32_t mbedtlsstub_sslciphersuite_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_ciphersuite]ctx id: %lu\n", ssl->id);
@@ -627,6 +682,7 @@ int32_t mbedtlsstub_sslciphersuiteid_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR const char *ciphersuite_name = (FAR const char *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_ciphersuite_id_s *out =
@@ -642,7 +698,10 @@ int32_t mbedtlsstub_sslciphersuiteid_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_CIPHERSUITE_ID;
       size = sizeof(struct apicmd_ssl_ciphersuite_id_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -660,6 +719,7 @@ int32_t mbedtlsstub_sslciphersuiteid_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
       size = -ENOSYS;
     }
@@ -675,6 +735,7 @@ int32_t mbedtlsstub_sslrecexp_pkt_compose(FAR void **arg,
   FAR const mbedtls_ssl_context *ssl =
     (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_record_expansion_s *out =
@@ -685,7 +746,10 @@ int32_t mbedtlsstub_sslrecexp_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_RECORD_EXPANSION;
       size = sizeof(struct apicmd_ssl_record_expansion_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -697,8 +761,9 @@ int32_t mbedtlsstub_sslrecexp_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_record_expansion]ctx id: %lu\n", ssl->id);
@@ -713,6 +778,7 @@ int32_t mbedtlsstub_sslvrfyresult_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR const mbedtls_ssl_context *ssl = (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_verify_result_s *out =
@@ -723,7 +789,10 @@ int32_t mbedtlsstub_sslvrfyresult_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_VERIFY_RESULT;
       size = sizeof(struct apicmd_ssl_verify_result_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -736,8 +805,9 @@ int32_t mbedtlsstub_sslvrfyresult_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_verify_result]ctx id: %lu\n", ssl->id);
@@ -752,6 +822,7 @@ int32_t mbedtlsstub_ssltimercb_pkt_compose(FAR void **arg,
   int32_t size = 0;
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_timer_cb_s *out =
@@ -762,7 +833,10 @@ int32_t mbedtlsstub_ssltimercb_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_TIMER_CB;
       size = sizeof(struct apicmd_ssl_timer_cb_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -774,8 +848,9 @@ int32_t mbedtlsstub_ssltimercb_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_timer_cb]config id: %lu\n", ssl->id);
@@ -791,6 +866,7 @@ int32_t mbedtlsstub_sslpeercert_pkt_compose(FAR void **arg,
   FAR const mbedtls_ssl_context *ssl =
     (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_peer_cert_s *out =
@@ -801,7 +877,10 @@ int32_t mbedtlsstub_sslpeercert_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_PEER_CERT;
       size = sizeof(struct apicmd_ssl_peer_cert_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -813,8 +892,9 @@ int32_t mbedtlsstub_sslpeercert_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_peer_cert]ctx id: %lu\n", ssl->id);
@@ -830,6 +910,7 @@ int32_t mbedtlsstub_sslbytesavail_pkt_compose(FAR void **arg,
   FAR const mbedtls_ssl_context *ssl =
     (FAR const mbedtls_ssl_context *)arg[0];
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_bytes_avail_s *out =
@@ -840,7 +921,10 @@ int32_t mbedtlsstub_sslbytesavail_pkt_compose(FAR void **arg,
       *altcid = APICMDID_TLS_SSL_BYTES_AVAIL;
       size = sizeof(struct apicmd_ssl_bytes_avail_s);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmd_s *out =
         (FAR struct apicmd_sslcmd_s *)pktbuf;
@@ -852,8 +936,9 @@ int32_t mbedtlsstub_sslbytesavail_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_sslcmd_s);
     }
   else
+#endif
     {
-      size = -ENOSYS;
+      return -ENOSYS;
     }
 
   TLS_DEBUG("[ssl_bytes_avail]id: %lu\n", ssl->id);
@@ -865,8 +950,11 @@ int32_t mbedtlsstub_sslinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_initres_s *in =
@@ -875,10 +963,18 @@ int32_t mbedtlsstub_sslinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_init res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -888,8 +984,11 @@ int32_t mbedtlsstub_sslfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_freeres_s *in =
@@ -898,10 +997,18 @@ int32_t mbedtlsstub_sslfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_free res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -911,8 +1018,11 @@ int32_t mbedtlsstub_sslsetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_setupres_s *in =
@@ -921,10 +1031,18 @@ int32_t mbedtlsstub_sslsetup_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_setup res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -934,8 +1052,11 @@ int32_t mbedtlsstub_sslhostname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_hostnameres_s *in =
@@ -944,10 +1065,18 @@ int32_t mbedtlsstub_sslhostname_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_hostname res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -957,8 +1086,11 @@ int32_t mbedtlsstub_sslbio_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_biores_s *in =
@@ -967,10 +1099,18 @@ int32_t mbedtlsstub_sslbio_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_bio res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -980,8 +1120,11 @@ int32_t mbedtlsstub_sslhandshake_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_handshakeres_s *in =
@@ -990,10 +1133,18 @@ int32_t mbedtlsstub_sslhandshake_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_handshake res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1003,8 +1154,11 @@ int32_t mbedtlsstub_sslwrite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_writeres_s *in =
@@ -1013,10 +1167,18 @@ int32_t mbedtlsstub_sslwrite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_write res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1026,6 +1188,7 @@ int32_t mbedtlsstub_sslread_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   size_t req_buf_len = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *buf = (FAR unsigned char *)arg[1];
@@ -1033,7 +1196,9 @@ int32_t mbedtlsstub_sslread_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
 
   req_buf_len = (*len <= APICMD_SSL_READ_BUF_LEN)
     ? *len : APICMD_SSL_READ_BUF_LEN;
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_readres_s *in =
@@ -1055,10 +1220,18 @@ int32_t mbedtlsstub_sslread_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
           return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
         }
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1068,8 +1241,11 @@ int32_t mbedtlsstub_sslclosenotif_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_close_notifyres_s *in =
@@ -1078,10 +1254,18 @@ int32_t mbedtlsstub_sslclosenotif_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_close_notify res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1091,9 +1275,12 @@ int32_t mbedtlsstub_sslver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR const char **version = (FAR const char **)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_versionres_s *in =
@@ -1105,10 +1292,18 @@ int32_t mbedtlsstub_sslver_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
       *version = get_ssl_tls_version(in->version);
       TLS_DEBUG("[ssl_version res]version: %s\n", *version);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1118,9 +1313,12 @@ int32_t mbedtlsstub_sslciphersuite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR 
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR char *cipher_str_buf = (FAR char *)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_ciphersuiteres_s *in =
@@ -1133,10 +1331,18 @@ int32_t mbedtlsstub_sslciphersuite_pkt_parse(FAR struct alt1250_dev_s *dev, FAR 
       strncpy((char *)cipher_str_buf, (const char *)in->ciphersuite,
         SSL_CIPHER_STR_BUF-1);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1146,9 +1352,12 @@ int32_t mbedtlsstub_sslciphersuiteid_pkt_parse(FAR struct alt1250_dev_s *dev, FA
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
   int32_t  ret_cipher_id = 0;
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_ciphersuite_idres_s *in =
@@ -1159,10 +1368,18 @@ int32_t mbedtlsstub_sslciphersuiteid_pkt_parse(FAR struct alt1250_dev_s *dev, FA
       TLS_DEBUG("[ssl_ciphersuite_id res]ret: %ld\n", *ret);
       TLS_DEBUG("[ssl_ciphersuite_id res]id: %ld\n", ret_cipher_id);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return ret_cipher_id;
@@ -1172,8 +1389,11 @@ int32_t mbedtlsstub_sslrecexp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_record_expansionres_s *in =
@@ -1182,10 +1402,18 @@ int32_t mbedtlsstub_sslrecexp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_record_expansion res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1195,8 +1423,11 @@ int32_t mbedtlsstub_sslvrfyresult_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_verify_resultres_s *in =
@@ -1205,10 +1436,18 @@ int32_t mbedtlsstub_sslvrfyresult_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_verify_result res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1218,8 +1457,11 @@ int32_t mbedtlsstub_ssltimercb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_timer_cbres_s *in =
@@ -1228,10 +1470,18 @@ int32_t mbedtlsstub_ssltimercb_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
       *ret = ntohl(in->ret_code);
       TLS_DEBUG("[ssl_timer_cb res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1241,9 +1491,12 @@ int32_t mbedtlsstub_sslpeercert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR mbedtls_x509_crt *x509_crt = (FAR mbedtls_x509_crt *)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_peer_certres_s *in =
@@ -1254,10 +1507,18 @@ int32_t mbedtlsstub_sslpeercert_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
       x509_crt->id = ntohl(in->crt);
       TLS_DEBUG("[ssl_peer_cert res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1267,8 +1528,11 @@ int32_t mbedtlsstub_sslbytesavail_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_bytes_availres_s *in =
@@ -1277,10 +1541,18 @@ int32_t mbedtlsstub_sslbytesavail_pkt_parse(FAR struct alt1250_dev_s *dev, FAR u
       *ret = ntohl( in->avail_bytes);
       TLS_DEBUG("[ssl_bytes_avail res]ret: %ld\n", *ret);
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+  if (altver == ALTCOM_VER4)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       return -1;
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -1291,15 +1563,21 @@ int32_t mbedtlsstub_sslcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
                              size_t pktsz, uint8_t altver, FAR void **arg,
                              size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
   FAR int32_t *ret_code = (FAR int32_t *)arg[0];
+#endif
   int32_t ret = 0;
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       TLS_ERROR("Unexpected ALTCOM version: %u\n",altver);
       ret = -1;
     }
-  else if (altver == ALTCOM_VER4)
+  else
+#endif
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
+ if (altver == ALTCOM_VER4)
     {
       FAR struct apicmd_sslcmdres_s *in =
         (FAR struct apicmd_sslcmdres_s *)pktbuf;
@@ -1391,6 +1669,11 @@ int32_t mbedtlsstub_sslcmd_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t 
         {
           *ret_code = ntohl(in->ret_code);
         }
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return ret;
