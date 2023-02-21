@@ -448,13 +448,15 @@ static void app_restart_cb(uint32_t reason)
   char *reson_string[] =
   {
     "Modem restart by application.",
-    "Modem restart by self."
+    "Modem restart by self.",
+    "Modem version mismatch"
   };
   pthread_t thread_id;
 
   printf("%s called. reason:%s\n", __func__, reson_string[reason]);
 
-  if(reason == LTE_RESTART_USER_INITIATED)
+  if(reason == LTE_RESTART_USER_INITIATED ||
+     reason == LTE_RESTART_VERSION_ERROR)
     {
 
       /* Notify the result to the lte_http_get sample application task */
@@ -542,6 +544,7 @@ int main(int argc, FAR char *argv[])
   int result    = LTE_RESULT_OK;
   lte_apn_setting_t apnsetting = {0};
   lte_errinfo_t     info       = {0};
+  lte_version_t     version    = {0};
 
   uint8_t data_pdn_sid = LTE_PDN_SESSIONID_INVALID_ID;
 
@@ -606,6 +609,20 @@ int main(int argc, FAR char *argv[])
       ret = app_wait_lte_callback(&result);
       if (ret < 0)
         {
+          goto errout_with_lte_fin;
+        }
+      else if (result == LTE_RESTART_VERSION_ERROR)
+        {
+          printf("Please enable the disabled protocol version"
+                 " and flash the application.\n");
+
+          ret = lte_get_version_sync(&version);
+          if (ret == 0)
+            {
+              printf("Modem IC Type : %s\n", version.bb_product);
+              printf("      FW Ver. : %s\n", version.np_package);
+            }
+
           goto errout_with_lte_fin;
         }
     }
