@@ -1,7 +1,7 @@
 /****************************************************************************
  * system/lte_sysctl/lte_sysctl.c
  *
- *   Copyright 2020, 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2020, 2021, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,6 +140,7 @@
 
 static sem_t g_sem;
 static sem_t g_exclsem = SEM_INITIALIZER(1);
+static bool g_vererr = false;
 
 /****************************************************************************
  * Private Functions
@@ -147,6 +148,14 @@ static sem_t g_exclsem = SEM_INITIALIZER(1);
 
 static void restart_callback(uint32_t reason)
 {
+  if (reason == LTE_RESTART_VERSION_ERROR)
+    {
+      fprintf(stderr, "ERROR: Modem protocol version mismatch.\n"
+              "Please enable the disabled protocol version"
+              " and flash the application.\n");
+      g_vererr = true;
+    }
+
   sem_post(&g_sem);
 }
 
@@ -190,6 +199,7 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   uint8_t rat)
 {
   int ret;
+  lte_version_t version = {0};
 
   sem_init(&g_sem, 0, 0);
 
@@ -230,6 +240,24 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
   sem_wait(&g_sem);
 
   lte_set_report_restart(NULL);
+
+  if (g_vererr)
+    {
+      g_vererr = false;
+      ret = lte_get_version_sync(&version);
+      if (ret < 0)
+        {
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
+        }
+      else
+        {
+          printf("Modem IC Type : %s\n", version.bb_product);
+          printf("      FW Ver. : %s\n", version.np_package);
+        }
+
+      lte_finalize();
+      goto err_out;
+    }
 
   ret = save_apnsettings(apn);
   if (ret < 0)
@@ -357,6 +385,7 @@ static void show_daemon_stat(void)
 static int factory_reset(FAR const char *progname)
 {
   int ret;
+  lte_version_t version = {0};
 
   sem_init(&g_sem, 0, 0);
 
@@ -395,6 +424,24 @@ static int factory_reset(FAR const char *progname)
     }
 
   sem_wait(&g_sem);
+
+  if (g_vererr)
+    {
+      g_vererr = false;
+      ret = lte_get_version_sync(&version);
+      if (ret < 0)
+        {
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+        }
+      else
+        {
+          printf("Modem IC Type : %s\n", version.bb_product);
+          printf("      FW Ver. : %s\n", version.np_package);
+        }
+
+      lte_finalize();
+      goto err_out;
+    }
 
   /* Acquire the wakelock during factory reset running */
 
