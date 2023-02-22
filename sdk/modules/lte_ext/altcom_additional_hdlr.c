@@ -80,17 +80,17 @@ parse_handler_t alt1250_additional_parsehdlr(uint16_t altcid, uint8_t altver)
     }
 #endif
 
-#ifdef CONFIG_LTE_FACTORY_RESET_API
-  if (ret == NULL)
-    {
-      ret = alt1250_fresetparsehdlr(altcid, altver);
-    }
-#endif
-
 #ifdef CONFIG_HAVE_EXTHANDLER
   if (ret == NULL)
     {
       ret = alt1250_extparsehdlr(altcid, altver);
+    }
+#endif
+
+#ifdef CONFIG_LTE_FACTORY_RESET_API
+  if (ret == NULL)
+    {
+      ret = alt1250_fresetparsehdlr(altcid, altver);
     }
 #endif
 
