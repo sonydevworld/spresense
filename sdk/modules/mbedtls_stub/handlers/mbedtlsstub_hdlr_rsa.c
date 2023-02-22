@@ -63,12 +63,15 @@ int32_t mbedtlsstub_rsainit_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int *padding = (FAR int *)arg[0];
   FAR int *hash_id = (FAR int *)arg[1];
   FAR int32_t *id = (FAR int32_t *)arg[2];
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_RSA_CTX);
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_init_s *out =
@@ -86,6 +89,7 @@ int32_t mbedtlsstub_rsainit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_rsa_init_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -98,8 +102,11 @@ int32_t mbedtlsstub_rsafree_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_rsa_context *ctx = (FAR mbedtls_rsa_context *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_free_s *out =
@@ -113,6 +120,7 @@ int32_t mbedtlsstub_rsafree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_rsa_free_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -125,11 +133,14 @@ int32_t mbedtlsstub_rsagenkey_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_rsa_context *ctx = (FAR mbedtls_rsa_context *)arg[0];
   FAR void *p_rng = (FAR void *)arg[2];
   FAR unsigned int *nbits = (FAR unsigned int *)arg[3];
   FAR int *exponent = (FAR int *)arg[4];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_gen_key_s *out =
@@ -155,6 +166,7 @@ int32_t mbedtlsstub_rsagenkey_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_rsa_gen_key_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -166,8 +178,11 @@ int32_t mbedtlsstub_rsainit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_initres_s *in =
@@ -177,6 +192,11 @@ int32_t mbedtlsstub_rsainit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
 
       TLS_DEBUG("[rsa_init res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -185,8 +205,11 @@ int32_t mbedtlsstub_rsafree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_freeres_s *in =
@@ -196,6 +219,11 @@ int32_t mbedtlsstub_rsafree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
 
       TLS_DEBUG("[rsa_free res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -204,8 +232,11 @@ int32_t mbedtlsstub_rsagenkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_rsa_gen_keyres_s *in =
@@ -214,6 +245,11 @@ int32_t mbedtlsstub_rsagenkey_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8
       *ret = ntohl(in->ret_code);
 
       TLS_DEBUG("[rsa_gen_key res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

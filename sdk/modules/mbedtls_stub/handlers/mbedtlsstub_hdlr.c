@@ -360,6 +360,7 @@ parse_handler_t alt1250_sslparsehdlr(uint16_t altcid, uint8_t altver)
 
   altcid &= ~ALTCOM_CMDID_REPLY_BIT;
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV4
   if (altver == ALTCOM_VER4)
     {
       /* Change the command ID to Version 1 */
@@ -370,6 +371,7 @@ parse_handler_t alt1250_sslparsehdlr(uint16_t altcid, uint8_t altver)
           return NULL;
         }
     }
+#endif
 
   for (i = 0; i < ARRAY_SZ(g_parsehdlrs); i++)
     {

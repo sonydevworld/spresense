@@ -62,6 +62,7 @@ static void lte_restart_cb(uint32_t reason)
     {
       case LTE_RESTART_USER_INITIATED:
       case LTE_RESTART_MODEM_INITIATED:
+      case LTE_RESTART_VERSION_ERROR:
         msg.msgid = MESSAGE_ID_LTE_RESTARTED;
         msg.arg.code = reason;
         send_message(MESSAGE_QUEUE_NAME, &msg);
@@ -78,13 +79,28 @@ static void lte_restart_cb(uint32_t reason)
 
 static int wait_for_lterestart(void)
 {
+  int ret;
   struct app_message_s msg;
+  lte_version_t version = {0};
   if (receive_message(MESSAGE_QUEUE_NAME, &msg) == OK)
     {
       if (msg.msgid == MESSAGE_ID_LTE_RESTARTED &&
           msg.arg.code == LTE_RESTART_USER_INITIATED)
         {
           return OK;
+        }
+      else if (msg.msgid == MESSAGE_ID_LTE_RESTARTED &&
+               msg.arg.code == LTE_RESTART_VERSION_ERROR)
+        {
+          printf("Please enable the disabled protocol version"
+                 " and flash the application.\n");
+
+          ret = lte_get_version_sync(&version);
+          if (ret == 0)
+            {
+              printf("Modem IC Type : %s\n", version.bb_product);
+              printf("      FW Ver. : %s\n", version.np_package);
+            }
         }
     }
 

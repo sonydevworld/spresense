@@ -68,6 +68,7 @@ int32_t mbedtlsstub_x509csrinit_pkt_compose(FAR void **arg,
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_X509_CSR_CTX);
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_init_s *out =
@@ -81,6 +82,7 @@ int32_t mbedtlsstub_x509csrinit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_x509_csr_init_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -93,8 +95,11 @@ int32_t mbedtlsstub_x509csrfree_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_x509_csr *csr = (FAR mbedtls_x509_csr *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_free_s *out =
@@ -108,6 +113,7 @@ int32_t mbedtlsstub_x509csrfree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_x509_csr_free_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -120,9 +126,12 @@ int32_t mbedtlsstub_x509csrparsefile_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_x509_csr *csr = (FAR mbedtls_x509_csr *)arg[0];
   FAR const char *path = (FAR const char *)arg[1];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parse_file_s *out =
@@ -143,6 +152,7 @@ int32_t mbedtlsstub_x509csrparsefile_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_x509_csr_parse_file_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -155,10 +165,13 @@ int32_t mbedtlsstub_x509csrparseder_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_x509_csr *csr = (FAR mbedtls_x509_csr *)arg[0];
   FAR const unsigned char *buf = (FAR const unsigned char *)arg[1];
   FAR size_t *buflen = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parse_der_s *out =
@@ -184,6 +197,7 @@ int32_t mbedtlsstub_x509csrparseder_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_x509_csr_parse_der_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -196,10 +210,13 @@ int32_t mbedtlsstub_x509csrparse_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_x509_csr *csr = (FAR mbedtls_x509_csr *)arg[0];
   FAR const unsigned char *buf = (FAR const unsigned char *)arg[1];
   FAR size_t *buflen = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parse_s *out =
@@ -228,6 +245,7 @@ int32_t mbedtlsstub_x509csrparse_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_x509_csr_parse_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -240,8 +258,11 @@ int32_t mbedtlsstub_x509csrinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_initres_s *in =
@@ -251,6 +272,11 @@ int32_t mbedtlsstub_x509csrinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
 
       TLS_DEBUG("[x509_csr_init res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -259,8 +285,11 @@ int32_t mbedtlsstub_x509csrfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_freeres_s *in =
@@ -270,6 +299,11 @@ int32_t mbedtlsstub_x509csrfree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
 
       TLS_DEBUG("[x509_csr_free res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -278,8 +312,11 @@ int32_t mbedtlsstub_x509csrparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FA
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parse_fileres_s *in =
@@ -289,6 +326,11 @@ int32_t mbedtlsstub_x509csrparsefile_pkt_parse(FAR struct alt1250_dev_s *dev, FA
 
       TLS_DEBUG("[x509_csr_parse_file res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -297,8 +339,11 @@ int32_t mbedtlsstub_x509csrparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parse_derres_s *in =
@@ -308,6 +353,11 @@ int32_t mbedtlsstub_x509csrparseder_pkt_parse(FAR struct alt1250_dev_s *dev, FAR
 
       TLS_DEBUG("[x509_csr_parse_der res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -316,8 +366,11 @@ int32_t mbedtlsstub_x509csrparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_x509_csr_parseres_s *in =
@@ -326,6 +379,11 @@ int32_t mbedtlsstub_x509csrparse_pkt_parse(FAR struct alt1250_dev_s *dev, FAR ui
       *ret = ntohl(in->ret_code);
 
       TLS_DEBUG("[x509_csr_parse res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

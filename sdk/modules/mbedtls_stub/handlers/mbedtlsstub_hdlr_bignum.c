@@ -67,6 +67,7 @@ int32_t mbedtlsstub_mpiinit_pkt_compose(FAR void **arg,
 
   *id = mbedtlsstub_get_mbedtls_ctx_id(MBEDTLSSTUB_SSL_MPI_CTX);
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_init_s *out =
@@ -80,6 +81,7 @@ int32_t mbedtlsstub_mpiinit_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_mpi_init_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -92,8 +94,11 @@ int32_t mbedtlsstub_mpifree_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_mpi *X = (FAR mbedtls_mpi *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_free_s *out =
@@ -107,6 +112,7 @@ int32_t mbedtlsstub_mpifree_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_mpi_free_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -119,11 +125,14 @@ int32_t mbedtlsstub_mpireadstr_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   uint32_t buflen = 0;
   FAR mbedtls_mpi *X = (FAR mbedtls_mpi *)arg[0];
   FAR int *radix = (FAR int *)arg[1];
   FAR const char *s = (FAR const char *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_read_string_s *out =
@@ -154,6 +163,7 @@ int32_t mbedtlsstub_mpireadstr_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_mpi_read_string_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -166,10 +176,13 @@ int32_t mbedtlsstub_mpiwritestr_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR const mbedtls_mpi *X = (FAR const mbedtls_mpi *)arg[0];
   FAR int *radix = (FAR int *)arg[1];
   FAR size_t *buflen = (FAR size_t *)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_write_string_s *out =
@@ -194,6 +207,7 @@ int32_t mbedtlsstub_mpiwritestr_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_mpi_write_string_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -206,8 +220,11 @@ int32_t mbedtlsstub_mpiinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_initres_s *in =
@@ -217,6 +234,11 @@ int32_t mbedtlsstub_mpiinit_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
 
       TLS_DEBUG("[mpi_init res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -225,8 +247,11 @@ int32_t mbedtlsstub_mpifree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_freeres_s *in =
@@ -236,6 +261,11 @@ int32_t mbedtlsstub_mpifree_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
 
       TLS_DEBUG("[mpi_free res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -244,8 +274,11 @@ int32_t mbedtlsstub_mpireadstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_read_stringres_s *in =
@@ -255,6 +288,11 @@ int32_t mbedtlsstub_mpireadstr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
 
       TLS_DEBUG("[mpi_read_string res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -263,11 +301,14 @@ int32_t mbedtlsstub_mpiwritestr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR char *buf = (FAR char *)arg[1];
   FAR size_t *buflen = (FAR size_t *)arg[2];
   FAR size_t *olen = (FAR size_t *)arg[3];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_mpi_write_stringres_s *in =
@@ -285,6 +326,11 @@ int32_t mbedtlsstub_mpiwritestr_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
         }
 
       TLS_DEBUG("[mpi_write_string res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

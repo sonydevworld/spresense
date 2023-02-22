@@ -261,7 +261,8 @@ static void app_restart_cb(uint32_t reason)
   char *reson_string[] =
     {
       "Modem restart by application.",
-      "Modem restart by self."
+      "Modem restart by self.",
+      "Modem version mismatch."
     };
   printf("%s called. reason:%s\n", __func__, reson_string[reason]);
 
@@ -397,6 +398,7 @@ int app_awsiot_connect_to_lte(void)
   struct lte_apn_setting  apnsetting;
   lte_errinfo_t           info = {0};
   lte_pdn_t               pdn = {0};
+  lte_version_t           version = {0};
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.
@@ -442,8 +444,22 @@ int app_awsiot_connect_to_lte(void)
        */
 
       ret = app_wait_lte_callback(&result);
-      if ((ret < 0) || (result == LTE_RESULT_ERROR))
+      if (ret < 0)
         {
+          goto errout_with_lte_fin;
+        }
+      else if (result == LTE_RESTART_VERSION_ERROR)
+        {
+          printf("Please enable the disabled protocol version"
+                 " and flash the application.\n");
+
+          ret = lte_get_version_sync(&version);
+          if (ret == 0)
+            {
+              printf("Modem IC Type : %s\n", version.bb_product);
+              printf("      FW Ver. : %s\n", version.np_package);
+            }
+
           goto errout_with_lte_fin;
         }
     }

@@ -63,8 +63,11 @@ int32_t mbedtlsstub_sslexportsrtpkeys_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_export_srtp_keys_s *out =
@@ -78,6 +81,7 @@ int32_t mbedtlsstub_sslexportsrtpkeys_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_ssl_export_srtp_keys_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -90,8 +94,11 @@ int32_t mbedtlsstub_sslusesrtp_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_use_srtp_s *out =
@@ -105,6 +112,7 @@ int32_t mbedtlsstub_sslusesrtp_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_ssl_use_srtp_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -117,8 +125,11 @@ int32_t mbedtlsstub_srtpprofile_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_srtp_profile_s *out =
@@ -132,6 +143,7 @@ int32_t mbedtlsstub_srtpprofile_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_ssl_srtp_profile_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -144,11 +156,14 @@ int32_t mbedtlsstub_sslturn_pkt_compose(FAR void **arg,
                               const size_t pktsz, FAR uint16_t *altcid)
 {
   int32_t size = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR mbedtls_ssl_context *ssl = (FAR mbedtls_ssl_context *)arg[0];
   FAR uint16_t *turn_channel = (FAR uint16_t *)arg[1];
   FAR uint32_t *peer_addr = (FAR uint32_t *)arg[2];
   FAR uint16_t *peer_port = (FAR uint16_t *)arg[3];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_turn_s *out =
@@ -165,6 +180,7 @@ int32_t mbedtlsstub_sslturn_pkt_compose(FAR void **arg,
       size = sizeof(struct apicmd_ssl_turn_s);
     }
   else
+#endif
     {
       size = -ENOTSUP;
     }
@@ -176,11 +192,14 @@ int32_t mbedtlsstub_sslexportsrtpkeys_pkt_parse(FAR struct alt1250_dev_s *dev, F
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   uint32_t buflen = 0;
   FAR int32_t *ret = (FAR int32_t *)arg[0];
   FAR unsigned char *buf = (FAR unsigned char *)arg[1];
   FAR uint16_t *size = (FAR uint16_t*)arg[2];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_export_srtp_keysres_s *in =
@@ -193,6 +212,11 @@ int32_t mbedtlsstub_sslexportsrtpkeys_pkt_parse(FAR struct alt1250_dev_s *dev, F
 
       TLS_DEBUG("[ssl_export_srtp_keys res]ret: %ld\n", *ret);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return 0;
 }
@@ -201,8 +225,11 @@ int32_t mbedtlsstub_sslusesrtp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_use_srtpres_s *in =
@@ -211,6 +238,11 @@ int32_t mbedtlsstub_sslusesrtp_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint
       *ret = ntohl(in->ret_code);
 
       TLS_DEBUG("[ssl_use_srtp res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;
@@ -221,8 +253,11 @@ int32_t mbedtlsstub_srtpprofile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
                               size_t arglen, FAR uint64_t *bitmap)
 {
   int32_t profile = 0;
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_srtp_profileres_s *in =
@@ -234,6 +269,11 @@ int32_t mbedtlsstub_srtpprofile_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uin
       TLS_DEBUG("[ssl_srtp_profile res]ret: %ld\n", *ret);
       TLS_DEBUG("[ssl_srtp_profile res]profile: %ld\n", profile);
     }
+  else
+#endif
+    {
+      return -ENOSYS;
+    }
 
   return profile;
 }
@@ -242,8 +282,11 @@ int32_t mbedtlsstub_sslturn_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
                               size_t pktsz, uint8_t altver, FAR void **arg,
                               size_t arglen, FAR uint64_t *bitmap)
 {
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   FAR int32_t *ret = (FAR int32_t *)arg[0];
+#endif
 
+#ifndef CONFIG_MODEM_ALT1250_DISABLE_PV1
   if (altver == ALTCOM_VER1)
     {
       FAR struct apicmd_ssl_turn_res_s *in =
@@ -252,6 +295,11 @@ int32_t mbedtlsstub_sslturn_pkt_parse(FAR struct alt1250_dev_s *dev, FAR uint8_t
       *ret = ntohl(in->ret_code);
 
       TLS_DEBUG("[ssl_turn res]ret: %ld\n", *ret);
+    }
+  else
+#endif
+    {
+      return -ENOSYS;
     }
 
   return 0;

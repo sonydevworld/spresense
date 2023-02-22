@@ -52,6 +52,7 @@
 
 static pthread_mutex_t g_restart_mutex;
 static pthread_cond_t  g_restart_cond;
+static bool g_vererr = false;
 
 /****************************************************************************
  * Private Functions
@@ -71,8 +72,14 @@ static void app_restart_cb(uint32_t reason)
   char *reason_string[] =
   {
     "Modem restart by application.",
-    "Modem restart by self."
+    "Modem restart by self.",
+    "Modem version mismatch."
   };
+
+  if (reason == LTE_RESTART_VERSION_ERROR)
+    {
+      g_vererr = true;
+    }
 
   /* Send a signal only for the first call. */
 
@@ -146,6 +153,7 @@ static int app_cond_fin(void)
 static int app_lte_poweron(void)
 {
   int ret = 0;
+  lte_version_t version = {0};
 
   /* Initialize the LTE library */
 
@@ -203,6 +211,23 @@ static int app_lte_poweron(void)
       printf("Failed to cond finalize :%d\n", ret);
 
       return ret;
+    }
+
+  if (g_vererr)
+    {
+      g_vererr = false;
+      printf("Please enable the disabled protocol version"
+             " and flash the application.\n");
+
+      ret = lte_get_version_sync(&version);
+      if (ret == 0)
+        {
+          printf("Modem IC Type : %s\n", version.bb_product);
+          printf("      FW Ver. : %s\n", version.np_package);
+        }
+
+      lte_finalize();
+      return -EPERM;
     }
 
   return 0;
