@@ -76,7 +76,7 @@ static int send_sms(FAR char *phone_number, FAR char *text_msg,
   FAR struct sms_send_msg_s *sendmsg;
   struct lte_smsreq_s smsreq;
 
-  sms_sock = socket(AF_SMSSOCK, SOCK_DGRAM, 0);
+  sms_sock = socket(AF_INET, SOCK_SMS, 0);
   if (sms_sock < 0)
     {
       printf("Failed to open socket:%d\n", errno);
