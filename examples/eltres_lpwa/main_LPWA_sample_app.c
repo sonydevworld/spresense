@@ -538,11 +538,7 @@ static void power_off_check(void){
         set_CXM150x_power(CXM150x_POWER_OFF,&res_set_power,NULL);
         g_gnss_ready_flg = FLAG_OFF;
         g_int1_callback_flg = FLAG_OFF;
-        sleep(1);
-        uint32_t power_on_time = next_time - g_pow_enable_remain_offset;
-        struct tm p_tm;
-        (void)localtime_r(&power_on_time,&p_tm);
-        set_rtc_alarm(p_tm.tm_hour,p_tm.tm_min,p_tm.tm_sec);
+        set_rtc_alarm(0,0,interval);
         memset(&g_nmea_gga_info_buf,0,sizeof(g_nmea_gga_info_buf));
     } else {
         printf("CXM150x power not change\r\n");
@@ -716,7 +712,7 @@ static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
     int fd = open("/dev/rtc0", O_WRONLY);
 
     setrel.id      = 0;
-    setrel.pid     = 0;
+    setrel.pid     = getpid();
     setrel.reltime = (time_t)(hh*60*60 + mm*60 + ss);
 
     setrel.event.sigev_notify = SIGEV_SIGNAL;
@@ -727,7 +723,11 @@ static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
     g_rtc_callback_flg = FLAG_OFF;
     close(fd);
 
-    printf("set_rtc_alarm %02ld:%02ld:%02ld\r\n",hh,mm,ss);
+    mm += ss / 60;
+    ss %= 60;
+    hh += mm / 60;
+    mm %= 60;
+    printf("set_rtc_alarm %02ld:%02ld:%02ld later\r\n",hh,mm,ss);
 }
 
 // ===========================================================================
@@ -1259,7 +1259,8 @@ int main_LPWA_sample_app(void){
     /* Infinite loop */
     while(1){
         // Sleep processing if no interrupt
-        if(g_int1_callback_flg == FLAG_OFF && g_push_btn_flag == FLAG_OFF && check_message_count() == FLAG_OFF){
+        if(g_int1_callback_flg == FLAG_OFF && g_push_btn_flag == FLAG_OFF && check_message_count() == FLAG_OFF
+           && g_rtc_callback_flg == FLAG_OFF){
             // TBD: Implement sleep function
             sleep(1);
             continue;
