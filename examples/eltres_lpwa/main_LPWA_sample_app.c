@@ -757,6 +757,23 @@ static uint32_t get_current_tm(void){
     uint32_t sec = 0;
     conv_CXM150x_GNSSTime_to_second(res.m_str,&sec);
     
+    // Convert the number of seconds elapsed since GPS reference date and time obtained by above API to the number of seconds elapsed since 00:00:00 on January 1, 1900
+    // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
+    struct tm base_time;
+    base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
+    base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
+    base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;
+    base_time.tm_mday = GPS_FORMAT_BASE_TIME_MDAY;
+    base_time.tm_mon = GPS_FORMAT_BASE_TIME_MON;
+    base_time.tm_year = GPS_FORMAT_BASE_TIME_YEAR;
+    base_time.tm_wday = GPS_FORMAT_BASE_TIME_WDAY;
+    base_time.tm_yday = GPS_FORMAT_BASE_TIME_YDAY;
+    base_time.tm_isdst = GPS_FORMAT_BASE_TIME_ISDST;
+    sec += mktime(&base_time);
+
+    // This time format is GNSS time so substract leap second to convert it to UTC time format
+    sec -= GNSS_DATETIME_ADJUST_LEAP_SECOND;
+
     return sec;
 }
 
@@ -774,20 +791,7 @@ static uint32_t get_current_tm(void){
 // ===========================================================================
 static void set_rtc_time(void){
     uint32_t sec = get_current_tm();
-    // Convert the number of seconds elapsed since GPS reference date and time obtained by get_current_tm to the number of seconds elapsed since 00:00:00 on January 1, 1900
-    // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
-    struct tm base_time;
-    base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
-    base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
-    base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;
-    base_time.tm_mday = GPS_FORMAT_BASE_TIME_MDAY;
-    base_time.tm_mon = GPS_FORMAT_BASE_TIME_MON;
-    base_time.tm_year = GPS_FORMAT_BASE_TIME_YEAR;
-    base_time.tm_wday = GPS_FORMAT_BASE_TIME_WDAY;
-    base_time.tm_yday = GPS_FORMAT_BASE_TIME_YDAY;
-    base_time.tm_isdst = GPS_FORMAT_BASE_TIME_ISDST;
-    sec += mktime(&base_time);
-    
+
     struct timespec ts;
     ts.tv_sec = sec;
     ts.tv_nsec = 0;
@@ -835,7 +839,7 @@ static time_t get_rtc_time(void){
 }
 
 // ===========================================================================
-//! Convert the time set in RTC to UTC and get it in character string format
+//! Read the UTC time set in RTC and get it in character string format
 /*!
  *
  * @param [in] none
@@ -850,8 +854,6 @@ static void get_utc_time_str(uint8_t *str){
     time_t rtc_time = get_rtc_time();
     if(rtc_time > 0){
         // Successful acquisition
-        // RTC time format is GNSS time so substract leap second to convert it to UTC time format, and return it as character string.
-        rtc_time -= GNSS_DATETIME_ADJUST_LEAP_SECOND;
         struct tm utc_tm;
         (void)localtime_r(&rtc_time,&utc_tm);
         strftime((char*)str, GNSS_DATETIME_LEN+1, "%Y%m%d%H%M%S", &utc_tm);
