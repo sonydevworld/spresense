@@ -274,7 +274,7 @@ static void add_rx_buffer(uint8_t *rx_message,uint8_t rcv_cnt){
  * @return none
 */
 // ===========================================================================
-void weak_function CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt)
+void CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt)
 {
     if(type_from==WRAPPER_UART_RX_FROM_CXM150x){
         add_rx_buffer((uint8_t*)g_rcv_buf,rcv_cnt);
