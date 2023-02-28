@@ -74,6 +74,7 @@ int g_fw_updating;
 static pthread_t g_uart_recv_thread;
 static void uart_recv_main(void);
 static bool g_stop_thread = false;
+static void (*g_CXM150x_uart_rx_callback)(uint32_t, uint32_t) = NULL;
 #endif
 
 // ===========================================================================
@@ -247,6 +248,25 @@ uint32_t wrapper_CXM150x_get_power(void){
 }
 
 // ===========================================================================
+//! Set UART receive callback
+/*! This function is mainly used in standalone mode. The callback function is
+ * CXM150x_uart_receive_to_buffer_callback by default, but the function can
+ * be set by the original function in standalone mode.
+ *
+ * @param [in] callback: Function pointer to UART receive callback
+ * @param [out] none
+ * @par Global variable
+ *        [in] none
+ *        [out] g_CXM150x_uart_rx_callback: UART receive callback
+ *
+ * @return none
+*/
+// ===========================================================================
+void wrapper_CXM150x_set_uart_rx_callback(void (*callback)(uint32_t, uint32_t)){
+    g_CXM150x_uart_rx_callback = callback;
+}
+
+// ===========================================================================
 //! UART receive handler
 /*! Buffers characters received by UART from CXM150x and continues UART reception until line feed code is received (timeout is fixed at 5 seconds)
  * Call the CXM150x_uart_receive_to_buffer_callback function of the library core when a line feed code is received
@@ -275,7 +295,11 @@ void wrapper_CXM150x_uart_rx_callback(void){
                 g_rcv_buf[g_rcv_cnt++] = g_rcv_char;
                 // Receive line feed code
                 g_rcv_buf[g_rcv_cnt++] = '\0';
-                CXM150x_uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                if (g_CXM150x_uart_rx_callback){
+                    g_CXM150x_uart_rx_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                } else {
+                    CXM150x_uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                }
                 g_rcv_cnt = 0;
                 g_rcv_buf[0] = '\0';
                 break;
