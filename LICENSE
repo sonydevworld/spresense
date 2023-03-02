@@ -1650,3 +1650,22 @@ File name:  nRF5_SDK_17.1.0_ddde560.zip
 Notice:
 The software under the nRF5_Nordic_licence here must only be used with
 a Noridic Semiconductor ASA integrated circuit.
+
+
+15. License of ELTRES SDK
+
+========================================================================
+externals/eltres/CXM150x_SDK
+examples/eltres_lpwa
+examples/eltres_standalone
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+ externals/eltres/README.md
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://www.sony-semicon.com/en/eltres/module.html (en)
+https://www.sony-semicon.com/ja/eltres/module.html (ja)
