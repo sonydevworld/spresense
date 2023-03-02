@@ -87,6 +87,7 @@ void wrapper_CXM150x_set_Wakeup_pin(CXM150x_power_state on_off);
 void wrapper_CXM150x_set_wakeup_pin(CXM150x_wakeup_state high_low);
 void wrapper_CXM150x_set_uart_Hiz(void);
 int32_t wrapper_CXM150x_set_uart_rx_buf(uint8_t *rcv_char_buf);
+void wrapper_CXM150x_set_uart_rx_callback(void (*callback)(uint32_t,uint32_t));
 CXM150x_return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uint32_t wait_count);
 uint32_t wrapper_CXM150x_get_tick(void);
 void wrapper_CXM150x_delay(uint32_t tick);
