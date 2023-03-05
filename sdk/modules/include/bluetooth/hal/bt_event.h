@@ -191,6 +191,7 @@ typedef enum
 	BLE_COMMON_EVENT_MTUSIZE,              /**< MTU size event */
 	BLE_COMMON_EVENT_SAVE_BOND,            /**< Save bonding information event */
 	BLE_COMMON_EVENT_LOAD_BOND,            /**< Load bonding information event */
+    BLE_COMMON_EVENT_ENCRYPTION_RESULT,    /**< Encryption result notification */
 } BLE_COMMON_EVENT_ID;
 
 /**
@@ -538,6 +539,19 @@ struct ble_event_bondinfo_t
   uint8_t  event_id;                    /**< Event sub ID @ref BLE_COMMON_EVENT_ID */
   int      num;                         /**< The number of bonding information */
   struct ble_bondinfo_s *bond;          /**< bonding information */
+};
+
+/**
+ * @struct ble_event_encryption_result_t
+ * @brief Bluetooth LE encryption result event
+ */
+
+struct ble_event_encryption_result_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_COMMON_EVENT_ID */
+  uint16_t conn_handle;                 /**< connection handle */
+  int      result;                      /**< encryption result */
 };
 
 /**

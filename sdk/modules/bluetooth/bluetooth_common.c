@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/bluetooth_common.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -329,6 +329,24 @@ static int ble_event_load_bond(struct ble_event_bondinfo_t *evt)
   if (ops && ops->load_bondinfo)
     {
       ret = ops->load_bondinfo(evt->num, evt->bond);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_encryption_result(struct ble_event_encryption_result_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->encryption_result)
+    {
+      ops->encryption_result(evt->conn_handle, evt->result);
     }
   else
     {
@@ -1064,6 +1082,33 @@ int ble_disconnect(struct ble_state_s *ble_state)
 }
 
 /****************************************************************************
+ * Name: ble_pairing
+ *
+ * Description:
+ *   Bluetooth LE pairing for Central
+ *   This function is for Central role.
+ *
+ ****************************************************************************/
+
+int ble_pairing(uint16_t conn_handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->pairing)
+    {
+      ret = ops->pairing(conn_handle);
+    }
+  else
+    {
+      _err("%s [BLE][Common] not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: ble_start_advertise
  *
  * Description:
@@ -1299,6 +1344,9 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
 
       case BLE_COMMON_EVENT_LOAD_BOND:
         return ble_event_load_bond((struct ble_event_bondinfo_t *) bt_event);
+
+      case BLE_COMMON_EVENT_ENCRYPTION_RESULT:
+        return ble_event_encryption_result((struct ble_event_encryption_result_t *) bt_event);
 
       default:
         break;

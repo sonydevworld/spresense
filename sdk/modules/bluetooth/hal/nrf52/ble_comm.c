@@ -149,6 +149,7 @@ static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
 static uint16_t nrf52_ble_set_mtusize(uint16_t sz);
 static uint16_t nrf52_ble_get_mtusize(void);
 static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
+static int nrf52_ble_pairing(uint16_t handle);
 
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
@@ -189,6 +190,7 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .setMtuSize           = nrf52_ble_set_mtusize,
   .getMtuSize           = nrf52_ble_get_mtusize,
   .getNegotiatedMtuSize = nrf52_ble_get_negotiated_mtusize,
+  .pairing              = nrf52_ble_pairing,
 };
 
 static struct bt_hal_common_ops_s bt_hal_common_ops =
@@ -843,6 +845,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   g_ble_context.conn_sts                = BLE_CONN_STS_CONNECTED;
   g_ble_context.is_scanning             = false;
   g_ble_context.is_advertising          = false;
+  memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
   conn_stat_evt.handle = evt->handle;
@@ -905,8 +908,20 @@ static void on_read_rsp(BLE_EvtGattcRead *readRsp)
 
 static void on_exchange_feature(const BLE_EvtExchangeFeature* exchange_feature)
 {
-  BLE_GapPairingFeature* pf = &g_ble_context.pairing_feature;
-  int ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
+  int ret;
+  BLE_GapPairingFeature* pf = NULL;
+
+  /* In central case, pairing feature must not be set,
+   * because it is transmitted in the parameter of
+   * preceding sd_ble_gap_authenticate()
+   */
+
+  if (g_ble_context.ble_role == BLE_ROLE_PERIPHERAL)
+    {
+      pf = &g_ble_context.pairing_feature;
+    }
+
+  ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
 
   if (BLE_SUCCESS != ret)
     {
@@ -928,6 +943,18 @@ static void on_disp_passkey(BLE_EvtDisplayPasskey* disp_passkey)
   LOG_OUT("[BLE][LOG]Passkey: %s\n", disp_passkey->passkey);
 }
 
+static void mk_encryption_result_event(uint16_t handle, bool result)
+{
+  struct ble_event_encryption_result_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_ENCRYPTION_RESULT;
+  evt.conn_handle = handle;
+  evt.result = result;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
 static void on_auth_status(BLE_EvtAuthStatus* auth_status)
 {
   int ret   = BLE_SUCCESS;
@@ -936,6 +963,7 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
   if (auth_status->status != BLE_GAP_SM_STATUS_SUCCESS)
     {
       LOG_OUT("[BLE][LOG]Pairing failed! ErrCode: %x\n", auth_status->status);
+      mk_encryption_result_event(auth_status->handle, false);
       return;
     }
   else
@@ -1712,16 +1740,93 @@ void onAuthKeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   on_auth_key_request((BLE_EvtAuthKey *)pBleEvent->evtData);
 }
 
+static int getAddrFmConnHandle(uint16_t handle, BT_ADDR *addr)
+{
+  if (handle != g_ble_context.ble_conn_handle)
+    {
+      /* Invalid connection handle. */
+
+      return -EINVAL;
+    }
+
+  memcpy(addr->address, g_ble_context.ble_addr.addr, BT_ADDR_LEN);
+
+  return BT_SUCCESS;
+}
+
+static int searchBondInfoIndexFmConnHandle(uint16_t handle)
+{
+  int i;
+  int ret;
+  uint32_t list = bleBondEnableList;
+  BT_ADDR addr;
+
+  ret = getAddrFmConnHandle(handle, &addr);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++, list >>= 1)
+    {
+      if (list & 1)
+        {
+          if (memcmp(addr.address,
+                     BondInfoInFlash[i].bondInfo.addr,
+                     BT_ADDR_LEN)
+               == 0)
+            {
+              break;
+            }
+        }
+    }
+
+  return i;
+}
+
+static void clearBondInfo(uint16_t handle)
+{
+  int ret;
+
+  ret = searchBondInfoIndexFmConnHandle(handle);
+  printf("searchBondInfoIndexFmConnHandle ret = %d\n", ret);
+  if ((ret >= 0) && (ret < BLE_SAVE_BOND_DEVICE_MAX_NUM))
+    {
+      memset(&BondInfoInFlash[ret], 0, sizeof(bleGapWrapperBondInfo));
+      bleBondEnableList &= ~(1 << ret);
+      mk_save_bondinfo_event();
+    }
+}
+
 static
 void onConnSecUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
+  bool result;
+  ble_gap_evt_t *evt = &pBleNrfEvt->evt.gap_evt;
+  ble_gap_conn_sec_t *prm = &evt->params.conn_sec_update.conn_sec;
+
   pBleEvent->evtHeader = BLE_GAP_EVENT_CONN_SEC_UPDATE;
   pBleEvent->evtDataSize = 0;
-#ifdef BLE_DBGPRT_ENABLE
-  ble_gap_evt_conn_sec_update_t *sec = &pBleNrfEvt->evt.gap_evt.params.conn_sec_update;
-  BLE_PRT("onConnSecUpdate: keysize=%d sm=%d lv=%d\n", sec->conn_sec.encr_key_size,
-    sec->conn_sec.sec_mode.sm, sec->conn_sec.sec_mode.lv);
-#endif
+  BLE_PRT("onConnSecUpdate: keysize=%d sm=%d lv=%d\n", prm->encr_key_size,
+    prm->sec_mode.sm, prm->sec_mode.lv);
+
+  if (prm->encr_key_size > 0)
+    {
+      /* Positive key size means that the connection is encrypted. */
+
+      result = true;
+    }
+  else
+    {
+      /* Non-positive key size means that encryption fails.
+       * In such a case, the corresponding bond information shall be cleared.
+       */
+
+      clearBondInfo(evt->conn_handle);
+      result = false;
+    }
+
+  mk_encryption_result_event(evt->conn_handle, result);
 }
 
 static
@@ -2957,6 +3062,36 @@ static int nrf52_ble_get_negotiated_mtusize(uint16_t handle)
     }
 
   return commMem.client_rx_mtu;
+}
+
+
+static int nrf52_ble_pairing(uint16_t handle)
+{
+  int ret;
+
+  ret = searchBondInfoIndexFmConnHandle(handle);
+  if (ret < 0)
+    {
+      /* Invalid handle error */
+
+      return ret;
+    }
+  else if (ret < BLE_SAVE_BOND_DEVICE_MAX_NUM)
+    {
+      /* If pairing information about this connection is stored,
+       * skip pairing and only encrypt with stored key.
+       */
+
+      ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+    }
+  else
+    {
+      /* Otherwise, execute pairing. */
+
+      ret = BLE_GapAuthenticate(handle, &g_ble_context.pairing_feature);
+    }
+
+  return ret;
 }
 
 /****************************************************************************
