@@ -88,10 +88,15 @@ bool Playlist::open(FAR const char *mode)
       return false;
     }
 
-  snprintf(absolute_path,
-           sizeof(absolute_path),
-           "%s/%s", m_playlist_path,
-           this->m_track_db_file_name);
+  int ret = snprintf(absolute_path,
+                     sizeof(absolute_path),
+                     "%s/%s", m_playlist_path,
+                     this->m_track_db_file_name);
+  if (ret < 0)
+    {
+      return false;
+    }
+
   this->m_track_db_fp = fopen(absolute_path, mode);
 
   if (this->m_track_db_fp == NULL)
@@ -515,7 +520,12 @@ bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
     }
 
   char file_name_tmp[FileNameMaxLength];
-  snprintf(file_name_tmp, sizeof(file_name_tmp), "%s_tmp", file_name_org);
+  int ret = snprintf(file_name_tmp, sizeof(file_name_tmp), "%s_tmp", file_name_org);
+  if (ret < 0)
+    {
+      return false;
+    }
+
   FAR FILE *fp_tmp = fopen(file_name_tmp, "w");
   if (fp_tmp == NULL)
     {
