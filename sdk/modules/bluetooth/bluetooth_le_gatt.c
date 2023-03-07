@@ -391,6 +391,19 @@ void ble_gatt_init(struct ble_state_s *ble_state)
 }
 
 /****************************************************************************
+ * Name: ble_gatt_finalize
+ *
+ * Description:
+ *   Clear GATT information.
+ *
+ ****************************************************************************/
+
+void ble_gatt_finalize(void)
+{
+  memset(&g_ble_gatt_state, 0, sizeof(g_ble_gatt_state));
+}
+
+/****************************************************************************
  * Name: ble_create_service
  *
  * Description:

@@ -42,6 +42,7 @@
 #include <bluetooth/hal/bt_if.h>
 
 #include "bluetooth_hal_init.h"
+#include "bluetooth_le_gatt.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -54,12 +55,6 @@
 #ifndef CONFIG_BLUETOOTH_LE_NAME
 #define CONFIG_BLUETOOTH_LE_NAME "SONY-BLE-CLASSIC"
 #endif
-
-/****************************************************************************
- * Function prototypes
- ****************************************************************************/
-
-extern void ble_gatt_init(struct ble_state_s *ble_state);
 
 /****************************************************************************
  * Private Types
@@ -399,6 +394,8 @@ int bt_finalize(void)
     {
       ret = bt_hal_common_ops->finalize();
     }
+
+  ble_gatt_finalize();
 
   return ret;
 }

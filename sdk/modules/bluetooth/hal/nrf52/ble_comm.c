@@ -651,6 +651,36 @@ static
 int bleStackFin(void)
 {
   int ret = 0;
+
+  switch (g_ble_context.conn_sts)
+    {
+      case BLE_CONN_STS_CONNECTED:
+        BLE_GapDisconnectLink(g_ble_context.ble_conn_handle);
+        g_ble_context.ble_conn_handle = CONN_HANDLE_INVALED;
+        break;
+
+      case BLE_CONN_STS_CONNECTING:
+        BLE_GapCancelConnecting();
+        break;
+
+      default:
+        break;
+    }
+
+  g_ble_context.conn_sts = BLE_CONN_STS_NOTCONNECTED;
+
+  if (g_ble_context.is_advertising)
+    {
+      BLE_GapStopAdv();
+      g_ble_context.is_advertising = false;
+    }
+
+  if (g_ble_context.is_scanning)
+    {
+      BLE_GapStopScan();
+      g_ble_context.is_scanning = false;
+    }
+
   ret = nrf_sdh_disable_request();
   return bleConvertErrorCode(ret);
 }
@@ -804,12 +834,16 @@ static void ble_advertise(int mode)
 
 static void on_connected(const BLE_EvtConnected* evt)
 {
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   LOG_OUT("Connected: handle %d, role %d\n", evt->handle, evt->role);
   g_ble_context.ble_srv_sds.conn_handle = evt->handle;
   g_ble_context.ble_conn_handle         = evt->handle;
   g_ble_context.ble_role                = evt->role;
+  g_ble_context.conn_sts                = BLE_CONN_STS_CONNECTED;
+  g_ble_context.is_scanning             = false;
+  g_ble_context.is_advertising          = false;
 
-  struct ble_event_conn_stat_t conn_stat_evt;
   conn_stat_evt.connected = true;
   conn_stat_evt.handle = evt->handle;
   memcpy(conn_stat_evt.addr.address, evt->addr.addr, BT_ADDR_LEN);
@@ -826,9 +860,11 @@ static void on_connected(const BLE_EvtConnected* evt)
 
 static void on_disconnected(const BLE_EvtDisconnected* evt)
 {
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   LOG_OUT("Disconnected: HCI status 0x%x\n", evt->reason);
   g_ble_context.ble_conn_handle = CONN_HANDLE_INVALED;
-  struct ble_event_conn_stat_t conn_stat_evt;
+  g_ble_context.conn_sts        = BLE_CONN_STS_NOTCONNECTED;
 
   conn_stat_evt.connected = false;
 
@@ -845,6 +881,10 @@ static void on_disconnected(const BLE_EvtDisconnected* evt)
       if (BLE_SUCCESS != ret)
         {
           LOG_OUT("BLE_GapStartAdv failed, ret=%d\n", ret);
+        }
+      else
+        {
+          g_ble_context.is_advertising = true;
         }
     }
 }
@@ -2721,6 +2761,8 @@ static int ble_stop(void)
 
 static int nrf52_ble_start_scan(bool duplicate_filter)
 {
+  int ret;
+
   /* Return error if duplicate_filter is true,
    * because nRF52 HW do not support duplicate scan result filter.
    */
@@ -2730,7 +2772,13 @@ static int nrf52_ble_start_scan(bool duplicate_filter)
       return BT_FAIL;
     }
 
-  return BLE_GapStartScan();
+  ret = BLE_GapStartScan();
+  if (ret == BLE_SUCCESS)
+    {
+      g_ble_context.is_scanning = true;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -2743,7 +2791,14 @@ static int nrf52_ble_start_scan(bool duplicate_filter)
 
 static int nrf52_ble_stop_scan(void)
 {
-  return BLE_GapStopScan();
+  int ret;
+  ret = BLE_GapStopScan();
+  if (ret == BLE_SUCCESS)
+    {
+      g_ble_context.is_scanning = false;
+    }
+
+  return ret;
 }
 
 /****************************************************************************
@@ -2763,6 +2818,10 @@ static int nrf52_ble_connect(const BT_ADDR *addr)
   memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
 
   ret = BLE_GapConnect(&gap_addr);
+  if (ret == BT_SUCCESS)
+    {
+      g_ble_context.conn_sts = BLE_CONN_STS_CONNECTING;
+    }
 
   return ret;
 }
@@ -2798,6 +2857,10 @@ static int nrf52_ble_advertise(bool enable)
         {
           LOG_OUT("ble enable advertise failed, ret=%d\n", ret);
         }
+      else
+        {
+          g_ble_context.is_advertising = true;
+        }
     }
   else
     {
@@ -2806,6 +2869,10 @@ static int nrf52_ble_advertise(bool enable)
       if (BLE_SUCCESS != ret)
         {
           LOG_OUT("ble disable advertise failed, ret=%d\n", ret);
+        }
+      else
+        {
+          g_ble_context.is_advertising = false;
         }
     }
   return ret;
