@@ -235,6 +235,7 @@ static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond)
   FILE *fp;
   int stored_num;
   int sz;
+  size_t ret;
 
   fp = fopen(BONDINFO_FILENAME, "rb");
   if (fp == NULL)
@@ -242,7 +243,15 @@ static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond)
       return 0;
     }
 
-  fread(&stored_num, 1, sizeof(int), fp);
+  ret = fread(&stored_num, 1, sizeof(int), fp);
+  if (ret != sizeof(int))
+    {
+      printf("Error: could not load due to %s read error.\n",
+             BONDINFO_FILENAME);
+      fclose(fp);
+      return 0;
+    }
+
   g_ble_bonded_device_num = (stored_num < num) ? stored_num : num;
   sz = g_ble_bonded_device_num * sizeof(struct ble_cccd_s *);
   g_cccd = (struct ble_cccd_s **)malloc(sz);
@@ -254,7 +263,26 @@ static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond)
 
   for (i = 0; i < g_ble_bonded_device_num; i++)
     {
-      fread(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+      ret = fread(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+      if (ret != sizeof(struct ble_bondinfo_s))
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      if (bond[i].cccd_num > 1)
+        {
+          printf("Error: could not load all data due to invalid data.\n");
+          printf("cccd_num does not exceed the number of characteristics\n");
+          printf("that is set by this application.\n");
+          printf("The number of loaded device is %d\n", i);
+
+          g_ble_bonded_device_num = i;
+          break;
+        }
 
       /* Because only cccd is pointer member, load it individually. */
 
@@ -271,7 +299,15 @@ static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond)
         }
 
       bond[i].cccd = g_cccd[i];
-      fread(bond[i].cccd, 1, sz, fp);
+      ret = fread(bond[i].cccd, 1, sz, fp);
+      if (ret != sz)
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
     }
 
   fclose(fp);
