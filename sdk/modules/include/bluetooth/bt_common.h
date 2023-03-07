@@ -208,6 +208,11 @@ struct ble_common_ops_s
   /** Load bonding information callback */
 
   int  (*load_bondinfo)(int num, struct ble_bondinfo_s *bond);
+
+  /** encryption result callback */
+
+  void (*encryption_result)(uint16_t conn_handle, bool result);
+
 };
 
 /**
@@ -539,6 +544,16 @@ uint16_t ble_get_request_mtusize(void);
  */
 
 int ble_get_negotiated_mtusize(uint16_t handle);
+
+/**
+ * @brief Execute pairing
+ *
+ * @param[in] handle: connection handle
+ *
+ * @retval BLE_SUCCESS or negated errno.
+ */
+
+int ble_pairing(uint16_t handle);
 
 /**
  * @brief Parse advertise data.
