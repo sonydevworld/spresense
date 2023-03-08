@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_debug.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_DEBUG_H
+#define __INCLUDE_AUDIOLITE_DEBUG_H
 
 /****************************************************************************
  * Included Files
@@ -42,19 +42,39 @@
 
 #include <nuttx/config.h>
 
+#include <stdio.h>
+#include <unistd.h>
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+#define al_debugmessage(T,...) { printf(T " %s:%s(%d) : ", __FILE__, __func__, __LINE__); \
+                                 printf(__VA_ARGS__); }
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
+#ifdef CONFIG_AL_DEBUG_ERR
+#define al_derror(...) al_debugmessage("ALD[ERR]", __VA_ARGS__)
 #else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
+#define al_derror(...)
 #endif
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+#ifdef CONFIG_AL_DEBUG_WRN
+#define al_dwarn(...) al_debugmessage("ALD[WRN]", __VA_ARGS__)
+#else
+#define al_dwarn(...)
+#endif
+
+#ifdef CONFIG_AL_DEBUG_DBG
+#define al_ddebug(...) { al_debugmessage("ALD[DBG]", __VA_ARGS__); \
+                         usleep(100 * 1000); }
+#else
+#define al_ddebug(...)
+#endif
+
+#ifdef CONFIG_AL_DEBUG_INF
+#define al_dinfo(...) al_debugmessage("ALD[INF]", __VA_ARGS__)
+#else
+#define al_dinfo(...)
+#endif
+
+#endif /* __INCLUDE_AUDIOLITE_DEBUG_H */

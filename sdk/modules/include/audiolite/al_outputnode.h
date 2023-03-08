@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_inputnode.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,69 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_OUTPUTNODE_H
+#define __INCLUDE_AUDIOLITE_OUTPUTNODE_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <mossfw/mossfw_component.h>
+
+#include <audiolite/al_memalloc.h>
+#include <audiolite/al_nodecomm.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Pre-definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+class audiolite_inputnode;
+class audiolite_component;
+class audiolite_outputnode;
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+/****************************************************************************
+ * Class Definitions
+ ****************************************************************************/
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+/****************************************************************************
+ * class: audiolite_outputnode
+ ****************************************************************************/
+
+class audiolite_outputnode
+{
+  private:
+    audiolite_component *_component;
+    audiolite_inputnode *_binded;
+    audiolite_nodecomm _comm;
+    mossfw_output_t *_output;
+    mossfw_lock_t _lock;
+
+  public:
+    audiolite_outputnode(audiolite_component *cmp);
+    ~audiolite_outputnode();
+
+    int bind(audiolite_inputnode *in);
+    int unbind(audiolite_inputnode *in);
+    int unbind();
+    bool can_breakdata();
+    int push_data(audiolite_mem *mem);
+    int fanout();
+
+  friend class audiolite_component;
+  friend int audiolite_start(audiolite_outputnode *node);
+  friend void audiolite_stop(audiolite_outputnode *node);
+  friend void audiolite_reflesh(audiolite_outputnode *node);
+  friend int audiolite_start(audiolite_inputnode *node);
+  friend void audiolite_stop(audiolite_inputnode *node);
+  friend void audiolite_reflesh(audiolite_inputnode *node);
+};
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+int audiolite_start(audiolite_outputnode *node);
+void audiolite_stop(audiolite_outputnode *node);
+void audiolite_reflesh(audiolite_outputnode *node);
+
+#endif /* __INCLUDE_AUDIOLITE_OUTPUTNODE_H */

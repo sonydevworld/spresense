@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_decoder.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,59 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_DECODER_H
+#define __INCLUDE_AUDIOLITE_DECODER_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <audiolite/al_source.h>
+#include <audiolite/al_stream.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_decoder
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_decoder : public audiolite_source
+{
+  protected:
+    audiolite_stream *_stream;
+    int _prio;
+    int _stacksz;
+    mossfw_thread_t _tid;
+    const char *_tname;
+    volatile bool _isplay;
+    volatile bool _ispause;
+    volatile bool _is_thrdrun;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    int start_thread(const char *name);
+    void stop_thread();
+    virtual void decode_runner() = 0;
+
+    static void *inject_worker(void *arg);
+
+  public:
+    audiolite_decoder(const char *name,
+                      int prio = -1, int stack_sz = -1);
+    ~audiolite_decoder();
+
+    int start();
+    void stop();
+    void pause();
+    int resume();
+
+    virtual int start_decode() = 0;
+    virtual int stop_decode() = 0;
+    virtual int pause_decode() = 0;
+    virtual int resume_decode() = 0;
+
+    void set_stream(audiolite_stream *st) { _stream = st; };
+};
+
+#endif  /* __INCLUDE_AUDIOLITE_DECODER_H */

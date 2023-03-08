@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_mp3dec.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,54 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_MP3DEC_H
+#define __INCLUDE_AUDIOLITE_MP3DEC_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <audiolite/al_worker.h>
+#include <audiolite/al_decoder.h>
+#include <audiolite/al_memalloc.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_mp3dec
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_mp3dec : public audiolite_decoder
+{
+  private:
+    audiolite_mempoolapbuf *_omempool;
+    audiolite_worker _worker;
+    audiolite_workermemq _inq;
+    audiolite_workermemq _outq;
+    bool _frame_eof;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    static int handle_mesage(al_comm_msghdr_t hdr,
+                             al_comm_msgopt_t *opt, void *arg);
+
+  protected:
+    void decode_runner();
+
+  public:
+    audiolite_mp3dec();
+    ~audiolite_mp3dec();
+
+    int start_decode();
+    int stop_decode();
+    int pause_decode() { return OK; };
+    int resume_decode() { return OK; };
+
+    void set_outputmempool(audiolite_mempoolapbuf *pool)
+    {
+      _omempool = pool;
+    }
+};
+
+#endif /* __INCLUDE_AUDIOLITE_MP3DEC_H */

@@ -38,12 +38,14 @@
  ****************************************************************************/
 
 #include "sprmp3_sendback.h"
-#include "alworker_comm.h"
+#include "audiolite/alworker_comm.h"
 #include "minimp3_spresense.h"
 
 #ifdef SPRMP3_DEBUG
 #include "sprmp3_debug.h"
 #endif
+
+extern al_wtask_t g_mp3dec_task;
 
 /****************************************************************************
  * Public Functions
@@ -61,11 +63,12 @@ int send_frameinfo(int id, mp3dec_frame_info_t *info)
   hdr.code = AL_COMM_MSGCODEINST_INFO;
   hdr.opt  = id;
 
-  opt.chs = info->channels;
-  opt.hz = info->hz;
-  opt.mode = 0;
+  opt.dec_chs = info->channels;
+  opt.dec_hz = info->hz;
+  opt.dec_layer = info->layer;
+  opt.dec_kbps = info->bitrate_kbps;
 
-  return al_send_message(hdr, &opt);
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
 }
 
 /*** name: send_framedone */
@@ -84,7 +87,7 @@ int send_framedone(int id)
   sprmp3_dprintf("[MSG] FrameDone:%d\n", id);
 #endif
 
-  return al_send_message(hdr, &opt);
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
 }
 
 /*** name: send_errormsg */
@@ -96,7 +99,7 @@ int send_errormsg(int id, int errcode)
 
   hdr.grp  = AL_COMM_MESSAGE_SYS;
   hdr.type = AL_COMM_MSGTYPE_ASYNC;
-  hdr.code = AL_COMM_MSGCODESYS_BOOT;
+  hdr.code = AL_COMM_MSGCODESYS_ERR;
   hdr.opt  = id;
 
   opt.errcode = errcode;
@@ -105,7 +108,7 @@ int send_errormsg(int id, int errcode)
   sprmp3_dprintf("[MSG] Error on %d err:%d\n", id, errcode);
 #endif
 
-  return al_send_message(hdr, &opt);
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
 }
 
 /*** name: send_bootmsg */
@@ -118,13 +121,13 @@ int send_bootmsg(void)
   hdr.grp  = AL_COMM_MESSAGE_SYS;
   hdr.type = AL_COMM_MSGTYPE_ASYNC;
   hdr.code = AL_COMM_MSGCODESYS_BOOT;
-  hdr.opt  = AL_COMM_MSGCODEERR_OK;
+  hdr.opt  = AL_WORKER_VERSION_0;
 
 #ifdef SPRMP3_DEBUG
   sprmp3_dprintf("[MSG] BootUp\n");
 #endif
 
-  return al_send_message(hdr, &opt);
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
 }
 
 /*** name: release_framemem */
@@ -153,7 +156,7 @@ int release_framemem(int id, sprmp3_fmemqueue_t *queue)
                   id, mem->size, opt.eof ? "EOF" : "");
 #endif
 
-  return al_send_message(hdr, &opt);
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
 }
 
 /*** name: deliver_outpcm */
@@ -186,7 +189,7 @@ int deliver_outpcm(sprmp3_outmemqueue_t *outq)
       sprmp3_dprintf("[MSG] PCMmemFree sz:%d\n", opt.size);
 #endif
 
-      return al_send_message(hdr, &opt);
+      return al_send_message(&g_mp3dec_task, hdr, &opt);
     }
 
   return ERROR;

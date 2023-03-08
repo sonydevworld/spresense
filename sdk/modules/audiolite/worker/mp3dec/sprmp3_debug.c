@@ -176,7 +176,8 @@ void print_buffer_status(sprmp3_sys_t *sys)
       printf("+----+\n");
       printf("|    |\n");
       printf("|FCas|<- used:%d\n", inst->fcache.usedsize);
-      printf("|    |<- fill:%d\n", inst->fcache.fillsize);
+      printf("| %c  |<- fill:%d\n", inst->fcache.eof ? 'E' : ' ',
+                                    inst->fcache.fillsize);
       printf("+----+ sz:%d\n", inst->fcache.size);
       printf("+----+\n");
       printf("|    |\n");

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_wavdec.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,43 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_WAVDEC_H
+#define __INCLUDE_AUDIOLITE_WAVDEC_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <audiolite/al_decoder.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_wavdec
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_wavdec : public audiolite_decoder
+{
+  private:
+    int _chnum;
+    int _bitlen;
+    int _samplerate;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    void decode_runner();
+    int parse_wavhdr();
+
+  public:
+    audiolite_wavdec() : audiolite_decoder("wavdec"),
+                         _chnum(-1), _bitlen(-1), _samplerate(-1) {};
+    ~audiolite_wavdec(){};
+
+    int start_decode();
+    int stop_decode() { return OK; };
+    int pause_decode() { return OK; };
+    int resume_decode() { return OK; };
+};
+
+#endif /* __INCLUDE_AUDIOLITE_WAVDEC_H */

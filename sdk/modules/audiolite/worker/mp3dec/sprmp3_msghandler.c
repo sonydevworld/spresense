@@ -41,7 +41,7 @@
 #include <queue.h>
 
 #include "minimp3_spresense.h"
-#include "alworker_comm.h"
+#include "audiolite/alworker_comm.h"
 
 #include "sprmp3_msghandler.h"
 #include "sprmp3_sendback.h"
@@ -49,6 +49,12 @@
 #ifdef SPRMP3_DEBUG
 #include "sprmp3_debug.h"
 #endif
+
+/****************************************************************************
+ * Public Data
+ ****************************************************************************/
+
+al_wtask_t g_mp3dec_task;
 
 /****************************************************************************
  * Private functions
@@ -146,7 +152,7 @@ static void handle_system_msg(sprmp3_sys_t *sys,
   if (hdr.type == AL_COMM_MSGTYPE_SYNC)
     {
       hdr.opt = retcode;
-      al_send_message(hdr, opt);
+      al_send_message(&g_mp3dec_task, hdr, opt);
     }
 }
 
@@ -189,7 +195,7 @@ static void handle_outpcm_msg(sprmp3_sys_t *sys,
   if (ret != AL_COMM_MSGCODEERR_OK)
     {
       hdr.opt = ret;
-      al_send_message(hdr, opt);
+      al_send_message(&g_mp3dec_task, hdr, opt);
     }
 }
 
@@ -209,7 +215,7 @@ static void handle_framemem_msg(sprmp3_sys_t *sys,
         {
           inst = &sys->insts[hdr.opt];
 
-          if (opt->addr && opt->size > 0)
+          if (opt->addr && opt->size >= 0)
             {
               memblk = (sprmp3_fmemcont_t *)sq_remfirst(&inst->fqueue.free);
               if (memblk)
@@ -242,7 +248,7 @@ static void handle_framemem_msg(sprmp3_sys_t *sys,
   if (ret != AL_COMM_MSGCODEERR_OK)
     {
       hdr.opt = ret;
-      al_send_message(hdr, opt);
+      al_send_message(&g_mp3dec_task, hdr, opt);
     }
 }
 
@@ -270,7 +276,7 @@ static void handle_instance_msg(sprmp3_sys_t *sys,
 
           case AL_COMM_MSGCODEINST_STOP:
             hdr.opt = sq_count(&inst->fqueue.queued);
-            al_send_message(hdr, opt);
+            al_send_message(&g_mp3dec_task, hdr, opt);
             reset_instance(inst);
             break;
 
@@ -291,7 +297,7 @@ static void handle_instance_msg(sprmp3_sys_t *sys,
   if (ret != AL_COMM_MSGCODEERR_OK)
     {
       opt->errcode = ret;
-      al_send_message(hdr, opt);
+      al_send_message(&g_mp3dec_task, hdr, opt);
     }
 }
 
@@ -321,7 +327,7 @@ static void handle_message(sprmp3_sys_t *sys,
 
       default:
         hdr.opt = AL_COMM_MSGCODEERR_UNKNOWN;
-        al_send_message(hdr, opt);
+        al_send_message(&g_mp3dec_task, hdr, opt);
         break;
     }
 }
@@ -334,7 +340,7 @@ static void handle_message(sprmp3_sys_t *sys,
 
 int sprmp3_initmsgloop(void)
 {
-  return initialize_alworker("");
+  return initialize_alworker(&g_mp3dec_task, "", false);
 }
 
 /*** name: sprmp3_pollmessage */
@@ -346,7 +352,7 @@ void sprmp3_pollmessage(sprmp3_sys_t *sys, int block)
 
   do
     {
-      hdr = al_receive_message(&opt, block);
+      hdr = al_receive_message(&g_mp3dec_task, &opt, block);
       if (hdr.u32 != AL_COMM_NO_MSG)
         {
           handle_message(sys, hdr, &opt);

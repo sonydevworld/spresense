@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_source.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,44 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_SOURCE_H
+#define __INCLUDE_AUDIOLITE_SOURCE_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <audiolite/al_component.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_source
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_source : public audiolite_component
+{
+  public:
+    audiolite_source(int inputnum = 1,
+                     int outputnum = 1,
+                     int depth = 4,
+                     bool is_sync = true,
+                     int prio = -1,
+                     int stack_sz = -1)
+          : audiolite_component(inputnum, outputnum, depth,
+                                is_sync, prio, stack_sz)
+    {
+    };
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    virtual ~audiolite_source(){};
+
+    virtual int start() = 0;
+    virtual void stop() = 0;
+    virtual void pause() = 0;
+    virtual int resume() = 0;
+};
+
+#endif /* __INCLUDE_AUDIOLITE_SOURCE_H */

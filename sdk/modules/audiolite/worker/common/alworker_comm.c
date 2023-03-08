@@ -44,55 +44,23 @@
 #include <asmp/mpmq.h>
 #include <asmp/mpshm.h>
 
-#ifdef BUILD_TGT_SUPERVISOR
-#  include <stdio.h>
+#ifndef BUILD_TGT_ASMPWORKER
 #  include <asmp/mptask.h>
 #endif
 
 #include "almsgq_name.h"
-#include "alworker_comm.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define MSGBUF_DEPTH_POW  (4)
-#define MSGBUF_DEPTH      (1 << MSGBUF_DEPTH_POW)
-
-/****************************************************************************
- * Private Types
- ****************************************************************************/
-
-struct msg_s
-{
-  al_comm_msghdr_t hdr;
-  al_comm_msgopt_t opt;
-};
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-#ifdef BUILD_TGT_SUPERVISOR
-static mptask_t g_mp3task = {0};
-#endif
-
-static mpmq_t g_mqsend = {0};
-static mpmq_t g_mqrecv = {0};
+#include "audiolite/alworker_comm.h"
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
-static struct msg_s *get_send_msgbody(void)
+static struct al_msg_s *get_send_msgbody(al_wtask_t *inst)
 {
-  static struct msg_s msg[MSGBUF_DEPTH];
-  static int msg_index = 0;
+  struct al_msg_s *ret = &inst->msg[inst->msg_index];
 
-  struct msg_s *ret = &msg[msg_index];
-
-  msg_index++;
-  msg_index &= (MSGBUF_DEPTH - 1);
+  inst->msg_index++;
+  inst->msg_index &= (AL_MSGBUF_DEPTH - 1);
 
   return ret;
 }
@@ -111,71 +79,76 @@ void *alworker_addr_convert(void *a)
 
 /** initialize_alworker() */
 
-int initialize_alworker(char *dspfname)
+int initialize_alworker(al_wtask_t *inst, const char *dspfname, bool is_spk)
 {
+  int ret;
+  key_t key = AL_COMM_MQ_NAMESEND;
   cpuid_t cid = 0;
 
-#ifdef BUILD_TGT_SUPERVISOR
-  if (mptask_init(&g_mp3task, dspfname) < 0)
+  memset(inst, 0, sizeof(al_wtask_t));
+
+#ifndef BUILD_TGT_ASMPWORKER
+  if (is_spk)
     {
-      return AL_COMM_ERR_WORKERINIT;
+      ret = mptask_init_secure(&inst->wtask, dspfname);
+      if (ret < 0)
+        {
+          return AL_COMM_ERR_WORKERINIT;
+        }
+    }
+  else
+    {
+      ret = mptask_init(&inst->wtask, dspfname);
+      if (ret < 0)
+        {
+          return AL_COMM_ERR_WORKERINIT;
+        }
     }
 
-  if (mptask_assign(&g_mp3task) < 0)
+  if (mptask_assign(&inst->wtask) < 0)
     {
-      mptask_destroy(&g_mp3task, false, NULL);
+      mptask_destroy(&inst->wtask, false, NULL);
       return AL_COMM_ERR_WORKERASSIGN;
     }
 
-  cid = mptask_getcpuid(&g_mp3task);
-#else
-  (void)dspfname;
+  cid = mptask_getcpuid(&inst->wtask);
 #endif
 
   /* Initialize MP message queue,
-   * On the worker side, 3rd argument is ignored.
+   * If worker is used in spk format,
+   * key and cid must be fixed values.
    */
 
-  if (mpmq_init(&g_mqsend, AL_COMM_MQ_NAMESEND, cid) < 0)
+#if defined(BUILD_TGT_ASMPWORKER) && defined(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_SPK)
+      key = 0;
+      cid = 2;
+#endif
+
+  if (mpmq_init(&inst->mqsend, key, cid) < 0)
     {
-#ifdef BUILD_TGT_SUPERVISOR
-      mptask_destroy(&g_mp3task, false, NULL);
+#ifndef BUILD_TGT_ASMPWORKER
+      mptask_destroy(&inst->wtask, false, NULL);
 #endif
       return AL_COMM_ERR_SENDMQCREATE;
     }
 
-#ifdef BUILD_TGT_SUPERVISOR
-  if (mptask_bindobj(&g_mp3task, &g_mqsend) < 0)
+#ifndef BUILD_TGT_ASMPWORKER
+  if (!is_spk)
     {
-      mptask_destroy(&g_mp3task, false, NULL);
-      mpmq_destroy(&g_mqsend);
-      return AL_COMM_ERR_SENDMQBIND;
+      if (mptask_bindobj(&inst->wtask, &inst->mqsend) < 0)
+        {
+          mptask_destroy(&inst->wtask, false, NULL);
+          mpmq_destroy(&inst->mqsend);
+          return AL_COMM_ERR_SENDMQBIND;
+        }
     }
 #endif
 
-  if (mpmq_init(&g_mqrecv, AL_COMM_MQ_NAMERECV, cid) < 0)
+#ifndef BUILD_TGT_ASMPWORKER
+  if (mptask_exec(&inst->wtask) < 0)
     {
-#ifdef BUILD_TGT_SUPERVISOR
-      mptask_destroy(&g_mp3task, false, NULL);
-#endif
-      mpmq_destroy(&g_mqsend);
-      return AL_COMM_ERR_RECVMQCREATE;
-    }
-
-#ifdef BUILD_TGT_SUPERVISOR
-  if (mptask_bindobj(&g_mp3task, &g_mqrecv) < 0)
-    {
-      mptask_destroy(&g_mp3task, false, NULL);
-      mpmq_destroy(&g_mqsend);
-      mpmq_destroy(&g_mqrecv);
-      return AL_COMM_ERR_SENDMQBIND;
-    }
-
-  if (mptask_exec(&g_mp3task) < 0)
-    {
-      mptask_destroy(&g_mp3task, false, NULL);
-      mpmq_destroy(&g_mqsend);
-      mpmq_destroy(&g_mqrecv);
+      mptask_destroy(&inst->wtask, false, NULL);
+      mpmq_destroy(&inst->mqsend);
       return AL_COMM_ERR_EXECWORKER;
     }
 #endif
@@ -183,12 +156,11 @@ int initialize_alworker(char *dspfname)
   return AL_COMM_ERR_SUCCESS;
 }
 
-int finalize_alworker(void)
+int finalize_alworker(al_wtask_t *inst)
 {
-#ifdef BUILD_TGT_SUPERVISOR
-  mptask_destroy(&g_mp3task, false, NULL);
-  mpmq_destroy(&g_mqsend);
-  mpmq_destroy(&g_mqrecv);
+#ifndef BUILD_TGT_ASMPWORKER
+  mpmq_destroy(&inst->mqsend);
+  mptask_destroy(&inst->wtask, true, NULL);
 #endif
 
   return 0;
@@ -196,27 +168,52 @@ int finalize_alworker(void)
 
 /** al_receive_message() */
 
-al_comm_msghdr_t al_receive_message(al_comm_msgopt_t *opt, int block)
+al_comm_msghdr_t al_receive_message(al_wtask_t *inst,
+                                    al_comm_msgopt_t *opt, int block)
 {
   al_comm_msghdr_t hdr;
   uint32_t msgdata;
   int ret;
-  struct msg_s *msg;
+  struct al_msg_s *msg;
 
   hdr.u32 = AL_COMM_NO_MSG;
 
   if (block)
     {
-      ret = mpmq_receive(&g_mqrecv, &msgdata);
+      ret = mpmq_receive(&inst->mqsend, &msgdata);
     }
   else
     {
-      ret = mpmq_tryreceive(&g_mqrecv, &msgdata);
+      ret = mpmq_tryreceive(&inst->mqsend, &msgdata);
     }
 
   if (ret >= 0)
     {
-      msg = (struct msg_s *)msgdata;
+      msg = (struct al_msg_s *)msgdata;
+      hdr.u32 = msg->hdr.u32;
+      memcpy(opt, &msg->opt, sizeof(al_comm_msgopt_t));
+    }
+
+  return hdr;
+}
+
+/** al_receive_messageto() */
+
+al_comm_msghdr_t al_receive_messageto(al_wtask_t *inst,
+                                      al_comm_msgopt_t *opt, int ms)
+{
+  al_comm_msghdr_t hdr;
+  uint32_t msgdata;
+  int ret;
+  struct al_msg_s *msg;
+
+  hdr.u32 = AL_COMM_NO_MSG;
+
+  ret = mpmq_timedreceive(&inst->mqsend, &msgdata, ms);
+
+  if (ret >= 0)
+    {
+      msg = (struct al_msg_s *)msgdata;
       hdr.u32 = msg->hdr.u32;
       memcpy(opt, &msg->opt, sizeof(al_comm_msgopt_t));
     }
@@ -226,12 +223,13 @@ al_comm_msghdr_t al_receive_message(al_comm_msgopt_t *opt, int block)
 
 /** al_send_message() */
 
-int al_send_message(al_comm_msghdr_t hdr, al_comm_msgopt_t *opt)
+int al_send_message(al_wtask_t *inst,
+                    al_comm_msghdr_t hdr, al_comm_msgopt_t *opt)
 {
-  struct msg_s *msg = alworker_addr_convert(get_send_msgbody());
+  struct al_msg_s *msg = alworker_addr_convert(get_send_msgbody(inst));
 
   msg->hdr.u32 = hdr.u32;
   memcpy(&msg->opt, opt, sizeof(al_comm_msgopt_t));
 
-  return mpmq_send(&g_mqsend, msg->hdr.type, (uint32_t)msg);
+  return mpmq_send(&inst->mqsend, msg->hdr.type, (uint32_t)msg);
 }

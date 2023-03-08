@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_inputcomp.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,63 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_INPUT_COMPONENT_H
+#define __INCLUDE_AUDIOLITE_INPUT_COMPONENT_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <audiolite/al_source.h>
+#include <audiolite/al_audiodrv.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_component
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_inputcomp : public audiolite_source,
+                            public audiolite_drvlistener
+{
+  private:
+    mossfw_thread_t _tid;
+    volatile bool _is_running;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    int start_thread();
+    static void *inject_worker(void *arg);
+
+  public:
+    audiolite_inputcomp();
+    ~audiolite_inputcomp();
+
+  /* Inherited member functions from audiolite_component */
+
+    int on_starting(audiolite_inputnode *inode,
+                    audiolite_outputnode *onode);
+    void on_started(audiolite_inputnode *inode,
+                    audiolite_outputnode *onode);
+    void on_canceled(audiolite_inputnode *inode,
+                     audiolite_outputnode *onode);
+    void on_stop(audiolite_inputnode *inode,
+                 audiolite_outputnode *onode);
+
+  /* Inherited member functions from audiolite_drvlistener */
+
+    void on_pusheddata(FAR struct ap_buffer_s *apb){/* Never happened. */};
+    void on_stopped(void);
+    void on_underflowed(void){ /* Never happened. */ };
+    void on_popeddata(struct ap_buffer_s *apb);
+    void on_overflowed(void);
+
+  /* Inherited member functions from audiolite_source */
+
+    int start();
+    void stop();
+    void pause();
+    int resume();
+};
+
+#endif /* __INCLUDE_AUDIOLITE_INPUT_COMPONENT_H */

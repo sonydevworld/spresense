@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/include/alworker_comm.h
+ * modules/include/audiolite/alworker_comm.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -41,6 +41,14 @@
  ****************************************************************************/
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#ifndef __linux__
+#include <asmp/mpmq.h>
+#ifndef BUILD_TGT_ASMPWORKER
+#  include <asmp/mptask.h>
+#endif
+#endif
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -63,7 +71,8 @@
 #define AL_COMM_MSGCODESYS_BOOT  (4)
 #define AL_COMM_MSGCODESYS_TERM  (5)
 #define AL_COMM_MSGCODESYS_PARAM (6)
-#define AL_COMM_MSGCODESYS_DBG   (7)
+#define AL_COMM_MSGCODESYS_ERR   (7)
+#define AL_COMM_MSGCODESYS_DBG   (8)
 
 #define AL_COMM_MSGCODEINST_NONE  (0)
 #define AL_COMM_MSGCODEINST_START (1)
@@ -85,6 +94,7 @@
 #define AL_COMM_MSGCODEERR_OVFLOW        (6)
 #define AL_COMM_MSGCODEERR_INVALIDINST   (7)
 #define AL_COMM_MSGCODEERR_MULTIFRAME    (8)
+#define AL_COMM_MSGCODEERR_UNSUPFRAME    (9)
 
 #define AL_COMM_ERR_SUCCESS      (0)
 #define AL_COMM_ERR_WORKERINIT   (-1)
@@ -94,7 +104,14 @@
 #define AL_COMM_ERR_RECVMQCREATE (-5)
 #define AL_COMM_ERR_EXECWORKER   (-6)
 
+#define AL_WORKER_TYPE_MP3DEC (1)
+
+#define AL_WORKER_VERSION_0 (0)
+
 #define AL_COMM_NO_MSG (0xffffffff)
+
+#define AL_MSGBUF_DEPTH_POW  (4)
+#define AL_MSGBUF_DEPTH      (1 << AL_MSGBUF_DEPTH_POW)
 
 /****************************************************************************
  * Public Types
@@ -130,10 +147,40 @@ union al_comm_msgopt_u
       int hz;
       int mode;
     };
+  struct
+    {
+      int dec_chs;
+      int dec_hz;
+      int dec_layer;
+      int dec_kbps;
+    };
   int errcode;
   float gain;
 };
 typedef union al_comm_msgopt_u al_comm_msgopt_t;
+
+struct al_msg_s
+{
+  al_comm_msghdr_t hdr;
+  al_comm_msgopt_t opt;
+};
+typedef struct al_msg_s al_msg_t;
+
+struct al_wtask_s
+{
+#ifdef __linux__
+  int dmy;
+#else
+#ifndef BUILD_TGT_ASMPWORKER
+  mptask_t wtask;
+  bool is_spk; 
+#endif
+  mpmq_t mqsend;
+  struct al_msg_s msg[AL_MSGBUF_DEPTH];
+  int msg_index;
+#endif
+};
+typedef struct al_wtask_s al_wtask_t;
 
 /****************************************************************************
  * Public Function Prototypes
@@ -144,10 +191,14 @@ extern "C" {
 #endif /* __cplusplus */
 
 void *alworker_addr_convert(void *a);
-int initialize_alworker(char *dspfname);
-al_comm_msghdr_t al_receive_message(al_comm_msgopt_t *opt, int block);
-int al_send_message(al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
-int finalize_alworker(void);
+int initialize_alworker(al_wtask_t *inst, const char *dspfname, bool is_spk);
+al_comm_msghdr_t al_receive_message(al_wtask_t *inst,
+                                    al_comm_msgopt_t *opt, int block);
+al_comm_msghdr_t al_receive_messageto(al_wtask_t *inst,
+                                      al_comm_msgopt_t *opt, int ms);
+int al_send_message(al_wtask_t *inst,
+                    al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
+int finalize_alworker(al_wtask_t *inst);
 
 #ifdef __cplusplus
 }

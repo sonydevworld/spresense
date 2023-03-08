@@ -36,9 +36,32 @@
 -include $(SDKDIR)/modules/Make.defs
 
 MODNAME = audiolite
+CXXEXT = .cxx
 
-ifeq ($(CONFIG_AUDIO_LITE),y)
-CSRCS =  dummy.c
+CXXSRCS  = src/base/al_component.cxx
+CXXSRCS += src/base/al_evthandler.cxx
+CXXSRCS += src/base/al_inputnode.cxx
+CXXSRCS += src/base/al_memalloc.cxx
+CXXSRCS += src/base/al_outputnode.cxx
+CXXSRCS += src/base/al_stream.cxx
+CXXSRCS += src/base/al_decoder.cxx
+CXXSRCS += src/base/al_worker.cxx
+CXXSRCS += src/base/al_workercmd.cxx
+CXXSRCS += src/driver/al_audiodrv.cxx
+CXXSRCS += src/components/al_outputcomp.cxx
+CXXSRCS += src/components/al_inputcomp.cxx
+CXXSRCS += src/components/al_wavdec.cxx
+CXXSRCS += src/components/al_wavenc.cxx
+CXXSRCS += src/components/al_mp3dec.cxx
+
+CSRCS =
+CSRCS += worker/common/alworker_comm.c
+
+CFLAGS += -I include -DBUILD_TGT_SUPERVISOR
+CXXFLAGS += -I include -DBUILD_TGT_SUPERVISOR
+
+ifneq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),)
+CSRCS += dummy.c
 endif
 
 include $(SDKDIR)/modules/Module.mk

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_nodecomm.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,67 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_NODECOMM_H
+#define __INCLUDE_AUDIOLITE_NODECOMM_H
+
+#include <stdlib.h>
 
 /****************************************************************************
- * Included Files
+ * Class Pre-definitions
  ****************************************************************************/
 
-#include <nuttx/config.h>
+class audiolite_inputnode;
+class audiolite_outputnode;
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_nodecomm_if
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_nodecomm_if
+{
+  public:
+    virtual ~audiolite_nodecomm_if(){};
+    virtual int start(audiolite_inputnode *node) = 0;
+    virtual void cancel(audiolite_inputnode *node) = 0;
+    virtual void stop(audiolite_inputnode *node) = 0;
+    virtual int start(audiolite_outputnode *node) = 0;
+    virtual void cancel(audiolite_outputnode *node) = 0;
+    virtual void stop(audiolite_outputnode *node) = 0;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    virtual void reflesh(audiolite_inputnode *node) = 0;
+    virtual void reflesh(audiolite_outputnode *node) = 0;
+};
+
+/****************************************************************************
+ * class: audiolite_nodecomm
+ ****************************************************************************/
+
+class audiolite_nodecomm
+{
+  private:
+    audiolite_nodecomm_if *_if;
+    audiolite_inputnode *_innode;
+    audiolite_outputnode *_outnode;
+
+  public:
+    audiolite_nodecomm(audiolite_nodecomm_if *i, audiolite_inputnode *n)
+        : _if(i), _innode(n), _outnode(NULL) {};
+    audiolite_nodecomm(audiolite_nodecomm_if *i, audiolite_outputnode *n)
+        : _if(i), _innode(NULL), _outnode(n) {};
+
+    int start(){ if (_if) return _if->start(_innode); return 0;};
+    void cancel(){ _if->cancel(_innode); };
+    void stop(){ _if->stop(_innode); };
+    void reflesh(){ _if->reflesh(_innode); };
+
+    int rstart(){ if (_if) return _if->start(_outnode); return 0;};
+    void rcancel(){ if (_if) _if->cancel(_outnode); };
+    void rstop(){ if (_if) _if->stop(_outnode); };
+    void rreflesh(){ if (_if) _if->reflesh(_outnode); };
+};
+
+#endif /* __INCLUDE_AUDIOLITE_NODECOMM_H */

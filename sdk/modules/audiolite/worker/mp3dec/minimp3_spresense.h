@@ -44,6 +44,8 @@
 #include <stdbool.h>
 #include <queue.h>
 
+#include <audiolite/sprmp3dec_qsize.h>
+
 #include "speex_resampler.h"
 #include "minimp3.h"
 #include "minimp3_ex.h"
@@ -51,9 +53,6 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-#define SPRMP3_FRAMEMEM_QSIZE (8)
-#define SPRMP3_OUTMEM_QSIZE   (8)
 
 /* SPRMP3_MAX_INSTANCE:
  *  MP3 stream decoding instance number.
