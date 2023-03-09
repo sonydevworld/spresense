@@ -1351,40 +1351,6 @@ void onTxComplete(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   memcpy(pBleEvent->evtData, &commMem.txCompleteData, pBleEvent->evtDataSize);
 }
 
-static void onConnect_hal(void)
-{
-  struct bt_event_conn_stat_t con_stat_evt;
-
-  #ifdef BLE_DBGPRT_ENABLE
-  uint8_t connect = 0;
-  uint8_t type = 0;
-  uint8_t reason = 0;
-  #endif
-  /* Copy device address */
-
-  memcpy(&con_stat_evt.addr, commMem.connectData.addr.addr, sizeof(BT_ADDR));
-
-  /* Copy connect status */
-
-  con_stat_evt.connected = true;
-
-  /* Copy type */
-//   type = commMem.connectData.addr.type;
-//   con_stat_evt.status = reason;
-
-  con_stat_evt.group_id = BT_GROUP_COMMON;
-  con_stat_evt.event_id = BT_COMMON_EVENT_CONN_STAT_CHANGE;
-
-  BLE_PRT("addr: %02x.%02x.%02x.%02x.%02x,%02x is connect:%d,"
-      "transport type: %x, disconnect reason: %x.\n",
-    con_stat_evt.addr.address[0], con_stat_evt.addr.address[1],
-    con_stat_evt.addr.address[2], con_stat_evt.addr.address[3],
-    con_stat_evt.addr.address[4], con_stat_evt.addr.address[5],
-    connect, type, reason);
-
-  bt_common_event_handler((struct bt_event_t *) &con_stat_evt);
-}
-
 static int searchBondInfoIndex(ble_gap_master_id_t *id)
 {
   int i;
@@ -1444,9 +1410,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   memcpy(commMem.gapMem->wrapperBondInfo.bondInfo.addr, connected->peer_addr.addr, BLE_GAP_ADDR_LENGTH);
   pBleEvent->evtDataSize = sizeof(BLE_EvtConnected);
   memcpy(pBleEvent->evtData, &commMem.connectData, pBleEvent->evtDataSize);
-
-  //notify to hal layer
-  onConnect_hal();
 
   on_connected((BLE_EvtConnected*)pBleEvent->evtData);
 }
