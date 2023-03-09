@@ -516,6 +516,7 @@ bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
   FAR FILE *fp_org = fopen(file_name_org, "r");
   if (fp_org == NULL)
     {
+      fclose(fp_org);
       return false;
     }
 
@@ -581,8 +582,15 @@ bool Playlist::updateTrackDb(const char *audiofile_root_path)
 
   /* Reopen track database with write mode. */
 
-  this->close();
-  this->open("w");
+  if(this->close())
+    {
+      return false;
+    }
+
+  if(!this->open("w"))
+    {
+      return false;
+    }
 
   FAR DIR *dir_descriptor = opendir(audiofile_root_path);
   if (dir_descriptor == NULL)
@@ -658,8 +666,16 @@ bool Playlist::updateTrackDb(const char *audiofile_root_path)
 
   /* Reopen track database with read mode. */
 
-  this->close();
-  this->open("r");
+  if(this->close())
+    {
+      return false;
+    }
+
+  if(!this->open("r"))
+    {
+      return false;
+    }
+
 
   /* Delete all playlist. */
 
