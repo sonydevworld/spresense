@@ -54,13 +54,8 @@ TOOLCHAINSUM_linux_x86_64=2383e4eb4ea23f248d33adc70dc3227e
 TOOLCHAINSUM_linux_aarch64=3fe3d8bb693bd0a6e4615b6569443d0d
 
 OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
-OPENOCDRELEASE=v0.10.0-spr1
-OPENOCDVERDATE=openocd-0.10.0-spr1-20191113
-
-# This variable takes from openocd binary. Please check "openocd -v" and update if needed.
-# Open On-Chip Debugger 0.10.0+dev-00948-g7542ae67 (2019-11-25-05:46)
-#                                  ^^^^^
-OPENOCDREV=00948
+OPENOCDRELEASE=v0.12.0-spr1
+OPENOCDVERDATE=openocd-0.12.0-spr1-20230307
 
 VERBOSE=
 
@@ -247,24 +242,7 @@ mac_install_toolchain()
 
 wsl_install_toolchain()
 {
-    # XXX: We need to both of linux and windows toolschains for different purpose,
-    # linux toolchain to use build, windows toolchain is only use gdb from IDE.
-
     linux_install_toolchain
-    win_install_toolchain ${SPRROOT}/windows
-}
-
-openocd_need_update()
-{
-    local _target=${1:-${SPRROOT}/usr}
-
-    [ -e ${_target}/bin/openocd ] || return 0
-
-    local _rev=`${_target}/bin/openocd 2>&1 | head -n1 | sed -e 's/.*dev-\([0-9]*\)-.*/\1/'`
-
-    # Test if unknown revision or revision less than OPENOCDREV
-    [ -z "${_rev}" ] || [ "${_rev}" -lt "${OPENOCDREV}" ] && return 0
-    return 1
 }
 
 linux_install_openocd()
@@ -272,8 +250,6 @@ linux_install_openocd()
     local _fn=${OPENOCDVERDATE}
     local _sha
     local _target=${1:-${SPRROOT}/usr}
-
-    openocd_need_update $_target || return
 
     local _mach=`uname -m 2>/dev/null`
 
@@ -298,8 +274,6 @@ win_install_openocd()
     local _sha=${_fn}.sha
     local _target=${1:-${SPRROOT}/usr}
 
-    openocd_need_update $_target || return
-	
     if [ "`uname -m 2>/dev/null`" = "x86_64" ]; then
         _fn=${_fn}-win64.zip
     else
@@ -317,6 +291,7 @@ win_install_openocd()
     # and move from appropriate directory level to SPRROOT.
 
     run_progress unzip -o  ${_fn}
+    mkdir -p ${_target}
     cp -ar "${OPENOCDVERDATE}/"* ${_target} || exit 1
     rm -rf "${OPENOCDVERDATE}"
 }
@@ -326,8 +301,6 @@ mac_install_openocd()
     local _fn=${OPENOCDVERDATE}-macosx.tar.bz2
     local _sha=${_fn}.sha
     local _target=${1:-${SPRROOT}/usr}
-
-    openocd_need_update $_target || return
 
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_fn} ${_fn}
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_sha} ${_sha}
