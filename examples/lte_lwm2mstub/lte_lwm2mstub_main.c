@@ -64,12 +64,13 @@
 
 #define OBJID_DATACONTAINER  (19)
 #define APP_INIFILE "/mnt/spif/lwm2m.ini"
+#define LWM2M_TMP_BUFF_LEN   (16)
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static char tmp_buff[256];
+static char tmp_buff[LWM2M_TMP_BUFF_LEN];
 static uint16_t enableobjs[6] =
 {
   1, 2, 3, 4, 5, OBJID_DATACONTAINER
@@ -154,7 +155,7 @@ static void read_cb(int seq_no, int srv_id,
 
   if (inst->object_id == OBJID_DATACONTAINER && inst->res_id == 0)
     {
-      len = sprintf(tmp_buff, "%08x", periodic_value);
+      len = snprintf(tmp_buff, LWM2M_TMP_BUFF_LEN, "%08x", periodic_value);
       lte_m2m_readresponse(seq_no, inst,
                            LWM2MSTUB_RESP_CONTENT, tmp_buff, len);
     }
@@ -397,7 +398,7 @@ static void notify_value(int value)
   inst.res_id = 0;
   inst.res_inst = -1;
 
-  len = sprintf(tmp_buff, "%08x", value);
+  len = snprintf(tmp_buff, LWM2M_TMP_BUFF_LEN, "%08x", value);
   printf("Update value as : token: %s, /%d/0/0 %s\n",
                                       ov_token, OBJID_DATACONTAINER, tmp_buff);
   printf("observe update : %d\n",
