@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <bluetooth/bt_common.h>
 #include <bluetooth/ble_gatt.h>
 #include <bluetooth/hal/bt_if.h>
@@ -51,6 +52,7 @@
 
 #define BLE_UUID_SDS_SERVICE_IN  0x3802
 #define BLE_UUID_SDS_CHAR_IN     0x4a02
+#define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
 
 /****************************************************************************
  * Private Function Prototypes
@@ -74,6 +76,18 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len);
 /* MTU size callback */
 
 static void on_mtusize(uint16_t handle, uint16_t sz);
+
+/* Save bonding information */
+
+static void on_savebond(int num, struct ble_bondinfo_s *bond);
+
+/* Load bonding information */
+
+static int on_loadbond(int num, struct ble_bondinfo_s *bond);
+
+/* Encryption result */
+
+static void encryption_result(uint16_t handle, bool result);
 
 /* BLE GATT callbacks */
 
@@ -116,6 +130,9 @@ static struct ble_common_ops_s ble_common_ops =
     .connected_device_name_resp = on_connected_device_nameresp,
     .scan_result                = on_scan_result,
     .mtusize                    = on_mtusize,
+    .save_bondinfo              = on_savebond,
+    .load_bondinfo              = on_loadbond,
+    .encryption_result          = encryption_result,
   };
 
 static struct ble_gatt_central_ops_s ble_gatt_central_ops =
@@ -132,6 +149,9 @@ static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}}
 
 static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
 static struct ble_state_s *s_ble_state = NULL;
+
+static int g_ble_bonded_device_num;
+static struct ble_cccd_s **g_cccd = NULL;
 
 /****************************************************************************
  * Private Functions
@@ -220,6 +240,149 @@ static void on_mtusize(uint16_t handle, uint16_t sz)
 {
   printf("mtusize = %d\n", sz);
   ble_start_db_discovery(s_ble_state->ble_connect_handle);
+}
+
+static void encryption_result(uint16_t handle, bool result)
+{
+  printf("Encryption result(connection handle = %d) : %s\n",
+         handle, (result) ? "Success" : "Fail");
+}
+
+static void on_savebond(int num, struct ble_bondinfo_s *bond)
+{
+  int i;
+  FILE *fp;
+  int sz;
+
+  /* In this example, save the parameter `num` and each members of
+   * the parameter `bond` in order to the file.
+   */
+
+  fp = fopen(BONDINFO_FILENAME, "wb");
+  if (fp == NULL)
+    {
+      printf("Error: could not create file %s\n", BONDINFO_FILENAME);
+      return;
+    }
+
+  fwrite(&num, 1, sizeof(int), fp);
+
+  for (i = 0; i < num; i++)
+    {
+      fwrite(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+
+      /* Because only cccd is pointer member, save it individually. */
+
+      sz = bond[i].cccd_num * sizeof(struct ble_cccd_s);
+      fwrite(bond[i].cccd, 1, sz, fp);
+    }
+
+  fclose(fp);
+}
+
+static int on_loadbond(int num, struct ble_bondinfo_s *bond)
+{
+  int i;
+  FILE *fp;
+  int stored_num;
+  int sz;
+  size_t ret;
+
+  fp = fopen(BONDINFO_FILENAME, "rb");
+  if (fp == NULL)
+    {
+      return 0;
+    }
+
+  ret = fread(&stored_num, 1, sizeof(int), fp);
+  if (ret != sizeof(int))
+    {
+      printf("Error: could not load due to %s read error.\n",
+             BONDINFO_FILENAME);
+      fclose(fp);
+      return 0;
+    }
+
+  g_ble_bonded_device_num = (stored_num < num) ? stored_num : num;
+  sz = g_ble_bonded_device_num * sizeof(struct ble_cccd_s *);
+  g_cccd = (struct ble_cccd_s **)malloc(sz);
+  if (g_cccd == NULL)
+    {
+      printf("Error: could not load due to malloc error.\n");
+      g_ble_bonded_device_num = 0;
+    }
+
+  for (i = 0; i < g_ble_bonded_device_num; i++)
+    {
+      ret = fread(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+      if (ret != sizeof(struct ble_bondinfo_s))
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      if (bond[i].cccd_num > 1)
+        {
+          printf("Error: could not load all data due to invalid data.\n");
+          printf("cccd_num does not exceed the number of characteristics\n");
+          printf("that is set by this application.\n");
+          printf("The number of loaded device is %d\n", i);
+
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      /* Because only cccd is pointer member, load it individually. */
+
+      sz = bond[i].cccd_num * sizeof(struct ble_cccd_s);
+      g_cccd[i] = (struct ble_cccd_s *)malloc(sz);
+
+      if (g_cccd[i] == NULL)
+        {
+          printf("Error: could not load all data due to malloc error.");
+          printf("The number of loaded device is %d\n", i);
+
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      bond[i].cccd = g_cccd[i];
+      ret = fread(bond[i].cccd, 1, sz, fp);
+      if (ret != sz)
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
+    }
+
+  fclose(fp);
+
+  return g_ble_bonded_device_num;
+}
+
+static void free_cccd(void)
+{
+  int i;
+
+  if (g_cccd)
+    {
+      for (i = 0; i < g_ble_bonded_device_num; i++)
+        {
+          if (g_cccd[i])
+            {
+              free(g_cccd[i]);
+            }
+        }
+
+      free(g_cccd);
+      g_cccd = NULL;
+    }
 }
 
 static void on_write(struct ble_gatt_char_s *ble_gatt_char)
@@ -314,6 +477,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
       ble_continue_db_discovery(s_ble_state->ble_connect_handle,
                                 db_disc->state.end_handle + 1);
     }
+  ble_pairing(s_ble_state->ble_connect_handle);
 }
 
 static void on_descriptor_write(uint16_t conn_handle, uint16_t handle, int result)
@@ -362,6 +526,15 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
+  /* Register BLE common callbacks */
+
+  ret = ble_register_common_cb(&ble_common_ops);
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BLE] Register common call back failed. ret = %d\n", __func__, ret);
+      goto error;
+    }
+
   /* Turn ON BT */
 
   ret = bt_enable();
@@ -371,14 +544,9 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
-  /* Register BLE common callbacks */
+  /* Free memory that is allocated in on_loadbond() callback function. */
 
-  ret = ble_register_common_cb(&ble_common_ops);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BLE] Register common call back failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
+  free_cccd();
 
   /* Register BLE gatt callbacks */
 

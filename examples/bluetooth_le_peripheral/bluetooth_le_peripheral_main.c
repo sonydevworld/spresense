@@ -78,6 +78,14 @@ static void onSaveBondInfo(int num, struct ble_bondinfo_s *bond);
 
 static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond);
 
+/* Negotiated MTU size */
+
+static void onMtuSize(uint16_t handle, uint16_t sz);
+
+/* Encryption result */
+
+static void onEncryptionResult(uint16_t, bool result);
+
 /* BLE GATT callbacks */
 
 /* Write request */
@@ -102,6 +110,8 @@ static struct ble_common_ops_s ble_common_ops =
     .connected_device_name_resp = onConnectedDeviceNameResp,
     .save_bondinfo              = onSaveBondInfo,
     .load_bondinfo              = onLoadBondInfo,
+    .mtusize                    = onMtuSize,
+    .encryption_result          = onEncryptionResult,
   };
 
 static struct ble_gatt_peripheral_ops_s ble_gatt_peripheral_ops =
@@ -286,6 +296,17 @@ static void free_cccd(void)
       free(g_cccd);
       g_cccd = NULL;
     }
+}
+
+static void onMtuSize(uint16_t handle, uint16_t sz)
+{
+  printf("negotiated MTU size(connection handle = %d) : %d\n", handle, sz);
+}
+
+static void onEncryptionResult(uint16_t handle, bool result)
+{
+  printf("Encryption result(connection handle = %d) : %s\n",
+         handle, (result) ? "Success" : "Fail");
 }
 
 static void show_uuid(BLE_UUID *uuid)
