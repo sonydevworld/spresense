@@ -7,3 +7,6 @@
 [submodule "sdk/apps"]
 	path = sdk/apps
 	url = https://github.com/SPRESENSE/nuttx-apps.git
+[submodule "externals/mossfw/mossfw"]
+	path = externals/mossfw/mossfw
+	url = https://github.com/SPRESENSE/mossfw.git
