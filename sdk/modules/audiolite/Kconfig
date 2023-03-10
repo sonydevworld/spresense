@@ -1,0 +1,65 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+#
+
+menu "Audio Lite"
+
+config AUDIO_LITE
+	bool "Simple audio framework"
+	default n
+	---help---
+		This is a simpler audio framework. Provides several audio component,
+		such as audio input, audio output, mp3decorder, which can connect to
+		each others and configure user original audio signal flow easier.
+
+if AUDIO_LITE
+
+config AUDIO_LITE_MP3DEC
+	bool "MP3 Decoder component"
+	default y
+	---help---
+		Enable MP3 decoder component which can decode MP3 frames to PCM data.
+		The decorder core uses minimp3 with customized for Spresense.
+		minimp3 is provided under Creative Common 0 License.
+		Please see https://github.com/lieff/minimp3 for detais.
+
+if AUDIO_LITE_MP3DEC
+
+choice
+	prompt "MP3 Subcore binary selection"
+	default AUDIO_LITE_MP3DEC_SUBCORE_SPK
+	---help---
+		There are 2 options to provide for MP3 sub-core binary.
+		One is a "spk" binary which is contained in firmware.bin. If choose
+		this, user don't need to install other binaries as MP3 decorder,
+		except your own nuttx.spk.
+		The other is an "ELF" file, which is built as sub-core elf in build
+		stage. If choose this, user can modify MP3 decoder by yoreself.
+		But in the mean time, user needs to install the elf file in to flash
+		memory.
+
+config AUDIO_LITE_MP3DEC_SUBCORE_SPK
+	bool "mp3dec.spk"
+
+config AUDIO_LITE_MP3DEC_SUBCORE_ELF
+	bool "mp3dec (ELF file)"
+
+endchoice
+
+config AIDO_LITE_MP3DEC_SUBCORE_ELFNAME
+	string "mp3dec ELF file path"
+	default "/mnt/spif/mp3dec"
+	---help---
+		ELF file path on Spresense. To set mp3dec ELF file path to install, when
+		you choose "mp3dec (ELF file)".
+		If you want to install it in SPI-Flash on spresense main board, set "/mnt/spif/mp3dec".
+		If you want to install it in top directory of SDCard on extention board,
+		set "/mnt/spif/mp3dec".
+
+endif # end of if AUDIO_LITE_MP3DEC
+
+endif # end of if AUDIO_LITE
+
+endmenu
