@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_eventlistner.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,59 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
+#ifndef __INCLUDE_AUDIOLITE_EVENT_LISTENER_H
+#define __INCLUDE_AUDIOLITE_EVENT_LISTENER_H
 
 #include <nuttx/config.h>
+#include <audiolite/al_component.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+#define AL_EVENT_OVERFLOW          (-1)
+#define AL_EVENT_UNDERFLOW         (-2)
+#define AL_EVENT_ILLIGALSTREAM     (-3)
+#define AL_EVENT_UNSUPPORTFMT      (-4)
+#define AL_EVENT_DECODEDONE        (-5)
+#define AL_EVENT_STREAMDONE        (-6)
+#define AL_EVENT_PLAYSTARTED       (-7)
+#define AL_EVENT_PLAYSTOPPED       (-8)
+#define AL_EVENT_RECORDSTARTED     (-9)
+#define AL_EVENT_RECORDSTOPPED     (-10)
+#define AL_EVENT_PLAYPAUSED        (-11)
+#define AL_EVENT_PLAYRESUMED       (-12)
+#define AL_EVENT_RECORDPAUSED      (-13)
+#define AL_EVENT_RECORDRESUMED     (-14)
+#define AL_EVENT_DRVERROR          (-15)
+#define AL_EVENT_INVALIDSYSPARAM   (-16)
+#define AL_EVENT_STOPOUTPUT        (-17)
+#define AL_EVENT_STOPINPUT         (-18)
+#define AL_EVENT_INITERROR         (-19)
+#define AL_EVENT_SENDERROR         (-20)
+#define AL_EVENT_MP3FRAMEINFO      (-21)
+#define AL_EVENT_MP3DECWORKEREND   (-22)
+#define AL_EVENT_MP3DECUNKNOWNEVT  (-23)
+#define AL_EVENT_MP3DECERROR       (-24)
+#define AL_EVENT_MP3DEC_WRONGTYPE  (-25)
+#define AL_EVENT_MP3DEC_WRONGVER   (-26)
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_component;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+/****************************************************************************
+ * Class Definitions
+ ****************************************************************************/
+
+/****************************************************************************
+ * Class: audiolite_eventlistner
+ ****************************************************************************/
+
+class audiolite_eventlistener
+{
+  public:
+    virtual ~audiolite_eventlistener(){};
+    virtual void on_event(int evt, audiolite_component *cmp,
+                                   unsigned long arg){};
+};
+
+#endif  /* __INCLUDE_AUDIOLITE_EVENT_LISTENER_H */

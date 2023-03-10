@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/audiolite.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,35 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_H
+#define __INCLUDE_AUDIOLITE_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <audiolite/al_audiodrv.h>
+#include <audiolite/al_component.h>
+#include <audiolite/al_debug.h>
+#include <audiolite/al_decoder.h>
+#include <audiolite/al_encoder.h>
+#include <audiolite/al_eventlistener.h>
+#include <audiolite/al_evthandler.h>
+#include <audiolite/al_inputcomp.h>
+#include <audiolite/al_inputnode.h>
+#include <audiolite/al_memalloc.h>
+#include <audiolite/al_mp3dec.h>
+#include <audiolite/al_nodecomm.h>
+#include <audiolite/al_outputcomp.h>
+#include <audiolite/al_outputnode.h>
+#include <audiolite/al_source.h>
+#include <audiolite/al_stream.h>
+#include <audiolite/al_wavdec.h>
+#include <audiolite/al_wavenc.h>
+#include <audiolite/al_wavheader.h>
+#include <audiolite/al_worker.h>
+#include <audiolite/al_workercmd.h>
+#include <audiolite/alworker_comm.h>
+#include <audiolite/sprmp3dec_qsize.h>
 
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
-
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
-
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+#endif /* __INCLUDE_AUDIOLITE_H */

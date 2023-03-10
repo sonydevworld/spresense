@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_encoder.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,41 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_ENCODER_H
+#define __INCLUDE_AUDIOLITE_ENCODER_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include <audiolite/al_component.h>
+#include <audiolite/al_stream.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_encoder
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_encoder : public audiolite_component
+{
+  protected:
+    audiolite_stream *_stream;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+  public:
+    audiolite_encoder(const char *name, int prio = -1, int stack_sz = -1)
+      : audiolite_component(1, 0, 4, true, prio, stack_sz), _stream(NULL)
+    {
+      set_operatorname(name);
+    }
+
+    ~audiolite_encoder(){};
+
+    bool can_breakdata(audiolite_outputnode *out) { return true; };
+    void set_stream(audiolite_stream *st) { _stream = st; };
+};
+
+#endif /* __INCLUDE_AUDIOLITE_ENCODER_H */

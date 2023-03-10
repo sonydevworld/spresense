@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_stream.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_STREAM_H
+#define __INCLUDE_AUDIOLITE_STREAM_H
 
 /****************************************************************************
  * Included Files
@@ -42,19 +42,75 @@
 
 #include <nuttx/config.h>
 
+#include <stdio.h>
+
+#include <mossfw/mossfw_lock.h>
+#include <audiolite/al_memalloc.h>
+
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_stream
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_stream
+{
+  public:
+    virtual ~audiolite_stream(){};
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    virtual int rfile(const char *fname) = 0;
+    virtual int wfile(const char *fname) = 0;
+
+    virtual void close() = 0;
+    virtual int filesize() = 0;
+    virtual int seek(int size) = 0;
+    virtual int seekcur(int size) = 0;
+    virtual int seekend(int size) = 0;
+    virtual bool has_file() = 0;
+
+    virtual int read_data(void *data, int sz, int toms) = 0;
+    virtual int write_data(void *data, int sz, int toms) = 0;
+    virtual int receive_data(audiolite_mem *mem, int ofst, int toms) = 0;
+    virtual int send_data(audiolite_mem *mem, int ofst, int toms) = 0;
+};
+
+/****************************************************************************
+ * class: audiolite_filestream
+ ****************************************************************************/
+
+class audiolite_filestream : public audiolite_stream
+{
+  private:
+    FILE *_fp;
+    bool _self_open;
+    mossfw_lock_t _lock;
+
+    int open_file(const char *fname, const char *flg);
+
+  public:
+    audiolite_filestream() : _fp(NULL), _self_open(false)
+    {
+      mossfw_lock_init(&_lock);
+    };
+    ~audiolite_filestream();
+
+    int rfile(const char *fname);
+    int wfile(const char *fname);
+    int set_file(FILE *fp);
+
+    void close();
+    int filesize();
+    int seek(int size);
+    int seekcur(int size);
+    int seekend(int size);
+    bool has_file();
+
+    int read_data(void *data, int sz, int toms);
+    int write_data(void *data, int sz, int toms);
+    int receive_data(audiolite_mem *mem, int ofst, int toms);
+    int send_data(audiolite_mem *mem, int ofst, int toms);
+};
+
+#endif  /* __INCLUDE_AUDIOLITE_STREAM_H */

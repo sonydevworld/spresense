@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_workercmd.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
+#define __INCLUDE_AUDIOLITE_WORKERCMD_H
 
 /****************************************************************************
  * Included Files
@@ -42,19 +42,21 @@
 
 #include <nuttx/config.h>
 
+#include <audiolite/al_memalloc.h>
+#include <audiolite/alworker_comm.h>
+
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Function Prototypes
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+int alworker_send_systemparam(al_wtask_t *wtask,
+                              int chnum, int hz, int mode);
+int alworker_send_startframe(al_wtask_t *wtask);
+int alworker_send_instgain(al_wtask_t *wtask, float gain);
+int alworker_send_start(al_wtask_t *wtask);
+int alworker_send_term(al_wtask_t *wtask);
+int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
+int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */

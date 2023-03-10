@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/sprmp3dec_qsize.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,14 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#include <nuttx/config.h>
+#ifndef __AUDIOLITE_INCLUDE_SPRMP3_QSIZE_H
+#define __AUDIOLITE_INCLUDE_SPRMP3_QSIZE_H
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+#define SPRMP3_FRAMEMEM_QSIZE (8)
+#define SPRMP3_OUTMEM_QSIZE   (8)
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
-
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+#endif  /* __AUDIOLITE_INCLUDE_SPRMP3_QSIZE_H */

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_wavheader.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,45 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_WAVHEADER_H
+#define __INCLUDE_AUDIOLITE_WAVHEADER_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <stdint.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+#define RIFF_ID "RIFF"
+#define RIFF_FMT "WAVE"
+#define FMTCNK_ID "fmt "
+#define FMTCNK_SZ (16)
+#define FMT_WAV   (1)
+#define DATACNK_ID "data"
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+/****************************************************************************
+ * Public Data Types
+ ****************************************************************************/
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+struct al_wavhdr
+{
+  uint8_t riff_chunk_id[4];
+  uint32_t riff_chunk_size;
+  uint8_t riff_form_type[4];
+  uint8_t fmt_chunk_id[4];
+  uint32_t fmt_chunk_size;
+  uint16_t fmt_wave_format_type;
+  uint16_t fmt_channel;
+  uint32_t fmt_samples_per_sec;
+  uint32_t fmt_bytes_per_sec;
+  uint16_t fmt_block_size;
+  uint16_t fmt_bits_per_sample;
+  uint8_t data_chunk_id[4];
+  uint32_t data_chunk_size;
+};
+
+#endif /* __INCLUDE_AUDIOLITE_WAVHEADER_H */

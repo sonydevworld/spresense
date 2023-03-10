@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_singleton.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,18 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#include <nuttx/config.h>
+#ifndef __INCLUDE_AUDIOLITE_SINGLETON_H
+#define __INCLUDE_AUDIOLITE_SINGLETON_H
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+#define SINGLETON_MEMBER(t) static t *_inst
+#define SINGLETON_INST(t) t *t::_inst = NULL
+#define SINGLETON_METHODS(t) static t *get_instance() \
+            { if (_inst == NULL) {_inst = new t;} return _inst; }; \
+          static void terminate_instance() { \
+            if (_inst) { delete _inst; _inst = NULL; } }
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
-
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+#endif  /* __INCLUDE_AUDIOLITE_SINGLETON_H */

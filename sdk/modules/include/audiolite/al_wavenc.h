@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_wavenc.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_WAVENC_H
+#define __INCLUDE_AUDIOLITE_WAVENC_H
 
 /****************************************************************************
  * Included Files
@@ -42,19 +42,53 @@
 
 #include <nuttx/config.h>
 
+#include <audiolite/al_wavheader.h>
+#include <audiolite/al_encoder.h>
+#include <audiolite/al_stream.h>
+
+#define AL_WAVENC_FNAMELEN  (64)
+
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_wavenc
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_wavenc : public audiolite_encoder
+{
+  private:
+    int _max_filelen;
+    int _prefixlen;
+    int _crnt_idx;
+    int _crnt_sz;
+    mossfw_lock_t _lock;
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+    char _fname[AL_WAVENC_FNAMELEN];
+
+    void *construct_wavheader(al_wavhdr *hdr);
+    void create_fname();
+    void terminate_wavfile();
+
+    void create_wav_file();
+
+  public:
+    audiolite_wavenc();
+    ~audiolite_wavenc();
+
+    void on_data();
+    int on_starting(audiolite_inputnode *inode,
+                    audiolite_outputnode *onode);
+    void on_started(audiolite_inputnode *inode,
+                    audiolite_outputnode *onode);
+    void on_canceled(audiolite_inputnode *inode,
+                     audiolite_outputnode *onode);
+    void on_stop(audiolite_inputnode *inode,
+                 audiolite_outputnode *onode);
+
+    void set_max_filesize(int sz) { _max_filelen = sz; };
+    int set_fileprefix(const char *pfx);
+};
+
+#endif /* __INCLUDE_AUDIOLITE_WAVENC_H */

@@ -40,7 +40,7 @@
 #include <string.h>
 
 #include "mp3dec_main.h"
-#include "alworker_comm.h"
+#include "audiolite/alworker_comm.h"
 #include "minimp3_spresense.h"
 #include "sprmp3_msghandler.h"
 #include "sprmp3_sendback.h"
@@ -402,7 +402,11 @@ static int initialize_framecache(sprmp3_t *inst)
 
   /* Read and check ID3 tag header */
 
-  fill_tagsize(inst);
+  if (fill_tagsize(inst) == 0)
+    {
+      return ERROR;
+    }
+
   memset(&inst->frame_info, 0, sizeof(inst->frame_info));
 
   if (inst->fcache.fillsize > MINIMP3_ID3_DETECT_SIZE)
@@ -490,8 +494,7 @@ static int write_outmem(sprmp3_t *inst, sprmp3_outmemqueue_t *outq, int st)
   if (mem)
     {
       remain_space = mem->size - inst->omem_wofst;
-      write_size = (inst->tgtcache.decsize - inst->tgtcache.remofst) *
-                    outq->chs / inst->frame_info.channels;
+      write_size = inst->tgtcache.decsize - inst->tgtcache.remofst;
 
       if (write_size > remain_space)
         {
@@ -728,6 +731,36 @@ static int resampling(sprmp3_t *inst, int chs, int hz)
   return 0;
 }
 
+/*** name: is_supported_frame */
+
+static int is_supported_frame(mp3dec_frame_info_t *info)
+{
+  int ret = 0;
+
+  switch (info->hz)
+    {
+      case 32000:
+      case 44100:
+      case 48000:
+        break;
+      default:
+        ret = -1;
+        break;
+    }
+
+  switch (info->channels)
+    {
+      case 1:
+      case 2:
+        break;
+      default:
+        ret = -1;
+        break;
+    }
+
+  return ret;
+}
+
 /*** name: exec_decodestate */
 
 static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
@@ -780,14 +813,23 @@ static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
       inst->frame_info.layer = info.layer;
       inst->frame_info.bitrate_kbps = info.bitrate_kbps;
 
-      /* Initialize resampler here */
+      if (is_supported_frame(&inst->frame_info) == 0)
+        {
+          /* Initialize resampler here */
 
-      speex_resampler_init(&inst->resampler.lch, 1,
-                           inst->frame_info.hz, outq->hz, 1);
-      speex_resampler_init(&inst->resampler.rch, 1,
-                           inst->frame_info.hz, outq->hz, 1);
+          speex_resampler_init(&inst->resampler.lch, 1,
+                              inst->frame_info.hz, outq->hz, 1);
+          speex_resampler_init(&inst->resampler.rch, 1,
+                              inst->frame_info.hz, outq->hz, 1);
 
-      send_frameinfo(inst->id, &inst->frame_info);
+          send_frameinfo(inst->id, &inst->frame_info);
+        }
+      else
+        {
+          send_frameinfo(inst->id, &inst->frame_info);
+          send_errormsg(inst->id, AL_COMM_MSGCODEERR_UNSUPFRAME);
+          return SPRMP3_STATE_ERROR;
+        }
     }
   else if (inst->frame_info.channels != info.channels ||
            inst->frame_info.hz != info.hz ||

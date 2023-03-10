@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_audiodrv.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,8 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_AUDIODRV_H
+#define __INCLUDE_AUDIOLITE_AUDIODRV_H
 
 /****************************************************************************
  * Included Files
@@ -42,19 +42,67 @@
 
 #include <nuttx/config.h>
 
+#include <mqueue.h>
+#include <mossfw/mossfw_lock.h>
+
+#include <audiolite/al_singleton.h>
+
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+/****************************************************************************
+ * class: audiolite_drvlistener
+ ****************************************************************************/
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+class audiolite_drvlistener
+{
+  public:
+    virtual ~audiolite_drvlistener(){};
+    virtual void on_pusheddata(FAR struct ap_buffer_s *apb) = 0;
+    virtual void on_popeddata(FAR struct ap_buffer_s *apb) = 0;
+    virtual void on_stopped(void) = 0;
+    virtual void on_overflowed(void) = 0;
+    virtual void on_underflowed(void) = 0;
+};
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+/****************************************************************************
+ * class: audiolite_driver
+ ****************************************************************************/
+
+class audiolite_driver
+{
+  private:
+    SINGLETON_MEMBER(audiolite_driver);
+    int _fd;
+    int _mode;
+    mqd_t _mq;
+    mossfw_thread_t _tid;
+    audiolite_drvlistener *_listener;
+    int _enq_cnt;
+
+    audiolite_driver();
+    ~audiolite_driver();
+
+    int start_driver(void);
+    int stop_thread(void);
+    int setup_driver(audiolite_drvlistener *l, const char *devpath);
+
+  public:
+    SINGLETON_METHODS(audiolite_driver);
+
+    int as_output(audiolite_drvlistener *l);
+    int as_input(audiolite_drvlistener *l);
+
+    int set_audioparam(int fs, int bps, int chnum);
+    int enqueue_buffer(FAR struct ap_buffer_s *apb);
+    int set_volume(int vol);
+    int start(void);
+    int stop(void);
+
+    void reset(void);
+
+    static void *message_thread(void *arg);
+};
+
+#endif /* __INCLUDE_AUDIOLITE_AUDIODRV_H */

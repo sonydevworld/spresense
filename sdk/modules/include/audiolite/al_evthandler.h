@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/common/almsgq_name.h
+ * modules/include/audiolite/al_evthandler.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,28 +33,69 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
-#define __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H
+#ifndef __INCLUDE_AUDIOLITE_EVTHANDLER_H
+#define __INCLUDE_AUDIOLITE_EVTHANDLER_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <queue.h>
+#include <audiolite/al_singleton.h>
+#include <audiolite/al_eventlistener.h>
+#include <audiolite/al_memalloc.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Pre-definitions
  ****************************************************************************/
 
-#define AL_MSGQNAME_1  (2)
-#define AL_MSGQNAME_2  (2)
+class audiolite_component;
 
-#ifndef BUILD_TGT_ASMPWORKER
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_1
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_2
-#else
-#define AL_COMM_MQ_NAMERECV AL_MSGQNAME_2
-#define AL_COMM_MQ_NAMESEND AL_MSGQNAME_1
-#endif
+/****************************************************************************
+ * Class Definitions
+ ****************************************************************************/
 
-#endif /* __AUDIOLITE_WORKER_COMMON_ALMSGQ_NAME_H */
+/****************************************************************************
+ * class: audiolite_evthandler
+ ****************************************************************************/
+
+class audiolite_evthandler
+{
+  private:
+    SINGLETON_MEMBER(audiolite_evthandler);
+
+    int _fs;
+    int _chnum;
+    int _bitwidth;
+    audiolite_eventlistener *_listen;
+    audiolite_mempoolsysmsg *_pool;
+    mossfw_input_t *_receiver;
+    mossfw_output_t *_accepter;
+    mossfw_callback_op_t *_op;
+
+    audiolite_evthandler(int memnum = 8);
+    ~audiolite_evthandler();
+
+    static int event_handler(mossfw_callback_op_t *op, unsigned long arg);
+
+  public:
+    SINGLETON_METHODS(audiolite_evthandler);
+
+    int publish_event(int evtid, audiolite_component *issuer, unsigned long arg);
+    int set_systemparam(int fs, int bitwidth, int chnum);
+
+    void set_evtlistener(audiolite_eventlistener *l) { _listen = l; };
+    int get_fs(){ return _fs; };
+    int get_chnum(){ return _chnum; };
+    int get_bitwidth(){ return _bitwidth; };
+};
+
+/****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+void audiolite_set_evtlistener(audiolite_eventlistener *l);
+int audiolite_set_systemparam(int fs, int chnum, int bitwidth);
+void audiolite_eventdestroy();
+
+#endif /* __INCLUDE_AUDIOLITE_EVTHANDLER_H */
