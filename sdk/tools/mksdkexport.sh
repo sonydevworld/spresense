@@ -125,6 +125,9 @@ cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls
 cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/mbedtls/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls/
 
+# MOSS-FW header files
+cp -a ${SDK_DIR}/../externals/mossfw/mossfw/include/* ${TMP_DIR}/${SDK_EXP_SDK}/include/
+
 # Add external library objects into libapps.a
 CROSSDEV=arm-none-eabi-
 ARTMPDIR=`mktemp -d`
