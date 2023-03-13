@@ -1506,15 +1506,6 @@ Copyright (C) 2009-2016 Arm Limited. All rights reserved.
 Copyright (c) 2016 ARM Germany GmbH. All rights reserved.
 Copyright 2018 Sony Corporation
 
-------------------------------------------------------------------------
-externals/cmsis/CMSIS_5/docs
-
-search.js in original CMSIS_5
-
-The code in this file is loosly based on main.js, part of Natural Docs,
-which is Copyright (C) 2003-2008 Greg Valure
-Natural Docs is licensed under the GPL.
-
 ========================================================================
 
 
@@ -1524,7 +1515,7 @@ Natural Docs is licensed under the GPL.
 externals/nnablart/nnabla-c-runtime
 
 a original LICENSE description for above codes places under the following path.
-externals/nnabla-c-runtime/LICENSE
+externals/nnablart/nnabla-c-runtime/LICENSE
 
 Copyright 2017, 2018, 2019, 2020, 2021 Sony Corporation
 Copyright 2021 Sony Group Corporation
@@ -1630,13 +1621,12 @@ described in the following file:
 14. License of nRF52
 
 ========================================================================
-externals/nrf52/nRF5_SDK17.1.0_ddde560
+externals/nrf52/nRF5_SDK_17.1.0_ddde560
 
 This software includes open source software subject to the licensing
 described in the following file:
 
- externals/nrf52/nRF5_SDK17.1.0_ddde560/nRF5_Nordic_license.txt
-
+ externals/nrf52/nRF5_SDK_17.1.0_ddde560/license.txt
 
 The original codes can be downloaded as a zip file from the following site: 
 
@@ -1650,6 +1640,8 @@ File name:  nRF5_SDK_17.1.0_ddde560.zip
 Notice:
 The software under the nRF5_Nordic_licence here must only be used with
 a Noridic Semiconductor ASA integrated circuit.
+
+========================================================================
 
 
 15. License of ELTRES SDK
@@ -1669,3 +1661,68 @@ The original codes can be downloaded from the following site:
 Download:
 https://www.sony-semicon.com/en/eltres/module.html (en)
 https://www.sony-semicon.com/ja/eltres/module.html (ja)
+
+========================================================================
+
+
+16. License of minimp3
+
+========================================================================
+sdk/modules/audiolite/worker/ext_libs/minimp3
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+ sdk/modules/audiolite/worker/ext_libs/minimp3/LICENSE
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://github.com/lieff/minimp3
+
+========================================================================
+
+
+17. License of SpeexDSP
+
+========================================================================
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+ sdk/modules/audiolite/worker/ext_libs/speexdsp_resample/COPYING
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://github.com/xiph/speexdsp.git
+------------------------------------------------------------------------
+Copyright 2002-2008 	Xiph.org Foundation
+Copyright 2002-2008 	Jean-Marc Valin
+Copyright 2005-2007	Analog Devices Inc.
+Copyright 2005-2008	Commonwealth Scientific and Industrial Research
+                        Organisation (CSIRO)
+Copyright 1993, 2002, 2006 David Rowe
+Copyright 2003 		EpicGames
+Copyright 1992-1994	Jutta Degener, Carsten Bormann
+
+========================================================================
+
+
+18. License of Moss-FW
+
+========================================================================
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+ externals/mossfw/mossfw/LICENSE
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://github.com/SonySemiconductorSolutions/mossfw
+------------------------------------------------------------------------
+Copyright 2023 Sony Semiconductor Solutions Co.
+
+========================================================================
