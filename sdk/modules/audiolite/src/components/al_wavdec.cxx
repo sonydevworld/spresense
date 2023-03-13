@@ -100,6 +100,7 @@ int audiolite_wavdec::start_decode()
 {
   if (_stream)
     {
+      _eof = false;
       ((audiolite_filestream *)_stream)->seek(0);
       return parse_wavhdr();
     }
@@ -165,12 +166,17 @@ void audiolite_wavdec::decode_runner()
           if (mem)
             {
               _stream->receive_data(mem, 0, -1);
-              _outs[0]->push_data(mem);
+              if (!_eof)
+                {
+                  _outs[0]->push_data(mem);
+                }
+
               eof = mem->is_eof();
               mem->release();
 
-              if (eof)
+              if (!_eof && eof)
                 {
+                  _eof = true;
                   publish_event(AL_EVENT_DECODEDONE, 0);
                 }
             }

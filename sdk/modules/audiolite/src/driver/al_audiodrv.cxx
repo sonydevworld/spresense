@@ -173,9 +173,9 @@ int audiolite_driver::set_audioparam(int fs, int bps, int chnum)
                                                     : AUDIO_TYPE_INPUT;
       cap.caps.ac_channels = chnum;
       cap.caps.ac_chmap = 0;
-      cap.caps.ac_controls.hw[0] = fs;
+      cap.caps.ac_controls.hw[0] = fs & 0xFFFF;
       cap.caps.ac_controls.b[2] = bps;
-      cap.caps.ac_controls.b[3] = 0;  /* Upper fs over 65535 */
+      cap.caps.ac_controls.b[3] = (fs >> 16) & 0xFF;
 
       ret = ioctl(_fd, AUDIOIOC_CONFIGURE,
                   (unsigned long)(uintptr_t)&cap);

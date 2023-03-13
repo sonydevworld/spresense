@@ -57,13 +57,15 @@ class audiolite_wavdec : public audiolite_decoder
     int _chnum;
     int _bitlen;
     int _samplerate;
+    bool _eof;
 
     void decode_runner();
     int parse_wavhdr();
 
   public:
     audiolite_wavdec() : audiolite_decoder("wavdec"),
-                         _chnum(-1), _bitlen(-1), _samplerate(-1) {};
+                         _chnum(-1), _bitlen(-1), _samplerate(-1),
+                         _eof(false) {};
     ~audiolite_wavdec(){};
 
     int start_decode();
