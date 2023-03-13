@@ -51,13 +51,13 @@
 
 /* For Event receiving */
 
-class my_listener : public audiolite_eventlistener
+class my_mp3listener : public audiolite_eventlistener
 {
   public:
     volatile bool playing;
 
   public:
-    my_listener() : playing(false){};
+    my_mp3listener() : playing(false){};
 
     void on_event(int evt, audiolite_component *cmp,
                   unsigned long arg)
@@ -79,7 +79,7 @@ extern "C"
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  my_listener lsn;
+  my_mp3listener lsn;
 
   if (argc != 2)
     {
@@ -89,9 +89,9 @@ int main(int argc, FAR char *argv[])
 
   /* To Create below structure.
    *
-   * +--------------------------------+
-   * |  my_listener to listen events  |
-   * +--------------------------------+
+   * +---------------------------------+
+   * | my_mp3listener to listen events |
+   * +---------------------------------+
    *     ^            ^           ^
    *     |            |           |
    * +--------+    +-----+    +-------+
@@ -171,7 +171,7 @@ int main(int argc, FAR char *argv[])
     }
 
   /* Wait for finishing as receiving AL_EVENT_DECODEDONE
-   * in my_listener.
+   * in my_mp3listener.
    */
 
   while (lsn.playing)

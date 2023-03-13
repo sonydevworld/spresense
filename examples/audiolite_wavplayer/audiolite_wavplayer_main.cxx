@@ -51,22 +51,24 @@
 
 /* For Event receiving */
 
-class my_listener : public audiolite_eventlistener
+class my_wdeclistener : public audiolite_eventlistener
 {
   public:
     volatile bool playing;
 
   public:
-    my_listener() : playing(false){};
+    my_wdeclistener() : playing(false){};
 
     void on_event(int evt, audiolite_component *cmp,
                   unsigned long arg)
     {
-      printf("Event %s is happened : %d\n", convert_evtid(evt),
+      printf("WAV Dec Event %s is happened : %d\n", convert_evtid(evt),
                                             (int)arg);
+
       if (evt == AL_EVENT_DECODEDONE ||
           evt == AL_EVENT_STOPOUTPUT)
         {
+          printf("Decode is done\n");
           playing = false;
         }
     }
@@ -80,7 +82,7 @@ extern "C"
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  my_listener lsn;
+  my_wdeclistener lsn;
 
   if (argc != 2)
     {
@@ -90,9 +92,9 @@ int main(int argc, FAR char *argv[])
 
   /* To Create below structure.
    *
-   * +--------------------------------+
-   * |  my_listener to listen events  |
-   * +--------------------------------+
+   * +----------------------------------+
+   * | my_wdeclistener to listen events |
+   * +----------------------------------+
    *     ^            ^           ^
    *     |            |           |
    * +--------+    +-----+    +-------+
@@ -164,7 +166,7 @@ int main(int argc, FAR char *argv[])
     }
 
   /* Wait for finishing as receiving AL_EVENT_DECODEDONE
-   * in my_listener.
+   * in my_wdeclistener.
    */
 
   while (lsn.playing)

@@ -51,7 +51,7 @@
 
 /* For Event receiving */
 
-class my_listener : public audiolite_eventlistener
+class my_wenclistener : public audiolite_eventlistener
 {
   public:
     void on_event(int evt, audiolite_component *cmp,
@@ -116,7 +116,7 @@ extern "C"
 int main(int argc, FAR char *argv[])
 {
   int ret;
-  my_listener lsn;
+  my_wenclistener lsn;
 
   if (argc != 2)
     {
@@ -127,9 +127,9 @@ int main(int argc, FAR char *argv[])
 
   /* To Create below structure.
    *
-   * +--------------------------------+
-   * |  my_listener to listen events  |
-   * +--------------------------------+
+   * +----------------------------------+
+   * | my_wenclistener to listen events |
+   * +----------------------------------+
    *     ^            ^           ^
    *     |            |           |
    * +-------+    +-------+    +-----+    +--------+
