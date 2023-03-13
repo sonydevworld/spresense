@@ -196,7 +196,7 @@ FAR physical_sensor_t *PhysicalSensorCreate(
            "%s",
             mq_name_response);
   sensor->handler   = handler;
-  sensor->thread_id = NULL_TASK_PROCESS_ID;
+  sensor->thread_id = INVALID_PROCESS_ID;
 
   /* Start physical sensor process. */
 
@@ -495,7 +495,7 @@ int PhysicalSensorDestroy(FAR physical_sensor_t *sensor)
 
   /* Wait finish of sensor process. */
 
-  if (sensor->thread_id != NULL_TASK_PROCESS_ID)
+  if (sensor->thread_id != INVALID_PROCESS_ID)
     {
       FAR void *thread_return;
       pthread_cancel(sensor->thread_id);

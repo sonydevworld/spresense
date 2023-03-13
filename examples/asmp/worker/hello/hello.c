@@ -36,7 +36,12 @@
 /****************************************************************************
  * Included Files
  ****************************************************************************/
+#include <nuttx/config.h>
 #include <errno.h>
+
+#ifdef CONFIG_ASMP_WORKER_LIBC
+#include <string.h>
+#endif
 
 #include <asmp/types.h>
 #include <asmp/mpshm.h>
@@ -57,6 +62,7 @@
 
 static const char helloworld[] = "Hello, ASMP World!";
 
+#ifndef CONFIG_ASMP_WORKER_LIBC
 static char *strcopy(char *dest, const char *src)
 {
   char *d = dest;
@@ -65,6 +71,7 @@ static char *strcopy(char *dest, const char *src)
 
   return dest;
 }
+#endif
 
 /****************************************************************************
  * Public Functions
@@ -109,7 +116,11 @@ int main(void)
   /* Copy hello message to shared memory */
 
   mpmutex_lock(&mutex);
+#ifdef CONFIG_ASMP_WORKER_LIBC
+  strcpy(buf, helloworld);
+#else
   strcopy(buf, helloworld);
+#endif
   mpmutex_unlock(&mutex);
 
   /* Free virtual space */

@@ -130,8 +130,30 @@ typedef struct
  */
 typedef struct
 {
-  uint16_t                cccdHandle;     /**< Handle of client configuration characteristic descriptor in characteristic */
-  uint8_t                 reserve[2];     /**< Reserve */
+  /** Handle of characteristic extended properties descriptor */
+
+  uint16_t                cepdHandle;
+
+  /** Handle of characteristic user description descriptor */
+
+  uint16_t                cuddHandle;
+
+  /** Handle of client configuration characteristic descriptor */
+
+  uint16_t                cccdHandle;
+
+  /** Handle of server characteristic configuration descriptor */
+
+  uint16_t                sccdHandle;
+
+  /** Handle of characteristic presentation format descriptor */
+
+  uint16_t                cpfdHandle;
+
+  /** Handle of characteristic aggregate format descriptor */
+
+  uint16_t                cafdHandle;
+
   BLE_GattcChar           characteristic; /**< Characteristic information */
 } BLE_GattcDbDiscChar;
 

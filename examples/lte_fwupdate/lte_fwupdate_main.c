@@ -63,6 +63,7 @@ static char fw_data[INJECTION_SIZE];
 
 static volatile bool modem_boot_up = false;
 static volatile bool modem_restarted = false;
+static volatile bool modem_ver_err = false;
 
 /****************************************************************************
  * Private Functions
@@ -74,6 +75,12 @@ static void modem_restart_cb(uint32_t reason)
     {
       printf("Modem is booted up.\n");
       modem_boot_up = true;
+    }
+  else if (reason == LTE_RESTART_VERSION_ERROR)
+    {
+      printf("Modem version mismatch.\n");
+      modem_boot_up = true;
+      modem_ver_err = true;
     }
   else
     {
@@ -267,6 +274,7 @@ int main(int argc, FAR char *argv[])
 
   modem_boot_up = false;
   modem_restarted = false;
+  modem_ver_err = false;
 
   img_size = file_size(argv[1]);
   if (img_size < 0)
@@ -311,6 +319,15 @@ int main(int argc, FAR char *argv[])
 
   printf("Modem IC Type : %s\n", version.bb_product);
   printf("      FW Ver. : %s\n", version.np_package);
+
+  if (modem_ver_err)
+    {
+      printf("Please enable the disabled protocol version"
+             " and flash the application.\n");
+      lte_finalize();
+      return -1;
+    }
+
   printf("Confirm if the FW Version is the target version"
          " you want to update.\n\n");
 

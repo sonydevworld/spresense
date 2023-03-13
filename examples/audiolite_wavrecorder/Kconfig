@@ -1,0 +1,25 @@
+
+config EXAMPLES_AUDIOLITE_RECORDER
+	tristate "audiolite_wavrecorder app"
+	default n
+	---help---
+		Enable the audiolite_wavrecorder app
+
+if EXAMPLES_AUDIOLITE_RECORDER
+
+config EXAMPLES_AUDIOLITE_RECORDER_PROGNAME
+	string "Program name"
+	default "audiolite_wavrecorder"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_RECORDER_PRIORITY
+	int "audiolite_wavrecorder task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_RECORDER_STACKSIZE
+	int "audiolite_wavrecorder stack size"
+	default 2048
+
+endif

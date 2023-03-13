@@ -180,6 +180,16 @@ int tflm_runtime_forward(tflm_runtime_t *rt, const void *inputs[],
                         unsigned char input_num);
 
 /**
+ * Return the size of tensorflow arena size.
+ *
+ * @param [in,out] rt:      tflmrt_runtime_t object
+ *
+ * @return byes of actual arena memory size, otherwise -EINVAL.
+ */
+
+int tflm_runtime_actual_arenasize(tflm_runtime_t *rt);
+
+/**
  * Return the number of inputs which this network needs.
  *
  * @param [in,out] rt:      tflmrt_runtime_t object

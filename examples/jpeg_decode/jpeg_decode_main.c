@@ -113,7 +113,7 @@ int main(int argc, FAR char *argv[])
   ext = strrchr(argv[1], '.');
   memset(g_out_filename, 0, sizeof(g_out_filename));
   strncpy(g_out_filename, argv[1], strlen(argv[1]) - strlen(ext));
-  strncat(g_out_filename, ".YUV", strlen(".YUV"));
+  strncat(g_out_filename, ".YUV", strlen(".YUV") + 1);
 
   remove(g_out_filename);
 

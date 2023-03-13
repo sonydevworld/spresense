@@ -105,12 +105,15 @@ SPK       = $(NUTTXNAME).spk
 
 KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 
+# Specify the SDK version to the NuttX versioning script
+
+export VERSION_ARG = ${shell ./tools/mkversion.sh}
+
 # If TOPDIR's origin is command line, 'make' called from NuttX build system.
 # If not, 'make' called directly from user, then bypass to NuttX build.
 
 ifeq ($(MAKELEVEL),0)
 all:
-	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
 	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
 else
 all: .built
@@ -134,10 +137,10 @@ $(foreach SDIR, $(TARGETDIRS), $(eval $(call SDIR_template,$(SDIR),distclean)))
 ifeq ($(MAKELEVEL),0)
 MKSDKEXPORT = $(SDKDIR)/tools/mksdkexport.sh
 export:
-	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.zip nuttx-export.zip
+	$(Q) $(MAKE) -C $(TOPDIR) export && mv $(TOPDIR)/nuttx-export-*.tar.gz nuttx-export.tar.gz
 exportsdk: export
-	$(Q) $(MKSDKEXPORT) -i nuttx-export.zip -o sdk-export.tar.gz
-	$(Q) rm -rf nuttx-export.zip
+	$(Q) $(MKSDKEXPORT) -i nuttx-export.tar.gz -o sdk-export.tar.gz
+	$(Q) rm -rf nuttx-export.tar.gz
 PHONY += export
 PHONY += exportsdk
 endif
@@ -145,23 +148,7 @@ endif
 dirlinks:
 PHONY += dirlinks
 
-$(TOPDIR)/tools/cxd56:
-	$(Q) mkdir -p $@
-
-ifeq ($(CONFIG_HOST_LINUX),y)
-  MKSPK_SRC = $(SDKDIR)/tools/linux/mkspk
-endif
-ifeq ($(CONFIG_HOST_MACOS),y)
-  MKSPK_SRC = $(SDKDIR)/tools/macos/mkspk
-endif
-ifeq ($(CONFIG_HOST_WINDOWS),y)
-  MKSPK_SRC = $(SDKDIR)/tools/windows/mkspk$(HOSTEXEEXT)
-endif
-MKSPK = $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT)
-$(MKSPK): $(TOPDIR)/tools/cxd56
-	$(call COPYFILE,$(MKSPK_SRC),$@)
-
-context: dirlinks $(TOPDIR)/tools/cxd56/mkspk$(HOSTEXEEXT) $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
+context: dirlinks $(foreach SDIR,$(TARGETDIRS),$(SDIR)_context)
 PHONY += context
 
 clean_context:

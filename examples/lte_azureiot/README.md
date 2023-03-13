@@ -33,21 +33,6 @@ myDeviceId
 HZAww1PN3suNBkailQU1UeEllNB3j0=
 ```
 
-###### AZURE_IOT_CERT_FILE_NAME
-
-File defined by 'AZURE_IOT_CERT_FILE_NAME' in "lte_azureiot_main.c".
-
-("/mnt/sd0/CERTS/portal-azure-com.pem" by default)
-
-Please download certification file as "portal-azure-com.pem" from Microsoft Azure Portal.
-(This step is just for firefox web browser.)
-
-1. Open the "https://portal.azure.com" in the Firefox
-
-2. Open the certification details (Baltimore CyberTrust Root)
-
-3. Download the certification file (portal-azure-com.pem)
-
 ##### Build kernel and SDK:
 
 This application can be used by lte_azureiot default config.

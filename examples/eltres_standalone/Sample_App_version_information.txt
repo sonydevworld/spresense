@@ -1,0 +1,18 @@
+================================================================================
+
+  CXM150x main_standalone_mode_sample_app code version information
+
+================================================================================
+2021/12/24 version 1.0.3
+   Add EU Duty function
+   Change files
+    main_standalone_mode_sample_app.c
+2021/08/20 version 1.0.2
+   Addition of license terms
+   add TX POC_EN SET command
+   Change files
+    main_standalone_mode_sample_app.c,main_standalone_mode_sample_app.h,CXM150x_Port.c,CXM150x_Port.h,CXM150x_typedef.h
+2021/03/23 version 1.0.1
+   add SYS MODE SET command
+2021/01/26 version 1.0.0
+   Preliminary(first release version)

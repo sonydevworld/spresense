@@ -82,6 +82,11 @@ extern "C" {
 extern void bleEvtDispatch(ble_evt_t *pBleNrfEvt);
 #endif
 
+#define BLE_GATTS_SYS_ATTR_DATA_LEN (8)
+#define BLE_GATTS_SYS_ATTR_DATA_TOTALLEN (BLE_GATTS_SYS_ATTR_DATA_LEN \
+                                          * BLE_MAX_SERVICES \
+                                          * BLE_MAX_CHARACTERISTICS)
+
 typedef struct{
   uint32_t enable_key;
   uint32_t info_key[BLE_SAVE_BOND_DEVICE_MAX_NUM];
@@ -91,10 +96,11 @@ typedef struct
 {
   BLE_GapConnHandle connHandle;
   BLE_GapBondInfo bondInfo;
-  //ble_gap_id_key_t ownIdKey;
-  //ble_gap_enc_key_t ownEncKey;
+  ble_gap_id_key_t ownIdKey;
+  ble_gap_enc_key_t ownEncKey;
   ble_gap_id_key_t peerIdKey;
   ble_gap_enc_key_t peerEncKey;
+  uint8_t sys_attr_data[BLE_GATTS_SYS_ATTR_DATA_TOTALLEN];
 } bleGapWrapperBondInfo;
 
 /**@brief A collection of variables of gap. */
@@ -151,6 +157,7 @@ typedef struct
   bleGattcDb              gattcDb;
   bleGapMem               *gapMem;
   uint8_t                 stackInited;
+  uint16_t                requested_mtu;
   uint16_t                client_rx_mtu;
   BLE_EvtPhyUpdate        phyUpdate;
 } bleCommMem;
@@ -168,6 +175,13 @@ typedef struct ble_srv_sds
   BLE_GattsCharHandles char_ri_handle;
 } BLE_SrvSds;
 
+typedef enum ble_conn_sts
+{
+  BLE_CONN_STS_NOTCONNECTED = 0,
+  BLE_CONN_STS_CONNECTING,
+  BLE_CONN_STS_CONNECTED,
+} BLE_ConnSts;
+
 typedef struct ble_context
 {
   BLE_EvtCtx ble_evt_ctx;
@@ -175,6 +189,9 @@ typedef struct ble_context
   BLE_GapDeviceConfig ble_dev_cfg;
   BLE_GapName ble_name;
   BLE_GapConnHandle ble_conn_handle;
+  BLE_ConnSts conn_sts;
+  bool        is_scanning;
+  bool        is_advertising;
   uint8_t ble_role;
   BLE_SrvSds ble_srv_sds;
   BLE_GapPairingFeature pairing_feature;

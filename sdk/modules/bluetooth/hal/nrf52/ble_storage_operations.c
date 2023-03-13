@@ -58,7 +58,7 @@
 #define BSO_FILE_PATH_NAME BSO_FILE_PATH"/%s"
 #define BSO_REGISTRY_DB    "bso_registry_db"
 */
-#define REGDB_VALUE_MAX     60
+#define REGDB_VALUE_MAX     120
 #define REGDB_KEY_NAME_MAX  4
 /*
 #define BSO_FILE_NAME_MAX  64

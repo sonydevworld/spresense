@@ -1,7 +1,7 @@
 /****************************************************************************
  * externals/vtun/compat_nuttx.c
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,6 +48,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <nuttx/net/netconfig.h>
 
 #include "vtun.h"
 #include "lib.h"
@@ -90,7 +91,7 @@ int update_vtun_state(int enable)
   int     ret        = 0;
   uint8_t sock_type  = 0;
 
-  sockfd = socket(PF_USRSOCK, SOCK_STREAM, 0);
+  sockfd = socket(NET_SOCK_FAMILY, NET_SOCK_TYPE, NET_SOCK_PROTOCOL);
 
   if (sockfd < 0)
     {

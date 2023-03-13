@@ -79,7 +79,11 @@ fi
 TMP_DIR=`mktemp -d`
 
 # Extract exported nuttx archive
-unzip -d ${TMP_DIR} ${NUTTX_EXPORT} > /dev/null
+if [ ${NUTTX_EXPORT##*.} == "zip" ]; then
+	unzip -d ${TMP_DIR} ${NUTTX_EXPORT} > /dev/null
+else
+	tar zxf ${NUTTX_EXPORT} -C ${TMP_DIR} > /dev/null
+fi
 
 # Change exported file structure
 # -- sdk-export
@@ -120,6 +124,9 @@ cp -a ${SDK_DIR}/../externals/cmsis/CMSIS_5/CMSIS/NN/Include/* ${TMP_DIR}/${SDK_
 # MBEDTLS header files
 mkdir -p ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls
 cp -a ${SDK_DIR}/../externals/alt_stubs/mbedtls/include/mbedtls/* ${TMP_DIR}/${SDK_EXP_SDK}/externals/include/mbedtls/
+
+# MOSS-FW header files
+cp -a ${SDK_DIR}/../externals/mossfw/mossfw/include/* ${TMP_DIR}/${SDK_EXP_SDK}/include/
 
 # Add external library objects into libapps.a
 CROSSDEV=arm-none-eabi-

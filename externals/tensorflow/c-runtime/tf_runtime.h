@@ -79,6 +79,7 @@ TfLiteTensor *tf_rt_output_variable(tf_rt_context_pointer context,
 int tf_rt_forward(tf_rt_context_pointer context);
 void tf_rt_set_malloc(void *(*user_malloc)(size_t size));
 void tf_rt_set_free(void (*user_free)(void *ptr));
+size_t tf_rt_arenasize(tf_rt_context_pointer context);
 
 #ifdef __cplusplus
 }

@@ -83,6 +83,20 @@ extern bleGapMem *bleGetGapMem(void);
 #define PASSKEY_LEN                       4
 
 /****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_ble_set_dev_addr(BT_ADDR *addr);
+static int bcm20706_ble_set_dev_name(char *name);
+static int bcm20706_ble_set_appearance(BLE_APPEARANCE appearance);
+static int bcm20706_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
+static int bcm20706_ble_advertise(bool enable);
+static int bcm20706_ble_start_scan(bool duplicate_filter);
+static int bcm20706_ble_stop_scan(void);
+static int bcm20706_ble_connect(const BT_ADDR *addr);
+static int bcm20706_ble_disconnect(const uint16_t conn_handle);
+
+/****************************************************************************
  * Private Data
  ****************************************************************************/
 
@@ -94,6 +108,21 @@ static uint8_t g_manufacturer_adv_data[] = {
   0x12,
   0xe4, 0x62, 0x6b, 0xb7, 0x0c, 0xe4 /* same with g_addr[] */
 };
+
+static struct ble_hal_common_ops_s ble_hal_common_ops =
+{
+  .setDevAddr    = bcm20706_ble_set_dev_addr,
+  .setDevName    = bcm20706_ble_set_dev_name,
+  .setAppearance = bcm20706_ble_set_appearance,
+  .setPPCP       = bcm20706_ble_set_ppcp,
+  .advertise     = bcm20706_ble_advertise,
+  .startScan     = bcm20706_ble_start_scan,
+  .stopScan      = bcm20706_ble_stop_scan,
+  .connect       = bcm20706_ble_connect,
+  .disconnect    = bcm20706_ble_disconnect
+};
+
+static char g_ble_name[BT_NAME_LEN];
 
 /****************************************************************************
  * Private Functions
@@ -144,7 +173,7 @@ static int32_t set_adv_data(void)
   adv_data.flags = BLE_GAP_ADV_LE_GENERAL_DISC_MODE | BLE_GAP_ADV_BR_EDR_NOT_SUPPORTED;
   adv_data.txPower = tx_power;
   adv_data.complete32Uuid = 0;
-  adv_data.completeLocalName.advData = (uint8_t*) bt_common_context.ble_name;
+  adv_data.completeLocalName.advData = (uint8_t*)g_ble_name;
   adv_data.completeLocalName.advLength =
     strnlen((char*)adv_data.completeLocalName.advData, BUF_LEN_MAX);
   adv_data.manufacturerSpecificData.advData = g_manufacturer_adv_data;
@@ -171,10 +200,6 @@ static int32_t set_adv_data(void)
 static int bcm20706_ble_set_dev_addr(BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
-
-  /* Store input address to local address */
-
-  memcpy(&bt_common_context.bt_addr, addr, BT_ADDR_LEN);
 
   /* Send BT Address to chip */
 
@@ -210,11 +235,11 @@ static int bcm20706_ble_set_dev_name(char *name)
 
   /* Copy device name to local name */
 
-  strncpy(bt_common_context.ble_name, name, nameSize);
+  strncpy(g_ble_name, name, nameSize);
 
   /* Send device name to chip */
 
-  ret = btSetBtName(bt_common_context.ble_name);
+  ret = btSetBtName(name);
 
   return ret;
 }
@@ -291,21 +316,45 @@ static int bcm20706_ble_advertise(bool enable)
 }
 
 /****************************************************************************
- * Name: bcm20706_ble_scan
+ * Name: bcm20706_ble_start_scan
  *
  * Description:
- *   Bluetooth LE start/stop scan.
- *   Start/Stop scan.
+ *   Bluetooth LE start scan.
+
+ * Parameter:
+ *   duplicate_filter:
+ *           true means that duplicate scan results are filtered out.
+ *           false means that all duplicate scan result are notified to
+ *           applications.
+ *           bcm20706 HW do not support true value.
  *
  ****************************************************************************/
 
-static int bcm20706_ble_scan(bool enable)
+static int bcm20706_ble_start_scan(bool duplicate_filter)
 {
-  int ret = BT_SUCCESS;
+  /* Return error if duplicate_filter is true,
+   * because bcm20706 HW do not support duplicate scan result filter.
+   */
 
-  ret = bleGapScan(enable ? BLE_ENABLE : BLE_DISABLE);
+  if (duplicate_filter)
+    {
+      return BT_FAIL;
+    }
 
-  return ret;
+  return bleGapScan(BLE_ENABLE);
+}
+
+/****************************************************************************
+ * Name: bcm20706_ble_stop_scan
+ *
+ * Description:
+ *   Bluetooth LE stop scan.
+ *
+ ****************************************************************************/
+
+static int bcm20706_ble_stop_scan(void)
+{
+  return bleGapScan(BLE_DISABLE);
 }
 
 /****************************************************************************
@@ -345,22 +394,6 @@ static int bcm20706_ble_disconnect(const uint16_t conn_handle)
 
   return ret;
 }
-
-/****************************************************************************
- * Public Data
- ****************************************************************************/
-
-struct ble_hal_common_ops_s ble_hal_common_ops =
-{
-  .setDevAddr    = bcm20706_ble_set_dev_addr,
-  .setDevName    = bcm20706_ble_set_dev_name,
-  .setAppearance = bcm20706_ble_set_appearance,
-  .setPPCP       = bcm20706_ble_set_ppcp,
-  .advertise     = bcm20706_ble_advertise,
-  .scan          = bcm20706_ble_scan,
-  .connect       = bcm20706_ble_connect,
-  .disconnect    = bcm20706_ble_disconnect
-};
 
 /****************************************************************************
  * Public Functions
@@ -902,3 +935,9 @@ void bleRecvGattCompleteDiscovered(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)
       memset(gattcDbDiscovery, 0, sizeof(bleGattcDb));
     }
 }
+
+int bcm20706_ble_common_register(void)
+{
+  return ble_common_register_hal(&ble_hal_common_ops);
+}
+

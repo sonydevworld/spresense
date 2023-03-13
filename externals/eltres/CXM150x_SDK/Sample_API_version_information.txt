@@ -1,0 +1,105 @@
+================================================================================
+
+  CXM150x API code version information
+
+================================================================================
+2021/12/27 version 3.0.4
+   Add EU Duty function
+   Change files
+    CXM150x_LIB.c,CXM150x_LIB.h,CXM150x_TX.c,CXM150x_TX.h,CXM1500GE_APITypeDef.h
+
+2021/08/16 version 3.0.3
+   Addition of license terms
+   Change files
+     ALL files
+
+2020/11/05 version 3.0.2
+   change module name from CXM1500GE to CXM150x.
+   add stand alone mode APIs
+   Change files
+     CXM150x_LIB.c,CXM150x_LIB.h,CXM150x_SYS.c,CXM150x_SYS.h,CXM150x_TX.c,CXM150x_TX.h,
+     CXM150x_Utility.c,CXM150x_Utility.h,CXM150x_APITypeDef.h
+
+2020/11/05 version 3.0.1
+   Moved the EventBuffer size definition from CXM1500GE_LIB.c to CXM1500GE_APITypeDef.h
+   Bug fix get_CXM1500GE_Bootloader_version
+   support CubeMX 6.0.1
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_LIB.c
+    CXM1500GE_SYS.c
+    CXM1500GE_GNSS_FW_UPDATE_Port.c,CXM1500GE_GNSS_FW_UPDATE_Port.h,CXM1500GE_GNSS_FW_UPDATE.c
+    CXM1500GE_CTRL_FW_UPDATE_Port.c,CXM1500GE_CTRL_FW_UPDATE_Port.h,CXM1500GE_CTRL_FW_UPDATE.c
+
+2020/06/30 version 3.0.0
+   add auto profile select
+   add PoC fromat tx event
+   add EEPROM sequentially get method
+   supports CXM1500GE version information format change
+   Bug fix
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_LIB.c,CXM1500GE_LIB.h,CXM1500GE_SYS.c,CXM1500GE_SYS.h
+    CXM1500GE_TX.c,CXM1500GE_TX.h,CXM1500GE_Utility.c,CXM1500GE_Port.c
+
+2020/05/08 version 1.4.0
+   add PSGES,PSLES
+   English translation of comments
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_GNSS.h,CXM1500GE_GNSS.c,CXM1500GE_LIB.c,CXM1500GE_Utility.h,CXM1500GE_Utility.c
+
+2020/01/27 version 1.3.4
+   Bug fix
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_SYS.c,CXM1500GE_TX.c
+2019/09/02 version 1.3.1
+   reset command Bug fix
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_LIB.c,CXM1500GE_SYS.c,CXM1500GE_Port.c,
+
+2019/04/19 version 1.3.0
+   add GNSS assist(BUP)
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_LIB.h,CXM1500GE_GNSS.c,CXM1500GE_GNSS.h,CXM1500GE_SYS.c,CXM1500GE_SYS.h,
+    CXM1500GE_Utility.c,CXM1500GE_Port.c
+
+2019/03/12 version 1.2.0
+   add Control FW update type
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_CTRL_FW_UPDATE.c,CXM1500GE_CTRL_FW_UPDATE.h,CXM1500GE_CTRL_FW_UPDATE_Port.h
+
+2019/02/12 version 1.1.0
+   when receiving the power ON message at normal time, call FATAL_message callback_func
+   fixed an issue from static analysis tool
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_LIB.c,CXM1500GE_TX.c
+
+2019/02/06 version 1.0.0
+   add GNSS FW UPDATE API
+   add SDK Version display API
+   add UART1 tx timeout
+   add event bufferoverflow guard
+   add event bufferoverflow callback
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_SYS.c,CXM1500GE_SYS.h,CXM1500GE_LIB.c,CXM1500GE_LIB.h,
+    CXM1500GE_Port.c,CXM1500GE_Port.h
+   Add files
+    CXM1500GE_CTRL_FW_UPDATE_Port.c,CXM1500GE_CTRL_FW_UPDATE_Port.h
+
+2018/11/30 version 0.3.0
+   add CONTROL FW UPDATE API
+   add BootloaderVersionGetAPI
+   add FATAL_CTIME_EVENTAPI
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_SYS.c,CXM1500GE_SYS.h,CXM1500GE_LIB.c,CXM1500GE_LIB.h
+   Add files
+    CXM1500GE_CTRL_FW_UPDATE_Port.c,CXM1500GE_CTRL_FW_UPDATE_Port.h
+
+2018/10/24 version 0.2.0
+   add NMEA checksum result
+   add test tx mode API
+   Change files
+    CXM1500GE_APITypeDef.h,CXM1500GE_Utility.c,CXM1500GE_LIB.h
+   Add files
+    CXM1500GE_TEST.h,CXM1500GE_TEST.c
+
+2018/09/28 version 0.1.0
+   Preliminary(first release version)

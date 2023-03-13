@@ -40,6 +40,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -62,19 +64,6 @@ typedef enum
   ADDR_TYPE_RANDOM,
 } BT_ADDR_TYPE;
 
-struct bt_common_context_s  
-{
-  BT_ADDR bt_addr;  /* Common address for BT/BLE */
-  char bt_name[BT_NAME_LEN];
-  char ble_name[BT_NAME_LEN];
-};
-
-/****************************************************************************
- * Private Data
- ****************************************************************************/
-
-struct bt_common_context_s bt_common_context;
-
 /****************************************************************************
  * Public Functions prototype
  ****************************************************************************/
@@ -82,6 +71,32 @@ struct bt_common_context_s bt_common_context;
 int btSetBtAddress(BT_ADDR *addr);
 int btSetBtName(char *name);
 int btSetPairingEnable(uint8_t isEnable);
+
+int bcm20706_bt_common_register(void);
+
+#ifdef CONFIG_BCM20706_A2DP
+int bcm20706_bt_a2dp_register(void);
+#endif
+
+#ifdef CONFIG_BCM20706_AVRCP
+int bcm20706_bt_avrcp_register(void);
+#endif
+
+#ifdef CONFIG_BCM20706_HFP
+int bcm20706_bt_hfp_register(void);
+#endif
+
+#ifdef CONFIG_BCM20706_SPP
+int bcm20706_bt_spp_register(void);
+#endif
+
+#ifdef CONFIG_BCM20706_LE
+int bcm20706_ble_common_register(void);
+
+#ifdef CONFIG_BCM20706_LE_GATT
+int bcm20706_ble_gatt_register(void);
+#endif
+#endif
 
 #endif /* __MODULES_BLUETOOTH_HAL_BCM20706_BCM20706_BT_INTERNAL_H */
 

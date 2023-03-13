@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/hal/bt_event.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +70,13 @@
  *@{
  */
 #define BLE_MAX_ADV_DATA_LEN 31
+/** @} */
+
+/**
+ *@name Max ble GATT data length
+ *@{
+ */
+#define BLE_MAX_GATT_DATA_LEN 244
 /** @} */
 
 /****************************************************************************
@@ -181,6 +188,10 @@ typedef enum
 	BLE_COMMON_EVENT_CONN_STAT_CHANGE = 0, /**< Connection status change event */
 	BLE_COMMON_EVENT_CONN_DEV_NAME,        /**< Device name receive event */
 	BLE_COMMON_EVENT_SCAN_RESULT,          /**< Scan result event */
+	BLE_COMMON_EVENT_MTUSIZE,              /**< MTU size event */
+	BLE_COMMON_EVENT_SAVE_BOND,            /**< Save bonding information event */
+	BLE_COMMON_EVENT_LOAD_BOND,            /**< Load bonding information event */
+    BLE_COMMON_EVENT_ENCRYPTION_RESULT,    /**< Encryption result notification */
 } BLE_COMMON_EVENT_ID;
 
 /**
@@ -194,7 +205,7 @@ typedef enum
 	BLE_GATT_EVENT_NOTIFY_REQ,              /**< GATT Characteristic notify request event */
 	BLE_GATT_EVENT_WRITE_RESP,              /**< GATT Characteristic write response event */
 	BLE_GATT_EVENT_READ_RESP,               /**< GATT Characteristic read response event */
-	BLE_GATT_EVENT_NOTIFY_RESP,             /**< GATT Characteristic notify response event */
+	BLE_GATT_EVENT_NOTIFICATION,            /**< GATT Characteristic notifition event */
 	BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE,   /**< GATTC discovery requested by host completed */
 } BLE_GATT_EVENT_ID;
 
@@ -428,7 +439,7 @@ struct ble_gatt_event_write_req_t
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Write data length */
-  uint8_t data[BT_MAX_EVENT_DATA_LEN]; /**< Write data */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Write data */
 };
 
 /**
@@ -482,7 +493,21 @@ struct ble_gatt_event_read_rsp_t
   uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Read data length */
-  uint8_t data[BT_MAX_EVENT_DATA_LEN]; /**< Read data */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Read data */
+};
+
+/**
+ * @struct ble_gatt_event_notification_t
+ * @brief Bluetooth LE GATT notification event
+ */
+struct ble_gatt_event_notification_t
+{
+  uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
+  uint16_t conn_handle;                /**< Connection handle ID */
+  uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
+  uint16_t length;                     /**< Read data length */
+  uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Read data */
 };
 
 /**
@@ -498,6 +523,35 @@ struct ble_event_adv_rept_t
   uint8_t length;                      /**< Scan response data length */
   uint8_t data[BLE_MAX_ADV_DATA_LEN];  /**< Scan response data */
   BT_ADDR addr;                        /**< Advertising device address @ref BT_ADDR */
+};
+
+struct ble_event_mtusize_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
+  uint16_t handle;                      /**< Connection handle */
+  uint16_t mtusize;                     /**< MTU size */
+};
+
+struct ble_event_bondinfo_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_COMMON_EVENT_ID */
+  int      num;                         /**< The number of bonding information */
+  struct ble_bondinfo_s *bond;          /**< bonding information */
+};
+
+/**
+ * @struct ble_event_encryption_result_t
+ * @brief Bluetooth LE encryption result event
+ */
+
+struct ble_event_encryption_result_t
+{
+  uint8_t  group_id;                    /**< Event group ID @ref BT_GROUP_ID */
+  uint8_t  event_id;                    /**< Event sub ID @ref BLE_COMMON_EVENT_ID */
+  uint16_t conn_handle;                 /**< connection handle */
+  int      result;                      /**< encryption result */
 };
 
 /**

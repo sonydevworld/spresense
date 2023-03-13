@@ -1,0 +1,71 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+menuconfig EXTERNALS_ELTRES
+	bool "ELTRES SDK library"
+	default n
+	---help---
+		Enable ELTRES SDK library.
+		This SDK is provided from https://eltres-iot.jp and is licensed
+		under the 3-Clause BSD License.
+
+if EXTERNALS_ELTRES
+
+choice
+	prompt "ELTRES board selection"
+	default EXTERNALS_ELTRES_SPEXEL
+
+config EXTERNALS_ELTRES_SPEXEL
+	bool "SPEXEL board"
+	depends on CXD56_UART0
+	---help---
+		Use SPEXEL board provided by RISNER.
+		https://eltres-iot.jp/product/product-030/
+
+config EXTERNALS_ELTRES_ADDON
+	bool "Add-on board"
+	depends on CXD56_UART2
+	---help---
+		Use Add-on board provided by CRESCO Digital Tech.
+		https://www.cresco-dt.co.jp/service/iot/iot-poc/eltres/
+
+config EXTERNALS_ELTRES_ORIGINAL
+	bool "Original board"
+	---help---
+		Use the original board.
+
+endchoice
+
+config EXTERNALS_ELTRES_DEBUG_ERROR
+	bool "Debug printf for error"
+	default n
+	---help---
+		Enable the debug printf for error.
+
+config EXTERNALS_ELTRES_DEBUG_INFO
+	bool "Debug printf for info"
+	default n
+	---help---
+		Enable the debug printf for info.
+
+config EXTERNALS_ELTRES_CTRL_FWUPDATE
+	bool "Control firmware update"
+	default n
+	---help---
+		Enable the Control firmware update.
+
+config EXTERNALS_ELTRES_GNSS_FWUPDATE
+	bool "GNSS firmware update"
+	default n
+	---help---
+		Enable the GNSS firmware update.
+
+config EXTERNALS_ELTRES_TEST_MODE
+	bool "Transmission test mode"
+	default n
+	---help---
+		Enable the transmission test mode.
+
+endif # EXTERNALS_ELTRES

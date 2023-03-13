@@ -151,6 +151,7 @@ static int setup_parsedvalue(void *user, const char *section,
    * security_mode = <Secure mode>  ; Select Secure mode from NONE or PSK
    * deviceid = <Device ID>         ; Set Device ID
    * security_key = <Security KeyD> ; Set security key
+   * lifetime = <Life time>         ; Life time [sec] of resource /1/x/1.
    *
    */
 
@@ -249,6 +250,10 @@ static int setup_parsedvalue(void *user, const char *section,
     {
       strncpy(param->security_key, value, sizeof(param->security_key));
     }
+  else if (!strcmp(section, "LwM2M") && !strcmp(name, "lifetime"))
+    {
+      param->lifetime = atoi(value);
+    }
   else if (!strcmp(section, "LwM2M") && !strcmp(name, "time_period"))
     {
       printf("Time period.\n");
@@ -295,6 +300,7 @@ struct app_parameter_s *createparam_from_ini(const char *filename)
 {
   int ret;
   memset(&app_param, 0, sizeof(app_param));
+  app_param.lifetime = 6000; /* As default */
 
   ret = ini_parse(filename, setup_parsedvalue, &app_param);
   if (ret != 0)

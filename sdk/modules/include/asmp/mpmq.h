@@ -163,6 +163,21 @@ int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
                    uint32_t ms);
 
 /**
+ * Try send message via MP message queue
+ *
+ * @param [in,out] mq: MP message queue object
+ * @param [in] msgid: User defined message ID (0-127)
+ * @param [in] data: Message data
+ *
+ * @return On success, mpmq_trysend() returns 0.
+           On error, it returns an error
+ * number.
+ * @retval -EINVAL: Invalid argument
+ */
+
+int mpmq_trysend(mpmq_t *mq, int8_t msgid, uint32_t data);
+
+/**
  * Receive message via MP message queue
  *
  * @param [in,out] mq: MP message queue object
@@ -192,6 +207,21 @@ int mpmq_receive(mpmq_t *mq, uint32_t *data);
  */
 
 int mpmq_timedreceive(mpmq_t *mq, uint32_t *data, uint32_t ms);
+
+/**
+ * Try receive message via MP message queue
+ *
+ * @param [in,out] mq: MP message queue object
+ * @param [out] data: Message data
+ *
+ * @return On success, mpmq_tryreceive() returns message ID. On error, it returns an
+ * error number.
+ * @retval -EINVAL: Invalid argument
+ * @retval -EAGAIN: Try again when data hasn't come
+ */
+
+int mpmq_tryreceive(mpmq_t *mq, uint32_t *data);
+
 
 /**
  * Request signal when MP message arrival

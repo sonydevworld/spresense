@@ -103,7 +103,7 @@ bool ThruProcComponent::recv_done(ComponentCmpltParam *cmplt)
 /*--------------------------------------------------------------------*/
 bool ThruProcComponent::recv_done(ComponentInformParam *info)
 {
-  memset(info, 0, sizeof(ComponentInformParam));
+  memset(static_cast<void*>(info), 0, sizeof(ComponentInformParam));
 
   return m_req_que.free();
 }
