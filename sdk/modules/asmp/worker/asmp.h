@@ -67,6 +67,7 @@ extern "C"
 void *wk_memset(void *s, int c, size_t n);
 void *wk_memcpy(void *dest, const void *src, size_t n);
 void wk_exit(int status);
+void wk_udelay(uint32_t us);
 
 cpuid_t asmp_getglobalcpuid(void);
 cpuid_t asmp_getlocalcpuid(void);

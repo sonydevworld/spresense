@@ -42,7 +42,12 @@
 
 #include "arch/intrinsics.h"
 #include "arch/cpufifo.h"
+#include "arch/timer.h"
 #include "common.h"
+
+#ifndef DELAY_TIMER_ID
+#  define DELAY_TIMER_ID (1)
+#endif
 
 /* Enough to hold any data from supervisor */
 
@@ -84,6 +89,21 @@ void wk_exit(int status)
     }
 
   /* NOTREACHED */
+}
+
+void wk_udelay(uint32_t us)
+{
+  int ret;
+
+  ret = timer_settimeout(DELAY_TIMER_ID, us);
+  if (ret)
+    {
+      return;
+    }
+
+  timer_start(DELAY_TIMER_ID);
+  while(timer_getvalue(DELAY_TIMER_ID));
+  timer_stop(DELAY_TIMER_ID);
 }
 
 mpbindobj_t *asmp_findmpbindobj(mpobjtype_t type, key_t key)
