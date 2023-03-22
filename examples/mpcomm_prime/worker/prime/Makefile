@@ -1,7 +1,7 @@
 ############################################################################
 # mpcomm_prime/worker/mpcomm/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2021, 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -48,15 +48,11 @@ LDLIBPATH += -L $(ASMPW_DIR)
 LDLIBPATH += -L $(MPCOMMW_DIR)
 
 LDLIBS += -lmpcommw
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 LIBM = "${shell "$(CC)" $(ARCHCPUFLAGS) -print-file-name=libm.a}"
 
-ifeq ($(WINTOOL),y)
-CELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
-else
-CELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
-endif
+CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -75,7 +71,7 @@ $(AOBJS): %$(OBJEXT): %.S
 
 $(BIN): $(COBJS) $(AOBJS)
 	@echo "LD: $<"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBM)
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $^ $(LDLIBS) $(LIBM)
 	$(Q) $(STRIP) -d $(BIN)
 
 clean:

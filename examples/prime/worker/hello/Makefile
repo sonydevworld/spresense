@@ -45,20 +45,15 @@ endif
 
 LDLIBPATH +=  -L $(LIB_DIR)
 
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 BIN = hello
 
 CSRCS = $(BIN).c
 
 CELFFLAGS += -Os
-ifeq ($(WINTOOL),y)
-CELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
-CELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
-else
-CELFFLAGS += -I$(APPDIR)
-CELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
-endif
+CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
+CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -77,7 +72,7 @@ $(AOBJS): %$(OBJEXT): %.S
 
 $(BIN): $(COBJS) $(AOBJS)
 	@echo "LD: $<"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $^ $(LDLIBS)
 	$(Q) $(STRIP) -d $(BIN)
 
 clean:

@@ -45,7 +45,7 @@ endif
 
 LDLIBPATH += -L $(LIB_DIR)
 
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 WORKER_ELF = POSTPROC
 
@@ -56,15 +56,9 @@ CXXSRCS = customproc_dsp_ctrl.cpp main.cpp
 CXXSRCS += rcfilter.cpp userproc.cpp
 
 CXXELFFLAGS += -Os
-ifeq ($(WINTOOL),y)
-CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
-CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
-CXXELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
-else
-CXXELFFLAGS += -Iuserproc/include
-CXXELFFLAGS += -I$(APPDIR)
-CXXELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
-endif
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" userproc$(DELIM)include)
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
 
 CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
 
@@ -88,7 +82,7 @@ $(CXXOBJS): %$(OBJEXT):%.cpp
 
 $(WORKER_ELF): lib $(CXXOBJS)
 	@echo "LD: $@"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(ARCHCRT0OBJ) $(CXXOBJS) $(LDLIBS)
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@ $(CXXOBJS) $(LDLIBS)
 	$(Q) $(STRIP) -d $(WORKER_ELF)
 
 .depend:

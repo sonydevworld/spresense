@@ -1,7 +1,7 @@
 ############################################################################
 # audio_oscillator/worker_oscillator/Makefile
 #
-#   Copyright 2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2020, 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,7 +33,6 @@
 #
 ############################################################################
 
--include $(TOPDIR)/.config
 include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
@@ -47,7 +46,7 @@ VPATH = userproc/src
 
 LDLIBPATH += -L $(LIB_DIR)
 
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 # Setup to build and linking CMSIS DSP library
 
@@ -61,14 +60,9 @@ WORKER_ELF = OSCPROC
 CXXSRCS = main.cpp oscillator.cpp
 
 CXXELFFLAGS += -Os
-ifeq ($(WINTOOL),y)
-CXXELFFLAGS += -I"$(shell cygpath -w userproc$(DELIM)include)"
-CXXELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
-else
-CXXELFFLAGS += -Iuserproc/include
-CXXELFFLAGS += -I$(APPDIR)
-CXXELFFLAGS += -I$(SDKDIR)/modules/audio/include
-endif
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" userproc$(DELIM)include)
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
+CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)audio$(DELIM)include)
 
 CXXFLAGS += -D_POSIX
 
@@ -97,7 +91,7 @@ $(CXXOBJS): %$(OBJEXT):%.cpp
 $(WORKER_ELF): lib $(CXXOBJS)
 	@echo "LD: $@"
 	$(Q) $(LD) $(LDRAWELFFLAGS) -e main --gc-sections $(LDLIBPATH) -o $@ \
-		--start-group $(ARCHCRT0OBJ) $(CXXOBJS) $(LDLIBS) $(LIBGCC) --end-group
+		--start-group $(CXXOBJS) $(LDLIBS) --end-group
 	$(Q) $(STRIP) -d $(WORKER_ELF)
 
 .depend:
