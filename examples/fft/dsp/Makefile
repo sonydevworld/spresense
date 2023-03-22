@@ -1,7 +1,7 @@
 ############################################################################
 # examples/fft/dsp/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -44,7 +44,7 @@ all: depend $(BIN)
 WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
 WORKER_LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 LDLIBPATH += -L $(WORKER_DIR)
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 CMSISDIR = $(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)cmsis
 CMSIS_DSP_DIR = $(CMSISDIR)$(DELIM)dsp
@@ -61,18 +61,11 @@ CSRCS = dsp_main.c
 
 #CFLAGS += -fno-strict-aliasing -ffunction-sections -fdata-sections
 CFLAGS += -O3
-ifeq ($(WINTOOL),y)
-CFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/asmp/worker)"
-CFLAGS += -I"$(shell cygpath -w ..)"
-else
-CFLAGS += -I$(SDKDIR)/modules/asmp/worker
-CFLAGS += -I..
-endif
+CFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)/modules/asmp/worker)
+CFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" ..)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
-
-LIBGCC = "$(shell "$(CC)" $(ARCHCPUFLAGS) -print-libgcc-file-name)"
 
 $(COBJS): %$(OBJEXT): %.c
 	@echo "CC: $<"
@@ -85,7 +78,7 @@ $(AOBJS): %$(OBJEXT): %.S
 $(BIN): $(COBJS) $(AOBJS) | $(WORKER_LIB) $(CMSIS_DSP_LIB)
 	@echo "LD: $@"
 	$(Q) $(LD) $(LDRAWELFFLAGS) -e main --gc-sections $(LDLIBPATH) -o $@ \
-		--start-group $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBGCC) --end-group
+		--start-group $^ $(LDLIBS) --end-group
 	$(Q) cp $(BIN) $(BIN).debug.elf
 	$(Q) $(STRIP) -d $(BIN)
 
