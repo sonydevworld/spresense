@@ -224,7 +224,12 @@ int mpmq_trysend(mpmq_t *mq, int8_t msgid, uint32_t data)
   m.proto = 0;
   m.data = data;
 
-  return cpufifo_push(m.word);
+  if (cpufifo_push(m.word))
+    {
+      return -EAGAIN;
+    }
+
+  return OK;
 }
 
 /**
