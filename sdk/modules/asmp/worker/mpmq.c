@@ -60,12 +60,12 @@ union msg {
   uint32_t   word[2];
   struct {
     /* Little endian */
-    
+
     uint16_t pid;
     uint8_t  msgid;
     uint8_t  proto:4;
     uint8_t  cpuid:4;
-    
+
     uint32_t data;
   };
 };
@@ -156,7 +156,7 @@ int mpmq_send(mpmq_t *mq, int8_t msgid, uint32_t data)
       ret = cpufifo_push(m.word);
     }
   while(ret);
-  
+
   return OK;
 }
 
@@ -183,8 +183,25 @@ int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
       ret = cpufifo_push(m.word);
     }
   while(ret);
-  
+
   return OK;
+}
+
+/**
+ * Try send message via MP message queue
+ */
+
+int mpmq_trysend(mpmq_t *mq, int8_t msgid, uint32_t data)
+{
+  union msg m;
+
+  m.cpuid = mq->cpuid;
+  m.msgid = msgid;
+  m.pid = 0;
+  m.proto = 0;
+  m.data = data;
+
+  return cpufifo_push(m.word);
 }
 
 /**
@@ -203,7 +220,7 @@ int mpmq_receive(mpmq_t *mq, uint32_t *data)
   while(ret);
 
   *data = m.data;
-  
+
   return m.msgid;
 }
 
@@ -223,6 +240,24 @@ int mpmq_timedreceive(mpmq_t *mq, uint32_t *data, uint32_t ms)
   while(ret);
 
   *data = m.data;
-  
+
   return m.msgid;
+}
+
+/**
+ * Try Receive message via MP message queue
+ */
+
+int mpmq_tryreceive(mpmq_t *mq, uint32_t *data)
+{
+  union msg m;
+  int ret = -EAGAIN;
+
+  if (cpufifo_pull(PROTO_MSG, m.word) == 0)
+    {
+      *data = m.data;
+      ret = (int)m.msgid;
+    }
+
+  return ret;
 }

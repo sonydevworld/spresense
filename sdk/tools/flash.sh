@@ -80,16 +80,6 @@ esac
 # Exec file extension postfix
 EXEEXT=""
 
-# WSL/WSL2 detection
-if [ "${PLATFORM}" == "linux" ]; then
-	if [ "$(uname -r | grep -i microsoft)" != "" ]; then
-		# WSL/WSL2 is a linux but USB related SDK tools
-		# should use windows binary.
-		PLATFORM=windows
-		EXEEXT=".exe"
-	fi
-fi
-
 # Option handler
 # -b: UART Baudrate (default: 115200)
 # -c: UART Port (default: /dev/ttyUSB0)
@@ -118,6 +108,18 @@ shift $(($OPTIND - 1))
 if [ "${UPDATE_ZIP}" != "" ]; then
 	${SCRIPT_DIR}/bootloader.py -i ${UPDATE_ZIP}
 	exit
+fi
+
+# WSL/WSL2 detection
+if [ "${PLATFORM}" == "linux" ]; then
+	if [ "$(uname -r | grep -i microsoft)" != "" ]; then
+		if [[ "$UART_PORT" == COM* ]]; then
+			# WSL/WSL2 is a linux but USB related SDK tools
+			# should use windows binary.
+			PLATFORM=windows
+			EXEEXT=".exe"
+		fi
+	fi
 fi
 
 # Check loader version

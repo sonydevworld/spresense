@@ -1843,7 +1843,12 @@ static bool CreateMediaRecorder(AsObjectParams_t params, AudioAttentionCb attcb)
 
   pthread_setname_np(pid, "media_recorder");
 
-  MediaRecorderObject::set_pid(pid);
+  while (!MediaRecorderObject::set_pid(pid))
+    {
+      /* Wait until the object is created */
+
+      usleep(1);
+    }
 
   return true;
 }

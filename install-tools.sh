@@ -44,22 +44,18 @@ NXTOOLARCHIVE=${NXTOOL}.tar.gz
 GENROMFS=genromfs-0.5.2
 
 CROSSBASEURL=https://developer.arm.com/-/media/Files/downloads/gnu-rm
-CROSSTOOLDIR=9-2019q4
-CROSSTOOLFILE=gcc-arm-none-eabi-9-2019-q4-major
+CROSSTOOLDIR=10.3-2021.10
+CROSSTOOLFILE=gcc-arm-none-eabi-10.3-2021.10
 
 # MD5 check sums
-TOOLCHAINSUM_win=82525522fefbde0b7811263ee8172b10
-TOOLCHAINSUM_mac=241b64f0578db2cf146034fc5bcee3d4
-TOOLCHAINSUM_linux=fe0029de4f4ec43cf7008944e34ff8cc
+TOOLCHAINSUM_win=2bc8f0c4c4659f8259c8176223eeafc1
+TOOLCHAINSUM_mac=7f2a7b7b23797302a9d6182c6e482449
+TOOLCHAINSUM_linux_x86_64=2383e4eb4ea23f248d33adc70dc3227e
+TOOLCHAINSUM_linux_aarch64=3fe3d8bb693bd0a6e4615b6569443d0d
 
 OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
 OPENOCDRELEASE=v0.10.0-spr1
 OPENOCDVERDATE=openocd-0.10.0-spr1-20191113
-
-# This variable takes from openocd binary. Please check "openocd -v" and update if needed.
-# Open On-Chip Debugger 0.10.0+dev-00948-g7542ae67 (2019-11-25-05:46)
-#                                  ^^^^^
-OPENOCDREV=00948
 
 VERBOSE=
 
@@ -101,7 +97,7 @@ run_progress()
 
 linux_install_tools()
 {
-    local _packages="git gperf libncurses5 libncurses5-dev flex bison genromfs pkg-config autoconf automake curl make minicom"
+    local _packages="git gperf libncurses5 libncurses5-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip"
     local _needed
     for p in ${_packages}; do
         dpkg -s $p >/dev/null 2>&1 || _needed="${_needed} ${p}"
@@ -115,12 +111,17 @@ linux_install_tools()
 
 win_install_tools()
 {
-    pacman -S --noconfirm --needed base-devel gcc git python3 ncurses-devel unzip tio 2>/dev/null
+    pacman -S --noconfirm --needed base-devel gcc gperf git python3 ncurses-devel unzip tio vim 2>/dev/null
 }
 
 mac_install_tools()
 {
     :  # do nothing
+}
+
+wsl_install_tools()
+{
+    linux_install_tools # XXX: We expects that Ubuntu runs on WSL
 }
 
 install_nxtools()
@@ -179,11 +180,12 @@ linux_install_toolchain()
         return
     fi
 
-    _fn=${CROSSTOOLFILE}-${_mach}-${OS}.tar.bz2
+    _fn=${CROSSTOOLFILE}-${_mach}-linux.tar.bz2
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
-    echo ${TOOLCHAINSUM_linux} ${_fn} > .sum
+    local _csum=TOOLCHAINSUM_linux_${_mach}
+    echo ${!_csum} ${_fn} > .sum
     eval md5sum -c .sum
     rm -f .sum
     if [ "$?" -ne "0" ]; then
@@ -198,15 +200,21 @@ linux_install_toolchain()
 
 win_install_toolchain()
 {
+    local _target=${1:-${SPRROOT}/usr}
+
     # Check the cross toolchain already exists
 
-    [ -e ${SPRROOT}/usr/bin/arm-none-eabi-gcc ] && return
+    [ -e ${_target}/bin/arm-none-eabi-gcc ] && return
 
     local _fn=${CROSSTOOLFILE}-win32.zip
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
-    run_progress unzip -o -d ${SPRROOT}/usr ${_fn}
+    run_progress unzip ${_fn}
+
+    mkdir -p ${_target}
+    cp -ar ${CROSSTOOLFILE}/* ${_target}
+    rm -rf ${CROSSTOOLFILE}
 }
 
 mac_install_toolchain()
@@ -217,7 +225,7 @@ mac_install_toolchain()
 
     # Download cross toolchain
 
-    local _fn=${CROSSTOOLFILE}-${OS}.tar.bz2
+    local _fn=${CROSSTOOLFILE}-mac.tar.bz2
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
@@ -232,23 +240,16 @@ mac_install_toolchain()
     run_progress tar vjxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
 }
 
-openocd_need_update()
+wsl_install_toolchain()
 {
-    [ -e ${SPRROOT}/usr/bin/openocd ] || return 0
-
-    local _rev=`${SPRROOT}/usr/bin/openocd 2>&1 | head -n1 | sed -e 's/.*dev-\([0-9]*\)-.*/\1/'`
-
-    # Test if unknown revision or revision less than OPENOCDREV
-    [ -z "${_rev}" ] || [ "${_rev}" -lt "${OPENOCDREV}" ] && return 0
-    return 1
+    linux_install_toolchain
 }
 
 linux_install_openocd()
 {
     local _fn=${OPENOCDVERDATE}
     local _sha
-
-    openocd_need_update || return
+    local _target=${1:-${SPRROOT}/usr}
 
     local _mach=`uname -m 2>/dev/null`
 
@@ -271,9 +272,8 @@ win_install_openocd()
 {
     local _fn=${OPENOCDVERDATE}
     local _sha=${_fn}.sha
+    local _target=${1:-${SPRROOT}/usr}
 
-    openocd_need_update || return
-	
     if [ "`uname -m 2>/dev/null`" = "x86_64" ]; then
         _fn=${_fn}-win64.zip
     else
@@ -291,7 +291,8 @@ win_install_openocd()
     # and move from appropriate directory level to SPRROOT.
 
     run_progress unzip -o  ${_fn}
-    cp -ar "${OPENOCDVERDATE}/"* ${SPRROOT}/usr || exit 1
+    mkdir -p ${_target}
+    cp -ar "${OPENOCDVERDATE}/"* ${_target} || exit 1
     rm -rf "${OPENOCDVERDATE}"
 }
 
@@ -299,8 +300,7 @@ mac_install_openocd()
 {
     local _fn=${OPENOCDVERDATE}-macosx.tar.bz2
     local _sha=${_fn}.sha
-
-    openocd_need_update || return
+    local _target=${1:-${SPRROOT}/usr}
 
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_fn} ${_fn}
     download ${OPENOCDBASEURL}/${OPENOCDRELEASE}/${_sha} ${_sha}
@@ -308,6 +308,11 @@ mac_install_openocd()
     shasum -c ${_sha} || exit 1
 
     run_progress tar vjxf ${_fn}  --strip-components=1 -C ${SPRROOT}/usr
+}
+
+wsl_install_openocd()
+{
+    win_install_openocd ${SPRROOT}/windows
 }
 
 while [ ! -z "$*" ]
@@ -344,20 +349,23 @@ case "`uname -s`" in
 esac
 
 ARCH=`uname -m 2>/dev/null`
-ISWSL=`uname -r | grep -i microsoft`
 # 32bit linux is not supported
 if [ "${OS}" == "linux" ]; then
     if [ "${ARCH}" != "x86_64" ] && [ "${ARCH}" != "aarch64" ]; then
-	    echo Sorry, this platform is not supported.
-	    exit 1
+        echo Sorry, this platform is not supported.
+        exit 1
+    fi
+
+    if [ "$(grep enabled /proc/sys/fs/binfmt_misc/WSLInterop 2>/dev/null)" = "enabled" ]; then
+        OS="wsl"
     fi
 fi
 
 # Switch SPRROOT by platform
 if [ "${OS}" == "win" ]; then
-	SPRROOT=/opt/${SPRBASENAME}
+    SPRROOT=/opt/${SPRBASENAME}
 else
-	SPRROOT=${HOME}/${SPRBASENAME}
+    SPRROOT=${HOME}/${SPRBASENAME}
 fi
 
 # Re-install
@@ -381,29 +389,21 @@ install_nxtools
 
 echo "== Install cross toolchain"
 ${OS}_install_toolchain
-if [ "${ISWSL}" != "" ]; then
-	# For WSL
-	SPRROOT=${HOME}/${SPRBASENAME}/windows
-	mkdir -p ${SPRROOT}/usr
-	win_install_toolchain
-	for exe in ${SPRROOT}/usr/bin/arm-none-eabi-*.exe
-	do
-		linkdest=$(dirname ${exe})/$(basename ${exe} .exe)
-		if [ ! -e ${linkdest} ]; then
-			ln -s ${exe} ${linkdest}
-		fi
-	done
-	SPRROOT=${HOME}/${SPRBASENAME}
-fi
 
 # Install openocd prebuilt binary
 
 ${OS}_install_openocd
-if [ "${ISWSL}" != "" ]; then
-	# For WSL
-	SPRROOT=${HOME}/${SPRBASENAME}/windows
-	win_install_openocd
-	SPRROOT=${HOME}/${SPRBASENAME}
+
+# On WSL, we need to symbolic links to .exe files and add x permission
+
+if [ "$OS" = "wsl" ]; then
+    cd ${SPRROOT}/windows/bin
+    for f in *
+    do
+        chmod +x $f 2>/dev/null
+        ln -sf $f $(basename $f .exe) 2>/dev/null
+    done
+    cd - >/dev/null 2>&1
 fi
 
 # Create PATH environment setup support script

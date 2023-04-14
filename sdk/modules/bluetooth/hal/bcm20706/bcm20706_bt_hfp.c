@@ -37,11 +37,39 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "bt_util.h"
 #include <bt/bt_hfp_hf.h>
 #include "manager/bt_uart_manager.h"
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_bt_hfp_connect(BT_ADDR *addr, uint16_t handle,
+                                   bool connect);
+static int bcm20706_bt_hfp_audio_connect(BT_ADDR *addr, uint16_t handle,
+                                         bool connect);
+static int bcm20706_bt_hfp_hf_feature(BT_HFP_HF_FEATURE_FLAG hf_heature);
+static int bcm20706_bt_hfp_send_at_command(BT_ADDR *addr, char *at_str,
+                                           uint16_t handle);
+static int bcm20706_bt_hfp_press_button(BT_ADDR *addr, uint16_t handle);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct bt_hal_hfp_ops_s bt_hal_hfp_ops =
+{
+  .connect         = bcm20706_bt_hfp_connect,
+  .audio_connect   = bcm20706_bt_hfp_audio_connect,
+  .set_hf_feature  = bcm20706_bt_hfp_hf_feature,
+  .send_at_command = bcm20706_bt_hfp_send_at_command,
+  .press_button    = bcm20706_bt_hfp_press_button,
+};
 
 /****************************************************************************
  * Private Functions
@@ -304,14 +332,11 @@ static int bcm20706_bt_hfp_press_button(BT_ADDR *addr, uint16_t handle)
 }
 
 /****************************************************************************
- * Public Data
+ * Public Functions
  ****************************************************************************/
 
-struct bt_hal_hfp_ops_s bt_hal_hfp_ops =
+int bcm20706_bt_hfp_register(void)
 {
-  .connect         = bcm20706_bt_hfp_connect,
-  .audio_connect   = bcm20706_bt_hfp_audio_connect,
-  .set_hf_feature  = bcm20706_bt_hfp_hf_feature,
-  .send_at_command = bcm20706_bt_hfp_send_at_command,
-  .press_button    = bcm20706_bt_hfp_press_button,
-};
+  return bt_hfp_register_hal(&bt_hal_hfp_ops);
+}
+

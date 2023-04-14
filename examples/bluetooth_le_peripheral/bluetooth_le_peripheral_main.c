@@ -1,7 +1,7 @@
 /****************************************************************************
  * bluetooth_le_peripheral/bluetooth_le_peripheral_main.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <bluetooth/ble_gatt.h>
 
 #include "system/readline.h"
@@ -52,22 +53,52 @@
 #define BLE_UUID_SDS_SERVICE_IN  0x3802
 #define BLE_UUID_SDS_CHAR_IN     0x4a02
 
+#define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
+
 /****************************************************************************
  * Private Function Prototypes
  ****************************************************************************/
 
 /* BLE common callbacks */
 
+/* Connection status change */
+
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
-                                      bool connected);                  /**< Connection status change */
-static void onConnectedDeviceNameResp(const char *name);                /**< Device name change */
-static void onScanResult(BT_ADDR addr, char *dev_name);                 /**< Result callback for scan */
+                                     bool connected);
+
+/* Device name change */
+
+static void onConnectedDeviceNameResp(const char *name);
+
+/* Save bonding information */
+
+static void onSaveBondInfo(int num, struct ble_bondinfo_s *bond);
+
+/* Load bonding information */
+
+static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond);
+
+/* Negotiated MTU size */
+
+static void onMtuSize(uint16_t handle, uint16_t sz);
+
+/* Encryption result */
+
+static void onEncryptionResult(uint16_t, bool result);
 
 /* BLE GATT callbacks */
 
-static void onWrite(struct ble_gatt_char_s *ble_gatt_char);               /**< Write request */
-static void onRead(struct ble_gatt_char_s *ble_gatt_char);                /**< Read request */
-static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable); /**< Notify request */
+/* Write request */
+
+static void onWrite(struct ble_gatt_char_s *ble_gatt_char);
+
+/* Read request */
+
+static void onRead(struct ble_gatt_char_s *ble_gatt_char);
+
+/* Notify request */
+
+static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable);
 
 /****************************************************************************
  * Private Data
@@ -77,7 +108,10 @@ static struct ble_common_ops_s ble_common_ops =
   {
     .connect_status_changed     = onLeConnectStatusChanged,
     .connected_device_name_resp = onConnectedDeviceNameResp,
-    .scan_result                = onScanResult
+    .save_bondinfo              = onSaveBondInfo,
+    .load_bondinfo              = onLoadBondInfo,
+    .mtusize                    = onMtuSize,
+    .encryption_result          = onEncryptionResult,
   };
 
 static struct ble_gatt_peripheral_ops_s ble_gatt_peripheral_ops =
@@ -92,6 +126,8 @@ static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}}
 static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
 
 static bool ble_is_connected = false;
+
+static uint16_t ble_conn_handle;
 
 static struct ble_gatt_service_s *g_ble_gatt_service;
 
@@ -131,6 +167,9 @@ static struct ble_gatt_char_s g_ble_gatt_char =
     .ble_gatt_peripheral_ops = &ble_gatt_peripheral_ops
   };
 
+static int g_ble_bonded_device_num;
+static struct ble_cccd_s **g_cccd = NULL;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -147,6 +186,7 @@ static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
           addr.address[3], addr.address[4], addr.address[5],
           connected ? "Connected" : "Disconnected");
 
+  ble_conn_handle = ble_state->ble_connect_handle;
   ble_is_connected = connected;
 }
 
@@ -157,14 +197,152 @@ static void onConnectedDeviceNameResp(const char *name)
   printf("%s [BLE] Receive connected device name = %s\n", __func__, name);
 }
 
-static void onScanResult(BT_ADDR addr, char *dev_name)
+static void onSaveBondInfo(int num, struct ble_bondinfo_s *bond)
 {
-  /* If receive connected device name data, this function will call. */
+  int i;
+  FILE *fp;
+  int sz;
 
-  printf("[BLE_GATT] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X, name:%s\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          dev_name);
+  /* In this example, save the parameter `num` and each members of
+   * the parameter `bond` in order to the file.
+   */
+
+  fp = fopen(BONDINFO_FILENAME, "wb");
+  if (fp == NULL)
+    {
+      printf("Error: could not create file %s\n", BONDINFO_FILENAME);
+      return;
+    }
+
+  fwrite(&num, 1, sizeof(int), fp);
+
+  for (i = 0; i < num; i++)
+    {
+      fwrite(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+
+      /* Because only cccd is pointer member, save it individually. */
+
+      sz = bond[i].cccd_num * sizeof(struct ble_cccd_s);
+      fwrite(bond[i].cccd, 1, sz, fp);
+    }
+
+  fclose(fp);
+}
+
+static int onLoadBondInfo(int num, struct ble_bondinfo_s *bond)
+{
+  int i;
+  FILE *fp;
+  int stored_num;
+  int sz;
+  size_t ret;
+
+  fp = fopen(BONDINFO_FILENAME, "rb");
+  if (fp == NULL)
+    {
+      return 0;
+    }
+
+  ret = fread(&stored_num, 1, sizeof(int), fp);
+  if (ret != sizeof(int))
+    {
+      printf("Error: could not load due to %s read error.\n",
+             BONDINFO_FILENAME);
+      fclose(fp);
+      return 0;
+    }
+
+  g_ble_bonded_device_num = (stored_num < num) ? stored_num : num;
+  sz = g_ble_bonded_device_num * sizeof(struct ble_cccd_s *);
+  g_cccd = (struct ble_cccd_s **)malloc(sz);
+  if (g_cccd == NULL)
+    {
+      printf("Error: could not load due to malloc error.\n");
+      g_ble_bonded_device_num = 0;
+    }
+
+  for (i = 0; i < g_ble_bonded_device_num; i++)
+    {
+      ret = fread(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
+      if (ret != sizeof(struct ble_bondinfo_s))
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      if (bond[i].cccd_num > 1)
+        {
+          printf("Error: could not load all data due to invalid data.\n");
+          printf("cccd_num does not exceed the number of characteristics\n");
+          printf("that is set by this application.\n");
+          printf("The number of loaded device is %d\n", i);
+
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      /* Because only cccd is pointer member, load it individually. */
+
+      sz = bond[i].cccd_num * sizeof(struct ble_cccd_s);
+      g_cccd[i] = (struct ble_cccd_s *)malloc(sz);
+
+      if (g_cccd[i] == NULL)
+        {
+          printf("Error: could not load all data due to malloc error.");
+          printf("The number of loaded device is %d\n", i);
+
+          g_ble_bonded_device_num = i;
+          break;
+        }
+
+      bond[i].cccd = g_cccd[i];
+      ret = fread(bond[i].cccd, 1, sz, fp);
+      if (ret != sz)
+        {
+          printf("Error: could not load all data due to %s read error.\n",
+                 BONDINFO_FILENAME);
+          printf("The number of loaded device is %d\n", i);
+          g_ble_bonded_device_num = i;
+          break;
+        }
+    }
+
+  fclose(fp);
+
+  return g_ble_bonded_device_num;
+}
+
+static void free_cccd(void)
+{
+  int i;
+
+  if (g_cccd)
+    {
+      for (i = 0; i < g_ble_bonded_device_num; i++)
+        {
+          if (g_cccd[i])
+            {
+              free(g_cccd[i]);
+            }
+        }
+
+      free(g_cccd);
+      g_cccd = NULL;
+    }
+}
+
+static void onMtuSize(uint16_t handle, uint16_t sz)
+{
+  printf("negotiated MTU size(connection handle = %d) : %d\n", handle, sz);
+}
+
+static void onEncryptionResult(uint16_t handle, bool result)
+{
+  printf("Encryption result(connection handle = %d) : %s\n",
+         handle, (result) ? "Success" : "Fail");
 }
 
 static void show_uuid(BLE_UUID *uuid)
@@ -316,6 +494,15 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
+  /* Register BLE common callbacks */
+
+  ret = ble_register_common_cb(&ble_common_ops);
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BLE] Register common call back failed. ret = %d\n", __func__, ret);
+      goto error;
+    }
+
   /* Turn ON BT */
 
   ret = bt_enable();
@@ -325,14 +512,9 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
-  /* Register BLE common callbacks */
+  /* Free memory that is allocated in onLoadBond() callback function. */
 
-  ret = ble_register_common_cb(&ble_common_ops);
-  if (ret != BT_SUCCESS)
-    {
-      printf("%s [BLE] Register common call back failed. ret = %d\n", __func__, ret);
-      goto error;
-    }
+  free_cccd();
 
   /* BLE set name */
 
@@ -448,7 +630,10 @@ int main(int argc, FAR char *argv[])
 
       if (ble_is_connected)
         {
-          ret = ble_characteristic_notify(&g_ble_gatt_char, (uint8_t *) buffer, len);
+          ret = ble_characteristic_notify(ble_conn_handle,
+                                          &g_ble_gatt_char,
+                                          (uint8_t *) buffer,
+                                          len);
           if (ret != BT_SUCCESS)
             {
               printf("%s [BLE] Send data failed. ret = %d\n", __func__, ret);

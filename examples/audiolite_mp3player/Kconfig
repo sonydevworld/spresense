@@ -1,0 +1,25 @@
+
+config EXAMPLES_AUDIOLITE_MP3PLAYER
+	tristate "audiolite_mp3player app"
+	default n
+	---help---
+		Enable the audiolite_mp3player app
+
+if EXAMPLES_AUDIOLITE_MP3PLAYER
+
+config EXAMPLES_AUDIOLITE_MP3PLAYER_PROGNAME
+	string "Program name"
+	default "audiolite_mp3player"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_MP3PLAYER_PRIORITY
+	int "audiolite_mp3player task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_MP3PLAYER_STACKSIZE
+	int "audiolite_mp3player stack size"
+	default 2048
+
+endif

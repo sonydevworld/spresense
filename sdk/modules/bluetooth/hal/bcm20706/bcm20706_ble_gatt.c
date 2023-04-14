@@ -76,10 +76,45 @@
 #define SRV_DISC_END_HANDLE    0xFFFF
 
 /****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_ble_copy_uuid(BLE_Uuid *dest_uuid, BLE_UUID *src_uuid);
+static int bcm20706_ble_add_service(struct ble_gatt_service_s *ble_gatt_service);
+static int bcm20706_ble_add_characteristic(uint16_t serv_handle,
+                                           struct ble_gatt_char_s *ble_gatt_char);
+static int bcm20706_ble_gatts_write(struct ble_gatt_char_s *ble_gatt_char,
+                                    uint16_t handle);
+static int bcm20706_ble_gatts_read(struct ble_gatt_char_s *ble_gatt_char,
+                                   uint16_t handle);
+static int bcm20706_ble_notify(struct ble_gatt_char_s *ble_gatt_char,
+                               uint16_t handle);
+static int bcm20706_ble_start_db_discovery(uint16_t conn_handle);
+static int bcm20706_ble_continue_db_discovery(uint16_t start_handle,
+                                              uint16_t conn_handle);
+static int bcm20706_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
+                                    uint16_t handle);
+static int bcm20706_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
+                                   uint16_t handle);
+
+/****************************************************************************
  * Private Data
  ****************************************************************************/
 
 static uint16_t gatts_handle = 0x31;
+
+static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
+{
+  .gatts.addService          = bcm20706_ble_add_service,
+  .gatts.addChar             = bcm20706_ble_add_characteristic,
+  .gatts.write               = bcm20706_ble_gatts_write,
+  .gatts.read                = bcm20706_ble_gatts_read,
+  .gatts.notify              = bcm20706_ble_notify,
+  .gattc.startDbDiscovery    = bcm20706_ble_start_db_discovery,
+  .gattc.continueDbDiscovery = bcm20706_ble_continue_db_discovery,
+  .gattc.write               = bcm20706_ble_gattc_write,
+  .gattc.read                = bcm20706_ble_gattc_read
+};
 
 /****************************************************************************
  * Private Functions
@@ -398,23 +433,6 @@ static int bcm20706_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16
 }
 
 /****************************************************************************
- * Public Data
- ****************************************************************************/
-
-struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
-{
-  .gatts.addService          = bcm20706_ble_add_service,
-  .gatts.addChar             = bcm20706_ble_add_characteristic,
-  .gatts.write               = bcm20706_ble_gatts_write,
-  .gatts.read                = bcm20706_ble_gatts_read,
-  .gatts.notify              = bcm20706_ble_notify,
-  .gattc.startDbDiscovery    = bcm20706_ble_start_db_discovery,
-  .gattc.continueDbDiscovery = bcm20706_ble_continue_db_discovery,
-  .gattc.write               = bcm20706_ble_gattc_write,
-  .gattc.read                = bcm20706_ble_gattc_read
-};
-
-/****************************************************************************
  * Private Functions
  ****************************************************************************/
 
@@ -705,5 +723,10 @@ int BLE_GattcWrite(uint16_t connHandle, BLE_GattcWriteParams const *writeParams)
 int BLE_GattcConfirm(uint16_t connHandle, uint16_t attrHandle)
 {
   return bleGattcConfirm(connHandle, attrHandle);
+}
+
+int bcm20706_ble_gatt_register(void)
+{
+  return ble_gatt_register_hal(&ble_hal_gatt_ops);
 }
 

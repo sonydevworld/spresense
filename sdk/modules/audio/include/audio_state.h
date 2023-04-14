@@ -63,8 +63,7 @@ public:
   AudioState(uint32_t mod_id, FAR const char* name, T state)
     {
       m_mod_id = mod_id;
-      strncpy(m_name, name, sizeof(m_name));
-      m_name[4] = '\0';
+      strlcpy(m_name, name, sizeof(m_name));
       m_state = state;
     }
 

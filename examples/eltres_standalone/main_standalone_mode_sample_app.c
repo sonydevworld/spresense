@@ -159,7 +159,7 @@ static void set_additional_payload_data(uint32_t additional_val);
  * @return none
 */
 // ===========================================================================
-void CXM150x_uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt){
+static void uart_receive_to_buffer_callback(uint32_t type_from,uint32_t rcv_cnt){
     g_INT_OUT2_flag = FLAG_OFF;
     
     // Check the first byte to determine if it is an event or a response.
@@ -582,6 +582,9 @@ int main_standalone_mode_sample_app(void){
     // Display version information
     printf("%s:Ver.%s\r\n",SAMPLE_APP_NAME,SAMPLE_APP_VER);
     
+    // set UART RX callback
+    wrapper_CXM150x_set_uart_rx_callback(uart_receive_to_buffer_callback);
+
     // set UART RX buffer
     wrapper_CXM150x_set_uart_rx_buf(g_rcv_buf);
     

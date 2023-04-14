@@ -418,37 +418,38 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   int errCode  = 0;
   ble_gap_sec_params_t secParams = {0};
   ble_gap_sec_keyset_t keysExchanged = {{0}};
+  ble_gap_sec_params_t *p_sec = NULL;
 
-  if(pairingFeature == NULL) {
-    BLE_PRT("pairingFeature is NULL!!!\n");
-    return -EINVAL;
+  if(pairingFeature != NULL) {
+    if((pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_PRESENT) &&
+       (pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
+      BLE_PRT("pairingFeature->oob=%d\n", pairingFeature->oob);
+      return -EINVAL;
+    }
+    if((pairingFeature->maxKeySize < pairingFeature->minKeySize) ||
+      (pairingFeature->maxKeySize > BLE_GAP_MAX_KEY_SIZE) ||
+      (pairingFeature->minKeySize < BLE_GAP_MIN_KEY_SIZE)) {
+      BLE_PRT("pairingFeature->maxKeySize=%d, pairingFeature->minKeySize=%d\n", pairingFeature->maxKeySize, pairingFeature->minKeySize);
+      return -EINVAL;
+    }
+
+    memset(&secParams,0,sizeof(secParams));
+    memset(&keysExchanged,0,sizeof(keysExchanged));
+
+    memset(&gapMem.wrapperBondInfo.ownEncKey,0,sizeof(gapMem.wrapperBondInfo.ownEncKey));
+    memset(&gapMem.wrapperBondInfo.ownIdKey,0,sizeof(gapMem.wrapperBondInfo.ownIdKey));
+    memset(&gapMem.wrapperBondInfo.peerEncKey,0,sizeof(gapMem.wrapperBondInfo.peerEncKey));
+    memset(&gapMem.wrapperBondInfo.peerIdKey,0,sizeof(gapMem.wrapperBondInfo.peerIdKey));
+
+    secParams.oob          = pairingFeature->oob;
+    secParams.io_caps      = pairingFeature->ioCap;
+    secParams.max_key_size = pairingFeature->maxKeySize;
+    secParams.min_key_size = pairingFeature->minKeySize;
+    secParams.mitm         = (pairingFeature->authReq & BLE_GAP_AUTH_MITM) >> 1;
+    secParams.bond         = (pairingFeature->authReq & BLE_GAP_AUTH_BOND) >> 0;
+
+    p_sec = &secParams;
   }
-  if((pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_PRESENT) &&
-     (pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
-    BLE_PRT("pairingFeature->oob=%d\n", pairingFeature->oob);
-    return -EINVAL;
-  }
-  if((pairingFeature->maxKeySize < pairingFeature->minKeySize) ||
-    (pairingFeature->maxKeySize > BLE_GAP_MAX_KEY_SIZE) ||
-    (pairingFeature->minKeySize < BLE_GAP_MIN_KEY_SIZE)) {
-    BLE_PRT("pairingFeature->maxKeySize=%d, pairingFeature->minKeySize=%d\n", pairingFeature->maxKeySize, pairingFeature->minKeySize);
-    return -EINVAL;
-  }
-
-  memset(&secParams,0,sizeof(secParams));
-  memset(&keysExchanged,0,sizeof(keysExchanged));
-
-  memset(&gapMem.wrapperBondInfo.ownEncKey,0,sizeof(gapMem.wrapperBondInfo.ownEncKey));
-  memset(&gapMem.wrapperBondInfo.ownIdKey,0,sizeof(gapMem.wrapperBondInfo.ownIdKey));
-  memset(&gapMem.wrapperBondInfo.peerEncKey,0,sizeof(gapMem.wrapperBondInfo.peerEncKey));
-  memset(&gapMem.wrapperBondInfo.peerIdKey,0,sizeof(gapMem.wrapperBondInfo.peerIdKey));
-
-  secParams.oob          = pairingFeature->oob;
-  secParams.io_caps      = pairingFeature->ioCap;
-  secParams.max_key_size = pairingFeature->maxKeySize;
-  secParams.min_key_size = pairingFeature->minKeySize;
-  secParams.mitm         = (pairingFeature->authReq & BLE_GAP_AUTH_MITM) >> 1;
-  secParams.bond         = (pairingFeature->authReq & BLE_GAP_AUTH_BOND) >> 0;
 
   secParams.kdist_own.enc = 1;
   secParams.kdist_own.id  = 1;
@@ -460,7 +461,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   keysExchanged.keys_peer.p_enc_key    = &gapMem.wrapperBondInfo.peerEncKey;
   keysExchanged.keys_peer.p_id_key    = &gapMem.wrapperBondInfo.peerIdKey;
 
-  errCode = sd_ble_gap_sec_params_reply(connHandle, BLE_GAP_SEC_STATUS_SUCCESS, &secParams, &keysExchanged);
+  errCode = sd_ble_gap_sec_params_reply(connHandle, BLE_GAP_SEC_STATUS_SUCCESS, p_sec, &keysExchanged);
   ret = bleConvertErrorCode((uint32_t)errCode);
   memcpy(&gapMem.keySet, &keysExchanged, sizeof(ble_gap_sec_keyset_t));
 #ifdef BLE_DBGPRT_ENABLE
@@ -914,28 +915,11 @@ int BLE_GapGetBondInfoIdList(BLE_GapBondInfoList *bondInfo)
   return 0;
 }
 
-int BLE_GapEncrypt(BLE_GapConnHandle connHandle)
+int BLE_GapEncrypt(uint16_t handle, ble_gap_enc_key_t *key)
 {
-  int index;
-  uint32_t list = bleBondEnableList;
-  int errCode = 0;
-  if (gapMem.is_connected) {
-    for(index = 0; index < BLE_SAVE_BOND_DEVICE_MAX_NUM; index++, list >>= 1) {
-      if (!(list & 1)) {
-        continue;
-      }
-      if (BondInfoInFlash[index].bondInfo.addrType != gapMem.wrapperBondInfo.bondInfo.addrType) {
-        continue;
-      }
-      if(!memcmp(BondInfoInFlash[index].bondInfo.addr,
-        gapMem.wrapperBondInfo.bondInfo.addr, BLE_GAP_ADDR_LENGTH)) {
-        gapMem.wrapperBondInfo = BondInfoInFlash[index];
-        break;
-      }
-    }
-  }
-  errCode = sd_ble_gap_encrypt(connHandle,
-    &gapMem.wrapperBondInfo.peerEncKey.master_id, &gapMem.wrapperBondInfo.peerEncKey.enc_info);
+  int errCode;
+
+  errCode = sd_ble_gap_encrypt(handle, &key->master_id, &key->enc_info);
   return bleConvertErrorCode((uint32_t)errCode);
 }
 

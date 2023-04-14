@@ -64,12 +64,13 @@
 
 #define OBJID_DATACONTAINER  (19)
 #define APP_INIFILE "/mnt/spif/lwm2m.ini"
+#define LWM2M_TMP_BUFF_LEN   (16)
 
 /****************************************************************************
  * Private Data
  ****************************************************************************/
 
-static char tmp_buff[256];
+static char tmp_buff[LWM2M_TMP_BUFF_LEN];
 static uint16_t enableobjs[6] =
 {
   1, 2, 3, 4, 5, OBJID_DATACONTAINER
@@ -154,7 +155,7 @@ static void read_cb(int seq_no, int srv_id,
 
   if (inst->object_id == OBJID_DATACONTAINER && inst->res_id == 0)
     {
-      len = sprintf(tmp_buff, "%08x", periodic_value);
+      len = snprintf(tmp_buff, LWM2M_TMP_BUFF_LEN, "%08x", periodic_value);
       lte_m2m_readresponse(seq_no, inst,
                            LWM2MSTUB_RESP_CONTENT, tmp_buff, len);
     }
@@ -323,6 +324,7 @@ static int lwm2m_setup(struct app_parameter_s *param)
   info.bootstrap = param->bootstrap;
   info.security_mode = param->security_mode;
   info.nonip = (param->ip_type == LTE_IPTYPE_NON) ? true : false;
+  info.lifetime = param->lifetime;
 
   ret = lte_setm2m_serverinfo(&info, 0);
   if (ret < 0)
@@ -396,7 +398,7 @@ static void notify_value(int value)
   inst.res_id = 0;
   inst.res_inst = -1;
 
-  len = sprintf(tmp_buff, "%08x", value);
+  len = snprintf(tmp_buff, LWM2M_TMP_BUFF_LEN, "%08x", value);
   printf("Update value as : token: %s, /%d/0/0 %s\n",
                                       ov_token, OBJID_DATACONTAINER, tmp_buff);
   printf("observe update : %d\n",
@@ -460,6 +462,22 @@ static bool handle_message(struct app_message_s *msg)
 
       case MESSAGE_ID_ENDAPP:
         ret = false;
+        break;
+
+      case MESSAGE_ID_LTE_RESTARTED:
+        is_observing = false;
+        printf("LTE modem is resetted. This app will be terminated."
+               " Please execute this app again.\n");
+        ret = false;
+        break;
+
+      case MESSAGE_ID_VERSION:
+          {
+            lte_version_t version;
+            lte_get_version_sync(&version);
+            printf("Modem IC Type : %s\n", version.bb_product);
+            printf("      FW Ver. : %s\n", version.np_package);
+          }
         break;
     }
 
@@ -592,6 +610,7 @@ static void m2mapp_update_value(int v)
 int main(int argc, char **argv)
 {
   int ret;
+  struct app_message_s msg;
 
   if (!is_task_running)
     {
@@ -609,7 +628,22 @@ int main(int argc, char **argv)
   else if (argc == 2)
     {
       printf("Updating value : %s\n", argv[1]);
-      m2mapp_update_value(atoi(argv[1]));
+      if (argv[1][0] == 'v')
+        {
+          msg.msgid = MESSAGE_ID_VERSION;
+          msg.arg.code = argv[1][0];
+          send_message(MESSAGE_QUEUE_NAME, &msg);
+        }
+      else if (argv[1][0] == 'r')
+        {
+          msg.msgid = MESSAGE_ID_RECONNECT;
+          msg.arg.code = argv[1][0];
+          send_message(MESSAGE_QUEUE_NAME, &msg);
+        }
+      else
+        {
+          m2mapp_update_value(atoi(argv[1]));
+        }
     }
 
   return 0;

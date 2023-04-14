@@ -55,6 +55,7 @@
 
 #include <stdint.h>
 #include <ble/ble_gatts.h>
+#include <ble_gap.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -956,7 +957,7 @@ int BLE_GapGetBondInfoIdList(BLE_GapBondInfoList *bondInfo);
  *     No
  *
  */
-int BLE_GapEncrypt(BLE_GapConnHandle connHandle);
+int BLE_GapEncrypt(uint16_t handle, ble_gap_enc_key_t *key);
 
 /**@brief Start reporting the received signal strength
  * @details This call allows the application to start reporting RSSI.The following events may be triggered: @ref BLE_GAP_EVENT_RSSI_CHANGED.

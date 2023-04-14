@@ -41,6 +41,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <crc16.h>
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include <ble/ble_gatts.h>
@@ -75,6 +76,14 @@ extern void board_nrf52_reset(bool en);
 #define BLE_ERR(...)
 #endif
 
+#define NRF52_SYS_ATTR_DATA_OFFSET_HANDLE (0)
+#define NRF52_SYS_ATTR_DATA_OFFSET_LEN    (2)
+#define NRF52_SYS_ATTR_DATA_OFFSET_VALUE  (4)
+
+#define NRF52_SYS_ATTR_DATA_LEN_HANDLE (2)
+#define NRF52_SYS_ATTR_DATA_LEN_LEN    (2)
+#define NRF52_SYS_ATTR_DATA_LEN_VALUE  (2)
+
  /******************************************************************************
  * Structure define
  *****************************************************************************/
@@ -97,6 +106,7 @@ static void onPhyUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDataLengthUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDataLengthUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
+static void onExchangeMtuResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onTxComplete(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onConnParamUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
@@ -127,7 +137,20 @@ static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, BLE_GattcCha
 static bool isDescDiscoveryReqd(bleGattcDb *gattcDbDiscovery, BLE_GattcDbDiscChar *currChar, BLE_GattcDbDiscChar *nextChar, BLE_GattcHandleRange *handleRange);
 static  int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, bool *raiseDiscovComplete);
 
+static int nrf52_ble_start_scan(bool duplicate_filter);
+static int nrf52_ble_stop_scan(void);
+static int nrf52_ble_connect(const BT_ADDR *addr);
+static int nrf52_ble_disconnect(const uint16_t conn_handle);
+static int nrf52_ble_advertise(bool enable);
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
+static int nrf52_ble_set_dev_name(char *name);
+static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance);
+static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
+static uint16_t nrf52_ble_set_mtusize(uint16_t sz);
+static uint16_t nrf52_ble_get_mtusize(void);
+static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
+static int nrf52_ble_pairing(uint16_t handle);
+
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
 static int nrf52_bt_enable(bool enable);
@@ -152,7 +175,40 @@ struct bt_common_context_s bt_common_context = {0};
 #define WAIT_TIME (100*1000)
 #define LOG_OUT printf
 #define AUTH_KEY_SIZE   6
-static BLE_GattcDbDiscovery gattc_db_discovery = {0};
+
+static struct ble_hal_common_ops_s ble_hal_common_ops =
+{
+  .setDevAddr           = nrf52_ble_set_dev_addr,
+  .setDevName           = nrf52_ble_set_dev_name,
+  .setAppearance        = nrf52_ble_set_appearance,
+  .setPPCP              = nrf52_ble_set_ppcp,
+  .advertise            = nrf52_ble_advertise,
+  .startScan            = nrf52_ble_start_scan,
+  .stopScan             = nrf52_ble_stop_scan,
+  .connect              = nrf52_ble_connect,
+  .disconnect           = nrf52_ble_disconnect,
+  .setMtuSize           = nrf52_ble_set_mtusize,
+  .getMtuSize           = nrf52_ble_get_mtusize,
+  .getNegotiatedMtuSize = nrf52_ble_get_negotiated_mtusize,
+  .pairing              = nrf52_ble_pairing,
+};
+
+static struct bt_hal_common_ops_s bt_hal_common_ops =
+{
+  .init          = nrf52_bt_init,
+  .finalize      = nrf52_bt_finalize,
+  .enable        = nrf52_bt_enable,
+  .setDevAddr    = NULL,
+  .getDevAddr    = NULL,
+  .setDevName    = NULL,
+  .getDevName    = NULL,
+  .paringEnable  = NULL,
+  .getBondList   = NULL,
+  .unBond        = NULL,
+  .setVisibility = NULL,
+  .inquiryStart  = NULL,
+  .inquiryCancel = NULL
+};
 
 /****************************************************************************
  * Private Functions
@@ -193,41 +249,152 @@ static void bleInitBondInfoKey(void)
 #endif
 }
 
+static void set_EncKey_for_save_event(struct ble_idkey_s *apps,
+                                      ble_gap_enc_key_t  *nrf52)
+{
+  memcpy(apps->ltk, nrf52->enc_info.ltk, BLE_LTK_LEN);
+  apps->ediv = nrf52->master_id.ediv;
+  memcpy(apps->rand, nrf52->master_id.rand, BLE_RAND_LEN);
+}
+
+static void set_bondinfo_for_save_event(struct ble_bondinfo_s *apps,
+                                        bleGapWrapperBondInfo *nrf52)
+{
+  static struct ble_cccd_s cccd;
+
+  apps->peer_addr.type = nrf52->bondInfo.addrType;
+  memcpy(apps->peer_addr.addr,
+         nrf52->bondInfo.addr,
+         BLE_GAP_ADDR_LENGTH);
+
+  memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+  set_EncKey_for_save_event(&apps->own,  &nrf52->ownEncKey);
+  set_EncKey_for_save_event(&apps->peer, &nrf52->peerEncKey);
+
+  apps->cccd_num = 1;
+  apps->cccd = &cccd;
+  memcpy(&cccd.handle,
+         &nrf52->sys_attr_data[NRF52_SYS_ATTR_DATA_OFFSET_HANDLE],
+         NRF52_SYS_ATTR_DATA_LEN_HANDLE);
+  memcpy(&cccd.value,
+         &nrf52->sys_attr_data[NRF52_SYS_ATTR_DATA_OFFSET_VALUE],
+         NRF52_SYS_ATTR_DATA_LEN_VALUE);
+}
+
+static void mk_save_bondinfo_event(void)
+{
+  int i;
+  static struct ble_bondinfo_s bond[BLE_SAVE_BOND_DEVICE_MAX_NUM];
+  struct ble_event_bondinfo_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_SAVE_BOND;
+  evt.num = 0;
+
+  for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++)
+    {
+      if (((bleBondEnableList >> i) & 1) == 1)
+        {
+          set_bondinfo_for_save_event(&bond[evt.num],
+                                      &BondInfoInFlash[i]);
+          evt.num++;
+        }
+    }
+
+  evt.bond = bond;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
+static int mk_load_bondinfo_event(struct ble_bondinfo_s *bond)
+{
+  struct ble_event_bondinfo_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_LOAD_BOND;
+  evt.num = BLE_SAVE_BOND_DEVICE_MAX_NUM;
+  evt.bond = bond;
+
+  return ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
+static void save_EncKey(ble_gap_enc_key_t  *nrf52,
+                        struct ble_idkey_s *apps)
+{
+  memcpy(nrf52->enc_info.ltk, apps->ltk, BLE_GAP_SEC_KEY_LEN);
+  nrf52->enc_info.ltk_len = BLE_GAP_SEC_KEY_LEN;
+  nrf52->master_id.ediv = apps->ediv;
+  memcpy(nrf52->master_id.rand, apps->rand, BLE_GAP_SEC_RAND_LEN);
+}
+
+static void save_cccd(int num,
+                      struct ble_cccd_s *cccd,
+                      uint8_t *sys_attr_data)
+{
+  int i;
+  uint16_t *p = (uint16_t *)sys_attr_data;
+
+  for (i = 0; i < num; i++)
+    {
+      *p++ = cccd[i].handle;
+      *p++ = sizeof(cccd[i].value);
+      *p++ = cccd[i].value;
+    }
+
+  /* Append CRC16 value for created sys_attr_data. */
+
+  *p = crc16part(sys_attr_data, (uint8_t *)p - sys_attr_data, 0xFFFF);
+}
+
+static void save_apps_bondinfo(int num,
+                               struct ble_bondinfo_s *apps_bond,
+                               uint32_t *enable_list,
+                               bleGapWrapperBondInfo *bond)
+{
+  int i;
+  struct ble_bondinfo_s *apps = &apps_bond[0];
+  bleGapWrapperBondInfo *nrf52 = &bond[0];
+
+  *enable_list = 0;
+
+  for (i = 0, apps = &apps_bond[0], nrf52 = &bond[0];
+       i < num;
+       i++, apps++, nrf52++)
+    {
+      *enable_list |= (1 << i);
+      nrf52->bondInfo.addrType = apps->peer_addr.type;
+      memcpy(nrf52->bondInfo.addr,
+             apps->peer_addr.addr,
+             BLE_GAP_ADDR_LENGTH);
+      memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
+      memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+      nrf52->peerIdKey.id_addr_info.addr_id_peer = 1;
+      nrf52->peerIdKey.id_addr_info.addr_type = apps->peer_addr.type;
+      memcpy(nrf52->peerIdKey.id_addr_info.addr,
+             apps->peer_addr.addr,
+             BLE_GAP_ADDR_LENGTH);
+      save_EncKey(&nrf52->ownEncKey,  &apps->own);
+      save_EncKey(&nrf52->peerEncKey, &apps->peer);
+      save_cccd(apps->cccd_num, apps->cccd, nrf52->sys_attr_data);
+    }
+}
+
+static void load_apps_bondinfo(uint32_t *enable_list,
+                               bleGapWrapperBondInfo *bond)
+{
+  int num;
+  static struct ble_bondinfo_s apps_bond[BLE_SAVE_BOND_DEVICE_MAX_NUM];
+
+  num = mk_load_bondinfo_event(apps_bond);
+  save_apps_bondinfo(num, apps_bond, enable_list, bond);
+}
+
 static int bleGetBondInfo(void)
 {
-  int ret = 0;
   bleInitBondInfoKey();
-  ret = BSO_GetRegistryValue(bleKey.enable_key, (void *)&bleBondEnableList, sizeof(uint32_t));
-  if (ret == -ENOENT)
-    {
-      BLE_PRT("bleGetBondInfo: Set bleBondEnableList = 0\n");
-      bleBondEnableList = 0;
-      BSO_SetRegistryValue(bleKey.enable_key, (const void*)&bleBondEnableList, sizeof(uint32_t));
-      BSO_Sync();
-    }
-  else if (0 != ret)
-    {
-      BLE_PRT("bleGetBondInfo: Get bleBondEnableList NG %d\n", ret);
-      return ret;
-    }
-  
-  BLE_PRT("bleGetBondInfo: bleBondEnableList 0x%lx\n", bleBondEnableList);
-  for (int i=0; i<BLE_SAVE_BOND_DEVICE_MAX_NUM; i++)
-    {
-      ret = BSO_GetRegistryValue(bleKey.info_key[i], (void *)&BondInfoInFlash[i], sizeof(bleGapWrapperBondInfo));
-      if(ret == -ENOENT)
-        {
-          BLE_PRT("bleGetBondInfo: Set bleBondEnableList = 0\n");
-          bleBondEnableList = 0;
-          BSO_SetRegistryValue(bleKey.info_key[i], (const void*)&BondInfoInFlash[i], sizeof(bleGapWrapperBondInfo));
-          BSO_Sync();
-        }
-      else if (0 != ret)
-        {
-          BLE_PRT("bleGetBondInfo: Get BondInfoInFlash[%d] NG %d\n", i, ret);
-          return ret;
-        }
-    }
+  load_apps_bondinfo(&bleBondEnableList, BondInfoInFlash);
+
   return 0;
 }
 
@@ -282,7 +449,11 @@ int BLE_CommonInitializeStack(BLE_InitializeParams *initializeParams)
           {
             commMem.stackInited = true;
           }
-          break;
+
+        commMem.requested_mtu = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+        commMem.client_rx_mtu = BLE_GATT_ATT_MTU_DEFAULT;
+        break;
+
       default:
         ret = -EINVAL;
         break;
@@ -482,6 +653,36 @@ static
 int bleStackFin(void)
 {
   int ret = 0;
+
+  switch (g_ble_context.conn_sts)
+    {
+      case BLE_CONN_STS_CONNECTED:
+        BLE_GapDisconnectLink(g_ble_context.ble_conn_handle);
+        g_ble_context.ble_conn_handle = CONN_HANDLE_INVALED;
+        break;
+
+      case BLE_CONN_STS_CONNECTING:
+        BLE_GapCancelConnecting();
+        break;
+
+      default:
+        break;
+    }
+
+  g_ble_context.conn_sts = BLE_CONN_STS_NOTCONNECTED;
+
+  if (g_ble_context.is_advertising)
+    {
+      BLE_GapStopAdv();
+      g_ble_context.is_advertising = false;
+    }
+
+  if (g_ble_context.is_scanning)
+    {
+      BLE_GapStopScan();
+      g_ble_context.is_scanning = false;
+    }
+
   ret = nrf_sdh_disable_request();
   return bleConvertErrorCode(ret);
 }
@@ -574,6 +775,9 @@ void bleNrfEvtHandler(BLE_Evt *bleEvent, ble_evt_t *pBleNrfEvt)
       case BLE_GATTC_EVT_HVX:
         onHvx(bleEvent, pBleNrfEvt);
         break;
+      case BLE_GATTC_EVT_EXCHANGE_MTU_RSP:
+        onExchangeMtuResponse(bleEvent, pBleNrfEvt);
+        break;
       case BLE_GATTS_EVT_SYS_ATTR_MISSING:
         onSysAttrMissing(bleEvent, pBleNrfEvt);
         break;
@@ -632,48 +836,38 @@ static void ble_advertise(int mode)
 
 static void on_connected(const BLE_EvtConnected* evt)
 {
-  int ret = 0;
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   LOG_OUT("Connected: handle %d, role %d\n", evt->handle, evt->role);
   g_ble_context.ble_srv_sds.conn_handle = evt->handle;
   g_ble_context.ble_conn_handle         = evt->handle;
   g_ble_context.ble_role                = evt->role;
+  g_ble_context.conn_sts                = BLE_CONN_STS_CONNECTED;
+  g_ble_context.is_scanning             = false;
+  g_ble_context.is_advertising          = false;
+  memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
-  struct ble_event_conn_stat_t conn_stat_evt;
   conn_stat_evt.connected = true;
   conn_stat_evt.handle = evt->handle;
+  memcpy(conn_stat_evt.addr.address, evt->addr.addr, BT_ADDR_LEN);
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
   conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
-
   ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
 
-  if (evt->role != BLE_ROLE_CENTRAL)
+  if ((evt->role == BLE_ROLE_CENTRAL) &&
+      (commMem.requested_mtu != BLE_GATT_ATT_MTU_DEFAULT))
     {
-      return;
-    }
-
-  /* TODO BLE device needs to configure the MTU after connection,
-   * wait for the finish of configuring.
-   */
-
-  usleep(500 * 1000);
-
-  ret = BLE_GattcStartDbDiscovery(g_ble_context.ble_conn_handle);
-  if (BLE_SUCCESS == ret)
-    {
-      LOG_OUT("[BLE][SUCCESS]BLE_GattcStartDbDiscovery\n");
-    }
-  else
-    {
-      LOG_OUT("[BLE][ERROR]BLE_GattcStartDbDiscovery\n");
-      LOG_OUT("[BLE][ERROR]Error number = %d\n", ret);
+      sd_ble_gattc_exchange_mtu_request(evt->handle, commMem.requested_mtu);
     }
 }
 
 static void on_disconnected(const BLE_EvtDisconnected* evt)
 {
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   LOG_OUT("Disconnected: HCI status 0x%x\n", evt->reason);
   g_ble_context.ble_conn_handle = CONN_HANDLE_INVALED;
-  struct ble_event_conn_stat_t conn_stat_evt;
+  g_ble_context.conn_sts        = BLE_CONN_STS_NOTCONNECTED;
 
   conn_stat_evt.connected = false;
 
@@ -691,36 +885,43 @@ static void on_disconnected(const BLE_EvtDisconnected* evt)
         {
           LOG_OUT("BLE_GapStartAdv failed, ret=%d\n", ret);
         }
-    }
-}
-
-static uint8_t wait_on_read_rsp_flag = 0;
-
-static void on_db_discovery(BLE_EvtGattcDbDiscovery *db_discovery)
-{
-  if (db_discovery->result != BLE_GATTC_RESULT_SUCCESS)
-    {
-      LOG_OUT("[BLE][ERROR]DB Discovery Failed\n");
-    }
-  else
-    {
-      LOG_OUT("[BLE][SUCCESS]DB Discovery Success.service count= %d\n",
-          db_discovery->params.dbDiscovery.srvCount);
-      memcpy(&gattc_db_discovery, &db_discovery->params.dbDiscovery,
-          sizeof(BLE_GattcDbDiscovery));
+      else
+        {
+          g_ble_context.is_advertising = true;
+        }
     }
 }
 
 static void on_read_rsp(BLE_EvtGattcRead *readRsp)
 {
-  LOG_OUT("read peer device name:%s\n", readRsp->charValData);
-  wait_on_read_rsp_flag = 0;
+  struct ble_gatt_event_read_rsp_t evt;
+
+  evt.group_id    = BLE_GROUP_GATT;
+  evt.event_id    = BLE_GATT_EVENT_READ_RESP;
+  evt.conn_handle = readRsp->connHandle;
+  evt.char_handle = readRsp->charValHandle;
+  evt.length      = readRsp->charValLen;
+  memcpy(evt.data, readRsp->charValData, sizeof(evt.data));
+
+  ble_gatt_event_handler((struct bt_event_t *)&evt);
 }
 
 static void on_exchange_feature(const BLE_EvtExchangeFeature* exchange_feature)
 {
-  BLE_GapPairingFeature* pf = &g_ble_context.pairing_feature;
-  int ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
+  int ret;
+  BLE_GapPairingFeature* pf = NULL;
+
+  /* In central case, pairing feature must not be set,
+   * because it is transmitted in the parameter of
+   * preceding sd_ble_gap_authenticate()
+   */
+
+  if (g_ble_context.ble_role == BLE_ROLE_PERIPHERAL)
+    {
+      pf = &g_ble_context.pairing_feature;
+    }
+
+  ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
 
   if (BLE_SUCCESS != ret)
     {
@@ -742,6 +943,18 @@ static void on_disp_passkey(BLE_EvtDisplayPasskey* disp_passkey)
   LOG_OUT("[BLE][LOG]Passkey: %s\n", disp_passkey->passkey);
 }
 
+static void mk_encryption_result_event(uint16_t handle, bool result)
+{
+  struct ble_event_encryption_result_t evt;
+
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_ENCRYPTION_RESULT;
+  evt.conn_handle = handle;
+  evt.result = result;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
 static void on_auth_status(BLE_EvtAuthStatus* auth_status)
 {
   int ret   = BLE_SUCCESS;
@@ -750,6 +963,7 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
   if (auth_status->status != BLE_GAP_SM_STATUS_SUCCESS)
     {
       LOG_OUT("[BLE][LOG]Pairing failed! ErrCode: %x\n", auth_status->status);
+      mk_encryption_result_event(auth_status->handle, false);
       return;
     }
   else
@@ -798,6 +1012,8 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
           bond_id.bondInfoId[index][1],\
           bond_id.bondInfoId[index][0]);
     }
+
+  mk_save_bondinfo_event();
 }
 
 static void on_timeout(BLE_EvtTimeout *timeout)
@@ -904,66 +1120,18 @@ static void on_conn_params_update(BLE_EvtConnParamUpdate* param)
   LOG_OUT("[BLE][LOG]Timeout: %d\n", param->connParams.connSupTimeout);
 }
 
-typedef struct
-{
-  uint8_t *data;
-  uint16_t data_len;
-} data_t;
-
-static int adv_report_parse(uint8_t type, data_t *adv_data, data_t *type_data)
-{
-  uint16_t index = 0;
-  uint8_t *data = adv_data->data;
-
-  while (index < adv_data->data_len)
-    {
-      uint8_t field_length = data[index];
-      uint8_t field_type   = data[index+1];
-
-      if (field_type == type)
-        {
-          type_data->data   = &data[index+2];
-          type_data->data_len = field_length-1;
-          type_data->data[type_data->data_len] = '\0';
-          return 0;
-        }
-
-      index += field_length + 1;
-    }
-
-  return -1;
-}
-
 static void on_adv_report(BLE_EvtAdvReportData *adv_report)
 {
-  data_t advReport = {adv_report->data, adv_report->dlen};
-  data_t localName;
-  uint8_t localNameData[32] = {0};
-  localName.data = localNameData;
-  localName.data_len = 0;
-  int ret;
+  struct ble_event_adv_rept_t evt;
 
-  if (adv_report_parse(0x09 /* COMPLETE_LOCAL_NAME */, &advReport, &localName) ||
-    strncmp((const char *)localName.data, "SONY", strlen("SONY")))
-    {
-      return;
-    }
-
-  LOG_OUT("[BLE][LOG]Peer RSSI:%d Name:%s\n", adv_report->rssi, localName.data);
-
-  ret = BLE_GapStopScan();
-  if (BLE_SUCCESS != ret)
-    {
-      LOG_OUT("BLE_GapStopScan failed, ret=%d\n", ret);
-    }
-
-  /* If immediatey disconnect, change slave_latency. */
-
-  ret = BLE_GapConnect(&adv_report->addr);
-  if (BLE_SUCCESS != ret)
-    {
-      LOG_OUT("BLE_GapConnect failed, ret=%d\n", ret);
-    }
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
+  evt.rssi = adv_report->rssi;
+  evt.scan_rsp = adv_report->scan_rsp;
+  evt.length = adv_report->dlen;
+  memcpy(evt.data, adv_report->data, adv_report->dlen);
+  memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
+  ble_common_event_handler((struct bt_event_t *)&evt);
 }
 
 static void on_phy_update_request(BLE_EvtPhyUpdate *phy_update)
@@ -1099,21 +1267,56 @@ void onDataLengthUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   on_data_len_update((BLE_EvtDataLengthUpdate *)pBleEvent->evtData);
 }
 
+static void mk_mtusize_event(uint16_t handle, uint16_t sz)
+{
+  struct ble_event_mtusize_t evt;
+
+  evt.mtusize  = sz;
+  evt.handle   = handle;
+  evt.group_id = BLE_GROUP_COMMON;
+  evt.event_id = BLE_COMMON_EVENT_MTUSIZE;
+
+  ble_common_event_handler((struct bt_event_t *) &evt);
+}
+
+static
+void onExchangeMtuResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
+{
+  ble_gattc_evt_exchange_mtu_rsp_t *rsp;
+
+  rsp = &pBleNrfEvt->evt.gattc_evt.params.exchange_mtu_rsp;
+  BLE_PRT("onMtuReq: mtu=%d\n", req->client_rx_mtu);
+  if (commMem.requested_mtu > rsp->server_rx_mtu)
+    {
+      commMem.client_rx_mtu = rsp->server_rx_mtu;
+    }
+  else
+    {
+      commMem.client_rx_mtu = commMem.requested_mtu;
+    }
+
+  mk_mtusize_event(pBleNrfEvt->evt.gattc_evt.conn_handle, commMem.client_rx_mtu);
+}
+
 static
 void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
   int ret = 0;
-  ble_gatts_evt_exchange_mtu_request_t *req = &pBleNrfEvt->evt.gatts_evt.params.exchange_mtu_request;
+  ble_gatts_evt_exchange_mtu_request_t *req;
+
+  req = &pBleNrfEvt->evt.gatts_evt.params.exchange_mtu_request;
   BLE_PRT("onMtuReq: mtu=%d\n", req->client_rx_mtu);
-  if (NRF_SDH_BLE_GATT_MAX_MTU_SIZE > req->client_rx_mtu)
+  if (commMem.requested_mtu > req->client_rx_mtu)
     {
       commMem.client_rx_mtu = req->client_rx_mtu;
     }
   else
     {
-      commMem.client_rx_mtu = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+      commMem.client_rx_mtu = commMem.requested_mtu;
     }
-  ret = sd_ble_gatts_exchange_mtu_reply(pBleNrfEvt->evt.gatts_evt.conn_handle, commMem.client_rx_mtu);
+
+  ret = sd_ble_gatts_exchange_mtu_reply(pBleNrfEvt->evt.gatts_evt.conn_handle,
+                                        commMem.client_rx_mtu);
   if (ret)
     {
       BLE_ERR("onLenUp: sd_ble_gatts_exchange_mtu_reply %d\n", ret);
@@ -1124,6 +1327,8 @@ void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.gattsExchangeMTU.client_rx_mtu = req->client_rx_mtu;
   pBleEvent->evtDataSize = sizeof(BLE_EvtGattsExchangeMTU);
   memcpy(pBleEvent->evtData, &commMem.gattsExchangeMTU, pBleEvent->evtDataSize);
+
+  mk_mtusize_event(pBleNrfEvt->evt.gatts_evt.conn_handle, commMem.client_rx_mtu);
 }
 
 static
@@ -1144,40 +1349,6 @@ void onTxComplete(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
     }
   pBleEvent->evtDataSize = sizeof(BLE_EvtTxComplete);
   memcpy(pBleEvent->evtData, &commMem.txCompleteData, pBleEvent->evtDataSize);
-}
-
-static void onConnect_hal(void)
-{
-  struct bt_event_conn_stat_t con_stat_evt;
-
-  #ifdef BLE_DBGPRT_ENABLE
-  uint8_t connect = 0;
-  uint8_t type = 0;
-  uint8_t reason = 0;
-  #endif
-  /* Copy device address */
-
-  memcpy(&con_stat_evt.addr, commMem.connectData.addr.addr, sizeof(BT_ADDR));
-
-  /* Copy connect status */
-
-  con_stat_evt.connected = true;
-
-  /* Copy type */
-//   type = commMem.connectData.addr.type;
-//   con_stat_evt.status = reason;
-
-  con_stat_evt.group_id = BT_GROUP_COMMON;
-  con_stat_evt.event_id = BT_COMMON_EVENT_CONN_STAT_CHANGE;
-
-  BLE_PRT("addr: %02x.%02x.%02x.%02x.%02x,%02x is connect:%d,"
-      "transport type: %x, disconnect reason: %x.\n",
-    con_stat_evt.addr.address[0], con_stat_evt.addr.address[1],
-    con_stat_evt.addr.address[2], con_stat_evt.addr.address[3],
-    con_stat_evt.addr.address[4], con_stat_evt.addr.address[5],
-    connect, type, reason);
-
-  bt_common_event_handler((struct bt_event_t *) &con_stat_evt);
 }
 
 static int searchBondInfoIndex(ble_gap_master_id_t *id)
@@ -1240,9 +1411,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtDataSize = sizeof(BLE_EvtConnected);
   memcpy(pBleEvent->evtData, &commMem.connectData, pBleEvent->evtDataSize);
 
-  //notify to hal layer
-  onConnect_hal();
-
   on_connected((BLE_EvtConnected*)pBleEvent->evtData);
 }
 
@@ -1289,6 +1457,7 @@ void saveSysAttrData(ble_gap_master_id_t *id, uint8_t *sys_attr_data)
       BSO_SetRegistryValue(bleKey.info_key[index],
                            (const void*)&BondInfoInFlash[index],
                            sizeof(bleGapWrapperBondInfo));
+      mk_save_bondinfo_event();
     }
 }
 
@@ -1534,16 +1703,93 @@ void onAuthKeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   on_auth_key_request((BLE_EvtAuthKey *)pBleEvent->evtData);
 }
 
+static int getAddrFmConnHandle(uint16_t handle, BT_ADDR *addr)
+{
+  if (handle != g_ble_context.ble_conn_handle)
+    {
+      /* Invalid connection handle. */
+
+      return -EINVAL;
+    }
+
+  memcpy(addr->address, g_ble_context.ble_addr.addr, BT_ADDR_LEN);
+
+  return BT_SUCCESS;
+}
+
+static int searchBondInfoIndexFmConnHandle(uint16_t handle)
+{
+  int i;
+  int ret;
+  uint32_t list = bleBondEnableList;
+  BT_ADDR addr;
+
+  ret = getAddrFmConnHandle(handle, &addr);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++, list >>= 1)
+    {
+      if (list & 1)
+        {
+          if (memcmp(addr.address,
+                     BondInfoInFlash[i].bondInfo.addr,
+                     BT_ADDR_LEN)
+               == 0)
+            {
+              break;
+            }
+        }
+    }
+
+  return i;
+}
+
+static void clearBondInfo(uint16_t handle)
+{
+  int ret;
+
+  ret = searchBondInfoIndexFmConnHandle(handle);
+  printf("searchBondInfoIndexFmConnHandle ret = %d\n", ret);
+  if ((ret >= 0) && (ret < BLE_SAVE_BOND_DEVICE_MAX_NUM))
+    {
+      memset(&BondInfoInFlash[ret], 0, sizeof(bleGapWrapperBondInfo));
+      bleBondEnableList &= ~(1 << ret);
+      mk_save_bondinfo_event();
+    }
+}
+
 static
 void onConnSecUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
+  bool result;
+  ble_gap_evt_t *evt = &pBleNrfEvt->evt.gap_evt;
+  ble_gap_conn_sec_t *prm = &evt->params.conn_sec_update.conn_sec;
+
   pBleEvent->evtHeader = BLE_GAP_EVENT_CONN_SEC_UPDATE;
   pBleEvent->evtDataSize = 0;
-#ifdef BLE_DBGPRT_ENABLE
-  ble_gap_evt_conn_sec_update_t *sec = &pBleNrfEvt->evt.gap_evt.params.conn_sec_update;
-  BLE_PRT("onConnSecUpdate: keysize=%d sm=%d lv=%d\n", sec->conn_sec.encr_key_size,
-    sec->conn_sec.sec_mode.sm, sec->conn_sec.sec_mode.lv);
-#endif
+  BLE_PRT("onConnSecUpdate: keysize=%d sm=%d lv=%d\n", prm->encr_key_size,
+    prm->sec_mode.sm, prm->sec_mode.lv);
+
+  if (prm->encr_key_size > 0)
+    {
+      /* Positive key size means that the connection is encrypted. */
+
+      result = true;
+    }
+  else
+    {
+      /* Non-positive key size means that encryption fails.
+       * In such a case, the corresponding bond information shall be cleared.
+       */
+
+      clearBondInfo(evt->conn_handle);
+      result = false;
+    }
+
+  mk_encryption_result_event(evt->conn_handle, result);
 }
 
 static
@@ -1642,6 +1888,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 #endif
 
   index = searchBondInfoIndex(&secinfo->master_id);
+
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
       BLE_PRT("onSecInfoRequest: master_id exitsting index %d\n", index);
@@ -1650,7 +1897,12 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       sys_attr_data = BondInfoInFlash[index].sys_attr_data;
     }
 
-  memcpy(&commMem.gapMem->wrapperBondInfo, sys_attr_data, sizeof(bleGapWrapperBondInfo));
+  memcpy(&commMem.gapMem->wrapperBondInfo.ownEncKey.master_id,
+         &secinfo->master_id,
+         sizeof(ble_gap_master_id_t));
+  memcpy(&commMem.gapMem->wrapperBondInfo.sys_attr_data,
+         sys_attr_data,
+         BLE_GATTS_SYS_ATTR_DATA_TOTALLEN);
   sd_ble_gap_sec_info_reply(pBleNrfEvt->evt.gap_evt.conn_handle, enc_info, id_info, sign_info);
   sd_ble_gatts_sys_attr_set(pBleNrfEvt->evt.gap_evt.conn_handle,
                             sys_attr_data,
@@ -1789,28 +2041,34 @@ static void onWriteRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtHeader = BLE_GATTC_EVENT_WRITE_RSP;
   pBleEvent->evtDataSize = sizeof(BLE_EvtGattcWriteRsp);
 
-  BLE_EvtGattcWriteRsp* wrRsp = (BLE_EvtGattcWriteRsp*)pBleEvent->evtData;
   ble_gattc_evt_t *bleGattcEvt                         = &(pBleNrfEvt->evt.gattc_evt);
-  const ble_gattc_evt_read_rsp_t *bleGattcEvtReadRsp   = &(bleGattcEvt->params.read_rsp);
+  const ble_gattc_evt_write_rsp_t *bleGattcEvtWriteRsp   = &(bleGattcEvt->params.write_rsp);
+  struct ble_gatt_event_write_rsp_t evt;
 
-  wrRsp->connHandle    = bleGattcEvt->conn_handle;
-  wrRsp->charValHandle = bleGattcEvtReadRsp->handle;
-  wrRsp->status        = bleGattcEvt->gatt_status;
+  evt.group_id    = BLE_GROUP_GATT;
+  evt.event_id    = BLE_GATT_EVENT_WRITE_RESP;
+  evt.conn_handle = bleGattcEvt->conn_handle;
+  evt.char_handle = bleGattcEvtWriteRsp->handle;
+  evt.status      = bleGattcEvt->gatt_status;
+
+  ble_gatt_event_handler((struct bt_event_t *)&evt);
 }
 
 static
 void onHvx(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
-  pBleEvent->evtHeader = BLE_GATTC_EVENT_NTFIND;
   ble_gattc_evt_t *bleGattcEvt                = &(pBleNrfEvt->evt.gattc_evt);
   const ble_gattc_evt_hvx_t *bleGattcEvtHvx   = &(bleGattcEvt->params.hvx);
-  commMem.gattcNtfIndData.connHandle   = pBleNrfEvt->evt.gattc_evt.conn_handle;
-  commMem.gattcNtfIndData.attrHandle   = bleGattcEvtHvx->handle;
-  commMem.gattcNtfIndData.type         = (BLE_GattNtyIndType)bleGattcEvtHvx->type;
-  commMem.gattcNtfIndData.attrValLen   = bleGattcEvtHvx->len;
-  memcpy(commMem.gattcNtfIndData.attrValData, bleGattcEvtHvx->data, MAX_VAL_DATA_LENGTH);
-  pBleEvent->evtDataSize = sizeof(BLE_EvtGattcNtfInd);
-  memcpy(pBleEvent->evtData, &commMem.gattcNtfIndData, pBleEvent->evtDataSize);
+  struct ble_gatt_event_notification_t evt;
+
+  evt.group_id    = BLE_GROUP_GATT;
+  evt.event_id    = BLE_GATT_EVENT_NOTIFICATION;
+  evt.conn_handle = pBleNrfEvt->evt.gattc_evt.conn_handle;
+  evt.char_handle = bleGattcEvtHvx->handle;
+  evt.length      = bleGattcEvtHvx->len;
+  memcpy(evt.data, bleGattcEvtHvx->data, evt.length);
+
+  ble_gatt_event_handler((struct bt_event_t *)&evt);
 }
 
 static
@@ -1823,34 +2081,92 @@ void onSysAttrMissing(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   }
 }
 
+static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
+                                 struct ble_gattc_db_discovery_s *evt)
+{
+  int i;
+  int j;
+  BLE_GattcDbDiscSrv  *rcv_srv;
+  BLE_GattcDbDiscChar *rcv_ch;
+  struct ble_gattc_db_disc_srv_s  *srv;
+  struct ble_gattc_db_disc_char_s *ch;
+
+  evt->srv_count = rcv->srvCount;
+
+  srv = &evt->services[0];
+  rcv_srv = &rcv->services[0];
+
+  for (i = 0; i < evt->srv_count; i++, srv++, rcv_srv++)
+    {
+      srv->char_count = rcv_srv->charCount;
+      srv->srv_handle_range.start_handle = rcv_srv->srvHandleRange.startHandle;
+      srv->srv_handle_range.end_handle   = rcv_srv->srvHandleRange.endHandle;
+
+      ch = &srv->characteristics[0];
+      rcv_ch = &rcv_srv->characteristics[0];
+
+      for (j = 0; j < evt->srv_count; j++, ch++, rcv_ch++)
+        {
+           ch->characteristic.char_prope      = rcv_ch->characteristic.charPrope;
+           ch->characteristic.char_valhandle  = rcv_ch->characteristic.charValhandle;
+           ch->characteristic.char_declhandle = rcv_ch->characteristic.charDeclhandle;
+           memcpy(&ch->characteristic.char_valuuid,
+                  &rcv_ch->characteristic.charValUuid,
+                  sizeof(BLE_UUID));
+           ch->cepd_handle = rcv_ch->cepdHandle;
+           ch->cudd_handle = rcv_ch->cuddHandle;
+           ch->cccd_handle = rcv_ch->cccdHandle;
+           ch->sccd_handle = rcv_ch->sccdHandle;
+           ch->cpfd_handle = rcv_ch->cpfdHandle;
+           ch->cafd_handle = rcv_ch->cafdHandle;
+        }
+    }
+}
+
 static
 void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, int reason)
 {
-  commMem.gattcDbDiscoveryData.connHandle = connHandle;
-  commMem.gattcDbDiscoveryData.result = result;
-  commMem.gattcDbDiscoveryData.params.reason = reason;
-  if (result == BLE_GATTC_RESULT_SUCCESS) {
-    commMem.gattcDb.dbDiscovery.srvCount = commMem.gattcDb.currSrvInd;
-    memcpy(&commMem.gattcDbDiscoveryData.params.dbDiscovery, &commMem.gattcDb.dbDiscovery, sizeof(BLE_GattcDbDiscovery));
-  }
-  pBleEvent->evtHeader = BLE_GATTC_EVENT_DBDISCOVERY;
-  pBleEvent->evtDataSize = sizeof(BLE_EvtGattcDbDiscovery);
-  memcpy(pBleEvent->evtData, &commMem.gattcDbDiscoveryData, pBleEvent->evtDataSize);
+  static struct ble_gatt_event_db_discovery_t evt;
+  struct ble_gattc_db_disc_srv_s *last;
+
+  evt.group_id    = BLE_GROUP_GATT;
+  evt.event_id    = BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE;
+  evt.result      = result;
+  evt.conn_handle = connHandle;
+
+  if (evt.result == BLE_GATTC_RESULT_SUCCESS)
+    {
+      set_discoveried_data(&commMem.gattcDb.dbDiscovery, &evt.params.db_discovery);
+    }
+  else
+    {
+      evt.params.reason = reason;
+    }
+
+  last = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
+  evt.state.end_handle = last->srv_handle_range.end_handle;
+
+  ble_gatt_event_handler((struct bt_event_t *)&evt);
+
+  /* Initialize nrf52's local data. */
+
+  memset(&commMem.gattcDb, 0, sizeof(commMem.gattcDb));
   commMem.gattcDb.currCharInd = 0;
   commMem.gattcDb.currSrvInd  = 0;
-
-  on_db_discovery((BLE_EvtGattcDbDiscovery *)pBleEvent->evtData);
   return;
 }
 
 static
 void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
+  int i;
   uint16_t connHandle = 0;
-  ble_gattc_evt_t *bleGattcEvt = NULL;
-  BLE_GattcDbDiscSrv                   *srvBeingDiscovered = NULL;
+  ble_gattc_evt_t *bleGattcEvt = &(pBleNrfEvt->evt.gattc_evt);
+  ble_gattc_evt_prim_srvc_disc_rsp_t *srvs = &(bleGattcEvt->params.prim_srvc_disc_rsp);
+  ble_gattc_service_t *srv;
+  BLE_GattcDbDiscSrv *ltbl;
+  int num;
 
-  bleGattcEvt = &(pBleNrfEvt->evt.gattc_evt);
   connHandle  = bleGattcEvt->conn_handle;
   BLE_PRT2("onPrimary start ind %d\n", gattcDbDiscovery->currSrvInd);
   if (bleGattcEvt->gatt_status == BLE_GATT_STATUS_SUCCESS)
@@ -1862,20 +2178,36 @@ void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, 
           setDbDiscoveryEvent(pBleEvent, connHandle, BLE_GATTC_RESULT_FAILED, BLE_GATTC_REASON_SERVICE);
           return;
         }
-      gattcDbDiscovery->dbDiscovery.connHandle = connHandle;
-      srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
 
-      const ble_gattc_evt_prim_srvc_disc_rsp_t *primSrvcDiscRspEvt = &(bleGattcEvt->params.prim_srvc_disc_rsp);
-      srvBeingDiscovered->srvUuid.value.baseAlias.uuidAlias = primSrvcDiscRspEvt->services[0].uuid.uuid; //BLE_ENABLE_NORDIC_ORIGINAL
-      srvBeingDiscovered->srvUuid.type = (BLE_GATT_UUID_TYPE)primSrvcDiscRspEvt->services[0].uuid.type; //BLE_ENABLE_NORDIC_ORIGINAL
-      srvBeingDiscovered->srvHandleRange.startHandle =  primSrvcDiscRspEvt->services[0].handle_range.start_handle;
-      srvBeingDiscovered->srvHandleRange.endHandle =  primSrvcDiscRspEvt->services[0].handle_range.end_handle;
-      BLE_PRT2("onPrimary cnt %d type %d uuid 0x%04X sHdl %d eHdl %d\n",
-        primSrvcDiscRspEvt->count,
-        primSrvcDiscRspEvt->services[0].uuid.type,
-        primSrvcDiscRspEvt->services[0].uuid.uuid,
-        primSrvcDiscRspEvt->services[0].handle_range.start_handle,
-        primSrvcDiscRspEvt->services[0].handle_range.end_handle);
+      gattcDbDiscovery->dbDiscovery.connHandle = connHandle;
+
+      if (srvs->count > BLE_DB_DISCOVERY_MAX_SRV)
+        {
+          num = BLE_DB_DISCOVERY_MAX_SRV;
+        }
+      else
+        {
+          num = srvs->count;
+        }
+
+      gattcDbDiscovery->dbDiscovery.srvCount = num;
+
+      for (i = 0, srv = &srvs->services[0], ltbl = &gattcDbDiscovery->dbDiscovery.services[0];
+           i < num;
+           i++, srv++, ltbl++)
+        {
+          ltbl->srvUuid.value.baseAlias.uuidAlias = srv->uuid.uuid;
+          ltbl->srvUuid.type = (BLE_GATT_UUID_TYPE)srv->uuid.type;
+          ltbl->srvHandleRange.startHandle =  srv->handle_range.start_handle;
+          ltbl->srvHandleRange.endHandle =  srv->handle_range.end_handle;
+          BLE_PRT2("Primary Service[%d] type %d uuid 0x%04X sHdl %d eHdl %d\n",
+                   i,
+                   srv->uuid.type,
+                   srv->uuid.uuid,
+                   srv->handle_range.start_handle,
+                   srv->handle_range.end_handle);
+        }
+
       //get current service info finished. characteristic discovery which belongs to this service.
       (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
     }
@@ -1906,6 +2238,10 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   bool raiseDiscovComplete = false;
   ble_gattc_evt_t                 *bleGattcEvt = &(pBleNrfEvt->evt.gattc_evt);
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  BLE_GattcDbDiscChar      *chtop;
+  BLE_GattcChar            *ch;
+  const ble_gattc_evt_char_disc_rsp_t *charDiscRspEvt;
+  const ble_gattc_char_t   *rcvch;
   BLE_GattcChar            *lastKnownChar = NULL;
 
   connHandle  = bleGattcEvt->conn_handle;
@@ -1918,8 +2254,6 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
     }
   if (bleGattcEvt->gatt_status == BLE_GATT_STATUS_SUCCESS)
     {
-      const ble_gattc_evt_char_disc_rsp_t * charDiscRspEvt;
-
       charDiscRspEvt = &(bleGattcEvt->params.char_disc_rsp);
 
       numCharsPrevDisc = srvBeingDiscovered->charCount;
@@ -1939,18 +2273,32 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
 
       for (i = numCharsPrevDisc, j = 0; i < srvBeingDiscovered->charCount; i++, j++)
         {
-          memcpy(&srvBeingDiscovered->characteristics[i].characteristic.charPrope, &charDiscRspEvt->chars[j].char_props, sizeof(BLE_CharPrope));
-          srvBeingDiscovered->characteristics[i].characteristic.charDeclhandle = charDiscRspEvt->chars[j].handle_decl;
-          srvBeingDiscovered->characteristics[i].characteristic.charValhandle  = charDiscRspEvt->chars[j].handle_value;
-          srvBeingDiscovered->characteristics[i].characteristic.charValUuid.type = (BLE_GATT_UUID_TYPE)charDiscRspEvt->chars[j].uuid.type; //BLE_ENABLE_NORDIC_ORIGINAL
-          srvBeingDiscovered->characteristics[i].characteristic.charValUuid.value.baseAlias.uuidAlias = charDiscRspEvt->chars[j].uuid.uuid; //BLE_ENABLE_NORDIC_ORIGINAL
-          srvBeingDiscovered->characteristics[i].cccdHandle = BLE_GATT_HANDLE_INVALID;
+          chtop = &srvBeingDiscovered->characteristics[i];
+          ch    = &chtop->characteristic;
+          rcvch = &charDiscRspEvt->chars[j];
+
+          memcpy(&ch->charPrope, &rcvch->char_props, sizeof(BLE_CharPrope));
+          ch->charDeclhandle = rcvch->handle_decl;
+          ch->charValhandle  = rcvch->handle_value;
+          ch->charValUuid.type = (BLE_GATT_UUID_TYPE)rcvch->uuid.type;
+          ch->charValUuid.value.baseAlias.uuidAlias = rcvch->uuid.uuid;
+
+          /* Initialize all descriptors handle with invalid value.
+           * These handles are discovered later by descriptor discovery.
+           */
+
+          chtop->cccdHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
+          chtop->cepdHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
+          chtop->cuddHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
+          chtop->sccdHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
+          chtop->cpfdHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
+          chtop->cafdHandle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
 
           BLE_PRT2("onChar type %d uuid 0x%04X ValHdl %d DecHdl %d\n",
-            charDiscRspEvt->chars[j].uuid.type,
-            charDiscRspEvt->chars[j].uuid.uuid,
-            charDiscRspEvt->chars[j].handle_value,
-            charDiscRspEvt->chars[j].handle_decl);
+                   rcvch->uuid.type,
+                   rcvch->uuid.uuid,
+                   rcvch->handle_value,
+                   rcvch->handle_decl);
         }
 
       lastKnownChar = &(srvBeingDiscovered->characteristics[i - 1].characteristic);
@@ -1991,6 +2339,76 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
     }
 }
 
+static void saveDiscoveredDescriptor(uint16_t uuid,
+                                     uint16_t handle,
+                                     BLE_GattcDbDiscChar *charc)
+{
+  switch (uuid)
+    {
+      case BLE_UUID_DESCRIPTOR_CHAR_EXT_PROP:
+        charc->cepdHandle = handle;
+        break;
+
+      case BLE_UUID_DESCRIPTOR_CHAR_USER_DESC:
+        charc->cuddHandle = handle;
+        break;
+
+      case BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG:
+        charc->cccdHandle = handle;
+        break;
+
+      case BLE_UUID_DESCRIPTOR_SERVER_CHAR_CONFIG:
+        charc->sccdHandle = handle;
+        break;
+
+      case BLE_UUID_DESCRIPTOR_CHAR_PRESENTATION_FORMAT:
+        charc->cpfdHandle = handle;
+        break;
+
+      case BLE_UUID_DESCRIPTOR_CHAR_AGGREGATE_FORMAT:
+        charc->cafdHandle = handle;
+        break;
+
+      default:
+        /* Unknown descriptor is discovered. */
+
+        break;
+    }
+
+  BLE_PRT("discovered descriptor uuid:0x%04x,handle:0x%04x\n", uuid, handle);
+}
+
+static bool isLastCharacteristic(uint8_t cur_idx, uint8_t char_num)
+{
+  return ((cur_idx + 1) >= char_num);
+}
+
+static uint16_t getLastDescriptorHandle(bleGattcDb *db)
+{
+  uint16_t last;
+  BLE_GattcDbDiscSrv *srv;
+  BLE_GattcDbDiscChar *ch;
+
+  srv = &db->dbDiscovery.services[db->currSrvInd];
+  ch  = &srv->characteristics[db->currCharInd];
+
+  if (isLastCharacteristic(db->currCharInd, srv->charCount))
+    {
+      last = srv->srvHandleRange.endHandle;
+    }
+  else
+    {
+      /* The last handle is the declaration handle of
+       * next characteristic minus 1.
+       */
+
+      ch++;
+      last = ch->characteristic.charDeclhandle - 1;
+    }
+
+  return last;
+}
+
 static
 void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2005,6 +2423,9 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
   srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
   const ble_gattc_evt_desc_disc_rsp_t * descDiscRspEvt = &(bleGattcEvt->params.desc_disc_rsp);
   BLE_GattcDbDiscChar * charBeingDiscovered = &(srvBeingDiscovered->characteristics[gattcDbDiscovery->currCharInd]);
+  const ble_gattc_desc_t *desc = NULL;
+  ble_gattc_handle_range_t r;
+  uint16_t last;
 
   connHandle  = bleGattcEvt->conn_handle;
   if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV) ||
@@ -2020,13 +2441,28 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       // The descriptor was found at the peer.
       // If the descriptor was a Client Characteristic Configuration Descriptor, then the cccdHandle needs to be populated.
       // Loop through all the descriptors to find the Client Characteristic Configuration Descriptor.
+
       for (i = 0; i < descDiscRspEvt->count; i++)
         {
-          if (descDiscRspEvt->descs[i].uuid.uuid == BLE_UUID_DESCRIPTOR_CLIENT_CHAR_CONFIG)
+          desc = &descDiscRspEvt->descs[i];
+          saveDiscoveredDescriptor(desc->uuid.uuid, desc->handle, charBeingDiscovered);
+        }
+
+      /* Continue descriptor discover of the same characteristic,
+       * if the last handle of received data is different from
+       * the end handle of descriptor discover request,
+       */
+
+      if (desc != NULL)
+        {
+          last = getLastDescriptorHandle(gattcDbDiscovery);
+          if (last != desc->handle)
             {
-              charBeingDiscovered->cccdHandle = descDiscRspEvt->descs[i].handle;
-              BLE_PRT2("onDesc ccc %d\n", descDiscRspEvt->descs[i].handle);
-              break;
+              r.start_handle = desc->handle + 1;
+              r.end_handle   = last;
+
+              sd_ble_gattc_descriptors_discover(connHandle, &r);
+              return;
             }
         }
     }
@@ -2053,14 +2489,10 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
 static
 void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
 {
-  int ret = BLE_SUCCESS;
-  uint16_t nextHandleStart = 0;
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = NULL;
-  BLE_GattcDbDiscSrv       *srvPrevDiscovered = NULL;
 
   // Reset the current characteristic index since a new service discovery is about to start.
   gattcDbDiscovery->currCharInd = 0;
-  srvPrevDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
 
   gattcDbDiscovery->currSrvInd++;
   if (gattcDbDiscovery->currSrvInd > BLE_DB_DISCOVERY_MAX_SRV)
@@ -2079,21 +2511,11 @@ void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
           srvBeingDiscovered->charCount = 0;
         }
     }
-  if (srvPrevDiscovered->srvHandleRange.endHandle != BLE_GATTC_HANDLE_END)
-    {
-      nextHandleStart = srvPrevDiscovered->srvHandleRange.endHandle + 1;
-    }
-  else
-    {
-      nextHandleStart = BLE_GATTC_HANDLE_END;
-    }
-  BLE_PRT2("onCompletion nextHandle %d\n", nextHandleStart);
-  ret = sd_ble_gattc_primary_services_discover(gattcDbDiscovery->dbDiscovery.connHandle, nextHandleStart, NULL);
-  if (ret != NRF_SUCCESS)
-    {
-      BLE_ERR("sd_ble_gattc_primary_sd NG %d\n", ret);
-      goto err;
-    }
+
+  setDbDiscoveryEvent(pBleEvent,
+                      gattcDbDiscovery->dbDiscovery.connHandle,
+                      BLE_GATTC_RESULT_SUCCESS, 0);
+
   return;
 err:
   gattcDbDiscovery->discoveryInProgress = false;
@@ -2282,8 +2704,13 @@ int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, 
 
   if (!isDiscoveryReqd)
     {
-      // No more descriptor discovery required. Discovery is complete.
-      *raiseDiscovComplete = true;
+      // No more descriptor discovery required.
+      // Preceed to the characteristics discovery about next service.
+
+      gattcDbDiscovery->currSrvInd++;
+      gattcDbDiscovery->currCharInd = 0;
+      characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+
       return NRF_SUCCESS;
     }
 
@@ -2357,7 +2784,7 @@ static int ble_start(void)
       return ret;
     }
 
-  params.role = BLE_ROLE_PERIPHERAL;
+  params.role = BLE_ROLE_PERIPHERAL_AND_CENTRAL;
 
   ret = BLE_CommonInitializeStack(&params);
 
@@ -2385,26 +2812,58 @@ static int ble_stop(void)
   return ret;
 }
 
-
 /****************************************************************************
- * Name: nrf52_ble_scan
+ * Name: nrf52_ble_start_scan
  *
  * Description:
- *   Bluetooth LE start/stop scan.
- *   Start/Stop scan.
+ *   Bluetooth LE start scan.
+ *
+ * Parameter:
+ *   duplicate_filter:
+ *           true means that duplicate scan results are filtered out.
+ *           false means that all duplicate scan result are notified to
+ *           applications.
+ *           nrf52 HW do not support true value.
  *
  ****************************************************************************/
 
-static int nrf52_ble_scan(bool enable)
+static int nrf52_ble_start_scan(bool duplicate_filter)
 {
-  int ret = BT_SUCCESS;
-  if( true == enable)
+  int ret;
+
+  /* Return error if duplicate_filter is true,
+   * because nRF52 HW do not support duplicate scan result filter.
+   */
+
+  if (duplicate_filter)
     {
-      ret = BLE_GapStartScan();
+      return BT_FAIL;
     }
-  else
+
+  ret = BLE_GapStartScan();
+  if (ret == BLE_SUCCESS)
     {
-      ret = BLE_GapStopScan();
+      g_ble_context.is_scanning = true;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_stop_scan
+ *
+ * Description:
+ *   Bluetooth LE stop scan.
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_stop_scan(void)
+{
+  int ret;
+  ret = BLE_GapStopScan();
+  if (ret == BLE_SUCCESS)
+    {
+      g_ble_context.is_scanning = false;
     }
 
   return ret;
@@ -2423,9 +2882,14 @@ static int nrf52_ble_connect(const BT_ADDR *addr)
   int ret = BT_SUCCESS;
   BLE_GapAddr gap_addr = {0};
 
+  gap_addr.type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
   memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
 
   ret = BLE_GapConnect(&gap_addr);
+  if (ret == BT_SUCCESS)
+    {
+      g_ble_context.conn_sts = BLE_CONN_STS_CONNECTING;
+    }
 
   return ret;
 }
@@ -2461,6 +2925,10 @@ static int nrf52_ble_advertise(bool enable)
         {
           LOG_OUT("ble enable advertise failed, ret=%d\n", ret);
         }
+      else
+        {
+          g_ble_context.is_advertising = true;
+        }
     }
   else
     {
@@ -2470,14 +2938,24 @@ static int nrf52_ble_advertise(bool enable)
         {
           LOG_OUT("ble disable advertise failed, ret=%d\n", ret);
         }
+      else
+        {
+          g_ble_context.is_advertising = false;
+        }
     }
   return ret;
 }
 
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr)
 {
-  int ret = BT_SUCCESS;
-  return ret;
+  int ret;
+  ble_gap_addr_t nrf52_addr;
+
+  nrf52_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  memcpy(nrf52_addr.addr, addr->address, sizeof(nrf52_addr.addr));
+
+  ret = sd_ble_gap_addr_set(&nrf52_addr);
+  return bleConvertErrorCode(ret);
 }
 
 static int nrf52_ble_set_dev_name(char *name)
@@ -2517,39 +2995,72 @@ static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp)
   return ret;
 }
 
+static uint16_t nrf52_ble_set_mtusize(uint16_t sz)
+{
+  uint16_t ret;
+
+  if (sz > NRF_SDH_BLE_GATT_MAX_MTU_SIZE)
+    {
+      ret = NRF_SDH_BLE_GATT_MAX_MTU_SIZE;
+    }
+  else
+    {
+      ret = sz;
+    }
+
+  commMem.requested_mtu = ret;
+  return ret;
+}
+
+static uint16_t nrf52_ble_get_mtusize(void)
+{
+  return commMem.requested_mtu;
+}
+
+static int nrf52_ble_get_negotiated_mtusize(uint16_t handle)
+{
+  if (handle != g_ble_context.ble_conn_handle)
+    {
+      return -EINVAL;
+    }
+
+  return commMem.client_rx_mtu;
+}
+
+
+static int nrf52_ble_pairing(uint16_t handle)
+{
+  int ret;
+
+  ret = searchBondInfoIndexFmConnHandle(handle);
+  if (ret < 0)
+    {
+      /* Invalid handle error */
+
+      return ret;
+    }
+  else if (ret < BLE_SAVE_BOND_DEVICE_MAX_NUM)
+    {
+      /* If pairing information about this connection is stored,
+       * skip pairing and only encrypt with stored key.
+       */
+
+      ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+    }
+  else
+    {
+      /* Otherwise, execute pairing. */
+
+      ret = BLE_GapAuthenticate(handle, &g_ble_context.pairing_feature);
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Public Data
  ****************************************************************************/
 BLE_Context g_ble_context;
-
-struct ble_hal_common_ops_s ble_hal_common_ops =
-{
-  .setDevAddr    = nrf52_ble_set_dev_addr,
-  .setDevName    = nrf52_ble_set_dev_name,
-  .setAppearance = nrf52_ble_set_appearance,
-  .setPPCP       = nrf52_ble_set_ppcp,
-  .advertise     = nrf52_ble_advertise,
-  .scan          = nrf52_ble_scan,
-  .connect       = nrf52_ble_connect,
-  .disconnect    = nrf52_ble_disconnect
-};
-
-struct bt_hal_common_ops_s bt_hal_common_ops =
-{
-  .init          = nrf52_bt_init,
-  .finalize      = nrf52_bt_finalize,
-  .enable        = nrf52_bt_enable,
-  .setDevAddr    = NULL,
-  .getDevAddr    = NULL,
-  .setDevName    = NULL,
-  .getDevName    = NULL,
-  .paringEnable  = NULL,
-  .getBondList   = NULL,
-  .unBond        = NULL,
-  .setVisibility = NULL,
-  .inquiryStart  = NULL,
-  .inquiryCancel = NULL
-};
 
 /****************************************************************************
  * BT Dummy
@@ -2625,5 +3136,31 @@ static int nrf52_bt_enable(bool enable)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_common_register
+ *
+ * Description:
+ *   Register BLE common HAL I/F
+ *
+ ****************************************************************************/
+
+int nrf52_ble_common_register(void)
+{
+  return ble_common_register_hal(&ble_hal_common_ops);
+}
+
+/****************************************************************************
+ * Name: nrf52_bt_common_register
+ *
+ * Description:
+ *   Register BT common HAL I/F
+ *
+ ****************************************************************************/
+
+int nrf52_bt_common_register(void)
+{
+  return bt_common_register_hal(&bt_hal_common_ops);
 }
 

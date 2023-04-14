@@ -187,7 +187,7 @@ static int check_the_edgef(edge_detectf_t *detector)
  * Public functions
  ****************************************************************************/
 
-#ifdef CONFIG_DIFITAL_FILTER_EDGE_DETECT
+#ifdef CONFIG_DIGITAL_FILTER_EDGE_DETECT
 
 /**
  * Functions of type int16_t 
@@ -639,4 +639,4 @@ int edge_detectf(edge_detectf_t *detector, float *input, uint32_t len)
   return -1;
 }
 
-#endif  /* CONFIG_DIFITAL_FILTER_EDGE_DETECT */
+#endif  /* CONFIG_DIGITAL_FILTER_EDGE_DETECT */

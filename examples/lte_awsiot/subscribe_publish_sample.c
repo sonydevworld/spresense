@@ -133,6 +133,7 @@ static void parseInputArgsForConnectParams(int argc, char **argv) {
 
 static int awsiot_main(int argc, FAR char *argv[])
 {
+	int ret = 0;
 	bool infinitePublishFlag = true;
 
 	char rootCA[PATH_MAX + 1];
@@ -158,9 +159,18 @@ static int awsiot_main(int argc, FAR char *argv[])
 
 //	getcwd(CurrentWD, sizeof(CurrentWD));
 	memset(CurrentWD, 0, PATH_MAX);
-	snprintf(rootCA, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_ROOT_CA_FILENAME);
-	snprintf(clientCRT, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_CERTIFICATE_FILENAME);
-	snprintf(clientKey, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_PRIVATE_KEY_FILENAME);
+	ret = snprintf(rootCA, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_ROOT_CA_FILENAME);
+        if (ret < 0) {
+          return ERROR;
+        }
+	ret = snprintf(clientCRT, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_CERTIFICATE_FILENAME);
+        if (ret < 0) {
+          return ERROR;
+        }
+	ret = snprintf(clientKey, PATH_MAX + 1, "%s/%s/%s", CurrentWD, certDirectory, AWS_IOT_PRIVATE_KEY_FILENAME);
+        if (ret < 0) {
+          return ERROR;
+        }
 
 	IOT_DEBUG("rootCA %s", rootCA);
 	IOT_DEBUG("clientCRT %s", clientCRT);

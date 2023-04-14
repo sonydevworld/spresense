@@ -105,12 +105,15 @@ SPK       = $(NUTTXNAME).spk
 
 KDEFINE = ${shell $(TOPDIR)/tools/define.sh "$(CC)" __KERNEL__}
 
+# Specify the SDK version to the NuttX versioning script
+
+export VERSION_ARG = ${shell ./tools/mkversion.sh}
+
 # If TOPDIR's origin is command line, 'make' called from NuttX build system.
 # If not, 'make' called directly from user, then bypass to NuttX build.
 
 ifeq ($(MAKELEVEL),0)
 all:
-	$(Q) TOPDIR="$(TOPDIR)" ./tools/mkversion.sh
 	@ $(MAKE) -C ../nuttx && cp $(TOPDIR)/$(BIN) $(TOPDIR)/$(SPK) $(TOPDIR)/*.map .
 else
 all: .built

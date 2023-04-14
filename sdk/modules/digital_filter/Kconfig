@@ -16,7 +16,7 @@ config DIGITAL_FILTER_FIR
 	bool "FIR Digital Filter"
 	default y
 	---help---
-		Enable to use FIR digiral filters.
+		Enable to use FIR digital filters.
 		You need to enable ARM CMSIS DSP library because This filter is based on it.
 
 config DIGITAL_FILTER_DECIMATOR
@@ -26,7 +26,7 @@ config DIGITAL_FILTER_DECIMATOR
 		Enable to use FIR Decimation filters.
 		You need to enable ARM CMSIS DSP library because This filter is based on it.
 
-config DIFITAL_FILTER_EDGE_DETECT
+config DIGITAL_FILTER_EDGE_DETECT
 	bool "Edge Detection Filter"
 	default y
 	---help---

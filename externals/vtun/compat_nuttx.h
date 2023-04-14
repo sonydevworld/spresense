@@ -102,9 +102,6 @@ const EVP_CIPHER *EVP_bf_cbc(void);
 void openlog(const char *ident, int option, int facility);
 void closelog(void);
 
-/* signal */
-#define SIGHUP 1
-
 int getpriority(int which, id_t who);
 int setpriority(int which, id_t who, int prio);
 

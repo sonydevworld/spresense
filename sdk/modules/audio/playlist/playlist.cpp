@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/audio/playlist/playlist.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,10 +88,15 @@ bool Playlist::open(FAR const char *mode)
       return false;
     }
 
-  snprintf(absolute_path,
-           sizeof(absolute_path),
-           "%s/%s", m_playlist_path,
-           this->m_track_db_file_name);
+  int ret = snprintf(absolute_path,
+                     sizeof(absolute_path),
+                     "%s/%s", m_playlist_path,
+                     this->m_track_db_file_name);
+  if (ret < 0)
+    {
+      return false;
+    }
+
   this->m_track_db_fp = fopen(absolute_path, mode);
 
   if (this->m_track_db_fp == NULL)
@@ -394,7 +399,10 @@ bool Playlist::updatePlaylist(ListType type, FAR const char *key_str)
 
       if (this->isTargetTrack(type, key_str, &track))
         {
-          size_t wsize = fwrite(&fp_offset, sizeof(fp_offset), 1, list_fp);
+          /* Write each file position in 32bit size. */
+
+          uint32_t offset = static_cast<uint32_t>(fp_offset);
+          size_t wsize = fwrite(&offset, sizeof(offset), 1, list_fp);
           if (wsize != 1)
             {
               printf("File write error. [%d]\n", wsize);
@@ -508,11 +516,17 @@ bool Playlist::removeTrack(FAR const char *key_str, uint32_t remove_pos)
   FAR FILE *fp_org = fopen(file_name_org, "r");
   if (fp_org == NULL)
     {
+      fclose(fp_org);
       return false;
     }
 
   char file_name_tmp[FileNameMaxLength];
-  snprintf(file_name_tmp, sizeof(file_name_tmp), "%s_tmp", file_name_org);
+  int ret = snprintf(file_name_tmp, sizeof(file_name_tmp), "%s_tmp", file_name_org);
+  if (ret < 0)
+    {
+      return false;
+    }
+
   FAR FILE *fp_tmp = fopen(file_name_tmp, "w");
   if (fp_tmp == NULL)
     {
@@ -568,8 +582,15 @@ bool Playlist::updateTrackDb(const char *audiofile_root_path)
 
   /* Reopen track database with write mode. */
 
-  this->close();
-  this->open("w");
+  if(this->close())
+    {
+      return false;
+    }
+
+  if(!this->open("w"))
+    {
+      return false;
+    }
 
   FAR DIR *dir_descriptor = opendir(audiofile_root_path);
   if (dir_descriptor == NULL)
@@ -645,8 +666,16 @@ bool Playlist::updateTrackDb(const char *audiofile_root_path)
 
   /* Reopen track database with read mode. */
 
-  this->close();
-  this->open("r");
+  if(this->close())
+    {
+      return false;
+    }
+
+  if(!this->open("r"))
+    {
+      return false;
+    }
+
 
   /* Delete all playlist. */
 

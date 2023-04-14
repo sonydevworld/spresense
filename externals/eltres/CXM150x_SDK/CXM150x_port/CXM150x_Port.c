@@ -60,6 +60,8 @@
 // Timeout period from receiving the first character of UART communication to receiving CR + LF
 #define MAX_UART_LINE_TIME_OUT_TICK_COUNT     (3000)
 
+#define UART_RECEIVE_TASK_PRIORITY  110
+
 uint8_t g_uart_error_flg = CXM150x_UART_DRIVER_FLAG_OFF;
 
 static uint32_t g_rcv_cnt = 0;
@@ -72,6 +74,7 @@ int g_fw_updating;
 static pthread_t g_uart_recv_thread;
 static void uart_recv_main(void);
 static bool g_stop_thread = false;
+static void (*g_CXM150x_uart_rx_callback)(uint32_t, uint32_t) = NULL;
 #endif
 
 // ===========================================================================
@@ -91,6 +94,28 @@ static bool g_stop_thread = false;
 // ===========================================================================
 int32_t wrapper_CXM150x_set_uart_rx_buf(uint8_t *rcv_char_buf){
     g_rcv_buf = rcv_char_buf;
+#ifdef CONFIG_EXTERNALS_ELTRES_ADDON
+    if (CXM150x_POWER_OFF == wrapper_CXM150x_get_power()){
+        board_gpio_config(ELTRES_PIN_ENABLE, 0, false, false, PIN_FLOAT);
+        board_gpio_write(ELTRES_PIN_ENABLE, 0);
+    }
+#endif
+    if (g_uart_recv_thread == (pthread_t)0){
+        /* Create UART reception thread */
+        struct sched_param param;
+        pthread_attr_t attr;
+        g_fw_updating = false;
+        g_stop_thread = false;
+        pthread_attr_init(&attr);
+        param.sched_priority = UART_RECEIVE_TASK_PRIORITY;
+        pthread_attr_setschedparam(&attr, &param);
+        pthread_create(&g_uart_recv_thread,
+                       &attr,
+                       (pthread_startroutine_t)uart_recv_main,
+                       NULL);
+        /* Wait a little for the next command to be sent. */
+        usleep(1);
+    }
     return OK;
 }
 
@@ -113,24 +138,13 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
         // CXM150x power ON
 #ifdef ELTRES_PIN_DDC2V
         board_power_control(ELTRES_PIN_DDC2V, true);
+        board_unset_reset_gpo(ELTRES_PIN_DDC2V);
 #endif
-        /* Create UART reception thread */
-        struct sched_param param;
-        pthread_attr_t attr;
-
-        g_fw_updating = false;
-        g_stop_thread = false;
-        pthread_attr_init(&attr);
-        param.sched_priority = 110; // larger than application task priority
-        pthread_attr_setschedparam(&attr, &param);
-        pthread_create(&g_uart_recv_thread,
-                       &attr,
-                       (pthread_startroutine_t)uart_recv_main,
-                       NULL);
 
 #if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
         board_power_control_tristate(ELTRES_PIN_ENABLE, 0);
         board_power_control_tristate(ELTRES_PIN_ENABLE, -1); // Hi-Z
+        board_unset_reset_gpo(ELTRES_PIN_ENABLE);
 #else
         board_gpio_config(ELTRES_PIN_ENABLE, 0, false, false, PIN_FLOAT);
         board_gpio_write(ELTRES_PIN_ENABLE, 0);
@@ -139,6 +153,7 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
     } else {
         // Power OFF operation
 #if defined(CONFIG_EXTERNALS_ELTRES_SPEXEL)
+        board_set_reset_gpo(ELTRES_PIN_ENABLE);
         board_power_control(ELTRES_PIN_ENABLE, false);
 #else
         board_gpio_write(ELTRES_PIN_ENABLE, 0);
@@ -146,7 +161,9 @@ void wrapper_CXM150x_set_power(CXM150x_power_state on_off){
         // Wait for reception thread exit
         g_stop_thread = true;
         pthread_join(g_uart_recv_thread, &result);
+        g_uart_recv_thread = (pthread_t)0;
 #ifdef ELTRES_PIN_DDC2V
+        board_set_reset_gpo(ELTRES_PIN_DDC2V);
         board_power_control(ELTRES_PIN_DDC2V, false);
 #endif
     }
@@ -231,6 +248,25 @@ uint32_t wrapper_CXM150x_get_power(void){
 }
 
 // ===========================================================================
+//! Set UART receive callback
+/*! This function is mainly used in standalone mode. The callback function is
+ * CXM150x_uart_receive_to_buffer_callback by default, but the function can
+ * be set by the original function in standalone mode.
+ *
+ * @param [in] callback: Function pointer to UART receive callback
+ * @param [out] none
+ * @par Global variable
+ *        [in] none
+ *        [out] g_CXM150x_uart_rx_callback: UART receive callback
+ *
+ * @return none
+*/
+// ===========================================================================
+void wrapper_CXM150x_set_uart_rx_callback(void (*callback)(uint32_t, uint32_t)){
+    g_CXM150x_uart_rx_callback = callback;
+}
+
+// ===========================================================================
 //! UART receive handler
 /*! Buffers characters received by UART from CXM150x and continues UART reception until line feed code is received (timeout is fixed at 5 seconds)
  * Call the CXM150x_uart_receive_to_buffer_callback function of the library core when a line feed code is received
@@ -259,7 +295,11 @@ void wrapper_CXM150x_uart_rx_callback(void){
                 g_rcv_buf[g_rcv_cnt++] = g_rcv_char;
                 // Receive line feed code
                 g_rcv_buf[g_rcv_cnt++] = '\0';
-                CXM150x_uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                if (g_CXM150x_uart_rx_callback){
+                    g_CXM150x_uart_rx_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                } else {
+                    CXM150x_uart_receive_to_buffer_callback(WRAPPER_UART_RX_FROM_CXM150x,g_rcv_cnt);
+                }
                 g_rcv_cnt = 0;
                 g_rcv_buf[0] = '\0';
                 break;
@@ -317,51 +357,38 @@ void wrapper_CXM150x_uart_rx_callback(void){
 #ifdef CONFIG_ARCH_BOARD_SPRESENSE
 static void uart_recv_main(void)
 {
-  int ret;
+    int ret;
 
-  while (g_stop_thread == false)
-    {
 #if defined(CONFIG_EXTERNALS_ELTRES_ADDON)
-      g_uart_fd = open("/dev/ttyS2", O_RDWR | O_NONBLOCK);
+    g_uart_fd = open("/dev/ttyS2", O_RDWR | O_NONBLOCK);
 #else
-      cxd56_uart0initialize("/dev/uart0");
-      g_uart_fd = open("/dev/uart0", O_RDWR | O_NONBLOCK);
+    cxd56_uart0initialize("/dev/uart0");
+    g_uart_fd = open("/dev/uart0", O_RDWR | O_NONBLOCK);
 #endif
 
-      while (g_stop_thread == false)
-        {
-          if (g_fw_updating)
-            {
-              // In FW update, do not read in this thread.
-              usleep(1);
-              continue;
-            }
-          ret = read(g_uart_fd, &g_rcv_char, 1);
-          if (ret > 0)
-            {
-              wrapper_CXM150x_uart_rx_callback();
-            }
-          else
-            {
-              if ((ret < 0) && (errno != EAGAIN))
-                {
-                  //printf_err("ERROR:%s errno=%d\n", __FUNCTION__, errno);
-                  // Clear errno
-                  set_errno(0);
-
-                  // Break to recover UART
-                  break;
-                }
-            }
-          usleep(1);
+    while (g_stop_thread == false) {
+        if (g_fw_updating) {
+            // In FW update, do not read in this thread.
+            usleep(1);
+            continue;
         }
 
-      usleep(1);
-      close(g_uart_fd);
-#if !defined(CONFIG_EXTERNALS_ELTRES_ADDON)
-      cxd56_uart0uninitialize("/dev/uart0");
-#endif
+        ret = read(g_uart_fd, &g_rcv_char, 1);
+        if (ret > 0) {
+            wrapper_CXM150x_uart_rx_callback();
+        } else if (ret < 0) {
+            if ((errno != EAGAIN) && (errno != EIO)) {
+                printf_err("Error: UART read %d\r\n", errno);
+                break;
+            }
+        }
+        usleep(1);
     }
+
+    close(g_uart_fd);
+#if !defined(CONFIG_EXTERNALS_ELTRES_ADDON)
+    cxd56_uart0uninitialize("/dev/uart0");
+#endif
 }
 #endif
 
@@ -390,7 +417,7 @@ CXM150x_return_code wrapper_CXM150x_uart_transmit(uint8_t *data,uint16_t len,uin
     while (remain_size > 0){
         write_size = write(g_uart_fd, send_addr, remain_size);
         if (write_size < 0) {
-            printf_err("Error: UART0 write %d\r\n", errno);
+            printf_err("Error: UART write %d\r\n", errno);
             wrapper_CXM150x_set_Wakeup_pin(CXM150x_POWER_OFF);
             return RETURN_NG;
         }

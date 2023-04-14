@@ -1,7 +1,7 @@
 ############################################################################
 # modules/mbedtls_stub/Makefile
 #
-#   Copyright 2021 Sony Semiconductor Solutions Corporation
+#   Copyright 2021,2022 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -42,11 +42,48 @@ MODNAME = mbedtls_stub
 
 # Add sub directory if exists
 
-VPATH   =
+VPATH   = api handlers
 SUBDIRS =
-DEPPATH =
+DEPPATH = --dep-path api
+DEPPATH += --dep-path handlers
 
-CSRCS  = mbedtlsstub.c net_sockets.c altcom_mbedtls_hdlr.c
+CSRCS  = mbedtlsstub_utils.c
+CSRCS  += mbedtlsstub_ssl.c
+CSRCS  += mbedtlsstub_ssl_conf.c
+CSRCS  += mbedtlsstub_ssl_session.c
+CSRCS  += mbedtlsstub_x509_crt.c
+CSRCS  += mbedtlsstub_pk.c
+CSRCS  += mbedtlsstub_ctr_drbg.c
+CSRCS  += mbedtlsstub_entropy.c
+CSRCS  += mbedtlsstub_cipher.c
+CSRCS  += mbedtlsstub_md.c
+CSRCS  += mbedtlsstub_base64.c
+CSRCS  += mbedtlsstub_sha1.c
+CSRCS  += mbedtlsstub_bignum.c
+CSRCS  += mbedtlsstub_x509_csr.c
+CSRCS  += mbedtlsstub_x509write_crt.c
+CSRCS  += mbedtlsstub_rsa.c
+CSRCS  += mbedtlsstub_ssl_srtp.c
+CSRCS  += mbedtlsstub_x509_dn.c
+CSRCS  += net_sockets.c
+CSRCS  += mbedtlsstub_hdlr.c
+CSRCS  += mbedtlsstub_hdlr_ssl.c
+CSRCS  += mbedtlsstub_hdlr_ssl_conf.c
+CSRCS  += mbedtlsstub_hdlr_ssl_session.c
+CSRCS  += mbedtlsstub_hdlr_x509_crt.c
+CSRCS  += mbedtlsstub_hdlr_pk.c
+CSRCS  += mbedtlsstub_hdlr_ctr_drbg.c
+CSRCS  += mbedtlsstub_hdlr_entropy.c
+CSRCS  += mbedtlsstub_hdlr_cipher.c
+CSRCS  += mbedtlsstub_hdlr_md.c
+CSRCS  += mbedtlsstub_hdlr_base64.c
+CSRCS  += mbedtlsstub_hdlr_sha1.c
+CSRCS  += mbedtlsstub_hdlr_bignum.c
+CSRCS  += mbedtlsstub_hdlr_x509_csr.c
+CSRCS  += mbedtlsstub_hdlr_x509write_crt.c
+CSRCS  += mbedtlsstub_hdlr_rsa.c
+CSRCS  += mbedtlsstub_hdlr_ssl_srtp.c
+CSRCS  += mbedtlsstub_hdlr_x509_dn.c
 CXXSRCS =
 
 ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)

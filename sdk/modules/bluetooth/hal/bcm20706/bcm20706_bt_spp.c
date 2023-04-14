@@ -37,11 +37,34 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <bt/bt_spp.h>
 
 #include "bcm20706_bt_internal.h"
 #include "bt_util.h"
 #include "manager/bt_uart_manager.h"
+
+/****************************************************************************
+ * Private Function Prototypes
+ ****************************************************************************/
+
+static int bcm20706_bt_spp_connect(BT_ADDR *addr, uint16_t handle,
+                                   bool connect);
+static int bcm20706_bt_spp_set_uuid(BT_UUID *uuid);
+static int bcm20706_bt_spp_send_tx_data(BT_ADDR *addr, uint8_t *data,
+                                        int len, uint16_t handle);
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static struct bt_hal_spp_ops_s bt_hal_spp_ops =
+{
+  .connect    = bcm20706_bt_spp_connect,
+  .setUuid    = bcm20706_bt_spp_set_uuid,
+  .sendTxData = bcm20706_bt_spp_send_tx_data
+};
 
 /****************************************************************************
  * Private Functions
@@ -170,13 +193,11 @@ static int bcm20706_bt_spp_send_tx_data(BT_ADDR *addr, uint8_t *data, int len, u
 }
 
 /****************************************************************************
- * Public Data
+ * Public Functions
  ****************************************************************************/
 
-struct bt_hal_spp_ops_s bt_hal_spp_ops =
+int bcm20706_bt_spp_register(void)
 {
-  .connect    = bcm20706_bt_spp_connect,
-  .setUuid    = bcm20706_bt_spp_set_uuid,
-  .sendTxData = bcm20706_bt_spp_send_tx_data
-};
+  return bt_spp_register_hal(&bt_hal_spp_ops);
+}
 

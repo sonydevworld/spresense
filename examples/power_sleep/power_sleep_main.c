@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 
 #include <arch/chip/pm.h>
 #include <nuttx/timers/rtc.h>

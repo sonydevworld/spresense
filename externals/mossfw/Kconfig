@@ -1,0 +1,21 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_MOSSFW
+	bool "Motion Sensor Software framework"
+	default n
+	---help---
+		Enable Motion Sensor Software Framework library from
+		https://github.com/SonySemiconductorSolutions/mossfw.git
+
+if EXTERNALS_MOSSFW
+
+config EXTERNALS_MOSSFW_SEONSORLIB
+	bool "Use sensor libraries"
+	default n
+	---help---
+		Enable sensor library.
+
+endif # EXTERNALS_MOSSFW

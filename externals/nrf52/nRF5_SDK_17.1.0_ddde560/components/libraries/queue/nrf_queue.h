@@ -51,7 +51,7 @@
 #include <stdint.h>
 #include <stdint.h>
 #include <string.h>
-#include "nrf_assert.h"
+#include <assert.h>
 #include "sdk_errors.h"
 #include "app_util.h"
 #include "app_util_platform.h"
