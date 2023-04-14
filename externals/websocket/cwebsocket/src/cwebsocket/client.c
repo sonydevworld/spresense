@@ -78,18 +78,18 @@ void cwebsocket_client_parse_uri(cwebsocket_client *websocket, const char *uri,
 		return;
 	}
 	else if(sscanf(uri, "ws://%[^:]:%[^/]%s", hostname, port, resource) == 2) {
-		strncpy(resource, "/", strlen("/"));
+		strncpy(resource, "/", strlen("/") + 1);
 		strcpy(querystring, "");
 		return;
 	}
 	else if(sscanf(uri, "ws://%[^/]%s", hostname, resource) == 2) {
-		strncpy(port, "80", strlen("80"));
+		strncpy(port, "80", strlen("80") + 1);
 		strcpy(querystring, "");
 		return;
 	}
 	else if(sscanf(uri, "ws://%[^/]", hostname) == 1) {
-		strncpy(port, "80", strlen("80"));
-		strncpy(resource, "/", strlen("/"));
+		strncpy(port, "80", strlen("80") + 1);
+		strncpy(resource, "/", strlen("/") + 1);
 		strcpy(querystring, "");
 		return;
 	}
@@ -104,20 +104,20 @@ void cwebsocket_client_parse_uri(cwebsocket_client *websocket, const char *uri,
 		return;
 	}
 	else if(sscanf(uri, "wss://%[^:]:%[^/]%s", hostname, port, resource) == 2) {
-		strncpy(resource, "/", strlen("/"));
+		strncpy(resource, "/", strlen("/") + 1);
 		strcpy(querystring, "");
 		websocket->flags |= WEBSOCKET_FLAG_SSL;
 		return;
 	}
 	else if(sscanf(uri, "wss://%[^/]%s", hostname, resource) == 2) {
-		strncpy(port, "443", strlen("443"));
+		strncpy(port, "443", strlen("443") + 1);
 		strcpy(querystring, "");
 		websocket->flags |= WEBSOCKET_FLAG_SSL;
 		return;
 	}
 	else if(sscanf(uri, "wss://%[^/]", hostname) == 1) {
-		strncpy(port, "443", strlen("443"));
-		strncpy(resource, "/", strlen("/"));
+		strncpy(port, "443", strlen("443") + 1);
+		strncpy(resource, "/", strlen("/") + 1);
 		strcpy(querystring, "");
 		websocket->flags |= WEBSOCKET_FLAG_SSL;
 		return;
@@ -1018,7 +1018,7 @@ int cwebsocket_client_read_data(cwebsocket_client *websocket) {
 }
 
 void cwebsocket_client_create_masking_key(uint8_t *masking_key) {
-	uint8_t mask_bit;
+	uint32_t mask_bit;
 	time_t Tick0 = 0;
 
 	time(&Tick0);

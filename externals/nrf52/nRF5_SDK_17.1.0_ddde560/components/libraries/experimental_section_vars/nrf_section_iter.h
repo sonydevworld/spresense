@@ -42,8 +42,8 @@
 #define NRF_SECTION_ITER_H__
 
 #include <stddef.h>
+#include <assert.h>
 #include "nrf_section.h"
-#include "nrf_assert.h"
 #include "app_util.h"
 
 #ifdef __cplusplus

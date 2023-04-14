@@ -1,9 +1,12 @@
 [submodule "nuttx"]
 	path = nuttx
-	url = https://github.com/SPRESENSE/incubator-nuttx.git
+	url = https://github.com/SPRESENSE/nuttx.git
 [submodule "externals/nnabla-c-runtime"]
 	path = externals/nnablart/nnabla-c-runtime
 	url = https://github.com/sony/nnabla-c-runtime
 [submodule "sdk/apps"]
 	path = sdk/apps
-	url = https://github.com/SPRESENSE/incubator-nuttx-apps.git
+	url = https://github.com/SPRESENSE/nuttx-apps.git
+[submodule "externals/mossfw/mossfw"]
+	path = externals/mossfw/mossfw
+	url = https://github.com/SPRESENSE/mossfw.git

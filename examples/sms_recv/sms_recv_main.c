@@ -172,7 +172,7 @@ int main(int argc, FAR char *argv[])
   int rsize;
   FAR struct sms_recv_msg_header_s msgheader;
 
-  sms_sock = socket(AF_SMSSOCK, SOCK_DGRAM, 0);
+  sms_sock = socket(AF_INET, SOCK_SMS, 0);
   if (sms_sock < 0)
     {
       printf("Failed to open socket:%d\n", errno);

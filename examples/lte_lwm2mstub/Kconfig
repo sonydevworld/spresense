@@ -8,6 +8,12 @@ config EXAMPLES_LTE_LWM2MSTUB
 
 if EXAMPLES_LTE_LWM2MSTUB
 
+config EXAMPLES_LTE_LWM2MSTUB_SUPPORT_RATCHANGE
+	bool "Support RAT change to use lte_set_rat_sync()"
+	default n
+	---help---
+		Support RAT change by using lte_set_rat_sync() in this sample.
+
 config EXAMPLES_LTE_LWM2MSTUB_PROGNAME
 	string "Program name"
 	default "lte_lwm2mstub"

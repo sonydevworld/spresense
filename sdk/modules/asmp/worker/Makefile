@@ -36,14 +36,17 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-VPATH   = arch
+include worker_libc.mk
+
+VPATH   = arch $(LIBC_TGTPATH)
 SUBDIRS =
-DEPPATH = --dep-path arch --dep-path .
+DEPPATH = --dep-path arch --dep-path . $(LIBC_DEPPATH)
 
 ASRCS  = exception.S
 
 CSRCS  = common.c mpmq.c mpmutex.c mpshm.c
 CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c
+CSRCS += $(LIBC_CSRCS)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -57,6 +60,7 @@ BIN = libasmpw$(LIBEXT)
 
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
 
+CFLAGS := $(LIBC_INCPATH) $(CFLAGS)
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
 CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
 ifneq ($(CONFIG_ARCH_FAMILY),)

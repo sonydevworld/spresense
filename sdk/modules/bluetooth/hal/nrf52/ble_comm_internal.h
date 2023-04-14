@@ -157,6 +157,7 @@ typedef struct
   bleGattcDb              gattcDb;
   bleGapMem               *gapMem;
   uint8_t                 stackInited;
+  uint16_t                requested_mtu;
   uint16_t                client_rx_mtu;
   BLE_EvtPhyUpdate        phyUpdate;
 } bleCommMem;
@@ -174,6 +175,13 @@ typedef struct ble_srv_sds
   BLE_GattsCharHandles char_ri_handle;
 } BLE_SrvSds;
 
+typedef enum ble_conn_sts
+{
+  BLE_CONN_STS_NOTCONNECTED = 0,
+  BLE_CONN_STS_CONNECTING,
+  BLE_CONN_STS_CONNECTED,
+} BLE_ConnSts;
+
 typedef struct ble_context
 {
   BLE_EvtCtx ble_evt_ctx;
@@ -181,6 +189,9 @@ typedef struct ble_context
   BLE_GapDeviceConfig ble_dev_cfg;
   BLE_GapName ble_name;
   BLE_GapConnHandle ble_conn_handle;
+  BLE_ConnSts conn_sts;
+  bool        is_scanning;
+  bool        is_advertising;
   uint8_t ble_role;
   BLE_SrvSds ble_srv_sds;
   BLE_GapPairingFeature pairing_feature;

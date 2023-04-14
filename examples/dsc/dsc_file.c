@@ -108,7 +108,7 @@ static int get_next_index(const char *filter)
  ****************************************************************************/
 
 /****************************************************************************
- * Name: futil_initialize()
+ * Name: file_initialize()
  *
  * Description:
  *   Save path to write a file.
@@ -143,7 +143,7 @@ bool check_sdcard_content(void)
           mkdir(STORAGE_PATH, 0666);
         }
 
-      g_image_cnt   = get_next_index(PREFIX_IMAGE);
+      g_image_cnt = get_next_index(PREFIX_IMAGE);
       retval = true;
     }
   else
@@ -156,20 +156,19 @@ bool check_sdcard_content(void)
 }
 
 /****************************************************************************
- * Name: futil_finalize()
+ * Name: file_finalize()
  *
  * Description:
  *   Finalize file utility
  ****************************************************************************/
 
-void futil_finalize(void)
+void file_finalize(void)
 {
   sem_destroy(&g_sem);
-  return;
 }
 
 /****************************************************************************
- * Name: futil_writeimage()
+ * Name: file_writeimage()
  *
  * Description:
  *   Write a image file to selected storage.

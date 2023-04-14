@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/bluetooth_common.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,6 +42,7 @@
 #include <bluetooth/hal/bt_if.h>
 
 #include "bluetooth_hal_init.h"
+#include "bluetooth_le_gatt.h"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -54,12 +55,6 @@
 #ifndef CONFIG_BLUETOOTH_LE_NAME
 #define CONFIG_BLUETOOTH_LE_NAME "SONY-BLE-CLASSIC"
 #endif
-
-/****************************************************************************
- * Function prototypes
- ****************************************************************************/
-
-extern void ble_gatt_init(struct ble_state_s *ble_state);
 
 /****************************************************************************
  * Private Types
@@ -279,11 +274,83 @@ static int ble_event_advertise_report(struct ble_event_adv_rept_t *adv_rept_evt)
 
   if (ble_common_ops && ble_common_ops->scan_result)
     {
-      ble_common_ops->scan_result(adv_rept_evt->addr, (char*)(adv_rept_evt->data));
+      ble_common_ops->scan_result(adv_rept_evt->addr, adv_rept_evt->data, adv_rept_evt->length);
     }
   else
     {
       _err("%s [BLE][Common] Advertise report callback failed(CB not registered).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_mtusize(struct ble_event_mtusize_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->mtusize)
+    {
+      ops->mtusize(evt->handle, evt->mtusize);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_save_bond(struct ble_event_bondinfo_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->save_bondinfo)
+    {
+      ops->save_bondinfo(evt->num, evt->bond);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_load_bond(struct ble_event_bondinfo_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->load_bondinfo)
+    {
+      ret = ops->load_bondinfo(evt->num, evt->bond);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+static int ble_event_encryption_result(struct ble_event_encryption_result_t *evt)
+{
+  int ret = BT_SUCCESS;
+  struct ble_common_ops_s *ops = g_bt_common_state.ble_common_ops;
+
+  if (ops && ops->encryption_result)
+    {
+      ops->encryption_result(evt->conn_handle, evt->result);
+    }
+  else
+    {
+      _err("%s [BLE][Common] callback not registered.\n", __func__);
       return BT_FAIL;
     }
 
@@ -345,6 +412,8 @@ int bt_finalize(void)
     {
       ret = bt_hal_common_ops->finalize();
     }
+
+  ble_gatt_finalize();
 
   return ret;
 }
@@ -1013,6 +1082,33 @@ int ble_disconnect(struct ble_state_s *ble_state)
 }
 
 /****************************************************************************
+ * Name: ble_pairing
+ *
+ * Description:
+ *   Bluetooth LE pairing for Central
+ *   This function is for Central role.
+ *
+ ****************************************************************************/
+
+int ble_pairing(uint16_t conn_handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->pairing)
+    {
+      ret = ops->pairing(conn_handle);
+    }
+  else
+    {
+      _err("%s [BLE][Common] not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: ble_start_advertise
  *
  * Description:
@@ -1075,14 +1171,14 @@ int ble_cancel_advertise(void)
  *
  ****************************************************************************/
 
-int ble_start_scan(void)
+int ble_start_scan(bool duplicate_filter)
 {
   int ret = BT_SUCCESS;
   struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
 
-  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+  if (ble_hal_common_ops && ble_hal_common_ops->startScan)
     {
-      ret = ble_hal_common_ops->scan(true);
+      ret = ble_hal_common_ops->startScan(duplicate_filter);
     }
   else
     {
@@ -1107,13 +1203,67 @@ int ble_cancel_scan(void)
   int ret = BT_SUCCESS;
   struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
 
-  if (ble_hal_common_ops && ble_hal_common_ops->scan)
+  if (ble_hal_common_ops && ble_hal_common_ops->stopScan)
     {
-      ret = ble_hal_common_ops->scan(false);
+      ret = ble_hal_common_ops->stopScan();
     }
   else
     {
       _err("%s [BLE][Common] BLE scan failed(Central not supported yet).\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+uint16_t ble_set_request_mtusize(uint16_t sz)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->setMtuSize)
+    {
+      ret = ops->setMtuSize(sz);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+uint16_t ble_get_request_mtusize(void)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->getMtuSize)
+    {
+      ret = ops->getMtuSize();
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+int ble_get_negotiated_mtusize(uint16_t handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->getNegotiatedMtuSize)
+    {
+      ret = ops->getNegotiatedMtuSize(handle);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
       return BT_FAIL;
     }
 
@@ -1186,9 +1336,62 @@ int ble_common_event_handler(struct bt_event_t *bt_event)
       case BLE_COMMON_EVENT_SCAN_RESULT:
         return ble_event_advertise_report((struct ble_event_adv_rept_t *) bt_event);
 
+      case BLE_COMMON_EVENT_MTUSIZE:
+        return ble_event_mtusize((struct ble_event_mtusize_t *) bt_event);
+
+      case BLE_COMMON_EVENT_SAVE_BOND:
+        return ble_event_save_bond((struct ble_event_bondinfo_t *) bt_event);
+
+      case BLE_COMMON_EVENT_LOAD_BOND:
+        return ble_event_load_bond((struct ble_event_bondinfo_t *) bt_event);
+
+      case BLE_COMMON_EVENT_ENCRYPTION_RESULT:
+        return ble_event_encryption_result((struct ble_event_encryption_result_t *) bt_event);
+
       default:
         break;
     }
+
   return BT_SUCCESS;
+}
+
+/****************************************************************************
+ * Name: ble_parse_advertising_data
+ *
+ * Description:
+ *   Parse BLE advertising data and return the target AD type information.
+ *
+ ****************************************************************************/
+
+int ble_parse_advertising_data(BLE_AD_TYPE target,
+                               uint8_t *adv,
+                               uint8_t adv_len,
+                               struct bt_eir_s *eir)
+{
+  int i = 0;
+  uint8_t len;
+  uint8_t type;
+  uint8_t *data;
+  int ret = BT_FAIL;
+
+  while (i < adv_len)
+    {
+      len  = adv[i++];
+      type = adv[i++];
+      data = &adv[i];
+
+      if (type == target)
+        {
+          eir->len  = len,
+          eir->type = type,
+          memcpy(eir->data, data, len - 1); /* len include type and data */
+          ret = BT_SUCCESS;
+          break;
+        }
+
+      i += len - 1;
+    }
+
+  return ret;
 }
 

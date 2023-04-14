@@ -538,11 +538,7 @@ static void power_off_check(void){
         set_CXM150x_power(CXM150x_POWER_OFF,&res_set_power,NULL);
         g_gnss_ready_flg = FLAG_OFF;
         g_int1_callback_flg = FLAG_OFF;
-        sleep(1);
-        uint32_t power_on_time = next_time - g_pow_enable_remain_offset;
-        struct tm p_tm;
-        (void)localtime_r(&power_on_time,&p_tm);
-        set_rtc_alarm(p_tm.tm_hour,p_tm.tm_min,p_tm.tm_sec);
+        set_rtc_alarm(0,0,interval);
         memset(&g_nmea_gga_info_buf,0,sizeof(g_nmea_gga_info_buf));
     } else {
         printf("CXM150x power not change\r\n");
@@ -716,7 +712,7 @@ static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
     int fd = open("/dev/rtc0", O_WRONLY);
 
     setrel.id      = 0;
-    setrel.pid     = 0;
+    setrel.pid     = getpid();
     setrel.reltime = (time_t)(hh*60*60 + mm*60 + ss);
 
     setrel.event.sigev_notify = SIGEV_SIGNAL;
@@ -727,7 +723,11 @@ static void set_rtc_alarm(int32_t hh,int32_t mm,int32_t ss){
     g_rtc_callback_flg = FLAG_OFF;
     close(fd);
 
-    printf("set_rtc_alarm %02ld:%02ld:%02ld\r\n",hh,mm,ss);
+    mm += ss / 60;
+    ss %= 60;
+    hh += mm / 60;
+    mm %= 60;
+    printf("set_rtc_alarm %02ld:%02ld:%02ld later\r\n",hh,mm,ss);
 }
 
 // ===========================================================================
@@ -757,6 +757,23 @@ static uint32_t get_current_tm(void){
     uint32_t sec = 0;
     conv_CXM150x_GNSSTime_to_second(res.m_str,&sec);
     
+    // Convert the number of seconds elapsed since GPS reference date and time obtained by above API to the number of seconds elapsed since 00:00:00 on January 1, 1900
+    // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
+    struct tm base_time;
+    base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
+    base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
+    base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;
+    base_time.tm_mday = GPS_FORMAT_BASE_TIME_MDAY;
+    base_time.tm_mon = GPS_FORMAT_BASE_TIME_MON;
+    base_time.tm_year = GPS_FORMAT_BASE_TIME_YEAR;
+    base_time.tm_wday = GPS_FORMAT_BASE_TIME_WDAY;
+    base_time.tm_yday = GPS_FORMAT_BASE_TIME_YDAY;
+    base_time.tm_isdst = GPS_FORMAT_BASE_TIME_ISDST;
+    sec += mktime(&base_time);
+
+    // This time format is GNSS time so substract leap second to convert it to UTC time format
+    sec -= GNSS_DATETIME_ADJUST_LEAP_SECOND;
+
     return sec;
 }
 
@@ -774,20 +791,7 @@ static uint32_t get_current_tm(void){
 // ===========================================================================
 static void set_rtc_time(void){
     uint32_t sec = get_current_tm();
-    // Convert the number of seconds elapsed since GPS reference date and time obtained by get_current_tm to the number of seconds elapsed since 00:00:00 on January 1, 1900
-    // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
-    struct tm base_time;
-    base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
-    base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
-    base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;
-    base_time.tm_mday = GPS_FORMAT_BASE_TIME_MDAY;
-    base_time.tm_mon = GPS_FORMAT_BASE_TIME_MON;
-    base_time.tm_year = GPS_FORMAT_BASE_TIME_YEAR;
-    base_time.tm_wday = GPS_FORMAT_BASE_TIME_WDAY;
-    base_time.tm_yday = GPS_FORMAT_BASE_TIME_YDAY;
-    base_time.tm_isdst = GPS_FORMAT_BASE_TIME_ISDST;
-    sec += mktime(&base_time);
-    
+
     struct timespec ts;
     ts.tv_sec = sec;
     ts.tv_nsec = 0;
@@ -835,7 +839,7 @@ static time_t get_rtc_time(void){
 }
 
 // ===========================================================================
-//! Convert the time set in RTC to UTC and get it in character string format
+//! Read the UTC time set in RTC and get it in character string format
 /*!
  *
  * @param [in] none
@@ -850,8 +854,6 @@ static void get_utc_time_str(uint8_t *str){
     time_t rtc_time = get_rtc_time();
     if(rtc_time > 0){
         // Successful acquisition
-        // RTC time format is GNSS time so substract leap second to convert it to UTC time format, and return it as character string.
-        rtc_time -= GNSS_DATETIME_ADJUST_LEAP_SECOND;
         struct tm utc_tm;
         (void)localtime_r(&rtc_time,&utc_tm);
         strftime((char*)str, GNSS_DATETIME_LEN+1, "%Y%m%d%H%M%S", &utc_tm);
@@ -1259,7 +1261,8 @@ int main_LPWA_sample_app(void){
     /* Infinite loop */
     while(1){
         // Sleep processing if no interrupt
-        if(g_int1_callback_flg == FLAG_OFF && g_push_btn_flag == FLAG_OFF && check_message_count() == FLAG_OFF){
+        if(g_int1_callback_flg == FLAG_OFF && g_push_btn_flag == FLAG_OFF && check_message_count() == FLAG_OFF
+           && g_rtc_callback_flg == FLAG_OFF){
             // TBD: Implement sleep function
             sleep(1);
             continue;

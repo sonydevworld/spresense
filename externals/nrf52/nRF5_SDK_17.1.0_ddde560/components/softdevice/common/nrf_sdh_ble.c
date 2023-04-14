@@ -96,8 +96,22 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
     ret_code = sd_ble_cfg_set(BLE_CONN_CFG_GAP, &ble_cfg, *p_ram_start);
     if (ret_code != NRF_SUCCESS)
     {
-        NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_CONN_CFG_GAP.",
-                      nrf_strerror_get(ret_code));
+       /* Current BLE board can not be powered off with cold sleep or bt_disable.
+        * Then, NRF_ERROR_INVALID_STATE, which means that HW has been already
+        * initialized, can be returned.
+        * So, treat NRF_ERROR_INVALID_STATE as the success return.
+        */
+
+        if (ret_code == NRF_ERROR_INVALID_STATE)
+        {
+            ret_code = NRF_SUCCESS;
+        }
+        else
+        {
+            NRF_LOG_ERROR("sd_ble_cfg_set() returned %s when attempting to set BLE_CONN_CFG_GAP.",
+                          nrf_strerror_get(ret_code));
+        }
+
         return ret_code;
     }
 
@@ -178,9 +192,17 @@ ret_code_t nrf_sdh_ble_default_cfg_set(uint8_t conn_cfg_tag, uint32_t * p_ram_st
 ret_code_t nrf_sdh_ble_enable(uint32_t * const p_app_ram_start)
 {
     ret_code_t ret_code = sd_ble_enable(p_app_ram_start);
-    if (ret_code == NRF_SUCCESS)
+
+    /* Current BLE board can not be powered off with cold sleep or bt_disable.
+     * Then, NRF_ERROR_INVALID_STATE, which means that HW has been already
+     * initialized, can be returned.
+     * So, treat NRF_ERROR_INVALID_STATE as the success return.
+     */
+
+    if ((ret_code == NRF_SUCCESS) || (ret_code == NRF_ERROR_INVALID_STATE))
     {
         m_stack_is_enabled = true;
+        ret_code = NRF_SUCCESS;
     }
     else
     {

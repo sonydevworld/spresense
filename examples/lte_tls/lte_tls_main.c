@@ -69,7 +69,7 @@
 
 #define APP_SCHEME                 "https"
 #define APP_SCHEME_LEN              6 /* length of "https" + \0 */
-#define APP_PORT_LEN                5 
+#define APP_PORT_LEN                6
 #define APP_HTTPS_WELLKNOWN_PORT    443
 #define APP_HOSTNAME_LEN            128
 #define APP_FILENAME_LEN            128

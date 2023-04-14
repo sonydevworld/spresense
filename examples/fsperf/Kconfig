@@ -1,0 +1,41 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_FSPERF
+	tristate "File system performance measurement example"
+	default n
+	---help---
+		Enable the file system performance measurement application
+
+if EXAMPLES_FSPERF
+
+config EXAMPLES_FSPERF_PROGNAME
+	string "Program name"
+	default "fsperf"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_FSPERF_PRIORITY
+	int "fsperf task priority"
+	default 100
+
+config EXAMPLES_FSPERF_STACKSIZE
+	int "fsperf stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+config EXAMPLES_FSPERF_FWRITEREAD
+	bool "fwrite/fread performance"
+	default y
+
+config EXAMPLES_FSPERF_WRITEREAD
+	bool "write/read performance"
+	default n
+
+config EXAMPLES_FSPERF_REPEAT_COUNT
+	int "repeat count"
+	default 10
+
+endif

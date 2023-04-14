@@ -41,6 +41,7 @@
  ****************************************************************************/
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <lte/lte_api.h>
 #include <lte/lte_lwm2m.h>
@@ -62,6 +63,8 @@
 #define MESSAGE_ID_LWM2M_VALUE    (6)
 #define MESSAGE_ID_ENDAPP         (7)
 #define MESSAGE_ID_LWM2M_ACTION   (8)
+#define MESSAGE_ID_VERSION        (9)
+#define MESSAGE_ID_RECONNECT      (10)
 
 /****************************************************************************
  * Public Types
@@ -86,6 +89,7 @@ struct app_parameter_s
   char security_key[LWM2MSTUB_MAX_SEQKEY];
   bool bootstrap;
   int security_mode;
+  uint32_t lifetime;
 
   int time_period;
 };
