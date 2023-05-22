@@ -1442,6 +1442,12 @@ void onConnParamUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.gapMem->connParams = *(ble_gap_conn_params_t *)params;
   pBleEvent->evtDataSize = sizeof(BLE_EvtConnParamUpdate);
   memcpy(pBleEvent->evtData, &commMem.connParams, pBleEvent->evtDataSize);
+
+  /* Currently, not support the connection parameter settings.
+   * So, accept the peer's setting as is.
+   */
+
+  sd_ble_gap_conn_param_update(pBleNrfEvt->evt.gap_evt.conn_handle, params);
 }
 
 static
