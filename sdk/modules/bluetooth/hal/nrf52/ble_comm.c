@@ -1916,7 +1916,29 @@ void onTimeout(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtHeader = BLE_GAP_EVENT_TIMEOUT;
   ble_gap_evt_timeout_t *timeout = &pBleNrfEvt->evt.gap_evt.params.timeout;
   commMem.timeoutData.handle = pBleNrfEvt->evt.gap_evt.conn_handle;
-  commMem.timeoutData.timeoutSrc = timeout->src;
+
+  switch (timeout->src)
+    {
+      case BLE_GAP_TIMEOUT_SRC_SCAN:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_SCAN;
+        break;
+
+      case BLE_GAP_TIMEOUT_SRC_CONN:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_CONN;
+        break;
+
+      case BLE_GAP_TIMEOUT_SRC_AUTH_PAYLOAD:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_SECURITY_REQUEST;
+        break;
+
+      default:
+
+        /* It does not come here by interface specification. */
+
+        commMem.timeoutData.timeoutSrc = timeout->src;
+        break;
+    }
+
   pBleEvent->evtDataSize = sizeof(BLE_EvtTimeout);
   memcpy(pBleEvent->evtData, &commMem.timeoutData, pBleEvent->evtDataSize);
 
