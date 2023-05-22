@@ -274,6 +274,10 @@ typedef enum {
  */
 
 typedef enum {
+  /** BLE address type */
+
+  BLE_AD_TYPE_ADDRESS_TYPE                   = 0x00,
+
   /** Flags for discoverability. */
 
   BLE_AD_TYPE_FLAGS                          = 0x01,

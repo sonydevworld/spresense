@@ -139,7 +139,7 @@ static  int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDis
 
 static int nrf52_ble_start_scan(bool duplicate_filter);
 static int nrf52_ble_stop_scan(void);
-static int nrf52_ble_connect(const BT_ADDR *addr);
+static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr);
 static int nrf52_ble_disconnect(const uint16_t conn_handle);
 static int nrf52_ble_advertise(bool enable);
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
@@ -1128,8 +1128,15 @@ static void on_adv_report(BLE_EvtAdvReportData *adv_report)
   evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
   evt.rssi = adv_report->rssi;
   evt.scan_rsp = adv_report->scan_rsp;
-  evt.length = adv_report->dlen;
-  memcpy(evt.data, adv_report->data, adv_report->dlen);
+  evt.length = adv_report->dlen + 1;
+
+  /* The first octet is used for notification of peer address type. */
+
+  evt.data[0] = adv_report->addr.type;
+
+  /* The raw advertising data starts from second octet. */
+
+  memcpy(evt.data + 1, adv_report->data, adv_report->dlen);
   memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
   ble_common_event_handler((struct bt_event_t *)&evt);
 }
@@ -2905,12 +2912,12 @@ static int nrf52_ble_stop_scan(void)
  *
  ****************************************************************************/
 
-static int nrf52_ble_connect(const BT_ADDR *addr)
+static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
   BLE_GapAddr gap_addr = {0};
 
-  gap_addr.type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  gap_addr.type = addr_type;
   memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
 
   ret = BLE_GapConnect(&gap_addr);
