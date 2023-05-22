@@ -474,9 +474,10 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 
   if (db_disc->state.end_handle != 0xFFFF)
     {
-      ble_continue_db_discovery(s_ble_state->ble_connect_handle,
-                                db_disc->state.end_handle + 1);
+      ble_continue_db_discovery(db_disc->state.end_handle + 1,
+                                s_ble_state->ble_connect_handle);
     }
+
   ble_pairing(s_ble_state->ble_connect_handle);
 }
 
