@@ -93,7 +93,7 @@ static int bcm20706_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
 static int bcm20706_ble_advertise(bool enable);
 static int bcm20706_ble_start_scan(bool duplicate_filter);
 static int bcm20706_ble_stop_scan(void);
-static int bcm20706_ble_connect(const BT_ADDR *addr);
+static int bcm20706_ble_connect(uint8_t addr_type, const BT_ADDR *addr);
 static int bcm20706_ble_disconnect(const uint16_t conn_handle);
 
 /****************************************************************************
@@ -365,11 +365,12 @@ static int bcm20706_ble_stop_scan(void)
  *
  ****************************************************************************/
 
-static int bcm20706_ble_connect(const BT_ADDR *addr)
+static int bcm20706_ble_connect(uint8_t addr_type, const BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
   BLE_GapAddr gap_addr = {0};
 
+  gap_addr.type = addr_type;
   memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
 
   ret = BLE_GapConnect(&gap_addr);
