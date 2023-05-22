@@ -157,11 +157,14 @@ static struct ble_cccd_s **g_cccd = NULL;
  * Private Functions
  ****************************************************************************/
 
-static void ble_state_add_bt_addr(struct ble_state_s *state, BT_ADDR *addr)
+static void ble_state_add_bt_addr(struct ble_state_s *state,
+                                  BT_ADDR *addr,
+                                  uint8_t addr_type)
 {
   ASSERT(state);
 
   memcpy(&state->bt_target_addr, addr, sizeof(state->bt_target_addr));
+  state->bt_target_addr_type = addr_type;
 }
 
 static void on_le_connect_status_change(struct ble_state_s *ble_state,
@@ -192,12 +195,24 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
   struct ble_state_s state = {0};
   int ret = BT_SUCCESS;
   struct bt_eir_s eir;
+  uint8_t addr_type;
 
   printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
           addr.address[5], addr.address[4], addr.address[3], addr.address[2],
           addr.address[1], addr.address[0]);
 
-  ret = ble_parse_advertising_data(BLE_AD_TYPE_COMPLETE_LOCAL_NAME, data, len, &eir);
+  ret = ble_parse_advertising_data(BLE_AD_TYPE_ADDRESS_TYPE,
+                                   data, len, &eir);
+  if (ret != BT_SUCCESS)
+    {
+      printf("This advertising data do not have address type.\n");
+      return;
+    }
+
+  addr_type = eir.data[0];
+
+  ret = ble_parse_advertising_data(BLE_AD_TYPE_COMPLETE_LOCAL_NAME,
+                                   data, len, &eir);
   if (ret != BT_SUCCESS)
     {
       printf("This advertising data do not have device name.\n");
@@ -219,7 +234,7 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
       goto bye;
     }
 
-  ble_state_add_bt_addr(&state, &addr);
+  ble_state_add_bt_addr(&state, &addr, addr_type);
 
   ret = ble_connect(&state);
   if (ret != BT_SUCCESS)
