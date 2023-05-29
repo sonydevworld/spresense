@@ -133,7 +133,7 @@ static void onReadRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onWriteRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery);
 static  int characteristicsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery);
-static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, BLE_GattcChar *afterChar);
+static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, uint16_t last_handle);
 static bool isDescDiscoveryReqd(bleGattcDb *gattcDbDiscovery, BLE_GattcDbDiscChar *currChar, BLE_GattcDbDiscChar *nextChar, BLE_GattcHandleRange *handleRange);
 static  int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, bool *raiseDiscovComplete);
 
@@ -2136,6 +2136,7 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
       srv->char_count = rcv_srv->charCount;
       srv->srv_handle_range.start_handle = rcv_srv->srvHandleRange.startHandle;
       srv->srv_handle_range.end_handle   = rcv_srv->srvHandleRange.endHandle;
+      memcpy(&srv->srv_uuid, &rcv_srv->srvUuid, sizeof(BLE_UUID));
 
       ch = &srv->characteristics[0];
       rcv_ch = &rcv_srv->characteristics[0];
@@ -2191,6 +2192,60 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
   return;
 }
 
+static bool is_target_uuid(const ble_uuid_t *notified, ble_uuid_t *target)
+{
+  if (target->type == BLE_UUID_TYPE_UNKNOWN)
+    {
+      /* This setting means that all information is discovered. */
+
+      return true;
+    }
+  else
+    {
+      if (BLE_UUID_EQ(notified, target))
+        {
+          return true;
+        }
+      else
+        {
+          return false;
+        }
+    }
+}
+
+static void convert_uuid_nrf2mw(const ble_uuid_t *nrf52, BLE_Uuid *mw)
+{
+  uint8_t len;
+  uint8_t uuid[16];
+
+  if (nrf52->type == BLE_UUID_TYPE_BLE)
+    {
+      mw->value.baseAlias.uuidAlias = nrf52->uuid;
+      mw->type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+    }
+  else if (nrf52->type == BLE_UUID_TYPE_UNKNOWN)
+    {
+      /* Unknown and non-encodable 128bit UUID case. */
+
+      mw->type = BLE_UUID_TYPE_UUID128;
+      memset(mw->value.uuid128.uuid128, 0, 16);
+    }
+  else
+    {
+      sd_ble_uuid_encode(nrf52, &len, uuid);
+      if (len == 2)
+        {
+          mw->value.baseAlias.uuidAlias = (uuid[1] << 8) | uuid[0];
+          mw->type = BLE_UUID_TYPE_BASEALIAS_VENDOR;
+        }
+      else
+        {
+          memcpy(mw->value.uuid128.uuid128, uuid, 16);
+          mw->type = BLE_UUID_TYPE_UUID128;
+        }
+    }
+}
+
 static
 void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2231,8 +2286,12 @@ void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, 
            i < num;
            i++, srv++, ltbl++)
         {
-          ltbl->srvUuid.value.baseAlias.uuidAlias = srv->uuid.uuid;
-          ltbl->srvUuid.type = (BLE_GATT_UUID_TYPE)srv->uuid.type;
+          if (is_target_uuid(&srv->uuid, &gattcDbDiscovery->target.srvUuid) == false)
+            {
+              continue;
+            }
+
+          convert_uuid_nrf2mw(&srv->uuid, &ltbl->srvUuid);
           ltbl->srvHandleRange.startHandle =  srv->handle_range.start_handle;
           ltbl->srvHandleRange.endHandle =  srv->handle_range.end_handle;
           BLE_PRT2("Primary Service[%d] type %d uuid 0x%04X sHdl %d eHdl %d\n",
@@ -2268,17 +2327,15 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   uint8_t numCharsCurrDisc = 0;
   uint16_t connHandle = 0;
   uint32_t i               = 0;
-  uint32_t j               = 0;
   bool   performDescDiscov = false;
   bool raiseDiscovComplete = false;
   ble_gattc_evt_t                 *bleGattcEvt = &(pBleNrfEvt->evt.gattc_evt);
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
   BLE_GattcDbDiscChar      *chtop;
-  BLE_GattcChar            *ch;
+  BLE_GattcChar            *ch = NULL;
   const ble_gattc_evt_char_disc_rsp_t *charDiscRspEvt;
   const ble_gattc_char_t   *rcvch;
-  BLE_GattcChar            *lastKnownChar = NULL;
-
+  uint16_t                 last_handle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
   connHandle  = bleGattcEvt->conn_handle;
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
@@ -2294,29 +2351,22 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
       numCharsPrevDisc = srvBeingDiscovered->charCount;
       numCharsCurrDisc = charDiscRspEvt->count;
       BLE_PRT2("onChar preCnt %d curCnt %d\n", numCharsPrevDisc, numCharsCurrDisc);
-      // Check if the total number of discovered characteristics are supported
-      if ((numCharsPrevDisc + numCharsCurrDisc) <= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+      chtop = &srvBeingDiscovered->characteristics[numCharsPrevDisc];
+      for (i = 0; i < numCharsCurrDisc; i++)
         {
-          // Update the characteristics count.
-          srvBeingDiscovered->charCount += numCharsCurrDisc;
-        }
-      else
-        {
-          // The number of characteristics discovered at the peer is more than the supported maximum.
-          srvBeingDiscovered->charCount = BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV;
-        }
+          rcvch = &charDiscRspEvt->chars[i];
+          last_handle = rcvch->handle_value;
 
-      for (i = numCharsPrevDisc, j = 0; i < srvBeingDiscovered->charCount; i++, j++)
-        {
-          chtop = &srvBeingDiscovered->characteristics[i];
+          if (is_target_uuid(&rcvch->uuid, &gattcDbDiscovery->target.charUuid) == false)
+            {
+              continue;
+            }
+
           ch    = &chtop->characteristic;
-          rcvch = &charDiscRspEvt->chars[j];
-
           memcpy(&ch->charPrope, &rcvch->char_props, sizeof(BLE_CharPrope));
           ch->charDeclhandle = rcvch->handle_decl;
           ch->charValhandle  = rcvch->handle_value;
-          ch->charValUuid.type = (BLE_GATT_UUID_TYPE)rcvch->uuid.type;
-          ch->charValUuid.value.baseAlias.uuidAlias = rcvch->uuid.uuid;
+          convert_uuid_nrf2mw(&rcvch->uuid, &ch->charValUuid);
 
           /* Initialize all descriptors handle with invalid value.
            * These handles are discovered later by descriptor discovery.
@@ -2334,13 +2384,19 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
                    rcvch->uuid.uuid,
                    rcvch->handle_value,
                    rcvch->handle_decl);
-        }
 
-      lastKnownChar = &(srvBeingDiscovered->characteristics[i - 1].characteristic);
+          srvBeingDiscovered->charCount++;
+          if (srvBeingDiscovered->charCount > BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+            {
+              break;
+            }
+
+          chtop++;
+        }
 
       // If no more characteristic discovery is required, or if the maximum number of supported
       // characteristic per service has been reached, descriptor discovery will be performed.
-      if (!isCharDiscoveryReqd(gattcDbDiscovery, lastKnownChar) ||
+      if (!isCharDiscoveryReqd(gattcDbDiscovery, last_handle) ||
       (srvBeingDiscovered->charCount == BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
         {
           performDescDiscov = true;
@@ -2612,15 +2668,15 @@ err:
 
 static
 bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery,
-               BLE_GattcChar         *afterChar)
+                         uint16_t last_handle)
 {
-  BLE_PRT2("isChar charEndHdl %d srvEndHdl %d\n", afterChar->charValhandle,
+  BLE_PRT2("isChar charEndHdl %d srvEndHdl %d\n", last_handle,
     gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle);
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
       return false;
     }
-  if (afterChar->charValhandle <
+  if (last_handle <
   gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle)
     {
       // Handle value of the characteristic being discovered is less than the end handle of
@@ -2744,7 +2800,17 @@ int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, 
 
       gattcDbDiscovery->currSrvInd++;
       gattcDbDiscovery->currCharInd = 0;
-      characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+
+      if (gattcDbDiscovery->currSrvInd < gattcDbDiscovery->dbDiscovery.srvCount)
+        {
+          characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+        }
+      else
+        {
+          setDbDiscoveryEvent(pBleEvent,
+                              gattcDbDiscovery->dbDiscovery.connHandle,
+                              BLE_GATTC_RESULT_SUCCESS, 0);
+        }
 
       return NRF_SUCCESS;
     }

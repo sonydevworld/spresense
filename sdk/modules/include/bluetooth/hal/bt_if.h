@@ -179,11 +179,17 @@ struct ble_hal_gattc_ops_s
 
   int (*continueDbDiscovery)(uint16_t start_handle, uint16_t conn_handle);
 
-  /**< Write characteristic request(Central)/response(Peripheral) */
+  /** GATT client specific UUID discovery */
+
+  int (*discoverUuid)(uint16_t conn_handle,
+                      BLE_UUID *srv_uuid,
+                      BLE_UUID *char_uuid);
+
+  /** Write characteristic request(Central)/response(Peripheral) */
 
   int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
 
-  /**< Read characteristic request(Central)/response(Peripheral) */
+  /** Read characteristic request(Central)/response(Peripheral) */
 
   int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
 
