@@ -48,4 +48,8 @@ ROOTDEPPATH := $(foreach dir,$(SUBDIRS), --dep-path $(dir))
 CSRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.c)))
 ASRCS := $(notdir $(foreach dir,$(SUBDIRS), $(wildcard $(dir)/*.S)))
 
+
+# No suffix for shorter file name.
+SUFFIX =
+
 include $(APPDIR)/Application.mk
