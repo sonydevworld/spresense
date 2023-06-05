@@ -153,6 +153,10 @@ static struct ble_state_s *s_ble_state = NULL;
 static int g_ble_bonded_device_num;
 static struct ble_cccd_s **g_cccd = NULL;
 
+static bool g_target = false;
+static BLE_UUID g_target_srv_uuid;
+static BLE_UUID g_target_char_uuid;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -254,7 +258,17 @@ bye:
 static void on_mtusize(uint16_t handle, uint16_t sz)
 {
   printf("mtusize = %d\n", sz);
-  ble_start_db_discovery(s_ble_state->ble_connect_handle);
+
+  if (g_target)
+    {
+      ble_discover_uuid(s_ble_state->ble_connect_handle,
+                        &g_target_srv_uuid,
+                        &g_target_char_uuid);
+    }
+  else
+    {
+      ble_start_db_discovery(s_ble_state->ble_connect_handle);
+    }
 }
 
 static void encryption_result(uint16_t handle, bool result)
@@ -447,6 +461,35 @@ static void print_descriptor_handle(const char *name, uint16_t handle)
   printf("      %s  handle : 0x%04x\n", name, handle);
 }
 
+static void print_uuid(char *prefix, BLE_UUID *uuid)
+{
+  int i;
+
+  printf("%s", prefix);
+
+  if (uuid->type == BLE_UUID_TYPE_UUID128)
+    {
+      /* 128bit : VVVVVVVV-WWWW-XXXX-YYYY-ZZZZZZZZZZZZ */
+
+      for (i = 0; i < 16; i++)
+        {
+          printf("%02x", uuid->value.uuid128.uuid128[15 - i]);
+          if ((i == 3) || (i == 5) || (i == 7) || (i == 9))
+            {
+              printf("-");
+            }
+        }
+    }
+  else
+    {
+      /* 16bit */
+
+      printf("0x%04x", uuid->value.alias.uuidAlias);
+    }
+
+  printf("\n");
+}
+
 static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 {
   int i;
@@ -462,6 +505,8 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
     {
       printf("=== SRV[%d] ===\n", i);
 
+      print_uuid("   uuid : ", &srv->srv_uuid);
+
       ch = &srv->characteristics[0];
 
       for (j = 0; j < srv->char_count; j++, ch++)
@@ -469,7 +514,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
           printf("   === CHR[%d] ===\n", j);
           printf("      decl  handle : 0x%04x\n", ch->characteristic.char_declhandle);
           printf("      value handle : 0x%04x\n", ch->characteristic.char_valhandle);
-          printf("      uuid         : 0x%04x\n", ch->characteristic.char_valuuid.value.alias.uuidAlias);
+          print_uuid("      uuid         : ", &ch->characteristic.char_valuuid);
 
           print_descriptor_handle("cccd", ch->cccd_handle);
           print_descriptor_handle("cepd", ch->cepd_handle);
@@ -489,8 +534,11 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 
   if (db_disc->state.end_handle != 0xFFFF)
     {
-      ble_continue_db_discovery(db_disc->state.end_handle + 1,
-                                s_ble_state->ble_connect_handle);
+      if (g_target == false)
+        {
+          ble_continue_db_discovery(db_disc->state.end_handle + 1,
+                                    s_ble_state->ble_connect_handle);
+        }
     }
 
   ble_pairing(s_ble_state->ble_connect_handle);
@@ -521,6 +569,78 @@ static void on_descriptor_read(uint16_t conn_handle,
   printf("\n");
 }
 
+static int convert_str2uuid(char *str, BLE_UUID *uuid)
+{
+  int i;
+  int j;
+  char hex[3] = {0};
+
+  if (strlen(str) == 4)  /* 16bit UUID */
+    {
+      uuid->type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+      uuid->value.alias.uuidAlias = strtol(str, NULL, 16);
+    }
+  else if (strlen(str) == 36)   /* 128bit UUID */
+    {
+      /* string format : VVVVVVVV-WWWW-XXXX-YYYY-ZZZZZZZZZZZZ */
+
+      if ((str[8] != '-')  || (str[13] != '-') ||
+          (str[18] != '-') || (str[23] != '-'))
+        {
+          return ERROR;
+        }
+
+      uuid->type = BLE_UUID_TYPE_UUID128;
+
+      for (i = 0, j = 35; i < 16; i++, j = j - 2)
+        {
+          if (str[j] == '-')
+            {
+              j--;
+            }
+
+          hex[0] = str[j - 1];
+          hex[1] = str[j];
+
+          uuid->value.uuid128.uuid128[i] = strtol(hex, NULL, 16);
+        }
+    }
+  else
+    {
+      return ERROR;
+    }
+
+  return OK;
+}
+
+static int parse_argument(int argc, FAR char *argv[])
+{
+  int ret;
+
+  if (argc == 3)
+    {
+      ret = convert_str2uuid(argv[1], &g_target_srv_uuid);
+      if (ret != OK)
+        {
+          return ret;
+        }
+
+      ret = convert_str2uuid(argv[2], &g_target_char_uuid);
+      if (ret != OK)
+        {
+          return ret;
+        }
+
+      g_target = true;
+    }
+  else
+    {
+      g_target = false;
+    }
+
+  return OK;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -532,6 +652,12 @@ static void on_descriptor_read(uint16_t conn_handle,
 int main(int argc, FAR char *argv[])
 {
   int ret = 0;
+
+  ret = parse_argument(argc, argv);
+  if (ret != OK)
+    {
+      return ret;
+    }
 
   /* Initialize BT HAL */
 

@@ -688,6 +688,34 @@ int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle)
 }
 
 /****************************************************************************
+ * Name: ble_discover_uuid
+ *
+ * Description:
+ *   BLE GATT database discovery with specific UUID.
+ *
+ ****************************************************************************/
+
+int ble_discover_uuid(uint16_t conn_handle,
+                      BLE_UUID *srv_uuid,
+                      BLE_UUID *char_uuid)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (ops && ops->discoverUuid)
+    {
+      ret = ops->discoverUuid(conn_handle, srv_uuid, char_uuid);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: ble_gatt_register_hal
  *
  * Description:
