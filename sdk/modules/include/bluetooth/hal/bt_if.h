@@ -144,7 +144,7 @@ struct ble_hal_common_ops_s
   int (*advertise)(bool enable);                   /**< Advertisement start/stop */
   int (*startScan)(bool duplicate_filter);         /**< Start scan */
   int (*stopScan)(void);                           /**< Stop scan */
-  int (*connect)(const BT_ADDR *addr);             /**< Create a connection */
+  int (*connect)(uint8_t addr_type, const BT_ADDR *addr); /**< Create a connection */
   int (*disconnect)(const uint16_t conn_handle);   /**< Destroy a connection */
   int (*pairing)(uint16_t conn_handle);            /**< Execute pairing */
   uint16_t (*setMtuSize)(uint16_t sz);             /**< Set MTU size */

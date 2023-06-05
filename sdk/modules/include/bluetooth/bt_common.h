@@ -114,6 +114,7 @@ struct ble_state_s
   BT_CONNECT_STATUS          ble_connection;              /**< Status of BLE connection @ref BT_CONNECT_STATUS */
   uint16_t                   ble_connect_handle;          /**< Handle ID for BLE connection */
   struct bt_common_state_s   *bt_common_state;            /**< BT base context @ref bt_common_state_s */
+  uint8_t                    bt_target_addr_type;         /**< BT target device address type */
   BT_ADDR                    bt_target_addr;              /**< BT target device address @ref BT_ADDR */
   char                       bt_target_name[BT_NAME_LEN]; /**< BT target device name */
 };

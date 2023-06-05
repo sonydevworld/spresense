@@ -1043,7 +1043,8 @@ int ble_connect(struct ble_state_s *ble_state)
 
   if (ble_hal_common_ops && ble_hal_common_ops->connect)
     {
-      ret = ble_hal_common_ops->connect(&ble_state->bt_target_addr);
+      ret = ble_hal_common_ops->connect(ble_state->bt_target_addr_type,
+                                        &ble_state->bt_target_addr);
     }
   else
     {
@@ -1373,6 +1374,20 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
   uint8_t type;
   uint8_t *data;
   int ret = BT_FAIL;
+
+  ASSERT(adv_len > 0);
+
+  memset(eir, 0, sizeof(struct bt_eir_s));
+
+  if (target == BLE_AD_TYPE_ADDRESS_TYPE)
+    {
+      eir->len     = 1;
+      eir->type    = target;
+      eir->data[0] = adv[i];
+      return BT_SUCCESS;
+    }
+
+  i++;
 
   while (i < adv_len)
     {
