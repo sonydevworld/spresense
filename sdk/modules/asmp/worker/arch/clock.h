@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/asmp/worker/common.c
+ * modules/asmp/worker/arch/clock.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,91 +33,9 @@
  *
  ****************************************************************************/
 
-#include <stdio.h> /* size_t */
-#include <errno.h>
+#ifndef _ASMP_WORKER_ARCH_CLOCK_H_
+#define _ASMP_WORKER_ARCH_CLOCK_H_
 
-#include <asmp/types.h>
-#include <asmp/mptask.h>
-#include <asmp/mpsignal.h>
+uint32_t clock_getcpubaseclock(void);
 
-#include "arch/intrinsics.h"
-#include "arch/cpufifo.h"
-#include "arch/timer.h"
-#include "common.h"
-
-#ifndef DELAY_TIMER_ID
-#  define DELAY_TIMER_ID (1)
 #endif
-
-/* Enough to hold any data from supervisor */
-
-#define WORKER_RESERVED_AREA   128
-
-char __attribute__((aligned(4)))
-mpframework_reserved[WORKER_RESERVED_AREA] = "RSVD";
-
-void *wk_memset(void *s, int c, size_t n)
-{
-  unsigned char *p = (unsigned char *)s;
-  while (n-- > 0)
-    {
-      *p++ = c;
-    }
-  return s;
-}
-
-void *wk_memcpy(void *dest, const void *src, size_t n)
-{
-  unsigned char *pout = (unsigned char *)dest;
-  unsigned char *pin  = (unsigned char *)src;
-
-  while (n-- > 0)
-    {
-      *pout++ = *pin++;
-    }
-
-  return dest;
-}
-
-void wk_exit(int status)
-{
-  _signal(2, MPSIGEXIT, (uint32_t)status);
-
-  for (;;)
-    {
-      wfi();
-    }
-
-  /* NOTREACHED */
-}
-
-void wk_udelay(uint32_t us)
-{
-  int ret;
-
-  ret = timer_settimeout(DELAY_TIMER_ID, us);
-  if (ret)
-    {
-      return;
-    }
-
-  timer_start(DELAY_TIMER_ID);
-  while(timer_getvalue(DELAY_TIMER_ID));
-  timer_stop(DELAY_TIMER_ID);
-}
-
-mpbindobj_t *asmp_findmpbindobj(mpobjtype_t type, key_t key)
-{
-  mpbindobj_t *obj = (mpbindobj_t *) mpframework_reserved;
-  int i;
-
-  for (i = 0; i < NMPBINDS; i++, obj++)
-    {
-      if (obj->type == type && obj->key == key)
-        {
-          return obj;
-        }
-    }
-
-  return NULL;
-}

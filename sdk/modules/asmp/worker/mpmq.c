@@ -49,12 +49,17 @@
 #include "chip.h"
 
 #include "arch/cpufifo.h"
+#include "arch/timer.h"
 #include "asmp.h"
 #include "common.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#ifndef TIMEOUT_TIMER_ID
+#  define TIMEOUT_TIMER_ID  (1)
+#endif
 
 union msg {
   uint32_t   word[2];
@@ -162,15 +167,19 @@ int mpmq_send(mpmq_t *mq, int8_t msgid, uint32_t data)
 
 /**
  * Send message via MP message queue with timeout
- *
- * TODO: Implement timeout process
  */
 
 int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
                    uint32_t ms)
 {
   union msg m;
+  uint32_t t;
   int ret;
+
+  if (ms == 0)
+    {
+      return mpmq_send(mq, msgid, data);
+    }
 
   m.cpuid = mq->cpuid;
   m.msgid = msgid;
@@ -178,11 +187,25 @@ int mpmq_timedsend(mpmq_t *mq, int8_t msgid, uint32_t data,
   m.proto = 0;
   m.data = data;
 
+  ret = timer_settimeout(TIMEOUT_TIMER_ID, ms * 1000);
+  if (ret)
+    {
+      return ret;
+    }
+
+  timer_start(TIMEOUT_TIMER_ID);
   do
     {
       ret = cpufifo_push(m.word);
+      t = timer_getvalue(TIMEOUT_TIMER_ID);
     }
-  while(ret);
+  while(ret && t);
+  timer_stop(TIMEOUT_TIMER_ID);
+
+  if (ret)
+    {
+      return -ETIMEDOUT;
+    }
 
   return OK;
 }
@@ -201,7 +224,12 @@ int mpmq_trysend(mpmq_t *mq, int8_t msgid, uint32_t data)
   m.proto = 0;
   m.data = data;
 
-  return cpufifo_push(m.word);
+  if (cpufifo_push(m.word))
+    {
+      return -EAGAIN;
+    }
+
+  return OK;
 }
 
 /**
@@ -231,13 +259,33 @@ int mpmq_receive(mpmq_t *mq, uint32_t *data)
 int mpmq_timedreceive(mpmq_t *mq, uint32_t *data, uint32_t ms)
 {
   union msg m;
+  uint32_t t;
   int ret;
 
+  if (ms == 0)
+    {
+      return mpmq_receive(mq, data);
+    }
+
+  ret = timer_settimeout(TIMEOUT_TIMER_ID, ms * 1000);
+  if (ret)
+    {
+      return ret;
+    }
+
+  timer_start(TIMEOUT_TIMER_ID);
   do
     {
       ret = cpufifo_pull(PROTO_MSG, m.word);
+      t = timer_getvalue(TIMEOUT_TIMER_ID);
     }
-  while(ret);
+  while(ret && t);
+  timer_stop(TIMEOUT_TIMER_ID);
+
+  if (ret)
+    {
+      return -ETIMEDOUT;
+    }
 
   *data = m.data;
 
