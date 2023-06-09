@@ -91,5 +91,12 @@ config EXTERNALS_NRF52_SER_PHY_UART_LOG_LEVEL
 		Set log level of ser_phy_uart component.
 
 endif # EXTERNALS_NRF52_OUTPUT_LOG_LEVEL > 0
+
+config EXTERNALS_NRF52_EVTTASK_STACKSIZE
+	int "Event task stack size"
+	default 4096
+	---help---
+		Stack size of event task which calls callback functions to notify
+		asynchronous event from nRF52
 endif # EXTERNALS_NRF52
 
