@@ -1395,6 +1395,13 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
       type = adv[i++];
       data = &adv[i];
 
+      if (len - 1 > BT_EIR_LEN)
+        {
+          /* Invalid advertising data(invalid length information) */
+
+          break;
+        }
+
       if (type == target)
         {
           eir->len  = len,

@@ -50,11 +50,16 @@
 #include <stdint.h>
 #include <bluetooth/bluetooth.h>
 
-#define BT_EIR_LEN (29)
-
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#define BT_ADV_DATA_MAX_LEN  (255)
+#define BT_ADV_DATA_LEN_LEN  (1)
+#define BT_ADV_DATA_TYPE_LEN (1)
+#define BT_EIR_LEN  (BT_ADV_DATA_MAX_LEN \
+                   - BT_ADV_DATA_LEN_LEN \
+                   - BT_ADV_DATA_TYPE_LEN)
 
 #define BLE_IRK_LEN  (16)
 #define BLE_CSRK_LEN (16)
