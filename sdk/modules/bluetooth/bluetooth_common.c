@@ -1391,11 +1391,15 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
 
   while (i < adv_len)
     {
-      len  = adv[i++];
+      /* For calculation of data length,
+       * decrease 1 byte that represents length of type.
+       */
+
+      len  = adv[i++] - 1;
       type = adv[i++];
       data = &adv[i];
 
-      if (len - 1 > BT_EIR_LEN)
+      if (len > BT_EIR_LEN)
         {
           /* Invalid advertising data(invalid length information) */
 
@@ -1406,12 +1410,12 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
         {
           eir->len  = len,
           eir->type = type,
-          memcpy(eir->data, data, len - 1); /* len include type and data */
+          memcpy(eir->data, data, len);
           ret = BT_SUCCESS;
           break;
         }
 
-      i += len - 1;
+      i += len;
     }
 
   return ret;
