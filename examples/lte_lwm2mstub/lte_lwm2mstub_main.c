@@ -230,12 +230,14 @@ static void ovstop_cb(int seq_no, int srv_id,
  * Name: serverop_cb
  ****************************************************************************/
 
-static void serverop_cb(int event)
+static void serverop_cb(int event, int srvid, struct lwm2mstub_instance_s *inst)
 {
   struct app_message_s msg;
 
   printf("Operation : %d  ", event);
   dump_opevent(event);
+  printf("TargetObj: %d/%d/%d\n",
+          inst->object_id, inst->object_inst, inst->res_id);
 
   if (event == LWM2MSTUB_OP_REGSUCCESS)
     {
