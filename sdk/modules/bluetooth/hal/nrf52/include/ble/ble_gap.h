@@ -66,8 +66,10 @@
  */
 
 #define BLE_GAP_ADDR_LENGTH             6 /**< BLE address length */
-#undef BLE_GAP_ADV_MAX_SIZE
-#define BLE_GAP_ADV_MAX_SIZE           31 /**< Maximum size of advertising data in octets */
+
+/** Maximum size of advertising data in octets */
+
+#define BLE_GAP_ADV_MAX_SIZE            BT_ADV_DATA_MAX_LEN
 #define BLE_GAP_SEC_KEY_LEN            16 /**< GAP Security Key Length */
 #define BLE_GAP_SEC_RAND_LEN            8 /**< GAP Security Random Number Length. */
 #define BLE_SAVE_BOND_DEVICE_MAX_NUM    8 /**< The maximum size of bonded devices. */
