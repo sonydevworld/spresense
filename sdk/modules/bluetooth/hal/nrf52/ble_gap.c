@@ -65,13 +65,38 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define ADV_DEFAULT_TIMEOUT             180
 #endif
 
-#define SCAN_INTERVAL                   0x0200
-#define SCAN_WINDOW                     0x0020
-#if NRF_SD_BLE_API_VERSION > 5
-#define SCAN_TIMEOUT                    6000 // 10ms units
-#else
-#define SCAN_TIMEOUT                    60
-#endif
+/* Active scan setting.
+ *   1 means that execute active scan.
+ *   0 means that do not execute active scan.
+ */
+
+#define EXECUTE_ACTIVE_SCAN             1
+
+/* Extended advertising data reception setting.
+ *   1 means that enable extended advertising data reception.
+ *   0 means that disable extended advertising data reception.
+ */
+
+#define ENABLE_EXTENDED_ADV_RECV        1
+
+/* Scan interval setting. unit:625usec. */
+
+#define SCAN_INTERVAL                   512
+
+/* Scan reception window size setting. unit:625usec. SCAN_WINDOW < SCAN_INTERVAL.
+ * The smaller this value is, the higher the probability of missing
+ * advertising data or scan response data is.
+ */
+
+#define SCAN_WINDOW                     511
+
+/* Scan timeout setting. unit:10msec.
+ * BLE board stops scan automatically after SCAN_TIMEOUT time has elapsed.
+ * In this setting, BLE_GAP_SCAN_TIMEOUT_UNLIMITED means that scan does not stop
+ * until sd_ble_gap_scan_stop() execution.
+ */
+
+#define SCAN_TIMEOUT                    BLE_GAP_SCAN_TIMEOUT_UNLIMITED
 #define MIN_SCAN_INTERVAL               0x0004
 #define MAX_SCAN_INTERVAL               0x4000
 #define MIN_SCAN_WINDOW                 0x0004
@@ -579,14 +604,14 @@ int BLE_GapStartScan(void)
       gapMem.scanParams.timeout > MAX_SCAN_TIMEOUT ||
       gapMem.scanParams.timeout < MIN_SCAN_TIMEOUT)) {
     // default
-    gapMem.scanParams.active       = 0;
+    gapMem.scanParams.active       = EXECUTE_ACTIVE_SCAN;
     gapMem.scanParams.interval     = SCAN_INTERVAL;
     gapMem.scanParams.window       = SCAN_WINDOW;
     gapMem.scanParams.timeout      = SCAN_TIMEOUT;
 #if NRF_SD_BLE_API_VERSION > 5
     gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
     gapMem.scanParams.scan_phys     = BLE_GAP_PHY_1MBPS;
-    gapMem.scanParams.extended      = 1;
+    gapMem.scanParams.extended      = ENABLE_EXTENDED_ADV_RECV;
     ble_gap_scan_tx_power           = 0;
 #endif
   }
