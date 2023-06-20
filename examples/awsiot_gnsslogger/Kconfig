@@ -28,4 +28,9 @@ config EXAMPLES_AWSIOT_GNSSLOGGER_PUBSUB_TEST
 	---help---
 		Simple test of publish and subscribe to/from AWS IoT Core.
 
+config EXAMPLES_AWSIOT_GNSSLOGGER_GPS_DEVNAME
+	string "GNSS device name"
+	default "/dev/gps2" if CXD56_GNSS_ADDON
+	default "/dev/gps"
+
 endif
