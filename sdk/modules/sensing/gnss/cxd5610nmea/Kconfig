@@ -1,0 +1,12 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config GPSUTILS_CXD5610NMEA_LIB
+	bool "Support CXD5610 gnss NMEA convert library"
+	default n
+	depends on SENSORS_CXD5610_GNSS
+	---help---
+		Enable CXD5610 gnss NMEA convert library.
+		This converts from positioning data of CXD5610 GNSS to NMEA sentences.
