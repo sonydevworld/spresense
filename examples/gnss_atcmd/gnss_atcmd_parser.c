@@ -1039,11 +1039,64 @@ static int command_ver(FAR struct gnss_atcmd_info *info,
                        int argc)
 {
   int ret;
-  ret = gnss_atcmd_printf(info->wfd, "00000,0000000,0,0,0\r\n", 0, 0);
-  if (ret >= 0)
+  char version[CXD56_GNSS_VERSION_MAXLEN];
+
+  ret = ioctl(info->gnssfd, CXD56_GNSS_IOCTL_GET_VERSION,
+              (unsigned long)&version);
+  if (ret < 0)
     {
-      ret = 0;
+      return -errno;
     }
+
+  gnss_atcmd_printf(info->wfd, "%s\r\n", version);
+  return ret;
+}
+
+static int command_rst(FAR struct gnss_atcmd_info *info,
+                       FAR struct atcmd_entry *cmdentry, FAR char *argv[],
+                       int argc)
+{
+  int ret;
+
+  ret = ioctl(info->gnssfd, CXD56_GNSS_IOCTL_RESET, 0);
+  if (ret < 0)
+    {
+      return -errno;
+    }
+
+  return ret;
+}
+
+static int command_slp(FAR struct gnss_atcmd_info *info,
+                       FAR struct atcmd_entry *cmdentry, FAR char *argv[],
+                       int argc)
+{
+  int ret;
+  uint32_t param;
+
+  param = strtoul(argv[1], NULL, 0);
+
+  ret = ioctl(info->gnssfd, CXD56_GNSS_IOCTL_SLEEP, param);
+  if (ret < 0)
+    {
+      return -errno;
+    }
+
+  return ret;
+}
+
+static int command_wup(FAR struct gnss_atcmd_info *info,
+                       FAR struct atcmd_entry *cmdentry, FAR char *argv[],
+                       int argc)
+{
+  int ret;
+
+  ret = ioctl(info->gnssfd, CXD56_GNSS_IOCTL_WAKEUP, 0);
+  if (ret < 0)
+    {
+      return -errno;
+    }
+
   return ret;
 }
 
@@ -1107,8 +1160,11 @@ static struct atcmd_entry atcmd_entry_table[] = {
   {command_gguc, "GGUC", 0},
   {command_gpps, "GPPS", 1},
   {command_nop,  "LEMG", 0},
+  {command_rst,  "RST",  0},
+  {command_slp,  "SLP",  1},
   {command_nop,  "TRCK", 1},
   {command_ver,  "VER",  0},
+  {command_wup,  "WUP",  0},
   {command_aext, "AEXT", 0},
 };
 
