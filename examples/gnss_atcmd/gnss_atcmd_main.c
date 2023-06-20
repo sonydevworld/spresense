@@ -1,7 +1,7 @@
 /****************************************************************************
  * gnss_atcmd/gnss_atcmd_main.c
  *
- *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018,2019, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,6 +114,22 @@
 #define CONFIG_EXAMPLES_GNSS_ATCMD_CREATE_EMULATOR_PTHREAD
 #endif /* ifndef CONFIG_EXAMPLES_GNSS_ATCMD_TTYS */
 
+
+/* Change functions of NMEA conversion for CXD5610 GNSS */
+
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON
+#define NMEA_InitMask         NMEA_InitMask2
+#define NMEA_RegistOutputFunc NMEA_RegistOutputFunc2
+#define NMEA_Output           NMEA_Output2
+#define NMEA_DcReport_Output  NMEA_DcReport_Output2
+#endif
+
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON
+#define GPS_DEVNAME "/dev/gps2"
+#else
+#define GPS_DEVNAME "/dev/gps"
+#endif
+
 /****************************************************************************
  * Private Types
  ****************************************************************************/
@@ -133,7 +149,11 @@ static struct gnss_atcmd_info atcmd_info;
 #ifdef CONFIG_EXAMPLES_GNSS_ATCMD_CREATE_EMULATOR_PTHREAD
 static pthread_t              atcmd_tid;
 #endif /* ifndef CONFIG_EXAMPLES_GNSS_ATCMD_CREATE_EMULATOR_PTHREAD */
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON
+static struct cxd56_gnss_positiondata2_s posdat;
+#else
 static struct cxd56_gnss_positiondata_s  posdat;
+#endif
 static int                    cmdfds[2];
 static char                   cmd_rbuf[CMD_RBUF_SIZE];
 #ifdef _USE_STATIC_NMEA_BUF
@@ -359,7 +379,7 @@ static FAR void atcmd_emulator(FAR void *arg)
 
   printf("Start GNSS_ATCMD!!\n");
 
-  fd = open("/dev/gps", O_RDONLY);
+  fd = open(GPS_DEVNAME, O_RDONLY);
   if (fd < 0)
     {
       printf("open error:%d,%d\n", fd, errno);
