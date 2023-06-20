@@ -1,7 +1,7 @@
 /****************************************************************************
  * gnss_atcmd/gnss_atcmd_parser.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,6 +52,12 @@
 /***************************************************************************
  * Definitions
  ***************************************************************************/
+
+#ifdef CONFIG_EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON
+/* Change functions of NMEA conversion for CXD5610 GNSS */
+
+#define NMEA_SetMask          NMEA_SetMask2
+#endif
 
 #define _HEADER_SIZE 4
 #define _FOOTER_SIZE 4
