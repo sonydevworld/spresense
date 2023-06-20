@@ -54,4 +54,9 @@ config EXAMPLES_LTE_LWM2M_APN_PASSWD
 	string "Password used for authentication"
 	default ""
 
+config EXAMPLES_LTE_LWM2M_GPS_DEVNAME
+	string "GNSS device name"
+	default "/dev/gps2" if CXD56_GNSS_ADDON
+	default "/dev/gps"
+
 endif
