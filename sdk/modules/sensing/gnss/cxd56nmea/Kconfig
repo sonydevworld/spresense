@@ -7,7 +7,6 @@
 config GPSUTILS_CXD56NMEA_LIB
 	bool "Support CXD56xx gnss NMEA convert library"
 	default n
-	#depends on CXD56_GNSS && LIBM
 	depends on CXD56_GNSS
 	---help---
 		Enable CXD56xx gnss NMEA convert library.
