@@ -182,9 +182,9 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
           return 0;
         }
 
-      if (hdr.opt != AL_WORKER_VERSION_0)
+      if (hdr.opt != AL_MP3DECWORKER_VERSION)
         {
-          thiz->publish_event(AL_EVENT_MP3DEC_WRONGVER, 0);
+          thiz->publish_event(AL_EVENT_MP3DEC_WRONGVER, hdr.opt);
           return 0;
         }
 
