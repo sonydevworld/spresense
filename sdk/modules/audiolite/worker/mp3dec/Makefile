@@ -37,6 +37,14 @@ include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
 ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),y)
+BUILD_EXECUTE = 1
+else ifeq ($(FORCE_BUILD),1)
+BUILD_EXECUTE = 1
+else
+BUILD_EXECUTE = 0
+endif
+
+ifeq ($(BUILD_EXECUTE),1)
 
 BIN = mp3dec
 all: depend $(BIN)
@@ -138,10 +146,10 @@ context:
 
 -include Make.dep
 
-else
+else # ($(BUILD_EXECUTE),1)
 
 clean:
 
 distclean:
 
-endif # ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),y)
+endif # ($(BUILD_EXECUTE),1)
