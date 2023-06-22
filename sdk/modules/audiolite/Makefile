@@ -35,6 +35,10 @@
 
 -include $(SDKDIR)/modules/Make.defs
 
+# Set 1 FORACE_WORKER_BUILD when you want to make spk
+
+FORCE_WORKER_BUILD =
+
 MODNAME = audiolite
 CXXEXT = .cxx
 
@@ -62,18 +66,20 @@ CXXFLAGS += -I include -DBUILD_TGT_SUPERVISOR
 
 ifneq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),)
 CSRCS += dummy.c
+else ifeq ($(FORCE_WORKER_BUILD),1)
+CSRCS += dummy.c
 endif
 
 include $(SDKDIR)/modules/Module.mk
 
 .PHONY: build_mp3dec
 build_mp3dec:
-	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) FORCE_BUILD=$(FORCE_WORKER_BUILD)
 
 dummy.c: build_mp3dec
 
 clean_mp3dec:
-	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
+	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) FORCE_BUILD=$(FORCE_WORKER_BUILD) clean
 
 clean:: clean_mp3dec
 
