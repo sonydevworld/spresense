@@ -121,7 +121,7 @@ int send_bootmsg(void)
   hdr.grp  = AL_COMM_MESSAGE_SYS;
   hdr.type = AL_COMM_MSGTYPE_ASYNC;
   hdr.code = AL_COMM_MSGCODESYS_BOOT;
-  hdr.opt  = AL_WORKER_VERSION_0;
+  hdr.opt  = AL_MP3DECWORKER_VERSION;
 
 #ifdef SPRMP3_DEBUG
   sprmp3_dprintf("[MSG] BootUp\n");
