@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/gnss/Makefile
+# modules/sensing/gnss/cxd5610nmea/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,74 +33,7 @@
 #
 ############################################################################
 
-# Do not change
-
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
-DELIM ?= $(strip /)
-CXXEXT ?= .cpp
-
-CSRCS   =
-CXXSRCS =
-
-BIN = libgnss$(LIBEXT)
-
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
-CXXOBJS = $(CXXSRCS:$(CXXEXT)=$(OBJEXT))
-
-SRCS = $(ASRCS) $(CSRCS) $(CXXSRCS)
-LIB_OBJS = $(AOBJS) $(COBJS) $(CXXOBJS)
-
-# Here is a example of adding include paths.
-# Note that include path addtion will be affected to build time.
-# Don't add unnecessary include paths for module.
-#
-#SKELETONSRCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)skeleton
-#ifeq ($(WINTOOL),y)
-#  CFLAGS += -I "${shell cygpath -w $(SKELETONSRCDIR)}"
-#else
-#  CFLAGS += -I$(SKELETONSRCDIR)
-#endif
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(CXXOBJS): %$(OBJEXT): %$(CXXEXT)
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARCHIVE_ADD, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS)
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(ASRCS) $(CSRCS) >Make.dep
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CXXFLAGS) -- $(CXXSRCS) >>Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-# context target proceeds before depend. User can be used this rule
-# to prerequisite process (e.g. generate header file).
-
-.context:
-	$(Q) touch $@
-
-context:
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-
+-include $(SDKDIR)/modules/Make.defs
+MODNAME = cxd5610nmea
+CSRCS   = gnss_nmea.c
+include $(SDKDIR)/modules/Module.mk

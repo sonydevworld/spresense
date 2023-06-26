@@ -1,7 +1,7 @@
 /****************************************************************************
  * lte_lwm2m/system_gnss.c
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2021, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +85,7 @@ static int gnss_task(int argc, char **argv)
 
   /* Get file descriptor to control GNSS. */
 
-  fd = open("/dev/gps", O_RDONLY);
+  fd = open(CONFIG_EXAMPLES_LTE_LWM2M_GPS_DEVNAME, O_RDONLY);
   if (fd < 0)
     {
       printf("open error:%d,%d\n", fd, errno);

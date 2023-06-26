@@ -6,7 +6,7 @@
 config EXAMPLES_GNSS
 	tristate "GNSS positioning example"
 	default n
-	depends on CXD56_GNSS
+	depends on CXD56_GNSS || CXD56_GNSS_ADDON
 	---help---
 		Enable the Simple GNSS positioning example
 
@@ -38,5 +38,10 @@ config EXAMPLES_GNSS_USE_SIGNAL
 	bool "Signal notification"
 
 endchoice # Event notification
+
+config EXAMPLES_GNSS_DEVNAME
+	string "GNSS device name"
+	default "/dev/gps2" if CXD56_GNSS_ADDON
+	default "/dev/gps"
 
 endif
