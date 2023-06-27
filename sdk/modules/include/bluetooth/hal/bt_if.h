@@ -216,6 +216,14 @@ struct ble_hal_gatt_ops_s
   struct ble_hal_gattc_ops_s gattc; /**< GATT client HAL */
 };
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -377,5 +385,10 @@ int ble_gatt_event_handler(struct bt_event_t *bt_event);
  */
 
 int ble_register_gatt_central_cb(struct ble_gatt_central_ops_s *central_ops);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_HAL_BT_IF_H */

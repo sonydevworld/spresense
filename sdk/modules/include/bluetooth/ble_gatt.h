@@ -423,6 +423,14 @@ struct ble_gatt_central_ops_s
                           uint16_t len);
 };
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -580,5 +588,10 @@ int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle);
  */
 
 int ble_discover_uuid(uint16_t conn_handle, BLE_UUID *srv_uuid, BLE_UUID *char_uuid);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BLE_GATT_H */
