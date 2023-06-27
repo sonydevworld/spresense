@@ -39,6 +39,7 @@
 
 #include <nuttx/config.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <arch/chip/gnss.h>
 #include <gpsutils/cxd56_gnss_nmea.h>
