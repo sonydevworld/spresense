@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <bluetooth/bt_common.h>
 #include <bluetooth/ble_gatt.h>
+#include <bluetooth/ble_util.h>
 #include <bluetooth/hal/bt_if.h>
 #include <assert.h>
 
@@ -50,8 +51,6 @@
  ****************************************************************************/
 
 
-#define BLE_UUID_SDS_SERVICE_IN  0x3802
-#define BLE_UUID_SDS_CHAR_IN     0x4a02
 #define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
 
 /****************************************************************************
@@ -161,16 +160,6 @@ static BLE_UUID g_target_char_uuid;
  * Private Functions
  ****************************************************************************/
 
-static void ble_state_add_bt_addr(struct ble_state_s *state,
-                                  BT_ADDR *addr,
-                                  uint8_t addr_type)
-{
-  ASSERT(state);
-
-  memcpy(&state->bt_target_addr, addr, sizeof(state->bt_target_addr));
-  state->bt_target_addr_type = addr_type;
-}
-
 static void on_le_connect_status_change(struct ble_state_s *ble_state,
                                       bool connected)
 {
@@ -178,7 +167,8 @@ static void on_le_connect_status_change(struct ble_state_s *ble_state,
 
   /* If receive connected status data, this function will call. */
 
-  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, status:%s\n",
+  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, "
+         "status:%s\n",
           addr.address[5], addr.address[4], addr.address[3],
           addr.address[2], addr.address[1], addr.address[0],
           connected ? "Connected" : "Disconnected");
@@ -195,40 +185,45 @@ static void on_connected_device_nameresp(const char *name)
 
 static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
 {
-  const char target_device_name[] = "SONY-PERIPHERAL";
   struct ble_state_s state = {0};
   int ret = BT_SUCCESS;
-  struct bt_eir_s eir;
-  uint8_t addr_type;
+  char devname[BT_EIR_LEN];
 
+  devname[0] = '\0';
   printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
-          addr.address[5], addr.address[4], addr.address[3], addr.address[2],
-          addr.address[1], addr.address[0]);
+         addr.address[5], addr.address[4], addr.address[3],
+         addr.address[2], addr.address[1], addr.address[0]);
 
-  ret = ble_parse_advertising_data(BLE_AD_TYPE_ADDRESS_TYPE,
-                                   data, len, &eir);
-  if (ret != BT_SUCCESS)
+  /* If peer device has the device name, print it. */
+
+  if (bleutil_get_devicename(data, len, devname))
     {
-      printf("This advertising data do not have address type.\n");
-      return;
+      printf("[BLE] Scan device name: %s\n", devname);
     }
 
-  addr_type = eir.data[0];
-
-  ret = ble_parse_advertising_data(BLE_AD_TYPE_COMPLETE_LOCAL_NAME,
-                                   data, len, &eir);
-  if (ret != BT_SUCCESS)
+  if (g_target)
     {
-      printf("This advertising data do not have device name.\n");
-      return;
+      /* If target UUID is specified, display only peripheral devices
+       * that transmit advertising with target UUID and
+       * connect to the device with target UUID.
+       */
+
+      if (bleutil_find_srvc_uuid(&g_target_srv_uuid, data, len) == 0)
+        {
+          printf("Service UUID is not matched\n");
+          return;
+        }
     }
-
-  printf("[BLE] Scan device name: %s\n", eir.data);
-
-  if (0 != strcmp((char *)eir.data, target_device_name))
+  else
     {
-      printf("%s [BLE_GATT] BLE target_device_name %s ignored.\n", __func__, eir.data);
-      goto bye;
+      const char target_device_name[] = "SONY-PERIPHERAL";
+
+      if (strcmp((char *)devname, target_device_name) != 0)
+        {
+          printf("%s [BLE] DevName is not matched: %s expect: %s\n",
+                 __func__, devname, target_device_name);
+          goto bye;
+        }
     }
 
   ret = ble_cancel_scan();
@@ -238,7 +233,7 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
       goto bye;
     }
 
-  ble_state_add_bt_addr(&state, &addr, addr_type);
+  bleutil_add_btaddr(&state, &addr, bleutil_get_addrtype(data, len));
 
   ret = ble_connect(&state);
   if (ret != BT_SUCCESS)
@@ -346,19 +341,18 @@ static int on_loadbond(int num, struct ble_bondinfo_s *bond)
       ret = fread(&bond[i], 1, sizeof(struct ble_bondinfo_s), fp);
       if (ret != sizeof(struct ble_bondinfo_s))
         {
-          printf("Error: could not load all data due to %s read error.\n",
-                 BONDINFO_FILENAME);
-          printf("The number of loaded device is %d\n", i);
+          printf("Error: could not load all data due to %s read error.\n"
+                 "The number of loaded device is %d\n", BONDINFO_FILENAME, i);
           g_ble_bonded_device_num = i;
           break;
         }
 
       if (bond[i].cccd_num > 1)
         {
-          printf("Error: could not load all data due to invalid data.\n");
-          printf("cccd_num does not exceed the number of characteristics\n");
-          printf("that is set by this application.\n");
-          printf("The number of loaded device is %d\n", i);
+          printf("Error: could not load all data due to invalid data.\n"
+                 "       cccd_num does not exceed the number of characteristics\n"
+                 "       that is set by this application.\n"
+                 "       The number of loaded device is %d\n", i);
 
           g_ble_bonded_device_num = i;
           break;
@@ -371,8 +365,8 @@ static int on_loadbond(int num, struct ble_bondinfo_s *bond)
 
       if (g_cccd[i] == NULL)
         {
-          printf("Error: could not load all data due to malloc error.");
-          printf("The number of loaded device is %d\n", i);
+          printf("Error: could not load all data due to malloc error.\n"
+                 "       The number of loaded device is %d\n", i);
 
           g_ble_bonded_device_num = i;
           break;
@@ -382,9 +376,9 @@ static int on_loadbond(int num, struct ble_bondinfo_s *bond)
       ret = fread(bond[i].cccd, 1, sz, fp);
       if (ret != sz)
         {
-          printf("Error: could not load all data due to %s read error.\n",
-                 BONDINFO_FILENAME);
-          printf("The number of loaded device is %d\n", i);
+          printf("Error: could not load all data due to %s read error.\n"
+                 "       The number of loaded device is %d\n",
+                 BONDINFO_FILENAME, i);
           g_ble_bonded_device_num = i;
           break;
         }
@@ -461,35 +455,6 @@ static void print_descriptor_handle(const char *name, uint16_t handle)
   printf("      %s  handle : 0x%04x\n", name, handle);
 }
 
-static void print_uuid(char *prefix, BLE_UUID *uuid)
-{
-  int i;
-
-  printf("%s", prefix);
-
-  if (uuid->type == BLE_UUID_TYPE_UUID128)
-    {
-      /* 128bit : VVVVVVVV-WWWW-XXXX-YYYY-ZZZZZZZZZZZZ */
-
-      for (i = 0; i < 16; i++)
-        {
-          printf("%02x", uuid->value.uuid128.uuid128[15 - i]);
-          if ((i == 3) || (i == 5) || (i == 7) || (i == 9))
-            {
-              printf("-");
-            }
-        }
-    }
-  else
-    {
-      /* 16bit */
-
-      printf("0x%04x", uuid->value.alias.uuidAlias);
-    }
-
-  printf("\n");
-}
-
 static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 {
   int i;
@@ -497,6 +462,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
   struct ble_gattc_db_discovery_s *db;
   struct ble_gattc_db_disc_srv_s  *srv;
   struct ble_gattc_db_disc_char_s *ch;
+  char   uuid[BLE_UUID_128BIT_STRING_BUFSIZE];
 
   db = &db_disc->params.db_discovery;
   srv = &db->services[0];
@@ -505,7 +471,8 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
     {
       printf("=== SRV[%d] ===\n", i);
 
-      print_uuid("   uuid : ", &srv->srv_uuid);
+      bleutil_convert_uuid2str(&srv->srv_uuid, uuid, BLE_UUID_128BIT_STRING_BUFSIZE);
+      printf("   uuid : %s\n", uuid);
 
       ch = &srv->characteristics[0];
 
@@ -514,7 +481,10 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
           printf("   === CHR[%d] ===\n", j);
           printf("      decl  handle : 0x%04x\n", ch->characteristic.char_declhandle);
           printf("      value handle : 0x%04x\n", ch->characteristic.char_valhandle);
-          print_uuid("      uuid         : ", &ch->characteristic.char_valuuid);
+          bleutil_convert_uuid2str(&ch->characteristic.char_valuuid,
+                                   uuid,
+                                   BLE_UUID_128BIT_STRING_BUFSIZE);
+          printf("      uuid         : %s\n", uuid);
 
           print_descriptor_handle("cccd", ch->cccd_handle);
           print_descriptor_handle("cepd", ch->cepd_handle);
@@ -538,6 +508,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
         {
           ble_continue_db_discovery(db_disc->state.end_handle + 1,
                                     s_ble_state->ble_connect_handle);
+          return;
         }
     }
 
@@ -569,65 +540,23 @@ static void on_descriptor_read(uint16_t conn_handle,
   printf("\n");
 }
 
-static int convert_str2uuid(char *str, BLE_UUID *uuid)
-{
-  int i;
-  int j;
-  char hex[3] = {0};
-
-  if (strlen(str) == 4)  /* 16bit UUID */
-    {
-      uuid->type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
-      uuid->value.alias.uuidAlias = strtol(str, NULL, 16);
-    }
-  else if (strlen(str) == 36)   /* 128bit UUID */
-    {
-      /* string format : VVVVVVVV-WWWW-XXXX-YYYY-ZZZZZZZZZZZZ */
-
-      if ((str[8] != '-')  || (str[13] != '-') ||
-          (str[18] != '-') || (str[23] != '-'))
-        {
-          return ERROR;
-        }
-
-      uuid->type = BLE_UUID_TYPE_UUID128;
-
-      for (i = 0, j = 35; i < 16; i++, j = j - 2)
-        {
-          if (str[j] == '-')
-            {
-              j--;
-            }
-
-          hex[0] = str[j - 1];
-          hex[1] = str[j];
-
-          uuid->value.uuid128.uuid128[i] = strtol(hex, NULL, 16);
-        }
-    }
-  else
-    {
-      return ERROR;
-    }
-
-  return OK;
-}
-
 static int parse_argument(int argc, FAR char *argv[])
 {
   int ret;
 
   if (argc == 3)
     {
-      ret = convert_str2uuid(argv[1], &g_target_srv_uuid);
-      if (ret != OK)
+      ret = bleutil_convert_str2uuid(argv[1], &g_target_srv_uuid);
+      if (ret != BT_SUCCESS)
         {
+          printf("Invalid service UUID.\n");
           return ret;
         }
 
-      ret = convert_str2uuid(argv[2], &g_target_char_uuid);
-      if (ret != OK)
+      ret = bleutil_convert_str2uuid(argv[2], &g_target_char_uuid);
+      if (ret != BT_SUCCESS)
         {
+          printf("Invalid characteristic UUID.\n");
           return ret;
         }
 
