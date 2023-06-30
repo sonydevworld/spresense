@@ -502,6 +502,12 @@ int BLE_CommonFinalizeStack(void)
     {
       ret = -EPERM;
     }
+
+  if (BSO_Finalize(NULL))
+    {
+      ret = -ENXIO;
+    }
+
   commMem.stackInited = false;
   return ret;
 }
@@ -3202,16 +3208,7 @@ static int nrf52_bt_init(void)
 
 static int nrf52_bt_finalize(void)
 {
-  int ret = BT_SUCCESS;
-
-  ret = BSO_Finalize(NULL);
-  if (ret)
-    {
-      ret = -ENXIO;
-      BLE_PRT("BSO_Finalize failed\n");
-    }
-
-  return ret;
+  return BT_SUCCESS;
 }
 
 /****************************************************************************
