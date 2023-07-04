@@ -88,22 +88,104 @@ audiolite_component::audiolite_component(int inputnum, int outputnum,
       _op = mossfw_callback_op_create_attr(audiolite_component::operate_cb,
                             (unsigned long)this, is_async, prio, stack_sz);
 #endif
+      if (_op == NULL)
+        {
+          printf("[AudioLite] Fatal Error! No memory operator\n");
+          _innum = 0;
+          _outnum = 0;
+          return;
+        }
+
       set_operatorname("al_comp_op");
 
       _ins = (audiolite_inputnode **)malloc(sizeof(audiolite_inputnode *) * inputnum);
-      for (int i = 0; i < inputnum; i++)
+      if (_ins)
         {
-          _ins[i] = new audiolite_inputnode(this, depth);
-          _ins[i]->setup_operation(_op);
+          for (int i = 0; i < inputnum; i++)
+            {
+              _ins[i] = new audiolite_inputnode(this, depth);
+              if (_ins[i])
+                {
+                  _ins[i]->setup_operation(_op);
+                }
+              else
+                {
+                  printf("[AudioLite] Fatal Error! No memory innode\n");
+                  for (int j = i - 1; j >= 0; j--)
+                    {
+                      delete _ins[j];
+                    }
+
+                  free(_ins);
+                  _ins = NULL;
+                  _innum = 0;
+                  _outnum = 0;
+                  return;
+                }
+            }
+        }
+      else
+        {
+          printf("[AudioLite] Fatal Error! No memory inputnode array\n");
+          _innum = 0;
+          _outnum = 0;
+          return;
         }
     }
 
   if (outputnum > 0)
     {
       _outs = (audiolite_outputnode **)malloc(sizeof(audiolite_outputnode *) * outputnum);
-      for (int i = 0; i < outputnum; i++)
+      if (_outs)
         {
-          _outs[i] = new audiolite_outputnode(this);
+          for (int i = 0; i < outputnum; i++)
+            {
+              _outs[i] = new audiolite_outputnode(this);
+              if (_outs[i] == NULL)
+                {
+                  printf("[AudioLite] Fatal Error! No memory outnode\n");
+                  for (int j = i - 1; j >= 0; j--)
+                    {
+                      delete _outs[j];
+                    }
+
+                  free(_outs);
+                  _outs = NULL;
+
+                  if (_ins)
+                    {
+                      for (int k = 0; k < _innum; k++)
+                        {
+                          delete _ins[k];
+                        }
+
+                      free(_ins);
+                      _ins = NULL;
+                    }
+
+                  _innum = 0;
+                  _outnum = 0;
+                  return;
+                }
+            }
+        }
+      else
+        {
+          printf("[AudioLite] Fatal Error! No memory outputnode array\n");
+          if (_ins)
+            {
+              for (int i = 0; i < _innum; i++)
+                {
+                  delete _ins[i];
+                }
+
+              free(_ins);
+              _ins = NULL;
+            }
+
+          _innum = 0;
+          _outnum = 0;
+          return;
         }
     }
 }
