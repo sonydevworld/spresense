@@ -230,8 +230,16 @@ struct bt_eir_s
 {
   uint8_t len;
   uint8_t type;
-  uint8_t data[BT_EIR_LEN]
+  uint8_t data[BT_EIR_LEN];
 };
+
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
 
 /****************************************************************************
  * Public Function Prototypes
@@ -574,5 +582,10 @@ int ble_parse_advertising_data(uint8_t target,
                                uint8_t *adv_data,
                                uint8_t adv_len,
                                struct bt_eir_s *eir);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BT_COMMON_H */
