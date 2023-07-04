@@ -578,7 +578,7 @@ int ble_pairing(uint16_t handle);
  * @param[in] eir: parse result
  */
 
-int ble_parse_advertising_data(uint8_t target,
+int ble_parse_advertising_data(BLE_AD_TYPE target,
                                uint8_t *adv_data,
                                uint8_t adv_len,
                                struct bt_eir_s *eir);
