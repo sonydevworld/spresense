@@ -66,6 +66,52 @@
 #define BLE_LTK_LEN  (16)
 #define BLE_RAND_LEN (8)
 
+/** BLE status code */
+
+/** Success */
+
+#define BLE_STATUS_CODE_SUCCESS                               0x00
+
+/** Memory Capacity Exceeded */
+
+#define BLE_STATUS_CODE_MEMORY_CAPACITY_EXCEEDED              0x07
+
+/** Connection Timeout */
+
+#define BLE_STATUS_CODE_CONNECTION_TIMEOUT                    0x08
+
+/** Peer Device Terminated Connection */
+
+#define BLE_STATUS_CODE_PEER_TERMINATED_CONNECTION            0x13
+
+/** Peer Device Terminated Connection due to Low Resources */
+
+#define BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_LOW_RESOURCES 0x14
+
+/** Peer Device Terminated Connection due to Power Off */
+
+#define BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_POWER_OFF     0x15
+
+/** Connection Terminated By Own device */
+
+#define BLE_STATUS_CODE_OWN_TERMINATED_CONNECTION             0x16
+
+/** Unspecified Error */
+
+#define BLE_STATUS_CODE_UNSPECIFIED                           0x1F
+
+/** Controller Busy */
+
+#define BLE_STATUS_CODE_CONTROLLER_BUSY                       0x3A
+
+/** Unacceptable Connection Parameters */
+
+#define BLE_STATUS_CODE_CONN_INTERVAL_UNACCEPTABLE            0x3B
+
+/** Connection Failed to be Established / Synchronization Timeout */
+
+#define BLE_STATUS_CODE_CONN_FAILED_TO_BE_ESTABLISHED         0x3E
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -193,7 +239,8 @@ struct ble_common_ops_s
   /** Connection status change */
 
   void (*connect_status_changed)(struct ble_state_s *ble_state,
-                                 bool connected);
+                                 bool connected,
+                                 uint8_t status);
 
   /** Device name change */
 
