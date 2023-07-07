@@ -45,15 +45,8 @@
 #include <ble/ble_gatts.h>
 #include "ble.h"
 #include "ble_comm_internal.h"
+#include "ble_debug.h"
 #include <bluetooth/ble_gatt.h>
-
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#else
-#define BLE_PRT(...)
-#endif
 
 /******************************************************************************
  * externs
