@@ -854,6 +854,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
+  conn_stat_evt.status    = BLE_STATUS_CODE_SUCCESS;
   conn_stat_evt.handle = evt->handle;
   memcpy(conn_stat_evt.addr.address, evt->addr.addr, BT_ADDR_LEN);
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
@@ -864,6 +865,45 @@ static void on_connected(const BLE_EvtConnected* evt)
       (commMem.requested_mtu != BLE_GATT_ATT_MTU_DEFAULT))
     {
       sd_ble_gattc_exchange_mtu_request(evt->handle, commMem.requested_mtu);
+    }
+}
+
+static uint8_t convert_hcicode_to_mwvalue(uint8_t hcicode)
+{
+  switch (hcicode)
+    {
+      case BLE_HCI_STATUS_CODE_SUCCESS:
+        return BLE_STATUS_CODE_SUCCESS;
+
+      case BLE_HCI_MEMORY_CAPACITY_EXCEEDED:
+        return BLE_STATUS_CODE_MEMORY_CAPACITY_EXCEEDED;
+
+      case BLE_HCI_CONNECTION_TIMEOUT:
+        return BLE_STATUS_CODE_CONNECTION_TIMEOUT;
+
+      case BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION:
+        return BLE_STATUS_CODE_PEER_TERMINATED_CONNECTION;
+
+      case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES:
+        return BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_LOW_RESOURCES;
+
+      case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF:
+        return BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_POWER_OFF;
+
+      case BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION:
+        return BLE_STATUS_CODE_OWN_TERMINATED_CONNECTION;
+
+      case BLE_HCI_CONTROLLER_BUSY:
+        return BLE_STATUS_CODE_CONTROLLER_BUSY;
+
+      case BLE_HCI_CONN_INTERVAL_UNACCEPTABLE:
+        return BLE_STATUS_CODE_CONN_INTERVAL_UNACCEPTABLE;
+
+      case BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED:
+        return BLE_STATUS_CODE_CONN_FAILED_TO_BE_ESTABLISHED;
+
+      default:
+        return BLE_STATUS_CODE_UNSPECIFIED;
     }
 }
 
@@ -879,7 +919,7 @@ static void on_disconnected(const BLE_EvtDisconnected* evt)
 
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
   conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
-
+  conn_stat_evt.status   = convert_hcicode_to_mwvalue(evt->reason);
   ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
   if (g_ble_context.ble_role == BLE_ROLE_PERIPHERAL)
     {
@@ -1025,6 +1065,8 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
 static void on_timeout(BLE_EvtTimeout *timeout)
 {
   int ret = BLE_SUCCESS;
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   switch(timeout->timeoutSrc)
     {
       case BLE_GAP_TIMEOUT_ADVERTISING:
@@ -1050,6 +1092,13 @@ static void on_timeout(BLE_EvtTimeout *timeout)
         break;
       case BLE_GAP_TIMEOUT_CONN:
         LOG_OUT("[BLE][LOG]Timeout reason: Connection timeout!\n");
+        conn_stat_evt.connected = false;
+
+        conn_stat_evt.group_id = BLE_GROUP_COMMON;
+        conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
+        conn_stat_evt.status   = BLE_STATUS_CODE_CONNECTION_TIMEOUT;
+        ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
+
         break;
       default:
         LOG_OUT("[BLE][LOG]Timeout reason: Error\n");
