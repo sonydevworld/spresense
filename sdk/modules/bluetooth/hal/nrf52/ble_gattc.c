@@ -46,14 +46,7 @@
 #include "ble.h"
 #include "ble_err.h"
 #include "ble_comm_internal.h"
-
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#else
-#define BLE_PRT(...)
-#endif
+#include "ble_debug.h"
 
 /******************************************************************************
  * externs
@@ -291,12 +284,24 @@ static int nrf52_ble_notify(struct ble_gatt_char_s *ble_gatt_char, uint16_t hand
   int ret = BT_SUCCESS;
   BLE_GattsHandleValueNfyIndParams param = {0};
   int32_t size = (int32_t) ble_gatt_char->value.length;
+  int i;
 
   if (BLE_MAX_CHAR_SIZE >= size)
     {
       BLE_PRT("size=%ld\n",size);
       BLE_PRT("ble_gatt_char->handle=%d\n", ble_gatt_char->handle);
-      BLE_PRT("ble_gatt_char->value.data=%.*s\n", size, ble_gatt_char->value.data);
+      BLE_PRT("ble_gatt_char->value.data:");
+      for (i = 0; i < size; i++)
+        {
+          if (i % 16 == 0)
+            {
+              BLE_PRT("\n");
+            }
+
+          BLE_PRT("%02x ", ble_gatt_char->value.data[i]);
+        }
+
+      BLE_PRT("\n");
       param.type = BLE_GATT_NOTIFICATION;
       param.attrHandle = ble_gatt_char->handle;
       param.attrValData = ble_gatt_char->value.data;
