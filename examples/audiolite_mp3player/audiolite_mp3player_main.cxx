@@ -188,6 +188,8 @@ app_error:
 
   /* Clean up */
 
+  mp3->unbindall();
+
   printf("Delete instances\n");
 
   delete fstream;

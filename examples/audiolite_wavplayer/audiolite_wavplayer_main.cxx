@@ -183,6 +183,7 @@ app_error:
 
   /* Clean up */
 
+  wavdec->unbindall();
   printf("Delete instances\n");
 
   delete fstream;

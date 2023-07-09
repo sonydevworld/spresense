@@ -87,14 +87,7 @@ class my_interceptor : public audiolite_component
 
           /* Display top 4 samples on both L and R */
 
-          printf("DL %d : %d\n", samples, data[(samples - 4) * 2]);
-          printf("DL %d : %d\n", samples, data[(samples - 3) * 2]);
-          printf("DL %d : %d\n", samples, data[(samples - 2) * 2]);
-          printf("DL %d : %d\n", samples, data[(samples - 1) * 2]);
-          printf("DR %d : %d\n", samples, data[(samples - 4) * 2 + 1]);
-          printf("DR %d : %d\n", samples, data[(samples - 3) * 2 + 1]);
-          printf("DR %d : %d\n", samples, data[(samples - 2) * 2 + 1]);
-          printf("DR %d : %d\n", samples, data[(samples - 1) * 2 + 1]);
+          printf("DL %d : %6d %6d\n", samples, data[0], data[1]);
 
           /* Pass the data to later block. */
 
@@ -163,10 +156,10 @@ int main(int argc, FAR char *argv[])
   audiolite_set_evtlistener(&lsn);
 
   /* Setup memory pool to receive audio data from the Input device
-   * as 4096bytes x 16blocks.
+   * as 4096bytes x 32blocks.
    */
 
-  mempool->create_instance(4096, 16);
+  mempool->create_instance(4096, 32);
 
   /* Setup WAV Encoder */
 
@@ -221,6 +214,9 @@ int main(int argc, FAR char *argv[])
 app_error:
 
   /* Clean up */
+
+  aindev->unbindall();
+  intercept->unbindall();
 
   printf("Delete instances\n");
 
