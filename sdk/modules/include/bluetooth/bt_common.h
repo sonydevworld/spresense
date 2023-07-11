@@ -70,47 +70,47 @@
 
 /** Success */
 
-#define BLE_STATUS_CODE_SUCCESS                               0x00
+#define BLESTAT_SUCCESS           0x00
 
 /** Memory Capacity Exceeded */
 
-#define BLE_STATUS_CODE_MEMORY_CAPACITY_EXCEEDED              0x07
+#define BLESTAT_MEMCAP_EXCD       0x07
 
 /** Connection Timeout */
 
-#define BLE_STATUS_CODE_CONNECTION_TIMEOUT                    0x08
+#define BLESTAT_CONNECT_TIMEOUT   0x08
 
 /** Peer Device Terminated Connection */
 
-#define BLE_STATUS_CODE_PEER_TERMINATED_CONNECTION            0x13
+#define BLESTAT_PEER_TERMINATED   0x13
 
 /** Peer Device Terminated Connection due to Low Resources */
 
-#define BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_LOW_RESOURCES 0x14
+#define BLESTAT_PEER_TERM_LOWRES  0x14
 
 /** Peer Device Terminated Connection due to Power Off */
 
-#define BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_POWER_OFF     0x15
+#define BLESTAT_PEER_TERM_POFF    0x15
 
 /** Connection Terminated By Own device */
 
-#define BLE_STATUS_CODE_OWN_TERMINATED_CONNECTION             0x16
+#define BLESTAT_TERMINATED        0x16
 
 /** Unspecified Error */
 
-#define BLE_STATUS_CODE_UNSPECIFIED                           0x1F
+#define BLESTAT_UNSPEC_ERR        0x1F
 
 /** Controller Busy */
 
-#define BLE_STATUS_CODE_CONTROLLER_BUSY                       0x3A
+#define BLESTAT_DEVICE_BUSY       0x3A
 
 /** Unacceptable Connection Parameters */
 
-#define BLE_STATUS_CODE_CONN_INTERVAL_UNACCEPTABLE            0x3B
+#define BLESTAT_PARAM_REJECTED    0x3B
 
 /** Connection Failed to be Established / Synchronization Timeout */
 
-#define BLE_STATUS_CODE_CONN_FAILED_TO_BE_ESTABLISHED         0x3E
+#define BLESTAT_CONNECT_FAILED    0x3E
 
 /****************************************************************************
  * Public Types

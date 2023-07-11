@@ -132,10 +132,10 @@ int bleutil_get_devicename(uint8_t *data, uint8_t len, char *devname);
  *       len     [in]  : Advertising data length in bytes
  *
  *       Return : BLE address type. One of below
- *                   BLE_ADDR_TYPE_PUBLIC
- *                   BLE_ADDR_TYPE_RANDOM_STATIC
- *                   BLE_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE
- *                   BLE_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE
+ *                   BLE_ADDRTYPE_PUBLIC
+ *                   BLE_ADDRTYPE_RAND_STATIC
+ *                   BLE_ADDRTYPE_RAND_PRIV_RESOLVABLE
+ *                   BLE_ADDRTYPE_RAND_PRIV_NONRESOLVABLE
  */
 
 BLE_ADDRESS_TYPE bleutil_get_addrtype(uint8_t *data, uint8_t len);

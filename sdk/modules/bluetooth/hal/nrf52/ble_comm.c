@@ -841,7 +841,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
-  conn_stat_evt.status    = BLE_STATUS_CODE_SUCCESS;
+  conn_stat_evt.status    = BLESTAT_SUCCESS;
   conn_stat_evt.handle = evt->handle;
   memcpy(conn_stat_evt.addr.address, evt->addr.addr, BT_ADDR_LEN);
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
@@ -860,37 +860,37 @@ static uint8_t convert_hcicode_to_mwvalue(uint8_t hcicode)
   switch (hcicode)
     {
       case BLE_HCI_STATUS_CODE_SUCCESS:
-        return BLE_STATUS_CODE_SUCCESS;
+        return BLESTAT_SUCCESS;
 
       case BLE_HCI_MEMORY_CAPACITY_EXCEEDED:
-        return BLE_STATUS_CODE_MEMORY_CAPACITY_EXCEEDED;
+        return BLESTAT_MEMCAP_EXCD;
 
       case BLE_HCI_CONNECTION_TIMEOUT:
-        return BLE_STATUS_CODE_CONNECTION_TIMEOUT;
+        return BLESTAT_CONNECT_TIMEOUT;
 
       case BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION:
-        return BLE_STATUS_CODE_PEER_TERMINATED_CONNECTION;
+        return BLESTAT_PEER_TERMINATED;
 
       case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES:
-        return BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_LOW_RESOURCES;
+        return BLESTAT_PEER_TERM_LOWRES;
 
       case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF:
-        return BLE_STATUS_CODE_PEER_TERMINATION_DUE_TO_POWER_OFF;
+        return BLESTAT_PEER_TERM_POFF;
 
       case BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION:
-        return BLE_STATUS_CODE_OWN_TERMINATED_CONNECTION;
+        return BLESTAT_TERMINATED;
 
       case BLE_HCI_CONTROLLER_BUSY:
-        return BLE_STATUS_CODE_CONTROLLER_BUSY;
+        return BLESTAT_DEVICE_BUSY;
 
       case BLE_HCI_CONN_INTERVAL_UNACCEPTABLE:
-        return BLE_STATUS_CODE_CONN_INTERVAL_UNACCEPTABLE;
+        return BLESTAT_PARAM_REJECTED;
 
       case BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED:
-        return BLE_STATUS_CODE_CONN_FAILED_TO_BE_ESTABLISHED;
+        return BLESTAT_CONNECT_FAILED;
 
       default:
-        return BLE_STATUS_CODE_UNSPECIFIED;
+        return BLESTAT_UNSPEC_ERR;
     }
 }
 
@@ -1083,7 +1083,7 @@ static void on_timeout(BLE_EvtTimeout *timeout)
 
         conn_stat_evt.group_id = BLE_GROUP_COMMON;
         conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
-        conn_stat_evt.status   = BLE_STATUS_CODE_CONNECTION_TIMEOUT;
+        conn_stat_evt.status   = BLESTAT_CONNECT_TIMEOUT;
         ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
 
         break;
