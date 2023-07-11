@@ -44,7 +44,7 @@ all: depend $(BIN)
 WORKER_DIR = $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
 WORKER_LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 LDLIBPATH += -L $(WORKER_DIR)
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 CSRCS = fm_synth.c fmsynth.c fmsynth_eg.c fmsynth_op.c alworker_comm.c
 CFLAGS += -DBUILD_TGT_ASMPWORKER
@@ -56,18 +56,11 @@ DELTGT_FILES = $(CSRCS:.c=.o)
 INCDIRS = $(APPDIR)/include
 
 CFLAGS += -O3
-ifeq ($(WINTOOL),y)
-CFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/asmp/worker)"
-CFLAGS += $(foreach d,$(INCDIRS), -I"$(shell cygpath -w $(d))")
-else
-CFLAGS += -I$(SDKDIR)/modules/asmp/worker
-CFLAGS += $(foreach d,$(INCDIRS), -I$(d))
-endif
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/modules/asmp/worker"}
+CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(APPDIR)/include"}
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
-
-LIBGCC = "$(shell "$(CC)" $(ARCHCPUFLAGS) -print-libgcc-file-name)"
 
 $(COBJS): %$(OBJEXT): %.c
 	@echo "CC: $<"
@@ -80,7 +73,7 @@ $(AOBJS): %$(OBJEXT): %.S
 $(BIN): $(COBJS) $(AOBJS) | $(WORKER_LIB) $(CMSIS_DSP_LIB)
 	@echo "LD: $@"
 	$(Q) $(LD) $(LDRAWELFFLAGS) -e main --gc-sections $(LDLIBPATH) -o $@ \
-		--start-group $(ARCHCRT0OBJ) $^ $(LDLIBS) $(LIBGCC) --end-group
+		--start-group $(ARCHCRT0OBJ) $^ $(LDLIBS) --end-group
 	$(Q) cp $(BIN) $(BIN).debug.elf
 	$(Q) $(STRIP) -d $(BIN)
 

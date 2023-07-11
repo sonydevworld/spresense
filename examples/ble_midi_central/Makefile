@@ -15,8 +15,6 @@ MAINSRC = ble_midi_central_main.c
 CFLAGS += -Iworker
 CXXFLAGS += -Iworker
 
-CSRCS += dummy.c
-
 include $(APPDIR)/Application.mk
 
 .PHONY: build_synthworker
@@ -24,7 +22,7 @@ include $(APPDIR)/Application.mk
 build_synthworker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
-dummy.c: build_synthworker
+$(OBJS): build_synthworker
 
 clean_synthworker:
 	@$(MAKE) -C worker TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
