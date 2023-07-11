@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_BLE_MIDI_CENTRAL),)
+CONFIGURED_APPS += ble_midi_central
+endif
