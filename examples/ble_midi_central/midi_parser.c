@@ -46,6 +46,7 @@
  * Included Files
  ****************************************************************************/
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -109,7 +110,6 @@
 /* #define DEBUG_MIDIPARSER */
 
 #ifdef DEBUG_MIDIPARSER
-#include <stdio.h>
 #define dbg_midiparser  printf
 #else
 #define dbg_midiparser(...)

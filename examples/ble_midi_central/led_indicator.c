@@ -86,6 +86,8 @@ static void *connection_wait_indicate(void *param)
       usleep(10 * 1000);
       counter++;
     }
+
+  return NULL;
 }
 
 void led_stop_waitconnection(void)
