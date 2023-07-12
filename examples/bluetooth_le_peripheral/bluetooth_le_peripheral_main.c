@@ -64,7 +64,7 @@
 /* Connection status change */
 
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
-                                     bool connected);
+                                     bool connected, uint8_t reason);
 
 /* Device name change */
 
@@ -175,16 +175,17 @@ static struct ble_cccd_s **g_cccd = NULL;
  ****************************************************************************/
 
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
-                                      bool connected)
+                                     bool connected, uint8_t reason)
 {
   BT_ADDR addr = ble_state->bt_target_addr;
 
   /* If receive connected status data, this function will call. */
 
-  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, status:%s\n",
-          addr.address[0], addr.address[1], addr.address[2],
-          addr.address[3], addr.address[4], addr.address[5],
-          connected ? "Connected" : "Disconnected");
+  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, "
+         "status: %s, reason: 0x%02x\n",
+          addr.address[5], addr.address[4], addr.address[3],
+          addr.address[2], addr.address[1], addr.address[0],
+          connected ? "Connected" : "Disconnected", reason);
 
   ble_conn_handle = ble_state->ble_connect_handle;
   ble_is_connected = connected;

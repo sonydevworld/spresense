@@ -109,6 +109,13 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define SLAVE_LATENCY                   0
 #define SUPERVISION_TIMEOUT             MSEC_TO_UNITS(4000, UNIT_10_MS)
 
+/* Connection timeout value. unit : 10msec.
+ * After this timeout value has elapsed since sd_ble_gap_connect() API is
+ * executed, the connection timeout event occurs.
+ */
+
+#define CONNECTION_TIMEOUT              1000
+
 /* Flash handle key name size */
 #define FLASH_KEY_NAME_SIZE      4
 #define FLASH_KEY_NAME_2         2
@@ -697,6 +704,17 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   if(addr == NULL) {
     return -EINVAL;
   }
+
+  /* The timeout of scan parameters is used as the connection timeout
+   * in BLE board.
+   * Because the timeout value is set to 'infinitely'(timeout does not occur)
+   * in scan start timing, connection timeout setting is also 'infinitely'
+   * without change.
+   * So, modify this timeout value to finite value to avoid that
+   * application wait connection infinitely.
+   */
+
+  gapMem.scanParams.timeout = CONNECTION_TIMEOUT;
 
   gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
   gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;

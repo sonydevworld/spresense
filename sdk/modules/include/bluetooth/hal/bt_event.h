@@ -421,6 +421,7 @@ struct ble_event_conn_stat_t
   uint16_t handle;  /**< Handle ID for BLE connection */
   BT_ADDR addr;     /**< Target address @ref BT_ADDR */
   bool connected;   /**< Connection status */
+  uint8_t status;   /**< Connection status change reason */
 };
 
 /**
