@@ -1,0 +1,25 @@
+
+config EXAMPLES_BLE_MIDI_CENTRAL
+	tristate "Bluetooth LE MIDI Central example"
+	default n
+	---help---
+		Enable the ble_midi_central app
+
+if EXAMPLES_BLE_MIDI_CENTRAL
+
+config EXAMPLES_BLE_MIDI_CENTRAL_PROGNAME
+	string "Program name"
+	default "ble_midi_central"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_BLE_MIDI_CENTRAL_PRIORITY
+	int "ble_midi_central task priority"
+	default 100
+
+config EXAMPLES_BLE_MIDI_CENTRAL_STACKSIZE
+	int "ble_midi_central stack size"
+	default 2048
+
+endif
