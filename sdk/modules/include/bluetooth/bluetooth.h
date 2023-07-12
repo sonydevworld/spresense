@@ -474,19 +474,19 @@ typedef enum
 {
   /** BLE public address */
 
-  BLE_ADDR_TYPE_PUBLIC = 0x00,
+  BLE_ADDRTYPE_PUBLIC = 0x00,
 
   /** BLE random static address */
 
-  BLE_ADDR_TYPE_RANDOM_STATIC,
+  BLE_ADDRTYPE_RAND_STATIC,
 
   /** BLE random private resolvable address */
 
-  BLE_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE,
+  BLE_ADDRTYPE_RAND_PRIV_RESOLVABLE,
 
   /** BLE random private non-resolvable address */
 
-  BLE_ADDR_TYPE_RANDOM_PRIVATE_NON_RESOLVABLE,
+  BLE_ADDRTYPE_RAND_PRIV_NONRESOLVABLE,
 } BLE_ADDRESS_TYPE;
 
 /****************************************************************************
