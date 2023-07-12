@@ -45,7 +45,7 @@ $(TGT_FILE): rcS.template
 
 context:: $(TGT_FILE)
 
-clean::
+distclean::
 	$(Q) rm -f $(TGT_FILE)
 
 include $(APPDIR)/Application.mk
