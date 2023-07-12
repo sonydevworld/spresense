@@ -42,6 +42,7 @@
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include "ble_comm_internal.h"
+#include "ble_debug.h"
 #include "ble_storage_operations.h"
 
 /******************************************************************************
@@ -123,14 +124,6 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define BLE_GAP_ADDR_LENGTH_4    4
 #define BLE_GAP_ADDR_LENGTH_5    5
 #define BLE_KEY_MASK             0x7F
-
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#else
-#define BLE_PRT(...)
-#endif
 
  /******************************************************************************
  * Structre define
@@ -496,8 +489,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   errCode = sd_ble_gap_sec_params_reply(connHandle, BLE_GAP_SEC_STATUS_SUCCESS, p_sec, &keysExchanged);
   ret = bleConvertErrorCode((uint32_t)errCode);
   memcpy(&gapMem.keySet, &keysExchanged, sizeof(ble_gap_sec_keyset_t));
-#ifdef BLE_DBGPRT_ENABLE
-#if 0
+
   // own
   BLE_PRT("ExchangePairing: own id_irk=0x");
   for (int i=0; i<16; i++) {
@@ -526,7 +518,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   } else {
     BLE_PRT("ExchangePairing: peer enc_info_ltk=%d\n", gapMem.wrapperBondInfo.peerEncKey.enc_info.ltk_len);
   }
-#endif
+
   // peer
   BLE_PRT("ExchangePairing: peer id_irk=0x");
   for (int i=0; i<16; i++) {
@@ -555,7 +547,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   } else {
     BLE_PRT("ExchangePairing: peer enc_info_ltk=%d\n", gapMem.wrapperBondInfo.peerEncKey.enc_info.ltk_len);
   }
-#endif
+
   return ret;
 }
 

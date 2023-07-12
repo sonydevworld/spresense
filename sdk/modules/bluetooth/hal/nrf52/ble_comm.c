@@ -48,6 +48,7 @@
 #include <ble/ble_gattc.h>
 #include "ble_storage_operations.h"
 #include "ble_comm_internal.h"
+#include "ble_debug.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include <arch/board/board.h>
@@ -64,17 +65,6 @@ extern void board_nrf52_reset(bool en);
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#define BLE_PRT2(...)
-#define BLE_ERR printf
-#else
-#define BLE_PRT(...)
-#define BLE_PRT2(...)
-#define BLE_ERR(...)
-#endif
 
 #define NRF52_SYS_ATTR_DATA_OFFSET_HANDLE (0)
 #define NRF52_SYS_ATTR_DATA_OFFSET_LEN    (2)
@@ -173,7 +163,6 @@ struct bt_common_context_s bt_common_context = {0};
 #endif
 
 #define WAIT_TIME (100*1000)
-#define LOG_OUT printf
 #define AUTH_KEY_SIZE   6
 
 static struct ble_hal_common_ops_s ble_hal_common_ops =
@@ -241,12 +230,10 @@ static void bleInitBondInfoKey(void)
   bleKey.info_key[5] = BSO_GenerateRegistryKey(BOND_INFO_6_KEY_NAME, 0);
   bleKey.info_key[6] = BSO_GenerateRegistryKey(BOND_INFO_7_KEY_NAME, 0);
   bleKey.info_key[7] = BSO_GenerateRegistryKey(BOND_INFO_8_KEY_NAME, 0);
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("bleInitBondInfoKey: enable_key 0x%lx\n", bleKey.enable_key);
   for (int i=0; i<BLE_SAVE_BOND_DEVICE_MAX_NUM; i++) {
     BLE_PRT("bleInitBondInfoKey: info_key[%d] 0x%lx\n", i, bleKey.info_key[i]);
   }
-#endif
 }
 
 static void set_EncKey_for_save_event(struct ble_idkey_s *apps,
@@ -1109,10 +1096,9 @@ static void on_timeout(BLE_EvtTimeout *timeout)
 static int input_passkey(uint8_t *key)
 {
   LOG_OUT("Please enter passkey:\n");
-  const char* name = "passkey_input";
   int len = 0;
 
-  LOG_OUT("%s> ", name);
+  LOG_OUT("passkey_input> ");
   fflush(stdout);
   len = readline((char*)key, AUTH_KEY_SIZE, stdin, stdout);
   if (len < 1)
@@ -1249,11 +1235,11 @@ void bleEvtDispatch(ble_evt_t *pBleNrfEvt)
 static
 void onAdvSetTerminate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
-#ifdef BLE_DBGPRT_ENABLE
+#ifdef CONFIG_BLUETOOTH_DEBUG_MSG
   ble_gap_evt_adv_set_terminated_t *set = &pBleNrfEvt->evt.gap_evt.params.adv_set_terminated;
+#endif
   BLE_PRT("onAdvSetTerminate reason=%d handle=%d num=%d\n",
     set->reason, set->adv_handle, set->num_completed_adv_events);
-#endif
   pBleNrfEvt->evt.gap_evt.params.timeout.src = BLE_GAP_TIMEOUT_ADVERTISING;
   onTimeout(pBleEvent, pBleNrfEvt);
 }
@@ -1299,13 +1285,13 @@ static
 void onDataLengthUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
   int ret = 0;
-#ifdef BLE_DBGPRT_ENABLE
+#ifdef CONFIG_BLUETOOTH_DEBUG_MSG
   ble_gap_data_length_params_t *req = &pBleNrfEvt->evt.gap_evt.params.data_length_update_request.peer_params;
+#endif
   BLE_PRT("onLenUpReq: max_tx=%d\n", req->max_tx_octets);
   BLE_PRT("onLenUpReq: max_rx=%d\n", req->max_rx_octets);
   BLE_PRT("onLenUpReq: tx_time=%d\n", req->max_tx_time_us);
   BLE_PRT("onLenUpReq: rx_time=%d\n", req->max_rx_time_us);
-#endif
   ret = sd_ble_gap_data_length_update(pBleNrfEvt->evt.gap_evt.conn_handle, NULL, NULL);
   if (ret)
     {
@@ -1347,7 +1333,7 @@ void onExchangeMtuResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   ble_gattc_evt_exchange_mtu_rsp_t *rsp;
 
   rsp = &pBleNrfEvt->evt.gattc_evt.params.exchange_mtu_rsp;
-  BLE_PRT("onMtuReq: mtu=%d\n", req->client_rx_mtu);
+  BLE_PRT("onMtuRsp: mtu=%d\n", rsp->server_rx_mtu);
   if (commMem.requested_mtu > rsp->server_rx_mtu)
     {
       commMem.client_rx_mtu = rsp->server_rx_mtu;
@@ -1453,7 +1439,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       commMem.connectData.role   = BLE_ROLE_CENTRAL;
     }
   commMem.gapMem->connParams = *(ble_gap_conn_params_t *)&connected->conn_params;
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("onConnect: handle=%d\n", commMem.connectData.handle);
   BLE_PRT("onConnect: role=%d\n", commMem.connectData.role);
   BLE_PRT("onConnect: type=%d\n", commMem.connectData.addr.type);
@@ -1466,7 +1451,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   BLE_PRT("onConnect: maxConnInterval=%d\n", commMem.gapMem->connParams.max_conn_interval);
   BLE_PRT("onConnect: slaveLatency=%d\n", commMem.gapMem->connParams.slave_latency);
   BLE_PRT("onConnect: connSupTimeout=%d\n", commMem.gapMem->connParams.conn_sup_timeout);
-#endif
   commMem.gapMem->wrapperBondInfo.connHandle = pBleNrfEvt->evt.gap_evt.conn_handle;
   commMem.gapMem->wrapperBondInfo.bondInfo.addrType = connected->peer_addr.addr_type;
   memcpy(commMem.gapMem->wrapperBondInfo.bondInfo.addr, connected->peer_addr.addr, BLE_GAP_ADDR_LENGTH);
@@ -1578,7 +1562,6 @@ void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtHeader = BLE_GAP_EVENT_AUTH_STATUS;
   ble_gap_evt_auth_status_t *authStatus = &pBleNrfEvt->evt.gap_evt.params.auth_status;
   commMem.authStatusData.handle = pBleNrfEvt->evt.gap_evt.conn_handle;
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("onAuthStatus: handle=%d\n", pBleNrfEvt->evt.gap_evt.conn_handle);
   BLE_PRT("onAuthStatus: auth_status=%d\n", authStatus->auth_status);
   BLE_PRT("onAuthStatus: error_src=%d\n", authStatus->error_src);
@@ -1664,7 +1647,7 @@ void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
     {
       BLE_PRT("onAuthStatus: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
-#endif
+
   //Auth status code.
   if ( authStatus->auth_status < BLE_GAP_SEC_STATUS_PDU_INVALID )
     {
@@ -1869,7 +1852,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   ble_gap_evt_sec_info_request_t *secinfo = &pBleNrfEvt->evt.gap_evt.params.sec_info_request;
   uint8_t *sys_attr_data = NULL;
   int index;
-#ifdef BLE_DBGPRT_ENABLE
+
   BLE_PRT("onSecInfoRequest: handle=%d\n", pBleNrfEvt->evt.gap_evt.conn_handle);
   BLE_PRT("onSecInfoRequest: addr_type=%d\n", secinfo->peer_addr.addr_type);
   BLE_PRT("onSecInfoRequest: peer_addr=0x");
@@ -1953,7 +1936,6 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
     {
       BLE_PRT("onSecInfoRequest: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
-#endif
 
   index = searchBondInfoIndex(&secinfo->master_id);
 
