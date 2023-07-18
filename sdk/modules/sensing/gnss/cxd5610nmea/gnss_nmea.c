@@ -149,11 +149,26 @@ static int nmea_set_time(char *str, const size_t maxlen,
 
 static void nmea_deg2nmea(double deg, int *d, double *m, int *sign)
 {
+  int min_integer;
+
   *sign = (deg < 0.0) ? -1 : 1;
   deg = fabs(deg);
 
   *d = (int)deg;
   *m = (deg - *d) * 60.0;
+
+  /* Round minute to the fifth place after the decimal point */
+
+  min_integer = (int)*m;
+  *m = *m - min_integer + (5 / 100000.0);
+  *m = (int)(*m * 10000.0) / 10000.0;
+  *m += min_integer;
+
+  if (*m >= 60.0)
+    {
+      *d += 1;
+      *m = 0.0;
+    }
 }
 
 static int nmea_set_position(char *str, const size_t maxlen,
@@ -175,7 +190,7 @@ static int nmea_set_position(char *str, const size_t maxlen,
   nmea_deg2nmea(rcv->latitude, &latd, &latm, &latsign);
   nmea_deg2nmea(rcv->longitude, &lond, &lonm, &lonsign);
 
-  return snprintf(str, maxlen, ",%d%06.4lf,%c,%d%06.4lf,%c",
+  return snprintf(str, maxlen, ",%02d%07.4lf,%c,%03d%07.4lf,%c",
                   latd, latm, (latsign > 0) ? 'N' : 'S',
                   lond, lonm, (lonsign > 0) ? 'E' : 'W');
 }
