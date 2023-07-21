@@ -120,6 +120,13 @@ typedef struct
 
 typedef struct
 {
+  ble_uuid_t srvUuid;
+  ble_uuid_t charUuid;
+} bleGattcDbTarget;
+
+typedef struct
+{
+  bleGattcDbTarget        target;
   uint8_t                 currCharInd;
   uint8_t                 currSrvInd;
   bool                    discoveryInProgress;

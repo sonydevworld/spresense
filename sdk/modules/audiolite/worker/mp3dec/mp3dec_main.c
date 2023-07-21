@@ -71,6 +71,7 @@ struct state_proc_s
 static int exec_endstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
 static int exec_initstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
 static int exec_readystate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
+static int exec_waitseek(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
 static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
 static int exec_fillupstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
 static int exec_fillremstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq);
@@ -87,6 +88,7 @@ static struct state_proc_s state_procs[] =
   [SPRMP3_STATE_END]          = {exec_endstate,     0},
   [SPRMP3_STATE_INIT]         = {exec_initstate,    0},
   [SPRMP3_STATE_READY]        = {exec_readystate,   0},
+  [SPRMP3_STATE_WAITSEEK]     = {exec_waitseek,     0},
   [SPRMP3_STATE_DECODE]       = {exec_decodestate,  1},
   [SPRMP3_STATE_FILLUP]       = {exec_fillupstate,  1},
   [SPRMP3_STATE_FILLUPREMAIN] = {exec_fillremstate, 1},
@@ -256,21 +258,45 @@ static int fill_tagsize(sprmp3_t *inst)
 
 /*** name: seek_size */
 
-static size_t seek_size(sprmp3_t *inst, int size)
+static int seek_size(sprmp3_t *inst, int size)
 {
-  size_t ret = 0;
-  sprmp3_fmemcont_t *mem =
-         (sprmp3_fmemcont_t *)sq_peek(&inst->fqueue.queued);
+  int ret = SPRMP3_STATE_WAITSEEK;
+  sprmp3_fmemqueue_t *queue = &inst->fqueue;
+  sprmp3_fmemcont_t *mem = (sprmp3_fmemcont_t *)sq_peek(&queue->queued);
 
   if (mem)
     {
+      /* The size is from top of the stream data */
+
       if (mem->size >= (size_t)size)
         {
           /* Just skip size bytes */
 
           inst->fqueue.copied_ofst = size;
-          ret = (size_t)size;
+
+          ret = SPRMP3_STATE_DECODE;
         }
+      else
+        {
+          /* Keep the remaining size of the data to skip,
+           * as minus value.
+           */
+
+          inst->fcache.usedsize = mem->size - size;
+
+          /* Release current buffer */
+
+          release_framemem(inst->id, queue);
+        }
+    }
+  else
+    {
+      /* Keep the remaining size of the data to skip,
+       * as minus value.
+       */
+
+      inst->fcache.usedsize = -size;
+      release_framemem(inst->id, queue);
     }
 
   return ret;
@@ -393,6 +419,7 @@ static int refill_framecache(sprmp3_t *inst)
 
 static int initialize_framecache(sprmp3_t *inst)
 {
+  int ret;
   size_t id3v2size;
 
   mp3dec_init(&inst->core);
@@ -404,19 +431,21 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (fill_tagsize(inst) == 0)
     {
-      return ERROR;
+#ifdef SPRMP3_DEBUG
+      sprmp3_dprintf("fill_tagsize() error\n");
+#endif
+      return SPRMP3_STATE_ERROR;
     }
 
   memset(&inst->frame_info, 0, sizeof(inst->frame_info));
 
-  if (inst->fcache.fillsize > MINIMP3_ID3_DETECT_SIZE)
+  if (inst->fcache.fillsize != MINIMP3_ID3_DETECT_SIZE)
     {
-      return ERROR;
-    }
-
-  if (MINIMP3_ID3_DETECT_SIZE != inst->fcache.fillsize)
-    {
-      return ERROR;
+#ifdef SPRMP3_DEBUG
+      sprmp3_dprintf("fillsize is not equal ID3 SIZE : %d\n",
+                     inst->fcache.fillsize);
+#endif
+      return SPRMP3_STATE_ERROR;
     }
 
   id3v2size = mp3dec_skip_id3v2(inst->fcache.addr,
@@ -424,48 +453,76 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (id3v2size)
     {
-      /* If tag header exists */
-
-      if (seek_size(inst, id3v2size) != id3v2size)
-        {
-          return ERROR;
-        }
-
       /* Avoid read data and fill again */
 
       inst->fcache.fillsize = 0;
+
+      /* If tag header exists */
+
+      ret = seek_size(inst, id3v2size);
+      if (ret != SPRMP3_STATE_DECODE)
+        {
+          return ret;
+        }
     }
 
   /* Fill empty space on No tag header case */
 
   refill_framecache(inst);
 
-  if (inst->fcache.eof)
-    {
-      /* If the stream is very short and it is the end */
-
-      mp3dec_skip_id3v1(&inst->fcache.addr[0],
-                        (size_t *)&inst->fcache.fillsize);
-    }
-
-  return OK;
+  return SPRMP3_STATE_DECODE;
 }
 
 /*** name: exec_readystate */
 
 static int exec_readystate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
 {
+  int ret;
   (void)outq;
 
-  if (initialize_framecache(inst) == OK)
+  ret = initialize_framecache(inst);
+
+  if (ret == SPRMP3_STATE_ERROR)
     {
-      return SPRMP3_STATE_DECODE;
+      send_errormsg(inst->id, AL_COMM_MSGCODEERR_TOOSHORT);
+    }
+
+  return ret;
+}
+
+/*** name: exec_waitseek */
+
+static int exec_waitseek(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
+{
+  int sz;
+  int next_state = SPRMP3_STATE_WAITSEEK;
+  sprmp3_fmemqueue_t *queue = &inst->fqueue;
+  sprmp3_fmemcont_t *mem = (sprmp3_fmemcont_t *)sq_peek(&queue->queued);
+
+  if (inst->fcache.usedsize < 0)
+    {
+      if (mem)
+        {
+          sz = -inst->fcache.usedsize;
+          if (mem->size >= (size_t)sz)
+            {
+              inst->fqueue.copied_ofst = sz;
+              inst->fcache.usedsize = 0;
+              next_state = refill_framecache(inst);
+            }
+          else
+            {
+              inst->fcache.usedsize = mem->size - sz;
+              release_framemem(inst->id, queue);
+            }
+        }
     }
   else
     {
-      send_errormsg(inst->id, AL_COMM_MSGCODEERR_TOOSHORT);
-      return SPRMP3_STATE_ERROR;
+      next_state = refill_framecache(inst);
     }
+
+  return next_state;
 }
 
 /*** name: mix_data */
@@ -790,8 +847,26 @@ static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
     }
   else if (!frame_size)
     {
-      send_errormsg(inst->id, AL_COMM_MSGCODEERR_ILLIGALFRAME);
-      return SPRMP3_STATE_ERROR;
+      if (inst->fcache.eof)
+        {
+          /* In case of no frame is found in the last data,
+           * End the decoding.
+           */
+
+          inst->fcache.usedsize = inst->fcache.fillsize;
+          inst->tgtcache.decsize = inst->tgtcache.remofst;
+          outq->done |= SPRMP3_OUTDONE(inst);
+          inst->omem_wofst = 0;
+#ifdef SPRMP3_DEBUG
+          sprmp3_dprintf("Force the decode finish.\n");
+#endif
+          return SPRMP3_STATE_ENDING;
+        }
+      else
+        {
+          send_errormsg(inst->id, AL_COMM_MSGCODEERR_ILLIGALFRAME);
+          return SPRMP3_STATE_ERROR;
+        }
     }
 
   /* Update frame information */

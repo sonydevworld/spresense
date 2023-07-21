@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/gpsutils/cxd56_gnss_nmea.h
  *
- *   Copyright 2018,2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2019, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,14 +65,28 @@ extern "C" {
 
 #define NMEA_SENTENCE_MAX_LEN  160
 
+/** NMEA sentence mask */
+
+#define NMEA_GGA_ON     0x00000001 /**< GPGGA sentence mask */
+#define NMEA_GLL_ON     0x00000002 /**< GPGLL sentence mask */
+#define NMEA_GSA_ON     0x00000004 /**< GPGSA sentence mask */
+#define NMEA_GSV_ON     0x00000008 /**< GPGSV sentence mask */
+#define NMEA_GNS_ON     0x00000010 /**< GPGNS sentence mask */
+#define NMEA_RMC_ON     0x00000020 /**< GPRMC sentence mask */
+#define NMEA_VTG_ON     0x00000040 /**< GPVTG sentence mask */
+#define NMEA_ZDA_ON     0x00000080 /**< GPZDA sentence mask */
+#define NMEA_SARRLM_ON  0x00000800 /**< PSRLM sentence mask */
+#define NMEA_QZQSM_ON   0x00004000 /**< QZQSM sentence mask */
+#define NMEA_GST_ON     0x00100000 /**< GPGST sentence mask */
+
 /** Structure of callback functions to manage buffer and output NMEA sentences */
 
 typedef struct
 {
-  FAR char *(FAR *bufReq)(uint16_t);      /**< Buffer request callback func */
-  void(FAR *bufFree)(FAR char *);         /**< Buffer free callback func */
-  int(FAR *out)(FAR char *);              /**< Output callback func */
-  int(FAR *outBin)(FAR char *, uint32_t); /**< Output callback func for binary */
+  char *(*bufReq)(uint16_t);        /**< Buffer request callback func */
+  void (*bufFree)(char *);          /**< Buffer free callback func */
+  int (*out)(char *);               /**< Output callback func */
+  int (*outBin)(char *, uint32_t);  /**< Output callback func for binary */
 } NMEA_OUTPUT_CB;
 
 /** Spectrum OUTPUT data */
@@ -102,7 +116,7 @@ void NMEA_InitMask(void);
  * @retval <0 : fail
  */
 
-int NMEA_RegistOutputFunc(FAR const NMEA_OUTPUT_CB *func);
+int NMEA_RegistOutputFunc(const NMEA_OUTPUT_CB *func);
 
 /**
  * Set NMEA sentence mask
@@ -147,7 +161,7 @@ uint32_t NMEA_GetMask(void);
  * @retval <0 : fail
  */
 
-uint16_t NMEA_Output(FAR const struct cxd56_gnss_positiondata_s* pposdat);
+uint16_t NMEA_Output(const struct cxd56_gnss_positiondata_s* pposdat);
 
 /*
  * Output QZSS Satellite Report sentence for Disaster and Crisis Management(DC Report)
@@ -155,6 +169,7 @@ uint16_t NMEA_Output(FAR const struct cxd56_gnss_positiondata_s* pposdat);
  * @retval >0 : success, output total sentence size
  * @retval <0 : fail
  */
+
 uint16_t NMEA_DcReport_Output(const struct cxd56_gnss_dcreport_data_s* dcrdat);
 
 /*
@@ -173,7 +188,7 @@ uint16_t NMEA_GalSarRlm_Output(const struct cxd56_gnss_gal_sarrlm_s* dat);
  * @retval <0 : fail
  */
 
-uint16_t NMEA_OutputSpectrum(FAR NMEA_SPECTRUM_DATA *spectrumdat);
+uint16_t NMEA_OutputSpectrum(NMEA_SPECTRUM_DATA *spectrumdat);
 
 /*
  * Extract raw data from position data
@@ -183,8 +198,59 @@ uint16_t NMEA_OutputSpectrum(FAR NMEA_SPECTRUM_DATA *spectrumdat);
  * @retval <0 : fail
  */
 
-int NMEA_ExtractRawData(FAR const struct cxd56_gnss_positiondata_s* pposdat,
-                        FAR struct nmea_raw_s *rawdat);
+int NMEA_ExtractRawData(const struct cxd56_gnss_positiondata_s* pposdat,
+                        struct nmea_raw_s *rawdat);
+
+/**
+ * Initialize NMEA sentence mask for cxd5610 gnss
+ */
+
+void NMEA_InitMask2(void);
+
+/**
+ * Register output function for cxd5610 gnss
+ * @param[in] *func : function pointer
+ * @retval 0 : success
+ * @retval <0 : fail
+ */
+
+int NMEA_RegistOutputFunc2(const NMEA_OUTPUT_CB *func);
+
+/**
+ * Set NMEA sentence mask for cxd5610 gnss
+ * Give this function by ORing the bits in the table below corresponding to
+ * the sentence to be output.
+ * If set 0, stopping output.
+ * @param[in] mask : 32bit mask value
+ */
+
+void NMEA_SetMask2(uint32_t mask);
+
+/**
+ * Get NMEA sentence mask for cxd5610 gnss
+ * @retval NMEA sentence mask
+ */
+
+uint32_t NMEA_GetMask2(void);
+
+/**
+ * Output NMEA sentence for cxd5610 gnss
+ * @param[in] pposdat : Position data output from GNSS
+ * @retval >0 : success, output total sentence size
+ * @retval <0 : fail
+ */
+
+uint16_t NMEA_Output2(const struct cxd56_gnss_positiondata2_s* pposdat);
+
+/*
+ * Output QZSS Satellite Report sentence for Disaster and Crisis
+ * Management(DC Report) for cxd5610 gnss
+ * @param[in] dcrdat : QZSS DC report data
+ * @retval >0 : success, output total sentence size
+ * @retval <0 : fail
+ */
+
+uint16_t NMEA_DcReport_Output2(const struct cxd56_gnss_dcreport_data_s* dcrdat);
 
 /* @} gnss_nmea */
 /* @} gnss */

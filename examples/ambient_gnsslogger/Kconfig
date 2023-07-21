@@ -27,4 +27,9 @@ config EXAMPLES_AMBIENT_GNSSLOGGER_STACKSIZE
 	int "Ambient GNSS Logger stack size"
 	default DEFAULT_TASK_STACKSIZE
 
+config EXAMPLES_AMBIENT_GNSSLOGGER_GPS_DEVNAME
+	string "GNSS device name"
+	default "/dev/gps2" if CXD56_GNSS_ADDON
+	default "/dev/gps"
+
 endif

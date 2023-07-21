@@ -1,7 +1,7 @@
 ############################################################################
-# bluetooth_hfp_hf/Makefile
+# modules/sensing/gnss/cxd5610nmea/Makefile
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,17 +33,7 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
-include $(SDKDIR)/Make.defs
-
-# Bt_Hfp_Hf built-in application info
-
-APPNAME = bt_hfp_hf
-PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PROGNAME)
-PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF_STACKSIZE)
-MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_HFP_HF)
-
-MAINSRC = bluetooth_hfp_hf_main.c
-
-include $(APPDIR)/Application.mk
+-include $(SDKDIR)/modules/Make.defs
+MODNAME = cxd5610nmea
+CSRCS   = gnss_nmea.c
+include $(SDKDIR)/modules/Module.mk

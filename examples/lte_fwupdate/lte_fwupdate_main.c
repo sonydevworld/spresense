@@ -261,7 +261,7 @@ int main(int argc, FAR char *argv[])
   int injected_size;
   lte_version_t version;
   int img_size;
-  char user_resp[32];
+  char user_resp[32] = {0};
 
   printf("= Alt1250 modem FW update example =\n\n");
 

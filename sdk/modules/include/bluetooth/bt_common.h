@@ -50,16 +50,67 @@
 #include <stdint.h>
 #include <bluetooth/bluetooth.h>
 
-#define BT_EIR_LEN (29)
-
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#define BT_ADV_DATA_MAX_LEN  (255)
+#define BT_ADV_DATA_LEN_LEN  (1)
+#define BT_ADV_DATA_TYPE_LEN (1)
+#define BT_EIR_LEN  (BT_ADV_DATA_MAX_LEN \
+                   - BT_ADV_DATA_LEN_LEN \
+                   - BT_ADV_DATA_TYPE_LEN)
 
 #define BLE_IRK_LEN  (16)
 #define BLE_CSRK_LEN (16)
 #define BLE_LTK_LEN  (16)
 #define BLE_RAND_LEN (8)
+
+/** BLE status code */
+
+/** Success */
+
+#define BLESTAT_SUCCESS           0x00
+
+/** Memory Capacity Exceeded */
+
+#define BLESTAT_MEMCAP_EXCD       0x07
+
+/** Connection Timeout */
+
+#define BLESTAT_CONNECT_TIMEOUT   0x08
+
+/** Peer Device Terminated Connection */
+
+#define BLESTAT_PEER_TERMINATED   0x13
+
+/** Peer Device Terminated Connection due to Low Resources */
+
+#define BLESTAT_PEER_TERM_LOWRES  0x14
+
+/** Peer Device Terminated Connection due to Power Off */
+
+#define BLESTAT_PEER_TERM_POFF    0x15
+
+/** Connection Terminated By Own device */
+
+#define BLESTAT_TERMINATED        0x16
+
+/** Unspecified Error */
+
+#define BLESTAT_UNSPEC_ERR        0x1F
+
+/** Controller Busy */
+
+#define BLESTAT_DEVICE_BUSY       0x3A
+
+/** Unacceptable Connection Parameters */
+
+#define BLESTAT_PARAM_REJECTED    0x3B
+
+/** Connection Failed to be Established / Synchronization Timeout */
+
+#define BLESTAT_CONNECT_FAILED    0x3E
 
 /****************************************************************************
  * Public Types
@@ -114,6 +165,7 @@ struct ble_state_s
   BT_CONNECT_STATUS          ble_connection;              /**< Status of BLE connection @ref BT_CONNECT_STATUS */
   uint16_t                   ble_connect_handle;          /**< Handle ID for BLE connection */
   struct bt_common_state_s   *bt_common_state;            /**< BT base context @ref bt_common_state_s */
+  uint8_t                    bt_target_addr_type;         /**< BT target device address type */
   BT_ADDR                    bt_target_addr;              /**< BT target device address @ref BT_ADDR */
   char                       bt_target_name[BT_NAME_LEN]; /**< BT target device name */
 };
@@ -187,7 +239,8 @@ struct ble_common_ops_s
   /** Connection status change */
 
   void (*connect_status_changed)(struct ble_state_s *ble_state,
-                                 bool connected);
+                                 bool connected,
+                                 uint8_t status);
 
   /** Device name change */
 
@@ -224,8 +277,16 @@ struct bt_eir_s
 {
   uint8_t len;
   uint8_t type;
-  uint8_t data[BT_EIR_LEN]
+  uint8_t data[BT_EIR_LEN];
 };
+
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
 
 /****************************************************************************
  * Public Function Prototypes
@@ -564,9 +625,14 @@ int ble_pairing(uint16_t handle);
  * @param[in] eir: parse result
  */
 
-int ble_parse_advertising_data(uint8_t target,
+int ble_parse_advertising_data(BLE_AD_TYPE target,
                                uint8_t *adv_data,
                                uint8_t adv_len,
                                struct bt_eir_s *eir);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BT_COMMON_H */

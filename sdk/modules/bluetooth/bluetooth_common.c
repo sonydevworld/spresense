@@ -237,7 +237,9 @@ static int ble_event_connect_stat_change(struct ble_event_conn_stat_t *conn_stat
 
   if (ble_common_ops && ble_common_ops->connect_status_changed)
     {
-      ble_common_ops->connect_status_changed(&g_ble_state, conn_stat_evt->connected);
+      ble_common_ops->connect_status_changed(&g_ble_state,
+                                             conn_stat_evt->connected,
+                                             conn_stat_evt->status);
     }
   else
     {
@@ -1043,7 +1045,14 @@ int ble_connect(struct ble_state_s *ble_state)
 
   if (ble_hal_common_ops && ble_hal_common_ops->connect)
     {
-      ret = ble_hal_common_ops->connect(&ble_state->bt_target_addr);
+      ret = ble_hal_common_ops->connect(ble_state->bt_target_addr_type,
+                                        &ble_state->bt_target_addr);
+      if (ret == BT_SUCCESS)
+        {
+          /* Store target address for later possible timeout error notification. */
+
+          g_ble_state.bt_target_addr = ble_state->bt_target_addr;
+        }
     }
   else
     {
@@ -1374,22 +1383,47 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
   uint8_t *data;
   int ret = BT_FAIL;
 
+  ASSERT(adv_len > 0);
+
+  memset(eir, 0, sizeof(struct bt_eir_s));
+
+  if (target == BLE_AD_TYPE_ADDRESS_TYPE)
+    {
+      eir->len     = 1;
+      eir->type    = target;
+      eir->data[0] = adv[i];
+      return BT_SUCCESS;
+    }
+
+  i++;
+
   while (i < adv_len)
     {
-      len  = adv[i++];
+      /* For calculation of data length,
+       * decrease 1 byte that represents length of type.
+       */
+
+      len  = adv[i++] - 1;
       type = adv[i++];
       data = &adv[i];
+
+      if (len > BT_EIR_LEN)
+        {
+          /* Invalid advertising data(invalid length information) */
+
+          break;
+        }
 
       if (type == target)
         {
           eir->len  = len,
           eir->type = type,
-          memcpy(eir->data, data, len - 1); /* len include type and data */
+          memcpy(eir->data, data, len);
           ret = BT_SUCCESS;
           break;
         }
 
-      i += len - 1;
+      i += len;
     }
 
   return ret;

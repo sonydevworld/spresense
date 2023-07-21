@@ -42,6 +42,7 @@
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include "ble_comm_internal.h"
+#include "ble_debug.h"
 #include "ble_storage_operations.h"
 
 /******************************************************************************
@@ -65,13 +66,38 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define ADV_DEFAULT_TIMEOUT             180
 #endif
 
-#define SCAN_INTERVAL                   0x0200
-#define SCAN_WINDOW                     0x0020
-#if NRF_SD_BLE_API_VERSION > 5
-#define SCAN_TIMEOUT                    6000 // 10ms units
-#else
-#define SCAN_TIMEOUT                    60
-#endif
+/* Active scan setting.
+ *   1 means that execute active scan.
+ *   0 means that do not execute active scan.
+ */
+
+#define EXECUTE_ACTIVE_SCAN             1
+
+/* Extended advertising data reception setting.
+ *   1 means that enable extended advertising data reception.
+ *   0 means that disable extended advertising data reception.
+ */
+
+#define ENABLE_EXTENDED_ADV_RECV        1
+
+/* Scan interval setting. unit:625usec. */
+
+#define SCAN_INTERVAL                   512
+
+/* Scan reception window size setting. unit:625usec. SCAN_WINDOW < SCAN_INTERVAL.
+ * The smaller this value is, the higher the probability of missing
+ * advertising data or scan response data is.
+ */
+
+#define SCAN_WINDOW                     511
+
+/* Scan timeout setting. unit:10msec.
+ * BLE board stops scan automatically after SCAN_TIMEOUT time has elapsed.
+ * In this setting, BLE_GAP_SCAN_TIMEOUT_UNLIMITED means that scan does not stop
+ * until sd_ble_gap_scan_stop() execution.
+ */
+
+#define SCAN_TIMEOUT                    BLE_GAP_SCAN_TIMEOUT_UNLIMITED
 #define MIN_SCAN_INTERVAL               0x0004
 #define MAX_SCAN_INTERVAL               0x4000
 #define MIN_SCAN_WINDOW                 0x0004
@@ -84,6 +110,13 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define SLAVE_LATENCY                   0
 #define SUPERVISION_TIMEOUT             MSEC_TO_UNITS(4000, UNIT_10_MS)
 
+/* Connection timeout value. unit : 10msec.
+ * After this timeout value has elapsed since sd_ble_gap_connect() API is
+ * executed, the connection timeout event occurs.
+ */
+
+#define CONNECTION_TIMEOUT              1000
+
 /* Flash handle key name size */
 #define FLASH_KEY_NAME_SIZE      4
 #define FLASH_KEY_NAME_2         2
@@ -91,14 +124,6 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define BLE_GAP_ADDR_LENGTH_4    4
 #define BLE_GAP_ADDR_LENGTH_5    5
 #define BLE_KEY_MASK             0x7F
-
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#else
-#define BLE_PRT(...)
-#endif
 
  /******************************************************************************
  * Structre define
@@ -464,8 +489,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   errCode = sd_ble_gap_sec_params_reply(connHandle, BLE_GAP_SEC_STATUS_SUCCESS, p_sec, &keysExchanged);
   ret = bleConvertErrorCode((uint32_t)errCode);
   memcpy(&gapMem.keySet, &keysExchanged, sizeof(ble_gap_sec_keyset_t));
-#ifdef BLE_DBGPRT_ENABLE
-#if 0
+
   // own
   BLE_PRT("ExchangePairing: own id_irk=0x");
   for (int i=0; i<16; i++) {
@@ -494,7 +518,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   } else {
     BLE_PRT("ExchangePairing: peer enc_info_ltk=%d\n", gapMem.wrapperBondInfo.peerEncKey.enc_info.ltk_len);
   }
-#endif
+
   // peer
   BLE_PRT("ExchangePairing: peer id_irk=0x");
   for (int i=0; i<16; i++) {
@@ -523,7 +547,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   } else {
     BLE_PRT("ExchangePairing: peer enc_info_ltk=%d\n", gapMem.wrapperBondInfo.peerEncKey.enc_info.ltk_len);
   }
-#endif
+
   return ret;
 }
 
@@ -579,14 +603,14 @@ int BLE_GapStartScan(void)
       gapMem.scanParams.timeout > MAX_SCAN_TIMEOUT ||
       gapMem.scanParams.timeout < MIN_SCAN_TIMEOUT)) {
     // default
-    gapMem.scanParams.active       = 0;
+    gapMem.scanParams.active       = EXECUTE_ACTIVE_SCAN;
     gapMem.scanParams.interval     = SCAN_INTERVAL;
     gapMem.scanParams.window       = SCAN_WINDOW;
     gapMem.scanParams.timeout      = SCAN_TIMEOUT;
 #if NRF_SD_BLE_API_VERSION > 5
     gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
     gapMem.scanParams.scan_phys     = BLE_GAP_PHY_1MBPS;
-    gapMem.scanParams.extended      = 0;
+    gapMem.scanParams.extended      = ENABLE_EXTENDED_ADV_RECV;
     ble_gap_scan_tx_power           = 0;
 #endif
   }
@@ -672,6 +696,17 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   if(addr == NULL) {
     return -EINVAL;
   }
+
+  /* The timeout of scan parameters is used as the connection timeout
+   * in BLE board.
+   * Because the timeout value is set to 'infinitely'(timeout does not occur)
+   * in scan start timing, connection timeout setting is also 'infinitely'
+   * without change.
+   * So, modify this timeout value to finite value to avoid that
+   * application wait connection infinitely.
+   */
+
+  gapMem.scanParams.timeout = CONNECTION_TIMEOUT;
 
   gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
   gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;

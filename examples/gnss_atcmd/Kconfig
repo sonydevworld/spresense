@@ -7,7 +7,7 @@ config EXAMPLES_GNSS_ATCMD
 	tristate "GNSS CXD5603 @command emulator example"
 	default n
 	select LIBC_FLOATINGPOINT
-	depends on CXD56_GNSS
+	depends on CXD56_GNSS || CXD56_GNSS_ADDON
 	---help---
 		Enable GNSS CXD5603 @command emulator example
 
@@ -48,10 +48,12 @@ config EXAMPLES_GNSS_ATCMD_SUPPORT_DCREPORT
 config EXAMPLES_GNSS_ATCMD_SUPPORT_SARRLM
 	bool "Example supports GAL SAR/RLM output"
 	default y
+	depends on EXAMPLES_GNSS_ATCMD_ON_INTERNAL_GNSS
 
 config EXAMPLES_GNSS_ATCMD_SUPPORT_SPECRUM
 	bool "Example supports spectrum output"
 	default y
+	depends on EXAMPLES_GNSS_ATCMD_ON_INTERNAL_GNSS
 
 config EXAMPLES_GNSS_ATCMD_PRIORITY
 	int "GNSS task priority"
@@ -60,5 +62,23 @@ config EXAMPLES_GNSS_ATCMD_PRIORITY
 config EXAMPLES_GNSS_ATCMD_STACKSIZE
 	int "GNSS stack size"
 	default 2048
+
+choice
+	prompt "GNSS device"
+	default EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON if CXD56_GNSS_ADDON
+	default EXAMPLES_GNSS_ATCMD_ON_INTERNAL_GNSS
+	---help---
+		This choice specifies gsss device.
+
+config EXAMPLES_GNSS_ATCMD_ON_INTERNAL_GNSS
+	bool "Internal GNSS"
+	depends on CXD56_GNSS
+
+config EXAMPLES_GNSS_ATCMD_ON_GNSS_ADDON
+	bool "GNSS Add-on"
+	depends on CXD56_GNSS_ADDON
+	select GPSUTILS_CXD5610NMEA_LIB
+
+endchoice
 
 endif

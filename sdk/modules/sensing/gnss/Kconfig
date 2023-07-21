@@ -4,3 +4,4 @@
 #
 
 source "$APPSDIR/../modules/sensing/gnss/cxd56nmea/Kconfig"
+source "$APPSDIR/../modules/sensing/gnss/cxd5610nmea/Kconfig"

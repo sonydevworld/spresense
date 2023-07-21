@@ -3,7 +3,7 @@
 #
 #   Copyright (C) 2012, 2014 Gregory Nutt. All rights reserved.
 #   Author: Gregory Nutt <gnutt@nuttx.org>
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -45,20 +45,15 @@ endif
 
 LDLIBPATH +=  -L $(LIB_DIR)
 
-LDLIBS += -lasmpw
+LDLIBS += $(ASMPWORKER_LIB)
 
 BIN = hello
 
 CSRCS = $(BIN).c
 
 CELFFLAGS += -Og
-ifeq ($(WINTOOL),y)
-CELFFLAGS += -I"$(shell cygpath -w $(APPDIR))"
-CELFFLAGS += -I"$(shell cygpath -w $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)"
-else
-CELFFLAGS += -I$(APPDIR)
-CELFFLAGS += -I$(SDKDIR)/modules/asmp/worker
-endif
+CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
+CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -76,8 +71,8 @@ $(AOBJS): %$(OBJEXT): %.S
 	$(Q) $(CC) -c $(AFLAGS) $< -o $@
 
 $(BIN): $(COBJS) $(AOBJS)
-	@echo "LD: $<"
-	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@.debug $(ARCHCRT0OBJ) $^ $(LDLIBS)
+	@echo "LD: $@"
+	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@.debug $^ $(LDLIBS)
 	$(Q) $(STRIP) -d -o $@ $@.debug
 
 clean:

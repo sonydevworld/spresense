@@ -1,0 +1,30 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_GNSS_ADDON
+	tristate "GNSS Add-on example"
+	default n
+	depends on CXD56_GNSS_ADDON
+	---help---
+		Enable the GNSS Add-on application
+
+if EXAMPLES_GNSS_ADDON
+
+config EXAMPLES_GNSS_ADDON_PROGNAME
+	string "Program name"
+	default "gnss_addon"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_GNSS_ADDON_PRIORITY
+	int "GNSS Add-on task priority"
+	default 100
+
+config EXAMPLES_GNSS_ADDON_STACKSIZE
+	int "GNSS Add-on stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif

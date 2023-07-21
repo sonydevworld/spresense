@@ -52,6 +52,7 @@ CSRCS +=  bluetooth_spp.c
 endif
 ifeq ($(CONFIG_BLUETOOTH_LE_GATT),y)
 CSRCS +=  bluetooth_le_gatt.c
+CSRCS +=  bluetooth_le_util.c
 endif
 CSRCS +=  bluetooth_hal_init.c
 

@@ -38,6 +38,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#include <nuttx/config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
@@ -76,7 +77,6 @@ NRF_LOG_MODULE_REGISTER();
 #define SD_BLE_RESPONSE_TIMEOUT_FLAG 0x01
 #define SD_BLE_EVENT_FLAG 0x10
 #define SD_BLE_EVTTASK_NAME "nrf52_sdevt_task"
-#define SD_BLE_EVTTASK_STACKSIZE (2048)
 
 static pid_t g_rcv_tid;
 static int g_rcv_loop;
@@ -350,7 +350,7 @@ uint32_t sd_softdevice_enable(nrf_clock_lf_cfg_t const * p_clock_lf_cfg,
     sched_getparam(0, &param);
     g_rcv_tid = task_create(SD_BLE_EVTTASK_NAME,
                             param.sched_priority,
-                            SD_BLE_EVTTASK_STACKSIZE,
+                            CONFIG_EXTERNALS_NRF52_EVTTASK_STACKSIZE,
                             (main_t)ble_rcv_evt_task,
                             NULL);
     if (g_rcv_tid == ERROR)

@@ -46,14 +46,7 @@
 #include "ble.h"
 #include "ble_err.h"
 #include "ble_comm_internal.h"
-
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#else
-#define BLE_PRT(...)
-#endif
+#include "ble_debug.h"
 
 /******************************************************************************
  * externs
@@ -78,6 +71,9 @@ static int nrf52_ble_notify(struct ble_gatt_char_s *ble_gatt_char,
 static int nrf52_ble_start_db_discovery(uint16_t conn_handle);
 static int nrf52_ble_continue_db_discovery(uint16_t start_handle,
                                            uint16_t conn_handle);
+static int nrf52_ble_discover_uuid(uint16_t conn_handle,
+                                   BLE_UUID *srv_uuid,
+                                   BLE_UUID *char_uuid);
 static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
                                  uint16_t handle);
 static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
@@ -107,6 +103,7 @@ static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
   .gatts.notify              = nrf52_ble_notify,
   .gattc.startDbDiscovery    = nrf52_ble_start_db_discovery,
   .gattc.continueDbDiscovery = nrf52_ble_continue_db_discovery,
+  .gattc.discoverUuid        = nrf52_ble_discover_uuid,
   .gattc.write               = nrf52_ble_gattc_write,
   .gattc.read                = nrf52_ble_gattc_read,
   .gattc.descriptor_write    = nrf52_ble_descriptor_write,
@@ -287,12 +284,24 @@ static int nrf52_ble_notify(struct ble_gatt_char_s *ble_gatt_char, uint16_t hand
   int ret = BT_SUCCESS;
   BLE_GattsHandleValueNfyIndParams param = {0};
   int32_t size = (int32_t) ble_gatt_char->value.length;
+  int i;
 
   if (BLE_MAX_CHAR_SIZE >= size)
     {
       BLE_PRT("size=%ld\n",size);
       BLE_PRT("ble_gatt_char->handle=%d\n", ble_gatt_char->handle);
-      BLE_PRT("ble_gatt_char->value.data=%.*s\n", size, ble_gatt_char->value.data);
+      BLE_PRT("ble_gatt_char->value.data:");
+      for (i = 0; i < size; i++)
+        {
+          if (i % 16 == 0)
+            {
+              BLE_PRT("\n");
+            }
+
+          BLE_PRT("%02x ", ble_gatt_char->value.data[i]);
+        }
+
+      BLE_PRT("\n");
       param.type = BLE_GATT_NOTIFICATION;
       param.attrHandle = ble_gatt_char->handle;
       param.attrValData = ble_gatt_char->value.data;
@@ -338,6 +347,72 @@ static int nrf52_ble_start_db_discovery(uint16_t conn_handle)
 static int nrf52_ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle)
 {
   return BLE_GattcContinueDbDiscovery(conn_handle, start_handle);
+}
+
+static int convert_uuid_mw2nrf(BLE_UUID *mw, ble_uuid_t *nrf52)
+{
+  int ret;
+  ble_uuid128_t uuid128;
+
+  if (mw->type == BLE_UUID_TYPE_UUID128)
+    {
+      memcpy(uuid128.uuid128,
+             mw->value.uuid128.uuid128,
+             sizeof(uuid128.uuid128));
+      ret = sd_ble_uuid_vs_add(&uuid128, &nrf52->type);
+      nrf52->uuid = (mw->value.uuid128.uuid128[13] << 8)
+                   | mw->value.uuid128.uuid128[12];
+    }
+  else
+    {
+      ret = NRF_SUCCESS;
+      nrf52->type = BLE_UUID_TYPE_BLE;
+      nrf52->uuid = mw->value.alias.uuidAlias;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_discover_uuid
+ *
+ * Description:
+ *   Bluetooth LE GATT client discover specific UUID
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_discover_uuid(uint16_t conn_handle,
+                                   BLE_UUID *srv_uuid,
+                                   BLE_UUID *char_uuid)
+{
+  int errCode;
+
+  errCode = convert_uuid_mw2nrf(srv_uuid,  &commMem.gattcDb.target.srvUuid);
+  if (errCode != NRF_SUCCESS)
+    {
+      goto err;
+    }
+
+  errCode = convert_uuid_mw2nrf(char_uuid, &commMem.gattcDb.target.charUuid);
+  if (errCode != NRF_SUCCESS)
+    {
+      goto err;
+    }
+
+  errCode = sd_ble_gattc_primary_services_discover
+            (conn_handle,
+             SRV_DISC_START_HANDLE,
+             &commMem.gattcDb.target.srvUuid);
+  if (errCode != NRF_SUCCESS)
+    {
+      goto err;
+    }
+
+  return BLE_SUCCESS;
+
+err:
+  memset(&commMem.gattcDb.target, 0, sizeof(bleGattcDbTarget));
+  return bleConvertErrorCode((uint32_t)errCode);
 }
 
 /****************************************************************************

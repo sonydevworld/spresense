@@ -66,10 +66,17 @@
 /** @} */
 
 /**
+ *@name address type length of advertise data
+ *@{
+ */
+#define BT_ADV_DATA_ADDRTYPE_LEN (1)
+/** @} */
+
+/**
  *@name Max ble advertise data length
  *@{
  */
-#define BLE_MAX_ADV_DATA_LEN 31
+#define BLE_MAX_ADV_DATA_LEN (BT_ADV_DATA_MAX_LEN + BT_ADV_DATA_ADDRTYPE_LEN)
 /** @} */
 
 /**
@@ -414,6 +421,7 @@ struct ble_event_conn_stat_t
   uint16_t handle;  /**< Handle ID for BLE connection */
   BT_ADDR addr;     /**< Target address @ref BT_ADDR */
   bool connected;   /**< Connection status */
+  uint8_t status;   /**< Connection status change reason */
 };
 
 /**

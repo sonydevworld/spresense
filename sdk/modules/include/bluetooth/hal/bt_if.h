@@ -144,7 +144,7 @@ struct ble_hal_common_ops_s
   int (*advertise)(bool enable);                   /**< Advertisement start/stop */
   int (*startScan)(bool duplicate_filter);         /**< Start scan */
   int (*stopScan)(void);                           /**< Stop scan */
-  int (*connect)(const BT_ADDR *addr);             /**< Create a connection */
+  int (*connect)(uint8_t addr_type, const BT_ADDR *addr); /**< Create a connection */
   int (*disconnect)(const uint16_t conn_handle);   /**< Destroy a connection */
   int (*pairing)(uint16_t conn_handle);            /**< Execute pairing */
   uint16_t (*setMtuSize)(uint16_t sz);             /**< Set MTU size */
@@ -179,11 +179,17 @@ struct ble_hal_gattc_ops_s
 
   int (*continueDbDiscovery)(uint16_t start_handle, uint16_t conn_handle);
 
-  /**< Write characteristic request(Central)/response(Peripheral) */
+  /** GATT client specific UUID discovery */
+
+  int (*discoverUuid)(uint16_t conn_handle,
+                      BLE_UUID *srv_uuid,
+                      BLE_UUID *char_uuid);
+
+  /** Write characteristic request(Central)/response(Peripheral) */
 
   int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
 
-  /**< Read characteristic request(Central)/response(Peripheral) */
+  /** Read characteristic request(Central)/response(Peripheral) */
 
   int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
 
@@ -209,6 +215,14 @@ struct ble_hal_gatt_ops_s
   struct ble_hal_gatts_ops_s gatts; /**< GATT server HAL */
   struct ble_hal_gattc_ops_s gattc; /**< GATT client HAL */
 };
+
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
 
 /****************************************************************************
  * Public Function Prototypes
@@ -371,5 +385,10 @@ int ble_gatt_event_handler(struct bt_event_t *bt_event);
  */
 
 int ble_register_gatt_central_cb(struct ble_gatt_central_ops_s *central_ops);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_HAL_BT_IF_H */

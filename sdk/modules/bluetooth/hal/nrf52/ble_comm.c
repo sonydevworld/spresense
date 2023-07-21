@@ -48,6 +48,7 @@
 #include <ble/ble_gattc.h>
 #include "ble_storage_operations.h"
 #include "ble_comm_internal.h"
+#include "ble_debug.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_ble.h"
 #include <arch/board/board.h>
@@ -64,17 +65,6 @@ extern void board_nrf52_reset(bool en);
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-// #define BLE_DBGPRT_ENABLE
-#ifdef BLE_DBGPRT_ENABLE
-#include <stdio.h>
-#define BLE_PRT printf
-#define BLE_PRT2(...)
-#define BLE_ERR printf
-#else
-#define BLE_PRT(...)
-#define BLE_PRT2(...)
-#define BLE_ERR(...)
-#endif
 
 #define NRF52_SYS_ATTR_DATA_OFFSET_HANDLE (0)
 #define NRF52_SYS_ATTR_DATA_OFFSET_LEN    (2)
@@ -133,13 +123,13 @@ static void onReadRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onWriteRsp(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery);
 static  int characteristicsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery);
-static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, BLE_GattcChar *afterChar);
+static bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery, uint16_t last_handle);
 static bool isDescDiscoveryReqd(bleGattcDb *gattcDbDiscovery, BLE_GattcDbDiscChar *currChar, BLE_GattcDbDiscChar *nextChar, BLE_GattcHandleRange *handleRange);
 static  int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, bool *raiseDiscovComplete);
 
 static int nrf52_ble_start_scan(bool duplicate_filter);
 static int nrf52_ble_stop_scan(void);
-static int nrf52_ble_connect(const BT_ADDR *addr);
+static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr);
 static int nrf52_ble_disconnect(const uint16_t conn_handle);
 static int nrf52_ble_advertise(bool enable);
 static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
@@ -173,7 +163,6 @@ struct bt_common_context_s bt_common_context = {0};
 #endif
 
 #define WAIT_TIME (100*1000)
-#define LOG_OUT printf
 #define AUTH_KEY_SIZE   6
 
 static struct ble_hal_common_ops_s ble_hal_common_ops =
@@ -241,12 +230,10 @@ static void bleInitBondInfoKey(void)
   bleKey.info_key[5] = BSO_GenerateRegistryKey(BOND_INFO_6_KEY_NAME, 0);
   bleKey.info_key[6] = BSO_GenerateRegistryKey(BOND_INFO_7_KEY_NAME, 0);
   bleKey.info_key[7] = BSO_GenerateRegistryKey(BOND_INFO_8_KEY_NAME, 0);
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("bleInitBondInfoKey: enable_key 0x%lx\n", bleKey.enable_key);
   for (int i=0; i<BLE_SAVE_BOND_DEVICE_MAX_NUM; i++) {
     BLE_PRT("bleInitBondInfoKey: info_key[%d] 0x%lx\n", i, bleKey.info_key[i]);
   }
-#endif
 }
 
 static void set_EncKey_for_save_event(struct ble_idkey_s *apps,
@@ -502,6 +489,12 @@ int BLE_CommonFinalizeStack(void)
     {
       ret = -EPERM;
     }
+
+  if (BSO_Finalize(NULL))
+    {
+      ret = -ENXIO;
+    }
+
   commMem.stackInited = false;
   return ret;
 }
@@ -848,6 +841,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
+  conn_stat_evt.status    = BLESTAT_SUCCESS;
   conn_stat_evt.handle = evt->handle;
   memcpy(conn_stat_evt.addr.address, evt->addr.addr, BT_ADDR_LEN);
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
@@ -858,6 +852,45 @@ static void on_connected(const BLE_EvtConnected* evt)
       (commMem.requested_mtu != BLE_GATT_ATT_MTU_DEFAULT))
     {
       sd_ble_gattc_exchange_mtu_request(evt->handle, commMem.requested_mtu);
+    }
+}
+
+static uint8_t convert_hcicode_to_mwvalue(uint8_t hcicode)
+{
+  switch (hcicode)
+    {
+      case BLE_HCI_STATUS_CODE_SUCCESS:
+        return BLESTAT_SUCCESS;
+
+      case BLE_HCI_MEMORY_CAPACITY_EXCEEDED:
+        return BLESTAT_MEMCAP_EXCD;
+
+      case BLE_HCI_CONNECTION_TIMEOUT:
+        return BLESTAT_CONNECT_TIMEOUT;
+
+      case BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION:
+        return BLESTAT_PEER_TERMINATED;
+
+      case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_LOW_RESOURCES:
+        return BLESTAT_PEER_TERM_LOWRES;
+
+      case BLE_HCI_REMOTE_DEV_TERMINATION_DUE_TO_POWER_OFF:
+        return BLESTAT_PEER_TERM_POFF;
+
+      case BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION:
+        return BLESTAT_TERMINATED;
+
+      case BLE_HCI_CONTROLLER_BUSY:
+        return BLESTAT_DEVICE_BUSY;
+
+      case BLE_HCI_CONN_INTERVAL_UNACCEPTABLE:
+        return BLESTAT_PARAM_REJECTED;
+
+      case BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED:
+        return BLESTAT_CONNECT_FAILED;
+
+      default:
+        return BLESTAT_UNSPEC_ERR;
     }
 }
 
@@ -873,7 +906,7 @@ static void on_disconnected(const BLE_EvtDisconnected* evt)
 
   conn_stat_evt.group_id = BLE_GROUP_COMMON;
   conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
-
+  conn_stat_evt.status   = convert_hcicode_to_mwvalue(evt->reason);
   ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
   if (g_ble_context.ble_role == BLE_ROLE_PERIPHERAL)
     {
@@ -1019,6 +1052,8 @@ static void on_auth_status(BLE_EvtAuthStatus* auth_status)
 static void on_timeout(BLE_EvtTimeout *timeout)
 {
   int ret = BLE_SUCCESS;
+  struct ble_event_conn_stat_t conn_stat_evt;
+
   switch(timeout->timeoutSrc)
     {
       case BLE_GAP_TIMEOUT_ADVERTISING:
@@ -1044,6 +1079,13 @@ static void on_timeout(BLE_EvtTimeout *timeout)
         break;
       case BLE_GAP_TIMEOUT_CONN:
         LOG_OUT("[BLE][LOG]Timeout reason: Connection timeout!\n");
+        conn_stat_evt.connected = false;
+
+        conn_stat_evt.group_id = BLE_GROUP_COMMON;
+        conn_stat_evt.event_id = BLE_COMMON_EVENT_CONN_STAT_CHANGE;
+        conn_stat_evt.status   = BLESTAT_CONNECT_TIMEOUT;
+        ble_common_event_handler((struct bt_event_t *) &conn_stat_evt);
+
         break;
       default:
         LOG_OUT("[BLE][LOG]Timeout reason: Error\n");
@@ -1054,10 +1096,9 @@ static void on_timeout(BLE_EvtTimeout *timeout)
 static int input_passkey(uint8_t *key)
 {
   LOG_OUT("Please enter passkey:\n");
-  const char* name = "passkey_input";
   int len = 0;
 
-  LOG_OUT("%s> ", name);
+  LOG_OUT("passkey_input> ");
   fflush(stdout);
   len = readline((char*)key, AUTH_KEY_SIZE, stdin, stdout);
   if (len < 1)
@@ -1128,8 +1169,15 @@ static void on_adv_report(BLE_EvtAdvReportData *adv_report)
   evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
   evt.rssi = adv_report->rssi;
   evt.scan_rsp = adv_report->scan_rsp;
-  evt.length = adv_report->dlen;
-  memcpy(evt.data, adv_report->data, adv_report->dlen);
+  evt.length = adv_report->dlen + 1;
+
+  /* The first octet is used for notification of peer address type. */
+
+  evt.data[0] = adv_report->addr.type;
+
+  /* The raw advertising data starts from second octet. */
+
+  memcpy(evt.data + 1, adv_report->data, adv_report->dlen);
   memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
   ble_common_event_handler((struct bt_event_t *)&evt);
 }
@@ -1187,11 +1235,11 @@ void bleEvtDispatch(ble_evt_t *pBleNrfEvt)
 static
 void onAdvSetTerminate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
-#ifdef BLE_DBGPRT_ENABLE
+#ifdef CONFIG_BLUETOOTH_DEBUG_MSG
   ble_gap_evt_adv_set_terminated_t *set = &pBleNrfEvt->evt.gap_evt.params.adv_set_terminated;
+#endif
   BLE_PRT("onAdvSetTerminate reason=%d handle=%d num=%d\n",
     set->reason, set->adv_handle, set->num_completed_adv_events);
-#endif
   pBleNrfEvt->evt.gap_evt.params.timeout.src = BLE_GAP_TIMEOUT_ADVERTISING;
   onTimeout(pBleEvent, pBleNrfEvt);
 }
@@ -1237,13 +1285,13 @@ static
 void onDataLengthUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
   int ret = 0;
-#ifdef BLE_DBGPRT_ENABLE
+#ifdef CONFIG_BLUETOOTH_DEBUG_MSG
   ble_gap_data_length_params_t *req = &pBleNrfEvt->evt.gap_evt.params.data_length_update_request.peer_params;
+#endif
   BLE_PRT("onLenUpReq: max_tx=%d\n", req->max_tx_octets);
   BLE_PRT("onLenUpReq: max_rx=%d\n", req->max_rx_octets);
   BLE_PRT("onLenUpReq: tx_time=%d\n", req->max_tx_time_us);
   BLE_PRT("onLenUpReq: rx_time=%d\n", req->max_rx_time_us);
-#endif
   ret = sd_ble_gap_data_length_update(pBleNrfEvt->evt.gap_evt.conn_handle, NULL, NULL);
   if (ret)
     {
@@ -1285,7 +1333,7 @@ void onExchangeMtuResponse(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   ble_gattc_evt_exchange_mtu_rsp_t *rsp;
 
   rsp = &pBleNrfEvt->evt.gattc_evt.params.exchange_mtu_rsp;
-  BLE_PRT("onMtuReq: mtu=%d\n", req->client_rx_mtu);
+  BLE_PRT("onMtuRsp: mtu=%d\n", rsp->server_rx_mtu);
   if (commMem.requested_mtu > rsp->server_rx_mtu)
     {
       commMem.client_rx_mtu = rsp->server_rx_mtu;
@@ -1391,7 +1439,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       commMem.connectData.role   = BLE_ROLE_CENTRAL;
     }
   commMem.gapMem->connParams = *(ble_gap_conn_params_t *)&connected->conn_params;
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("onConnect: handle=%d\n", commMem.connectData.handle);
   BLE_PRT("onConnect: role=%d\n", commMem.connectData.role);
   BLE_PRT("onConnect: type=%d\n", commMem.connectData.addr.type);
@@ -1404,7 +1451,6 @@ void onConnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   BLE_PRT("onConnect: maxConnInterval=%d\n", commMem.gapMem->connParams.max_conn_interval);
   BLE_PRT("onConnect: slaveLatency=%d\n", commMem.gapMem->connParams.slave_latency);
   BLE_PRT("onConnect: connSupTimeout=%d\n", commMem.gapMem->connParams.conn_sup_timeout);
-#endif
   commMem.gapMem->wrapperBondInfo.connHandle = pBleNrfEvt->evt.gap_evt.conn_handle;
   commMem.gapMem->wrapperBondInfo.bondInfo.addrType = connected->peer_addr.addr_type;
   memcpy(commMem.gapMem->wrapperBondInfo.bondInfo.addr, connected->peer_addr.addr, BLE_GAP_ADDR_LENGTH);
@@ -1442,6 +1488,12 @@ void onConnParamUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.gapMem->connParams = *(ble_gap_conn_params_t *)params;
   pBleEvent->evtDataSize = sizeof(BLE_EvtConnParamUpdate);
   memcpy(pBleEvent->evtData, &commMem.connParams, pBleEvent->evtDataSize);
+
+  /* Currently, not support the connection parameter settings.
+   * So, accept the peer's setting as is.
+   */
+
+  sd_ble_gap_conn_param_update(pBleNrfEvt->evt.gap_evt.conn_handle, params);
 }
 
 static
@@ -1510,7 +1562,6 @@ void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtHeader = BLE_GAP_EVENT_AUTH_STATUS;
   ble_gap_evt_auth_status_t *authStatus = &pBleNrfEvt->evt.gap_evt.params.auth_status;
   commMem.authStatusData.handle = pBleNrfEvt->evt.gap_evt.conn_handle;
-#ifdef BLE_DBGPRT_ENABLE
   BLE_PRT("onAuthStatus: handle=%d\n", pBleNrfEvt->evt.gap_evt.conn_handle);
   BLE_PRT("onAuthStatus: auth_status=%d\n", authStatus->auth_status);
   BLE_PRT("onAuthStatus: error_src=%d\n", authStatus->error_src);
@@ -1596,7 +1647,7 @@ void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
     {
       BLE_PRT("onAuthStatus: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
-#endif
+
   //Auth status code.
   if ( authStatus->auth_status < BLE_GAP_SEC_STATUS_PDU_INVALID )
     {
@@ -1801,7 +1852,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   ble_gap_evt_sec_info_request_t *secinfo = &pBleNrfEvt->evt.gap_evt.params.sec_info_request;
   uint8_t *sys_attr_data = NULL;
   int index;
-#ifdef BLE_DBGPRT_ENABLE
+
   BLE_PRT("onSecInfoRequest: handle=%d\n", pBleNrfEvt->evt.gap_evt.conn_handle);
   BLE_PRT("onSecInfoRequest: addr_type=%d\n", secinfo->peer_addr.addr_type);
   BLE_PRT("onSecInfoRequest: peer_addr=0x");
@@ -1885,7 +1936,6 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
     {
       BLE_PRT("onSecInfoRequest: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
-#endif
 
   index = searchBondInfoIndex(&secinfo->master_id);
 
@@ -1916,7 +1966,29 @@ void onTimeout(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   pBleEvent->evtHeader = BLE_GAP_EVENT_TIMEOUT;
   ble_gap_evt_timeout_t *timeout = &pBleNrfEvt->evt.gap_evt.params.timeout;
   commMem.timeoutData.handle = pBleNrfEvt->evt.gap_evt.conn_handle;
-  commMem.timeoutData.timeoutSrc = timeout->src;
+
+  switch (timeout->src)
+    {
+      case BLE_GAP_TIMEOUT_SRC_SCAN:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_SCAN;
+        break;
+
+      case BLE_GAP_TIMEOUT_SRC_CONN:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_CONN;
+        break;
+
+      case BLE_GAP_TIMEOUT_SRC_AUTH_PAYLOAD:
+        commMem.timeoutData.timeoutSrc = BLE_GAP_TIMEOUT_SECURITY_REQUEST;
+        break;
+
+      default:
+
+        /* It does not come here by interface specification. */
+
+        commMem.timeoutData.timeoutSrc = timeout->src;
+        break;
+    }
+
   pBleEvent->evtDataSize = sizeof(BLE_EvtTimeout);
   memcpy(pBleEvent->evtData, &commMem.timeoutData, pBleEvent->evtDataSize);
 
@@ -2101,6 +2173,7 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
       srv->char_count = rcv_srv->charCount;
       srv->srv_handle_range.start_handle = rcv_srv->srvHandleRange.startHandle;
       srv->srv_handle_range.end_handle   = rcv_srv->srvHandleRange.endHandle;
+      memcpy(&srv->srv_uuid, &rcv_srv->srvUuid, sizeof(BLE_UUID));
 
       ch = &srv->characteristics[0];
       rcv_ch = &rcv_srv->characteristics[0];
@@ -2156,6 +2229,60 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
   return;
 }
 
+static bool is_target_uuid(const ble_uuid_t *notified, ble_uuid_t *target)
+{
+  if (target->type == BLE_UUID_TYPE_UNKNOWN)
+    {
+      /* This setting means that all information is discovered. */
+
+      return true;
+    }
+  else
+    {
+      if (BLE_UUID_EQ(notified, target))
+        {
+          return true;
+        }
+      else
+        {
+          return false;
+        }
+    }
+}
+
+static void convert_uuid_nrf2mw(const ble_uuid_t *nrf52, BLE_Uuid *mw)
+{
+  uint8_t len;
+  uint8_t uuid[16];
+
+  if (nrf52->type == BLE_UUID_TYPE_BLE)
+    {
+      mw->value.baseAlias.uuidAlias = nrf52->uuid;
+      mw->type = BLE_UUID_TYPE_BASEALIAS_BTSIG;
+    }
+  else if (nrf52->type == BLE_UUID_TYPE_UNKNOWN)
+    {
+      /* Unknown and non-encodable 128bit UUID case. */
+
+      mw->type = BLE_UUID_TYPE_UUID128;
+      memset(mw->value.uuid128.uuid128, 0, 16);
+    }
+  else
+    {
+      sd_ble_uuid_encode(nrf52, &len, uuid);
+      if (len == 2)
+        {
+          mw->value.baseAlias.uuidAlias = (uuid[1] << 8) | uuid[0];
+          mw->type = BLE_UUID_TYPE_BASEALIAS_VENDOR;
+        }
+      else
+        {
+          memcpy(mw->value.uuid128.uuid128, uuid, 16);
+          mw->type = BLE_UUID_TYPE_UUID128;
+        }
+    }
+}
+
 static
 void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2196,8 +2323,12 @@ void onPrimarySrvDiscoveryRsp(bleGattcDb *gattcDbDiscovery, BLE_Evt *pBleEvent, 
            i < num;
            i++, srv++, ltbl++)
         {
-          ltbl->srvUuid.value.baseAlias.uuidAlias = srv->uuid.uuid;
-          ltbl->srvUuid.type = (BLE_GATT_UUID_TYPE)srv->uuid.type;
+          if (is_target_uuid(&srv->uuid, &gattcDbDiscovery->target.srvUuid) == false)
+            {
+              continue;
+            }
+
+          convert_uuid_nrf2mw(&srv->uuid, &ltbl->srvUuid);
           ltbl->srvHandleRange.startHandle =  srv->handle_range.start_handle;
           ltbl->srvHandleRange.endHandle =  srv->handle_range.end_handle;
           BLE_PRT2("Primary Service[%d] type %d uuid 0x%04X sHdl %d eHdl %d\n",
@@ -2233,17 +2364,15 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   uint8_t numCharsCurrDisc = 0;
   uint16_t connHandle = 0;
   uint32_t i               = 0;
-  uint32_t j               = 0;
   bool   performDescDiscov = false;
   bool raiseDiscovComplete = false;
   ble_gattc_evt_t                 *bleGattcEvt = &(pBleNrfEvt->evt.gattc_evt);
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
   BLE_GattcDbDiscChar      *chtop;
-  BLE_GattcChar            *ch;
+  BLE_GattcChar            *ch = NULL;
   const ble_gattc_evt_char_disc_rsp_t *charDiscRspEvt;
   const ble_gattc_char_t   *rcvch;
-  BLE_GattcChar            *lastKnownChar = NULL;
-
+  uint16_t                 last_handle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
   connHandle  = bleGattcEvt->conn_handle;
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
@@ -2259,29 +2388,22 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
       numCharsPrevDisc = srvBeingDiscovered->charCount;
       numCharsCurrDisc = charDiscRspEvt->count;
       BLE_PRT2("onChar preCnt %d curCnt %d\n", numCharsPrevDisc, numCharsCurrDisc);
-      // Check if the total number of discovered characteristics are supported
-      if ((numCharsPrevDisc + numCharsCurrDisc) <= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+      chtop = &srvBeingDiscovered->characteristics[numCharsPrevDisc];
+      for (i = 0; i < numCharsCurrDisc; i++)
         {
-          // Update the characteristics count.
-          srvBeingDiscovered->charCount += numCharsCurrDisc;
-        }
-      else
-        {
-          // The number of characteristics discovered at the peer is more than the supported maximum.
-          srvBeingDiscovered->charCount = BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV;
-        }
+          rcvch = &charDiscRspEvt->chars[i];
+          last_handle = rcvch->handle_value;
 
-      for (i = numCharsPrevDisc, j = 0; i < srvBeingDiscovered->charCount; i++, j++)
-        {
-          chtop = &srvBeingDiscovered->characteristics[i];
+          if (is_target_uuid(&rcvch->uuid, &gattcDbDiscovery->target.charUuid) == false)
+            {
+              continue;
+            }
+
           ch    = &chtop->characteristic;
-          rcvch = &charDiscRspEvt->chars[j];
-
           memcpy(&ch->charPrope, &rcvch->char_props, sizeof(BLE_CharPrope));
           ch->charDeclhandle = rcvch->handle_decl;
           ch->charValhandle  = rcvch->handle_value;
-          ch->charValUuid.type = (BLE_GATT_UUID_TYPE)rcvch->uuid.type;
-          ch->charValUuid.value.baseAlias.uuidAlias = rcvch->uuid.uuid;
+          convert_uuid_nrf2mw(&rcvch->uuid, &ch->charValUuid);
 
           /* Initialize all descriptors handle with invalid value.
            * These handles are discovered later by descriptor discovery.
@@ -2299,13 +2421,19 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
                    rcvch->uuid.uuid,
                    rcvch->handle_value,
                    rcvch->handle_decl);
-        }
 
-      lastKnownChar = &(srvBeingDiscovered->characteristics[i - 1].characteristic);
+          srvBeingDiscovered->charCount++;
+          if (srvBeingDiscovered->charCount > BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+            {
+              break;
+            }
+
+          chtop++;
+        }
 
       // If no more characteristic discovery is required, or if the maximum number of supported
       // characteristic per service has been reached, descriptor discovery will be performed.
-      if (!isCharDiscoveryReqd(gattcDbDiscovery, lastKnownChar) ||
+      if (!isCharDiscoveryReqd(gattcDbDiscovery, last_handle) ||
       (srvBeingDiscovered->charCount == BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
         {
           performDescDiscov = true;
@@ -2577,15 +2705,15 @@ err:
 
 static
 bool isCharDiscoveryReqd(bleGattcDb *const gattcDbDiscovery,
-               BLE_GattcChar         *afterChar)
+                         uint16_t last_handle)
 {
-  BLE_PRT2("isChar charEndHdl %d srvEndHdl %d\n", afterChar->charValhandle,
+  BLE_PRT2("isChar charEndHdl %d srvEndHdl %d\n", last_handle,
     gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle);
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
       return false;
     }
-  if (afterChar->charValhandle <
+  if (last_handle <
   gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.endHandle)
     {
       // Handle value of the characteristic being discovered is less than the end handle of
@@ -2709,7 +2837,17 @@ int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, 
 
       gattcDbDiscovery->currSrvInd++;
       gattcDbDiscovery->currCharInd = 0;
-      characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+
+      if (gattcDbDiscovery->currSrvInd < gattcDbDiscovery->dbDiscovery.srvCount)
+        {
+          characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+        }
+      else
+        {
+          setDbDiscoveryEvent(pBleEvent,
+                              gattcDbDiscovery->dbDiscovery.connHandle,
+                              BLE_GATTC_RESULT_SUCCESS, 0);
+        }
 
       return NRF_SUCCESS;
     }
@@ -2877,12 +3015,12 @@ static int nrf52_ble_stop_scan(void)
  *
  ****************************************************************************/
 
-static int nrf52_ble_connect(const BT_ADDR *addr)
+static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr)
 {
   int ret = BT_SUCCESS;
   BLE_GapAddr gap_addr = {0};
 
-  gap_addr.type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  gap_addr.type = addr_type;
   memcpy(gap_addr.addr, addr->address, sizeof(gap_addr.addr));
 
   ret = BLE_GapConnect(&gap_addr);
@@ -3101,16 +3239,7 @@ static int nrf52_bt_init(void)
 
 static int nrf52_bt_finalize(void)
 {
-  int ret = BT_SUCCESS;
-
-  ret = BSO_Finalize(NULL);
-  if (ret)
-    {
-      ret = -ENXIO;
-      BLE_PRT("BSO_Finalize failed\n");
-    }
-
-  return ret;
+  return BT_SUCCESS;
 }
 
 /****************************************************************************

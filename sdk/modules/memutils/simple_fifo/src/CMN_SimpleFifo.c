@@ -38,8 +38,8 @@
 #include <stddef.h>
 #include <assert.h>
 
-static inline void __DMB(void) { asm volatile ("dmb"); }
-static inline void __DSB(void) { asm volatile ("dsb"); }
+static inline void __DMB(void) { __asm__ volatile ("dmb"); }
+static inline void __DSB(void) { __asm__ volatile ("dsb"); }
 
 #include "memutils/simple_fifo/CMN_SimpleFifo.h"
 

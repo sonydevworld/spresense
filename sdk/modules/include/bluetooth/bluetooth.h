@@ -109,6 +109,56 @@
 #define BT_UUID128_LEN 16
 /** @} */
 
+/**
+ *@name Flags bits in advertising data
+ *@{
+ */
+
+/** LE Limited Discoverable Mode */
+
+#define BLE_ADV_FLAGS_LIMITED_DISC_MODE      (0x01)
+
+/** LE General Discoverable Mode */
+
+#define BLE_ADV_FLAGS_GENERAL_DISC_MODE      (0x02)
+
+/** BR/EDR not supported */
+
+#define BLE_ADV_FLAGS_BR_EDR_NOT_SUPPORTED   (0x04)
+
+/** Simultaneous LE and BR/EDR capable(Controller) */
+
+#define BLE_ADV_FLAGS_LE_BR_EDR_CONTROLLER   (0x08)
+
+/** Simultaneous LE and BR/EDR capable(Host) */
+
+#define BLE_ADV_FLAGS_LE_BR_EDR_HOST         (0x10)
+
+/** @} */
+
+/**
+ *@name The length of UUID string
+ *@{
+ */
+
+/** The length of 128-bit UUID string */
+
+#define BLE_UUID_128BIT_STRING_LENGTH  (36)
+
+/** The length of 16-bit UUID string */
+
+#define BLE_UUID_16BIT_STRING_LENGTH   (4)
+
+/** The minimal buffer size for 128-bit UUID string */
+
+#define BLE_UUID_128BIT_STRING_BUFSIZE (BLE_UUID_128BIT_STRING_LENGTH + 1)
+
+/** The minimal buffer size for 16-bit UUID string */
+
+#define BLE_UUID_16BIT_STRING_BUFSIZE  (BLE_UUID_16BIT_STRING_LENGTH + 1)
+
+/** @} */
+
 /****************************************************************************
  * Public Types
  ****************************************************************************/
@@ -274,6 +324,10 @@ typedef enum {
  */
 
 typedef enum {
+  /** BLE address type */
+
+  BLE_AD_TYPE_ADDRESS_TYPE                   = 0x00,
+
   /** Flags for discoverability. */
 
   BLE_AD_TYPE_FLAGS                          = 0x01,
@@ -410,6 +464,30 @@ typedef enum {
 
   BLE_AD_TYPE_MANUFACTURER_SPECIFIC_DATA     = 0xFF,
 } BLE_AD_TYPE;
+
+/**
+ * @enum BLE_ADDRESS_TYPE
+ * @brief BLE address type
+ */
+
+typedef enum
+{
+  /** BLE public address */
+
+  BLE_ADDRTYPE_PUBLIC = 0x00,
+
+  /** BLE random static address */
+
+  BLE_ADDRTYPE_RAND_STATIC,
+
+  /** BLE random private resolvable address */
+
+  BLE_ADDRTYPE_RAND_PRIV_RESOLVABLE,
+
+  /** BLE random private non-resolvable address */
+
+  BLE_ADDRTYPE_RAND_PRIV_NONRESOLVABLE,
+} BLE_ADDRESS_TYPE;
 
 /****************************************************************************
  * Private Data

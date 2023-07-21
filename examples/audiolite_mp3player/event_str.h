@@ -28,6 +28,8 @@ static const char *convert_evtid(int id)
       STRINGCASE(MP3DECWORKEREND)
       STRINGCASE(MP3DECUNKNOWNEVT)
       STRINGCASE(MP3DECERROR)
+      STRINGCASE(MP3DEC_WRONGTYPE)
+      STRINGCASE(MP3DEC_WRONGVER)
       default:
         return "not event id...";
     }

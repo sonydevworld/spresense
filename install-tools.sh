@@ -54,8 +54,8 @@ TOOLCHAINSUM_linux_x86_64=2383e4eb4ea23f248d33adc70dc3227e
 TOOLCHAINSUM_linux_aarch64=3fe3d8bb693bd0a6e4615b6569443d0d
 
 OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
-OPENOCDRELEASE=v0.10.0-spr1
-OPENOCDVERDATE=openocd-0.10.0-spr1-20191113
+OPENOCDRELEASE=v0.11.0-spr1
+OPENOCDVERDATE=openocd-0.11.0-spr1-20230313
 
 VERBOSE=
 

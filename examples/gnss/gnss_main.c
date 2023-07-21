@@ -1,7 +1,7 @@
 /****************************************************************************
  * gnss/gnss_main.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -278,7 +278,7 @@ int main(int argc, FAR char *argv[])
 
   /* Get file descriptor to control GNSS. */
 
-  fd = open("/dev/gps", O_RDONLY);
+  fd = open(CONFIG_EXAMPLES_GNSS_DEVNAME, O_RDONLY);
   if (fd < 0)
     {
       printf("open error:%d,%d\n", fd, errno);

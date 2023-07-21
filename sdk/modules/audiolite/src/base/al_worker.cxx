@@ -132,7 +132,7 @@ audiolite_memapbuf *audiolite_workermemq::pop()
 
 void *audiolite_worker::msg_receiver(void *arg)
 {
-  int ret;
+  int ret = 0;
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
   audiolite_worker *alw = (audiolite_worker *)arg;
@@ -156,7 +156,7 @@ void *audiolite_worker::msg_receiver(void *arg)
           break;
         }
 
-pthread_yield();
+      pthread_yield();
     }
 
   return NULL;

@@ -1,7 +1,7 @@
 ############################################################################
-# bluetooth_a2dp_snk/Makefile
+# examples/gnss_addon/Makefile
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,13 +36,18 @@
 include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
-# Bt_A2dp_Snk built-in application info
+# GNSS Add-on built-in application info
 
-PROGNAME  = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PROGNAME)
-PRIORITY  = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_PRIORITY)
-STACKSIZE = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK_STACKSIZE)
-MODULE    = $(CONFIG_EXAMPLES_BLUETOOTH_A2DP_SNK)
+PROGNAME  = $(CONFIG_EXAMPLES_GNSS_ADDON_PROGNAME)
+PRIORITY  = $(CONFIG_EXAMPLES_GNSS_ADDON_PRIORITY)
+STACKSIZE = $(CONFIG_EXAMPLES_GNSS_ADDON_STACKSIZE)
+MODULE    = $(CONFIG_EXAMPLES_GNSS_ADDON)
 
-MAINSRC = bluetooth_a2dp_snk_main.c
+# GNSS Add-on example
+
+ASRCS =
+CSRCS  = gnss_addon_nmea.c
+CSRCS += gnss_addon_pps.c
+MAINSRC = gnss_addon_main.c
 
 include $(APPDIR)/Application.mk

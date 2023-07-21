@@ -423,6 +423,14 @@ struct ble_gatt_central_ops_s
                           uint16_t len);
 };
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
@@ -547,6 +555,8 @@ int ble_descriptor_write(uint16_t conn_handle,
 /**
  * @brief BLE start database discovery
  *        Send database discovery request to peripheral (For Central role)
+ *        In case of device/nrf52 configuration, 128-bit UUID information is not
+ *        discovered correctly. Then, you may use ble_discover_uuid() API.
  *
  * @param[in] conn_handle: Bluetooth LE GATT connection handle
  *
@@ -558,6 +568,8 @@ int ble_start_db_discovery(uint16_t conn_handle);
 /**
  * @brief BLE continue database discovery
  *        Send continue database discovery request to peripheral (For Central role)
+ *        In case of device/nrf52 configuration, 128-bit UUID information is not
+ *        discovered correctly. Then, you may use ble_discover_uuid() API.
  *
  * @param[in] start_handle: Bluetooth LE GATT start handle
  * @param[in] conn_handle: Bluetooth LE GATT connection handle
@@ -566,5 +578,20 @@ int ble_start_db_discovery(uint16_t conn_handle);
  */
 
 int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle);
+
+/* @brief Discover GATT database with specific UUID
+ * @param[in] conn_handle: BLE connection handle
+ * @param[in] srv_uuid: Service UUID to be discovered
+ * @param[in] char_uuid: Characteristic UUID to be discovered
+ *
+ * @retval error code
+ */
+
+int ble_discover_uuid(uint16_t conn_handle, BLE_UUID *srv_uuid, BLE_UUID *char_uuid);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MODULES_INCLUDE_BLUETOOTH_BLE_GATT_H */

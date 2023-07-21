@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/ambient_gnsslogger/gnss_util.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,7 +87,7 @@ int init_gnss(sigset_t *mask)
   struct cxd56_gnss_signal_setting_s setting;
   struct cxd56_gnss_ope_mode_param_s set_opemode;
 
-  fd = open("/dev/gps", O_RDONLY);
+  fd = open(CONFIG_EXAMPLES_AMBIENT_GNSSLOGGER_GPS_DEVNAME, O_RDONLY);
   if (fd < 0)
     {
       printf("open error:%d,%d\n", fd, errno);

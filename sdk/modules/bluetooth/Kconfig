@@ -76,6 +76,12 @@ config BLUETOOTH_LE_GATT
 		This option enabling LE GATT feature.
 endif
 
+config BLUETOOTH_DEBUG_MSG
+	bool "Enable debug messages output"
+	default n
+	---help---
+		This option enables the bluetooth debug messages output
+
 source "$APPSDIR/../modules/bluetooth/hal/Kconfig"
 endif
 endmenu
