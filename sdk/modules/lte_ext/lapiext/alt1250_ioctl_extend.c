@@ -84,7 +84,7 @@ static int postproc_freset_command(FAR struct alt1250_s *dev,
                                    FAR struct alt_container_s *reply,
                                    FAR struct usock_s *usock,
                                    FAR int32_t *usock_result,
-                                   FAR uint64_t *usock_xid,
+                                   FAR uint32_t *usock_xid,
                                    FAR struct usock_ackinfo_s *ackinfo,
                                    unsigned long arg)
 {
@@ -135,8 +135,8 @@ static int send_freset_command(FAR struct alt1250_s *dev,
   freset_cmd_oargs[0] = &freset_cmd_result;
 
   set_container_ids(container, usockid, LTE_CMDID_FACTORY_RESET);
-  set_container_argument(container, inparam, ARRAY_SZ(inparam));
-  set_container_response(container, freset_cmd_oargs, ARRAY_SZ(freset_cmd_oargs));
+  set_container_argument(container, inparam, nitems(inparam));
+  set_container_response(container, freset_cmd_oargs, nitems(freset_cmd_oargs));
   set_container_postproc(container, postproc_freset_command, freset_cmdid);
 
   return altdevice_send_command(dev->altfd, container, usock_result);
@@ -153,7 +153,7 @@ static int send_freset_command(FAR struct alt1250_s *dev,
 int usockreq_ioctl_extend(FAR struct alt1250_s *dev,
                           FAR struct usrsock_request_buff_s *req,
                           FAR int32_t *usock_result,
-                          FAR uint64_t *usock_xid,
+                          FAR uint32_t *usock_xid,
                           FAR struct usock_ackinfo_s *ackinfo)
 {
   FAR struct usrsock_request_ioctl_s *request = &req->request.ioctl_req;
