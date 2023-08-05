@@ -60,9 +60,9 @@ WORKER_ELF = OSCPROC
 CXXSRCS = main.cpp oscillator.cpp
 
 CXXELFFLAGS += -Os
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" userproc$(DELIM)include)
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)audio$(DELIM)include)
+CXXELFFLAGS += ${INCDIR_PREFIX}userproc$(DELIM)include
+CXXELFFLAGS += ${INCDIR_PREFIX}$(APPDIR)
+CXXELFFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)audio$(DELIM)include
 
 CXXFLAGS += -D_POSIX
 

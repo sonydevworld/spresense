@@ -61,8 +61,8 @@ CSRCS = dsp_main.c
 
 #CFLAGS += -fno-strict-aliasing -ffunction-sections -fdata-sections
 CFLAGS += -O3
-CFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)/modules/asmp/worker)
-CFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" ..)
+CFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/modules/asmp/worker
+CFLAGS += ${INCDIR_PREFIX}..
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))

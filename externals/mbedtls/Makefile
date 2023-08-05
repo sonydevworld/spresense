@@ -58,7 +58,7 @@ CSRCS += ssl_msg.c ssl_srv.c ssl_ticket.c ssl_tls.c ssl_tls13_keys.c
 CSRCS += threading.c timing.c version.c version_features.c
 CSRCS += x509.c x509_create.c x509_crl.c x509_crt.c x509_csr.c x509write_crt.c x509write_csr.c xtea.c 
 
-CFLAGS += ${shell $(INCDIR) "$(CC)" "$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)mbedtls$(DELIM)mbedtls-v2$(DELIM)library"}
+CFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)..$(DELIM)externals$(DELIM)mbedtls$(DELIM)mbedtls-v2$(DELIM)library
 
 VPATH = mbedtls-v2/library
 ROOTDEPPATH = --dep-path mbedtls-v2/library

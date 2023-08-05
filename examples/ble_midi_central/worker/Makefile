@@ -56,8 +56,8 @@ DELTGT_FILES = $(CSRCS:.c=.o)
 INCDIRS = $(APPDIR)/include
 
 CFLAGS += -O3
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/modules/asmp/worker"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(APPDIR)/include"}
+CFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/modules/asmp/worker
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)/include
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))

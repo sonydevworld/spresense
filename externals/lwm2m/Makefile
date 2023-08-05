@@ -54,8 +54,8 @@ LWM2MCOADIR = wakaama$(DELIM)coap
 LWM2MDATDIR = wakaama$(DELIM)data
 LWM2MSHADIR = wakaama$(DELIM)examples$(DELIM)shared
 
-CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCORDIR)"}
-CFLAGS      += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(LWM2MCOADIR)"}
+CFLAGS      += ${INCDIR_PREFIX}$(LWM2MCORDIR)
+CFLAGS      += ${INCDIR_PREFIX}$(LWM2MCOADIR)
 
 ROOTDEPPATH += --dep-path $(LWM2MCORDIR)
 ROOTDEPPATH += --dep-path $(LWM2MCOADIR)

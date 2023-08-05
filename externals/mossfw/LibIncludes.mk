@@ -34,7 +34,7 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_MOSSFW),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mossfw/mossfw/include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mossfw/mossfw/include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mossfw/mossfw/include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mossfw/mossfw/include
 endif
 

@@ -53,9 +53,9 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio Example flags
 
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF_USEPREPROC),y)
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker$(DELIM)userproc$(DELIM)include"}
+CXXFLAGS += ${INCDIR_PREFIX}worker$(DELIM)userproc$(DELIM)include
 endif
 
 CXXFLAGS += -D_POSIX

@@ -34,8 +34,8 @@
 ############################################################################
 
 ifeq ($(CONFIG_LTE_NET_MBEDTLS),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/alt_stubs/mbedtls/include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/alt_stubs/mbedtls/include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/alt_stubs/mbedtls/include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/alt_stubs/mbedtls/include
 endif
 
 

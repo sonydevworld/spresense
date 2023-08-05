@@ -53,10 +53,10 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio Example flags
 
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_recognizer$(DELIM)userproc$(DELIM)include"}
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
+CXXFLAGS += ${INCDIR_PREFIX}worker_recognizer$(DELIM)userproc$(DELIM)include
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "worker_preprocess$(DELIM)userproc$(DELIM)include"}
+CXXFLAGS += ${INCDIR_PREFIX}worker_preprocess$(DELIM)userproc$(DELIM)include
 endif
 
 CXXFLAGS += -D_POSIX
