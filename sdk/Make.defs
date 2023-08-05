@@ -50,7 +50,6 @@ ifeq ($(PLATFORM),CYGWIN)
 
 CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
 CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
-INCDIROPT = -w
 else
 # Linux/macOS/MSYS2-native toolchain
 CFLAGS += -isystem $(SDKDIR)/modules/include
@@ -137,10 +136,6 @@ ifeq ($(CONFIG_WINDOWS_NATIVE),y)
   MKKCONFIG = $(SDKDIR)$(DELIM)apps$(DELIM)tools$(DELIM)mkkconfig.bat
 else
   MKKCONFIG = $(SDKDIR)$(DELIM)apps$(DELIM)tools$(DELIM)mkkconfig.sh
-endif
-
-ifeq ($(WINTOOL),y)
-  INCDIROPT = -w
 endif
 
 CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include

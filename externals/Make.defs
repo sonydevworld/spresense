@@ -71,10 +71,6 @@ else
 endif
 endif
 
-ifeq ($(WINTOOL),y)
-  INCDIROPT = -w
-endif
-
 # Standard include path
 
 CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)bsp$(DELIM)include
