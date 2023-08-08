@@ -53,6 +53,9 @@
 #include "nrf_sdh_ble.h"
 #include <arch/board/board.h>
 #include <system/readline.h>
+#include <nrf_crypto.h>
+#include <nrf_crypto_ecc.h>
+#include <nrf_crypto_ecdh.h>
 
 /******************************************************************************
  * externs
@@ -103,6 +106,9 @@ static void onConnParamUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onConnParamUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDisconnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onSecParamsRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
+#ifdef CONFIG_NRF52_LESC
+static void onLescDhkeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
+#endif
 static void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDispPasskey(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onAdvReport(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
@@ -705,6 +711,11 @@ void bleNrfEvtHandler(BLE_Evt *bleEvent, ble_evt_t *pBleNrfEvt)
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
         onSecParamsRequest(bleEvent, pBleNrfEvt);
         break;
+#ifdef CONFIG_NRF52_LESC
+      case BLE_GAP_EVT_LESC_DHKEY_REQUEST:
+        onLescDhkeyRequest(bleEvent, pBleNrfEvt);
+        break;
+#endif
       case BLE_GAP_EVT_AUTH_STATUS:
         onAuthStatus(bleEvent, pBleNrfEvt);
         break;
@@ -954,7 +965,9 @@ static void on_exchange_feature(const BLE_EvtExchangeFeature* exchange_feature)
       pf = &g_ble_context.pairing_feature;
     }
 
-  ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
+  ret = BLE_GapExchangePairingFeature(exchange_feature->handle,
+                                      pf,
+                                      &exchange_feature->peerFeature);
 
   if (BLE_SUCCESS != ret)
     {
@@ -1550,11 +1563,60 @@ void onSecParamsRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.exchangeFeatureData.peerFeature.authReq = (BLE_GapAuth)((secParamReq->peer_params.mitm)<<1 |(secParamReq->peer_params.bond));
   commMem.exchangeFeatureData.peerFeature.maxKeySize = secParamReq->peer_params.max_key_size;
   commMem.exchangeFeatureData.peerFeature.minKeySize = secParamReq->peer_params.min_key_size;
+  commMem.exchangeFeatureData.peerFeature.lesc       = secParamReq->peer_params.lesc;
   pBleEvent->evtDataSize = sizeof(BLE_EvtExchangeFeature);
   memcpy(pBleEvent->evtData, &commMem.exchangeFeatureData, pBleEvent->evtDataSize);
 
   on_exchange_feature((BLE_EvtExchangeFeature*)pBleEvent->evtData);
 }
+
+#ifdef CONFIG_NRF52_LESC
+static
+void onLescDhkeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
+{
+  uint16_t conn_handle = pBleNrfEvt->evt.gap_evt.conn_handle;
+  uint8_t *recv_pk = pBleNrfEvt->evt.gap_evt.params.lesc_dhkey_request.p_pk_peer->pk;
+  uint8_t pk_raw[BLE_GAP_LESC_P256_PK_LEN];
+  nrf_crypto_ecc_public_key_t pk;
+  ble_gap_lesc_dhkey_t dhkey;
+  size_t dhkey_len = BLE_GAP_LESC_DHKEY_LEN;
+  nrf_crypto_ecdh_context_t ctx;
+
+  nrf_crypto_init();
+
+  /* Convert the received public key from little endian to big-endian. */
+
+  nrf_crypto_ecc_byte_order_invert(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                   recv_pk,
+                                   pk_raw,
+                                   BLE_GAP_LESC_P256_PK_LEN);
+
+  /* Convert received public key data to internal public key format. */
+
+  nrf_crypto_ecc_public_key_from_raw(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                     &pk,
+                                     pk_raw,
+                                     BLE_GAP_LESC_P256_PK_LEN);
+
+  /* Calculate the DHKey. */
+
+  nrf_crypto_ecdh_compute(&ctx,
+                          &commMem.gapMem->lescKey.priv,
+                          &pk,
+                          dhkey.key,
+                          &dhkey_len);
+
+  /* Invert the shared secret for little endian format. */
+
+  nrf_crypto_ecc_byte_order_invert(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                   dhkey.key,
+                                   dhkey.key,
+                                   BLE_GAP_LESC_DHKEY_LEN);
+
+  nrf_crypto_uninit();
+  sd_ble_gap_lesc_dhkey_reply(conn_handle, &dhkey);
+}
+#endif
 
 static
 void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
@@ -2905,7 +2967,11 @@ static int32_t init_pairing_mode(BLE_GAP_IO_CAP io_cap)
   pf->authReq               = auth;
   pf->minKeySize            = BLE_GAP_MIN_KEY_SIZE;
   pf->maxKeySize            = BLE_GAP_MAX_KEY_SIZE;
-
+#ifdef CONFIG_NRF52_LESC
+  pf->lesc                  = true;
+#else
+  pf->lesc                  = false;
+#endif
   return ret;
 }
 

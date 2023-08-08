@@ -25,6 +25,13 @@ config NRF52_LE_GATT
 	---help---
 		This option enabling Nordic nRF52 LE GATT HAL.
 
+config NRF52_LESC
+	bool "LE secure connection support"
+	default y
+	---help---
+		This option enables LE secure connection feature of nRF52.
+		LE secure connection is the safer pairing method,
+		but nrf52 needs more memory because mbedtls or micro-ecc is required.
 endif # NRF52_LE
 
 endif # BLUETOOTH_NRF52

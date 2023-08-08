@@ -56,8 +56,12 @@
  * @}
  *
  */
- 
 
+#if defined(CONFIG_NRF52_LESC)
+#  if !defined(CONFIG_EXTERNALS_MICRO_ECC) && !defined(CONFIG_EXTERNALS_MBEDTLS)
+#    error "nRF52 needs to enable CONFIG_EXTERNALS_MICRO_ECC or CONFIG_EXTERNALS_MBEDTLS"
+#  endif
+#endif
 
 #include <stdint.h>
 #include "nrf_crypto_init.h"
