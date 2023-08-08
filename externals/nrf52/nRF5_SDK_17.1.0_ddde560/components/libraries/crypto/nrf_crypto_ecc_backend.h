@@ -50,14 +50,8 @@
 #include "nrf_crypto_error.h"
 #include "nrf_crypto_ecc_shared.h"
 
-// Include all backends
-#include "cc310_backend_ecc.h"
-#include "cc310_bl_backend_ecc.h"
 #include "mbedtls_backend_ecc.h"
-#include "oberon_backend_ecc.h"
 #include "micro_ecc_backend_ecc.h"
-#include "optiga_backend_ecc.h"
-
 
 #ifdef __cplusplus
 extern "C" {

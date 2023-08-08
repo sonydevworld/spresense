@@ -52,11 +52,6 @@
  * @details This file includes all backend definitions.
  */
 
-#include "cc310_backend_rng.h"
-#include "nrf_hw_backend_rng.h"
-#include "nrf_hw_backend_rng_mbedtls.h"
-#include "optiga_backend_rng.h"
-
 #if !NRF_MODULE_ENABLED(NRF_CRYPTO_RNG)
 
 #ifdef __cplusplus
