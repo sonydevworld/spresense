@@ -98,7 +98,13 @@ int nrf_crypto_backend_mbedtls_ecc_mbedtls_rng(void * p_param, unsigned char * p
     return 0;
 
 #else
-    return MBEDTLS_ERR_ECP_FEATURE_UNAVAILABLE;
+    int i;
+    for (i = 0; i < size; i++)
+    {
+      p_data[i] = rand();
+    }
+
+    return 0;
 #endif
 }
 

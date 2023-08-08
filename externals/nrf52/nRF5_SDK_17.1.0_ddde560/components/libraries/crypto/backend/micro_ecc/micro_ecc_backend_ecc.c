@@ -75,9 +75,13 @@ int nrf_crypto_backend_micro_ecc_rng_callback(uint8_t * dest, unsigned size)
     return 1;
 
 #else
-    UNUSED_PARAMETER(dest);
-    UNUSED_PARAMETER(size);
-    return 0;
+    int i;
+    for (i = 0; i < size; i++)
+    {
+      dest[i] = rand();
+    }
+
+    return 1;
 #endif
 }
 
