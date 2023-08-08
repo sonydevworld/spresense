@@ -10,3 +10,6 @@
 [submodule "externals/mossfw/mossfw"]
 	path = externals/mossfw/mossfw
 	url = https://github.com/SPRESENSE/mossfw.git
+[submodule "externals/micro-ecc/micro-ecc"]
+	path = externals/micro-ecc/micro-ecc
+	url = https://github.com/kmackay/micro-ecc.git
