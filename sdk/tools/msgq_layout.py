@@ -43,7 +43,7 @@ import datetime
 # constants
 
 ALINGMENT_SIZE  = 4             # Alignment size
-QUE_BLOCK_SIZE  = 68            # Message queue block size sizeof (MsgQueBlock)
+QUE_BLOCK_SIZE  = 76            # Message queue block size sizeof (MsgQueBlock)
 MIN_PACKET_SIZE = 8             # Minimum message packet size
 MAX_PACKET_SIZE = 512           # Maximum message packet size
 MAX_PACKET_NUM  = 16384         # Maximum number of message packets
