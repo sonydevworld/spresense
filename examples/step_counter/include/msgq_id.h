@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_id.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,17 +37,21 @@
 #ifndef MSGQ_ID_H_INCLUDED
 #define MSGQ_ID_H_INCLUDED
 
-/* Message area size: 456 bytes */
+/* Message area size: 472 bytes */
+
 #define MSGQ_TOP_DRM 0xfe000
-#define MSGQ_END_DRM 0xfe1c8
+#define MSGQ_END_DRM 0xfe1d8
 
 /* Message area fill value after message poped */
+
 #define MSG_FILL_VALUE_AFTER_POP 0x0
 
 /* Message parameter type match check */
+
 #define MSG_PARAM_TYPE_MATCH_CHECK false
 
 /* Message queue pool IDs */
+
 #define MSGQ_NULL 0
 #define MSGQ_SEN_MGR 1
 #define NUM_MSGQ_POOLS 2
@@ -55,11 +59,12 @@
 /* User defined constants */
 
 /************************************************************************/
-#define MSGQ_SEN_MGR_QUE_BLOCK_DRM 0xfe044
-#define MSGQ_SEN_MGR_N_QUE_DRM 0xfe088
+#define MSGQ_SEN_MGR_QUE_BLOCK_DRM 0xfe04c
+#define MSGQ_SEN_MGR_N_QUE_DRM 0xfe098
 #define MSGQ_SEN_MGR_N_SIZE 40
 #define MSGQ_SEN_MGR_N_NUM 8
 #define MSGQ_SEN_MGR_H_QUE_DRM 0xffffffff
 #define MSGQ_SEN_MGR_H_SIZE 0
 #define MSGQ_SEN_MGR_H_NUM 0
+
 #endif /* MSGQ_ID_H_INCLUDED */

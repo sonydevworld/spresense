@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_pool.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,10 +39,12 @@
 
 #include "msgq_id.h"
 
-extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] = {
-   /* n_drm, n_size, n_num, h_drm, h_size, h_num */
+extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
+{
+  /* n_drm, n_size, n_num, h_drm, h_size, h_num */
+
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfe088, 40, 8, 0xffffffff, 0, 0 }, /* MSGQ_SEN_MGR */
+  { 0xfe098, 40, 8, 0xffffffff, 0, 0 }, /* MSGQ_SEN_MGR */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

@@ -2,7 +2,7 @@
 /****************************************************************************
  * mem_layout.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,13 +40,16 @@
 /*
  * Memory devices
  */
+
 /* SHM_SRAM: type=RAM, use=0x0001f300, remainder=0x00000d00 */
+
 #define SHM_SRAM_ADDR  0x000e0000
 #define SHM_SRAM_SIZE  0x00020000
 
 /*
  * Fixed areas
  */
+
 #define SENSOR_WORK_AREA_ALIGN   0x00000008
 #define SENSOR_WORK_AREA_ADDR    0x000e0000
 #define SENSOR_WORK_AREA_DRM     0x000e0000 /* _DRM is obsolete macro. to use _ADDR */
@@ -77,13 +80,19 @@
 /*
  * Section IDs
  */
+
 #define SECTION_NO0       0
+
+/*
+ * Number of sections
+ */
 
 #define NUM_MEM_SECTIONS  1
 
 /*
  * Pool IDs
  */
+
 const MemMgrLite::PoolId S0_NULL_POOL                = { 0, SECTION_NO0};  /*  0 */
 const MemMgrLite::PoolId S0_SENSOR_DSP_CMD_BUF_POOL  = { 1, SECTION_NO0};  /*  1 */
 const MemMgrLite::PoolId S0_ACCEL_DATA_BUF_POOL      = { 2, SECTION_NO0};  /*  2 */
@@ -95,11 +104,12 @@ const MemMgrLite::PoolId S0_GNSS_DATA_BUF_POOL       = { 3, SECTION_NO0};  /*  3
 #define NUM_MEM_LAYOUTS      1
 #define NUM_MEM_POOLS        4
 
-
 /*
  * Pool areas
  */
+
 /* Section0 Layout0: */
+
 #define MEMMGR_S0_L0_WORK_SIZE   0x00000060
 
 #define S0_L0_SENSOR_DSP_CMD_BUF_POOL_ALIGN    0x00000008
