@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_id.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,10 +37,10 @@
 #ifndef MSGQ_ID_H_INCLUDED
 #define MSGQ_ID_H_INCLUDED
 
-/* Message area size: 8188 bytes */
+/* Message area size: 7564 bytes */
 
 #define MSGQ_TOP_DRM 0xfd000
-#define MSGQ_END_DRM 0xfeffc
+#define MSGQ_END_DRM 0xfed8c
 
 /* Message area fill value after message poped */
 
@@ -69,88 +69,88 @@
 /* User defined constants */
 
 /************************************************************************/
-#define MSGQ_AUD_MGR_QUE_BLOCK_DRM 0xfd044
-#define MSGQ_AUD_MGR_N_QUE_DRM 0xfd330
+#define MSGQ_AUD_MGR_QUE_BLOCK_DRM 0xfd04c
+#define MSGQ_AUD_MGR_N_QUE_DRM 0xfd390
 #define MSGQ_AUD_MGR_N_SIZE 88
 #define MSGQ_AUD_MGR_N_NUM 30
 #define MSGQ_AUD_MGR_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_MGR_H_SIZE 0
 #define MSGQ_AUD_MGR_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd088
-#define MSGQ_AUD_APP_N_QUE_DRM 0xfdd80
+#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd098
+#define MSGQ_AUD_APP_N_QUE_DRM 0xfdde0
 #define MSGQ_AUD_APP_N_SIZE 64
 #define MSGQ_AUD_APP_N_NUM 2
 #define MSGQ_AUD_APP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_APP_H_SIZE 0
 #define MSGQ_AUD_APP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_DSP_QUE_BLOCK_DRM 0xfd0cc
-#define MSGQ_AUD_DSP_N_QUE_DRM 0xfde00
+#define MSGQ_AUD_DSP_QUE_BLOCK_DRM 0xfd0e4
+#define MSGQ_AUD_DSP_N_QUE_DRM 0xfde60
 #define MSGQ_AUD_DSP_N_SIZE 20
 #define MSGQ_AUD_DSP_N_NUM 5
 #define MSGQ_AUD_DSP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_DSP_H_SIZE 0
 #define MSGQ_AUD_DSP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_SYNTHESIZER_QUE_BLOCK_DRM 0xfd110
-#define MSGQ_AUD_SYNTHESIZER_N_QUE_DRM 0xfde64
-#define MSGQ_AUD_SYNTHESIZER_N_SIZE 88
+#define MSGQ_AUD_SYNTHESIZER_QUE_BLOCK_DRM 0xfd130
+#define MSGQ_AUD_SYNTHESIZER_N_QUE_DRM 0xfdec4
+#define MSGQ_AUD_SYNTHESIZER_N_SIZE 64
 #define MSGQ_AUD_SYNTHESIZER_N_NUM 30
 #define MSGQ_AUD_SYNTHESIZER_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_SYNTHESIZER_H_SIZE 0
 #define MSGQ_AUD_SYNTHESIZER_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_OUTPUT_MIX_QUE_BLOCK_DRM 0xfd154
-#define MSGQ_AUD_OUTPUT_MIX_N_QUE_DRM 0xfe8b4
+#define MSGQ_AUD_OUTPUT_MIX_QUE_BLOCK_DRM 0xfd17c
+#define MSGQ_AUD_OUTPUT_MIX_N_QUE_DRM 0xfe644
 #define MSGQ_AUD_OUTPUT_MIX_N_SIZE 48
 #define MSGQ_AUD_OUTPUT_MIX_N_NUM 8
 #define MSGQ_AUD_OUTPUT_MIX_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_OUTPUT_MIX_H_SIZE 0
 #define MSGQ_AUD_OUTPUT_MIX_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY0_QUE_BLOCK_DRM 0xfd198
-#define MSGQ_AUD_RND_PLY0_N_QUE_DRM 0xfea34
+#define MSGQ_AUD_RND_PLY0_QUE_BLOCK_DRM 0xfd1c8
+#define MSGQ_AUD_RND_PLY0_N_QUE_DRM 0xfe7c4
 #define MSGQ_AUD_RND_PLY0_N_SIZE 32
 #define MSGQ_AUD_RND_PLY0_N_NUM 16
 #define MSGQ_AUD_RND_PLY0_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RND_PLY0_H_SIZE 0
 #define MSGQ_AUD_RND_PLY0_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY0_SYNC_QUE_BLOCK_DRM 0xfd1dc
-#define MSGQ_AUD_RND_PLY0_SYNC_N_QUE_DRM 0xfec34
+#define MSGQ_AUD_RND_PLY0_SYNC_QUE_BLOCK_DRM 0xfd214
+#define MSGQ_AUD_RND_PLY0_SYNC_N_QUE_DRM 0xfe9c4
 #define MSGQ_AUD_RND_PLY0_SYNC_N_SIZE 16
 #define MSGQ_AUD_RND_PLY0_SYNC_N_NUM 8
 #define MSGQ_AUD_RND_PLY0_SYNC_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RND_PLY0_SYNC_H_SIZE 0
 #define MSGQ_AUD_RND_PLY0_SYNC_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY1_QUE_BLOCK_DRM 0xfd220
-#define MSGQ_AUD_RND_PLY1_N_QUE_DRM 0xfecb4
+#define MSGQ_AUD_RND_PLY1_QUE_BLOCK_DRM 0xfd260
+#define MSGQ_AUD_RND_PLY1_N_QUE_DRM 0xfea44
 #define MSGQ_AUD_RND_PLY1_N_SIZE 32
 #define MSGQ_AUD_RND_PLY1_N_NUM 16
 #define MSGQ_AUD_RND_PLY1_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RND_PLY1_H_SIZE 0
 #define MSGQ_AUD_RND_PLY1_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY1_SYNC_QUE_BLOCK_DRM 0xfd264
-#define MSGQ_AUD_RND_PLY1_SYNC_N_QUE_DRM 0xfeeb4
+#define MSGQ_AUD_RND_PLY1_SYNC_QUE_BLOCK_DRM 0xfd2ac
+#define MSGQ_AUD_RND_PLY1_SYNC_N_QUE_DRM 0xfec44
 #define MSGQ_AUD_RND_PLY1_SYNC_N_SIZE 16
 #define MSGQ_AUD_RND_PLY1_SYNC_N_NUM 8
 #define MSGQ_AUD_RND_PLY1_SYNC_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RND_PLY1_SYNC_H_SIZE 0
 #define MSGQ_AUD_RND_PLY1_SYNC_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_PFDSP0_QUE_BLOCK_DRM 0xfd2a8
-#define MSGQ_AUD_PFDSP0_N_QUE_DRM 0xfef34
+#define MSGQ_AUD_PFDSP0_QUE_BLOCK_DRM 0xfd2f8
+#define MSGQ_AUD_PFDSP0_N_QUE_DRM 0xfecc4
 #define MSGQ_AUD_PFDSP0_N_SIZE 20
 #define MSGQ_AUD_PFDSP0_N_NUM 5
 #define MSGQ_AUD_PFDSP0_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_PFDSP0_H_SIZE 0
 #define MSGQ_AUD_PFDSP0_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_PFDSP1_QUE_BLOCK_DRM 0xfd2ec
-#define MSGQ_AUD_PFDSP1_N_QUE_DRM 0xfef98
+#define MSGQ_AUD_PFDSP1_QUE_BLOCK_DRM 0xfd344
+#define MSGQ_AUD_PFDSP1_N_QUE_DRM 0xfed28
 #define MSGQ_AUD_PFDSP1_N_SIZE 20
 #define MSGQ_AUD_PFDSP1_N_NUM 5
 #define MSGQ_AUD_PFDSP1_H_QUE_DRM 0xffffffff
