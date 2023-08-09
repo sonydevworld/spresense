@@ -1726,3 +1726,21 @@ https://github.com/SonySemiconductorSolutions/mossfw
 Copyright 2023 Sony Semiconductor Solutions Co.
 
 ========================================================================
+
+
+19. License of micro-ecc library
+
+========================================================================
+externals/micro-ecc/micro-ecc/
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+  externals/micro-ecc/micro-ecc/LICENSE.txt
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://github.com/kmackay/micro-ecc.git
+
+========================================================================
