@@ -143,3 +143,7 @@ CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include
 
 CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)apps$(DELIM)include
 CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)apps$(DELIM)include
+
+define ARLOCK
+	flock $1.lock $(call ARCHIVE, $1, $(2))
+endef
