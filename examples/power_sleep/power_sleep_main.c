@@ -112,7 +112,16 @@ int main(int argc, FAR char *argv[])
   setrel.event.sigev_signo  = ALARM_SIGNO;
   setrel.event.sigev_value.sival_int = 0;
 
-  ret = ioctl(fd, RTC_SET_RELATIVE, (unsigned long)&setrel);
+  do
+    {
+      /* If the RTC is not initialized and returns EBUSY,
+       * set the RTC alarm repeatedly until it returns OK.
+       */
+
+      ret = ioctl(fd, RTC_SET_RELATIVE, (unsigned long)&setrel);
+    }
+  while ((ret < 0) && (errno == EBUSY));
+
   close(fd);
   if (ret < 0)
     {
