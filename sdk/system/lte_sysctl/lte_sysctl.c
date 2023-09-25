@@ -111,6 +111,7 @@
 #define APN_PASS_FMT "  Password: %s\n"
 #define RAT_FMT "RAT: %s\n"
 #define VER_FMT "VER: %s\n"
+#define IMEI_FMT "IMEI: %s\n"
 #define LTE_SYSCTL_CMD_START "start"
 #define LTE_SYSCTL_CMD_STOP "stop"
 #define LTE_SYSCTL_CMD_STAT "stat"
@@ -177,6 +178,349 @@ static void show_usage(FAR const char *progname, int exitcode)
 #endif
   fprintf(stderr, " [-h]: Show this message\n");
   exit(exitcode);
+}
+
+static bool is_edrx_enable(lte_edrx_setting_t *val)
+{
+  if (val == NULL)
+    {
+      return false;
+    }
+
+  if (val->act_type == LTE_EDRX_ACTTYPE_WBS1 ||
+      val->act_type == LTE_EDRX_ACTTYPE_NBS1)
+    {
+      return val->enable;
+    }
+
+  return false;
+}
+
+static const char *get_edrx_enable(lte_edrx_setting_t *val)
+{
+  return is_edrx_enable(val) ? "enable" : "disable";
+}
+
+static const char *get_edrx_cycle(lte_edrx_setting_t *val)
+{
+  static const char *cycle_str[LTE_EDRX_CYC_1048576 + 1] =
+    {
+      "5.12",     /* LTE_EDRX_CYC_512     */
+      "10.24",    /* LTE_EDRX_CYC_1024    */
+      "20.48",    /* LTE_EDRX_CYC_2048    */
+      "40.96",    /* LTE_EDRX_CYC_4096    */
+      "61.44",    /* LTE_EDRX_CYC_6144    */
+      "81.92",    /* LTE_EDRX_CYC_8192    */
+      "102.40",   /* LTE_EDRX_CYC_10240   */
+      "122.88",   /* LTE_EDRX_CYC_12288   */
+      "143.36",   /* LTE_EDRX_CYC_14336   */
+      "163.84",   /* LTE_EDRX_CYC_16384   */
+      "327.68",   /* LTE_EDRX_CYC_32768   */
+      "655.36",   /* LTE_EDRX_CYC_65536   */
+      "1310.72",  /* LTE_EDRX_CYC_131072  */
+      "2621.44",  /* LTE_EDRX_CYC_262144  */
+      "5242.88",  /* LTE_EDRX_CYC_524288  */
+      "10485.76"  /* LTE_EDRX_CYC_1048576 */
+    };
+
+  if (is_edrx_enable(val))
+    {
+      if (val->edrx_cycle <= LTE_EDRX_CYC_1048576)
+        {
+          return cycle_str[val->edrx_cycle];
+        }
+    }
+
+  return "-";
+}
+
+static const char *get_edrx_ptw(lte_edrx_setting_t *val)
+{
+  static const char *ptw_str[LTE_EDRX_PTW_4096 + 1] =
+    {
+      "1.28",   /* LTE_EDRX_PTW_128  */
+      "2.56",   /* LTE_EDRX_PTW_256  */
+      "3.84",   /* LTE_EDRX_PTW_384  */
+      "5.12",   /* LTE_EDRX_PTW_512  */
+      "6.40",   /* LTE_EDRX_PTW_640  */
+      "7.68",   /* LTE_EDRX_PTW_768  */
+      "8.96",   /* LTE_EDRX_PTW_896  */
+      "10.24",  /* LTE_EDRX_PTW_1024 */
+      "11.52",  /* LTE_EDRX_PTW_1152 */
+      "12.80",  /* LTE_EDRX_PTW_1280 */
+      "14.08",  /* LTE_EDRX_PTW_1408 */
+      "15.36",  /* LTE_EDRX_PTW_1536 */
+      "16.64",  /* LTE_EDRX_PTW_1664 */
+      "17.92",  /* LTE_EDRX_PTW_1792 */
+      "19.20",  /* LTE_EDRX_PTW_1920 */
+      "20.48",  /* LTE_EDRX_PTW_2048 */
+      "23.04",  /* LTE_EDRX_PTW_2304 */
+      "25.60",  /* LTE_EDRX_PTW_2560 */
+      "28.16",  /* LTE_EDRX_PTW_2816 */
+      "30.72",  /* LTE_EDRX_PTW_3072 */
+      "33.28",  /* LTE_EDRX_PTW_3328 */
+      "35.84",  /* LTE_EDRX_PTW_3584 */
+      "38.40",  /* LTE_EDRX_PTW_3840 */
+      "40.96"   /* LTE_EDRX_PTW_4096 */
+    };
+
+  if (is_edrx_enable(val))
+    {
+      if (val->ptw_val <= LTE_EDRX_PTW_4096)
+        {
+          return ptw_str[val->ptw_val];
+        }
+    }
+
+  return "-";
+}
+
+static void show_edrxsettings(void)
+{
+  int ret;
+  lte_edrx_setting_t dev_edrx;
+  lte_edrx_setting_t nego_edrx;
+
+  ret = lte_get_edrx_sync(&dev_edrx);
+  if (ret == 0)
+    {
+      ret = lte_get_current_edrx_sync(&nego_edrx);
+      if (ret == 0)
+        {
+          fprintf(stderr, "eDRX (device settings): %s\n"
+                          "  eDRX cycle:         %s seconds\n"
+                          "  Paging time window: %s seconds\n",
+                          get_edrx_enable(&dev_edrx),
+                          get_edrx_cycle(&dev_edrx),
+                          get_edrx_ptw(&dev_edrx));
+          fprintf(stderr, "eDRX (negotiated with LTE): %s\n"
+                          "  eDRX cycle:         %s seconds\n"
+                          "  Paging time window: %s seconds\n",
+                          get_edrx_enable(&nego_edrx),
+                          get_edrx_cycle(&nego_edrx),
+                          get_edrx_ptw(&nego_edrx));
+        }
+      else
+        {
+          fprintf(stderr, "eDRX (device settings): %s\n"
+                          "  eDRX cycle:         %s seconds\n"
+                          "  Paging time window: %s seconds\n",
+                          get_edrx_enable(&dev_edrx),
+                          get_edrx_cycle(&dev_edrx),
+                          get_edrx_ptw(&dev_edrx));
+        }
+    }
+}
+
+static bool is_psm_enable(lte_psm_setting_t *val)
+{
+  if (val == NULL)
+    {
+      return false;
+    }
+
+  if (val->req_active_time.unit == LTE_PSM_T3324_UNIT_DEACT ||
+      val->req_active_time.time_val == 0 ||
+      val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_DEACT ||
+      val->ext_periodic_tau_time.time_val == 0)
+    {
+      return false;
+    }
+
+  return val->enable;
+}
+
+static const char *get_psm_enable(lte_psm_setting_t *val)
+{
+  return is_psm_enable(val) ? "enable" : "disable";
+}
+
+static int get_psm_acttimer(lte_psm_setting_t *val)
+{
+  /* val->req_active_time.time_val: The range is 0 to 31 seconds */
+
+  if (val->req_active_time.unit == LTE_PSM_T3324_UNIT_2SEC)
+    {
+      return val->req_active_time.time_val * 2;
+    }
+  else if (val->req_active_time.unit == LTE_PSM_T3324_UNIT_1MIN)
+    {
+      return val->req_active_time.time_val * 60;
+    }
+  else if (val->req_active_time.unit == LTE_PSM_T3324_UNIT_6MIN)
+    {
+      return val->req_active_time.time_val * 6 * 60;
+    }
+
+  return 0;
+}
+
+static int get_psm_updatetimer(lte_psm_setting_t *val)
+{
+  /* val->ext_periodic_tau_time.time_val: The range is 0 to 31 seconds */
+
+  if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_2SEC)
+    {
+      return val->ext_periodic_tau_time.time_val * 2;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_30SEC)
+    {
+      return val->ext_periodic_tau_time.time_val * 30;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_1MIN)
+    {
+      return val->ext_periodic_tau_time.time_val * 60;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_10MIN)
+    {
+      return val->ext_periodic_tau_time.time_val * 10 * 60;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_1HOUR)
+    {
+      return val->ext_periodic_tau_time.time_val * 60 * 60;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_10HOUR)
+    {
+      return val->ext_periodic_tau_time.time_val * 10 * 60 * 60;
+    }
+  else if (val->ext_periodic_tau_time.unit == LTE_PSM_T3412_UNIT_320HOUR)
+    {
+      return val->ext_periodic_tau_time.time_val * 320 * 60 * 60;
+    }
+
+  return 0;
+}
+
+static void show_psmsettings(void)
+{
+  int ret;
+  lte_psm_setting_t dev_psm;
+  lte_psm_setting_t nego_psm;
+
+  ret = lte_get_psm_sync(&dev_psm);
+  if (ret == 0)
+    {
+      ret = lte_get_current_psm_sync(&nego_psm);
+      if (ret == 0)
+        {
+          fprintf(stderr, "PSM (device settings): %s\n"
+                          "  Active timer:          %d seconds\n"
+                          "  Periodic update timer: %d seconds\n",
+                          get_psm_enable(&dev_psm),
+                          get_psm_acttimer(&dev_psm),
+                          get_psm_updatetimer(&dev_psm));
+          fprintf(stderr, "PSM (negotiated with LTE): %s\n"
+                          "  Active timer:          %d seconds\n"
+                          "  Periodic update timer: %d seconds\n",
+                          get_psm_enable(&nego_psm),
+                          get_psm_acttimer(&nego_psm),
+                          get_psm_updatetimer(&nego_psm));
+        }
+      else
+        {
+          fprintf(stderr, "PSM (device settings): %s\n"
+                          "  Active timer:          %d seconds\n"
+                          "  Periodic update timer: %d seconds\n",
+                          get_psm_enable(&dev_psm),
+                          get_psm_acttimer(&dev_psm),
+                          get_psm_updatetimer(&dev_psm));
+        }
+    }
+}
+
+static void show_siminfo(void)
+{
+  int ret;
+  char buff[LTE_PHONENO_LEN];
+  lte_siminfo_t siminfo;
+  int i;
+
+  ret = lte_get_imsi_sync(buff, LTE_IMSI_LEN);
+  if (ret == 0)
+    {
+      fprintf(stderr, "SIM: Inserted\n");
+      fprintf(stderr, "  IMSI: %s\n", buff);
+    }
+  else
+    {
+      fprintf(stderr, "SIM: Not inserted\n");
+      return;
+    }
+
+  ret = lte_get_phoneno_sync(buff, LTE_PHONENO_LEN);
+  if (ret == 0)
+    {
+      fprintf(stderr, "  Phone number: %s\n", buff);
+    }
+
+  ret = lte_get_siminfo_sync(LTE_SIMINFO_GETOPT_ICCID, &siminfo);
+  if (ret == 0)
+    {
+      fprintf(stderr, "  ICCID: ");
+      for (i = 0; i < siminfo.iccid_len - 1; i++)
+        {
+          fprintf(stderr, "%02X", siminfo.iccid[i]);
+        }
+
+      if ((siminfo.iccid[i] & 0x0f) == 0x0f)
+        {
+          fprintf(stderr, "%X\n", siminfo.iccid[i] >> 4);
+        }
+      else
+        {
+          fprintf(stderr, "%02X\n", siminfo.iccid[i]);
+        }
+    }
+
+  ret = lte_get_siminfo_sync(LTE_SIMINFO_GETOPT_MCCMNC, &siminfo);
+  if (ret == 0)
+    {
+      fprintf(stderr, "  MCC MNC: %c%c%c ",
+              siminfo.mcc[0], siminfo.mcc[1], siminfo.mcc[2]);
+      if (siminfo.mnc_digit == 2)
+        {
+          fprintf(stderr, "%c%c\n",
+                  siminfo.mnc[0], siminfo.mnc[1]);
+        }
+      else
+        {
+          fprintf(stderr, "%c%c%c\n",
+                  siminfo.mnc[0], siminfo.mnc[1], siminfo.mnc[2]);
+        }
+    }
+
+  ret = lte_get_siminfo_sync(LTE_SIMINFO_GETOPT_SPN, &siminfo);
+  if (ret == 0)
+    {
+      if (siminfo.spn_len <= sizeof(siminfo.spn))
+        {
+          char tail = siminfo.spn[siminfo.spn_len - 1];
+          siminfo.spn[siminfo.spn_len - 1] = '\0';
+          fprintf(stderr, "  Service provider name: %s%c\n",
+                  siminfo.spn, tail);
+        }
+    }
+}
+
+static void show_networkinfo(FAR lte_netinfo_t *netinfo)
+{
+  int i;
+  int ret;
+  char oper[LTE_OPERATOR_LEN];
+
+  fprintf(stderr, "Network infomation\n");
+
+  for (i = 0; i < netinfo->pdn_stat[0].ipaddr_num; i++)
+    {
+      fprintf(stderr, "  IP address[%d]: %s\n", i,
+              netinfo->pdn_stat[0].address[i].address);
+    }
+
+  ret = lte_get_operator_sync(oper, LTE_OPERATOR_LEN);
+  if (ret == 0)
+    {
+      fprintf(stderr, "  Operator: %s\n", oper);
+    }
 }
 
 static int save_apnsettings(FAR lte_apn_setting_t *apn)
@@ -299,7 +643,8 @@ err_out:
 static void show_daemon_stat(void)
 {
   int ret;
-  lte_pdn_t pdnstat[NPDN];
+  char imei[LTE_IMEI_LEN];
+  lte_pdn_t pdnstat[NPDN] = {0};
   lte_netinfo_t info = {.pdn_stat = pdnstat};
 
   ret = lte_get_netinfo_sync(NPDN, &info);
@@ -377,6 +722,21 @@ static void show_daemon_stat(void)
       if (ret == 0)
         {
           fprintf(stderr, VER_FMT, ver.np_package);
+        }
+
+      ret = lte_get_imei_sync(imei, LTE_IMEI_LEN);
+      if (ret == 0)
+        {
+          fprintf(stderr, IMEI_FMT, imei);
+        }
+
+      show_edrxsettings();
+      show_psmsettings();
+      show_siminfo();
+
+      if (info.pdn_num != 0)
+        {
+          show_networkinfo(&info);
         }
     }
 }
