@@ -163,13 +163,17 @@ static void restart_callback(uint32_t reason)
 static void show_usage(FAR const char *progname, int exitcode)
 {
   fprintf(stderr, "\nUSAGE: %s command\n", progname);
-  fprintf(stderr, " [-a <apn_name>] [-i <ip_type>] [-v <auth_type>] [-u <user_name>] [-p <password>] [-r <rat_type>] start\n");
+  fprintf(stderr, " [-a <apn_name>] [-i <ip_type>] [-v <auth_type>]"
+                  " [-u <user_name>] [-p <password>] [-r <rat_type>]"
+                  " start\n");
   fprintf(stderr, "  -a: APN name\n");
-  fprintf(stderr, "  -i: IP type 0=IPv4, 1=IPv6, 2=IPv4 and IPv6, 3=Non-IP\n");
+  fprintf(stderr, "  -i: IP type 0=IPv4, 1=IPv6, 2=IPv4 and IPv6,"
+                  " 3=Non-IP\n");
   fprintf(stderr, "  -v: Authenticaion type 0=NONE, 1=PAP, 2=CHAP\n");
   fprintf(stderr, "  -u: User name for authenticaion\n");
   fprintf(stderr, "  -p: Password for authenticaion\n");
-  fprintf(stderr, "  -r: Radio Access Technology type M1=CAT-M1, NB=NB-IoT\n");
+  fprintf(stderr, "  -r: Radio Access Technology type M1=CAT-M1,"
+                  " NB=NB-IoT\n");
   fprintf(stderr, " stop\n");
   fprintf(stderr, " stat\n");
 #ifdef CONFIG_LTE_SYSCTL_FACTORY_RESET
@@ -525,25 +529,34 @@ static void show_networkinfo(FAR lte_netinfo_t *netinfo)
 
 static int save_apnsettings(FAR lte_apn_setting_t *apn)
 {
-  FAR void *inarg[] = {apn};
+  FAR void *inarg[] =
+    {
+      apn
+    };
 
   return lapi_req(LTE_CMDID_SAVEAPN, (FAR void *)inarg, ARRAY_SZ(inarg),
-    NULL, 0, NULL);
+                  NULL, 0, NULL);
 }
 
 static int get_apnsettings(FAR lte_apn_setting_t *apn)
 {
-  FAR void *outarg[] = {apn};
+  FAR void *outarg[] =
+    {
+      apn
+    };
 
   return lapi_req(LTE_CMDID_GETAPN, NULL, 0,
-    (FAR void *)outarg, ARRAY_SZ(outarg), NULL);
+                  (FAR void *)outarg, ARRAY_SZ(outarg), NULL);
 }
 
 static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
-  uint8_t rat)
+                        uint8_t rat)
 {
   int ret;
-  lte_version_t version = {0};
+  lte_version_t version =
+    {
+      0
+    };
 
   sem_init(&g_sem, 0, 0);
 
@@ -619,11 +632,13 @@ static int start_daemon(FAR const char *progname, FAR lte_apn_setting_t *apn,
           if (ret == -ENOTSUP)
             {
               fprintf(stderr, ERR_FMT_STR, progname, LTE_SYSCTL_CMD_START,
-              "RAT changes are not supported in the FW version of the modem");
+                      "RAT changes are not supported"
+                      " in the FW version of the modem");
             }
           else
             {
-              fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START, -ret);
+              fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_START,
+                      -ret);
             }
 
           lte_finalize();
@@ -644,8 +659,15 @@ static void show_daemon_stat(void)
 {
   int ret;
   char imei[LTE_IMEI_LEN];
-  lte_pdn_t pdnstat[NPDN] = {0};
-  lte_netinfo_t info = {.pdn_stat = pdnstat};
+  lte_pdn_t pdnstat[NPDN] =
+    {
+      0
+    };
+
+  lte_netinfo_t info =
+    {
+      .pdn_stat = pdnstat
+    };
 
   ret = lte_get_netinfo_sync(NPDN, &info);
   if (ret < 0)
@@ -704,6 +726,7 @@ static void show_daemon_stat(void)
             {
               fprintf(stderr, APN_AUTH_FMT, CHAP_STR);
             }
+
           fprintf(stderr, APN_USER_FMT, apn.user_name);
           fprintf(stderr, APN_PASS_FMT, apn.password);
         }
@@ -745,7 +768,10 @@ static void show_daemon_stat(void)
 static int factory_reset(FAR const char *progname)
 {
   int ret;
-  lte_version_t version = {0};
+  lte_version_t version =
+    {
+      0
+    };
 
   sem_init(&g_sem, 0, 0);
 
@@ -759,7 +785,8 @@ static int factory_reset(FAR const char *progname)
         }
       else
         {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET,
+                  -ret);
         }
 
       goto err_out;
@@ -791,7 +818,8 @@ static int factory_reset(FAR const char *progname)
       ret = lte_get_version_sync(&version);
       if (ret < 0)
         {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET,
+                  -ret);
         }
       else
         {
@@ -826,7 +854,8 @@ static int factory_reset(FAR const char *progname)
         }
       else
         {
-          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET, -ret);
+          fprintf(stderr, ERR_FMT_NUM, progname, LTE_SYSCTL_CMD_FRESET,
+                  -ret);
         }
 
       lte_release_wakelock();
@@ -864,7 +893,6 @@ err_out:
 }
 #endif
 
-
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -874,12 +902,14 @@ int main(int argc, FAR char *argv[])
   int               ret         = 0;
   int               opt         = 0;
   char              *cmd        = NULL;
-  lte_apn_setting_t setting_apn = {};
   char              *rat_str    = NULL;
   uint8_t           rat         = RAT_KEEP;
   long apn_type;
   long ip_type;
   long auth_type;
+  lte_apn_setting_t setting_apn =
+    {
+    };
 
   setting_apn.apn       = APP_APN_NAME;
   setting_apn.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
@@ -906,9 +936,9 @@ int main(int argc, FAR char *argv[])
             apn_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE_HEX);
             if (apn_type != (LTE_APN_TYPE_IA | LTE_APN_TYPE_DEFAULT))
               {
-                fprintf(stderr, "Currently supported APN type is 0x%x",
+                fprintf(stderr, "Currently supported APN type is 0x%x"
+                        ": LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA\n",
                         LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA);
-                fprintf(stderr, ": LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA\n");
                 show_usage(argv[0], EXIT_FAILURE);
               }
 
@@ -950,7 +980,7 @@ int main(int argc, FAR char *argv[])
             setting_apn.user_name = optarg;
             break;
           case 'p':
-            if (strlen(optarg) >=LTE_APN_PASSWD_LEN)
+            if (strlen(optarg) >= LTE_APN_PASSWD_LEN)
               {
                 fprintf(stderr, "Password is too long\n");
                 show_usage(argv[0], EXIT_FAILURE);
@@ -989,6 +1019,7 @@ int main(int argc, FAR char *argv[])
       fprintf(stderr, "%s: missing required argument(s)\n", argv[0]);
       show_usage(argv[0], EXIT_FAILURE);
     }
+
   cmd = argv[optind++];
 
   if (optind < argc)
