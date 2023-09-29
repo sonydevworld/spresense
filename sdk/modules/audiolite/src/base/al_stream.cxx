@@ -48,7 +48,7 @@
 audiolite_filestream::~audiolite_filestream()
 {
   mossfw_lock_take(&_lock);
-  if (_fp >= 0 && _self_open)
+  if (_fp != NULL && _self_open)
     {
       fclose(_fp);
     }
