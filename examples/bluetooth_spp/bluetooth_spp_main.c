@@ -358,7 +358,7 @@ int main(int argc, FAR char *argv[])
       printf("spp>");
       fflush(stdout);
 
-      len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
+      len = readline_stream(buffer, sizeof(buffer) - 1, stdin, stdout);
 
       if (s_bt_acl_state && s_bt_acl_state->bt_acl_connection == BT_CONNECTED)
         {

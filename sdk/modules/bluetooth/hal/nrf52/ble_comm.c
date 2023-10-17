@@ -1100,7 +1100,7 @@ static int input_passkey(uint8_t *key)
 
   LOG_OUT("passkey_input> ");
   fflush(stdout);
-  len = readline((char*)key, AUTH_KEY_SIZE, stdin, stdout);
+  len = readline_stream((char*)key, AUTH_KEY_SIZE, stdin, stdout);
   if (len < 1)
     {
       LOG_OUT("readpasskey error, ret:%d\n", len);

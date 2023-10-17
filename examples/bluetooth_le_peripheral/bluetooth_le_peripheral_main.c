@@ -627,7 +627,7 @@ int main(int argc, FAR char *argv[])
       printf("ble_peripheral>");
       fflush(stdout);
 
-      len = readline(buffer, sizeof(buffer) - 1, stdin, stdout);
+      len = readline_stream(buffer, sizeof(buffer) - 1, stdin, stdout);
 
       if (ble_is_connected)
         {
