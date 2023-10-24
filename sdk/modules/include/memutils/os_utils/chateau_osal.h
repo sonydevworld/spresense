@@ -171,13 +171,23 @@ static INLINE size_t Chateau_CountSemaphore(Chateau_sem_handle_t h) {
 /* 取り敢えず仮実装 */
 #define TIME_FOREVER	(unsigned)TMO_FEVR
 typedef sem_t	Chateau_sem_handle_t;
-#define Chateau_CreateSemaphore(pH, ini, max)				\
-	do {    F_ASSERT((sem_init(pH,ini,max)) == 0);	\
-	} while(0)
-#define Chateau_DeleteSemaphore(h)  F_ASSERT(sem_destroy(&h) == 0)
-#define Chateau_SignalSemaphore(h)      F_ASSERT(sem_post(&h)		== 0)
-#define Chateau_SignalSemaphoreTask(h)  F_ASSERT(sem_post(&h)		== 0)
-#define Chateau_SignalSemaphoreIsr(h)   F_ASSERT(sem_post(&h)		== 0)
+#define Chateau_CreateSemaphore(pH, ini, max)   \
+  do {                                          \
+    int ret = sem_init(pH, ini, max);           \
+    F_ASSERT(ret == 0);                         \
+  } while (0)
+#define Chateau_DeleteSemaphore(h)              \
+  do {                                          \
+    int ret = sem_destroy(&h);                  \
+    F_ASSERT(ret == 0);                         \
+  } while (0)
+#define Chateau_SignalSemaphore(h)              \
+  do {                                          \
+    int ret = sem_post(&h);                     \
+    F_ASSERT(ret == 0);                         \
+  } while (0)
+#define Chateau_SignalSemaphoreTask(h)  Chateau_SignalSemaphore(h)
+#define Chateau_SignalSemaphoreIsr(h)   Chateau_SignalSemaphore(h)
 #define Chateau_TimedWaitSemaphore(h, tm) (nxsem_timedwait_uninterruptible(&h, &tm) == 0)
 #define Chateau_WaitSemaphore(h)        (nxsem_wait_uninterruptible(&h) == 0)
 
