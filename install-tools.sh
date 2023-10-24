@@ -2,7 +2,7 @@
 ############################################################################
 # install-tools.sh
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2019, 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -43,15 +43,16 @@ NXTOOL=nuttx-tools
 NXTOOLARCHIVE=${NXTOOL}.tar.gz
 GENROMFS=genromfs-0.5.2
 
-CROSSBASEURL=https://developer.arm.com/-/media/Files/downloads/gnu-rm
-CROSSTOOLDIR=10.3-2021.10
-CROSSTOOLFILE=gcc-arm-none-eabi-10.3-2021.10
+CROSSBASEURL=https://developer.arm.com/-/media/Files/downloads/gnu
+CROSSTOOLDIR=12.3.rel1/binrel
+CROSSTOOLFILE=arm-gnu-toolchain-12.3.rel1
 
 # MD5 check sums
-TOOLCHAINSUM_win=2bc8f0c4c4659f8259c8176223eeafc1
-TOOLCHAINSUM_mac=7f2a7b7b23797302a9d6182c6e482449
-TOOLCHAINSUM_linux_x86_64=2383e4eb4ea23f248d33adc70dc3227e
-TOOLCHAINSUM_linux_aarch64=3fe3d8bb693bd0a6e4615b6569443d0d
+TOOLCHAINSUM_win=36c3f864ae8a4ded4a464e67c74f4973
+TOOLCHAINSUM_mac_x86_64=13ae2cc016564507c91a4fcffb6e3c54
+TOOLCHAINSUM_mac_arm64=53d034e9423e7f470acc5ed2a066758e
+TOOLCHAINSUM_linux_x86_64=00ebb1b70b1f88906c61206457eacb61
+TOOLCHAINSUM_linux_aarch64=02c9b0d3bb1110575877d8eee1f223f2
 
 OPENOCDBASEURL=https://github.com/sonydevworld/spresense-openocd-prebuilt/releases/download
 OPENOCDRELEASE=v0.11.0-spr1
@@ -180,7 +181,7 @@ linux_install_toolchain()
         return
     fi
 
-    _fn=${CROSSTOOLFILE}-${_mach}-linux.tar.bz2
+    _fn=${CROSSTOOLFILE}-${_mach}-arm-none-eabi.tar.xz
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
@@ -195,7 +196,7 @@ linux_install_toolchain()
 
     # Extract toolchain directly
 
-    run_progress tar vjxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
+    run_progress tar vxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
 }
 
 win_install_toolchain()
@@ -206,15 +207,17 @@ win_install_toolchain()
 
     [ -e ${_target}/bin/arm-none-eabi-gcc ] && return
 
-    local _fn=${CROSSTOOLFILE}-win32.zip
+    local _fn=${CROSSTOOLFILE}-mingw-w64-i686-arm-none-eabi.zip
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
-    run_progress unzip ${_fn}
+    # Overwrite without prompting, even if there is a case insensitivity problem
+
+    run_progress unzip -o ${_fn}
 
     mkdir -p ${_target}
-    cp -ar ${CROSSTOOLFILE}/* ${_target}
-    rm -rf ${CROSSTOOLFILE}
+    cp -ar ${CROSSTOOLFILE}-mingw-w64-i686-arm-none-eabi/* ${_target}
+    rm -rf ${CROSSTOOLFILE}-mingw-w64-i686-arm-none-eabi
 }
 
 mac_install_toolchain()
@@ -225,19 +228,30 @@ mac_install_toolchain()
 
     # Download cross toolchain
 
-    local _fn=${CROSSTOOLFILE}-mac.tar.bz2
+    local _fn
+    local _mach=`uname -m 2>/dev/null`
+
+    if [ "${_mach}" != "x86_64" ] && [ "${_mach}" != "arm64" ]; then
+        echo Sorry, this machine ${_mach} is not supported.
+        return
+    fi
+
+    _fn=${CROSSTOOLFILE}-darwin-${_mach}-arm-none-eabi.tar.xz
 
     download ${CROSSBASEURL}/${CROSSTOOLDIR}/${_fn} ${_fn}
 
-    local _sum=`md5 -q ${_fn}`
-    if [ "${_sum}" != "${TOOLCHAINSUM_mac}" ]; then
+    local _csum=TOOLCHAINSUM_mac_${_mach}
+    echo ${!_csum} ${_fn} > .sum
+    eval md5sum -c .sum
+    rm -f .sum
+    if [ "$?" -ne "0" ]; then
         echo "Archive validation failed."
         exit 1
     fi
 
     # Extract toolchain directly
 
-    run_progress tar vjxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
+    run_progress tar vxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
 }
 
 wsl_install_toolchain()
