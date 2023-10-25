@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/memutils/os_utils/chateau_osal.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -126,101 +126,6 @@ static INLINE size_t Chateau_CountSemaphore(Chateau_sem_handle_t h) {
 /* Cyclic */
 #define Chateau_StartCyclicHandler(h) F_ASSERT(sta_cyc(h) == E_OK)
 #define Chateau_StopCyclicHandler(h) F_ASSERT(stp_cyc(h) == E_OK)
-
-#elif defined(_SPRESENSE_OS) /* For CXD5602 */
-#include "board_config.h"
-#include <os_wrapper.h>
-#include <spresense.h>
-
-#define TIME_POLLING	TMO_POL
-#define TIME_FOREVER	(unsigned)TMO_FEVR
-
-typedef SYS_Id			Chateau_sem_handle_t;
-typedef SYS_CyclicHandler	Chateau_cyclic_handle_t;
-typedef				void          (*Chateau_task_func_t)(void *arg);
-typedef SYS_Task		Chateau_task_id_t;
-typedef SYS_Task		Chateau_task_handle_t;
-typedef int			Chateau_task_pri_t;
-
-/* Task */
-static INLINE Chateau_task_handle_t Chateau_CreateTask(Chateau_task_func_t func,
-						       void* arg, size_t stack_size,
-						       Chateau_task_pri_t pri) {
-	SYS_CreateTaskParams cfg;
-	Chateau_task_handle_t tid;
-	cfg.arg = arg;
-	cfg.function = func;
-	cfg.name = NULL;
-	cfg.priority = pri;
-	cfg.stackSize = (unsigned long)stack_size;
-	F_ASSERT(SYS_CreateTask(&tid, &cfg) == 0);
-	return tid;
-}
-
-static INLINE Chateau_task_handle_t Chateau_GetTaskId() {
-	Chateau_task_handle_t des = 0;
-	F_ASSERT( SYS_GetTaskDescriptor( &des ) == 0 );
-	return des;
-}
-
-static INLINE Chateau_task_handle_t Chateau_GetTaskHandle() {
-	return Chateau_GetTaskId();
-}
-
-static INLINE Chateau_task_pri_t Chateau_GetTaskPriority() {
-	Chateau_task_pri_t pri; F_ASSERT(SYS_GetTaskPriority(TSK_SELF, &pri) == 0); return pri;
-}
-#define Chateau_SetTaskPriority(pri)	F_ASSERT(SYS_ChangeTaskPriority(TSK_SELF, pri) == 0)
-
-#define Chateau_SuspendTask(h)	F_ASSERT(SYS_SuspendTask(h) == 0)
-#define Chateau_ResumeTask(h)	F_ASSERT(SYS_ResumeTask(h)  == 0)
-#define Chateau_SleepTask(ms)   SYS_SleepTask(ms)
-#define Chateau_DelayTask(ms)   SYS_DelayTask(ms)
-#define Chateau_YieldTask()     F_ASSERT(SYS_YieldTask() == 0)
-#define Chateau_IsTaskContext()	(SYS_IsInTaskContext())
-
-#define Chateau_GetSystemTime(n) do{ SYS_Time s = 0; SYS_GetTime(&s); (n) = (unsigned)s; }while(0)
-#define Chateau_GetInterruptMask()		SYS_GetInterruptMask()
-#define Chateau_LockInterrupt(pContext)	do {				\
-		SYS_SaveInterruptMask(pContext);			\
-		SYS_DisableDispatch();					\
-	} while(0)
-#define Chateau_LockInterruptIsr(pContext) do {				\
-		SYS_SaveInterruptMask(pContext);			\
-		SYS_DisableDispatch();					\
-	} while(0)
-#define Chateau_UnlockInterrupt(pContext) do {				\
-		SYS_EnableDispatch();					\
-		SYS_RestoreInterruptMask(*pContext);			\
-	} while(0)
-#define Chateau_UnlockInterruptIsr(pContext) do {			\
-		SYS_EnableDispatch();					\
-		SYS_RestoreInterruptMask(*pContext);			\
-	} while(0)
-#define Chateau_EnableInterrupt(intno)		SYS_EnableInterrupt(intno)
-#define Chateau_DisableInterrupt(intno)		SYS_DisableInterrupt(intno)
-
-/* Semaphore */
-#define Chateau_CreateSemaphore(pH, ini, max)				\
-	do {    SYS_CreateSemaphoreParams _cfg_ = { 0, ini, max };	\
-		F_ASSERT((*(pH) = SYS_CreateSemaphore(0, &_cfg_)) > 0);	\
-	} while(0)
-#define Chateau_DeleteSemaphore(h)	F_ASSERT(SYS_DeleteSemaphore(h)		== 0)
-#define Chateau_WaitSemaphore(h)	(SYS_WaitSemaphore(h, TIME_FOREVER) == 0)
-#define Chateau_PollingWaitSemaphore(h) (SYS_WaitSemaphore(h, TIME_POOLING) == 0)
-#define Chateau_TimedWaitSemaphore(h, ms)        (SYS_WaitSemaphore(h, (ms))	== 0)
-#define Chateau_SignalSemaphore(h)      F_ASSERT(SYS_SignalSemaphore(h)		== 0)
-#define Chateau_SignalSemaphoreTask(h)  F_ASSERT(SYS_SignalSemaphore(h)		== 0) /*パフォーマンスが下がっている。分けるべき。*//* :TODO */
-#define Chateau_SignalSemaphoreIsr(h)   F_ASSERT(SYS_SignalSemaphore(h)		== 0) /*パフォーマンスが下がっている。分けるべき。*//* :TODO */
-static INLINE size_t Chateau_CountSemaphore(Chateau_sem_handle_t h) {
-	SYS_SemaphoreStatus s;
-	F_ASSERT(SYS_ReferSemaphore(h, &s) == 0);
-	return s.semaphoreCount;
-}
-
-/* Cyclic */
-#define Chateau_StartCyclicHandler(h) F_ASSERT(SYS_StartCyclicHandler(h) == 0)
-#define Chateau_StopCyclicHandler(h) F_ASSERT(SYS_StopCyclicHandler(h) == 0)
 
 #elif defined(_POSIX)
 #include <sys/types.h>
