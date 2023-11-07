@@ -49,7 +49,6 @@ ASRCS =
 CSRCS = gnss_util.c
 MAINSRC = ambient_gnsslogger_main.c
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" \
-    "$(SDKDIR)$(DELIM)system$(DELIM)ambient"}
+CFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)ambient
 
 include $(APPDIR)/Application.mk

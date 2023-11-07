@@ -44,13 +44,13 @@ CFLAGS += -DBLE_ENABLE_NORDIC_ORIGINAL
 endif
 
 ifeq ($(CONFIG_EXTERNALS_NRF52),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/common"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/util"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/queue"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/log"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/config/nrf52832/config"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/common
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/softdevice/s132/headers
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/experimental_section_vars
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/util
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/queue
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/components/libraries/log
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/modules/nrfx/mdk
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/nrf52/nRF5_SDK_17.1.0_ddde560/config/nrf52832/config
 endif

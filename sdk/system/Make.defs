@@ -35,5 +35,5 @@
 
 # Standard include path
 
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)system$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)system$(DELIM)include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include

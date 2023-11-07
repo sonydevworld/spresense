@@ -394,14 +394,14 @@ static int controller_listener_uninitialize(mpcomm_supervisor_context_t *ctx)
   ret = pthread_cancel(ctx->controller_listener_pid);
   if (ret < 0)
     {
-      mpcerr("pthread_create() failure: %d.\n", ret);
+      mpcerr("pthread_cancel() failure: %d.\n", ret);
       return ret;
     }
 
   ret = pthread_join(ctx->controller_listener_pid, NULL);
   if (ret < 0)
     {
-      mpcerr("pthread_create() failure: %d.\n", ret);
+      mpcerr("pthread_join() failure: %d.\n", ret);
       return ret;
     }
 
@@ -534,6 +534,13 @@ int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx)
   int ret;
   int i;
 
+  ret = controller_listener_uninitialize(ctx);
+  if (ret < 0)
+    {
+      mpcerr("controller_listener_uninitialize() failure: %d.\n", ret);
+      return ret;
+    }
+
   ret = deinit_core(&ctx->controller);
   if (ret < 0)
     {
@@ -549,13 +556,6 @@ int mpcomm_supervisor_deinit(mpcomm_supervisor_context_t *ctx)
           mpcerr("deinit_core() failure: %d.\n", ret);
           return ret;
         }
-    }
-
-  ret = controller_listener_uninitialize(ctx);
-  if (ret < 0)
-    {
-      mpcerr("controller_listener_uninitialize() failure: %d.\n", ret);
-      return ret;
     }
 
   ret = sem_destroy(&ctx->sem_done);

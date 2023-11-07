@@ -34,11 +34,11 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_MQTT),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTPacket/src"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src/nuttx"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTPacket/src"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src/nuttx"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTPacket/src
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src/nuttx
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTPacket/src
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/mqtt/paho.mqtt.embedded-c/MQTTClient-C/src/nuttx
 endif
 

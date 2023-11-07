@@ -46,11 +46,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <queue.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <debug.h>
+
+#include <nuttx/queue.h>
 
 #include "mbedtls/config.h"
 #include "mbedtls/ctr_drbg.h"

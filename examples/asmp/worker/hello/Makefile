@@ -52,8 +52,8 @@ BIN = hello
 CSRCS = $(BIN).c
 
 CELFFLAGS += -Og
-CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
-CELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
+CELFFLAGS += ${INCDIR_PREFIX}$(APPDIR)
+CELFFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))

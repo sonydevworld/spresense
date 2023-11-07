@@ -2,7 +2,7 @@
 /****************************************************************************
  * pool_layout.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,10 +54,10 @@ uint8_t pool_num[NUM_MEM_SECTIONS] = {
 extern const PoolSectionAttr MemoryPoolLayouts[NUM_MEM_SECTIONS][NUM_MEM_LAYOUTS][4] = {
   {  /* Section:0 */
     {/* Layout:0 */
-     /* pool_ID          type       seg fence  addr        size         */
-      { S0_SENSOR_DSP_CMD_BUF_POOL     , BasicType,   8, false, 0x000e0000, 0x00000380 },  /* SENSOR_WORK_AREA */
-      { S0_ACCEL_DATA_BUF_POOL         , BasicType,   8, false, 0x000e0380, 0x00000c00 },  /* SENSOR_WORK_AREA */
-      { S0_GNSS_DATA_BUF_POOL          , BasicType,   8, false, 0x000e0f80, 0x00000180 },  /* SENSOR_WORK_AREA */
+     /* pool_ID                          type         seg  fence  addr        size         */
+      { S0_SENSOR_DSP_CMD_BUF_POOL     , BasicType  ,   8, false, 0x000e0000, 0x00000380 },  /* SENSOR_WORK_AREA */
+      { S0_ACCEL_DATA_BUF_POOL         , BasicType  ,   8, false, 0x000e0380, 0x00000c00 },  /* SENSOR_WORK_AREA */
+      { S0_GNSS_DATA_BUF_POOL          , BasicType  ,   8, false, 0x000e0f80, 0x00000180 },  /* SENSOR_WORK_AREA */
       { S0_NULL_POOL, 0, 0, false, 0, 0 },
     },
   },

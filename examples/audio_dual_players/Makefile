@@ -54,7 +54,7 @@ MAINSRC = audio_dual_players_main.cxx
 # Audio Example flags
 
 # XXX: Do NOT add module directory, please use modules/include.
-#CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
+#CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE

@@ -61,10 +61,10 @@ BIN = libasmpw$(LIBEXT)
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
 
 CFLAGS := $(LIBC_INCPATH) $(CFLAGS)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)chip
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)common
 ifneq ($(CONFIG_ARCH_FAMILY),)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
 endif
 
 CFLAGS += -fno-tree-loop-distribute-patterns
@@ -81,7 +81,7 @@ $(COBJS): %$(OBJEXT): %.c
 	$(call COMPILE, $<, $@)
 
 $(BIN): $(LIB_OBJS)
-	$(call ARCHIVE_ADD, $@, $(LIB_OBJS))
+	$(call ARLOCK, $@, $(LIB_OBJS))
 
 .depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
 	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
@@ -99,6 +99,7 @@ clean:
 	$(call CLEAN)
 
 distclean: clean
+	$(call DELFILE, $(BIN).lock)
 	$(call DELFILE, .context)
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)

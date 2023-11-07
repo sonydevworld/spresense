@@ -50,11 +50,11 @@ include container_format_lib/Make.defs
 
 AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)dsp_driver$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)components"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)objects"}
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)dsp_driver$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)components
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)objects
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE

@@ -34,7 +34,7 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_WEBSOCKET),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/websocket/cwebsocket/src/cwebsocket"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/websocket/cwebsocket/src/cwebsocket"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/websocket/cwebsocket/src/cwebsocket
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/websocket/cwebsocket/src/cwebsocket
 endif
 

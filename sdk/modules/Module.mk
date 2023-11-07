@@ -67,7 +67,8 @@ BIN ?= $(APPDIR)$(DELIM)libapps$(LIBEXT)
 
 # Targets follow
 
-all:: $(OBJS)
+all:: .built
+
 .PHONY: clean preconfig depend distclean
 
 $(AOBJS): %$(SUFFIX)$(OBJEXT): %.S
@@ -79,12 +80,13 @@ $(COBJS): %$(SUFFIX)$(OBJEXT): %.c
 $(CXXOBJS): %$(SUFFIX)$(OBJEXT): %$(CXXEXT)
 	$(call COMPILEXX, $<, $@)
 
-archive:
+.built: $(OBJS)
 ifeq ($(WINTOOL),y)
-	$(call ARCHIVE_ADD, "${shell cygpath -w $(BIN)}", $(OBJS))
+	$(call ARLOCK, "${shell cygpath -w $(BIN)}", $(OBJS))
 else
-	$(call ARCHIVE_ADD, $(BIN), $(OBJS))
+	$(call ARLOCK, $(BIN), $(OBJS))
 endif
+	$(Q) touch $@
 
 install::
 
@@ -103,9 +105,11 @@ endif
 depend:: .depend
 
 clean::
+	$(call DELFILE, .built)
 	$(call CLEAN)
 
 distclean:: clean
+	$(call DELFILE, $(BIN).lock)
 	$(call DELFILE, Make.dep)
 	$(call DELFILE, .depend)
 

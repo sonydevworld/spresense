@@ -243,7 +243,7 @@ static int init_video(void)
   video_fd = open("/dev/video", 0);
   if (video_fd < 0)
     {
-      video_uninitialize();
+      video_uninitialize("/dev/video");
       return -1;
     }
 
@@ -254,7 +254,7 @@ static int init_video(void)
     {
       close(video_fd);
       free(frame_mem);
-      video_uninitialize();
+      video_uninitialize("/dev/video");
       video_fd = -1;
       return -1;
     }

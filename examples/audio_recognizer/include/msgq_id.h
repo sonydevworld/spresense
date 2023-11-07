@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_id.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,17 +37,21 @@
 #ifndef MSGQ_ID_H_INCLUDED
 #define MSGQ_ID_H_INCLUDED
 
-/* Message area size: 4812 bytes */
+/* Message area size: 4884 bytes */
+
 #define MSGQ_TOP_DRM 0xfd000
-#define MSGQ_END_DRM 0xfe2cc
+#define MSGQ_END_DRM 0xfe314
 
 /* Message area fill value after message poped */
+
 #define MSG_FILL_VALUE_AFTER_POP 0x0
 
 /* Message parameter type match check */
+
 #define MSG_PARAM_TYPE_MATCH_CHECK false
 
 /* Message queue pool IDs */
+
 #define MSGQ_NULL 0
 #define MSGQ_AUD_APP 1
 #define MSGQ_AUD_MNG 2
@@ -62,67 +66,68 @@
 /* User defined constants */
 
 /************************************************************************/
-#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd044
-#define MSGQ_AUD_APP_N_QUE_DRM 0xfd264
+#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd04c
+#define MSGQ_AUD_APP_N_QUE_DRM 0xfd2ac
 #define MSGQ_AUD_APP_N_SIZE 64
 #define MSGQ_AUD_APP_N_NUM 2
 #define MSGQ_AUD_APP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_APP_H_SIZE 0
 #define MSGQ_AUD_APP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_MNG_QUE_BLOCK_DRM 0xfd088
-#define MSGQ_AUD_MNG_N_QUE_DRM 0xfd2e4
+#define MSGQ_AUD_MNG_QUE_BLOCK_DRM 0xfd098
+#define MSGQ_AUD_MNG_N_QUE_DRM 0xfd32c
 #define MSGQ_AUD_MNG_N_SIZE 88
 #define MSGQ_AUD_MNG_N_NUM 30
 #define MSGQ_AUD_MNG_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_MNG_H_SIZE 0
 #define MSGQ_AUD_MNG_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_FRONTEND_QUE_BLOCK_DRM 0xfd0cc
-#define MSGQ_AUD_FRONTEND_N_QUE_DRM 0xfdd34
+#define MSGQ_AUD_FRONTEND_QUE_BLOCK_DRM 0xfd0e4
+#define MSGQ_AUD_FRONTEND_N_QUE_DRM 0xfdd7c
 #define MSGQ_AUD_FRONTEND_N_SIZE 48
 #define MSGQ_AUD_FRONTEND_N_NUM 10
 #define MSGQ_AUD_FRONTEND_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_FRONTEND_H_SIZE 0
 #define MSGQ_AUD_FRONTEND_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RECOGNIZER_QUE_BLOCK_DRM 0xfd110
-#define MSGQ_AUD_RECOGNIZER_N_QUE_DRM 0xfdf14
+#define MSGQ_AUD_RECOGNIZER_QUE_BLOCK_DRM 0xfd130
+#define MSGQ_AUD_RECOGNIZER_N_QUE_DRM 0xfdf5c
 #define MSGQ_AUD_RECOGNIZER_N_SIZE 48
 #define MSGQ_AUD_RECOGNIZER_N_NUM 5
 #define MSGQ_AUD_RECOGNIZER_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RECOGNIZER_H_SIZE 0
 #define MSGQ_AUD_RECOGNIZER_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_CAP_QUE_BLOCK_DRM 0xfd154
-#define MSGQ_AUD_CAP_N_QUE_DRM 0xfe004
+#define MSGQ_AUD_CAP_QUE_BLOCK_DRM 0xfd17c
+#define MSGQ_AUD_CAP_N_QUE_DRM 0xfe04c
 #define MSGQ_AUD_CAP_N_SIZE 24
 #define MSGQ_AUD_CAP_N_NUM 16
 #define MSGQ_AUD_CAP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_CAP_H_SIZE 0
 #define MSGQ_AUD_CAP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_CAP_SYNC_QUE_BLOCK_DRM 0xfd198
-#define MSGQ_AUD_CAP_SYNC_N_QUE_DRM 0xfe184
+#define MSGQ_AUD_CAP_SYNC_QUE_BLOCK_DRM 0xfd1c8
+#define MSGQ_AUD_CAP_SYNC_N_QUE_DRM 0xfe1cc
 #define MSGQ_AUD_CAP_SYNC_N_SIZE 16
 #define MSGQ_AUD_CAP_SYNC_N_NUM 8
 #define MSGQ_AUD_CAP_SYNC_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_CAP_SYNC_H_SIZE 0
 #define MSGQ_AUD_CAP_SYNC_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_PREDSP_QUE_BLOCK_DRM 0xfd1dc
-#define MSGQ_AUD_PREDSP_N_QUE_DRM 0xfe204
+#define MSGQ_AUD_PREDSP_QUE_BLOCK_DRM 0xfd214
+#define MSGQ_AUD_PREDSP_N_QUE_DRM 0xfe24c
 #define MSGQ_AUD_PREDSP_N_SIZE 20
 #define MSGQ_AUD_PREDSP_N_NUM 5
 #define MSGQ_AUD_PREDSP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_PREDSP_H_SIZE 0
 #define MSGQ_AUD_PREDSP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RCGDSP_QUE_BLOCK_DRM 0xfd220
-#define MSGQ_AUD_RCGDSP_N_QUE_DRM 0xfe268
+#define MSGQ_AUD_RCGDSP_QUE_BLOCK_DRM 0xfd260
+#define MSGQ_AUD_RCGDSP_N_QUE_DRM 0xfe2b0
 #define MSGQ_AUD_RCGDSP_N_SIZE 20
 #define MSGQ_AUD_RCGDSP_N_NUM 5
 #define MSGQ_AUD_RCGDSP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RCGDSP_H_SIZE 0
 #define MSGQ_AUD_RCGDSP_H_NUM 0
+
 #endif /* MSGQ_ID_H_INCLUDED */

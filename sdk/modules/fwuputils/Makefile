@@ -50,10 +50,10 @@ include $(wildcard */Make.defs)
 
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)chip"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)common"}
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)chip
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)common
 ifneq ($(CONFIG_ARCH_FAMILY),)
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)"}
+CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
 endif
 
 include $(SDKDIR)/modules/Module.mk

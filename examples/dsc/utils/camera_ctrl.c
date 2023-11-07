@@ -179,7 +179,7 @@ const char *initialize_cameractrl(int *fd)
   *fd = open(VIDEO_DEVF, 0);
   if (*fd < 0)
     {
-      video_uninitialize();
+      video_uninitialize(VIDEO_DEVF);
       *fd = -ENODEV;
       return NULL;
     }
@@ -187,7 +187,7 @@ const char *initialize_cameractrl(int *fd)
   if (request_camerabuffs(*fd, V4L2_BUF_TYPE_STILL_CAPTURE) < 0)
     {
       close(*fd);
-      video_uninitialize();
+      video_uninitialize(VIDEO_DEVF);
       *fd = -EINVAL;
       return NULL;
     }
@@ -195,7 +195,7 @@ const char *initialize_cameractrl(int *fd)
   if (request_camerabuffs(*fd, V4L2_BUF_TYPE_VIDEO_CAPTURE) < 0)
     {
       close(*fd);
-      video_uninitialize();
+      video_uninitialize(VIDEO_DEVF);
       *fd = -EINVAL;
       return NULL;
     }
@@ -206,7 +206,7 @@ const char *initialize_cameractrl(int *fd)
 void finalize_cameractrl(int fd)
 {
   close(fd);
-  video_uninitialize();
+  video_uninitialize(VIDEO_DEVF);
 }
 
 unsigned char *camera_framebuffer(int *sz)

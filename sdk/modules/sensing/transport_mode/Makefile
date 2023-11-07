@@ -39,6 +39,6 @@ CXXSRCS  = transport_mode.cpp
 CXXSRCS += tram_state_transition.cpp
 
 SENSINGDIR = $(SDKDIR)$(DELIM)modules$(DELIM)sensing
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SENSINGDIR)$(DELIM)include"}
+CXXFLAGS += ${INCDIR_PREFIX}$(SENSINGDIR)$(DELIM)include
 
 include $(SDKDIR)/modules/Module.mk

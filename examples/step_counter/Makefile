@@ -54,8 +54,8 @@ SENSINGDIR = $(SDKDIR)$(DELIM)modules$(DELIM)sensing
 
 # Sensing Example flags
 
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SENSINGDIR)"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)modules$(DELIM)include"}
+CXXFLAGS += ${INCDIR_PREFIX}$(SENSINGDIR)
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)include
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE

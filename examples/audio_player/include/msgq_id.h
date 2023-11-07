@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_id.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,10 +37,10 @@
 #ifndef MSGQ_ID_H_INCLUDED
 #define MSGQ_ID_H_INCLUDED
 
-/* Message area size: 4844 bytes */
+/* Message area size: 4916 bytes */
 
 #define MSGQ_TOP_DRM 0xfd000
-#define MSGQ_END_DRM 0xfe2ec
+#define MSGQ_END_DRM 0xfe334
 
 /* Message area fill value after message poped */
 
@@ -66,64 +66,64 @@
 /* User defined constants */
 
 /************************************************************************/
-#define MSGQ_AUD_MNG_QUE_BLOCK_DRM 0xfd044
-#define MSGQ_AUD_MNG_N_QUE_DRM 0xfd264
+#define MSGQ_AUD_MNG_QUE_BLOCK_DRM 0xfd04c
+#define MSGQ_AUD_MNG_N_QUE_DRM 0xfd2ac
 #define MSGQ_AUD_MNG_N_SIZE 88
 #define MSGQ_AUD_MNG_N_NUM 30
 #define MSGQ_AUD_MNG_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_MNG_H_SIZE 0
 #define MSGQ_AUD_MNG_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd088
-#define MSGQ_AUD_APP_N_QUE_DRM 0xfdcb4
+#define MSGQ_AUD_APP_QUE_BLOCK_DRM 0xfd098
+#define MSGQ_AUD_APP_N_QUE_DRM 0xfdcfc
 #define MSGQ_AUD_APP_N_SIZE 64
 #define MSGQ_AUD_APP_N_NUM 2
 #define MSGQ_AUD_APP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_APP_H_SIZE 0
 #define MSGQ_AUD_APP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_DSP_QUE_BLOCK_DRM 0xfd0cc
-#define MSGQ_AUD_DSP_N_QUE_DRM 0xfdd34
+#define MSGQ_AUD_DSP_QUE_BLOCK_DRM 0xfd0e4
+#define MSGQ_AUD_DSP_N_QUE_DRM 0xfdd7c
 #define MSGQ_AUD_DSP_N_SIZE 20
 #define MSGQ_AUD_DSP_N_NUM 5
 #define MSGQ_AUD_DSP_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_DSP_H_SIZE 0
 #define MSGQ_AUD_DSP_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_PFDSP0_QUE_BLOCK_DRM 0xfd110
-#define MSGQ_AUD_PFDSP0_N_QUE_DRM 0xfdd98
+#define MSGQ_AUD_PFDSP0_QUE_BLOCK_DRM 0xfd130
+#define MSGQ_AUD_PFDSP0_N_QUE_DRM 0xfdde0
 #define MSGQ_AUD_PFDSP0_N_SIZE 20
 #define MSGQ_AUD_PFDSP0_N_NUM 5
 #define MSGQ_AUD_PFDSP0_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_PFDSP0_H_SIZE 0
 #define MSGQ_AUD_PFDSP0_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_PLY_QUE_BLOCK_DRM 0xfd154
-#define MSGQ_AUD_PLY_N_QUE_DRM 0xfddfc
+#define MSGQ_AUD_PLY_QUE_BLOCK_DRM 0xfd17c
+#define MSGQ_AUD_PLY_N_QUE_DRM 0xfde44
 #define MSGQ_AUD_PLY_N_SIZE 48
 #define MSGQ_AUD_PLY_N_NUM 5
 #define MSGQ_AUD_PLY_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_PLY_H_SIZE 0
 #define MSGQ_AUD_PLY_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_OUTPUT_MIX_QUE_BLOCK_DRM 0xfd198
-#define MSGQ_AUD_OUTPUT_MIX_N_QUE_DRM 0xfdeec
+#define MSGQ_AUD_OUTPUT_MIX_QUE_BLOCK_DRM 0xfd1c8
+#define MSGQ_AUD_OUTPUT_MIX_N_QUE_DRM 0xfdf34
 #define MSGQ_AUD_OUTPUT_MIX_N_SIZE 48
 #define MSGQ_AUD_OUTPUT_MIX_N_NUM 8
 #define MSGQ_AUD_OUTPUT_MIX_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_OUTPUT_MIX_H_SIZE 0
 #define MSGQ_AUD_OUTPUT_MIX_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY_QUE_BLOCK_DRM 0xfd1dc
-#define MSGQ_AUD_RND_PLY_N_QUE_DRM 0xfe06c
+#define MSGQ_AUD_RND_PLY_QUE_BLOCK_DRM 0xfd214
+#define MSGQ_AUD_RND_PLY_N_QUE_DRM 0xfe0b4
 #define MSGQ_AUD_RND_PLY_N_SIZE 32
 #define MSGQ_AUD_RND_PLY_N_NUM 16
 #define MSGQ_AUD_RND_PLY_H_QUE_DRM 0xffffffff
 #define MSGQ_AUD_RND_PLY_H_SIZE 0
 #define MSGQ_AUD_RND_PLY_H_NUM 0
 /************************************************************************/
-#define MSGQ_AUD_RND_PLY_SYNC_QUE_BLOCK_DRM 0xfd220
-#define MSGQ_AUD_RND_PLY_SYNC_N_QUE_DRM 0xfe26c
+#define MSGQ_AUD_RND_PLY_SYNC_QUE_BLOCK_DRM 0xfd260
+#define MSGQ_AUD_RND_PLY_SYNC_N_QUE_DRM 0xfe2b4
 #define MSGQ_AUD_RND_PLY_SYNC_N_SIZE 16
 #define MSGQ_AUD_RND_PLY_SYNC_N_NUM 8
 #define MSGQ_AUD_RND_PLY_SYNC_H_QUE_DRM 0xffffffff
