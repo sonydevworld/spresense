@@ -65,9 +65,9 @@ VPATH = src/functions src/runtime
 DEPPATH = --dep-path src/functions --dep-path src/runtime
 endif
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/functions}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/src/runtime}
+CFLAGS += ${INCDIR_PREFIX}$(RUNTIMEDIR)/include
+CFLAGS += ${INCDIR_PREFIX}$(RUNTIMEDIR)/src/functions
+CFLAGS += ${INCDIR_PREFIX}$(RUNTIMEDIR)/src/runtime
 
 CFLAGS += -std=c99
 

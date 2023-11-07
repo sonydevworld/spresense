@@ -2,7 +2,7 @@
 /****************************************************************************
  * pool_layout.h
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,13 +54,13 @@ uint8_t pool_num[NUM_MEM_SECTIONS] = {
 extern const PoolSectionAttr MemoryPoolLayouts[NUM_MEM_SECTIONS][NUM_MEM_LAYOUTS][7] = {
   {  /* Section:0 */
     {/* Layout:0 */
-     /* pool_ID          type       seg fence  addr        size         */
-      { S0_ES_BUF_POOL                 , BasicType,   5, true, 0x000c0008, 0x0000f000 },  /* AUDIO_WORK_AREA */
-      { S0_PREPROC_BUF_POOL            , BasicType,   5, true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
-      { S0_INPUT_BUF_POOL              , BasicType,   5, true, 0x000de018, 0x0000f000 },  /* AUDIO_WORK_AREA */
-      { S0_ENC_APU_CMD_POOL            , BasicType,   3, true, 0x000ed020, 0x00000114 },  /* AUDIO_WORK_AREA */
-      { S0_SRC_APU_CMD_POOL            , BasicType,   3, true, 0x000ed140, 0x00000114 },  /* AUDIO_WORK_AREA */
-      { S0_PRE_APU_CMD_POOL            , BasicType,   3, true, 0x000ed260, 0x00000114 },  /* AUDIO_WORK_AREA */
+     /* pool_ID                          type         seg  fence  addr        size         */
+      { S0_ES_BUF_POOL                 , BasicType  ,   5,  true, 0x000c0008, 0x0000f000 },  /* AUDIO_WORK_AREA */
+      { S0_PREPROC_BUF_POOL            , BasicType  ,   5,  true, 0x000cf010, 0x0000f000 },  /* AUDIO_WORK_AREA */
+      { S0_INPUT_BUF_POOL              , BasicType  ,   5,  true, 0x000de018, 0x0000f000 },  /* AUDIO_WORK_AREA */
+      { S0_ENC_APU_CMD_POOL            , BasicType  ,   3,  true, 0x000ed020, 0x00000114 },  /* AUDIO_WORK_AREA */
+      { S0_SRC_APU_CMD_POOL            , BasicType  ,   3,  true, 0x000ed140, 0x00000114 },  /* AUDIO_WORK_AREA */
+      { S0_PRE_APU_CMD_POOL            , BasicType  ,   3,  true, 0x000ed260, 0x00000114 },  /* AUDIO_WORK_AREA */
       { S0_NULL_POOL, 0, 0, false, 0, 0 },
     },
   },

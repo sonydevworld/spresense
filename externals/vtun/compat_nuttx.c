@@ -60,14 +60,6 @@
  * Public Functions
  ****************************************************************************/
 
-void openlog(const char *ident, int option, int facility)
-{
-}
-
-void closelog(void)
-{
-}
-
 #ifndef CONFIG_PSEUDOFS_SOFTLINKS
 int symlink(const char *path1, const char *path2)
 {

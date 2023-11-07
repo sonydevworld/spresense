@@ -211,7 +211,7 @@ static void get_datetime(struct cxd56_gnss_datetime_s *dt)
   dt->time.usec   = ts.tv_nsec / NSEC_PER_USEC;
 }
 
-int64_t diff_msec(struct timespec *t1, struct timespec *t2)
+static int64_t diff_msec(struct timespec *t1, struct timespec *t2)
 {
   int64_t msec;
 

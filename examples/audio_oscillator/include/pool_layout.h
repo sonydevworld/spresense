@@ -2,7 +2,7 @@
 /****************************************************************************
  * pool_layout.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,11 +56,11 @@ extern const PoolSectionAttr MemoryPoolLayouts[NUM_MEM_SECTIONS][NUM_MEM_LAYOUTS
     {/* Layout:0 */
      /* pool_ID                          type         seg  fence  addr        size         */
       { S0_REND_PCM_BUF_POOL           , BasicType  ,   5,  true, 0x000c0008, 0x00005000 },  /* AUDIO_WORK_AREA */
-      { S0_OSC_APU_CMD_POOL            , BasicType  ,   5,  true, 0x000c5010, 0x000001cc },  /* AUDIO_WORK_AREA */
-      { S0_PF0_PCM_BUF_POOL            , BasicType  ,   1,  true, 0x000c51e8, 0x00001000 },  /* AUDIO_WORK_AREA */
-      { S0_PF1_PCM_BUF_POOL            , BasicType  ,   1,  true, 0x000c61f0, 0x00001000 },  /* AUDIO_WORK_AREA */
-      { S0_PF0_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000c71f8, 0x00000398 },  /* AUDIO_WORK_AREA */
-      { S0_PF1_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000c7598, 0x00000398 },  /* AUDIO_WORK_AREA */
+      { S0_OSC_APU_CMD_POOL            , BasicType  ,  16,  true, 0x000c5010, 0x000005c0 },  /* AUDIO_WORK_AREA */
+      { S0_PF0_PCM_BUF_POOL            , BasicType  ,   1,  true, 0x000c55d8, 0x00001000 },  /* AUDIO_WORK_AREA */
+      { S0_PF1_PCM_BUF_POOL            , BasicType  ,   1,  true, 0x000c65e0, 0x00001000 },  /* AUDIO_WORK_AREA */
+      { S0_PF0_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000c75e8, 0x00000398 },  /* AUDIO_WORK_AREA */
+      { S0_PF1_APU_CMD_POOL            , BasicType  ,  10,  true, 0x000c7988, 0x00000398 },  /* AUDIO_WORK_AREA */
       { S0_NULL_POOL, 0, 0, false, 0, 0 },
     },
   },

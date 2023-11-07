@@ -2,6 +2,7 @@
 Make.dep
 *.o
 *.a
+*.a.lock
 *.d
 *.i
 *~

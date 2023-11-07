@@ -206,7 +206,6 @@ audiolite_memapbuf::audiolite_memapbuf(void) : audiolite_mem()
   _abuf.nbytes       = 0;
   _abuf.flags        = 0;
   _abuf.samp         = NULL;
-  sem_init(&_abuf.sem, 0, 1);
 }
 
 /***********************************************

@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_pool.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,19 +44,19 @@ extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
   /* n_drm, n_size, n_num, h_drm, h_size, h_num */
 
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd3b8, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
-  { 0xfde08, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfde88, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP0 */
-  { 0xfdeec, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP1 */
-  { 0xfdf50, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY0 */
-  { 0xfe040, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfe0a4, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
-  { 0xfe108, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY1 */
-  { 0xfe1f8, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe378, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY0 */
-  { 0xfe578, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY0_SYNC */
-  { 0xfe598, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY1 */
-  { 0xfe798, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY1_SYNC */
+  { 0xfd428, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MGR */
+  { 0xfde78, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
+  { 0xfdef8, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP0 */
+  { 0xfdf5c, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_DSP1 */
+  { 0xfdfc0, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY0 */
+  { 0xfe0b0, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
+  { 0xfe114, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
+  { 0xfe178, 48, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PLY1 */
+  { 0xfe268, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
+  { 0xfe3e8, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY0 */
+  { 0xfe5e8, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY0_SYNC */
+  { 0xfe608, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY1 */
+  { 0xfe808, 16, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_PLY1_SYNC */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

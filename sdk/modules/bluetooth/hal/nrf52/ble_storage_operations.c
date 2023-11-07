@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <crc32.h>
+#include <nuttx/crc32.h>
 #include <errno.h>
 
 #include "queue.h" /* TODO: replace to nuttx/include/queue.h */

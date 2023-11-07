@@ -37,6 +37,7 @@ ifneq ($(CONFIG_ASMP_WORKER_LIBC),)
 
 NXINC_PATH = $(SDKDIR)/../nuttx/include
 LIBC_PATH = $(SDKDIR)/../nuttx/libs/libc
+LIBM_PATH = $(SDKDIR)/../nuttx/libs/libm
 
 LIBC_LIBS  = ctype
 LIBC_LIBS += fixedmath
@@ -46,7 +47,7 @@ LIBC_LIBS += queue
 LIBC_EXTRA_SRC = lib_modff.c lib_floorf.c lib_fabsf.c
 
 LIBC_LIBSPATH = $(patsubst %,$(LIBC_PATH)/%,$(LIBC_LIBS))
-LIBC_TGTPATH = $(LIBC_LIBSPATH) $(LIBC_PATH)/math
+LIBC_TGTPATH = $(LIBC_LIBSPATH) $(LIBM_PATH)/libm
 LIBC_CSRCS = $(notdir $(foreach p,$(LIBC_LIBSPATH),$(wildcard $(p)/*.c))) $(LIBC_EXTRA_SRC)
 LIBC_DEPPATH = --dep-path $(NXINC_PATH) --dep-path $(NXINC_PATH)/nuttx/lib $(patsubst %,--dep-path %,$(LIBC_TGTPATH))
 LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH) -DCONFIG_ARCH_STDARG_H

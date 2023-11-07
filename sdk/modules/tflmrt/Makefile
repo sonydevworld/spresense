@@ -53,7 +53,7 @@ VPATH = src/runtime
 DEPPATH = --dep-path src/runtime
 endif
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)}
+CFLAGS += ${INCDIR_PREFIX}$(RUNTIMEDIR)
 
 include $(SDKDIR)/modules/Module.mk
 

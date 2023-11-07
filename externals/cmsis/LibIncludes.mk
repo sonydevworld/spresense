@@ -39,15 +39,15 @@ CXXFLAGS += -DARM_MATH_CM4 -D__FPU_PRESENT=1U -D__ARM_FEATURE_MVE=0
 endif
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS_DSP),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include"}
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/Core/Include
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/Include
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/DSP_Lib_TestSuite/Common/inc
 endif
 
 ifeq ($(CONFIG_EXTERNALS_CMSIS_NN),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/NN/Include
 endif

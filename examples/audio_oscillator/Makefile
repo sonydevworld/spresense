@@ -54,11 +54,11 @@ AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
 
 # Audio oscillator Example flags
 
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AUDIODIR)$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" worker_oscillator$(DELIM)userproc$(DELIM)include}
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
+CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}worker_oscillator$(DELIM)userproc$(DELIM)include
 ifeq ($(CONFIG_EXAMPLES_AUDIO_OSCILLATOR_USEPOSTPROC),y)
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" worker_postproc$(DELIM)userproc$(DELIM)include}
+CXXFLAGS += ${INCDIR_PREFIX}worker_postproc$(DELIM)userproc$(DELIM)include
 endif
 
 CXXFLAGS += -D_POSIX

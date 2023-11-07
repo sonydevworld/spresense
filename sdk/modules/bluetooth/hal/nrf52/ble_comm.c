@@ -41,7 +41,7 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <crc16.h>
+#include <nuttx/crc16.h>
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include <ble/ble_gatts.h>

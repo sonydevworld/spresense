@@ -48,7 +48,6 @@
 #include "asmp.h"
 #include "common.h"
 
-extern uint32_t _sbss, _ebss;
 extern int main(void);
 extern void exception_common(void);
 extern uint32_t __stack_pointer;
@@ -134,11 +133,11 @@ void __start(void)
   /* Set PSP to IDLE stack */
 
   __asm__ __volatile__("\tmsr psp, %0\n" :
-                       : "r" ((uint32_t)&_ebss+CONFIG_IDLETHREAD_STACKSIZE-4));
+                       : "r" (_ebss+CONFIG_IDLETHREAD_STACKSIZE-4));
 
   up_irq_disable();
 
-  for (dest = &_sbss; dest < &_ebss; )
+  for (dest = (uint32_t *)_sbss; dest < (uint32_t *)_ebss; )
     {
       *dest++ = 0;
     }

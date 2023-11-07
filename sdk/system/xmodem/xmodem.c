@@ -45,7 +45,7 @@
 #include <signal.h>
 #include <sched.h>
 #include <errno.h>
-#include <crc16.h>
+#include <nuttx/crc16.h>
 
 #include "system/xmodem.h"
 

@@ -40,7 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <queue.h>
+#include <nuttx/queue.h>
 #include <audiolite/al_singleton.h>
 #include <audiolite/al_eventlistener.h>
 #include <audiolite/al_memalloc.h>

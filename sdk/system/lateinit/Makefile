@@ -38,7 +38,7 @@ include $(SDKDIR)/Make.defs
 
 CSRCS = lateinit.c
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(TOPDIR)$(DELIM)boards$(DELIM)arm$(DELIM)cxd56xx"}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)modules$(DELIM)include"}
+CFLAGS += ${INCDIR_PREFIX}$(TOPDIR)$(DELIM)boards$(DELIM)arm$(DELIM)cxd56xx
+CFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)include
 
 include $(APPDIR)/Application.mk

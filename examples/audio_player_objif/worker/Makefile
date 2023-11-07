@@ -56,9 +56,9 @@ CXXSRCS = customproc_dsp_ctrl.cpp main.cpp
 CXXSRCS += rcfilter.cpp userproc.cpp
 
 CXXELFFLAGS += -Os
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" userproc$(DELIM)include)
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(APPDIR))
-CXXELFFLAGS += $(shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker)
+CXXELFFLAGS += ${INCDIR_PREFIX}userproc$(DELIM)include
+CXXELFFLAGS += ${INCDIR_PREFIX}$(APPDIR)
+CXXELFFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)asmp$(DELIM)worker
 
 CXXOBJS = $(CXXSRCS:.cpp=$(OBJEXT))
 

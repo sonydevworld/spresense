@@ -2,7 +2,7 @@
 /****************************************************************************
  * mem_layout.h
  *
- *   Copyright 2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,13 +40,16 @@
 /*
  * Memory devices
  */
+
 /* AUD_SRAM: type=RAM, use=0x0003f300, remainder=0x00000d00 */
+
 #define AUD_SRAM_ADDR  0x000c0000
 #define AUD_SRAM_SIZE  0x00040000
 
 /*
  * Fixed areas
  */
+
 #define AUDIO_WORK_AREA_ALIGN   0x00000008
 #define AUDIO_WORK_AREA_ADDR    0x000c0000
 #define AUDIO_WORK_AREA_DRM     0x000c0000 /* _DRM is obsolete macro. to use _ADDR */
@@ -77,13 +80,19 @@
 /*
  * Section IDs
  */
+
 #define SECTION_NO0       0
+
+/*
+ * Number of sections
+ */
 
 #define NUM_MEM_SECTIONS  1
 
 /*
  * Pool IDs
  */
+
 const MemMgrLite::PoolId S0_NULL_POOL                = { 0, SECTION_NO0};  /*  0 */
 const MemMgrLite::PoolId S0_ES_BUF_POOL              = { 1, SECTION_NO0};  /*  1 */
 const MemMgrLite::PoolId S0_PREPROC_BUF_POOL         = { 2, SECTION_NO0};  /*  2 */
@@ -98,14 +107,16 @@ const MemMgrLite::PoolId S0_PRE_APU_CMD_POOL         = { 6, SECTION_NO0};  /*  6
 #define NUM_MEM_LAYOUTS      1
 #define NUM_MEM_POOLS        7
 
-
 /*
  * Pool areas
  */
+
 /* Section0 Layout0: */
+
 #define MEMMGR_S0_L0_WORK_SIZE   0x0000009c
 
 /* Skip 0x0004 bytes for alignment. */
+
 #define S0_L0_ES_BUF_POOL_ALIGN    0x00000008
 #define S0_L0_ES_BUF_POOL_L_FENCE  0x000c0004
 #define S0_L0_ES_BUF_POOL_ADDR     0x000c0008
@@ -139,6 +150,7 @@ const MemMgrLite::PoolId S0_PRE_APU_CMD_POOL         = { 6, SECTION_NO0};  /*  6
 #define S0_L0_ENC_APU_CMD_POOL_SEG_SIZE 0x0000005c
 
 /* Skip 0x0004 bytes for alignment. */
+
 #define S0_L0_SRC_APU_CMD_POOL_ALIGN    0x00000008
 #define S0_L0_SRC_APU_CMD_POOL_L_FENCE  0x000ed13c
 #define S0_L0_SRC_APU_CMD_POOL_ADDR     0x000ed140
@@ -148,6 +160,7 @@ const MemMgrLite::PoolId S0_PRE_APU_CMD_POOL         = { 6, SECTION_NO0};  /*  6
 #define S0_L0_SRC_APU_CMD_POOL_SEG_SIZE 0x0000005c
 
 /* Skip 0x0004 bytes for alignment. */
+
 #define S0_L0_PRE_APU_CMD_POOL_ALIGN    0x00000008
 #define S0_L0_PRE_APU_CMD_POOL_L_FENCE  0x000ed25c
 #define S0_L0_PRE_APU_CMD_POOL_ADDR     0x000ed260

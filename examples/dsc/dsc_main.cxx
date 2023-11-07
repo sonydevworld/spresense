@@ -45,9 +45,6 @@
 #  include <sys/ioctl.h>
 #  include <nuttx/fs/ioctl.h>
 #  include <nuttx/fs/automount.h>
-#else
-#  include <nuttx/board.h>
-#  include <arch/board/board.h>
 #endif
 
 #include <stdio.h>
@@ -111,6 +108,7 @@ static struct app_param_t g_appinst;
  * name: card_detection_cb
  ****************************************************************************/
 
+#ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
 static void card_detection_cb(bool injected)
 {
   if (injected)
@@ -122,6 +120,7 @@ static void card_detection_cb(bool injected)
       g_appinst.is_card_inserted = false;
     }
 }
+#endif
 
 /****************************************************************************
  * name: draw_cardstatus
@@ -338,13 +337,6 @@ extern "C" int main(void)
       ret = -1;
       goto errout0;
     }
-#else
-  if (board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB,
-                  (uintptr_t)card_detection_cb) < 0)
-    {
-      printf("card detection init failed\n");
-      return -1;
-    }
 #endif
   g_appinst.is_card_inserted = file_initialize();
   g_appinst.nocard_fcnt = 0;
@@ -450,8 +442,6 @@ errout1:
 #ifdef CONFIG_FS_AUTOMOUNTER_DRIVER
 errout0:
   close(fd);
-#else
-  board_ioctl(BOARDIOC_SDCARD_SETNOTIFYCB, 0);
 #endif
 
   return ret;

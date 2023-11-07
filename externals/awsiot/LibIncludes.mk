@@ -35,17 +35,17 @@
 
 ifeq ($(CONFIG_EXTERNALS_AWSIOT),y)
 AWSCOREDIR += $(EXTERNAL_DIR)$(DELIM)awsiot$(DELIM)aws-iot-device-sdk-embedded-C
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(EXTERNAL_DIR)$(DELIM)awsiot"}
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)include"}
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn"}
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)common"}
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)mbedtls"}
-CFLAGS     += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)pthread"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(EXTERNAL_DIR)$(DELIM)awsiot"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)include"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)common"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)mbedtls"}
-CXXFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)pthread"}
+CFLAGS     += ${INCDIR_PREFIX}$(EXTERNAL_DIR)$(DELIM)awsiot
+CFLAGS     += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)include
+CFLAGS     += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
+CFLAGS     += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)common
+CFLAGS     += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)mbedtls
+CFLAGS     += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)pthread
+CXXFLAGS   += ${INCDIR_PREFIX}$(EXTERNAL_DIR)$(DELIM)awsiot
+CXXFLAGS   += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)include
+CXXFLAGS   += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)external_libs$(DELIM)jsmn
+CXXFLAGS   += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)common
+CXXFLAGS   += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)mbedtls
+CXXFLAGS   += ${INCDIR_PREFIX}$(AWSCOREDIR)$(DELIM)platform$(DELIM)linux$(DELIM)pthread
 endif
 

@@ -34,6 +34,6 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_SSLUTILS),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/sslutils/include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/sslutils/include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/sslutils/include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/sslutils/include
 endif
