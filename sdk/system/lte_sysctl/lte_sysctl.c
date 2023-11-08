@@ -726,6 +726,7 @@ static void show_daemon_stat(void)
             {
               fprintf(stderr, APN_AUTH_FMT, CHAP_STR);
             }
+
           fprintf(stderr, APN_USER_FMT, apn.user_name);
           fprintf(stderr, APN_PASS_FMT, apn.password);
         }
@@ -1018,6 +1019,7 @@ int main(int argc, FAR char *argv[])
       fprintf(stderr, "%s: missing required argument(s)\n", argv[0]);
       show_usage(argv[0], EXIT_FAILURE);
     }
+
   cmd = argv[optind++];
 
   if (optind < argc)
