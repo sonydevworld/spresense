@@ -284,6 +284,12 @@ int mbedtls_entropy_source_self_test( int verbose );
 #endif /* MBEDTLS_ENTROPY_HARDWARE_ALT */
 #endif /* MBEDTLS_SELF_TEST */
 
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_entropy_getctx( mbedtls_entropy_context *entropy, uint8_t *buff, size_t size );
+int mbedtls_entropy_setctx( mbedtls_entropy_context *entropy, uint8_t *buff, size_t size );
+int mbedtls_entropy_getctxsize( mbedtls_entropy_context *entropy );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

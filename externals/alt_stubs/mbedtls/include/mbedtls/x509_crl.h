@@ -167,6 +167,12 @@ void mbedtls_x509_crl_init( mbedtls_x509_crl *crl );
  */
 void mbedtls_x509_crl_free( mbedtls_x509_crl *crl );
 
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_x509_crl_getctx( mbedtls_x509_crl *crl, uint8_t *buff, size_t size );
+int mbedtls_x509_crl_setctx( mbedtls_x509_crl *crl, uint8_t *buff, size_t size );
+int mbedtls_x509_crl_getctxsize( mbedtls_x509_crl *crl );
+#endif
+
 /* \} name */
 /* \} addtogroup x509_module */
 

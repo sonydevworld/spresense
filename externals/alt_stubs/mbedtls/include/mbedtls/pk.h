@@ -621,6 +621,16 @@ int mbedtls_pk_write_pubkey( unsigned char **p, unsigned char *start,
 int mbedtls_pk_load_file( const char *path, unsigned char **buf, size_t *n );
 #endif
 
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_pk_getctx( mbedtls_pk_context *pk, uint8_t *buff, size_t size );
+int mbedtls_pk_setctx( mbedtls_pk_context *pk, uint8_t *buff, size_t size );
+int mbedtls_pk_getctxsize( mbedtls_pk_context *pk );
+
+int mbedtls_pk_info_getctx( mbedtls_pk_info_t *info, uint8_t *buff, size_t size );
+int mbedtls_pk_info_setctx( mbedtls_pk_info_t *info, uint8_t *buff, size_t size );
+int mbedtls_pk_info_getctxsize( mbedtls_pk_info_t *info );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

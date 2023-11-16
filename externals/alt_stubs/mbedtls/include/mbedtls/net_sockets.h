@@ -228,6 +228,9 @@ void mbedtls_net_free( mbedtls_net_context *ctx );
 #if defined(CONFIG_LTE_NET_MBEDTLS)
 void mbedtls_net_alt2fd( mbedtls_net_context *ctx );
 void mbedtls_net_fd2alt( mbedtls_net_context *ctx );
+int mbedtls_net_getctx( mbedtls_net_context *net, uint8_t *buff, size_t size );
+int mbedtls_net_setctx( mbedtls_net_context *net, uint8_t *buff, size_t size );
+int mbedtls_net_getctxsize( mbedtls_net_context *net );
 #endif
 
 #ifdef __cplusplus

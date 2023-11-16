@@ -111,3 +111,41 @@ int mbedtls_ctr_drbg_random(void *p_rng, unsigned char *output, size_t output_le
     return MBEDTLS_ERR_CTR_DRBG_ENTROPY_SOURCE_FAILED;
 }
 
+int mbedtls_ctr_drbg_getctx(mbedtls_ctr_drbg_context *ctr_drbg, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_ctr_drbg_context);
+
+  if (ctr_drbg && buff && size >= sizeof(mbedtls_ctr_drbg_context))
+    {
+      mbedtls_ctr_drbg_context *ctx = (mbedtls_ctr_drbg_context *)buff;
+      ctx->id = ctr_drbg->id;
+    }
+  else if (ctr_drbg && buff)
+    {
+      ret = MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR;
+    }
+
+  return ret;
+}
+
+int mbedtls_ctr_drbg_setctx(mbedtls_ctr_drbg_context *ctr_drbg, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (ctr_drbg && buff && size >= sizeof(mbedtls_ctr_drbg_context))
+    {
+      mbedtls_ctr_drbg_context *ctx = (mbedtls_ctr_drbg_context *)buff;
+      ctr_drbg->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_CTR_DRBG_FILE_IO_ERROR;
+    }
+
+  return ret;
+}
+
+int mbedtls_ctr_drbg_getctxsize(mbedtls_ctr_drbg_context *ctr_drbg)
+{
+  return mbedtls_ctr_drbg_getctx(NULL, NULL, 0);
+}

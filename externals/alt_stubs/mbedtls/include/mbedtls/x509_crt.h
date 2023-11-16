@@ -662,6 +662,12 @@ int mbedtls_x509write_crt_pem( mbedtls_x509write_cert *ctx, unsigned char *buf, 
 #endif /* MBEDTLS_PEM_WRITE_C */
 #endif /* MBEDTLS_X509_CRT_WRITE_C */
 
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_x509_crt_getctx( mbedtls_x509_crt *crt, uint8_t *buff, size_t size );
+int mbedtls_x509_crt_setctx( mbedtls_x509_crt *crt, uint8_t *buff, size_t size );
+int mbedtls_x509_crt_getctxsize( mbedtls_x509_crt *crt );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

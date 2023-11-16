@@ -272,3 +272,80 @@ mbedtls_rsa_context *mbedtls_pk_rsa(const mbedtls_pk_context pk)
     }
 }
 
+int mbedtls_pk_getctx(mbedtls_pk_context *pk, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_pk_context);
+
+  if (pk && buff && size >= sizeof(mbedtls_pk_context))
+    {
+      mbedtls_pk_context *ctx = (mbedtls_pk_context *)buff;
+      ctx->id = pk->id;
+    }
+  else if (pk && buff)
+    {
+      ret = MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_pk_setctx(mbedtls_pk_context *pk, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (pk && buff && size >= sizeof(mbedtls_pk_context))
+    {
+      mbedtls_pk_context *ctx = (mbedtls_pk_context *)buff;
+      pk->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_pk_getctxsize(mbedtls_pk_context *pk)
+{
+  return mbedtls_pk_getctx(NULL, NULL, 0);
+}
+
+int mbedtls_pk_info_getctx(mbedtls_pk_info_t *info, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_pk_info_t);
+
+  if (info && buff && size >= sizeof(mbedtls_pk_info_t))
+    {
+      mbedtls_pk_info_t *ctx = (mbedtls_pk_info_t *)buff;
+      ctx->id = info->id;
+    }
+  else if (info && buff)
+    {
+      ret = MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_pk_info_setctx(mbedtls_pk_info_t *info, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (info && buff && size >= sizeof(mbedtls_pk_info_t))
+    {
+      mbedtls_pk_info_t *ctx = (mbedtls_pk_info_t *)buff;
+      info->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_PK_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_pk_info_getctxsize(mbedtls_pk_info_t *info)
+{
+  return mbedtls_pk_info_getctx(NULL, NULL, 0);
+}

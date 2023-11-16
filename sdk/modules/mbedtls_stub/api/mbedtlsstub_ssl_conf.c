@@ -332,3 +332,80 @@ void mbedtls_ssl_conf_ciphersuites(mbedtls_ssl_config *conf, const int *ciphersu
   return ;
 }
 
+int mbedtls_ssl_config_getctx(mbedtls_ssl_config *conf, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_ssl_config);
+
+  if (conf && buff && size >= sizeof(mbedtls_ssl_config))
+    {
+      mbedtls_ssl_config *ctx = (mbedtls_ssl_config *)buff;
+      ctx->id = conf->id;
+    }
+  else if (conf && buff)
+    {
+      ret = MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_ssl_config_setctx(mbedtls_ssl_config *conf, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (conf && buff && size >= sizeof(mbedtls_ssl_config))
+    {
+      mbedtls_ssl_config *ctx = (mbedtls_ssl_config *)buff;
+      conf->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_ssl_config_getctxsize(mbedtls_ssl_config *conf)
+{
+  return mbedtls_ssl_config_getctx(NULL, NULL, 0);
+}
+
+int mbedtls_x509_crl_getctx(mbedtls_x509_crl *crl, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_x509_crl);
+
+  if (crl && buff && size >= sizeof(mbedtls_x509_crl))
+    {
+      mbedtls_x509_crl *ctx = (mbedtls_x509_crl *)buff;
+      ctx->id = crl->id;
+    }
+  else if (crl && buff)
+    {
+      ret = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_x509_crl_setctx(mbedtls_x509_crl *crl, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (crl && buff && size >= sizeof(mbedtls_x509_crl))
+    {
+      mbedtls_x509_crl *ctx = (mbedtls_x509_crl *)buff;
+      crl->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_x509_crl_getctxsize(mbedtls_x509_crl *crl)
+{
+  return mbedtls_x509_crl_getctx(NULL, NULL, 0);
+}
