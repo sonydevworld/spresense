@@ -209,8 +209,8 @@ extern BLE_Context g_ble_context;
 struct bt_common_context_s  
 {
   BT_ADDR bt_addr;  /* Common address for BT/BLE */
-  char bt_name[BT_NAME_LEN];
-  char ble_name[BT_NAME_LEN];
+  char bt_name[BT_NAME_LEN + 1];
+  char ble_name[BT_NAME_LEN + 1];
 };
 
 /****************************************************************************
