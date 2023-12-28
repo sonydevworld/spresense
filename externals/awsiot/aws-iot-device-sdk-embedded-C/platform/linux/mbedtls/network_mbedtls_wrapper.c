@@ -406,11 +406,16 @@ IoT_Error_t iot_tls_read(Network *pNetwork, unsigned char *pMsg, size_t len, Tim
 	return SUCCESS;
 }
 
-IoT_Error_t iot_tls_disconnect(Network *pNetwork) {
+IoT_Error_t iot_tls_disconnect(Network *pNetwork, Timer *timer) {
 	mbedtls_ssl_context *ssl = &(pNetwork->tlsDataParams.ssl);
 	int ret = 0;
 	do {
 		ret = mbedtls_ssl_close_notify(ssl);
+#ifdef IOT_SSL_SOCKET_NON_BLOCKING
+		if (has_timer_expired(timer)) {
+			break;
+		}
+#endif
 	} while(ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
 	/* All other negative return values indicate connection needs to be reset.

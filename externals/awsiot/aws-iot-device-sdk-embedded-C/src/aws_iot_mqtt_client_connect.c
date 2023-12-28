@@ -409,6 +409,7 @@ static IoT_Error_t _aws_iot_mqtt_internal_connect(AWS_IoT_Client *pClient, IoT_C
 IoT_Error_t aws_iot_mqtt_connect(AWS_IoT_Client *pClient, IoT_Client_Connect_Params *pConnectParams) {
 	IoT_Error_t rc, disconRc;
 	ClientState clientState;
+	Timer timer;
 	FUNC_ENTRY;
 
 	if(NULL == pClient) {
@@ -428,7 +429,9 @@ IoT_Error_t aws_iot_mqtt_connect(AWS_IoT_Client *pClient, IoT_Client_Connect_Par
 	rc = _aws_iot_mqtt_internal_connect(pClient, pConnectParams);
 
 	if(SUCCESS != rc) {
-		pClient->networkStack.disconnect(&(pClient->networkStack));
+		init_timer(&timer);
+		countdown_ms(&timer, pClient->clientData.commandTimeoutMs);
+		pClient->networkStack.disconnect(&(pClient->networkStack), &timer);
 		disconRc = pClient->networkStack.destroy(&(pClient->networkStack));
 		if (SUCCESS != disconRc) {
 			FUNC_EXIT_RC(NETWORK_DISCONNECTED_ERROR);
@@ -476,7 +479,7 @@ static IoT_Error_t _aws_iot_mqtt_internal_disconnect(AWS_IoT_Client *pClient) {
 	}
 
 	/* Clean network stack */
-	pClient->networkStack.disconnect(&(pClient->networkStack));
+	pClient->networkStack.disconnect(&(pClient->networkStack), &timer);
 	rc = pClient->networkStack.destroy(&(pClient->networkStack));
 	if(SUCCESS != rc) {
 		/* TLS Destroy failed, return error */
