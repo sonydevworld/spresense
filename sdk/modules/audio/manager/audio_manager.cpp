@@ -812,7 +812,7 @@ void AudioManager::run(void)
 {
   err_t           err_code;
   FAR MsgQueBlock *que;
-  FAR MsgPacket   *msg;
+  FAR MsgPacket   *msg = NULL;
 
   err_code = MsgLib::referMsgQueBlock(m_selfDtq, &que);
   F_ASSERT(err_code == ERR_OK);
