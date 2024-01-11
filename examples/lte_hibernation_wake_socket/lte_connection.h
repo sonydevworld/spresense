@@ -40,7 +40,7 @@
  * Public Functions Prototypes
  ****************************************************************************/
 
-int app_connect_to_lte(void);
+int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting);
 int app_disconnect_from_lte(void);
 
 #endif /* __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_LTE_CONNECTION_H */
