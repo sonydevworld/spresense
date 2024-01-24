@@ -495,7 +495,7 @@ int ble_characteristic_notify(uint16_t               conn_handle,
                               int                    len);
 
 /**
- * @brief BLE Read Characteristic value
+ * @brief BLE Read Characteristic value (Deprecated)
  *        Send read characteristic request to peripheral (For Central role)
  *
  * @param[in] conn_handle: connection handle for which read request is sent
@@ -507,7 +507,7 @@ int ble_characteristic_notify(uint16_t               conn_handle,
 int ble_characteristic_read(uint16_t conn_handle, struct ble_gatt_char_s *charc);
 
 /**
- * @brief BLE Write Characteristic value
+ * @brief BLE Write Characteristic value (Deprecated)
  *        Send write characteristic request to peripheral (For Central role)
  *
  * @param[in] conn_handle: connection handle for which write request is sent
@@ -522,6 +522,37 @@ int ble_characteristic_write(uint16_t               conn_handle,
                              struct ble_gatt_char_s *charc,
                              uint8_t                *data,
                              int                    len);
+
+/**
+ * @brief BLE Read Characteristic value
+ *        Send read characteristic request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle for which write request is sent
+ * @param[in] char_handle: characteristic handle for which write request is sent
+ *
+ * @retval error code
+ */
+
+int ble_read_characteristic(uint16_t conn_handle, uint16_t char_handle);
+
+/**
+ * @brief BLE Write Characteristic value
+ *        Send write characteristic request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle for which write request is sent
+ * @param[in] char_handle: characteristic handle for which write request is sent
+ * @param[in] data: Write data
+ * @param[in] len: Write data length
+ * @param[in] rsp: Require write response to receive write result
+ *
+ * @retval error code
+ */
+
+int ble_write_characteristic(uint16_t conn_handle,
+                             uint16_t char_handle,
+                             uint8_t  *data,
+                             int      len,
+                             bool     rsp);
 
 /**
  * @brief BLE Read Descriptor value

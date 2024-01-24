@@ -564,7 +564,7 @@ int ble_characteristic_notify(uint16_t               conn_handle,
 }
 
 /****************************************************************************
- * Name: ble_characteristic_read
+ * Name: ble_characteristic_read (Deprecated)
  *
  * Description:
  *   BLE Read Characteristic value
@@ -586,7 +586,7 @@ int ble_characteristic_read(uint16_t               conn_handle,
 
   if (ble_hal_gattc_ops && ble_hal_gattc_ops->read)
     {
-      ret = ble_hal_gattc_ops->read(charc, conn_handle);
+      ret = ble_hal_gattc_ops->read(conn_handle, charc->handle);
     }
   else
     {
@@ -598,7 +598,7 @@ int ble_characteristic_read(uint16_t               conn_handle,
 }
 
 /****************************************************************************
- * Name: ble_characteristic_write
+ * Name: ble_characteristic_write (Deprecated)
  *
  * Description:
  *   BLE Write Characteristic value
@@ -622,7 +622,75 @@ int ble_characteristic_write(uint16_t               conn_handle,
 
   if (ble_hal_gattc_ops && ble_hal_gattc_ops->write)
     {
-      ret = ble_hal_gattc_ops->write(charc, conn_handle);
+      ret = ble_hal_gattc_ops->write(conn_handle,
+                                     charc->handle,
+                                     charc->value.data,
+                                     charc->value.length,
+                                     TRUE); /* This API supports 'with response' */
+    }
+  else
+    {
+      _err("%s [BLE][GATT] write characteristic failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_read_characteristic
+ *
+ * Description:
+ *   BLE Read Characteristic value
+ *   Send read characteristic request to peripheral (For Central role)
+ *
+ ****************************************************************************/
+
+int ble_read_characteristic(uint16_t conn_handle, uint16_t char_handle)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops;
+
+  ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (ops && ops->read)
+    {
+
+      ret = ops->read(conn_handle, char_handle);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] write characteristic failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_write_characteristic
+ *
+ * Description:
+ *   BLE Write Characteristic value
+ *   Send write characteristic request to peripheral (For Central role)
+ *
+ ****************************************************************************/
+
+int ble_write_characteristic(uint16_t conn_handle,
+                             uint16_t char_handle,
+                             uint8_t  *data,
+                             int      len,
+                             bool     rsp)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops;
+
+  ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
+
+  if (ops && ops->write)
+    {
+
+      ret = ops->write(conn_handle, char_handle, data, len, rsp);
     }
   else
     {
