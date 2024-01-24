@@ -157,9 +157,10 @@ static BLE_CHAR_VALUE char_value =
 
 static BLE_CHAR_PROP char_property =
   {
-    .read   = 1,
-    .write  = 1,
-    .notify = 1
+    .read        = 1,
+    .write       = 1,
+    .writeWoResp = 1,
+    .notify      = 1
   };
 
 static struct ble_gatt_char_s g_ble_gatt_char =
