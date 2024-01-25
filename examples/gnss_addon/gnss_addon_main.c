@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/gnss_addon/gnss_addon_main.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -323,6 +323,7 @@ int main(int argc, char *argv[])
   uint32_t bootcause;
   int fixcnt = 0;
   FILE *fp = stdout;
+  char version[CXD56_GNSS_VERSION_MAXLEN];
 
   /* Argument settings */
 
@@ -388,6 +389,19 @@ int main(int argc, char *argv[])
   if (ret < 0)
     {
       printf("ERROR: wakeup ret=%d, errno=%d\n", ret, errno);
+    }
+
+  /* Display the firmware version. */
+
+  memset(version, 0, sizeof(version));
+  ret = ioctl(fd, CXD56_GNSS_IOCTL_GET_VERSION, (unsigned long)&version);
+  if (ret < 0)
+    {
+      printf("ERROR: get version ret=%d, errno=%d\n", ret, errno);
+    }
+  else
+    {
+      printf("FW version: %s\n", version);
     }
 
   /* Adjust the system time using 1PPS signal.
