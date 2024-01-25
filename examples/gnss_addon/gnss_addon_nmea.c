@@ -96,6 +96,7 @@ int setup_nmea(FILE *stream)
                 NMEA_GNS_ON |
                 NMEA_RMC_ON |
                 NMEA_VTG_ON |
+                NMEA_QZQSM_ON |
                 NMEA_ZDA_ON);
 
   /* Register callbacks to output NMEA */
@@ -117,5 +118,29 @@ int setup_nmea(FILE *stream)
 int print_nmea(struct cxd56_gnss_positiondata2_s *posdat)
 {
   NMEA_Output2(posdat);
+  return 0;
+}
+
+int print_dcreport(struct cxd56_gnss_dcreport_data_s *dcreport)
+{
+  static struct cxd56_gnss_dcreport_data_s s_dcreport;
+
+  if (dcreport->svid == 0)
+    {
+        /* invalid data */
+
+        return 0;
+    }
+
+  if (0 == memcmp(&s_dcreport, dcreport, sizeof(s_dcreport)))
+    {
+        /* not updated */
+
+        return 0;
+    }
+
+  memcpy(&s_dcreport, dcreport, sizeof(s_dcreport));
+
+  NMEA_DcReport_Output2(dcreport);
   return 0;
 }
