@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_hibernation/lte_connection.c
+ * examples/lte_hibernation_wake_socket/lte_connection.c
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -52,7 +52,7 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define APP_MQUEUE_NAME    "lte_hibernation_sample_queue"
+#define APP_MQUEUE_NAME    "lte_hibernation_wake_socket_sample_queue"
 #define APP_MAX_MQUEUE_MSG 1
 #define APP_MQUEUE_MODE    0666
 #define APP_SESSION_ID     1
@@ -90,6 +90,7 @@ static int app_mq_create(FAR const char *mq_name)
       printf("mq_open() failed: %d\n", errcode);
       return -1;
     }
+
   mq_close(mqd);
 
   return 0;
@@ -129,7 +130,7 @@ static void app_mq_notify_result(int result)
 
   /* Send result of callback */
 
-  ret = mq_send(mqd, (FAR const char*)&buffer, sizeof(buffer), 0);
+  ret = mq_send(mqd, (FAR const char *)&buffer, sizeof(buffer), 0);
   if (ret < 0)
     {
       errcode = errno;
@@ -137,6 +138,7 @@ static void app_mq_notify_result(int result)
       mq_close(mqd);
       return;
     }
+
   mq_close(mqd);
 }
 
@@ -163,7 +165,7 @@ static int app_wait_lte_callback(int *result)
 
   /* Receive result of callback */
 
-  ret = mq_receive(mqd, (FAR char*)&buffer, sizeof(buffer), 0);
+  ret = mq_receive(mqd, (FAR char *)&buffer, sizeof(buffer), 0);
   if (ret < 0)
     {
       errcode = errno;
@@ -171,6 +173,7 @@ static int app_wait_lte_callback(int *result)
       mq_close(mqd);
       return -1;
     }
+
   mq_close(mqd);
 
   *result = buffer;
@@ -193,6 +196,7 @@ static void app_restart_cb(uint32_t reason)
       "Modem restart by application.",
       "Modem restart by self."
     };
+
   printf("%s called. reason:%s\n", __func__, reson_string[reason]);
 
   /* Notify the result to the lte_hibernation sample application task */
@@ -210,7 +214,10 @@ static void app_restart_cb(uint32_t reason)
 static void app_show_errinfo(void)
 {
   int           ret;
-  lte_errinfo_t info = {0};
+  lte_errinfo_t info =
+    {
+      0
+    };
 
   ret = lte_get_errinfo(&info);
   if (ret == 0)
@@ -219,10 +226,12 @@ static void app_show_errinfo(void)
         {
           printf("err_result_code : %ld\n", info.err_result_code);
         }
+
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRNO)
         {
           printf("err_no          : %ld\n", info.err_no);
         }
+
       if (info.err_indicator & LTE_ERR_INDICATOR_ERRSTR)
         {
           printf("err_string      : %s\n", info.err_string);
@@ -261,7 +270,10 @@ static void app_show_pdn(lte_pdn_t *pdn)
 static int app_get_sessionid(void)
 {
   int           ret     = 0;
-  lte_netinfo_t netinfo = {0};
+  lte_netinfo_t netinfo =
+    {
+      0
+    };
 
   netinfo.pdn_stat = (lte_pdn_t *)malloc(sizeof(lte_pdn_t)
                                          * LTE_SESSION_ID_MAX);
@@ -279,6 +291,7 @@ static int app_get_sessionid(void)
         {
           app_show_errinfo();
         }
+
       free(netinfo.pdn_stat);
       return -1;
     }
@@ -306,11 +319,17 @@ static int app_get_sessionid(void)
 
 int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
 {
-  int                     ret;
-  int                     result = LTE_RESULT_OK;
-  lte_errinfo_t           info = {0};
-  lte_pdn_t               pdn = {0};
-  lte_edrx_setting_t      edrx = {0};
+  int ret;
+  int result = LTE_RESULT_OK;
+  lte_errinfo_t info =
+    {
+      0
+    };
+
+  lte_pdn_t pdn =
+    {
+      0
+    };
 
   /* Create a message queue. It is used to receive result from the
    * asynchronous API callback.
@@ -349,7 +368,6 @@ int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
   ret = lte_power_on();
   if (ret >= 0)
     {
-
       /* Wait until the modem startup normally and notification
        * comes from the callback(app_restart_cb)
        * registered by lte_set_report_restart.
@@ -371,20 +389,6 @@ int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
       goto errout_with_lte_fin;
     }
 
-  /* Set LTE eDRX mode for low power consumption */
-
-  edrx.act_type   = LTE_EDRX_ACTTYPE_WBS1;
-  edrx.enable     = LTE_ENABLE;
-  edrx.edrx_cycle = LTE_EDRX_CYC_65536;
-  edrx.ptw_val    = LTE_EDRX_PTW_512;
-
-  ret = lte_set_edrx_sync(&edrx);
-  if (ret < 0)
-    {
-      printf("Failed to set eDRX parameters.\n");
-      goto errout_with_lte_fin;
-    }
-
   /* Radio on and start to search for network */
 
   ret = lte_radio_on_sync();
@@ -393,7 +397,7 @@ int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
       if (ret == -EPROTO)
         {
           lte_get_errinfo(&info);
-          if(info.err_no != -EALREADY)
+          if (info.err_no != -EALREADY)
             {
               printf("Failed to set radio on :%d\n", ret);
               goto errout_with_lte_fin;
@@ -416,7 +420,6 @@ int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
     }
   else
     {
-
       /* Attach to the LTE network and connect to the data PDN */
 
       ret = lte_activate_pdn_sync(apnsetting, &pdn);
@@ -434,26 +437,6 @@ int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
       app_show_pdn(&pdn);
       data_pdn_sid = pdn.session_id;
     }
-
-  /* Get negotiated eDRX parameters */
-
-  ret = lte_get_current_edrx_sync(&edrx);
-  if (ret < 0)
-    {
-      printf("Failed to get current eDRX parameters.\n");
-      goto errout_with_lte_fin;
-    }
-
-  /* Show negotiated eDRX parameters.
-   * Parameter's definition is defined at
-   * nuttx/include/nuttx/wireless/lte/lte.h
-   */
-
-  printf("Negotiated eDRX parameter:\n");
-  printf("  Act Type          : %d\n", edrx.act_type);
-  printf("  Enable            : %s\n", edrx.enable ? "True" : "False");
-  printf("  eDRX cycle        : %ld\n", edrx.edrx_cycle);
-  printf("  Paging time window: %ld\n", edrx.ptw_val);
 
   return 0;
 

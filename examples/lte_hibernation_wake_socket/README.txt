@@ -1,16 +1,17 @@
-examples/lte_hibernation
-^^^^^^^^^^^^^^^^^^^^^^^^
+examples/lte_hibernation_wake_socket
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ******************************************************************************
 * Description
 ******************************************************************************
 
   This application is a sample that shows how Spresense works when it is
   put into CodSleep while maintaining an LTE connection.
-  Spresense goes into ColdSleep while maintaining an LTE connection and
-  periodically starts up and downloads the HTML of a web page with Wget.
+  Spresense can enter ColdSleep while maintaining the LTE connection and
+  also the connection to the server. Spresense is able to wake up and receive
+  data from the server when it arrives.
 
-  It can be used as a reference to create a program with reduced power
-  consumption by changing the program for the part that executes Wget.
+  It can be used as a reference for this sample to make a program that wakes
+  up Spresense by notification from the server.
 
   Supported LTE modem is ALT1250.
 
@@ -18,8 +19,17 @@ examples/lte_hibernation
 * Build kernel and SDK
 ******************************************************************************
 
-  $ ./tools/config.py examples/lte_hibernation
+  $ ./tools/config.py examples/lte_hibernation_wake_socket
   $ make
+
+******************************************************************************
+* Install certificate file
+******************************************************************************
+
+  This example performs an HTTP GET to https://httpbin.org/delay/10.
+  Therefore, please install the server certificate file in /mnt/sd0/CERTS
+  beforehand. The installation directory can be changed in
+  CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_CERTS_PATH.
 
 ******************************************************************************
 * Execute Example
@@ -28,11 +38,11 @@ examples/lte_hibernation
   Create the file /mnt/spif/init.rc. Refer to the following command to create
   the init.rc file.
 
-  $ echo "lte_hibernation -a <apn_name> -i <ip_type> -t <auth_type> -u <user_name> -p <password> &" > /mnt/spif/init.rc
+  $ echo "lte_hibernation_wake_socket -a <apn_name> -i <ip_type> -t <auth_type> -u <user_name> -p <password>" > /mnt/spif/init.rc
 
-  The usage of lte_hibernation is as follows.
+  The usage of lte_hibernation_wake_socket is as follows.
 
-    USAGE: lte_hibernation command
+    USAGE: lte_hibernation_wake_socket command
      [-a <apn_name>] [-i <ip_type>] [-t <auth_type>] [-u <user_name>] [-p <password>]
       -a: APN name
       -i: IP type : v4 or v6 or v4v6

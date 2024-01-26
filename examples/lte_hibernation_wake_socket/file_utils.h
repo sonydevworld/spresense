@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_hibernation/lte_connection.h
+ * examples/lte_hibernation_wake_socket/file_utils.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,14 +33,15 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H
-#define __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H
+#ifndef __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_FILE_UTILS_H
+#define __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_FILE_UTILS_H
 
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
 
-int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting);
-int app_disconnect_from_lte(void);
+int app_save_file(FAR char *filename, FAR uint8_t *data, int size);
+int app_read_file(FAR char *filename, FAR uint8_t *data, int size);
+bool app_file_exist(char *filename);
 
-#endif /* __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H */
+#endif /* __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_FILE_UTILS_H */

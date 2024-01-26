@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/mbedtls_stub/api/mbedtlsstub_entropy.c
+ * examples/lte_hibernation_wake_socket/wget_ops.h
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,101 +33,63 @@
  *
  ****************************************************************************/
 
+#ifndef __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_OPS_H
+#define __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_OPS_H
+
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
 #include <nuttx/config.h>
 
-#include <nuttx/wireless/lte/lte_ioctl.h>
+#include <mbedtls/config.h>
+#include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
+#include <mbedtls/net_sockets.h>
+#include <mbedtls/platform.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/pk_internal.h>
+#include <mbedtls/md_internal.h>
 
-#include "include/mbedtlsstub_utils.h"
-#include "lte/lapi.h"
+#include "wget_utils.h"
 
 /****************************************************************************
- * Public Functions
+ * Public Data Types
  ****************************************************************************/
 
-void mbedtls_entropy_init(mbedtls_entropy_context *ctx)
+struct wgetops_sock_context_s
 {
-  int ret;
-  int32_t result;
-  FAR void *inarg[] = {&ctx->id};
-  FAR void *outarg[] = {&result, ctx};
+  int sockfd;
+};
 
-  ret = lapi_req(LTE_CMDID_TLS_ENTROPY_INIT,
-		 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
-    {
-      ret = result;
-    }
-
-  return ;
-}
-
-void mbedtls_entropy_free(mbedtls_entropy_context *ctx)
+struct wgetops_tls_context_s
 {
-  int ret;
-  int32_t result;
-  FAR void *inarg[] = {ctx};
-  FAR void *outarg[] = {&result};
+  mbedtls_net_context server_fd;
+  mbedtls_x509_crt ca;
+  mbedtls_entropy_context entropy;
+  mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_ssl_context ssl;
+  mbedtls_ssl_config conf;
+};
 
-  ret = lapi_req(LTE_CMDID_TLS_ENTROPY_FREE,
-                 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
-    {
-      ret = result;
-    }
+/****************************************************************************
+ * Public Functions Prototypes
+ ****************************************************************************/
 
-  return ;
-}
+/* wget operations for normal socket */
 
-int mbedtls_entropy_func(void *data, unsigned char *output, size_t len)
-{
-  return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
-}
+int wgetops_sock_connect(FAR void *ctx, FAR const char *hostname,
+                         FAR const char *port);
+ssize_t wgetops_sock_send(FAR void *ctx, FAR const void *buf, size_t len);
+ssize_t wgetops_sock_recv(FAR void *ctx, FAR void *buf, size_t len);
+int wgetops_sock_close(FAR void *ctx);
 
-int mbedtls_entropy_getctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
-{
-  int ret = sizeof(mbedtls_entropy_context);
+/* wget operations for secure socket */
 
-  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
-    {
-      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
-      ctx->id = entropy->id;
-    }
-  else if (entropy && buff)
-    {
-      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
-    }
+int wgetops_tls_connect(FAR void *ctx, FAR const char *hostname,
+                        FAR const char *port);
+ssize_t wgetops_tls_send(FAR void *ctx, FAR const void *buf, size_t len);
+ssize_t wgetops_tls_recv(FAR void *ctx, FAR void *buf, size_t len);
+int wgetops_tls_close(FAR void *ctx);
 
-  return ret;
-}
-
-int mbedtls_entropy_setctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
-{
-  int ret = 0;
-
-  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
-    {
-      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
-      entropy->id = ctx->id;
-    }
-  else
-    {
-      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
-    }
-
-  return ret;
-}
-
-int mbedtls_entropy_getctxsize(mbedtls_entropy_context *entropy)
-{
-  return mbedtls_entropy_getctx(NULL, NULL, 0);
-}
-
+#endif /* __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_OPS_H */

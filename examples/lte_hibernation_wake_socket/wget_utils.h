@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/lte_hibernation/lte_connection.h
+ * examples/lte_hibernation_wake_socket/wget_utils.h
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -33,14 +33,35 @@
  *
  ****************************************************************************/
 
-#ifndef __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H
-#define __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H
+#ifndef __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_UTILS_H
+#define __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_UTILS_H
+
+struct wu_wget_ops_s
+{
+  CODE int (*connect)(FAR void *ctx,
+                      FAR const char *hostname, FAR const char *port);
+  CODE ssize_t (*send)(FAR void *ctx,
+                       FAR const void *buf, size_t len);
+  CODE ssize_t (*recv)(FAR void *ctx,
+                       FAR void *buf, size_t len);
+  CODE int (*close)(FAR void *ctx);
+};
+
+struct wu_wget_context_s
+{
+  FAR void *ctx;
+  struct wu_wget_ops_s ops;
+};
 
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
 
-int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting);
-int app_disconnect_from_lte(void);
+int wu_perform_wget_connect(FAR struct wu_wget_context_s *ctx,
+                            FAR char *url);
+int wu_perform_wget_request(FAR struct wu_wget_context_s *ctx,
+                            FAR const void *buf, size_t len);
+int wu_perform_wget_response(FAR struct wu_wget_context_s *ctx,
+                             FAR void *buf, size_t len);
 
-#endif /* __EXAMPLES_LTE_HIBERNATION_LTE_CONNECTION_H */
+#endif /* __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_WGET_UTILS_H */

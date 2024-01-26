@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/mbedtls_stub/api/mbedtlsstub_entropy.c
+ * examples/lte_hibernation_wake_socket/file_utils.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,96 +38,97 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
-
-#include <nuttx/wireless/lte/lte_ioctl.h>
-#include <mbedtls/entropy.h>
-
-#include "include/mbedtlsstub_utils.h"
-#include "lte/lapi.h"
+#include <stdio.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
-void mbedtls_entropy_init(mbedtls_entropy_context *ctx)
-{
-  int ret;
-  int32_t result;
-  FAR void *inarg[] = {&ctx->id};
-  FAR void *outarg[] = {&result, ctx};
+/****************************************************************************
+ * Name: app_save_file
+ ****************************************************************************/
 
-  ret = lapi_req(LTE_CMDID_TLS_ENTROPY_INIT,
-		 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
+int app_save_file(char *filename, uint8_t *data, int size)
+{
+  int fd;
+  struct stat tmp;
+  size_t s;
+
+  /* If previous context data exists, remove it. */
+
+  if (stat(filename, &tmp) == 0)
     {
-      ret = result;
+      unlink(filename);
     }
 
-  return ;
-}
+  printf("write to %s\n", filename);
 
-void mbedtls_entropy_free(mbedtls_entropy_context *ctx)
-{
-  int ret;
-  int32_t result;
-  FAR void *inarg[] = {ctx};
-  FAR void *outarg[] = {&result};
-
-  ret = lapi_req(LTE_CMDID_TLS_ENTROPY_FREE,
-                 (FAR void *)inarg, ARRAY_SZ(inarg),
-                 (FAR void *)outarg, ARRAY_SZ(outarg),
-                 NULL);
-  if (ret == 0)
+  fd = open(filename, O_RDONLY | O_WRONLY | O_CREAT);
+  if (fd < 0)
     {
-      ret = result;
+      printf("Failed to open %s. errno:%d\n", filename, errno);
+      return -1;
     }
 
-  return ;
-}
-
-int mbedtls_entropy_func(void *data, unsigned char *output, size_t len)
-{
-  return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
-}
-
-int mbedtls_entropy_getctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
-{
-  int ret = sizeof(mbedtls_entropy_context);
-
-  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
+  s = write(fd, data, size);
+  if (s != size)
     {
-      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
-      ctx->id = entropy->id;
-    }
-  else if (entropy && buff)
-    {
-      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
+      printf("Failed to write context data. errno:%d\n", errno);
     }
 
-  return ret;
+  close(fd);
+
+  return 0;
 }
 
-int mbedtls_entropy_setctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
-{
-  int ret = 0;
+/****************************************************************************
+ * Name: app_read_file
+ ****************************************************************************/
 
-  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
+int app_read_file(char *filename, uint8_t *data, int size)
+{
+  int fd;
+  struct stat tmp;
+  size_t s;
+
+  if (stat(filename, &tmp) == 0)
     {
-      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
-      entropy->id = ctx->id;
+      printf("read from %s\n", filename);
+
+      fd = open(filename, O_RDONLY);
+      if (fd < 0)
+        {
+          printf("Failed to open %s. errno:%d\n", filename, errno);
+          return -1;
+        }
+
+      s = read(fd, data, size);
+      close(fd);
+      unlink(filename);
     }
   else
     {
-      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
+      return -1;
     }
 
-  return ret;
+  return s;
 }
 
-int mbedtls_entropy_getctxsize(mbedtls_entropy_context *entropy)
+/****************************************************************************
+ * Name: app_file_exist
+ ****************************************************************************/
+
+bool app_file_exist(char *filename)
 {
-  return mbedtls_entropy_getctx(NULL, NULL, 0);
-}
+  struct stat tmp;
 
+  if (stat(filename, &tmp) == 0)
+    {
+      return true;
+    }
+
+  return false;
+}
