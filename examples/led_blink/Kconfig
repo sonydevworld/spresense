@@ -1,0 +1,25 @@
+
+config EXAMPLES_LED_BLINK
+	tristate "LED drive example"
+	default n
+	---help---
+		Enable the led_blink app
+
+if EXAMPLES_LED_BLINK
+
+config EXAMPLES_LED_BLINK_PROGNAME
+	string "Program name"
+	default "led_blink"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LED_BLINK_PRIORITY
+	int "led_blink task priority"
+	default 100
+
+config EXAMPLES_LED_BLINK_STACKSIZE
+	int "led_blink stack size"
+	default 2048
+
+endif
