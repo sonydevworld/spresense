@@ -109,7 +109,7 @@ protected:
   {
     err_t        err_code;
     MsgQueBlock  *que;
-    MsgPacket    *msg;
+    MsgPacket    *msg = NULL;
 
     err_code = MsgLib::referMsgQueBlock(dsp_dtq, &que);
     F_ASSERT(err_code == ERR_OK);
