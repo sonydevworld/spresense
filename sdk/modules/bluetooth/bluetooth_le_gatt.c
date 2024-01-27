@@ -149,7 +149,7 @@ static int event_write_req(struct ble_gatt_event_write_req_t *write_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->write)
     {
-      ble_gatt_peripheral_ops->write(ble_gatt_char);
+      ble_gatt_peripheral_ops->write(write_req_evt->conn_handle, ble_gatt_char);
     }
   else
     {
@@ -182,7 +182,7 @@ static int event_read_req(struct ble_gatt_event_read_req_t *read_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->read)
     {
-      ble_gatt_peripheral_ops->read(ble_gatt_char);
+      ble_gatt_peripheral_ops->read(read_req_evt->conn_handle, ble_gatt_char);
     }
   else
     {
@@ -215,7 +215,7 @@ static int event_notify_req(struct ble_gatt_event_notify_req_t *notify_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->notify)
     {
-      ble_gatt_peripheral_ops->notify(ble_gatt_char, notify_req_evt->enable);
+      ble_gatt_peripheral_ops->notify(notify_req_evt->conn_handle, ble_gatt_char, notify_req_evt->enable);
     }
   else
     {
@@ -324,7 +324,7 @@ static int event_notification(struct ble_gatt_event_notification_t *evt)
       ble_gatt_char.handle       = evt->char_handle;
       ble_gatt_char.value.length = evt->length;
       ble_gatt_char.value.data   = evt->data;
-      ops->notify(&ble_gatt_char);
+      ops->notify(evt->conn_handle, &ble_gatt_char);
       return BT_SUCCESS;
     }
   else
