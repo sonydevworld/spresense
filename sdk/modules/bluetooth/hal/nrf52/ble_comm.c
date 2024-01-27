@@ -2437,6 +2437,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   const ble_gattc_char_t   *rcvch;
   uint16_t                 last_handle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
   connHandle  = bleGattcEvt->conn_handle;
+  ble_gattc_handle_range_t range = {0};
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
       BLE_ERR("onChar ind NG\n");
@@ -2507,7 +2508,11 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
           gattcDbDiscovery->currCharInd = srvBeingDiscovered->charCount;
           // Perform another round of characteristic discovery.
           BLE_PRT2("onChar charDiscover\n");
-          (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+          range.start_handle = last_handle + 1;
+          range.end_handle   = srvBeingDiscovered->srvHandleRange.endHandle;
+          sd_ble_gattc_characteristics_discover(
+            gattcDbDiscovery->dbDiscovery.connHandle,
+            &range);
         }
     }
   else
