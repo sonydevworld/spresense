@@ -149,7 +149,7 @@ static int event_write_req(struct ble_gatt_event_write_req_t *write_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->write)
     {
-      ble_gatt_peripheral_ops->write(write_req_evt->conn_handle, ble_gatt_char);
+      ble_gatt_peripheral_ops->write(ble_gatt_char);
     }
   else
     {
@@ -182,7 +182,7 @@ static int event_read_req(struct ble_gatt_event_read_req_t *read_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->read)
     {
-      ble_gatt_peripheral_ops->read(read_req_evt->conn_handle, ble_gatt_char);
+      ble_gatt_peripheral_ops->read(ble_gatt_char);
     }
   else
     {
@@ -215,7 +215,7 @@ static int event_notify_req(struct ble_gatt_event_notify_req_t *notify_req_evt)
 
   if (ble_gatt_peripheral_ops && ble_gatt_peripheral_ops->notify)
     {
-      ble_gatt_peripheral_ops->notify(notify_req_evt->conn_handle, ble_gatt_char, notify_req_evt->enable);
+      ble_gatt_peripheral_ops->notify(ble_gatt_char, notify_req_evt->enable);
     }
   else
     {
@@ -252,7 +252,7 @@ static int event_write_rsp(struct ble_gatt_event_write_rsp_t *evt)
           ble_gatt_char.status = evt->status;
           ble_gatt_char.handle = evt->char_handle;
 
-          ops->write(&ble_gatt_char);
+          ops->write(evt->conn_handle, &ble_gatt_char);
         }
       else
         {
@@ -297,7 +297,7 @@ static int event_read_rsp(struct ble_gatt_event_read_rsp_t *evt)
           ble_gatt_char.value.length = evt->length;
           ble_gatt_char.value.data   = evt->data;
 
-          ops->read(&ble_gatt_char);
+          ops->read(evt->conn_handle, &ble_gatt_char);
         }
       else
         {
@@ -318,6 +318,9 @@ static int event_notification(struct ble_gatt_event_notification_t *evt)
 {
   struct ble_gatt_char_s ble_gatt_char;
   struct ble_gatt_central_ops_s *ops = g_ble_gatt_state.ble_gatt_central_ops;
+  struct ble_hal_gattc_ops_s *hal_ops;
+
+  hal_ops = &(g_ble_gatt_state.ble_hal_gatt_ops->gattc);
 
   if (ops && ops->notify)
     {
@@ -325,6 +328,16 @@ static int event_notification(struct ble_gatt_event_notification_t *evt)
       ble_gatt_char.value.length = evt->length;
       ble_gatt_char.value.data   = evt->data;
       ops->notify(evt->conn_handle, &ble_gatt_char);
+
+      /* In indication case, send confirm automatically
+       * after return of callback.
+       */
+
+      if (evt->indicate && hal_ops && hal_ops->send_confirm)
+        {
+          hal_ops->send_confirm(evt->conn_handle, evt->char_handle);
+        }
+
       return BT_SUCCESS;
     }
   else

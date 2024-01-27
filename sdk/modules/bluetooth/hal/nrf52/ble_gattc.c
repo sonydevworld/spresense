@@ -74,6 +74,8 @@ static int nrf52_ble_continue_db_discovery(uint16_t start_handle,
 static int nrf52_ble_discover_uuid(uint16_t conn_handle,
                                    BLE_UUID *srv_uuid,
                                    BLE_UUID *char_uuid);
+static int nrf52_ble_send_confirm(uint16_t conn_handle,
+                                  uint16_t char_handle);
 static int nrf52_ble_gattc_write(uint16_t conn_handle,
                                  uint16_t char_handle,
                                  uint8_t  *data,
@@ -106,6 +108,7 @@ static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
   .gattc.startDbDiscovery    = nrf52_ble_start_db_discovery,
   .gattc.continueDbDiscovery = nrf52_ble_continue_db_discovery,
   .gattc.discoverUuid        = nrf52_ble_discover_uuid,
+  .gattc.send_confirm        = nrf52_ble_send_confirm,
   .gattc.write               = nrf52_ble_gattc_write,
   .gattc.read                = nrf52_ble_gattc_read,
   .gattc.descriptor_write    = nrf52_ble_descriptor_write,
@@ -415,6 +418,22 @@ static int nrf52_ble_discover_uuid(uint16_t conn_handle,
 err:
   memset(&commMem.gattcDb.target, 0, sizeof(bleGattcDbTarget));
   return bleConvertErrorCode((uint32_t)errCode);
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_send_confirm
+ *
+ * Description:
+ *   Send confirm for indicate
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_send_confirm(uint16_t conn_handle, uint16_t char_handle)
+{
+  int ret;
+  ret = sd_ble_gattc_hv_confirm(conn_handle, char_handle);
+
+  return bleConvertErrorCode((uint32_t)ret);
 }
 
 /****************************************************************************
