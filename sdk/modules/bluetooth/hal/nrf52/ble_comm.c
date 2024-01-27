@@ -2605,6 +2605,33 @@ static uint16_t getLastDescriptorHandle(bleGattcDb *db)
   return last;
 }
 
+static int getDescNumOfCurrChar(const ble_gattc_evt_desc_disc_rsp_t *evt,
+                                bool *incl)
+{
+  int i;
+
+  *incl = false;
+
+  /* In case of last characteristic or UUID-specified discovery,
+   * the range of descriptor handle can be invalid.
+   * In such a case, all attribute data is notify and
+   * characteristic group is delimited by UUID = 0x2803 information,
+   * that means next characteristic delaration.
+   * So, delimit by 0x2803 information.
+   */
+
+  for (i = 0; i < evt->count; i++)
+    {
+      if (evt->descs[i].uuid.uuid == BLE_UUID_CHARACTERISTIC)
+        {
+          *incl = true;
+          break;
+        }
+   }
+
+  return i;
+}
+
 static
 void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2622,6 +2649,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
   const ble_gattc_desc_t *desc = NULL;
   ble_gattc_handle_range_t r;
   uint16_t last;
+  bool includeNextChar;
+  int num;
 
   connHandle  = bleGattcEvt->conn_handle;
   if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV) ||
@@ -2638,7 +2667,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       // If the descriptor was a Client Characteristic Configuration Descriptor, then the cccdHandle needs to be populated.
       // Loop through all the descriptors to find the Client Characteristic Configuration Descriptor.
 
-      for (i = 0; i < descDiscRspEvt->count; i++)
+      num = getDescNumOfCurrChar(descDiscRspEvt, &includeNextChar);
+      for (i = 0; i < num; i++)
         {
           desc = &descDiscRspEvt->descs[i];
           saveDiscoveredDescriptor(desc->uuid.uuid, desc->handle, charBeingDiscovered);
@@ -2652,7 +2682,7 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       if (desc != NULL)
         {
           last = getLastDescriptorHandle(gattcDbDiscovery);
-          if (last != desc->handle)
+          if ((last != desc->handle) && !includeNextChar)
             {
               r.start_handle = desc->handle + 1;
               r.end_handle   = last;
