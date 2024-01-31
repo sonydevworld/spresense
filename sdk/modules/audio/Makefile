@@ -58,5 +58,6 @@ CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)$(DELIM)objects
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE
+CXXFLAGS += -Wno-return-type
 
 include $(SDKDIR)/modules/Module.mk
