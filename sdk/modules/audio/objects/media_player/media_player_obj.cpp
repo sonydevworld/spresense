@@ -225,7 +225,7 @@ void PlayerObj::run(void)
 {
   err_t        err_code;
   MsgQueBlock *que;
-  MsgPacket   *msg;
+  MsgPacket   *msg = NULL;
 
   err_code = MsgLib::referMsgQueBlock(m_msgq_id.player, &que);
   F_ASSERT(err_code == ERR_OK);
