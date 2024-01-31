@@ -45,8 +45,12 @@ extern "C" {
   * This is for the case when the aws_iot_mqtt_internal_send_packet Fails.
   */
 static void _aws_iot_mqtt_force_client_disconnect(AWS_IoT_Client *pClient) {
+	Timer timer;
+
+	init_timer(&timer);
+	countdown_ms(&timer, pClient->clientData.commandTimeoutMs);
 	pClient->clientStatus.clientState = CLIENT_STATE_DISCONNECTED_ERROR;
-	pClient->networkStack.disconnect(&(pClient->networkStack));
+	pClient->networkStack.disconnect(&(pClient->networkStack), &timer);
 	pClient->networkStack.destroy(&(pClient->networkStack));
 }
 
