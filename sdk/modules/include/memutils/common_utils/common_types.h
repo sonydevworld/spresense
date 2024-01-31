@@ -91,8 +91,12 @@ S_ASSERT(FALSE == 0);  /* ERROR: FALSE is not 0 */
 #define ON		(1)
 #define OFF		(0)
 
+#ifndef MIN
 #define MIN(a,b)	(((a)<(b))?(a):(b))
+#endif
+#ifndef MAX
 #define MAX(a,b)	(((a)>(b))?(a):(b))
+#endif
 #define ABS(x)  	(((x) < 0) ? ((~(x))+1) : (x))
 #define AVE(x, y)	(((x)>>1)+((y)>>1))
 #define LOW16(x)	(0xffff & (x))
