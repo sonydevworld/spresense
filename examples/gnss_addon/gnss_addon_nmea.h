@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/gnss_addon/gnss_addon_nmea.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,5 +50,6 @@
 
 int setup_nmea(FILE *stream);
 int print_nmea(struct cxd56_gnss_positiondata2_s *posdat);
+int print_dcreport(struct cxd56_gnss_dcreport_data_s *dcreport);
 
 #endif /* __EXAMPLES_GNSS_ADDON_GNSS_ADDON_NMEA_H */

@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/gnss_addon/gnss_addon_nmea.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,7 +69,11 @@ static void freebuf(char *buf)
 
 static int outnmea(char *buf)
 {
-  return fprintf(g_stream, "%s", buf);
+  int ret = fprintf(g_stream, "%s", buf);
+#ifdef CONFIG_EXAMPLES_GNSS_ADDON_FSYNC_LOGGING
+  fsync(fileno(g_stream));
+#endif
+  return ret;
 }
 
 /****************************************************************************
@@ -92,6 +96,7 @@ int setup_nmea(FILE *stream)
                 NMEA_GNS_ON |
                 NMEA_RMC_ON |
                 NMEA_VTG_ON |
+                NMEA_QZQSM_ON |
                 NMEA_ZDA_ON);
 
   /* Register callbacks to output NMEA */
@@ -113,5 +118,29 @@ int setup_nmea(FILE *stream)
 int print_nmea(struct cxd56_gnss_positiondata2_s *posdat)
 {
   NMEA_Output2(posdat);
+  return 0;
+}
+
+int print_dcreport(struct cxd56_gnss_dcreport_data_s *dcreport)
+{
+  static struct cxd56_gnss_dcreport_data_s s_dcreport;
+
+  if (dcreport->svid == 0)
+    {
+        /* invalid data */
+
+        return 0;
+    }
+
+  if (0 == memcmp(&s_dcreport, dcreport, sizeof(s_dcreport)))
+    {
+        /* not updated */
+
+        return 0;
+    }
+
+  memcpy(&s_dcreport, dcreport, sizeof(s_dcreport));
+
+  NMEA_DcReport_Output2(dcreport);
   return 0;
 }
