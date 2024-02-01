@@ -72,6 +72,7 @@
 struct args_s
 {
   bool nmea;
+  bool qzqsm;
   bool pps;
   int  cycle;
   int  fixcnt;
@@ -84,6 +85,7 @@ struct args_s
  ****************************************************************************/
 
 static struct cxd56_gnss_positiondata2_s posdat;
+static struct cxd56_gnss_dcreport_data_s dcreport;
 
 /****************************************************************************
  * Private Functions
@@ -91,10 +93,11 @@ static struct cxd56_gnss_positiondata2_s posdat;
 
 static void show_usage(const char *progname)
 {
-  printf("Usage: %s [-n] [-p] [-c <cycle>] [-f <fixcnt>] [-s <sleep>]"
+  printf("Usage: %s [-n] [-q] [-p] [-c <cycle>] [-f <fixcnt>] [-s <sleep>]"
          " [-o <filepath>]\n"
          "Options:\n"
          "  -n: Enable NMEA output\n"
+         "  -q: Enable NMEA DC Report output with \"-n\" option\n"
          "  -p: Enable 1PPS signal\n"
          "  -c <cycle>: Positioning cycle\n"
          "     (100, 125, 200, 250, 500 or 1000 x N) [msec] (default:1000)\n"
@@ -111,18 +114,22 @@ static int parse_args(struct args_s *args, int argc, char *argv[])
   /* default settings */
 
   args->nmea     = false;
+  args->qzqsm    = false;
   args->pps      = false;
   args->cycle    = 1000;
   args->fixcnt   = 300;
   args->sleep    = 0;
   args->filepath = NULL;
 
-  while ((opt = getopt(argc, argv, "npc:f:s:o:")) != ERROR)
+  while ((opt = getopt(argc, argv, "nqpc:f:s:o:")) != ERROR)
     {
       switch (opt)
         {
           case 'n':
             args->nmea = true;
+            break;
+          case 'q':
+            args->qzqsm = true;
             break;
           case 'p':
             args->pps = true;
@@ -155,6 +162,13 @@ static int parse_args(struct args_s *args, int argc, char *argv[])
        (args->cycle != 500) && (args->cycle % 1000)))
     {
       printf("ERROR: Invalid cycle '%d'\n", args->cycle);
+      show_usage(argv[0]);
+      return -EINVAL;
+    }
+
+  if (args->qzqsm && !args->nmea)
+    {
+      printf("ERROR: Also specify the \"-n\" option to use \"-q\"\n");
       show_usage(argv[0]);
       return -EINVAL;
     }
@@ -324,6 +338,7 @@ int main(int argc, char *argv[])
   int fixcnt = 0;
   FILE *fp = stdout;
   char version[CXD56_GNSS_VERSION_MAXLEN];
+  uint32_t vernum = 0;
 
   /* Argument settings */
 
@@ -347,8 +362,10 @@ int main(int argc, char *argv[])
       (bootcause == PM_BOOT_WDT_REBOOT))
     {
       printf("GNSS Add-on example application:\n");
-      printf("NMEA: %s, 1PPS: %s\n", args.nmea ? "Enable" : "Disable",
-                                     args.pps ? "Enable" : "Disable");
+      printf("NMEA: %s (DC Report: %s), 1PPS: %s\n",
+             args.nmea ? "Enable" : "Disable",
+             args.qzqsm ? "Enable" : "Disable",
+             args.pps ? "Enable" : "Disable");
       printf("After positioning fix %d times, sleep %d sec.\n",
              args.fixcnt, args.sleep);
     }
@@ -402,6 +419,15 @@ int main(int argc, char *argv[])
   else
     {
       printf("FW version: %s\n", version);
+      vernum = atof(version + 1) * 1000;
+    }
+
+  /* Check if supported by the firmware version. */
+
+  if (args.qzqsm && (vernum < 144))
+    {
+      printf("ERROR: QZQSM is supported in v00.144 or later.\n");
+      return -ENOTSUP;
     }
 
   /* Adjust the system time using 1PPS signal.
@@ -509,6 +535,36 @@ int main(int argc, char *argv[])
       if (args.nmea)
         {
           print_nmea(&posdat);
+
+          if (args.qzqsm)
+            {
+              /* Read the DC Report. */
+
+              ret = lseek(fd, CXD56_GNSS_READ_OFFSET_DCREPORT, SEEK_SET);
+              if (ret < 0)
+                {
+                  printf("ERROR: lseek ret=%d, errno=%d\n", ret, errno);
+                  break;
+                }
+
+              ret = read(fd, &dcreport, sizeof(dcreport));
+              if (ret != sizeof(dcreport))
+                {
+                  printf("ERROR: read ret=%d, errno=%d\n", ret, errno);
+                  break;
+                }
+
+              print_dcreport(&dcreport);
+
+              /* Return the read position to the top. */
+
+              ret = lseek(fd, CXD56_GNSS_READ_OFFSET_LAST_GNSS, SEEK_SET);
+              if (ret < 0)
+                {
+                  printf("ERROR: lseek ret=%d, errno=%d\n", ret, errno);
+                  break;
+                }
+            }
         }
       else
         {
