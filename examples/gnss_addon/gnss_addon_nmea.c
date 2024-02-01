@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/gnss_addon/gnss_addon_nmea.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,7 +69,11 @@ static void freebuf(char *buf)
 
 static int outnmea(char *buf)
 {
-  return fprintf(g_stream, "%s", buf);
+  int ret = fprintf(g_stream, "%s", buf);
+#ifdef CONFIG_EXAMPLES_GNSS_ADDON_FSYNC_LOGGING
+  fsync(fileno(g_stream));
+#endif
+  return ret;
 }
 
 /****************************************************************************
