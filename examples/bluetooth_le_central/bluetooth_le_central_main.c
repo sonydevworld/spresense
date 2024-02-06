@@ -44,14 +44,17 @@
 #include <bluetooth/ble_gatt.h>
 #include <bluetooth/ble_util.h>
 #include <bluetooth/hal/bt_if.h>
-#include <assert.h>
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-
 #define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
+#define RESULT_NOT_RECEIVE 1
+#define CHAR_ACCESS_COUNT 10
+#define INVALID_CONN_HANDLE 0xffff
+#define NOTIFICATION_ENABLED 1
+#define NOTIFICATION_DISABLED 0
 
 /****************************************************************************
  * Private Function Prototypes
@@ -146,7 +149,7 @@ static struct ble_gatt_central_ops_s ble_gatt_central_ops =
 
 static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}};
 
-static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
+static char local_ble_name[BT_NAME_LEN] = "SONY-CENTRAL";
 static struct ble_state_s *s_ble_state = NULL;
 
 static int g_ble_bonded_device_num;
@@ -156,25 +159,50 @@ static bool g_target = false;
 static BLE_UUID g_target_srv_uuid;
 static BLE_UUID g_target_char_uuid;
 
+static uint8_t g_read_data[BLE_MAX_GATT_DATA_LEN];
+static uint16_t g_read_datalen;
+static int      g_charwr_result;
+static int      g_charrd_result;
+static int      g_descwr_result;
+static int      g_descrd_result;
+
+static struct ble_gattc_db_disc_char_s g_nrw_char;
+static volatile int    g_discovered = false;
+static int    g_notify_cnt = 0;
+static int    g_dbaccess_cnt = 0;
+
+static bool g_mtusz_exchg = false;
+static int g_encrypted = -1;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 static void on_le_connect_status_change(struct ble_state_s *ble_state,
-                                        bool connected, uint8_t reason)
+                                        bool connected, uint8_t cause)
 {
   BT_ADDR addr = ble_state->bt_target_addr;
 
   /* If receive connected status data, this function will call. */
 
-  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, "
-         "status:%s, reason: 0x%02x\n",
+  printf("[BLE] Connect ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
           addr.address[5], addr.address[4], addr.address[3],
-          addr.address[2], addr.address[1], addr.address[0],
-          connected ? "Connected" : "Disconnected", reason);
+          addr.address[2], addr.address[1], addr.address[0]);
+  printf("[BLE] status:%s", connected ? "Connected" : "Disconnected");
+  printf("  : Cause <%s> :\n",
+         cause == BLESTAT_SUCCESS          ? "Success"                 :
+         cause == BLESTAT_MEMCAP_EXCD      ? "Mem capacity exceed"     :
+         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connetion timeout"       :
+         cause == BLESTAT_PEER_TERMINATED  ? "Peripheral terminated"   :
+         cause == BLESTAT_PEER_TERM_LOWRES ? "Peripheral low resource" :
+         cause == BLESTAT_PEER_TERM_POFF   ? "Peripheral power off"    :
+         cause == BLESTAT_TERMINATED       ? "Terminated by self"      :
+         cause == BLESTAT_DEVICE_BUSY      ? "Device busy"             :
+         cause == BLESTAT_PARAM_REJECTED   ? "Negotiation breakup"     :
+         cause == BLESTAT_CONNECT_FAILED   ? "Connection failed"       :
+                                             "Unspecified error"       );
 
-  s_ble_state = ble_state;
-
+  s_ble_state = connected ? ble_state : NULL;
 }
 
 static void on_connected_device_nameresp(const char *name)
@@ -255,22 +283,15 @@ static void on_mtusize(uint16_t handle, uint16_t sz)
 {
   printf("mtusize = %d\n", sz);
 
-  if (g_target)
-    {
-      ble_discover_uuid(s_ble_state->ble_connect_handle,
-                        &g_target_srv_uuid,
-                        &g_target_char_uuid);
-    }
-  else
-    {
-      ble_start_db_discovery(s_ble_state->ble_connect_handle);
-    }
+  g_mtusz_exchg = true;
 }
 
 static void encryption_result(uint16_t handle, bool result)
 {
   printf("Encryption result(connection handle = %d) : %s\n",
          handle, (result) ? "Success" : "Fail");
+
+  g_encrypted = result;
 }
 
 static void on_savebond(int num, struct ble_bondinfo_s *bond)
@@ -411,9 +432,9 @@ static void free_cccd(void)
 
 static void on_write(struct ble_gatt_char_s *ble_gatt_char)
 {
-  BLE_CHAR_VALUE *value = &ble_gatt_char->value;
+  printf("%s [BLE] result = %d\n", __func__, ble_gatt_char->status);
 
-  printf("%s [BLE] data[0] = 0x%02X, Length = %d\n", __func__, value->data[0], value->length);
+  g_charwr_result = ble_gatt_char->status;
 }
 
 static void on_read(struct ble_gatt_char_s *ble_gatt_char)
@@ -421,14 +442,20 @@ static void on_read(struct ble_gatt_char_s *ble_gatt_char)
   int i;
 
   printf("%s [BLE] \n", __func__);
-  printf("handle : 0x%04x\n", ble_gatt_char->handle);
-  printf("value len : %d\n",  ble_gatt_char->value.length);
+  printf("   handle : 0x%04x\n", ble_gatt_char->handle);
+  printf("   value len : %d\n",  ble_gatt_char->value.length);
+  printf("   value : ");
+
   for (i = 0; i < ble_gatt_char->value.length; i++)
     {
       printf("%02x ", ble_gatt_char->value.data[i]);
     }
 
   printf("\n");
+
+  g_read_datalen = ble_gatt_char->value.length;
+  memcpy(g_read_data, ble_gatt_char->value.data, g_read_datalen);
+  g_charrd_result = ble_gatt_char->status;
 }
 
 static void on_notify(struct ble_gatt_char_s *ble_gatt_char)
@@ -436,14 +463,17 @@ static void on_notify(struct ble_gatt_char_s *ble_gatt_char)
   int i;
 
   printf("%s [BLE] \n", __func__);
-  printf("handle : 0x%04x\n", ble_gatt_char->handle);
-  printf("value len : %d\n",  ble_gatt_char->value.length);
+  printf("   handle : 0x%04x\n", ble_gatt_char->handle);
+  printf("   value len : %d\n",  ble_gatt_char->value.length);
+  printf("   value data :");
   for (i = 0; i < ble_gatt_char->value.length; i++)
     {
       printf("%02x ", ble_gatt_char->value.data[i]);
     }
 
   printf("\n");
+
+  g_notify_cnt++;
 }
 
 static void print_descriptor_handle(const char *name, uint16_t handle)
@@ -464,6 +494,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
   struct ble_gattc_db_disc_srv_s  *srv;
   struct ble_gattc_db_disc_char_s *ch;
   char   uuid[BLE_UUID_128BIT_STRING_BUFSIZE];
+  BLE_CHAR_PROP prop;
 
   db = &db_disc->params.db_discovery;
   srv = &db->services[0];
@@ -479,6 +510,8 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 
       for (j = 0; j < srv->char_count; j++, ch++)
         {
+          prop = ch->characteristic.char_prope;
+
           printf("   === CHR[%d] ===\n", j);
           printf("      decl  handle : 0x%04x\n", ch->characteristic.char_declhandle);
           printf("      value handle : 0x%04x\n", ch->characteristic.char_valhandle);
@@ -486,6 +519,9 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
                                    uuid,
                                    BLE_UUID_128BIT_STRING_BUFSIZE);
           printf("      uuid         : %s\n", uuid);
+          printf("      property     : %s%s%s\n", prop.notify ? "notify," : "",
+                                                  prop.read   ? "read," : "",
+                                                  prop.write  ? "write" : "");
 
           print_descriptor_handle("cccd", ch->cccd_handle);
           print_descriptor_handle("cepd", ch->cepd_handle);
@@ -494,6 +530,16 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
           print_descriptor_handle("cpfd", ch->cpfd_handle);
           print_descriptor_handle("cafd", ch->cafd_handle);
           printf("\n");
+
+          /* In this application, use a characteristic that has
+           * read/write/notify property.
+           * So, store only such data.
+           */
+
+          if (prop.notify && prop.read && prop.write)
+            {
+              memcpy(&g_nrw_char, ch, sizeof(struct ble_gattc_db_disc_char_s));
+            }
         }
 
       printf("\n");
@@ -513,13 +559,40 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
         }
     }
 
-  ble_pairing(s_ble_state->ble_connect_handle);
+  g_discovered = true;
+}
+
+static struct ble_gattc_db_disc_char_s *get_nrw_characteristic(uint16_t conn_handle)
+{
+  g_discovered = false;
+
+  if (g_target)
+    {
+      ble_discover_uuid(conn_handle,
+                        &g_target_srv_uuid,
+                        &g_target_char_uuid);
+    }
+  else
+    {
+      ble_start_db_discovery(conn_handle);
+    }
+
+  /* Wait for discovery result to be notified */
+
+  while (g_discovered == false)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return (g_nrw_char.characteristic.char_valhandle != 0) ? &g_nrw_char : NULL;
 }
 
 static void on_descriptor_write(uint16_t conn_handle, uint16_t handle, int result)
 {
   printf("%s [BLE] conn_handle = 0x%04x, handle = 0x%04x, result = %d\n",
          __func__, conn_handle, handle, result);
+
+  g_descwr_result = result;
 }
 
 static void on_descriptor_read(uint16_t conn_handle,
@@ -539,6 +612,8 @@ static void on_descriptor_read(uint16_t conn_handle,
     }
 
   printf("\n");
+
+  g_descrd_result = (len) ? BT_SUCCESS : BT_FAIL;
 }
 
 static int parse_argument(int argc, FAR char *argv[])
@@ -571,6 +646,295 @@ static int parse_argument(int argc, FAR char *argv[])
   return OK;
 }
 
+static uint16_t scan_and_connect(void)
+{
+  int ret;
+
+  ret = ble_start_scan(false);
+  if (ret != BT_SUCCESS)
+    {
+      return INVALID_CONN_HANDLE;
+    }
+
+  /* If ble_start_scan() is executed, scan result is notified by
+   * scan_result callback of struct ble_common_ops_s.
+   * This application executes ble_connect() API in scan_result callback.
+   * After that, connection will be established and MTU size will be
+   * exchanged automatically.
+   * So, wait for MTU size to be exchanged here.
+   */
+
+  while (!g_mtusz_exchg)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return s_ble_state->ble_connect_handle;
+}
+
+static int pairing(uint16_t conn_handle)
+{
+  int ret;
+
+  g_encrypted = -1;
+  ret = ble_pairing(conn_handle);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  /* Wait for encryption result to be notified. */
+
+  while (g_encrypted == -1)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return (g_encrypted) ? BT_SUCCESS : BT_FAIL;
+}
+
+static int write_descriptor(uint16_t conn_handle,
+                            uint16_t desc_handle,
+                            uint8_t  *buf,
+                            uint16_t len)
+{
+  int ret;
+
+  g_descwr_result = RESULT_NOT_RECEIVE;
+
+  ret = ble_descriptor_write(conn_handle, desc_handle, buf, len);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  /* Wait for write response. */
+
+  while (g_descwr_result == RESULT_NOT_RECEIVE)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return g_descwr_result;
+}
+
+static int read_descriptor(uint16_t conn_handle,
+                           uint16_t desc_handle,
+                           uint8_t  *buf,
+                           uint16_t *len)
+{
+  int ret;
+
+  g_descrd_result = RESULT_NOT_RECEIVE;
+  ret = ble_descriptor_read(conn_handle, desc_handle);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  /* Wait for read response. */
+
+  while (g_descrd_result == RESULT_NOT_RECEIVE)
+    {
+      usleep(1);
+    }
+
+  if (g_descrd_result == BT_SUCCESS)
+    {
+      *len = g_read_datalen;
+      memcpy(buf, g_read_data, g_read_datalen);
+    }
+
+  return g_descrd_result;
+}
+
+static int write_characteristic(uint16_t conn_handle,
+                                uint16_t char_handle,
+                                uint8_t  *buf,
+                                uint16_t len)
+{
+  int ret;
+  struct ble_gatt_char_s ch;
+
+  g_charwr_result = RESULT_NOT_RECEIVE;
+
+  ch.handle = char_handle;
+  ch.value.length = len;
+  ch.value.data   = buf;
+
+  ret = ble_characteristic_write(conn_handle, &ch, buf, len);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  /* Wait for write response. */
+
+  while (g_charwr_result == RESULT_NOT_RECEIVE)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return g_charwr_result;
+}
+
+static int read_characteristic(uint16_t conn_handle,
+                               uint16_t char_handle,
+                               uint8_t  *buf,
+                               uint16_t *len)
+{
+  int ret;
+  struct ble_gatt_char_s ch;
+
+  g_charrd_result = RESULT_NOT_RECEIVE;
+
+  ch.handle = char_handle;
+
+  ret = ble_characteristic_read(conn_handle, &ch);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  /* Wait for read response. */
+
+  while (g_charrd_result == RESULT_NOT_RECEIVE)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  if (g_charrd_result == BT_SUCCESS)
+    {
+      *len = g_read_datalen;
+      memcpy(buf, g_read_data, g_read_datalen);
+    }
+
+  return g_charrd_result;
+}
+
+static int access_descriptor(uint16_t conn_handle,
+                             struct ble_gattc_db_disc_char_s *char_db)
+{
+  int ret = BT_SUCCESS;
+  uint16_t buf;
+  uint16_t len;
+
+  if (char_db->cccd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, &len);
+      if (buf == NOTIFICATION_DISABLED)
+        {
+          buf = NOTIFICATION_ENABLED;
+          ret = write_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, len);
+        }
+
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  if (char_db->cepd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->cepd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  if (char_db->cudd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->cudd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  if (char_db->sccd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->sccd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  if (char_db->cpfd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->cpfd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  if (char_db->cafd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
+    {
+      ret = read_descriptor(conn_handle, char_db->cafd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+    }
+
+  return ret;
+}
+
+static int access_characteristic(uint16_t conn_handle,
+                                 uint16_t char_handle,
+                                 int data)
+{
+  int ret;
+  int buf = 0;
+  uint16_t len;
+
+  ret = write_characteristic(conn_handle,
+                             char_handle,
+                             (uint8_t *)&data,
+                             sizeof(data));
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  ret = read_characteristic(conn_handle,
+                            char_handle,
+                            (uint8_t *)&buf,
+                            &len);
+  if (ret != BT_SUCCESS)
+    {
+      return ret;
+    }
+
+  if (buf != data)
+    {
+      printf("read result error. value = %d, expect = %d\n", buf, data);
+      ret = BT_FAIL;
+    }
+
+  return ret;
+}
+
+static void finish_ble(uint16_t conn_handle)
+{
+  struct ble_state_s state;
+
+  state.ble_connect_handle = conn_handle;
+  ble_disconnect(&state);
+
+  /* Wait for connection status to be disconnected status. */
+
+  while (s_ble_state)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  bt_disable();
+  bt_finalize();
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -582,6 +946,9 @@ static int parse_argument(int argc, FAR char *argv[])
 int main(int argc, FAR char *argv[])
 {
   int ret = 0;
+  int i;
+  uint16_t conn_handle;
+  struct ble_gattc_db_disc_char_s *nrw_char;
 
   ret = parse_argument(argc, argv);
   if (ret != OK)
@@ -656,12 +1023,53 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
-  ret = ble_start_scan(false);
-  if (ret != BT_SUCCESS)
+  conn_handle = scan_and_connect();
+  if (conn_handle != BT_SUCCESS)
     {
-      printf("%s [BLE] Start scan failed. ret = %d\n", __func__, ret);
+      printf("%s [BLE] Connection to the target failed. ret = %d\n", __func__, ret);
       goto error;
     }
+
+  nrw_char = get_nrw_characteristic(conn_handle);
+  if (nrw_char == NULL)
+    {
+      printf("%s [BLE] Can not find the characteristic that "
+             "has the notify/read/write property. ret = %d\n", __func__, ret);
+      goto error;
+    }
+
+  ret = pairing(conn_handle);
+  if (ret != BT_SUCCESS)
+    {
+      printf("%s [BLE] Pairing failed. ret = %d\n", __func__, ret);
+      goto error;
+    }
+
+  /* Read and write descriptor of discovered characteristic.
+   * This application increments written data each write.
+   */
+
+  ret = access_descriptor(conn_handle, nrw_char);
+
+  for (i = 0; i < CHAR_ACCESS_COUNT; i++)
+    {
+      ret = access_characteristic(conn_handle,
+                                  nrw_char->characteristic.char_valhandle,
+                                  g_dbaccess_cnt++);
+      if (ret != BT_SUCCESS)
+        {
+          goto error;
+        }
+    }
+
+  /* This application wait receive notify CHAR_ACCESS_COUNT times. */
+
+  while (g_notify_cnt < CHAR_ACCESS_COUNT)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  finish_ble(conn_handle);
 
 error:
   return ret;
