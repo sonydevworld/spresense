@@ -139,7 +139,7 @@ static int send_freset_command(FAR struct alt1250_s *dev,
   set_container_response(container, freset_cmd_oargs, nitems(freset_cmd_oargs));
   set_container_postproc(container, postproc_freset_command, freset_cmdid);
 
-  return altdevice_send_command(dev->altfd, container, usock_result);
+  return altdevice_send_command(dev, dev->altfd, container, usock_result);
 }
 
 /****************************************************************************
