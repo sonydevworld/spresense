@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_DIRECT_AUDIO_SIN),)
+CONFIGURED_APPS += direct_audio_sin
+endif
