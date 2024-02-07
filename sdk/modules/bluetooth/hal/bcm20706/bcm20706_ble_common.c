@@ -122,7 +122,7 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .disconnect    = bcm20706_ble_disconnect
 };
 
-static char g_ble_name[BT_NAME_LEN];
+static char g_ble_name[BT_NAME_LEN + 1];
 
 /****************************************************************************
  * Private Functions
