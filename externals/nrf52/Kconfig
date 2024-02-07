@@ -98,5 +98,20 @@ config EXTERNALS_NRF52_EVTTASK_STACKSIZE
 	---help---
 		Stack size of event task which calls callback functions to notify
 		asynchronous event from nRF52
+
+if NRF52_LESC
+choice
+	prompt "nRF52 cryptography library backend"
+	default EXTERNALS_NRF52_CRYPTOGRAPHY_MICRO_ECC
+
+config EXTERNALS_NRF52_CRYPTOGRAPHY_MICRO_ECC
+	bool "Use micro-ecc backend"
+	depends on EXTERNALS_MICRO_ECC
+
+config EXTERNALS_NRF52_CRYPTOGRAPHY_MBEDTLS
+	bool "Use mbedtls backend"
+	depends on EXTERNALS_MBEDTLS
+endchoice
+endif # NRF52_LESC
 endif # EXTERNALS_NRF52
 

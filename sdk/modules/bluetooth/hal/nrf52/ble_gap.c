@@ -45,6 +45,9 @@
 #include "ble_debug.h"
 #include "ble_storage_operations.h"
 
+#include <nrf_crypto.h>
+#include <nrf_crypto_ecc.h>
+
 /******************************************************************************
  * externs
  *****************************************************************************/
@@ -437,24 +440,30 @@ int BLE_GapSetSecParam(BLE_GapSecCfg *param)
   return ret;
 }
 
-int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFeature *pairingFeature)
+int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
+                                  BLE_GapPairingFeature *own,
+                                  const BLE_GapPairingFeature *peer)
 {
   int ret      = BLE_SUCCESS;
   int errCode  = 0;
   ble_gap_sec_params_t secParams = {0};
   ble_gap_sec_keyset_t keysExchanged = {{0}};
   ble_gap_sec_params_t *p_sec = NULL;
-
-  if(pairingFeature != NULL) {
-    if((pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_PRESENT) &&
-       (pairingFeature->oob != BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
-      BLE_PRT("pairingFeature->oob=%d\n", pairingFeature->oob);
+#ifdef CONFIG_NRF52_LESC
+  nrf_crypto_ecc_key_pair_generate_context_t ctx;
+  nrf_crypto_ecc_public_key_t pubKey;
+  size_t pubKey_len = BLE_GAP_LESC_P256_PK_LEN;
+#endif
+  if(own != NULL) {
+    if((own->oob != BLE_GAP_OOB_AUTH_DATA_PRESENT) &&
+       (own->oob != BLE_GAP_OOB_AUTH_DATA_NOT_PRESENT)) {
+      BLE_PRT("own->oob=%d\n", own->oob);
       return -EINVAL;
     }
-    if((pairingFeature->maxKeySize < pairingFeature->minKeySize) ||
-      (pairingFeature->maxKeySize > BLE_GAP_MAX_KEY_SIZE) ||
-      (pairingFeature->minKeySize < BLE_GAP_MIN_KEY_SIZE)) {
-      BLE_PRT("pairingFeature->maxKeySize=%d, pairingFeature->minKeySize=%d\n", pairingFeature->maxKeySize, pairingFeature->minKeySize);
+    if((own->maxKeySize < own->minKeySize) ||
+      (own->maxKeySize > BLE_GAP_MAX_KEY_SIZE) ||
+      (own->minKeySize < BLE_GAP_MIN_KEY_SIZE)) {
+      BLE_PRT("own->maxKeySize=%d, own->minKeySize=%d\n", own->maxKeySize, own->minKeySize);
       return -EINVAL;
     }
 
@@ -466,13 +475,13 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
     memset(&gapMem.wrapperBondInfo.peerEncKey,0,sizeof(gapMem.wrapperBondInfo.peerEncKey));
     memset(&gapMem.wrapperBondInfo.peerIdKey,0,sizeof(gapMem.wrapperBondInfo.peerIdKey));
 
-    secParams.oob          = pairingFeature->oob;
-    secParams.io_caps      = pairingFeature->ioCap;
-    secParams.max_key_size = pairingFeature->maxKeySize;
-    secParams.min_key_size = pairingFeature->minKeySize;
-    secParams.mitm         = (pairingFeature->authReq & BLE_GAP_AUTH_MITM) >> 1;
-    secParams.bond         = (pairingFeature->authReq & BLE_GAP_AUTH_BOND) >> 0;
-
+    secParams.oob          = own->oob;
+    secParams.io_caps      = own->ioCap;
+    secParams.max_key_size = own->maxKeySize;
+    secParams.min_key_size = own->minKeySize;
+    secParams.mitm         = (own->authReq & BLE_GAP_AUTH_MITM) >> 1;
+    secParams.bond         = (own->authReq & BLE_GAP_AUTH_BOND) >> 0;
+    secParams.lesc         = own->lesc & peer->lesc;
     p_sec = &secParams;
   }
 
@@ -481,10 +490,35 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFe
   secParams.kdist_peer.enc  = 1;
   secParams.kdist_peer.id   = 1;
 
-  keysExchanged.keys_own.p_enc_key  = &gapMem.wrapperBondInfo.ownEncKey;
-  keysExchanged.keys_own.p_id_key   = &gapMem.wrapperBondInfo.ownIdKey;
-  keysExchanged.keys_peer.p_enc_key    = &gapMem.wrapperBondInfo.peerEncKey;
-  keysExchanged.keys_peer.p_id_key    = &gapMem.wrapperBondInfo.peerIdKey;
+  keysExchanged.keys_own.p_enc_key   = &gapMem.wrapperBondInfo.ownEncKey;
+  keysExchanged.keys_own.p_id_key    = &gapMem.wrapperBondInfo.ownIdKey;
+  keysExchanged.keys_own.p_pk        = &gapMem.lescKey.own_pub;
+  keysExchanged.keys_peer.p_enc_key  = &gapMem.wrapperBondInfo.peerEncKey;
+  keysExchanged.keys_peer.p_id_key   = &gapMem.wrapperBondInfo.peerIdKey;
+  keysExchanged.keys_peer.p_pk       = &gapMem.lescKey.peer_pub;
+
+#ifdef CONFIG_NRF52_LESC
+  /* In case that both own device and peer device support LE secure connection
+   * pairing, generate key pair for the pairing.
+   */
+
+  if (g_ble_context.pairing_feature.lesc & peer->lesc)
+    {
+      nrf_crypto_init();
+      nrf_crypto_ecc_key_pair_generate(&ctx,
+                                       &g_nrf_crypto_ecc_secp256r1_curve_info,
+                                       &gapMem.lescKey.priv,
+                                       &pubKey);
+      nrf_crypto_ecc_public_key_to_raw(&pubKey,
+                                       gapMem.lescKey.own_pub.pk,
+                                       &pubKey_len);
+      nrf_crypto_ecc_byte_order_invert(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                       gapMem.lescKey.own_pub.pk,
+                                       gapMem.lescKey.own_pub.pk,
+                                       BLE_GAP_LESC_P256_PK_LEN);
+      nrf_crypto_uninit();
+    }
+#endif
 
   errCode = sd_ble_gap_sec_params_reply(connHandle, BLE_GAP_SEC_STATUS_SUCCESS, p_sec, &keysExchanged);
   ret = bleConvertErrorCode((uint32_t)errCode);
@@ -770,8 +804,12 @@ int BLE_GapAuthenticate(BLE_GapConnHandle connHandle, BLE_GapPairingFeature *pai
   secParams.min_key_size = pairingFeature->minKeySize;
   secParams.mitm         = (pairingFeature->authReq & BLE_GAP_AUTH_MITM) >> 1;
   secParams.bond         = (pairingFeature->authReq & BLE_GAP_AUTH_BOND) >> 0;
+  secParams.kdist_own.enc   = 1;
+  secParams.kdist_own.id    = 1;
   secParams.kdist_peer.enc  = 1;
   secParams.kdist_peer.id   = 1;
+  secParams.lesc = pairingFeature->lesc;
+
   errCode = sd_ble_gap_authenticate(connHandle, &secParams);
   ret = bleConvertErrorCode((uint32_t)errCode);
   return ret;
