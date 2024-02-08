@@ -87,6 +87,7 @@ class audiolite_inputnode
     void stop_operation();
     int reset_operation();
     bool can_breakdata();
+    void release_allstoredbuff();
     audiolite_mem *pop_data(int *used);
 
   friend class audiolite_outputnode;

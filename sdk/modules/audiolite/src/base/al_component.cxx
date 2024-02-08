@@ -309,6 +309,9 @@ error_cancel:
 void audiolite_component::stop(audiolite_inputnode *node)
 {
   al_ddebug("Entry\n");
+
+  on_stopping(node, NULL);
+
   for (int i = 0; i < _outnum; i++)
     {
       al_ddebug("Call %d/%d\n", i, _outnum);
@@ -459,14 +462,25 @@ void audiolite_component::on_started(audiolite_inputnode *inode,
     }
 }
 
+void audiolite_component::on_stopping(audiolite_inputnode *inode,
+                                      audiolite_outputnode *onode)
+{
+  al_ddebug("Enter\n");
+  for (int i = 0; i < _innum; i++)
+    {
+      _ins[i]->stop_operation();
+    }
+}
+
 void audiolite_component::on_stop(audiolite_inputnode *inode,
                                   audiolite_outputnode *onode)
 {
   /* Default on_stop() */
 
+  al_ddebug("Enter\n");
   for (int i = 0; i < _innum; i++)
     {
-      _ins[i]->stop_operation();
+      _ins[i]->release_allstoredbuff();
     }
 }
 
