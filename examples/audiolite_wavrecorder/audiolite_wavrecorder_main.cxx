@@ -75,7 +75,7 @@ class my_interceptor : public audiolite_component
 
       /* Get comming data */
 
-      audiolite_memapbuf *mem = (audiolite_memapbuf *)_ins[0]->pop_data(NULL);
+      audiolite_memapbuf *mem = (audiolite_memapbuf *)pop_data();
 
       if (mem)
         {
@@ -91,7 +91,7 @@ class my_interceptor : public audiolite_component
 
           /* Pass the data to later block. */
 
-          _outs[0]->push_data(mem);
+          push_data(mem);
 
           /* Release the memory it after finishing use */
 

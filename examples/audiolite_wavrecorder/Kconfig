@@ -1,6 +1,6 @@
 
 config EXAMPLES_AUDIOLITE_RECORDER
-	tristate "audiolite_wavrecorder app"
+	tristate "AudioLite sample : audiolite_wavrecorder app"
 	default n
 	---help---
 		Enable the audiolite_wavrecorder app
