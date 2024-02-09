@@ -185,13 +185,21 @@ struct ble_hal_gattc_ops_s
                       BLE_UUID *srv_uuid,
                       BLE_UUID *char_uuid);
 
+  /** Send confirm for indicate */
+
+  int (*send_confirm)(uint16_t conn_handle, uint16_t char_handle);
+
   /** Write characteristic request(Central)/response(Peripheral) */
 
-  int (*write)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
+  int (*write)(uint16_t conn_handle,
+               uint16_t char_handle,
+               uint8_t  *data,
+               int      len,
+               bool     rsp);
 
   /** Read characteristic request(Central)/response(Peripheral) */
 
-  int (*read)(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle);
+  int (*read)(uint16_t conn_handle, uint16_t char_handle);
 
   /** Write descriptor request */
 
