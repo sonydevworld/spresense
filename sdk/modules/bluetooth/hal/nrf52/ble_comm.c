@@ -1381,6 +1381,7 @@ void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   if (ret)
     {
       BLE_ERR("onLenUp: sd_ble_gatts_exchange_mtu_reply %d\n", ret);
+      return;
     }
 
   pBleEvent->evtHeader = BLE_GATTS_EVENT_EXCHANGE_MTU;
@@ -2241,7 +2242,7 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
       ch = &srv->characteristics[0];
       rcv_ch = &rcv_srv->characteristics[0];
 
-      for (j = 0; j < evt->srv_count; j++, ch++, rcv_ch++)
+      for (j = 0; j < srv->char_count; j++, ch++, rcv_ch++)
         {
            ch->characteristic.char_prope      = rcv_ch->characteristic.charPrope;
            ch->characteristic.char_valhandle  = rcv_ch->characteristic.charValhandle;
@@ -2437,6 +2438,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   const ble_gattc_char_t   *rcvch;
   uint16_t                 last_handle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
   connHandle  = bleGattcEvt->conn_handle;
+  ble_gattc_handle_range_t range = {0};
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
       BLE_ERR("onChar ind NG\n");
@@ -2507,7 +2509,11 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
           gattcDbDiscovery->currCharInd = srvBeingDiscovered->charCount;
           // Perform another round of characteristic discovery.
           BLE_PRT2("onChar charDiscover\n");
-          (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+          range.start_handle = last_handle + 1;
+          range.end_handle   = srvBeingDiscovered->srvHandleRange.endHandle;
+          sd_ble_gattc_characteristics_discover(
+            gattcDbDiscovery->dbDiscovery.connHandle,
+            &range);
         }
     }
   else
@@ -2600,6 +2606,33 @@ static uint16_t getLastDescriptorHandle(bleGattcDb *db)
   return last;
 }
 
+static int getDescNumOfCurrChar(const ble_gattc_evt_desc_disc_rsp_t *evt,
+                                bool *incl)
+{
+  int i;
+
+  *incl = false;
+
+  /* In case of last characteristic or UUID-specified discovery,
+   * the range of descriptor handle can be invalid.
+   * In such a case, all attribute data is notify and
+   * characteristic group is delimited by UUID = 0x2803 information,
+   * that means next characteristic delaration.
+   * So, delimit by 0x2803 information.
+   */
+
+  for (i = 0; i < evt->count; i++)
+    {
+      if (evt->descs[i].uuid.uuid == BLE_UUID_CHARACTERISTIC)
+        {
+          *incl = true;
+          break;
+        }
+   }
+
+  return i;
+}
+
 static
 void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2617,6 +2650,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
   const ble_gattc_desc_t *desc = NULL;
   ble_gattc_handle_range_t r;
   uint16_t last;
+  bool includeNextChar;
+  int num;
 
   connHandle  = bleGattcEvt->conn_handle;
   if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV) ||
@@ -2633,7 +2668,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       // If the descriptor was a Client Characteristic Configuration Descriptor, then the cccdHandle needs to be populated.
       // Loop through all the descriptors to find the Client Characteristic Configuration Descriptor.
 
-      for (i = 0; i < descDiscRspEvt->count; i++)
+      num = getDescNumOfCurrChar(descDiscRspEvt, &includeNextChar);
+      for (i = 0; i < num; i++)
         {
           desc = &descDiscRspEvt->descs[i];
           saveDiscoveredDescriptor(desc->uuid.uuid, desc->handle, charBeingDiscovered);
@@ -2647,7 +2683,7 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       if (desc != NULL)
         {
           last = getLastDescriptorHandle(gattcDbDiscovery);
-          if (last != desc->handle)
+          if ((last != desc->handle) && !includeNextChar)
             {
               r.start_handle = desc->handle + 1;
               r.end_handle   = last;
