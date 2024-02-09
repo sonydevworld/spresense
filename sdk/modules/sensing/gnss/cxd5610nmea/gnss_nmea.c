@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/sensing/gnss/cxd5610nmea/gnss_nmea.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -288,13 +288,27 @@ static int nmea_set_altitude_unit(char *str, const size_t maxlen,
 static int nmea_set_geoid(char *str, const size_t maxlen,
                           const posdat_t *posdat)
 {
-  return snprintf(str, maxlen, ",");
+  const struct cxd56_gnss_receiver2_s *rcv = &posdat->receiver;
+
+  if (rcv->pos_dataexist == 0)
+    {
+      return snprintf(str, maxlen, ",");
+    }
+
+  return snprintf(str, maxlen, ",%.1f", rcv->geoid);
 }
 
 static int nmea_set_geoid_unit(char *str, const size_t maxlen,
                                const posdat_t *posdat)
 {
-  return snprintf(str, maxlen, ",");
+  const struct cxd56_gnss_receiver2_s *rcv = &posdat->receiver;
+
+  if (rcv->pos_dataexist == 0)
+    {
+      return snprintf(str, maxlen, ",");
+    }
+
+  return snprintf(str, maxlen, ",M");
 }
 
 static int nmea_set_dgps(char *str, const size_t maxlen,

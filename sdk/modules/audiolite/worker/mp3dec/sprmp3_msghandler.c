@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <string.h>
-#include <queue.h>
+#include <nuttx/queue.h>
 
 #include "minimp3_spresense.h"
 #include "audiolite/alworker_comm.h"

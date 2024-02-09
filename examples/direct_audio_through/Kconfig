@@ -1,0 +1,27 @@
+
+config EXAMPLES_DIRECT_AUDIO_THROUGH
+	tristate "Audio Driver Direct sample : audio_through"
+	default n
+	---help---
+		Enable the audio_through app.
+		This app outputs the sound input from the microphone
+		directly to the speaker.
+
+if EXAMPLES_DIRECT_AUDIO_THROUGH
+
+config EXAMPLES_DIRECT_AUDIO_THROUGH_PROGNAME
+	string "Program name"
+	default "audio_through"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_DIRECT_AUDIO_THROUGH_PRIORITY
+	int "audio_through task priority"
+	default 100
+
+config EXAMPLES_DIRECT_AUDIO_THROUGH_STACKSIZE
+	int "audio_through stack size"
+	default 2048
+
+endif

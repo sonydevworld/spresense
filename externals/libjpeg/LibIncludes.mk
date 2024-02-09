@@ -34,7 +34,7 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_LIBJPEG),y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/libjpeg"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/libjpeg"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/libjpeg
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/libjpeg
 endif
 

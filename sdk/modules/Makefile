@@ -58,9 +58,6 @@ endef
 $(foreach SDIR, $(MODULEDIRS), $(eval $(call Add_Module,$(SDIR))))
 
 all: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_all)
-	$(Q) for app in ${CONFIGURED_APPS}; do \
-		$(MAKE) -C "$${app}" archive ; \
-	done
 
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),all)))
 $(foreach SDIR, $(CONFIGURED_APPS), $(eval $(call SDIR_template,$(SDIR),context)))
@@ -73,6 +70,7 @@ context: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_context)
 depend: $(foreach SDIR,$(CONFIGURED_APPS),$(SDIR)_depend)
 
 clean: $(foreach SDIR,$(CLEANDIRS),$(SDIR)_clean)
+	$(call DELFILE, .built)
 
 distclean: $(foreach SDIR,$(CLEANDIRS),$(SDIR)_distclean)
 	$(call DELFILE, Kconfig)

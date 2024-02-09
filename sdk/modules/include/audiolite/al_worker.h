@@ -42,7 +42,7 @@
 
 #include <nuttx/config.h>
 
-#include <queue.h>
+#include <nuttx/queue.h>
 #include <mossfw/mossfw_lock.h>
 #include <audiolite/al_memalloc.h>
 #include <audiolite/alworker_comm.h>

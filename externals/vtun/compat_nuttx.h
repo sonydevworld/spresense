@@ -90,18 +90,6 @@ const EVP_CIPHER *EVP_bf_ofb(void);
 const EVP_CIPHER *EVP_bf_cfb(void);
 const EVP_CIPHER *EVP_bf_cbc(void);
 
-/* syslog */
-
-/* log the pid with each message */
-#define	LOG_PID		0x01
-/* don't delay open */
-#define	LOG_NDELAY	0x08
-/* log to stderr as well */
-#define	LOG_PERROR	0x20
-
-void openlog(const char *ident, int option, int facility);
-void closelog(void);
-
 int getpriority(int which, id_t who);
 int setpriority(int which, id_t who, int prio);
 

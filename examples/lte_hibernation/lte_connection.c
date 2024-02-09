@@ -57,42 +57,6 @@
 #define APP_MQUEUE_MODE    0666
 #define APP_SESSION_ID     1
 
-/* APN settings */
-
-#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_APN_NAME
-#  define APP_APN_NAME     CONFIG_EXAMPLES_LTE_HIBERNATION_APN_NAME
-#else
-#  define APP_APN_NAME     "lte_hibernation_sample_apn"
-#endif
-
-#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_APN_IPTYPE_IPV6
-#  define APP_APN_IPTYPE   LTE_IPTYPE_V6
-#elif defined CONFIG_EXAMPLES_LTE_HIBERNATION_APN_IPTYPE_IPV4V6
-#  define APP_APN_IPTYPE   LTE_IPTYPE_V4V6
-#else
-#  define APP_APN_IPTYPE   LTE_IPTYPE_V4
-#endif
-
-#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_APN_AUTHTYPE_PAP
-#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_PAP
-#elif defined CONFIG_EXAMPLES_LTE_HIBERNATION_APN_AUTHTYPE_CHAP
-#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_CHAP
-#else
-#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_NONE
-#endif
-
-#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_APN_USERNAME
-#  define APP_APN_USR_NAME CONFIG_EXAMPLES_LTE_HIBERNATION_APN_USERNAME
-#else
-#  define APP_APN_USR_NAME ""
-#endif
-
-#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_APN_PASSWD
-#  define APP_APN_PASSWD   CONFIG_EXAMPLES_LTE_HIBERNATION_APN_PASSWD
-#else
-#  define APP_APN_PASSWD   ""
-#endif
-
 /****************************************************************************
  * Private Data
  ****************************************************************************/
@@ -340,11 +304,10 @@ static int app_get_sessionid(void)
  * app_connect_to_lte
  ****************************************************************************/
 
-int app_connect_to_lte(void)
+int app_connect_to_lte(FAR struct lte_apn_setting *apnsetting)
 {
   int                     ret;
   int                     result = LTE_RESULT_OK;
-  struct lte_apn_setting  apnsetting;
   lte_errinfo_t           info = {0};
   lte_pdn_t               pdn = {0};
   lte_edrx_setting_t      edrx = {0};
@@ -456,14 +419,7 @@ int app_connect_to_lte(void)
 
       /* Attach to the LTE network and connect to the data PDN */
 
-      apnsetting.apn       = APP_APN_NAME;
-      apnsetting.ip_type   = APP_APN_IPTYPE;
-      apnsetting.auth_type = APP_APN_AUTHTYPE;
-      apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
-      apnsetting.user_name = APP_APN_USR_NAME;
-      apnsetting.password  = APP_APN_PASSWD;
-
-      ret = lte_activate_pdn_sync(&apnsetting, &pdn);
+      ret = lte_activate_pdn_sync(apnsetting, &pdn);
       if (ret < 0)
         {
           printf("Failed to activate PDN :%d\n", ret);

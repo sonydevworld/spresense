@@ -67,7 +67,7 @@ struct Network {
 
 	IoT_Error_t (*read)(Network *, unsigned char *, size_t, Timer *, size_t *);    ///< Function pointer pointing to the network function to read from the network
 	IoT_Error_t (*write)(Network *, unsigned char *, size_t, Timer *, size_t *);    ///< Function pointer pointing to the network function to write to the network
-	IoT_Error_t (*disconnect)(Network *);    ///< Function pointer pointing to the network function to disconnect from the network
+	IoT_Error_t (*disconnect)(Network *, Timer *);    ///< Function pointer pointing to the network function to disconnect from the network
 	IoT_Error_t (*isConnected)(Network *);    ///< Function pointer pointing to the network function to check if TLS is connected
 	IoT_Error_t (*destroy)(Network *);        ///< Function pointer pointing to the network function to destroy the network object
 
@@ -136,9 +136,10 @@ IoT_Error_t iot_tls_read(Network *, unsigned char *, size_t, Timer *, size_t *);
  * @brief Disconnect from network socket
  *
  * @param Network - Pointer to a Network struct defining the network interface.
+ * @param Timer * - operation timer
  * @return IoT_Error_t - successful read or TLS error code
  */
-IoT_Error_t iot_tls_disconnect(Network *pNetwork);
+IoT_Error_t iot_tls_disconnect(Network *pNetwork, Timer *);
 
 /**
  * @brief Perform any tear-down or cleanup of TLS layer

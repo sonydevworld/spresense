@@ -422,6 +422,7 @@ typedef struct
   BLE_GapAuth       authReq; /**< Authentication requirements */
   uint8_t        minKeySize; /**< Minimum encryption key size in octets between 7 and 16 */
   uint8_t        maxKeySize; /**< Maximum encryption key size in octets between min_key_size and 16 */
+  bool                 lesc; /**< LE secure connection support. 1 means support, 0 means unsupport. */
 } BLE_GapPairingFeature;
 
 /**@brief Authentication key structure */
@@ -728,7 +729,8 @@ int BLE_GapSetSecParam(BLE_GapSecCfg *param);
  * @details This call exchanges the pairing feature between pairing initiator and responder.The following events may be triggered: @ref BLE_GAP_EVENT_DISPLAY_PASSKEY, @ref BLE_GAP_EVENT_AUTH_STATUS.
  *
  * @param[in]  connHandle: Connection handle
- * @param[in]  pairingFeature: Pairing feature exchanged in pairing phase 1
+ * @param[in]  ownFeature: Pairing feature of own device
+ * @param[in]  peerFeature: Pairing feature of peer device
  * @return     0: success
  *
  * @par Blocking
@@ -739,7 +741,9 @@ int BLE_GapSetSecParam(BLE_GapSecCfg *param);
  *     No
  *
  */
-int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle, BLE_GapPairingFeature *pairingFeature);
+int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
+                                  BLE_GapPairingFeature *ownFeature,
+                                  const BLE_GapPairingFeature *peerFeature);
 
 /**@brief   Set scan parameter
  * @details This call allows the application to set scan paramter, use the default scan parameter

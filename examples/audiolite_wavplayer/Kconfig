@@ -1,6 +1,6 @@
 
 config EXAMPLES_AUDIOLITE_WAVPLAYER
-	tristate "audiolite_wavplayer app"
+	tristate "AudioLite sample : audiolite_wavplayer app"
 	default n
 	---help---
 		Enable the audiolite_wavplayer app

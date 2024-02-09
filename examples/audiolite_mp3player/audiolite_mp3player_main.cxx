@@ -80,11 +80,22 @@ int main(int argc, FAR char *argv[])
 {
   int ret;
   my_mp3listener lsn;
+  int volume = 1000;
 
-  if (argc != 2)
+  /* Argument check */
+
+  if (argc < 2)
     {
-      printf("Usage nsh> %s <playing mp3 file name>\n", argv[0]);
+      printf("Usage nsh> %s <playing mp3 file name> (<vol>)\n",
+             argv[0]);
       return -1;
+    }
+
+  if (argc >= 3)
+    {
+      volume = atoi(argv[2]);
+      volume = (volume < 0)    ?    0 :
+               (volume > 1000) ? 1000 : volume;
     }
 
   /* To Create below structure.
@@ -109,7 +120,7 @@ int main(int argc, FAR char *argv[])
   audiolite_filestream *fstream = new audiolite_filestream;
   audiolite_mempoolapbuf *imempool = new audiolite_mempoolapbuf;
   audiolite_mempoolapbuf *omempool = new audiolite_mempoolapbuf;
-  audiolite_outputcomp *aoutdev = new audiolite_outputcomp;
+  audiolite_outputcomp *aoutdev = new audiolite_outputcomp();
   audiolite_mp3dec *mp3 = new audiolite_mp3dec;
 
   /* File open on filestream as read mode */
@@ -158,6 +169,10 @@ int main(int argc, FAR char *argv[])
   /* Connect MP3 output to Audio Output device */
 
   mp3->bind(aoutdev);
+
+  /* Set volume */
+
+  aoutdev->set_volume(volume);
 
   /* Let's play */
 

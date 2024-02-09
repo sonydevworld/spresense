@@ -564,7 +564,7 @@ static bool app_set_ready(void)
   return sendAudioCommandAndWait(&command);
 }
 
-static bool app_get_status(void)
+static AsMngStatus app_get_status(void)
 {
   AudioCommand command;
   command.header.packet_length = LENGTH_GETSTATUS;
@@ -575,7 +575,7 @@ static bool app_get_status(void)
 
   sendAudioCommandAndWait(&command, &result);
 
-  return result.notify_status.status_info;
+  return static_cast<AsMngStatus>(result.notify_status.status_info);
 }
 
 static bool app_init_output_select(void)

@@ -37,9 +37,9 @@ ifeq ($(CONFIG_LTE_FACTORY_RESET_API),y)
 
 CSRCS += alt1250_ioctl_extend.c
 
-CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250"}
-CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)usock_handlers"}
-CFLAGS += ${shell $(INCDIR) "$(CC)" "$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)callback_handlers"}
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)$(DELIM)lte$(DELIM)alt1250
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)usock_handlers
+CFLAGS += ${INCDIR_PREFIX}$(APPDIR)$(DELIM)lte$(DELIM)alt1250$(DELIM)callback_handlers
 VPATH += lapiext
 DEPPATH += --dep-path lapiext
 

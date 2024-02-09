@@ -54,6 +54,7 @@
 #include "ble_hci.h"
 #include "app_util.h"
 #include <semaphore.h>
+#include <nrf_crypto_ecc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +76,8 @@ extern "C" {
 #define BOND_INFO_7_KEY_NAME     "1007"
 #define BOND_INFO_8_KEY_NAME     "1008"
 
-#define BLE_GATTC_HANDLE_END 0xFFFF
+#define BLE_GATTC_HANDLE_START 0x0001
+#define BLE_GATTC_HANDLE_END   0xFFFF
 #define APP_BLE_CONN_CFG_TAG 1
 #define CONN_HANDLE_INVALED 0xffff
 #ifndef BLE_USE_SECTION
@@ -103,6 +105,13 @@ typedef struct
   uint8_t sys_attr_data[BLE_GATTS_SYS_ATTR_DATA_TOTALLEN];
 } bleGapWrapperBondInfo;
 
+typedef struct
+{
+  nrf_crypto_ecc_private_key_t priv;
+  ble_gap_lesc_p256_pk_t       own_pub;
+  ble_gap_lesc_p256_pk_t       peer_pub;
+} bleLescKeyInfo;
+
 /**@brief A collection of variables of gap. */
 typedef struct
 {
@@ -113,6 +122,7 @@ typedef struct
   ble_gap_scan_params_t scanParams;
   ble_gap_conn_params_t connParams;
   ble_gap_sec_keyset_t keySet;
+  bleLescKeyInfo lescKey;
   uint8_t is_connected;
   int8_t peerRssi;
   uint8_t startRssi;
@@ -133,6 +143,13 @@ typedef struct
   uint8_t                 reserve;
   BLE_GattcDbDiscovery    dbDiscovery;
 } bleGattcDb;
+
+typedef struct
+{
+  uint16_t start;
+  uint16_t req;
+} bleDiscoveringInfo;
+
 
 /**@brief A collection of variables of common. */
  typedef struct
@@ -162,6 +179,7 @@ typedef struct
   BLE_EvtGattcNtfInd      gattcNtfIndData;
   BLE_EvtGattcDbDiscovery gattcDbDiscoveryData;
   bleGattcDb              gattcDb;
+  bleDiscoveringInfo      disc;
   bleGapMem               *gapMem;
   uint8_t                 stackInited;
   uint16_t                requested_mtu;
@@ -209,8 +227,8 @@ extern BLE_Context g_ble_context;
 struct bt_common_context_s  
 {
   BT_ADDR bt_addr;  /* Common address for BT/BLE */
-  char bt_name[BT_NAME_LEN];
-  char ble_name[BT_NAME_LEN];
+  char bt_name[BT_NAME_LEN + 1];
+  char ble_name[BT_NAME_LEN + 1];
 };
 
 /****************************************************************************

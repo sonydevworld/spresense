@@ -195,3 +195,42 @@ int mbedtls_x509_crt_verify_info(char *buf, size_t size, const char *prefix, uin
   return ret;
 }
 
+int mbedtls_x509_crt_getctx(mbedtls_x509_crt *crt, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_x509_crt);
+
+  if (crt && buff && size >= sizeof(mbedtls_x509_crt))
+    {
+      mbedtls_x509_crt *ctx = (mbedtls_x509_crt *)buff;
+      ctx->id = crt->id;
+    }
+  else if (crt && buff)
+    {
+      ret = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_x509_crt_setctx(mbedtls_x509_crt *crt, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (crt && buff && size >= sizeof(mbedtls_x509_crt))
+    {
+      mbedtls_x509_crt *ctx = (mbedtls_x509_crt *)buff;
+      crt->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_X509_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_x509_crt_getctxsize(mbedtls_x509_crt *crt)
+{
+  return mbedtls_x509_crt_getctx(NULL, NULL, 0);
+}
+

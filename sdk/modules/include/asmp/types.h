@@ -44,7 +44,7 @@
 #define __INCLUDE_ASMP_TYPES_H
 
 #include <sys/types.h>
-#include <queue.h>
+#include <nuttx/queue.h>
 
 #define MPOBJTYPE_SHM   0x4588  /* MP shared memory object */
 #define MPOBJTYPE_MQ    0x2dc6  /* MP message queue object */

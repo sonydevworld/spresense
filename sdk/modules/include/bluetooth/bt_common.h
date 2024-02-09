@@ -134,14 +134,14 @@ typedef enum
  */
 struct bt_common_state_s
 {
-  struct bt_hal_common_ops_s  *bt_hal_common_ops;    /**< BT common HAL interfaces @ref bt_hal_common_ops_s */
-  struct ble_hal_common_ops_s *ble_hal_common_ops;   /**< BLE common HAL interfaces @ref ble_hal_common_ops_s */
-  struct bt_common_ops_s      *bt_common_ops;        /**< BT status callbacks @ref bt_common_ops_s */
-  struct ble_common_ops_s      *ble_common_ops;      /**< BLE status callbacks @ref ble_common_ops_s */
-  BT_ADDR                     bt_addr;               /**< BT local device address @ref BT_ADDR */
-  BT_ADDR                     ble_addr;              /**< BLE local device address @ref BT_ADDR */
-  char                        bt_name[BT_NAME_LEN];  /**< BT local device name */
-  char                        ble_name[BT_NAME_LEN]; /**< BLE local device name */
+  struct bt_hal_common_ops_s  *bt_hal_common_ops;        /**< BT common HAL interfaces @ref bt_hal_common_ops_s */
+  struct ble_hal_common_ops_s *ble_hal_common_ops;       /**< BLE common HAL interfaces @ref ble_hal_common_ops_s */
+  struct bt_common_ops_s      *bt_common_ops;            /**< BT status callbacks @ref bt_common_ops_s */
+  struct ble_common_ops_s      *ble_common_ops;          /**< BLE status callbacks @ref ble_common_ops_s */
+  BT_ADDR                     bt_addr;                   /**< BT local device address @ref BT_ADDR */
+  BT_ADDR                     ble_addr;                  /**< BLE local device address @ref BT_ADDR */
+  char                        bt_name[BT_NAME_LEN + 1];  /**< BT local device name */
+  char                        ble_name[BT_NAME_LEN + 1]; /**< BLE local device name */
 };
 
 /**

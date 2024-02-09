@@ -50,8 +50,8 @@ endif
 CFLAGS += -ffast-math
 CFLAGS += -Wno-shadow
 
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/cmsis/CMSIS_5/CMSIS/DSP/PrivateInclude
 
 CMSIS_ROOT = ../CMSIS_5/CMSIS
 

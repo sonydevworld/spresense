@@ -397,15 +397,15 @@ struct ble_gatt_central_ops_s
 {
   /** Write response */
 
-  void (*write)(struct ble_gatt_char_s *ble_gatt_char);
+  void (*write)(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
   /** Read response */
 
-  void (*read)(struct ble_gatt_char_s *ble_gatt_char);
+  void (*read)(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
   /** Receive notification */
 
-  void (*notify)(struct ble_gatt_char_s *ble_gatt_char);
+  void (*notify)(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
   /** Database discovery event */
 
@@ -495,7 +495,7 @@ int ble_characteristic_notify(uint16_t               conn_handle,
                               int                    len);
 
 /**
- * @brief BLE Read Characteristic value
+ * @brief BLE Read Characteristic value (Deprecated)
  *        Send read characteristic request to peripheral (For Central role)
  *
  * @param[in] conn_handle: connection handle for which read request is sent
@@ -507,7 +507,7 @@ int ble_characteristic_notify(uint16_t               conn_handle,
 int ble_characteristic_read(uint16_t conn_handle, struct ble_gatt_char_s *charc);
 
 /**
- * @brief BLE Write Characteristic value
+ * @brief BLE Write Characteristic value (Deprecated)
  *        Send write characteristic request to peripheral (For Central role)
  *
  * @param[in] conn_handle: connection handle for which write request is sent
@@ -522,6 +522,37 @@ int ble_characteristic_write(uint16_t               conn_handle,
                              struct ble_gatt_char_s *charc,
                              uint8_t                *data,
                              int                    len);
+
+/**
+ * @brief BLE Read Characteristic value
+ *        Send read characteristic request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle for which write request is sent
+ * @param[in] char_handle: characteristic handle for which write request is sent
+ *
+ * @retval error code
+ */
+
+int ble_read_characteristic(uint16_t conn_handle, uint16_t char_handle);
+
+/**
+ * @brief BLE Write Characteristic value
+ *        Send write characteristic request to peripheral (For Central role)
+ *
+ * @param[in] conn_handle: connection handle for which write request is sent
+ * @param[in] char_handle: characteristic handle for which write request is sent
+ * @param[in] data: Write data
+ * @param[in] len: Write data length
+ * @param[in] rsp: Require write response to receive write result
+ *
+ * @retval error code
+ */
+
+int ble_write_characteristic(uint16_t conn_handle,
+                             uint16_t char_handle,
+                             uint8_t  *data,
+                             int      len,
+                             bool     rsp);
 
 /**
  * @brief BLE Read Descriptor value
@@ -579,7 +610,8 @@ int ble_start_db_discovery(uint16_t conn_handle);
 
 int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle);
 
-/* @brief Discover GATT database with specific UUID
+/**
+ * @brief Discover GATT database with specific UUID
  * @param[in] conn_handle: BLE connection handle
  * @param[in] srv_uuid: Service UUID to be discovered
  * @param[in] char_uuid: Characteristic UUID to be discovered

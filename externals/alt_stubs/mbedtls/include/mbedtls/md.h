@@ -347,6 +347,12 @@ int mbedtls_md_hmac( const mbedtls_md_info_t *md_info, const unsigned char *key,
 /* Internal use */
 int mbedtls_md_process( mbedtls_md_context_t *ctx, const unsigned char *data );
 
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_md_info_getctx( mbedtls_md_info_t *md_info, uint8_t *buff, size_t size );
+int mbedtls_md_info_setctx( mbedtls_md_info_t *md_info, uint8_t *buff, size_t size );
+int mbedtls_md_info_getctxsize( mbedtls_md_info_t *md_info );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

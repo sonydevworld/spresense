@@ -100,9 +100,6 @@ else
 # symbol table is required.
 
 .built: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_all)
-	$(Q) for app in ${CONFIGURED_APPS}; do \
-		$(MAKE) -C "$${app}" archive ; \
-	done
 	$(Q) touch $@
 
 install: $(foreach SDIR, $(CONFIGURED_APPS), $(SDIR)_install)
@@ -175,6 +172,7 @@ clean_context:
 	$(Q) $(MAKE) -C builtin clean_context
 
 clean: $(foreach SDIR, $(CLEANDIRS), $(SDIR)_clean)
+	$(call DELFILE, .built)
 	$(call DELFILE, $(SYMTABSRC))
 	$(call DELFILE, $(SYMTABOBJ))
 	$(call DELFILE, $(BIN))
@@ -200,6 +198,7 @@ endif
 	$(call DELFILE, .depend)
 	$(call DELFILE, $(SYMTABSRC))
 	$(call DELFILE, $(SYMTABOBJ))
+	$(call DELFILE, $(BIN).lock)
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, Kconfig)
 	$(call DELDIR, $(BINDIR))

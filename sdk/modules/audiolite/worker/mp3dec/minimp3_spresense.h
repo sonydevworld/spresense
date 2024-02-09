@@ -42,7 +42,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <queue.h>
+#include <nuttx/queue.h>
 
 #include <audiolite/sprmp3dec_qsize.h>
 

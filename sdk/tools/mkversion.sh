@@ -2,7 +2,7 @@
 ############################################################################
 # tools/mkversion.sh
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018-2024 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,12 +36,12 @@
 
 TAG=${1:-HEAD}
 
-SDK_VERSION="SDK3.1.0"
+SDK_VERSION="SDK3.2.0"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
 
-NUTTX_VERSION="11.0.0"
+NUTTX_VERSION="12.3.0"
 
 # Get short hash for specified tag
 GIT_REVISION=`git rev-parse ${TAG} 2>/dev/null | cut -b -7`

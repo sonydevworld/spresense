@@ -48,7 +48,6 @@ depend:
 
 $(LIB): depend
 	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)"
-	$(Q) $(MAKE) -C $(WORKER_DIR) TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" archive
 
 $(BIN): $(LIB)
 	$(Q) install $< $@

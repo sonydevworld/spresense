@@ -2,7 +2,7 @@
 /****************************************************************************
  * msgq_pool.h
  *
- *   Copyright 2019 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,17 +44,17 @@ extern const MsgQueDef MsgqPoolDefs[NUM_MSGQ_POOLS] =
   /* n_drm, n_size, n_num, h_drm, h_size, h_num */
 
   { 0x00000000, 0, 0, 0x00000000, 0, 0, 0 }, /* MSGQ_NULL */
-  { 0xfd330, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MNG */
-  { 0xfdd80, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
-  { 0xfde00, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PREDSP */
-  { 0xfde64, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
-  { 0xfdec8, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
-  { 0xfdf2c, 48, 10, 0xffffffff, 0, 0 }, /* MSGQ_AUD_FRONTEND */
-  { 0xfe10c, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
-  { 0xfe28c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
-  { 0xfe48c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
-  { 0xfe50c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND */
-  { 0xfe70c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SYNC */
+  { 0xfd390, 88, 30, 0xffffffff, 0, 0 }, /* MSGQ_AUD_MNG */
+  { 0xfdde0, 64, 2, 0xffffffff, 0, 0 }, /* MSGQ_AUD_APP */
+  { 0xfde60, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PREDSP */
+  { 0xfdec4, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP0 */
+  { 0xfdf28, 20, 5, 0xffffffff, 0, 0 }, /* MSGQ_AUD_PFDSP1 */
+  { 0xfdf8c, 48, 10, 0xffffffff, 0, 0 }, /* MSGQ_AUD_FRONTEND */
+  { 0xfe16c, 48, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_OUTPUT_MIX */
+  { 0xfe2ec, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP */
+  { 0xfe4ec, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_CAP_SYNC */
+  { 0xfe56c, 32, 16, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND */
+  { 0xfe76c, 16, 8, 0xffffffff, 0, 0 }, /* MSGQ_AUD_RND_SYNC */
 };
 
 #endif /* MSGQ_POOL_H_INCLUDED */

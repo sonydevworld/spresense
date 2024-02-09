@@ -49,8 +49,12 @@
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define al_debugmessage(T,...) { printf(T " %s:%s(%d) : ", __FILE__, __func__, __LINE__); \
-                                 printf(__VA_ARGS__); }
+#define al_debugmessage(T,...) \
+  do { \
+      printf("\n" T " %s:%s(%d) : \n" T "   ",    \
+             __FILE__, __PRETTY_FUNCTION__, __LINE__); \
+      printf(__VA_ARGS__); \
+  } while(0)
 
 #ifdef CONFIG_AL_DEBUG_ERR
 #define al_derror(...) al_debugmessage("ALD[ERR]", __VA_ARGS__)
@@ -65,8 +69,7 @@
 #endif
 
 #ifdef CONFIG_AL_DEBUG_DBG
-#define al_ddebug(...) { al_debugmessage("ALD[DBG]", __VA_ARGS__); \
-                         usleep(100 * 1000); }
+#define al_ddebug(...) al_debugmessage("ALD[DBG]", __VA_ARGS__)
 #else
 #define al_ddebug(...)
 #endif

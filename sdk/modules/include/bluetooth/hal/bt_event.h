@@ -445,6 +445,7 @@ struct ble_gatt_event_write_req_t
   uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
   uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
+  uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   uint16_t length;                     /**< Write data length */
   uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Write data */
@@ -459,6 +460,7 @@ struct ble_gatt_event_read_req_t
   uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
   uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
+  uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
 };
 
@@ -471,6 +473,7 @@ struct ble_gatt_event_notify_req_t
   uint8_t group_id;                    /**< Event group ID @ref BT_GROUP_ID */
   uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t serv_handle;                /**< Service handle ID @ref ble_gatt_service_s */
+  uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
   bool enable;                         /**< Notify enable/disable */
 };
@@ -514,6 +517,7 @@ struct ble_gatt_event_notification_t
   uint8_t event_id;                    /**< Event sub ID @ref BLE_GATT_EVENT_ID */
   uint16_t conn_handle;                /**< Connection handle ID */
   uint16_t char_handle;                /**< Characteristic handle ID @ref ble_gatt_char_s */
+  bool     indicate;                   /**< Indicate or not */
   uint16_t length;                     /**< Read data length */
   uint8_t data[BLE_MAX_GATT_DATA_LEN]; /**< Read data */
 };

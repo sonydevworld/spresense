@@ -41,7 +41,7 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <crc16.h>
+#include <nuttx/crc16.h>
 #include <ble/ble_comm.h>
 #include <ble/ble_gap.h>
 #include <ble/ble_gatts.h>
@@ -53,6 +53,9 @@
 #include "nrf_sdh_ble.h"
 #include <arch/board/board.h>
 #include <system/readline.h>
+#include <nrf_crypto.h>
+#include <nrf_crypto_ecc.h>
+#include <nrf_crypto_ecdh.h>
 
 /******************************************************************************
  * externs
@@ -103,6 +106,9 @@ static void onConnParamUpdate(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onConnParamUpdateRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDisconnect(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onSecParamsRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
+#ifdef CONFIG_NRF52_LESC
+static void onLescDhkeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
+#endif
 static void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onDispPasskey(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
 static void onAdvReport(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt);
@@ -705,6 +711,11 @@ void bleNrfEvtHandler(BLE_Evt *bleEvent, ble_evt_t *pBleNrfEvt)
       case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
         onSecParamsRequest(bleEvent, pBleNrfEvt);
         break;
+#ifdef CONFIG_NRF52_LESC
+      case BLE_GAP_EVT_LESC_DHKEY_REQUEST:
+        onLescDhkeyRequest(bleEvent, pBleNrfEvt);
+        break;
+#endif
       case BLE_GAP_EVT_AUTH_STATUS:
         onAuthStatus(bleEvent, pBleNrfEvt);
         break;
@@ -954,7 +965,9 @@ static void on_exchange_feature(const BLE_EvtExchangeFeature* exchange_feature)
       pf = &g_ble_context.pairing_feature;
     }
 
-  ret = BLE_GapExchangePairingFeature(exchange_feature->handle, pf);
+  ret = BLE_GapExchangePairingFeature(exchange_feature->handle,
+                                      pf,
+                                      &exchange_feature->peerFeature);
 
   if (BLE_SUCCESS != ret)
     {
@@ -1368,6 +1381,7 @@ void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   if (ret)
     {
       BLE_ERR("onLenUp: sd_ble_gatts_exchange_mtu_reply %d\n", ret);
+      return;
     }
 
   pBleEvent->evtHeader = BLE_GATTS_EVENT_EXCHANGE_MTU;
@@ -1550,11 +1564,60 @@ void onSecParamsRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   commMem.exchangeFeatureData.peerFeature.authReq = (BLE_GapAuth)((secParamReq->peer_params.mitm)<<1 |(secParamReq->peer_params.bond));
   commMem.exchangeFeatureData.peerFeature.maxKeySize = secParamReq->peer_params.max_key_size;
   commMem.exchangeFeatureData.peerFeature.minKeySize = secParamReq->peer_params.min_key_size;
+  commMem.exchangeFeatureData.peerFeature.lesc       = secParamReq->peer_params.lesc;
   pBleEvent->evtDataSize = sizeof(BLE_EvtExchangeFeature);
   memcpy(pBleEvent->evtData, &commMem.exchangeFeatureData, pBleEvent->evtDataSize);
 
   on_exchange_feature((BLE_EvtExchangeFeature*)pBleEvent->evtData);
 }
+
+#ifdef CONFIG_NRF52_LESC
+static
+void onLescDhkeyRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
+{
+  uint16_t conn_handle = pBleNrfEvt->evt.gap_evt.conn_handle;
+  uint8_t *recv_pk = pBleNrfEvt->evt.gap_evt.params.lesc_dhkey_request.p_pk_peer->pk;
+  uint8_t pk_raw[BLE_GAP_LESC_P256_PK_LEN];
+  nrf_crypto_ecc_public_key_t pk;
+  ble_gap_lesc_dhkey_t dhkey;
+  size_t dhkey_len = BLE_GAP_LESC_DHKEY_LEN;
+  nrf_crypto_ecdh_context_t ctx;
+
+  nrf_crypto_init();
+
+  /* Convert the received public key from little endian to big-endian. */
+
+  nrf_crypto_ecc_byte_order_invert(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                   recv_pk,
+                                   pk_raw,
+                                   BLE_GAP_LESC_P256_PK_LEN);
+
+  /* Convert received public key data to internal public key format. */
+
+  nrf_crypto_ecc_public_key_from_raw(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                     &pk,
+                                     pk_raw,
+                                     BLE_GAP_LESC_P256_PK_LEN);
+
+  /* Calculate the DHKey. */
+
+  nrf_crypto_ecdh_compute(&ctx,
+                          &commMem.gapMem->lescKey.priv,
+                          &pk,
+                          dhkey.key,
+                          &dhkey_len);
+
+  /* Invert the shared secret for little endian format. */
+
+  nrf_crypto_ecc_byte_order_invert(&g_nrf_crypto_ecc_secp256r1_curve_info,
+                                   dhkey.key,
+                                   dhkey.key,
+                                   BLE_GAP_LESC_DHKEY_LEN);
+
+  nrf_crypto_uninit();
+  sd_ble_gap_lesc_dhkey_reply(conn_handle, &dhkey);
+}
+#endif
 
 static
 void onAuthStatus(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
@@ -2137,6 +2200,7 @@ void onHvx(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   evt.event_id    = BLE_GATT_EVENT_NOTIFICATION;
   evt.conn_handle = pBleNrfEvt->evt.gattc_evt.conn_handle;
   evt.char_handle = bleGattcEvtHvx->handle;
+  evt.indicate    = (bleGattcEvtHvx->type == BLE_GATT_HVX_INDICATION);
   evt.length      = bleGattcEvtHvx->len;
   memcpy(evt.data, bleGattcEvtHvx->data, evt.length);
 
@@ -2178,7 +2242,7 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
       ch = &srv->characteristics[0];
       rcv_ch = &rcv_srv->characteristics[0];
 
-      for (j = 0; j < evt->srv_count; j++, ch++, rcv_ch++)
+      for (j = 0; j < srv->char_count; j++, ch++, rcv_ch++)
         {
            ch->characteristic.char_prope      = rcv_ch->characteristic.charPrope;
            ch->characteristic.char_valhandle  = rcv_ch->characteristic.charValhandle;
@@ -2196,11 +2260,27 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
     }
 }
 
+static uint16_t get_last_handle(struct ble_gattc_db_disc_char_s *chrc)
+{
+  uint16_t biggest;
+
+  biggest = chrc->characteristic.char_valhandle;
+  biggest = MAX(biggest, chrc->cepd_handle);
+  biggest = MAX(biggest, chrc->cudd_handle);
+  biggest = MAX(biggest, chrc->cccd_handle);
+  biggest = MAX(biggest, chrc->sccd_handle);
+  biggest = MAX(biggest, chrc->cpfd_handle);
+  biggest = MAX(biggest, chrc->cafd_handle);
+
+  return biggest;
+}
+
 static
 void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, int reason)
 {
   static struct ble_gatt_event_db_discovery_t evt;
-  struct ble_gattc_db_disc_srv_s *last;
+  struct ble_gattc_db_disc_srv_s *last_srv;
+  struct ble_gattc_db_disc_char_s *last_chrc;
 
   evt.group_id    = BLE_GROUP_GATT;
   evt.event_id    = BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE;
@@ -2216,8 +2296,24 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
       evt.params.reason = reason;
     }
 
-  last = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
-  evt.state.end_handle = last->srv_handle_range.end_handle;
+  /* If the number of the last characteristic is BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV
+   * and end_handle of the last service is BLE_GATTC_HANDLE_END,
+   * continuation may be exists.
+   * Then, the last handle value should be notified.
+   */
+
+  last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
+  last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
+
+  if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+    {
+      evt.state.end_handle = get_last_handle(last_chrc);
+    }
+  else
+    {
+      evt.state.end_handle = last_srv->srv_handle_range.end_handle;
+      commMem.disc.start = 0;
+    }
 
   ble_gatt_event_handler((struct bt_event_t *)&evt);
 
@@ -2374,6 +2470,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
   const ble_gattc_char_t   *rcvch;
   uint16_t                 last_handle = BLE_GATT_INVALID_ATTRIBUTE_HANDLE;
   connHandle  = bleGattcEvt->conn_handle;
+  ble_gattc_handle_range_t range = {0};
   if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
       BLE_ERR("onChar ind NG\n");
@@ -2423,7 +2520,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
                    rcvch->handle_decl);
 
           srvBeingDiscovered->charCount++;
-          if (srvBeingDiscovered->charCount > BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+          if (srvBeingDiscovered->charCount >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
             {
               break;
             }
@@ -2434,7 +2531,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
       // If no more characteristic discovery is required, or if the maximum number of supported
       // characteristic per service has been reached, descriptor discovery will be performed.
       if (!isCharDiscoveryReqd(gattcDbDiscovery, last_handle) ||
-      (srvBeingDiscovered->charCount == BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
+      (srvBeingDiscovered->charCount >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
         {
           performDescDiscov = true;
         }
@@ -2444,7 +2541,11 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
           gattcDbDiscovery->currCharInd = srvBeingDiscovered->charCount;
           // Perform another round of characteristic discovery.
           BLE_PRT2("onChar charDiscover\n");
-          (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
+          range.start_handle = last_handle + 1;
+          range.end_handle   = srvBeingDiscovered->srvHandleRange.endHandle;
+          sd_ble_gattc_characteristics_discover(
+            gattcDbDiscovery->dbDiscovery.connHandle,
+            &range);
         }
     }
   else
@@ -2537,6 +2638,33 @@ static uint16_t getLastDescriptorHandle(bleGattcDb *db)
   return last;
 }
 
+static int getDescNumOfCurrChar(const ble_gattc_evt_desc_disc_rsp_t *evt,
+                                bool *incl)
+{
+  int i;
+
+  *incl = false;
+
+  /* In case of last characteristic or UUID-specified discovery,
+   * the range of descriptor handle can be invalid.
+   * In such a case, all attribute data is notify and
+   * characteristic group is delimited by UUID = 0x2803 information,
+   * that means next characteristic delaration.
+   * So, delimit by 0x2803 information.
+   */
+
+  for (i = 0; i < evt->count; i++)
+    {
+      if (evt->descs[i].uuid.uuid == BLE_UUID_CHARACTERISTIC)
+        {
+          *incl = true;
+          break;
+        }
+   }
+
+  return i;
+}
+
 static
 void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
 {
@@ -2554,6 +2682,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
   const ble_gattc_desc_t *desc = NULL;
   ble_gattc_handle_range_t r;
   uint16_t last;
+  bool includeNextChar;
+  int num;
 
   connHandle  = bleGattcEvt->conn_handle;
   if ((gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV) ||
@@ -2570,7 +2700,8 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       // If the descriptor was a Client Characteristic Configuration Descriptor, then the cccdHandle needs to be populated.
       // Loop through all the descriptors to find the Client Characteristic Configuration Descriptor.
 
-      for (i = 0; i < descDiscRspEvt->count; i++)
+      num = getDescNumOfCurrChar(descDiscRspEvt, &includeNextChar);
+      for (i = 0; i < num; i++)
         {
           desc = &descDiscRspEvt->descs[i];
           saveDiscoveredDescriptor(desc->uuid.uuid, desc->handle, charBeingDiscovered);
@@ -2584,7 +2715,7 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
       if (desc != NULL)
         {
           last = getLastDescriptorHandle(gattcDbDiscovery);
-          if (last != desc->handle)
+          if ((last != desc->handle) && !includeNextChar)
             {
               r.start_handle = desc->handle + 1;
               r.end_handle   = last;
@@ -2614,41 +2745,83 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
     }
 }
 
+static bool hasRemainingChar(bleGattcDb *gattcDbDiscovery)
+{
+  BLE_GattcDbDiscSrv  *curr_srv;
+  BLE_GattcDbDiscChar *curr_ch;
+  struct ble_gattc_db_disc_char_s chrc;
+  uint16_t last;
+
+  curr_srv = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  curr_ch = &(curr_srv->characteristics[gattcDbDiscovery->currCharInd]);
+
+  chrc.characteristic.char_valhandle = curr_ch->characteristic.charValhandle;
+  chrc.cepd_handle = curr_ch->cepdHandle;
+  chrc.cudd_handle = curr_ch->cuddHandle;
+  chrc.cccd_handle = curr_ch->cccdHandle;
+  chrc.sccd_handle = curr_ch->sccdHandle;
+  chrc.cpfd_handle = curr_ch->cpfdHandle;
+  chrc.cafd_handle = curr_ch->cafdHandle;
+
+  last = get_last_handle(&chrc);
+
+  if (last < curr_srv->srvHandleRange.endHandle)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
 static
 void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
 {
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = NULL;
 
+  /* If service discovery complete and this service has the more characteristics,
+   * trigger event to encourage application to continue discover.
+   */
+
+  if (hasRemainingChar(gattcDbDiscovery))
+    {
+      gattcDbDiscovery->dbDiscovery.srvCount = gattcDbDiscovery->currSrvInd + 1;
+      commMem.disc.start = gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.startHandle;
+
+      setDbDiscoveryEvent(pBleEvent,
+                    gattcDbDiscovery->dbDiscovery.connHandle,
+                    BLE_GATTC_RESULT_SUCCESS, 0);
+      return;
+    }
+
+  commMem.disc.start = 0;
+
   // Reset the current characteristic index since a new service discovery is about to start.
   gattcDbDiscovery->currCharInd = 0;
 
   gattcDbDiscovery->currSrvInd++;
-  if (gattcDbDiscovery->currSrvInd > BLE_DB_DISCOVERY_MAX_SRV)
+  if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
-      BLE_ERR("onCompletion ind NG\n");
-      goto err;
+      BLE_PRT("onSrvDiscCompletion: no more service\n");
+      setDbDiscoveryEvent(pBleEvent,
+                      gattcDbDiscovery->dbDiscovery.connHandle,
+                      BLE_GATTC_RESULT_SUCCESS, 0);
     }
   else
     {
-      // Initiate discovery of the next service.
-      if (gattcDbDiscovery->currSrvInd < BLE_DB_DISCOVERY_MAX_SRV)
-        {
-          srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
-          // Reset the characteristic count in the current service to zero since a new service
-          // discovery is about to start.
-          srvBeingDiscovered->charCount = 0;
-        }
+      /* Reset the characteristic count in the next service to zero since a new service
+       * discovery is about to start.
+       */
+
+      srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+      srvBeingDiscovered->charCount = 0;
+
+      /* Discover characterisitics of next service. */
+
+      (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
     }
 
-  setDbDiscoveryEvent(pBleEvent,
-                      gattcDbDiscovery->dbDiscovery.connHandle,
-                      BLE_GATTC_RESULT_SUCCESS, 0);
-
-  return;
-err:
-  gattcDbDiscovery->discoveryInProgress = false;
-  setDbDiscoveryEvent(pBleEvent, gattcDbDiscovery->dbDiscovery.connHandle,
-    BLE_GATTC_RESULT_FAILED, BLE_GATTC_REASON_SERVICE);
   return;
 }
 
@@ -2681,8 +2854,20 @@ int characteristicsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscove
     }
   else
     {
-      // This is the first characteristic of this service being discovered.
-      handleRange.startHandle = srvBeingDiscovered->srvHandleRange.startHandle;
+      /* This is the first characteristic of this service being discovered.
+       * In continue case, start discovery from application specified handle.
+       */
+
+      if (commMem.disc.req > BLE_GATTC_HANDLE_START)
+        {
+          handleRange.startHandle = commMem.disc.req;
+          commMem.disc.req = BLE_GATTC_HANDLE_START;
+        }
+      else
+        {
+          handleRange.startHandle = srvBeingDiscovered->srvHandleRange.startHandle;
+
+        }
     }
 
   handleRange.endHandle = srvBeingDiscovered->srvHandleRange.endHandle;
@@ -2905,7 +3090,11 @@ static int32_t init_pairing_mode(BLE_GAP_IO_CAP io_cap)
   pf->authReq               = auth;
   pf->minKeySize            = BLE_GAP_MIN_KEY_SIZE;
   pf->maxKeySize            = BLE_GAP_MAX_KEY_SIZE;
-
+#ifdef CONFIG_NRF52_LESC
+  pf->lesc                  = true;
+#else
+  pf->lesc                  = false;
+#endif
   return ret;
 }
 

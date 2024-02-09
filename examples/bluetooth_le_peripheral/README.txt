@@ -1,18 +1,17 @@
 examples/bluetooth_le_peripheral
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  This is a simple example of Bluetooth SPP data transfer.
+  This is a simple example of Bluetooth le peripheral role
   Available as nsh built-in command.
-  This example turn on bluetooth and try to connect other device via SPP
-  and Receive Rx data.
+  This example turn on bluetooth and wait for BLE central to connect
+  and execute data communication.
 
   Configuration in this example:
 
     CONFIG_EXAMPLES_BLUETOOTH_LE_PERIPHERAL - Enable this example
 
   Build(In <spresense>/sdk):
-    $ ./tools/config.py examples/ble_peripheral
-    $ make buildkernel
+    $ ./tools/config.py examples/ble_central device/nrf52
     $ make
 
   Flash(In <spresense>/sdk):
@@ -22,11 +21,25 @@ examples/bluetooth_le_peripheral
     1. Launch "ble_peripheral" application by NuttShell
       $ ble_peripheral
 
-    2 Connect "SONY_BLE" by PC or Andrlid (ex. "nRF Connect" as Android application)
+  Configuration in this example:
 
-    3. Write characteristic data by Android or PC application
+    CONFIG_EXAMPLES_BLUETOOTH_LE_PERIPHERAL - Enable this example
 
-    4. bt_spp application will output
-              "onWrite [BLE] data[0] = 0x12, Length = 2"
+  Build(In <spresense>/sdk):
+    $ ./tools/config.py examples/ble_peripheral device/nrf52
+    $ make
 
-    5. After 2 seconds ble_peripheral will notify "0x06 0x14" to characteristic.
+  Flash(In <spresense>/sdk):
+    $ ./tools/flash.sh nuttx.spk
+
+  Operation:
+    1. Launch "ble_peripheral" application by NuttShell
+      $ ble_peripheral
+
+    2. Then, the following BLE procedures are executed automatically.
+       - Wait for BLE central to connect.
+       - Wait for BLE central to write characteristic 10 times.
+         (e.g. <spresense>/examples/bluetooth_le_central/ application executes this.)
+       - Send notification to BLE central 10 times every one second.
+       - Wait for BLE central to disconnect.
+

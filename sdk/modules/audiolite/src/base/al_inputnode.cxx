@@ -127,6 +127,17 @@ void audiolite_inputnode::stop_operation()
     }
 }
 
+void audiolite_inputnode::release_allstoredbuff()
+{
+  audiolite_mem *mem;
+
+  while ((mem = (audiolite_mem *)mossfw_release_delivereddata_array(_input))
+          != NULL)
+    {
+      mem->release();
+    }
+}
+
 bool audiolite_inputnode::can_breakdata()
 {
   bool ret = true;

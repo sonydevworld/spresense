@@ -1,0 +1,78 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET
+	tristate "Example of waking up from LTE hibernation by socket"
+	default n
+	---help---
+		Enable the LTE Hibernation sample application
+
+if EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_PROGNAME
+	string "Program name"
+	default "lte_hibernation_wake_socket"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_PRIORITY
+	int "lte_hibernation_wake_socket task priority"
+	default 100
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_STACKSIZE
+	int "lte_hibernation_wake_socket stack size"
+	default 2048
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_CERTS_PATH
+	string "Directory for server certification files"
+	default "/mnt/sd0/CERTS"
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_SAVECONTEXT_PATH
+	string "Directory for save context files"
+	default "/mnt/sd0"
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_NAME
+	string "Access Point Name"
+	default ""
+
+choice
+	prompt "IP type Selection"
+	default EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IP
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IP
+		bool "IPv4"
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IPV6
+		bool "IPv6"
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IPV4V6
+		bool "IPv4/v6"
+endchoice
+
+choice
+	prompt "Authentication type Selection"
+	default EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_NONE
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_NONE
+		bool "None"
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_PAP
+		bool "PAP"
+
+	config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_CHAP
+		bool "CHAP"
+endchoice
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_USERNAME
+	string "Username used for authentication"
+	default ""
+
+config EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_PASSWD
+	string "Password used for authentication"
+	default ""
+
+
+endif

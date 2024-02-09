@@ -27,4 +27,10 @@ config EXAMPLES_GNSS_ADDON_STACKSIZE
 	int "GNSS Add-on stack size"
 	default DEFAULT_TASK_STACKSIZE
 
+config EXAMPLES_GNSS_ADDON_FSYNC_LOGGING
+	bool "GNSS Add-on fsync logging"
+	default n
+	---help---
+		Enable fsync after writing the logging data to a file each time.
+
 endif

@@ -220,6 +220,15 @@ config EXTERNALS_AWSIOT_DISABLE_METRICS
 		Disable the collection of metrics by setting this to true.
 endmenu # Metrics
 
+menu "TLS configs"
+config EXTERNALS_AWSIOT_ENABLE_IOT_SSL_SOCKET_NON_BLOCKING
+        bool "ENABLE_IOT_SSL_SOCKET_NON_BLOCKING"
+        default n
+        ---help---
+                Enable ENABLE_IOT_SSL_SOCKET_NON_BLOCKING macro.
+
+endmenu # TLS configs
+
 menu "Debug"
 config EXTERNALS_AWSIOT_ENABLE_IOT_DEBUG
 	bool "ENABLE_IOT_DEBUG"

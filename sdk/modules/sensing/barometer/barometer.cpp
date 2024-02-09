@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/sensing/barometer/barometer.cpp
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -209,11 +209,11 @@ int32_t BarometerClass::compensateTemperature(int32_t adc_T)
   int32_t var2;
   int32_t T;
 
-  var1 = ((((adc_T >> 3) - ((int32_t)temp_adj.dig_T1 << 1))) *
-          ((int32_t)temp_adj.dig_T2)) >> 11;
-  var2 = (((((adc_T >> 4) - ((int32_t)temp_adj.dig_T1)) *
-          ((adc_T >> 4) - ((int32_t)temp_adj.dig_T1))) >> 12) *
-            ((int32_t)temp_adj.dig_T3)) >> 14;
+  var1 = ((((adc_T >> 3) - ((int32_t)temp_adj.dig_t1 << 1))) *
+          ((int32_t)temp_adj.dig_t2)) >> 11;
+  var2 = (((((adc_T >> 4) - ((int32_t)temp_adj.dig_t1)) *
+          ((adc_T >> 4) - ((int32_t)temp_adj.dig_t1))) >> 12) *
+            ((int32_t)temp_adj.dig_t3)) >> 14;
 
   T = var1 + var2;
 
@@ -242,12 +242,12 @@ uint32_t BarometerClass::compensatePressure(int32_t adc_P, int32_t comp_T)
   uint32_t p;
 
   var1 = (((int32_t)comp_T) >> 1) - (int32_t)64000;
-  var2 = (((var1 >> 2) * (var1 >> 2)) >> 11 ) * ((int32_t)press_adj.dig_P6);
-  var2 = var2 + ((var1 * ((int32_t)press_adj.dig_P5)) << 1);
-  var2 = (var2 >> 2) + (((int32_t)press_adj.dig_P4) << 16);
-  var1 = (((press_adj.dig_P3 * (((var1 >> 2) * (var1 >> 2)) >> 13 )) >> 3) +
-          ((((int32_t)press_adj.dig_P2) * var1) >> 1)) >> 18;
-  var1 = ((((32768 + var1)) * ((int32_t)press_adj.dig_P1)) >> 15);
+  var2 = (((var1 >> 2) * (var1 >> 2)) >> 11 ) * ((int32_t)press_adj.dig_p6);
+  var2 = var2 + ((var1 * ((int32_t)press_adj.dig_p5)) << 1);
+  var2 = (var2 >> 2) + (((int32_t)press_adj.dig_p4) << 16);
+  var1 = (((press_adj.dig_p3 * (((var1 >> 2) * (var1 >> 2)) >> 13 )) >> 3) +
+          ((((int32_t)press_adj.dig_p2) * var1) >> 1)) >> 18;
+  var1 = ((((32768 + var1)) * ((int32_t)press_adj.dig_p1)) >> 15);
 
   /* avoid exception caused by division by zero */
 
@@ -267,9 +267,9 @@ uint32_t BarometerClass::compensatePressure(int32_t adc_P, int32_t comp_T)
       p = (p / (uint32_t)var1) * 2;
     }
 
-  var1 = (((int32_t)press_adj.dig_P9) * ((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >> 12;
-  var2 = (((int32_t)(p >> 2)) * ((int32_t)press_adj.dig_P8)) >> 13;
-  p = (uint32_t)((int32_t)p + ((var1 + var2 + press_adj.dig_P7) >> 4));
+  var1 = (((int32_t)press_adj.dig_p9) * ((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >> 12;
+  var2 = (((int32_t)(p >> 2)) * ((int32_t)press_adj.dig_p8)) >> 13;
+  p = (uint32_t)((int32_t)p + ((var1 + var2 + press_adj.dig_p7) >> 4));
 
   return p;
 }

@@ -139,7 +139,9 @@ static bool CreateSynthesizer(AsObjectParams_t params, AudioAttentionCb attcb)
 
   FAR MsgQueBlock *que;
 
-  F_ASSERT(MsgLib::referMsgQueBlock(params.msgq_id.self, &que) == ERR_OK);
+  err_t er = MsgLib::referMsgQueBlock(params.msgq_id.self, &que);
+
+  F_ASSERT(er == ERR_OK);
 
   que->reset();
 

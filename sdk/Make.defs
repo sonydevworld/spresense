@@ -50,7 +50,6 @@ ifeq ($(PLATFORM),CYGWIN)
 
 CFLAGS += -isystem "$(shell cygpath -w $(SDKDIR)/modules/include)"
 CXXFLAGS += -I"$(shell cygpath -w $(SDKDIR)/modules/include)"
-INCDIROPT = -w
 else
 # Linux/macOS/MSYS2-native toolchain
 CFLAGS += -isystem $(SDKDIR)/modules/include
@@ -139,12 +138,12 @@ else
   MKKCONFIG = $(SDKDIR)$(DELIM)apps$(DELIM)tools$(DELIM)mkkconfig.sh
 endif
 
-ifeq ($(WINTOOL),y)
-  INCDIROPT = -w
-endif
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)system$(DELIM)include
 
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)system$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)system$(DELIM)include"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)apps$(DELIM)include
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)apps$(DELIM)include
 
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)apps$(DELIM)include"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)$(DELIM)apps$(DELIM)include"}
+define ARLOCK
+	flock $1.lock $(call ARCHIVE, $1, $(2))
+endef

@@ -41,9 +41,9 @@ BIN = libnnablart$(LIBEXT)
 RUNTIMEDIR = nnabla-c-runtime
 SRCDIR = $(RUNTIMEDIR)/src
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(RUNTIMEDIR)/include}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SRCDIR)/functions}
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(SRCDIR)/runtime}
+CFLAGS += ${INCDIR_PREFIX}$(RUNTIMEDIR)/include
+CFLAGS += ${INCDIR_PREFIX}$(SRCDIR)/functions
+CFLAGS += ${INCDIR_PREFIX}$(SRCDIR)/runtime
 
 CFLAGS += -std=c99
 
