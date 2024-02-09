@@ -90,11 +90,6 @@ static int nrf52_ble_descriptor_read(uint16_t conn_handle,
                                      uint16_t handle);
 
 /****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-#define SRV_DISC_START_HANDLE  0x0001
-
-/****************************************************************************
  * Private Data
  ****************************************************************************/
 
@@ -406,7 +401,7 @@ static int nrf52_ble_discover_uuid(uint16_t conn_handle,
 
   errCode = sd_ble_gattc_primary_services_discover
             (conn_handle,
-             SRV_DISC_START_HANDLE,
+             BLE_GATTC_HANDLE_START,
              &commMem.gattcDb.target.srvUuid);
   if (errCode != NRF_SUCCESS)
     {
@@ -517,8 +512,13 @@ int BLE_GattcStartDbDiscovery(uint16_t connHandle)
   int ret      = BLE_SUCCESS;
   int errCode = 0;
 
-  errCode = sd_ble_gattc_primary_services_discover(connHandle,SRV_DISC_START_HANDLE,NULL);
+  errCode = sd_ble_gattc_primary_services_discover(connHandle,BLE_GATTC_HANDLE_START,NULL);
   ret = bleConvertErrorCode((uint32_t)errCode);
+  if (ret == BLE_SUCCESS)
+    {
+      commMem.disc.req = BLE_GATTC_HANDLE_START;
+    }
+
   return ret;
 }
 
@@ -526,9 +526,20 @@ int BLE_GattcContinueDbDiscovery(uint16_t connHandle, uint16_t startHandle)
 {
   int ret      = BLE_SUCCESS;
   int errCode = 0;
+  uint16_t start = startHandle;
 
-  errCode = sd_ble_gattc_primary_services_discover(connHandle,startHandle,NULL);
+  if (commMem.disc.start != 0)
+    {
+      start = commMem.disc.start;
+    }
+
+  errCode = sd_ble_gattc_primary_services_discover(connHandle,start,NULL);
   ret = bleConvertErrorCode((uint32_t)errCode);
+  if (ret == BLE_SUCCESS)
+    {
+      commMem.disc.req = startHandle;
+    }
+
   return ret;
 }
 
