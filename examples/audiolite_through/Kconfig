@@ -1,0 +1,32 @@
+
+config EXAMPLES_AUDIOLITE_THROUGH
+	tristate "audiolite_through app"
+	default n
+	---help---
+		Enable the audiolite_through app
+
+if EXAMPLES_AUDIOLITE_THROUGH
+
+config EXAMPLES_AUDIOLITE_THROUGH_PROGNAME
+	string "Program name"
+	default "audiolite_through"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_THROUGH_PRIORITY
+	int "audiolite_through task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_THROUGH_STACKSIZE
+	int "audiolite_through stack size"
+	default 2048
+
+config EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
+	bool "Watch through data on the console"
+	default n
+	---help---
+		Enable displaying through data from mic to spkeaker on
+		terminal console.
+
+endif

@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_debug.h
+ * examples/audiolite_rec2net/event_str.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,51 +33,50 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_DEBUG_H
-#define __INCLUDE_AUDIOLITE_DEBUG_H
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#include <nuttx/config.h>
-
-#include <stdio.h>
-#include <unistd.h>
+#ifndef __EXAMPLES_AUDIOLITE_REC2NET_EVENT_STR_H
+#define __EXAMPLES_AUDIOLITE_REC2NET_EVENT_STR_H
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define al_debugmessage(T,...) \
-  do { \
-      printf("\n" T " %s:%s(%d) : \n" T "   ",    \
-             __FILE__, __PRETTY_FUNCTION__, __LINE__); \
-      printf(__VA_ARGS__); \
-  } while(0)
+#define STRINGCASE(e) case AL_EVENT_##e: return #e;
 
-#ifdef CONFIG_AL_DEBUG_ERR
-#define al_derror(...) al_debugmessage("ALD[ERR]", __VA_ARGS__)
-#else
-#define al_derror(...)
-#endif
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
 
-#ifdef CONFIG_AL_DEBUG_WRN
-#define al_dwarn(...) al_debugmessage("ALD[WRN]", __VA_ARGS__)
-#else
-#define al_dwarn(...)
-#endif
+static const char *convert_evtid(int id)
+{
+  switch (id)
+    {
+      STRINGCASE(OVERFLOW)
+      STRINGCASE(UNDERFLOW)
+      STRINGCASE(ILLIGALSTREAM)
+      STRINGCASE(UNSUPPORTFMT)
+      STRINGCASE(DECODEDONE)
+      STRINGCASE(STREAMDONE)
+      STRINGCASE(PLAYSTARTED)
+      STRINGCASE(PLAYSTOPPED)
+      STRINGCASE(RECORDSTARTED)
+      STRINGCASE(RECORDSTOPPED)
+      STRINGCASE(PLAYPAUSED)
+      STRINGCASE(PLAYRESUMED)
+      STRINGCASE(RECORDPAUSED)
+      STRINGCASE(RECORDRESUMED)
+      STRINGCASE(DRVERROR)
+      STRINGCASE(INVALIDSYSPARAM)
+      STRINGCASE(STOPOUTPUT)
+      STRINGCASE(STOPINPUT)
+      STRINGCASE(INITERROR)
+      STRINGCASE(SENDERROR)
+      STRINGCASE(MP3FRAMEINFO)
+      STRINGCASE(MP3DECWORKEREND)
+      STRINGCASE(MP3DECUNKNOWNEVT)
+      STRINGCASE(MP3DECERROR)
+      default:
+        return "not event id...";
+    }
+}
 
-#ifdef CONFIG_AL_DEBUG_DBG
-#define al_ddebug(...) al_debugmessage("ALD[DBG]", __VA_ARGS__)
-#else
-#define al_ddebug(...)
-#endif
-
-#ifdef CONFIG_AL_DEBUG_INF
-#define al_dinfo(...) al_debugmessage("ALD[INF]", __VA_ARGS__)
-#else
-#define al_dinfo(...)
-#endif
-
-#endif /* __INCLUDE_AUDIOLITE_DEBUG_H */
+#endif /* __EXAMPLES_AUDIOLITE_REC2NET_EVENT_STR_H */

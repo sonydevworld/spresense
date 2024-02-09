@@ -1,0 +1,27 @@
+
+config EXAMPLES_AUDIOLITE_REC2NET
+	tristate "AudioLite sample : audiolite_rec2net app"
+	default n
+	---help---
+		Enable the audiolite_rec2net app
+		This app get mic audio signal(192KHz 16bit 4ch).
+		And send it to connected server.
+
+if EXAMPLES_AUDIOLITE_REC2NET
+
+config EXAMPLES_AUDIOLITE_REC2NET_PROGNAME
+	string "Program name"
+	default "audiolite_rec2net"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_REC2NET_PRIORITY
+	int "audiolite_rec2net task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_REC2NET_STACKSIZE
+	int "audiolite_rec2net stack size"
+	default 2048
+
+endif

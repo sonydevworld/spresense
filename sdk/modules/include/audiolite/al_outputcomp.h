@@ -54,9 +54,14 @@
 class audiolite_outputcomp : public audiolite_component,
                              public audiolite_drvlistener
 {
+  private:
+    audiolite_driver *_driver;
+
   public:
-    audiolite_outputcomp();
+    audiolite_outputcomp(bool is_sub = false);
     ~audiolite_outputcomp();
+
+    int set_volume(int vol);
 
   /* Inherited member functions from audiolite_component */
 

@@ -42,10 +42,16 @@
 
 #include <nuttx/config.h>
 
+#include <errno.h>
 #include <mqueue.h>
 #include <mossfw/mossfw_lock.h>
 
-#include <audiolite/al_singleton.h>
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define ALDRV_MODE_OUTPUT (1)
+#define ALDRV_MODE_INPUT  (2)
 
 /****************************************************************************
  * Class Definitions
@@ -72,33 +78,44 @@ class audiolite_drvlistener
 
 class audiolite_driver
 {
-  private:
-    SINGLETON_MEMBER(audiolite_driver);
+  protected:
     int _fd;
     int _mode;
+    int _volume;
     mqd_t _mq;
     mossfw_thread_t _tid;
     audiolite_drvlistener *_listener;
-    int _enq_cnt;
+    mossfw_lock_t _lock;
 
-    audiolite_driver();
-    ~audiolite_driver();
+    int _fs;
+    int _bps;
+    int _chnum;
+    int _maxch;
+    const char *_devpath;
+    const char *_mqpath;
+    int _is_started;
 
-    int start_driver(void);
+    void cleanup_messageq();
+    int update_audioparam();
     int stop_thread(void);
-    int setup_driver(audiolite_drvlistener *l, const char *devpath);
+    int setup_driver();
+    int set_volume_nolock(int vol);
+    int single_ioctl(int ioc);
+    int set_audioparam(int fs, int bps, int chnum);
 
   public:
-    SINGLETON_METHODS(audiolite_driver);
+    audiolite_driver(int mode, const char *devpath,
+                     const char *mqpath, int maxch);
+    ~audiolite_driver();
 
-    int as_output(audiolite_drvlistener *l);
-    int as_input(audiolite_drvlistener *l);
-
-    int set_audioparam(int fs, int bps, int chnum);
-    int enqueue_buffer(FAR struct ap_buffer_s *apb);
+    void set_listener(audiolite_drvlistener *l){ _listener = l; };
     int set_volume(int vol);
-    int start(void);
+
+    int enqueue_buffer(FAR struct ap_buffer_s *apb);
+    int start(int fs, int bps, int chnum);
     int stop(void);
+    int pause(void);
+    int resume(void);
 
     void reset(void);
 

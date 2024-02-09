@@ -1,6 +1,6 @@
 
 config EXAMPLES_AUDIOLITE_MP3PLAYER
-	tristate "audiolite_mp3player app"
+	tristate "AudioLite sample : audiolite_mp3player app"
 	default n
 	---help---
 		Enable the audiolite_mp3player app

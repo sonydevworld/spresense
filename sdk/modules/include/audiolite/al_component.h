@@ -67,6 +67,17 @@ class audiolite_component : public audiolite_nodecomm_if
     static int operate_cb(mossfw_callback_op_t *op, unsigned long arg);
     void set_operatorname(const char *name);
 
+    audiolite_mem *pop_data(int no = 0, int *used = NULL)
+    {
+      return (_ins && _innum > no) ? _ins[no]->pop_data(used) : NULL;
+    };
+
+    int push_data(audiolite_mem *mem, int no = 0)
+    {
+      if (_outs && _outnum > no) return _outs[no]->push_data(mem);
+      return -1;
+    };
+
 #ifdef _ALDEBUG_ENABLE
   public:
     const char *dbg_name;
@@ -105,6 +116,8 @@ class audiolite_component : public audiolite_nodecomm_if
                            audiolite_outputnode *onode);
     virtual void on_canceled(audiolite_inputnode *inode,
                             audiolite_outputnode *onode);
+    virtual void on_stopping(audiolite_inputnode *inode,
+                             audiolite_outputnode *onode);
     virtual void on_stop(audiolite_inputnode *inode,
                         audiolite_outputnode *onode);
 

@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_debug.h
+ * examples/audiolite_through/my_display_data.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,51 +33,61 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_DEBUG_H
-#define __INCLUDE_AUDIOLITE_DEBUG_H
+#ifndef __EXAMPLES_AUDIOLITE_THROUGH_MY_DISPLAY_DATA_H
+#define __EXAMPLES_AUDIOLITE_THROUGH_MY_DISPLAY_DATA_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
+
 #include <nuttx/config.h>
 
+#ifdef CONFIG_EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
 #include <stdio.h>
-#include <unistd.h>
+
+#include <audiolite/audiolite.h>
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Class Definitions
  ****************************************************************************/
 
-#define al_debugmessage(T,...) \
-  do { \
-      printf("\n" T " %s:%s(%d) : \n" T "   ",    \
-             __FILE__, __PRETTY_FUNCTION__, __LINE__); \
-      printf(__VA_ARGS__); \
-  } while(0)
+/****************************************************************************
+ * class: my_display_data
+ ****************************************************************************/
 
-#ifdef CONFIG_AL_DEBUG_ERR
-#define al_derror(...) al_debugmessage("ALD[ERR]", __VA_ARGS__)
-#else
-#define al_derror(...)
-#endif
+class my_display_data : public audiolite_component
+{
+  public:
+    void on_data()
+    {
+      /* Get comming data */
 
-#ifdef CONFIG_AL_DEBUG_WRN
-#define al_dwarn(...) al_debugmessage("ALD[WRN]", __VA_ARGS__)
-#else
-#define al_dwarn(...)
-#endif
+      audiolite_memapbuf *mem = (audiolite_memapbuf *)pop_data(0);
 
-#ifdef CONFIG_AL_DEBUG_DBG
-#define al_ddebug(...) al_debugmessage("ALD[DBG]", __VA_ARGS__)
-#else
-#define al_ddebug(...)
-#endif
+      if (mem)
+        {
+          /* If the data is available, let's see the data */
 
-#ifdef CONFIG_AL_DEBUG_INF
-#define al_dinfo(...) al_debugmessage("ALD[INF]", __VA_ARGS__)
-#else
-#define al_dinfo(...)
-#endif
+          int16_t *data = (int16_t *)mem->get_data();
+          int samples = mem->get_storedsize() /
+                        mem->get_channels() / sizeof(int16_t);
 
-#endif /* __INCLUDE_AUDIOLITE_DEBUG_H */
+          /* Display top 2 (L and R)  samples */
+
+          printf("%d : %6d %6d\n", samples, data[0], data[1]);
+
+          /* Pass the data to later block. */
+
+          push_data(0, mem);
+
+          /* Release the memory it after finishing use */
+
+          mem->release();
+        }
+    }
+};
+
+#endif /* CONFIG_EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA */
+
+#endif /* __EXAMPLES_AUDIOLITE_THROUGH_MY_DISPLAY_DATA_H */

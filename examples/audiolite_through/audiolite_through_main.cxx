@@ -1,7 +1,7 @@
 /****************************************************************************
- * examples/audiolite_mp3player/audiolite_mp3player_main.c
+ * examples/audiolite_through/audiolite_through_main.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,13 +37,12 @@
  * Included Files
  ****************************************************************************/
 
-
 #include <nuttx/config.h>
 #include <stdio.h>
 
 #include <audiolite/audiolite.h>
 
-#include "event_str.h"
+#include "my_display_data.h"
 
 /****************************************************************************
  * Privete Class
@@ -51,21 +50,23 @@
 
 /* For Event receiving */
 
-class my_mp3listener : public audiolite_eventlistener
+class my_throughlistener : public audiolite_eventlistener
 {
   public:
     volatile bool playing;
 
   public:
-    my_mp3listener() : playing(false){};
+    my_throughlistener() : playing(false){};
 
     void on_event(int evt, audiolite_component *cmp,
                   unsigned long arg)
     {
-      printf("Event %s is happened : %d\n", convert_evtid(evt),
-                                            (int)arg);
-      if (evt == AL_EVENT_DECODEDONE)
+      printf("AudioThrough Event %d is happened : %d\n", evt, (int)arg);
+
+      if (evt == AL_EVENT_STOPINPUT ||
+          evt == AL_EVENT_STOPOUTPUT)
         {
+          printf("Through is done\n");
           playing = false;
         }
     }
@@ -78,58 +79,36 @@ class my_mp3listener : public audiolite_eventlistener
 extern "C"
 int main(int argc, FAR char *argv[])
 {
-  int ret;
-  my_mp3listener lsn;
-  int volume = 1000;
+  my_throughlistener lsn;
 
-  /* Argument check */
+  audiolite_inputcomp *aindev = new audiolite_inputcomp;
+  audiolite_outputcomp *aoutdev = new audiolite_outputcomp;
+  audiolite_mempoolapbuf *mempool = new audiolite_mempoolapbuf;
 
-  if (argc < 2)
-    {
-      printf("Usage nsh> %s <playing mp3 file name> (<vol>)\n",
-             argv[0]);
-      return -1;
-    }
-
-  if (argc >= 3)
-    {
-      volume = atoi(argv[2]);
-      volume = (volume < 0)    ?    0 :
-               (volume > 1000) ? 1000 : volume;
-    }
+#ifdef CONFIG_EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
+  // This my_display_data class is defined in my_display_data.h file.
+  my_display_data *disp = new my_display_data;
+#endif
 
   /* To Create below structure.
    *
-   * +---------------------------------+
-   * | my_mp3listener to listen events |
-   * +---------------------------------+
-   *     ^            ^           ^
-   *     |            |           |
-   * +--------+    +-----+    +-------+
-   * | File   |    | MP3 |    | Audio |
-   * | Stream | -> | Dec | -> | Output|
-   * +--------+    +-----+    --------+
-   *                ^   ^
-   *                |   |
-   *      +------+  |   |  +------+
-   *      |Memroy|  |   |  |Memory|
-   *      | Pool |--+   +--| Pool |
-   *      +------+         +------+
+   *      +-------------------------------------+
+   *      | my_throughlistener to listen events |
+   *      +-------------------------------------+
+   *           ^              ^               ^
+   *           |              |               |
+   *       +-------+    +------------+    +--------+
+   *       | Audio |    |   Display  |    | Audio  |
+   * MIC-> | Input | -> |    Data    | -> | Output | -> Speaker
+   *       |       |    | (optional) |    |        |
+   *       +-------+    +------------+    ---------+
+   *           ^
+   *           |
+   *        +------+
+   *        |Memroy|
+   *        | Pool |
+   *        +------+
    */
-
-  audiolite_filestream *fstream = new audiolite_filestream;
-  audiolite_mempoolapbuf *imempool = new audiolite_mempoolapbuf;
-  audiolite_mempoolapbuf *omempool = new audiolite_mempoolapbuf;
-  audiolite_outputcomp *aoutdev = new audiolite_outputcomp();
-  audiolite_mp3dec *mp3 = new audiolite_mp3dec;
-
-  /* File open on filestream as read mode */
-
-  if (fstream->rfile(argv[1]) != OK)
-    {
-      printf("File open error : %d\n", errno);
-      return -1;
-    }
 
   /* Setup system parameter as
    *   Output Sampling rate : 48K
@@ -147,75 +126,59 @@ int main(int argc, FAR char *argv[])
    * as 4096bytes x 8blocks.
    */
 
-  imempool->create_instance(4096, 8);
+  mempool->create_instance(4096, 8);
 
-  /* Setup memory pool to stored decoded data
-   * as 4096bytes x 16blocks.
+  /* Set memory pools on Audio Input */
+
+  aindev->set_mempool(mempool);
+
+  /* Connect Audio Input to Audio Output
+   * In a option, if you enabled EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
+   * of this example config, my_display_data is set between them.
    */
 
-  omempool->create_instance(4096, 16);
+#ifdef CONFIG_EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
+  aindev->bind(disp);
+  disp->bind(aoutdev);
+#else
+  aindev->bind(aoutdev);
+#endif
 
-  /* Setup MP3 Decorder */
+  /* Let's Start */
 
-  /* Set memory pools on MP3 Decorder */
+  printf("Start Through data from MIC to Speaker in 10 sec\n");
+  aindev->start();
 
-  mp3->set_mempool(imempool);
-  mp3->set_outputmempool(omempool);
-
-  /* Set file stream on MP3 Decorder */
-
-  mp3->set_stream(fstream);
-
-  /* Connect MP3 output to Audio Output device */
-
-  mp3->bind(aoutdev);
-
-  /* Set volume */
-
-  aoutdev->set_volume(volume);
-
-  /* Let's play */
-
-  printf("Start player : %s\n", argv[1]);
-  lsn.playing = true;
-  ret = mp3->start();
-  if (ret != OK)
-    {
-      printf("Start error..: %d\n", ret);
-      goto app_error;
-    }
-
-  /* Wait for finishing as receiving AL_EVENT_DECODEDONE
-   * in my_mp3listener.
+  /* Wait for 10sec.
+   * You can speak on the mic and it will sound on the speaker during 10sec.
    */
 
-  while (lsn.playing)
+  for (int i = 0; i < 10; i++)
     {
-      usleep(10 * 1000);
+      printf("."); fflush(stdout);
+      sleep(1);
     }
+
+  printf("\n");
 
   /* Stop playing */
 
-  printf("Stop player\n");
-  mp3->stop();
+  printf("Stop Through\n");
+  aindev->stop();
 
-app_error:
+  /* Unconnect all connections */
 
-  /* Clean up */
-
-  mp3->unbindall();
+  aindev->unbindall();
 
   printf("Delete instances\n");
-
-  delete fstream;
-  delete mp3;
-  delete aoutdev;
-  delete imempool;
-  delete omempool;
-
-  printf("Delete system event handler\n");
-
   audiolite_eventdestroy();
+
+#ifdef CONFIG_EXAMPLES_AUDIOLITE_THROUGH_WATCHDATA
+  delete disp;
+#endif
+  delete aindev;
+  delete aoutdev;
+  delete mempool;
 
   return 0;
 }

@@ -57,13 +57,19 @@ class audiolite_inputcomp : public audiolite_source,
   private:
     mossfw_thread_t _tid;
     volatile bool _is_running;
+    volatile bool _is_stopped;
+    audiolite_driver *_driver;
+    mossfw_lock_t _slock;
+    mossfw_condition_t _scond;
 
+    void notice_stop(bool isstop);
     int start_thread();
     static void *inject_worker(void *arg);
 
   public:
-    audiolite_inputcomp();
+    audiolite_inputcomp(bool isi2s = false);
     ~audiolite_inputcomp();
+    int set_volume(int vol);
 
   /* Inherited member functions from audiolite_component */
 
@@ -72,6 +78,8 @@ class audiolite_inputcomp : public audiolite_source,
     void on_started(audiolite_inputnode *inode,
                     audiolite_outputnode *onode);
     void on_canceled(audiolite_inputnode *inode,
+                     audiolite_outputnode *onode);
+    void on_stopping(audiolite_inputnode *inode,
                      audiolite_outputnode *onode);
     void on_stop(audiolite_inputnode *inode,
                  audiolite_outputnode *onode);
