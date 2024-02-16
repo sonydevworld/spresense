@@ -65,9 +65,6 @@ extern "C" {
 typedef struct
 {
     int fd;             /**< The underlying file descriptor                 */
-#if defined(CONFIG_LTE_NET_MBEDTLS)
-    int alt_fd;         /**< The underlying file descriptor                 */
-#endif
 }
 mbedtls_net_context;
 
@@ -78,10 +75,6 @@ mbedtls_net_context;
  * \param ctx      Context to initialize
  */
 void mbedtls_net_init( mbedtls_net_context *ctx );
-
-#if defined(CONFIG_LTE_NET_MBEDTLS)
-int mbedtls_net_dtls_connect( mbedtls_net_context *ctx, const char *host, const char *port, int proto , int source_port );
-#endif
 
 /**
  * \brief          Initiate a connection with host:port in the given protocol
@@ -226,8 +219,6 @@ int mbedtls_net_recv_timeout( void *ctx, unsigned char *buf, size_t len,
 void mbedtls_net_free( mbedtls_net_context *ctx );
 
 #if defined(CONFIG_LTE_NET_MBEDTLS)
-void mbedtls_net_alt2fd( mbedtls_net_context *ctx );
-void mbedtls_net_fd2alt( mbedtls_net_context *ctx );
 int mbedtls_net_getctx( mbedtls_net_context *net, uint8_t *buff, size_t size );
 int mbedtls_net_setctx( mbedtls_net_context *net, uint8_t *buff, size_t size );
 int mbedtls_net_getctxsize( mbedtls_net_context *net );
