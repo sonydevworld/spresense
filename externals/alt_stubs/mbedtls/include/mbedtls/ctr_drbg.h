@@ -287,6 +287,13 @@ int mbedtls_ctr_drbg_seed_entropy_len( mbedtls_ctr_drbg_context *,
                                int (*)(void *, unsigned char *, size_t), void *,
                                const unsigned char *, size_t, size_t );
 
+
+#if defined(CONFIG_LTE_NET_MBEDTLS)
+int mbedtls_ctr_drbg_getctx( mbedtls_ctr_drbg_context *ctr_drbg, uint8_t *buff, size_t size );
+int mbedtls_ctr_drbg_setctx( mbedtls_ctr_drbg_context *ctr_drbg, uint8_t *buff, size_t size );
+int mbedtls_ctr_drbg_getctxsize( mbedtls_ctr_drbg_context *ctr_drbg );
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -405,3 +405,41 @@ size_t mbedtls_ssl_get_bytes_avail(const mbedtls_ssl_context *ssl)
     }
 }
 
+int mbedtls_ssl_getctx(mbedtls_ssl_context *ssl, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_ssl_context);
+
+  if (ssl && buff && size >= sizeof(mbedtls_ssl_context))
+    {
+      mbedtls_ssl_context *ctx = (mbedtls_ssl_context *)buff;
+      ctx->id = ssl->id;
+    }
+  else if (ssl && buff)
+    {
+      ret = MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_ssl_setctx(mbedtls_ssl_context *ssl, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (ssl && buff && size >= sizeof(mbedtls_ssl_context))
+    {
+      mbedtls_ssl_context *ctx = (mbedtls_ssl_context *)buff;
+      ssl->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_ssl_getctxsize(mbedtls_ssl_context *ssl)
+{
+  return mbedtls_ssl_getctx(NULL, NULL, 0);
+}

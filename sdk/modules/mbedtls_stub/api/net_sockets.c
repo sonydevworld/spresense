@@ -78,6 +78,9 @@ static int wsa_init_done = 0;
 #include <netdb.h>
 #include <errno.h>
 
+#include <sys/ioctl.h>
+#include <nuttx/net/net.h>
+
 #endif /* ( _WIN32 || _WIN32_WCE ) && !EFIX64 && !EFI32 */
 
 /* Some MS functions want int and MSVC warns if we pass size_t,
@@ -93,6 +96,12 @@ static int wsa_init_done = 0;
 #include <time.h>
 
 #include <stdint.h>
+
+struct mbedtls_net_context_helper
+{
+  mbedtls_net_context netctx;
+  uint8_t buff[0];
+};
 
 /*
  * Prepare for using the sockets interface
@@ -567,6 +576,95 @@ void mbedtls_net_free( mbedtls_net_context *ctx )
     close( ctx->fd );
 
     ctx->fd = -1;
+}
+
+int mbedtls_net_getctx(mbedtls_net_context *net, uint8_t *buff, size_t size)
+{
+  int ret = MBEDTLS_ERR_NET_INVALID_CONTEXT;
+  struct socket_context_s sc = {0};
+
+  if (net)
+    {
+      /* get socket context size */
+
+      sc.ctx_size = 0;
+      ret = ioctl(net->fd, SIOCGETCONTEXT, (unsigned long)&sc);
+      if (ret < 0)
+        {
+          return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+        }
+
+      if (buff && size >= sc.ctx_size + sizeof(struct mbedtls_net_context_helper))
+        {
+          struct mbedtls_net_context_helper *h =
+            (struct mbedtls_net_context_helper *)buff;
+
+          h->netctx.fd = net->fd;
+          sc.ctx = (FAR struct socket_ctx_data_s *)h->buff;
+          ret = ioctl(net->fd, SIOCGETCONTEXT, (unsigned long)&sc);
+          if (ret < 0)
+            {
+              return MBEDTLS_ERR_NET_INVALID_CONTEXT;
+            }
+
+          ret = sc.ctx_size + sizeof(struct mbedtls_net_context_helper);
+        }
+      else if (buff)
+        {
+          /* request buffer size is too small */
+
+          ret = MBEDTLS_ERR_NET_INVALID_CONTEXT;
+        }
+      else
+        {
+          /* The case where buffer is NULL. It means to get the buffer size. */
+
+          ret = sc.ctx_size + sizeof(struct mbedtls_net_context_helper);
+        }
+    }
+
+  return ret;
+}
+
+int mbedtls_net_setctx(mbedtls_net_context *net, uint8_t *buff, size_t size)
+{
+  int ret = MBEDTLS_ERR_NET_INVALID_CONTEXT;
+  struct socket_context_s sc = {0};
+
+  if (net)
+    {
+      /* check buffer size */
+
+      if (size >= sizeof(struct mbedtls_net_context_helper) +
+                  sizeof(struct socket_ctx_data_s))
+        {
+          struct mbedtls_net_context_helper* h =
+            (struct mbedtls_net_context_helper *)buff;
+          struct socket_ctx_data_s *sdata =
+            (struct socket_ctx_data_s *)h->buff;
+
+          net->fd = socket(sdata->s_domain, sdata->s_type, sdata->s_proto);
+          if (net->fd >= 0)
+            {
+              sc.ctx = sdata;
+              sc.ctx_size = size;
+              ret = ioctl(net->fd, SIOCSETCONTEXT, (unsigned long)&sc);
+              if (ret < 0)
+                {
+                  ret = MBEDTLS_ERR_NET_INVALID_CONTEXT;
+                  close(net->fd);
+                  net->fd = -1;
+                }
+            }
+        }
+    }
+
+  return ret;
+}
+
+int mbedtls_net_getctxsize(mbedtls_net_context *net)
+{
+  return mbedtls_net_getctx(net, NULL, 0);
 }
 
 #endif /* MBEDTLS_NET_C */

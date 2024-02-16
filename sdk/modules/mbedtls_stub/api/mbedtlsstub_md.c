@@ -137,3 +137,42 @@ int mbedtls_md_digest(const mbedtls_md_info_t *md_info, mbedtls_x509_crt *chain,
   return ret;
 }
 
+int mbedtls_md_info_getctx(mbedtls_md_info_t *md_info, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_md_info_t);
+
+  if (md_info && buff && size >= sizeof(mbedtls_md_info_t))
+    {
+      mbedtls_md_info_t *ctx = (mbedtls_md_info_t *)buff;
+      ctx->id = md_info->id;
+    }
+  else if (md_info && buff)
+    {
+      ret = MBEDTLS_ERR_MD_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_md_info_setctx(mbedtls_md_info_t *md_info, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (md_info && buff && size >= sizeof(mbedtls_md_info_t))
+    {
+      mbedtls_md_info_t *ctx = (mbedtls_md_info_t *)buff;
+      md_info->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_MD_BAD_INPUT_DATA;
+    }
+
+  return ret;
+}
+
+int mbedtls_md_info_getctxsize(mbedtls_md_info_t *md_info)
+{
+  return mbedtls_md_info_getctx(NULL, NULL, 0);
+}
+

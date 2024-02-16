@@ -2646,6 +2646,19 @@ int mbedtls_ssl_export_srtp_keys( mbedtls_ssl_context *ssl, uint8_t* key_buffer,
  *
  */
 int mbedtls_ssl_set_turn( mbedtls_ssl_context *ssl, uint16_t turn_channel, uint32_t peer_addr, uint16_t peer_port );
+
+
+int mbedtls_ssl_getctx( mbedtls_ssl_context *ssl, uint8_t *buff, size_t size );
+int mbedtls_ssl_setctx( mbedtls_ssl_context *ssl, uint8_t *buff, size_t size );
+int mbedtls_ssl_getctxsize( mbedtls_ssl_context *ssl );
+
+int mbedtls_ssl_config_getctx( mbedtls_ssl_config *conf, uint8_t *buff, size_t size );
+int mbedtls_ssl_config_setctx( mbedtls_ssl_config *conf, uint8_t *buff, size_t size );
+int mbedtls_ssl_config_getctxsize( mbedtls_ssl_config *conf );
+
+int mbedtls_ssl_session_getctx( mbedtls_ssl_session *session, uint8_t *buff, size_t size );
+int mbedtls_ssl_session_setctx( mbedtls_ssl_session *session, uint8_t *buff, size_t size );
+int mbedtls_ssl_session_getctxsize( mbedtls_ssl_session *session );
 #endif
 
 #ifdef __cplusplus

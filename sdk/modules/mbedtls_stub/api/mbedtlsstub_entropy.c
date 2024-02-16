@@ -92,3 +92,42 @@ int mbedtls_entropy_func(void *data, unsigned char *output, size_t len)
   return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
 }
 
+int mbedtls_entropy_getctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
+{
+  int ret = sizeof(mbedtls_entropy_context);
+
+  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
+    {
+      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
+      ctx->id = entropy->id;
+    }
+  else if (entropy && buff)
+    {
+      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
+    }
+
+  return ret;
+}
+
+int mbedtls_entropy_setctx(mbedtls_entropy_context *entropy, uint8_t *buff, size_t size)
+{
+  int ret = 0;
+
+  if (entropy && buff && size >= sizeof(mbedtls_entropy_context))
+    {
+      mbedtls_entropy_context *ctx = (mbedtls_entropy_context *)buff;
+      entropy->id = ctx->id;
+    }
+  else
+    {
+      ret = MBEDTLS_ERR_ENTROPY_FILE_IO_ERROR;
+    }
+
+  return ret;
+}
+
+int mbedtls_entropy_getctxsize(mbedtls_entropy_context *entropy)
+{
+  return mbedtls_entropy_getctx(NULL, NULL, 0);
+}
+
