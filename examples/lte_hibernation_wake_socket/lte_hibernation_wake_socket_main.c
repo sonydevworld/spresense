@@ -77,6 +77,24 @@
 #define LTE_HIBERNATION_TLS_SSLCONF_CONTEXT_PATH  SAVE_DIR "/.tls_sslconf"
 #define LTE_HIBERNATION_INTERVAL                  (30)  /* seconds */
 
+/* APN settings */
+
+#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IPV6
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V6
+#elif defined CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_IPTYPE_IPV4V6
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V4V6
+#else
+#  define APP_APN_IPTYPE   LTE_IPTYPE_V4
+#endif
+
+#ifdef CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_PAP
+#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_PAP
+#elif defined CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_AUTHTYPE_CHAP
+#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_CHAP
+#else
+#  define APP_APN_AUTHTYPE LTE_APN_AUTHTYPE_NONE
+#endif
+
 #define SD_MOUNT_POINT "/mnt/sd0"
 #define ALARM_DEVPATH "/dev/rtc0"
 #define ALARM_SIGNO 1
@@ -88,6 +106,9 @@
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? (a) : (b))
 #endif
+
+#define MATCH_STRING(str1, str2) ((strlen(str1) == strlen(str2)) && \
+                                  (strncmp(str1, str2, strlen(str2)) == 0))
 
 /****************************************************************************
  * Private Data
@@ -704,12 +725,82 @@ static int lte_resume_from_hibernation(void)
 }
 
 /****************************************************************************
+ * Name: ip_parse
+ ****************************************************************************/
+
+static int ip_parse(FAR char *s)
+{
+  int ret = -1;
+
+  if (MATCH_STRING(s, "v4v6"))
+    {
+      ret = LTE_IPTYPE_V4V6;
+    }
+  else if (MATCH_STRING(s, "v4"))
+    {
+      ret = LTE_IPTYPE_V4;
+    }
+  else if (MATCH_STRING(s, "v6"))
+    {
+      ret = LTE_IPTYPE_V6;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: auth_parse
+ ****************************************************************************/
+
+static int auth_parse(FAR char *s)
+{
+  int ret = -1;
+
+  if (MATCH_STRING(s, "none"))
+    {
+      ret = LTE_APN_AUTHTYPE_NONE;
+    }
+  else if (MATCH_STRING(s, "pap"))
+    {
+      ret = LTE_APN_AUTHTYPE_PAP;
+    }
+  else if (MATCH_STRING(s, "chap"))
+    {
+      ret = LTE_APN_AUTHTYPE_CHAP;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: show_usage
+ ****************************************************************************/
+
+static void show_usage(FAR const char *progname, int exitcode)
+{
+  fprintf(stderr, "\nUSAGE: %s command\n", progname);
+  fprintf(stderr, " [-a <apn_name>] [-i <ip_type>] [-t <auth_type>]"
+                  " [-u <user_name>] [-p <password>]\n");
+  fprintf(stderr, "  -a: APN name\n");
+  fprintf(stderr, "  -i: IP type : v4 or v6 or v4v6\n");
+  fprintf(stderr, "  -t: Authenticaion type : none or pap or chap\n");
+  fprintf(stderr, "  -u: User name for authenticaion\n");
+  fprintf(stderr, "  -p: Password for authenticaion\n");
+  fprintf(stderr, " [-h]: Show this message\n");
+  exit(exitcode);
+}
+
+/****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 int main(int argc, FAR char *argv[])
 {
   int ret;
+  int opt;
+  struct lte_apn_setting apnsetting;
+  int ip_type;
+  int auth_type;
 
   /* This sample executes the following sequence
    * 1. Connect LTE network
@@ -723,6 +814,76 @@ int main(int argc, FAR char *argv[])
    */
 
   printf("Wakeup spresense\n");
+
+  apnsetting.apn =  CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_NAME;
+  apnsetting.ip_type   = APP_APN_IPTYPE;
+  apnsetting.auth_type = APP_APN_AUTHTYPE;
+  apnsetting.apn_type  = LTE_APN_TYPE_DEFAULT | LTE_APN_TYPE_IA;
+  apnsetting.user_name =
+    CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_USERNAME;
+  apnsetting.password  =
+    CONFIG_EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_APN_PASSWD;
+
+  optind = -1;
+  while ((opt = getopt(argc, argv, "a:i:t:u:p:h")) != -1)
+    {
+      switch (opt)
+        {
+          case 'a':
+            if (strlen(optarg) >= LTE_APN_LEN)
+              {
+                fprintf(stderr, "APN name is too long\n");
+                show_usage(argv[0], EXIT_FAILURE);
+              }
+
+            apnsetting.apn = optarg;
+            break;
+          case 'i':
+            ip_type = ip_parse(optarg);
+            if (ip_type == -1)
+              {
+                fprintf(stderr, "Invalid IP type:%s\n", optarg);
+                show_usage(argv[0], EXIT_FAILURE);
+              }
+
+            apnsetting.ip_type = ip_type;
+            break;
+          case 't':
+            auth_type = auth_parse(optarg);
+            if (auth_type == -1)
+              {
+                fprintf(stderr, "Invalid authenticaion type:%s\n", optarg);
+                show_usage(argv[0], EXIT_FAILURE);
+              }
+
+            apnsetting.auth_type = auth_type;
+            break;
+          case 'u':
+            if (strlen(optarg) >= LTE_APN_USER_NAME_LEN)
+              {
+                fprintf(stderr, "User name is too long\n");
+                show_usage(argv[0], EXIT_FAILURE);
+              }
+
+            apnsetting.user_name = optarg;
+            break;
+          case 'p':
+            if (strlen(optarg) >= LTE_APN_PASSWD_LEN)
+              {
+                fprintf(stderr, "Password is too long\n");
+                show_usage(argv[0], EXIT_FAILURE);
+              }
+
+            apnsetting.password = optarg;
+            break;
+          case 'h':
+            show_usage(argv[0], EXIT_SUCCESS);
+            break;
+          default:
+            show_usage(argv[0], EXIT_FAILURE);
+            break;
+        }
+    }
 
   if (up_pm_get_bootcause() &
       (PM_BOOT_COLD_RTC | PM_BOOT_COLD_RTC_ALM0 | PM_BOOT_COLD_GPIO))
@@ -851,7 +1012,7 @@ int main(int argc, FAR char *argv[])
        * ------------------------
        */
 
-      ret = app_connect_to_lte();
+      ret = app_connect_to_lte(&apnsetting);
       if (ret < 0)
         {
           return -1;
@@ -907,33 +1068,3 @@ int main(int argc, FAR char *argv[])
   return 0;
 }
 
-/****************************************************************************
- * Name: lte_hibernation_wake_socket_entry()
- *
- * Description:
- *   Called to run lte_hibernation directly from entrypoint.
- *
- * Input Parameters:
- *   none.
- *
- * Returned Value:
- *   Zero (OK) on success; Negative value on error.
- *
- * Assumptions/Limitations:
- *   none.
- *
- ****************************************************************************/
-
-int lte_hibernation_wake_socket_entry(int argc, char *argv[])
-{
-  /* Initialize  */
-
-  int ret = boardctl(BOARDIOC_INIT, 0);
-
-  if (ret == OK)
-    {
-      ret = main(argc, argv);
-    }
-
-  return ret;
-}
