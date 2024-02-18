@@ -185,6 +185,10 @@ struct ble_hal_gattc_ops_s
                       BLE_UUID *srv_uuid,
                       BLE_UUID *char_uuid);
 
+  /** Send confirm for indicate */
+
+  int (*send_confirm)(uint16_t conn_handle, uint16_t char_handle);
+
   /** Write characteristic request(Central)/response(Peripheral) */
 
   int (*write)(uint16_t conn_handle,

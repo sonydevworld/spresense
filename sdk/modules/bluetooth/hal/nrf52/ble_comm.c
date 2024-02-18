@@ -2200,6 +2200,7 @@ void onHvx(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   evt.event_id    = BLE_GATT_EVENT_NOTIFICATION;
   evt.conn_handle = pBleNrfEvt->evt.gattc_evt.conn_handle;
   evt.char_handle = bleGattcEvtHvx->handle;
+  evt.indicate    = (bleGattcEvtHvx->type == BLE_GATT_HVX_INDICATION);
   evt.length      = bleGattcEvtHvx->len;
   memcpy(evt.data, bleGattcEvtHvx->data, evt.length);
 
