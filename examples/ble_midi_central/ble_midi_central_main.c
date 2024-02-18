@@ -280,7 +280,6 @@ static void on_discovered(struct ble_gatt_event_db_discovery_t *db_disc)
 static void on_enc_result(uint16_t handle, bool result)
 {
   int ret;
-  struct ble_gatt_char_s ch = {0};
 
   printf("[%s] Encryption : %s\n", __func__, result ? "Success" : "Fail");
 
@@ -288,8 +287,7 @@ static void on_enc_result(uint16_t handle, bool result)
    * Read the characteristic once because of MIDI BLE spec.
    */
 
-  ch.handle = g_charhdl;
-  ret = ble_characteristic_read(g_connecthdl, &ch);
+  ret = ble_read_characteristic(g_connecthdl, g_charhdl);
   if (ret != BT_SUCCESS)
     {
       printf("[%s] gle_charactaristic_read() Failed : %d\n", __func__, ret);
