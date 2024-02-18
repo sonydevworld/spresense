@@ -44,6 +44,7 @@
 #include <bluetooth/ble_gatt.h>
 #include <bluetooth/ble_util.h>
 #include <bluetooth/hal/bt_if.h>
+#include <assert.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -613,6 +614,8 @@ static void on_descriptor_read(uint16_t conn_handle,
 
   printf("\n");
 
+  g_read_datalen = len;
+  memcpy(g_read_data, data, g_read_datalen);
   g_descrd_result = (len) ? BT_SUCCESS : BT_FAIL;
 }
 
