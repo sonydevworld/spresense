@@ -2240,7 +2240,7 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
       ch = &srv->characteristics[0];
       rcv_ch = &rcv_srv->characteristics[0];
 
-      for (j = 0; j < evt->srv_count; j++, ch++, rcv_ch++)
+      for (j = 0; j < srv->char_count; j++, ch++, rcv_ch++)
         {
            ch->characteristic.char_prope      = rcv_ch->characteristic.charPrope;
            ch->characteristic.char_valhandle  = rcv_ch->characteristic.charValhandle;
