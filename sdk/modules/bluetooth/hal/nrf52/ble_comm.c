@@ -1381,6 +1381,7 @@ void onExchangeMtuRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   if (ret)
     {
       BLE_ERR("onLenUp: sd_ble_gatts_exchange_mtu_reply %d\n", ret);
+      return;
     }
 
   pBleEvent->evtHeader = BLE_GATTS_EVENT_EXCHANGE_MTU;
