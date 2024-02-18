@@ -41,8 +41,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <bluetooth/ble_gatt.h>
-
-#include "system/readline.h"
+#include <bluetooth/ble_util.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -54,6 +53,8 @@
 #define BLE_UUID_SDS_CHAR_IN     0x4a02
 
 #define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
+
+#define CHAR_ACCESS_COUNT 10
 
 /****************************************************************************
  * Private Function Prototypes
@@ -123,7 +124,7 @@ static struct ble_gatt_peripheral_ops_s ble_gatt_peripheral_ops =
 
 static BT_ADDR local_addr               = {{0x19, 0x84, 0x06, 0x14, 0xAB, 0xCD}};
 
-static char local_ble_name[BT_NAME_LEN] = "SONY_BLE";
+static char local_ble_name[BT_NAME_LEN] = "SONY-PERIPHERAL";
 
 static bool ble_is_connected = false;
 
@@ -136,7 +137,7 @@ static BLE_UUID128 service_in_uuid = {{0xfb, 0x34, 0x9b, 0x5f,  \
                                        0x00, 0x10, 0x00, 0x00,  \
                                        0x00, 0x00, 0x00, 0x00}};
 
-static BLE_UUID128 char_in_uuid = {{0x00, 0x34, 0x9b, 0x5f,  \
+static BLE_UUID128 char_in_uuid = {{0xfb, 0x34, 0x9b, 0x5f,  \
                                     0x80, 0x00, 0x00, 0x80,  \
                                     0x00, 0x10, 0x00, 0x00,  \
                                     0x00, 0x00, 0x00, 0x00}};
@@ -170,22 +171,35 @@ static struct ble_gatt_char_s g_ble_gatt_char =
 static int g_ble_bonded_device_num;
 static struct ble_cccd_s **g_cccd = NULL;
 
+static int g_dbaccess_cnt;
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
 static void onLeConnectStatusChanged(struct ble_state_s *ble_state,
-                                     bool connected, uint8_t reason)
+                                     bool connected, uint8_t cause)
 {
   BT_ADDR addr = ble_state->bt_target_addr;
 
   /* If receive connected status data, this function will call. */
 
-  printf("[BLE_GATT] Connect status ADDR:%02X:%02X:%02X:%02X:%02X:%02X, "
-         "status: %s, reason: 0x%02x\n",
+  printf("[BLE] Connect ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
           addr.address[5], addr.address[4], addr.address[3],
-          addr.address[2], addr.address[1], addr.address[0],
-          connected ? "Connected" : "Disconnected", reason);
+          addr.address[2], addr.address[1], addr.address[0]);
+  printf("[BLE] status:%s", connected ? "Connected" : "Disconnected");
+  printf("  : Cause <%s> :\n",
+         cause == BLESTAT_SUCCESS          ? "Success"                 :
+         cause == BLESTAT_MEMCAP_EXCD      ? "Mem capacity exceed"     :
+         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connetion timeout"       :
+         cause == BLESTAT_PEER_TERMINATED  ? "Central terminated"   :
+         cause == BLESTAT_PEER_TERM_LOWRES ? "Central low resource" :
+         cause == BLESTAT_PEER_TERM_POFF   ? "Central power off"    :
+         cause == BLESTAT_TERMINATED       ? "Terminated by self"      :
+         cause == BLESTAT_DEVICE_BUSY      ? "Device busy"             :
+         cause == BLESTAT_PARAM_REJECTED   ? "Negotiation breakup"     :
+         cause == BLESTAT_CONNECT_FAILED   ? "Connection failed"       :
+                                             "Unspecified error"       );
 
   ble_conn_handle = ble_state->ble_connect_handle;
   ble_is_connected = connected;
@@ -346,68 +360,19 @@ static void onEncryptionResult(uint16_t handle, bool result)
          handle, (result) ? "Success" : "Fail");
 }
 
-static void show_uuid(BLE_UUID *uuid)
-{
-  int i;
-
-  printf("uuid : ");
-
-  switch (uuid->type)
-    {
-      case BLE_UUID_TYPE_UUID128:
-
-        /* UUID format YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY */
-
-        for (i = 0; i < BT_UUID128_LEN; i++)
-          {
-            printf("%02x", uuid->value.uuid128.uuid128[BT_UUID128_LEN - i - 1]);
-            if ((i == 3) || (i == 5) || (i == 7) || (i == 9))
-              {
-                printf("-");
-              }
-          }
-
-        printf("\n");
-
-        break;
-
-      case BLE_UUID_TYPE_BASEALIAS_BTSIG:
-      case BLE_UUID_TYPE_BASEALIAS_VENDOR:
-
-        /* UUID format 0000XXXX-YYYY-YYYY-YYYY-YYYYYYYYYYYY (XXXX : alias) */
-
-        printf("0000%04x-", uuid->value.alias.uuidAlias);
-
-        for (i = 4 ; i < BT_UUID128_LEN; i++)
-          {
-            printf("%02x", uuid->value.alias.uuidBase.uuid128[BT_UUID128_LEN - i - 1]);
-            if ((i == 5) || (i == 7) || (i == 9))
-              {
-                printf("-");
-              }
-          }
-
-        printf("\n");
-
-        break;
-
-      default:
-        printf("Irregular UUID type.\n");
-        break;
-    }
-}
-
 static void onWrite(struct ble_gatt_char_s *ble_gatt_char)
 {
   int i;
+  char str[BLE_UUID_128BIT_STRING_BUFSIZE];
 
   /* If receive connected device name data, this function will call. */
 
   printf("%s [BLE] start\n", __func__);
-  printf("handle : %d\n", ble_gatt_char->handle);
-  show_uuid(&ble_gatt_char->uuid);
-  printf("value_len : %d\n", ble_gatt_char->value.length);
-  printf("value : ");
+  printf("   handle : %d\n", ble_gatt_char->handle);
+  bleutil_convert_uuid2str(&ble_gatt_char->uuid, str, BLE_UUID_128BIT_STRING_LENGTH);
+  printf("   uuid : %s\n", str);
+  printf("   value_len : %d\n", ble_gatt_char->value.length);
+  printf("   value : ");
   for (i = 0; i < ble_gatt_char->value.length; i++)
     {
       printf("%02x ", ble_gatt_char->value.data[i]);
@@ -416,6 +381,8 @@ static void onWrite(struct ble_gatt_char_s *ble_gatt_char)
   printf("\n");
 
   printf("%s [BLE] end\n", __func__);
+
+  g_dbaccess_cnt++;
 }
 
 static void onRead(struct ble_gatt_char_s *ble_gatt_char)
@@ -427,19 +394,22 @@ static void onRead(struct ble_gatt_char_s *ble_gatt_char)
 
 static void onNotify(struct ble_gatt_char_s *ble_gatt_char, bool enable)
 {
+  char str[BLE_UUID_128BIT_STRING_BUFSIZE];
+
   /* If receive connected device name data, this function will call. */
 
   printf("%s [BLE] start \n", __func__);
-  printf("handle : %d\n", ble_gatt_char->handle);
-  show_uuid(&ble_gatt_char->uuid);
+  printf("   handle : %d\n", ble_gatt_char->handle);
+  bleutil_convert_uuid2str(&ble_gatt_char->uuid, str, BLE_UUID_128BIT_STRING_LENGTH);
+  printf("   uuid : %s\n", str);
 
   if (enable)
     {
-      printf("notification enabled\n");
+      printf("   notification enabled\n");
     }
   else
     {
-      printf("notification disabled\n");
+      printf("   notification disabled\n");
     }
 
   printf("%s [BLE] end \n", __func__);
@@ -449,9 +419,12 @@ static void ble_peripheral_exit(void)
 {
   int ret;
 
-  /* Update connection status */
+  /* Wait for disconnection by BLE central. */
 
-  ble_is_connected = false;
+  while (ble_is_connected)
+    {
+      usleep(1); /* usleep for task dispatch */
+    };
 
   /* Turn OFF BT */
 
@@ -470,21 +443,36 @@ static void ble_peripheral_exit(void)
     }
 }
 
+static uint16_t wait_connection(void)
+{
+  /* connection establishment is initiated by BLE central device.
+   * So, BLE peripheral only waits for connection status to be "connected".
+   */
+
+  while (!ble_is_connected)
+    {
+      usleep(1); /* usleep for task dispatch */
+    }
+
+  return ble_conn_handle;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * BLE_GATT_main
+ * main
  ****************************************************************************/
 
 int main(int argc, FAR char *argv[])
 {
   int ret = 0;
-  int len = 0;
-  char buffer[BLE_MAX_TX_DATA_SIZE] = {0};
   BLE_UUID *s_uuid;
   BLE_UUID *c_uuid;
+  uint16_t conn_handle;
+
+  g_dbaccess_cnt = 0;
 
   /* Initialize BT HAL */
 
@@ -573,7 +561,7 @@ int main(int argc, FAR char *argv[])
 
   /* Setup Characteristic UUID */
 
-  c_uuid->type =BLE_UUID_TYPE_BASEALIAS_VENDOR;
+  c_uuid->type                  = BLE_UUID_TYPE_BASEALIAS_BTSIG;
   c_uuid->value.alias.uuidAlias = BLE_UUID_SDS_CHAR_IN;
   memcpy(&c_uuid->value.alias.uuidBase, &char_in_uuid, sizeof(BLE_UUID128));
 
@@ -620,32 +608,31 @@ int main(int argc, FAR char *argv[])
       goto error;
     }
 
-  /* Send Tx data by using readline */
+  conn_handle = wait_connection();
 
-  while(1)
+  /* First, wait for BLE central to write characteristic CHAR_ACCESS_COUNT times. */
+
+  while (g_dbaccess_cnt < CHAR_ACCESS_COUNT)
     {
-      printf("ble_peripheral>");
-      fflush(stdout);
+      usleep(1); /* usleep for task dispatch */
+    }
 
-      len = readline_stream(buffer, sizeof(buffer) - 1, stdin, stdout);
+  /* Second, update characteristic CHAR_ACCESS_COUNT times every second.
+   * The data is decremented with each update.
+   */
 
-      if (ble_is_connected)
+  while(g_dbaccess_cnt--)
+    {
+      ret = ble_characteristic_notify(conn_handle,
+                                      &g_ble_gatt_char,
+                                      (uint8_t *)&g_dbaccess_cnt,
+                                      sizeof(g_dbaccess_cnt));
+      if (ret != BT_SUCCESS)
         {
-          ret = ble_characteristic_notify(ble_conn_handle,
-                                          &g_ble_gatt_char,
-                                          (uint8_t *) buffer,
-                                          len);
-          if (ret != BT_SUCCESS)
-            {
-              printf("%s [BLE] Send data failed. ret = %d\n", __func__, ret);
-            }
+          printf("%s [BLE] Send data failed. ret = %d\n", __func__, ret);
         }
 
-      if (!strcmp(buffer, "quit\n"))
-        {
-          printf("Quit.\n");
-          break;
-        }
+      sleep(1);
     }
 
   /* Quit this application */
