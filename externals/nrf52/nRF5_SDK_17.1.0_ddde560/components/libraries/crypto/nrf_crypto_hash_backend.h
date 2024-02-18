@@ -42,11 +42,7 @@
 #define NRF_CRYPTO_HASH_BACKEND_H__
 
 #include "sdk_common.h"
-#include "cc310_backend_hash.h"
 #include "mbedtls_backend_hash.h"
-#include "oberon_backend_hash.h"
-#include "cc310_bl_backend_hash.h"
-#include "nrf_sw_backend_hash.h"
 
 #ifdef __cplusplus
 extern "C" {

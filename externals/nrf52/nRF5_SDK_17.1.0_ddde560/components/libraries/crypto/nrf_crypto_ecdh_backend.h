@@ -51,12 +51,8 @@
 #include "nrf_crypto_ecdh_shared.h"
 
 // Include all backends
-#include "cc310_backend_ecdh.h"
-#include "cc310_bl_backend_ecdh.h"
 #include "mbedtls_backend_ecdh.h"
-#include "oberon_backend_ecdh.h"
 #include "micro_ecc_backend_ecdh.h"
-#include "optiga_backend_ecdh.h"
 
 
 #ifdef __cplusplus
