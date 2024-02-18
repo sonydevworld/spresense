@@ -520,9 +520,11 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
                                    uuid,
                                    BLE_UUID_128BIT_STRING_BUFSIZE);
           printf("      uuid         : %s\n", uuid);
-          printf("      property     : %s%s%s\n", prop.notify ? "notify," : "",
-                                                  prop.read   ? "read," : "",
-                                                  prop.write  ? "write" : "");
+          printf("      property     : %s%s%s%s\n",
+                 prop.notify ? "notify," : "",
+                 prop.read   ? "read," : "",
+                 prop.write  ? "write," : "",
+                 prop.writeWoResp ? "write w/o rsp" : "");
 
           print_descriptor_handle("cccd", ch->cccd_handle);
           print_descriptor_handle("cepd", ch->cepd_handle);
@@ -537,7 +539,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
            * So, store only such data.
            */
 
-          if (prop.notify && prop.read && prop.write)
+          if (prop.notify && prop.read && (prop.write || prop.writeWoResp))
             {
               memcpy(&g_nrw_char, ch, sizeof(struct ble_gattc_db_disc_char_s));
             }
@@ -754,21 +756,24 @@ static int read_descriptor(uint16_t conn_handle,
 static int write_characteristic(uint16_t conn_handle,
                                 uint16_t char_handle,
                                 uint8_t  *buf,
-                                uint16_t len)
+                                uint16_t len,
+                                bool     rsp)
 {
   int ret;
-  struct ble_gatt_char_s ch;
 
   g_charwr_result = RESULT_NOT_RECEIVE;
 
-  ch.handle = char_handle;
-  ch.value.length = len;
-  ch.value.data   = buf;
-
-  ret = ble_characteristic_write(conn_handle, &ch, buf, len);
+  ret = ble_write_characteristic(conn_handle, char_handle, buf, len, rsp);
   if (ret != BT_SUCCESS)
     {
       return ret;
+    }
+
+  if (!rsp)
+    {
+      /* In write w/o response case, not wait response. */
+
+      return OK;
     }
 
   /* Wait for write response. */
@@ -787,13 +792,10 @@ static int read_characteristic(uint16_t conn_handle,
                                uint16_t *len)
 {
   int ret;
-  struct ble_gatt_char_s ch;
 
   g_charrd_result = RESULT_NOT_RECEIVE;
 
-  ch.handle = char_handle;
-
-  ret = ble_characteristic_read(conn_handle, &ch);
+  ret = ble_read_characteristic(conn_handle, char_handle);
   if (ret != BT_SUCCESS)
     {
       return ret;
@@ -887,7 +889,8 @@ static int access_descriptor(uint16_t conn_handle,
 
 static int access_characteristic(uint16_t conn_handle,
                                  uint16_t char_handle,
-                                 int data)
+                                 int data,
+                                 bool rsp)
 {
   int ret;
   int buf = 0;
@@ -896,7 +899,8 @@ static int access_characteristic(uint16_t conn_handle,
   ret = write_characteristic(conn_handle,
                              char_handle,
                              (uint8_t *)&data,
-                             sizeof(data));
+                             sizeof(data),
+                             rsp);
   if (ret != BT_SUCCESS)
     {
       return ret;
@@ -1054,14 +1058,37 @@ int main(int argc, FAR char *argv[])
 
   ret = access_descriptor(conn_handle, nrw_char);
 
-  for (i = 0; i < CHAR_ACCESS_COUNT; i++)
+  if (nrw_char->characteristic.char_prope.write)
     {
-      ret = access_characteristic(conn_handle,
-                                  nrw_char->characteristic.char_valhandle,
-                                  g_dbaccess_cnt++);
-      if (ret != BT_SUCCESS)
+      /* write(w/ rsp) and read characteristic */
+
+      for (i = 0; i < CHAR_ACCESS_COUNT / 2; i++)
         {
-          goto error;
+          ret = access_characteristic(conn_handle,
+                                      nrw_char->characteristic.char_valhandle,
+                                      g_dbaccess_cnt++,
+                                      TRUE);
+          if (ret != BT_SUCCESS)
+            {
+              goto error;
+            }
+        }
+    }
+
+  if (nrw_char->characteristic.char_prope.writeWoResp)
+    {
+      /* write(w/o rsp) and read characteristic */
+
+      for (i = 0; i < CHAR_ACCESS_COUNT / 2; i++)
+        {
+          ret = access_characteristic(conn_handle,
+                                      nrw_char->characteristic.char_valhandle,
+                                      g_dbaccess_cnt++,
+                                      FALSE);
+          if (ret != BT_SUCCESS)
+            {
+              goto error;
+            }
         }
     }
 
