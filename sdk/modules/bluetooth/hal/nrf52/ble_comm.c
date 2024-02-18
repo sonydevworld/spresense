@@ -2260,11 +2260,27 @@ static void set_discoveried_data(BLE_GattcDbDiscovery *rcv,
     }
 }
 
+static uint16_t get_last_handle(struct ble_gattc_db_disc_char_s *chrc)
+{
+  uint16_t biggest;
+
+  biggest = chrc->characteristic.char_valhandle;
+  biggest = MAX(biggest, chrc->cepd_handle);
+  biggest = MAX(biggest, chrc->cudd_handle);
+  biggest = MAX(biggest, chrc->cccd_handle);
+  biggest = MAX(biggest, chrc->sccd_handle);
+  biggest = MAX(biggest, chrc->cpfd_handle);
+  biggest = MAX(biggest, chrc->cafd_handle);
+
+  return biggest;
+}
+
 static
 void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, int reason)
 {
   static struct ble_gatt_event_db_discovery_t evt;
-  struct ble_gattc_db_disc_srv_s *last;
+  struct ble_gattc_db_disc_srv_s *last_srv;
+  struct ble_gattc_db_disc_char_s *last_chrc;
 
   evt.group_id    = BLE_GROUP_GATT;
   evt.event_id    = BLE_GATT_EVENT_DB_DISCOVERY_COMPLETE;
@@ -2280,8 +2296,24 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
       evt.params.reason = reason;
     }
 
-  last = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
-  evt.state.end_handle = last->srv_handle_range.end_handle;
+  /* If the number of the last characteristic is BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV
+   * and end_handle of the last service is BLE_GATTC_HANDLE_END,
+   * continuation may be exists.
+   * Then, the last handle value should be notified.
+   */
+
+  last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
+  last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
+
+  if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+    {
+      evt.state.end_handle = get_last_handle(last_chrc);
+    }
+  else
+    {
+      evt.state.end_handle = last_srv->srv_handle_range.end_handle;
+      commMem.disc.start = 0;
+    }
 
   ble_gatt_event_handler((struct bt_event_t *)&evt);
 
@@ -2488,7 +2520,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
                    rcvch->handle_decl);
 
           srvBeingDiscovered->charCount++;
-          if (srvBeingDiscovered->charCount > BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+          if (srvBeingDiscovered->charCount >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
             {
               break;
             }
@@ -2499,7 +2531,7 @@ void onCharacteristicDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *p
       // If no more characteristic discovery is required, or if the maximum number of supported
       // characteristic per service has been reached, descriptor discovery will be performed.
       if (!isCharDiscoveryReqd(gattcDbDiscovery, last_handle) ||
-      (srvBeingDiscovered->charCount == BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
+      (srvBeingDiscovered->charCount >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV))
         {
           performDescDiscov = true;
         }
@@ -2713,41 +2745,83 @@ void onDescriptorDiscoveryRsp(bleGattcDb *const gattcDbDiscovery, BLE_Evt *pBleE
     }
 }
 
+static bool hasRemainingChar(bleGattcDb *gattcDbDiscovery)
+{
+  BLE_GattcDbDiscSrv  *curr_srv;
+  BLE_GattcDbDiscChar *curr_ch;
+  struct ble_gattc_db_disc_char_s chrc;
+  uint16_t last;
+
+  curr_srv = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+  curr_ch = &(curr_srv->characteristics[gattcDbDiscovery->currCharInd]);
+
+  chrc.characteristic.char_valhandle = curr_ch->characteristic.charValhandle;
+  chrc.cepd_handle = curr_ch->cepdHandle;
+  chrc.cudd_handle = curr_ch->cuddHandle;
+  chrc.cccd_handle = curr_ch->cccdHandle;
+  chrc.sccd_handle = curr_ch->sccdHandle;
+  chrc.cpfd_handle = curr_ch->cpfdHandle;
+  chrc.cafd_handle = curr_ch->cafdHandle;
+
+  last = get_last_handle(&chrc);
+
+  if (last < curr_srv->srvHandleRange.endHandle)
+    {
+      return true;
+    }
+  else
+    {
+      return false;
+    }
+}
+
 static
 void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
 {
   BLE_GattcDbDiscSrv       *srvBeingDiscovered = NULL;
 
+  /* If service discovery complete and this service has the more characteristics,
+   * trigger event to encourage application to continue discover.
+   */
+
+  if (hasRemainingChar(gattcDbDiscovery))
+    {
+      gattcDbDiscovery->dbDiscovery.srvCount = gattcDbDiscovery->currSrvInd + 1;
+      commMem.disc.start = gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd].srvHandleRange.startHandle;
+
+      setDbDiscoveryEvent(pBleEvent,
+                    gattcDbDiscovery->dbDiscovery.connHandle,
+                    BLE_GATTC_RESULT_SUCCESS, 0);
+      return;
+    }
+
+  commMem.disc.start = 0;
+
   // Reset the current characteristic index since a new service discovery is about to start.
   gattcDbDiscovery->currCharInd = 0;
 
   gattcDbDiscovery->currSrvInd++;
-  if (gattcDbDiscovery->currSrvInd > BLE_DB_DISCOVERY_MAX_SRV)
+  if (gattcDbDiscovery->currSrvInd >= BLE_DB_DISCOVERY_MAX_SRV)
     {
-      BLE_ERR("onCompletion ind NG\n");
-      goto err;
+      BLE_PRT("onSrvDiscCompletion: no more service\n");
+      setDbDiscoveryEvent(pBleEvent,
+                      gattcDbDiscovery->dbDiscovery.connHandle,
+                      BLE_GATTC_RESULT_SUCCESS, 0);
     }
   else
     {
-      // Initiate discovery of the next service.
-      if (gattcDbDiscovery->currSrvInd < BLE_DB_DISCOVERY_MAX_SRV)
-        {
-          srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
-          // Reset the characteristic count in the current service to zero since a new service
-          // discovery is about to start.
-          srvBeingDiscovered->charCount = 0;
-        }
+      /* Reset the characteristic count in the next service to zero since a new service
+       * discovery is about to start.
+       */
+
+      srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
+      srvBeingDiscovered->charCount = 0;
+
+      /* Discover characterisitics of next service. */
+
+      (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
     }
 
-  setDbDiscoveryEvent(pBleEvent,
-                      gattcDbDiscovery->dbDiscovery.connHandle,
-                      BLE_GATTC_RESULT_SUCCESS, 0);
-
-  return;
-err:
-  gattcDbDiscovery->discoveryInProgress = false;
-  setDbDiscoveryEvent(pBleEvent, gattcDbDiscovery->dbDiscovery.connHandle,
-    BLE_GATTC_RESULT_FAILED, BLE_GATTC_REASON_SERVICE);
   return;
 }
 
@@ -2780,8 +2854,20 @@ int characteristicsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscove
     }
   else
     {
-      // This is the first characteristic of this service being discovered.
-      handleRange.startHandle = srvBeingDiscovered->srvHandleRange.startHandle;
+      /* This is the first characteristic of this service being discovered.
+       * In continue case, start discovery from application specified handle.
+       */
+
+      if (commMem.disc.req > BLE_GATTC_HANDLE_START)
+        {
+          handleRange.startHandle = commMem.disc.req;
+          commMem.disc.req = BLE_GATTC_HANDLE_START;
+        }
+      else
+        {
+          handleRange.startHandle = srvBeingDiscovered->srvHandleRange.startHandle;
+
+        }
     }
 
   handleRange.endHandle = srvBeingDiscovered->srvHandleRange.endHandle;

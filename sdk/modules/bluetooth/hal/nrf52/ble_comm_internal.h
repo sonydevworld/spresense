@@ -76,7 +76,8 @@ extern "C" {
 #define BOND_INFO_7_KEY_NAME     "1007"
 #define BOND_INFO_8_KEY_NAME     "1008"
 
-#define BLE_GATTC_HANDLE_END 0xFFFF
+#define BLE_GATTC_HANDLE_START 0x0001
+#define BLE_GATTC_HANDLE_END   0xFFFF
 #define APP_BLE_CONN_CFG_TAG 1
 #define CONN_HANDLE_INVALED 0xffff
 #ifndef BLE_USE_SECTION
@@ -143,6 +144,13 @@ typedef struct
   BLE_GattcDbDiscovery    dbDiscovery;
 } bleGattcDb;
 
+typedef struct
+{
+  uint16_t start;
+  uint16_t req;
+} bleDiscoveringInfo;
+
+
 /**@brief A collection of variables of common. */
  typedef struct
 {
@@ -171,6 +179,7 @@ typedef struct
   BLE_EvtGattcNtfInd      gattcNtfIndData;
   BLE_EvtGattcDbDiscovery gattcDbDiscoveryData;
   bleGattcDb              gattcDb;
+  bleDiscoveringInfo      disc;
   bleGapMem               *gapMem;
   uint8_t                 stackInited;
   uint16_t                requested_mtu;
