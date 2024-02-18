@@ -51,7 +51,7 @@
 #include "nrf_crypto_mem.h"
 #include "nrf_crypto_rng.h"
 #include "nrf_crypto_shared.h"
-#include "nrf_assert.h"
+#include <assert.h>
 #include "mbedtls_backend_ecc.h"
 
 /*lint -save -e????*/
