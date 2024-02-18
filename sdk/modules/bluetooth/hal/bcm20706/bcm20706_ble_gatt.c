@@ -92,10 +92,13 @@ static int bcm20706_ble_notify(struct ble_gatt_char_s *ble_gatt_char,
 static int bcm20706_ble_start_db_discovery(uint16_t conn_handle);
 static int bcm20706_ble_continue_db_discovery(uint16_t start_handle,
                                               uint16_t conn_handle);
-static int bcm20706_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
-                                    uint16_t handle);
-static int bcm20706_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
-                                   uint16_t handle);
+static int bcm20706_ble_gattc_write(uint16_t conn_handle,
+                                    uint16_t char_handle,
+                                    uint8_t  *buf,
+                                    int      len,
+                                    bool     rsp);
+static int bcm20706_ble_gattc_read(uint16_t conn_handle,
+                                   uint16_t char_handle);
 
 /****************************************************************************
  * Private Data
@@ -402,16 +405,20 @@ static int bcm20706_ble_continue_db_discovery(uint16_t start_handle, uint16_t co
  *
  ****************************************************************************/
 
-static int bcm20706_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int bcm20706_ble_gattc_write(uint16_t conn_handle,
+                                    uint16_t char_handle,
+                                    uint8_t  *data,
+                                    int      len,
+                                    bool     rsp)
 {
   BLE_GattcWriteParams param = {0};
 
-  param.writeOp       = (ble_gatt_char->property.writeWoResp ? BLE_GATTC_WRITE_CMD : BLE_GATTC_WRITE_REQ);
-  param.charValHandle = ble_gatt_char->handle;
-  param.charValLen    = ble_gatt_char->value.length;
-  param.charValData   = ble_gatt_char->value.data;
+  param.writeOp       = rsp ? BLE_GATTC_WRITE_REQ : BLE_GATTC_WRITE_CMD;
+  param.charValHandle = char_handle;
+  param.charValLen    = len;
+  param.charValData   = data;
 
-  return BLE_GattcWrite(handle, &param);
+  return BLE_GattcWrite(conn_handle, &param);
 }
 
 /****************************************************************************
@@ -423,13 +430,13 @@ static int bcm20706_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char, uint1
  *
  ****************************************************************************/
 
-static int bcm20706_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int bcm20706_ble_gattc_read(uint16_t conn_handle, uint16_t char_handle)
 {
   BLE_GattcReadParams param = {0};
 
-  param.charValHandle = ble_gatt_char->handle;
+  param.charValHandle = char_handle;
 
-  return BLE_GattcRead(handle, &param);
+  return BLE_GattcRead(conn_handle, &param);
 }
 
 /****************************************************************************

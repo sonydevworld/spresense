@@ -74,10 +74,12 @@ static int nrf52_ble_continue_db_discovery(uint16_t start_handle,
 static int nrf52_ble_discover_uuid(uint16_t conn_handle,
                                    BLE_UUID *srv_uuid,
                                    BLE_UUID *char_uuid);
-static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char,
-                                 uint16_t handle);
-static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char,
-                                uint16_t handle);
+static int nrf52_ble_gattc_write(uint16_t conn_handle,
+                                 uint16_t char_handle,
+                                 uint8_t  *data,
+                                 int      len,
+                                 bool     rsp);
+static int nrf52_ble_gattc_read(uint16_t conn_handle, uint16_t char_handle);
 static int nrf52_ble_descriptor_write(uint16_t conn_handle,
                                       uint16_t handle,
                                       uint8_t  *data,
@@ -416,7 +418,7 @@ err:
 }
 
 /****************************************************************************
- * Name: nrf52_ble_write
+ * Name: nrf52_ble_gattc_write
  *
  * Description:
  *   Bluetooth LE GATT client write request.
@@ -424,16 +426,20 @@ err:
  *
  ****************************************************************************/
 
-static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int nrf52_ble_gattc_write(uint16_t conn_handle,
+                                 uint16_t char_handle,
+                                 uint8_t  *data,
+                                 int      len,
+                                 bool     rsp)
 {
   BLE_GattcWriteParams param = {0};
 
-  param.writeOp       = (ble_gatt_char->property.writeWoResp ? BLE_GATTC_WRITE_CMD : BLE_GATTC_WRITE_REQ);
-  param.charValHandle = ble_gatt_char->handle;
-  param.charValLen    = ble_gatt_char->value.length;
-  param.charValData   = ble_gatt_char->value.data;
+  param.writeOp       = rsp ? BLE_GATTC_WRITE_REQ : BLE_GATTC_WRITE_CMD;
+  param.charValHandle = char_handle;
+  param.charValLen    = len;
+  param.charValData   = data;
 
-  return BLE_GattcWrite(handle, &param);
+  return BLE_GattcWrite(conn_handle, &param);
 }
 
 /****************************************************************************
@@ -445,13 +451,13 @@ static int nrf52_ble_gattc_write(struct ble_gatt_char_s *ble_gatt_char, uint16_t
  *
  ****************************************************************************/
 
-static int nrf52_ble_gattc_read(struct ble_gatt_char_s *ble_gatt_char, uint16_t handle)
+static int nrf52_ble_gattc_read(uint16_t conn_handle, uint16_t char_handle)
 {
   BLE_GattcReadParams param = {0};
 
-  param.charValHandle = ble_gatt_char->handle;
+  param.charValHandle = char_handle;
 
-  return BLE_GattcRead(handle, &param);
+  return BLE_GattcRead(conn_handle, &param);
 }
 
 static int nrf52_ble_descriptor_write(uint16_t conn_handle,
