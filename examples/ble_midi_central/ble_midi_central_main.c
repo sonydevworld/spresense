@@ -81,8 +81,10 @@ static void on_discovered(struct ble_gatt_event_db_discovery_t *db_disc);
 static void on_enc_result(uint16_t handle, bool result);
 static void on_devicename(const char *name);
 
-static void on_read(struct ble_gatt_char_s *gatt_char);
-static void on_notify(struct ble_gatt_char_s *ble_gatt_char);
+static void on_read(uint16_t conn_handle,
+                    struct ble_gatt_char_s *gatt_char);
+static void on_notify(uint16_t conn_handle,
+                      struct ble_gatt_char_s *ble_gatt_char);
 static void on_desc_write(uint16_t connhdl, uint16_t charhdl, int result);
 
 /****************************************************************************
@@ -299,7 +301,8 @@ static void on_devicename(const char *name)
   printf("[%s] Got device name : %s\n", __func__, name);
 }
 
-static void on_read(struct ble_gatt_char_s *ble_gatt_char)
+static void on_read(uint16_t conn_handle,
+                    struct ble_gatt_char_s *ble_gatt_char)
 {
   int ret;
   uint8_t notice_en = 1;
@@ -323,7 +326,8 @@ static void on_desc_write(uint16_t connhdl, uint16_t charhdl, int result)
   led_stop_waitconnection();
 }
 
-static void on_notify(struct ble_gatt_char_s *gatt_char)
+static void on_notify(uint16_t conn_handle,
+                      struct ble_gatt_char_s *gatt_char)
 {
   /* Received nodify from MIDI device. */
 

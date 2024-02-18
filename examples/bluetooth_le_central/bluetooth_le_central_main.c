@@ -96,15 +96,15 @@ static void encryption_result(uint16_t handle, bool result);
 
 /* Write response */
 
-static void on_write(struct ble_gatt_char_s *ble_gatt_char);
+static void on_write(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
 /* Read response */
 
-static void on_read(struct ble_gatt_char_s *ble_gatt_char);
+static void on_read(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
 /* Receive notification */
 
-static void on_notify(struct ble_gatt_char_s *ble_gatt_char);
+static void on_notify(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char);
 
 /* DB discovery result */
 
@@ -431,14 +431,14 @@ static void free_cccd(void)
     }
 }
 
-static void on_write(struct ble_gatt_char_s *ble_gatt_char)
+static void on_write(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
 {
   printf("%s [BLE] result = %d\n", __func__, ble_gatt_char->status);
 
   g_charwr_result = ble_gatt_char->status;
 }
 
-static void on_read(struct ble_gatt_char_s *ble_gatt_char)
+static void on_read(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
 {
   int i;
 
@@ -459,7 +459,7 @@ static void on_read(struct ble_gatt_char_s *ble_gatt_char)
   g_charrd_result = ble_gatt_char->status;
 }
 
-static void on_notify(struct ble_gatt_char_s *ble_gatt_char)
+static void on_notify(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
 {
   int i;
 
@@ -520,8 +520,9 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
                                    uuid,
                                    BLE_UUID_128BIT_STRING_BUFSIZE);
           printf("      uuid         : %s\n", uuid);
-          printf("      property     : %s%s%s%s\n",
+          printf("      property     : %s%s%s%s%s\n",
                  prop.notify ? "notify," : "",
+                 prop.notify ? "indicate," : "",
                  prop.read   ? "read," : "",
                  prop.write  ? "write," : "",
                  prop.writeWoResp ? "write w/o rsp" : "");
