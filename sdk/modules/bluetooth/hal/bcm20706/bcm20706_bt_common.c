@@ -119,7 +119,7 @@ static struct bt_hal_common_ops_s bt_hal_common_ops =
   .inquiryCancel = bcm20706_bt_inquiry_cancel
 };
 
-static char g_bt_name[BT_NAME_LEN];
+static char g_bt_name[BT_NAME_LEN + 1];
 
 static BT_ADDR g_bt_addr;
 

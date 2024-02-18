@@ -496,7 +496,13 @@ int bt_set_name(char *name)
       return BT_FAIL;
     }
 
-  memcpy(g_bt_common_state.bt_name, name, sizeof(char) * BT_NAME_LEN);
+  if (strlen(name) > BT_NAME_LEN)
+    {
+      _err("%s [BT][Common] Failed(name length is too long).\n", __func__);
+      return BT_FAIL;
+    }
+
+  strlcpy(g_bt_common_state.bt_name, name, sizeof(g_bt_common_state.bt_name));
   return ret;
 }
 
@@ -924,7 +930,13 @@ int ble_set_name(char *name)
       return BT_FAIL;
     }
 
-  memcpy(g_bt_common_state.ble_name, name, sizeof(char) * BT_NAME_LEN);
+  if (strlen(name) > BT_NAME_LEN)
+    {
+      _err("%s [BT][Common] Failed(name length is too long).\n", __func__);
+      return BT_FAIL;
+    }
+
+  strlcpy(g_bt_common_state.ble_name, name, sizeof(g_bt_common_state.ble_name));
   return ret;
 }
 
