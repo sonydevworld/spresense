@@ -522,7 +522,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
           printf("      uuid         : %s\n", uuid);
           printf("      property     : %s%s%s%s%s\n",
                  prop.notify ? "notify," : "",
-                 prop.notify ? "indicate," : "",
+                 prop.indicate ? "indicate," : "",
                  prop.read   ? "read," : "",
                  prop.write  ? "write," : "",
                  prop.writeWoResp ? "write w/o rsp" : "");
