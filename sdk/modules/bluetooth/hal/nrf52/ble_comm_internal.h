@@ -54,6 +54,7 @@
 #include "ble_hci.h"
 #include "app_util.h"
 #include <semaphore.h>
+#include <nrf_crypto_ecc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,6 +104,13 @@ typedef struct
   uint8_t sys_attr_data[BLE_GATTS_SYS_ATTR_DATA_TOTALLEN];
 } bleGapWrapperBondInfo;
 
+typedef struct
+{
+  nrf_crypto_ecc_private_key_t priv;
+  ble_gap_lesc_p256_pk_t       own_pub;
+  ble_gap_lesc_p256_pk_t       peer_pub;
+} bleLescKeyInfo;
+
 /**@brief A collection of variables of gap. */
 typedef struct
 {
@@ -113,6 +121,7 @@ typedef struct
   ble_gap_scan_params_t scanParams;
   ble_gap_conn_params_t connParams;
   ble_gap_sec_keyset_t keySet;
+  bleLescKeyInfo lescKey;
   uint8_t is_connected;
   int8_t peerRssi;
   uint8_t startRssi;
