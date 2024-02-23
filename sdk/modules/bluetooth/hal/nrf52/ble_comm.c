@@ -63,7 +63,6 @@
 extern bleGapMem *bleGetGapMem(void);
 extern void bleMngEvtDispatch(ble_evt_t *nrfEvt);
 extern void board_nrf52_initialize(void);
-extern void board_nrf52_reset(bool en);
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -213,9 +212,12 @@ static int blePowerOff(void)
 {
   int ret = 0;
 
-//  for support reset pin. (Will be valid later)
-//  board_nrf52_reset(true);
-  ret = board_power_control(POWER_BTBLE, false);
+  /* Control the reset pin instead of the power.
+   * true (HIGH) : reset assert
+   * false (LOW) : reset deassert
+   */
+
+  ret = board_power_control(POWER_BTBLE, true);
   if (ret)
     {
       BLE_PRT("board_power_control(off): NG %d\n", ret);
@@ -509,18 +511,24 @@ static
 int blePowerOn(void)
 {
   int ret = 0;
-  ret = board_power_control(POWER_BTBLE, true);
+
+  /* Control the reset pin instead of the power.
+   * true (HIGH) : reset assert
+   * false (LOW) : reset deassert
+   */
+
+  ret = board_power_control(POWER_BTBLE, false);
+
   if (ret)
     {
       BLE_PRT("board_power_control(on): NG %d\n", ret);
       goto errPower;
     }
-//  for support reset pin. (Will be valid later)
-//  board_nrf52_reset(false);
+
   BLE_PRT("Power on BLE!!\n");
   return BLE_SUCCESS;
 errPower:
-  (void)board_power_control(POWER_BTBLE, false);
+  (void)board_power_control(POWER_BTBLE, true);
   return ret;
 
 }
