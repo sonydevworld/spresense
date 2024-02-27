@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/hal/bcm20706/manager/bt_storage_manager.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,8 +46,8 @@
 #include <nuttx/crc32.h>
 #include <errno.h>
 #include <debug.h>
+#include <sys/queue.h>
 
-#include "queue.h" /* TODO: replace to nuttx/include/queue.h */
 #include "manager/bt_storage_manager.h"
 #include "bt_debug.h"
 
