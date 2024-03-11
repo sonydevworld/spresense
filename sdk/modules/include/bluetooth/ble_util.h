@@ -1,7 +1,7 @@
 /****************************************************************************
  * sdk/modules/include/bluetooth/ble_util.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -139,6 +139,17 @@ int bleutil_get_devicename(uint8_t *data, uint8_t len, char *devname);
  */
 
 BLE_ADDRESS_TYPE bleutil_get_addrtype(uint8_t *data, uint8_t len);
+
+/* name: bleutil_get_rssi
+ *       Get BLE RSSI value from advertising data
+ *
+ *       data    [in]  : Advertising data
+ *       len     [in]  : Advertising data length in bytes
+ *
+ *       Return : BLE RSSI value for advertising
+ */
+
+int8_t bleutil_get_rssi(uint8_t *data, uint8_t len);
 
 /* name: bleutil_get_advertising_flags
  *       Get advertising flags from advertising data
