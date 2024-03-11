@@ -1,7 +1,7 @@
 /****************************************************************************
  * bluetooth_le_central/bluetooth_le_central_main.c
  *
- *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -220,9 +220,10 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
   char devname[BT_EIR_LEN];
 
   devname[0] = '\0';
-  printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
+  printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X (RSSI:%ddB)\n",
          addr.address[5], addr.address[4], addr.address[3],
-         addr.address[2], addr.address[1], addr.address[0]);
+         addr.address[2], addr.address[1], addr.address[0],
+         bleutil_get_rssi(data, len));
 
   /* If peer device has the device name, print it. */
 
