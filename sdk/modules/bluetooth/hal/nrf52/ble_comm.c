@@ -137,7 +137,7 @@ static int nrf52_ble_stop_scan(void);
 static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr);
 static int nrf52_ble_disconnect(const uint16_t conn_handle);
 static int nrf52_ble_advertise(bool enable);
-static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
+static int nrf52_ble_set_dev_addr(BT_ADDR *addr, uint8_t type);
 static int nrf52_ble_set_dev_name(char *name);
 static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance);
 static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
@@ -2829,7 +2829,7 @@ void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
       srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
       srvBeingDiscovered->charCount = 0;
 
-      /* Discover characterisitics of next service. */
+      /* Discover characteristics of next service. */
 
       (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
     }
@@ -3030,7 +3030,7 @@ int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, 
   if (!isDiscoveryReqd)
     {
       // No more descriptor discovery required.
-      // Preceed to the characteristics discovery about next service.
+      // Proceed to the characteristics discovery about next service.
 
       gattcDbDiscovery->currSrvInd++;
       gattcDbDiscovery->currCharInd = 0;
@@ -3285,12 +3285,12 @@ static int nrf52_ble_advertise(bool enable)
   return ret;
 }
 
-static int nrf52_ble_set_dev_addr(BT_ADDR *addr)
+static int nrf52_ble_set_dev_addr(BT_ADDR *addr, uint8_t type)
 {
   int ret;
   ble_gap_addr_t nrf52_addr;
 
-  nrf52_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  nrf52_addr.addr_type = type;
   memcpy(nrf52_addr.addr, addr->address, sizeof(nrf52_addr.addr));
 
   ret = sd_ble_gap_addr_set(&nrf52_addr);
@@ -3306,7 +3306,7 @@ static int nrf52_ble_set_dev_name(char *name)
 
   nameSize = strlen(name);
 
-  /* If invalid size, retrun NG */
+  /* If invalid size, return error */
 
   if (!name || nameSize > BT_MAX_NAME_LEN)
     {

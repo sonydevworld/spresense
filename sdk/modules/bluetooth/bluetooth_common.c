@@ -69,7 +69,8 @@ static struct bt_common_state_s g_bt_common_state =
   .bt_name  = CONFIG_BLUETOOTH_NAME,
   .ble_name = CONFIG_BLUETOOTH_LE_NAME,
   .bt_addr  = {{0x20, 0x70, 0x3A, 0x10, 0x00, 0x01}},
-  .ble_addr = {{0x20, 0x70, 0x3A, 0x10, 0x00, 0x01}}
+  .ble_addr = {{0x20, 0x70, 0x3A, 0x10, 0x00, 0x01}},
+  .ble_addr_type = BLE_ADDRTYPE_RAND_STATIC
 };
 
 static struct bt_acl_state_s g_bt_acl_state =
@@ -870,8 +871,8 @@ int bt_common_event_handler(struct bt_event_t *bt_event)
  * Name: ble_set_address
  *
  * Description:
- *   Set Bluetooth LE module address
- *   This is Spresense side address and should be call before bt_enable.
+ *   Set Bluetooth LE module address of the random static address type.
+ *   This is Spresense side address and should be called before bt_enable.
  *
  ****************************************************************************/
 
@@ -881,12 +882,50 @@ int ble_set_address(BT_ADDR *addr)
 
   if (!addr)
     {
-      _err("%s [BLE][Common] Set local BT address failed(addr not set).\n", __func__);
+      _err("%s [BLE][Common] Set own BLE address failed.\n", __func__);
       return BT_FAIL;
     }
 
+  g_bt_common_state.ble_addr_type = BLE_ADDRTYPE_RAND_STATIC;
   memcpy(&g_bt_common_state.ble_addr, addr, sizeof(BT_ADDR));
   return ret;
+}
+
+/****************************************************************************
+ * Name: ble_set_public_address
+ *
+ * Description:
+ *   Set Bluetooth LE module address of the public address type.
+ *   This is Spresense side address and should be called before bt_enable.
+ *
+ ****************************************************************************/
+
+int ble_set_public_address(BT_ADDR *addr)
+{
+  int ret = BT_SUCCESS;
+
+  if (!addr)
+    {
+      _err("%s [BLE][Common] Set own BLE public address failed.\n", __func__);
+      return BT_FAIL;
+    }
+
+  g_bt_common_state.ble_addr_type = BLE_ADDRTYPE_PUBLIC;
+  memcpy(&g_bt_common_state.ble_addr, addr, sizeof(BT_ADDR));
+  return ret;
+}
+
+/****************************************************************************
+ * Name: ble_get_address_type
+ *
+ * Description:
+ *   Get Bluetooth LE module address type
+ *
+ ****************************************************************************/
+
+uint8_t ble_get_address_type(void)
+{
+  return g_bt_common_state.ble_addr_type;
 }
 
 /****************************************************************************
@@ -916,7 +955,7 @@ int ble_get_address(BT_ADDR *addr)
  *
  * Description:
  *   Set Bluetooth LE module name
- *   This name visible for other devices and should be call before bt_enable.
+ *   This name visible for other devices and should be called before bt_enable.
  *
  ****************************************************************************/
 
@@ -990,7 +1029,8 @@ int ble_enable(void)
           return ret;
         }
 
-      ret = ble_hal_common_ops->setDevAddr(&g_bt_common_state.ble_addr);
+      ret = ble_hal_common_ops->setDevAddr(&g_bt_common_state.ble_addr,
+                                           g_bt_common_state.ble_addr_type);
 
       if (ret != BT_SUCCESS)
         {
@@ -1318,7 +1358,7 @@ int ble_register_common_cb(struct ble_common_ops_s *ble_common_ops)
  *
  * Description:
  *   Bluetooth LE common function HAL register
- *   This is Spresense side address and should be call before bt_enable.
+ *   This is Spresense side address and should be called before bt_enable.
  *
  ****************************************************************************/
 
