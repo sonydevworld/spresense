@@ -42,7 +42,7 @@ BLE_API_VERSION := 7
 endif
 
 # SOURCES
-BLE_C_FILES := $(shell find $(BLEDIR) -name "*.c" -printf '%f ')
+BLE_C_FILES := $(notdir $(shell find $(BLEDIR) -name "*.c"))
 BLE_C_DIRS := $(sort $(dir $(shell find $(BLEDIR) -name "*.c")))
 # INCLUDES
 BLE_H_DIRS := $(sort $(dir $(shell find $(BLEDIR) -name "*.h" -not -path $(BLE_IGNORE_DIR))))
