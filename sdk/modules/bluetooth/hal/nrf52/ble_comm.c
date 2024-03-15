@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/hal/nrf52/ble_comm.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1190,15 +1190,19 @@ static void on_adv_report(BLE_EvtAdvReportData *adv_report)
   evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
   evt.rssi = adv_report->rssi;
   evt.scan_rsp = adv_report->scan_rsp;
-  evt.length = adv_report->dlen + 1;
+  evt.length = adv_report->dlen + 2;
 
   /* The first octet is used for notification of peer address type. */
 
   evt.data[0] = adv_report->addr.type;
 
-  /* The raw advertising data starts from second octet. */
+  /* The second octet is used for notification of rssi. */
 
-  memcpy(evt.data + 1, adv_report->data, adv_report->dlen);
+  evt.data[1] = (uint8_t)adv_report->rssi;
+
+  /* The raw advertising data starts from the third octet. */
+
+  memcpy(&evt.data[2], adv_report->data, adv_report->dlen);
   memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
   ble_common_event_handler((struct bt_event_t *)&evt);
 }
