@@ -45,6 +45,12 @@ MODULE    = $(CONFIG_EXAMPLES_GNSS)
 
 # GNSS(simple) Example
 
+ifneq ($(CONFIG_EXAMPLES_GNSS_USE_SIGNAL),)
 MAINSRC = gnss_main.c
+endif
+
+ifneq ($(CONFIG_EXAMPLES_GNSS_USE_POLL),)
+MAINSRC = gnss_poll_main.c
+endif
 
 include $(APPDIR)/Application.mk
