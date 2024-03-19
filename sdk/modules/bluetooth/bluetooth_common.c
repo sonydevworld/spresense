@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/bluetooth_common.c
  *
- *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1389,7 +1389,7 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
                                uint8_t adv_len,
                                struct bt_eir_s *eir)
 {
-  int i = 0;
+  int i = 2; /* raw advertising data starts from the 3rd offset */
   uint8_t len;
   uint8_t type;
   uint8_t *data;
@@ -1406,8 +1406,6 @@ int ble_parse_advertising_data(BLE_AD_TYPE target,
       eir->data[0] = adv[i];
       return BT_SUCCESS;
     }
-
-  i++;
 
   while (i < adv_len)
     {

@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/hal/bt_event.h
  *
- *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,10 +73,19 @@
 /** @} */
 
 /**
+ *@name rssi length of advertise data
+ *@{
+ */
+#define BT_ADV_DATA_RSSI_LEN (1)
+/** @} */
+
+/**
  *@name Max ble advertise data length
  *@{
  */
-#define BLE_MAX_ADV_DATA_LEN (BT_ADV_DATA_MAX_LEN + BT_ADV_DATA_ADDRTYPE_LEN)
+#define BLE_MAX_ADV_DATA_LEN (BT_ADV_DATA_MAX_LEN + \
+                              BT_ADV_DATA_ADDRTYPE_LEN + \
+                              BT_ADV_DATA_RSSI_LEN)
 /** @} */
 
 /**
