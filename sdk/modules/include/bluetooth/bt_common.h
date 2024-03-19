@@ -513,6 +513,16 @@ int ble_set_name(char *name);
 int ble_get_name(char *name);
 
 /**
+ * @brief Set Bluetooth LE module appearance
+ *
+ * @param[in] appearance: Bluetooth LE device appearance
+ *
+ * @retval error code
+ */
+
+int ble_set_appearance(BLE_APPEARANCE appearance);
+
+/**
  * @brief Bluetooth LE enable
  *
  * @retval error code

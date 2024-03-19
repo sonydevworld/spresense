@@ -3324,8 +3324,10 @@ static int nrf52_ble_set_dev_name(char *name)
 
 static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance)
 {
-  int ret = BT_SUCCESS;
-  return ret;
+  uint32_t errCode;
+
+  errCode = sd_ble_gap_appearance_set((uint16_t)appearance);
+  return bleConvertErrorCode(errCode);
 }
 
 static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp)
