@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/bt_common.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,6 +140,7 @@ struct bt_common_state_s
   struct ble_common_ops_s      *ble_common_ops;          /**< BLE status callbacks @ref ble_common_ops_s */
   BT_ADDR                     bt_addr;                   /**< BT local device address @ref BT_ADDR */
   BT_ADDR                     ble_addr;                  /**< BLE local device address @ref BT_ADDR */
+  uint8_t                     ble_addr_type;             /**< BLE local device address_type @ref BLE_GAP_ADDR_TYPES */
   char                        bt_name[BT_NAME_LEN + 1];  /**< BT local device name */
   char                        ble_name[BT_NAME_LEN + 1]; /**< BLE local device name */
 };
@@ -224,7 +225,7 @@ struct bt_common_ops_s
   void (*command_status)(BT_CMD_STATUS status);                                                    /**< Command status */
   void (*pairing_complete)(BT_ADDR addr, BT_PAIR_STATUS status);                                   /**< Pairing complete */
   void (*inquiry_result)(BT_ADDR addr, char *name);                                                /**< Inquiry data result */
-  void (*inquiry_complete)(void);                                                                  /**< Coplete inquiry */
+  void (*inquiry_complete)(void);                                                                  /**< Complete inquiry */
   void (*connect_status_changed)(struct bt_acl_state_s *bt_acl_state, bool connected, int status); /**< Connection status change */
   void (*connected_device_name)(const char *name);                                                 /**< Device name change */
   void (*bond_info)(BT_ADDR addr);                                                                 /**< Bonding information */
@@ -311,7 +312,7 @@ int bt_finalize(void);
 
 /**
  * @brief Set Bluetooth module address
- *        This is Spresense side address and should be call before bt_enable.
+ *        This is Spresense side address and should be called before bt_enable.
  *
  * @param[in] addr: Bluetooth device address @ref BT_ADDR
  *
@@ -332,7 +333,7 @@ int bt_get_address(BT_ADDR *addr);
 
 /**
  * @brief Set Bluetooth module name
- *        This name visible for other devices and should be call before bt_enable.
+ *        This name visible for other devices and should be called before bt_enable.
  *
  * @param[in] name: Bluetooth device name
  *
@@ -451,8 +452,8 @@ int bt_cancel_inquiry(void);
 int bt_register_common_cb(struct bt_common_ops_s *bt_common_ops);
 
 /**
- * @brief Set Bluetooth LE module address
- *        This is Spresense side address and should be call before bt_enable.
+ * @brief Set Bluetooth LE module address of the random static address type.
+ *        This is Spresense side address and should be called before bt_enable.
  *
  * @param[in] addr: Bluetooth LE device address @ref BT_ADDR
  *
@@ -472,8 +473,27 @@ int ble_set_address(BT_ADDR *addr);
 int ble_get_address(BT_ADDR *addr);
 
 /**
+ * @brief Set Bluetooth LE module address of the public address type.
+ *        This is Spresense side address and should be called before bt_enable.
+ *
+ * @param[in] addr: Bluetooth LE device address @ref BT_ADDR
+ *
+ * @retval error code
+ */
+
+int ble_set_public_address(BT_ADDR *addr);
+
+/**
+ * @brief Get Bluetooth LE module address type
+ *
+ * @retval Bluetooth LE device address type
+ */
+
+uint8_t ble_get_address_type(void);
+
+/**
  * @brief Set Bluetooth LE module name
- *        This name visible for other devices and should be call before bt_enable.
+ *        This name visible for other devices and should be called before bt_enable.
  *
  * @param[in] name: Bluetooth LE device name
  *

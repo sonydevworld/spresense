@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/bluetooth/hal/bcm20706/manager/bt_uart_manager.c
+ * modules/bluetooth/hal/bcm20706/bcm20706_ble_common.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,7 +86,7 @@ extern bleGapMem *bleGetGapMem(void);
  * Private Function Prototypes
  ****************************************************************************/
 
-static int bcm20706_ble_set_dev_addr(BT_ADDR *addr);
+static int bcm20706_ble_set_dev_addr(BT_ADDR *addr, uint8_t type);
 static int bcm20706_ble_set_dev_name(char *name);
 static int bcm20706_ble_set_appearance(BLE_APPEARANCE appearance);
 static int bcm20706_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
@@ -197,7 +197,7 @@ static int32_t set_adv_data(void)
  *
  ****************************************************************************/
 
-static int bcm20706_ble_set_dev_addr(BT_ADDR *addr)
+static int bcm20706_ble_set_dev_addr(BT_ADDR *addr, uint8_t type)
 {
   int ret = BT_SUCCESS;
 
@@ -226,7 +226,7 @@ static int bcm20706_ble_set_dev_name(char *name)
 
   nameSize = strlen(name);
 
-  /* If invalid size, retrun NG */
+  /* If invalid size, return error */
 
   if (!name || nameSize > BT_MAX_NAME_LEN)
     {
