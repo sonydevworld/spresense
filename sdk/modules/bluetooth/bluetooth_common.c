@@ -1002,6 +1002,32 @@ int ble_get_name(char *name)
 }
 
 /****************************************************************************
+ * Name: ble_set_appearance
+ *
+ * Description:
+ *   Set Bluetooth LE module appearance
+ *
+ ****************************************************************************/
+
+int ble_set_appearance(BLE_APPEARANCE appearance)
+{
+  int ret = BT_FAIL;
+  struct ble_hal_common_ops_s *ble_hal_common_ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ble_hal_common_ops && ble_hal_common_ops->setAppearance)
+    {
+      ret = ble_hal_common_ops->setAppearance(appearance);
+
+      if (ret != BT_SUCCESS)
+        {
+          _err("%s [BLE][Common] Set appearance failed.\n", __func__);
+        }
+    }
+
+  return ret;
+}
+
+/****************************************************************************
  * Name: ble_enable
  *
  * Description:
@@ -1018,7 +1044,6 @@ int ble_enable(void)
 
   if (ble_hal_common_ops && ble_hal_common_ops->setDevName &&
       ble_hal_common_ops->setDevAddr &&
-      ble_hal_common_ops->setAppearance &&
       ble_hal_common_ops->setPPCP)
     {
       ret = ble_hal_common_ops->setDevName(g_bt_common_state.ble_name);
@@ -1035,14 +1060,6 @@ int ble_enable(void)
       if (ret != BT_SUCCESS)
         {
           _err("%s [BLE][Common] BLE set address failed.\n", __func__);
-          return ret;
-        }
-
-      ret = ble_hal_common_ops->setAppearance(BLE_APPEARANCE_GENERIC_PHONE);
-
-      if (ret != BT_SUCCESS)
-        {
-          _err("%s [BLE][Common] BLE set appearance failed.\n", __func__);
           return ret;
         }
 
