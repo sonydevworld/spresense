@@ -1,7 +1,7 @@
 /****************************************************************************
- * gnss/gnss_main.c
+ * gnss/gnss_poll_main.c
  *
- *   Copyright 2018, 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@
  ****************************************************************************/
 
 /* This example is showing how to use GNSS function on Spresense by using
- * signal() method to wait result of measurement.
+ * poll() method to wait result of measurement.
  */
 
 /****************************************************************************
@@ -50,14 +50,6 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <arch/chip/gnss.h>
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#define GNSS_POLL_FD_NUM          1
-#define GNSS_POLL_TIMEOUT_FOREVER -1
-#define MY_GNSS_SIG               18
 
 /****************************************************************************
  * Private Types
@@ -273,12 +265,11 @@ int main(int argc, FAR char *argv[])
   int      fd;
   int      ret;
   int      posperiod;
-  sigset_t mask;
-  struct cxd56_gnss_signal_setting_s setting;
+  struct pollfd fds[1];
 
   /* Program start. */
 
-  printf("Hello, GNSS(USE_SIGNAL) SAMPLE!!\n");
+  printf("Hello, GNSS <<USE POLL>> SAMPLE!!\n");
 
   /* Get file descriptor to control GNSS. */
 
@@ -287,32 +278,6 @@ int main(int argc, FAR char *argv[])
     {
       printf("open error:%d,%d\n", fd, errno);
       return -ENODEV;
-    }
-
-  /* Configure mask to notify GNSS signal. */
-
-  sigemptyset(&mask);
-  sigaddset(&mask, MY_GNSS_SIG);
-  ret = sigprocmask(SIG_BLOCK, &mask, NULL);
-  if (ret != OK)
-    {
-      printf("sigprocmask failed. %d\n", ret);
-      goto _err;
-    }
-
-  /* Set the signal to notify GNSS events. */
-
-  setting.fd      = fd;
-  setting.enable  = 1;
-  setting.gnsssig = CXD56_GNSS_SIG_GNSS;
-  setting.signo   = MY_GNSS_SIG;
-  setting.data    = NULL;
-
-  ret = ioctl(fd, CXD56_GNSS_IOCTL_SIGNAL_SET, (unsigned long)&setting);
-  if (ret < 0)
-    {
-      printf("signal error\n");
-      goto _err;
     }
 
   /* Set GNSS parameters. */
@@ -345,16 +310,18 @@ int main(int argc, FAR char *argv[])
 
   do
     {
-      /* Wait for positioning to be fixed. After fixed,
-       * idle for the specified seconds. */
+      fds[0].fd     = fd;
+      fds[0].events = POLLIN;
 
-      ret = sigwaitinfo(&mask, NULL);
-      if (ret != MY_GNSS_SIG)
+      /* Wait for positioning data to be notified. */
+
+      ret = poll(fds, 1, -1);
+      if (ret < 0)
         {
-          printf("sigwaitinfo error %d\n", ret);
+          printf("ERROR: poll ret=%d, errno=%d\n", ret, errno);
           break;
         }
-
+      
       /* Read and print POS data. */
 
       ret = read_and_print(fd);
@@ -385,17 +352,6 @@ int main(int argc, FAR char *argv[])
     }
 
 _err:
-
-  /* GNSS firmware needs to disable the signal after positioning. */
-
-  setting.enable = 0;
-  ret = ioctl(fd, CXD56_GNSS_IOCTL_SIGNAL_SET, (unsigned long)&setting);
-  if (ret < 0)
-    {
-      printf("signal error\n");
-    }
-
-  sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
   /* Release GNSS file descriptor. */
 
