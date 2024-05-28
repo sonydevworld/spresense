@@ -1,7 +1,7 @@
 ############################################################################
-# modules/sensing/gnss/cxd5610nmea/Makefile
+# modules/sensing/gnss/Makefile
 #
-#   Copyright 2023 Sony Semiconductor Solutions Corporation
+#   Copyright 2024 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,6 +34,12 @@
 ############################################################################
 
 -include $(SDKDIR)/modules/Make.defs
+
+ifeq ($(CONFIG_GPSUTILS_CXD5610NMEA_LIB),y)
 MODNAME = cxd5610nmea
+VPATH   = cxd5610nmea
+DEPPATH = --dep-path cxd5610nmea
 CSRCS   = gnss_nmea.c
+endif
+
 include $(SDKDIR)/modules/Module.mk
