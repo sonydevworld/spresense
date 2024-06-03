@@ -34,5 +34,5 @@
 ############################################################################
 
 ifeq ($(CONFIG_GPSUTILS_CXD5610NMEA_LIB),y)
-CONFIGURED_APPS += sensing/gnss/cxd5610nmea
+CONFIGURED_APPS += sensing/gnss
 endif
