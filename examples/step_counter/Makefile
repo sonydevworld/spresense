@@ -48,14 +48,7 @@ MODULE    = $(CONFIG_EXAMPLES_STEP_COUNTER)
 MAINSRC = step_counter_main.cxx
 CXXSRCS = physical_sensor.cxx accel_sensor.cxx gnss_sensor.cxx
 
-# Sensing Example paths
-
-SENSINGDIR = $(SDKDIR)$(DELIM)modules$(DELIM)sensing
-
 # Sensing Example flags
-
-CXXFLAGS += ${INCDIR_PREFIX}$(SENSINGDIR)
-CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)$(DELIM)modules$(DELIM)include
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
