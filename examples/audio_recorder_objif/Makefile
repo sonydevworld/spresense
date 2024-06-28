@@ -47,13 +47,8 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF)
 
 MAINSRC = audio_recorder_objif_main.cxx
 
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
 # Audio Example flags
 
-CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECORDER_OBJIF_USEPREPROC),y)
 CXXFLAGS += ${INCDIR_PREFIX}worker$(DELIM)userproc$(DELIM)include
 endif

@@ -47,13 +47,8 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_RECOGNIZER)
 
 MAINSRC = audio_recognizer_main.cxx
 
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
 # Audio Example flags
 
-CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 CXXFLAGS += ${INCDIR_PREFIX}worker_recognizer$(DELIM)userproc$(DELIM)include
 ifeq ($(CONFIG_EXAMPLES_AUDIO_RECOGNIZER_USEPREPROC),y)
 CXXFLAGS += ${INCDIR_PREFIX}worker_preprocess$(DELIM)userproc$(DELIM)include

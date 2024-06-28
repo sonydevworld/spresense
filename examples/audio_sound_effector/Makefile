@@ -47,13 +47,7 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_SOUND_EFFECTOR)
 
 MAINSRC = audio_sound_effector.cxx
 
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
 # Audio Example flags
-
-CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
