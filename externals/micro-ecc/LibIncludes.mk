@@ -34,6 +34,6 @@
 ############################################################################
 
 ifeq ($(CONFIG_EXTERNALS_MICRO_ECC), y)
-CFLAGS   += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/micro-ecc/micro-ecc"}
-CXXFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" "$(SDKDIR)/../externals/micro-ecc/micro-ecc"}
+CFLAGS   += ${INCDIR_PREFIX}$(SDKDIR)/../externals/micro-ecc/micro-ecc
+CXXFLAGS += ${INCDIR_PREFIX}$(SDKDIR)/../externals/micro-ecc/micro-ecc
 endif
