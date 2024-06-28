@@ -36,11 +36,6 @@
 include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
-LTEALTCOMAPIINCDIR = $(SDKDIR)$(DELIM)modules$(DELIM)include$(DELIM)lte
-
-CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom
-CFLAGS += -I$(LTEALTCOMAPIINCDIR)$(DELIM)altcom$(DELIM)net
-
 MAINSRC = lte_sysctl.c
 
 PROGNAME  = $(CONFIG_LTE_SYSCTL_CMDNAME)
