@@ -111,7 +111,7 @@ int logdump_main(int argc, char **argv)
 
   /* Dump from file */
 
-  snprintf(logfile, 64, CONFIG_SYSTEM_LOGSAVE_MOUNTPOINT"/%s.log", name);
+  snprintf(logfile, 64, CONFIG_SYSTEM_LOGDUMP_MOUNTPOINT"/%s.log", name);
 
   fp = fopen(logfile, "rb");
   if (fp == NULL)
