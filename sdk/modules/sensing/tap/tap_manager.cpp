@@ -163,12 +163,8 @@ static int TapMngsendAcccmd(int acc_cmd)
 
           /* send signal */
 
-#ifdef CONFIG_CAN_PASS_STRUCTS
           value.sival_ptr = NULL;
           (void)sigqueue(g_tap_mng_task_id, TAP_MNG_CMD_SIGNAL, value);
-#else
-          (void)sigqueue(g_tap_mng_task_id, TAP_MNG_CMD_SIGNAL, NULL);
-#endif
 
         }
       /* waiting for command complete */
@@ -279,7 +275,7 @@ static void TapMngTapLibRun(void)
   timeout.tv_sec = 2;
   timeout.tv_nsec = 0;
 
-  /* send responce ACC_INIT complete */
+  /* send response ACC_INIT complete */
 
   TapMngsendAcccmdResp();
 
@@ -784,7 +780,7 @@ int TapMngStop(int ctl_id)
 
   TAP_MNG_NODE_LOCK();
 
-  /* Find Node from contol id */
+  /* Find Node from control id */
 
   p_tapmng_node = TapMngFindNode(ctl_id);
   if (NULL != p_tapmng_node)
