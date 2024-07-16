@@ -36,7 +36,7 @@
 include $(APPDIR)/Make.defs
 include $(SDKDIR)/Make.defs
 
-TGT_FILE = nsh_romfsimg.h
+TGT_FILE = etc_romfs.c
 
 MKROMIMG = $(TOPDIR)/tools/mkromfsimg.sh
 
@@ -47,6 +47,10 @@ context:: $(TGT_FILE)
 
 distclean::
 	$(Q) rm -f $(TGT_FILE)
+
+ifeq ($(CONFIG_SYSTEM_STARTUP_SCRIPT),y)
+CSRCS = $(TGT_FILE)
+endif
 
 include $(APPDIR)/Application.mk
 
