@@ -1,0 +1,10 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config SYSTEM_SYSUTIL
+	bool "Create firmware for the system utility"
+	default n
+	---help---
+		Create a firmware for the system utility called as sysutil.spk.
