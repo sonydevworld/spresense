@@ -75,6 +75,7 @@ struct bt_a2dp_media_thread_s
   pthread_mutex_t mutex;
   pthread_attr_t attr;
   pthread_t thread;
+  bool is_initialized;
 };
 #endif /* CONFIG_BLUETOOTH_A2DP_USE_THREAD */
 
@@ -88,7 +89,10 @@ static struct bt_a2dp_state_s g_bt_a2dp_state =
 };
 
 #ifdef CONFIG_BLUETOOTH_A2DP_USE_THREAD
-static struct bt_a2dp_media_thread_s g_bt_a2dp_media_thread;
+static struct bt_a2dp_media_thread_s g_bt_a2dp_media_thread =
+{
+  .is_initialized = false
+};
 #endif /* CONFIG_BLUETOOTH_A2DP_USE_THREAD */
 
 /****************************************************************************
@@ -181,7 +185,7 @@ static int event_recv_data(struct bt_a2dp_event_recv_t *event_recv)
   int ret = BT_SUCCESS;
 
 #ifdef CONFIG_BLUETOOTH_A2DP_USE_THREAD
-  if (!g_bt_a2dp_media_thread.mutex.pid)
+  if (!g_bt_a2dp_media_thread.is_initialized)
     {
       pthread_mutex_init(&g_bt_a2dp_media_thread.mutex, NULL);
       sched_getparam(0, &g_bt_a2dp_media_thread.param);
@@ -190,6 +194,7 @@ static int event_recv_data(struct bt_a2dp_event_recv_t *event_recv)
                                   BT_A2DP_SCHED_EXEC_MEDIA_DATA);
       pthread_attr_setschedparam(&g_bt_a2dp_media_thread.attr,
                                  &g_bt_a2dp_media_thread.param);
+      g_bt_a2dp_media_thread.is_initialized = true;
     }
   pthread_create(&g_bt_a2dp_media_thread.thread, &g_bt_a2dp_media_thread.attr,
                  receive_thread, (pthread_addr_t)event_recv);
