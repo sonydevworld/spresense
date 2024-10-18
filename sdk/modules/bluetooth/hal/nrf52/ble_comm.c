@@ -3386,7 +3386,18 @@ static int nrf52_ble_pairing(uint16_t handle)
        * skip pairing and only encrypt with stored key.
        */
 
-      ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+      if (BondInfoInFlash[ret].ownEncKey.master_id.ediv != 0)
+        {
+          /* LE Legacy Pairing */
+
+          ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+        }
+      else
+        {
+          /* LE Secure Connections Pairing */
+
+          ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].ownEncKey);
+        }
     }
   else
     {
