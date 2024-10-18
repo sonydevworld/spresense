@@ -457,7 +457,7 @@ static void on_read(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
 
   g_read_datalen = ble_gatt_char->value.length;
   memcpy(g_read_data, ble_gatt_char->value.data, g_read_datalen);
-  g_charrd_result = ble_gatt_char->status;
+  g_charrd_result = (g_read_datalen > 0) ? BT_SUCCESS : BT_FAIL;
 }
 
 static void on_notify(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
@@ -823,21 +823,21 @@ static int access_descriptor(uint16_t conn_handle,
                              struct ble_gattc_db_disc_char_s *char_db)
 {
   int ret = BT_SUCCESS;
-  uint16_t buf;
-  uint16_t len;
+  uint16_t buf = 0;
+  uint16_t len = 0;
 
   if (char_db->cccd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
     {
       ret = read_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+
       if (buf == NOTIFICATION_DISABLED)
         {
           buf = NOTIFICATION_ENABLED;
           ret = write_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, len);
-        }
-
-      if (ret != BT_SUCCESS)
-        {
-          return ret;
         }
     }
 
