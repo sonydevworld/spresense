@@ -264,6 +264,7 @@ static void set_datetime(struct cxd56_gnss_date_s *date,
 
   if (time->usec == 0)
     {
+      memset(&tm, 0, sizeof(tm));
       tm.tm_year = date->year - 1900;
       tm.tm_mon  = date->month - 1;
       tm.tm_mday = date->day;

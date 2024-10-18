@@ -197,6 +197,7 @@ static int gnss_task(int argc, char **argv)
 
           radius = sqrtf(hvar * hvar + vvar * vvar);
 
+          memset(&tm, 0, sizeof(tm));
           tm.tm_sec  = posdat.receiver.time.sec;
           tm.tm_min  = posdat.receiver.time.minute;
           tm.tm_hour = posdat.receiver.time.hour;
