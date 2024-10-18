@@ -550,7 +550,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
     }
     BLE_PRT("\n");
   } else {
-    BLE_PRT("ExchangePairing: peer enc_info_ltk=%d\n", gapMem.wrapperBondInfo.peerEncKey.enc_info.ltk_len);
+    BLE_PRT("ExchangePairing: own enc_info_ltk=%d\n", gapMem.wrapperBondInfo.ownEncKey.enc_info.ltk_len);
   }
 
   // peer
