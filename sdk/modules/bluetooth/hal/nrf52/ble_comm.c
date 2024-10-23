@@ -56,6 +56,7 @@
 #include <nrf_crypto.h>
 #include <nrf_crypto_ecc.h>
 #include <nrf_crypto_ecdh.h>
+#include <nrf_soc.h>
 
 /******************************************************************************
  * externs
@@ -75,6 +76,9 @@ extern void board_nrf52_initialize(void);
 #define NRF52_SYS_ATTR_DATA_LEN_HANDLE (2)
 #define NRF52_SYS_ATTR_DATA_LEN_LEN    (2)
 #define NRF52_SYS_ATTR_DATA_LEN_VALUE  (2)
+
+#define IM_ADDR_CLEARTEXT_LENGTH  (3)
+#define IM_ADDR_CIPHERTEXT_LENGTH (3)
 
  /******************************************************************************
  * Structure define
@@ -857,6 +861,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   g_ble_context.conn_sts                = BLE_CONN_STS_CONNECTED;
   g_ble_context.is_scanning             = false;
   g_ble_context.is_advertising          = false;
+  g_ble_context.ble_addr.type           = evt->addr.type;
   memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
@@ -1425,22 +1430,74 @@ void onTxComplete(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   memcpy(pBleEvent->evtData, &commMem.txCompleteData, pBleEvent->evtDataSize);
 }
 
-static int searchBondInfoIndex(ble_gap_master_id_t *id)
+/* Calculate the ah() hash function described in Bluetooth core specification */
+
+static void ah(uint8_t const *p_k, uint8_t const *p_r, uint8_t *p_local_hash)
+{
+  nrf_ecb_hal_data_t ecb_hal_data;
+  uint32_t i;
+
+  for (i = 0; i < SOC_ECB_KEY_LENGTH; i++)
+    {
+      ecb_hal_data.key[i] = p_k[SOC_ECB_KEY_LENGTH - 1 - i];
+    }
+
+  memset(ecb_hal_data.cleartext, 0, SOC_ECB_KEY_LENGTH - IM_ADDR_CLEARTEXT_LENGTH);
+
+  for (i = 0; i < IM_ADDR_CLEARTEXT_LENGTH; i++)
+    {
+      ecb_hal_data.cleartext[SOC_ECB_KEY_LENGTH - 1 - i] = p_r[i];
+    }
+
+  sd_ecb_block_encrypt(&ecb_hal_data);
+
+  for (i = 0; i < IM_ADDR_CIPHERTEXT_LENGTH; i++)
+    {
+      p_local_hash[i] = ecb_hal_data.ciphertext[SOC_ECB_KEY_LENGTH - 1 - i];
+    }
+}
+
+static bool im_address_resolve(ble_gap_addr_t const *p_addr, ble_gap_irk_t const *p_irk)
+{
+  uint8_t hash[IM_ADDR_CIPHERTEXT_LENGTH];
+  uint8_t local_hash[IM_ADDR_CIPHERTEXT_LENGTH];
+  uint8_t prand[IM_ADDR_CLEARTEXT_LENGTH];
+
+  if (p_addr->addr_type != BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE)
+    {
+      return false;
+    }
+
+  memcpy(hash, p_addr->addr, IM_ADDR_CIPHERTEXT_LENGTH);
+  memcpy(prand, &p_addr->addr[IM_ADDR_CIPHERTEXT_LENGTH], IM_ADDR_CLEARTEXT_LENGTH);
+  ah(p_irk->irk, prand, local_hash);
+
+  return (memcmp(hash, local_hash, IM_ADDR_CIPHERTEXT_LENGTH) == 0);
+}
+
+static int searchBondInfoIndexAddress(ble_gap_addr_t *addr)
 {
   int i;
-
   uint32_t list = bleBondEnableList;
 
   for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++, list >>= 1)
     {
       if (list & 1)
         {
-          if (memcmp(&BondInfoInFlash[i].ownEncKey.master_id,
-                    id,
-                    sizeof(ble_gap_master_id_t))
-               == 0)
+          if ((addr->addr_type == BLE_GAP_ADDR_TYPE_PUBLIC) ||
+              (addr->addr_type == BLE_GAP_ADDR_TYPE_RANDOM_STATIC))
             {
-              break;
+              if (memcmp(BondInfoInFlash[i].bondInfo.addr, addr->addr, BLE_GAP_ADDR_LEN) == 0)
+                {
+                  break;
+                }
+            }
+          else if (addr->addr_type == BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE)
+            {
+              if (im_address_resolve(addr, &BondInfoInFlash[i].peerIdKey.id_info))
+                {
+                  break;
+                }
             }
         }
     }
@@ -1526,8 +1583,11 @@ static
 void saveSysAttrData(ble_gap_master_id_t *id, uint8_t *sys_attr_data)
 {
   int index;
+  ble_gap_addr_t addr;
 
-  index = searchBondInfoIndex(id);
+  addr.addr_type = g_ble_context.ble_addr.type;
+  memcpy(addr.addr, g_ble_context.ble_addr.addr, BLE_GAP_ADDR_LENGTH);
+  index = searchBondInfoIndexAddress(&addr);
 
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
@@ -2012,7 +2072,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       BLE_PRT("onSecInfoRequest: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
 
-  index = searchBondInfoIndex(&secinfo->master_id);
+  index = searchBondInfoIndexAddress(&secinfo->peer_addr);
 
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
