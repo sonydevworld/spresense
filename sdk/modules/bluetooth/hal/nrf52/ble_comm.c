@@ -262,8 +262,8 @@ static void set_bondinfo_for_save_event(struct ble_bondinfo_s *apps,
          nrf52->bondInfo.addr,
          BLE_GAP_ADDR_LENGTH);
 
-  memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
-  memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(apps->own.irk, nrf52->ownIdKey.id_info.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(apps->peer.irk, nrf52->peerIdKey.id_info.irk, BLE_GAP_SEC_KEY_LEN);
   set_EncKey_for_save_event(&apps->own,  &nrf52->ownEncKey);
   set_EncKey_for_save_event(&apps->peer, &nrf52->peerEncKey);
 
