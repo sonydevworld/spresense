@@ -760,6 +760,7 @@ static uint32_t get_current_tm(void){
     // Convert the number of seconds elapsed since GPS reference date and time obtained by above API to the number of seconds elapsed since 00:00:00 on January 1, 1900
     // Convert by adding the number of seconds elapsed from 00:00:00 on January 1, 1900 to 00:00:00 on January 6, 1980, which is the base date of GPS time
     struct tm base_time;
+    memset(&base_time, 0, sizeof(base_time));
     base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
     base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
     base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;

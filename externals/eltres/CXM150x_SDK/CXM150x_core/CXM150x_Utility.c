@@ -334,6 +334,7 @@ uint32_t conv_CXM150x_GNSSTime_to_string(uint8_t *p_s, uint8_t *p_date){
     uint32_t val = 0;
 
     if (sscanf((char*)p_s, "%lx", &val)) {
+        memset(&base_time, 0, sizeof(base_time));
         base_time.tm_sec = GPS_FORMAT_BASE_TIME_SEC;
         base_time.tm_min = GPS_FORMAT_BASE_TIME_MIN;
         base_time.tm_hour = GPS_FORMAT_BASE_TIME_HOUR;

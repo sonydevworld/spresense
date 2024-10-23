@@ -87,6 +87,7 @@ static void set_system_time(uint16_t year, uint8_t month, uint8_t day,
   struct tm tm;
   struct timespec ts;
 
+  memset(&tm, 0, sizeof(tm));
   tm.tm_sec  = 0;           /* Seconds (0-61, allows for leap seconds) */
   tm.tm_min  = minute;      /* Minutes (0-59) */
   tm.tm_hour = hour;        /* Hours (0-23) */
