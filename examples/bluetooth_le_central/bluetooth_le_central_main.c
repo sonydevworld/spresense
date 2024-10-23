@@ -823,21 +823,21 @@ static int access_descriptor(uint16_t conn_handle,
                              struct ble_gattc_db_disc_char_s *char_db)
 {
   int ret = BT_SUCCESS;
-  uint16_t buf;
-  uint16_t len;
+  uint16_t buf = 0;
+  uint16_t len = 0;
 
   if (char_db->cccd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
     {
       ret = read_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+
       if (buf == NOTIFICATION_DISABLED)
         {
           buf = NOTIFICATION_ENABLED;
           ret = write_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, len);
-        }
-
-      if (ret != BT_SUCCESS)
-        {
-          return ret;
         }
     }
 
