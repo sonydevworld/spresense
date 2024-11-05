@@ -45,9 +45,7 @@
 #include "sprmp3_msghandler.h"
 #include "sprmp3_sendback.h"
 
-#ifdef SPRMP3_DEBUG
 #include "sprmp3_debug.h"
-#endif
 
 #ifdef ENABME_PERFORMANCE
 #include <stdio.h>
@@ -431,9 +429,7 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (fill_tagsize(inst) == 0)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("fill_tagsize() error\n");
-#endif
       return SPRMP3_STATE_ERROR;
     }
 
@@ -441,10 +437,8 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (inst->fcache.fillsize != MINIMP3_ID3_DETECT_SIZE)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("fillsize is not equal ID3 SIZE : %d\n",
                      inst->fcache.fillsize);
-#endif
       return SPRMP3_STATE_ERROR;
     }
 
@@ -857,9 +851,7 @@ static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
           inst->tgtcache.decsize = inst->tgtcache.remofst;
           outq->done |= SPRMP3_OUTDONE(inst);
           inst->omem_wofst = 0;
-#ifdef SPRMP3_DEBUG
           sprmp3_dprintf("Force the decode finish.\n");
-#endif
           return SPRMP3_STATE_ENDING;
         }
       else
@@ -1198,17 +1190,14 @@ int mp3dec_main(void)
   dbg_init_compare();
 #endif
 
-#ifdef SPRMP3_DEBUG
   print_status(&g_sys);
-#endif
 
-  send_bootmsg();
+  send_bootmsg(NULL);
 
   while (g_sys.system_state != SPRMP3_SYSSTATE_TERM)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("\n::::::::: Start Loop ::::::::::\n");
-#endif
+      print_status(&g_sys);
       if (g_sys.system_state == SPRMP3_SYSSTATE_STOP)
         {
           sprmp3_pollmessage(&g_sys, 1);
@@ -1216,29 +1205,21 @@ int mp3dec_main(void)
       else
         {
           sprmp3_pollmessage(&g_sys, 0);
-#ifdef SPRMP3_DEBUG
           print_status(&g_sys);
           print_buffer_status(&g_sys);
-#endif
           if (g_sys.system_state != SPRMP3_SYSSTATE_TERM)
             {
               exec_playing(&g_sys);
-#ifdef SPRMP3_DEBUG
               print_buffer_status(&g_sys);
-#endif
               if (g_sys.system_state == SPRMP3_SYSSTATE_PAUSE ||
                   !exist_playing(g_sys.insts))
                 {
-#ifdef SPRMP3_DEBUG
                   sprmp3_dprintf("Just Deliver PCM..\n");
-#endif
                   deliver_outpcm(&g_sys.outqueue);
                 }
               else
                 {
-#ifdef SPRMP3_DEBUG
                   sprmp3_dprintf("Deliver PCM if possible..\n");
-#endif
                   deliver_decodedpcm(g_sys.insts,
                                      &g_sys.outqueue,
                                      &g_sys.sys_gain,

@@ -46,9 +46,7 @@
 #include "sprmp3_msghandler.h"
 #include "sprmp3_sendback.h"
 
-#ifdef SPRMP3_DEBUG
 #include "sprmp3_debug.h"
-#endif
 
 /****************************************************************************
  * Public Data
@@ -132,10 +130,7 @@ static void handle_system_msg(sprmp3_sys_t *sys,
 
       case AL_COMM_MSGCODESYS_TERM:
 
-#ifdef SPRMP3_DEBUG
         sprmp3_dprintf("[RCV] Terminate\n");
-#endif
-
         sys->system_state = SPRMP3_SYSSTATE_TERM;
         release_all_mem(sys);
         break;
@@ -307,6 +302,8 @@ static void handle_message(sprmp3_sys_t *sys,
                            al_comm_msghdr_t hdr,
                            al_comm_msgopt_t *opt)
 {
+  sprmp3_dprintf("[mp3dec] GRP:%d TYP:%d COD:%d OPT:%d\n",
+                 hdr.grp, hdr.type, hdr.code, hdr.opt);
   switch (hdr.grp)
     {
       case AL_COMM_MESSAGE_SYS:
