@@ -74,7 +74,7 @@ void audiolite_mp3dec::decode_runner()
 
   while (_is_thrdrun)
     {
-      if (_isplay)
+      if (_isplay && _worker_booted)
         {
           audiolite_memapbuf *mem = 
               (audiolite_memapbuf *)_omempool->allocate();
@@ -216,18 +216,9 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
             }
         }
 
-      for (int i = 0; i < thiz->_outq.get_qsize(); i++)
-        {
-          mem = (audiolite_memapbuf *)thiz->_omempool->allocate();
-          if (mem)
-            {
-              thiz->_outq.push(mem);
-              alworker_inject_omem(thiz->_worker.getwtask(), mem);
-            }
-        }
-
       alworker_send_startframe(thiz->_worker.getwtask());
       alworker_send_start(thiz->_worker.getwtask());
+      thiz->_worker_booted = true; /* This makes start injection of omem */
     }
   else if (CHECK_HDR(hdr, SYS, SYS_ERR))
     {
@@ -254,7 +245,8 @@ audiolite_mp3dec::audiolite_mp3dec() : audiolite_decoder("mp3decomem",
                                        CONFIG_ALMP3DEC_INJECTSTACK),
                   _omempool(NULL), _worker(),
                   _inq(SPRMP3_FRAMEMEM_QSIZE / 2),
-                  _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false)
+                  _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false),
+                  _worker_booted(false)
 {
   _worker.set_msghandler(audiolite_mp3dec::handle_mesage, this);
 }
@@ -293,6 +285,7 @@ int audiolite_mp3dec::stop_decode()
     }
   _inq.disable();
   _worker.terminate_worker();
+  _worker_booted = false;
   _outq.disable();
 
   return OK;
