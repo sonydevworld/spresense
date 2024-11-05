@@ -40,6 +40,8 @@
 
 #include <nuttx/config.h>
 #include <stdio.h>
+#include <poll.h>
+#include <fcntl.h>
 
 #include <audiolite/audiolite.h>
 
@@ -81,6 +83,7 @@ int main(int argc, FAR char *argv[])
   int ret;
   my_mp3listener lsn;
   int volume = 1000;
+  struct pollfd pfd;
 
   /* Argument check */
 
@@ -191,7 +194,17 @@ int main(int argc, FAR char *argv[])
 
   while (lsn.playing)
     {
-      usleep(10 * 1000);
+      pfd.fd = fileno(stdin);
+      pfd.events = POLLIN;
+
+      poll(&pfd, 1, 10 /* ms */);
+      if (pfd.revents & POLLIN)
+        {
+          if (getchar() == 'q')
+            {
+              break;
+            }
+        }
     }
 
   /* Stop playing */

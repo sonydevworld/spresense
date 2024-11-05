@@ -200,12 +200,11 @@ int audiolite_filestream::send_data(audiolite_mem *mem,
 {
   char *data = (char *)mem->get_data();
   int sz = mem->get_storedsize() - ofst;
-  int ret = 0;
+  int ret = -EINVAL;
 
   if (_fp && sz > 0)
     {
-      ret = fwrite(&data[ofst], sz, 1, _fp);
-      ret = ret == 1 ? sz : ret;
+      ret = fwrite(&data[ofst], 1, sz, _fp);
     }
 
   return ret;

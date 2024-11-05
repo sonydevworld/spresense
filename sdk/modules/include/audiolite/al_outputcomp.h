@@ -55,6 +55,7 @@ class audiolite_outputcomp : public audiolite_component,
                              public audiolite_drvlistener
 {
   private:
+    volatile bool enqueue_enable;
     audiolite_driver *_driver;
 
   public:
