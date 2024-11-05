@@ -87,7 +87,7 @@ MODULE = $(CONFIG_{configname})
 
 ASRCS =
 CSRCS =
-MAINSRC = {appname}_main.c
+MAINSRC = {appname}_main.{ext}
 
 include $(APPDIR)/Application.mk
 '''
@@ -102,7 +102,7 @@ MAINCSRC_TMPL = '''
 #include <nuttx/config.h>
 #include <stdio.h>
 
-int main(int argc, FAR char *argv[])
+{extern_desc}int main(int argc, FAR char *argv[])
 {{
   return 0;
 }}
@@ -121,10 +121,10 @@ GITIGNORE = '''/Make.dep
 /*.src
 '''
 
-def create_from_template(template, filename, appname, configname, menudesc=None):
+def create_from_template(template, filename, appname, configname, ext, extern_desc, menudesc=None):
     with open(filename, "w") as f:
-        f.write(template.format(appname=appname, configname=configname,
-                                menudesc=menudesc))
+        f.write(template.format(appname=appname, configname=configname, ext=ext,
+                                extern_desc=extern_desc, menudesc=menudesc))
 
 if __name__ == '__main__':
 
@@ -137,6 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('desc', type=str, nargs="?", help='Menu description')
     parser.add_argument('-d', '--basedir', type=str, default='examples',
                         help='Base directory to create new application')
+    parser.add_argument('-x', '--cplusplus', action='store_true', help='Generate C++ code')
     parser.add_argument('-v', '--verbose', action='count', default=0, help='Verbose messages')
     opts = parser.parse_args()
 
@@ -145,7 +146,9 @@ if __name__ == '__main__':
     appname = opts.appname
     optprefix = os.path.basename(os.path.normpath(opts.basedir)).upper()
     configname = optprefix + '_' + appname.upper()
-    maincsrcfile = appname + '_main.c'
+    ext = 'cxx' if opts.cplusplus else 'c'
+    extern_desc = 'extern "C" ' if opts.cplusplus else ''
+    mainsrcfile = appname + '_main.' + ext
     sdkdir = os.path.abspath(os.path.join(sys.argv[0], '..', '..'))
 
     #
@@ -185,10 +188,10 @@ if __name__ == '__main__':
 
     os.chdir(targetdir)
 
-    create_from_template(KCONFIG_TMPL, 'Kconfig', appname, configname, menudesc)
-    create_from_template(MAKEFILE_TMPL, 'Makefile', appname, configname)
-    create_from_template(MAKEDEFS_TMPL, 'Make.defs', appname, configname)
-    create_from_template(MAINCSRC_TMPL, maincsrcfile, appname, configname)
+    create_from_template(KCONFIG_TMPL, 'Kconfig', appname, configname, ext, extern_desc, menudesc)
+    create_from_template(MAKEFILE_TMPL, 'Makefile', appname, configname, ext, extern_desc)
+    create_from_template(MAKEDEFS_TMPL, 'Make.defs', appname, configname, ext, extern_desc)
+    create_from_template(MAINCSRC_TMPL, mainsrcfile, appname, configname, ext, extern_desc)
 
     with open('.gitignore', "w") as f:
         f.write(GITIGNORE)
