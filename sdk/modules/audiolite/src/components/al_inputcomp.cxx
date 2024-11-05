@@ -195,8 +195,8 @@ void audiolite_inputcomp::on_stopping(audiolite_inputnode *inode,
                                       audiolite_outputnode *onode)
 {
   al_ddebug("Enter\n");
+  audiolite_component::on_stopping(inode, onode);
   notice_stop(true);
-  audiolite_component::on_stop(inode, onode);
 }
 
 void audiolite_inputcomp::on_stop(audiolite_inputnode *inode,

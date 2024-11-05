@@ -59,7 +59,8 @@
 
 audiolite_outputcomp::audiolite_outputcomp(bool is_sub) :
     audiolite_component(1,0, 16, true, CONFIG_ALOUTCOMP_PRIO,
-                                       CONFIG_ALOUTCOMP_STACKSZ)
+                                       CONFIG_ALOUTCOMP_STACKSZ),
+    enqueue_enable(false)
 {
   set_operatorname("outputcomp");
   if  (is_sub)
@@ -96,10 +97,20 @@ int audiolite_outputcomp::set_volume(int vol)
 void audiolite_outputcomp::on_data()
 {
   audiolite_memapbuf *mem =
-              (audiolite_memapbuf *)_ins[0]->pop_data(NULL);
-  if (_driver->enqueue_buffer(mem->get_raw_abuf()) != OK)
+              (audiolite_memapbuf *)pop_data();
+  if (mem)
     {
-      mem->release();
+      if (enqueue_enable)
+        {
+          if (_driver->enqueue_buffer(mem->get_raw_abuf()) != OK)
+            {
+              mem->release();
+            }
+        }
+      else
+        {
+          mem->release();
+        }
     }
 }
 
@@ -109,6 +120,7 @@ int audiolite_outputcomp::on_starting(audiolite_inputnode *inode,
   int ret;
 
   audiolite_component::on_starting(inode, onode);
+  enqueue_enable = true;
   _driver->set_listener(this);
   ret = _driver->start(samplingrate(), samplebitwidth(), channels());
   if (ret != 0)
@@ -129,6 +141,7 @@ void audiolite_outputcomp::on_started(audiolite_inputnode *inode,
 void audiolite_outputcomp::on_canceled(audiolite_inputnode *inode,
                                        audiolite_outputnode *onode)
 {
+  enqueue_enable = false;
   _driver->stop();
   audiolite_component::on_canceled(inode, onode);
 }
@@ -136,6 +149,7 @@ void audiolite_outputcomp::on_canceled(audiolite_inputnode *inode,
 void audiolite_outputcomp::on_stop(audiolite_inputnode *inode,
                                    audiolite_outputnode *onode)
 {
+  enqueue_enable = false;
   _driver->stop();
   audiolite_component::on_stop(inode, onode);
 }
@@ -152,7 +166,6 @@ void audiolite_outputcomp::on_pusheddata(FAR struct ap_buffer_s *apb)
 
 void audiolite_outputcomp::on_stopped(void)
 {
-  _driver->stop();
   publish_event(AL_EVENT_STOPOUTPUT, 0);
 }
 
