@@ -152,23 +152,6 @@ int audiolite_inputcomp::on_starting(audiolite_inputnode *inode,
       return -1;
     }
 
-  _pool->enable_pool();
-
-  ret = _driver->start(samplingrate(), samplebitwidth(), channels());
-  if (ret != 0)
-    {
-      publish_event(AL_EVENT_DRVERROR, (unsigned long)ret);
-      return -1;
-    }
-
-  ret = start_thread();
-  if (ret != 0)
-    {
-      publish_event(AL_EVENT_INITERROR, (unsigned long)ret);
-      _driver->stop();
-      return -1;
-    }
-
   ret = audiolite_component::on_starting(inode, onode);
 
   al_ddebug("Leave\n");
@@ -178,7 +161,27 @@ int audiolite_inputcomp::on_starting(audiolite_inputnode *inode,
 void audiolite_inputcomp::on_started(audiolite_inputnode *inode,
                                       audiolite_outputnode *onode)
 {
+  int ret;
+
   al_ddebug("Entry\n");
+
+  _pool->enable_pool();
+
+  ret = _driver->start(samplingrate(), samplebitwidth(), channels());
+  if (ret != 0)
+    {
+      publish_event(AL_EVENT_DRVERROR, (unsigned long)ret);
+      return;
+    }
+
+  ret = start_thread();
+  if (ret != 0)
+    {
+      publish_event(AL_EVENT_INITERROR, (unsigned long)ret);
+      _driver->stop();
+      return;
+    }
+
   audiolite_component::on_started(inode, onode);
   al_ddebug("Leave\n");
 }
@@ -215,12 +218,18 @@ void audiolite_inputcomp::on_popeddata(FAR struct ap_buffer_s *apb)
   audiolite_memapbuf *mem =
       audiolite_memapbuf::local_cast((dq_entry_t *)apb);
 
-  mem->set_fs(samplingrate());
-  mem->set_channels(channels());
-  mem->set_storedsize(mem->get_fullsize());
-
-  _outs[0]->push_data(mem);
-  mem->release();
+  if (mem)
+    {
+      mem->set_fs(samplingrate());
+      mem->set_channels(channels());
+      mem->set_storedsize(mem->get_fullsize());
+      _outs[0]->push_data(mem);
+      mem->release();
+    }
+  else
+    {
+      al_ddebug("Error no memory on audiolite_inputcomp::on_popeddata\n");
+    }
 }
 
 void audiolite_inputcomp::on_stopped(void)
