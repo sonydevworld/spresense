@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/audiolite/worker/mp3dec/sprmp3_debug.h
+ * modules/include/asmp/stdio.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,36 +33,8 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H
-#define __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H
-
-/****************************************************************************
- * Included Files
- ****************************************************************************/
-
-#ifdef BUILD_TGT_ASMPWORKER
-# include <asmp/stdio.h>
-#else
-# include <stdio.h>
-#endif
-
-#include "minimp3_spresense.h"
-
-/****************************************************************************
- * Pre-processor Definitions
- ****************************************************************************/
-
-#ifdef SPRMP3_DEBUG
-#  define sprmp3_dprintf(...) printf(__VA_ARGS__)
-#  ifndef SPRMP3_DEBUG_DETAIL
-#    define print_status(s)
-#    define print_buffer_status(s)
-#  endif
-#else
-#  define sprmp3_dprintf(...)
-#  define print_status(s)
-#  define print_buffer_status(s)
-#endif
+#ifndef __INCLUDE_ASMP_STDIO_H
+#define __INCLUDE_ASMP_STDIO_H
 
 /****************************************************************************
  * Public Function Prototypes
@@ -71,23 +43,16 @@
 #ifdef __cplusplus
 extern "C"
 {
-#endif /* __cplusplus */
-
-#ifdef SPRMP3_DEBUG
-
-#ifdef SPRMP3_DEBUG_COMPARE
-int dbg_load_mp3frame(const char *fname, unsigned char **fmem);
 #endif
 
-#ifdef SPRMP3_DEBUG_DETAIL
-void print_status(sprmp3_sys_t *sys);
-void print_buffer_status(sprmp3_sys_t *sys);
-#endif
+/* For debug use only */
 
-#endif
+int putchar(const char c);
+int puts(const char *str);
+int printf(const char *fmt, ...);
 
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
+#endif
 
-#endif /* __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H */
+#endif  /* __INCLUDE_ASMP_STDIO_H */

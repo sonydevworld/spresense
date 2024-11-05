@@ -37,8 +37,11 @@
  * Included Files
  ****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef BUILD_TGT_ASMPWORKER
+#  include <asmp/stdio.h>
+#else
+#  include <stdio.h>
+#endif
 
 #include "sprmp3_debug.h"
 
@@ -49,6 +52,8 @@
 #ifdef SPRMP3_DEBUG
 
 #ifdef SPRMP3_DEBUG_COMPARE
+#include <stdlib.h>
+
 static int dbg_framesz;
 static int dbg_frame_ofst;
 static unsigned char *dbg_mp3framemem;
@@ -102,7 +107,8 @@ int dbg_init_compare(void)
 }
 #endif
 
-const char *inststatelog(int state)
+#ifdef SPRMP3_DEBUG_DETAIL
+static const char *inststatelog(int state)
 {
   switch (state)
     {
@@ -120,7 +126,7 @@ const char *inststatelog(int state)
   return "Unknown";
 }
 
-const char *statelog(int state)
+static const char *statelog(int state)
 {
   switch (state)
     {
@@ -142,13 +148,13 @@ void print_status(sprmp3_sys_t *sys)
   inst = &sys->insts[0];
 
   printf("==== System State : %s =====\n", statelog(sys->system_state));
-  printf("     OutQueue: Free:%ld, Queued:%ld\n",
+  printf("     OutQueue: Free:%d, Queued:%d \n",
           sq_count(&sys->outqueue.free),
           sq_count(&sys->outqueue.queued));
 
   for (i = 0; i < SPRMP3_MAX_INSTANCE; i++)
     {
-      printf("     Inst:%d Status:%s, Queue:<Free:%ld, Queued:%ld>,"
+      printf("     Inst:%d Status:%s, Queue:<Free:%d, Queued:%d>,"
              " Gain:%f\n",
              inst->id, inststatelog(inst->state),
              sq_count(&inst->fqueue.free),
@@ -201,5 +207,6 @@ void print_buffer_status(sprmp3_sys_t *sys)
       inst++;
     }
 }
+#endif  /* SPRMP3_DEBUG_DETAIL */
 
 #endif /* SPRMP3_DEBUG */

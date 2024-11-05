@@ -44,8 +44,8 @@ DEPPATH = --dep-path arch --dep-path . $(LIBC_DEPPATH)
 
 ASRCS  = exception.S
 
-CSRCS  = common.c mpmq.c mpmutex.c mpshm.c
-CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c
+CSRCS  = common.c mpmq.c mpmutex.c mpshm.c printf.c
+CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c
 CSRCS += $(LIBC_CSRCS)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))

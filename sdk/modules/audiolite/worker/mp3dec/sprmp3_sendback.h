@@ -54,7 +54,8 @@ extern "C"
 int send_frameinfo(int id, mp3dec_frame_info_t *info);
 int send_framedone(int id);
 int send_errormsg(int id, int errcode);
-int send_bootmsg(void);
+int send_bootmsg(void *d);
+int send_debug(unsigned char opt);
 int release_framemem(int id, sprmp3_fmemqueue_t *queue);
 int deliver_outpcm(sprmp3_outmemqueue_t *outq);
 

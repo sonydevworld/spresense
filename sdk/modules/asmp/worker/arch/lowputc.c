@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/audiolite/worker/mp3dec/sprmp3_debug.h
+ * modules/asmp/worker/arch/lowputc.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,61 +33,27 @@
  *
  ****************************************************************************/
 
-#ifndef __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H
-#define __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#ifdef BUILD_TGT_ASMPWORKER
-# include <asmp/stdio.h>
-#else
-# include <stdio.h>
-#endif
+#include "hardware/cxd56_uart.h"
+#include "hardware/cxd5602_memorymap.h"
+#include "arm_internal.h"
 
-#include "minimp3_spresense.h"
+#include "arch/lowputc.h"
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Public Functions
  ****************************************************************************/
 
-#ifdef SPRMP3_DEBUG
-#  define sprmp3_dprintf(...) printf(__VA_ARGS__)
-#  ifndef SPRMP3_DEBUG_DETAIL
-#    define print_status(s)
-#    define print_buffer_status(s)
-#  endif
-#else
-#  define sprmp3_dprintf(...)
-#  define print_status(s)
-#  define print_buffer_status(s)
-#endif
-
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
-
-#ifdef __cplusplus
-extern "C"
+void lowputc(const char ch)
 {
-#endif /* __cplusplus */
+  /* Wait for the transmitter to be available */
 
-#ifdef SPRMP3_DEBUG
+  while ((getreg32(CXD56_UART1_BASE + CXD56_UART_FR) & UART_FLAG_TXFF));
 
-#ifdef SPRMP3_DEBUG_COMPARE
-int dbg_load_mp3frame(const char *fname, unsigned char **fmem);
-#endif
+  /* Send the character */
 
-#ifdef SPRMP3_DEBUG_DETAIL
-void print_status(sprmp3_sys_t *sys);
-void print_buffer_status(sprmp3_sys_t *sys);
-#endif
-
-#endif
-
-#ifdef __cplusplus
+  putreg32((uint32_t)ch, CXD56_UART1_BASE + CXD56_UART_DR);
 }
-#endif /* __cplusplus */
-
-#endif /* __AUDIOLITE_WORKER_MP3DEC_SPRMP3_DEBUG_H */
