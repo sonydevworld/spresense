@@ -101,6 +101,7 @@ class audiolite_mempool : public audiolite_timeprofile
     virtual void memfree(audiolite_mem *mem) = 0;
     virtual void disable_pool() = 0;
     virtual void enable_pool() = 0;
+    virtual int remaining() = 0;
 };
 
 /****************************************************************************
@@ -203,6 +204,7 @@ class audiolite_mempoolapbuf : public audiolite_mempool
     virtual void memfree(audiolite_mem *mem);
     void disable_pool();
     void enable_pool();
+    int remaining();
 };
 
 /****************************************************************************
@@ -264,6 +266,7 @@ class audiolite_mempoolsysmsg : public audiolite_mempool
     virtual void memfree(audiolite_mem *mem);
     void disable_pool();
     void enable_pool();
+    int remaining();
 };
 
 #endif /* __INCLUDE_AUDIOLITE_MEMALLOC_H */

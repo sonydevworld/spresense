@@ -62,6 +62,7 @@ class audiolite_mp3dec : public audiolite_decoder
     audiolite_workermemq _outq;
     bool _frame_eof;
     volatile bool _worker_booted;
+    volatile bool _worker_terminated;
 
     static int handle_mesage(al_comm_msghdr_t hdr,
                              al_comm_msgopt_t *opt, void *arg);

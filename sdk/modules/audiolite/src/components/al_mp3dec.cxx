@@ -116,7 +116,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
       mem = thiz->_inq.pop();
       if (mem)
         {
-          if (thiz->_frame_eof)
+          if (thiz->_frame_eof || thiz->_worker_booted != true)
             {
               mem->release();
             }
@@ -144,8 +144,11 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
       mem = thiz->_outq.pop();
       if (mem)
         {
-          mem->set_storedsize(opt->size);
-          thiz->_outs[0]->push_data(mem);
+          if (thiz->_worker_booted)
+            {
+              mem->set_storedsize(opt->size);
+              thiz->_outs[0]->push_data(mem);
+            }
           mem->release();
         }
     }
@@ -163,6 +166,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
     {
       al_dinfo("TERM\n");
       thiz->publish_event(AL_EVENT_MP3DECWORKEREND, 0);
+      thiz->_worker_terminated = true;
       ret = -1;
     }
   else if (CHECK_HDR(hdr, SYS, SYS_PARAM))
@@ -246,7 +250,7 @@ audiolite_mp3dec::audiolite_mp3dec() : audiolite_decoder("mp3decomem",
                   _omempool(NULL), _worker(),
                   _inq(SPRMP3_FRAMEMEM_QSIZE / 2),
                   _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false),
-                  _worker_booted(false)
+                  _worker_booted(false), _worker_terminated(true)
 {
   _worker.set_msghandler(audiolite_mp3dec::handle_mesage, this);
 }
@@ -284,8 +288,21 @@ int audiolite_mp3dec::stop_decode()
       _pool->disable_pool();
     }
   _inq.disable();
-  _worker.terminate_worker();
-  _worker_booted = false;
+
+  if (_worker_booted)
+    {
+      _worker_booted = false;
+
+      _worker_terminated = false;
+      alworker_send_term(_worker.getwtask());
+      while (_worker_terminated == false)
+        {
+          usleep(1);
+        }
+
+      _worker.terminate_worker();
+    }
+
   _outq.disable();
 
   return OK;

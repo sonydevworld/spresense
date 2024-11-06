@@ -473,6 +473,16 @@ void audiolite_mempoolapbuf::enable_pool()
   mossfw_lock_give(&_lock);
 }
 
+int audiolite_mempoolapbuf::remaining()
+{
+  int ret;
+  mossfw_lock_take(&_lock);
+  ret = dq_count(&_free_mem);
+  mossfw_lock_give(&_lock);
+
+  return ret;
+}
+
 /****************************************************************************
  * class: audiolite_sysmsg
  ****************************************************************************/
@@ -638,4 +648,14 @@ void audiolite_mempoolsysmsg::enable_pool()
   _pool_enable = true;
   mossfw_condition_notice(&_cond);
   mossfw_lock_give(&_lock);
+}
+
+int audiolite_mempoolsysmsg::remaining()
+{
+  int ret;
+  mossfw_lock_take(&_lock);
+  ret = dq_count(&_free_mem);
+  mossfw_lock_give(&_lock);
+
+  return ret;
 }
