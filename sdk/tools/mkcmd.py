@@ -119,6 +119,7 @@ GITIGNORE = '''/Make.dep
 /*.adb
 /*.lib
 /*.src
+/*.spk
 '''
 
 def create_from_template(template, filename, appname, configname, ext, extern_desc, menudesc=None):
