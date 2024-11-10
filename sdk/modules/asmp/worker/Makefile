@@ -67,7 +67,7 @@ ifneq ($(CONFIG_ARCH_FAMILY),)
 CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
 endif
 
-CFLAGS += -fno-tree-loop-distribute-patterns
+CFLAGS += -fno-tree-loop-distribute-patterns -DCXD5602_WORKER
 
 AFLAGS += -isystem $(SDKDIR)/modules/include
 
