@@ -59,6 +59,7 @@
 #define AL_COMM_MESSAGE_FMEM   (2)
 #define AL_COMM_MESSAGE_OMEM   (3)
 #define AL_COMM_MESSAGE_INST   (4)
+#define AL_COMM_MESSAGE_USER   (5)
 
 #define AL_COMM_MSGTYPE_NONE  (0)
 #define AL_COMM_MSGTYPE_ASYNC (1)
@@ -95,6 +96,7 @@
 #define AL_COMM_MSGCODEERR_INVALIDINST   (7)
 #define AL_COMM_MSGCODEERR_MULTIFRAME    (8)
 #define AL_COMM_MSGCODEERR_UNSUPFRAME    (9)
+#define AL_COMM_MSGCODEERR_INVALIDSTATE  (10)
 
 #define AL_COMM_ERR_SUCCESS      (0)
 #define AL_COMM_ERR_WORKERINIT   (-1)
@@ -159,6 +161,7 @@ union al_comm_msgopt_u
     };
   int errcode;
   float gain;
+  int usr[4];
 };
 typedef union al_comm_msgopt_u al_comm_msgopt_t;
 

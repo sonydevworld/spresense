@@ -45,6 +45,8 @@ CXXSRCS += src/base/al_evthandler.cxx
 CXXSRCS += src/base/al_inputnode.cxx
 CXXSRCS += src/base/al_memalloc.cxx
 CXXSRCS += src/base/al_outputnode.cxx
+CXXSRCS += src/base/al_thread.cxx
+CXXSRCS += src/base/al_workercomp.cxx
 CXXSRCS += src/base/al_stream.cxx
 CXXSRCS += src/base/al_decoder.cxx
 CXXSRCS += src/base/al_worker.cxx
@@ -80,4 +82,3 @@ clean_mp3dec:
 	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
 clean:: clean_mp3dec
-

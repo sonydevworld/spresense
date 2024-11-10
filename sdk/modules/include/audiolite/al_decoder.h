@@ -41,7 +41,7 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
-#include <audiolite/al_source.h>
+#include <audiolite/al_component.h>
 #include <audiolite/al_stream.h>
 
 /****************************************************************************
@@ -52,7 +52,7 @@
  * class: audiolite_decoder
  ****************************************************************************/
 
-class audiolite_decoder : public audiolite_source
+class audiolite_decoder : public audiolite_component
 {
   protected:
     audiolite_stream *_stream;

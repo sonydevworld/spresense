@@ -233,5 +233,6 @@ int al_send_message(al_wtask_t *inst,
   msg->hdr.u32 = hdr.u32;
   memcpy(&msg->opt, opt, sizeof(al_comm_msgopt_t));
 
-  return mpmq_send(&inst->mqsend, msg->hdr.type, (uint32_t)msg);
+  while (mpmq_send(&inst->mqsend, msg->hdr.type, (uint32_t)msg) != OK);
+  return OK;
 }

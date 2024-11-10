@@ -54,6 +54,7 @@ int alworker_send_systemparam(al_wtask_t *wtask,
 int alworker_send_startframe(al_wtask_t *wtask);
 int alworker_send_instgain(al_wtask_t *wtask, float gain);
 int alworker_send_start(al_wtask_t *wtask);
+int alworker_send_stop(al_wtask_t *wtask);
 int alworker_send_term(al_wtask_t *wtask);
 int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
 int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);

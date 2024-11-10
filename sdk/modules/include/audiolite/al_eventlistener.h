@@ -65,10 +65,10 @@
 #define AL_EVENT_SENDERROR         (-20)
 #define AL_EVENT_MP3FRAMEINFO      (-21)
 #define AL_EVENT_MP3DECWORKEREND   (-22)
-#define AL_EVENT_MP3DECUNKNOWNEVT  (-23)
+#define AL_EVENT_UNKNOWN           (-23)
 #define AL_EVENT_MP3DECERROR       (-24)
 #define AL_EVENT_MP3DEC_WRONGTYPE  (-25)
-#define AL_EVENT_MP3DEC_WRONGVER   (-26)
+#define AL_EVENT_WRONGVERSION      (-26)
 
 class audiolite_component;
 

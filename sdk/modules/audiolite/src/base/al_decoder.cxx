@@ -46,7 +46,7 @@
 
 audiolite_decoder::audiolite_decoder(const char *name,
                                      int prio, int stack_sz)
-                 : audiolite_source(0, 1),
+                 : audiolite_component(0, 1),
                    _stream(NULL), _prio(prio), _stacksz(stack_sz),
                    _tid(-1), _tname(name), _isplay(false), _ispause(false),
                    _is_thrdrun(false)
