@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/worker_libc.mk
+# modules/asmp/worker/bin/fmsynth.mk
 #
-#   Copyright 2023 Sony Semiconductor Solutions Corporation
+#   Copyright 2024 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,23 +33,19 @@
 #
 ############################################################################
 
-ifneq ($(CONFIG_ASMP_WORKER_LIBC),)
+ifneq ($(CONFIG_ASMP_WORKER_FMSYNTH),)
 
-NXINC_PATH = $(SDKDIR)/../nuttx/include
-LIBC_PATH = $(SDKDIR)/../nuttx/libs/libc
-LIBM_PATH = $(SDKDIR)/../nuttx/libs/libm
+EXT_VPATH   ?=
+EXT_DEPPATH ?=
+EXT_CSRCS   ?=
+EXT_INCPATH ?=
 
-LIBC_LIBS  = ctype
-LIBC_LIBS += fixedmath
-LIBC_LIBS += string
-LIBC_LIBS += queue
+NXAPPS_PATH  = $(SDKDIR)/apps/include
+FMSYNTH_PATH = $(SDKDIR)/apps/audioutils
 
-LIBC_EXTRA_SRC = lib_modff.c lib_floorf.c lib_fabsf.c
-
-LIBC_LIBSPATH = $(patsubst %,$(LIBC_PATH)/%,$(LIBC_LIBS))
-LIBC_TGTPATH = $(LIBC_LIBSPATH) $(LIBM_PATH)/libm
-LIBC_CSRCS = $(notdir $(foreach p,$(LIBC_LIBSPATH),$(wildcard $(p)/*.c))) $(LIBC_EXTRA_SRC)
-LIBC_DEPPATH = --dep-path $(NXINC_PATH) --dep-path $(NXINC_PATH)/nuttx/lib $(patsubst %,--dep-path %,$(LIBC_TGTPATH))
-LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH) -DCONFIG_ARCH_STDARG_H
+EXT_VPATH   += $(FMSYNTH_PATH)
+EXT_DEPPATH += --dep-path $(FMSYNTH_PATH)
+EXT_CSRCS   += $(notdir $(wildcard $(FMSYNTH_PATH)/*.c))
+EXT_INCPATH += -I $(NXAPPS_PATH)
 
 endif
