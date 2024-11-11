@@ -56,6 +56,7 @@ class audiolite_decoder : public audiolite_component
 {
   protected:
     audiolite_stream *_stream;
+    audiolite_mempoolapbuf *_omempool;
     int _prio;
     int _stacksz;
     mossfw_thread_t _tid;
@@ -86,6 +87,10 @@ class audiolite_decoder : public audiolite_component
     virtual int resume_decode() = 0;
 
     void set_stream(audiolite_stream *st) { _stream = st; };
+    void set_outputmempool(audiolite_mempoolapbuf *pool)
+    {
+      _omempool = pool;
+    }
 };
 
 #endif  /* __INCLUDE_AUDIOLITE_DECODER_H */

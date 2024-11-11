@@ -88,6 +88,12 @@ void audiolite_mp3dec::decode_runner()
                * It will be done after finishing decode.
                */
             }
+          else
+            {
+              /* Yeild */
+
+              usleep(10 * 1000);
+            }
         }
       else
         {
@@ -253,7 +259,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
 audiolite_mp3dec::audiolite_mp3dec() : audiolite_decoder("mp3decomem",
                                        CONFIG_ALMP3DEC_INJECTPRIO,
                                        CONFIG_ALMP3DEC_INJECTSTACK),
-                  _omempool(NULL), _worker(),
+                  _worker(),
                   _inq(SPRMP3_FRAMEMEM_QSIZE / 2),
                   _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false),
                   _worker_booted(false), _worker_terminated(true)
@@ -293,6 +299,7 @@ int audiolite_mp3dec::stop_decode()
     {
       _pool->disable_pool();
     }
+
   _inq.disable();
 
   if (_worker_booted)
