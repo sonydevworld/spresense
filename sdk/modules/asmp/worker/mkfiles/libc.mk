@@ -1,7 +1,7 @@
 ############################################################################
-# modules/asmp/worker/Makefile
+# modules/asmp/worker/mkfiles/libc.mk
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2023 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,77 +33,33 @@
 #
 ############################################################################
 
-include $(APPDIR)/Make.defs
--include $(SDKDIR)/Make.defs
+ifneq ($(CONFIG_ASMP_WORKER_LIBC),)
 
-include mkfiles/libc.mk
-include mkfiles/fmsynth.mk
+EXT_VPATH   ?=
+EXT_DEPPATH ?=
+EXT_CSRCS   ?=
+EXT_INCPATH ?=
 
-VPATH   = arch $(EXT_VPATH)
-SUBDIRS =
-DEPPATH = --dep-path arch --dep-path . $(EXT_DEPPATH)
+NXINC_PATH = $(SDKDIR)/../nuttx/include
+LIBC_PATH = $(SDKDIR)/../nuttx/libs/libc
+LIBM_PATH = $(SDKDIR)/../nuttx/libs/libm
 
-ASRCS  = exception.S
+LIBC_LIBS  = ctype
+LIBC_LIBS += fixedmath
+LIBC_LIBS += string
+LIBC_LIBS += queue
 
-CSRCS  = common.c mpmq.c mpmutex.c mpshm.c printf.c
-CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c
-CSRCS += $(EXT_CSRCS)
+LIBC_EXTRA_SRC = lib_modff.c lib_floorf.c lib_fabsf.c
 
-AOBJS = $(ASRCS:.S=$(OBJEXT))
-COBJS = $(CSRCS:.c=$(OBJEXT))
+LIBC_LIBSPATH = $(patsubst %,$(LIBC_PATH)/%,$(LIBC_LIBS))
+LIBC_TGTPATH = $(LIBC_LIBSPATH) $(LIBM_PATH)/libm
+LIBC_CSRCS = $(notdir $(foreach p,$(LIBC_LIBSPATH),$(wildcard $(p)/*.c))) $(LIBC_EXTRA_SRC)
+LIBC_DEPPATH = --dep-path $(NXINC_PATH) --dep-path $(NXINC_PATH)/nuttx/lib $(patsubst %,--dep-path %,$(LIBC_TGTPATH))
+LIBC_INCPATH = -I$(NXINC_PATH) -I$(NXINC_PATH)/nuttx/lib -I$(LIBC_PATH) -DCONFIG_ARCH_STDARG_H
 
-LIB_OBJS = $(AOBJS) $(COBJS)
+EXT_VPATH   += $(LIBC_TGTPATH)
+EXT_DEPPATH += $(LIBC_DEPPATH)
+EXT_CSRCS   += $(LIBC_CSRCS)
+EXT_INCPATH += $(LIBC_INCPATH)
 
-SRCS = $(ASRCS) $(CSRCS)
-OBJS = $(AOBJS) $(COBJS)
-
-BIN = libasmpw$(LIBEXT)
-
-ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
-
-CFLAGS := $(EXT_INCPATH) $(CFLAGS)
-CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)chip
-CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)common
-ifneq ($(CONFIG_ARCH_FAMILY),)
-CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
 endif
-
-CFLAGS += -fno-tree-loop-distribute-patterns -DCXD5602_WORKER
-
-AFLAGS += -isystem $(SDKDIR)/modules/include
-
-all: $(BIN)
-.PHONY: context depend clean distclean
-
-$(AOBJS): %$(OBJEXT): %.S
-	$(call ASSEMBLE, $<, $@)
-
-$(COBJS): %$(OBJEXT): %.c
-	$(call COMPILE, $<, $@)
-
-$(BIN): $(LIB_OBJS)
-	$(call ARLOCK, $@, $(LIB_OBJS))
-
-.depend: Makefile $(SRCS) $(TOPDIR)$(DELIM).config
-	$(Q) $(MKDEP) $(DEPPATH) "$(CC)" -- $(CFLAGS) -- $(SRCS) >Make.dep
-	$(Q) touch $@
-
-depend: .depend
-
-.context:
-	$(Q) touch $@
-
-context: .context
-
-clean:
-	$(call DELFILE, $(BIN))
-	$(call CLEAN)
-
-distclean: clean
-	$(call DELFILE, $(BIN).lock)
-	$(call DELFILE, .context)
-	$(call DELFILE, Make.dep)
-	$(call DELFILE, .depend)
-
--include Make.dep
-

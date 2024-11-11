@@ -54,13 +54,14 @@
 #include <audiolite/al_nodecomm.h>
 #include <audiolite/al_outputcomp.h>
 #include <audiolite/al_outputnode.h>
-#include <audiolite/al_source.h>
 #include <audiolite/al_stream.h>
 #include <audiolite/al_wavdec.h>
 #include <audiolite/al_wavenc.h>
 #include <audiolite/al_wavheader.h>
 #include <audiolite/al_worker.h>
+#include <audiolite/al_thread.h>
 #include <audiolite/al_workercmd.h>
+#include <audiolite/al_workercomp.h>
 #include <audiolite/alworker_comm.h>
 #include <audiolite/sprmp3dec_qsize.h>
 

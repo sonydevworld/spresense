@@ -58,7 +58,7 @@
  ****************************************************************************/
 
 audiolite_inputcomp::audiolite_inputcomp(bool isi2s) :
-  audiolite_source(0,1), _tid(-1), _is_running(false), _is_stopped(true)
+  audiolite_component(0,1), _tid(-1), _is_running(false), _is_stopped(true)
 {
   if (isi2s)
     {
@@ -266,33 +266,15 @@ void *audiolite_inputcomp::inject_worker(void *arg)
                 }
               else
                 {
-                  thiz->_driver->enqueue_buffer(mem->get_raw_abuf());
+                  if (thiz->_driver->enqueue_buffer(mem->get_raw_abuf()) != OK)
+                    {
+                      mem->release();
+                      usleep(1);
+                    }
                 }
             }
         }
     }
 
   return NULL;
-}
-
-/* Inherited member functions from audiolite_source */
-
-int audiolite_inputcomp::start()
-{
-  return audiolite_component::start((audiolite_inputnode *)NULL);
-}
-
-void audiolite_inputcomp::stop()
-{
-  audiolite_component::stop((audiolite_inputnode *)NULL);
-}
-
-void audiolite_inputcomp::pause()
-{
-  audiolite_component::stop((audiolite_inputnode *)NULL);
-}
-
-int audiolite_inputcomp::resume()
-{
-  return audiolite_component::start((audiolite_inputnode *)NULL);
 }

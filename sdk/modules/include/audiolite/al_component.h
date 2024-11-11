@@ -129,11 +129,16 @@ class audiolite_component : public audiolite_nodecomm_if
     audiolite_inputnode *get_input(int id = 0);
     audiolite_outputnode *get_output(int id = 0);
 
-    int bind(audiolite_component *cmp);
+    audiolite_component *bind(audiolite_component *cmp);
     int bind(audiolite_inputnode *in, int outid = 0);
 
     int unbind(audiolite_inputnode *in);
     int unbindall();
+
+    virtual int start();
+    virtual void stop();
+    virtual void suspend();
+    virtual int resume();
 };
 
 #endif /* __INCLUDE_AUDIOLITE_COMPONENT_H */

@@ -265,3 +265,9 @@ else
 	echo "      The spresense tools completion can not work well"
 	echo "      because of old bash version."
 fi
+
+#
+# Tool path setup
+#
+
+export PATH=${SCRIPT_DIR}/bin:$PATH

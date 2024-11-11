@@ -152,6 +152,21 @@ int alworker_send_start(al_wtask_t *wtask)
   return ret;
 }
 
+int alworker_send_stop(al_wtask_t *wtask)
+{
+  int ret;
+  al_comm_msghdr_t hdr;
+  al_comm_msgopt_t opt;
+
+  hdr.grp  = AL_COMM_MESSAGE_SYS;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = AL_COMM_MSGCODESYS_STOP;
+  hdr.opt  = 0;
+
+  ret = al_send_message(wtask, hdr, &opt);
+  return ret;
+}
+
 int alworker_send_term(al_wtask_t *wtask)
 {
   int ret;

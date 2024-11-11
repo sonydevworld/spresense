@@ -416,7 +416,7 @@ audiolite_mem *audiolite_mempoolapbuf::allocate(bool blocking)
 {
   int qsz;
   audiolite_memapbuf *ret = NULL;
-  dq_entry_t *tmp;
+  dq_entry_t *tmp = NULL;
 
   mossfw_lock_take(&_lock);
 
@@ -431,11 +431,17 @@ audiolite_mem *audiolite_mempoolapbuf::allocate(bool blocking)
       measure_start();
     }
 
-  tmp = dq_remfirst(&_free_mem);
-  while (_pool_enable && blocking && tmp == NULL)
+  if (_pool_enable)
     {
-      mossfw_condition_wait(&_cond, &_lock);
       tmp = dq_remfirst(&_free_mem);
+      while (_pool_enable && blocking && tmp == NULL)
+        {
+          mossfw_condition_wait(&_cond, &_lock);
+          if (_pool_enable)
+            {
+              tmp = dq_remfirst(&_free_mem);
+            }
+        }
     }
 
   update_remain(qsz);

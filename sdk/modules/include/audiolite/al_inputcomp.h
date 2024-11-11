@@ -40,7 +40,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <audiolite/al_source.h>
+#include <audiolite/al_component.h>
 #include <audiolite/al_audiodrv.h>
 
 /****************************************************************************
@@ -51,7 +51,7 @@
  * class: audiolite_component
  ****************************************************************************/
 
-class audiolite_inputcomp : public audiolite_source,
+class audiolite_inputcomp : public audiolite_component,
                             public audiolite_drvlistener
 {
   private:
@@ -91,13 +91,6 @@ class audiolite_inputcomp : public audiolite_source,
     void on_underflowed(void){ /* Never happened. */ };
     void on_popeddata(struct ap_buffer_s *apb);
     void on_overflowed(void);
-
-  /* Inherited member functions from audiolite_source */
-
-    int start();
-    void stop();
-    void pause();
-    int resume();
 };
 
 #endif /* __INCLUDE_AUDIOLITE_INPUT_COMPONENT_H */

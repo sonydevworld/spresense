@@ -422,7 +422,17 @@ void audiolite_component::on_data()
 
       if (_outnum > 0)
         {
-          _outs[0]->push_data(mem);
+          if (mem->get_storedsize() != 0)
+            {
+              _outs[0]->push_data(mem);
+            }
+          else
+            {
+              printf("[AudioLite] %s(%d) : ZERO size memory is pushed\n"
+                     "                     This might be BUG. \n"
+                     "                     Check it if it is expected\n",
+                     __func__, __LINE__);
+            }
         }
 
       mem->release();
@@ -561,9 +571,10 @@ audiolite_outputnode *audiolite_component::get_output(int id)
   return NULL;
 }
 
-int audiolite_component::bind(audiolite_component *cmp)
+audiolite_component *audiolite_component::bind(audiolite_component *cmp)
 {
-  return bind(cmp->get_input(), 0);
+  bind(cmp->get_input(), 0);
+  return cmp;
 }
 
 int audiolite_component::bind(audiolite_inputnode *in, int outid)
@@ -605,6 +616,42 @@ int audiolite_component::unbindall()
     }
 
   return 0;
+}
+
+int audiolite_component::start()
+{
+  if (_innum != 0)
+    {
+      return -ENOTSUP;
+    }
+
+  return start((audiolite_inputnode *)NULL);
+}
+
+void audiolite_component::stop()
+{
+  if (_innum == 0)
+    {
+      stop((audiolite_inputnode *)NULL);
+    }
+}
+
+void audiolite_component::suspend()
+{
+  if (_innum == 0)
+    {
+      stop((audiolite_inputnode *)NULL);
+    }
+}
+
+int audiolite_component::resume()
+{
+  if (_innum != 0)
+    {
+      return -ENOTSUP;
+    }
+
+  return start((audiolite_inputnode *)NULL);
 }
 
 /***********************************************

@@ -31,6 +31,12 @@ config ASMP_WORKER_LIBC
 	---help---
 		Support some libraries such as ctype, string, queue, fixedmath and etc. in worker.
 
+config ASMP_WORKER_FMSYNTH
+	bool "Support fmsynth library in worker"
+	default n
+	---help---
+		Support fmsynth library. The code is in sdk/apps/audioutils/fmsynth
+
 config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
 

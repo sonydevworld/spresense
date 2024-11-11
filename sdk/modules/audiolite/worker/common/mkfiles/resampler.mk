@@ -1,0 +1,6 @@
+SPEEXDSP_DIR = $(ALWORKER_COMMON)/../ext_libs/speexdsp_resample
+
+CSRCS += resample.c
+VPATH_DIR += $(SPEEXDSP_DIR)
+INCDIRS += $(SPEEXDSP_DIR)
+CFLAGS += -DUSE_CMSIS

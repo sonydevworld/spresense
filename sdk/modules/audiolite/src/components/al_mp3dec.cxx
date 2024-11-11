@@ -188,7 +188,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
 
       if (hdr.opt != AL_MP3DECWORKER_VERSION)
         {
-          thiz->publish_event(AL_EVENT_MP3DEC_WRONGVER, hdr.opt);
+          thiz->publish_event(AL_EVENT_WRONGVERSION, hdr.opt);
           return 0;
         }
 
@@ -238,7 +238,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
     }
   else
     {
-      thiz->publish_event(AL_EVENT_MP3DECUNKNOWNEVT, hdr.u32);
+      thiz->publish_event(AL_EVENT_UNKNOWN, hdr.u32);
     }
   
   return ret;

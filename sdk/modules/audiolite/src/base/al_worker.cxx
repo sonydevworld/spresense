@@ -126,6 +126,32 @@ audiolite_memapbuf *audiolite_workermemq::pop()
   return mem;
 }
 
+audiolite_memapbuf *audiolite_workermemq::pop(unsigned char *adr)
+{
+  audiolite_memapbuf *mem = NULL;
+  dq_entry_t *tmp;
+
+  mossfw_lock_take(&_lock);
+
+  for (tmp = dq_peek(&_mem_proc); tmp; tmp = tmp->blink)
+    {
+      mem = audiolite_memapbuf::local_cast(tmp);
+      if (adr == alworker_addr_convert(mem->get_data()))
+        {
+          dq_rem(tmp, &_mem_proc);
+          break;
+        }
+      mem = NULL;
+    }
+
+  mossfw_condition_notice(&_cond);
+  mossfw_lock_give(&_lock);
+
+  al_dinfo("[%08x] poped with addr (%08x) %d : %08x\n",
+           this, adr, dq_count(&_mem_proc), mem);
+  return mem;
+}
+
 /****************************************************************************
  * class: audiolite_worker
  ****************************************************************************/

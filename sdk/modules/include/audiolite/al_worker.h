@@ -88,7 +88,9 @@ class audiolite_workermemq
 
     void push(audiolite_memapbuf *mem);
     audiolite_memapbuf *pop();
+    audiolite_memapbuf *pop(unsigned char *addr);
     int get_qsize() { return _max_qsz; };
+    int current_sz() { return dq_count(&_mem_proc); };
 };
 
 /****************************************************************************

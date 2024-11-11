@@ -62,7 +62,7 @@ SINGLETON_INST(audiolite_evthandler);
  ***********************************************/
 
 audiolite_evthandler::audiolite_evthandler(int memnum)
-    : _fs(0), _chnum(0), _bitwidth(0), _listen(NULL)
+    : _fs(48000), _chnum(2), _bitwidth(16), _listen(NULL)
 {
   _pool = new audiolite_mempoolsysmsg;
   _pool->create_instance(memnum);
