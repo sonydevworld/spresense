@@ -179,7 +179,7 @@ int release_framemem(int id, sprmp3_fmemqueue_t *queue)
 
 /*** name: deliver_outpcm */
 
-int deliver_outpcm(sprmp3_outmemqueue_t *outq)
+int deliver_outpcm(sprmp3_outmemqueue_t *outq, int eof)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
@@ -197,7 +197,7 @@ int deliver_outpcm(sprmp3_outmemqueue_t *outq)
       opt.addr = mem->addr;
       opt.size = (outq->mode == SPRMP3_MODE_JUSTDECODE) ?
                  outq->filled_size : mem->size;
-      opt.eof = 0;
+      opt.eof = eof;
 
       sq_addlast((sq_entry_t *)mem, &outq->free);
       outq->done = 0;

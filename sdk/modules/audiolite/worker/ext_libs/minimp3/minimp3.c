@@ -5,7 +5,6 @@
     See <http://creativecommons.org/publicdomain/zero/1.0/>.
 */
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "minimp3.h"

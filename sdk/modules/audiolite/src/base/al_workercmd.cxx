@@ -190,6 +190,6 @@ int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem)
 int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem)
 {
   return send_iframe(wtask, mem->get_data(),
-                            mem->get_fullsize(),
+                            mem->get_storedsize(),
                             mem->is_eof());
 }

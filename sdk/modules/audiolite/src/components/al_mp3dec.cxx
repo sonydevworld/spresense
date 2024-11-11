@@ -147,6 +147,12 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
           if (thiz->_worker_booted)
             {
               mem->set_storedsize(opt->size);
+              mem->clear_eof();
+              if (opt->eof != 0)
+                {
+                  mem->set_eof();
+                }
+
               thiz->_outs[0]->push_data(mem);
             }
           mem->release();

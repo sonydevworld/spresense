@@ -57,7 +57,7 @@ int send_errormsg(int id, int errcode);
 int send_bootmsg(void *d);
 int send_debug(unsigned char opt);
 int release_framemem(int id, sprmp3_fmemqueue_t *queue);
-int deliver_outpcm(sprmp3_outmemqueue_t *outq);
+int deliver_outpcm(sprmp3_outmemqueue_t *outq, int eof);
 
 #ifdef __cplusplus
 }
