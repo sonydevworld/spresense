@@ -66,7 +66,7 @@ class my_mp3listener : public audiolite_eventlistener
     {
       printf("Event %s is happened : %d\n", convert_evtid(evt),
                                             (int)arg);
-      if (evt == AL_EVENT_DECODEDONE)
+      if (evt == AL_EVENT_STOPOUTPUT)
         {
           playing = false;
         }
