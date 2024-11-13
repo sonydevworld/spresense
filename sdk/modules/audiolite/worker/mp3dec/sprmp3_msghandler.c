@@ -66,7 +66,7 @@ static void release_all_mem(sprmp3_sys_t *sys)
 
   while (sq_peek(&sys->outqueue.queued) != NULL)
     {
-      deliver_outpcm(&sys->outqueue);
+      deliver_outpcm(&sys->outqueue, 0);
     }
 
   for (i = 0; i < SPRMP3_MAX_INSTANCE; i++)

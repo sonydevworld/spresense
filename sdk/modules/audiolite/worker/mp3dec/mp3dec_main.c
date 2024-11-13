@@ -92,7 +92,7 @@ static struct state_proc_s state_procs[] =
   [SPRMP3_STATE_FILLUPREMAIN] = {exec_fillremstate, 1},
   [SPRMP3_STATE_WAITIN]       = {exec_waitinstate,  1},
   [SPRMP3_STATE_WAITINREMAIN] = {exec_winremstate,  1},
-  [SPRMP3_STATE_ENDING]       = {exec_endingstate,  1}
+  [SPRMP3_STATE_ENDING]       = {exec_endingstate,  2}
 };
 
 static sprmp3_sys_t g_sys;
@@ -205,7 +205,7 @@ static int exec_endingstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
 
   if (!(outq->done & mask))
     {
-      if (is_decode_done(inst))
+      if (is_decode_done(inst) && outq->filled_size == 0)
         {
           send_framedone(inst->id);
           reset_instance(inst);
@@ -1104,7 +1104,7 @@ static bool all_player_done(sprmp3_t *insts, unsigned int done)
   for (i = 0; i < SPRMP3_MAX_INSTANCE; i++)
     {
       mask = 1 << insts->id;
-      if (state_procs[insts->state].playing && !(mask & done))
+      if (state_procs[insts->state].playing == 1 && !(mask & done))
         {
           return false;
         }
@@ -1167,7 +1167,7 @@ static int deliver_decodedpcm(sprmp3_t *insts, sprmp3_outmemqueue_t *outq,
                 break;
             }
 
-          return deliver_outpcm(outq);
+          return deliver_outpcm(outq, is_decode_done(insts) ? 1 : 0);
         }
     }
 
@@ -1215,7 +1215,8 @@ int mp3dec_main(void)
                   !exist_playing(g_sys.insts))
                 {
                   sprmp3_dprintf("Just Deliver PCM..\n");
-                  deliver_outpcm(&g_sys.outqueue);
+                  deliver_outpcm(&g_sys.outqueue,
+                                 is_decode_done(g_sys.insts) ? 1 : 0);
                 }
               else
                 {
