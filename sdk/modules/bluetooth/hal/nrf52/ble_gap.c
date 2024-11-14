@@ -726,6 +726,7 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   int ret      = BLE_SUCCESS;
   int errCode  = 0;
   ble_gap_addr_t peerAddr = {0};
+  ble_gap_scan_params_t scanParams;
 
   if(addr == NULL) {
     return -EINVAL;
@@ -740,7 +741,8 @@ int BLE_GapConnect(BLE_GapAddr *addr)
    * application wait connection infinitely.
    */
 
-  gapMem.scanParams.timeout = CONNECTION_TIMEOUT;
+  memcpy(&scanParams, &gapMem.scanParams, sizeof(scanParams));
+  scanParams.timeout = CONNECTION_TIMEOUT;
 
   gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
   gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;
@@ -749,7 +751,7 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   peerAddr.addr_type = addr->type;
   memcpy(peerAddr.addr, addr->addr, BLE_GAP_ADDR_LENGTH);
   errCode = sd_ble_gap_connect(&peerAddr,
-                  &gapMem.scanParams,
+                  &scanParams,
                   &gapMem.connParams,
                   APP_BLE_CONN_CFG_TAG);
   ret = bleConvertErrorCode((uint32_t)errCode);
