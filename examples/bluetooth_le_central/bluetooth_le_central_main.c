@@ -501,6 +501,14 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
   db = &db_disc->params.db_discovery;
   srv = &db->services[0];
 
+  /* If any error occurs, finish discovery */
+
+  if (db_disc->result != BT_SUCCESS)
+    {
+      printf("Discovery failed result=%d\n", db_disc->result);
+      goto finish;
+    }
+
   for (i = 0; i < db->srv_count; i++, srv++)
     {
       printf("=== SRV[%d] ===\n", i);
@@ -551,10 +559,11 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
     }
 
   /* The end_handle of the last service is 0xFFFF.
-   * So, if end_handle is not 0xFFFF, the continuous service information exists.
+   * When end_handle is 0x0000, no more services are found.
+   * So, if end_handle is not 0xFFFF or 0x0000, the continuous service information exists.
    */
 
-  if (db_disc->state.end_handle != 0xFFFF)
+  if ((db_disc->state.end_handle != 0xFFFF) && (db_disc->state.end_handle != 0x0000))
     {
       if (g_target == false)
         {
@@ -564,6 +573,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
         }
     }
 
+finish:
   g_discovered = true;
 }
 
