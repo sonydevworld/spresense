@@ -54,6 +54,7 @@
 
 #include <stdint.h>
 #include <ble/ble_gatts.h>
+#include <bluetooth/ble_gatt.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -63,9 +64,6 @@
  * @{
  */
 
-
-#define BLE_DB_DISCOVERY_MAX_SRV          3 /**< Support Max services */
-#define BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV 4 /**< Support Max characteristics per service */
 #ifndef CONFIG_NRF51822
 #define MAX_VAL_DATA_LENGTH              512 /**< Max value data length. */
 #else

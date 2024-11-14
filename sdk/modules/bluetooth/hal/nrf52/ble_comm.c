@@ -2374,17 +2374,25 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
    * Then, the last handle value should be notified.
    */
 
-  last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
-  last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
-
-  if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+  if (evt.params.db_discovery.srv_count == 0)
     {
-      evt.state.end_handle = get_last_handle(last_chrc);
+      evt.state.end_handle = 0;
+      commMem.disc.start = 0;
     }
   else
     {
-      evt.state.end_handle = last_srv->srv_handle_range.end_handle;
-      commMem.disc.start = 0;
+      last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
+      last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
+
+      if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+        {
+          evt.state.end_handle = get_last_handle(last_chrc);
+        }
+      else
+        {
+          evt.state.end_handle = last_srv->srv_handle_range.end_handle;
+          commMem.disc.start = 0;
+        }
     }
 
   ble_gatt_event_handler((struct bt_event_t *)&evt);
