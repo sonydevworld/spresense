@@ -21,6 +21,15 @@ examples/bluetooth_le_central
     1. Launch "ble_central" application by NuttShell
       $ ble_central
 
+      If there is only one argument, you are able to specify a device name.
+      $ ble_central <Device name>
+      <Device name> is a string.
+
+      If there are two arguments, you are able to specify service and characteristic UUIDs.
+      $ ble_central <Service UUID> <Characteristic UUID>
+      <UUID> is a hexadecimal string without "0x".
+       e.g.) 1812, 12345678-90AB-CDEF-1234-567890ABCDEF
+
     2. Then, the following BLE procedures are executed automatically.
        - scan and connect to peripheral device named "SONY-PERIPHERAL"
          (e.g. <spresense>/examples/bluetooth_le_peripheral/ application.)

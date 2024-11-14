@@ -159,6 +159,7 @@ static struct ble_cccd_s **g_cccd = NULL;
 static bool g_target = false;
 static BLE_UUID g_target_srv_uuid;
 static BLE_UUID g_target_char_uuid;
+static char g_target_device_name[BT_NAME_LEN] = "SONY-PERIPHERAL";
 
 static uint8_t g_read_data[BLE_MAX_GATT_DATA_LEN];
 static uint16_t g_read_datalen;
@@ -193,7 +194,7 @@ static void on_le_connect_status_change(struct ble_state_s *ble_state,
   printf("  : Cause <%s> :\n",
          cause == BLESTAT_SUCCESS          ? "Success"                 :
          cause == BLESTAT_MEMCAP_EXCD      ? "Mem capacity exceed"     :
-         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connetion timeout"       :
+         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connection timeout"      :
          cause == BLESTAT_PEER_TERMINATED  ? "Peripheral terminated"   :
          cause == BLESTAT_PEER_TERM_LOWRES ? "Peripheral low resource" :
          cause == BLESTAT_PEER_TERM_POFF   ? "Peripheral power off"    :
@@ -247,12 +248,10 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
     }
   else
     {
-      const char target_device_name[] = "SONY-PERIPHERAL";
-
-      if (strcmp((char *)devname, target_device_name) != 0)
+      if (strcmp((char *)devname, g_target_device_name) != 0)
         {
           printf("%s [BLE] DevName is not matched: %s expect: %s\n",
-                 __func__, devname, target_device_name);
+                 __func__, devname, g_target_device_name);
           goto bye;
         }
     }
@@ -654,6 +653,12 @@ static int parse_argument(int argc, FAR char *argv[])
         }
 
       g_target = true;
+    }
+  else if (argc == 2)
+    {
+      strncpy(g_target_device_name, argv[1], BT_NAME_LEN);
+      g_target_device_name[BT_NAME_LEN - 1] = '\0';
+      g_target = false;
     }
   else
     {
