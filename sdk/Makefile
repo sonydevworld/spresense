@@ -201,6 +201,9 @@ endif
 
 install: $(foreach SDIR, $(TARGETDIRS), $(SDIR)_install)
 
+postinstall::
+	@:
+
 # Bypass config targets
 
 config oldconfig olddefconfig menuconfig nconfig qconfig gconfig:
