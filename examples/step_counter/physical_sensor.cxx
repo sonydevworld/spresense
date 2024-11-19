@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <arch/chip/scu.h>
+#include <nuttx/sched.h>
 
 #include "physical_sensor.h"
 
