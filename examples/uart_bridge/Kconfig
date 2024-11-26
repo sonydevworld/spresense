@@ -1,0 +1,25 @@
+
+config EXAMPLES_UART_BRIDGE
+	tristate "UART Bridge Example"
+	default n
+	---help---
+		Enable the uart_bridge app. This app is bridging data between UART0 and UART2.
+
+if EXAMPLES_UART_BRIDGE
+
+config EXAMPLES_UART_BRIDGE_PROGNAME
+	string "Program name"
+	default "uart_bridge"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_UART_BRIDGE_PRIORITY
+	int "uart_bridge task priority"
+	default 100
+
+config EXAMPLES_UART_BRIDGE_STACKSIZE
+	int "uart_bridge stack size"
+	default 2048
+
+endif
