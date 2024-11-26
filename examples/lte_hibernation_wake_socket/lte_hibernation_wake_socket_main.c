@@ -240,6 +240,7 @@ static int load_sock_context(FAR char *filename)
   if (ret < 0)
     {
       printf("SIOCSETCONTEXT failed:%d\n", errno);
+      close(sockfd);
       return -1;
     }
 
