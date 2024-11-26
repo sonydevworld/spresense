@@ -945,3 +945,30 @@ int ble_descriptor_write(uint16_t conn_handle,
 
   return ret;
 }
+
+/****************************************************************************
+ * Name: ble_set_vendor_uuid
+ *
+ * Description:
+ *   Set vendor specific UUID.
+ *   This API allows the vendor specific UUID to be discovered.
+ *
+ ****************************************************************************/
+
+int ble_set_vendor_uuid(BLE_UUID *uuid)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_gattc_ops_s *ops = &g_ble_gatt_state.ble_hal_gatt_ops->gattc;
+
+  if (ops && ops->set_vendor_uuid)
+    {
+      ret = ops->set_vendor_uuid(uuid);
+    }
+  else
+    {
+      _err("%s [BLE][GATT] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}

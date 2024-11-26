@@ -621,6 +621,17 @@ int ble_continue_db_discovery(uint16_t start_handle, uint16_t conn_handle);
 
 int ble_discover_uuid(uint16_t conn_handle, BLE_UUID *srv_uuid, BLE_UUID *char_uuid);
 
+/**
+ * @brief Set vendor specific UUID
+ *        This API allows the vendor specific UUID to be discovered.
+ *
+ * @param[in] uuid: Vendor Specific UUID (128 bit)
+ *
+ * @retval error code
+ */
+
+int ble_set_vendor_uuid(BLE_UUID *uuid);
+
 #undef EXTERN
 #ifdef __cplusplus
 }
