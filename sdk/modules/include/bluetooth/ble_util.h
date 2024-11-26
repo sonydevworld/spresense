@@ -45,6 +45,14 @@
 #include <bluetooth/ble_gatt.h>
 #include <bluetooth/hal/bt_if.h>
 
+#ifdef __cplusplus
+#define EXTERN extern "C"
+extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
@@ -301,5 +309,10 @@ int bleutil_get_manufacturer_specific_data(uint8_t *data,
                                            uint8_t *company,
                                            uint8_t **specific_data,
                                            uint8_t *specific_datalen);
+
+#undef EXTERN
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SDK_MODULES_INCLUDE_BLUETOOTH_BLE_UTIL_H */
