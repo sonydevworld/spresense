@@ -212,6 +212,10 @@ struct ble_hal_gattc_ops_s
 
   int (*descriptor_read)(uint16_t conn_handle,
                          uint16_t handle);
+
+  /** Set vendor specific UUID */
+
+  int (*set_vendor_uuid)(BLE_UUID *uuid);
 };
 
 /**

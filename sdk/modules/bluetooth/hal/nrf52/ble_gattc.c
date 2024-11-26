@@ -88,6 +88,7 @@ static int nrf52_ble_descriptor_write(uint16_t conn_handle,
                                       uint16_t len);
 static int nrf52_ble_descriptor_read(uint16_t conn_handle,
                                      uint16_t handle);
+static int nrf52_ble_set_vendor_uuid(BLE_UUID *uuid);
 
 /****************************************************************************
  * Private Data
@@ -108,6 +109,7 @@ static struct ble_hal_gatt_ops_s ble_hal_gatt_ops =
   .gattc.read                = nrf52_ble_gattc_read,
   .gattc.descriptor_write    = nrf52_ble_descriptor_write,
   .gattc.descriptor_read     = nrf52_ble_descriptor_read,
+  .gattc.set_vendor_uuid     = nrf52_ble_set_vendor_uuid,
 };
 
 /******************************************************************************
@@ -500,6 +502,24 @@ static int nrf52_ble_descriptor_read(uint16_t conn_handle,
 
   ret = sd_ble_gattc_read(conn_handle, handle, 0);
   return bleConvertErrorCode(ret);
+}
+
+static int nrf52_ble_set_vendor_uuid(BLE_UUID *uuid)
+{
+  uint32_t errCode;
+  int ret;
+  uint8_t uuid_type;
+
+  if (!uuid || (uuid->type != BLE_UUID_TYPE_UUID128))
+    {
+      return -EINVAL;
+    }
+
+  errCode = sd_ble_uuid_vs_add((ble_uuid128_t *)&uuid->value.uuid128,
+                               &uuid_type);
+
+  ret = bleConvertErrorCode(errCode);
+  return ret;
 }
 
 /****************************************************************************
