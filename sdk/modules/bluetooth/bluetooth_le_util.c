@@ -535,13 +535,15 @@ int bleutil_get_devicename(uint8_t *data, uint8_t len, char *devname)
   if (ble_parse_advertising_data(BLE_AD_TYPE_COMPLETE_LOCAL_NAME,
                                  data, len, &eir) == BT_SUCCESS)
     {
-      memcpy(devname, eir.data, sizeof(eir.data));
+      memcpy(devname, eir.data, eir.len);
+      devname[eir.len] = '\0';
       return 1;
     }
   else if(ble_parse_advertising_data(BLE_AD_TYPE_SHORT_LOCAL_NAME,
                                      data, len, &eir) == BT_SUCCESS)
     {
-      memcpy(devname, eir.data, sizeof(eir.data));
+      memcpy(devname, eir.data, eir.len);
+      devname[eir.len] = '\0';
       return 1;
     }
 
