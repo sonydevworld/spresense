@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_UART_BRIDGE),)
+CONFIGURED_APPS += uart_bridge
+endif
