@@ -23,14 +23,11 @@ WORKER_LIB = $(WORKER_DIR)$(DELIM)libasmpw$(LIBEXT)
 LDLIBPATH += -L $(WORKER_DIR)
 LDLIBS += -lasmpw
 
-ifeq ($(ALWORKER_USE_CMSIS),1)
+ifneq ($(CONFIG_ASMP_WORKER_CMSIS),)
 include $(ALWORKER_COMMONMKS)/cmsis.mk
 endif
 
 ifeq ($(ALWORKER_USE_RESAMPLER),1)
-ifneq ($(ALWORKER_USE_CMSIS),1)
-include $(ALWORKER_COMMONMKS)/cmsis.mk
-endif
 include $(ALWORKER_COMMONMKS)/resampler.mk
 endif
 

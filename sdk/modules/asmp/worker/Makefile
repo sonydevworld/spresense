@@ -38,6 +38,7 @@ include $(APPDIR)/Make.defs
 
 include mkfiles/libc.mk
 include mkfiles/fmsynth.mk
+include mkfiles/cmsis.mk
 
 VPATH   = arch $(EXT_VPATH)
 SUBDIRS =
@@ -72,7 +73,7 @@ CFLAGS += -fno-tree-loop-distribute-patterns -DCXD5602_WORKER
 
 AFLAGS += -isystem $(SDKDIR)/modules/include
 
-all: $(BIN)
+all: $(BIN) | $(EXT_LIBS)
 .PHONY: context depend clean distclean
 
 $(AOBJS): %$(OBJEXT): %.S

@@ -25,17 +25,28 @@ config ASMP_SMALL_BLOCK
 		Use small block size (64 KiB) to memory management.
 		This option is for improve memory usage, but it tends to fragmentation.
 
+menu "ASMP Worker libraries"
+
 config ASMP_WORKER_LIBC
 	bool "Support some libc functions in worker"
 	default n
 	---help---
 		Support some libraries such as ctype, string, queue, fixedmath and etc. in worker.
 
+config ASMP_WORKER_CMSIS
+	bool "Support ARM CMSIS math library in worker"
+	default n
+	---help---
+		Support ARM CMSIS math library in worker. For enabling this, you must set 
+		CONFIG_EXTERNALS_CMSIS to build the library itself.
+
 config ASMP_WORKER_FMSYNTH
 	bool "Support fmsynth library in worker"
 	default n
 	---help---
 		Support fmsynth library. The code is in sdk/apps/audioutils/fmsynth
+
+endmenu
 
 config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
