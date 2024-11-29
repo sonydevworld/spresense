@@ -645,7 +645,7 @@ int BLE_GapStartScan(void)
     gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
     gapMem.scanParams.scan_phys     = BLE_GAP_PHY_1MBPS;
     gapMem.scanParams.extended      = ENABLE_EXTENDED_ADV_RECV;
-    ble_gap_scan_tx_power           = 0;
+    ble_gap_scan_tx_power           = gapMem.txPower;
 #endif
   }
 #if NRF_SD_BLE_API_VERSION > 5

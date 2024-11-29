@@ -637,6 +637,19 @@ uint16_t ble_get_request_mtusize(void);
 int ble_get_negotiated_mtusize(uint16_t handle);
 
 /**
+ * @brief Set Tx power
+ *
+ * @param[in] tx_power: Tx power [dBm]
+ *
+ * @note Set the value supported by each device.
+ * @note This API can be called after ble_enable.
+ *
+ * @retval BLE_SUCCESS or negated errno.
+ */
+
+int ble_set_tx_power(int8_t tx_power);
+
+/**
  * @brief Execute pairing
  *
  * @param[in] handle: connection handle
