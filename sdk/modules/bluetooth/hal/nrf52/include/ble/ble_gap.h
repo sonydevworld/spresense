@@ -760,7 +760,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
  *     No
  *
  */
-int BLE_GapSetScanParam(BLE_GapScanParams *scanParam);
+int BLE_GapSetScanParam(struct ble_scan_param_s *scanParam);
 
 /**@brief    Start scanning
  * @details This call allows the application to start scanning. The scanning timeout interval is 60 seconds.The following events may be triggered: @ref BLE_GAP_EVENT_TIMEOUT, @ref BLE_GAP_EVENT_ADV_REPORT.
@@ -806,6 +806,21 @@ int BLE_GapStartScanExt(BLE_GapScanParams *scanparams);
  *
  */
 int BLE_GapStopScan(void);
+
+/**@brief    Set connection paramter
+ * @details  This call allows to set connection parameter before connecting.
+ * @param[in]  connParam: Pointer to connection parameters
+ * @return     0: success
+ *
+ * @par Blocking
+ *     Yes
+ * @par Context
+ *     Task
+ * @par Reentrant
+ *     No
+ *
+ */
+int BLE_GapSetConnectionParams(BLE_GapConnParams *connParams);
 
 /**@brief    Create a connection
  * @details  This call allows the application to create a connection. The following events may be triggered: @ref BLE_GAP_EVENT_CONNECTED.

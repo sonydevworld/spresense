@@ -149,6 +149,9 @@ static uint16_t nrf52_ble_set_mtusize(uint16_t sz);
 static uint16_t nrf52_ble_get_mtusize(void);
 static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
 static int nrf52_ble_pairing(uint16_t handle);
+static int nrf52_ble_set_txpower(int8_t tx_power);
+static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param);
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param);
 
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
@@ -189,6 +192,9 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .getMtuSize           = nrf52_ble_get_mtusize,
   .getNegotiatedMtuSize = nrf52_ble_get_negotiated_mtusize,
   .pairing              = nrf52_ble_pairing,
+  .setTxPower           = nrf52_ble_set_txpower,
+  .setScanParam         = nrf52_ble_set_scan_param,
+  .setConnParam         = nrf52_ble_set_conn_param,
 };
 
 static struct bt_hal_common_ops_s bt_hal_common_ops =
@@ -3138,9 +3144,8 @@ err:
 
 static int32_t set_adv_data(void)
 {
-#define BLE_TX_POWER_LEVEL  0
   int ret             = 0;
-  int8_t tx_power         = BLE_TX_POWER_LEVEL;
+  int8_t tx_power     = commMem.gapMem->txPower;
   BLE_GapAdvData adv_data = {0};
 
   adv_data.flags = BLE_GAP_ADV_LE_GENERAL_DISC_MODE | BLE_GAP_ADV_BR_EDR_NOT_SUPPORTED;
@@ -3475,6 +3480,74 @@ static int nrf52_ble_pairing(uint16_t handle)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_txpower
+ *
+ * Description:
+ *   Bluetooth LE set Tx Power
+ *   Supported tx_power values:
+ *    -40, -20, -16, -12, -8, -4, 0, +3 and +4 [dBm]
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_txpower(int8_t tx_power)
+{
+  int ret = 0;
+
+  if (!commMem.gapMem)
+    {
+      LOG_OUT("Must be called after BLE is enabled.\n");
+      return -EPERM;
+    }
+
+  switch (tx_power)
+    {
+      case -40:
+      case -20:
+      case -16:
+      case -12:
+      case -8:
+      case -4:
+      case 0:
+      case 3:
+      case 4:
+        commMem.gapMem->txPower = tx_power;
+        break;
+      default:
+        commMem.gapMem->txPower = 0; /* set default if illegal value */
+        ret = -EINVAL;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_scan_param
+ *
+ * Description:
+ *   Bluetooth LE set scan parameter
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param)
+{
+  return BLE_GapSetScanParam(param);
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_conn_param
+ *
+ * Description:
+ *   Bluetooth LE set connection parameter
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param)
+{
+  return BLE_GapSetConnectionParams((BLE_GapConnParams *)param);
 }
 
 /****************************************************************************

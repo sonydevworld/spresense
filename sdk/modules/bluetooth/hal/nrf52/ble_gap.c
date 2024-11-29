@@ -108,6 +108,10 @@ extern int bleConvertErrorCode(uint32_t errCode);
 #define MIN_SCAN_TIMEOUT                0x0000
 #define MAX_SCAN_TIMEOUT                0xFFFF
 
+#define IS_INVALID_SCAN_PARAM(interval, window) \
+  (((interval) < BLE_GAP_SCAN_INTERVAL_MIN) || \
+   ((window) < BLE_GAP_SCAN_WINDOW_MIN))
+
 #define MIN_CONNECTION_INTERVAL         MSEC_TO_UNITS(7.5, UNIT_1_25_MS)
 #define MAX_CONNECTION_INTERVAL         MSEC_TO_UNITS(30, UNIT_1_25_MS)
 #define SLAVE_LATENCY                   0
@@ -119,6 +123,15 @@ extern int bleConvertErrorCode(uint32_t errCode);
  */
 
 #define CONNECTION_TIMEOUT              1000
+
+#define IS_INVALID_CONN_PARAM(min, max, slave, timeout) \
+  (((min) < BLE_GAP_CP_MIN_CONN_INTVL_MIN) || \
+   ((min) > BLE_GAP_CP_MIN_CONN_INTVL_MAX) || \
+   ((max) < BLE_GAP_CP_MAX_CONN_INTVL_MIN) || \
+   ((max) > BLE_GAP_CP_MAX_CONN_INTVL_MAX) || \
+   ((slave) > BLE_GAP_CP_SLAVE_LATENCY_MAX) || \
+   ((timeout) < BLE_GAP_CP_CONN_SUP_TIMEOUT_MIN)|| \
+   ((timeout) > BLE_GAP_CP_CONN_SUP_TIMEOUT_MAX))
 
 /* Flash handle key name size */
 #define FLASH_KEY_NAME_SIZE      4
@@ -590,38 +603,21 @@ static int8_t ble_gap_scan_tx_power = 0;
 uint8_t bleAdvReportBuffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MIN];
 #endif
 
-int BLE_GapSetScanParam(BLE_GapScanParams *scanParam)
+int BLE_GapSetScanParam(struct ble_scan_param_s *scanParam)
 {
   if(scanParam == NULL) {
     return -EINVAL;
   }
-  if (!(scanParam->interval > MAX_SCAN_INTERVAL ||
-      scanParam->interval < MIN_SCAN_INTERVAL ||
-      scanParam->window > MAX_SCAN_WINDOW ||
-      scanParam->window  < MIN_SCAN_WINDOW ||
-      scanParam->timeout > MAX_SCAN_TIMEOUT ||
-      scanParam->timeout < MIN_SCAN_TIMEOUT)) {
-    gapMem.scanParams.active       = scanParam->active;
-    //gapMem.scanParams.selective    = 0;
-    gapMem.scanParams.interval     = scanParam->interval;
-    gapMem.scanParams.window       = scanParam->window;
-    //gapMem.scanParams.p_whitelist  = NULL;
-    gapMem.scanParams.timeout      = scanParam->timeout;
-  }
-  else {
+  if (IS_INVALID_SCAN_PARAM(scanParam->interval,
+                            scanParam->window)) {
     return -EINVAL;
   }
-#if NRF_SD_BLE_API_VERSION > 5
-  gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
-  gapMem.scanParams.scan_phys     = scanParam->scan_phys;
-  if (gapMem.scanParams.scan_phys == BLE_GAP_PHY_CODED) {
-    gapMem.scanParams.extended    = 1;
-  }
-  else {
-    gapMem.scanParams.extended    = 0;
-  }
-  ble_gap_scan_tx_power           = scanParam->tx_power;
-#endif
+
+  gapMem.scanParams.active   = scanParam->active;
+  gapMem.scanParams.interval = scanParam->interval;
+  gapMem.scanParams.window   = scanParam->window;
+  gapMem.scanParams.timeout  = scanParam->timeout;
+
   return 0;
 }
 
@@ -630,25 +626,23 @@ int BLE_GapStartScan(void)
   int ret      = BLE_SUCCESS;
   int errCode  = 0;
 
-  if ((gapMem.scanParams.interval > MAX_SCAN_INTERVAL ||
-      gapMem.scanParams.interval < MIN_SCAN_INTERVAL ||
-      gapMem.scanParams.window > MAX_SCAN_WINDOW ||
-      gapMem.scanParams.window  < MIN_SCAN_WINDOW ||
-      gapMem.scanParams.timeout > MAX_SCAN_TIMEOUT ||
-      gapMem.scanParams.timeout < MIN_SCAN_TIMEOUT)) {
-    // default
-    gapMem.scanParams.active       = EXECUTE_ACTIVE_SCAN;
-    gapMem.scanParams.interval     = SCAN_INTERVAL;
-    gapMem.scanParams.window       = SCAN_WINDOW;
-    gapMem.scanParams.timeout      = SCAN_TIMEOUT;
-#if NRF_SD_BLE_API_VERSION > 5
-    gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
-    gapMem.scanParams.scan_phys     = BLE_GAP_PHY_1MBPS;
-    gapMem.scanParams.extended      = ENABLE_EXTENDED_ADV_RECV;
-    ble_gap_scan_tx_power           = 0;
-#endif
+  if (IS_INVALID_SCAN_PARAM(gapMem.scanParams.interval,
+                            gapMem.scanParams.window)) {
+    /* If scan parameter is not set, use the default value. */
+
+    gapMem.scanParams.active   = EXECUTE_ACTIVE_SCAN;
+    gapMem.scanParams.interval = SCAN_INTERVAL;
+    gapMem.scanParams.window   = SCAN_WINDOW;
+    gapMem.scanParams.timeout  = SCAN_TIMEOUT;
   }
 #if NRF_SD_BLE_API_VERSION > 5
+  /* Always use the fixed value. */
+
+  gapMem.scanParams.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+  gapMem.scanParams.scan_phys     = BLE_GAP_PHY_1MBPS;
+  gapMem.scanParams.extended      = ENABLE_EXTENDED_ADV_RECV;
+
+  ble_gap_scan_tx_power           = gapMem.txPower;
   errCode = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_SCAN_INIT, 0,
     ble_gap_scan_tx_power);
   if (errCode) {
@@ -721,6 +715,29 @@ int BLE_GapStopScan(void)
   return ret;
 }
 
+int BLE_GapSetConnectionParams(BLE_GapConnParams *connParams)
+{
+  int ret = BLE_SUCCESS;
+
+  if (connParams == NULL) {
+      return -EINVAL;
+  }
+
+  if (IS_INVALID_CONN_PARAM(connParams->minConnInterval,
+                            connParams->maxConnInterval,
+                            connParams->slaveLatency,
+                            connParams->connSupTimeout)) {
+      return -EINVAL;
+  }
+
+  gapMem.connParams.min_conn_interval = connParams->minConnInterval;
+  gapMem.connParams.max_conn_interval = connParams->maxConnInterval;
+  gapMem.connParams.slave_latency     = connParams->slaveLatency;
+  gapMem.connParams.conn_sup_timeout  = connParams->connSupTimeout;
+
+  return ret;
+}
+
 int BLE_GapConnect(BLE_GapAddr *addr)
 {
   int ret      = BLE_SUCCESS;
@@ -744,10 +761,18 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   memcpy(&scanParams, &gapMem.scanParams, sizeof(scanParams));
   scanParams.timeout = CONNECTION_TIMEOUT;
 
-  gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
-  gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;
-  gapMem.connParams.slave_latency = SLAVE_LATENCY;
-  gapMem.connParams.conn_sup_timeout = SUPERVISION_TIMEOUT;
+  if (IS_INVALID_CONN_PARAM(gapMem.connParams.min_conn_interval,
+                            gapMem.connParams.max_conn_interval,
+                            gapMem.connParams.slave_latency,
+                            gapMem.connParams.conn_sup_timeout)) {
+    /* If connection parameter is not set, use the default value. */
+
+    gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
+    gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;
+    gapMem.connParams.slave_latency     = SLAVE_LATENCY;
+    gapMem.connParams.conn_sup_timeout  = SUPERVISION_TIMEOUT;
+  }
+
   peerAddr.addr_type = addr->type;
   memcpy(peerAddr.addr, addr->addr, BLE_GAP_ADDR_LENGTH);
   errCode = sd_ble_gap_connect(&peerAddr,

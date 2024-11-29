@@ -1348,6 +1348,60 @@ int ble_get_negotiated_mtusize(uint16_t handle)
   return ret;
 }
 
+int ble_set_tx_power(int8_t tx_power)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->setTxPower)
+    {
+      ret = ops->setTxPower(tx_power);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+int ble_set_scan_param(struct ble_scan_param_s *param)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->setScanParam)
+    {
+      ret = ops->setScanParam(param);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
+int ble_set_conn_param(struct ble_conn_param_s *param)
+{
+  int ret = BT_SUCCESS;
+  struct ble_hal_common_ops_s *ops = g_bt_common_state.ble_hal_common_ops;
+
+  if (ops && ops->setConnParam)
+    {
+      ret = ops->setConnParam(param);
+    }
+  else
+    {
+      _err("%s [BLE][Common] Not supported.\n", __func__);
+      return BT_FAIL;
+    }
+
+  return ret;
+}
+
 /****************************************************************************
  * Name: ble_register_common_cb
  *
