@@ -211,8 +211,8 @@ static int load_sock_context(FAR char *filename)
 {
   int sockfd;
   struct socket_context_s sc;
-  int ret;
-  size_t size;
+  int ret = -1;
+  ssize_t size;
   FAR struct socket_ctx_data_s *sdata;
 
   size = app_read_file(filename, g_iobuffer, sizeof(g_iobuffer));
@@ -240,6 +240,7 @@ static int load_sock_context(FAR char *filename)
   if (ret < 0)
     {
       printf("SIOCSETCONTEXT failed:%d\n", errno);
+      close(sockfd);
       return -1;
     }
 
@@ -394,8 +395,8 @@ exit:
 
 static int load_tls_contexts(FAR struct wgetops_tls_context_s *ctx)
 {
-  size_t size;
-  int ret;
+  ssize_t size;
+  int ret = -1;
 
   /* Load context of mbedtls_net_context from file */
 
