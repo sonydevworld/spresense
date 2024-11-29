@@ -473,7 +473,10 @@ static void app_restart_cb(uint32_t reason)
         {
           printf("Failed to recovery process :%d\n", ret);
         }
-      pthread_detach(thread_id);
+      else
+        {
+          pthread_detach(thread_id);
+        }
     }
 }
 
