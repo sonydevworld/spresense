@@ -152,6 +152,7 @@ struct ble_hal_common_ops_s
   int (*getNegotiatedMtuSize)(uint16_t handle);    /**< Get negotiated MTU size */
   int (*setTxPower)(int8_t tx_power);              /**< Set Tx Power */
   int (*setScanParam)(struct ble_scan_param_s *param); /**< Set scan parameter */
+  int (*setConnParam)(struct ble_conn_param_s *param); /**< Set connection parameter */
 };
 
 /**
