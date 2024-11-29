@@ -66,6 +66,12 @@
 #define BLE_LTK_LEN  (16)
 #define BLE_RAND_LEN (8)
 
+/* Macro to convert time in msec for scan parameter */
+
+#define BLE_SCAN_PARAM_INTERVAL_MSEC(t) ((t) * 1000 / 625)
+#define BLE_SCAN_PARAM_WINDOW_MSEC(t)   ((t) * 1000 / 625)
+#define BLE_SCAN_PARAM_TIMEOUT_MSEC(t)  ((t) * 1000 / 10000)
+
 /** BLE status code */
 
 /** Success */
@@ -214,6 +220,14 @@ struct ble_bondinfo_s
   struct ble_idkey_s  own;
   uint8_t             cccd_num;
   struct ble_cccd_s   *cccd;
+};
+
+struct ble_scan_param_s
+{
+  uint8_t  active;   /**< 1: active scan, 0: passive scan */
+  uint16_t interval; /**< Scan interval in 625 us units. (2.5 - 10,240 ms) */
+  uint16_t window;   /**< Scan window   in 625 us units. (2.5 - 10,240 ms) */
+  uint16_t timeout;  /**< Scan timeout  in 10  ms units. 0: no timeout */
 };
 
 /**
@@ -648,6 +662,16 @@ int ble_get_negotiated_mtusize(uint16_t handle);
  */
 
 int ble_set_tx_power(int8_t tx_power);
+
+/**
+ * @brief Set scan parameter
+ *
+ * @param[in] param: scan parameter
+ *
+ * @retval error code
+ */
+
+int ble_set_scan_param(struct ble_scan_param_s *param);
 
 /**
  * @brief Execute pairing

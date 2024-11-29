@@ -760,7 +760,7 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
  *     No
  *
  */
-int BLE_GapSetScanParam(BLE_GapScanParams *scanParam);
+int BLE_GapSetScanParam(struct ble_scan_param_s *scanParam);
 
 /**@brief    Start scanning
  * @details This call allows the application to start scanning. The scanning timeout interval is 60 seconds.The following events may be triggered: @ref BLE_GAP_EVENT_TIMEOUT, @ref BLE_GAP_EVENT_ADV_REPORT.
