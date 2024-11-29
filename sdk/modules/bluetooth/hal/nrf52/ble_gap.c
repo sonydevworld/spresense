@@ -124,6 +124,15 @@ extern int bleConvertErrorCode(uint32_t errCode);
 
 #define CONNECTION_TIMEOUT              1000
 
+#define IS_INVALID_CONN_PARAM(min, max, slave, timeout) \
+  (((min) < BLE_GAP_CP_MIN_CONN_INTVL_MIN) || \
+   ((min) > BLE_GAP_CP_MIN_CONN_INTVL_MAX) || \
+   ((max) < BLE_GAP_CP_MAX_CONN_INTVL_MIN) || \
+   ((max) > BLE_GAP_CP_MAX_CONN_INTVL_MAX) || \
+   ((slave) > BLE_GAP_CP_SLAVE_LATENCY_MAX) || \
+   ((timeout) < BLE_GAP_CP_CONN_SUP_TIMEOUT_MIN)|| \
+   ((timeout) > BLE_GAP_CP_CONN_SUP_TIMEOUT_MAX))
+
 /* Flash handle key name size */
 #define FLASH_KEY_NAME_SIZE      4
 #define FLASH_KEY_NAME_2         2
@@ -706,6 +715,29 @@ int BLE_GapStopScan(void)
   return ret;
 }
 
+int BLE_GapSetConnectionParams(BLE_GapConnParams *connParams)
+{
+  int ret = BLE_SUCCESS;
+
+  if (connParams == NULL) {
+      return -EINVAL;
+  }
+
+  if (IS_INVALID_CONN_PARAM(connParams->minConnInterval,
+                            connParams->maxConnInterval,
+                            connParams->slaveLatency,
+                            connParams->connSupTimeout)) {
+      return -EINVAL;
+  }
+
+  gapMem.connParams.min_conn_interval = connParams->minConnInterval;
+  gapMem.connParams.max_conn_interval = connParams->maxConnInterval;
+  gapMem.connParams.slave_latency     = connParams->slaveLatency;
+  gapMem.connParams.conn_sup_timeout  = connParams->connSupTimeout;
+
+  return ret;
+}
+
 int BLE_GapConnect(BLE_GapAddr *addr)
 {
   int ret      = BLE_SUCCESS;
@@ -729,10 +761,18 @@ int BLE_GapConnect(BLE_GapAddr *addr)
   memcpy(&scanParams, &gapMem.scanParams, sizeof(scanParams));
   scanParams.timeout = CONNECTION_TIMEOUT;
 
-  gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
-  gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;
-  gapMem.connParams.slave_latency = SLAVE_LATENCY;
-  gapMem.connParams.conn_sup_timeout = SUPERVISION_TIMEOUT;
+  if (IS_INVALID_CONN_PARAM(gapMem.connParams.min_conn_interval,
+                            gapMem.connParams.max_conn_interval,
+                            gapMem.connParams.slave_latency,
+                            gapMem.connParams.conn_sup_timeout)) {
+    /* If connection parameter is not set, use the default value. */
+
+    gapMem.connParams.min_conn_interval = MIN_CONNECTION_INTERVAL;
+    gapMem.connParams.max_conn_interval = MAX_CONNECTION_INTERVAL;
+    gapMem.connParams.slave_latency     = SLAVE_LATENCY;
+    gapMem.connParams.conn_sup_timeout  = SUPERVISION_TIMEOUT;
+  }
+
   peerAddr.addr_type = addr->type;
   memcpy(peerAddr.addr, addr->addr, BLE_GAP_ADDR_LENGTH);
   errCode = sd_ble_gap_connect(&peerAddr,

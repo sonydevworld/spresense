@@ -151,6 +151,7 @@ static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
 static int nrf52_ble_pairing(uint16_t handle);
 static int nrf52_ble_set_txpower(int8_t tx_power);
 static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param);
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param);
 
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
@@ -193,6 +194,7 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .pairing              = nrf52_ble_pairing,
   .setTxPower           = nrf52_ble_set_txpower,
   .setScanParam         = nrf52_ble_set_scan_param,
+  .setConnParam         = nrf52_ble_set_conn_param,
 };
 
 static struct bt_hal_common_ops_s bt_hal_common_ops =
@@ -3533,6 +3535,19 @@ static int nrf52_ble_set_txpower(int8_t tx_power)
 static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param)
 {
   return BLE_GapSetScanParam(param);
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_conn_param
+ *
+ * Description:
+ *   Bluetooth LE set connection parameter
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param)
+{
+  return BLE_GapSetConnectionParams((BLE_GapConnParams *)param);
 }
 
 /****************************************************************************

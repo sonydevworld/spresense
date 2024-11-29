@@ -72,6 +72,11 @@
 #define BLE_SCAN_PARAM_WINDOW_MSEC(t)   ((t) * 1000 / 625)
 #define BLE_SCAN_PARAM_TIMEOUT_MSEC(t)  ((t) * 1000 / 10000)
 
+/* Macro to convert time in msec for connection parameter */
+
+#define BLE_CONN_PARAM_INTERVAL_MSEC(t) ((t) * 1000 / 1250)
+#define BLE_CONN_PARAM_TIMEOUT_MSEC(t)  ((t) * 1000 / 10000)
+
 /** BLE status code */
 
 /** Success */
@@ -228,6 +233,14 @@ struct ble_scan_param_s
   uint16_t interval; /**< Scan interval in 625 us units. (2.5 - 10,240 ms) */
   uint16_t window;   /**< Scan window   in 625 us units. (2.5 - 10,240 ms) */
   uint16_t timeout;  /**< Scan timeout  in 10  ms units. 0: no timeout */
+};
+
+struct ble_conn_param_s
+{
+  uint16_t min_interval;  /**< Minimum Connection Interval in 1.25 ms units. (7.5 - 4,000 ms) */
+  uint16_t max_interval;  /**< Maximum Connection Interval in 1.25 ms units. (7.5 - 4,000 ms) */
+  uint16_t slave_latency; /**< Slave Latency in number of connection events. (max 499) */
+  uint16_t sup_timeout;   /**< Connection Supervision Timeout in 10 ms unit. (100 - 32,000 ms) */
 };
 
 /**
@@ -672,6 +685,16 @@ int ble_set_tx_power(int8_t tx_power);
  */
 
 int ble_set_scan_param(struct ble_scan_param_s *param);
+
+/**
+ * @brief Set connection parameter
+ *
+ * @param[in] param: connection parameter
+ *
+ * @retval error code
+ */
+
+int ble_set_conn_param(struct ble_conn_param_s *param);
 
 /**
  * @brief Execute pairing
