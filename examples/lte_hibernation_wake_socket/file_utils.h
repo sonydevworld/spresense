@@ -43,5 +43,6 @@
 int app_save_file(FAR char *filename, FAR uint8_t *data, int size);
 int app_read_file(FAR char *filename, FAR uint8_t *data, int size);
 bool app_file_exist(char *filename);
+int app_file_size(char *filename);
 
 #endif /* __EXAMPLES_LTE_HIBERNATION_WAKE_SOCKET_FILE_UTILS_H */

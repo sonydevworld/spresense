@@ -688,7 +688,10 @@ static int lte_enter_hibernation(void)
 static int lte_resume_from_hibernation(void)
 {
   int size = 0;
+  int ctx_size;
   int ret = 0;
+  int fd = 0;
+  uint8_t data[64];
 
   if (strncmp(SD_MOUNT_POINT, SAVE_DIR, strlen(SD_MOUNT_POINT)) == 0)
     {
@@ -706,23 +709,55 @@ static int lte_resume_from_hibernation(void)
       return -1;
     }
 
-  size = app_read_file(LTE_HIBERNATION_CONTEXT_PATH,
-                      g_iobuffer, sizeof(g_iobuffer));
-  if (size < 0)
+  size = app_file_size(LTE_HIBERNATION_CONTEXT_PATH);
+  if (size > 0)
+    {
+      /* Get the context size required for resume. */
+
+      ctx_size = lte_hibernation_resume(NULL, 0);
+      if (ctx_size != size)
+        {
+          printf("File size does not match."
+                 " file size = %d, context size = %d\n",
+                 size, ctx_size);
+          ret = -1;
+        }
+      else
+        {
+          fd = open(LTE_HIBERNATION_CONTEXT_PATH, O_RDONLY);
+
+          do
+            {
+              size = read(fd, data, sizeof(data));
+              ret = lte_hibernation_resume(data, size);
+              if (ret < 0)
+                {
+                  printf("lte_hibernation_resume failed.\n");
+                }
+              else
+                {
+                  printf("remain size = %d\n", ret);
+                }
+            }
+          while (ret > 0);
+
+          close(fd);
+        }
+
+      unlink(LTE_HIBERNATION_CONTEXT_PATH);
+    }
+  else
+    {
+      ret = -1;
+    }
+
+  if (ret != 0)
     {
       lte_finalize();
       return -1;
     }
 
-  ret = lte_hibernation_resume(g_iobuffer, size);
-  if (ret < 0)
-    {
-      printf("lte_hibernation_resume failed.\n");
-      lte_finalize();
-      return -1;
-    }
-
-  return ret;
+  return 0;
 }
 
 /****************************************************************************
@@ -896,7 +931,7 @@ int main(int argc, FAR char *argv[])
       ret = lte_resume_from_hibernation();
       if (ret < 0)
         {
-          return -1;
+          goto normal_boot;
         }
 
       /* Find out if there is a file that stores the context of the secure
@@ -1001,70 +1036,72 @@ int main(int argc, FAR char *argv[])
 
           printf("End of this sample\n");
         }
+
+      return 0;
     }
-  else
+
+normal_boot:
+
+  /* Normal boot */
+
+  printf("Turn On LTE.\n");
+
+  /* ------------------------
+   * 1. Connect LTE network
+   * ------------------------
+   */
+
+  ret = app_connect_to_lte(&apnsetting);
+  if (ret < 0)
     {
-      /* Normal boot */
-
-      printf("Turn On LTE.\n");
-
-      /* ------------------------
-       * 1. Connect LTE network
-       * ------------------------
-       */
-
-      ret = app_connect_to_lte(&apnsetting);
-      if (ret < 0)
-        {
-          return -1;
-        }
-
-      /* --------------------------------------
-       * 2. send HTTP request (secure socket)
-       * --------------------------------------
-       */
-
-      /* HTTP requests are sent using secure socket. HTTP response will
-       * arrive 10 seconds later. In the meantime, Spresense sleeps and
-       * waits for the HTTP response, and wakes up when triggered by
-       * the HTTP response.
-       */
-
-      ret = send_https_request(&g_tls_context, APP_HTTPS_WGET_URL);
-      if (ret < 0)
-        {
-          return -1;
-        }
-
-      /* Save to file the secure socket context needed to receive a HTTP
-       * response after resuming from sleep.
-       */
-
-      ret = save_tls_contexts(&g_tls_context);
-      if (ret < 0)
-        {
-          return -1;
-        }
-
-      /* ------------------------------------------------------
-       * 3. spresense cold sleep (Keep the connection to LTE)
-       * ------------------------------------------------------
-       */
-
-      /* LTE module entering hibernation mode */
-
-      printf("Entering LTE hibernation mode.\n");
-
-      ret = lte_enter_hibernation();
-      if (ret < 0)
-        {
-          return -1;
-        }
-
-      /* Entering cold sleep */
-
-      boardctl(BOARDIOC_POWEROFF, 1);
+      return -1;
     }
+
+  /* --------------------------------------
+   * 2. send HTTP request (secure socket)
+   * --------------------------------------
+   */
+
+  /* HTTP requests are sent using secure socket. HTTP response will
+   * arrive 10 seconds later. In the meantime, Spresense sleeps and
+   * waits for the HTTP response, and wakes up when triggered by
+   * the HTTP response.
+   */
+
+  ret = send_https_request(&g_tls_context, APP_HTTPS_WGET_URL);
+  if (ret < 0)
+    {
+      return -1;
+    }
+
+  /* Save to file the secure socket context needed to receive a HTTP
+   * response after resuming from sleep.
+   */
+
+  ret = save_tls_contexts(&g_tls_context);
+  if (ret < 0)
+    {
+      return -1;
+    }
+
+  /* ------------------------------------------------------
+   * 3. spresense cold sleep (Keep the connection to LTE)
+   * ------------------------------------------------------
+   */
+
+  /* LTE module entering hibernation mode */
+
+  printf("Entering LTE hibernation mode.\n");
+
+  ret = lte_enter_hibernation();
+  if (ret < 0)
+    {
+      return -1;
+    }
+
+  /* Entering cold sleep */
+
+  boardctl(BOARDIOC_POWEROFF, 1);
 
   return 0;
 }
