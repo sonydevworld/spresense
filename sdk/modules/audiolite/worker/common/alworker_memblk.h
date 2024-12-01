@@ -143,4 +143,11 @@ int memblk_conv_pcm16tofloat(memblk_t *flt, memblk_t *pcm16);
 int memblk_conv_floattopcm16(memblk_t *pcm16, memblk_t *flt);
 int memblk_normalizef(memblk_t *flt, float min, float max);
 
+float memblk_pop_float(memblk_t *mb);
+void memblk_push_float(memblk_t *mb, float val);
+short memblk_pop_int16(memblk_t *mb);
+void memblk_push_int16(memblk_t *mb, int16_t val);
+uint8_t memblk_pop_uint8(memblk_t *mb);
+void memblk_push_uint8(memblk_t *mb, uint8_t val);
+
 #endif /* __AUDIOLITE_WORKER_COMMON_ALWORKER_MEMBLK_H */

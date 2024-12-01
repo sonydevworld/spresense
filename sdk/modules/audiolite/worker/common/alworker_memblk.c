@@ -49,6 +49,18 @@
 #  define MIN(a,b)  ((a) > (b) ? (b) : (a))
 #endif
 
+#define TEMPLATE_PUSH_POP(name, type) \
+  type memblk_pop_##name(memblk_t *mb) \
+    { \
+      type ret = *((type *)memblk_dataptr(mb)); \
+      memblk_updateused(mb, sizeof(type)); \
+      return ret; \
+    } \
+  void memblk_push_##name(memblk_t *mb, type val) \
+    { \
+      memblk_fillupraw(mb, (char *)&val, sizeof(type)); \
+    }
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -453,3 +465,7 @@ int memblk_normalizef(memblk_t *flt, float min, float max)
 
   return remain;
 }
+
+TEMPLATE_PUSH_POP(float, float)
+TEMPLATE_PUSH_POP(uint8, uint8_t)
+TEMPLATE_PUSH_POP(int16, int16_t)
