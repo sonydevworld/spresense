@@ -40,6 +40,7 @@
 #include <string.h>
 #include <errno.h>
 #include <asmp/stdio.h>
+#include <asmp/delay.h>
 #include <nuttx/queue.h>
 #include <alworker_memblk.h>
 
@@ -80,14 +81,14 @@ static void release_allmem(alworker_insthead_t *inst)
 #if CONF_WORKER_IMEMMAX > 0
   while ((mem = TAKE_IMEM(inst)) != NULL)
     {
-      alworker_release_imem(0, mem);
+      alworker_release_imem(inst, 0, mem);
     }
 #endif
 
 #if CONF_WORKER_OMEMMAX > 0
   while ((mem = TAKE_OMEM(inst)) != NULL)
     {
-      alworker_release_omem(mem, ALWORKER_DECMODE_ALLMEMORY);
+      alworker_release_omem(inst, mem, ALWORKER_DECMODE_ALLMEMORY);
     }
 #endif
 }
@@ -397,6 +398,7 @@ static void handle_message(alworker_insthead_t *inst,
 
   if (hdr.type == AL_COMM_MSGTYPE_SYNC || ret != AL_COMM_MSGCODEERR_OK)
     {
+      hdr.type = AL_COMM_MSGTYPE_RESP;
       hdr.opt = ret;
       al_send_message(&g_worker_task, hdr, opt);
     }
@@ -460,6 +462,34 @@ void alworker_commfw_pollmessage(alworker_insthead_t *inst)
         }
     }
   while (!block && hdr.u32 != AL_COMM_NO_MSG);
+}
+
+void alworker_commfw_waitresp(alworker_insthead_t *inst,
+                              al_comm_msghdr_t snd)
+{
+  al_comm_msghdr_t hdr;
+  al_comm_msgopt_t opt;
+
+  while (1)
+    {
+      hdr = al_receive_message(&g_worker_task, &opt, 1);
+      if (hdr.u32 != AL_COMM_NO_MSG)
+        {
+          if (hdr.type == AL_COMM_MSGTYPE_RESP)
+            {
+              if (hdr.grp != snd.grp || hdr.code != snd.code)
+                {
+                  printf("[Worker CommFW] Wrang Resp G(exp:%02x, act:%02x), "
+                         "C(exp:%02x, act:%02x\n",
+                         snd.grp, hdr.grp, snd.code, hdr.code);
+                }
+
+              break;
+            }
+
+          handle_message(inst, hdr, &opt);
+        }
+    }
 }
 
 void alworker_commfw_msgloop(alworker_insthead_t *inst)
@@ -664,28 +694,30 @@ int alworker_send_bootmsg(int version, void *d)
   return al_send_message(&g_worker_task, hdr, &opt);
 }
 
-int alworker_send_debug(unsigned char hdr_opt)
+int alworker_send_debug(alworker_insthead_t *inst, unsigned char hdr_opt)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
 
   hdr.grp  = AL_COMM_MESSAGE_SYS;
-  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.type = AL_COMM_MSGTYPE_SYNC;
   hdr.code = AL_COMM_MSGCODESYS_DBG;
   hdr.opt  = hdr_opt;
 
-  return al_send_message(&g_worker_task, hdr, &opt);
+  al_send_message(&g_worker_task, hdr, &opt);
+  alworker_commfw_waitresp(inst, hdr);
+  return OK;
 }
 
 /*** name: release_framemem */
 
-int alworker_release_imem(int id, memblk_t *memblk)
+int alworker_release_imem(alworker_insthead_t *inst, int id, memblk_t *memblk)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
 
   hdr.grp  = AL_COMM_MESSAGE_FMEM;
-  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.type = AL_COMM_MSGTYPE_SYNC;
   hdr.code = AL_COMM_MSGCODEMEM_RELEASE;
   hdr.opt  = (unsigned char)id;
 
@@ -693,18 +725,20 @@ int alworker_release_imem(int id, memblk_t *memblk)
   opt.size = memblk->size;
   opt.eof  = memblk->eof;
 
-  return al_send_message(&g_worker_task, hdr, &opt);
+  al_send_message(&g_worker_task, hdr, &opt);
+  alworker_commfw_waitresp(inst, hdr);
+  return OK;
 }
 
 /*** name: deliver_outpcm */
 
-int alworker_release_omem(memblk_t *memblk, int mode)
+int alworker_release_omem(alworker_insthead_t *inst, memblk_t *memblk, int mode)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
 
   hdr.grp  = AL_COMM_MESSAGE_OMEM;
-  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.type = AL_COMM_MSGTYPE_SYNC;
   hdr.code = AL_COMM_MSGCODEMEM_RELEASE;
   hdr.opt  = AL_COMM_MSGCODEERR_OK;
 
@@ -713,7 +747,9 @@ int alworker_release_omem(memblk_t *memblk, int mode)
              memblk->filled : memblk->size;
   opt.eof = memblk->eof;
 
-  return al_send_message(&g_worker_task, hdr, &opt);
+  al_send_message(&g_worker_task, hdr, &opt);
+  alworker_commfw_waitresp(inst, hdr);
+  return OK;
 }
 
 int alworker_free(memblk_t *mem, alworker_insthead_t *inst)
@@ -724,14 +760,14 @@ int alworker_free(memblk_t *mem, alworker_insthead_t *inst)
     {
 #if CONF_WORKER_IMEMMAX > 0
       case MEMBLK_TYPE_INPUT:
-        ret = alworker_release_imem(0, mem);
+        ret = alworker_release_imem(inst, 0, mem);
         PUSH_FREE_IMEM(mem, inst);
         break;
 #endif
 
 #if CONF_WORKER_OMEMMAX > 0
       case MEMBLK_TYPE_OUTPUT:
-        ret = alworker_release_omem(mem, ALWORKER_DECMODE_JUSTDECODE);
+        ret = alworker_release_omem(inst, mem, ALWORKER_DECMODE_JUSTDECODE);
         PUSH_FREE_OMEM(mem, inst);
         break;
 #endif

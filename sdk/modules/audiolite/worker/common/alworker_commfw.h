@@ -317,6 +317,9 @@ alcommfw_cbs_t *alworker_commfw_get_cbtable(void);
 
 void alworker_commfw_pollmessage(alworker_insthead_t *arg);
 
+void alworker_commfw_waitresp(alworker_insthead_t *inst,
+                              al_comm_msghdr_t snd);
+
 /* alworker_commfw_msgloop()
  * Message loop for this framework.
  * When this is called, start waiting message from HOST.
@@ -334,9 +337,9 @@ int alworker_send_frameinfo(int id, int chs, int hz, int layer, int rate);
 int alworker_send_framedone(int id);
 int alworker_send_errormsg(int id, int errcode);
 int alworker_send_bootmsg(int version, void *d);
-int alworker_send_debug(unsigned char hdr_opt);
-int alworker_release_imem(int id, memblk_t *memblk);
-int alworker_release_omem(memblk_t *memblk, int mode);
+int alworker_send_debug(alworker_insthead_t *inst, unsigned char hdr_opt);
+int alworker_release_imem(alworker_insthead_t *inst, int id, memblk_t *memblk);
+int alworker_release_omem(alworker_insthead_t *inst, memblk_t *memblk, int mode);
 int alworker_free(memblk_t *mem, alworker_insthead_t *inst);
 
 #endif /* __AUDIOLITE_WORKER_COMMON_ALWORKER_COMMFW_H */

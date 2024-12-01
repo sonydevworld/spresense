@@ -123,15 +123,6 @@ int audiolite_workercomp::handle_message(al_comm_msghdr_t hdr,
       mem = thiz->_inq.pop(opt->addr);
       if (mem)
         {
-          if (opt->eof == 1)
-            {
-              mem->set_eof();
-            }
-          else
-            {
-              mem->clear_eof();
-            }
-
           nmem = listener->release_inmem(thiz, wtask, mem, opt->size);
           mem->release();
           if (nmem)
@@ -146,6 +137,15 @@ int audiolite_workercomp::handle_message(al_comm_msghdr_t hdr,
       mem = thiz->_outq.pop(opt->addr);
       if (mem)
         {
+          if (opt->eof == 1)
+            {
+              mem->set_eof();
+            }
+          else
+            {
+              mem->clear_eof();
+            }
+
           mem->set_storedsize(opt->size);
           nmem = listener->release_outmem(thiz, wtask, mem);
           mem->release();
@@ -163,6 +163,11 @@ int audiolite_workercomp::handle_message(al_comm_msghdr_t hdr,
   else if (hdr.u32 != AL_COMM_NO_MSG)
     {
       thiz->publish_event(AL_EVENT_UNKNOWN, hdr.u32);
+    }
+
+  if (hdr.type == AL_COMM_MSGTYPE_SYNC)
+    {
+      alworker_send_resp(wtask, hdr, ret);
     }
 
   return ret;
