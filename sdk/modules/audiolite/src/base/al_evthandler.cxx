@@ -47,6 +47,8 @@
                     MOSSFW_DATA_TYPENAME_AUDIO + \
                     MOSSFW_DATA_TYPEARRAY_ARRAY)
 
+#define STRINGCASE(e) case AL_EVENT_##e: return #e;
+
 /****************************************************************************
  * class: audiolite_evthandler
  ****************************************************************************/
@@ -161,4 +163,39 @@ int audiolite_set_systemparam(int fs, int chnum, int bitwidth)
 void audiolite_eventdestroy(void)
 {
   audiolite_evthandler::terminate_instance();
+}
+
+const char *audiolite_strevent(int evt)
+{
+  switch (evt)
+    {
+      STRINGCASE(OVERFLOW)
+      STRINGCASE(UNDERFLOW)
+      STRINGCASE(ILLIGALSTREAM)
+      STRINGCASE(UNSUPPORTFMT)
+      STRINGCASE(DECODEDONE)
+      STRINGCASE(STREAMDONE)
+      STRINGCASE(PLAYSTARTED)
+      STRINGCASE(PLAYSTOPPED)
+      STRINGCASE(RECORDSTARTED)
+      STRINGCASE(RECORDSTOPPED)
+      STRINGCASE(PLAYPAUSED)
+      STRINGCASE(PLAYRESUMED)
+      STRINGCASE(RECORDPAUSED)
+      STRINGCASE(RECORDRESUMED)
+      STRINGCASE(DRVERROR)
+      STRINGCASE(INVALIDSYSPARAM)
+      STRINGCASE(STOPOUTPUT)
+      STRINGCASE(STOPINPUT)
+      STRINGCASE(INITERROR)
+      STRINGCASE(SENDERROR)
+      STRINGCASE(MP3FRAMEINFO)
+      STRINGCASE(MP3DECWORKEREND)
+      STRINGCASE(UNKNOWN)
+      STRINGCASE(MP3DECERROR)
+      STRINGCASE(MP3DEC_WRONGTYPE)
+      STRINGCASE(WRONGVERSION)
+      default:
+        return "not event id...";
+    }
 }
