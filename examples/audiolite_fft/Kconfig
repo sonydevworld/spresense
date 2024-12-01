@@ -1,0 +1,26 @@
+
+config EXAMPLES_AUDIOLITE_FFT
+	tristate "AudioLite sample : audiolite_fft app"
+	default n
+	---help---
+		Enable the audiolite_fft app. This example includes how to make
+		user original audiolite component with worker (sub-core) off-load.
+
+if EXAMPLES_AUDIOLITE_FFT
+
+config EXAMPLES_AUDIOLITE_FFT_PROGNAME
+	string "Program name"
+	default "audiolite_fft"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_FFT_PRIORITY
+	int "audiolite_fft task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_FFT_STACKSIZE
+	int "audiolite_fft stack size"
+	default 2048
+
+endif
