@@ -32,6 +32,15 @@ config NRF52_LESC
 		This option enables LE secure connection feature of nRF52.
 		LE secure connection is the safer pairing method,
 		but nrf52 needs more memory because mbedtls or micro-ecc is required.
+
+config NRF52_SCAN_COMPAT_MODE
+	bool "Enable scan compatible mode"
+	default n
+	---help---
+		Enable interoperability with devices that do not support a value of
+		0 for the WinOffset parameter in the Link Layer CONNECT_IND packet.
+		This applies to a limited set of legacy peripheral devices.
+
 endif # NRF52_LE
 
 endif # BLUETOOTH_NRF52

@@ -603,6 +603,21 @@ static int8_t ble_gap_scan_tx_power = 0;
 uint8_t bleAdvReportBuffer[BLE_GAP_SCAN_BUFFER_EXTENDED_MIN];
 #endif
 
+int BLE_GapSetScanCompatMode(bool enable)
+{
+  int ret     = BLE_SUCCESS;
+  int errCode = 0;
+  ble_opt_t opt;
+
+  memset(&opt, 0x0, sizeof(opt));
+  opt.gap_opt.compat_mode_1.enable = enable ? 1 : 0;
+
+  errCode = sd_ble_opt_set(BLE_GAP_OPT_COMPAT_MODE_1, &opt);
+  ret = bleConvertErrorCode((uint32_t)errCode);
+
+  return ret;
+}
+
 int BLE_GapSetScanParam(struct ble_scan_param_s *scanParam)
 {
   if(scanParam == NULL) {
@@ -635,6 +650,15 @@ int BLE_GapStartScan(void)
     gapMem.scanParams.window   = SCAN_WINDOW;
     gapMem.scanParams.timeout  = SCAN_TIMEOUT;
   }
+
+#ifdef CONFIG_NRF52_SCAN_COMPAT_MODE
+  /* Allow connection to legacy peripheral device that do not support
+   * a Window offset parameter of 0.
+   */
+
+  BLE_GapSetScanCompatMode(true);
+#endif
+
 #if NRF_SD_BLE_API_VERSION > 5
   /* Always use the fixed value. */
 

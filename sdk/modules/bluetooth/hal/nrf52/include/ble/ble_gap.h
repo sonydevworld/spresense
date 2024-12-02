@@ -745,6 +745,24 @@ int BLE_GapExchangePairingFeature(BLE_GapConnHandle connHandle,
                                   BLE_GapPairingFeature *ownFeature,
                                   const BLE_GapPairingFeature *peerFeature);
 
+/**@brief   Set scan compatible mode option
+ * @details Allow connection to legacy peripheral device that do not support
+ *          a Window offset parameter of 0. This enables compatibility mode 1
+ *          option for nrf52 softdevice.
+ *
+ * @param[in]  enable: enable if true, disable if false (default: disable)
+ * @return     0: success
+ *
+ * @par Blocking
+ *     Yes
+ * @par Context
+ *     Task
+ * @par Reentrant
+ *     No
+ *
+ */
+int BLE_GapSetScanCompatMode(bool enable);
+
 /**@brief   Set scan parameter
  * @details This call allows the application to set scan paramter, use the default scan parameter
  *          (interval:200,  window:20, timeout:60) if the call of this API is failed or not call this API.
