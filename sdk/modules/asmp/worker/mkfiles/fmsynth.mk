@@ -40,12 +40,12 @@ EXT_DEPPATH ?=
 EXT_CSRCS   ?=
 EXT_INCPATH ?=
 
-NXAPPS_PATH  = $(SDKDIR)/apps/include
-FMSYNTH_PATH = $(SDKDIR)/apps/audioutils
+NXAPPS_INCPATH  = $(SDKDIR)/apps/include
+FMSYNTH_PATH = $(SDKDIR)/apps/audioutils/fmsynth
 
 EXT_VPATH   += $(FMSYNTH_PATH)
 EXT_DEPPATH += --dep-path $(FMSYNTH_PATH)
 EXT_CSRCS   += $(notdir $(wildcard $(FMSYNTH_PATH)/*.c))
-EXT_INCPATH += -I $(NXAPPS_PATH)
+EXT_INCPATH += -I $(NXAPPS_INCPATH)
 
 endif
