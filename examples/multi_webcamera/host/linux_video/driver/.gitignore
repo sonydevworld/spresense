@@ -1,0 +1,13 @@
+.mod.c
+.Module.symvers.cmd
+.modules.order.cmd
+.spr_camera.ko.cmd
+.spr_camera.mod.cmd
+.spr_camera.mod.o.cmd
+.spr_camera.o.cmd
+Module.symvers
+modules.order
+.ko
+.mod
+.mod.o
+.o

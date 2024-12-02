@@ -31,7 +31,7 @@ examples/multi_webcamera
 
     2. Multiple Web Camera by using original protocol.
         In this option, Spresense send a camera JPEG image to a client by original protocol on TCP.
-        In host/ directory, there is reference host programing by using Python.
+        In host/python directory, there is reference host programing by using Python.
 
   [How to build]
 
@@ -144,7 +144,7 @@ examples/multi_webcamera
         192.168.11.3
         192.168.11.4
 
-      On PC side, sample tool is provided in spresense/examples/multi_webcamera/host.
+      On PC side, sample tool is provided in spresense/examples/multi_webcamera/host/python.
       It is written in Python2.x with WxPython to display GUI.
       So you need to install smoe required pachages of python at first on you PC.
       Below example is in case of ubuntu 16.04.
@@ -152,7 +152,7 @@ examples/multi_webcamera
         $ sudo  apt  install  python-wxgtk3.0  python-wxtools
 
       After that, attach the AP network as the same as other spresense boards.
-      And then, execute MultiCameraFrame.py on your PC in host/ directory.
+      And then, execute MultiCameraFrame.py on your PC in host/python directory.
 
         $ python MultiCameraFrame.py
 
