@@ -73,6 +73,12 @@
 class audiolite_component;
 
 /****************************************************************************
+ * Public Function Prototypes
+ ****************************************************************************/
+
+const char *audiolite_strevent(int evt);
+
+/****************************************************************************
  * Class Definitions
  ****************************************************************************/
 
@@ -86,6 +92,21 @@ class audiolite_eventlistener
     virtual ~audiolite_eventlistener(){};
     virtual void on_event(int evt, audiolite_component *cmp,
                                    unsigned long arg){};
+};
+
+/****************************************************************************
+ * Class: audiolite_simplelistener
+ ****************************************************************************/
+
+class audiolite_simplelistener : public audiolite_eventlistener
+{
+  public:
+    void on_event(int evt, audiolite_component *cmp,
+                  unsigned long arg)
+    {
+      printf("AudioLite Event %s is happened : %d\n",
+             audiolite_strevent(evt), (int)arg);
+    }
 };
 
 #endif  /* __INCLUDE_AUDIOLITE_EVENT_LISTENER_H */

@@ -64,6 +64,7 @@
 #define AL_COMM_MSGTYPE_NONE  (0)
 #define AL_COMM_MSGTYPE_ASYNC (1)
 #define AL_COMM_MSGTYPE_SYNC  (2)
+#define AL_COMM_MSGTYPE_RESP  (3)
 
 #define AL_COMM_MSGCODESYS_NONE  (0)
 #define AL_COMM_MSGCODESYS_STOP  (1)
@@ -118,6 +119,11 @@
 
 #define AL_MSGBUF_DEPTH_POW  (4)
 #define AL_MSGBUF_DEPTH      (1 << AL_MSGBUF_DEPTH_POW)
+
+#define AL_COMM_MSGGRP(h)   ((h)->grp)
+#define AL_COMM_MSGTYPE(h)  ((h)->type)
+#define AL_COMM_MSGCODE(h)  ((h)->code)
+#define AL_COMM_MSGOPT(h)   ((h)->opt)
 
 /****************************************************************************
  * Public Types
