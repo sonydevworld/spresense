@@ -24,6 +24,6 @@ config EXAMPLES_BLUETOOTH_SPP_PRIORITY
 
 config EXAMPLES_BLUETOOTH_SPP_STACKSIZE
 	int "Stack size"
-	default 2560
+	default 4096
 
 endif
