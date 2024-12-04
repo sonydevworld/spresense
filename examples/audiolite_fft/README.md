@@ -1,5 +1,5 @@
 > [!NOTE]
-> This tutrial is written in [English section](#english-section) after Japanese section.
+> This tutorial is written in [English section](#english-section) after Japanese section.
 
 ## AudioLite オリジナルコンポーネント作成チュートリアル
 
@@ -13,17 +13,10 @@ AudioLiteはコンポーネントと呼ばれる機能モジュールを組み�
 アプリケーションが行いたいAudioの信号処理のデータフローをランタイムに構築し、
 実行するためのフレームワークです。
 
-```mermaid
----
-title: コンポーネント接続例：マイク入力からの音に対して、信号処理を行い、スピーカーに出力
----
-flowchart LR;
-  comp1(マイクコンポーネント);
-  comp2(信号処理コンポーネント);
-  comp3(スピーカー出力コンポーネント);
-  comp1 -->|Data| comp2;
-  comp2 -->|Data| comp3;
-```
+
+コンポーネント接続例：マイク入力からの音に対して、信号処理を行い、スピーカーに出力
+![Component](images/component.png)
+
 
 コンポーネントはユーザーも自由に作成することが出来、作成したコンポーネントを、
 信号処理のデータフローに組み込むことでオリジナルな信号処理を追加することが出来ます。
@@ -31,22 +24,13 @@ flowchart LR;
 コンポーネントは内部でSpresenseが持つサブコアを利用することで、
 処理をオフロードすることも出来ます。
 
-```mermaid
-block-beta
-  columns 5
-  comp1("audiolite_inputcomp") space comp2("ユーザーオリジナルコンポーネント（サブコア付き）") space comp3("audiolite_outputcomp")
-  space space space space space
-  space space subcomp("サブコア") space space
+Worker(SubCore)を用いたコンポーネント
+![WorkerComponent](images/worker_component.png)
 
-  comp1 -- "Data" --> comp2
-  comp2 -- "Data" --> comp3
-  comp2 --> subcomp
-  subcomp --> comp2
-```
 
 #### mkalwcomp.py コマンド
 
-上記の図にある、 **ユーザーオリジナルコンポーネント（サブコア付き）** と **サブコア** のペアの実装のテンプレート出力をするツールが、
+上記の図にある、 **ユーザーオリジナルコンポーネント（サブコア付き）** と **Worker(SubCore)** のペアの実装のテンプレート出力をするツールが、
 **mkalcomp.py** になります。
 
 #### 作成するプログラム
@@ -56,8 +40,8 @@ FFTを行って、音の周波数解析をUARTで出力するプログラムを�
 
 ### 作成するコンポーネントの設計
 
-まず、どのような信号処理を行うコンポーネントを作成するか、ですが、
-入力されたAudioのサンプルにFFTで周波数成分に直し、スペクトル強度を算出して、
+まず、どのような信号処理を行うコンポーネントを作成するかですが、
+入力されたAudioのサンプルにFFTで周波数成分に直し、スペクトル強度を算出して
 出力する、というコンポーネントにします。
 
 FFTは信号の一部を切り出して、その信号が周期的な信号であると仮定して周波数分析を行う手法です。
@@ -75,13 +59,13 @@ FFTを行うコンポーネントの信号処理の概要は以下のような�
 ![FFT Component](images/fft_component_outline.png)
 
 計算し終わったパワースペクトラムを後段のコンポーネントに渡します。
-パワースケプトラムは、FFTサイズに対して、半分のデータ数となります。
+パワースペクトラムは、FFTサイズに対して半分のデータ数となります。
 FFTの計算が終わったら、次の入力データ用に図の **FFT 入力データ** の上半分を消し下半分のデータを上にシフトさせ、
 新たな入力データに備えます。
 
 今回は演算部分をSubcore（SDKではWorkerと呼びます）で行います。
-そのため、Workerは、入力 Audio Sample Dataが格納されたメモリと演算結果の出力メモリを、自作するAudioLite Componentから受け取り、
-入力メモリを使い終わった、もしくは、出力メモリに結果を書き終わったら、それぞれのメモリをComponentに戻し、
+そのため、Workerは入力 Audio Sample Dataが格納されたメモリと演算結果の出力メモリを、自作するAudioLite Componentから受け取り、
+入力メモリを使い終わった、もしくは出力メモリに結果を書き終わったら、それぞれのメモリをComponentに戻し、
 Component側はそれぞれを次のコンポーネントに渡します。
 
 ### コンポーネントのテンプレート作成
@@ -696,7 +680,7 @@ int main(void)
   
   SET_PROCESS(cbs, on_process);
                            
-  alworker_send_bootmsg(FFTWORKER_WORKER_VERSION, NULL);
+  alworker_send_bootmsg(FFT_WORKER_VERSION, NULL);
                                                      
   alworker_commfw_msgloop((alworker_insthead_t *)&g_instance);
 
@@ -1002,7 +986,10 @@ tools/flash.sh -c /dev/ttyUSB0 nuttx.spk workerspks/fft.spk
 無事実機へのインストールが完了したら、ターミナルソフトで実機に接続を行います。
 NuttShellのプロンプトが表示されたら、alfftと入力してEnterキーを押し実行すると、
 マイク入力の音声がFFTされて周波数成分がアスキー文字として出力されます。
-Spresenseに接続したマイクに聞こえるよう口笛を吹いてみて音の高さに連動して表示が変わることを確認してみよう。
+例えば、Spresenseに接続したマイクに聞こえるよう口笛を吹くなどしてみて音の高さに連動して表示が変わることを確認して見てください。
+
+> {!NOTE]
+> マイクはMIC-A入力を使います。Spresenseのハードウェアガイド [1.17.1 マイクチャネルの配置](https://developer.sony.com/spresense/development-guides/hw_docs_ja.html#_%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%81%E3%83%A3%E3%83%B3%E3%83%8D%E3%83%AB%E3%81%AE%E9%85%8D%E7%BD%AE)を参考にマイクをAに接続してください。
 
 ```shell
 nsh> alfft
@@ -1040,7 +1027,169 @@ ZOb-_--, .,_._pHb-  ....  ..                  .
 
 #### memblk_t
 
-T.B.D.
+memblk_tはアドレスとサイズで示されるメモリブロックを効率的に利用するための構造体です。
+[sdk/modules/audiolite/worker/common/alworker_memblk.h](https://github.com/SonySemiconductorSolutions/spresense/blob/new-master/sdk/modules/audiolite/worker/common/alworker_memblk.h)の中で以下のように定義されています。
+
+```c
+struct memblk_s
+{
+  sq_entry_t link;
+  char *addr;
+  int size;
+  int filled;
+  int used;
+  int eof;
+  int type;
+};
+typedef struct memblk_s memblk_t;
+```
+
+それぞれのメンバ変数の意味は以下のようになります。
+
+| メンバ変数名 | 型名       | 説明 |
+| ------------ | ---------- | ---- |
+| link         | sq_entry_t | NuttXのシングルキューのエントリー。リスト構造を作るために利用 |
+| addr         | char *     | 管理対象となるメモリの先頭アドレス |
+| size         | int        | 管理対象メモリの全体サイズ |
+| filled       | int        | 管理対象メモリに対して次のデータを書き込む際の書き込みポイントをオフセット値（Byte数）を示す。filled == sizeで満タンとなる。 |
+| used         | int        | 管理対象メモリの中に溜まったデータのうち、どこまで利用したかを示すオフセット値（Byte数）を示す。size == filledで使い切りとなる。 |
+| eof          | int        | AudioFrameとして最後のフレームであることを示す。 |
+| type         | int        | メモリの所在を示す。入力メモリブロック、出力メモリブロック、ローカル（Worker内部の）メモリブロックを判別する。 |
+
+図で表すと以下のようになります。
+
+![memblk_t](images/memblk_t.png)
+
+
+メインコアのComponentからメモリを受け取るとフレームワーク内部でこのmemblk_t構造体が作成され、入力メモリキュー、もしくは出力メモリキューに入れられ、
+ユーザの信号処理を行う関数on_process()内などで、これらのキューからmemblk_tを取り出して利用することになります。
+
+入力メモリキューからmemblk_tを取り出すにはTAKE_IMEM()を用い、
+
+```c
+  memblk_t *mem = TAKE_IMEM();
+```
+
+出力メモリキューから取り出すには、TAKE_OMEM()を利用します。
+
+```c
+  memblk_t *mem = TAKE_OMEM();
+```
+
+それぞれのメモリの開放（Componentへの返却・送信）は、入力メモリ・出力メモリどちらであってもFREE_MEMBLK()を用いて返却します。
+
+memblk_tはWorker内部のメモリ管理にも用いることが出来ます。
+例えば、サイズ512Byteのchar 型のメモリがあった場合、memblk_init()を用いて以下のようなコードを書くことで、そのメモリをmemblk_tによって管理することが出来ます。
+
+```c
+char data[512];
+```
+
+```c
+  memblk_t tmp_memblk;
+  memblk_init(&tmp_memblk, data, 512);
+```
+
+memblk_t構造体で管理されているメモリは、様々なユーティリティ関数を用いてメモリ内のデータを管理することが出来ます。
+
+ここでは、このチュートリアルで利用しているユーティリティ関数について説明します。
+
+##### memblk_dataptr(memblk_t *mem)
+
+このユーティリティ関数は、引数で与えられたメモリブロックのusedが示す場所のアドレスを返します。つまり、このメモリブロックで次に利用するメモリのポインタを渡します。データを配列として一度に利用したい場合などで利用します。
+
+例：メモリに入っているデータをfloatとして利用する
+
+```c
+  float *pcm = (float *)memblk_dataptr(&mem);
+```
+
+##### memblk_reset(memblk_t *mem)
+
+このユーティリティ関数は、引数で与えられたメモリブロックの中身をすべて破棄して、空の状態にします。内部の動作は、filledメンバとusedメンバにそれぞれ0を入れます。こうすることで、結果としてメモリは何もデータが存在しない（filledが0）で、かつ利用済みデータが無い（usedが0）という状態になります。
+
+```c
+  memblk_reset(&mem);
+```
+
+##### memblk_is_full(memblk_t *mem)
+
+このユーティリティ関数は、引数で与えられたメモリブロックのデータが満タンかどうかを判別し、満タンであればtrueを、そうでなければfalseを返します。
+満タンかどうかは、filled == sizeかどうかで判断しています。
+
+例：満タンであればなにか処理を行う
+```c
+  if (memblk_is_full(&mem))
+  {
+    ...
+  }
+```
+
+##### memblk_is_empty(memblk_t *mem)
+
+このユーティリティ関数は、引数で与えられたメモリブロックの利用可能データが空（無い）かどうかを判別し、空であればtrueを、そうでなければfalseを返します。
+空かどうかは、used == filledかどうかで判断しています。
+
+例：空であればなにか処理を行う
+```c
+  if (memblk_is_empty(&mem))
+  {
+    ...
+  }
+```
+
+##### memblk_push_uint8(memblk_t *mem, uint8_t data)
+
+このユーティリティ関数は、第1引数で与えられたメモリブロックに対して、第2引数で与えられたuint8_t型のデータを格納します。この関数によって、メモリブロックは1Byte分のデータが蓄えられ、filledメンバが1増えることになります。
+
+例：
+```c
+  uint8_t dat = 0x22;
+  memblk_push_uint8(&mem, dat);
+```
+
+##### memblk_single16(memblk_t *tgt, memblk_t *src)
+
+このユーティリティ関数は、第1引数のメモリブロックに対して、第2引数のメモリブロックからデータをコピーします。ただコピーするのではなく、srcが持つデータを2byteおきにコピーします。
+
+これは、
+Audioデータが、16bitサンプル長のステレオデータとして入ってきた場合、信号処理を行う上で、一つのチャネルのデータのみを取り出したい、という場合に便利です。
+
+ステレオデータの場合、LRLRLRLR..... と16ビットごとに交互に並んで入力されます。
+これを、 LLLLLL.... とLChのみ取得する、という場合にこの関数を用います。
+
+例：mem_inに入っているステレオ16BitデータをLのみのmem_outにコピーする
+```c
+  memblk_single16(&mem_out, &mem_in);
+```
+
+各メモリブロックでコピーされるサイズは、「コピー出来る最大数」コピーします。
+つまり、それぞれのメモリブロックのfilled, size, usedによる利用状況に応じて、コピー出来る最大のサンプル数をコピーし、更にコピーした結果に応じて、filled, size, usedを更新することで各メモリブロックの利用状況も更新されます。
+
+
+##### memblk_shift_drop(memblk_t *mem, int drop_sz)
+
+このユーティリティ関数は、第1引数で与えられたメモリブロックの中で未使用データを、管理しているメモリの先頭にシフトさせます。更に第2引数で示されたサイズのデータを捨てます。
+
+動作イメージは以下の図のようになります。
+
+![memblk_shift_drop()](images/memblk_shift_drop.png)
+
+残っているデータを保持しつつ、メモリを最大限使いたい場合や、次に来るデータのための空き容量を増やしたい場合などに利用します。
+
+##### memblk_conv_pcm16tofloat(memblk_t *tgt, memblk_t *src);
+
+このユーティリティ関数は、第2引数で与えられたメモリブロックに保持されているデータを16ビット整数のデータとして、第1引数で与えられたメモリブロックにfloatに変換してコピーを行います。
+
+16Bit整数で入ってきたオーディオデータを浮動小数点で処理したい場合などに用います。
+
+使用例：
+```c
+  memblk_conv_pcm16tofloat(&mem_float, &mem_pcm);
+```
+
+その他にも様々なユーティリティ関数があります。
+詳しくは、[ヘッダファイル](https://github.com/SonySemiconductorSolutions/spresense/blob/new-master/sdk/modules/audiolite/worker/common/alworker_memblk.h)を参照してみてください。
 
 # English Section
 
