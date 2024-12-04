@@ -254,16 +254,13 @@ typedef enum
   BT_VIS_DISCOVERY_CONNECTABLE       = 3  /**< Discoverable and connectable */
 } BT_VISIBILITY;
 
-#ifdef EXTERNALS_NRF52
-#include "ble_types.h"
-typedef int BLE_APPEARANCE
-#else
 /**
  * @enum BLE_APPEARANCE
  * @brief BLE appearance ID
  */
 typedef enum
 {
+  BLE_APPEARANCE_UNKNOWN                          = 0,
   BLE_APPEARANCE_GENERIC_PHONE                    = 64,
   BLE_APPEARANCE_GENERIC_COMPUTER                 = 128,
   BLE_APPEARANCE_GENERIC_WATCH                    = 192,
@@ -304,7 +301,6 @@ typedef enum
   BLE_APPEARANCE_CYCLING_POWER_SENSOR             = 1156,
   BLE_APPEARANCE_CYCLING_SPEED_AND_CADENCE_SENSOR = 1157,
 } BLE_APPEARANCE;
-#endif
 
 /**
  * @enum BLE_GAP_IO_CAP

@@ -220,9 +220,45 @@ config AIDO_LITE_MP3DEC_SUBCORE_ELFNAME
 		set "/mnt/sd0/mp3dec".
 		To enable this option, needs to enable EXTERNALS_CMSIS, ASMP and ASMP_WORKER_LIBC
 
-endif # end of if AUDIO_LITE_MP3DEC
-
 endif # AUDIO_LITE_MP3DEC_SUBCORE_ELF
+
+if AUDIO_LITE_MP3DEC_SUBCORE_SPK
+
+config AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD
+	bool "Build mp3dec spk"
+	default n
+	---help---
+		Enable build SPK file named "mp3dec.spk" in sdk/modules/audiolite/worker/mp3dec directory.
+		If you want to use your built mp3dec.spk, you need flash it like
+		  $ ./tools/flash.sh modules/audiolite/worker/mp3dec/mp3dec.spk
+
+endif # AUDIO_LITE_MP3DEC_SUBCORE_SPK
+
+if AUDIO_LITE_MP3DEC_SUBCORE_ELF || AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD
+
+config AUDIO_LITE_MP3DEC_SUBCORE_DEBUG
+	bool "Enable Debug print in mo3dec Worker"
+	default n
+	---help---
+		Enable display debug message from mp3dec worker. This debug message pass to UART1.
+		And it is expected that the HW initialization has finished by main core.
+		If you want to change it from UART1 to others, modify it in a source code.
+		This makes that the worker takes long time to print information. So realtime playing
+		will be stopped.
+
+if AUDIO_LITE_MP3DEC_SUBCORE_DEBUG
+
+config AUDIO_LITE_MP3DEC_SUBCORE_DEBUG_DETAIL
+	bool "Enable print detail information of mo3dec Worker"
+	default n
+	---help---
+		Enable display buffer status and pointer.
+
+endif # AUDIO_LITE_MP3DEC_SUBCORE_DEBUG
+
+endif # AUDIO_LITE_MP3DEC_SUBCORE_ELF || AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD
+
+endif # end of if AUDIO_LITE_MP3DEC
 
 endmenu # MP3 Decorder Component
 

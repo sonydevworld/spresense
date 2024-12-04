@@ -59,10 +59,12 @@
 #define AL_COMM_MESSAGE_FMEM   (2)
 #define AL_COMM_MESSAGE_OMEM   (3)
 #define AL_COMM_MESSAGE_INST   (4)
+#define AL_COMM_MESSAGE_USER   (5)
 
 #define AL_COMM_MSGTYPE_NONE  (0)
 #define AL_COMM_MSGTYPE_ASYNC (1)
 #define AL_COMM_MSGTYPE_SYNC  (2)
+#define AL_COMM_MSGTYPE_RESP  (3)
 
 #define AL_COMM_MSGCODESYS_NONE  (0)
 #define AL_COMM_MSGCODESYS_STOP  (1)
@@ -95,6 +97,7 @@
 #define AL_COMM_MSGCODEERR_INVALIDINST   (7)
 #define AL_COMM_MSGCODEERR_MULTIFRAME    (8)
 #define AL_COMM_MSGCODEERR_UNSUPFRAME    (9)
+#define AL_COMM_MSGCODEERR_INVALIDSTATE  (10)
 
 #define AL_COMM_ERR_SUCCESS      (0)
 #define AL_COMM_ERR_WORKERINIT   (-1)
@@ -108,13 +111,19 @@
 
 #define AL_WORKER_VERSION_0 (0)
 #define AL_WORKER_VERSION_1 (1)
+#define AL_WORKER_VERSION_2 (2)
 
-#define AL_MP3DECWORKER_VERSION AL_WORKER_VERSION_1
+#define AL_MP3DECWORKER_VERSION AL_WORKER_VERSION_2
 
 #define AL_COMM_NO_MSG (0xffffffff)
 
 #define AL_MSGBUF_DEPTH_POW  (4)
 #define AL_MSGBUF_DEPTH      (1 << AL_MSGBUF_DEPTH_POW)
+
+#define AL_COMM_MSGGRP(h)   ((h)->grp)
+#define AL_COMM_MSGTYPE(h)  ((h)->type)
+#define AL_COMM_MSGCODE(h)  ((h)->code)
+#define AL_COMM_MSGOPT(h)   ((h)->opt)
 
 /****************************************************************************
  * Public Types
@@ -159,6 +168,7 @@ union al_comm_msgopt_u
     };
   int errcode;
   float gain;
+  int usr[4];
 };
 typedef union al_comm_msgopt_u al_comm_msgopt_t;
 

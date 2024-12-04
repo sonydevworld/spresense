@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/bt_common.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,6 +65,17 @@
 #define BLE_CSRK_LEN (16)
 #define BLE_LTK_LEN  (16)
 #define BLE_RAND_LEN (8)
+
+/* Macro to convert time in msec for scan parameter */
+
+#define BLE_SCAN_PARAM_INTERVAL_MSEC(t) ((t) * 1000 / 625)
+#define BLE_SCAN_PARAM_WINDOW_MSEC(t)   ((t) * 1000 / 625)
+#define BLE_SCAN_PARAM_TIMEOUT_MSEC(t)  ((t) * 1000 / 10000)
+
+/* Macro to convert time in msec for connection parameter */
+
+#define BLE_CONN_PARAM_INTERVAL_MSEC(t) ((t) * 1000 / 1250)
+#define BLE_CONN_PARAM_TIMEOUT_MSEC(t)  ((t) * 1000 / 10000)
 
 /** BLE status code */
 
@@ -140,6 +151,7 @@ struct bt_common_state_s
   struct ble_common_ops_s      *ble_common_ops;          /**< BLE status callbacks @ref ble_common_ops_s */
   BT_ADDR                     bt_addr;                   /**< BT local device address @ref BT_ADDR */
   BT_ADDR                     ble_addr;                  /**< BLE local device address @ref BT_ADDR */
+  uint8_t                     ble_addr_type;             /**< BLE local device address_type @ref BLE_GAP_ADDR_TYPES */
   char                        bt_name[BT_NAME_LEN + 1];  /**< BT local device name */
   char                        ble_name[BT_NAME_LEN + 1]; /**< BLE local device name */
 };
@@ -215,6 +227,22 @@ struct ble_bondinfo_s
   struct ble_cccd_s   *cccd;
 };
 
+struct ble_scan_param_s
+{
+  uint8_t  active;   /**< 1: active scan, 0: passive scan */
+  uint16_t interval; /**< Scan interval in 625 us units. (2.5 - 10,240 ms) */
+  uint16_t window;   /**< Scan window   in 625 us units. (2.5 - 10,240 ms) */
+  uint16_t timeout;  /**< Scan timeout  in 10  ms units. 0: no timeout */
+};
+
+struct ble_conn_param_s
+{
+  uint16_t min_interval;  /**< Minimum Connection Interval in 1.25 ms units. (7.5 - 4,000 ms) */
+  uint16_t max_interval;  /**< Maximum Connection Interval in 1.25 ms units. (7.5 - 4,000 ms) */
+  uint16_t slave_latency; /**< Slave Latency in number of connection events. (max 499) */
+  uint16_t sup_timeout;   /**< Connection Supervision Timeout in 10 ms unit. (100 - 32,000 ms) */
+};
+
 /**
  * @struct bt_common_ops_s
  * @brief Bluetooth Common application callbacks
@@ -224,7 +252,7 @@ struct bt_common_ops_s
   void (*command_status)(BT_CMD_STATUS status);                                                    /**< Command status */
   void (*pairing_complete)(BT_ADDR addr, BT_PAIR_STATUS status);                                   /**< Pairing complete */
   void (*inquiry_result)(BT_ADDR addr, char *name);                                                /**< Inquiry data result */
-  void (*inquiry_complete)(void);                                                                  /**< Coplete inquiry */
+  void (*inquiry_complete)(void);                                                                  /**< Complete inquiry */
   void (*connect_status_changed)(struct bt_acl_state_s *bt_acl_state, bool connected, int status); /**< Connection status change */
   void (*connected_device_name)(const char *name);                                                 /**< Device name change */
   void (*bond_info)(BT_ADDR addr);                                                                 /**< Bonding information */
@@ -311,7 +339,7 @@ int bt_finalize(void);
 
 /**
  * @brief Set Bluetooth module address
- *        This is Spresense side address and should be call before bt_enable.
+ *        This is Spresense side address and should be called before bt_enable.
  *
  * @param[in] addr: Bluetooth device address @ref BT_ADDR
  *
@@ -332,7 +360,7 @@ int bt_get_address(BT_ADDR *addr);
 
 /**
  * @brief Set Bluetooth module name
- *        This name visible for other devices and should be call before bt_enable.
+ *        This name visible for other devices and should be called before bt_enable.
  *
  * @param[in] name: Bluetooth device name
  *
@@ -451,8 +479,8 @@ int bt_cancel_inquiry(void);
 int bt_register_common_cb(struct bt_common_ops_s *bt_common_ops);
 
 /**
- * @brief Set Bluetooth LE module address
- *        This is Spresense side address and should be call before bt_enable.
+ * @brief Set Bluetooth LE module address of the random static address type.
+ *        This is Spresense side address and should be called before bt_enable.
  *
  * @param[in] addr: Bluetooth LE device address @ref BT_ADDR
  *
@@ -472,8 +500,27 @@ int ble_set_address(BT_ADDR *addr);
 int ble_get_address(BT_ADDR *addr);
 
 /**
+ * @brief Set Bluetooth LE module address of the public address type.
+ *        This is Spresense side address and should be called before bt_enable.
+ *
+ * @param[in] addr: Bluetooth LE device address @ref BT_ADDR
+ *
+ * @retval error code
+ */
+
+int ble_set_public_address(BT_ADDR *addr);
+
+/**
+ * @brief Get Bluetooth LE module address type
+ *
+ * @retval Bluetooth LE device address type
+ */
+
+uint8_t ble_get_address_type(void);
+
+/**
  * @brief Set Bluetooth LE module name
- *        This name visible for other devices and should be call before bt_enable.
+ *        This name visible for other devices and should be called before bt_enable.
  *
  * @param[in] name: Bluetooth LE device name
  *
@@ -491,6 +538,16 @@ int ble_set_name(char *name);
  */
 
 int ble_get_name(char *name);
+
+/**
+ * @brief Set Bluetooth LE module appearance
+ *
+ * @param[in] appearance: Bluetooth LE device appearance
+ *
+ * @retval error code
+ */
+
+int ble_set_appearance(BLE_APPEARANCE appearance);
 
 /**
  * @brief Bluetooth LE enable
@@ -605,6 +662,39 @@ uint16_t ble_get_request_mtusize(void);
  */
 
 int ble_get_negotiated_mtusize(uint16_t handle);
+
+/**
+ * @brief Set Tx power
+ *
+ * @param[in] tx_power: Tx power [dBm]
+ *
+ * @note Set the value supported by each device.
+ * @note This API can be called after ble_enable.
+ *
+ * @retval BLE_SUCCESS or negated errno.
+ */
+
+int ble_set_tx_power(int8_t tx_power);
+
+/**
+ * @brief Set scan parameter
+ *
+ * @param[in] param: scan parameter
+ *
+ * @retval error code
+ */
+
+int ble_set_scan_param(struct ble_scan_param_s *param);
+
+/**
+ * @brief Set connection parameter
+ *
+ * @param[in] param: connection parameter
+ *
+ * @retval error code
+ */
+
+int ble_set_conn_param(struct ble_conn_param_s *param);
 
 /**
  * @brief Execute pairing

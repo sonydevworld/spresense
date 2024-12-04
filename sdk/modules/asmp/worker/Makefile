@@ -36,17 +36,19 @@
 include $(APPDIR)/Make.defs
 -include $(SDKDIR)/Make.defs
 
-include worker_libc.mk
+include mkfiles/libc.mk
+include mkfiles/fmsynth.mk
+include mkfiles/cmsis.mk
 
-VPATH   = arch $(LIBC_TGTPATH)
+VPATH   = arch $(EXT_VPATH)
 SUBDIRS =
-DEPPATH = --dep-path arch --dep-path . $(LIBC_DEPPATH)
+DEPPATH = --dep-path arch --dep-path . $(EXT_DEPPATH)
 
 ASRCS  = exception.S
 
-CSRCS  = common.c mpmq.c mpmutex.c mpshm.c
-CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c
-CSRCS += $(LIBC_CSRCS)
+CSRCS  = common.c mpmq.c mpmutex.c mpshm.c printf.c
+CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c delay.c
+CSRCS += $(EXT_CSRCS)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
 COBJS = $(CSRCS:.c=$(OBJEXT))
@@ -60,18 +62,18 @@ BIN = libasmpw$(LIBEXT)
 
 ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
 
-CFLAGS := $(LIBC_INCPATH) $(CFLAGS)
+CFLAGS := $(EXT_INCPATH) $(CFLAGS)
 CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)chip
 CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)common
 ifneq ($(CONFIG_ARCH_FAMILY),)
 CFLAGS += ${INCDIR_PREFIX}$(ARCHSRCDIR)$(DELIM)$(CONFIG_ARCH_FAMILY)
 endif
 
-CFLAGS += -fno-tree-loop-distribute-patterns
+CFLAGS += -fno-tree-loop-distribute-patterns -DCXD5602_WORKER
 
 AFLAGS += -isystem $(SDKDIR)/modules/include
 
-all: $(BIN)
+all: $(BIN) | $(EXT_LIBS)
 .PHONY: context depend clean distclean
 
 $(AOBJS): %$(OBJEXT): %.S

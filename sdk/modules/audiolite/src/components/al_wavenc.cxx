@@ -134,7 +134,12 @@ void audiolite_wavenc::on_data()
   int ret;
   int wsize = 0;
   audiolite_memapbuf *mem =
-          (audiolite_memapbuf *)_ins[0]->pop_data(NULL);
+          (audiolite_memapbuf *)pop_data();
+
+  if (mem == NULL)
+    {
+      return;
+    }
 
   mossfw_lock_take(&_lock);
   while (_stream->has_file() && wsize < mem->get_storedsize())
@@ -153,11 +158,6 @@ void audiolite_wavenc::on_data()
 
   mossfw_lock_give(&_lock);
 
-  if (!_stream->has_file())
-    {
-      return;
-    }
-
   mem->release();
   _crnt_sz += wsize;
 
@@ -172,13 +172,22 @@ void audiolite_wavenc::on_data()
 int audiolite_wavenc::on_starting(audiolite_inputnode *inode,
                 audiolite_outputnode *onode)
 {
-  return _stream != NULL ? 0 : -1;
+  int ret = -1;
+  if (_stream)
+    {
+      create_wav_file();
+      if (_stream->has_file())
+        {
+          ret = 0;
+        }
+    }
+
+  return ret;
 }
 
 void audiolite_wavenc::on_started(audiolite_inputnode *inode,
                 audiolite_outputnode *onode)
 {
-  create_wav_file();
   audiolite_encoder::on_started(inode, onode);
 }
 

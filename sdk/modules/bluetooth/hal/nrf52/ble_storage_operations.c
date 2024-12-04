@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/hal/nrf52/bt_storage_manager.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,8 +44,8 @@
 #include <fcntl.h>
 #include <nuttx/crc32.h>
 #include <errno.h>
+#include <sys/queue.h>
 
-#include "queue.h" /* TODO: replace to nuttx/include/queue.h */
 #include "ble_storage_operations.h"
 
 /****************************************************************************

@@ -113,7 +113,7 @@ int send_errormsg(int id, int errcode)
 
 /*** name: send_bootmsg */
 
-int send_bootmsg(void)
+int send_bootmsg(void *d)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
@@ -122,6 +122,24 @@ int send_bootmsg(void)
   hdr.type = AL_COMM_MSGTYPE_ASYNC;
   hdr.code = AL_COMM_MSGCODESYS_BOOT;
   hdr.opt  = AL_MP3DECWORKER_VERSION;
+  opt.addr = (unsigned char *)alworker_addr_convert(d);
+
+#ifdef SPRMP3_DEBUG
+  sprmp3_dprintf("[MSG] BootUp\n");
+#endif
+
+  return al_send_message(&g_mp3dec_task, hdr, &opt);
+}
+
+int send_debug(unsigned char hdr_opt)
+{
+  al_comm_msghdr_t hdr;
+  al_comm_msgopt_t opt;
+
+  hdr.grp  = AL_COMM_MESSAGE_SYS;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = AL_COMM_MSGCODESYS_DBG;
+  hdr.opt  = hdr_opt;
 
 #ifdef SPRMP3_DEBUG
   sprmp3_dprintf("[MSG] BootUp\n");
@@ -161,7 +179,7 @@ int release_framemem(int id, sprmp3_fmemqueue_t *queue)
 
 /*** name: deliver_outpcm */
 
-int deliver_outpcm(sprmp3_outmemqueue_t *outq)
+int deliver_outpcm(sprmp3_outmemqueue_t *outq, int eof)
 {
   al_comm_msghdr_t hdr;
   al_comm_msgopt_t opt;
@@ -179,7 +197,7 @@ int deliver_outpcm(sprmp3_outmemqueue_t *outq)
       opt.addr = mem->addr;
       opt.size = (outq->mode == SPRMP3_MODE_JUSTDECODE) ?
                  outq->filled_size : mem->size;
-      opt.eof = 0;
+      opt.eof = eof;
 
       sq_addlast((sq_entry_t *)mem, &outq->free);
       outq->done = 0;

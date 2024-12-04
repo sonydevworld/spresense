@@ -181,15 +181,21 @@ int audiolite_filestream::receive_data(audiolite_mem *mem,
   int sz = mem->get_fullsize() - ofst;
   int ret = 0;
 
+  mem->set_storedsize(0);
   if (_fp && sz > 0)
     {
       ret = fread(&data[ofst], 1, sz, _fp);
-      if (sz != ret)
+      if (feof(_fp))
         {
           mem->set_eof();
+          fclose(_fp);
+          _fp = NULL;
         }
 
-      mem->set_storedsize(ret);
+      if (ret >= 0)
+        {
+          mem->set_storedsize(ret);
+        }
     }
 
   return ret;
@@ -200,12 +206,11 @@ int audiolite_filestream::send_data(audiolite_mem *mem,
 {
   char *data = (char *)mem->get_data();
   int sz = mem->get_storedsize() - ofst;
-  int ret = 0;
+  int ret = -EINVAL;
 
   if (_fp && sz > 0)
     {
-      ret = fwrite(&data[ofst], sz, 1, _fp);
-      ret = ret == 1 ? sz : ret;
+      ret = fwrite(&data[ofst], 1, sz, _fp);
     }
 
   return ret;

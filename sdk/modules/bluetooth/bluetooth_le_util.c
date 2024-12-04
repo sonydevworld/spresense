@@ -1,7 +1,7 @@
 /****************************************************************************
  * sdk/modules/bluetooth/bluetooth_le_util.c
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2023, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -535,13 +535,15 @@ int bleutil_get_devicename(uint8_t *data, uint8_t len, char *devname)
   if (ble_parse_advertising_data(BLE_AD_TYPE_COMPLETE_LOCAL_NAME,
                                  data, len, &eir) == BT_SUCCESS)
     {
-      memcpy(devname, eir.data, sizeof(eir.data));
+      memcpy(devname, eir.data, eir.len);
+      devname[eir.len] = '\0';
       return 1;
     }
   else if(ble_parse_advertising_data(BLE_AD_TYPE_SHORT_LOCAL_NAME,
                                      data, len, &eir) == BT_SUCCESS)
     {
-      memcpy(devname, eir.data, sizeof(eir.data));
+      memcpy(devname, eir.data, eir.len);
+      devname[eir.len] = '\0';
       return 1;
     }
 
@@ -563,10 +565,21 @@ int bleutil_get_devicename(uint8_t *data, uint8_t len, char *devname)
 
 uint8_t bleutil_get_addrtype(uint8_t *data, uint8_t len)
 {
-  struct bt_eir_s eir;
-  ble_parse_advertising_data(BLE_AD_TYPE_ADDRESS_TYPE,
-                             data, len, &eir);
-  return eir.data[0];
+  return (BLE_ADDRESS_TYPE)data[0];
+}
+
+/* name: bleutil_get_rssi
+ *       Get BLE RSSI value from advertising data
+ *
+ *       data    [in]  : Advertising data
+ *       len     [in]  : Advertising data length in bytes
+ *
+ *       Return : BLE RSSI value for advertising
+ */
+
+int8_t bleutil_get_rssi(uint8_t *data, uint8_t len)
+{
+  return (int8_t)data[1];
 }
 
 /* name: bleutil_get_advertising_flags

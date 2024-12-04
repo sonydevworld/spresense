@@ -1,7 +1,7 @@
 /****************************************************************************
  * bluetooth_le_central/bluetooth_le_central_main.c
  *
- *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -159,6 +159,7 @@ static struct ble_cccd_s **g_cccd = NULL;
 static bool g_target = false;
 static BLE_UUID g_target_srv_uuid;
 static BLE_UUID g_target_char_uuid;
+static char g_target_device_name[BT_NAME_LEN] = "SONY-PERIPHERAL";
 
 static uint8_t g_read_data[BLE_MAX_GATT_DATA_LEN];
 static uint16_t g_read_datalen;
@@ -193,7 +194,7 @@ static void on_le_connect_status_change(struct ble_state_s *ble_state,
   printf("  : Cause <%s> :\n",
          cause == BLESTAT_SUCCESS          ? "Success"                 :
          cause == BLESTAT_MEMCAP_EXCD      ? "Mem capacity exceed"     :
-         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connetion timeout"       :
+         cause == BLESTAT_CONNECT_TIMEOUT  ? "Connection timeout"      :
          cause == BLESTAT_PEER_TERMINATED  ? "Peripheral terminated"   :
          cause == BLESTAT_PEER_TERM_LOWRES ? "Peripheral low resource" :
          cause == BLESTAT_PEER_TERM_POFF   ? "Peripheral power off"    :
@@ -220,9 +221,10 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
   char devname[BT_EIR_LEN];
 
   devname[0] = '\0';
-  printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X\n",
+  printf("[BLE] Scan result ADDR:%02X:%02X:%02X:%02X:%02X:%02X (RSSI:%ddB)\n",
          addr.address[5], addr.address[4], addr.address[3],
-         addr.address[2], addr.address[1], addr.address[0]);
+         addr.address[2], addr.address[1], addr.address[0],
+         bleutil_get_rssi(data, len));
 
   /* If peer device has the device name, print it. */
 
@@ -246,12 +248,10 @@ static void on_scan_result(BT_ADDR addr, uint8_t *data, uint8_t len)
     }
   else
     {
-      const char target_device_name[] = "SONY-PERIPHERAL";
-
-      if (strcmp((char *)devname, target_device_name) != 0)
+      if (strcmp((char *)devname, g_target_device_name) != 0)
         {
           printf("%s [BLE] DevName is not matched: %s expect: %s\n",
-                 __func__, devname, target_device_name);
+                 __func__, devname, g_target_device_name);
           goto bye;
         }
     }
@@ -456,7 +456,7 @@ static void on_read(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
 
   g_read_datalen = ble_gatt_char->value.length;
   memcpy(g_read_data, ble_gatt_char->value.data, g_read_datalen);
-  g_charrd_result = ble_gatt_char->status;
+  g_charrd_result = (g_read_datalen > 0) ? BT_SUCCESS : BT_FAIL;
 }
 
 static void on_notify(uint16_t conn_handle, struct ble_gatt_char_s *ble_gatt_char)
@@ -499,6 +499,14 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
 
   db = &db_disc->params.db_discovery;
   srv = &db->services[0];
+
+  /* If any error occurs, finish discovery */
+
+  if (db_disc->result != BT_SUCCESS)
+    {
+      printf("Discovery failed result=%d\n", db_disc->result);
+      goto finish;
+    }
 
   for (i = 0; i < db->srv_count; i++, srv++)
     {
@@ -550,10 +558,11 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
     }
 
   /* The end_handle of the last service is 0xFFFF.
-   * So, if end_handle is not 0xFFFF, the continuous service information exists.
+   * When end_handle is 0x0000, no more services are found.
+   * So, if end_handle is not 0xFFFF or 0x0000, the continuous service information exists.
    */
 
-  if (db_disc->state.end_handle != 0xFFFF)
+  if ((db_disc->state.end_handle != 0xFFFF) && (db_disc->state.end_handle != 0x0000))
     {
       if (g_target == false)
         {
@@ -563,6 +572,7 @@ static void on_db_discovery(struct ble_gatt_event_db_discovery_t *db_disc)
         }
     }
 
+finish:
   g_discovered = true;
 }
 
@@ -643,6 +653,12 @@ static int parse_argument(int argc, FAR char *argv[])
         }
 
       g_target = true;
+    }
+  else if (argc == 2)
+    {
+      strncpy(g_target_device_name, argv[1], BT_NAME_LEN);
+      g_target_device_name[BT_NAME_LEN - 1] = '\0';
+      g_target = false;
     }
   else
     {
@@ -822,21 +838,21 @@ static int access_descriptor(uint16_t conn_handle,
                              struct ble_gattc_db_disc_char_s *char_db)
 {
   int ret = BT_SUCCESS;
-  uint16_t buf;
-  uint16_t len;
+  uint16_t buf = 0;
+  uint16_t len = 0;
 
   if (char_db->cccd_handle != BLE_GATT_INVALID_ATTRIBUTE_HANDLE)
     {
       ret = read_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, &len);
+      if (ret != BT_SUCCESS)
+        {
+          return ret;
+        }
+
       if (buf == NOTIFICATION_DISABLED)
         {
           buf = NOTIFICATION_ENABLED;
           ret = write_descriptor(conn_handle, char_db->cccd_handle, (uint8_t *)&buf, len);
-        }
-
-      if (ret != BT_SUCCESS)
-        {
-          return ret;
         }
     }
 

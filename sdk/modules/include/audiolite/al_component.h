@@ -40,6 +40,8 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+
 #include <audiolite/al_nodecomm.h>
 #include <audiolite/al_inputnode.h>
 #include <audiolite/al_outputnode.h>
@@ -88,8 +90,8 @@ class audiolite_component : public audiolite_nodecomm_if
                         int outputnum = 1,
                         int depth = 16,
                         bool is_sync = true,
-                        int prio = -1,
-                        int stack_sz = -1);
+                        int prio = 105,
+                        int stack_sz = CONFIG_PTHREAD_STACK_DEFAULT);
     virtual ~audiolite_component();
 
     void set_mempool(audiolite_mempool *pool);
@@ -129,11 +131,16 @@ class audiolite_component : public audiolite_nodecomm_if
     audiolite_inputnode *get_input(int id = 0);
     audiolite_outputnode *get_output(int id = 0);
 
-    int bind(audiolite_component *cmp);
+    audiolite_component *bind(audiolite_component *cmp);
     int bind(audiolite_inputnode *in, int outid = 0);
 
     int unbind(audiolite_inputnode *in);
     int unbindall();
+
+    virtual int start();
+    virtual void stop();
+    virtual void suspend();
+    virtual int resume();
 };
 
 #endif /* __INCLUDE_AUDIOLITE_COMPONENT_H */

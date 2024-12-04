@@ -126,6 +126,7 @@ typedef struct
   uint8_t is_connected;
   int8_t peerRssi;
   uint8_t startRssi;
+  int8_t txPower;
 } bleGapMem;
 
 typedef struct

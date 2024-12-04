@@ -116,8 +116,8 @@ struct bt_hal_hfp_ops_s
   int (*connect)(BT_ADDR *addr, uint16_t handle, bool connect);         /**< Connect/Disconnect HFP by BT_ADDR */
   int (*audio_connect)(BT_ADDR *addr, uint16_t handle, bool connect);   /**< Connect/Disconnect HFP audio by BT_ADDR */
   int (*set_hf_feature)(BT_HFP_HF_FEATURE_FLAG hf_heature);             /**< Setup HFP HF feature @ref BT_HFP_HF_FEATURE_FLAG */
-  int (*send_at_command)(BT_ADDR *addr, char *at_str, uint16_t handle); /**< Send AT comand */
-  int (*press_button)(BT_ADDR *addr, uint16_t handle);                  /**< Send pressing button comand */
+  int (*send_at_command)(BT_ADDR *addr, char *at_str, uint16_t handle); /**< Send AT command */
+  int (*press_button)(BT_ADDR *addr, uint16_t handle);                  /**< Send pressing button command */
 };
 
 /**
@@ -137,7 +137,7 @@ struct bt_hal_spp_ops_s
  */
 struct ble_hal_common_ops_s
 {
-  int (*setDevAddr)(BT_ADDR *addr);                /**< Set BLE device address */
+  int (*setDevAddr)(BT_ADDR *addr, uint8_t type);  /**< Set BLE device address and type */
   int (*setDevName)(char *name);                   /**< Set BLE device name */
   int (*setAppearance)(BLE_APPEARANCE appearance); /**< Set BLE appearance ID @ref BLE_APPEARANCE */
   int (*setPPCP)(BLE_CONN_PARAMS ppcp);            /**< Set PPCP connection parameter */
@@ -150,6 +150,9 @@ struct ble_hal_common_ops_s
   uint16_t (*setMtuSize)(uint16_t sz);             /**< Set MTU size */
   uint16_t (*getMtuSize)(void);                    /**< Get MTU size */
   int (*getNegotiatedMtuSize)(uint16_t handle);    /**< Get negotiated MTU size */
+  int (*setTxPower)(int8_t tx_power);              /**< Set Tx Power */
+  int (*setScanParam)(struct ble_scan_param_s *param); /**< Set scan parameter */
+  int (*setConnParam)(struct ble_conn_param_s *param); /**< Set connection parameter */
 };
 
 /**
@@ -212,6 +215,10 @@ struct ble_hal_gattc_ops_s
 
   int (*descriptor_read)(uint16_t conn_handle,
                          uint16_t handle);
+
+  /** Set vendor specific UUID */
+
+  int (*set_vendor_uuid)(BLE_UUID *uuid);
 };
 
 /**

@@ -1,5 +1,5 @@
 /****************************************************************************
- * modules/audiolite/worker/mp3dec/al_comm_comm.c
+ * modules/audiolite/worker/common/alworker_comm.c
  *
  *   Copyright 2023 Sony Semiconductor Solutions Corporation
  *
@@ -81,7 +81,9 @@ void *alworker_addr_convert(void *a)
 
 int initialize_alworker(al_wtask_t *inst, const char *dspfname, bool is_spk)
 {
+#ifndef BUILD_TGT_ASMPWORKER
   int ret;
+#endif
   key_t key = AL_COMM_MQ_NAMESEND;
   cpuid_t cid = 0;
 
@@ -231,5 +233,6 @@ int al_send_message(al_wtask_t *inst,
   msg->hdr.u32 = hdr.u32;
   memcpy(&msg->opt, opt, sizeof(al_comm_msgopt_t));
 
-  return mpmq_send(&inst->mqsend, msg->hdr.type, (uint32_t)msg);
+  while (mpmq_send(&inst->mqsend, msg->hdr.type, (uint32_t)msg) != OK);
+  return OK;
 }

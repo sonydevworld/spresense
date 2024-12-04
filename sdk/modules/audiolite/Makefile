@@ -37,8 +37,6 @@
 
 # Set 1 FORACE_WORKER_BUILD when you want to make spk
 
-FORCE_WORKER_BUILD =
-
 MODNAME = audiolite
 CXXEXT = .cxx
 
@@ -47,6 +45,8 @@ CXXSRCS += src/base/al_evthandler.cxx
 CXXSRCS += src/base/al_inputnode.cxx
 CXXSRCS += src/base/al_memalloc.cxx
 CXXSRCS += src/base/al_outputnode.cxx
+CXXSRCS += src/base/al_thread.cxx
+CXXSRCS += src/base/al_workercomp.cxx
 CXXSRCS += src/base/al_stream.cxx
 CXXSRCS += src/base/al_decoder.cxx
 CXXSRCS += src/base/al_worker.cxx
@@ -66,7 +66,7 @@ CXXFLAGS += -I include -DBUILD_TGT_SUPERVISOR
 
 ifneq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),)
 CSRCS += dummy.c
-else ifeq ($(FORCE_WORKER_BUILD),1)
+else ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD),y)
 CSRCS += dummy.c
 endif
 
@@ -74,12 +74,11 @@ include $(SDKDIR)/modules/Module.mk
 
 .PHONY: build_mp3dec
 build_mp3dec:
-	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) FORCE_BUILD=$(FORCE_WORKER_BUILD)
+	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
 
 dummy.c: build_mp3dec
 
 clean_mp3dec:
-	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) FORCE_BUILD=$(FORCE_WORKER_BUILD) clean
+	@$(MAKE) -C worker/mp3dec TOPDIR="$(TOPDIR)" SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV) clean
 
 clean:: clean_mp3dec
-

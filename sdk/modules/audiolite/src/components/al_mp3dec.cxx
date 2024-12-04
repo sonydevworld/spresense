@@ -74,7 +74,7 @@ void audiolite_mp3dec::decode_runner()
 
   while (_is_thrdrun)
     {
-      if (_isplay)
+      if (_isplay && _worker_booted)
         {
           audiolite_memapbuf *mem = 
               (audiolite_memapbuf *)_omempool->allocate();
@@ -87,6 +87,12 @@ void audiolite_mp3dec::decode_runner()
               /* No need to release mem here.
                * It will be done after finishing decode.
                */
+            }
+          else
+            {
+              /* Yeild */
+
+              usleep(10 * 1000);
             }
         }
       else
@@ -116,7 +122,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
       mem = thiz->_inq.pop();
       if (mem)
         {
-          if (thiz->_frame_eof)
+          if (thiz->_frame_eof || thiz->_worker_booted != true)
             {
               mem->release();
             }
@@ -144,8 +150,17 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
       mem = thiz->_outq.pop();
       if (mem)
         {
-          mem->set_storedsize(opt->size);
-          thiz->_outs[0]->push_data(mem);
+          if (thiz->_worker_booted)
+            {
+              mem->set_storedsize(opt->size);
+              mem->clear_eof();
+              if (opt->eof != 0)
+                {
+                  mem->set_eof();
+                }
+
+              thiz->_outs[0]->push_data(mem);
+            }
           mem->release();
         }
     }
@@ -163,6 +178,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
     {
       al_dinfo("TERM\n");
       thiz->publish_event(AL_EVENT_MP3DECWORKEREND, 0);
+      thiz->_worker_terminated = true;
       ret = -1;
     }
   else if (CHECK_HDR(hdr, SYS, SYS_PARAM))
@@ -184,7 +200,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
 
       if (hdr.opt != AL_MP3DECWORKER_VERSION)
         {
-          thiz->publish_event(AL_EVENT_MP3DEC_WRONGVER, hdr.opt);
+          thiz->publish_event(AL_EVENT_WRONGVERSION, hdr.opt);
           return 0;
         }
 
@@ -216,18 +232,9 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
             }
         }
 
-      for (int i = 0; i < thiz->_outq.get_qsize(); i++)
-        {
-          mem = (audiolite_memapbuf *)thiz->_omempool->allocate();
-          if (mem)
-            {
-              thiz->_outq.push(mem);
-              alworker_inject_omem(thiz->_worker.getwtask(), mem);
-            }
-        }
-
       alworker_send_startframe(thiz->_worker.getwtask());
       alworker_send_start(thiz->_worker.getwtask());
+      thiz->_worker_booted = true; /* This makes start injection of omem */
     }
   else if (CHECK_HDR(hdr, SYS, SYS_ERR))
     {
@@ -243,7 +250,7 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
     }
   else
     {
-      thiz->publish_event(AL_EVENT_MP3DECUNKNOWNEVT, hdr.u32);
+      thiz->publish_event(AL_EVENT_UNKNOWN, hdr.u32);
     }
   
   return ret;
@@ -252,9 +259,10 @@ int audiolite_mp3dec::handle_mesage(al_comm_msghdr_t hdr,
 audiolite_mp3dec::audiolite_mp3dec() : audiolite_decoder("mp3decomem",
                                        CONFIG_ALMP3DEC_INJECTPRIO,
                                        CONFIG_ALMP3DEC_INJECTSTACK),
-                  _omempool(NULL), _worker(),
+                  _worker(),
                   _inq(SPRMP3_FRAMEMEM_QSIZE / 2),
-                  _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false)
+                  _outq(SPRMP3_OUTMEM_QSIZE / 2), _frame_eof(false),
+                  _worker_booted(false), _worker_terminated(true)
 {
   _worker.set_msghandler(audiolite_mp3dec::handle_mesage, this);
 }
@@ -291,8 +299,23 @@ int audiolite_mp3dec::stop_decode()
     {
       _pool->disable_pool();
     }
+
   _inq.disable();
-  _worker.terminate_worker();
+
+  if (_worker_booted)
+    {
+      _worker_booted = false;
+
+      _worker_terminated = false;
+      alworker_send_term(_worker.getwtask());
+      while (_worker_terminated == false)
+        {
+          usleep(1);
+        }
+
+      _worker.terminate_worker();
+    }
+
   _outq.disable();
 
   return OK;

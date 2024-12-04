@@ -27,10 +27,11 @@ Make.dep
 /.project
 /.settings
 /pcode
-/tags
+tags
 /*.log
 .*.tmp
 .context
 /Kconfig
+/workerspks
 .built
 sdk-export.tar.gz

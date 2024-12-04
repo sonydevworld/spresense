@@ -70,12 +70,6 @@ typedef int16_t cpuid_t;
 
 typedef int16_t mpobjtype_t;
 
-/* This typedef is supplemental */
-
-#ifndef CONFIG_SMP
-typedef volatile uint8_t cpu_set_t;
-#endif
-
 /*
  * Super class for MP objects
  */

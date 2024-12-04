@@ -45,9 +45,7 @@
 #include "sprmp3_msghandler.h"
 #include "sprmp3_sendback.h"
 
-#ifdef SPRMP3_DEBUG
 #include "sprmp3_debug.h"
-#endif
 
 #ifdef ENABME_PERFORMANCE
 #include <stdio.h>
@@ -94,7 +92,7 @@ static struct state_proc_s state_procs[] =
   [SPRMP3_STATE_FILLUPREMAIN] = {exec_fillremstate, 1},
   [SPRMP3_STATE_WAITIN]       = {exec_waitinstate,  1},
   [SPRMP3_STATE_WAITINREMAIN] = {exec_winremstate,  1},
-  [SPRMP3_STATE_ENDING]       = {exec_endingstate,  1}
+  [SPRMP3_STATE_ENDING]       = {exec_endingstate,  2}
 };
 
 static sprmp3_sys_t g_sys;
@@ -207,7 +205,7 @@ static int exec_endingstate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
 
   if (!(outq->done & mask))
     {
-      if (is_decode_done(inst))
+      if (is_decode_done(inst) && outq->filled_size == 0)
         {
           send_framedone(inst->id);
           reset_instance(inst);
@@ -431,9 +429,7 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (fill_tagsize(inst) == 0)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("fill_tagsize() error\n");
-#endif
       return SPRMP3_STATE_ERROR;
     }
 
@@ -441,10 +437,8 @@ static int initialize_framecache(sprmp3_t *inst)
 
   if (inst->fcache.fillsize != MINIMP3_ID3_DETECT_SIZE)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("fillsize is not equal ID3 SIZE : %d\n",
                      inst->fcache.fillsize);
-#endif
       return SPRMP3_STATE_ERROR;
     }
 
@@ -857,9 +851,7 @@ static int exec_decodestate(sprmp3_t *inst, sprmp3_outmemqueue_t *outq)
           inst->tgtcache.decsize = inst->tgtcache.remofst;
           outq->done |= SPRMP3_OUTDONE(inst);
           inst->omem_wofst = 0;
-#ifdef SPRMP3_DEBUG
           sprmp3_dprintf("Force the decode finish.\n");
-#endif
           return SPRMP3_STATE_ENDING;
         }
       else
@@ -1112,7 +1104,7 @@ static bool all_player_done(sprmp3_t *insts, unsigned int done)
   for (i = 0; i < SPRMP3_MAX_INSTANCE; i++)
     {
       mask = 1 << insts->id;
-      if (state_procs[insts->state].playing && !(mask & done))
+      if (state_procs[insts->state].playing == 1 && !(mask & done))
         {
           return false;
         }
@@ -1175,7 +1167,7 @@ static int deliver_decodedpcm(sprmp3_t *insts, sprmp3_outmemqueue_t *outq,
                 break;
             }
 
-          return deliver_outpcm(outq);
+          return deliver_outpcm(outq, is_decode_done(insts) ? 1 : 0);
         }
     }
 
@@ -1198,17 +1190,14 @@ int mp3dec_main(void)
   dbg_init_compare();
 #endif
 
-#ifdef SPRMP3_DEBUG
   print_status(&g_sys);
-#endif
 
-  send_bootmsg();
+  send_bootmsg(NULL);
 
   while (g_sys.system_state != SPRMP3_SYSSTATE_TERM)
     {
-#ifdef SPRMP3_DEBUG
       sprmp3_dprintf("\n::::::::: Start Loop ::::::::::\n");
-#endif
+      print_status(&g_sys);
       if (g_sys.system_state == SPRMP3_SYSSTATE_STOP)
         {
           sprmp3_pollmessage(&g_sys, 1);
@@ -1216,29 +1205,22 @@ int mp3dec_main(void)
       else
         {
           sprmp3_pollmessage(&g_sys, 0);
-#ifdef SPRMP3_DEBUG
           print_status(&g_sys);
           print_buffer_status(&g_sys);
-#endif
           if (g_sys.system_state != SPRMP3_SYSSTATE_TERM)
             {
               exec_playing(&g_sys);
-#ifdef SPRMP3_DEBUG
               print_buffer_status(&g_sys);
-#endif
               if (g_sys.system_state == SPRMP3_SYSSTATE_PAUSE ||
                   !exist_playing(g_sys.insts))
                 {
-#ifdef SPRMP3_DEBUG
                   sprmp3_dprintf("Just Deliver PCM..\n");
-#endif
-                  deliver_outpcm(&g_sys.outqueue);
+                  deliver_outpcm(&g_sys.outqueue,
+                                 is_decode_done(g_sys.insts) ? 1 : 0);
                 }
               else
                 {
-#ifdef SPRMP3_DEBUG
                   sprmp3_dprintf("Deliver PCM if possible..\n");
-#endif
                   deliver_decodedpcm(g_sys.insts,
                                      &g_sys.outqueue,
                                      &g_sys.sys_gain,

@@ -96,6 +96,25 @@ static char g_app_iobuffer[APP_IOBUFFER_LEN];
  ****************************************************************************/
 
 /****************************************************************************
+ * Name: get_file_size
+ *
+ * Description:
+ *   Get the size of the specified file.
+ ****************************************************************************/
+
+static int get_file_size(char *filename)
+{
+  struct stat tmp;
+
+  if (stat(filename, &tmp) == 0)
+    {
+      return tmp.st_size;
+    }
+
+  return -1;
+}
+
+/****************************************************************************
  * Name: set_rtc_alarm
  *
  * Description:
@@ -226,11 +245,11 @@ static int lte_enter_hibernation(void)
 
 static int lte_resume_from_hibernation(void)
 {
-  struct stat tmp;
-  uint8_t data[512] = {0};
   int size = 0;
+  int ctx_size;
   int ret = 0;
   int fd = 0;
+  uint8_t data[64];
 
   ret = lte_initialize();
   if (ret < 0 && ret != -EALREADY)
@@ -239,22 +258,50 @@ static int lte_resume_from_hibernation(void)
       return -1;
     }
 
-  if (stat(LTE_HIBERNATION_CONTEXT_PATH, &tmp) == 0)
+  size = get_file_size(LTE_HIBERNATION_CONTEXT_PATH);
+  if (size > 0)
     {
-      fd = open(LTE_HIBERNATION_CONTEXT_PATH, O_RDONLY);
-      size = read(fd, data, 512);
-      close(fd);
+      /* Get the context size required for resume. */
+
+      ctx_size = lte_hibernation_resume(NULL, 0);
+      if (ctx_size != size)
+        {
+          printf("File size does not match."
+                 " file size = %d, context size = %d\n",
+                 size, ctx_size);
+          ret = -1;
+        }
+      else
+        {
+          fd = open(LTE_HIBERNATION_CONTEXT_PATH, O_RDONLY);
+
+          do
+            {
+              size = read(fd, data, sizeof(data));
+              ret = lte_hibernation_resume(data, size);
+              if (ret < 0)
+                {
+                  printf("lte_hibernation_resume failed.\n");
+                }
+              else
+                {
+                  printf("remain size = %d\n", ret);
+                }
+            }
+          while (ret > 0);
+
+          close(fd);
+        }
+
       unlink(LTE_HIBERNATION_CONTEXT_PATH);
     }
   else
     {
-      return -1;
+      ret = -1;
     }
 
-  ret = lte_hibernation_resume(data, size);
-  if (ret < 0)
+  if (ret != 0)
     {
-      printf("lte_hibernation_resume failed.\n");
       lte_finalize();
       return -1;
     }
@@ -484,22 +531,29 @@ int main(int argc, FAR char *argv[])
       printf("Resume from LTE hibernation mode.\n");
 
       ret = lte_resume_from_hibernation();
-      if (ret < 0)
+      if (ret == 0)
         {
-          return -1;
+          /* Run wget */
+
+          ret = perform_wget();
+          if (ret < 0)
+            {
+              return -1;
+            }
+
+          printf("End of this sample\n");
+          return 0;
         }
     }
-  else
+
+  /* Normal boot */
+
+  printf("Turn On LTE.\n");
+
+  ret = app_connect_to_lte(&apnsetting);
+  if (ret < 0)
     {
-      /* Normal boot */
-
-      printf("Turn On LTE.\n");
-
-      ret = app_connect_to_lte(&apnsetting);
-      if (ret < 0)
-        {
-          return -1;
-        }
+      return -1;
     }
 
   /* Run wget */
@@ -531,6 +585,6 @@ int main(int argc, FAR char *argv[])
   /* Entering cold sleep */
 
   boardctl(BOARDIOC_POWEROFF, 1);
-    
+
   return 0;
 }

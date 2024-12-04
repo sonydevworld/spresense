@@ -416,7 +416,7 @@ audiolite_mem *audiolite_mempoolapbuf::allocate(bool blocking)
 {
   int qsz;
   audiolite_memapbuf *ret = NULL;
-  dq_entry_t *tmp;
+  dq_entry_t *tmp = NULL;
 
   mossfw_lock_take(&_lock);
 
@@ -431,11 +431,17 @@ audiolite_mem *audiolite_mempoolapbuf::allocate(bool blocking)
       measure_start();
     }
 
-  tmp = dq_remfirst(&_free_mem);
-  while (_pool_enable && blocking && tmp == NULL)
+  if (_pool_enable)
     {
-      mossfw_condition_wait(&_cond, &_lock);
       tmp = dq_remfirst(&_free_mem);
+      while (_pool_enable && blocking && tmp == NULL)
+        {
+          mossfw_condition_wait(&_cond, &_lock);
+          if (_pool_enable)
+            {
+              tmp = dq_remfirst(&_free_mem);
+            }
+        }
     }
 
   update_remain(qsz);
@@ -471,6 +477,16 @@ void audiolite_mempoolapbuf::enable_pool()
   _pool_enable = true;
   mossfw_condition_notice(&_cond);
   mossfw_lock_give(&_lock);
+}
+
+int audiolite_mempoolapbuf::remaining()
+{
+  int ret;
+  mossfw_lock_take(&_lock);
+  ret = dq_count(&_free_mem);
+  mossfw_lock_give(&_lock);
+
+  return ret;
 }
 
 /****************************************************************************
@@ -638,4 +654,14 @@ void audiolite_mempoolsysmsg::enable_pool()
   _pool_enable = true;
   mossfw_condition_notice(&_cond);
   mossfw_lock_give(&_lock);
+}
+
+int audiolite_mempoolsysmsg::remaining()
+{
+  int ret;
+  mossfw_lock_take(&_lock);
+  ret = dq_count(&_free_mem);
+  mossfw_lock_give(&_lock);
+
+  return ret;
 }

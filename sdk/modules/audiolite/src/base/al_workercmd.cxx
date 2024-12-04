@@ -152,6 +152,21 @@ int alworker_send_start(al_wtask_t *wtask)
   return ret;
 }
 
+int alworker_send_stop(al_wtask_t *wtask)
+{
+  int ret;
+  al_comm_msghdr_t hdr;
+  al_comm_msgopt_t opt;
+
+  hdr.grp  = AL_COMM_MESSAGE_SYS;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = AL_COMM_MSGCODESYS_STOP;
+  hdr.opt  = 0;
+
+  ret = al_send_message(wtask, hdr, &opt);
+  return ret;
+}
+
 int alworker_send_term(al_wtask_t *wtask)
 {
   int ret;
@@ -167,6 +182,17 @@ int alworker_send_term(al_wtask_t *wtask)
   return ret;
 }
 
+int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret)
+{
+  al_comm_msgopt_t opt;
+
+  hdr.type = AL_COMM_MSGTYPE_RESP;
+  hdr.opt = ret;
+
+  ret = al_send_message(wtask, hdr, &opt);
+  return ret;
+}
+
 int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem)
 {
   return send_oframe(wtask, mem->get_data(), mem->get_fullsize());
@@ -175,6 +201,6 @@ int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem)
 int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem)
 {
   return send_iframe(wtask, mem->get_data(),
-                            mem->get_fullsize(),
+                            mem->get_storedsize(),
                             mem->is_eof());
 }

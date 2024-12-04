@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/hal/bcm20706/manager/bt_recv_task.c
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -709,36 +709,19 @@ void bleRecvLeAdverReport(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt, uint16_t le
   rp += BLE_GAP_ADDR_LENGTH;
   STREAM_TO_UINT8(adv_rept_evt.rssi, rp);
 
-  adv_rept_evt.length = len - BLE_GAP_ADDR_LENGTH - BLE_HANDLE_LEN - BLE_ADV_RSSI_LEN;
-  memcpy(adv_rept_evt.data, rp, BLE_GAP_ADV_MAX_SIZE);
+  /* The first octet is used for notification of peer address type. */
 
-#ifndef REPORT_ALL_ADV_DATA /* report device name only */
-  uint32_t idx = 0;
-  uint8_t field_len = 0;
-  uint8_t field_type = 0;
-  uint8_t adv_data[BLE_GAP_ADV_MAX_SIZE] = {0};
+  adv_rept_evt.data[0] = pBleBcmEvt->evtData[1];
 
-  memcpy(adv_data, adv_rept_evt.data, adv_rept_evt.length);
+  /* The second octet is used for notification of rssi. */
 
-  while (idx < adv_rept_evt.length)
-    {
-      field_len = adv_data[idx];
-      field_type = adv_data[idx + 1];
+  adv_rept_evt.data[1] = (uint8_t)adv_rept_evt.rssi;
 
-      if (0x09 == field_type) { /* 0x09: Complete local name */
-        adv_rept_evt.length = field_len;
-        memset(adv_rept_evt.data, 0, sizeof(adv_rept_evt.data));
-        memcpy(adv_rept_evt.data, &adv_data[idx + 2], field_len - 1);
-        ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
-        return;
-      }
-      idx += field_len + 1;
-    }
-#else
+  len = len - BLE_GAP_ADDR_LENGTH - BLE_HANDLE_LEN - BLE_ADV_RSSI_LEN;
+  memcpy(&adv_rept_evt.data[2], rp, len);
+  adv_rept_evt.length = len + 2;
+
   ble_common_event_handler((struct bt_event_t *) &adv_rept_evt);
-#endif /* REPORT_ALL_ADV_DATA */
-
-
 }
 
 void bleRecvGattReadRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleBcmEvt)

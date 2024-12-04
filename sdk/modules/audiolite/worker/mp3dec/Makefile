@@ -38,7 +38,7 @@ include $(APPDIR)/Make.defs
 
 ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),y)
 BUILD_EXECUTE = 1
-else ifeq ($(FORCE_BUILD),1)
+else ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD),y)
 BUILD_EXECUTE = 1
 else
 BUILD_EXECUTE = 0
@@ -47,7 +47,22 @@ endif
 ifeq ($(BUILD_EXECUTE),1)
 
 BIN = mp3dec
+SPK = $(BIN).spk
+
+ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_ELF),y)
 all: depend $(BIN)
+endif
+
+ifeq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_SPK_BUILD),y)
+all: depend $(SPK)
+endif
+
+# For SPK tools
+
+MKSPK_TOOLDIR = $(TOPDIR)/tools/cxd56
+MKSPK_MKFILE = $(MKSPK_TOOLDIR)/Makefile.host
+MKSPK_TOOL = $(MKSPK_TOOLDIR)/mkspk
+MKSPK_TOOL_OPT = -c 2
 
 # Setup to build and linking worker support library
 
@@ -73,6 +88,7 @@ MINIMP3_DIR   = ../ext_libs/minimp3
 SPEEXDSP_DIR  = ../ext_libs/speexdsp_resample
 
 CSRCS =  entry.c mp3dec_main.c
+CSRCS += sprmp3_debug.c
 CSRCS += sprmp3_msghandler.c
 CSRCS += sprmp3_sendback.c
 CSRCS += alworker_comm.c
@@ -81,11 +97,21 @@ CSRCS += minimp3_ex.c
 CSRCS += resample.c
 CFLAGS += -DUSE_CMSIS -DBUILD_TGT_ASMPWORKER
 
+ifneq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_DEBUG),)
+CFLAGS += -DSPRMP3_DEBUG
+ifneq ($(CONFIG_AUDIO_LITE_MP3DEC_SUBCORE_DEBUG_DETAIL),)
+CFLAGS += -DSPRMP3_DEBUG_DETAIL
+endif
+endif
+
 VPATH = $(COMMON_DIR) $(MINIMP3_DIR) $(SPEEXDSP_DIR)
 
 DELTGT_FILES = $(CSRCS:.c=.o)
 
+ARCHSRCDIR = $(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src
+
 INCDIRS = $(COMMON_DIR) $(MINIMP3_DIR) $(SPEEXDSP_DIR) $(AUDIOLITE_DIR)/../include
+INCDIRS += $(ARCHSRCDIR)$(DELIM)chip $(ARCHSRCDIR)$(DELIM)common
 
 CFLAGS += -O3
 ifeq ($(WINTOOL),y)
@@ -116,10 +142,20 @@ $(BIN): $(COBJS) $(AOBJS) | $(WORKER_LIB) $(CMSIS_DSP_LIB)
 	$(Q) cp $(BIN) $(BIN).debug.elf
 	$(Q) $(STRIP) -d $(BIN)
 
+$(MKSPK_TOOL):
+	@$(MAKE) -C $(MKSPK_TOOLDIR) -f $(MKSPK_MKFILE) TOPDIR="$(TOPDIR)"
+
+# SDKDIR="$(SDKDIR)" APPDIR="$(APPDIR)" CROSSDEV=$(CROSSDEV)
+
+$(SPK): $(MKSPK_TOOL) $(BIN)
+	@echo "MKSPK: $@"
+	$(MKSPK_TOOL) $(MKSPK_TOOL_OPT) $(BIN) $(BIN) $(SPK)
+
 clean:
 	$(call DELFILE, $(BIN))
 	$(call DELFILE, $(BIN).debug.elf)
 	$(call DELFILE, $(DELTGT_FILES))
+	$(call DELFILE, $(SPK))
 	$(call CLEAN)
 
 ROOTDEPPATH  = --dep-path . $(foreach d,$(INCDIRS), --dep-path $(d))

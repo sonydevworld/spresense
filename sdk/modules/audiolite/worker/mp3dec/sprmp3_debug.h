@@ -40,14 +40,29 @@
  * Included Files
  ****************************************************************************/
 
-#include <stdio.h>
+#ifdef BUILD_TGT_ASMPWORKER
+# include <asmp/stdio.h>
+#else
+# include <stdio.h>
+#endif
+
 #include "minimp3_spresense.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
-#define sprmp3_dprintf(...) printf(__VA_ARGS__)
+#ifdef SPRMP3_DEBUG
+#  define sprmp3_dprintf(...) printf(__VA_ARGS__)
+#  ifndef SPRMP3_DEBUG_DETAIL
+#    define print_status(s)
+#    define print_buffer_status(s)
+#  endif
+#else
+#  define sprmp3_dprintf(...)
+#  define print_status(s)
+#  define print_buffer_status(s)
+#endif
 
 /****************************************************************************
  * Public Function Prototypes
@@ -58,11 +73,18 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#ifdef SPRMP3_DEBUG
+
+#ifdef SPRMP3_DEBUG_COMPARE
 int dbg_load_mp3frame(const char *fname, unsigned char **fmem);
-const char *inststatelog(int state);
-const char *statelog(int state);
+#endif
+
+#ifdef SPRMP3_DEBUG_DETAIL
 void print_status(sprmp3_sys_t *sys);
 void print_buffer_status(sprmp3_sys_t *sys);
+#endif
+
+#endif
 
 #ifdef __cplusplus
 }

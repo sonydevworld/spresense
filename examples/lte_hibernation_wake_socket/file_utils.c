@@ -132,3 +132,19 @@ bool app_file_exist(char *filename)
 
   return false;
 }
+
+/****************************************************************************
+ * Name: app_file_size
+ ****************************************************************************/
+
+int app_file_size(char *filename)
+{
+  struct stat tmp;
+
+  if (stat(filename, &tmp) == 0)
+    {
+      return tmp.st_size;
+    }
+
+  return 0;
+}

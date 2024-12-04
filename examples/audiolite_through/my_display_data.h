@@ -79,7 +79,7 @@ class my_display_data : public audiolite_component
 
           /* Pass the data to later block. */
 
-          push_data(0, mem);
+          push_data(mem);
 
           /* Release the memory it after finishing use */
 

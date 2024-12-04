@@ -47,13 +47,8 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_PCM_CAPTURE)
 
 MAINSRC = audio_pcm_capture_main.cxx
 
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
 # Audio Example flags
 
-CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 CXXFLAGS += -D_POSIX
 CXXFLAGS += -DUSE_MEMMGR_FENCE
 CXXFLAGS += -DATTENTION_USE_FILENAME_LINE

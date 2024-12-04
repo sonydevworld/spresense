@@ -133,7 +133,7 @@
 #define CATM1_STR "CAT-M1"
 
 #define MATCH_STRING(str1, str2) ((strlen(str1) == strlen(str2)) && \
-                                  (strncmp(str1, str2, strlen(str2)) == 0))
+                                  (strncasecmp(str1, str2, strlen(str2)) == 0))
 
 /****************************************************************************
  * Private Data
@@ -167,9 +167,10 @@ static void show_usage(FAR const char *progname, int exitcode)
                   " [-u <user_name>] [-p <password>] [-r <rat_type>]"
                   " start\n");
   fprintf(stderr, "  -a: APN name\n");
-  fprintf(stderr, "  -i: IP type 0=IPv4, 1=IPv6, 2=IPv4 and IPv6,"
-                  " 3=Non-IP\n");
-  fprintf(stderr, "  -v: Authenticaion type 0=NONE, 1=PAP, 2=CHAP\n");
+  fprintf(stderr, "  -i: IP type \"V4\", \"V6\", \"V4V6\", \"NON\" or"
+                  " 0=IPv4, 1=IPv6, 2=IPv4 and IPv6, 3=Non-IP\n");
+  fprintf(stderr, "  -v: Authenticaion type \"NONE\", \"PAP\", \"CHAP\", or"
+                  " 0=NONE, 1=PAP, 2=CHAP\n");
   fprintf(stderr, "  -u: User name for authenticaion\n");
   fprintf(stderr, "  -p: Password for authenticaion\n");
   fprintf(stderr, "  -r: Radio Access Technology type M1=CAT-M1,"
@@ -945,27 +946,61 @@ int main(int argc, FAR char *argv[])
             setting_apn.apn_type = (uint32_t)apn_type;
             break;
           case 'i':
-            ip_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE);
-            if ((ip_type != LTE_IPTYPE_V4) &&
-                (ip_type != LTE_IPTYPE_V6) &&
-                (ip_type != LTE_IPTYPE_V4V6) &&
-                (ip_type != LTE_IPTYPE_NON))
+            if (MATCH_STRING(optarg, "V4"))
               {
-                fprintf(stderr, "Invalid IP type:%ld\n", ip_type);
-                show_usage(argv[0], EXIT_FAILURE);
+                ip_type = LTE_IPTYPE_V4;
+              }
+            else if (MATCH_STRING(optarg, "V6"))
+              {
+                ip_type = LTE_IPTYPE_V6;
+              }
+            else if (MATCH_STRING(optarg, "V4V6"))
+              {
+                ip_type = LTE_IPTYPE_V4V6;
+              }
+            else if (MATCH_STRING(optarg, "NON"))
+              {
+                ip_type = LTE_IPTYPE_NON;
+              }
+            else
+              {
+                if (optarg[1] == '\0' && (optarg[0] >= '0' && optarg[0] <= '3'))
+                  {
+                    ip_type = atoi(optarg);
+                  }
+                else
+                  {
+                    fprintf(stderr, "Invalid IP type: %s\n", optarg);
+                    show_usage(argv[0], EXIT_FAILURE);
+                  }
               }
 
             setting_apn.ip_type = (uint8_t)ip_type;
             break;
           case 'v':
-            auth_type = strtol(optarg, NULL, LTE_SYSCTL_STRTOL_BASE);
-            if ((auth_type != LTE_APN_AUTHTYPE_NONE) &&
-                (auth_type != LTE_APN_AUTHTYPE_PAP) &&
-                (auth_type != LTE_APN_AUTHTYPE_CHAP))
+            if (MATCH_STRING(optarg, "NONE"))
               {
-                fprintf(stderr, "Invalid authenticaion type:%ld\n",
-                        auth_type);
-                show_usage(argv[0], EXIT_FAILURE);
+                auth_type = LTE_APN_AUTHTYPE_NONE;
+              }
+            else if (MATCH_STRING(optarg, "PAP"))
+              {
+                auth_type = LTE_APN_AUTHTYPE_PAP;
+              }
+            else if (MATCH_STRING(optarg, "CHAP"))
+              {
+                auth_type = LTE_APN_AUTHTYPE_CHAP;
+              }
+            else
+              {
+                if (optarg[1] == '\0' && (optarg[0] >= '0' && optarg[0] <= '2'))
+                  {
+                    auth_type = atoi(optarg);
+                  }
+                else
+                  {
+                    fprintf(stderr, "Invalid authenticaion type: %s\n", optarg);
+                    show_usage(argv[0], EXIT_FAILURE);
+                  }
               }
 
             setting_apn.auth_type = (uint8_t)auth_type;

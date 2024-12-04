@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/bluetooth/hal/nrf52/ble_comm.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022, 2024 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,7 @@
 #include <nrf_crypto.h>
 #include <nrf_crypto_ecc.h>
 #include <nrf_crypto_ecdh.h>
+#include <nrf_soc.h>
 
 /******************************************************************************
  * externs
@@ -63,7 +64,6 @@
 extern bleGapMem *bleGetGapMem(void);
 extern void bleMngEvtDispatch(ble_evt_t *nrfEvt);
 extern void board_nrf52_initialize(void);
-extern void board_nrf52_reset(bool en);
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -76,6 +76,9 @@ extern void board_nrf52_reset(bool en);
 #define NRF52_SYS_ATTR_DATA_LEN_HANDLE (2)
 #define NRF52_SYS_ATTR_DATA_LEN_LEN    (2)
 #define NRF52_SYS_ATTR_DATA_LEN_VALUE  (2)
+
+#define IM_ADDR_CLEARTEXT_LENGTH  (3)
+#define IM_ADDR_CIPHERTEXT_LENGTH (3)
 
  /******************************************************************************
  * Structure define
@@ -138,7 +141,7 @@ static int nrf52_ble_stop_scan(void);
 static int nrf52_ble_connect(uint8_t addr_type, const BT_ADDR *addr);
 static int nrf52_ble_disconnect(const uint16_t conn_handle);
 static int nrf52_ble_advertise(bool enable);
-static int nrf52_ble_set_dev_addr(BT_ADDR *addr);
+static int nrf52_ble_set_dev_addr(BT_ADDR *addr, uint8_t type);
 static int nrf52_ble_set_dev_name(char *name);
 static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance);
 static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp);
@@ -146,6 +149,9 @@ static uint16_t nrf52_ble_set_mtusize(uint16_t sz);
 static uint16_t nrf52_ble_get_mtusize(void);
 static int nrf52_ble_get_negotiated_mtusize(uint16_t handle);
 static int nrf52_ble_pairing(uint16_t handle);
+static int nrf52_ble_set_txpower(int8_t tx_power);
+static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param);
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param);
 
 static int nrf52_bt_init(void);
 static int nrf52_bt_finalize(void);
@@ -186,6 +192,9 @@ static struct ble_hal_common_ops_s ble_hal_common_ops =
   .getMtuSize           = nrf52_ble_get_mtusize,
   .getNegotiatedMtuSize = nrf52_ble_get_negotiated_mtusize,
   .pairing              = nrf52_ble_pairing,
+  .setTxPower           = nrf52_ble_set_txpower,
+  .setScanParam         = nrf52_ble_set_scan_param,
+  .setConnParam         = nrf52_ble_set_conn_param,
 };
 
 static struct bt_hal_common_ops_s bt_hal_common_ops =
@@ -213,9 +222,12 @@ static int blePowerOff(void)
 {
   int ret = 0;
 
-//  for support reset pin. (Will be valid later)
-//  board_nrf52_reset(true);
-  ret = board_power_control(POWER_BTBLE, false);
+  /* Control the reset pin instead of the power.
+   * true (HIGH) : reset assert
+   * false (LOW) : reset deassert
+   */
+
+  ret = board_power_control(POWER_BTBLE, true);
   if (ret)
     {
       BLE_PRT("board_power_control(off): NG %d\n", ret);
@@ -260,8 +272,8 @@ static void set_bondinfo_for_save_event(struct ble_bondinfo_s *apps,
          nrf52->bondInfo.addr,
          BLE_GAP_ADDR_LENGTH);
 
-  memcpy(nrf52->ownIdKey.id_info.irk, apps->own.irk, BLE_GAP_SEC_KEY_LEN);
-  memcpy(nrf52->peerIdKey.id_info.irk, apps->peer.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(apps->own.irk, nrf52->ownIdKey.id_info.irk, BLE_GAP_SEC_KEY_LEN);
+  memcpy(apps->peer.irk, nrf52->peerIdKey.id_info.irk, BLE_GAP_SEC_KEY_LEN);
   set_EncKey_for_save_event(&apps->own,  &nrf52->ownEncKey);
   set_EncKey_for_save_event(&apps->peer, &nrf52->peerEncKey);
 
@@ -509,18 +521,24 @@ static
 int blePowerOn(void)
 {
   int ret = 0;
-  ret = board_power_control(POWER_BTBLE, true);
+
+  /* Control the reset pin instead of the power.
+   * true (HIGH) : reset assert
+   * false (LOW) : reset deassert
+   */
+
+  ret = board_power_control(POWER_BTBLE, false);
+
   if (ret)
     {
       BLE_PRT("board_power_control(on): NG %d\n", ret);
       goto errPower;
     }
-//  for support reset pin. (Will be valid later)
-//  board_nrf52_reset(false);
+
   BLE_PRT("Power on BLE!!\n");
   return BLE_SUCCESS;
 errPower:
-  (void)board_power_control(POWER_BTBLE, false);
+  (void)board_power_control(POWER_BTBLE, true);
   return ret;
 
 }
@@ -849,6 +867,7 @@ static void on_connected(const BLE_EvtConnected* evt)
   g_ble_context.conn_sts                = BLE_CONN_STS_CONNECTED;
   g_ble_context.is_scanning             = false;
   g_ble_context.is_advertising          = false;
+  g_ble_context.ble_addr.type           = evt->addr.type;
   memcpy(g_ble_context.ble_addr.addr, evt->addr.addr, BT_ADDR_LEN);
 
   conn_stat_evt.connected = true;
@@ -1182,15 +1201,19 @@ static void on_adv_report(BLE_EvtAdvReportData *adv_report)
   evt.event_id = BLE_COMMON_EVENT_SCAN_RESULT;
   evt.rssi = adv_report->rssi;
   evt.scan_rsp = adv_report->scan_rsp;
-  evt.length = adv_report->dlen + 1;
+  evt.length = adv_report->dlen + 2;
 
   /* The first octet is used for notification of peer address type. */
 
   evt.data[0] = adv_report->addr.type;
 
-  /* The raw advertising data starts from second octet. */
+  /* The second octet is used for notification of rssi. */
 
-  memcpy(evt.data + 1, adv_report->data, adv_report->dlen);
+  evt.data[1] = (uint8_t)adv_report->rssi;
+
+  /* The raw advertising data starts from the third octet. */
+
+  memcpy(&evt.data[2], adv_report->data, adv_report->dlen);
   memcpy(evt.addr.address, adv_report->addr.addr, BLE_GAP_ADDR_LENGTH);
   ble_common_event_handler((struct bt_event_t *)&evt);
 }
@@ -1413,22 +1436,74 @@ void onTxComplete(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
   memcpy(pBleEvent->evtData, &commMem.txCompleteData, pBleEvent->evtDataSize);
 }
 
-static int searchBondInfoIndex(ble_gap_master_id_t *id)
+/* Calculate the ah() hash function described in Bluetooth core specification */
+
+static void ah(uint8_t const *p_k, uint8_t const *p_r, uint8_t *p_local_hash)
+{
+  nrf_ecb_hal_data_t ecb_hal_data;
+  uint32_t i;
+
+  for (i = 0; i < SOC_ECB_KEY_LENGTH; i++)
+    {
+      ecb_hal_data.key[i] = p_k[SOC_ECB_KEY_LENGTH - 1 - i];
+    }
+
+  memset(ecb_hal_data.cleartext, 0, SOC_ECB_KEY_LENGTH - IM_ADDR_CLEARTEXT_LENGTH);
+
+  for (i = 0; i < IM_ADDR_CLEARTEXT_LENGTH; i++)
+    {
+      ecb_hal_data.cleartext[SOC_ECB_KEY_LENGTH - 1 - i] = p_r[i];
+    }
+
+  sd_ecb_block_encrypt(&ecb_hal_data);
+
+  for (i = 0; i < IM_ADDR_CIPHERTEXT_LENGTH; i++)
+    {
+      p_local_hash[i] = ecb_hal_data.ciphertext[SOC_ECB_KEY_LENGTH - 1 - i];
+    }
+}
+
+static bool im_address_resolve(ble_gap_addr_t const *p_addr, ble_gap_irk_t const *p_irk)
+{
+  uint8_t hash[IM_ADDR_CIPHERTEXT_LENGTH];
+  uint8_t local_hash[IM_ADDR_CIPHERTEXT_LENGTH];
+  uint8_t prand[IM_ADDR_CLEARTEXT_LENGTH];
+
+  if (p_addr->addr_type != BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE)
+    {
+      return false;
+    }
+
+  memcpy(hash, p_addr->addr, IM_ADDR_CIPHERTEXT_LENGTH);
+  memcpy(prand, &p_addr->addr[IM_ADDR_CIPHERTEXT_LENGTH], IM_ADDR_CLEARTEXT_LENGTH);
+  ah(p_irk->irk, prand, local_hash);
+
+  return (memcmp(hash, local_hash, IM_ADDR_CIPHERTEXT_LENGTH) == 0);
+}
+
+static int searchBondInfoIndexAddress(ble_gap_addr_t *addr)
 {
   int i;
-
   uint32_t list = bleBondEnableList;
 
   for (i = 0; i < BLE_SAVE_BOND_DEVICE_MAX_NUM; i++, list >>= 1)
     {
       if (list & 1)
         {
-          if (memcmp(&BondInfoInFlash[i].ownEncKey.master_id,
-                    id,
-                    sizeof(ble_gap_master_id_t))
-               == 0)
+          if ((addr->addr_type == BLE_GAP_ADDR_TYPE_PUBLIC) ||
+              (addr->addr_type == BLE_GAP_ADDR_TYPE_RANDOM_STATIC))
             {
-              break;
+              if (memcmp(BondInfoInFlash[i].bondInfo.addr, addr->addr, BLE_GAP_ADDR_LEN) == 0)
+                {
+                  break;
+                }
+            }
+          else if (addr->addr_type == BLE_GAP_ADDR_TYPE_RANDOM_PRIVATE_RESOLVABLE)
+            {
+              if (im_address_resolve(addr, &BondInfoInFlash[i].peerIdKey.id_info))
+                {
+                  break;
+                }
             }
         }
     }
@@ -1514,8 +1589,11 @@ static
 void saveSysAttrData(ble_gap_master_id_t *id, uint8_t *sys_attr_data)
 {
   int index;
+  ble_gap_addr_t addr;
 
-  index = searchBondInfoIndex(id);
+  addr.addr_type = g_ble_context.ble_addr.type;
+  memcpy(addr.addr, g_ble_context.ble_addr.addr, BLE_GAP_ADDR_LENGTH);
+  index = searchBondInfoIndexAddress(&addr);
 
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
@@ -2000,7 +2078,7 @@ void onSecInfoRequest(BLE_Evt *pBleEvent, ble_evt_t *pBleNrfEvt)
       BLE_PRT("onSecInfoRequest: peer enc_info_ltk=%d\n", commMem.gapMem->wrapperBondInfo.peerEncKey.enc_info.ltk_len);
     }
 
-  index = searchBondInfoIndex(&secinfo->master_id);
+  index = searchBondInfoIndexAddress(&secinfo->peer_addr);
 
   if (index < BLE_SAVE_BOND_DEVICE_MAX_NUM)
     {
@@ -2302,17 +2380,25 @@ void setDbDiscoveryEvent(BLE_Evt *pBleEvent, uint16_t connHandle, int result, in
    * Then, the last handle value should be notified.
    */
 
-  last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
-  last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
-
-  if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+  if (evt.params.db_discovery.srv_count == 0)
     {
-      evt.state.end_handle = get_last_handle(last_chrc);
+      evt.state.end_handle = 0;
+      commMem.disc.start = 0;
     }
   else
     {
-      evt.state.end_handle = last_srv->srv_handle_range.end_handle;
-      commMem.disc.start = 0;
+      last_srv  = &evt.params.db_discovery.services[evt.params.db_discovery.srv_count - 1];
+      last_chrc = &last_srv->characteristics[last_srv->char_count - 1];
+
+      if (last_srv->char_count >= BLE_DB_DISCOVERY_MAX_CHAR_PER_SRV)
+        {
+          evt.state.end_handle = get_last_handle(last_chrc);
+        }
+      else
+        {
+          evt.state.end_handle = last_srv->srv_handle_range.end_handle;
+          commMem.disc.start = 0;
+        }
     }
 
   ble_gatt_event_handler((struct bt_event_t *)&evt);
@@ -2817,7 +2903,7 @@ void onSrvDiscCompletion(BLE_Evt *pBleEvent, bleGattcDb *gattcDbDiscovery)
       srvBeingDiscovered = &(gattcDbDiscovery->dbDiscovery.services[gattcDbDiscovery->currSrvInd]);
       srvBeingDiscovered->charCount = 0;
 
-      /* Discover characterisitics of next service. */
+      /* Discover characteristics of next service. */
 
       (void)characteristicsDiscover(pBleEvent, gattcDbDiscovery);
     }
@@ -3018,7 +3104,7 @@ int descriptorsDiscover(BLE_Evt *pBleEvent, bleGattcDb *const gattcDbDiscovery, 
   if (!isDiscoveryReqd)
     {
       // No more descriptor discovery required.
-      // Preceed to the characteristics discovery about next service.
+      // Proceed to the characteristics discovery about next service.
 
       gattcDbDiscovery->currSrvInd++;
       gattcDbDiscovery->currCharInd = 0;
@@ -3058,9 +3144,8 @@ err:
 
 static int32_t set_adv_data(void)
 {
-#define BLE_TX_POWER_LEVEL  0
   int ret             = 0;
-  int8_t tx_power         = BLE_TX_POWER_LEVEL;
+  int8_t tx_power     = commMem.gapMem->txPower;
   BLE_GapAdvData adv_data = {0};
 
   adv_data.flags = BLE_GAP_ADV_LE_GENERAL_DISC_MODE | BLE_GAP_ADV_BR_EDR_NOT_SUPPORTED;
@@ -3273,12 +3358,12 @@ static int nrf52_ble_advertise(bool enable)
   return ret;
 }
 
-static int nrf52_ble_set_dev_addr(BT_ADDR *addr)
+static int nrf52_ble_set_dev_addr(BT_ADDR *addr, uint8_t type)
 {
   int ret;
   ble_gap_addr_t nrf52_addr;
 
-  nrf52_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+  nrf52_addr.addr_type = type;
   memcpy(nrf52_addr.addr, addr->address, sizeof(nrf52_addr.addr));
 
   ret = sd_ble_gap_addr_set(&nrf52_addr);
@@ -3294,7 +3379,7 @@ static int nrf52_ble_set_dev_name(char *name)
 
   nameSize = strlen(name);
 
-  /* If invalid size, retrun NG */
+  /* If invalid size, return error */
 
   if (!name || nameSize > BT_MAX_NAME_LEN)
     {
@@ -3312,8 +3397,10 @@ static int nrf52_ble_set_dev_name(char *name)
 
 static int nrf52_ble_set_appearance(BLE_APPEARANCE appearance)
 {
-  int ret = BT_SUCCESS;
-  return ret;
+  uint32_t errCode;
+
+  errCode = sd_ble_gap_appearance_set((uint16_t)appearance);
+  return bleConvertErrorCode(errCode);
 }
 
 static int nrf52_ble_set_ppcp(BLE_CONN_PARAMS ppcp)
@@ -3372,7 +3459,18 @@ static int nrf52_ble_pairing(uint16_t handle)
        * skip pairing and only encrypt with stored key.
        */
 
-      ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+      if (BondInfoInFlash[ret].ownEncKey.master_id.ediv != 0)
+        {
+          /* LE Legacy Pairing */
+
+          ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].peerEncKey);
+        }
+      else
+        {
+          /* LE Secure Connections Pairing */
+
+          ret = BLE_GapEncrypt(handle, &BondInfoInFlash[ret].ownEncKey);
+        }
     }
   else
     {
@@ -3382,6 +3480,74 @@ static int nrf52_ble_pairing(uint16_t handle)
     }
 
   return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_txpower
+ *
+ * Description:
+ *   Bluetooth LE set Tx Power
+ *   Supported tx_power values:
+ *    -40, -20, -16, -12, -8, -4, 0, +3 and +4 [dBm]
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_txpower(int8_t tx_power)
+{
+  int ret = 0;
+
+  if (!commMem.gapMem)
+    {
+      LOG_OUT("Must be called after BLE is enabled.\n");
+      return -EPERM;
+    }
+
+  switch (tx_power)
+    {
+      case -40:
+      case -20:
+      case -16:
+      case -12:
+      case -8:
+      case -4:
+      case 0:
+      case 3:
+      case 4:
+        commMem.gapMem->txPower = tx_power;
+        break;
+      default:
+        commMem.gapMem->txPower = 0; /* set default if illegal value */
+        ret = -EINVAL;
+        break;
+    }
+
+  return ret;
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_scan_param
+ *
+ * Description:
+ *   Bluetooth LE set scan parameter
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_scan_param(struct ble_scan_param_s *param)
+{
+  return BLE_GapSetScanParam(param);
+}
+
+/****************************************************************************
+ * Name: nrf52_ble_set_conn_param
+ *
+ * Description:
+ *   Bluetooth LE set connection parameter
+ *
+ ****************************************************************************/
+
+static int nrf52_ble_set_conn_param(struct ble_conn_param_s *param)
+{
+  return BLE_GapSetConnectionParams((BLE_GapConnParams *)param);
 }
 
 /****************************************************************************

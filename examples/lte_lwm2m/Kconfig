@@ -26,6 +26,10 @@ config EXAMPLES_LTE_LWM2M_STACKSIZE
 	int "lte_lwm2m stack size"
 	default 8192
 
+config EXAMPLES_LTE_LWM2M_STACKSIZE_IN_USING_MBEDTLS
+	int "lte_lwm2m stack size in using mbedTLS"
+	default 11264
+
 config EXAMPLES_LTE_LWM2M_APN_NAME
 	string "Access Point Name"
 	default ""

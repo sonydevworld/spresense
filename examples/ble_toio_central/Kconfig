@@ -1,0 +1,29 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXAMPLES_BLE_TOIO_CENTRAL
+	tristate "BLE toio Central example"
+	default n
+	---help---
+		Enable the ble_toio_central app
+
+if EXAMPLES_BLE_TOIO_CENTRAL
+
+config EXAMPLES_BLE_TOIO_CENTRAL_PROGNAME
+	string "Program name"
+	default "ble_toio_central"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_BLE_TOIO_CENTRAL_PRIORITY
+	int "ble_toio_central task priority"
+	default 100
+
+config EXAMPLES_BLE_TOIO_CENTRAL_STACKSIZE
+	int "ble_toio_central stack size"
+	default DEFAULT_TASK_STACKSIZE
+
+endif # EXAMPLES_BLE_TOIO_CENTRAL

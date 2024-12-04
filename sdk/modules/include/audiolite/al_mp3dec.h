@@ -56,11 +56,12 @@
 class audiolite_mp3dec : public audiolite_decoder
 {
   private:
-    audiolite_mempoolapbuf *_omempool;
     audiolite_worker _worker;
     audiolite_workermemq _inq;
     audiolite_workermemq _outq;
     bool _frame_eof;
+    volatile bool _worker_booted;
+    volatile bool _worker_terminated;
 
     static int handle_mesage(al_comm_msghdr_t hdr,
                              al_comm_msgopt_t *opt, void *arg);
@@ -76,11 +77,6 @@ class audiolite_mp3dec : public audiolite_decoder
     int stop_decode();
     int pause_decode() { return OK; };
     int resume_decode() { return OK; };
-
-    void set_outputmempool(audiolite_mempoolapbuf *pool)
-    {
-      _omempool = pool;
-    }
 };
 
 #endif /* __INCLUDE_AUDIOLITE_MP3DEC_H */
