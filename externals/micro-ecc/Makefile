@@ -40,7 +40,7 @@ BIN = libuecc$(LIBEXT)
 
 UECC = micro-ecc
 
-CFLAGS += ${shell $(INCDIR) $(INCDIROPT) "$(CC)" $(UECC)}
+CFLAGS += ${INCDIR_PREFIX}$(UECC)
 
 CFLAGS += -D__ARM_ARCH_7M__=0
 CFLAGS += -DuECC_PLATFORM=uECC_arm_thumb2
