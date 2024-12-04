@@ -47,13 +47,7 @@ MODULE    = $(CONFIG_EXAMPLES_AUDIO_BEEP)
 
 MAINSRC = audio_beep_main.cxx
 
-# Audio Example paths
-
-AUDIODIR = $(SDKDIR)$(DELIM)modules$(DELIM)audio
-
 # Audio Example flags
-
-CXXFLAGS += ${INCDIR_PREFIX}$(AUDIODIR)
 
 CXXFLAGS += -D_POSIX
 
