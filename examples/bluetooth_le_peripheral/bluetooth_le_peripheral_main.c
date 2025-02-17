@@ -1,7 +1,7 @@
 /****************************************************************************
  * bluetooth_le_peripheral/bluetooth_le_peripheral_main.c
  *
- *   Copyright 2018, 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2022, 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,6 +55,12 @@
 #define BONDINFO_FILENAME "/mnt/spif/BONDINFO"
 
 #define CHAR_ACCESS_COUNT 10
+
+#define CHAR_SIZE 20
+
+#if CHAR_SIZE > 244
+#  error "Characteritic size must not exceed max MTU size - 3 (= 244)."
+#endif
 
 /****************************************************************************
  * Private Function Prototypes
@@ -148,11 +154,11 @@ static BLE_ATTR_PERM attr_param =
     .writePerm = BLE_SEC_MODE1LV2_NO_MITM_ENC
   };
 
-static uint8_t char_data[BLE_MAX_CHAR_SIZE];
+static uint8_t char_data[CHAR_SIZE];
 
 static BLE_CHAR_VALUE char_value =
   {
-    .length = BLE_MAX_CHAR_SIZE
+    .length = CHAR_SIZE
   };
 
 static BLE_CHAR_PROP char_property =
