@@ -1,7 +1,7 @@
 /****************************************************************************
  * modules/include/bluetooth/ble_gatt.h
  *
- *   Copyright 2018 Sony Semiconductor Solutions Corporation
+ *   Copyright 2018, 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,7 +73,7 @@
  *@name Max size of characteristics value
  *@{
  */
-#define BLE_MAX_CHAR_SIZE 20
+#define BLE_MAX_CHAR_SIZE 479
 /** @} */
 
 /**
