@@ -52,9 +52,17 @@
  * Private Functions
  ****************************************************************************/
 
-static int start_sensing(int fd, int rate)
+static int start_sensing(int fd, int rate, int adrange, int gdrange,
+                         int nfifos)
 {
+  cxd5602pwbimu_range_t range;
   int ret;
+
+  /*
+   * Set sampling rate. Available values (Hz) are below.
+   *
+   * 15 (default), 30, 60, 120, 240, 480, 960, 1920
+   */
 
   ret = ioctl(fd, SNIOC_SSAMPRATE, rate);
   if (ret)
@@ -62,6 +70,40 @@ static int start_sensing(int fd, int rate)
       printf("ERROR: Set sampling rate failed. %d\n", errno);
       return 1;
     }
+
+  /*
+   * Set dynamic ranges for accelerometer and gyroscope.
+   * Available values are below.
+   *
+   * accel: 2 (default), 4, 8, 16
+   * gyro: 125 (default), 250, 500, 1000, 2000, 4000
+   */
+
+  range.accel = adrange;
+  range.gyro = gdrange;
+  ret = ioctl(fd, SNIOC_SDRANGE, (unsigned long)(uintptr_t)&range);
+  if (ret)
+    {
+      printf("ERROR: Set dynamic range failed. %d\n", errno);
+      return 1;
+    }
+
+  /*
+   * Set hardware FIFO threshold.
+   * Increasing this value will reduce the frequency with which data is
+   * received.
+   */
+
+  ret = ioctl(fd, SNIOC_SFIFOTHRESH, nfifos);
+  if (ret)
+    {
+      printf("ERROR: Set sampling rate failed. %d\n", errno);
+      return 1;
+    }
+
+  /*
+   * Start sensing, user can not change the all of configurations.
+   */
 
   ret = ioctl(fd, SNIOC_ENABLE, 1);
   if (ret)
@@ -90,7 +132,13 @@ int main(int argc, FAR char *argv[])
   cxd5602pwbimu_data_t *outbuf = NULL;
   cxd5602pwbimu_data_t *p = NULL;
   cxd5602pwbimu_data_t *last;
+
+  /* Sensing parameters, see start sensing function. */
+
   const int samplerate = 1920;
+  const int adrange = 2;
+  const int gdrange = 125;
+  const int nfifos = 1;
 
   fd = open(CXD5602PWBIMU_DEVPATH, O_RDONLY);
   if (fd < 0)
@@ -110,7 +158,7 @@ int main(int argc, FAR char *argv[])
   fds[0].fd = fd;
   fds[0].events = POLLIN;
 
-  ret = start_sensing(fd, samplerate);
+  ret = start_sensing(fd, samplerate, adrange, gdrange, nfifos);
   if (ret)
     {
       close(fd);
@@ -118,7 +166,6 @@ int main(int argc, FAR char *argv[])
     }
 
   memset(&now, 0, sizeof(now));
-  clock_gettime(CLOCK_MONOTONIC, &start);
 
   for (p = outbuf; p < last; p++)
     {
@@ -135,6 +182,14 @@ int main(int argc, FAR char *argv[])
         {
           printf("Timeout!\n");
         }
+      if (p == outbuf)
+        {
+          /* To remove first sensing delay, start time measurement from
+           * the first captured data.
+           */
+
+          clock_gettime(CLOCK_MONOTONIC, &start);
+        }
 
       if (fds[0].revents & POLLIN)
         {
@@ -144,6 +199,7 @@ int main(int argc, FAR char *argv[])
               printf("ERROR: read size mismatch! %d\n", ret);
             }
         }
+
       clock_gettime(CLOCK_MONOTONIC, &now);
       clock_timespec_subtract(&now, &start, &delta);
       if (delta.tv_sec >= 1)
@@ -168,6 +224,7 @@ int main(int argc, FAR char *argv[])
              p->gx, p->gy, p->gz,
              p->ax, p->ay, p->az);
     }
+  free(outbuf);
 
   clock_timespec_subtract(&now, &start, &delta);
   printf("Elapsed %ld.%09ld seconds\n", delta.tv_sec, delta.tv_nsec);
