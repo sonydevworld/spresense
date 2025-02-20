@@ -224,12 +224,13 @@ int main(int argc, FAR char *argv[])
              p->gx, p->gy, p->gz,
              p->ax, p->ay, p->az);
     }
-  free(outbuf);
 
   clock_timespec_subtract(&now, &start, &delta);
   printf("Elapsed %ld.%09ld seconds\n", delta.tv_sec, delta.tv_nsec);
   printf("%d samples captured\n", last - outbuf);
   printf("Finished.\n");
+
+  free(outbuf);
 
   return 0;
 }
