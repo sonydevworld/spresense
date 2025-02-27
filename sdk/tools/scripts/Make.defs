@@ -95,5 +95,5 @@ HOSTCC = gcc
 HOSTCFLAGS = -Wall -Wstrict-prototypes -Wshadow -Wundef -g -pipe
 
 include $(SDKDIR)/Library.mk
--include $(TOPDIR)/../externals/Library.mk
+-include $(TOPDIR)/../*/Library.mk
 
