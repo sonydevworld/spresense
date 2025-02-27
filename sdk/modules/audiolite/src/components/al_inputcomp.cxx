@@ -101,6 +101,11 @@ audiolite_inputcomp::~audiolite_inputcomp()
   delete _driver;
 }
 
+int audiolite_inputcomp::set_micgain(int vol)
+{
+  return _driver->set_volume(vol);
+}
+
 int audiolite_inputcomp::start_thread()
 {
   int ret = 0;
