@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     # Required files for extending application series to outside of sdk repos.
 
-    filelist = ['Makefile', 'Make.defs', '.gitignore', '.sdksubdir']
+    filelist = ['Makefile', '.gitignore', '.sdksubdir']
 
     for f in filelist:
         src = os.path.join(srcdir, f)
