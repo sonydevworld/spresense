@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/gnss_addon.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,56 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
+#ifndef __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_GNSS_ADDON_H
+#define __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_GNSS_ADDON_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <pthread.h>
 
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define GNSS_STATE_NOTLOCK  (0)
+#define GNSS_STATE_LOCKED   (1)
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+struct gnss_ctrl_s
+{
+  int devfd;
+  int state;
+  int is_running;
+  pthread_t thd;
+  pthread_mutex_t lock;
+  pthread_cond_t  cond;
+};
+typedef struct gnss_ctrl_s gnss_ctrl_t;
+
+#  ifdef __cplusplus
+#    define EXTERN extern "C"
+extern "C"
+{
+#  else
+#    define EXTERN extern
+#  endif
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+int gnss_setup(gnss_ctrl_t *gnss);
+int gnss_wait_statechange(gnss_ctrl_t *gnss, int cur_state);
+void gnss_cleanup(gnss_ctrl_t *gnss);
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
+#  undef EXTERN
+#  ifdef __cplusplus
+}
+#  endif
 
+#endif /* __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_GNSS_ADDON_H */

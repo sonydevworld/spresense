@@ -324,7 +324,7 @@ ON_PLAYF = '''/* on_playmsg():
  *  to the host.
  */
 
-static int on_playmsg(int state, void *arg)
+static int on_playmsg(int state, void *arg, al_comm_msgopt_t *opt)
 {
   /*
   struct my_worker_instance_s *inst =

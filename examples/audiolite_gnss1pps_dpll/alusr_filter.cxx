@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/alusr_filter.cxx
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,55 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
-
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
-
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+#include <audiolite/audiolite.h>
+#include <alusr_filter.h>
 
 /****************************************************************************
- * Public Function Prototypes
+ * alusr_filter Class Methods
  ****************************************************************************/
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+alusr_filter::alusr_filter() :
+  audiolite_workercomp("filter", 8, 8), _outmempool(NULL),
+  _mode(MODE_NORMAL)
+{
+  set_msglistener(&_msglsnr);
+  _outmempool = new audiolite_mempoolapbuf;
+  _outmempool->create_instance(1024 * 2 * 2, 8);
+  set_mempool(_outmempool);
+}
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
+alusr_filter::~alusr_filter()
+{
+  set_mempool(NULL);
+  if (_outmempool)
+    delete _outmempool;
+}
 
+/****************************************************************************
+ * Message Listener Class Methods
+ ****************************************************************************/
+
+void alusr_filter::filter_msglistener::bootup(
+     audiolite_workercomp *wcomp, al_wtask_t *wtask, int version, void *d)
+{
+  al_comm_msgopt_t opt;
+  // This method is called just after receiving boot-up
+  // message from the worker
+
+  if (version == FILTER_WORKER_VERSION)
+    {
+      opt.usr[0] = ((alusr_filter *)wcomp)->_mode;
+      alworker_send_systemparam(wtask, wcomp->channels(),
+                                       wcomp->samplingrate(),
+                                       wcomp->samplebitwidth());
+      alworker_send_start(wtask, &opt);
+    }
+  else
+    {
+      wcomp->publish_event(AL_EVENT_WRONGVERSION, version);
+    }
+}

@@ -69,7 +69,7 @@ class audiolite_inputcomp : public audiolite_component,
   public:
     audiolite_inputcomp(bool isi2s = false);
     ~audiolite_inputcomp();
-    int set_volume(int vol);
+    int set_micgain(int vol);
 
   /* Inherited member functions from audiolite_component */
 

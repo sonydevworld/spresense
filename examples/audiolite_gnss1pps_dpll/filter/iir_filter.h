@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/filter/iir_filter.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,42 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
+#ifndef __EXAMPLES_AUDIOLITE_DPLL_FILTER_IIR_FILTER_H
+#define __EXAMPLES_AUDIOLITE_DPLL_FILTER_IIR_FILTER_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <arm_math.h>
 
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define FILTER_TYPE_LPF (0)
+#define FILTER_TYPE_HPF (1)
+#define FILTER_TYPE_BPF (2)
+#define FILTER_TYPE_BEF (3)
+
+/****************************************************************************
+ * Public Types
+ ****************************************************************************/
+
+struct iir_filter_s
+{
+  float coef[5];
+  float state_buf[2];
+  arm_biquad_cascade_df2T_instance_f32 iir;
+};
+typedef struct iir_filter_s iir_filter_t; 
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+int initialize_iir_filter(iir_filter_t *iir, int type,
+                          int fs, int cutoff, float q);
+void execute_iir_filter(iir_filter_t *iir, float *in, float *out, int sz);
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
-
+#endif /* __EXAMPLES_AUDIOLITE_DPLL_FILTER_IIR_FILTER_H */

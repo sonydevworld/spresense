@@ -421,7 +421,7 @@ int memblk_conv_pcm16tofloat(memblk_t *flt, memblk_t *pcm16)
   return samp_num;
 }
 
-int memblk_conv_flattopcm16(memblk_t *pcm16, memblk_t *flt, float gain)
+int memblk_conv_floattopcm16(memblk_t *pcm16, memblk_t *flt, float gain)
 {
   int i;
   int fltspace = memblk_remain(flt) / sizeof(float);

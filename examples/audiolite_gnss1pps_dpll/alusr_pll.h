@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/alusr_pll.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,58 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
+#ifndef __INCLUDE_AUDIOLITE_USER_PLL_H
+#define __INCLUDE_AUDIOLITE_USER_PLL_H
 
 /****************************************************************************
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <pthread.h>
+#include <semaphore.h>
 
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+#include <audiolite/al_workercomp.h>
+#include <audiolite/al_workercmd.h>
+#include <pll/pll_worker_main.h>
 
 /****************************************************************************
- * Public Function Prototypes
+ * Class Definitions
  ****************************************************************************/
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+class alusr_pll : public audiolite_workercomp
+{
+  protected:
+    class pll_msglistener : public audiolite_stdworker_msglistener
+    {
+      public:
+        virtual ~pll_msglistener(){};
+        void bootup(audiolite_workercomp *wcomp, al_wtask_t *wtask,
+                    int version, void *d);
+        void usermsg(audiolite_workercomp *wcomp, al_wtask_t *wtask,
+                     al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
+    };
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
+    pll_msglistener _msglsnr;
+    audiolite_mempoolapbuf *_outmempool;
 
+    sem_t _sem_wcom;
+    pthread_mutex_t _pllcmd_lock;
+    pthread_cond_t _pllcmd_cond;
+    int _pllcmd_reply;
+
+    bool sendto_worker(al_comm_msgopt_t *opt);
+
+  public:
+    alusr_pll();
+    virtual ~alusr_pll();
+    void start_pll();
+    void stop_pll();
+
+    bool send_xferdata(uint8_t *data, unsigned int len);
+    bool enable_xfer();
+    bool cancel_xfer();
+    void deliverr_reply(int code);
+    void xfer_done();
+};
+
+#endif /* __INCLUDE_AUDIOLITE_USER_PLL_H */

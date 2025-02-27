@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/netserver.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,45 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
+#ifndef __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_NETSERVER_H
+#define __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_NETSERVER_H
+
+#include <pthread.h>
+#include <audiolite/audiolite.h>
 
 /****************************************************************************
- * Included Files
+ * Pre-processor Definitions
  ****************************************************************************/
 
-#include <nuttx/config.h>
-
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+#define SERVER_PORT (12345)
 
 /****************************************************************************
- * Public Function Prototypes
+ * Class Definitions
  ****************************************************************************/
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+class netserver : public audiolite_component
+{
+  int s_sock;
+  int c_sock;
+  pthread_t s_thd;
+  pthread_mutex_t c_lock;
+  pthread_cond_t c_cond;
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
+  protected:
+    pthread_t init_server(int port_num);
+    pthread_t start_server(void);
+    int send_data(uint8_t *data, uint32_t len);
 
+  public:
+    netserver(int port = SERVER_PORT);
+    virtual ~netserver();
+
+    int get_clientsock(void);
+    void set_clientsock(int sock);
+    int wait_connection(struct sockaddr_in *client);
+    void sleep_until_lostconnect();
+
+    virtual void on_data();
+};
+
+#endif /* __EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_NETSERVER_H */

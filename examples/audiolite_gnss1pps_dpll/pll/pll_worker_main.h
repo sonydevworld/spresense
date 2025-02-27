@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/include/audiolite/al_workercmd.h
+ * examples/audiolite_gnss1pps_dpll/pll/pll_worker_main.h
  *
- *   Copyright 2023 Sony Semiconductor Solutions Corporation
+ *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,34 +33,48 @@
  *
  ****************************************************************************/
 
-#ifndef __INCLUDE_AUDIOLITE_WORKERCMD_H
-#define __INCLUDE_AUDIOLITE_WORKERCMD_H
+#ifndef __AUDIOLITE_WORKER_USR_PLL_H
+#define __AUDIOLITE_WORKER_USR_PLL_H
 
 /****************************************************************************
- * Included Files
+ * Preprocessor Definitions
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#define PLL_WORKER_VERSION (1)
 
-#include <audiolite/al_memalloc.h>
-#include <audiolite/alworker_comm.h>
+#define PLLCMD_START      (1)
+#define PLLCMD_STOP       (2)
 
-/****************************************************************************
- * Public Function Prototypes
- ****************************************************************************/
+#define PLLCMD_XFERDATA   (3 << 16)
+#define PLLCMD_ENABLEXFER (4)
+#define PLLCMD_CANCELXFER (5)
+#define PLLCMD_DONE_XFER  (6)
 
-int alworker_send_systemparam(al_wtask_t *wtask,
-                              int chnum, int hz, int mode);
-int alworker_send_startframe(al_wtask_t *wtask);
-int alworker_send_instgain(al_wtask_t *wtask, float gain);
-int alworker_send_start(al_wtask_t *wtask,
-                        al_comm_msgopt_t *opts = NULL);
-int alworker_send_stop(al_wtask_t *wtask);
-int alworker_send_term(al_wtask_t *wtask);
-int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
-int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
-int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
+#define PLLCMD_RETCODE_OK (0)
+#define PLLCMD_RETCODE_NG (1)
 
-#endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
+#define PLLXFERDATACMDMASK  (0xffff0000)
+#define PLLXFERDATACMD(ofst,len) \
+        (PLLCMD_XFERDATA | ((ofst & 0xff) << 8) | (len & 0xff))
+#define PLLXFERDATACMD_OFST(d) (((d) & 0xff00) >> 8)
+#define PLLXFERDATACMD_LEN(d) ((d) & 0xff)
 
+#define PLLCMD_RESP       (2)
+
+#define SAMPLE_FS   (192000)
+#define SAMPLE_BITS (16)
+#define SAMPLE_CHS  (2)
+#define BLK_SAMPLES (1024)
+
+#define DEFAULT_REFFREQ     (200)
+#define DEFAULT_CARRIERFREQ (35000)
+
+#define XFER_DATA_BITS   (128)
+#define XFER_DATA_BYTES  ((XFER_DATA_BITS + 7) / 8)
+
+#define PIN_LED0 PIN_I2S1_BCK
+#define PIN_LED1 PIN_I2S1_LRCK
+#define PIN_LED2 PIN_I2S1_DATA_IN
+#define PIN_LED3 PIN_I2S1_DATA_OUT
+
+#endif /* __AUDIOLITE_WORKER_USR_PLL_H */

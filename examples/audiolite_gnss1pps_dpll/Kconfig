@@ -1,0 +1,62 @@
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL
+	tristate "Digital PLL synchronized with GNSS 1PPS signal"
+	default n
+	---help---
+		Enable the audiolite_gnss1pps_dpll app
+
+if EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PROGNAME
+	string "Program name"
+	default "audiolite_gnss1pps_dpll"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PRIORITY
+	int "audiolite_gnss1pps_dpll task priority"
+	default 100
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_STACKSIZE
+	int "audiolite_gnss1pps_dpll stack size"
+	default 2048
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PSEUDO1PPS
+	bool "Enable a command of pseudo 1pps signal generater"
+	default n
+	---help---
+		Enable a 'pseudo1pps' command to generate pseudo 1pps signal
+		from another spresense main board.
+
+choice EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_MICASSIGN_ONEPPS
+	prompt "Choose Assignment of ONEPPS MIC (MIC-A or MIC-B)"
+	default EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_MICASSIGN_ONEPPS_MICA
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_MICASSIGN_ONEPPS_MICA
+	bool "MIC-A is ONEPPS signal, MIC-B is Refecence Signal"
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_MICASSIGN_ONEPPS_MICB
+	bool "MIC-B is ONEPPS signal, MIC-A is Refecence Signal"
+
+endchoice
+
+choice EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_OUTPUT_REFSIG_ASSIGN
+	prompt "Choose Assignment of Reference Signal Output"
+	default EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_OUTPUT_REFSIG_ASSIGN_L
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_OUTPUT_REFSIG_ASSIGN_L
+	bool "L-Ch is Reference Signal, R-Ch is Modulated Signal"
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_OUTPUT_REFSIG_ASSIGN_R
+	bool "R-Ch is Reference Signal, L-Ch is Modulated Signal"
+
+endchoice
+
+config EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PLL_DEBUG
+	bool "Enable Debug print in PLL Worker"
+	default n
+	---help---
+		Display debug message from PLL Worker on normal UART
+
+endif
