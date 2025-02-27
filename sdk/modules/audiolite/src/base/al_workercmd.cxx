@@ -137,7 +137,7 @@ int alworker_send_instgain(al_wtask_t *wtask, float gain)
   return al_send_message(wtask, hdr, &opt);
 }
 
-int alworker_send_start(al_wtask_t *wtask)
+int alworker_send_start(al_wtask_t *wtask, al_comm_msgopt_t *opts)
 {
   int ret;
   al_comm_msghdr_t hdr;
@@ -148,7 +148,16 @@ int alworker_send_start(al_wtask_t *wtask)
   hdr.code = AL_COMM_MSGCODESYS_PLAY;
   hdr.opt  = 0;
 
-  ret = al_send_message(wtask, hdr, &opt);
+  if (opts != NULL)
+    {
+      ret = al_send_message(wtask, hdr, opts);
+    }
+  else
+    {
+      memset(&opt, 0, sizeof(opt));
+      ret = al_send_message(wtask, hdr, &opt);
+    }
+
   return ret;
 }
 

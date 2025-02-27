@@ -251,7 +251,7 @@ typedef struct alworker_commfw_insthead_s alworker_insthead_t;
 struct alworker_commfw_callbacks_s
 {
   void (*on_stopmsg)(int state, void *arg);
-  int (*on_playmsg)(int state, void *arg);
+  int (*on_playmsg)(int state, void *arg, al_comm_msgopt_t *opt);
   void (*on_termmsg)(void *arg,
                      al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
   int (*on_process)(void *arg);

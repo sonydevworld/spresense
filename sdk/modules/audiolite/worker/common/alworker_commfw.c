@@ -131,7 +131,7 @@ static int handle_system_msg(alworker_insthead_t *inst,
             ret = AL_COMM_MSGCODEERR_OK;
             if (g_cbs.on_playmsg)
               {
-                ret = g_cbs.on_playmsg(inst->state, inst);
+                ret = g_cbs.on_playmsg(inst->state, inst, opt);
               }
 
             if (ret == AL_COMM_MSGCODEERR_OK)
