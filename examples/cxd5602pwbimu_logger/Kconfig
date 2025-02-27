@@ -1,0 +1,25 @@
+
+config EXAMPLES_CXD5602PWBIMU_LOGGER
+	tristate "CXD5602PWBIMU : Sample code to log the IMU raw data"
+	default n
+	---help---
+		Enable the cxd5602pwbimu_logger app
+
+if EXAMPLES_CXD5602PWBIMU_LOGGER
+
+config EXAMPLES_CXD5602PWBIMU_LOGGER_PROGNAME
+	string "Program name"
+	default "pwbimu_logger"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_CXD5602PWBIMU_LOGGER_PRIORITY
+	int "pwbimu_logger task priority"
+	default 100
+
+config EXAMPLES_CXD5602PWBIMU_LOGGER_STACKSIZE
+	int "pwbimu_logger stack size"
+	default 2048
+
+endif
