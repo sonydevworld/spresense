@@ -59,6 +59,7 @@ int alworker_send_term(al_wtask_t *wtask);
 int alworker_inject_omem(al_wtask_t *wtask, audiolite_mem *mem);
 int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem);
 int alworker_send_resp(al_wtask_t *wtask, al_comm_msghdr_t hdr, int ret);
+int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt);
 
 #endif  /* __INCLUDE_AUDIOLITE_WORKERCMD_H */
 

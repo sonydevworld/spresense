@@ -204,3 +204,17 @@ int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem)
                             mem->get_storedsize(),
                             mem->is_eof());
 }
+
+int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt)
+{
+  int ret;
+  al_comm_msghdr_t hdr;
+
+  hdr.grp  = AL_COMM_MESSAGE_USER;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = 0;
+  hdr.opt  = 0;
+
+  ret = al_send_message(wtask, hdr, opt);
+  return ret;
+}

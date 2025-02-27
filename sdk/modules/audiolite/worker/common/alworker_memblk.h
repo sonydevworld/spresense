@@ -79,18 +79,20 @@
   } while (0)
 
 #define memblk_init(mb, ad, sz)  \
-        memblk_initialize(mb, ad, sz, 0, MEMBLK_TYPE_LOCAL)
+        memblk_initialize(mb, (char *)ad, sz, 0, MEMBLK_TYPE_LOCAL)
 
 #define memblk_initin(mb, ad, sz, e)  \
-        memblk_initialize(mb, ad, sz, e, MEMBLK_TYPE_INPUT)
+        memblk_initialize(mb, (char *)ad, sz, e, MEMBLK_TYPE_INPUT)
 
 #define memblk_initout(mb, ad, sz)  \
-        memblk_initialize(mb, ad, sz, 0, MEMBLK_TYPE_OUTPUT)
+        memblk_initialize(mb, (char *)ad, sz, 0, MEMBLK_TYPE_OUTPUT)
 
 #define memblk_setfilled(mb, sz)    ((mb)->filled = (sz))
 #define memblk_setused(mb, sz)      ((mb)->used = (sz))
 #define memblk_updatefilled(mb, sz) ((mb)->filled += (sz))
+#define memblk_commit(mb, sz)       (memblk_updatefilled(mb, sz))
 #define memblk_updateused(mb, sz)   ((mb)->used += (sz))
+#define memblk_drop(mb, sz)         (memblk_updateused(mb, sz))
 #define memblk_remain(mb)           ((mb)->filled - (mb)->used)
 #define memblk_space(mb)            ((mb)->size - (mb)->filled)
 #define memblk_is_empty(mb)         ((mb)->used == (mb)->filled)
@@ -105,6 +107,30 @@
 #define memblk_fillptr(mb)          (&(mb)->addr[(mb)->filled])
 #define memblk_dataptr(mb)          (&(mb)->addr[(mb)->used])
 #define memblk_nextblk(mb)          ((memblk_t *)(mb)->link.flink)
+
+#define memblk_fillptrint16(mb)     ((int16_t *)memblk_fillptr(mb))
+#define memblk_fillptrfloat(mb)     ((float *)memblk_fillptr(mb))
+#define memblk_fillptruint8(mb)     ((uint8_t *)memblk_fillptr(mb))
+
+#define memblk_dataptrint16(mb)     ((int16_t *)memblk_dataptr(mb))
+#define memblk_dataptrfloat(mb)     ((float *)memblk_dataptr(mb))
+#define memblk_dataptruint8(mb)     ((uint8_t *)memblk_dataptr(mb))
+
+#define memblk_remainint16(mb)      (memblk_remain(mb) / sizeof(int16_t))
+#define memblk_remainfloat(mb)      (memblk_remain(mb) / sizeof(float))
+#define memblk_remainint32(mb)      (memblk_remain(mb) / sizeof(int32_t))
+
+#define memblk_spaceint16(mb)       (memblk_space(mb) / sizeof(int16_t))
+#define memblk_spacefloat(mb)       (memblk_space(mb) / sizeof(float))
+#define memblk_spaceint32(mb)       (memblk_space(mb) / sizeof(int32_t))
+
+#define memblk_commitint16(mb, sz)  (memblk_updatefilled(mb, (sz) * 2))
+#define memblk_commitfloat(mb, sz)  (memblk_updatefilled(mb, (sz) * 4))
+#define memblk_commituint8(mb, sz)  (memblk_updatefilled(mb, sz))
+
+#define memblk_dropint16(mb, sz)    (memblk_updateused(mb, (sz) * 2))
+#define memblk_dropfloat(mb, sz)    (memblk_updateused(mb, (sz) * 4))
+#define memblk_dropuint8(mb, sz)    (memblk_updateused(mb, sz))
 
 /****************************************************************************
  * Public Types
@@ -140,14 +166,14 @@ int  memblk_conbine_lr16(memblk_t *dst, memblk_t *lch, memblk_t *rch);
 int  memblk_conbine_lr16acc(memblk_t *dst, memblk_t *lch,
                             memblk_t *rch, memblk_t *acc);
 int memblk_conv_pcm16tofloat(memblk_t *flt, memblk_t *pcm16);
-int memblk_conv_floattopcm16(memblk_t *pcm16, memblk_t *flt);
+int memblk_conv_floattopcm16(memblk_t *pcm16, memblk_t *flt, float gain);
 int memblk_normalizef(memblk_t *flt, float min, float max);
 
-float memblk_pop_float(memblk_t *mb);
-void memblk_push_float(memblk_t *mb, float val);
-short memblk_pop_int16(memblk_t *mb);
-void memblk_push_int16(memblk_t *mb, int16_t val);
+float   memblk_pop_float(memblk_t *mb);
+void    memblk_push_float(memblk_t *mb, float val);
+int16_t memblk_pop_int16(memblk_t *mb);
+void    memblk_push_int16(memblk_t *mb, int16_t val);
 uint8_t memblk_pop_uint8(memblk_t *mb);
-void memblk_push_uint8(memblk_t *mb, uint8_t val);
+void    memblk_push_uint8(memblk_t *mb, uint8_t val);
 
 #endif /* __AUDIOLITE_WORKER_COMMON_ALWORKER_MEMBLK_H */
