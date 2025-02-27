@@ -40,14 +40,14 @@ include mkfiles/libc.mk
 include mkfiles/fmsynth.mk
 include mkfiles/cmsis.mk
 
-VPATH   = arch $(EXT_VPATH)
+VPATH   = arch $(CXD56XX_ARCH) $(EXT_VPATH)
 SUBDIRS =
 DEPPATH = --dep-path arch --dep-path . $(EXT_DEPPATH)
 
 ASRCS  = exception.S
 
 CSRCS  = common.c mpmq.c mpmutex.c mpshm.c printf.c
-CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c delay.c
+CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c delay.c gpio.c
 CSRCS += $(EXT_CSRCS)
 
 AOBJS = $(ASRCS:.S=$(OBJEXT))
