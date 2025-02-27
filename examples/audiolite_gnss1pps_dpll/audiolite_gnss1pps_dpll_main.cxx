@@ -74,6 +74,8 @@
 static gnss_ctrl_t g_gnss;
 #endif
 
+static uint8_t g_xferdata[XFER_DATA_BYTES];
+
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
@@ -101,12 +103,25 @@ static int check_kbd(alusr_pll *pll)
             pll->stop_pll();
             board_gpio_write(LED_1PPS_READY, 0);
             break;
+          case 'd':
+            pll->send_xferdata(g_xferdata, XFER_DATA_BYTES);
+            pll->enable_xfer();
+            break;
         }
     }
 
   return 0;
 }
 #endif
+
+static void init_xferdata(void)
+{
+  int i;
+  for (i = 0; i < XFER_DATA_BYTES; i++)
+    {
+      g_xferdata[i] = 0x5a;
+    }
+}
 
 static void init_pin(void)
 {
@@ -133,6 +148,8 @@ extern "C" int main(int argc, FAR char *argv[])
 #ifdef CONFIG_SENSORS_CXD5610_GNSS
   int next_state, cur_state = GNSS_STATE_NOTLOCK;
 #endif
+
+  init_xferdata();
 
   audiolite_simplelistener lsn;
   audiolite_inputcomp    *aindev  = new audiolite_inputcomp;
@@ -200,7 +217,7 @@ extern "C" int main(int argc, FAR char *argv[])
       /* Controll PLL according to GNSS 1PPS signal status */
 
 #ifdef CONFIG_SENSORS_CXD5610_GNSS
-      next_state = gnss_wait_satechange(&g_gnss, cur_state);
+      next_state = gnss_wait_statechange(&g_gnss, cur_state);
       if (cur_state != next_state)
         {
           switch (next_state)

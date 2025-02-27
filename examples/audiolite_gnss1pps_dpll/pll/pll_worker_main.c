@@ -49,26 +49,32 @@
  * Preprocessor Definitions
  ****************************************************************************/
 
-#define PLLSTATE_READY                (0)
-#define PLLSTATE_1STEDGEDETECT        (1)
-#define PLLSTATE_2NDEDGEDETECT        (2)
-#define PLLSTATE_INTERVAL             (3)
-#define PLLSTATE_PHASESHIFT           (4)
-#define PLLSTATE_PHASEUPDATED         (5)
-#define PLLSTATE_ADJUSTDELAY          (6)
-#define PLLSTATE_ADJUSTPHASE          (7)
-#define PLLSTATE_ADJUSTOMEGA          (8)
-#define PLLSTATE_PHASELOCKED          (9)
-#define PLLSTATE_NUMKINDS             (10)
+/* #define MODULATION_TEST */
+
+#define PLLSTATE_READY          (0)
+#define PLLSTATE_1STEDGEDETECT  (1)
+#define PLLSTATE_FREQMEASURE    (2)
+#define PLLSTATE_INTERVAL       (3)
+#define PLLSTATE_PHASESHIFT     (4)
+#define PLLSTATE_PHASEADJUST    (5)
+#define PLLSTATE_PHASELOCKED    (6)
+#define PLLSTATE_NUMKINDS       (7)
+
+#define IS_PLLLOCKED(i) ((i)->pll_state == PLLSTATE_PHASELOCKED)
 
 #define M_2PI48         ((int64_t)0x0000800000000000)
 #define M_2PI48_MASK    ((int64_t)0x00007fffffffffff)
+#define M_PI48          ((int64_t)0x0000400000000000)
 #define WRAP_PI48(p)    (((p) >= 0) ? (p) & M_2PI48_MASK : \
                                      -((-p) & M_2PI48_MASK))
 #define M_2PI16_MASK    ((int16_t)0x7fff)
 #define PHASE48to16(p)  ((p) >= 0) ? \
                         (((int16_t)((p) / 0x100000000)) & M_2PI16_MASK) : \
                         (-(((int16_t)((-p) / 0x100000000)) & M_2PI16_MASK))
+
+#define DETECT_FREQ_COUNT   (10)
+#define OMEGA_ADJUST_FACTOR (SAMPLE_FS * DETECT_FREQ_COUNT)
+#define THETA_ADJUST_FACTOR (SAMPLE_FS * DETECT_FREQ_COUNT * 10)
 
 #define ONEPPS_RISEEDGE_THRESH  (25000)
 
@@ -79,24 +85,12 @@
 #else
 #  define REFSIG_TRIGGER_LEVEL  (10000)
 #  define CHECK_TRIGGER_LEVEL(l)  ((l) > REFSIG_TRIGGER_LEVEL)
-#  define ZEROCROSS(l, c)  ((l) >= 0 && (c) < 0)
+#  define ZEROCROSS(l, c)  ((l) > 0 && (c) <= 0)
 #endif
 
 #define ATTENATE_REFSIG(s)   ((s) * 1 / 4)
 
 #define EDGEDETECT_INTERVAL_SEC   (2)
-#define PHASEUPDATE_INTERVAL_SEC  (2)
-
-#define OMEGA_ADJUST_FROM   (1)
-#define OMEGA_ADJUST_STABLE (OMEGA_ADJUST_FROM + 5)
-#define OMEGA_ADJUST_RANGE  (50)
-#define OMEGA_ADJUST_DELTAP(w)  ((w)->omega + \
-                                 ((M_2PI48 / SAMPLE_FS / 100) * (w)->freq))
-#define OMEGA_ADJUST_DELTAM(w)  ((w)->omega - \
-                                 ((M_2PI48 / SAMPLE_FS / 100) * (w)->freq))
-
-#define ADJUSTPHASE_INTERVAL (2)
-#define OMEGA_ADJUST_AVARAGE_SIZE (20)
 
 #define BLK_SAMPLES_BOUNDARY (10)
 
@@ -106,13 +100,15 @@
 #  define dprintf(...)
 #endif
 
+#define MODULATION_PHASE_OFST (M_PI48 / 2)
+#define MODULATION_ONEBIT_LEN (M_2PI48 * 2)
+
 /****************************************************************************
  * Private Data Types
  ****************************************************************************/
 
 struct wave_param_s
 {
-  int64_t delta;
   int64_t theta;
   int64_t omega;
   int freq;         /* (Hz) */
@@ -121,13 +117,15 @@ struct wave_param_s
 };
 typedef struct wave_param_s wave_param_t;
 
-struct adjust_omega_s
+struct xfer_data_s
 {
-  int pps_count;  /* One PPS Edge counter */
-  int period_diff_sum;   /* Sum of period from 1PPS edge to Zero-cross point */
-  int last_diff;  /* Last period */
+  int64_t next_angle;
+  int64_t cur_angle;
+  int current_bit;
+  uint8_t *data_inuse;
+  uint8_t data_mem[XFER_DATA_BYTES];
 };
-typedef struct adjust_omega_s adjust_omega_t;
+typedef struct xfer_data_s xfer_data_t;
 
 struct my_worker_instance_s
 {
@@ -156,16 +154,9 @@ struct my_worker_instance_s
   int16_t last_refsig;  /* Actual memory for refsig_last */
   int16_t last_refval;  /* Actual memory for refval_last */
 
-  adjust_omega_t omega_adjust;
+  int16_t ref_skew;
 
-  uint8_t *sending_data;
-  uint8_t sdata_mem[DATA_BITS / 8];
-  int current_bit;
-
-  int mode;
-#ifdef DEBUG_DISPLAY_ONEPPSPERIOD
-  int debug_period;
-#endif
+  xfer_data_t xfer_data;
 };
 typedef struct my_worker_instance_s worker_inst_t;
 
@@ -181,16 +172,13 @@ struct lr_signal_s
  * Private Function Prototypes
  ****************************************************************************/
 
-static void update_freq(worker_inst_t *inst);
+static void update_freq(worker_inst_t *inst, int sec);
 static int state_ready(worker_inst_t *inst, int epos, int zerox);
 static int state_1stedgedetect(worker_inst_t *inst, int epos, int zerox);
-static int state_2ndedgedetect(worker_inst_t *inst, int epos, int zerox);
+static int state_freqmeasure(worker_inst_t *inst, int epos, int zerox);
 static int state_interval(worker_inst_t *inst, int epos, int zerox);
 static int state_phaseshift(worker_inst_t *inst, int epos, int zerox);
-static int state_phaseupdated(worker_inst_t *inst, int epos, int zerox);
-static int state_adjustdelay(worker_inst_t *inst, int epos, int zerox);
-static int state_adjustphase(worker_inst_t *inst, int epos, int zerox);
-static int state_adjustomega(worker_inst_t *inst, int epos, int zerox);
+static int state_phaseadjust(worker_inst_t *inst, int epos, int zerox);
 static int state_phaselocked(worker_inst_t *inst, int epos, int zerox);
 
 /****************************************************************************
@@ -202,13 +190,10 @@ static state_process state_func[PLLSTATE_NUMKINDS] =
 {
   [PLLSTATE_READY]          = state_ready,
   [PLLSTATE_1STEDGEDETECT]  = state_1stedgedetect,
-  [PLLSTATE_2NDEDGEDETECT]  = state_2ndedgedetect,
+  [PLLSTATE_FREQMEASURE]    = state_freqmeasure,
   [PLLSTATE_INTERVAL]       = state_interval,
   [PLLSTATE_PHASESHIFT]     = state_phaseshift,
-  [PLLSTATE_PHASEUPDATED]   = state_phaseupdated,
-  [PLLSTATE_ADJUSTDELAY]    = state_adjustdelay,
-  [PLLSTATE_ADJUSTPHASE]    = state_adjustphase,
-  [PLLSTATE_ADJUSTOMEGA]    = state_adjustomega,
+  [PLLSTATE_PHASEADJUST]    = state_phaseadjust,
   [PLLSTATE_PHASELOCKED]    = state_phaselocked,
 };
 
@@ -216,13 +201,10 @@ static uint32_t state_ledptn[PLLSTATE_NUMKINDS] =
 {
   [PLLSTATE_READY]          = 0,
   [PLLSTATE_1STEDGEDETECT]  = 1,
-  [PLLSTATE_2NDEDGEDETECT]  = 1,
-  [PLLSTATE_INTERVAL]       = 2,
-  [PLLSTATE_PHASESHIFT]     = 2,
-  [PLLSTATE_PHASEUPDATED]   = 2,
-  [PLLSTATE_ADJUSTDELAY]    = 3,
-  [PLLSTATE_ADJUSTPHASE]    = 4,
-  [PLLSTATE_ADJUSTOMEGA]    = 5,
+  [PLLSTATE_FREQMEASURE]    = 2,
+  [PLLSTATE_INTERVAL]       = 3,
+  [PLLSTATE_PHASESHIFT]     = 4,
+  [PLLSTATE_PHASEADJUST]    = 5,
   [PLLSTATE_PHASELOCKED]    = 7,
 };
 
@@ -238,13 +220,10 @@ static const char *state_name(int state)
     {
       STATE_NAME(READY);
       STATE_NAME(1STEDGEDETECT);
-      STATE_NAME(2NDEDGEDETECT);
+      STATE_NAME(FREQMEASURE);
       STATE_NAME(INTERVAL);
       STATE_NAME(PHASESHIFT);
-      STATE_NAME(PHASEUPDATED);
-      STATE_NAME(ADJUSTDELAY);
-      STATE_NAME(ADJUSTPHASE);
-      STATE_NAME(ADJUSTOMEGA);
+      STATE_NAME(PHASEADJUST);
       STATE_NAME(PHASELOCKED);
     }
 
@@ -268,8 +247,154 @@ static void display_statechange(int cur, int next)
 #endif /* CONFIG_EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PLL_DEBUG */
 
 /**
+ * init_xfer_data()
+ * Initialize xfer data
+ */
+
+static void init_xfer_data(xfer_data_t *xf)
+{
+  xf->data_inuse = NULL;
+  xf->current_bit = -1;
+  xf->cur_angle = 0;
+
+#ifdef MODULATION_TEST
+  {
+    int i;
+    for (i = 0; i < XFER_DATA_BYTES; i++)
+      {
+        xf->data_mem[i] = 0x55;
+      }
+  }
+#endif
+}
+
+/**
+ * set_xferdata()
+ * Set xfer data for sending.
+ */
+
+static bool set_xferdata(xfer_data_t *xf, int ofst, uint8_t *d, int len)
+{
+  int i;
+  bool ret = false;
+
+  if (xf->data_inuse == NULL && len + ofst <= XFER_DATA_BYTES)
+    {
+      ret = true;
+      len = len + ofst;
+      for (i = ofst; i < len; i++)
+        {
+          xf->data_mem[i] = d[i - ofst];
+        }
+    }
+
+  return ret;
+}
+
+/**
+ * enable_xferdata()
+ * Request xfer data. Not xfer started yet, because xfer should start
+ * on the edge of 1PPS.
+ */
+
+static bool enable_xferdata(xfer_data_t *xf)
+{
+  if (xf->data_inuse == NULL)
+    {
+      init_xfer_data(xf);
+      xf->data_inuse = xf->data_mem;
+      xf->current_bit = -1;
+      xf->cur_angle = 0;
+      return true;
+    }
+
+  return false;
+}
+
+/**
+ * cancel_xferdata()
+ * Cancel current xfer data.
+ */
+
+static void cancel_xferdata(xfer_data_t *xf)
+{
+  if (xf->data_inuse != NULL)
+    {
+      init_xfer_data(xf);
+    }
+}
+
+/**
+ * modulate_psk()
+ * Modulate the input signal 'sig' according to xter data.
+ * Return true means all data is done to xfer.
+ */
+
+static bool modulate_psk(xfer_data_t *xf, int16_t *sig, int64_t car_omega)
+{
+  int bytepos;
+  int bitpos;
+  bool done = false;
+
+  if (xf->data_inuse != NULL && xf->current_bit >= 0)
+    {
+      bytepos = xf->current_bit / 8;
+      bitpos  = xf->current_bit % 8;
+      *sig = xf->data_inuse[bytepos] & (1 << bitpos) ? *sig : -*sig;
+
+      xf->cur_angle += car_omega;
+      if (xf->cur_angle >= MODULATION_ONEBIT_LEN)
+        {
+          xf->cur_angle = xf->cur_angle - MODULATION_ONEBIT_LEN;
+          xf->current_bit++;
+          if (xf->current_bit >= XFER_DATA_BITS)
+            {
+              done = true;
+              init_xfer_data(xf);
+            }
+        }
+    }
+  else
+    {
+      *sig = 0;
+    }
+
+  return done;
+}
+
+/**
+ * start_xfer()
+ * Start xfer data.
+ * This function is called the start point on edge of 1PPS.
+ * Return true if this is accepted. false is already in xfer.
+ */
+
+static bool start_xfer(xfer_data_t *xf)
+{
+  bool ret = false;
+
+  if (xf->data_inuse != NULL && xf->current_bit == -1)
+    {
+      xf->current_bit = 0;
+      ret = true;
+    }
+
+  return ret;
+}
+
+/**
+ * is_xfering()
+ * Check if xfer data is already started.
+ */
+
+static bool is_xfering(xfer_data_t *xf)
+{
+  return xf->data_inuse != NULL && xf->current_bit >= 0;
+}
+
+/**
  * initialize_instance()
- * Reset the instance to back to begining
+ * reset the instance to back to begining
  */
 
 static void initialize_instance(worker_inst_t *inst)
@@ -282,18 +407,16 @@ static void initialize_instance(worker_inst_t *inst)
 
   inst->refwave.freq = DEFAULT_REFFREQ;
   inst->carwave.freq = DEFAULT_CARRIERFREQ;
-  update_freq(inst);
-  inst->refwave.theta = M_2PI48 / 2;
-  inst->refwave.delta = 0;
+  update_freq(inst, 1);
+  inst->refwave.theta = M_PI48;
   inst->refwave.wavcnt = 0;
   inst->refwave.edge_wavcnt = 0;
   inst->carwave.theta = 0;
-  inst->carwave.delta = 0;
   inst->carwave.wavcnt = 0;
   inst->carwave.edge_wavcnt = 0;
+  inst->ref_skew = 0;
 
-  inst->sending_data = NULL;
-  inst->current_bit  = 0;
+  init_xfer_data(&inst->xfer_data);
 }
 
 /**
@@ -308,88 +431,17 @@ static void state_led(uint32_t led)
   board_gpio_write(PIN_LED2, (led & 0x04) ? 1 : 0);
 }
 
-static void init_adjustomega(adjust_omega_t *ao)
-{
-  ao->pps_count = 0;
-  ao->period_diff_sum = 0;
-  ao->last_diff = 0;
-}
-
-static void update_adjustomega(adjust_omega_t *ao, int epos, int zerox)
-{
-  int diff = zerox - epos;
-
-  if (ao->pps_count != 0)
-    {
-      if (diff != ao->last_diff)
-        {
-          ao->period_diff_sum += diff - ao->last_diff;
-        }
-    }
-
-  ao->last_diff = diff;
-}
-
-static bool adjust_omega(adjust_omega_t *ao,
-                         wave_param_t *ref, wave_param_t *car, int one_hz)
-{
-  bool ret = false;
-
-#ifdef CONFIG_EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_PLL_DEBUG
-  uint32_t *dd = (uint32_t *)&ref->omega;
-#endif
-
-  if (ao->pps_count == OMEGA_ADJUST_AVARAGE_SIZE)
-    {
-      dprintf("Update omega..from %08x%08x\n",
-              (unsigned int)dd[1], (unsigned int)dd[0]);
-      ref->omega =
-        M_2PI48 * OMEGA_ADJUST_AVARAGE_SIZE /
-        ((int64_t)one_hz * OMEGA_ADJUST_AVARAGE_SIZE -
-        (int64_t)ao->period_diff_sum) * ref->freq;
-      car->omega =
-        M_2PI48 * OMEGA_ADJUST_AVARAGE_SIZE /
-        ((int64_t)one_hz * OMEGA_ADJUST_AVARAGE_SIZE -
-        (int64_t)ao->period_diff_sum) * car->freq;
-      dprintf("                to %08x%08x\n",
-              (unsigned int)dd[1], (unsigned int)dd[0]);
-      ret = true;
-    }
-
-  ao->pps_count++;
-
-  return ret;
-}
-
 /**
  * update_freq()
  * Update the sample number of one second.
  * This value is the base value for the output sampling frequency. 
  */
 
-static void update_freq(worker_inst_t *inst)
+static void update_freq(worker_inst_t *inst, int sec)
 {
-  dprintf("Change Edge Period from %d to %d\n",
-          inst->one_hz_period, inst->onepps_period);
-
-  inst->one_hz_period = inst->onepps_period;
-  inst->refwave.omega = M_2PI48 / (int64_t)inst->one_hz_period
+  inst->one_hz_period = inst->onepps_period / sec;
+  inst->refwave.omega = M_2PI48 / (int64_t)inst->onepps_period * sec
                                 * (int64_t)inst->refwave.freq;
-  inst->carwave.omega = M_2PI48 / (int64_t)inst->one_hz_period
-                                * (int64_t)inst->carwave.freq;
-}
-
-/**
- * update_wave_count()
- */
-
-static void update_wave_count(wave_param_t *wave, int count)
-{
-  wave->delta = wave->delta - ((int64_t)count * wave->omega);
-
-  wave->wavcnt = (wave->wavcnt >= wave->edge_wavcnt) ?
-                    wave->wavcnt - wave->edge_wavcnt :
-                    wave->wavcnt + wave->freq - wave->edge_wavcnt;
 }
 
 /**
@@ -399,37 +451,37 @@ static void update_wave_count(wave_param_t *wave, int count)
 
 static void update_phase(worker_inst_t *inst)
 {
-  update_wave_count(&inst->refwave, inst->zerox_period);
-  update_wave_count(&inst->carwave, inst->zerox_period);
+  int64_t dphase;
+  int64_t dwcnt;
+  int64_t dtheta;
+
+  dphase = inst->refwave.omega * inst->zerox_period;
+  dwcnt = (dphase + (M_2PI48_MASK)) / M_2PI48;
+  dtheta = (dphase & M_2PI48_MASK) - M_PI48; /* Refsig has offset PI */
+
+  inst->refwave.wavcnt += (int)dwcnt;
+  inst->refwave.theta -= dtheta;
+  while (inst->refwave.wavcnt >= inst->refwave.freq)
+    {
+      inst->refwave.wavcnt -= inst->refwave.freq;
+    }
 }
 
 /**
- * adjust_output_delay()
- * Adjust wave counter for output delay from SPK output to MIC input
+ * adjust_theta()
+ * Adjusting theta value roughly.
  */
 
-static void adjust_output_delay(wave_param_t *wave)
+static void adjust_theta(wave_param_t *wave, int cnt)
 {
-  int diff = wave->wavcnt >= wave->edge_wavcnt ?
-             wave->wavcnt - wave->edge_wavcnt :
-             wave->wavcnt - (wave->edge_wavcnt - wave->freq);
-  wave->wavcnt += diff;
-}
-
-static void adjust_phase_1st(wave_param_t *wave, int cnt)
-{
-  wave->delta = wave->delta - ((int64_t)cnt * wave->omega);
-}
-
-/**
- * adjust_phase()
- * Adjust the phase to shift delta based on the value of reference.
- */
-
-static void adjust_phase(wave_param_t *ref, wave_param_t *car, int delta)
-{
-  ref->theta = ref->theta + (ref->omega * delta);
-  car->theta = car->theta + (car->omega * delta);
+  if (cnt == 1 && cnt == -1)
+    {
+      wave->theta = wave->theta + ((int64_t)cnt * wave->omega * 3 / 10);
+    }
+  else
+    {
+      wave->theta = wave->theta + ((int64_t)cnt * wave->omega);
+    }
 }
 
 /**
@@ -530,6 +582,34 @@ out_func:
   return pos;
 }
 
+/**
+ * adjust_refwave()
+ * According to refwave data on 1PPS edge,
+ * adjust refsig freq and position (theta).
+ */
+
+static void adjust_refwave(wave_param_t *refwav, int one_hz,
+                           int16_t data, int16_t diff, int skew)
+{
+  /* If 'diff' is positive, ref wave is slightly slow, decrease omega value.
+   * If it is negative, ref wave is slightly fast, increase omega value.
+   */
+
+  if (diff != 0)
+    {
+      refwav->omega += (refwav->omega  * diff) / (int64_t)skew * DETECT_FREQ_COUNT / one_hz;
+    }
+
+  /* 'data' indicates current position,
+   * for positive, it is before 1PPS, and for negative, it is behind 1PPS.
+   */
+
+  if (data != 0)
+    {
+      refwav->theta += (refwav->omega * data) / (int64_t)skew;
+    }
+}
+
 /****************************************************************************
  * Private Functions for each state processing
  ****************************************************************************/
@@ -559,25 +639,36 @@ static int state_1stedgedetect(worker_inst_t *inst, int epos, int zerox)
       dprintf("Detect Edge%c\n", ' ');
       inst->onepps_period =
         memblk_remainint16(&inst->onepps) - epos;
-      next_state = PLLSTATE_2NDEDGEDETECT;
+      inst->interval_cnt = 0;
+      next_state = PLLSTATE_FREQMEASURE;
     }
 
   return next_state;
 }
 
-/** state_2ndedgedetect() : Process in the state of 2NDEDGEDETECT.
+/** state_freqmeasure() : Process in the state of FREQMEASURE.
  * Search 2nd rising edge for measureing the period of 1-PPS.
  */
 
-static int state_2ndedgedetect(worker_inst_t *inst, int epos, int zerox)
+static int state_freqmeasure(worker_inst_t *inst, int epos, int zerox)
 {
-  int next_state = PLLSTATE_2NDEDGEDETECT;
+  int next_state = PLLSTATE_FREQMEASURE;
   if (epos >= 0)
     {
-      inst->onepps_period += epos;
-      update_freq(inst);
-      inst->interval_cnt = 0;
-      next_state = PLLSTATE_INTERVAL;
+      inst->interval_cnt++;
+      dprintf("Edge Period : %d:%d\n", inst->interval_cnt,
+                                       inst->onepps_period + epos);
+      if (inst->interval_cnt == DETECT_FREQ_COUNT)
+        {
+          inst->onepps_period += epos;
+          update_freq(inst, DETECT_FREQ_COUNT);
+          inst->interval_cnt = 0;
+          next_state = PLLSTATE_INTERVAL;
+        }
+      else
+        {
+          inst->onepps_period += memblk_remainint16(&inst->onepps);
+        }
     }
   else
     {
@@ -607,7 +698,6 @@ static int state_interval(worker_inst_t *inst, int epos, int zerox)
            */
 
           inst->refwave.edge_wavcnt = inst->refwave.wavcnt;
-          inst->carwave.edge_wavcnt = inst->carwave.wavcnt;
 
           zerox -= epos;
           if (zerox >= 0)
@@ -615,7 +705,8 @@ static int state_interval(worker_inst_t *inst, int epos, int zerox)
               inst->zerox_period = zerox;
               update_phase(inst);
               inst->interval_cnt = 0;
-              next_state = PLLSTATE_PHASEUPDATED;
+              inst->zerox_period = -1;
+              next_state = PLLSTATE_PHASEADJUST;
             }
           else
             {
@@ -643,7 +734,8 @@ static int state_phaseshift(worker_inst_t *inst, int epos, int zerox)
       inst->zerox_period += zerox;
       update_phase(inst);
       inst->interval_cnt = 0;
-      next_state = PLLSTATE_PHASEUPDATED;
+      inst->zerox_period = -1;
+      next_state = PLLSTATE_PHASEADJUST;
     }
   else
     {
@@ -653,134 +745,69 @@ static int state_phaseshift(worker_inst_t *inst, int epos, int zerox)
   return next_state;
 }
 
-/** state_phaseupdated() : Process in the state of PHASEUPDATED.
+/** state_phaseadjust() : Process in the state of PHASEADJUST.
  * This state is just wait 1-PPS edge signal for stabilizing refrerence
  * after updateed of the phase.
  */
 
-static int state_phaseupdated(worker_inst_t *inst, int epos, int zerox)
+static int state_phaseadjust(worker_inst_t *inst, int epos, int zerox)
 {
-  int next_state = PLLSTATE_PHASEUPDATED;
-
-  if (epos >= 0)
-    {
-      inst->interval_cnt++;
-
-      if (inst->interval_cnt >= PHASEUPDATE_INTERVAL_SEC)
-        {
-          inst->refwave.edge_wavcnt = inst->refwave.wavcnt;
-          inst->carwave.edge_wavcnt = inst->carwave.wavcnt;
-
-          if (zerox >= 0)
-            {
-              zerox -= epos;
-              inst->zerox_period = zerox;
-              adjust_output_delay(&inst->refwave);
-              adjust_output_delay(&inst->carwave);
-              memblk_reset(&inst->refval_last);
-              inst->interval_cnt = 0;
-              next_state = PLLSTATE_ADJUSTPHASE;
-            }
-          else
-            {
-              inst->zerox_period = memblk_remainint16(&inst->refsig) - epos;
-              next_state = PLLSTATE_ADJUSTDELAY;
-            }
-
-          inst->interval_cnt = 0;
-        }
-    }
-
-  return next_state;
-}
-
-static int state_adjustdelay(worker_inst_t *inst, int epos, int zerox)
-{
-  int next_state = PLLSTATE_ADJUSTDELAY;
-
-  if (zerox >= 0)
-    {
-      inst->zerox_period += zerox;
-      adjust_output_delay(&inst->refwave);
-      adjust_output_delay(&inst->carwave);
-      memblk_reset(&inst->refval_last);
-      inst->interval_cnt = 0;
-      next_state = PLLSTATE_ADJUSTPHASE;
-    }
-  else
-    {
-      inst->zerox_period += memblk_remainint16(&inst->refsig);
-    }
-
-  return next_state;
-}
-
-static int state_adjustphase(worker_inst_t *inst, int epos, int zerox)
-{
-  int next_state = PLLSTATE_ADJUSTPHASE;
   int diff;
+  int next_state = PLLSTATE_PHASEADJUST;
 
-  if (epos >= 0)
+  /* Measure distance between 1pps and zero-cross point of ref-signal
+   * And adjust the phase of ref-signal.
+   */
+
+  if (inst->zerox_period < 0) /* Not detected 1PPS edge yet */
     {
-      inst->interval_cnt++;
-      if (inst->interval_cnt >= ADJUSTPHASE_INTERVAL)
-        {
-          if (zerox >= 0)
+      if (epos >= 0)  /* Detect 1PPS edge */
+        { 
+          if (zerox >= 0) /* Zero-cross point is in the same block */
             {
               diff = zerox - epos;
               dprintf("Adjusting phase zerox[%d] - epos[%d] = %d\n",
-                     zerox, epos, diff);
-              if (diff != 0)
+                    zerox, epos, diff);
+              if (diff != 0)  /* Need rough adjustment */
                 {
-                  adjust_phase_1st(&inst->refwave, diff);
-                  adjust_phase_1st(&inst->carwave, diff);
+                  adjust_theta(&inst->refwave, diff);
                 }
+              else
+                {
+                  /* 1PPS position and zero-cross position are the same */
 
-              init_adjustomega(&inst->omega_adjust);
-              next_state = PLLSTATE_ADJUSTOMEGA;
+                  memblk_reset(&inst->refval_last);
+                  next_state = PLLSTATE_PHASELOCKED;
+                }
             }
-          else
+          else /* No zero-cross point in the same block */
             {
-              dprintf("Not in same block..%c\n", ' ');
-              inst->interval_cnt = 0;
-              next_state = PLLSTATE_PHASEUPDATED;
+              inst->zerox_period =
+                memblk_remainint16(&inst->refsig) - epos;
             }
         }
     }
-
-  return next_state;
-}
-
-static int state_adjustomega(worker_inst_t *inst, int epos, int zerox)
-{
-  int next_state = PLLSTATE_ADJUSTOMEGA;
-
-  if (epos >= 0)
+  else  /* 1PPS edge has been already detected */
     {
-      if (zerox >= 0)
+      if (zerox >= 0) /* Zero-cross is detected */
         {
-          update_adjustomega(&inst->omega_adjust, epos, zerox);
+          inst->zerox_period += zerox;
 
-          dprintf("ADJUSTOMG zerox[%d] - epos[%d] = %d : cnt%d sum[%d]\n",
-                  zerox, epos, zerox - epos,
-                  inst->omega_adjust.pps_count,
-                  inst->omega_adjust.period_diff_sum);
+          /* Check nerest boundary of 1PPS edge */
 
-          if (adjust_omega(&inst->omega_adjust,
-                           &inst->refwave, &inst->carwave,
-                           inst->one_hz_period))
+          if ((inst->one_hz_period / 2 - inst->zerox_period) < 0)
             {
-              next_state = PLLSTATE_PHASELOCKED;
+              inst->zerox_period =
+                inst->zerox_period - inst->one_hz_period;
             }
+
+          dprintf("Adjusting zerox period %d\n", inst->zerox_period);
+          adjust_theta(&inst->refwave, inst->zerox_period);
+          inst->zerox_period = -1;
         }
-      else
+      else  /* No zero-cross point */
         {
-          dprintf("ADJUSTOMG Not same block... epos[%d]\n", epos);
-          if (epos < (BLK_SAMPLES - 10) && epos > 10)
-            {
-              inst->interval_cnt = 0;
-              next_state = PLLSTATE_PHASEUPDATED;
-            }
+          inst->zerox_period +=memblk_remainint16(&inst->refsig);
         }
     }
 
@@ -795,49 +822,66 @@ static int state_adjustomega(worker_inst_t *inst, int epos, int zerox)
 static int state_phaselocked(worker_inst_t *inst, int epos, int zerox)
 {
   int next_state = PLLSTATE_PHASELOCKED;
-  int delta;
+
+  int16_t last;
   int16_t data;
+  int16_t diff;
+
+  /* Detecting skew */
+
+  if (zerox >= 0)
+    {
+      int16_t *dat = memblk_dataptrint16(&inst->refsig);
+      if (zerox >= memblk_remainint16(&inst->refsig) - 1)
+        {
+          inst->ref_skew = dat[zerox - 1] - dat[zerox];
+        }
+      else
+        {
+          inst->ref_skew = dat[zerox] - dat[zerox + 1];
+        }
+    }
+
+  /* Adjust refwave */
 
   if (epos >= 0)
     {
+      /* Get the reference signal value on the same position of 1PPS Edge */
+
+      memblk_dropint16(&inst->refsig, epos);
+      data = memblk_pop_int16(&inst->refsig);
+
+      if (memblk_remainint16(&inst->refval_last))
+        {
+          /* If the last reference signal is stored,
+           * compare current and last to detect the direction in whilch
+           * the reference signal shifts with respect to the 1PPS signal.
+           */
+
+          last = memblk_pop_int16(&inst->refval_last);
+          diff = data - last;
+          dprintf("Skew:%d Cur:%d - Last:%d = %d\n", inst->ref_skew, data, last, diff);
+          adjust_refwave(&inst->refwave, inst->onepps_period, data, diff, inst->ref_skew);
+
+          /* Just reset memblock (make it empty)
+           * Because adjusted results are reflected in the timing of 
+           * the next signal generation.
+           */
+
+          memblk_reset(&inst->refval_last);
+        }
+      else
+        {
+          /* Store the current data as last data */
+
+          memblk_push_int16(&inst->refval_last, data);
+        }
+
       if (zerox >= 0)
         {
-          delta = zerox - epos;
-          memblk_dropint16(&inst->refsig, epos);
-          data = memblk_pop_int16(&inst->refsig);
-          dprintf("PHASELOCKED zerox[%d] - epos[%d] = %d dat:%d\n",
-                  zerox, epos, zerox - epos, data);
-          if (delta != 0)
-            {
-              /* Case of the difference between eops and zerox
-               * is more than eq 1 sample
-               */
-
-              adjust_phase(&inst->refwave, &inst->carwave, delta);
-            }
-          else
-            {
-              // adjust_phase(inst, data);
-            }
-        }
-      else  /* Case of no zerox point in the same sample block */
-        {
-          /* Check if sample block boundary */
-
-          if (epos < (BLK_SAMPLES - BLK_SAMPLES_BOUNDARY) &&
-              epos > BLK_SAMPLES_BOUNDARY)
-            {
-              /* Over the boundary */
-
-              dprintf("Over boundary epos[%d]\n", epos);
-
-              inst->interval_cnt = 0;
-              next_state = PLLSTATE_PHASEUPDATED;
-            }
-          else
-            {
-              dprintf("PHASELOCKED NO zerox epos[%d]\n", epos);
-            }
+          int sampdiff = zerox - epos;
+          dprintf("LOCKED phase zerox[%d] - epos[%d] = %d\n",
+                zerox, epos, sampdiff);
         }
     }
 
@@ -853,11 +897,12 @@ static int state_phaselocked(worker_inst_t *inst, int epos, int zerox)
  * Reference signal is generated just one cycle on top of timer counter.
  */
 
-static void update_theta(wave_param_t *wave, int64_t bound)
+static int update_theta(wave_param_t *wave, int64_t bound)
 {
+  int ret = 0;
   int64_t next_theta = wave->theta + wave->omega;
-  int64_t next_wrap  = WRAP_PI48(next_theta + wave->delta);
-  int64_t cur_wrap   = WRAP_PI48(wave->theta + wave->delta);
+  int64_t next_wrap  = WRAP_PI48(next_theta);
+  int64_t cur_wrap   = WRAP_PI48(wave->theta);
 
   /* Update wave counter */
 
@@ -877,6 +922,15 @@ static void update_theta(wave_param_t *wave, int64_t bound)
       wave->wavcnt = 0;
     }
 
+  /* Trigger for starting carrier signal */
+
+  cur_wrap  = WRAP_PI48(wave->theta);
+  next_wrap = WRAP_PI48(next_theta);
+  if (wave->wavcnt == 0 && cur_wrap < M_PI48 && next_wrap >= M_PI48)
+    {
+      ret = 1;
+    }
+
   /* Update theta */
 
   if (next_theta >= bound)
@@ -887,19 +941,21 @@ static void update_theta(wave_param_t *wave, int64_t bound)
     {
       wave->theta = next_theta;
     }
+
+  return ret;
 }
 
-static int16_t generate_refsig(wave_param_t *wave)
+static int16_t generate_refsig(wave_param_t *wave, int *reset_carrier)
 {
   int16_t ret = 0;
-  int16_t phase = PHASE48to16(wave->theta + wave->delta);
+  int16_t phase = PHASE48to16(wave->theta);
 
   if (wave->wavcnt == 0)
     {
       ret = ATTENATE_REFSIG(arm_sin_q15(phase));
     }
 
-  update_theta(wave, wave->omega * wave->freq);
+  *reset_carrier = update_theta(wave, wave->omega * wave->freq);
 
   return ret;
 }
@@ -908,14 +964,38 @@ static int16_t generate_refsig(wave_param_t *wave)
  * Modulate carrier signal by sending data.
  */
 
-static int16_t modulate_carrier(wave_param_t *wave)
+static int16_t modulate_carrier(wave_param_t *wave, xfer_data_t *xf,
+                                wave_param_t *ref, int start)
 {
   int16_t ret;
-  int16_t phase = PHASE48to16(wave->theta + wave->delta);
+  int16_t phase;
+  al_comm_msgopt_t opt = { 0 };
 
-  if (wave->wavcnt < 128 * 10)
+  if (start)
     {
+      wave->wavcnt = 0;
+      wave->theta = 0;
+      wave->omega = ref->omega * wave->freq / ref->freq;
+#ifdef MODULATION_TEST
+      enable_xferdata(xf);
+      if (start_xfer(xf))
+        {
+          dprintf("Start Xfer%c\n", ' ');
+        }
+#else
+      start_xfer(xf);
+#endif
+    }
+
+  if (is_xfering(xf))
+    {
+      phase = PHASE48to16(wave->theta + MODULATION_PHASE_OFST);
       ret = arm_sin_q15(phase);
+      if (modulate_psk(xf, &ret, wave->omega))
+        {
+          opt.usr[0] = PLLCMD_DONE_XFER;
+          alworker_send_usrcmd(&opt);
+        }
     }
   else
     {
@@ -925,8 +1005,6 @@ static int16_t modulate_carrier(wave_param_t *wave)
   /* Update wave counter */
 
   update_theta(wave, M_2PI48);
-
-  /* TODO: Modulation */
 
   return ret;
 }
@@ -938,17 +1016,28 @@ static int16_t modulate_carrier(wave_param_t *wave)
 static void generate_signals(worker_inst_t *inst, memblk_t *out)
 {
   int i;
+  int start_carrier;
   int sample_num = memblk_spaceint16(out) / 2;
   struct lr_signal_s *sig = (struct lr_signal_s *)memblk_fillptrint16(out);
 
   for (i = 0; i < sample_num; i++)
     {
 #ifdef CONFIG_EXAMPLES_AUDIOLITE_GNSS1PPS_DPLL_OUTPUT_REFSIG_ASSIGN_R
-      sig[i].l = modulate_carrier(&inst->carwave);
-      sig[i].r = generate_refsig(&inst->refwave);
+      sig[i].r = generate_refsig(&inst->refwave, &start_carrier);
+      sig[i].l = 0;
+      if (IS_PLLLOCKED(inst))
+        {
+          sig[i].l = modulate_carrier(&inst->carwave, &inst->xfer_data,
+                                      &inst->refwave, start_carrier);
+        }
 #else
-      sig[i].l = generate_refsig(&inst->refwave);
-      sig[i].r = modulate_carrier(&inst->carwave);
+      sig[i].l = generate_refsig(&inst->refwave, &start_carrier);
+      sig[i].r = 0;
+      if (IS_PLLLOCKED(inst))
+        {
+          sig[i].r = modulate_carrier(&inst->carwave, &inst->xfer_data,
+                                      &inst->refwave, start_carrier);
+        }
 #endif
     }
 
@@ -959,27 +1048,14 @@ static void generate_signals(worker_inst_t *inst, memblk_t *out)
  * Private Functions of AudioLite worker framework
  ****************************************************************************/
 
-/* on_playmsg():
- *  Received start message from Host (Main Core)
- */
-
-static int on_playmsg(int state, void *arg, al_comm_msgopt_t *opt)
-{
-  worker_inst_t *inst = (worker_inst_t *)arg;
-
-  inst->mode = opt->usr[0];
-
-  return AL_COMMFW_RET_OK;
-}
-
 /* on_usrmsg():
- *  Received PLL Worker specific command.
- *  On this case, start / stop message for PLL
+ *  Receive and handle PLL Worker specific command from main core.
  */
 
 static int on_usrmsg(int state, void *arg,
                      al_comm_msghdr_t hdr, al_comm_msgopt_t *opt)
 {
+  int dofst, dlen;
   worker_inst_t *inst = (worker_inst_t *)arg;
 
   if (inst->pll_state == PLLSTATE_READY && opt->usr[0] == PLLCMD_START)
@@ -992,6 +1068,39 @@ static int on_usrmsg(int state, void *arg,
       dprintf("[PLLWorker] Stop PLL%c\n", ' ');
       inst->pll_state = PLLSTATE_READY;
       initialize_instance(inst);
+    }
+  else if ((opt->usr[0] & PLLXFERDATACMDMASK) == PLLCMD_XFERDATA)
+    {
+      dofst = PLLXFERDATACMD_OFST(opt->usr[0]);
+      dlen = PLLXFERDATACMD_LEN(opt->usr[0]);
+      if (dlen > 12)
+        {
+          alworker_resp_usrcmd(PLLCMD_RETCODE_NG, opt);
+        }
+      else if (set_xferdata(&inst->xfer_data, dofst,
+                            (uint8_t *)&opt->usr[1], dlen))
+        {
+          alworker_resp_usrcmd(PLLCMD_RETCODE_OK, opt);
+        }
+      else
+        {
+          alworker_resp_usrcmd(PLLCMD_RETCODE_NG, opt);
+        }
+    }
+  else if (opt->usr[0] == PLLCMD_ENABLEXFER)
+    {
+      if (enable_xferdata(&inst->xfer_data))
+        {
+          alworker_resp_usrcmd(PLLCMD_RETCODE_OK, opt);
+        }
+      else
+        {
+          alworker_resp_usrcmd(PLLCMD_RETCODE_NG, opt);
+        }
+    }
+  else if (opt->usr[0] == PLLCMD_CANCELXFER)
+    {
+      cancel_xferdata(&inst->xfer_data);
     }
 
   return AL_COMMFW_RET_OK;
@@ -1039,7 +1148,7 @@ static int on_process(void *arg)
       FREE_MEMBLK(memblk, inst);
     }
 
-  /* Process signal Ossilator */
+  /* Process signal Oscillator */
 
   memblk = TAKE_OMEM(inst);
   if (memblk)
@@ -1073,17 +1182,11 @@ int main(void)
 
   initialize_instance(&g_instance);
 
-  g_instance.mode = PLL_MODE_NORMAL;
-#ifdef DEBUG_DISPLAY_ONEPPSPERIOD
-  g_instance.debug_period = 0;
-#endif
-
   /* Set callbacks to handle host message and
    * state processing
    */
 
   SET_PROCESS(cbs, on_process);
-  SET_PLAYMSG(cbs, on_playmsg);
   SET_USRMSG(cbs, on_usrmsg);
 
   /* Send boot message to host to notice this worker is ready */

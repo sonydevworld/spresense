@@ -117,7 +117,7 @@ static pthread_addr_t gnss_location(pthread_addr_t arg)
  * Public Functions
  ****************************************************************************/
 
-int gnss_wait_satechange(gnss_ctrl_t *gnss, int cur_state)
+int gnss_wait_statechange(gnss_ctrl_t *gnss, int cur_state)
 {
   pthread_mutex_lock(&gnss->lock);
   while (cur_state == gnss->state)

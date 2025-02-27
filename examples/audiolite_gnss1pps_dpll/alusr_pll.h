@@ -40,6 +40,9 @@
  * Included Files
  ****************************************************************************/
 
+#include <pthread.h>
+#include <semaphore.h>
+
 #include <audiolite/al_workercomp.h>
 #include <audiolite/al_workercmd.h>
 #include <pll/pll_worker_main.h>
@@ -57,18 +60,31 @@ class alusr_pll : public audiolite_workercomp
         virtual ~pll_msglistener(){};
         void bootup(audiolite_workercomp *wcomp, al_wtask_t *wtask,
                     int version, void *d);
+        void usermsg(audiolite_workercomp *wcomp, al_wtask_t *wtask,
+                     al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
     };
 
     pll_msglistener _msglsnr;
     audiolite_mempoolapbuf *_outmempool;
 
+    sem_t _sem_wcom;
+    pthread_mutex_t _pllcmd_lock;
+    pthread_cond_t _pllcmd_cond;
+    int _pllcmd_reply;
+
+    bool sendto_worker(al_comm_msgopt_t *opt);
+
   public:
-    int _mode;
     alusr_pll();
     virtual ~alusr_pll();
-    void set_mode(int m) { _mode = m; };
     void start_pll();
     void stop_pll();
+
+    bool send_xferdata(uint8_t *data, unsigned int len);
+    bool enable_xfer();
+    bool cancel_xfer();
+    void deliverr_reply(int code);
+    void xfer_done();
 };
 
 #endif /* __INCLUDE_AUDIOLITE_USER_PLL_H */

@@ -42,8 +42,24 @@
 
 #define PLL_WORKER_VERSION (1)
 
-#define PLLCMD_START  (1)
-#define PLLCMD_STOP   (2)
+#define PLLCMD_START      (1)
+#define PLLCMD_STOP       (2)
+
+#define PLLCMD_XFERDATA   (3 << 16)
+#define PLLCMD_ENABLEXFER (4)
+#define PLLCMD_CANCELXFER (5)
+#define PLLCMD_DONE_XFER  (6)
+
+#define PLLCMD_RETCODE_OK (0)
+#define PLLCMD_RETCODE_NG (1)
+
+#define PLLXFERDATACMDMASK  (0xffff0000)
+#define PLLXFERDATACMD(ofst,len) \
+        (PLLCMD_XFERDATA | ((ofst & 0xff) << 8) | (len & 0xff))
+#define PLLXFERDATACMD_OFST(d) (((d) & 0xff00) >> 8)
+#define PLLXFERDATACMD_LEN(d) ((d) & 0xff)
+
+#define PLLCMD_RESP       (2)
 
 #define SAMPLE_FS   (192000)
 #define SAMPLE_BITS (16)
@@ -53,13 +69,8 @@
 #define DEFAULT_REFFREQ     (200)
 #define DEFAULT_CARRIERFREQ (35000)
 
-#define DATA_BITS  (128)
-
-#define PLL_MODE_NORMAL        (0)
-#define PLL_MODE_STAY1STEDGE   (1)
-#define PLL_MODE_STAYUPDATEREQ (2)
-
-#define PIN_TRIGGER PIN_UART2_RXD
+#define XFER_DATA_BITS   (128)
+#define XFER_DATA_BYTES  ((XFER_DATA_BITS + 7) / 8)
 
 #define PIN_LED0 PIN_I2S1_BCK
 #define PIN_LED1 PIN_I2S1_LRCK

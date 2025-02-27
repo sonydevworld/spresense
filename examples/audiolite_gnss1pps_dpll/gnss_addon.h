@@ -77,7 +77,7 @@ extern "C"
  ****************************************************************************/
 
 int gnss_setup(gnss_ctrl_t *gnss);
-int gnss_wait_satechange(gnss_ctrl_t *gnss, int cur_state);
+int gnss_wait_statechange(gnss_ctrl_t *gnss, int cur_state);
 void gnss_cleanup(gnss_ctrl_t *gnss);
 
 #  undef EXTERN
