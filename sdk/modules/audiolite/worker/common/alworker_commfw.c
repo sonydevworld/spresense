@@ -131,7 +131,7 @@ static int handle_system_msg(alworker_insthead_t *inst,
             ret = AL_COMM_MSGCODEERR_OK;
             if (g_cbs.on_playmsg)
               {
-                ret = g_cbs.on_playmsg(inst->state, inst);
+                ret = g_cbs.on_playmsg(inst->state, inst, opt);
               }
 
             if (ret == AL_COMM_MSGCODEERR_OK)
@@ -692,6 +692,30 @@ int alworker_send_bootmsg(int version, void *d)
   opt.addr = (unsigned char *)alworker_addr_convert(d);
 
   return al_send_message(&g_worker_task, hdr, &opt);
+}
+
+int alworker_send_usrcmd(al_comm_msgopt_t *opt)
+{
+  al_comm_msghdr_t hdr;
+
+  hdr.grp  = AL_COMM_MESSAGE_USER;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = 0;
+  hdr.opt  = 0;
+
+  return al_send_message(&g_worker_task, hdr, opt);
+}
+
+int alworker_resp_usrcmd(int code, al_comm_msgopt_t *opt)
+{
+  al_comm_msghdr_t hdr;
+
+  hdr.grp  = AL_COMM_MESSAGE_USER;
+  hdr.type = AL_COMM_MSGTYPE_RESP;
+  hdr.code = code;
+  hdr.opt  = 0;
+
+  return al_send_message(&g_worker_task, hdr, opt);
 }
 
 int alworker_send_debug(alworker_insthead_t *inst, unsigned char hdr_opt)

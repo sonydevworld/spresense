@@ -31,7 +31,7 @@ Worker(SubCore)を用いたコンポーネント
 #### mkalwcomp.py コマンド
 
 上記の図にある、 **ユーザーオリジナルコンポーネント（サブコア付き）** と **Worker(SubCore)** のペアの実装のテンプレート出力をするツールが、
-**mkalcomp.py** になります。
+**mkalwcomp.py** になります。
 
 #### 作成するプログラム
 
@@ -64,9 +64,9 @@ FFTの計算が終わったら、次の入力データ用に図の **FFT 入力�
 新たな入力データに備えます。
 
 今回は演算部分をSubcore（SDKではWorkerと呼びます）で行います。
-そのため、Workerは入力 Audio Sample Dataが格納されたメモリと演算結果の出力メモリを、自作するAudioLite Componentから受け取り、
-入力メモリを使い終わった、もしくは出力メモリに結果を書き終わったら、それぞれのメモリをComponentに戻し、
-Component側はそれぞれを次のコンポーネントに渡します。
+そのため、Workerは入力 Audio Sample Dataが格納された入力メモリと演算結果の出力メモリを、自作するAudioLite Componentから受け取り、
+入力メモリを使い終わるか、出力メモリに結果を書き終えたら、それぞれのメモリをComponentに戻します。
+Component側はそれぞれのメモリを次のコンポーネントに渡します。
 
 ### コンポーネントのテンプレート作成
 
@@ -818,7 +818,7 @@ class fft_show : public audiolite_component
 
 さて、後はmain()関数で各コンポーネントをつなぎ合わせてAudio処理を開始すればSpresenseのマイク入力の音声の周波数分析結果をUARTで確認することが出来ます。
 
-audiolite_throughサンプルにもありますが、audiolite_inputcomはマイク入力データを入れるメモリプールが必要になります。
+audiolite_throughサンプルにもありますが、audiolite_inputcompはマイク入力データを入れるメモリプールが必要になります。
 今回、pcm_cacheがFFT_TAPSHALFサイズなので、FFT_TAPHALFサンプル数分（2ch/16bit）を保持出来るメモリサイズのメモリプールを作成してaudiolite_inputcompに取り付けます。
 また、コンポーネントからのイベントを取得するためのイベントリスナーには、標準のaudiolite_simplelistenerを使います。
 周波数の分析は15秒間行い、15秒経つとコマンドが終了するようにしています。

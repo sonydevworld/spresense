@@ -251,7 +251,7 @@ typedef struct alworker_commfw_insthead_s alworker_insthead_t;
 struct alworker_commfw_callbacks_s
 {
   void (*on_stopmsg)(int state, void *arg);
-  int (*on_playmsg)(int state, void *arg);
+  int (*on_playmsg)(int state, void *arg, al_comm_msgopt_t *opt);
   void (*on_termmsg)(void *arg,
                      al_comm_msghdr_t hdr, al_comm_msgopt_t *opt);
   int (*on_process)(void *arg);
@@ -337,6 +337,8 @@ int alworker_send_frameinfo(int id, int chs, int hz, int layer, int rate);
 int alworker_send_framedone(int id);
 int alworker_send_errormsg(int id, int errcode);
 int alworker_send_bootmsg(int version, void *d);
+int alworker_send_usrcmd(al_comm_msgopt_t *opt);
+int alworker_resp_usrcmd(int code, al_comm_msgopt_t *opt);
 int alworker_send_debug(alworker_insthead_t *inst, unsigned char hdr_opt);
 int alworker_release_imem(alworker_insthead_t *inst, int id, memblk_t *memblk);
 int alworker_release_omem(alworker_insthead_t *inst, memblk_t *memblk, int mode);

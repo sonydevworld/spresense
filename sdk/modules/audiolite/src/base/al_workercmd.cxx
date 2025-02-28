@@ -137,7 +137,7 @@ int alworker_send_instgain(al_wtask_t *wtask, float gain)
   return al_send_message(wtask, hdr, &opt);
 }
 
-int alworker_send_start(al_wtask_t *wtask)
+int alworker_send_start(al_wtask_t *wtask, al_comm_msgopt_t *opts)
 {
   int ret;
   al_comm_msghdr_t hdr;
@@ -148,7 +148,16 @@ int alworker_send_start(al_wtask_t *wtask)
   hdr.code = AL_COMM_MSGCODESYS_PLAY;
   hdr.opt  = 0;
 
-  ret = al_send_message(wtask, hdr, &opt);
+  if (opts != NULL)
+    {
+      ret = al_send_message(wtask, hdr, opts);
+    }
+  else
+    {
+      memset(&opt, 0, sizeof(opt));
+      ret = al_send_message(wtask, hdr, &opt);
+    }
+
   return ret;
 }
 
@@ -203,4 +212,18 @@ int alworker_inject_imem(al_wtask_t *wtask, audiolite_mem *mem)
   return send_iframe(wtask, mem->get_data(),
                             mem->get_storedsize(),
                             mem->is_eof());
+}
+
+int alworker_send_usrcmd(al_wtask_t *wtask, al_comm_msgopt_t *opt)
+{
+  int ret;
+  al_comm_msghdr_t hdr;
+
+  hdr.grp  = AL_COMM_MESSAGE_USER;
+  hdr.type = AL_COMM_MSGTYPE_ASYNC;
+  hdr.code = 0;
+  hdr.opt  = 0;
+
+  ret = al_send_message(wtask, hdr, opt);
+  return ret;
 }
