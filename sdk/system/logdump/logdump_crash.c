@@ -97,23 +97,13 @@ static void regdump(uint32_t *regs, int size)
   printf("R8:  %08lx %08lx %08lx %08lx %08lx %08lx %08lx %08lx\n",
          regs[REG_R8], regs[REG_R9], regs[REG_R10], regs[REG_R11],
          regs[REG_R12], regs[REG_R13], regs[REG_R14], regs[REG_R15]);
-#ifdef CONFIG_ARMV7M_USEBASEPRI
-#  ifdef REG_EXC_RETURN
+#ifdef REG_EXC_RETURN
   printf("xPSR: %08lx BASEPRI: %08lx EXC_RETURN: %08lx\n",
          regs[REG_XPSR], regs[REG_BASEPRI], regs[REG_EXC_RETURN]);
-#  else
+#else
   printf("xPSR: %08lx BASEPRI: %08lx\n",
          regs[REG_XPSR], regs[REG_BASEPRI]);
-#  endif
-#else
-#  ifdef REG_EXC_RETURN
-  printf("xPSR: %08lx PRIMASK: %08lx EXC_RETURN: %08lx\n",
-         regs[REG_XPSR], regs[REG_PRIMASK], regs[REG_EXC_RETURN]);
-#  else
-  printf("xPSR: %08lx PRIMASK: %08lx\n",
-         regs[REG_XPSR], regs[REG_PRIMASK]);
-#  endif
-#endif /* CONFIG_ARMV7M_USEBASEPRI */
+#endif
 }
 
 /****************************************************************************
