@@ -69,14 +69,6 @@
 #  if defined(CONFIG_BUILD_PROTECTED) && CONFIG_ARCH_INTERRUPTSTACK < 4
 #    error Interrupt stack must be used with high priority interrupts in kernel mode
 #  endif
-
-  /* Use the the BASEPRI to control interrupts is required if nested, high
-   * priority interrupts are supported.
-   */
-
-#  ifndef CONFIG_ARMV7M_USEBASEPRI
-#    error CONFIG_ARMV7M_USEBASEPRI must be used with CONFIG_ARCH_HIPRI_INTERRUPT
-#  endif
 #endif
 
 /************************************************************************************
@@ -134,11 +126,8 @@ exception_common:
 	mov		r2, sp					/* R2=Copy of the main/process stack pointer */
 	add		r2, #HW_XCPT_SIZE		/* R2=MSP/PSP before the interrupt was taken */
 									/* (ignoring the xPSR[9] alignment bit) */
-#ifdef CONFIG_ARMV7M_USEBASEPRI
+
 	mrs		r3, basepri				/* R3=Current BASEPRI setting */
-#else
-	mrs		r3, primask				/* R3=Current PRIMASK setting */
-#endif
 
 #ifdef CONFIG_ARCH_FPU
 
@@ -291,14 +280,9 @@ exception_common:
 
 	/* Restore the interrupt state */
 
-#ifdef CONFIG_ARMV7M_USEBASEPRI
 	msr		basepri, r3				/* Restore interrupts priority masking */
 #ifndef CONFIG_ARCH_HIPRI_INTERRUPT
 	cpsie	i						/* Re-enable interrupts */
-#endif
-
-#else
-	msr		primask, r3				/* Restore interrupts */
 #endif
 
 	/* Always return with R14 containing the special value that will: (1)
