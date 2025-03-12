@@ -1796,3 +1796,20 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================
 
+21. License of cobs-c
+
+========================================================================
+externals/cobs-c
+
+This software includes open source software subject to the licensing
+described in the following file:
+
+  externals/cobs-c/LICENSE.txt
+
+The original codes can be downloaded from the following site:
+
+Download:
+https://github.com/cmcqueen/cobs-c.git
+f0d39b80ed3eb1c131746f44c23da0bf9ea07abf
+
+========================================================================
