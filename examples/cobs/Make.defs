@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_COBS),)
+CONFIGURED_APPS += cobs
+endif
