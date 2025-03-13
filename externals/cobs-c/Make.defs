@@ -1,0 +1,5 @@
+
+ifneq ($(CONFIG_EXTERNALS_COBS_C),)
+CONFIGURED_APPS += cobs-c
+endif
+

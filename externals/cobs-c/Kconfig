@@ -1,0 +1,8 @@
+
+config EXTERNALS_COBS_C
+  bool "COBS-C Library"
+  default n
+  ---help---
+    "cobs-c" is the OSS from https://github.com/cmcqueen/cobs-c.git.
+    This option is enabled to use it.
+
