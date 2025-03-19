@@ -22,8 +22,10 @@ examplex/gnss
   CONFIG_EXAMPLES_GNSS_STACKSIZE -- Specified this example's stack size.
 	  Default: 2048
   CONFIGE_EXAMPLES_GNSS_USE_POLL -- Choice poll method event notification.
+                                    If choose this, gnss_poll_main.c is used.
     Default: CONFIGE_EXAMPLES_GNSS_USE_POLL
-  CONFIGE_EXAMPLES_GNSS_USE_SIGNAL -- Choice signal method event notification
+  CONFIGE_EXAMPLES_GNSS_USE_SIGNAL -- Choice signal method event notification.
+                                      If choose this, gnss_main.c is used.
   
   In addition to the above, the following definitions are required:
     CONFIG_CXD56_GNSS
