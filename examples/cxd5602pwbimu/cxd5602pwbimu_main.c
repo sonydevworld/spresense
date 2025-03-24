@@ -118,7 +118,6 @@ int main(int argc, FAR char *argv[])
     }
 
   memset(&now, 0, sizeof(now));
-  clock_gettime(CLOCK_MONOTONIC, &start);
 
   for (p = outbuf; p < last; p++)
     {
@@ -135,6 +134,14 @@ int main(int argc, FAR char *argv[])
         {
           printf("Timeout!\n");
         }
+      if (p == outbuf)
+        {
+          /* To remove first sensing delay, start time measurement from
+           * the first captured data.
+           */
+
+          clock_gettime(CLOCK_MONOTONIC, &start);
+        }
 
       if (fds[0].revents & POLLIN)
         {
@@ -144,6 +151,7 @@ int main(int argc, FAR char *argv[])
               printf("ERROR: read size mismatch! %d\n", ret);
             }
         }
+
       clock_gettime(CLOCK_MONOTONIC, &now);
       clock_timespec_subtract(&now, &start, &delta);
       if (delta.tv_sec >= 1)
@@ -168,6 +176,7 @@ int main(int argc, FAR char *argv[])
              p->gx, p->gy, p->gz,
              p->ax, p->ay, p->az);
     }
+  free(outbuf);
 
   clock_timespec_subtract(&now, &start, &delta);
   printf("Elapsed %ld.%09ld seconds\n", delta.tv_sec, delta.tv_nsec);
