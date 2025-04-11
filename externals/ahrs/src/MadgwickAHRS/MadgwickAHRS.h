@@ -16,14 +16,22 @@
 //----------------------------------------------------------------------------------------------------
 // Variable declaration
 
-extern volatile float beta;				// algorithm gain
-extern volatile float q0, q1, q2, q3;	// quaternion of sensor frame relative to auxiliary frame
+struct ahrs_out_s
+{
+  float beta;
+  float q[4];
+  float samplerate;
+};
 
-//---------------------------------------------------------------------------------------------------
-// Function declarations
+#define INIT_AHRS(i, b, s)  do { (i)->beta = (b); \
+                                 (i)->q[0] = 1.0f; (i)->q[1] = 0.0f; \
+                                 (i)->q[2] = 0.0f; (i)->q[3] = 0.0f; \
+                                 (i)->samplerate = (s); }while(0)
 
-void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+void MadgwickAHRSupdateIMU(struct ahrs_out_s *out,
+                           float gx, float gy, float gz,
+                           float ax, float ay, float az);
+void quaternion2euler(const float q[4], float e[3]);
 
 #endif
 //=====================================================================================================
