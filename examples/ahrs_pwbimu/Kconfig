@@ -1,0 +1,25 @@
+
+config EXAMPLES_AHRS_PWBIMU
+	tristate "AHRS example with CXD5602PWBIMU Add-on"
+	default n
+	---help---
+		Enable the ahrs_pwbimu app
+
+if EXAMPLES_AHRS_PWBIMU
+
+config EXAMPLES_AHRS_PWBIMU_PROGNAME
+	string "Program name"
+	default "ahrs_pwbimu"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_AHRS_PWBIMU_PRIORITY
+	int "ahrs_pwbimu task priority"
+	default 100
+
+config EXAMPLES_AHRS_PWBIMU_STACKSIZE
+	int "ahrs_pwbimu stack size"
+	default 2048
+
+endif
