@@ -191,8 +191,9 @@ int main(int argc, FAR char *argv[])
   struct ahrs_out_s ahrs;
   cxd5602pwbimu_data_t imu;
   float e[3];
+  unsigned int cnt = 0;
 
-  INIT_AHRS(&ahrs, 0.1f, (float)DEFAULT_SAMPLERATE);
+  INIT_AHRS(&ahrs, 0.5f, (float)DEFAULT_SAMPLERATE);
 
   fd = start_sensing(DEFAULT_SAMPLERATE,
                      DEFAULT_ACCELRANGE,
@@ -205,7 +206,12 @@ int main(int argc, FAR char *argv[])
                                      imu.ax, imu.ay, imu.az);
 
         quaternion2euler(ahrs.q, e);
-        printf("R:%0.1f, P:%0.1f, Y:%0.1f\n", e[0], e[1], e[2]);
+
+        if (++cnt >= 20)  /* Decimate data 1920Hz / 20 = 96Hz */
+          {
+            printf("R:%0.1f, P:%0.1f, Y:%0.1f\n", e[0], e[1], e[2]);
+            cnt = 0;
+          }
     }
 
   close(fd);
