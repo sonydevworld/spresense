@@ -1,0 +1,25 @@
+
+config EXAMPLES_FFT_PWBIMU
+	tristate "fft_pwbimu app"
+	default n
+	---help---
+		Enable the fft_pwbimu app
+
+if EXAMPLES_FFT_PWBIMU
+
+config EXAMPLES_FFT_PWBIMU_PROGNAME
+	string "Program name"
+	default "fft_pwbimu"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_FFT_PWBIMU_PRIORITY
+	int "fft_pwbimu task priority"
+	default 100
+
+config EXAMPLES_FFT_PWBIMU_STACKSIZE
+	int "fft_pwbimu stack size"
+	default 2048
+
+endif
