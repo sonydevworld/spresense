@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>AHRS Visualization</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        #arrow_canvas {
+            width: 100%;
+            height: 100vh;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="arrow_canvas"></canvas>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('arrow_canvas');
+            const engine = new BABYLON.Engine(canvas, true);
+
+            const createScene = () => {
+                let scene = new BABYLON.Scene(engine);
+                let camera = new BABYLON.ArcRotateCamera("camera",
+                                                          -Math.PI / 2,
+                                                          Math.PI / 2.5,
+                                                          5,
+                                                          new BABYLON.Vector3(0, 0, 0),
+                                                          scene);
+                camera.attachControl(canvas, true);
+                new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0), scene);
+
+                // Material
+                let material = new BABYLON.StandardMaterial("material", scene);
+                material.diffuseColor = new BABYLON.Color3(1.0, 0.2, 0.2);
+                material.wireframe = false
+
+                let small_arrow_cone_height = 0.3
+                let small_arrow_cone_bottom = 0.3
+                let small_arrow_cylinder_height = 0.4
+                let small_arrow_cylinder_diameter = small_arrow_cone_bottom / 2
+
+                let arrow_cone_height = 0.5
+                let arrow_cone_bottom = 0.5
+                let arrow_cylinder_height = 1.0
+                let arrow_cylinder_diameter = arrow_cone_bottom / 2
+
+                // Arrow bow
+                let cone = BABYLON.MeshBuilder.CreateCylinder("cone",
+                              { height: arrow_cone_height,
+                                diameterTop: 0,
+                                diameterBottom: arrow_cone_bottom,
+                                tessellation: 50
+                              }, scene);
+                cone.position.y = arrow_cylinder_height / 2
+                let cylinder = BABYLON.MeshBuilder.CreateBox("cylinder",
+                              { height: arrow_cylinder_height - 0.2,
+                                size: arrow_cylinder_diameter,
+                                tessellation: 50
+                              }, scene);
+                let arrow = BABYLON.Mesh.MergeMeshes([cone, cylinder])
+                arrow.material = material;
+                arrow.position.y = arrow_cylinder_height;
+
+                let x_axis = arrow.clone("xaxis")
+                x_axis.scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+
+                let material2 = new BABYLON.StandardMaterial("material2", scene);
+                material2.diffuseColor = new BABYLON.Color3(1.0, 1.0, 1.0);
+                material2.wireframe = true
+
+                let tile = BABYLON.MeshBuilder.CreateTiledPlane("tile", {size: 100}, scene)
+                tile.material = material2;
+
+                return { scene, arrow };
+            };
+
+            const { scene, arrow } = createScene();
+
+            const ws = new WebSocket('ws://localhost:8080');
+            ws.onmessage = (event) => {
+                const posture = JSON.parse(event.data);
+
+                arrow.rotation.x = posture.roll  / 180 * Math.PI;
+                arrow.rotation.y = posture.pitch / 180 * Math.PI;
+                arrow.rotation.z = posture.yaw   / 180 * Math.PI;
+            };
+
+            engine.runRenderLoop(() => {
+                scene.render();
+            });
+
+            window.addEventListener('resize', () => {
+                engine.resize();
+            });
+        });
+    </script>
+</body>
+
+</html>

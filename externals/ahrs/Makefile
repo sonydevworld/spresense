@@ -1,8 +1,7 @@
-#!/usr/bin/env bash
 ############################################################################
-# tools/mkversion.sh
+# externals/ahrs/Makefile
 #
-#   Copyright 2018-2025 Sony Semiconductor Solutions Corporation
+#   Copyright 2025 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,26 +33,12 @@
 #
 ############################################################################
 
-TAG=${1:-HEAD}
+include $(APPDIR)/Make.defs
+-include $(SDKDIR)/Make.defs
 
-SDK_VERSION="SDK3.4.2"
-if [ -r sdk_version ]; then
-    SDK_VERSION="SDK`cat sdk_version`"
-fi
+BIN = libxioahrs$(LIBEXT)
 
-NUTTX_VERSION="12.3.0"
+VPATH += src/MadgwickAHRS
+CSRCS = MadgwickAHRS.c
 
-# Get short hash for specified tag
-GIT_REVISION=`git rev-parse ${TAG} 2>/dev/null | cut -b -7`
-
-if [ "${GIT_REVISION}" != "" ]; then
-    BUILD_ID="${SDK_VERSION}-${GIT_REVISION}"
-    if [ -n "`git diff-index --name-only --ignore-submodules=untracked ${TAG} | head -1`" ]; then
-        BUILD_ID="${BUILD_ID}"-dirty
-    fi
-else
-    BUILD_ID="${SDK_VERSION}"
-fi
-
-VERSION_ARG="-v ${NUTTX_VERSION} -b ${BUILD_ID}"
-echo ${VERSION_ARG}
+include $(APPDIR)/Application.mk

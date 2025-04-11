@@ -8,10 +8,10 @@ BUILD_EXECUTE = 1
 # ALWORKER_USE_CMSIS = 1
 # ALWORKER_USE_RESAMPLER = 1
 
-BIN = fftworker
+BIN = imufft
 SPK = $(BIN).spk
 
-CSRCS = fftworker_worker_main.c
+CSRCS = imufft_worker_main.c
 
 CFLAGS +=
 LDLIBPATH =
