@@ -192,6 +192,12 @@ int main(int argc, FAR char *argv[])
   cxd5602pwbimu_data_t imu;
   float e[3];
   unsigned int cnt = 0;
+  int print_hex = 0;
+
+  if (argc == 2 && argv[1][0] == 'h')
+    {
+      print_hex = 1;
+    }
 
   INIT_AHRS(&ahrs, 0.5f, (float)DEFAULT_SAMPLERATE);
 
@@ -199,6 +205,14 @@ int main(int argc, FAR char *argv[])
                      DEFAULT_ACCELRANGE,
                      DEFAULT_GYROSCOPERANGE, 1);
   drop_50msdata(fd, DEFAULT_SAMPLERATE, &imu);
+
+  /* Note: Add logic to remove gyro bias, othewise DC offset will be
+   *       on the gyro sensor data.
+   *       A commonly used method to remove the DC offset is, for example,
+   *       to take the average of the gyro sensor data while it is
+   *       stationary for several seconds, use that value as the BIAS
+   *       value, and subtract that value from each gyro sample data.
+   */
 
   while (read_imudata(fd, &imu))
     {
@@ -209,7 +223,17 @@ int main(int argc, FAR char *argv[])
 
         if (++cnt >= 20)  /* Decimate data 1920Hz / 20 = 96Hz */
           {
-            printf("R:%0.1f, P:%0.1f, Y:%0.1f\n", e[0], e[1], e[2]);
+            if (print_hex)
+              {
+                printf("%08x,%08x,%08x\n", *(unsigned int *)&e[0],
+                                           *(unsigned int *)&e[1],
+                                           *(unsigned int *)&e[2]);
+              }
+            else
+              {
+                printf("R:%0.1f, P:%0.1f, Y:%0.1f\n", e[0], e[1], e[2]);
+              }
+
             cnt = 0;
           }
     }
