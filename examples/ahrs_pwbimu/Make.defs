@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_AHRS_PWBIMU),)
+CONFIGURED_APPS += ahrs_pwbimu
+endif

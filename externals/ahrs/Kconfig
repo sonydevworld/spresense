@@ -1,0 +1,11 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EXTERNALS_XIO_AHRS
+	bool "AHRS library from x-io"
+	default n
+	---help---
+		Enable support AHRS library.
+		This library is from https://x-io.co.uk/downloads/madgwick_algorithm_c.zip
