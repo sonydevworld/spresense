@@ -230,7 +230,6 @@ inline MsgQueBlock::MsgQueBlock(MsgQueId id, MsgCpuId owner, SpinLockId spinlock
 	m_cur_que(NULL),
 	m_tally()
 {
-	m_count_sem.semcount = 0;
 }
 
 /*****************************************************************
@@ -743,8 +742,8 @@ inline void MsgQueBlock::unlock() {
  *****************************************************************/
 inline void MsgQueBlock::dump() const
 {
-	printf("ID:%d, init=%d, owner=%d, spinlock=%d, count_sem=%d, cur_pending=%d, cur_que=%p\n",
-		m_id, m_initDone, m_owner, m_spinlock, m_count_sem.semcount, m_pendingMsgCount, m_cur_que);
+	printf("ID:%d, init=%d, owner=%d, spinlock=%d, count_sem=%ld, cur_pending=%d, cur_que=%p\n",
+		m_id, m_initDone, m_owner, m_spinlock, m_count_sem.val.semcount, m_pendingMsgCount, m_cur_que);
 	m_tally.dump();
 
 	printf("Normal priority queue=%p\n", &m_que[MsgPriNormal]);
