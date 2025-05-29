@@ -22,4 +22,14 @@ config EXAMPLES_AHRS_PWBIMU_STACKSIZE
 	int "ahrs_pwbimu stack size"
 	default 2048
 
+config EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION
+	bool "ahrs_pwbimu execute gyro-bias estimation"
+	default n
+
+config EXAMPLES_AHRS_PWBIMU_GYROBIAS_ESTIMATION_TIME
+	int "ahrs_pwbimu gyro-bias estimation time in seconds"
+	default 10
+	range 1 512
+	depends on EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION
+
 endif
