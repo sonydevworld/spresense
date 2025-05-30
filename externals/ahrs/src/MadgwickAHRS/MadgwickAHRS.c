@@ -9,6 +9,8 @@
 // 29/09/2011	SOH Madgwick    Initial release
 // 02/10/2011	SOH Madgwick	Optimised for reduced CPU load
 // 19/02/2012	SOH Madgwick	Magnetometer measurement is normalised
+// 22/05/2025	Sony Semiconductor Solutions	Add function to set roll/pitch posture by using Accel
+//           	                            	Unified the unit of euler angles to radian
 //
 //=====================================================================================================
 
@@ -170,9 +172,61 @@ static inline float arc_sinf(const float value)
 void quaternion2euler(const float q[4], float e[3])
 {
   const float hmq = 0.5f - q[2] * q[2];
-  e[0] = rad2deg(atan2f(q[0] * q[1] + q[2] * q[3], hmq - q[1] * q[1]));
-  e[1] = rad2deg(arc_sinf(2.0f * (q[0] * q[2] - q[3] * q[1])));
-  e[2] = rad2deg(atan2f(q[0] * q[3] + q[1] * q[2], hmq - q[3] * q[3]));
+  e[0] = atan2f(q[0] * q[1] + q[2] * q[3], hmq - q[1] * q[1]);
+  e[1] = arc_sinf(2.0f * (q[0] * q[2] - q[3] * q[1]));
+  e[2] = atan2f(q[0] * q[3] + q[1] * q[2], hmq - q[3] * q[3]);
+}
+
+void euler2quaternion(const float e[3], float q[4])
+{
+	float sin_rx_2, sin_ry_2, sin_rz_2;
+	float cos_rx_2, cos_ry_2, cos_rz_2;
+
+	sin_rx_2 = sinf(e[0] / 2.0);
+	sin_ry_2 = sinf(e[1] / 2.0);
+	sin_rz_2 = sinf(e[2] / 2.0);
+
+	cos_rx_2 = cosf(e[0] / 2.0);
+	cos_ry_2 = cosf(e[1] / 2.0);
+	cos_rz_2 = cosf(e[2] / 2.0);
+
+	q[0] =  cos_rx_2 * cos_ry_2 * cos_rz_2 + sin_rx_2 * sin_ry_2 * sin_rz_2;
+	q[1] =  sin_rx_2 * cos_ry_2 * cos_rz_2 - cos_rx_2 * sin_ry_2 * sin_rz_2;
+	q[2] =  sin_rx_2 * cos_ry_2 * sin_rz_2 + cos_rx_2 * sin_ry_2 * cos_rz_2;
+	q[3] =  cos_rx_2 * cos_ry_2 * sin_rz_2 - sin_rx_2 * sin_ry_2 * cos_rz_2;
+}
+
+void setPostureByAccel(struct ahrs_out_s *inst,
+					   float ax, float ay, float az)
+{
+	float a[3] = {ax, ay, az};
+	float norm;
+	float euler[3] = {0.0};
+
+	norm = sqrtf(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+	if (norm == 0){
+		return;
+	}
+	else{
+		g_work.recipNorm = invSqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+		a[0] *= g_work.recipNorm;
+		a[1] *= g_work.recipNorm;
+		a[2] *= g_work.recipNorm;
+	}
+	
+	euler[0] = atan2f(a[1], a[2]);
+	euler[1] = -1.0 * asinf(a[0]);
+	
+	euler2quaternion(euler, inst->q);
+
+	g_work.recipNorm = invSqrt(inst->q[0] * inst->q[0] + 
+							   inst->q[1] * inst->q[1] +
+							   inst->q[2] * inst->q[2] +
+							   inst->q[3] * inst->q[3]);
+	inst->q[0] *= g_work.recipNorm;
+	inst->q[1] *= g_work.recipNorm;
+	inst->q[2] *= g_work.recipNorm;
+	inst->q[3] *= g_work.recipNorm;
 }
 
 //---------------------------------------------------------------------------------------------------
