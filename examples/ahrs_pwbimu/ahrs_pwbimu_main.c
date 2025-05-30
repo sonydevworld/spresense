@@ -330,9 +330,10 @@ int main(int argc, FAR char *argv[])
           {
             if (print_hex)
               {
-                printf("%08x,%08x,%08x\n", *(unsigned int *)&e[0],
-                                           *(unsigned int *)&e[1],
-                                           *(unsigned int *)&e[2]);
+                printf("%08x,%08x,%08x,%08x\n", *(unsigned int *)&ahrs.q[0],
+                                                *(unsigned int *)&ahrs.q[1],
+                                                *(unsigned int *)&ahrs.q[2],
+                                                *(unsigned int *)&ahrs.q[3]);
               }
             else
               {
