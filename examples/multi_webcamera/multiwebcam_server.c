@@ -48,6 +48,8 @@
  
 #define MAX_SENDING_LEN (1500)
 
+static int is_rootfile_request(int sock);
+
 static int send_binary(int s, const char *data, int len)
 {
   int ret;
@@ -136,7 +138,20 @@ int multiwebcam_waitconnection(int s_sock, struct sockaddr_in *client)
 
   /* accept TCP connection from client */
 
-  c_sock = accept(s_sock, (struct sockaddr *)client, &len);
+  while (1)
+    {
+      c_sock = accept(s_sock, (struct sockaddr *)client, &len);
+      if (is_rootfile_request(c_sock))
+        {
+          break;
+        }
+      else
+        {
+          /* Not Root file. Avoid the request */
+
+          close(c_sock);
+        }
+    }
 
   return c_sock;
 }
@@ -150,6 +165,7 @@ int multiwebcam_waitconnection(int s_sock, struct sockaddr_in *client)
 #define CRLF "\r\n"
 
 #define HTTP_MJPEG_HEADER "HTTP/1.1 200 OK" CRLF \
+  "Access-Control-Allow-Origin: *" CRLF \
   "Content-Type: multipart/x-mixed-replace; boundary=--MOBOTIX_Fast_Serverpush" \
   CRLF CRLF
 
@@ -157,6 +173,25 @@ int multiwebcam_waitconnection(int s_sock, struct sockaddr_in *client)
   "Content-Length: "
 
 #define HTTP_MJPEG_PART_HEADER2 CRLF "Content-type: image/jpeg" CRLF CRLF
+
+#define REQBUF_SIZE (256)
+
+static char g_request[REQBUF_SIZE];
+
+static int is_rootfile_request(int sock)
+{
+  int ret = read(sock, g_request, REQBUF_SIZE - 1);
+  if (ret >= 0)
+    {
+      g_request[ret] = '\0';
+      if (strstr(g_request, "GET / ") != NULL)
+        {
+          return 1;
+        }
+    }
+
+  return 0;
+}
 
 int multiwabcam_sendheader(int c_sock)
 {
@@ -211,6 +246,11 @@ int multiwebcam_sendframe(int c_sock, char *jpg, int jpg_len)
 /* If you DIDN'T set USE_HTTP_MJPEG config,
  * Use original simple protocol to send image.
  */
+
+static int is_rootfile_request(int sock)
+{
+  return 1; /* Always acceptable */
+}
 
 int multiwabcam_sendheader(int c_sock)
 {
