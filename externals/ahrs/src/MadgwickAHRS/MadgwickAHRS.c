@@ -197,7 +197,7 @@ void euler2quaternion(const float e[3], float q[4])
 }
 
 void setPostureByAccel(struct ahrs_out_s *inst,
-					   float ax, float ay, float az)
+					   float ax, float ay, float az, float yaw)
 {
 	float a[3] = {ax, ay, az};
 	float norm;
@@ -216,6 +216,7 @@ void setPostureByAccel(struct ahrs_out_s *inst,
 	
 	euler[0] = atan2f(a[1], a[2]);
 	euler[1] = -1.0 * asinf(a[0]);
+	euler[2] = yaw;
 	
 	euler2quaternion(euler, inst->q);
 
