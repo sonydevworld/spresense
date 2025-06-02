@@ -1,7 +1,7 @@
 /****************************************************************************
  * system/xmodem/xmodem_main.c
  *
- *   Copyright 2019,2021 Sony Semiconductor Solutions Corporation
+ *   Copyright 2019,2021,2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <termios.h>
+#include <libgen.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <sys/boardctl.h>
 #include <system/xmodem.h>
 
@@ -68,8 +71,10 @@ static int xmodem_receive_data_to_file(FILE *fptr)
   int end_condition;
   unsigned char buff[XMODEM_BUFF_SIZE];
   XMHANDLE handle;
+  struct termios saveterm;
+  struct termios term;
 
-  /* Open UART for transfering X-Modem */
+  /* Open UART for transferring X-Modem */
 
   uart_fd = open(XMODEM_DEV, O_RDWR);
 
@@ -79,7 +84,7 @@ static int xmodem_receive_data_to_file(FILE *fptr)
       return -1;
     }
 
-  /* Get X-Modem handle for transfering */
+  /* Get X-Modem handle for transferring */
 
   handle = xmodemHandleInit(uart_fd);
 
@@ -88,6 +93,13 @@ static int xmodem_receive_data_to_file(FILE *fptr)
       printf("Error: Failed to get X-Modem handle.\n");
       return -1;
     }
+
+  /* Set the terminal to the raw mode */
+
+  tcgetattr(uart_fd, &term);
+  memcpy(&saveterm, &term, sizeof(struct termios));
+  cfmakeraw(&term);
+  tcsetattr(uart_fd, TCSANOW, &term);
 
   /* Receive file body */
 
@@ -100,7 +112,7 @@ static int xmodem_receive_data_to_file(FILE *fptr)
       if (recv_size < 0)
         {
           printf("Error: Failed to receive data(%d).\n", recv_size);
-          return -1;
+          goto errout;
         }
 
       /* Remove padding bytes */
@@ -127,12 +139,17 @@ static int xmodem_receive_data_to_file(FILE *fptr)
       if (end_condition == XMODEM_DATA_CONTINUE ||
           end_condition == XMODEM_DATA_COMPLETE)
         {
-          int ret = fwrite(buff, 1, recv_size, fptr);
-
-          if (ret < recv_size)
+          size_t i = 0;
+          while (i < recv_size)
             {
-              printf("Error: Failed to write file.\n");
-              return -1;
+              int ret = fwrite(buff, 1, recv_size, fptr);
+              if (ret < 0)
+                {
+                  printf("Error: Failed to write file.\n");
+                  goto errout;
+                }
+
+              i += ret;
             }
 
           if (end_condition == XMODEM_DATA_COMPLETE)
@@ -147,15 +164,57 @@ static int xmodem_receive_data_to_file(FILE *fptr)
         }
     }
 
+errout:
+
   /* Release X-Modem handle */
 
   xmodemHandleRelease(handle);
+
+  /* Flush the serial output to assure do not hang trying to drain it */
+
+  tcflush(uart_fd, TCIOFLUSH);
+
+  /* Restore the saved terminal setting */
+
+  tcsetattr(uart_fd, TCSANOW, &saveterm);
 
   /* Close UART */
 
   close(uart_fd);
 
   return 0;
+}
+
+static int dir_exists(const char *path)
+{
+  struct stat st;
+  return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+}
+
+static int make_dirs(const char *path)
+{
+  char tmp[64];
+  char *p = NULL;
+  size_t len;
+
+  snprintf(tmp, sizeof(tmp), "%s", path);
+  len = strlen(tmp);
+  if (tmp[len - 1] == '/')
+    {
+      tmp[len - 1] = '\0';
+    }
+
+  for (p = tmp + 1; *p; p++)
+    {
+      if (*p == '/')
+        {
+          *p = 0;
+          mkdir(tmp, 0777);
+          *p = '/';
+        }
+    }
+
+  return mkdir(tmp, 0777);
 }
 
 /****************************************************************************
@@ -167,6 +226,7 @@ int main(int argc, FAR char *argv[])
   char *file_path;
   FILE *fptr;
   int ret;
+  char dir_path[64];
 
   if (argc < 2)
     {
@@ -176,6 +236,19 @@ int main(int argc, FAR char *argv[])
     }
 
   file_path = argv[1];
+
+  /* If the directory does not exist, create it recursively */
+
+  snprintf(dir_path, sizeof(dir_path), "%s", file_path);
+  dirname(dir_path);
+
+  if (!dir_exists(dir_path))
+    {
+      if (make_dirs(dir_path) != 0 && errno != EEXIST)
+        {
+          return -1;
+        }
+    }
 
   fptr = fopen(file_path, "wb");
 
