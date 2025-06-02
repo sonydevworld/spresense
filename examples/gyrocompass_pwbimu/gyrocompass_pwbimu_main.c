@@ -62,7 +62,7 @@
 #define MAX_POSTURE             (32)
 
 #define DEFAULT_SAMPLERATE      (1920)
-#define DEFAULT_GYROSCOPERANGE  (1000)
+#define DEFAULT_GYROSCOPERANGE  (125)
 #define DEFAULT_ACCELRANGE      (4)
 
 #define COLLECTION_DATACNT  \
