@@ -275,7 +275,7 @@ static void set_initial_posture(int fd, struct ahrs_out_s *inst,
                                 cxd5602pwbimu_data_t *imu)
 {
   read_imudata(fd, imu);
-  setPostureByAccel(inst, imu->ax, imu->ay, imu->az);
+  setPostureByAccel(inst, imu->ax, imu->ay, imu->az, 0.f);
 }
 
 /****************************************************************************
