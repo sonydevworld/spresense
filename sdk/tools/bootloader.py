@@ -3,7 +3,7 @@
 ############################################################################
 # tools/bootloader.py
 #
-#   Copyright 2018,2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2018,2020,2025 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -44,6 +44,8 @@ import json
 import os
 import re
 import zipfile
+import shutil
+import textwrap
 
 # This script file path
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -57,6 +59,8 @@ VERSION_JSON = "version.json"
 # Json file name for describe stored version
 STORED_VERSION_JSON = "stored_version.json"
 
+# EULA
+EULA_TXT = "END_USER_LICENSE_AGREEMENT.TXT"
 
 # Name       : BootloaderVersion
 # Description: For bootloader check version and extract archive
@@ -104,14 +108,13 @@ class BootloaderVersion:
 	def checkBootloaderVersion(self):
 		if self.isNeedToUpdate():
 			version = self.getLoaderVersion(os.path.join(FIRMWARE_PATH, VERSION_JSON))
-			url = self.getDownloadURL(os.path.join(FIRMWARE_PATH, VERSION_JSON))
-			print("WARNING: New loader %s is required, please download and install." % version)
-			print("         Download URL   : %s" % url)
-			print("         Install command:")
-			print("                          1. Extract loader archive into host PC.")
-			print("                             ./tools/flash.sh -e <download zip file>")
-			print("                          2. Flash loader into Board.")
-			print("                             ./tools/flash.sh -l %s -c <port>" % FIRMWARE_PATH)
+			print("------------------------------------------------------------------------")
+			print("WARNING: New bootloader %s is required, please install." % version)
+			print("By agreeing to the EULA, the installation process will begin.\n")
+			print("Install command:")
+			print("$ ./tools/flash.sh -c <port> -B\n")
+			print("NOTE: Replace <port> with your serial port (e.g., /dev/ttyUSB0 or COM3).")
+			print("------------------------------------------------------------------------")
 
 	# Name       : update
 	# Description: Update EULA binaries from zip archive
@@ -129,15 +132,52 @@ class BootloaderVersion:
 				update_json = json.loads(update_line)
 				update_version = update_json["LoaderVersion"]
 				if update_version == requre_version:
-					# If same with target version, do u	pdate
-					binzip.extractall(FIRMWARE_PATH)
-					print("Update succeed.")
+					if self.displayEULA():
+						# If same with target version, do update
+						binzip.extractall(FIRMWARE_PATH)
+						return True
 				else:
 					print("Error: Please use correct loader version (Selected: %s, Required: %s)." % (update_version, requre_version))
 			else:
 				print("ERROR: Please select correct zip file")
 		else:
 			print("ERROR: Please select correct zip file")
+		return False
+
+	def displayEULA(self):
+		eula_file_path = os.path.join(FIRMWARE_PATH, EULA_TXT)
+		try:
+			with open(eula_file_path, "r", encoding="utf-8") as eula_file:
+				eula_text = eula_file.read()
+		except FileNotFoundError:
+			print("ERROR: EULA file not found.")
+			return False
+
+		try:
+			terminal_size = shutil.get_terminal_size((80, 20))
+			page_size = terminal_size.lines - 2
+			width = terminal_size.columns
+		except Exception:
+			page_size = 20
+			width = 80
+
+		wrapped_lines = []
+		for line in eula_text.splitlines():
+			wrapped_lines.extend(textwrap.wrap(line, width=width) or [''])
+
+		for i in range(0, len(wrapped_lines), page_size):
+			os.system('cls' if os.name == 'nt' else 'clear')
+			print('\n'.join(wrapped_lines[i:i+page_size]))
+			if i + page_size < len(wrapped_lines):
+				input("\nPress Enter to continue...")
+
+		print("\nBy agreeing to the EULA, the installation process will begin.")
+
+		user_input = input("Do you agree to the EULA? (Y/N): ").strip().lower()
+		if user_input != 'y':
+			print("Update canceled by user.")
+			return False
+		return True
 
 if __name__ == "__main__":
 	# Option
@@ -153,4 +193,5 @@ if __name__ == "__main__":
 		bootloader_version.checkBootloaderVersion()
 	else:
 		# for '-i'
-		bootloader_version.updateBootloaderBinary(args.input)	
+		success = bootloader_version.updateBootloaderBinary(args.input)
+		exit(0 if success else 1)
