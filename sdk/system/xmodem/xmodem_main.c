@@ -43,7 +43,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
-
+#include <libgen.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include <sys/boardctl.h>
 #include <system/xmodem.h>
 
@@ -183,6 +185,38 @@ errout:
   return 0;
 }
 
+static int dir_exists(const char *path)
+{
+  struct stat st;
+  return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+}
+
+static int make_dirs(const char *path)
+{
+  char tmp[64];
+  char *p = NULL;
+  size_t len;
+
+  snprintf(tmp, sizeof(tmp), "%s", path);
+  len = strlen(tmp);
+  if (tmp[len - 1] == '/')
+    {
+      tmp[len - 1] = '\0';
+    }
+
+  for (p = tmp + 1; *p; p++)
+    {
+      if (*p == '/')
+        {
+          *p = 0;
+          mkdir(tmp, 0777);
+          *p = '/';
+        }
+    }
+
+  return mkdir(tmp, 0777);
+}
+
 /****************************************************************************
  * xmodem_main
  ****************************************************************************/
@@ -192,6 +226,7 @@ int main(int argc, FAR char *argv[])
   char *file_path;
   FILE *fptr;
   int ret;
+  char dir_path[64];
 
   if (argc < 2)
     {
@@ -201,6 +236,19 @@ int main(int argc, FAR char *argv[])
     }
 
   file_path = argv[1];
+
+  /* If the directory does not exist, create it recursively */
+
+  snprintf(dir_path, sizeof(dir_path), "%s", file_path);
+  dirname(dir_path);
+
+  if (!dir_exists(dir_path))
+    {
+      if (make_dirs(dir_path) != 0 && errno != EEXIST)
+        {
+          return -1;
+        }
+    }
 
   fptr = fopen(file_path, "wb");
 
