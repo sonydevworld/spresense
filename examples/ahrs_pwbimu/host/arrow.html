@@ -22,8 +22,9 @@
 
             const createScene = () => {
                 let scene = new BABYLON.Scene(engine);
+                scene.useRightHandedSystem = true;
                 let camera = new BABYLON.ArcRotateCamera("camera",
-                                                          -Math.PI / 2,
+                                                          Math.PI / 2,
                                                           Math.PI / 2.5,
                                                           5,
                                                           new BABYLON.Vector3(0, 0, 0),
@@ -63,8 +64,26 @@
                 arrow.material = material;
                 arrow.position.y = arrow_cylinder_height;
 
-                let x_axis = arrow.clone("xaxis")
-                x_axis.scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+                // local coordinate axes
+                const axisLength = 1.0;
+
+                const localX = BABYLON.MeshBuilder.CreateLines("localX", {
+                    points: [BABYLON.Vector3.Zero(), new BABYLON.Vector3(axisLength, 0, 0)]
+                }, scene);
+                localX.color = new BABYLON.Color3(1, 0, 0);
+                localX.parent = arrow;
+
+                const localY = BABYLON.MeshBuilder.CreateLines("localY", {
+                    points: [BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, axisLength, 0)]
+                }, scene);
+                localY.color = new BABYLON.Color3(0, 1, 0);
+                localY.parent = arrow;
+
+                const localZ = BABYLON.MeshBuilder.CreateLines("localZ", {
+                    points: [BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 0, axisLength)]
+                }, scene);
+                localZ.color = new BABYLON.Color3(0, 0, 1);
+                localZ.parent = arrow;
 
                 let material2 = new BABYLON.StandardMaterial("material2", scene);
                 material2.diffuseColor = new BABYLON.Color3(1.0, 1.0, 1.0);
@@ -73,18 +92,48 @@
                 let tile = BABYLON.MeshBuilder.CreateTiledPlane("tile", {size: 100}, scene)
                 tile.material = material2;
 
+                // global coordinate axes
+                const origin = new BABYLON.Vector3(-1, -1, 0);
+                showAxis(origin, 1.5, scene);
+
                 return { scene, arrow };
             };
+
+            function showAxis(origin, size, scene) {
+                const axisX = BABYLON.MeshBuilder.CreateLines("axisX", {
+                    points: [
+                        origin,
+                        origin.add(new BABYLON.Vector3(size, 0, 0))
+                    ]
+                }, scene);
+                axisX.color = new BABYLON.Color3(1, 0, 0);
+
+                const axisY = BABYLON.MeshBuilder.CreateLines("axisY", {
+                    points: [
+                        origin,
+                        origin.add(new BABYLON.Vector3(0, size, 0))
+                    ]
+                }, scene);
+                axisY.color = new BABYLON.Color3(0, 1, 0);
+
+                const axisZ = BABYLON.MeshBuilder.CreateLines("axisZ", {
+                    points: [
+                        origin,
+                        origin.add(new BABYLON.Vector3(0, 0, size))
+                    ]
+                }, scene);
+                axisZ.color = new BABYLON.Color3(0, 0, 1);
+            }
 
             const { scene, arrow } = createScene();
 
             const ws = new WebSocket('ws://localhost:8080');
             ws.onmessage = (event) => {
                 const posture = JSON.parse(event.data);
+                const w = posture.q_w, x = posture.q_x, y = posture.q_y, z = posture.q_z;
+                const q = new BABYLON.Quaternion(x, y, z, w);
 
-                arrow.rotation.x = posture.roll  / 180 * Math.PI;
-                arrow.rotation.y = posture.pitch / 180 * Math.PI;
-                arrow.rotation.z = posture.yaw   / 180 * Math.PI;
+                arrow.rotationQuaternion = q;
             };
 
             engine.runRenderLoop(() => {

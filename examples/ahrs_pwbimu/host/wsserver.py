@@ -96,15 +96,17 @@ class SerialWebsockServer(WebsocketServer):
     data = data.rstrip('\n')
     data = data.rstrip('\r')
     rpy = data.split(',')
-    if len(rpy) == 3:
+    if len(rpy) == 4:
       try:
-        roll  = struct.unpack(">f", binascii.unhexlify(rpy[0]))[0]
-        pitch = struct.unpack(">f", binascii.unhexlify(rpy[1]))[0]
-        yaw   = struct.unpack(">f", binascii.unhexlify(rpy[2]))[0]
-        return json.dumps({"roll" : roll, "pitch" : pitch, "yaw" : yaw})
+        q_w  = struct.unpack(">f", binascii.unhexlify(rpy[0]))[0]
+        q_x  = struct.unpack(">f", binascii.unhexlify(rpy[1]))[0]
+        q_y  = struct.unpack(">f", binascii.unhexlify(rpy[2]))[0]
+        q_z  = struct.unpack(">f", binascii.unhexlify(rpy[3]))[0]
+        return json.dumps({"q_w" : q_w, "q_x" : q_x, "q_y" : q_y, "q_z" : q_z})
       except Exception as e:
         print("   Non hexdigit : >" + str(rpy[0]) + \
-              "< >" + str(rpy[1]) + "< >" + str(rpy[2]) + "<")
+              "< >" + str(rpy[1]) + "< >" + str(rpy[2]) +
+              "< >" + str(rpy[3]) + "<")
         return None
     else:
       return None
