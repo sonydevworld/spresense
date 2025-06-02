@@ -51,7 +51,7 @@ function show_help()
 	echo "       -c: Serial port (default: /dev/ttyUSB0)"
 	echo "       -b: Serial baudrate (default: 115200)"
 	echo "       -B: Install Bootloader"
-	echo "       -r: Remove nuttx(Main Core SPK) file from spresense board"
+	echo "       -r: Remove nuttx(Main Core SPK) and other files from spresense board"
 	echo "       -w: Worker load mode"
 	echo "       -h: Show help (This message)"
 	exit
@@ -179,6 +179,10 @@ elif [ "${FLASH_MODE}" == "ELF" ]; then
 	# Flash elf files into spresense board
 	${SCRIPT_DIR}/${PLATFORM}/xmodem_writer${EXEEXT} -d -c ${UART_PORT} $@
 elif [ "${FLASH_MODE}" == "REMOVE" ]; then
-	# Remove nuttx spk file from spresense board
-	${SCRIPT_DIR}/${PLATFORM}/flash_writer${EXEEXT} -s -c ${UART_PORT} -d -e nuttx
+	args=()
+	for f in "$@"; do
+		args+=("-e" "$f")
+	done
+	# Remove nuttx spk file and other files from spresense board
+	${SCRIPT_DIR}/${PLATFORM}/flash_writer${EXEEXT} -s -c ${UART_PORT} -d -n -e nuttx "${args[@]}"
 fi
