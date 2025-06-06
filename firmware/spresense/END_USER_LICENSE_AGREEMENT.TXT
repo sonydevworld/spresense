@@ -1,0 +1,99 @@
+END USER LICENSE AGREEMENT FOR SPRESENSE BOOTLOADER FILES
+=========================================================
+IMPORTANT:
+----------
+BEFORE USING THE SOFTWARE, PLEASE READ THIS END USER LICENSE AGREEMENT ("EULA") CAREFULLY. BY SELECTING THE "ACCEPT" BUTTON AT THE BOTTOM OF THIS AGREEMENT, OR DOWNLOADING, INSTALLING, OR USING ANY VERSION OF THE SOFTWARE, YOU AGREE TO COMPLY AND BE BOUND BY THE TERMS OF THIS EULA. IF YOU DO NOT ACCEPT THE TERMS OF THIS EULA, YOU MAY NOT USE THE SOFTWARE.
+
+This EULA is a legal agreement between you and Sony Semiconductor Solutions Corporation ("SONY"). This EULA governs your rights and obligations regarding the SPRESENSE board system CPU firmware and GNSS firmware recovery tool software of SONY and/or its third party licensors (including SONY's affiliates) and their respective affiliates (collectively, the "THIRD-PARTY SUPPLIERS"), together with any updates/upgrades provided by SONY, any printed, on-line or other electronic documentation for such software, and any data files created by operation of such software (collectively, the "SOFTWARE").
+
+Notwithstanding the foregoing, any software in the SOFTWARE having a separate end user license agreement (including, but not limited to, GNU General Public license and Lesser/Library General Public License) shall be covered by such applicable separate end user license agreement in lieu of the terms of this EULA to the extent required by such separate end user license agreement ("EXCLUDED SOFTWARE").
+
+SOFTWARE LICENSE
+----------------
+The SOFTWARE is licensed, not sold. The SOFTWARE is protected by copyright and other intellectual property laws and international treaties.
+
+COPYRIGHT
+---------
+All right and title in and to the SOFTWARE (including, but not limited to, any images, photographs, animation, video, audio, music, text and "applets" incorporated into the SOFTWARE), and any copies of the SOFTWARE, are owned by SONY or one or more of the THIRD-PARTY SUPPLIERS. All rights not specifically granted under this EULA are reserved by SONY.
+
+GRANT OF LICENSE
+----------------
+SONY grants you a non-exclusive, royalty-free, non-sublicensable, non-transferrable, limited license to use the SOFTWARE solely for the purpose of recovering the SPRESENSE board system firmware or updating the system firmware, and only for your individual, non-commercial use. SONY and the THIRD-PARTY SUPPLIERS expressly reserve all rights, title and interest (including, but not limited to, all intellectual property rights) in and to the SOFTWARE that this EULA does not specifically grant to you.
+
+REQUIREMENTS AND LIMITATIONS
+----------------------------
+You may not copy unless to a genuine SPRESENSE board, publish, adapt, redistribute, attempt to derive source code, modify, reverse engineer, decompile, or disassemble any of the SOFTWARE, whether in whole or in part, or create any derivative works from or of the SOFTWARE unless such derivative works are intentionally facilitated by the SOFTWARE. You may not modify or tamper with any digital rights management functionality of the SOFTWARE. You may not bypass, modify, defeat or circumvent any of the functions or protections of the SOFTWARE or any mechanisms operatively linked to the SOFTWARE. You may not remove, alter, cover or deface any trademarks or notices on the SOFTWARE. You may not share, distribute, rent, lease, sublicense, assign, transfer or sell the SOFTWARE. The software, network services or other products other than SOFTWARE upon which the SOFTWARE'S performance depends might be interrupted or discontinued at the discretion of the suppliers (software suppliers, service suppliers, or SONY). SONY and such suppliers do not warrant that the SOFTWARE, network services, contents or other products will continue to be available, or will operate without interruption or modification.
+
+EXCLUDED SOFTWARE AND OPEN SOURCE COMPONENTS
+--------------------------------------------
+Notwithstanding the foregoing limited license grant, you acknowledge that the SOFTWARE may include EXCLUDED SOFTWARE. Certain EXCLUDED SOFTWARE may be covered by open source software licenses ("Open Source Components"), which means any software licenses approved as open source licenses by the Open Source Initiative or any substantially similar licenses, including but not limited to any license that, as a condition of distribution of the software licensed under such license, requires that the distributor make the software available in source code format. If and to the extent disclosure is required, please visit https://developer.sony.com/develop/spresense or other SONY-designated web site for a list of applicable OPEN SOURCE COMPONENTS included in the SOFTWARE from time to time, and the applicable terms and conditions governing its use. Such terms and conditions may be changed by the applicable third party at any time without liability to you. To the extent required by the licenses covering EXCLUDED SOFTWARE, the terms of such licenses will apply in lieu of the terms of this EULA. To the extent the terms of the licenses applicable to EXCLUDED SOFTWARE prohibit any of the restrictions in this EULA with respect to such EXCLUDED SOFTWARE, such restrictions will not apply to such EXCLUDED SOFTWARE. To the extent the terms of the licenses applicable to Open Source Components require SONY to make an offer to provide source code in connection with the SOFTWARE, such offer is hereby made.
+
+USE OF SOFTWARE WITH COPYRIGHTED MATERIALS
+------------------------------------------
+The SOFTWARE may be capable of being used by you to view, store, process and/or use content created by you and/or third parties. Such content may be protected by copyright, other intellectual property laws, and/or agreements. You agree to use the SOFTWARE only in compliance with all such laws and agreements that apply to such content. You acknowledge and agree that SONY may take appropriate measures to protect the copyright of content stored, processed or used by the SOFTWARE. Such measures include, but are not limited to termination of this EULA in the event of your illegitimate use of the SOFTWARE.
+
+INTERNET CONNECTIVITY AND THIRD PARTY SERVICES
+----------------------------------------------
+You acknowledge and agree that access to certain SOFTWARE features may require an Internet connection for which you are solely responsible. Further, you are solely responsible for payment of any third party fees associated with your Internet connection, including but not limited to Internet service provider or airtime charges. Operation of the SOFTWARE may be limited or restricted depending on the capabilities, bandwidth or technical limitations of your Internet connection and service. The provision, quality and security of such Internet connectivity are the sole responsibility of the third party providing such service.
+
+EXPORT AND OTHER REGULATIONS
+----------------------------
+You agree to comply with all applicable export and re-export restrictions and regulations of the area or country in which you reside, and not to transfer, or authorize the transfer, of the SOFTWARE to a prohibited country or otherwise in violation of any such restrictions or regulations.
+
+HIGH RISK ACTIVITIES
+--------------------
+The SOFTWARE is not fault-tolerant and is not designed, manufactured or intended for use or resale as on-line control equipment in hazardous environments requiring fail-safe performance, such as in the operation of nuclear facilities, aircraft navigation or communication systems, air traffic control, direct life support machines, or weapons systems, in which the failure of the SOFTWARE could lead to death, personal injury, or severe physical or environmental damage ("HIGH RISK ACTIVITIES"). SONY, each of the THIRD-PARTY SUPPLIERS, and each of their respective affiliates specifically disclaim any express or implied warranty, duty or condition of fitness for HIGH RISK ACTIVITIES.
+
+EXCLUSION OF WARRANTY ON SOFTWARE
+---------------------------------
+You acknowledge and agree that use of the SOFTWARE is at your sole risk and that you are responsible for use of the SOFTWARE. The SOFTWARE is provided "AS IS," without warranty, duty or condition of any kind.
+
+SONY AND EACH OF THE THIRD-PARTY SUPPLIERS (for purposes of this Section, SONY and each of the THIRD-PARTY SUPPLIERS shall be collectively referred to as "SONY") EXPRESSLY DISCLAIM ALL WARRANTIES, DUTIES OR CONDITIONS, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. SONY DOES NOT WARRANT OR MAKE ANY CONDITIONS OR REPRESENTATIONS (A) THAT THE FUNCTIONS CONTAINED IN ANY OF THE SOFTWARE WILL MEET YOUR REQUIREMENTS OR THAT THEY WILL BE UPDATED, (B) THAT THE OPERATION OF ANY OF THE SOFTWARE WILL BE CORRECT OR ERROR-FREE OR THAT ANY DEFECTS WILL BE CORRECTED, (C) THAT THE SOFTWARE WILL NOT DAMAGE ANY OTHER SOFTWARE, HARDWARE OR DATA, (D) THAT ANY SOFTWARE, NETWORK SERVICES (INCLUDING THE INTERNET) OR PRODUCTS (OTHER THAN THE SOFTWARE) UPON WHICH THE SOFTWARE'S PERFORMANCE DEPENDS WILL CONTINUE TO BE AVAILABLE, UNINTERRUPTED OR UNMODIFIED, AND (E) REGARDING THE USE OR THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS, ACCURACY, RELIABILITY, OR OTHERWISE.
+
+NO ORAL OR WRITTEN INFORMATION OR ADVICE GIVEN BY SONY OR AN AUTHORIZED REPRESENTATIVE OF SONY SHALL CREATE A WARRANTY, DUTY OR CONDITION OR IN ANY WAY INCREASE THE SCOPE OF THIS WARRANTY. SHOULD THE SOFTWARE PROVE DEFECTIVE YOU ASSUME THE ENTIRE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES, SO THESE EXCLUSIONS MAY NOT APPLY TO YOU.
+
+LIMITATION OF LIABILITY
+-----------------------
+SONY AND EACH OF THE THIRD-PARTY SUPPLIERS (for purposes of this Section, SONY and each of the THIRD-PARTY SUPPLIERS shall be collectively referred to as "SONY") SHALL NOT BE LIABLE FOR ANY INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR BREACH OF ANY EXPRESS OR IMPLIED WARRANTY, BREACH OF CONTRACT, NEGLIGENCE, STRICT LIABILITY OR UNDER ANY OTHER LEGAL THEORY RELATED TO THE SOFTWARE, INCLUDING, BUT NOT LIMITED TO, ANY DAMAGES ARISING OUT OF LOSS OF PROFITS, LOSS OF REVENUE, LOSS OF DATA, LOSS OF USE OF THE SOFTWARE OR ANY ASSOCIATED HARDWARE, DOWN TIME AND USER'S TIME, EVEN IF ANY OF THEM HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. IN ANY CASE, EACH AND ALL OF THEIR AGGREGATE LIABILITY UNDER ANY PROVISION OF THIS EULA SHALL BE LIMITED TO THE AMOUNT ACTUALLY PAID ALLOCABLE TO THE ASSOCIATED SOFTWARE. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR LIMITATION OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, SO THE ABOVE EXCLUSION OR LIMITATION MAY NOT APPLY TO YOU.
+
+AUTOMATIC UPDATE FEATURE
+------------------------
+From time to time, SONY or the THIRD-PARTY SUPPLIERS may automatically update or otherwise modify the SOFTWARE, including, but not limited to, for purposes of enhancement of security functions, error correction and improvement of functions, at such time as you interact with SONY's or third parties' servers, or otherwise. Such updates or modifications may delete or change the nature of features or other aspects of the SOFTWARE, including, but not limited to, functions you may rely upon. You acknowledge and agree that such activities may occur at SONY's sole discretion and that SONY may condition continued use of the SOFTWARE upon your complete installation or acceptance of such update or modifications. Any updates/modifications shall be deemed to be, and shall constitute part of, the SOFTWARE for purposes of this EULA. By acceptance of this EULA, you consent to such update/modification.
+
+ENTIRE AGREEMENT, WAIVER, SEVERABILITY
+--------------------------------------
+This EULA and SONY's privacy policy, each as amended and modified from time to time, together constitute the entire agreement between you and SONY with respect to the SOFTWARE. The failure of SONY to exercise or enforce any right or provision of this EULA shall not constitute a waiver of such right or provision. If any part of this EULA is held invalid, illegal, or unenforceable, that provision shall be enforced to the maximum extent permissible so as to maintain the intent of this EULA, and the other parts will remain in full force and effect.
+
+GOVERNING LAW AND JURISDICTION
+------------------------------
+This EULA shall be governed by the laws of Japan, without regards to conflict of laws provisions. Any dispute arising out of this EULA shall be subject to the exclusive venue of the Tokyo District Court in Japan, and the parties hereby consent to the venue and jurisdiction of such courts.
+
+EQUITABLE REMEDIES
+------------------
+Notwithstanding anything contained in this EULA to the contrary, you acknowledge and agree that any violation of or non-compliance with this EULA by you will cause irreparable harm to SONY, for which monetary damages would be inadequate, and you consent to SONY obtaining any injunctive or equitable relief that SONY deems necessary or appropriate in such circumstances. SONY may also take any legal and technical remedies to prevent violation of and/or to enforce this EULA, including, but not limited to, immediate termination of your use of the SOFTWARE, if SONY believes in its sole discretion that you are violating or intend to violate this EULA. These remedies are in addition to any other remedies SONY may have at law, in equity or under contract.
+
+TERMINATION
+-----------
+Without prejudice to any of its other rights, SONY may terminate this EULA if you fail to comply with any of its terms. In case of such termination, you must cease all use, and uninstall or destroy any copies, of the SOFTWARE. The provisions of the following captions shall survive any termination of this EULA;
+
+TERMINATION,
+
+COPYRIGHT,
+
+EXCLUSION OF WARRANTY ON SOFTWARE,
+
+LIMITATION OF LIABILITY,
+
+ENTIRE AGREEMENT, WAIVER, SEVERABILITY, and
+
+GOVERNING LAW AND JURISDICTION
+
+AMENDMENT
+---------
+SONY RESERVES THE RIGHT TO AMEND ANY OF THE TERMS OF THIS EULA AT ITS SOLE DISCRETION BY POSTING NOTICE ON A SONY DESIGNATED WEB SITE, BY EMAIL NOTIFICATION TO AN EMAIL ADDRESS PROVIDED BY YOU, BY PROVIDING NOTICE AS PART OF THE PROCESS IN WHICH YOU OBTAIN UPGRADES/UPDATES OR BY ANY OTHER LEGALLY RECOGNIZABLE FORM OF NOTICE. If you do not agree to the amendment, you should promptly contact SONY for instructions. Your continued use of the SOFTWARE after the effective date of any such notice shall be deemed your agreement to be bound by such amendment.
+
+THIRD-PARTY BENEFICIARIES
+-------------------------
+Each THIRD-PARTY SUPPLIER is an express intended third-party beneficiary of, and shall have the right to enforce, each provision of this EULA with respect to the SOFTWARE of such party. Should you have any questions concerning this EULA, you may contact SONY by writing to SONY at applicable contact address of each area or country.
+
+Copyright 2017-2025 Sony Semiconductor Solutions Corporation
