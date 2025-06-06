@@ -2,7 +2,7 @@
 ############################################################################
 # tools/flash.sh
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2025 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -37,22 +37,20 @@
 CURRENT_DIR=`pwd`
 SCRIPT_NAME=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)/$(basename "${BASH_SOURCE[0]}")
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
+BOOTLOADER_ZIP="$SCRIPT_DIR/../../firmware/spresense/firmware.zip"
+BOOTLOADER_PATH="$SCRIPT_DIR/../../firmware/spresense"
 
 # function   : show_help
 # description: Show help and exit.
 function show_help()
 {
 	echo "  Usage:"
-	echo "       $0 [-c <UART Port> -b <UART Baudrate>] <(e)spk file> [<(e)spk file> ...]"
-	echo ""
-	echo "  Mandatory argument:"
-	echo "       (e)spk file path"
+	echo "       $0 [-c <port> -b <baudrate>] [-B] [-w] [<file> ...]"
 	echo ""
 	echo "  Optional arguments:"
 	echo "       -c: Serial port (default: /dev/ttyUSB0)"
 	echo "       -b: Serial baudrate (default: 115200)"
-	echo "       -e: Extract loader archive"
-	echo "       -l: Flash loader"
+	echo "       -B: Install Bootloader"
 	echo "       -r: Remove nuttx(Main Core SPK) file from spresense board"
 	echo "       -w: Worker load mode"
 	echo "       -h: Show help (This message)"
@@ -89,12 +87,19 @@ UART_PORT="/dev/ttyUSB0"
 UPDATE_ZIP=""
 LOADR_PATH=""
 FLASH_MODE="SPK"
-while getopts b:c:s:e:l:rwh OPT
+while getopts b:c:s:e:l:Brwh OPT
 do
 	case $OPT in
 		'b' ) UART_BAUDRATE=$OPTARG;;
 		'c' ) UART_PORT=$OPTARG;;
-		'e' ) UPDATE_ZIP=$OPTARG;;
+		'e' )
+			  echo "This option has been deprecated."
+			  echo "Please use the following command instead."
+			  echo ""
+			  echo "$0 -c <port> -B"
+			  exit;;
+		'B' ) UPDATE_ZIP=$BOOTLOADER_ZIP
+			  LOADR_PATH=$BOOTLOADER_PATH;;
 		'l' ) LOADR_PATH=$OPTARG;;
 		'r' ) FLASH_MODE="REMOVE";;
 		'w' ) FLASH_MODE="ELF";;
@@ -106,8 +111,12 @@ done
 shift $(($OPTIND - 1))
 
 if [ "${UPDATE_ZIP}" != "" ]; then
+	rm -f ${LOADR_PATH}/*.espk
+	rm -f ${LOADR_PATH}/*.spk
 	${SCRIPT_DIR}/bootloader.py -i ${UPDATE_ZIP}
-	exit
+	if [ $? -ne 0 ]; then
+		exit
+	fi
 fi
 
 # WSL/WSL2 detection
@@ -140,8 +149,8 @@ if [ "${FLASH_MODE}" == "SPK" ]; then
 	done
 
 	if [ "${LOADR_PATH}" != "" ]; then
-		ESPK_FILES="`find ${LOADR_PATH} -name "*.espk"`"
-		SPK_FILES="`find ${LOADR_PATH} -name "*.spk"`"
+		ESPK_FILES="${ESPK_FILES} `find ${LOADR_PATH} -name "*.espk"`"
+		SPK_FILES="${SPK_FILES} `find ${LOADR_PATH} -name "*.spk"`"
 	fi
 
 	if [ "${SPK_FILES}${ESPK_FILES}" == "" ]; then
@@ -152,6 +161,14 @@ if [ "${FLASH_MODE}" == "SPK" ]; then
 
 	# Flash spk files into spresense board
 	${SCRIPT_DIR}/${PLATFORM}/flash_writer${EXEEXT} -s -c ${UART_PORT} -d -b ${UART_BAUDRATE} -n ${ESPK_FILES} ${SPK_FILES}
+	if [ $? -ne 0 ]; then
+		if [ "${UPDATE_ZIP}" != "" ]; then
+			# If the flash_writer failed, remove all files unzipped in the loader path
+			rm -f ${LOADR_PATH}/*.espk
+			rm -f ${LOADR_PATH}/*.spk
+			rm -f ${LOADR_PATH}/stored_version.json
+		fi
+	fi
 elif [ "${FLASH_MODE}" == "ELF" ]; then
 	if [ "$#" == "0" ]; then
 		echo "ERROR: No elf files are contains."
