@@ -3,7 +3,7 @@
 ############################################################################
 # tools/config.py
 #
-#   Copyright 2018, 2020 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2020, 2025 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -41,8 +41,6 @@ import logging
 import glob
 import shutil
 import re
-
-import bootloader
 
 MODE_MENUCONFIG = "menuconfig"
 MODE_QCONFIG = "qconfig"
@@ -427,7 +425,3 @@ if __name__ == "__main__":
     if menumode == None and len(opts.configname) == 0:
         parser.print_usage()
         sys.exit(9)
-
-    # Since every developer use this script, to notice a necessity of bootloader update,
-    # check the saved bootloader version and if necessary, show warning message.
-    bootloader.BootloaderVersion().checkBootloaderVersion()
