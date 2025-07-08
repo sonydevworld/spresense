@@ -41,8 +41,8 @@ config EXAMPLES_AUDIO_PLAYER_MODE_HIRES
 endchoice
 
 config EXAMPLES_AUDIO_PLAYER_USEPOSTPROC
-    bool "Use Posstprocess"
-    default n
+	bool "Use Posstprocess"
+	default n
 
 config EXAMPLES_AUDIO_PLAYER_PROGNAME
 	string "Program name"
