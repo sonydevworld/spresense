@@ -5,7 +5,7 @@
 
 config EXAMPLES_ASMP
 	tristate "ASMP ELF Loader Example"
-    depends on ASMP
+	depends on ASMP
 	default n
 	---help---
 		Enable the ELF loader example
@@ -28,7 +28,7 @@ config EXAMPLES_ASMP_STACKSIZE
 	default 2048
 
 config EXAMPLES_ASMP_WORKER_STACKSIZE
-    int "Example worker stack size"
-    default 1024
+	int "Example worker stack size"
+	default 1024
 
 endif
