@@ -46,6 +46,7 @@ endif
 LDLIBPATH +=  -L $(LIB_DIR)
 
 LDLIBS += $(ASMPWORKER_LIB)
+LIB_ASMPWORKER := $(LIB_DIR)$(DELIM)libasmpw.a
 
 BIN = hello
 
@@ -70,11 +71,14 @@ $(AOBJS): %$(OBJEXT): %.S
 	@echo "AS: $<"
 	$(Q) $(CC) -c $(AFLAGS) $< -o $@
 
-$(BIN): $(COBJS) $(AOBJS)
+$(BIN): $(COBJS) $(AOBJS) $(LIB_ASMPWORKER)
 	@echo "LD: $@"
 	$(Q) $(LD) $(LDRAWELFFLAGS) $(LDLIBPATH) -o $@.debug $^ $(LDLIBS)
 	$(Q) $(STRIP) -d -o $@ $@.debug
 
+$(LIB_ASMPWORKER):
+
 clean:
 	$(call DELFILE, $(BIN))
+	$(call DELFILE, $(BIN).debug)
 	$(call CLEAN)
