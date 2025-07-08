@@ -27,8 +27,8 @@ config EXAMPLES_STEP_COUNTER_STACKSIZE
 	default 2048
 
 config EXAMPLES_SENSOR_STEP_COUNTER_ACCEL_WM_SIGNO
-    int "Accelerator sensor watermark signal"
-    default 14
+	int "Accelerator sensor watermark signal"
+	default 14
 
 config EXAMPLES_STEP_COUNTER_WALKING_STRIDE
 	int "Stride length of walking state"

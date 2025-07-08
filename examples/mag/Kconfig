@@ -27,11 +27,11 @@ config EXAMPLES_MAG_STACKSIZE
 	default 2048
 
 config EXAMPLES_MAG_DEVNAME
-    string "Magnetometer sensor device name"
-    default "/dev/mag0"
+	string "Magnetometer sensor device name"
+	default "/dev/mag0"
 
 config EXAMPLES_MAG_SIGNO
-    int "Magnetometer sensor signal"
-    default 14
+	int "Magnetometer sensor signal"
+	default 14
 
 endif

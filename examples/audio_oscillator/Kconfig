@@ -25,7 +25,7 @@ config EXAMPLES_AUDIO_OSCILLATOR_STACKSIZE
 	default 2048
 
 config EXAMPLES_AUDIO_OSCILLATOR_USEPOSTPROC
-    bool "Use Posstprocess"
-    default n
+	bool "Use Posstprocess"
+	default n
 
 endif

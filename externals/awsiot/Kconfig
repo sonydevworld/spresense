@@ -222,10 +222,10 @@ endmenu # Metrics
 
 menu "TLS configs"
 config EXTERNALS_AWSIOT_ENABLE_IOT_SSL_SOCKET_NON_BLOCKING
-        bool "ENABLE_IOT_SSL_SOCKET_NON_BLOCKING"
-        default n
-        ---help---
-                Enable ENABLE_IOT_SSL_SOCKET_NON_BLOCKING macro.
+	bool "ENABLE_IOT_SSL_SOCKET_NON_BLOCKING"
+	default n
+	---help---
+		Enable ENABLE_IOT_SSL_SOCKET_NON_BLOCKING macro.
 
 endmenu # TLS configs
 
@@ -237,28 +237,28 @@ config EXTERNALS_AWSIOT_ENABLE_IOT_DEBUG
 		Enable IOT_DEBUG macro.
 
 config EXTERNALS_AWSIOT_ENABLE_IOT_TRACE
-        bool "ENABLE_IOT_TRACE"
-        default n
-        ---help---
-                Enable FUNC_ENTRY, FUNC_EXIT, and FINC_EXIT_RC macros.
+	bool "ENABLE_IOT_TRACE"
+	default n
+	---help---
+		Enable FUNC_ENTRY, FUNC_EXIT, and FINC_EXIT_RC macros.
 
 config EXTERNALS_AWSIOT_ENABLE_IOT_INFO
-        bool "ENABLE_IOT_INFO"
-        default n
-        ---help---
-                Enable IOT_INFO macro.
+	bool "ENABLE_IOT_INFO"
+	default n
+	---help---
+		Enable IOT_INFO macro.
 
 config EXTERNALS_AWSIOT_ENABLE_IOT_WARN
-        bool "ENABLE_IOT_WARN"
-        default n
-        ---help---
-                Enable IOT_WARN macro.
+	bool "ENABLE_IOT_WARN"
+	default n
+	---help---
+		Enable IOT_WARN macro.
 
 config EXTERNALS_AWSIOT_ENABLE_IOT_ERROR
-        bool "ENABLE_IOT_ERROR"
-        default n
-        ---help---
-                Enable IOT_ERROR macro.
+	bool "ENABLE_IOT_ERROR"
+	default n
+	---help---
+		Enable IOT_ERROR macro.
 
 
 endmenu # Debug
