@@ -525,7 +525,6 @@ int app_lte_connect_to_lte(void)
   if (ret >= 0)
     {
       printf("Already activated PDN.\n");
-      data_pdn_sid = ret;
     }
   else
     {
@@ -575,6 +574,30 @@ int app_lte_disconnect_from_lte(void)
 {
   int ret;
 
+  /* Disable to receive events of local time change */
+
+  ret = lte_set_report_localtime(NULL);
+  if (ret < 0)
+    {
+      printf("Failed to clear report local time :%d\n", ret);
+    }
+
+  /* Unregister callback for modem restart. */
+
+  ret = lte_set_report_restart(NULL);
+  if (ret < 0)
+    {
+      printf("Failed to clear report restart :%d\n", ret);
+    }
+
+  /* If this application runs in activated state, keep the state and exit. */
+
+  if (data_pdn_sid == LTE_PDN_SESSIONID_INVALID_ID)
+    {
+      printf("Exit with PDN activated.\n");
+      goto keep_activated;
+    }
+
   /* Disconnect from the data PDN and Detach from the LTE network */
 
   ret = lte_deactivate_pdn_sync(data_pdn_sid);
@@ -621,6 +644,8 @@ int app_lte_disconnect_from_lte(void)
       ERRF("Failed to finalize LTE library :%d\n", ret);
       goto errout_with_fin;
     }
+
+keep_activated:
 
   /* Delete a message queue */
 
