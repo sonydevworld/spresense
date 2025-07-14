@@ -1,0 +1,25 @@
+
+config EXAMPLES_COBS
+	tristate "COBS-C Sample Code"
+	default n
+	---help---
+		Enable the cobs app
+
+if EXAMPLES_COBS
+
+config EXAMPLES_COBS_PROGNAME
+	string "Program name"
+	default "cobs"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_COBS_PRIORITY
+	int "cobs task priority"
+	default 100
+
+config EXAMPLES_COBS_STACKSIZE
+	int "cobs stack size"
+	default 2048
+
+endif
