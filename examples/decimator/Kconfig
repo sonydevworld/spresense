@@ -28,19 +28,19 @@ config EXAMPLES_DECIMATOR_STACKSIZE
 	default 2048
 
 config EXAMPLES_DECIMATOR0_DEVNAME
-    string "Sensor 0 device name"
-    default "/dev/accel0"
+	string "Sensor 0 device name"
+	default "/dev/accel0"
 
 config EXAMPLES_DECIMATOR0_SIGNO
-    int "Sensor signal"
-    default 13
+	int "Sensor signal"
+	default 13
 
 config EXAMPLES_DECIMATOR1_DEVNAME
-    string "Sensor 1 device name"
-    default "/dev/accel1"
+	string "Sensor 1 device name"
+	default "/dev/accel1"
 
 config EXAMPLES_DECIMATOR1_SIGNO
-    int "Sensor signal"
-    default 14
+	int "Sensor signal"
+	default 14
 
 endif
