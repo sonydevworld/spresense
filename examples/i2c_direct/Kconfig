@@ -31,7 +31,7 @@ config EXAMPLES_I2C_DIRECT_DEBUG_ON
 	default n
 	---help---
 		Enable the Debug print in i2c_direct
-	
+
 if EXAMPLES_I2C_DIRECT_DEBUG_ON
 
 config EXAMPLES_I2C_DIRECT_DPRINT_DEBUG
