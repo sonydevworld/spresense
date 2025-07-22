@@ -207,4 +207,4 @@ if __name__ == '__main__':
     print("New '%s' app successfully created at '%s'." % (appname, os.path.join(basedir, appname)))
 
     if os.path.isfile(os.path.join('..', 'Kconfig')):
-        print("Please 'make clean' from sdk first.")
+        print("Please 'make distclean' from sdk first.")
