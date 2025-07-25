@@ -79,17 +79,28 @@ download()
 run_progress()
 {
     if [ -n "$VERBOSE" ]; then
-        $*
+        "$@"
+        if [ $? -ne 0 ]; then
+            echo command "$@" failed.
+            exit 1
+        fi
     else
-        echo -n "=== $*  "
-        $* 2>&1 | awk '
+        echo -n "=== $@  "
+        errfile=$(mktemp)
+        "$@" 2> "$errfile" | awk '
             BEGIN {ORS=""}
             NR % 10 == 0 { print "."; fflush() }
             END { print "\n"}'
-    fi
-    if [ "$?" -ne "0" ]; then
-        echo command "$*" failed.
-        exit 1
+
+        result=$(grep -i 'err' "$errfile")
+        if [ "$result" != "" ]; then
+          cat "$errfile"
+          rm -f "$errfile"
+          echo command "$@" failed by Error.
+          exit 1
+        fi
+
+        rm -f "$errfile"
     fi
 }
 
