@@ -109,7 +109,7 @@ run_progress()
 
 linux_install_tools()
 {
-    local _packages="git gperf libncurses5 libncurses6 libncurses5-dev libncurses-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip"
+    local _packages="git gperf libncurses5 libncurses6 libncurses5-dev libncurses-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip bzip2"
     local _needed
     for p in ${_packages}; do
         if LANG=C apt-cache policy $p | grep -q "Candidate:"; then
