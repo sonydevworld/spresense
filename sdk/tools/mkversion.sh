@@ -36,7 +36,7 @@
 
 TAG=${1:-HEAD}
 
-SDK_VERSION="SDK3.4.3"
+SDK_VERSION="SDK3.4.4"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
