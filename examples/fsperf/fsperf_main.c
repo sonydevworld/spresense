@@ -1,7 +1,7 @@
 /****************************************************************************
  * examples/fsperf/fsperf_main.c
  *
- *   Copyright 2022 Sony Semiconductor Solutions Corporation
+ *   Copyright 2022, 2025 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,7 +80,7 @@
 struct testitem
 {
   const char *name;
-  double (*func)(const char *, size_t);
+  double (*func)(const char *, size_t, double *);
 };
 
 /****************************************************************************
@@ -122,7 +122,7 @@ static double ts_diff(const struct timespec *a, const struct timespec *b)
  *
  ****************************************************************************/
 
-static double fsperf_fwrite(const char *filepath, size_t sz)
+static double fsperf_fwrite(const char *filepath, size_t sz, double *sec2)
 {
   FILE            *fp;
   uint8_t         *buf;
@@ -130,6 +130,8 @@ static double fsperf_fwrite(const char *filepath, size_t sz)
   char            filename[64];
   struct timespec start;
   struct timespec end;
+  struct timespec start2;
+  struct timespec end2;
 
   /* set up */
 
@@ -147,6 +149,11 @@ static double fsperf_fwrite(const char *filepath, size_t sz)
   /* remove in advance */
 
   unlink(filename);
+
+  /* measure start */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ASSERT(ret == OK);
 
   fp = fopen(filename, "w");
   if (fp == NULL)
@@ -161,22 +168,27 @@ static double fsperf_fwrite(const char *filepath, size_t sz)
   ASSERT(ret == OK);
 #endif
 
-  /* measure */
-
-  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ret = clock_gettime(CLOCK_MONOTONIC, &start2);
   ASSERT(ret == OK);
 
   ret = fwrite(buf, 1, sz, fp);
   ASSERT(ret == sz);
 
-  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ret = clock_gettime(CLOCK_MONOTONIC, &end2);
   ASSERT(ret == OK);
 
   /* tear down */
 
   fclose(fp);
 
+  /* measure end */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ASSERT(ret == OK);
+
   free(buf);
+
+  *sec2 = ts_diff(&end2, &start2);
 
   return ts_diff(&end, &start);
 }
@@ -189,7 +201,7 @@ static double fsperf_fwrite(const char *filepath, size_t sz)
  *
  ****************************************************************************/
 
-static double fsperf_fread(const char *filepath, size_t sz)
+static double fsperf_fread(const char *filepath, size_t sz, double *sec2)
 {
   FILE            *fp;
   uint8_t         *buf;
@@ -197,6 +209,8 @@ static double fsperf_fread(const char *filepath, size_t sz)
   char            filename[64];
   struct timespec start;
   struct timespec end;
+  struct timespec start2;
+  struct timespec end2;
 
   /* set up */
 
@@ -211,6 +225,11 @@ static double fsperf_fread(const char *filepath, size_t sz)
 
   snprintf(filename, sizeof(filename), "%s%d", filepath, sz);
 
+  /* measure start */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ASSERT(ret == OK);
+
   fp = fopen(filename, "r");
   if (fp == NULL)
     {
@@ -224,20 +243,23 @@ static double fsperf_fread(const char *filepath, size_t sz)
   ASSERT(ret == OK);
 #endif
 
-  /* measure */
-
-  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ret = clock_gettime(CLOCK_MONOTONIC, &start2);
   ASSERT(ret == OK);
 
   ret = fread(buf, 1, sz, fp);
   ASSERT(ret == sz);
 
-  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ret = clock_gettime(CLOCK_MONOTONIC, &end2);
   ASSERT(ret == OK);
 
   /* tear down */
 
   fclose(fp);
+
+  /* measure end */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ASSERT(ret == OK);
 
   /* verify */
 
@@ -247,6 +269,8 @@ static double fsperf_fread(const char *filepath, size_t sz)
     }
 
   free(buf);
+
+  *sec2 = ts_diff(&end2, &start2);
 
   return ts_diff(&end, &start);
 }
@@ -261,7 +285,7 @@ static double fsperf_fread(const char *filepath, size_t sz)
  *
  ****************************************************************************/
 
-static double fsperf_write(const char *filepath, size_t sz)
+static double fsperf_write(const char *filepath, size_t sz, double *sec2)
 {
   int             fd;
   uint8_t         *buf;
@@ -269,6 +293,8 @@ static double fsperf_write(const char *filepath, size_t sz)
   char            filename[64];
   struct timespec start;
   struct timespec end;
+  struct timespec start2;
+  struct timespec end2;
 
   /* set up */
 
@@ -287,6 +313,11 @@ static double fsperf_write(const char *filepath, size_t sz)
 
   unlink(filename);
 
+  /* measure start */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ASSERT(ret == OK);
+
   fd = open(filename, O_CREAT | O_RDWR);
   if (fd < 0)
     {
@@ -295,22 +326,27 @@ static double fsperf_write(const char *filepath, size_t sz)
       return FSPERF_ERROR;
     }
 
-  /* measure */
-
-  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ret = clock_gettime(CLOCK_MONOTONIC, &start2);
   ASSERT(ret == OK);
 
   ret = write(fd, buf, sz);
   ASSERT(ret == sz);
 
-  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ret = clock_gettime(CLOCK_MONOTONIC, &end2);
   ASSERT(ret == OK);
 
   /* tear down */
 
   close(fd);
 
+  /* measure end */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ASSERT(ret == OK);
+
   free(buf);
+
+  *sec2 = ts_diff(&end2, &start2);
 
   return ts_diff(&end, &start);
 }
@@ -323,7 +359,7 @@ static double fsperf_write(const char *filepath, size_t sz)
  *
  ****************************************************************************/
 
-static double fsperf_read(const char *filepath, size_t sz)
+static double fsperf_read(const char *filepath, size_t sz, double *sec2)
 {
   int             fd;
   uint8_t         *buf;
@@ -331,6 +367,8 @@ static double fsperf_read(const char *filepath, size_t sz)
   char            filename[64];
   struct timespec start;
   struct timespec end;
+  struct timespec start2;
+  struct timespec end2;
 
   /* set up */
 
@@ -345,6 +383,11 @@ static double fsperf_read(const char *filepath, size_t sz)
 
   snprintf(filename, sizeof(filename), "%s%d", filepath, sz);
 
+  /* measure start */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ASSERT(ret == OK);
+
   fd = open(filename, O_RDWR);
   if (fd < 0)
     {
@@ -353,20 +396,23 @@ static double fsperf_read(const char *filepath, size_t sz)
       return FSPERF_ERROR;
     }
 
-  /* measure */
-
-  ret = clock_gettime(CLOCK_MONOTONIC, &start);
+  ret = clock_gettime(CLOCK_MONOTONIC, &start2);
   ASSERT(ret == OK);
 
   ret = read(fd, buf, sz);
   ASSERT(ret == sz);
 
-  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ret = clock_gettime(CLOCK_MONOTONIC, &end2);
   ASSERT(ret == OK);
 
   /* tear down */
 
   close(fd);
+
+  /* measure end */
+
+  ret = clock_gettime(CLOCK_MONOTONIC, &end);
+  ASSERT(ret == OK);
 
   /* verify */
 
@@ -377,9 +423,31 @@ static double fsperf_read(const char *filepath, size_t sz)
 
   free(buf);
 
+  *sec2 = ts_diff(&end2, &start2);
+
   return ts_diff(&end, &start);
 }
 #endif /* CONFIG_EXAMPLES_FSPERF_WRITEREAD */
+
+/****************************************************************************
+ * Name: fsperf_remove
+ *
+ * Description:
+ *   Remove a file created for performance test
+ *
+ ****************************************************************************/
+
+static int fsperf_remove(const char *filepath, size_t sz)
+{
+  int  ret;
+  char filename[64];
+
+  snprintf(filename, sizeof(filename), "%s%d", filepath, sz);
+
+  ret = unlink(filename);
+
+  return ret;
+}
 
 /****************************************************************************
  * Name: show_speed
@@ -389,14 +457,14 @@ static double fsperf_read(const char *filepath, size_t sz)
  *
  ****************************************************************************/
 
-void show_speed(const char *str, size_t sz, double sec)
+void show_speed(const char *str, size_t sz, double sec, double sec2)
 {
   double speed;
 
   speed = CALC_BITRATE(sz, sec);
 
-  printf(" %4d [KB] / %7.3lf [ms], speed= %7.3lf [Mbps]\n",
-         sz / 1024, sec * 1000, speed);
+  printf(" %4d [KB] / %7.3lf (%7.3lf) [ms], speed= %7.3lf [Mbps]\n",
+         sz / 1024, sec * 1000, sec2 * 1000, speed);
 }
 
 /****************************************************************************
@@ -433,10 +501,12 @@ void show_summary(const char *str, size_t sz, double sec_avg,
 
 static void show_usage(FAR const char *progname)
 {
-  fprintf(stderr, "Usage: %s [-i] [-n <num>] -f <file>\n", progname);
+  fprintf(stderr, "Usage: %s [-i] [-n <num>] [-k <size>] -f <file>\n",
+                  progname);
   fprintf(stderr, "FileSystem Performance Monitor:\n"
                   "  -i: Display the information of each result\n"
                   "  -n: Specify the repeat count, default is %d\n"
+                  "  -k: Maximum size in KByte (1 - 1024), default is 256\n"
                   "  -f: Specify the path to prefix of example files\n"
                   "      e.g.\n"
                   "      \"-f /mnt/spif/test\" on SPI-Flash\n"
@@ -457,6 +527,7 @@ int main(int argc, FAR char *argv[])
   double sec_min;
   double sec_max;
   double sec_avg;
+  double sec2;
   size_t sz;
   int    num;
   int    i;
@@ -464,6 +535,7 @@ int main(int argc, FAR char *argv[])
   int    repeat_num = CONFIG_EXAMPLES_FSPERF_REPEAT_COUNT;
   bool   info = false;
   char   *filepath = NULL;
+  int    maxsize = 256;
 
   struct testitem item[] = {
 #ifdef CONFIG_EXAMPLES_FSPERF_FWRITEREAD
@@ -476,7 +548,7 @@ int main(int argc, FAR char *argv[])
 #endif
   };
 
-  while ((option = getopt(argc, argv, "in:f:")) != ERROR)
+  while ((option = getopt(argc, argv, "in:f:k:")) != ERROR)
     {
       switch (option)
         {
@@ -489,6 +561,9 @@ int main(int argc, FAR char *argv[])
           case 'f':
             filepath = optarg;
             break;
+          case 'k':
+            maxsize = atoi(optarg);
+            break;
           default:
             show_usage(argv[0]);
         }
@@ -499,18 +574,24 @@ int main(int argc, FAR char *argv[])
       show_usage(argv[0]);
     }
 
+  if ((maxsize <= 0) || (1024 < maxsize))
+    {
+      printf("ERROR: Invalid parameter: -k %d\n", maxsize);
+      show_usage(argv[0]);
+    }
+
   printf("File access speed monitor!!\n");
 
   for (i = 0; i < sizeof(item) / sizeof(item[0]); i++)
     {
-      for (sz = 1024; sz <= 1024 * 1024; sz <<= 1)
+      for (sz = 1024; sz <= maxsize * 1024; sz <<= 1)
         {
           sec_sum = 0.0;
           sec_min = DBL_MAX;
           sec_max = DBL_MIN;
           for (num = 0; num < repeat_num; num++)
             {
-              sec = item[i].func(filepath, sz);
+              sec = item[i].func(filepath, sz, &sec2);
               if (sec == FSPERF_ERROR)
                 {
                   break;
@@ -518,7 +599,7 @@ int main(int argc, FAR char *argv[])
 
               if (info)
                 {
-                  show_speed(item[i].name, sz, sec);
+                  show_speed(item[i].name, sz, sec, sec2);
                 }
 
               sec_min = MIN(sec_min, sec);
@@ -533,6 +614,13 @@ int main(int argc, FAR char *argv[])
                            sec_avg, sec_min, sec_max, num);
             }
         }
+    }
+
+  /* Remove created files. */
+
+  for (sz = 1024; sz <= maxsize * 1024; sz <<= 1)
+    {
+      fsperf_remove(filepath, sz);
     }
 
   return 0;

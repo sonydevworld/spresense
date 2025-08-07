@@ -1,0 +1,4 @@
+
+ifneq ($(CONFIG_EXAMPLES_LED_CTRL),)
+CONFIGURED_APPS += led_ctrl
+endif

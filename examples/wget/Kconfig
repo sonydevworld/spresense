@@ -24,26 +24,26 @@ config EXAMPLES_SPRESENSE_WGET_STACKSIZE
 	default 8192
 
 config EXAMPLES_SPRESENSE_WGET_URL
-  string "File URL"
-  default ""
-  ---help---
-    The URL of the file to get
+	string "File URL"
+	default ""
+	---help---
+		The URL of the file to get
 
 config EXAMPLES_SPRESENSE_WGET_NOMAC
-  bool "Use Canned MAC Address"
-  depends on !NSH_NETINIT
-  default n
+	bool "Use Canned MAC Address"
+	depends on !NSH_NETINIT
+	default n
 
 config EXAMPLES_SPRESENSE_WGET_IPADDR
-  hex "Target IP address"
-  default 0x0a000002
+	hex "Target IP address"
+	default 0x0a000002
 
 config EXAMPLES_SPRESENSE_WGET_DRIPADDR
-  hex "Default Router IP address (Gateway)"
-  default 0x0a000001
+	hex "Default Router IP address (Gateway)"
+	default 0x0a000001
 
 config EXAMPLES_SPRESENSE_WGET_NETMASK
-  hex "Network Mask"
-  default 0xffffff00
+	hex "Network Mask"
+	default 0xffffff00
 
 endif

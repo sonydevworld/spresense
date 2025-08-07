@@ -79,17 +79,28 @@ download()
 run_progress()
 {
     if [ -n "$VERBOSE" ]; then
-        $*
+        "$@"
+        if [ $? -ne 0 ]; then
+            echo command "$@" failed.
+            exit 1
+        fi
     else
-        echo -n "=== $*  "
-        $* 2>&1 | awk '
+        echo -n "=== $@  "
+        errfile=$(mktemp)
+        "$@" 2> "$errfile" | awk '
             BEGIN {ORS=""}
             NR % 10 == 0 { print "."; fflush() }
             END { print "\n"}'
-    fi
-    if [ "$?" -ne "0" ]; then
-        echo command "$*" failed.
-        exit 1
+
+        result=$(grep -i 'err' "$errfile")
+        if [ "$result" != "" ]; then
+          cat "$errfile"
+          rm -f "$errfile"
+          echo command "$@" failed by Error.
+          exit 1
+        fi
+
+        rm -f "$errfile"
     fi
 }
 
@@ -97,7 +108,7 @@ run_progress()
 
 linux_install_tools()
 {
-    local _packages="git gperf libncurses5 libncurses6 libncurses5-dev libncurses-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip"
+    local _packages="git gperf libncurses5 libncurses6 libncurses5-dev libncurses-dev flex bison genromfs pkg-config autoconf automake curl make minicom unzip bzip2"
     local _needed
     for p in ${_packages}; do
         if LANG=C apt-cache policy $p | grep -q "Candidate:"; then
