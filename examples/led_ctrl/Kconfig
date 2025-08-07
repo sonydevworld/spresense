@@ -1,0 +1,26 @@
+
+config EXAMPLES_LED_CTRL
+	tristate "LED Control command"
+	default n
+	---help---
+		Enable the led_ctrl app.
+		This can achive to control LEDs on Spresense Main board.
+
+if EXAMPLES_LED_CTRL
+
+config EXAMPLES_LED_CTRL_PROGNAME
+	string "Program name"
+	default "led_ctrl"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_LED_CTRL_PRIORITY
+	int "led_ctrl task priority"
+	default 100
+
+config EXAMPLES_LED_CTRL_STACKSIZE
+	int "led_ctrl stack size"
+	default 2048
+
+endif
