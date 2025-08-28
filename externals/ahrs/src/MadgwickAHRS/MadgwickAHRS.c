@@ -59,7 +59,7 @@ static float invSqrt(float x)
 
 void MadgwickAHRSupdateIMU(struct ahrs_out_s *inst,
                            float gx, float gy, float gz,
-                           float ax, float ay, float az)
+                           float ax, float ay, float az, float dtsec)
 {
 	// Rate of change of quaternion from gyroscope
 	g_work.qDot1 = 0.5f * (-inst->q[1] * gx - inst->q[2] * gy - inst->q[3] * gz);
@@ -137,10 +137,10 @@ void MadgwickAHRSupdateIMU(struct ahrs_out_s *inst,
 	}
 
 	// Integrate rate of change of quaternion to yield quaternion
-	inst->q[0] += g_work.qDot1 * (1.0f / inst->samplerate);
-	inst->q[1] += g_work.qDot2 * (1.0f / inst->samplerate);
-	inst->q[2] += g_work.qDot3 * (1.0f / inst->samplerate);
-	inst->q[3] += g_work.qDot4 * (1.0f / inst->samplerate);
+	inst->q[0] += g_work.qDot1 * dtsec;
+	inst->q[1] += g_work.qDot2 * dtsec;
+	inst->q[2] += g_work.qDot3 * dtsec;
+	inst->q[3] += g_work.qDot4 * dtsec;
 
 	// Normalise quaternion
 	g_work.recipNorm = invSqrt(inst->q[0] * inst->q[0] +
