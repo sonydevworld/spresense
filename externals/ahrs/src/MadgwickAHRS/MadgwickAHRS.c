@@ -197,7 +197,12 @@ void euler2quaternion(const float e[3], float q[4])
 }
 
 void setPostureByAccel(struct ahrs_out_s *inst,
-					   float ax, float ay, float az, float yaw)
+                       float ax, float ay, float az, float yaw)
+{
+  postureByAccel(inst->q, ax, ay, az, yaw);
+}
+
+void postureByAccel(float *q, float ax, float ay, float az, float yaw)
 {
 	float a[3] = {ax, ay, az};
 	float norm;
@@ -218,16 +223,13 @@ void setPostureByAccel(struct ahrs_out_s *inst,
 	euler[1] = -1.0 * asinf(a[0]);
 	euler[2] = yaw;
 	
-	euler2quaternion(euler, inst->q);
+	euler2quaternion(euler, q);
 
-	g_work.recipNorm = invSqrt(inst->q[0] * inst->q[0] + 
-							   inst->q[1] * inst->q[1] +
-							   inst->q[2] * inst->q[2] +
-							   inst->q[3] * inst->q[3]);
-	inst->q[0] *= g_work.recipNorm;
-	inst->q[1] *= g_work.recipNorm;
-	inst->q[2] *= g_work.recipNorm;
-	inst->q[3] *= g_work.recipNorm;
+	g_work.recipNorm = invSqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+	q[0] *= g_work.recipNorm;
+	q[1] *= g_work.recipNorm;
+	q[2] *= g_work.recipNorm;
+	q[3] *= g_work.recipNorm;
 }
 
 //---------------------------------------------------------------------------------------------------
