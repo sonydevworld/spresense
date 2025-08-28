@@ -42,6 +42,7 @@ import serial
 import json
 import struct
 import binascii
+import argparse
 
 DEV_NAME = "/dev/ttyUSB0"
 SVR_PORT = 8080
@@ -57,7 +58,7 @@ class SprSerial(serial.Serial):
     self.xonxoff  = 0
     self.rtscts   = 0
 
-  def connect_dev(self):
+  def connect_dev(self, start_str, exec_cmd):
     print("Connecting device")
     print("  Reset Device")
     time.sleep(0.1)
@@ -66,14 +67,16 @@ class SprSerial(serial.Serial):
     time.sleep(0.1)
     self.setDTR(False)
 
-    print("  Waiting for booting-up device")
-    rdat = b""
-    while b'NuttShell' not in rdat:
-      rdat = self.readline()
+    if exec_cmd is not None:
+      print("  Waiting for booting-up device")
+      rdat = b""
+      while start_str not in rdat:
+        rdat = self.readline()
+      time.sleep(0.1)
+      print("  Exec AHRS app on Spresense ")
+      self.write(exec_cmd)
 
-    time.sleep(0.1)
-    print("  Exec AHRS app on Spresense ")
-    self.write(b'ahrs_pwbimu h\n')
+    print("Done")
 
 class SerialWebsockServer(WebsocketServer):
 
@@ -118,7 +121,6 @@ class SerialWebsockServer(WebsocketServer):
       data = self.convert_json(data)
 
       if data is not None:
-        # print(data)
         with self.lock:
           if self.connected:
             self.send_message_to_all(data)
@@ -152,7 +154,21 @@ class SerialWebsockServer(WebsocketServer):
     pass
     
 if __name__ == "__main__":
-  com = SprSerial(DEV_NAME)
-  com.connect_dev()
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-i', '--initialized', action='store_true', help='No Reset')
+  parser.add_argument('-c', '--comm_port', dest="serial_port",
+                      type=str, default=DEV_NAME, help='Serial Port')
+
+  args = parser.parse_args()
+
+  if args.initialized:
+    start_str = b'Connected'
+    exec_cmd = None
+  else:
+    start_str = b'NuttShell'
+    exec_cmd = b'ahrs_pwbimu h\n'
+
+  com = SprSerial(args.serial_port)
+  com.connect_dev(start_str, exec_cmd)
   server = SerialWebsockServer(com, "0.0.0.0", SVR_PORT)
   server.run_forever()
