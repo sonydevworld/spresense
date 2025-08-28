@@ -1,0 +1,37 @@
+# Start NRC7292 Usersock daemon
+nrc7292 &
+led_ctrl 1000
+sleep 1
+
+# Set AccessPoint Mode
+wapi mode wlan0 WAPI_MODE_MASTER
+
+# Set SSID as 'sprdemo'
+wapi essid wlan0 sprdemo 1
+
+# Set Password as 0123456789
+wapi psk wlan0 0123456789 2 2
+
+# Set Bandwidth as 2Mbps
+wapi bandwidth wlan0 2000
+
+# Set TX Power as Maximum (1 to 30 dbm)
+wapi txpower wlan0 30 WAPI_TXPOWER_DBM
+
+# Set Band Frequency
+wapi freq wlan0 923500 1 WAPI_FREQ_AUTO
+
+# Set LED blink pattern for waiting to finish ifup wlan0
+led_ctrl 0011 3 1100
+sleep 1
+
+# Start Halow Access Point
+ifup wlan0
+
+# Stop LED Daemon with keeping LED on
+led_ctrl 1111 -1
+sleep 1
+
+# Start AHRS Receiver
+ahrs_recv
+
