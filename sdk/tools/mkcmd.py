@@ -62,7 +62,7 @@ config {configname}_PROGNAME
 	string "Program name"
 	default "{appname}"
 	---help---
-		This is the name of the program that will be use when the NSH ELF
+		This is the name of the program that will be used when the NSH ELF
 		program is installed.
 
 config {configname}_PRIORITY
