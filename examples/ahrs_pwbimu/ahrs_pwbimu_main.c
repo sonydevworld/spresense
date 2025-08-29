@@ -46,6 +46,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <float.h>
+#include <math.h>
 
 #include <nuttx/sensors/cxd5602pwbimu.h>
 #include <MadgwickAHRS.h>
@@ -59,6 +60,8 @@
 #define DEFAULT_SAMPLERATE      (1920)
 #define DEFAULT_GYROSCOPERANGE  (1000)
 #define DEFAULT_ACCELRANGE      (4)
+
+#define RAD2DEG(x) ((x) * 180.0 / M_PI)
 
 /****************************************************************************
  * Private Functions
@@ -268,6 +271,13 @@ static uint64_t generate_unroll_timestamp(uint32_t curr_time)
   return s_prev_unroll_time;
 }
 
+static void set_initial_posture(int fd, struct ahrs_out_s *inst,
+                                cxd5602pwbimu_data_t *imu)
+{
+  read_imudata(fd, imu);
+  setPostureByAccel(inst, imu->ax, imu->ay, imu->az, 0.f);
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -316,6 +326,8 @@ int main(int argc, FAR char *argv[])
                           gyrobias, &imu);
 #endif
 
+  set_initial_posture(fd, &ahrs, &imu);
+
   while (read_imudata(fd, &imu))
     {
         MadgwickAHRSupdateIMU(&ahrs,
@@ -338,7 +350,7 @@ int main(int argc, FAR char *argv[])
             else
               {
                 uint64_t unroll_time = generate_unroll_timestamp(imu.timestamp);
-                printf("T:%0.2f, R:%0.2f, P:%0.2f, Y:%0.2f\n", (float)(unroll_time/19200000.0f), e[0], e[1], e[2]);
+                printf("T:%0.2f, R:%0.2f, P:%0.2f, Y:%0.2f\n", (float)(unroll_time/19200000.0f), RAD2DEG(e[0]), RAD2DEG(e[1]), RAD2DEG(e[2]));
               }
 
             cnt = 0;
