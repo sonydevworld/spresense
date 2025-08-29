@@ -38,6 +38,7 @@ include $(APPDIR)/Make.defs
 
 BIN = libxioahrs$(LIBEXT)
 
-CSRCS = src/MadgwickAHRS/MadgwickAHRS.c
+VPATH += src/MadgwickAHRS
+CSRCS = MadgwickAHRS.c
 
 include $(APPDIR)/Application.mk
