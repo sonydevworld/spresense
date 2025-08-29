@@ -59,7 +59,7 @@ static float invSqrt(float x)
 
 void MadgwickAHRSupdateIMU(struct ahrs_out_s *inst,
                            float gx, float gy, float gz,
-                           float ax, float ay, float az)
+                           float ax, float ay, float az, float dtsec)
 {
 	// Rate of change of quaternion from gyroscope
 	g_work.qDot1 = 0.5f * (-inst->q[1] * gx - inst->q[2] * gy - inst->q[3] * gz);
@@ -137,10 +137,10 @@ void MadgwickAHRSupdateIMU(struct ahrs_out_s *inst,
 	}
 
 	// Integrate rate of change of quaternion to yield quaternion
-	inst->q[0] += g_work.qDot1 * (1.0f / inst->samplerate);
-	inst->q[1] += g_work.qDot2 * (1.0f / inst->samplerate);
-	inst->q[2] += g_work.qDot3 * (1.0f / inst->samplerate);
-	inst->q[3] += g_work.qDot4 * (1.0f / inst->samplerate);
+	inst->q[0] += g_work.qDot1 * dtsec;
+	inst->q[1] += g_work.qDot2 * dtsec;
+	inst->q[2] += g_work.qDot3 * dtsec;
+	inst->q[3] += g_work.qDot4 * dtsec;
 
 	// Normalise quaternion
 	g_work.recipNorm = invSqrt(inst->q[0] * inst->q[0] +
@@ -197,7 +197,12 @@ void euler2quaternion(const float e[3], float q[4])
 }
 
 void setPostureByAccel(struct ahrs_out_s *inst,
-					   float ax, float ay, float az, float yaw)
+                       float ax, float ay, float az, float yaw)
+{
+  postureByAccel(inst->q, ax, ay, az, yaw);
+}
+
+void postureByAccel(float *q, float ax, float ay, float az, float yaw)
 {
 	float a[3] = {ax, ay, az};
 	float norm;
@@ -218,16 +223,13 @@ void setPostureByAccel(struct ahrs_out_s *inst,
 	euler[1] = -1.0 * asinf(a[0]);
 	euler[2] = yaw;
 	
-	euler2quaternion(euler, inst->q);
+	euler2quaternion(euler, q);
 
-	g_work.recipNorm = invSqrt(inst->q[0] * inst->q[0] + 
-							   inst->q[1] * inst->q[1] +
-							   inst->q[2] * inst->q[2] +
-							   inst->q[3] * inst->q[3]);
-	inst->q[0] *= g_work.recipNorm;
-	inst->q[1] *= g_work.recipNorm;
-	inst->q[2] *= g_work.recipNorm;
-	inst->q[3] *= g_work.recipNorm;
+	g_work.recipNorm = invSqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+	q[0] *= g_work.recipNorm;
+	q[1] *= g_work.recipNorm;
+	q[2] *= g_work.recipNorm;
+	q[3] *= g_work.recipNorm;
 }
 
 //---------------------------------------------------------------------------------------------------

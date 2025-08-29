@@ -30,11 +30,12 @@ struct ahrs_out_s
 
 void MadgwickAHRSupdateIMU(struct ahrs_out_s *out,
                            float gx, float gy, float gz,
-                           float ax, float ay, float az);
+                           float ax, float ay, float az, float dtsec);
 void quaternion2euler(const float q[4], float e[3]);
 void euler2quaternion(const float e[3], float q[4]);
 void setPostureByAccel(struct ahrs_out_s *inst,
                        float ax, float ay, float az, float yaw);
+void postureByAccel(float *q, float ax, float ay, float az, float yaw);
 
 #endif
 //=====================================================================================================
