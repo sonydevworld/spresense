@@ -35,6 +35,7 @@ void quaternion2euler(const float q[4], float e[3]);
 void euler2quaternion(const float e[3], float q[4]);
 void setPostureByAccel(struct ahrs_out_s *inst,
                        float ax, float ay, float az, float yaw);
+void postureByAccel(float *q, float ax, float ay, float az, float yaw);
 
 #endif
 //=====================================================================================================
