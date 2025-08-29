@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <errno.h>
+#include <float.h>
 
 #include <nuttx/sensors/cxd5602pwbimu.h>
 #include <MadgwickAHRS.h>
@@ -62,6 +63,13 @@
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
+
+/****************************************************************************
+ * Private Data
+ ****************************************************************************/
+
+static uint32_t s_prev_time;
+static uint64_t s_prev_unroll_time;
 
 /** start_sensing()
  * @rate    [in]: 15, 30, 60, 120, 240, 480, 960, 1920
@@ -118,21 +126,6 @@ static int start_sensing(int rate, int adrange, int gdrange, int nfifos)
   return fd;
 }
 
-static int drop_50msdata(int fd, int samprate, cxd5602pwbimu_data_t *imu)
-{
-  int cnt = samprate / 20; /* data size of 50ms */
-
-  if (cnt == 0) cnt = 1;
-
-  while (cnt)
-    {
-      read(fd, imu, sizeof(imu[0]));
-      cnt--;
-    }
-
-  return 0;
-}
-
 static int read_imudata(int fd, cxd5602pwbimu_data_t *imudata)
 {
   char c;
@@ -181,6 +174,100 @@ static int read_imudata(int fd, cxd5602pwbimu_data_t *imudata)
   return ret;
 }
 
+static int drop_50msdata(int fd, int samprate, cxd5602pwbimu_data_t *imu)
+{
+  int cnt = samprate / 20; /* data size of 50ms */
+
+  if (cnt == 0) cnt = 1;
+
+  while (cnt)
+    {
+      read_imudata(fd, imu);
+      cnt--;
+    }
+
+  return 0;
+}
+
+#ifdef CONFIG_EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION 
+static void max_min_check(float val, float* min_val, float* max_val)
+{
+  *min_val = val < *min_val ? val : *min_val;
+  *max_val = val > *max_val ? val : *max_val;
+}
+
+static int gyrobias_estimation(int fd, int samprate, int estimation_time,
+                               double* gyrobias, cxd5602pwbimu_data_t *imu)
+{
+  int cnt = estimation_time * samprate; /* data size of estimation time */
+  int cnt_dwn = cnt;
+  int elp_cnt = 0;
+  float min_gx = FLT_MAX, max_gx = -FLT_MAX;
+  float min_gy = FLT_MAX, max_gy = -FLT_MAX;
+  float min_gz = FLT_MAX, max_gz = -FLT_MAX;
+  float min_ax = FLT_MAX, max_ax = -FLT_MAX;
+  float min_ay = FLT_MAX, max_ay = -FLT_MAX;
+  float min_az = FLT_MAX, max_az = -FLT_MAX;
+  double accelave[3] = {0.0};
+  int i = 0;
+  
+  printf("Start gyro-bias estimation.\n");
+
+  while (cnt_dwn)
+    {
+      read_imudata(fd, imu);
+
+      gyrobias[0] += imu->gx;
+      gyrobias[1] += imu->gy;
+      gyrobias[2] += imu->gz;
+
+      accelave[0] += imu->ax;
+      accelave[1] += imu->ay;
+      accelave[2] += imu->az;
+
+      max_min_check(imu->gx, &min_gx, &max_gx);
+      max_min_check(imu->gy, &min_gy, &max_gy);
+      max_min_check(imu->gz, &min_gz, &max_gz);
+
+      max_min_check(imu->ax, &min_ax, &max_ax);
+      max_min_check(imu->ay, &min_ay, &max_ay);
+      max_min_check(imu->az, &min_az, &max_az);
+
+      cnt_dwn--;
+
+      if (!(cnt_dwn % samprate))
+        {
+          printf("Elapsed time : %03d seconds.\n", ++elp_cnt);
+        }
+    }
+
+  printf("Finish gyro-bias estimation.\n");
+
+  for(i = 0; i < 3; i++)
+    {
+      gyrobias[i] /= (double)cnt;
+      accelave[i] /= (double)cnt;
+    }
+
+  printf("gx: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[0], min_gx, max_gx);
+  printf("gy: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[1], min_gy, max_gy);
+  printf("gz: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[2], min_gz, max_gz);
+
+  printf("ax: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[0], min_ax, max_ax);
+  printf("ay: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[1], min_ay, max_ay);
+  printf("az: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[2], min_az, max_az);
+
+  return 0;
+}
+#endif
+
+static uint64_t generate_unroll_timestamp(uint32_t curr_time)
+{
+  s_prev_unroll_time += (uint64_t)(curr_time - s_prev_time);
+  s_prev_time = curr_time;
+  return s_prev_unroll_time;
+}
+
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -191,8 +278,12 @@ int main(int argc, FAR char *argv[])
   struct ahrs_out_s ahrs;
   cxd5602pwbimu_data_t imu;
   float e[3];
+  double gyrobias[3] = {0.0};
   unsigned int cnt = 0;
   int print_hex = 0;
+
+  s_prev_time = 0;
+  s_prev_unroll_time = 0;
 
   if (argc == 2 && argv[1][0] == 'h')
     {
@@ -213,11 +304,25 @@ int main(int argc, FAR char *argv[])
    *       stationary for several seconds, use that value as the BIAS
    *       value, and subtract that value from each gyro sample data.
    */
+#ifdef CONFIG_EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION 
+  /* This is a example of gyro bias estimation.
+   * This function estimate the gyro bias and the angular velocity
+   * caused by the Earth's rotation together as offset values.
+   * Please maintain a stationary state as much as possible
+   * during the estimation.
+   */
+  gyrobias_estimation(fd, DEFAULT_SAMPLERATE, 
+                          CONFIG_EXAMPLES_AHRS_PWBIMU_GYROBIAS_ESTIMATION_TIME,
+                          gyrobias, &imu);
+#endif
 
   while (read_imudata(fd, &imu))
     {
-        MadgwickAHRSupdateIMU(&ahrs, imu.gx, imu.gy, imu.gz,
-                                     imu.ax, imu.ay, imu.az);
+        MadgwickAHRSupdateIMU(&ahrs,
+                              imu.gx - (float)gyrobias[0],
+                              imu.gy - (float)gyrobias[1],
+                              imu.gz - (float)gyrobias[2],
+                              imu.ax, imu.ay, imu.az);
 
         quaternion2euler(ahrs.q, e);
 
@@ -231,7 +336,8 @@ int main(int argc, FAR char *argv[])
               }
             else
               {
-                printf("R:%0.1f, P:%0.1f, Y:%0.1f\n", e[0], e[1], e[2]);
+                uint64_t unroll_time = generate_unroll_timestamp(imu.timestamp);
+                printf("T:%0.2f, R:%0.2f, P:%0.2f, Y:%0.2f\n", (float)(unroll_time/19200000.0f), e[0], e[1], e[2]);
               }
 
             cnt = 0;
