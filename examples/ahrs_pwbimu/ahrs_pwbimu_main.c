@@ -1,5 +1,5 @@
 /****************************************************************************
- * examples/ahrs/ahrs_pwbimu.c
+ * examples/ahrs_pwbimu/ahrs_pwbimu_main.c
  *
  *   Copyright 2025 Sony Semiconductor Solutions Corporation
  *
@@ -51,21 +51,24 @@
 #include <nuttx/sensors/cxd5602pwbimu.h>
 #include <MadgwickAHRS.h>
 
+#include "net_client.h"
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
 
 #define CXD5602PWBIMU_DEVPATH   "/dev/imu0"
 
+#define IMU_COUNTER_FREQ        (19200000.f)
 #define DEFAULT_SAMPLERATE      (1920)
 #define DEFAULT_GYROSCOPERANGE  (1000)
 #define DEFAULT_ACCELRANGE      (4)
 
 #define RAD2DEG(x) ((x) * 180.0 / M_PI)
 
-/****************************************************************************
- * Private Functions
- ****************************************************************************/
+#define OUTPUT_MODE_EULER      (0)
+#define OUTPUT_MODE_QUATERNION (1)
+#define OUTPUT_MODE_NET        (2)
 
 /****************************************************************************
  * Private Data
@@ -73,6 +76,10 @@
 
 static uint32_t s_prev_time;
 static uint64_t s_prev_unroll_time;
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
 
 /** start_sensing()
  * @rate    [in]: 15, 30, 60, 120, 240, 480, 960, 1920
@@ -131,8 +138,10 @@ static int start_sensing(int rate, int adrange, int gdrange, int nfifos)
 
 static int read_imudata(int fd, cxd5602pwbimu_data_t *imudata)
 {
+  int ret = 0;
+
+#ifndef CONFIG_SYSTEM_STARTUP_SCRIPT
   char c;
-  int ret;
   struct pollfd fds[2];
   int keep_trying = 1;
 
@@ -173,6 +182,16 @@ static int read_imudata(int fd, cxd5602pwbimu_data_t *imudata)
             }
         }
     }
+#else /* #ifdef CONFIG_SYSTEM_STARTUP_SCRIPT */
+  /* This code is a workaround for an issue where IMU data cannot be obtained
+   * when poll() is executed with stdin while the program task is running in the background.
+   * When the startup_script is enabled, the situation will happen more often.
+   * Incidentally, it is planed to fix the above issues at a later date.
+   */
+
+  ret = read(fd, imudata, sizeof(*imudata));
+  return (ret == sizeof(*imudata)) ? 1 : 0;
+#endif /* #ifdef CONFIG_SYSTEM_STARTUP_SCRIPT */
 
   return ret;
 }
@@ -193,30 +212,26 @@ static int drop_50msdata(int fd, int samprate, cxd5602pwbimu_data_t *imu)
 }
 
 #ifdef CONFIG_EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION 
-static void max_min_check(float val, float* min_val, float* max_val)
+static void update_maxmin(float val, float* min_val, float* max_val)
 {
   *min_val = val < *min_val ? val : *min_val;
   *max_val = val > *max_val ? val : *max_val;
 }
 
 static int gyrobias_estimation(int fd, int samprate, int estimation_time,
-                               double* gyrobias, cxd5602pwbimu_data_t *imu)
+                               float* bias_out, cxd5602pwbimu_data_t *imu)
 {
-  int cnt = estimation_time * samprate; /* data size of estimation time */
-  int cnt_dwn = cnt;
-  int elp_cnt = 0;
   float min_gx = FLT_MAX, max_gx = -FLT_MAX;
   float min_gy = FLT_MAX, max_gy = -FLT_MAX;
   float min_gz = FLT_MAX, max_gz = -FLT_MAX;
-  float min_ax = FLT_MAX, max_ax = -FLT_MAX;
-  float min_ay = FLT_MAX, max_ay = -FLT_MAX;
-  float min_az = FLT_MAX, max_az = -FLT_MAX;
-  double accelave[3] = {0.0};
+  double gyrobias[3];
   int i = 0;
+
+  estimation_time *= samprate; /* data num of estimation time */
   
   printf("Start gyro-bias estimation.\n");
 
-  while (cnt_dwn)
+  for (i = 0; i < estimation_time; i++)
     {
       read_imudata(fd, imu);
 
@@ -224,23 +239,13 @@ static int gyrobias_estimation(int fd, int samprate, int estimation_time,
       gyrobias[1] += imu->gy;
       gyrobias[2] += imu->gz;
 
-      accelave[0] += imu->ax;
-      accelave[1] += imu->ay;
-      accelave[2] += imu->az;
+      update_maxmin(imu->gx, &min_gx, &max_gx);
+      update_maxmin(imu->gy, &min_gy, &max_gy);
+      update_maxmin(imu->gz, &min_gz, &max_gz);
 
-      max_min_check(imu->gx, &min_gx, &max_gx);
-      max_min_check(imu->gy, &min_gy, &max_gy);
-      max_min_check(imu->gz, &min_gz, &max_gz);
-
-      max_min_check(imu->ax, &min_ax, &max_ax);
-      max_min_check(imu->ay, &min_ay, &max_ay);
-      max_min_check(imu->az, &min_az, &max_az);
-
-      cnt_dwn--;
-
-      if (!(cnt_dwn % samprate))
+      if ((i % samprate) == (samprate - 1))
         {
-          printf("Elapsed time : %03d seconds.\n", ++elp_cnt);
+          printf("Elapsed time : %03d seconds.\n", i / samprate + 1);
         }
     }
 
@@ -248,27 +253,25 @@ static int gyrobias_estimation(int fd, int samprate, int estimation_time,
 
   for(i = 0; i < 3; i++)
     {
-      gyrobias[i] /= (double)cnt;
-      accelave[i] /= (double)cnt;
+      gyrobias[i] /= (double)estimation_time;
     }
 
-  printf("gx: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[0], min_gx, max_gx);
-  printf("gy: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[1], min_gy, max_gy);
-  printf("gz: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[2], min_gz, max_gz);
-
-  printf("ax: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[0], min_ax, max_ax);
-  printf("ay: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[1], min_ay, max_ay);
-  printf("az: ave=%12.3e, min=%12.3e, max=%12.3e\n", accelave[2], min_az, max_az);
+  printf("gx: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[0],
+                                                     min_gx, max_gx);
+  printf("gy: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[1],
+                                                     min_gy, max_gy);
+  printf("gz: ave=%12.3e, min=%12.3e, max=%12.3e\n", gyrobias[2],
+                                                     min_gz, max_gz);
 
   return 0;
 }
 #endif
 
-static uint64_t generate_unroll_timestamp(uint32_t curr_time)
+static float convert_timesec(uint32_t curr_time)
 {
   s_prev_unroll_time += (uint64_t)(curr_time - s_prev_time);
   s_prev_time = curr_time;
-  return s_prev_unroll_time;
+  return (float)s_prev_unroll_time / IMU_COUNTER_FREQ;
 }
 
 static void set_initial_posture(int fd, struct ahrs_out_s *inst,
@@ -290,21 +293,45 @@ int main(int argc, FAR char *argv[])
   float e[3];
   double gyrobias[3] = {0.0};
   unsigned int cnt = 0;
-  int print_hex = 0;
+  int outmode = OUTPUT_MODE_EULER;
+  int sock = -1;
+  uint32_t last_ts;
+  float    diff_ts;
+
+  /* Parse arguments */
+
+  if (argc == 2 && argv[1][0] == 'h')
+    {
+      outmode = OUTPUT_MODE_QUATERNION;
+    }
+  else if (argc == 3 && !strncmp(argv[1], "net", 4))
+    {
+      outmode = OUTPUT_MODE_NET;
+      sock = ahrs_connect_server(argv[2]);
+      if (sock < 0)
+        {
+          printf("Could not connect Receiver %s: errno:%d\n", argv[2], errno);
+          return -1;
+        }
+      printf("Connected to server\n");
+    }
+
+  /* Initialize time stamp */
 
   s_prev_time = 0;
   s_prev_unroll_time = 0;
 
-  if (argc == 2 && argv[1][0] == 'h')
-    {
-      print_hex = 1;
-    }
+  /* Initialize AHRS instance */
 
   INIT_AHRS(&ahrs, 0.5f, (float)DEFAULT_SAMPLERATE);
 
+  /* Start IMU Driver */
+
+  printf("Starting Driver\n");
   fd = start_sensing(DEFAULT_SAMPLERATE,
                      DEFAULT_ACCELRANGE,
                      DEFAULT_GYROSCOPERANGE, 1);
+  printf("Drop 50ms data for stability\n");
   drop_50msdata(fd, DEFAULT_SAMPLERATE, &imu);
 
   /* Note: Add logic to remove gyro bias, othewise DC offset will be
@@ -314,47 +341,78 @@ int main(int argc, FAR char *argv[])
    *       stationary for several seconds, use that value as the BIAS
    *       value, and subtract that value from each gyro sample data.
    */
+
 #ifdef CONFIG_EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION 
-  /* This is a example of gyro bias estimation.
+
+  /* This is an example of gyro bias estimation.
    * This function estimate the gyro bias and the angular velocity
    * caused by the Earth's rotation together as offset values.
    * Please maintain a stationary state as much as possible
    * during the estimation.
    */
+
   gyrobias_estimation(fd, DEFAULT_SAMPLERATE, 
-                          CONFIG_EXAMPLES_AHRS_PWBIMU_GYROBIAS_ESTIMATION_TIME,
-                          gyrobias, &imu);
+                      CONFIG_EXAMPLES_AHRS_PWBIMU_GYROBIAS_ESTIMATION_TIME,
+                      gyrobias, &imu);
 #endif
+  last_ts = imu.timestamp;
 
   set_initial_posture(fd, &ahrs, &imu);
 
+  printf("Start loop\n");
   while (read_imudata(fd, &imu))
     {
-        MadgwickAHRSupdateIMU(&ahrs,
-                              imu.gx - (float)gyrobias[0],
-                              imu.gy - (float)gyrobias[1],
-                              imu.gz - (float)gyrobias[2],
-                              imu.ax, imu.ay, imu.az);
+      diff_ts = ((float)(imu.timestamp - last_ts) / IMU_COUNTER_FREQ);
+      last_ts = imu.timestamp;
 
-        quaternion2euler(ahrs.q, e);
+      MadgwickAHRSupdateIMU(&ahrs,
+                            imu.gx - (float)gyrobias[0],
+                            imu.gy - (float)gyrobias[1],
+                            imu.gz - (float)gyrobias[2],
+                            imu.ax, imu.ay, imu.az, diff_ts);
 
-        if (++cnt >= 20)  /* Decimate data 1920Hz / 20 = 96Hz */
-          {
-            if (print_hex)
-              {
-                printf("%08x,%08x,%08x,%08x\n", *(unsigned int *)&ahrs.q[0],
-                                                *(unsigned int *)&ahrs.q[1],
-                                                *(unsigned int *)&ahrs.q[2],
-                                                *(unsigned int *)&ahrs.q[3]);
-              }
-            else
-              {
-                uint64_t unroll_time = generate_unroll_timestamp(imu.timestamp);
-                printf("T:%0.2f, R:%0.2f, P:%0.2f, Y:%0.2f\n", (float)(unroll_time/19200000.0f), RAD2DEG(e[0]), RAD2DEG(e[1]), RAD2DEG(e[2]));
-              }
+      quaternion2euler(ahrs.q, e);
 
-            cnt = 0;
-          }
+      /* Output Data */
+
+      if (++cnt >= 20)  /* Decimate data 1920Hz / 20 = 96Hz */
+        {
+          switch (outmode)
+            {
+              case OUTPUT_MODE_EULER:
+                printf("T:%0.2f, R:%0.2f, P:%0.2f, Y:%0.2f\n",
+                       convert_timesec(imu.timestamp),
+                       RAD2DEG(e[0]), RAD2DEG(e[1]), RAD2DEG(e[2]));
+                break;
+
+              case OUTPUT_MODE_QUATERNION:
+                printf("%08x,%08x,%08x,%08x\n",
+                       *(unsigned int *)&ahrs.q[0],
+                       *(unsigned int *)&ahrs.q[1],
+                       *(unsigned int *)&ahrs.q[2],
+                       *(unsigned int *)&ahrs.q[3]);
+                break;
+
+              case OUTPUT_MODE_NET:
+                if (ahrs_send_binary(sock, (const char *)&ahrs.q[0],
+                                           sizeof(ahrs.q)) < 0)
+                  {
+                    printf("Send error.\n");
+                    close(sock);
+                    close(fd);
+                    return -1;
+                  }
+
+                break;
+            }
+
+          cnt = 0;
+        }
+    }
+
+  if (sock >= 0)
+    {
+      close(sock);
     }
 
   close(fd);

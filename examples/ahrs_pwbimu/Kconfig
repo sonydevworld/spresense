@@ -32,4 +32,18 @@ config EXAMPLES_AHRS_PWBIMU_GYROBIAS_ESTIMATION_TIME
 	range 1 512
 	depends on EXAMPLES_AHRS_PWBIMU_EXEC_GYROBIAS_ESTIMATION
 
+config EXAMPLES_AHRS_PWBIMU_RECV
+	bool "Include net receive server"
+	default n
+	---help---
+		Enable a command to receive AHRS result from network.
+		This program will act as a network server.
+
+config EXAMPLES_AHRS_PWBIMU_HOST_RECV
+	bool "Build receive server on PC side"
+	default n
+	---help---
+		Receiver server will be built for Host PC side.
+		Behavior is the same as on board command.
+
 endif
