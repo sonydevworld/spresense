@@ -1,0 +1,36 @@
+
+config EXAMPLES_GYROCOMPASS_PWBIMU
+	tristate "Gyrocompass example with high precision IMU(CXD5602PWBIMU)"
+	default n
+	---help---
+		Enable the gyrocompass app
+
+if EXAMPLES_GYROCOMPASS_PWBIMU
+
+config EXAMPLES_GYROCOMPASS_PWBIMU_PROGNAME
+	string "Program name"
+	default "gyrocompass"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_GYROCOMPASS_PWBIMU_PRIORITY
+	int "gyrocompass task priority"
+	default 100
+
+config EXAMPLES_GYROCOMPASS_PWBIMU_STACKSIZE
+	int "gyrocompass stack size"
+	default 2048
+
+config EXAMPLES_GYROCOMPASS_COLLECTTIME
+	int "Data collecting time for each posture (in sec)"
+	default 10
+
+config EXAMPLES_GYROCOMPASS_TEST
+	bool "Enable test mode calculate azimuth from logged files"
+	default n
+	---help---
+		Enabling this will cause it to perform a function similar to gyrocompass.py.
+		It will calcurate azimuth from logged files.
+
+endif
