@@ -1,0 +1,26 @@
+
+config EXAMPLES_POSPREDICT_PWBIMU
+	tristate "Position Prediction sample."
+	default n
+	---help---
+		This sample code is predicting position by tracking IMU data as
+		a sample for implementing position predict application.
+
+if EXAMPLES_POSPREDICT_PWBIMU
+
+config EXAMPLES_POSPREDICT_PWBIMU_PROGNAME
+	string "Program name"
+	default "pospredict"
+	---help---
+		This is the name of the program that will be used when the NSH ELF
+		program is installed.
+
+config EXAMPLES_POSPREDICT_PWBIMU_PRIORITY
+	int "pospredict_pwbimu task priority"
+	default 100
+
+config EXAMPLES_POSPREDICT_PWBIMU_STACKSIZE
+	int "pospredict_pwbimu stack size"
+	default 2048
+
+endif
