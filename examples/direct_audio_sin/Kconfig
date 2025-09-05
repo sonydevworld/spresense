@@ -1,0 +1,26 @@
+
+config EXAMPLES_DIRECT_AUDIO_SIN
+	tristate "Audio Driver Direct sample : audio_sin"
+	default n
+	---help---
+		Enable the simple_audio_sin app
+		This app generate sin wave and play it to a speaker.
+
+if EXAMPLES_DIRECT_AUDIO_SIN
+
+config EXAMPLES_DIRECT_AUDIO_SIN_PROGNAME
+	string "Program name"
+	default "audio_sin"
+	---help---
+		This is the name of the program that will be use when the NSH ELF
+		program is installed.
+
+config EXAMPLES_DIRECT_AUDIO_SIN_PRIORITY
+	int "audio_sin task priority"
+	default 100
+
+config EXAMPLES_DIRECT_AUDIO_SIN_STACKSIZE
+	int "audio_sin stack size"
+	default 2048
+
+endif
