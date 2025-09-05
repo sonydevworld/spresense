@@ -254,7 +254,7 @@ static int handle_msg(mqd_t mq, int micfd)
             ret = -2;
             break;
 
-          case AUDIO_MSG_IOERROR:
+          case AUDIO_MSG_IOERR:
 
             /* Any driver error is happened */
 
