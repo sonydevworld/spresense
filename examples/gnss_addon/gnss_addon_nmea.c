@@ -70,6 +70,7 @@ static void freebuf(char *buf)
 static int outnmea(char *buf)
 {
   int ret = fprintf(g_stream, "%s", buf);
+  fflush(g_stream);
 #ifdef CONFIG_EXAMPLES_GNSS_ADDON_FSYNC_LOGGING
   fsync(fileno(g_stream));
 #endif
