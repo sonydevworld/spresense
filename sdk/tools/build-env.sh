@@ -126,6 +126,19 @@ function spr-set-approot() {
 	fi
 }
 
+# Name: spr-unset-approot
+# Note: Unset application root directory.
+# Usage: $ spr-unset-approot
+function spr-unset-approot() {
+	unset SPRESENSE_HOME
+
+	# Save current variable
+	_save_spresense_environment
+
+	# Print current variable
+	_print_current_spresense_environment
+}
+
 # Name: spr-create-app
 # Note: Create user application into application root directory.
 # Usage: $ spr-create-app <application name>
