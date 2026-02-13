@@ -89,7 +89,7 @@ if __name__ == '__main__':
         sys.exit(2)
 
     try:
-        os.mkdir(targetdir)
+        os.makedirs(targetdir, exist_ok=False)
     except:
         if not opts.force:
             print('%s already exists' % targetdir, file=sys.stderr)
