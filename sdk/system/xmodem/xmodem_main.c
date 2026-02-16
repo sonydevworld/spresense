@@ -197,9 +197,10 @@ static int make_dirs(const char *path)
   char *p = NULL;
   size_t len;
 
+  memset(tmp, 0, sizeof(tmp));
   snprintf(tmp, sizeof(tmp), "%s", path);
   len = strlen(tmp);
-  if (tmp[len - 1] == '/')
+  if (len > 0 && tmp[len - 1] == '/')
     {
       tmp[len - 1] = '\0';
     }
