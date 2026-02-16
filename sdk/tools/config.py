@@ -138,6 +138,20 @@ class DefconfigManager:
                 pp = os.path.dirname(dp)
                 self.category = os.path.basename(pp)
 
+                # For SPRESENSE_HOME configs, use app name as category
+                # e.g., /path/to/myapps/myapp/configs/default/defconfig
+                # -> category should be 'myapp' instead of 'configs'
+
+                if self.category == "configs":
+                    # Check if this is from SPRESENSE_HOME
+                    spresense_home = os.environ.get(SPRESENSE_HOME)
+                    if spresense_home and os.path.commonpath([self.path, spresense_home]) == os.path.realpath(spresense_home):
+                        ppp = os.path.dirname(pp)
+                        app_name = os.path.basename(ppp)
+                        # Use app name as category
+                        if app_name and app_name != "sdk":
+                            self.category = app_name
+
         def get_configname(self):
             if self.category == None or self.category == "configs":
                 return self.name
@@ -386,7 +400,7 @@ if __name__ == "__main__":
 
     if opts.list:
         print('Available configurations:')
-        for cat in (None, 'feature', 'device', 'examples'):
+        for cat in manager.category:
             configs = manager.get_configs_by_category(cat)
             configs.sort()
             for c in configs:

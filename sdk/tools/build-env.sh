@@ -52,8 +52,12 @@ function spr-create-approot() {
 		if [ "${1:0:1}" == "/" ]; then
 			SPRESENSE_HOME=${1}
 		else
-			SPRESENSE_HOME="$(cd ${1}; pwd)"
+			SPRESENSE_HOME=$(pwd -P)/${1}
 		fi
+		SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
+		SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
+		mkdir -p ${SPRESENSE_HOME_DIR}
+		SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
 		if [ -d ${SPRESENSE_HOME} ]; then
 			echo "Warning: Directory ${SPRESENSE_HOME} is already exists,"
 			echo -n "         Overwrite makefiles ? (Y/N): "
@@ -122,6 +126,19 @@ function spr-set-approot() {
 	fi
 }
 
+# Name: spr-unset-approot
+# Note: Unset application root directory.
+# Usage: $ spr-unset-approot
+function spr-unset-approot() {
+	unset SPRESENSE_HOME
+
+	# Save current variable
+	_save_spresense_environment
+
+	# Print current variable
+	_print_current_spresense_environment
+}
+
 # Name: spr-create-app
 # Note: Create user application into application root directory.
 # Usage: $ spr-create-app <application name>
@@ -134,8 +151,18 @@ function spr-create-app() {
 		echo "         $ spr-set-approot <application home directory>"
 	else
 		cd ${SPRESENSE_SDK}/sdk
-		rm -f ${SPRESENSE_HOME}/Kconfig
+		KCONFIG_EXISTED=0
+		if [ -f ${SPRESENSE_HOME}/Kconfig ]; then
+			KCONFIG_EXISTED=1
+			rm -f ${SPRESENSE_HOME}/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/Kconfig
+		fi
 		./tools/mkcmd.py -d ${SPRESENSE_HOME} ${1}
+		if [ ${KCONFIG_EXISTED} -eq 1 ]; then
+			make olddefconfig
+		fi
 		cd - &> /dev/null
 	fi
 }
