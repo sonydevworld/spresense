@@ -138,8 +138,18 @@ function spr-create-app() {
 		echo "         $ spr-set-approot <application home directory>"
 	else
 		cd ${SPRESENSE_SDK}/sdk
-		rm -f ${SPRESENSE_HOME}/Kconfig
+		KCONFIG_EXISTED=0
+		if [ -f ${SPRESENSE_HOME}/Kconfig ]; then
+			KCONFIG_EXISTED=1
+			rm -f ${SPRESENSE_HOME}/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
+			rm -f ${SPRESENSE_SDK}/sdk/Kconfig
+		fi
 		./tools/mkcmd.py -d ${SPRESENSE_HOME} ${1}
+		if [ ${KCONFIG_EXISTED} -eq 1 ]; then
+			make olddefconfig
+		fi
 		cd - &> /dev/null
 	fi
 }
