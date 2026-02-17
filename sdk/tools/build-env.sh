@@ -52,8 +52,12 @@ function spr-create-approot() {
 		if [ "${1:0:1}" == "/" ]; then
 			SPRESENSE_HOME=${1}
 		else
-			SPRESENSE_HOME="$(cd ${1}; pwd)"
+			SPRESENSE_HOME=$(pwd -P)/${1}
 		fi
+		SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
+		SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
+		mkdir -p ${SPRESENSE_HOME_DIR}
+		SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
 		if [ -d ${SPRESENSE_HOME} ]; then
 			echo "Warning: Directory ${SPRESENSE_HOME} is already exists,"
 			echo -n "         Overwrite makefiles ? (Y/N): "
