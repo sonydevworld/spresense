@@ -71,7 +71,7 @@ static void print_usage(const char *app)
 
 int main(int argc, FAR char *argv[])
 {
-  int ret;
+  int ret = 0;
   struct webclient_tls_ops *ops;
   struct webclient_tls_connection *connp;
 
@@ -95,8 +95,28 @@ int main(int argc, FAR char *argv[])
             {
               /* Wait input from terminal */
 
-              scanf("%s", g_sbuf);
-              
+              if (fgets(g_sbuf, sizeof(g_sbuf), stdin) == NULL)
+                {
+                  printf("Failed to input!\n");
+                  break;
+                }
+              else
+                {
+                  ret = strlen(g_sbuf);
+
+                  if (ret > 0 && g_sbuf[ret - 1] == '\n')
+                    {
+                      g_sbuf[ret - 1] = '\0';  /* remove a LF('\n') by fgets. */
+                    }
+                }
+
+              if (ret == 0 || ret == 1)
+                {
+                  /* No character only by Enter input. */
+
+                  continue;
+                }
+
               /* Send the data to the server */
 
               ops->send(&g_ctx, connp, g_sbuf, strlen(g_sbuf));
