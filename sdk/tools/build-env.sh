@@ -115,6 +115,15 @@ function spr-create-approot() {
 	fi
 	SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
 	SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
+	SPRESENSE_HOME_BASE_LOWER=$(echo "${SPRESENSE_HOME_BASE}" | tr '[:upper:]' '[:lower:]')
+	if [ "${SPRESENSE_HOME_BASE_LOWER}" == "examples" ] || \
+	   [ "${SPRESENSE_HOME_BASE_LOWER}" == "feature" ] || \
+	   [ "${SPRESENSE_HOME_BASE_LOWER}" == "device" ]; then
+		echo "Error: Invalid approot '${SPRESENSE_HOME}'."
+		echo "       Directory names 'examples', 'feature', and 'device' are reserved and cannot be used."
+		SPRESENSE_HOME="${prev_spresense_home}"
+		return 1
+	fi
 	mkdir -p ${SPRESENSE_HOME_DIR}
 	SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
 	if [ -d ${SPRESENSE_HOME} ]; then
