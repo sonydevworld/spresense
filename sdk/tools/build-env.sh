@@ -167,12 +167,145 @@ function spr-create-app() {
 	fi
 }
 
+# Name: spr-import-app
+# Note: Import example application into application root directory.
+# Usage: $ spr-import-app <example application path>
+function spr-import-app() {
+	# Validate arguments
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <example application path>"
+		return 1
+	fi
+
+	# Check if SPRESENSE_HOME is set
+	if [ -z "${SPRESENSE_HOME}" ]; then
+		echo "Warning: Spresense user application directory is not set."
+		echo "         Please run"
+		echo "         $ spr-set-approot <application home directory>"
+		return 1
+	fi
+
+	local src_app="${1}"
+	local app_basename=$(basename "${src_app}")
+	local dest_path="${SPRESENSE_HOME}/${app_basename}"
+
+	# Check if source application exists
+	if [ ! -e "${src_app}" ]; then
+		echo "Error: Application '${src_app}' does not exist."
+		return 1
+	fi
+
+	# Ensure the source lives under an 'examples' directory
+	local src_parent_abs="$(cd "$(dirname "${src_app}")" && pwd -P)"
+	local src_parent_name="$(basename "${src_parent_abs}")"
+	if [ "${src_parent_name}" != "examples" ]; then
+		echo "Error: Application '${src_app}' must reside under an 'examples' directory."
+		return 1
+	fi
+
+	# Copy application to SPRESENSE_HOME
+	if ! cp -r "${src_app}" "${SPRESENSE_HOME}"; then
+		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
+		return 1
+	fi
+
+	# Generate approot names
+	local approot=$(basename "${SPRESENSE_HOME}")
+	local APPROOT="${approot^^}"
+	local SED_INPLACE=(-i)
+
+	# macOS (BSD sed) requires explicit empty backup suffix with -i
+	if [ "$(uname -s)" = "Darwin" ]; then
+		SED_INPLACE=(-i "")
+	fi
+
+	# Replace EXAMPLES_ with APPROOT_ in all files
+	# Change to destination directory to avoid path issues
+	cd "${SPRESENSE_HOME}" || return 1
+	if ! find "${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
+		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
+		cd "${CURRENT_DIR}" &> /dev/null
+		return 1
+	fi
+	cd "${CURRENT_DIR}" &> /dev/null
+
+	echo "Application '${app_basename}' successfully imported to ${SPRESENSE_HOME}"
+	return 0
+}
+
 # Name: spr-config
-# Note: Create user application into application root directory.
+# Note: Configure SDK and user application same as config.py command.
 # Usage: $ spr-config <configuration name>...
 function spr-config() {
 	cd ${SPRESENSE_SDK}/sdk
 	./tools/config.py $@
+	cd - &> /dev/null
+}
+
+# Name: spr-mkdefconfig
+# Note: Create user configuration into application root directory.
+# Usage: $ spr-mkdefconfig <configuration name>...
+function spr-mkdefconfig() {
+	# Validate arguments
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <configuration name>"
+		return 1
+	fi
+
+	# Check if SPRESENSE_HOME is set
+	if [ -z "${SPRESENSE_HOME}" ]; then
+		echo "Warning: Spresense user application directory is not set."
+		echo "         Please run"
+		echo "         $ spr-set-approot <application home directory>"
+		return 1
+	fi
+
+	# Check SDK path
+	if [ -z "${SPRESENSE_SDK}" ]; then
+		echo "Warning: SPRESENSE_SDK is not set."
+		echo "         Please run 'source tools/build-env.sh' again."
+		return 1
+	fi
+
+	local config_name="$1"
+	local sdk_dir="${SPRESENSE_SDK}/sdk"
+	local current_dir="$(pwd -P)"
+
+	if ! cd "${sdk_dir}"; then
+		echo "Error: Failed to enter SDK directory: ${sdk_dir}"
+		return 1
+	fi
+
+	if ! ./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${config_name}"; then
+		echo "Error: mkdefconfig failed for configuration: ${config_name}"
+		cd "${current_dir}" &> /dev/null
+		return 1
+	fi
+
+	cd "${current_dir}" &> /dev/null
+	echo "Config '${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
+	return 0
+}
+
+# Name: spr-flash
+# Note: Flash nuttx.spk via flash.sh wrapper.
+# Usage: $ spr-flash <options>
+function spr-flash() {
+	cd ${SPRESENSE_SDK}/sdk
+	# Check if arguments contain .spk or .espk files, or -w/-r/-B option
+	local has_spk=0
+	for arg in "$@"; do
+		if [[ "$arg" =~ \.(spk|espk)$ ]] || [[ "$arg" == "-w" ]] || [[ "$arg" == "-r" ]] || [[ "$arg" == "-B" ]]; then
+			has_spk=1
+			break
+		fi
+	done
+
+	if [ $has_spk -eq 1 ]; then
+		./tools/flash.sh $@
+	else
+		./tools/flash.sh $@ nuttx.spk
+	fi
 	cd - &> /dev/null
 }
 
@@ -184,7 +317,7 @@ function spr-go-sdk() {
 		cd ${SPRESENSE_SDK}/sdk
 	else
 		echo "Warning: SPRESENSE_SDK is not set."
-		echo "         Please run 'source tools/envsetup.sh' again."
+		echo "         Please run 'source tools/build-env.sh' again."
 	fi
 }
 
