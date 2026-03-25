@@ -398,6 +398,21 @@ function spr-flash() {
 	cd - &> /dev/null
 }
 
+# Name: spr-terminal
+# Note: Open serial terminal via terminal.sh wrapper.
+# Usage: $ spr-terminal <options>
+function spr-terminal() {
+	cd ${SPRESENSE_SDK}/sdk
+
+	local port;
+	if [ "${SPRESENSE_PORT}" != "" ]; then
+		port="-c ${SPRESENSE_PORT}"
+	fi
+
+	./tools/terminal.sh ${port} $@
+	cd - &> /dev/null
+}
+
 # Name: spr-go-sdk
 # Note: Move current directory to SDK directory.
 # Usage: $ spr-go-sdk
