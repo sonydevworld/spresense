@@ -141,6 +141,70 @@ function spr-unset-approot() {
 	_print_current_spresense_environment
 }
 
+# Name: spr-set-port
+# Note: Set serial port
+# Usage: $ spr-set-port <serial port>
+function spr-set-port() {
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <serial port>"
+		# Print current variable
+		_print_current_spresense_environment
+	else
+		SPRESENSE_PORT=${1}
+
+		# Save current variable
+		_save_spresense_environment
+
+		# Print current variable
+		_print_current_spresense_environment
+	fi
+}
+
+# Name: spr-unset-port
+# Note: Unset serial port.
+# Usage: $ spr-unset-port
+function spr-unset-port() {
+	unset SPRESENSE_PORT
+
+	# Save current variable
+	_save_spresense_environment
+
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-set-baud
+# Note: Set serial port baud rate
+# Usage: $ spr-set-baud <baud rate>
+function spr-set-baud() {
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <baud rate>"
+		# Print current variable
+		_print_current_spresense_environment
+	else
+		SPRESENSE_BAUD=${1}
+
+		# Save current variable
+		_save_spresense_environment
+
+		# Print current variable
+		_print_current_spresense_environment
+	fi
+}
+
+# Name: spr-unset-baud
+# Note: Unset serial port baud rate.
+# Usage: $ spr-unset-baud
+function spr-unset-baud() {
+	unset SPRESENSE_BAUD
+
+	# Save current variable
+	_save_spresense_environment
+
+	# Print current variable
+	_print_current_spresense_environment
+}
+
 # Name: spr-info
 # Note: Show current environment information
 # Usage: $ spr-info
@@ -396,6 +460,8 @@ function _load_spresense_environment() {
 		source ${HOME}/.spresense_env
 	fi
 	export SPRESENSE_HOME
+	export SPRESENSE_PORT
+	export SPRESENSE_BAUD
 }
 
 # Save current variable
@@ -403,6 +469,8 @@ function _save_spresense_environment() {
 	# Export parameters into configuration file
 	echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
 	echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
+	echo "SPRESENSE_PORT=${SPRESENSE_PORT}" >> ${HOME}/.spresense_env
+	echo "SPRESENSE_BAUD=${SPRESENSE_BAUD}" >> ${HOME}/.spresense_env
 }
 
 # Print current variable
@@ -412,6 +480,8 @@ function _print_current_spresense_environment() {
 	echo " NUTTX_VERSION = `cat ${SPRESENSE_SDK}/sdk/tools/mkversion.sh | grep '^NUTTX_VERSION' | cut -d '\"' -f 2`"
 	echo " SPRESENSE_SDK = ${SPRESENSE_SDK}"
 	echo "SPRESENSE_HOME = ${SPRESENSE_HOME}"
+	echo "SPRESENSE_PORT = ${SPRESENSE_PORT}"
+	echo "SPRESENSE_BAUD = ${SPRESENSE_BAUD}"
 	echo "   GCC_VERSION = `arm-none-eabi-gcc --version | head -n 1`"
 	echo "          HOST = `uname -sm`"
 	echo "======================================="
