@@ -64,6 +64,91 @@ function _spresense_config_completion() {
 	fi
 }
 
+# TAB completion for spr-import-example
+function _spresense_import_example_completion() {
+	local cur prev base1 base2 old_nullglob rel suffix name
+	local -a list
+
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev=""
+	if [ ${COMP_CWORD} -gt 0 ]; then
+		prev="${COMP_WORDS[COMP_CWORD-1]}"
+	fi
+	base1="${SPRESENSE_SDK}/examples"
+	base2="${SPRESENSE_SDK}/sdk/apps/examples"
+	list=()
+
+	compopt -o nospace
+
+	if [ -z "${SPRESENSE_SDK}" ]; then
+		return 0
+	fi
+
+	old_nullglob="$(shopt -p nullglob)"
+	shopt -s nullglob
+
+	# Keep progressing completion when the shell already inserted a space.
+	if [ -z "${cur}" ]; then
+		if [[ "${prev}" == "examples/" ]] || [[ "${prev}" == "apps/examples/" ]]; then
+			cur="${prev}"
+		elif [[ "${prev}" == "${base1}/" ]] || [[ "${prev}" == "${base2}/" ]]; then
+			cur="${prev}"
+		fi
+	fi
+
+	if [[ "${cur}" == /* ]]; then
+		if [[ "${cur}" == "${base1}"* ]]; then
+			for d in "${cur}"*; do
+				[ -d "${d}" ] && list+=("${d}")
+			done
+		elif [[ "${cur}" == "${base2}"* ]]; then
+			for d in "${cur}"*; do
+				[ -d "${d}" ] && list+=("${d}")
+			done
+		fi
+	else
+		# Step 1: complete only the root candidates while typing prefix (e.g. exa -> examples/)
+		if [[ "${cur}" != */* ]]; then
+			list+=($(compgen -W "examples/ apps/examples/" -- "${cur}"))
+		else
+			# Step 2: after root is selected, complete only first-level app names.
+			if [[ "${cur}" == examples/* ]] && [ -d "${base1}" ]; then
+				suffix="${cur#examples/}"
+				if [[ "${suffix}" != */* ]]; then
+					for d in "${base1}"/*; do
+						if [ -d "${d}" ]; then
+							name="${d##*/}"
+							if [[ "${name}" == "${suffix}"* ]]; then
+								rel="${d#${SPRESENSE_SDK}/}"
+								list+=("${rel}")
+							fi
+						fi
+					done
+				fi
+			elif [[ "${cur}" == apps/examples/* ]] && [ -d "${base2}" ]; then
+				suffix="${cur#apps/examples/}"
+				if [[ "${suffix}" != */* ]]; then
+					for d in "${base2}"/*; do
+						if [ -d "${d}" ]; then
+							name="${d##*/}"
+							if [[ "${name}" == "${suffix}"* ]]; then
+								rel="${d#${SPRESENSE_SDK}/sdk/}"
+								list+=("${rel}")
+							fi
+						fi
+					done
+				fi
+			else
+				# Keep root completion available for partial hierarchical inputs.
+				list+=($(compgen -W "examples/ apps/examples/" -- "${cur}"))
+			fi
+		fi
+	fi
+
+	eval "${old_nullglob}"
+	COMPREPLY=($(printf "%s\n" "${list[@]}" | sort -u))
+}
+
 ############################################################################
 # Environment setup                                                        #
 ############################################################################
@@ -73,4 +158,5 @@ function _spresense_config_completion() {
 #
 
 complete -F _spresense_config_completion tools/config.py ./tools/config.py spr-config
+complete -F _spresense_import_example_completion spr-import-example
 

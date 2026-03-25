@@ -1,4 +1,5 @@
 .vscode
+.spresense_env
 firmware/*/*.spk
 firmware/*/*.espk
 firmware/*/stored_version.json
