@@ -287,6 +287,28 @@ function spr-mkdefconfig() {
 	return 0
 }
 
+# Name: spr-flash
+# Note: Flash nuttx.spk via flash.sh wrapper.
+# Usage: $ spr-flash <options>
+function spr-flash() {
+	cd ${SPRESENSE_SDK}/sdk
+	# Check if arguments contain .spk or .espk files, or -w/-r/-B option
+	local has_spk=0
+	for arg in "$@"; do
+		if [[ "$arg" =~ \.(spk|espk)$ ]] || [[ "$arg" == "-w" ]] || [[ "$arg" == "-r" ]] || [[ "$arg" == "-B" ]]; then
+			has_spk=1
+			break
+		fi
+	done
+
+	if [ $has_spk -eq 1 ]; then
+		./tools/flash.sh $@
+	else
+		./tools/flash.sh $@ nuttx.spk
+	fi
+	cd - &> /dev/null
+}
+
 # Name: spr-go-sdk
 # Note: Move current directory to SDK directory.
 # Usage: $ spr-go-sdk
