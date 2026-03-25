@@ -311,8 +311,28 @@ function spr-import-example() {
 # Note: Configure SDK and user application same as config.py command.
 # Usage: $ spr-config <configuration name>...
 function spr-config() {
+	local appname
+	local configname
+	local config_arg="$1"
+	local approot=$(basename "${SPRESENSE_HOME}")
+
 	cd ${SPRESENSE_SDK}/sdk
-	./tools/config.py $@
+
+	# Check if config_arg contains / and configname is "default"
+	if [[ "$config_arg" == *"/default" ]]; then
+		# Parse appname/configname format
+		appname="${config_arg%/*}"
+		configname="${config_arg#*/}"
+
+		if [[ "$approot" == "$appname" ]]; then
+			./tools/config.py -d "${SPRESENSE_HOME}/configs" "${configname}"
+		else
+			./tools/config.py -d "${SPRESENSE_HOME}/${appname}/configs" "${configname}"
+		fi
+	else
+		# Normal config.py execution
+		./tools/config.py $@
+	fi
 	cd - &> /dev/null
 }
 
