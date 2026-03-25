@@ -74,6 +74,13 @@ function spr-create-approot() {
 	# Save previous SPRESENSE_HOME to restore on error
 	local prev_spresense_home="${SPRESENSE_HOME}"
 
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		echo "Cleaning build output before creating application root directory..."
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
+	fi
+
 	local mkappsdir_flag=""
 	local mkappsdir_desc="User application"
 	if [ "$#" -ge 2 ]; then
@@ -195,6 +202,12 @@ function spr-set-approot() {
 	fi
 	if [ -d "${_SPRESENSE_HOME}" ]; then
 		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" ]; then
+			if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+				echo "Cleaning build output before setting application root directory..."
+				if ! spr-make distclean > /dev/null 2>&1; then
+					echo "Error: Failed to run 'spr-make distclean'."
+				fi
+			fi
 			SPRESENSE_HOME=${_SPRESENSE_HOME}
 			# Save current variable
 			_save_spresense_environment
@@ -239,6 +252,19 @@ function spr-unset-approot() {
 		echo "Unset your application root directory."
 		echo ""
 		return 1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		echo "Cleaning build output before unsetting application root directory..."
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
 	fi
 
 	unset SPRESENSE_HOME
