@@ -176,6 +176,51 @@ function spr-config() {
 	cd - &> /dev/null
 }
 
+# Name: spr-mkdefconfig
+# Note: Create user configuration into application root directory.
+# Usage: $ spr-mkdefconfig <configuration name>...
+function spr-mkdefconfig() {
+	# Validate arguments
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <configuration name>"
+		return 1
+	fi
+
+	# Check if SPRESENSE_HOME is set
+	if [ -z "${SPRESENSE_HOME}" ]; then
+		echo "Warning: Spresense user application directory is not set."
+		echo "         Please run"
+		echo "         $ spr-set-approot <application home directory>"
+		return 1
+	fi
+
+	# Check SDK path
+	if [ -z "${SPRESENSE_SDK}" ]; then
+		echo "Warning: SPRESENSE_SDK is not set."
+		echo "         Please run 'source tools/build-env.sh' again."
+		return 1
+	fi
+
+	local config_name="$1"
+	local sdk_dir="${SPRESENSE_SDK}/sdk"
+	local current_dir="$(pwd -P)"
+
+	if ! cd "${sdk_dir}"; then
+		echo "Error: Failed to enter SDK directory: ${sdk_dir}"
+		return 1
+	fi
+
+	if ! ./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${config_name}"; then
+		echo "Error: mkdefconfig failed for configuration: ${config_name}"
+		cd "${current_dir}" &> /dev/null
+		return 1
+	fi
+
+	cd "${current_dir}" &> /dev/null
+	echo "Config '${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
+	return 0
+}
+
 # Name: spr-go-sdk
 # Note: Move current directory to SDK directory.
 # Usage: $ spr-go-sdk
