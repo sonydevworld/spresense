@@ -177,10 +177,10 @@ function spr-create-app() {
 	fi
 }
 
-# Name: spr-import-app
-# Note: Import example application into application root directory.
-# Usage: $ spr-import-app <example application path>
-function spr-import-app() {
+# Name: spr-import-example
+# Note: Import an example application into application root directory.
+# Usage: $ spr-import-example <example application path>
+function spr-import-example() {
 	# Validate arguments
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <example application path>"
