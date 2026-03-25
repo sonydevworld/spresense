@@ -822,24 +822,20 @@ function spr-flash() {
 		baud="-b ${SPRESENSE_BAUD}"
 	fi
 
-	cd ${SPRESENSE_SDK}/sdk || return 1
 	if [ "$#" -gt 0 ]; then
-		./tools/flash.sh ${port} ${baud} "$@"
+		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "$@"
 	else
 		_check_spresense_home_environment
 		if [ $? -ne 0 ]; then
-			cd - &> /dev/null
 			return 1
 		fi
 		if [ ! -f "${SPRESENSE_HOME}/build/nuttx.spk" ]; then
 			echo "Error: '${SPRESENSE_HOME}/build/nuttx.spk' does not exist."
 			echo "       Please run 'spr-make' first or specify a .spk/.espk file."
-			cd - &> /dev/null
 			return 1
 		fi
-		./tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/nuttx.spk"
+		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/nuttx.spk"
 	fi
-	cd - &> /dev/null
 }
 
 # Name: spr-terminal
