@@ -34,7 +34,6 @@
 #
 ############################################################################
 
-CURRENT_DIR=`pwd`
 SCRIPT_NAME=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)/$(basename "${BASH_SOURCE[0]}")
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
@@ -226,7 +225,7 @@ function spr-create-app() {
 	else
 		cd ${SPRESENSE_SDK}/sdk
 		KCONFIG_EXISTED=0
-		if [ -f ${SPRESENSE_HOME}/Kconfig ]; then
+		if [ -f ${SPRESENSE_SDK}/sdk/Kconfig ]; then
 			KCONFIG_EXISTED=1
 			rm -f ${SPRESENSE_HOME}/Kconfig
 			rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
@@ -235,7 +234,7 @@ function spr-create-app() {
 		fi
 		./tools/mkcmd.py -d ${SPRESENSE_HOME} ${1}
 		if [ ${KCONFIG_EXISTED} -eq 1 ]; then
-			make olddefconfig
+			make olddefconfig &> /dev/null
 		fi
 		cd - &> /dev/null
 	fi
@@ -293,15 +292,48 @@ function spr-import-example() {
 		SED_INPLACE=(-i "")
 	fi
 
+	# Copy configs/examples/${approot} if it exists
+	local configs_src="${SPRESENSE_SDK}/sdk/configs/examples/${app_basename}"
+	if [ -d "${configs_src}" ]; then
+		mkdir -p "${dest_path}/configs"
+		cp -r "${configs_src}" "${dest_path}/configs/"
+
+		# Replace +EXAMPLES_ with +${APPROOT}_ in defconfig
+		local defconfig_file="${dest_path}/configs/${app_basename}/defconfig"
+		if [ -f "${defconfig_file}" ]; then
+			if ! sed "${SED_INPLACE[@]}" "s/+EXAMPLES_/+${APPROOT}_/g" "${defconfig_file}"; then
+				echo "Warning: Failed to replace +EXAMPLES_ with +${APPROOT}_ in ${defconfig_file}."
+			fi
+		fi
+	fi
+
 	# Replace EXAMPLES_ with APPROOT_ in all files
 	# Change to destination directory to avoid path issues
 	cd "${SPRESENSE_HOME}" || return 1
 	if ! find "${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
 		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
-		cd "${CURRENT_DIR}" &> /dev/null
+		cd - &> /dev/null
 		return 1
 	fi
-	cd "${CURRENT_DIR}" &> /dev/null
+	cd - &> /dev/null
+
+	# Replace $(APPDIR)/examples/ with nothing in Make.defs
+	local makedefs_file="${dest_path}/Make.defs"
+	if [ -f "${makedefs_file}" ]; then
+		if ! sed "${SED_INPLACE[@]}" 's|\$(APPDIR)/examples/||g' "${makedefs_file}"; then
+			echo "Warning: Failed to replace \$(APPDIR)/examples/ in ${makedefs_file}."
+		fi
+	fi
+
+	if [ -f ${SPRESENSE_SDK}/sdk/Kconfig ]; then
+		cd ${SPRESENSE_SDK}/sdk
+		rm -f ${SPRESENSE_HOME}/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/Kconfig
+		make olddefconfig &> /dev/null
+		cd - &> /dev/null
+	fi
 
 	echo "Application '${app_basename}' successfully imported to ${SPRESENSE_HOME}"
 	return 0
@@ -315,6 +347,15 @@ function spr-config() {
 	local configname
 	local config_arg="$1"
 	local approot=$(basename "${SPRESENSE_HOME}")
+
+	if [ "$#" -eq 0 ]; then
+		echo "Usage: ${FUNCNAME[0]} <config name>..."
+		echo "  -l             List available configurations"
+		echo "  -m             Open menuconfig after configuration"
+		echo "  -v <config>    Verbose output"
+		echo "  -i <config>    Show configuration"
+		return 1
+	fi
 
 	cd ${SPRESENSE_SDK}/sdk
 
@@ -461,8 +502,8 @@ function spr-go-approot() {
 # Note: Build SDK and user application same as make command.
 # Usage: $ spr-make [build options]
 function spr-make() {
-	make -C ${SPRESENSE_SDK}/sdk $@
-	if [ $? -eq 0 ]; then
+	make -j -C ${SPRESENSE_SDK}/sdk $@
+	if [[ $? -eq 0 ]] && [[ -d ${SPRESENSE_HOME} ]]; then
 		# Check if arguments contain clean, config or help
 		local skip_copy=0
 		local remove_build=0
@@ -550,6 +591,8 @@ _load_spresense_environment
 if [ "${SPRESENSE_HOME}" == "" ]; then
 	echo "Warning: Spresense user application directory is not set."
     echo "         Please run"
+    echo "         $ spr-create-approot <application home directory>"
+    echo "            or"
     echo "         $ spr-set-approot <application home directory>"
 elif [ ! -d ${SPRESENSE_HOME} ]; then
     echo "Warning: ${SPRESENSE_HOME} does not exist."
