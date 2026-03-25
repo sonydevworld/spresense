@@ -286,6 +286,84 @@ function spr-unset-approot() {
 	_print_current_spresense_environment
 }
 
+# Name: spr-distclean
+# Note: Clean generated files under sdk/apps by git clean.
+# Usage: $ spr-distclean
+function spr-distclean() {
+	local force=0
+	if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != "-f" ]; }; then
+		echo "Usage: ${FUNCNAME[0]} [-f]"
+		echo ""
+		echo "Clean generated files under sdk/apps by git clean."
+		echo "Then run 'spr-make distclean' automatically."
+		echo ""
+		echo "Options:"
+		echo "  -f          Run cleanup without confirmation prompt."
+		echo ""
+		return 1
+	fi
+	if [ "$#" -eq 1 ]; then
+		force=1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	local apps_dir="${SPRESENSE_SDK}/sdk/apps"
+	if [ ! -d "${apps_dir}" ]; then
+		echo "Error: '${apps_dir}' directory does not exist."
+		return 1
+	fi
+	if ! command -v git > /dev/null 2>&1; then
+		echo "Error: 'git' command is not available."
+		return 1
+	fi
+
+	if [ ${force} -eq 0 ]; then
+		local preview
+		preview=$(git -C "${apps_dir}" clean -ndx)
+		if [ $? -ne 0 ]; then
+			echo "Error: Failed to list cleanup targets under '${apps_dir}'."
+			return 1
+		fi
+		if [ -z "${preview}" ]; then
+			echo "No files to clean under '${apps_dir}'."
+			if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+				if ! spr-make distclean > /dev/null 2>&1; then
+					echo "Error: Failed to run 'spr-make distclean'."
+				fi
+			fi
+			return 0
+		fi
+
+		echo "This command removes untracked and ignored files under '${apps_dir}'."
+		echo "Targets to remove:"
+		echo "${preview}"
+		echo -n "Run 'git -C ${apps_dir} clean -fdx' ? (Y/N): "
+		read input
+		input=`echo ${input} | tr '[:lower:]' '[:upper:]'`
+		if [ "${input}" != "Y" ]; then
+			echo "Canceled to clean '${apps_dir}'."
+			return 1
+		fi
+	fi
+
+	git -C "${apps_dir}" clean -fdx
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to clean '${apps_dir}'."
+		return 1
+	fi
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
+	fi
+	echo "Finished cleaning '${apps_dir}' and running 'spr-make distclean'."
+}
+
 # Name: spr-set-port
 # Note: Set serial port
 # Usage: $ spr-set-port <serial port>
