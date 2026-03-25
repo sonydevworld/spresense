@@ -280,13 +280,18 @@ function spr-mkdefconfig() {
 	local config_name="$1"
 	local sdk_dir="${SPRESENSE_SDK}/sdk"
 	local current_dir="$(pwd -P)"
+	local approot=$(basename "${SPRESENSE_HOME}")
 
 	if ! cd "${sdk_dir}"; then
 		echo "Error: Failed to enter SDK directory: ${sdk_dir}"
 		return 1
 	fi
 
-	if ! ./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${config_name}"; then
+	# Copy default/defconfig to SPRESENSE_HOME/configs/default
+	mkdir -p "${SPRESENSE_HOME}/configs"
+	cp -r "${sdk_dir}/configs/default" "${SPRESENSE_HOME}/configs/"
+
+	if ! ./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${approot}/${config_name}"; then
 		echo "Error: mkdefconfig failed for configuration: ${config_name}"
 		cd "${current_dir}" &> /dev/null
 		return 1
