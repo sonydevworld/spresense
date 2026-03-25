@@ -121,7 +121,8 @@ endif
 
 SDKSUBDIRS = modules system
 
-EXTSUBDIRS = $(dir $(wildcard ../*/.sdksubdir)) $(SPRESENSE_HOME)
+EXTSDKSUBDIRS = $(foreach d,$(dir $(wildcard ../*/.sdksubdir)),$(if $(wildcard $(d).approotdir),,$(d)))
+EXTSUBDIRS = $(EXTSDKSUBDIRS) $(SPRESENSE_HOME)
 
 TARGETDIRS = $(SDKSUBDIRS) $(EXTSUBDIRS)
 SDKCLEANDIRS = $(EXTSUBDIRS)

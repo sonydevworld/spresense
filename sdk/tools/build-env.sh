@@ -144,6 +144,8 @@ function spr-create-approot() {
 		cd - &> /dev/null
 		return 1
 	fi
+	# Create a marker file to indicate this is an application root directory
+	touch "${SPRESENSE_HOME}/.approotdir"
 	echo "Created and set application root directory to '${SPRESENSE_HOME}'"
 	cd - &> /dev/null
 	# Save current variable
@@ -201,7 +203,7 @@ function spr-set-approot() {
 		fi
 	fi
 	if [ -d "${_SPRESENSE_HOME}" ]; then
-		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" ]; then
+		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" -a -f "${_SPRESENSE_HOME}/.approotdir" ]; then
 			if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
 				echo "Cleaning build output before setting application root directory..."
 				if ! spr-make distclean > /dev/null 2>&1; then
@@ -1157,7 +1159,7 @@ elif [ ! -d "${SPRESENSE_HOME}" ]; then
 	unset SPRESENSE_HOME
 fi
 
-if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
+if [ -d "${SPRESENSE_HOME}" -a \( ! -f "${SPRESENSE_HOME}/.sdksubdir" -o ! -f "${SPRESENSE_HOME}/.approotdir" \) ]; then
 	if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
 		echo "Warning: '${SPRESENSE_HOME}' is created for Spresense SDK1.x version."
 		echo "         Please create a new project directory with next command."
