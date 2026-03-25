@@ -1,4 +1,4 @@
 This configuration contains required options to use camera example.
 
 [Source path]
-examples/camera
+sdk/apps/examples/camera

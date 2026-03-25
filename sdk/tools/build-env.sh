@@ -74,6 +74,13 @@ function spr-create-approot() {
 	# Save previous SPRESENSE_HOME to restore on error
 	local prev_spresense_home="${SPRESENSE_HOME}"
 
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		echo "Cleaning build output before creating application root directory..."
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
+	fi
+
 	local mkappsdir_flag=""
 	local mkappsdir_desc="User application"
 	if [ "$#" -ge 2 ]; then
@@ -108,6 +115,15 @@ function spr-create-approot() {
 	fi
 	SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
 	SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
+	SPRESENSE_HOME_BASE_LOWER=$(echo "${SPRESENSE_HOME_BASE}" | tr '[:upper:]' '[:lower:]')
+	if [ "${SPRESENSE_HOME_BASE_LOWER}" == "examples" ] || \
+	   [ "${SPRESENSE_HOME_BASE_LOWER}" == "feature" ] || \
+	   [ "${SPRESENSE_HOME_BASE_LOWER}" == "device" ]; then
+		echo "Error: Invalid approot '${SPRESENSE_HOME}'."
+		echo "       Directory names 'examples', 'feature', and 'device' are reserved and cannot be used."
+		SPRESENSE_HOME="${prev_spresense_home}"
+		return 1
+	fi
 	mkdir -p ${SPRESENSE_HOME_DIR}
 	SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
 	if [ -d ${SPRESENSE_HOME} ]; then
@@ -137,6 +153,8 @@ function spr-create-approot() {
 		cd - &> /dev/null
 		return 1
 	fi
+	# Create a marker file to indicate this is an application root directory
+	touch "${SPRESENSE_HOME}/.approotdir"
 	echo "Created and set application root directory to '${SPRESENSE_HOME}'"
 	cd - &> /dev/null
 	# Save current variable
@@ -194,7 +212,13 @@ function spr-set-approot() {
 		fi
 	fi
 	if [ -d "${_SPRESENSE_HOME}" ]; then
-		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" ]; then
+		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" -a -f "${_SPRESENSE_HOME}/.approotdir" ]; then
+			if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+				echo "Cleaning build output before setting application root directory..."
+				if ! spr-make distclean > /dev/null 2>&1; then
+					echo "Error: Failed to run 'spr-make distclean'."
+				fi
+			fi
 			SPRESENSE_HOME=${_SPRESENSE_HOME}
 			# Save current variable
 			_save_spresense_environment
@@ -241,12 +265,103 @@ function spr-unset-approot() {
 		return 1
 	fi
 
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		echo "Cleaning build output before unsetting application root directory..."
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
+	fi
+
 	unset SPRESENSE_HOME
 	# Save current variable
 	_save_spresense_environment
 	_load_spresense_environment
 	# Print current variable
 	_print_current_spresense_environment
+}
+
+# Name: spr-distclean
+# Note: Clean generated files under sdk/apps by git clean.
+# Usage: $ spr-distclean
+function spr-distclean() {
+	local force=0
+	if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != "-f" ]; }; then
+		echo "Usage: ${FUNCNAME[0]} [-f]"
+		echo ""
+		echo "Clean generated files under sdk/apps by git clean."
+		echo "Then run 'spr-make distclean' automatically."
+		echo ""
+		echo "Options:"
+		echo "  -f          Run cleanup without confirmation prompt."
+		echo ""
+		return 1
+	fi
+	if [ "$#" -eq 1 ]; then
+		force=1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	local apps_dir="${SPRESENSE_SDK}/sdk/apps"
+	if [ ! -d "${apps_dir}" ]; then
+		echo "Error: '${apps_dir}' directory does not exist."
+		return 1
+	fi
+	if ! command -v git > /dev/null 2>&1; then
+		echo "Error: 'git' command is not available."
+		return 1
+	fi
+
+	if [ ${force} -eq 0 ]; then
+		local preview
+		preview=$(git -C "${apps_dir}" clean -ndx)
+		if [ $? -ne 0 ]; then
+			echo "Error: Failed to list cleanup targets under '${apps_dir}'."
+			return 1
+		fi
+		if [ -z "${preview}" ]; then
+			echo "No files to clean under '${apps_dir}'."
+			if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+				if ! spr-make distclean > /dev/null 2>&1; then
+					echo "Error: Failed to run 'spr-make distclean'."
+				fi
+			fi
+			return 0
+		fi
+
+		echo "This command removes untracked and ignored files under '${apps_dir}'."
+		echo "Targets to remove:"
+		echo "${preview}"
+		echo -n "Run 'git -C ${apps_dir} clean -fdx' ? (Y/N): "
+		read input
+		input=`echo ${input} | tr '[:lower:]' '[:upper:]'`
+		if [ "${input}" != "Y" ]; then
+			echo "Canceled to clean '${apps_dir}'."
+			return 1
+		fi
+	fi
+
+	git -C "${apps_dir}" clean -fdx
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to clean '${apps_dir}'."
+		return 1
+	fi
+	if [ -f "${SPRESENSE_SDK}/nuttx/.config" ]; then
+		if ! spr-make distclean > /dev/null 2>&1; then
+			echo "Error: Failed to run 'spr-make distclean'."
+		fi
+	fi
+	echo "Finished cleaning '${apps_dir}' and running 'spr-make distclean'."
 }
 
 # Name: spr-set-port
@@ -433,6 +548,11 @@ function spr-create-app() {
 		echo "       Use alphanumeric characters only (A-Z, a-z, 0-9, _)."
 		return 1
 	fi
+	if [[ "$appname" =~ ^[0-9] ]]; then
+		echo "Error: Invalid appname '${appname}'."
+		echo "       appname cannot start with a digit."
+		return 1
+	fi
 	if [[ "${desc}" == *\"* ]]; then
 		echo "Error: Invalid description '${desc}'."
 		echo "       Double quotes (\") are not allowed in description."
@@ -503,6 +623,9 @@ function spr-import-example() {
 	fi
 
 	local src_app="${1}"
+	local src_arg_for_match="${1}"
+	src_arg_for_match="${src_arg_for_match#./}"
+	src_arg_for_match="${src_arg_for_match%/}"
 
 	# Allow completion to pass SPRESENSE_SDK-relative paths.
 	if [[ "${src_app}" != /* ]]; then
@@ -537,25 +660,6 @@ function spr-import-example() {
 		SED_INPLACE=(-i "")
 	fi
 
-	# Config names mapping for examples that use different config directories
-	declare -A example_configs_map
-	example_configs_map["ahrs_pwbimu"]="ahrs_pwbimu ahrs_pwbimu_nethalow"
-	example_configs_map["audiolite_rec2net"]="audiolite_rec2net_rndis"
-	example_configs_map["awsiot_gnsslogger"]="wifi_awsiot_gnsslogger"
-	example_configs_map["bluetooth_le_central"]="ble_central"
-	example_configs_map["bluetooth_le_peripheral"]="ble_peripheral"
-	example_configs_map["bluetooth_spp"]="bt_spp"
-	example_configs_map["direct_audio_micinput"]="direct_audio"
-	example_configs_map["direct_audio_sin"]="direct_audio"
-	example_configs_map["direct_audio_through"]="direct_audio"
-	example_configs_map["hostif"]="hostif_i2c hostif_spi"
-	example_configs_map["multi_webcamera"]="multiwebcam multiwebcam_eth"
-	example_configs_map["tf_example"]="tf_example_helloworld tf_example_micro_speech tf_example_persondetect"
-	example_configs_map["tlsecho"]="tlsecho_wifi_revc"
-	example_configs_map["websocket_bitbank"]="lte_websocket_bitbank"
-	example_configs_map["websocket_gmocoin"]="lte_websocket_gmocoin"
-	example_configs_map["bmi160"]="sixaxis"
-
 	# Copy application to SPRESENSE_HOME
 	if ! cp -rf "${src_app}" "${SPRESENSE_HOME}"; then
 		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
@@ -579,18 +683,56 @@ function spr-import-example() {
 		fi
 	fi
 
-	# Copy configs/examples/${approot} if it exists
-	# Determine which config directories to copy
-	local config_names
-	if [ -n "${example_configs_map[$app_basename]}" ]; then
-		config_names="${example_configs_map[$app_basename]}"
-	else
-		config_names="${app_basename}"
+	# Find matching config directories from README [Source path]
+	local config_names=()
+	while IFS= read -r readme_path; do
+		if awk -v target="${src_arg_for_match}" '
+			function normalize(s) {
+				gsub(/\r/, "", s)
+				sub(/^[[:space:]]+/, "", s)
+				sub(/[[:space:]]+$/, "", s)
+				sub(/^sdk\//, "", s)
+				sub(/^\.\//, "", s)
+				sub(/\/$/, "", s)
+				return s
+			}
+			BEGIN {
+				in_source = 0
+				matched = 0
+				target = normalize(target)
+			}
+			/^\[Source path\][[:space:]]*$/ {
+				in_source = 1
+				next
+			}
+			in_source && /^\[[^]]+\][[:space:]]*$/ {
+				in_source = 0
+			}
+			in_source {
+				path = normalize($0)
+				if (path == "") {
+					next
+				}
+				if (path == target) {
+					matched = 1
+					exit
+				}
+			}
+			END {
+				exit(matched ? 0 : 1)
+			}
+		' "${readme_path}"; then
+			config_names+=("$(basename "$(dirname "${readme_path}")")")
+		fi
+	done < <(find "${SPRESENSE_SDK}/sdk/configs/examples" -mindepth 2 -maxdepth 2 -name README.txt)
+
+	if [ ${#config_names[@]} -eq 0 ]; then
+		echo "Warning: No matching config was found in sdk/configs/examples/*/README.txt for source path '${src_arg_for_match}'."
 	fi
 
-	# Copy each config directory
+	# Copy each matched config directory
 	local config_copied=0
-	for config_name in $config_names; do
+	for config_name in "${config_names[@]}"; do
 		local configs_src="${SPRESENSE_SDK}/sdk/configs/examples/${config_name}"
 		if [ -d "${configs_src}" ]; then
 			if [ $config_copied -eq 0 ]; then
@@ -800,24 +942,20 @@ function spr-flash() {
 		baud="-b ${SPRESENSE_BAUD}"
 	fi
 
-	cd ${SPRESENSE_SDK}/sdk || return 1
 	if [ "$#" -gt 0 ]; then
-		./tools/flash.sh ${port} ${baud} "$@"
+		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "$@"
 	else
 		_check_spresense_home_environment
 		if [ $? -ne 0 ]; then
-			cd - &> /dev/null
 			return 1
 		fi
 		if [ ! -f "${SPRESENSE_HOME}/build/nuttx.spk" ]; then
 			echo "Error: '${SPRESENSE_HOME}/build/nuttx.spk' does not exist."
 			echo "       Please run 'spr-make' first or specify a .spk/.espk file."
-			cd - &> /dev/null
 			return 1
 		fi
-		./tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/nuttx.spk"
+		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/*.spk"
 	fi
-	cd - &> /dev/null
 }
 
 # Name: spr-terminal
@@ -978,11 +1116,20 @@ function spr-make() {
 			cp -f ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/build/
 			cp -f ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/build/
 			cp -f ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/build/
+
+			if [[ -d "${SPRESENSE_SDK}/sdk/workerspks" ]]; then
+				local worker_file
+				for worker_file in "${SPRESENSE_SDK}/sdk/workerspks"/*; do
+					if [[ -f "${worker_file}" ]]; then
+						cp -f "${worker_file}" "${SPRESENSE_HOME}/build/"
+					fi
+				done
+			fi
 		fi
 
 		if [[ $remove_build -eq 1 ]]; then
 			echo "Clean successful. Remove build artifacts from ${SPRESENSE_HOME}/build"
-			rm -f ${SPRESENSE_HOME}/build/nuttx.spk
+			rm -f ${SPRESENSE_HOME}/build/*.spk
 			rm -f ${SPRESENSE_HOME}/build/nuttx
 			rm -f ${SPRESENSE_HOME}/build/nuttx.map
 			rm -f ${SPRESENSE_HOME}/build/System.map
@@ -1108,7 +1255,7 @@ elif [ ! -d "${SPRESENSE_HOME}" ]; then
 	unset SPRESENSE_HOME
 fi
 
-if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
+if [ -d "${SPRESENSE_HOME}" -a \( ! -f "${SPRESENSE_HOME}/.sdksubdir" -o ! -f "${SPRESENSE_HOME}/.approotdir" \) ]; then
 	if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
 		echo "Warning: '${SPRESENSE_HOME}' is created for Spresense SDK1.x version."
 		echo "         Please create a new project directory with next command."
