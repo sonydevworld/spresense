@@ -459,6 +459,11 @@ function spr-create-app() {
 		echo "       Use alphanumeric characters only (A-Z, a-z, 0-9, _)."
 		return 1
 	fi
+	if [[ "$appname" =~ ^[0-9] ]]; then
+		echo "Error: Invalid appname '${appname}'."
+		echo "       appname cannot start with a digit."
+		return 1
+	fi
 	if [[ "${desc}" == *\"* ]]; then
 		echo "Error: Invalid description '${desc}'."
 		echo "       Double quotes (\") are not allowed in description."
