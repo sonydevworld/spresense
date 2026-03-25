@@ -380,10 +380,20 @@ function spr-flash() {
 		fi
 	done
 
+	local port;
+	if [ "${SPRESENSE_PORT}" != "" ]; then
+		port="-c ${SPRESENSE_PORT}"
+	fi
+
+	local baud;
+	if [ "${SPRESENSE_BAUD}" != "" ]; then
+		baud="-b ${SPRESENSE_BAUD}"
+	fi
+
 	if [ $has_spk -eq 1 ]; then
-		./tools/flash.sh $@
+		./tools/flash.sh ${port} ${baud} $@
 	else
-		./tools/flash.sh $@ nuttx.spk
+		./tools/flash.sh ${port} ${baud} $@ ${SPRESENSE_HOME}/build/nuttx.spk
 	fi
 	cd - &> /dev/null
 }
