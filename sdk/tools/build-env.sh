@@ -168,7 +168,7 @@ function spr-create-app() {
 }
 
 # Name: spr-config
-# Note: Create user application into application root directory.
+# Note: Configure SDK and user application same as config.py command.
 # Usage: $ spr-config <configuration name>...
 function spr-config() {
 	cd ${SPRESENSE_SDK}/sdk
@@ -184,7 +184,7 @@ function spr-go-sdk() {
 		cd ${SPRESENSE_SDK}/sdk
 	else
 		echo "Warning: SPRESENSE_SDK is not set."
-		echo "         Please run 'source tools/envsetup.sh' again."
+		echo "         Please run 'source tools/build-env.sh' again."
 	fi
 }
 
