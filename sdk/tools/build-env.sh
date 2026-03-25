@@ -503,6 +503,9 @@ function spr-import-example() {
 	fi
 
 	local src_app="${1}"
+	local src_arg_for_match="${1}"
+	src_arg_for_match="${src_arg_for_match#./}"
+	src_arg_for_match="${src_arg_for_match%/}"
 
 	# Allow completion to pass SPRESENSE_SDK-relative paths.
 	if [[ "${src_app}" != /* ]]; then
@@ -537,25 +540,6 @@ function spr-import-example() {
 		SED_INPLACE=(-i "")
 	fi
 
-	# Config names mapping for examples that use different config directories
-	declare -A example_configs_map
-	example_configs_map["ahrs_pwbimu"]="ahrs_pwbimu ahrs_pwbimu_nethalow"
-	example_configs_map["audiolite_rec2net"]="audiolite_rec2net_rndis"
-	example_configs_map["awsiot_gnsslogger"]="wifi_awsiot_gnsslogger"
-	example_configs_map["bluetooth_le_central"]="ble_central"
-	example_configs_map["bluetooth_le_peripheral"]="ble_peripheral"
-	example_configs_map["bluetooth_spp"]="bt_spp"
-	example_configs_map["direct_audio_micinput"]="direct_audio"
-	example_configs_map["direct_audio_sin"]="direct_audio"
-	example_configs_map["direct_audio_through"]="direct_audio"
-	example_configs_map["hostif"]="hostif_i2c hostif_spi"
-	example_configs_map["multi_webcamera"]="multiwebcam multiwebcam_eth"
-	example_configs_map["tf_example"]="tf_example_helloworld tf_example_micro_speech tf_example_persondetect"
-	example_configs_map["tlsecho"]="tlsecho_wifi_revc"
-	example_configs_map["websocket_bitbank"]="lte_websocket_bitbank"
-	example_configs_map["websocket_gmocoin"]="lte_websocket_gmocoin"
-	example_configs_map["bmi160"]="sixaxis"
-
 	# Copy application to SPRESENSE_HOME
 	if ! cp -rf "${src_app}" "${SPRESENSE_HOME}"; then
 		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
@@ -579,18 +563,56 @@ function spr-import-example() {
 		fi
 	fi
 
-	# Copy configs/examples/${approot} if it exists
-	# Determine which config directories to copy
-	local config_names
-	if [ -n "${example_configs_map[$app_basename]}" ]; then
-		config_names="${example_configs_map[$app_basename]}"
-	else
-		config_names="${app_basename}"
+	# Find matching config directories from README [Source path]
+	local config_names=()
+	while IFS= read -r readme_path; do
+		if awk -v target="${src_arg_for_match}" '
+			function normalize(s) {
+				gsub(/\r/, "", s)
+				sub(/^[[:space:]]+/, "", s)
+				sub(/[[:space:]]+$/, "", s)
+				sub(/^sdk\//, "", s)
+				sub(/^\.\//, "", s)
+				sub(/\/$/, "", s)
+				return s
+			}
+			BEGIN {
+				in_source = 0
+				matched = 0
+				target = normalize(target)
+			}
+			/^\[Source path\][[:space:]]*$/ {
+				in_source = 1
+				next
+			}
+			in_source && /^\[[^]]+\][[:space:]]*$/ {
+				in_source = 0
+			}
+			in_source {
+				path = normalize($0)
+				if (path == "") {
+					next
+				}
+				if (path == target) {
+					matched = 1
+					exit
+				}
+			}
+			END {
+				exit(matched ? 0 : 1)
+			}
+		' "${readme_path}"; then
+			config_names+=("$(basename "$(dirname "${readme_path}")")")
+		fi
+	done < <(find "${SPRESENSE_SDK}/sdk/configs/examples" -mindepth 2 -maxdepth 2 -name README.txt)
+
+	if [ ${#config_names[@]} -eq 0 ]; then
+		echo "Warning: No matching config was found in sdk/configs/examples/*/README.txt for source path '${src_arg_for_match}'."
 	fi
 
-	# Copy each config directory
+	# Copy each matched config directory
 	local config_copied=0
-	for config_name in $config_names; do
+	for config_name in "${config_names[@]}"; do
 		local configs_src="${SPRESENSE_SDK}/sdk/configs/examples/${config_name}"
 		if [ -d "${configs_src}" ]; then
 			if [ $config_copied -eq 0 ]; then
