@@ -353,6 +353,41 @@ function spr-go-approot() {
 # Usage: $ spr-make [build options]
 function spr-make() {
 	make -C ${SPRESENSE_SDK}/sdk $@
+	if [ $? -eq 0 ]; then
+		# Check if arguments contain clean, config or help
+		local skip_copy=0
+		local remove_build=0
+		for arg in "$@"; do
+			if [[ "$arg" == *config* ]] || [[ "$arg" == help ]]; then
+				skip_copy=1
+			fi
+			if [[ "$arg" == *clean* ]]; then
+				skip_copy=1
+				remove_build=1
+			fi
+			if [[ "$arg" == all ]]; then
+				skip_copy=0
+				remove_build=0
+			fi
+		done
+
+		if [[ $skip_copy -eq 0 ]] && [[ -f ${SPRESENSE_SDK}/sdk/nuttx.spk ]]; then
+			echo "Build successful. Copying build artifacts to ${SPRESENSE_HOME}/build"
+			mkdir -p ${SPRESENSE_HOME}/build
+			cp ${SPRESENSE_SDK}/sdk/nuttx.spk ${SPRESENSE_HOME}/build/
+			cp ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/build/
+			cp ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/build/
+			cp ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/build/
+		fi
+
+		if [[ $remove_build -eq 1 ]]; then
+			echo "Clean successful. Removing build artifacts from ${SPRESENSE_HOME}/build"
+			rm -f ${SPRESENSE_HOME}/build/nuttx.spk
+			rm -f ${SPRESENSE_HOME}/build/nuttx
+			rm -f ${SPRESENSE_HOME}/build/nuttx.map
+			rm -f ${SPRESENSE_HOME}/build/System.map
+		fi
+	fi
 }
 
 # Load current variable
