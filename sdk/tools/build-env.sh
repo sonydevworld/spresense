@@ -2,7 +2,7 @@
 ############################################################################
 # tools/build-env.sh
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2019, 2026 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -91,6 +91,8 @@ function spr-create-approot() {
 function spr-set-approot() {
 	if [ "$#" != 1 ]; then
 		echo "Usage: ${FUNCNAME[0]} <application home directory>"
+		# Print current variable
+		_print_current_spresense_environment
 	else
 		if [ "${1:0:1}" == "/" ]; then
 			_SPRESENSE_HOME=${1}
@@ -135,6 +137,14 @@ function spr-unset-approot() {
 	# Save current variable
 	_save_spresense_environment
 
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-info
+# Note: Show current environment information
+# Usage: $ spr-info
+function spr-info() {
 	# Print current variable
 	_print_current_spresense_environment
 }
