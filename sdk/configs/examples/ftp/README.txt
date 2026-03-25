@@ -2,4 +2,5 @@ This configuration contains required options to build "ftpc" and "ftpd" example 
 These are File Transfer Protocol(FTP) server and client examples.
 
 [Source path]
-sdk/apps/examples/ftpc and sdk/apps/examples/ftpd
+sdk/apps/examples/ftpc
+sdk/apps/examples/ftpd
