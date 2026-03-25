@@ -87,6 +87,7 @@ MODULE = $(CONFIG_{configname})
 
 ASRCS =
 CSRCS =
+CXXSRCS =
 MAINSRC = {appname}_main.{ext}
 
 include $(APPDIR)/Application.mk
