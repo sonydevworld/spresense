@@ -5,3 +5,4 @@
 Make.dep
 /*.a
 *.o
+/build
