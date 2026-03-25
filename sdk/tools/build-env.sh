@@ -167,6 +167,72 @@ function spr-create-app() {
 	fi
 }
 
+# Name: spr-import-app
+# Note: Import example application into application root directory.
+# Usage: $ spr-import-app <example application path>
+function spr-import-app() {
+	# Validate arguments
+	if [ "$#" != 1 ]; then
+		echo "Usage: ${FUNCNAME[0]} <example application path>"
+		return 1
+	fi
+
+	# Check if SPRESENSE_HOME is set
+	if [ -z "${SPRESENSE_HOME}" ]; then
+		echo "Warning: Spresense user application directory is not set."
+		echo "         Please run"
+		echo "         $ spr-set-approot <application home directory>"
+		return 1
+	fi
+
+	local src_app="${1}"
+	local app_basename=$(basename "${src_app}")
+	local dest_path="${SPRESENSE_HOME}/${app_basename}"
+
+	# Check if source application exists
+	if [ ! -e "${src_app}" ]; then
+		echo "Error: Application '${src_app}' does not exist."
+		return 1
+	fi
+
+	# Ensure the source lives under an 'examples' directory
+	local src_parent_abs="$(cd "$(dirname "${src_app}")" && pwd -P)"
+	local src_parent_name="$(basename "${src_parent_abs}")"
+	if [ "${src_parent_name}" != "examples" ]; then
+		echo "Error: Application '${src_app}' must reside under an 'examples' directory."
+		return 1
+	fi
+
+	# Copy application to SPRESENSE_HOME
+	if ! cp -r "${src_app}" "${SPRESENSE_HOME}"; then
+		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
+		return 1
+	fi
+
+	# Generate approot names
+	local approot=$(basename "${SPRESENSE_HOME}")
+	local APPROOT="${approot^^}"
+	local SED_INPLACE=(-i)
+
+	# macOS (BSD sed) requires explicit empty backup suffix with -i
+	if [ "$(uname -s)" = "Darwin" ]; then
+		SED_INPLACE=(-i "")
+	fi
+
+	# Replace EXAMPLES_ with APPROOT_ in all files
+	# Change to destination directory to avoid path issues
+	cd "${SPRESENSE_HOME}" || return 1
+	if ! find "${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
+		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
+		cd "${CURRENT_DIR}" &> /dev/null
+		return 1
+	fi
+	cd "${CURRENT_DIR}" &> /dev/null
+
+	echo "Application '${app_basename}' successfully imported to ${SPRESENSE_HOME}"
+	return 0
+}
+
 # Name: spr-config
 # Note: Configure SDK and user application same as config.py command.
 # Usage: $ spr-config <configuration name>...
