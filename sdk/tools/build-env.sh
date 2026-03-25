@@ -2,7 +2,7 @@
 ############################################################################
 # tools/build-env.sh
 #
-#   Copyright 2019 Sony Semiconductor Solutions Corporation
+#   Copyright 2019, 2026 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,7 +34,6 @@
 #
 ############################################################################
 
-CURRENT_DIR=`pwd`
 SCRIPT_NAME=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)/$(basename "${BASH_SOURCE[0]}")
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
@@ -44,85 +43,189 @@ SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
 # Name: spr-create-approot
 # Note: Create application root directory that will contain user applications.
-# Usage: $ spr-create-approot <application home directory>
+# Usage: $ spr-create-approot <application root directory>
 function spr-create-approot() {
-	if [ "$#" != 1 ]; then
-		echo "Usage: ${FUNCNAME[0]} <application home directory>"
-	else
-		if [ "${1:0:1}" == "/" ]; then
-			SPRESENSE_HOME=${1}
-		else
-			SPRESENSE_HOME=$(pwd -P)/${1}
-		fi
-		SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
-		SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
-		mkdir -p ${SPRESENSE_HOME_DIR}
-		SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
-		if [ -d ${SPRESENSE_HOME} ]; then
-			echo "Warning: Directory ${SPRESENSE_HOME} is already exists,"
-			echo -n "         Overwrite makefiles ? (Y/N): "
-			read input
-			input=`echo ${input} | tr '[:lower:]' '[:upper:]'`
-			if [ "${input}" == "Y" ]; then
-				echo "Creating application directory into ${SPRESENSE_HOME}"
-				cd ${SPRESENSE_SDK}/sdk
-				${SCRIPT_DIR}/mkappsdir.py -f ${SPRESENSE_HOME} "User application"
-				cd - &> /dev/null
-			else
-				echo "Create application home directory canceled."
-			fi
-		else
-			echo "Creating application directory into ${SPRESENSE_HOME}"
-			cd ${SPRESENSE_SDK}/sdk
-			${SCRIPT_DIR}/mkappsdir.py ${SPRESENSE_HOME} "User application"
-			cd - &> /dev/null
-		fi
-		# Save current variable
-		_save_spresense_environment
-
-		# Print current variable
-		_print_current_spresense_environment
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <approot> [description]"
+		echo ""
+		echo "Create and set your new application root directory."
+		echo ""
+		echo "Arguments:"
+		echo "  approot         Path to your new application root directory."
+		echo "                  Absolute path or relative path from the current directory."
+		echo "                  Use alphanumeric characters with '.', '~', '_' and '/'."
+		echo "                  (e.g. ~/myapps, ../../myapps)"
+		echo ""
+		echo "Options:"
+		echo "  description     Optional description of the application root."
+		echo "                  (e.g. \"My Applications\")"
+		echo "                  Double quotes (\") are not allowed."
+		echo "                  Leading or trailing spaces are not allowed."
+		echo ""
+		return 1
 	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	# Save previous SPRESENSE_HOME to restore on error
+	local prev_spresense_home="${SPRESENSE_HOME}"
+
+	local mkappsdir_flag=""
+	local mkappsdir_desc="User application"
+	if [ "$#" -ge 2 ]; then
+		mkappsdir_desc="$2"
+		if [[ "${mkappsdir_desc}" == *\"* ]]; then
+			echo "Error: Invalid description '${mkappsdir_desc}'."
+			echo "       Double quotes (\") are not allowed in description."
+			return 1
+		fi
+		if [[ "${mkappsdir_desc}" =~ ^[[:space:]] || "${mkappsdir_desc}" =~ [[:space:]]$ ]]; then
+			echo "Error: Invalid description '${mkappsdir_desc}'."
+			echo "       Leading or trailing spaces are not allowed in description."
+			return 1
+		fi
+	fi
+	if [[ "$1" =~ [^A-Za-z0-9./~_] ]]; then
+		echo "Error: Invalid approot '$1'."
+		echo "       Use alphanumeric characters with '.', '~', '_' and '/' only."
+		return 1
+	fi
+	if [[ "$1" == *"~"* ]] && [[ "${1:0:1}" != "~" ]]; then
+		echo "Error: Invalid approot '$1'."
+		echo "       '~' is only allowed at the beginning of approot."
+		return 1
+	fi
+	if [ "${1:0:1}" == "/" ]; then
+		SPRESENSE_HOME=${1}
+	elif [ "${1:0:1}" == "~" ]; then
+		SPRESENSE_HOME=${HOME}${1:1}
+	else
+		SPRESENSE_HOME=$(pwd -P)/${1}
+	fi
+	SPRESENSE_HOME_DIR=$(dirname ${SPRESENSE_HOME})
+	SPRESENSE_HOME_BASE=$(basename ${SPRESENSE_HOME})
+	mkdir -p ${SPRESENSE_HOME_DIR}
+	SPRESENSE_HOME=$(cd ${SPRESENSE_HOME_DIR}; pwd -P)/${SPRESENSE_HOME_BASE}
+	if [ -d ${SPRESENSE_HOME} ]; then
+		echo "Warning: Directory '${SPRESENSE_HOME}' already exists,"
+		echo -n "         Overwrite Makefile ? (Y/N): "
+		read input
+		input=`echo ${input} | tr '[:lower:]' '[:upper:]'`
+		if [ "${input}" == "Y" ]; then
+			mkappsdir_flag="-f"
+		else
+			echo "Canceled to create '${SPRESENSE_HOME}'."
+			# Restore previous SPRESENSE_HOME on cancel
+			SPRESENSE_HOME="${prev_spresense_home}"
+			_save_spresense_environment
+			_load_spresense_environment
+			return 1
+		fi
+	fi
+	cd ${SPRESENSE_SDK}/sdk || return 1
+	./tools/mkappsdir.py ${mkappsdir_flag} ${SPRESENSE_HOME} "${mkappsdir_desc}"
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to create '${SPRESENSE_HOME}'."
+		# Restore previous SPRESENSE_HOME on error
+		SPRESENSE_HOME="${prev_spresense_home}"
+		_save_spresense_environment
+		_load_spresense_environment
+		cd - &> /dev/null
+		return 1
+	fi
+	echo "Created and set application root directory to '${SPRESENSE_HOME}'"
+	cd - &> /dev/null
+	# Save current variable
+	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
 }
 
 # Name: spr-set-approot
 # Note: Select application root directory.
-# Usage: $ spr-set-approot <application home directory>
+# Usage: $ spr-set-approot <application root directory>
 function spr-set-approot() {
-	if [ "$#" != 1 ]; then
-		echo "Usage: ${FUNCNAME[0]} <application home directory>"
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <approot>"
+		echo ""
+		echo "Set your application root directory as SPRESENSE_HOME."
+		echo "Specify the directory created by 'spr-create-approot' command."
+		echo ""
+		echo "Arguments:"
+		echo "  approot      Your application root directory."
+		echo "               Absolute path or relative path from the current directory."
+		echo "               Use alphanumeric characters with '.', '~', '_' and '/' only."
+		echo "               (e.g. ~/myapps, ../../myapps, myapps/subdir)"
+		echo ""
+		return 1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	if [[ "$1" =~ [^A-Za-z0-9./~_] ]]; then
+		echo "Error: Invalid approot '$1'."
+		echo "       Use alphanumeric characters with '.', '~', '_' and '/' only."
+		return 1
+	fi
+	if [[ "$1" == *"~"* ]] && [[ "${1:0:1}" != "~" ]]; then
+		echo "Error: Invalid approot '$1'."
+		echo "       '~' is only allowed at the beginning of approot."
+		return 1
+	fi
+
+	if [ "${1:0:1}" == "/" ]; then
+		_SPRESENSE_HOME=${1}
+	elif [ "${1:0:1}" == "~" ]; then
+		_SPRESENSE_HOME=${HOME}${1:1}
 	else
-		if [ "${1:0:1}" == "/" ]; then
-			_SPRESENSE_HOME=${1}
+		if [ -d "${1}" ]; then
+			_SPRESENSE_HOME="$(cd ${1} &> /dev/null; pwd)"
 		else
-			_SPRESENSE_HOME="$(cd ${1}; pwd)"
+			_SPRESENSE_HOME="$(pwd -P)/${1}"
 		fi
-		if [ -d ${_SPRESENSE_HOME} ]; then
-			if [ -f ${_SPRESENSE_HOME}/.sdksubdir ]; then
-				SPRESENSE_HOME=${_SPRESENSE_HOME}
-
-				# Save current variable
-				_save_spresense_environment
+	fi
+	if [ -d "${_SPRESENSE_HOME}" ]; then
+		if [ -f "${_SPRESENSE_HOME}/.sdksubdir" ]; then
+			SPRESENSE_HOME=${_SPRESENSE_HOME}
+			# Save current variable
+			_save_spresense_environment
+			_load_spresense_environment
+			# Print current variable
+			_print_current_spresense_environment
+		else
+			if [ -f "${_SPRESENSE_HOME}/Application.mk" ]; then
+				echo "Warning: Your environment('${_SPRESENSE_HOME}') is created for Spresense SDK1.x version."
+				echo "         Please create a new application root directory with next command."
+				echo ""
+				echo "         $ spr-create-approot <new place>"
+				echo ""
 			else
-				if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
-					echo "Warning: Your environment(${SPRESENSE_HOME}) is created for Spresense SDK1.x version."
-					echo "         Please create a new project directory with next command."
-					echo "         $ spr-create-approot <new place>"
-				else
-					echo "Warning: Your environment(${_SPRESENSE_HOME}) doesn't have makefiles."
-					echo "         Please run next command to create makefiles."
-					echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
-				fi
-				unset SPRESENSE_HOME
+				echo "Warning: Your environment('${_SPRESENSE_HOME}') is invalid."
+				echo "         Please run next command to create the application root directory."
+				echo ""
+				echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+				echo ""
 			fi
-		else
-			echo "Warning: ${_SPRESENSE_HOME} does not exist."
-			echo "         Please run"
-			echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+			unset SPRESENSE_HOME
+			# Save current variable
+			_save_spresense_environment
+			_load_spresense_environment
 		fi
-
-		# Print current variable
-		_print_current_spresense_environment
+	else
+		echo "Warning: '${_SPRESENSE_HOME}' does not exist."
+		echo "         Please run next command to create the application root directory."
+		echo ""
+		echo "         $ spr-create-approot ${_SPRESENSE_HOME}"
+		echo ""
 	fi
 }
 
@@ -130,10 +233,134 @@ function spr-set-approot() {
 # Note: Unset application root directory.
 # Usage: $ spr-unset-approot
 function spr-unset-approot() {
-	unset SPRESENSE_HOME
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Unset your application root directory."
+		echo ""
+		return 1
+	fi
 
+	unset SPRESENSE_HOME
 	# Save current variable
 	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-set-port
+# Note: Set serial port
+# Usage: $ spr-set-port <serial port>
+function spr-set-port() {
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <port>"
+		echo ""
+		echo "Set your serial port used by 'spr-flash' and 'spr-terminal' command."
+		echo ""
+		echo "Arguments:"
+		echo "  port         Serial port name"
+		echo "               (e.g. COM3, /dev/ttyS0)."
+		echo ""
+		return 1
+	fi
+
+	SPRESENSE_PORT=${1}
+	# Save current variable
+	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-unset-port
+# Note: Unset serial port.
+# Usage: $ spr-unset-port
+function spr-unset-port() {
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Unset your serial port."
+		echo ""
+		return 1
+	fi
+
+	unset SPRESENSE_PORT
+	# Save current variable
+	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-set-baud
+# Note: Set serial port baud rate
+# Usage: $ spr-set-baud <baud rate>
+function spr-set-baud() {
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <baud>"
+		echo ""
+		echo "Set your serial baud rate used by 'spr-flash' command."
+		echo ""
+		echo "Arguments:"
+		echo "  baud         Baud rate for serial communication."
+		echo "               (e.g. 115200, 230400, 460800, 500000, 576000, 921600, 1000000, 1152000)."
+		echo ""
+		return 1
+	fi
+
+	if [[ ! "$1" =~ ^[0-9]+$ ]]; then
+		echo "Error: Invalid baud '$1'."
+		echo "       Baud must contain digits only."
+		return 1
+	fi
+
+	SPRESENSE_BAUD=${1}
+	# Save current variable
+	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-unset-baud
+# Note: Unset serial port baud rate.
+# Usage: $ spr-unset-baud
+function spr-unset-baud() {
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Unset your serial baud rate."
+		echo "The default 115200 is used by 'spr-flash' command."
+		echo ""
+		return 1
+	fi
+
+	unset SPRESENSE_BAUD
+	# Save current variable
+	_save_spresense_environment
+	_load_spresense_environment
+	# Print current variable
+	_print_current_spresense_environment
+}
+
+# Name: spr-info
+# Note: Show current environment information
+# Usage: $ spr-info
+function spr-info() {
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Show your current environment information."
+		echo ""
+		return 1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
 
 	# Print current variable
 	_print_current_spresense_environment
@@ -143,51 +370,148 @@ function spr-unset-approot() {
 # Note: Create user application into application root directory.
 # Usage: $ spr-create-app <application name>
 function spr-create-app() {
-	if [ "$#" != 1 ]; then
-		echo "Usage: ${FUNCNAME[0]} <application name>"
-	elif [ "${SPRESENSE_HOME}" == "" ]; then
-		echo "Warning: Spresense user application directory is not set."
-		echo "         Please run"
-		echo "         $ spr-set-approot <application home directory>"
-	else
-		cd ${SPRESENSE_SDK}/sdk
-		KCONFIG_EXISTED=0
-		if [ -f ${SPRESENSE_HOME}/Kconfig ]; then
-			KCONFIG_EXISTED=1
-			rm -f ${SPRESENSE_HOME}/Kconfig
-			rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
-			rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
-			rm -f ${SPRESENSE_SDK}/sdk/Kconfig
-		fi
-		./tools/mkcmd.py -d ${SPRESENSE_HOME} ${1}
-		if [ ${KCONFIG_EXISTED} -eq 1 ]; then
-			make olddefconfig
-		fi
-		cd - &> /dev/null
-	fi
-}
-
-# Name: spr-import-app
-# Note: Import example application into application root directory.
-# Usage: $ spr-import-app <example application path>
-function spr-import-app() {
-	# Validate arguments
-	if [ "$#" != 1 ]; then
-		echo "Usage: ${FUNCNAME[0]} <example application path>"
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <appname> [description] [-x]"
+		echo ""
+		echo "Create your application into application root directory."
+		echo ""
+		echo "Arguments:"
+		echo "  appname         Application name to create."
+		echo "                  It must be an alphanumeric string (A-Z, a-z, 0-9, _)."
+		echo ""
+		echo "Options:"
+		echo "  description     Optional description of the application."
+		echo "                  (e.g. \"My Application\")"
+		echo "                  Double quotes (\") are not allowed."
+		echo "                  Leading or trailing spaces are not allowed."
+		echo "  -x              Create C++ application."
+		echo ""
 		return 1
 	fi
 
-	# Check if SPRESENSE_HOME is set
-	if [ -z "${SPRESENSE_HOME}" ]; then
-		echo "Warning: Spresense user application directory is not set."
-		echo "         Please run"
-		echo "         $ spr-set-approot <application home directory>"
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	_check_spresense_home_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	local cpp_flag=""
+	local appname=""
+	local desc=""
+	local arg_count=0
+	local approot=$(basename "${SPRESENSE_HOME}")
+	local SED_INPLACE=(-i)
+
+	# macOS (BSD sed) requires explicit empty backup suffix with -i
+	if [ "$(uname -s)" = "Darwin" ]; then
+		SED_INPLACE=(-i "")
+	fi
+
+	# Parse arguments and remove -x flag
+	for arg in "$@"; do
+		if [ "$arg" == "-x" ]; then
+			cpp_flag="-x"
+		else
+			arg_count=$((arg_count + 1))
+			if [ $arg_count -eq 1 ]; then
+				appname="$arg"
+			elif [ $arg_count -eq 2 ]; then
+				desc="$arg"
+				if [[ "$desc" == -* ]]; then
+					desc=""
+					arg_count=$((arg_count - 1))
+				fi
+			fi
+		fi
+	done
+	if ! [[ "$appname" =~ ^[A-Za-z0-9_]+$ ]]; then
+		echo "Error: Invalid appname '${appname}'."
+		echo "       Use alphanumeric characters only (A-Z, a-z, 0-9, _)."
+		return 1
+	fi
+	if [[ "${desc}" == *\"* ]]; then
+		echo "Error: Invalid description '${desc}'."
+		echo "       Double quotes (\") are not allowed in description."
+		return 1
+	fi
+	if [[ "${desc}" =~ ^[[:space:]] || "${desc}" =~ [[:space:]]$ ]]; then
+		echo "Error: Invalid description '${desc}'."
+		echo "       Leading or trailing spaces are not allowed in description."
+		return 1
+	fi
+
+	cd ${SPRESENSE_SDK}/sdk || return 1
+	KCONFIG_EXISTED=0
+	if [ -f ${SPRESENSE_SDK}/sdk/Kconfig ]; then
+		KCONFIG_EXISTED=1
+		rm -f ${SPRESENSE_HOME}/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/Kconfig
+	fi
+	./tools/mkcmd.py -d ${SPRESENSE_HOME} ${cpp_flag} ${appname} "${desc}"
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to create application '${appname}'."
+		cd - &> /dev/null
+		return 1
+	fi
+	# Replace "default y" with "default n" in generated Kconfig
+	if [ -f "${SPRESENSE_HOME}/${appname}/Kconfig" ]; then
+		sed "${SED_INPLACE[@]}" 's/^\([[:space:]]*\)default y$/\1default n/' "${SPRESENSE_HOME}/${appname}/Kconfig"
+	fi
+	# Copy default/defconfig to SPRESENSE_HOME/configs/default
+	mkdir -p "${SPRESENSE_HOME}/configs/${approot}/${appname}"
+	cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
+	# Create defconfig with +${APPROOT}_${APPNAME}=y
+	echo "+${approot^^}_${appname^^}=y" > "${SPRESENSE_HOME}/configs/${approot}/${appname}/defconfig"
+	echo "New '${approot}/${appname}' config successfully created into ${SPRESENSE_HOME}/configs"
+	if [ ${KCONFIG_EXISTED} -eq 1 ]; then
+		make olddefconfig &> /dev/null
+	fi
+	cd - &> /dev/null
+}
+
+# Name: spr-import-example
+# Note: Import an example application into application root directory.
+# Usage: $ spr-import-example <example application path>
+function spr-import-example() {
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <example>"
+		echo ""
+		echo "Import the specified example application into the application root directory."
+		echo "Specify an example name completed with tab completion."
+		echo ""
+		echo "Arguments:"
+		echo "  example         The example application name to import."
+		echo "                  (e.g. examples/gnss, apps/examples/hello)"
+		echo ""
+		return 1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	_check_spresense_home_environment
+	if [ $? -ne 0 ]; then
 		return 1
 	fi
 
 	local src_app="${1}"
-	local app_basename=$(basename "${src_app}")
-	local dest_path="${SPRESENSE_HOME}/${app_basename}"
+
+	# Allow completion to pass SPRESENSE_SDK-relative paths.
+	if [[ "${src_app}" != /* ]]; then
+		if [[ "${src_app}" == examples/* ]]; then
+			src_app="${SPRESENSE_SDK}/${src_app}"
+		elif [[ "${src_app}" == apps/examples/* ]]; then
+			src_app="${SPRESENSE_SDK}/sdk/${src_app}"
+		fi
+	fi
 
 	# Check if source application exists
 	if [ ! -e "${src_app}" ]; then
@@ -203,13 +527,7 @@ function spr-import-app() {
 		return 1
 	fi
 
-	# Copy application to SPRESENSE_HOME
-	if ! cp -r "${src_app}" "${SPRESENSE_HOME}"; then
-		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
-		return 1
-	fi
-
-	# Generate approot names
+	local app_basename=$(basename "${src_app}")
 	local approot=$(basename "${SPRESENSE_HOME}")
 	local APPROOT="${approot^^}"
 	local SED_INPLACE=(-i)
@@ -219,26 +537,160 @@ function spr-import-app() {
 		SED_INPLACE=(-i "")
 	fi
 
-	# Replace EXAMPLES_ with APPROOT_ in all files
-	# Change to destination directory to avoid path issues
-	cd "${SPRESENSE_HOME}" || return 1
-	if ! find "${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
-		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
-		cd "${CURRENT_DIR}" &> /dev/null
+	# Config names mapping for examples that use different config directories
+	declare -A example_configs_map
+	example_configs_map["ahrs_pwbimu"]="ahrs_pwbimu ahrs_pwbimu_nethalow"
+	example_configs_map["audiolite_rec2net"]="audiolite_rec2net_rndis"
+	example_configs_map["awsiot_gnsslogger"]="wifi_awsiot_gnsslogger"
+	example_configs_map["bluetooth_le_central"]="ble_central"
+	example_configs_map["bluetooth_le_peripheral"]="ble_peripheral"
+	example_configs_map["bluetooth_spp"]="bt_spp"
+	example_configs_map["direct_audio_micinput"]="direct_audio"
+	example_configs_map["direct_audio_sin"]="direct_audio"
+	example_configs_map["direct_audio_through"]="direct_audio"
+	example_configs_map["hostif"]="hostif_i2c hostif_spi"
+	example_configs_map["multi_webcamera"]="multiwebcam multiwebcam_eth"
+	example_configs_map["tf_example"]="tf_example_helloworld tf_example_micro_speech tf_example_persondetect"
+	example_configs_map["tlsecho"]="tlsecho_wifi_revc"
+	example_configs_map["websocket_bitbank"]="lte_websocket_bitbank"
+	example_configs_map["websocket_gmocoin"]="lte_websocket_gmocoin"
+	example_configs_map["bmi160"]="sixaxis"
+
+	# Copy application to SPRESENSE_HOME
+	if ! cp -rf "${src_app}" "${SPRESENSE_HOME}"; then
+		echo "Error: Failed to copy '${src_app}' to '${SPRESENSE_HOME}'."
 		return 1
 	fi
-	cd "${CURRENT_DIR}" &> /dev/null
-
 	echo "Application '${app_basename}' successfully imported to ${SPRESENSE_HOME}"
-	return 0
+
+	# Replace EXAMPLES_ with APPROOT_ in all files
+	if ! find "${SPRESENSE_HOME}/${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
+		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
+	fi
+
+	# Replace $(APPDIR)/examples/ with nothing in Make.defs
+	local makedefs_file="${SPRESENSE_HOME}/${app_basename}/Make.defs"
+	if [ -f "${makedefs_file}" ]; then
+		if ! sed "${SED_INPLACE[@]}" '/CONFIGURED_APPS/s|\$(APPDIR)/examples/||g' "${makedefs_file}"; then
+			echo "Warning: Failed to replace \$(APPDIR)/examples/ in ${makedefs_file}."
+		fi
+		if ! sed "${SED_INPLACE[@]}" '/CONFIGURED_APPS/s|examples/||g' "${makedefs_file}"; then
+			echo "Warning: Failed to replace examples/ in ${makedefs_file}."
+		fi
+	fi
+
+	# Copy configs/examples/${approot} if it exists
+	# Determine which config directories to copy
+	local config_names
+	if [ -n "${example_configs_map[$app_basename]}" ]; then
+		config_names="${example_configs_map[$app_basename]}"
+	else
+		config_names="${app_basename}"
+	fi
+
+	# Copy each config directory
+	local config_copied=0
+	for config_name in $config_names; do
+		local configs_src="${SPRESENSE_SDK}/sdk/configs/examples/${config_name}"
+		if [ -d "${configs_src}" ]; then
+			if [ $config_copied -eq 0 ]; then
+				mkdir -p "${SPRESENSE_HOME}/configs/${approot}"
+				cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
+				config_copied=1
+			fi
+			cp -rf "${configs_src}" "${SPRESENSE_HOME}/configs/${approot}"
+			echo "Config '${approot}/${config_name}' successfully imported to ${SPRESENSE_HOME}/configs"
+
+			# Replace +EXAMPLES_ with +${APPROOT}_ in defconfig
+			local defconfig_file="${SPRESENSE_HOME}/configs/${approot}/${config_name}/defconfig"
+			if [ -f "${defconfig_file}" ]; then
+				if ! sed "${SED_INPLACE[@]}" "s/+EXAMPLES_/+${APPROOT}_/g" "${defconfig_file}"; then
+					echo "Warning: Failed to replace +EXAMPLES_ with +${APPROOT}_ in ${defconfig_file}."
+				fi
+			fi
+
+			# Replace sdk/apps/examples/ or examples/ with ${approot}/ in README.txt
+			local readme_file="${SPRESENSE_HOME}/configs/${approot}/${config_name}/README.txt"
+			if [ -f "${readme_file}" ]; then
+				if ! sed "${SED_INPLACE[@]}" "s|sdk/apps/examples/|${approot}/|g" "${readme_file}"; then
+					echo "Warning: Failed to replace sdk/apps/examples/ with ${approot}/ in ${readme_file}."
+				fi
+				if ! sed "${SED_INPLACE[@]}" "s|examples/|${approot}/|g" "${readme_file}"; then
+					echo "Warning: Failed to replace examples/ with ${approot}/ in ${readme_file}."
+				fi
+			fi
+		fi
+	done
+
+	if [ -f ${SPRESENSE_SDK}/sdk/Kconfig ]; then
+		cd ${SPRESENSE_SDK}/sdk || return 1
+		rm -f ${SPRESENSE_HOME}/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/apps/spresense/Kconfig
+		rm -f ${SPRESENSE_SDK}/sdk/Kconfig
+		make olddefconfig &> /dev/null
+		cd - &> /dev/null
+	fi
 }
 
 # Name: spr-config
 # Note: Configure SDK and user application same as config.py command.
 # Usage: $ spr-config <configuration name>...
 function spr-config() {
-	cd ${SPRESENSE_SDK}/sdk
-	./tools/config.py $@
+	local config_args=()
+
+	for arg in "$@"; do
+		if [[ "$arg" == "-h" ]] || [[ "$arg" == "--help" ]]; then
+			config_args=()
+			break
+		elif [[ "$arg" == *"/default" ]]; then
+			config_args+=("default")
+		else
+			config_args+=("$arg")
+		fi
+	done
+
+	if [ ${#config_args[@]} == 0 ]; then
+		echo "Usage: ${FUNCNAME[0]} [-m] <config>... [-- [+|-]tweak...]"
+		echo "       ${FUNCNAME[0]} [-i] <config>..."
+		echo "       ${FUNCNAME[0]} [-l]"
+		echo ""
+		echo "Configure SDK and your application."
+		echo "Specify one or more configs listed with the -l option or completed with tab completion."
+		echo ""
+		echo "Arguments:"
+		echo "  config         Configuration name"
+		echo "                 (e.g. default, device/sdcard, feature/debug, examples/hello)"
+		echo ""
+		echo "Options:"
+		echo "  -l             List available configurations"
+		echo "  -m config      Open menuconfig with configuration"
+		echo "  -i config      Show configuration"
+		echo "  -- +tweak      Enable the specified configuration without 'CONFIG_' prefix"
+		echo "  -- -tweak      Disable the specified configuration without 'CONFIG_' prefix"
+		echo "                 (e.g. -- +DEBUG_FEATURES -USBDEV)"
+		echo ""
+		return 1
+	fi
+	cd ${SPRESENSE_SDK}/sdk || return 1
+	./tools/config.py "${config_args[@]}"
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to configure '${config_args[@]}'."
+		cd - &> /dev/null
+		return 1
+	fi
+	# Show finished message only when not listing or showing info
+	local show_finished=1
+	for arg in "${config_args[@]}"; do
+		if [[ "$arg" == "-l" ]] || [[ "$arg" == "-i" ]]; then
+			show_finished=0
+			break
+		fi
+	done
+
+	if [ $show_finished -eq 1 ]; then
+		echo "Configuration '${config_args[@]}' finished."
+	fi
 	cd - &> /dev/null
 }
 
@@ -246,113 +698,315 @@ function spr-config() {
 # Note: Create user configuration into application root directory.
 # Usage: $ spr-mkdefconfig <configuration name>...
 function spr-mkdefconfig() {
-	# Validate arguments
-	if [ "$#" != 1 ]; then
-		echo "Usage: ${FUNCNAME[0]} <configuration name>"
+	if [ "$#" == 0 ] || [ "${1:0:1}" == "-" ]; then
+		echo "Usage: ${FUNCNAME[0]} <configname>"
+		echo ""
+		echo "Save the current configuration into your application root directory."
+		echo ""
+		echo "Arguments:"
+		echo "  configname      New configuration name to save."
+		echo "                  It must be an alphanumeric string (A-Z, a-z, 0-9, _)."
+		echo ""
 		return 1
 	fi
 
-	# Check if SPRESENSE_HOME is set
-	if [ -z "${SPRESENSE_HOME}" ]; then
-		echo "Warning: Spresense user application directory is not set."
-		echo "         Please run"
-		echo "         $ spr-set-approot <application home directory>"
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	_check_spresense_home_environment
+	if [ $? -ne 0 ]; then
 		return 1
 	fi
 
-	# Check SDK path
-	if [ -z "${SPRESENSE_SDK}" ]; then
-		echo "Warning: SPRESENSE_SDK is not set."
-		echo "         Please run 'source tools/build-env.sh' again."
+	if [[ ! -f "${SPRESENSE_SDK}/nuttx/.config" ]]; then
+		echo "Error: Your application is not configured yet."
+		echo "       Please run 'spr-config'."
 		return 1
 	fi
 
 	local config_name="$1"
-	local sdk_dir="${SPRESENSE_SDK}/sdk"
-	local current_dir="$(pwd -P)"
+	local approot=$(basename "${SPRESENSE_HOME}")
 
-	if ! cd "${sdk_dir}"; then
-		echo "Error: Failed to enter SDK directory: ${sdk_dir}"
+	if ! [[ "$config_name" =~ ^[A-Za-z0-9_]+$ ]]; then
+		echo "Error: Invalid configname '${config_name}'."
+		echo "       Use alphanumeric characters only (A-Z, a-z, 0-9, _)."
 		return 1
 	fi
 
-	if ! ./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${config_name}"; then
-		echo "Error: mkdefconfig failed for configuration: ${config_name}"
-		cd "${current_dir}" &> /dev/null
+	# Copy default/defconfig to SPRESENSE_HOME/configs/default
+	mkdir -p "${SPRESENSE_HOME}/configs"
+	cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
+
+	cd ${SPRESENSE_SDK}/sdk || return 1
+	./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${approot}/${config_name}"
+	if [ $? -ne 0 ]; then
+		echo "Error: Failed to create config '${approot}/${config_name}'."
+		cd - &> /dev/null
 		return 1
 	fi
-
-	cd "${current_dir}" &> /dev/null
-	echo "Config '${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
-	return 0
+	echo "Config '${approot}/${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
+	cd - &> /dev/null
 }
 
 # Name: spr-flash
 # Note: Flash nuttx.spk via flash.sh wrapper.
 # Usage: $ spr-flash <options>
 function spr-flash() {
-	cd ${SPRESENSE_SDK}/sdk
-	# Check if arguments contain .spk or .espk files, or -w/-r/-B option
-	local has_spk=0
-	for arg in "$@"; do
-		if [[ "$arg" =~ \.(spk|espk)$ ]] || [[ "$arg" == "-w" ]] || [[ "$arg" == "-r" ]] || [[ "$arg" == "-B" ]]; then
-			has_spk=1
-			break
+	# Check if first argument is valid
+	if [ "$#" -gt 0 ]; then
+		if ! [[ "$1" =~ \.(spk|espk)$ ]] && [[ "$1" != "-w" ]] && [[ "$1" != "-r" ]] && [[ "$1" != "-B" ]]; then
+			echo "Usage: ${FUNCNAME[0]}"
+			echo "       ${FUNCNAME[0]} <spk>..."
+			echo "       ${FUNCNAME[0]} [-B]"
+			echo "       ${FUNCNAME[0]} [-w <file>]"
+			echo ""
+			echo "Flash your built application into your board."
+			echo "Please set the serial port name connected to the main board by 'spr-set-port'."
+			echo "The serial baud rate can be set by 'spr-set-baud'. If not set, the default 115200 is used."
+			echo ""
+			echo "If you see \"WARNING: New bootloader is required\" when running 'spr-flash',"
+			echo "please flash the bootloader by 'spr-flash -B'."
+			echo ""
+			echo "Options:"
+			echo "  spk           Flash the specified .spk or .espk file(s) into the board."
+			echo "  -B            Flash bootloader into the board."
+			echo "  -w file       Upload the specified file into user file system ('/mnt/spif') on the board."
+			echo ""
+			return 1
 		fi
-	done
+	fi
 
-	if [ $has_spk -eq 1 ]; then
-		./tools/flash.sh $@
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	if [ -z "${SPRESENSE_PORT}" ]; then
+		echo "Error: Serial port is not set."
+		echo "       Please run"
+		echo ""
+		echo "       $ spr-set-port <port>"
+		echo ""
+		return 1
+	fi
+
+	local port="-c ${SPRESENSE_PORT}";
+
+	local baud="";
+	if [ "${SPRESENSE_BAUD}" != "" ]; then
+		baud="-b ${SPRESENSE_BAUD}"
+	fi
+
+	cd ${SPRESENSE_SDK}/sdk || return 1
+	if [ "$#" -gt 0 ]; then
+		./tools/flash.sh ${port} ${baud} "$@"
 	else
-		./tools/flash.sh $@ nuttx.spk
+		_check_spresense_home_environment
+		if [ $? -ne 0 ]; then
+			cd - &> /dev/null
+			return 1
+		fi
+		if [ ! -f "${SPRESENSE_HOME}/build/nuttx.spk" ]; then
+			echo "Error: '${SPRESENSE_HOME}/build/nuttx.spk' does not exist."
+			echo "       Please run 'spr-make' first or specify a .spk/.espk file."
+			cd - &> /dev/null
+			return 1
+		fi
+		./tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/nuttx.spk"
 	fi
 	cd - &> /dev/null
+}
+
+# Name: spr-terminal
+# Note: Open serial terminal via terminal.sh wrapper.
+# Usage: $ spr-terminal
+function spr-terminal() {
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Open serial terminal."
+		echo "Please set the serial port name connected to the main board by 'spr-set-port'."
+		echo "If not set, list the available ports."
+		echo ""
+		return 1
+	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	local port="";
+	if [ "${SPRESENSE_PORT}" != "" ]; then
+		port="-c ${SPRESENSE_PORT}"
+	fi
+	${SPRESENSE_SDK}/sdk/tools/terminal.sh ${port}
 }
 
 # Name: spr-go-sdk
 # Note: Move current directory to SDK directory.
 # Usage: $ spr-go-sdk
 function spr-go-sdk() {
-	if [ "${SPRESENSE_SDK}" != "" ]; then
-		cd ${SPRESENSE_SDK}/sdk
-	else
-		echo "Warning: SPRESENSE_SDK is not set."
-		echo "         Please run 'source tools/build-env.sh' again."
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Change directory to your Spresense SDK directory."
+		echo ""
+		return 1
 	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	if [ ! -d "${SPRESENSE_SDK}/sdk" ]; then
+		echo "Error: '${SPRESENSE_SDK}/sdk' directory does not exist."
+		return 1
+	fi
+
+	echo "Change directory to ${SPRESENSE_SDK}/sdk"
+	cd ${SPRESENSE_SDK}/sdk
 }
 
 # Name: spr-go-approot
 # Note: Move current directory to user application root directory.
 # Usage: $ spr-go-approot
 function spr-go-approot() {
-	if [ "${SPRESENSE_HOME}" != "" ]; then
-		cd ${SPRESENSE_HOME}
-	else
-		echo "Warning: SPRESENSE_HOME is not set."
-		echo "         Please run 'spr-set-approot' first."
+	if [ "$#" != 0 ]; then
+		echo "Usage: ${FUNCNAME[0]}"
+		echo ""
+		echo "Change directory to your application root directory."
+		echo ""
+		return 1
 	fi
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	_check_spresense_home_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+
+	echo "Change directory to ${SPRESENSE_HOME}"
+	cd ${SPRESENSE_HOME}
 }
 
 # Name: spr-make
 # Note: Build SDK and user application same as make command.
 # Usage: $ spr-make [build options]
 function spr-make() {
-	make -C ${SPRESENSE_SDK}/sdk $@
+	local job="-j"
+	local make_args=()
+
+	for arg in "$@"; do
+		if [[ "$arg" == "-h" ]] || [[ "$arg" == "--help" ]]; then
+			echo "Usage: ${FUNCNAME[0]} [(all)|distclean|clean|menuconfig] [V=1|2] [-jN]"
+			echo ""
+			echo "Build and clean your application."
+			echo ""
+			echo "Options:"
+			echo "  all            Build (Must be configured in advance by 'spr-config')."
+			echo "  distclean      Remove all build artifacts and configuration files."
+			echo "  clean          Remove all build artifacts but keep configuration files."
+			echo "  menuconfig     Open menuconfig to configure your application."
+			echo "  V=1|2          Show verbose build output."
+			echo "  -jN            Specify the N number of jobs to run simultaneously."
+			echo "                 If this option is not specified, -j is used by default."
+			echo "                 (e.g. -j4, -j8. Note that -j0/-j1 disables parallel build)."
+			echo ""
+			return 1
+		elif [[ "$arg" =~ ^-j[0-9]+$ ]]; then
+			if [[ "$arg" == "-j0" ]] || [[ "$arg" == "-j1" ]]; then
+				job=""
+			else
+				job="$arg"
+			fi
+		else
+			make_args+=("$arg")
+		fi
+	done
+
+	# Check current environment
+	_check_spresense_sdk_environment
+	if [ $? -ne 0 ]; then
+		return 1
+	fi
+	if [[ -n "${SPRESENSE_HOME}" ]] && [[ ! -d "${SPRESENSE_HOME}" ]]; then
+		unset SPRESENSE_HOME
+		# Save current variable
+		_save_spresense_environment
+	fi
+
+	if [[ ! -f "${SPRESENSE_SDK}/nuttx/.config" ]]; then
+		echo "Error: Your application is not configured yet."
+		echo "       Please run 'spr-config'."
+		return 1
+	fi
+
+	make ${job} -C ${SPRESENSE_SDK}/sdk "${make_args[@]}"
+	if [[ $? -eq 0 ]] && [[ -d "${SPRESENSE_HOME}" ]]; then
+		# Check if arguments contain clean, config or help
+		local skip_copy=0
+		local remove_build=0
+		for arg in "$@"; do
+			if [[ "$arg" == *config ]] || [[ "$arg" == help ]]; then
+				skip_copy=1
+			fi
+			if [[ "$arg" == *clean* ]]; then
+				skip_copy=1
+				remove_build=1
+			fi
+			if [[ "$arg" == all ]]; then
+				skip_copy=0
+				remove_build=0
+			fi
+		done
+
+		if [[ $skip_copy -eq 0 ]] && [[ -f "${SPRESENSE_SDK}/sdk/nuttx.spk" ]]; then
+			echo "Build successful. Copy build artifacts to ${SPRESENSE_HOME}/build"
+			mkdir -p ${SPRESENSE_HOME}/build
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx.spk ${SPRESENSE_HOME}/build/
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/build/
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/build/
+			cp -f ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/build/
+		fi
+
+		if [[ $remove_build -eq 1 ]]; then
+			echo "Clean successful. Remove build artifacts from ${SPRESENSE_HOME}/build"
+			rm -f ${SPRESENSE_HOME}/build/nuttx.spk
+			rm -f ${SPRESENSE_HOME}/build/nuttx
+			rm -f ${SPRESENSE_HOME}/build/nuttx.map
+			rm -f ${SPRESENSE_HOME}/build/System.map
+		fi
+	fi
 }
 
 # Load current variable
 function _load_spresense_environment() {
-	if [ -f ${HOME}/.spresense_env ]; then
-		source ${HOME}/.spresense_env
+	if [ -f ${SPRESENSE_SDK}/.spresense_env ]; then
+		source ${SPRESENSE_SDK}/.spresense_env
 	fi
 	export SPRESENSE_HOME
+	export SPRESENSE_PORT
+	export SPRESENSE_BAUD
 }
 
 # Save current variable
 function _save_spresense_environment() {
 	# Export parameters into configuration file
-	echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${HOME}/.spresense_env
-	echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${HOME}/.spresense_env
+	echo "SPRESENSE_HOME=${SPRESENSE_HOME}" > ${SPRESENSE_SDK}/.spresense_env
+	echo "SPRESENSE_SDK=${SPRESENSE_SDK}" >> ${SPRESENSE_SDK}/.spresense_env
+	echo "SPRESENSE_PORT=${SPRESENSE_PORT}" >> ${SPRESENSE_SDK}/.spresense_env
+	echo "SPRESENSE_BAUD=${SPRESENSE_BAUD}" >> ${SPRESENSE_SDK}/.spresense_env
 }
 
 # Print current variable
@@ -362,9 +1016,50 @@ function _print_current_spresense_environment() {
 	echo " NUTTX_VERSION = `cat ${SPRESENSE_SDK}/sdk/tools/mkversion.sh | grep '^NUTTX_VERSION' | cut -d '\"' -f 2`"
 	echo " SPRESENSE_SDK = ${SPRESENSE_SDK}"
 	echo "SPRESENSE_HOME = ${SPRESENSE_HOME}"
-	echo "   GCC_VERSION = `arm-none-eabi-gcc --version | head -n 1`"
+	echo "SPRESENSE_PORT = ${SPRESENSE_PORT}"
+	echo "SPRESENSE_BAUD = ${SPRESENSE_BAUD}"
+	if ! command -v arm-none-eabi-gcc &> /dev/null; then
+		echo "   GCC_VERSION = 'arm-none-eabi-gcc' is not found in PATH."
+	else
+		echo "   GCC_VERSION = `arm-none-eabi-gcc --version | head -n 1`"
+	fi
 	echo "          HOST = `uname -sm`"
 	echo "======================================="
+}
+
+# Check current variable
+function _check_spresense_sdk_environment() {
+	if [[ -z "${SPRESENSE_SDK}" ]] || [[ ! -d "${SPRESENSE_SDK}" ]]; then
+		echo "Error: Your Spresense SDK directory is invalid."
+		echo "       Please source tools/build-env.sh under spresense/sdk."
+		echo ""
+		echo "       $ source tools/build-env.sh"
+		echo ""
+		return 1
+	fi
+	return 0
+}
+
+function _check_spresense_home_environment() {
+	if [ -z "${SPRESENSE_HOME}" ]; then
+		echo "Error: Your application root directory is not set."
+		echo "       Please create or set the application root directory."
+		echo ""
+		echo "       $ spr-create-approot <application root directory>"
+		echo "          or"
+		echo "       $ spr-set-approot <application root directory>"
+		echo ""
+		return 1
+	elif [ ! -d "${SPRESENSE_HOME}" ]; then
+		echo "Error: '${SPRESENSE_HOME}' directory does not exist."
+		echo "       Your application root directory was cleared."
+		echo ""
+		unset SPRESENSE_HOME
+		# Save current variable
+		_save_spresense_environment
+		return 1
+	fi
+	return 0
 }
 
 ############################################################################
@@ -379,34 +1074,56 @@ function _print_current_spresense_environment() {
 # User application setup
 #
 
+# Set repository root to SPRESENSE_SDK
+export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
+
+# Check and source spresenseenv setup if GCC is not in PATH
+if ! command -v arm-none-eabi-gcc &> /dev/null; then
+	if [ -f "${HOME}/spresenseenv/setup" ]; then
+		source "${HOME}/spresenseenv/setup"
+	else
+		echo "Warning: The tools required for development are not installed."
+		echo "         Please install using install-tools.sh."
+		echo ""
+		echo "         $ bash ${SPRESENSE_SDK}/install-tools.sh"
+		echo ""
+	fi
+fi
+
 # Load current variable
 _load_spresense_environment
 
-if [ "${SPRESENSE_HOME}" == "" ]; then
-	echo "Warning: Spresense user application directory is not set."
-    echo "         Please run"
-    echo "         $ spr-set-approot <application home directory>"
-elif [ ! -d ${SPRESENSE_HOME} ]; then
-    echo "Warning: ${SPRESENSE_HOME} does not exist."
-    echo "         Please run"
-    echo "         $ spr-create-approot ${SPRESENSE_HOME}"
+if [ -z "${SPRESENSE_HOME}" ]; then
+	echo "Warning: Your application root directory is not set."
+	echo "         If you create user applications by spr-command,"
+	echo ""
+	echo "         $ spr-create-approot <application root directory>"
+	echo "            or"
+	echo "         $ spr-set-approot <application root directory>"
+	echo ""
+elif [ ! -d "${SPRESENSE_HOME}" ]; then
+	echo "Warning: '${SPRESENSE_HOME}' directory does not exist."
+	echo "          Your application root directory was cleared."
+	echo ""
+	unset SPRESENSE_HOME
 fi
 
 if [ -d "${SPRESENSE_HOME}" -a ! -f "${SPRESENSE_HOME}/.sdksubdir" ]; then
-    if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
-        echo "Warning: Your environment(${SPRESENSE_HOME}) is created for Spresense SDK1.x version."
-        echo "         Please create a new project directory with next command."
-        echo "         $ spr-create-approot <new place>"
-    else
-        echo "Warning: Your environment(${SPRESENSE_HOME}) doesn't have makefiles."
-        echo "         Please run next command to create makefiles."
-        echo "         $ spr-create-approot ${SPRESENSE_HOME}"
-    fi
-    unset SPRESENSE_HOME
+	if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
+		echo "Warning: '${SPRESENSE_HOME}' is created for Spresense SDK1.x version."
+		echo "         Please create a new project directory with next command."
+		echo ""
+		echo "         $ spr-create-approot <new application root directory>"
+		echo ""
+	else
+		echo "Warning: '${SPRESENSE_HOME}' is invalid."
+		echo "         Please run next command to create the application root directory."
+		echo ""
+		echo "         $ spr-create-approot ${SPRESENSE_HOME}"
+		echo ""
+	fi
+	unset SPRESENSE_HOME
 fi
-
-# Set repository root to SPRESENSE_SDK
-export SPRESENSE_SDK=$(dirname $(dirname ${SCRIPT_DIR}))
 
 # Print current variable
 _print_current_spresense_environment

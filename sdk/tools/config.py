@@ -106,6 +106,18 @@ class DefconfigManager:
         for c in self.defconfigs:
             if name == c.get_configname():
                 return c.path
+
+        # Fallback: allow unqualified config name lookup when it is unique.
+        # This helps commands such as:
+        #   ./tools/config.py -d <appdir> default
+        # where discovered config may be represented as "<appname>/default".
+        if '/' not in name:
+            matched = [c.path for c in self.defconfigs if c.name == name]
+            if len(matched) == 1:
+                return matched[0]
+            if len(matched) > 1:
+                raise RuntimeError('Config "%s" is ambiguous. Use category/config name.' % name)
+
         raise RuntimeError('Config "%s" not found' % name)
 
     def get_configs_by_category(self, category):
