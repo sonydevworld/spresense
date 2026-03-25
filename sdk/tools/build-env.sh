@@ -867,7 +867,7 @@ function spr-flash() {
 			echo "       Please run 'spr-make' first or specify a .spk/.espk file."
 			return 1
 		fi
-		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/nuttx.spk"
+		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/*.spk"
 	fi
 }
 
@@ -1029,11 +1029,20 @@ function spr-make() {
 			cp -f ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/build/
 			cp -f ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/build/
 			cp -f ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/build/
+
+			if [[ -d "${SPRESENSE_SDK}/sdk/workerspks" ]]; then
+				local worker_file
+				for worker_file in "${SPRESENSE_SDK}/sdk/workerspks"/*; do
+					if [[ -f "${worker_file}" ]]; then
+						cp -f "${worker_file}" "${SPRESENSE_HOME}/build/"
+					fi
+				done
+			fi
 		fi
 
 		if [[ $remove_build -eq 1 ]]; then
 			echo "Clean successful. Remove build artifacts from ${SPRESENSE_HOME}/build"
-			rm -f ${SPRESENSE_HOME}/build/nuttx.spk
+			rm -f ${SPRESENSE_HOME}/build/*.spk
 			rm -f ${SPRESENSE_HOME}/build/nuttx
 			rm -f ${SPRESENSE_HOME}/build/nuttx.map
 			rm -f ${SPRESENSE_HOME}/build/System.map
