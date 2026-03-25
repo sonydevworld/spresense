@@ -78,6 +78,7 @@ function spr-create-approot() {
 		fi
 		# Save current variable
 		_save_spresense_environment
+		_load_spresense_environment
 
 		# Print current variable
 		_print_current_spresense_environment
@@ -104,6 +105,7 @@ function spr-set-approot() {
 
 				# Save current variable
 				_save_spresense_environment
+				_load_spresense_environment
 			else
 				if [ -f "${SPRESENSE_HOME}/Application.mk" ]; then
 					echo "Warning: Your environment(${SPRESENSE_HOME}) is created for Spresense SDK1.x version."
@@ -153,6 +155,7 @@ function spr-set-port() {
 
 		# Save current variable
 		_save_spresense_environment
+		_load_spresense_environment
 
 		# Print current variable
 		_print_current_spresense_environment
@@ -185,6 +188,7 @@ function spr-set-baud() {
 
 		# Save current variable
 		_save_spresense_environment
+		_load_spresense_environment
 
 		# Print current variable
 		_print_current_spresense_environment
