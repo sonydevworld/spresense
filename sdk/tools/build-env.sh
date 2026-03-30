@@ -579,16 +579,20 @@ function spr-create-app() {
 		cd - &> /dev/null
 		return 1
 	fi
+	# Replace the generated APPROOT_ prefix token with USERAPP_ in created files
+	if ! find "${SPRESENSE_HOME}/${appname}" -type f -exec sed "${SED_INPLACE[@]}" "s/${approot^^}_/USERAPP_/g" {} +; then
+		echo "Warning: Failed to replace ${approot^^}_ with USERAPP_ in some files."
+	fi
 	# Replace "default y" with "default n" in generated Kconfig
 	if [ -f "${SPRESENSE_HOME}/${appname}/Kconfig" ]; then
 		sed "${SED_INPLACE[@]}" 's/^\([[:space:]]*\)default y$/\1default n/' "${SPRESENSE_HOME}/${appname}/Kconfig"
 	fi
 	# Copy default/defconfig to SPRESENSE_HOME/configs/default
-	mkdir -p "${SPRESENSE_HOME}/configs/${approot}/${appname}"
+	mkdir -p "${SPRESENSE_HOME}/configs/userapp/${appname}"
 	cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
-	# Create defconfig with +${APPROOT}_${APPNAME}=y
-	echo "+${approot^^}_${appname^^}=y" > "${SPRESENSE_HOME}/configs/${approot}/${appname}/defconfig"
-	echo "New '${approot}/${appname}' config successfully created into ${SPRESENSE_HOME}/configs"
+	# Create defconfig with +USERAPP_${APPNAME}=y
+	echo "+USERAPP_${appname^^}=y" > "${SPRESENSE_HOME}/configs/userapp/${appname}/defconfig"
+	echo "New 'userapp/${appname}' config successfully created into ${SPRESENSE_HOME}/configs"
 	if [ ${KCONFIG_EXISTED} -eq 1 ]; then
 		make olddefconfig &> /dev/null
 	fi
@@ -652,7 +656,6 @@ function spr-import-example() {
 
 	local app_basename=$(basename "${src_app}")
 	local approot=$(basename "${SPRESENSE_HOME}")
-	local APPROOT="${approot^^}"
 	local SED_INPLACE=(-i)
 
 	# macOS (BSD sed) requires explicit empty backup suffix with -i
@@ -667,9 +670,9 @@ function spr-import-example() {
 	fi
 	echo "Application '${app_basename}' successfully imported to ${SPRESENSE_HOME}"
 
-	# Replace EXAMPLES_ with APPROOT_ in all files
-	if ! find "${SPRESENSE_HOME}/${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/${APPROOT}_/g" {} +; then
-		echo "Warning: Failed to replace EXAMPLES with ${APPROOT} in some files."
+	# Replace EXAMPLES_ with USERAPP_ in all files
+	if ! find "${SPRESENSE_HOME}/${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/USERAPP_/g" {} +; then
+		echo "Warning: Failed to replace EXAMPLES with USERAPP in some files."
 	fi
 
 	# Replace $(APPDIR)/examples/ with nothing in Make.defs
@@ -736,23 +739,23 @@ function spr-import-example() {
 		local configs_src="${SPRESENSE_SDK}/sdk/configs/examples/${config_name}"
 		if [ -d "${configs_src}" ]; then
 			if [ $config_copied -eq 0 ]; then
-				mkdir -p "${SPRESENSE_HOME}/configs/${approot}"
+				mkdir -p "${SPRESENSE_HOME}/configs/userapp"
 				cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
 				config_copied=1
 			fi
-			cp -rf "${configs_src}" "${SPRESENSE_HOME}/configs/${approot}"
-			echo "Config '${approot}/${config_name}' successfully imported to ${SPRESENSE_HOME}/configs"
+			cp -rf "${configs_src}" "${SPRESENSE_HOME}/configs/userapp"
+			echo "Config 'userapp/${config_name}' successfully imported to ${SPRESENSE_HOME}/configs"
 
-			# Replace +EXAMPLES_ with +${APPROOT}_ in defconfig
-			local defconfig_file="${SPRESENSE_HOME}/configs/${approot}/${config_name}/defconfig"
+			# Replace +EXAMPLES_ with +USERAPP_ in defconfig
+			local defconfig_file="${SPRESENSE_HOME}/configs/userapp/${config_name}/defconfig"
 			if [ -f "${defconfig_file}" ]; then
-				if ! sed "${SED_INPLACE[@]}" "s/+EXAMPLES_/+${APPROOT}_/g" "${defconfig_file}"; then
-					echo "Warning: Failed to replace +EXAMPLES_ with +${APPROOT}_ in ${defconfig_file}."
+				if ! sed "${SED_INPLACE[@]}" "s/+EXAMPLES_/+USERAPP_/g" "${defconfig_file}"; then
+					echo "Warning: Failed to replace +EXAMPLES_ with +USERAPP_ in ${defconfig_file}."
 				fi
 			fi
 
-			# Replace sdk/apps/examples/ or examples/ with ${approot}/ in README.txt
-			local readme_file="${SPRESENSE_HOME}/configs/${approot}/${config_name}/README.txt"
+			# Replace sdk/apps/examples/ or examples/ with userapp/ in README.txt
+			local readme_file="${SPRESENSE_HOME}/configs/userapp/${config_name}/README.txt"
 			if [ -f "${readme_file}" ]; then
 				if ! sed "${SED_INPLACE[@]}" "s|sdk/apps/examples/|${approot}/|g" "${readme_file}"; then
 					echo "Warning: Failed to replace sdk/apps/examples/ with ${approot}/ in ${readme_file}."
@@ -869,7 +872,6 @@ function spr-mkdefconfig() {
 	fi
 
 	local config_name="$1"
-	local approot=$(basename "${SPRESENSE_HOME}")
 
 	if ! [[ "$config_name" =~ ^[A-Za-z0-9_]+$ ]]; then
 		echo "Error: Invalid configname '${config_name}'."
@@ -882,13 +884,13 @@ function spr-mkdefconfig() {
 	cp -rf "${SPRESENSE_SDK}/sdk/configs/default" "${SPRESENSE_HOME}/configs/"
 
 	cd ${SPRESENSE_SDK}/sdk || return 1
-	./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "${approot}/${config_name}"
+	./tools/mkdefconfig.py -d "${SPRESENSE_HOME}" "userapp/${config_name}"
 	if [ $? -ne 0 ]; then
-		echo "Error: Failed to create config '${approot}/${config_name}'."
+		echo "Error: Failed to create config 'userapp/${config_name}'."
 		cd - &> /dev/null
 		return 1
 	fi
-	echo "Config '${approot}/${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
+	echo "Config 'userapp/${config_name}' successfully created in ${SPRESENSE_HOME}/configs"
 	cd - &> /dev/null
 }
 
