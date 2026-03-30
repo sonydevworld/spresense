@@ -1,7 +1,7 @@
 /****************************************************************************
- * modules/asmp/worker/printf.c
+ * modules/asmp/worker/worker_printf.c
  *
- *   Copyright 2024 Sony Semiconductor Solutions Corporation
+ *   Copyright 2024,2026 Sony Semiconductor Solutions Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,9 +37,11 @@
  * Included Files
  ****************************************************************************/
 
+#include <nuttx/config.h>
+#include <stdint.h>
 #include <stdarg.h>
-#include <asmp/stdio.h>
-#include "arch/lowputc.h"
+
+#include "worker_printf.h"
 
 /****************************************************************************
  * Pri-processor Definitions
@@ -49,189 +51,9 @@
 #  define NULL ((void *)0)
 #endif
 
-#define INT_DIGITTOP (1000000000)
-
-#define ARGPARSE_FLAG_ZFILL   (1<<0)
-#define ARGPARSE_FLAG_MINUS   (1<<1)
-#define ARGPARSE_FLAG_PLUS    (1<<2)
-#define ARGPARSE_FLAG_LEFT    (1<<3)
-#define ARGPARSE_FLAG_NEGVAL  (1<<4)
-
-#define VALPARSE_TYPE_CHAR  1
-#define VALPARSE_TYPE_SINT  2
-#define VALPARSE_TYPE_UINT  3
-#define VALPARSE_TYPE_HEXL  4
-#define VALPARSE_TYPE_HEXH  5
-#define VALPARSE_TYPE_PTR   6
-#define VALPARSE_TYPE_STR   7
-
-#define PARSE_PHASE_INITIAL 0
-#define PARSE_PHASE_PLSMIN  1
-#define PARSE_PHASE_ZFILL   2
-#define PARSE_PHASE_DIGIT   3
-#define PARSE_PHASE_DONE    4
-
-/****************************************************************************
- * Private Types
- ****************************************************************************/
-
-struct arg_parse_s
-{
-  unsigned int flag;  /* bit map of ARGPARSE_FLAG_XXXX */
-  int digit_specify;  /* Store digit value. e.x. %8x -> 8 */
-  int type;           /* Parsed type as VALPARSE_TYPE_XXXX */
-  union
-  {
-    unsigned char c;  /* for %c */
-    unsigned int u;   /* for %p, %d, %u, %x, %X */
-    char *cp;         /* for %s */
-  } value;
-};
-
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
-
-static int lowputs(const char *str)
-{
-  int ret = 0;
-  while (*str)
-    {
-      lowputc(*str++);
-      ret++;
-    }
-
-  return ret;
-}
-
-/* print_hex(): print hexiagonal value */
-
-static int print_hex(struct arg_parse_s *arg, char h)
-{
-  int tmp;
-  int val;
-  int pos = 0;
-  unsigned int mask = 0xf0000000;
-  unsigned int shift = 28;
-  char value_buf[12];
-  int pad_len;
-  char pad_char;
-
-  tmp = 0;
-  for (mask = 0xf0000000, shift = 28; mask; mask >>= 4, shift -= 4)
-    {
-      val = (arg->value.u & mask) >> shift;
-      if (tmp || val != 0)
-        {
-          value_buf[pos++] = val >= 10 ? val + h - 10 : val + '0';
-          tmp = 1;
-        }
-    }
-
-  if (pos == 0)
-    {
-      value_buf[pos++] = '0';
-    }
-
-  if (arg->digit_specify)
-    {
-      arg->digit_specify = arg->digit_specify > 10 ? 10 : arg->digit_specify;
-      pad_char = arg->flag & ARGPARSE_FLAG_ZFILL ? '0' : ' ';
-      if (arg->digit_specify > pos)
-        {
-          pad_len = arg->digit_specify - pos;
-          for (tmp = pos - 1; tmp >= 0; tmp--)
-            {
-              value_buf[tmp + pad_len] = value_buf[tmp];
-            }
-
-          for (tmp = 0; tmp < pad_len; tmp++)
-            {
-              value_buf[tmp] = pad_char;
-            }
-
-          pos += pad_len;
-        }
-    }
-
-  value_buf[pos] = '\0';
-  lowputs(value_buf);
-
-  return pos;
-}
-
-/* print_int(): print integer value */
-
-static int print_int(struct arg_parse_s *arg)
-{
-  int val;
-  int tmp = 0;
-  int pos = 0;
-  unsigned int digit = INT_DIGITTOP;
-  char value_buf[12];
-  int pad_len;
-  char pad_char;
-
-  if (arg->flag & ARGPARSE_FLAG_PLUS || arg->flag & ARGPARSE_FLAG_NEGVAL)
-    {
-      value_buf[pos++] = arg->flag & ARGPARSE_FLAG_NEGVAL ? '-' : '+';
-    }
-
-  while (digit)
-    {
-      val = arg->value.u / digit;
-      if (tmp || val != 0)  /* tmp indicates print is started or not. */
-        {
-          val = (val >= 10) ? 9 : val;
-          value_buf[pos++] = val + '0';
-          tmp = 1;
-        }
-
-      arg->value.u = arg->value.u - (val * digit);
-      digit = digit / 10;
-    }
-
-  if (pos == 0)
-    {
-      value_buf[pos++] = '0';
-    }
-
-  if (arg->digit_specify)
-    {
-      arg->digit_specify = arg->digit_specify > 10 ? 10 : arg->digit_specify;
-      pad_char = arg->flag & ARGPARSE_FLAG_ZFILL ? '0' : ' ';
-      if (arg->digit_specify > pos)
-        {
-          pad_len = arg->digit_specify - pos;
-          if (arg->flag & ARGPARSE_FLAG_MINUS)
-            {
-              for (; pad_len; pad_len--)
-                {
-                  value_buf[pos++] = pad_char;
-                }
-            }
-          else
-            {
-              for (tmp = pos - 1; tmp >= 0; tmp--)
-                {
-                  value_buf[tmp + pad_len] = value_buf[tmp];
-                }
-
-              for (tmp = 0; tmp < pad_len; tmp++)
-                {
-                  value_buf[tmp] = pad_char;
-                }
-            }
-
-          pos += pad_len;
-        }
-    }
-
-  value_buf[pos] = '\0';
-  lowputs(value_buf);
-
-  return pos;
-}
 
 /* type_specify(): parse type in string */
 
@@ -246,6 +68,10 @@ static int type_specify(const char c)
       case  'X': return VALPARSE_TYPE_HEXH;
       case  'p': return VALPARSE_TYPE_PTR;
       case  's': return VALPARSE_TYPE_STR;
+#ifdef CONFIG_ASMP_WORKER_PRINTF_FLOATEN
+      case  'f': return VALPARSE_TYPE_FLOAT;
+      case  'e': return VALPARSE_TYPE_EFLOAT;
+#endif
       default: return 0;
     }
 }
@@ -254,141 +80,107 @@ static int type_specify(const char c)
 
 static const char *parse_percent_value(const char *fmt, struct arg_parse_s *arg)
 {
-  int parse_phase = PARSE_PHASE_INITIAL;
-  int pos = 0;
+  const char *p = fmt;
 
   arg->flag = 0;
-  arg->digit_specify = 0;
+  arg->width = 0;
+  arg->precision = -1;
+  arg->type = 0;
 
-  while (!(arg->type = type_specify(fmt[pos])))
+  /* Check flags just after '%'
+   * For light implementation, some format errors are avoided.
+   * (Like '--', '++', etc..)
+   */
+
+  while (1)
     {
-      switch (parse_phase)
+      switch (*p)
         {
-          case PARSE_PHASE_INITIAL:
-            switch (fmt[pos])
-              {
-                case '-':
-                  if (arg->flag & ARGPARSE_FLAG_MINUS)
-                    {
-                      /* Double specified */
-
-                      return NULL;
-                    }
-
-                  arg->flag |= ARGPARSE_FLAG_MINUS;
-                  if (arg->flag & ARGPARSE_FLAG_PLUS)
-                    {
-                      parse_phase = PARSE_PHASE_PLSMIN;
-                    }
-
-                  pos++;
-
-                  break;
-
-                case '+':
-                  if (arg->flag & ARGPARSE_FLAG_PLUS)
-                    {
-                      /* Double specified */
-
-                      return NULL;
-                    }
-
-                  arg->flag |= ARGPARSE_FLAG_PLUS;
-                  if (arg->flag & ARGPARSE_FLAG_MINUS)
-                    {
-                      parse_phase = PARSE_PHASE_PLSMIN;
-                    }
-
-                  pos++;
-
-                  break;
-
-                case '0':
-                  arg->flag |= ARGPARSE_FLAG_ZFILL;
-                  parse_phase = PARSE_PHASE_ZFILL;
-                  pos++;
-                  break;
-
-                default:
-                  if (fmt[pos] >= '1' && fmt[pos] <= '9')
-                    {
-                      parse_phase = PARSE_PHASE_DIGIT;
-
-                      /* no pos increment because digit detect in DIGIT phase */
-                    }
-                  else
-                    {
-                      return NULL;
-                    }
-
-                  break;
-              } /* switch (fmt[pos]) */
-
-            break;
-
-          case PARSE_PHASE_PLSMIN :
-            switch (fmt[pos])
-              {
-                case '0':
-                  arg->flag |= ARGPARSE_FLAG_ZFILL;
-                  parse_phase = PARSE_PHASE_ZFILL;
-                  pos++;
-                  break;
-
-                default:
-                  if (fmt[pos] >= '1' && fmt[pos] <= '9')
-                    {
-                      parse_phase = PARSE_PHASE_DIGIT;
-
-                    /* no pos increment because digit parse is done
-                     * in PARSE_PHASE_DIGIT
-                     */
-                    }
-                  else
-                    {
-                      return NULL;
-                    }
-              }
-
-            break;
-
-          case PARSE_PHASE_ZFILL  :
-            if (fmt[pos] >= '1' && fmt[pos] <= '9')
-              {
-                parse_phase = PARSE_PHASE_DIGIT;
-
-                /* no pos increment because digit parse is done
-                 * in PARSE_PHASE_DIGIT
-                 */
-              }
-            else
-              {
-                return NULL;
-              }
-
-            break;
-
-          case PARSE_PHASE_DIGIT  :
-            arg->digit_specify = fmt[pos] - '0';
-            pos++;
-            while (fmt[pos] >= '0' && fmt[pos] <= '9')
-              {
-                arg->digit_specify =
-                  arg->digit_specify * 10 + fmt[pos] - '0';
-                pos++;
-              }
-
-            parse_phase = PARSE_PHASE_DONE;
-            break;
-
-          case PARSE_PHASE_DONE  :
-            /* Should not enter here */
-
-            return NULL;
+          case '-': arg->flag |= ARGPARSE_FLAG_LEFT;  p++; continue;
+          case '+': arg->flag |= ARGPARSE_FLAG_PLUS;  p++; continue;
+          case '0': arg->flag |= ARGPARSE_FLAG_ZFILL; p++; continue;
+          case ' ': arg->flag |= ARGPARSE_FLAG_SPACE; p++; continue;
+          default: break;
         }
-    } /* while (!(arg->type = is_type_specify(fmt[pos]))) */
+      break;
+    }
 
-  return &fmt[pos];
+  /* Parse specific width of integer part */
+
+  if (*p >= '0' && *p <= '9')
+    {
+      while (*p >= '0' && *p <= '9')
+        {
+          arg->width = arg->width * 10 + (*p - '0');
+          p++;
+        }
+    }
+
+  /* Parse specific width of precision part */
+
+  if (*p == '.')
+    {
+      p++;
+      arg->precision = 0;
+
+      if (!(*p >= '0' && *p <= '9') && !(*p == 'f'))
+        {
+          return NULL;
+        }
+
+      while (*p >= '0' && *p <= '9')
+        {
+          arg->precision =
+            arg->precision * 10 + (*p - '0');
+          p++;
+        }
+    }
+
+  /* Check 'l' and 'll' */
+
+  if (*p == 'l')
+    {
+      p++;
+      if (*p == 'l')
+        {
+          arg->flag |= ARGPARSE_FLAG_LL;
+          p++;
+        }
+      else
+        {
+          arg->flag |= ARGPARSE_FLAG_LONG;
+        }
+    }
+
+  /* Parse type like %d, %s, ... */
+
+  arg->type = type_specify(*p);
+  if (!arg->type)
+    {
+      return NULL;
+    }
+
+  /* Check format error */
+
+  if ((arg->flag & ARGPARSE_FLAG_LL) &&
+      !(arg->type == VALPARSE_TYPE_SINT ||
+        arg->type == VALPARSE_TYPE_UINT ||
+        arg->type == VALPARSE_TYPE_HEXL ||
+        arg->type == VALPARSE_TYPE_HEXH))
+    {
+      return NULL;
+    }
+
+  if ((arg->flag & ARGPARSE_FLAG_LONG) &&
+      !(arg->type == VALPARSE_TYPE_SINT ||
+        arg->type == VALPARSE_TYPE_UINT ||
+        arg->type == VALPARSE_TYPE_HEXL ||
+        arg->type == VALPARSE_TYPE_HEXH))
+    {
+      return NULL;
+    }
+
+  return p;
 }
 
 /* worker_vprintf(): parse and print string and variables */
@@ -422,7 +214,6 @@ static int worker_vprintf(const char *fmt, va_list va)
 
                     lowputc('%');
                     total_len++;
-                    fmt--;
                   }
                 else
                   {
@@ -437,42 +228,77 @@ static int worker_vprintf(const char *fmt, va_list va)
                           break;
 
                         case VALPARSE_TYPE_SINT:
-                          val = va_arg(va, int);
-                          if (val < 0)
+                          if (arg.flag & ARGPARSE_FLAG_LL)
                             {
-                              arg.flag |= ARGPARSE_FLAG_NEGVAL;
-                              arg.value.u = - val;
+                              int64_t llv = va_arg(va, int64_t);
+                              if (llv < 0)
+                                {
+                                  arg.flag |= ARGPARSE_FLAG_NEGVAL;
+                                  arg.value.ll = - llv;
+                                }
+                              else
+                                {
+                                  arg.value.ll = llv;
+                                }
+
+                              total_len += worker_print_longlong(&arg);
                             }
                           else
                             {
-                              arg.value.u = val;
+                              val = va_arg(va, int);
+                              if (val < 0)
+                                {
+                                  arg.flag |= ARGPARSE_FLAG_NEGVAL;
+                                  arg.value.u = - val;
+                                }
+                              else
+                                {
+                                  arg.value.u = val;
+                                }
+
+                              total_len += worker_print_int(&arg);
                             }
 
-                          total_len += print_int(&arg);
                           break;
 
                         case VALPARSE_TYPE_UINT:
-                          arg.value.u = va_arg(va, unsigned int);
-                          total_len += print_int(&arg);
-                          break;
-
-                        case VALPARSE_TYPE_HEXL:
-                          arg.value.u = va_arg(va, unsigned int);
-                          total_len += print_hex(&arg, 'a');
+                          arg.flag |= ARGPARSE_FLAG_UNSIGN;
+                          if (arg.flag & ARGPARSE_FLAG_LL)
+                            {
+                              arg.value.ll = va_arg(va, unsigned long long);
+                              total_len += worker_print_longlong(&arg);
+                            }
+                          else
+                            {
+                              arg.value.u = va_arg(va, unsigned int);
+                              total_len += worker_print_int(&arg);
+                            }
                           break;
 
                         case VALPARSE_TYPE_HEXH:
-                          arg.value.u = va_arg(va, unsigned int);
-                          total_len += print_hex(&arg, 'A');
+                        case VALPARSE_TYPE_HEXL:
+                          if (arg.flag & ARGPARSE_FLAG_LL)
+                            {
+                              arg.value.ll = va_arg(va, unsigned long long);
+                              total_len += worker_print_lhex(&arg,
+                                            arg.type == VALPARSE_TYPE_HEXH ? 'A' : 'a');
+                            }
+                          else
+                            {
+                              arg.value.u = va_arg(va, unsigned int);
+                              total_len += worker_print_hex(&arg,
+                                            arg.type == VALPARSE_TYPE_HEXH ? 'A' : 'a');
+                            }
                           break;
+
 
                         case VALPARSE_TYPE_PTR:
                           arg.value.u = va_arg(va, unsigned int);
                           if (arg.value.u)
                             {
                               arg.flag |= ARGPARSE_FLAG_ZFILL;
-                              arg.digit_specify = 8;
-                              total_len += print_hex(&arg, 'a');
+                              arg.width = 8;
+                              total_len += worker_print_hex(&arg, 'a');
                             }
                           else
                             {
@@ -485,6 +311,32 @@ static int worker_vprintf(const char *fmt, va_list va)
                           arg.value.cp = va_arg(va, char *);
                           total_len += lowputs(arg.value.cp);
                           break;
+
+#ifdef CONFIG_ASMP_WORKER_PRINTF_FLOATEN
+                        case VALPARSE_TYPE_FLOAT:
+                          arg.value.d = va_arg(va, double);
+
+                          if (arg.value.d < 0)
+                            {
+                              arg.flag |= ARGPARSE_FLAG_NEGVAL;
+                              arg.value.d = - arg.value.d;
+                            }
+
+                          total_len += worker_print_float(&arg);
+                          break;
+
+                        case VALPARSE_TYPE_EFLOAT:
+                          arg.value.d = va_arg(va, double);
+
+                          if (arg.value.d < 0)
+                            {
+                              arg.flag |= ARGPARSE_FLAG_NEGVAL;
+                              arg.value.d = - arg.value.d;
+                            }
+
+                          total_len += worker_print_floate(&arg);
+                          break;
+#endif /* #ifdef CONFIG_ASMP_WORKER_PRINTF_FLOATEN */
                       } /* switch (arg.type) */
 
                     fmt = tmp;
@@ -492,12 +344,6 @@ static int worker_vprintf(const char *fmt, va_list va)
               } /* else of if (*fmt == '%') */
 
             break; /* case '%': */
-
-          case '\n':
-            lowputc('\r');
-            lowputc('\n');
-            total_len++;
-            break;
 
           default:
             lowputc(*fmt);
@@ -517,7 +363,12 @@ static int worker_vprintf(const char *fmt, va_list va)
 
 /* For debug use only */
 
+#ifdef CXD5602_WORKER
 int printf(const char *fmt, ...)
+#else
+/* For test on main core or linux */
+int my_printf(const char *fmt, ...)
+#endif
 {
   int ret;
   va_list va;
@@ -529,14 +380,32 @@ int printf(const char *fmt, ...)
   return ret;
 }
 
-int puts(const char *str)
+int lowputs(const char *str)
 {
-  return lowputs(str);
+  int ret = 0;
+
+  while (*str)
+    {
+      lowputc(*str++);
+      ret++;
+    }
+
+  return ret + 1;
 }
 
-int putchar(const char c)
+#ifdef CXD5602_WORKER
+int putchar(char c)
 {
   lowputc(c);
-
   return (int)c;
 }
+
+int puts(const char *str)
+{
+  int ret;
+  ret = lowputs(str);
+  lowputc('\n');
+
+  return ret + 1;
+}
+#endif
