@@ -390,7 +390,7 @@ int lowputs(const char *str)
       ret++;
     }
 
-  return ret + 1;
+  return ret;
 }
 
 #ifdef CXD5602_WORKER
