@@ -1,0 +1,8 @@
+ble_mouse_central &
+echo "Waiting for /dev/mouse0..."
+while [ ! -e /dev/mouse0 ]; do
+  sleep 1
+done
+echo "/dev/mouse0 detected, starting LVGL demo..."
+lvgldemo
+

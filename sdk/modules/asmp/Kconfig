@@ -48,6 +48,27 @@ config ASMP_WORKER_FMSYNTH
 
 endmenu
 
+menu "ASMP Worker printf"
+
+config ASMP_WORKER_PRINTF_FLOATEN
+	bool "Enable to print float value"
+	default y
+	---help---
+		Enable printing float value on printf
+
+if ASMP_WORKER_PRINTF_FLOATEN
+
+config ASMP_WORKER_PRINTF_USEPOWTBL
+	bool "Enable the use of pow10 tables"
+	default y
+	---help---
+		Enable the use of pow10 tables. This will improve processing speed,
+		but will consume an additional 8 x 40 = 320 bytes of memory.
+
+endif
+
+endmenu
+
 config ASMP_DEBUG_FEATURE
 	bool "ASMP Framework debug feature"
 

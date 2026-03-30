@@ -3,7 +3,7 @@
 ############################################################################
 # tools/mkcmd.py
 #
-#   Copyright 2018 Sony Semiconductor Solutions Corporation
+#   Copyright 2018, 2026 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -87,6 +87,7 @@ MODULE = $(CONFIG_{configname})
 
 ASRCS =
 CSRCS =
+CXXSRCS =
 MAINSRC = {appname}_main.{ext}
 
 include $(APPDIR)/Application.mk
@@ -196,14 +197,6 @@ if __name__ == '__main__':
 
     with open('.gitignore', "w") as f:
         f.write(GITIGNORE)
-
-    defconfigdir = os.path.join('configs', 'default')
-    os.makedirs(defconfigdir, exist_ok=True)
-    src = os.path.join(sdkdir, 'configs', 'default', 'defconfig')
-    dst = os.path.join(defconfigdir, 'defconfig')
-    shutil.copyfile(src, dst)
-    with open(dst, "a") as f:
-        f.write("CONFIG_%s=y\n" % configname)
 
     print("New '%s' app successfully created at '%s'." % (appname, os.path.join(basedir, appname)))
 

@@ -106,6 +106,18 @@ class DefconfigManager:
         for c in self.defconfigs:
             if name == c.get_configname():
                 return c.path
+
+        # Fallback: allow unqualified config name lookup when it is unique.
+        # This helps commands such as:
+        #   ./tools/config.py -d <appdir> default
+        # where discovered config may be represented as "<appname>/default".
+        if '/' not in name:
+            matched = [c.path for c in self.defconfigs if c.name == name]
+            if len(matched) == 1:
+                return matched[0]
+            if len(matched) > 1:
+                raise RuntimeError('Config "%s" is ambiguous. Use category/config name.' % name)
+
         raise RuntimeError('Config "%s" not found' % name)
 
     def get_configs_by_category(self, category):
@@ -113,8 +125,17 @@ class DefconfigManager:
             category = NO_CATEGORY
 
         l = []
+        spresense_home = os.environ.get(SPRESENSE_HOME)
+        spresense_home_real = os.path.realpath(spresense_home) if spresense_home else None
         for c in self.defconfigs:
             if c.category == category:
+                # Hide SPRESENSE_HOME-side "default" configs from -l output.
+                if c.name == 'default' and spresense_home_real:
+                    try:
+                        if os.path.commonpath([c.path, spresense_home_real]) == spresense_home_real:
+                            continue
+                    except ValueError:
+                        pass
                 l += [c.get_configname()]
         return l
 
@@ -137,6 +158,20 @@ class DefconfigManager:
                 self.name = os.path.basename(dp)
                 pp = os.path.dirname(dp)
                 self.category = os.path.basename(pp)
+
+                # For SPRESENSE_HOME configs, use app name as category
+                # e.g., /path/to/myapps/myapp/configs/default/defconfig
+                # -> category should be 'myapp' instead of 'configs'
+
+                if self.category == "configs":
+                    # Check if this is from SPRESENSE_HOME
+                    spresense_home = os.environ.get(SPRESENSE_HOME)
+                    if spresense_home and os.path.commonpath([self.path, spresense_home]) == os.path.realpath(spresense_home):
+                        ppp = os.path.dirname(pp)
+                        app_name = os.path.basename(ppp)
+                        # Use app name as category
+                        if app_name and app_name != "sdk":
+                            self.category = app_name
 
         def get_configname(self):
             if self.category == None or self.category == "configs":
@@ -386,7 +421,7 @@ if __name__ == "__main__":
 
     if opts.list:
         print('Available configurations:')
-        for cat in (None, 'feature', 'device', 'examples'):
+        for cat in manager.category:
             configs = manager.get_configs_by_category(cat)
             configs.sort()
             for c in configs:

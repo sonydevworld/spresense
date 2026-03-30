@@ -5,3 +5,6 @@
 Make.dep
 /*.a
 *.o
+/build
+/out
+.vscode

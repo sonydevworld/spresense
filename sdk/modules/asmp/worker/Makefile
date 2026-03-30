@@ -46,7 +46,7 @@ DEPPATH = --dep-path arch --dep-path . $(EXT_DEPPATH)
 
 ASRCS  = exception.S
 
-CSRCS  = common.c mpmq.c mpmutex.c mpshm.c printf.c
+CSRCS  = common.c mpmq.c mpmutex.c mpshm.c worker_printf.c worker_print_values.c
 CSRCS += cpufifo.c cpuid.c doirq.c startup.c sysctl.c clock.c timer.c lowputc.c delay.c gpio.c
 CSRCS += $(EXT_CSRCS)
 

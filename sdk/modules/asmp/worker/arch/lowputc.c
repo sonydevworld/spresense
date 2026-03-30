@@ -53,6 +53,14 @@ void lowputc(const char ch)
 
   while ((getreg32(CXD56_UART1_BASE + CXD56_UART_FR) & UART_FLAG_TXFF));
 
+  /* Send CR if it is LF */
+
+  if (ch == '\n')
+    {
+      putreg32((uint32_t)'\r', CXD56_UART1_BASE + CXD56_UART_DR);
+      while ((getreg32(CXD56_UART1_BASE + CXD56_UART_FR) & UART_FLAG_TXFF));
+    }
+
   /* Send the character */
 
   putreg32((uint32_t)ch, CXD56_UART1_BASE + CXD56_UART_DR);
