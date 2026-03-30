@@ -579,7 +579,10 @@ function spr-create-app() {
 	fi
 	# Replace the generated APPROOT_ prefix token with USERAPP_ in created files
 	if ! find "${SPRESENSE_HOME}/${appname}" -type f -exec sed "${SED_INPLACE[@]}" "s/${approot^^}_/USERAPP_/g" {} +; then
-		echo "Warning: Failed to replace ${approot^^}_ with USERAPP_ in some files."
+		echo "Error: Failed to replace ${approot^^}_ with USERAPP_ in '${SPRESENSE_HOME}/${appname}'."
+		echo "       'find' or 'sed' is not available. Please check your environment settings."
+		cd - &> /dev/null
+		return 1
 	fi
 	# Replace "default y" with "default n" in generated Kconfig
 	if [ -f "${SPRESENSE_HOME}/${appname}/Kconfig" ]; then
@@ -670,7 +673,9 @@ function spr-import-example() {
 
 	# Replace EXAMPLES_ with USERAPP_ in all files
 	if ! find "${SPRESENSE_HOME}/${app_basename}" -type f -exec sed "${SED_INPLACE[@]}" "s/EXAMPLES_/USERAPP_/g" {} +; then
-		echo "Warning: Failed to replace EXAMPLES with USERAPP in some files."
+		echo "Error: Failed to replace EXAMPLES_ with USERAPP_ in ${SPRESENSE_HOME}/${app_basename}."
+		echo "       'find' or 'sed' is not available. Please check your environment settings."
+		return 1
 	fi
 
 	# Replace $(APPDIR)/examples/ with nothing in Make.defs
