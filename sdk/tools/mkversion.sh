@@ -2,7 +2,7 @@
 ############################################################################
 # tools/mkversion.sh
 #
-#   Copyright 2018-2025 Sony Semiconductor Solutions Corporation
+#   Copyright 2018-2026 Sony Semiconductor Solutions Corporation
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
 
 TAG=${1:-HEAD}
 
-SDK_VERSION="SDK3.4.5"
+SDK_VERSION="SDK3.4.6"
 if [ -r sdk_version ]; then
     SDK_VERSION="SDK`cat sdk_version`"
 fi
