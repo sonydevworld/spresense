@@ -53,13 +53,12 @@ function spr-create-approot() {
 		echo "Arguments:"
 		echo "  approot         Path to your new application root directory."
 		echo "                  Absolute path or relative path from the current directory."
-		echo "                  Use alphanumeric characters with '.', '~', '_' and '/'."
-		echo "                  (e.g. ~/myapps, ../../myapps)"
+		echo "                  Use alphanumeric characters with '.', '~', '_', '-' and '/'."
+		echo "                  (e.g. ~/myproject, ../../myproject)"
 		echo ""
 		echo "Options:"
 		echo "  description     Optional description of the application root."
-		echo "                  (e.g. \"My Applications\")"
-		echo "                  Double quotes (\") are not allowed."
+		echo "                  (e.g. \"My Project\")"
 		echo "                  Leading or trailing spaces are not allowed."
 		echo ""
 		return 1
@@ -96,9 +95,9 @@ function spr-create-approot() {
 			return 1
 		fi
 	fi
-	if [[ "$1" =~ [^A-Za-z0-9./~_] ]]; then
+	if [[ "$1" =~ [^A-Za-z0-9./~_-] ]]; then
 		echo "Error: Invalid approot '$1'."
-		echo "       Use alphanumeric characters with '.', '~', '_' and '/' only."
+		echo "       Use alphanumeric characters with '.', '~', '_', '-' and '/' only."
 		return 1
 	fi
 	if [[ "$1" == *"~"* ]] && [[ "${1:0:1}" != "~" ]]; then
@@ -177,8 +176,8 @@ function spr-set-approot() {
 		echo "Arguments:"
 		echo "  approot      Your application root directory."
 		echo "               Absolute path or relative path from the current directory."
-		echo "               Use alphanumeric characters with '.', '~', '_' and '/' only."
-		echo "               (e.g. ~/myapps, ../../myapps, myapps/subdir)"
+		echo "               Use alphanumeric characters with '.', '~', '_', '-' and '/' only."
+		echo "               (e.g. ~/myproject, ../../myproject)"
 		echo ""
 		return 1
 	fi
@@ -189,9 +188,9 @@ function spr-set-approot() {
 		return 1
 	fi
 
-	if [[ "$1" =~ [^A-Za-z0-9./~_] ]]; then
+	if [[ "$1" =~ [^A-Za-z0-9./~_-] ]]; then
 		echo "Error: Invalid approot '$1'."
-		echo "       Use alphanumeric characters with '.', '~', '_' and '/' only."
+		echo "       Use alphanumeric characters with '.', '~', '_', '-' and '/' only."
 		return 1
 	fi
 	if [[ "$1" == *"~"* ]] && [[ "${1:0:1}" != "~" ]]; then
@@ -497,7 +496,6 @@ function spr-create-app() {
 		echo "Options:"
 		echo "  description     Optional description of the application."
 		echo "                  (e.g. \"My Application\")"
-		echo "                  Double quotes (\") are not allowed."
 		echo "                  Leading or trailing spaces are not allowed."
 		echo "  -x              Create C++ application."
 		echo ""
