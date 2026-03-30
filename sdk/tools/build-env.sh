@@ -833,6 +833,9 @@ function spr-config() {
 
 	if [ $show_finished -eq 1 ]; then
 		echo "Configuration '${config_args[@]}' finished."
+		if [[ -n "${SPRESENSE_HOME}" ]] && [[ -f "${SPRESENSE_SDK}/nuttx/.config" ]]; then
+			cp -f "${SPRESENSE_SDK}/nuttx/.config" "${SPRESENSE_HOME}/sdk.config"
+		fi
 	fi
 	cd - &> /dev/null
 }
@@ -949,12 +952,18 @@ function spr-flash() {
 		if [ $? -ne 0 ]; then
 			return 1
 		fi
-		if [ ! -f "${SPRESENSE_HOME}/build/nuttx.spk" ]; then
-			echo "Error: '${SPRESENSE_HOME}/build/nuttx.spk' does not exist."
+		local approot=$(basename "${SPRESENSE_HOME}")
+		if [ ! -f "${SPRESENSE_HOME}/out/${approot}.nuttx.spk" ]; then
+			echo "Error: '${SPRESENSE_HOME}/out/${approot}.nuttx.spk' does not exist."
 			echo "       Please run 'spr-make' first or specify a .spk/.espk file."
 			return 1
 		fi
-		${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/build/*.spk"
+		local worker_spk_glob="${SPRESENSE_HOME}/out/worker/*.spk"
+		if compgen -G "${worker_spk_glob}" > /dev/null; then
+			${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/out/*.spk" "${worker_spk_glob}"
+		else
+			${SPRESENSE_SDK}/sdk/tools/flash.sh ${port} ${baud} "${SPRESENSE_HOME}/out/*.spk"
+		fi
 	fi
 }
 
@@ -1095,6 +1104,7 @@ function spr-make() {
 		# Check if arguments contain clean, config or help
 		local skip_copy=0
 		local remove_build=0
+		local is_distclean=0
 		for arg in "$@"; do
 			if [[ "$arg" == *config ]] || [[ "$arg" == help ]]; then
 				skip_copy=1
@@ -1103,36 +1113,43 @@ function spr-make() {
 				skip_copy=1
 				remove_build=1
 			fi
+			if [[ "$arg" == distclean ]]; then
+				is_distclean=1
+			fi
 			if [[ "$arg" == all ]]; then
 				skip_copy=0
 				remove_build=0
+				is_distclean=0
 			fi
 		done
 
 		if [[ $skip_copy -eq 0 ]] && [[ -f "${SPRESENSE_SDK}/sdk/nuttx.spk" ]]; then
-			echo "Build successful. Copy build artifacts to ${SPRESENSE_HOME}/build"
-			mkdir -p ${SPRESENSE_HOME}/build
-			cp -f ${SPRESENSE_SDK}/sdk/nuttx.spk ${SPRESENSE_HOME}/build/
-			cp -f ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/build/
-			cp -f ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/build/
-			cp -f ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/build/
+			local approot=$(basename "${SPRESENSE_HOME}")
+			echo "Build successful. Copy build artifacts to ${SPRESENSE_HOME}/out"
+			mkdir -p ${SPRESENSE_HOME}/out
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx.spk ${SPRESENSE_HOME}/out/${approot}.nuttx.spk
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx ${SPRESENSE_HOME}/out/${approot}.nuttx
+			cp -f ${SPRESENSE_SDK}/sdk/nuttx.map ${SPRESENSE_HOME}/out/${approot}.nuttx.map
+			cp -f ${SPRESENSE_SDK}/sdk/System.map ${SPRESENSE_HOME}/out/
 
 			if [[ -d "${SPRESENSE_SDK}/sdk/workerspks" ]]; then
 				local worker_file
 				for worker_file in "${SPRESENSE_SDK}/sdk/workerspks"/*; do
+					mkdir -p ${SPRESENSE_HOME}/out/worker
 					if [[ -f "${worker_file}" ]]; then
-						cp -f "${worker_file}" "${SPRESENSE_HOME}/build/"
+						cp -f "${worker_file}" "${SPRESENSE_HOME}/out/worker/"
 					fi
 				done
 			fi
 		fi
 
 		if [[ $remove_build -eq 1 ]]; then
-			echo "Clean successful. Remove build artifacts from ${SPRESENSE_HOME}/build"
-			rm -f ${SPRESENSE_HOME}/build/*.spk
-			rm -f ${SPRESENSE_HOME}/build/nuttx
-			rm -f ${SPRESENSE_HOME}/build/nuttx.map
-			rm -f ${SPRESENSE_HOME}/build/System.map
+			if [[ $is_distclean -eq 1 ]]; then
+				echo "Distclean successful. Remove build artifacts from ${SPRESENSE_HOME}/out"
+			else
+				echo "Clean successful. Remove build artifacts from ${SPRESENSE_HOME}/out"
+			fi
+			rm -rf ${SPRESENSE_HOME}/out
 		fi
 	fi
 }
