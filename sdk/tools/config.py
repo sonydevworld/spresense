@@ -125,8 +125,17 @@ class DefconfigManager:
             category = NO_CATEGORY
 
         l = []
+        spresense_home = os.environ.get(SPRESENSE_HOME)
+        spresense_home_real = os.path.realpath(spresense_home) if spresense_home else None
         for c in self.defconfigs:
             if c.category == category:
+                # Hide SPRESENSE_HOME-side "default" configs from -l output.
+                if c.name == 'default' and spresense_home_real:
+                    try:
+                        if os.path.commonpath([c.path, spresense_home_real]) == spresense_home_real:
+                            continue
+                    except ValueError:
+                        pass
                 l += [c.get_configname()]
         return l
 
