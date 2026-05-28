@@ -38,9 +38,10 @@
 
 SPRBASENAME=spresenseenv
 
-NXTOOLURL=https://bitbucket.org/nuttx/tools
+NXTOOLURL=https://github.com/patacongo/tools
+NXTOOLVER=9484147c12d051014f854852d59c21d75a9616bd
 NXTOOL=nuttx-tools
-NXTOOLARCHIVE=${NXTOOL}.tar.gz
+NXTOOLARCHIVE=${NXTOOL}-${NXTOOLVER}.tar.gz
 GENROMFS=genromfs-0.5.2
 
 CROSSBASEURL=https://developer.arm.com/-/media/Files/downloads/gnu
@@ -149,7 +150,7 @@ install_nxtools()
 
     # Download and install kconfig-frontends
 
-    download ${NXTOOLURL}/get/master.tar.gz ${NXTOOLARCHIVE}
+    download ${NXTOOLURL}/archive/${NXTOOLVER}.tar.gz ${NXTOOLARCHIVE}
 
     rm -rf ${NXTOOL}
     mkdir ${NXTOOL}
