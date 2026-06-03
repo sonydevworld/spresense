@@ -251,7 +251,7 @@ mac_install_toolchain()
 
     # Extract toolchain directly
 
-    run_progress tar vjxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
+    run_progress tar jxf ${_fn} --strip-components=1 -C ${SPRROOT}/usr
 }
 
 wsl_install_toolchain()
@@ -321,7 +321,7 @@ mac_install_openocd()
 
     shasum -c ${_sha} || exit 1
 
-    run_progress tar vjxf ${_fn}  --strip-components=1 -C ${SPRROOT}/usr
+    run_progress tar jxf ${_fn}  --strip-components=1 -C ${SPRROOT}/usr
 }
 
 wsl_install_openocd()
