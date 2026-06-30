@@ -191,16 +191,11 @@ int main(int argc, FAR char *argv[])
 
 int gnss_factory_test(int argc, char *argv[])
 {
-  /* Initialize  */
+  int ret;
 
-  int ret = boardctl(BOARDIOC_INIT, 0);
+  /* Call factory test */
 
-  if (ret == OK)
-    {
-      /* Call factory test */
-
-      ret = gnss_factory_main(argc, argv);
-    }
+  ret = gnss_factory_main(argc, argv);
 
   return ret;
 }
