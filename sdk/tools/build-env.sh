@@ -34,6 +34,19 @@
 #
 ############################################################################
 
+# This script supports bash only. On other shells such as zsh (the macOS
+# default shell), BASH_SOURCE is not available and the environment would
+# be set up with wrong paths, so stop here with a clear message instead.
+if [ -z "${BASH_VERSION}" ]; then
+	echo "Error: tools/build-env.sh supports bash only."
+	echo "       Please start bash and source this script again."
+	echo ""
+	echo "       $ bash"
+	echo "       $ source tools/build-env.sh"
+	echo ""
+	return 1 2> /dev/null || exit 1
+fi
+
 SCRIPT_NAME=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)/$(basename "${BASH_SOURCE[0]}")
 SCRIPT_DIR=`dirname "$SCRIPT_NAME"`
 
