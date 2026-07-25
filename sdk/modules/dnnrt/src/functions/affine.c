@@ -209,7 +209,7 @@ static rt_function_error_t dnnrt_exec_affine_float(rt_function_t * f)
 
       if (bias)
         {
-          float *b = bias + output_offset;
+          float *b = bias;
           for (i = 0; i < output_loop_size; i++)
             {
               y[i] += b[i];
