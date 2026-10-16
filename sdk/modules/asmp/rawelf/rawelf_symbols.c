@@ -42,7 +42,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <elf32.h>
+#include <elf.h>
 #include <errno.h>
 #include <debug.h>
 

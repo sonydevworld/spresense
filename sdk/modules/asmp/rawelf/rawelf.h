@@ -45,7 +45,7 @@
 #include <sdk/config.h>
 
 #include <sys/types.h>
-#include <elf32.h>
+#include <elf.h>
 
 #include <nuttx/arch.h>
 
