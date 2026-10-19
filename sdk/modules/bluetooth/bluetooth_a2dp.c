@@ -39,6 +39,7 @@
 
 #include <bluetooth/bt_a2dp.h>
 #include <bluetooth/hal/bt_if.h>
+#include <pthread.h>
 
 /****************************************************************************
  * Pre-processor Definitions
