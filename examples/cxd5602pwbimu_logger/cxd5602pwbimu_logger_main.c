@@ -39,6 +39,8 @@
 
 #include <nuttx/config.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <poll.h>
 #include <inttypes.h>
 #include <sys/ioctl.h>
