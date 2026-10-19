@@ -40,6 +40,7 @@
 #include <nuttx/config.h>
 #include <debug.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include "sensing/logical_sensor/step_counter.h"
 #include "sensing/logical_sensor/step_counter_command.h"

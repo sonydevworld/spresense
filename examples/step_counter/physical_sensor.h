@@ -43,6 +43,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <mqueue.h>
+#include <pthread.h>
 
 #include <nuttx/queue.h>
 
