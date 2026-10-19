@@ -38,6 +38,7 @@
  ****************************************************************************/
 
 #include <stdio.h>
+#include <unistd.h>
 #include <arch/board/board.h>
 #include <arch/chip/audio.h>
 
